@@ -1,5 +1,6 @@
-// Źródła SVG — grupa: role.
-// Nazwy i kolejność wprost z `ikony/manifest.json` (pozycje 55–78).
+// Źródła wektorowe grupy ról: znaczniki `svg` wczytywane jako tekst i podane
+// dalej bez przetwarzania. Nazwy oraz kolejność pozycji pochodzą wprost
+// z pliku `ikony/manifest.json`.
 
 import agent from '../svg/agent.svg?raw';
 import agenci from '../svg/agenci.svg?raw';
@@ -26,7 +27,11 @@ import slonce from '../svg/slonce.svg?raw';
 import ksiezyc from '../svg/ksiezyc.svg?raw';
 import globus from '../svg/globus.svg?raw';
 
-/** Role, moduły i środowisko wykonania. */
+/**
+ * Role, moduły i środowisko wykonania: odwzorowanie nazwy ikony na treść
+ * pliku wektorowego. Klucze odpowiadają nazwom plików katalogu `ikony/svg`,
+ * a zapis `as const` zawęża je do zbioru dosłownego.
+ */
 export const ROLE = {
   'agent': agent,
   'agenci': agenci,

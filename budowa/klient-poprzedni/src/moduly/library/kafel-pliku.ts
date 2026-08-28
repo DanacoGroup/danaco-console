@@ -2,17 +2,9 @@ import type { LibraryFile } from '../../../../shared/contract';
 import type { TrafienieZnaczenia } from './magazyn-biblioteki';
 
 /**
- * Kafel pliku widoku siatki i widoku galerii.
- *
- * Kafel niesie to samo, co wiersz wykazu — zaznaczenie do czynności zbiorczych
- * i wskazanie pliku czynnego dla trzech pozostałych okien — ale w układzie
- * przeznaczonym dla materiału oglądanego, nie czytanego.
- *
- * Miniatury nie ma i nie może być: `library.file.preview` oddaje dla obrazu
- * wyłącznie odwołanie (`imageRef`), a klient nie ma komendy, którą pobrałby
- * bajty spod tego odwołania. Miejsce miniatury zajmuje więc znak rodziny
- * treści złożony z `mimeType` — informacja o tym, co to za plik, bez udawania,
- * że okno widziało jego zawartość.
+ * Kafel pliku obsługuje widok siatki i widok galerii biblioteki. Niesie zaznaczenie do
+ * czynności zbiorczych, wskazanie pliku czynnego oraz znak rodziny treści zajmujący
+ * miejsce przeznaczone na miniaturę.
  */
 export interface OpisKafla {
   zaznaczony: boolean;
@@ -77,12 +69,9 @@ export function utworzKafelPliku(plik: LibraryFile, opis: OpisKafla): HTMLElemen
 }
 
 /**
- * Zdanie o tym, dlaczego plik znalazł się w wyniku wyszukiwania po znaczeniu.
- *
- * Fragment przychodzi z `KnowledgeHit.text` i jest podstawą trafienia —
- * pokazany, pozwala Operatorowi sprawdzić dopasowanie zamiast wierzyć w nie.
- * Trafność wchodzi tylko wtedy, gdy rdzeń ją podał; wartość dopisana przez okno
- * wyglądałaby na pomiar.
+ * Składa zdanie o tym, dlaczego plik znalazł się w wyniku wyszukiwania po znaczeniu:
+ * podaje fragment będący podstawą trafienia, a trafność dopisuje wyłącznie wtedy, gdy
+ * podał ją rdzeń.
  */
 export function zdanieZnaczenia(znaczenie: TrafienieZnaczenia | null): string {
   if (znaczenie === null) return '';
@@ -93,7 +82,11 @@ export function zdanieZnaczenia(znaczenie: TrafienieZnaczenia | null): string {
   return `dopasowanie po znaczeniu${trafnosc}: „${skrot}"`;
 }
 
-/** Rodzina treści z typu MIME; nośnik znaku kafla, nie ozdoba. */
+/**
+ * Wyznacza rodzinę treści z typu MIME pliku. Rodzina jest nośnikiem znaku kafla, więc
+ * typ pusty oraz typ spoza obrazu, dźwięku, obrazu ruchomego i tekstu dostają wartość
+ * zastępczą.
+ */
 export function rodzinaTresci(mimeType: string | undefined): string {
   const rodzaj = (mimeType ?? '').toLowerCase();
   if (rodzaj === '') return 'nieznana';
@@ -104,7 +97,10 @@ export function rodzinaTresci(mimeType: string | undefined): string {
   return 'inna';
 }
 
-/** Skrót rodzaju treści widoczny w miejscu miniatury; nigdy dłuższy niż cztery znaki. */
+/**
+ * Składa skrót rodzaju treści widoczny w miejscu miniatury. Skrót bierze się z podtypu
+ * MIME, zapisany jest wielkimi literami i nigdy nie przekracza czterech znaków.
+ */
 function skrotRodzaju(mimeType: string | undefined): string {
   const rodzaj = (mimeType ?? '').toLowerCase();
   if (rodzaj === '') return '—';
@@ -114,7 +110,10 @@ function skrotRodzaju(mimeType: string | undefined): string {
   return czlon.slice(0, 4).toUpperCase();
 }
 
-/** Metryka kafla: rodzaj treści, rozmiar i chwila ostatniej zmiany. */
+/**
+ * Składa metrykę kafla z typu treści, rozmiaru w bajtach, modułu źródłowego pliku oraz
+ * daty ostatniej zmiany; człony nieznane zostają pominięte.
+ */
 function metrykaKafla(plik: LibraryFile): string {
   const czesci: string[] = [];
   if (plik.mimeType !== undefined && plik.mimeType !== '') czesci.push(plik.mimeType);

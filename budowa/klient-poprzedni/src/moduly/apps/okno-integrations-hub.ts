@@ -27,38 +27,18 @@ import type { StanRozszerzen } from './stan-rozszerzen';
 import { utworzWyborZMenu, wierszWyboru } from './wybor-z-menu';
 
 /**
- * Integrations Hub — okno wiodące integracji zewnętrznych: konektory i serwery
- * MCP w jednym widoku.
- *
- * Widok obejmuje dwa rodzaje pozycji katalogu — serwer MCP i integrację API —
- * bo tak brzmi cel okna. Wtyczki i umiejętności do niego nie należą: są
- * rozszerzeniami powłoki i sposobami wykonania zadań, nie drogami do usług
- * zewnętrznych, i mają swoje miejsce w App Catalogu.
- *
- * „Test połączenia" i „monitor zdrowia" stoją na `access.point.check` i okno
- * mówi wprost, co jest sprawdzane: MOST, którym się do serwera dochodzi, a nie
- * usługa za mostem. Sprawdzenie oddaje stan, czas i korzenie potwierdzone przez
- * punkt; czasu odpowiedzi samej integracji ani liczby jej narzędzi kontrakt nie
- * niesie i okno tego nie zmyśla.
- *
- * Integracja bez punktu dostępu nie jest usterką: pozycja rodzaju `api` bywa
- * dostępna wprost adresem, a `AccessPoint` opisuje most do maszyny. Okno
- * odróżnia „bez mostu" od „most nieznany rdzeniowi", bo to dwa różne stany
- * i drugi jest niespójnością rejestru.
- *
- * Transport MCP da się dziś wpisać wyłącznie do nieprzezroczystej konfiguracji.
- * Okno pozwala to zrobić i nazywa ryzyko: kontrakt tego pola nie nazywa, więc
- * rdzeń i okno mogą rozumieć je inaczej.
+ * Okno wiodące integracji zewnętrznych: zestawia w jednym widoku serwery
+ * protokołu MCP i integracje przez interfejs API wraz ze stanem ich mostów dostępu.
  */
 export interface OknoIntegrationsHub {
   element: HTMLElement;
   odswiez(): void;
 }
 
-/** Rodzaje pozycji, które są drogą do usługi zewnętrznej. */
+/** Rodzaje pozycji katalogu uznawane za drogę do usługi zewnętrznej: serwer protokołu MCP oraz integracja przez interfejs API. */
 const RODZAJE_INTEGRACJI: readonly ExtensionKind[] = [ExtensionKind.Mcp, ExtensionKind.Api];
 
-/** Odmiana plakietki stanu punktu dostępu; nazwy z biblioteki `komponenty/`. */
+/** Odmiana klasy plakietki oznaczającej stan punktu dostępu w wykazie integracji; nazwy klas pochodzą z biblioteki komponentów interfejsu. */
 const PLAKIETKI_PUNKTU: Readonly<Record<string, string>> = {
   [AccessPointStatus.Reachable]: 'dn-plakietka dn-plakietka--sukces',
   [AccessPointStatus.Unreachable]: 'dn-plakietka dn-plakietka--blad',
@@ -144,9 +124,7 @@ export function utworzOknoIntegrationsHub(stan: StanRozszerzen): OknoIntegration
   async function odczytajCalosc(): Promise<void> {
     rama.ladowanie('Odczyt integracji i katalogu mostów…');
     odpowiedz.pokaz('Odczyt integracji: żądania wysłane do rdzenia…', true);
-    // Dwa odczyty idą równolegle, bo są od siebie niezależne: odmowa jednego
-    // nie zabiera drugiego, a integracje da się pokazać także bez katalogu
-    // mostów — wtedy wiersz mówi, że mostu nie ma czym rozwiązać.
+    // Odczyty katalogu i punktów idą równolegle: odmowa jednego nie wyklucza wyniku drugiego.
     await Promise.all([stan.odczytajKatalog(), stan.odczytajPunkty()]);
     const powodKatalogu = stan.powodOdczytu('katalog');
     const powodPunktow = stan.powodOdczytu('punkty');
@@ -208,13 +186,7 @@ export function utworzOknoIntegrationsHub(stan: StanRozszerzen): OknoIntegration
     );
   }
 
-  /**
-   * Sprawdzenie mostu obsługującego integrację.
-   *
-   * Wynik wchodzi do wspólnego zbioru punktów, a nie tylko do wiersza: ten sam
-   * most bywa obsługą wielu integracji, więc sprawdzenie zrobione raz ma być
-   * widoczne przy każdej z nich.
-   */
+  /** Sprawdzenie zapisuje wynik do wspólnego zbioru punktów, bo jeden most bywa obsługą wielu integracji. */
   async function sprawdzMost(pozycja: Extension, punkt: AccessPoint): Promise<void> {
     rama.ladowanie(`Sprawdzanie mostu ${punkt.name}…`);
     const wynik = await stan.punktyDostepu.sprawdz(punkt.id);
@@ -262,13 +234,7 @@ export function utworzOknoIntegrationsHub(stan: StanRozszerzen): OknoIntegration
     );
   }
 
-  /**
-   * Zbiorczy stan integracji — składany wyłącznie z pól, które rdzeń oddał.
-   *
-   * Zdanie nie mówi o opóźnieniach ani o błędach integracji, bo tych kontrakt
-   * nie niesie. Mówi o tym, co wiadomo: ile integracji jest włączonych i jak
-   * odpowiadają ich mosty.
-   */
+  /** Zdanie zdrowia korzysta wyłącznie z pól, które rdzeń faktycznie oddał w kontrakcie integracji. */
   function zdanieZdrowia(pozycje: readonly Extension[]): string {
     if (pozycje.length === 0) return '';
     const wlaczone = pozycje.filter((pozycja) => pozycja.enabled).length;
@@ -414,7 +380,7 @@ function przyciskWiersza(etykieta: string, klasa: string, naNacisniecie: () => v
   return element;
 }
 
-/** Nagłówek części okna. */
+/** Nagłówek wydzielonej części okna, oddzielający formularz dodania integracji od wykazu istniejących integracji. */
 function naglowekCzesci(tresc: string): HTMLElement {
   const element = document.createElement('p');
   element.className = 'mp-czesc__tytul';

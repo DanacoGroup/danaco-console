@@ -1,20 +1,18 @@
+/**
+ * Prowenancja rady doradcy: zapis tego, kto zapytał, kogo i co doradca
+ * odpowiedział. Plik składa z rady zdanie nagłówkowe i zdanie o drodze przez
+ * rdzeń, a przy treści stawia etykietę odróżniającą radę od odpowiedzi
+ * eksperta.
+ */
+
 import { MessageStatus } from '../../../../shared/contract';
 import type { RadaDoradcy } from './zrodlo-doradcy';
 
 /**
- * Prowenancja rady doradcy — zapis tego, kto zapytał, kogo, o co i co
- * odpowiedział.
- *
- * Rada jest jawna i nie wolno pokazywać jej jako własnej odpowiedzi eksperta.
- * Gdyby zdanie o pochodzeniu składał widok, pierwszy widok, który by tego nie
- * zrobił, pokazałby radę bez źródła; tutaj zdanie powstaje raz, a widok bierze
- * treść razem z nim z jednego zapisu.
- *
- * Kontrakt nie ma pola prowenancji ani komendy zapisującej ją w bazie, więc
- * prowenancja żyje tyle, co widok, i wykaz mówi o tym wprost.
+ * Jedna pozycja wykazu konsultacji: rada doradcy wraz ze zdaniem nagłówkowym
+ * o tym, kto pytał i kogo, oraz ze zdaniem o drodze żądania przez rdzeń.
+ * Zapis powstaje raz, a widok bierze treść i jej pochodzenie z jednego miejsca.
  */
-
-/** Jedna pozycja wykazu konsultacji. */
 export interface ZapisProwenancji {
   /** Rada wraz z pochodzeniem — źródło wszystkich pól poniżej. */
   rada: RadaDoradcy;
@@ -24,7 +22,11 @@ export interface ZapisProwenancji {
   droga: string;
 }
 
-/** Etykieta, którą nosi każda rada; nigdy nie pojawia się bez treści rady. */
+/**
+ * Etykieta, którą nosi każda rada i która nigdy nie pojawia się bez treści
+ * rady. Odróżnia radę doradcy od własnej odpowiedzi eksperta wszędzie tam,
+ * gdzie treść rady zostaje pokazana albo przeniesiona dalej.
+ */
 export const ETYKIETA_RADY = 'RADA DORADCY — nie jest odpowiedzią eksperta';
 
 export function zapiszProwenancje(rada: RadaDoradcy): ZapisProwenancji {

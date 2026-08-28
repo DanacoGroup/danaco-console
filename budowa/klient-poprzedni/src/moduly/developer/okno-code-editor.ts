@@ -16,41 +16,8 @@ import type { ZrodloDeveloper } from './zrodlo-developer';
 import type { ZrodloWarsztatu } from './zrodlo-warsztatu';
 
 /**
- * Code Editor — okno wiodące modułu Developer: edycja treści pliku wskazanego
- * w Project Tree i zapis z opcjonalnym założeniem wersji.
- *
- * Dziewięć operacji kontekstowych panelu akcji jedzie komendą
- * `developer.contextual.op`: rdzeń składa polecenie z treści pliku, zaznaczenia
- * i wskazania Operatora, a wynik wraca PROPOZYCJĄ — okno pokazuje ją w miejscu
- * treści i niczego nie zapisuje. Nazwy kanoniczne i rodzaje operacji stoją
- * w `akcje-kanoniczne.ts`, jednym wykazem dla całego modułu.
- *
- * Stan należy do modułu, nie do tego okna: ścieżkę pliku i jego wersję okno
- * czyta z `stan.plik()`. Własną trzyma wyłącznie treść, względem której pole
- * jest czyste — bywa nią treść pola, a nie treść z rdzenia.
- *
- * Wskazanie pliku przychodzi ze stanu. Project Tree woła `stan.wskazPlik(...)`;
- * to okno nasłuchuje `stan.naZmiane(...)` i na nową ścieżkę otwiera plik przez
- * `zrodlo.otworzPlik`. Po udanym odczycie i po zapisie woła `stan.ustawPlik`,
- * żeby Project Tree i Git Panel widziały to samo.
- *
- * Jedyny punkt wejścia do odczytu to `odswiez()`. Wytwórnia okna nie czyta
- * sama — złożenie modułu woła `odswiez()` raz po montażu, a odczyt w wytwórni
- * dałby podwójne żądanie. `odswiez()` nie zdejmuje subskrypcji `stan.naZmiane`:
- * ta żyje od konstrukcji do `zamknij()`, inaczej wskazanie pliku w Project Tree
- * przestałoby cokolwiek robić po pierwszym odświeżeniu.
- *
- * Okno nie gubi pracy Operatora cicho. Gdy treść w polu edycji różni się od
- * treści ostatnio wczytanego pliku, a stan wskazuje inną ścieżkę, okno woła
- * `tresc.potwierdzenie(...)`, nie `tresc.blad(...)` — ten drugi czyściłby
- * miejsce treści razem z polem edycji. Pole `.mdev-kod` zostaje widoczne
- * i edytowalne, a Operator ma dwa jawne wyjścia: „Zapisz plik” albo „Porzuć
- * zmianę i otwórz wskazany plik”.
- *
- * Potwierdzenie zapisu mówi, co zrobił rdzeń: zdanie składa
- * `zdania-odpowiedzi.ts` z pól odpowiedzi, nie z przełącznika wersji. Rdzeń
- * robi wersję z treści sprzed zapisu, więc gdy takiej nie było, `versionId`
- * nie wraca wcale, a potwierdzenie nie ma prawa obiecywać punktu powrotu.
+ * Code Editor — okno wiodące modułu Developer: edycja treści pliku wskazanego w Project
+ * Tree i zapis z opcjonalnym założeniem wersji; stan pliku należy do modułu, nie do okna.
  */
 export interface OknoCodeEditora {
   element: HTMLElement;
@@ -74,9 +41,7 @@ export function utworzOknoCodeEditora(
     przedrostek: 'mdev',
   });
   const tresc = utworzStanTresci();
-  // Wykaz programów spoza instalki stoi w pasku narzędzi, nie w podpowiedzi
-  // przycisku: o wymaganym serwerze języka trzeba wiedzieć przy planowaniu
-  // pracy, a nie dopiero z odmowy czynności, która go potrzebowała.
+  // Wykaz programów spoza instalki stoi w pasku narzędzi — trzeba o nim wiedzieć przy planowaniu pracy.
   rama.narzedzia.append(
     rysujZaleznosci(zaleznosci(['serwer-jezyka', 'formater-linter', 'ripgrep'])),
   );
@@ -95,7 +60,7 @@ export function utworzOknoCodeEditora(
   };
 }
 
-/** Czynności okna: odczyt (wraz z osadzeniem w polu), zapis i porzucenie zmiany. */
+/** Czynności okna: odczyt pliku wraz z osadzeniem jego treści w polu edycji, zapis i porzucenie zmiany. */
 interface CzynnosciEdytora {
   otworz(): void;
   zapisz(): void;
@@ -113,16 +78,7 @@ function zlozCzynnosciEdytora(
   tresc: ReturnType<typeof utworzStanTresci>,
   powierzchnia: PowierzchniaEdytora,
 ): CzynnosciEdytora {
-  /**
-   * Jedyny stan, którego stan modułu nie zna, i dlatego jedyny trzymany tutaj:
-   * treść, względem której pole edycji jest czyste.
-   *
-   * Nie jest to treść z rdzenia. Po zapisie, którego rdzeń nie potwierdził
-   * treścią, znacznikiem czystości zostaje treść pola — inaczej edytor
-   * uznawałby pracę za niezapisaną na zawsze — a stan modułu nie ma prawa
-   * takiej treści nieść, bo rdzeń jej nie odesłał. `null` znaczy „nic jeszcze
-   * nie wczytano”.
-   */
+  /** Jedyny stan, którego stan modułu nie zna: treść, względem której pole jest czyste. */
   let odniesienieCzystosci: string | null = null;
 
   function niezapisana(): boolean {
@@ -141,8 +97,7 @@ function zlozCzynnosciEdytora(
 
   function otworz(): void {
     const sciezka = stan.sciezka();
-    // Plik oddany przez rdzeń niesie własną ścieżkę — to on, a nie osobna kopia
-    // w domknięciu, mówi, co leży w polu edycji.
+    // Plik oddany przez rdzeń niesie własną ścieżkę — to on mówi, co leży w polu edycji.
     const wPolu = stan.plik();
     if (sciezka === '') {
       tresc.pusto('Nie wskazano pliku — wybierz go w Project Tree.');
@@ -150,9 +105,7 @@ function zlozCzynnosciEdytora(
     }
     if (wPolu !== null && wPolu.path === sciezka) return;
     if (niezapisana()) {
-      // `potwierdzenie`, nie `blad`: `blad` czyściłby miejsce treści i
-      // skasowałby razem z nim pole `.mdev-kod` — czyli dokładnie tę pracę
-      // Operatora, przed której utratą to ostrzeżenie ma bronić.
+      // potwierdzenie, nie blad — blad czyściłby miejsce treści razem z polem .mdev-kod i pracą Operatora.
       tresc.potwierdzenie(
         `Plik „${wPolu?.path ?? ''}” ma niezapisaną zmianę w edytorze — zapisz ją albo porzuć, zanim otworzysz „${sciezka}”.`,
         false,
@@ -165,19 +118,13 @@ function zlozCzynnosciEdytora(
         tresc.blad('Rdzeń odmówił odczytu pliku.', wynik.blad);
         return;
       }
-      // Kolejność ma znaczenie: `wczytajDoPola` musi osadzić treść w polu zanim
-      // `stan.ustawPlik` rozgłosi zmianę, bo nasłuch wywołuje `otworz` ponownie.
-      // Reentrantne wywołanie kończy się wtedy natychmiast na porównaniu
-      // `stan.plik()?.path === stan.sciezka()` — obie wartości ustawia
-      // `ustawPlik` przed powiadomieniem — więc drugie żądanie odczytu nie leci.
+      // Kolejność ma znaczenie: wczytajDoPola osadza treść, zanim ustawPlik rozgłosi zmianę.
       wczytajDoPola(wynik.wynik);
       stan.ustawPlik(wynik.wynik);
     });
   }
 
-  // `zapisz` i `porzuc` używają wyłącznie `tresc.potwierdzenie(...)`, nigdy
-  // `tresc.ladowanie`/`tresc.blad`: obie czyszczą miejsce treści i skasowałyby
-  // `.mdev-kod` razem z pracą Operatora — tą samą pracą, którą zapis ma utrwalić.
+  // zapisz i porzuc używają wyłącznie tresc.potwierdzenie — inne metody skasują pole .mdev-kod z pracą.
   function zapisz(): void {
     const wPolu = stan.plik();
     if (wPolu === null) {
@@ -187,10 +134,7 @@ function zlozCzynnosciEdytora(
       );
       return;
     }
-    // Wersja pliku wedle ostatniej odpowiedzi rdzenia, zdjęta ze stanu przed
-    // wysłaniem żądania. Porównanie jej z wersją oddaną po zapisie rozstrzyga,
-    // czy punkt powrotu naprawdę powstał — obecność pola tego nie rozstrzyga,
-    // bo rdzeń dokłada tam wersję zastaną (`zdania-odpowiedzi.ts`).
+    // Wersja pliku sprzed żądania — porównanie z wersją po zapisie rozstrzyga, czy punkt powrotu powstał.
     const wersjaPrzedZapisem = wPolu.versionId ?? '';
     tresc.potwierdzenie('Zapis w toku…', true);
     void zrodlo
@@ -205,19 +149,13 @@ function zlozCzynnosciEdytora(
           tresc.potwierdzenie(`Rdzeń odmówił zapisu pliku. ${opisOdmowyZapisu(wynik.blad)}`, false);
           return;
         }
-        // Zdanie powstaje przed `stan.ustawPlik`, czyli zanim wersja w stanie
-        // modułu zostanie nadpisana: rozstrzyga je porównanie wersji sprzed
-        // zapisu z wersją oddaną przez rdzeń.
+        // Zdanie powstaje przed stan.ustawPlik, zanim wersja w stanie modułu zostanie nadpisana.
         const potwierdzenie = zdanieZapisuPliku(
           wynik.wynik,
           wersjaPrzedZapisem,
           powierzchnia.zaloz.checked,
         );
-        // Treść zapisana bierze się z odpowiedzi. Gdy rdzeń jej nie odesłał,
-        // znacznikiem czystości zostaje treść pola — inaczej edytor uznawałby
-        // pracę za niezapisaną na zawsze — a zdanie potwierdzenia mówi wprost,
-        // że okno nie ma czym potwierdzić zgodności z dyskiem. Znacznik
-        // ustawiamy przed `ustawPlik`, bo ten rozgłasza zmianę i budzi `otworz`.
+        // Treść zapisana bierze się z odpowiedzi; gdy rdzeń jej nie odesłał, znacznikiem zostaje treść pola.
         odniesienieCzystosci = wynik.wynik.content ?? powierzchnia.kod.value;
         powierzchnia.sciezka.textContent = wynik.wynik.path;
         opiszStatusPliku(powierzchnia.status, wynik.wynik);
@@ -237,14 +175,14 @@ function zlozCzynnosciEdytora(
   return { otworz, zapisz, porzuc };
 }
 
-/** Zdanie o odmowie zapisu, z kodem kontraktu, gdy rdzeń go podał. */
+/** Zdanie o odmowie zapisu pliku do rdzenia, z kodem i treścią przyczyny kontraktu, gdy rdzeń je podał. */
 function opisOdmowyZapisu(powod: { code: string; message: string } | undefined): string {
   if (powod === undefined) return '';
   const tresc = powod.message === '' ? 'rdzeń nie podał przyczyny' : powod.message;
   return `Powód: ${tresc} (kod ${powod.code}).`;
 }
 
-/** Kontrolki paska akcji Code Editora. */
+/** Kontrolki paska akcji Code Editora: przyciski zapisu, porzucenia zmiany oraz operacji kontekstowych. */
 interface AkcjeEdytora {
   /** Uchwyt wykonania operacji kontekstowych panelu akcji. */
   operacje: UchwytOperacji;
@@ -253,38 +191,25 @@ interface AkcjeEdytora {
 }
 
 /**
- * Składa pasek akcji: zapis, porzucenie zmiany i dziewięć operacji
- * kontekstowych bez pokrycia w kontrakcie.
- *
- * Wydzielone z wytwórni okna, żeby ta zmieściła się pod progiem długości
- * funkcji — fragment jest czystą konstrukcją bez domknięcia na stanie.
- *
- * „Porzuć zmianę” jest jawnym drugim wyjściem z ostrzeżenia o niezapisanej
- * pracy (obok „Zapisz plik”) — bez niego Operator widziałby ostrzeżenie bez
- * żadnej drogi naprzód poza ręczną edycją treści z powrotem do stanu wyjściowego.
- *
- * Nazwy operacji nie stoją tutaj — mają jedno źródło w `akcje-kanoniczne.ts`,
- * żeby przycisk i komenda dołożona później mówiły o operacji tym samym słowem.
+ * Składa pasek akcji: zapis, porzucenie zmiany i dziewięć operacji kontekstowych bez
+ * pokrycia w kontrakcie; wydzielone z wytwórni okna pod progiem długości funkcji.
  */
 function zlozAkcjeEdytora(gospodarz: HTMLElement): AkcjeEdytora {
   const zapiszPrzycisk = przycisk('Zapisz plik', 'dn-btn dn-btn--atrament');
   const porzucPrzycisk = przycisk('Porzuć zmianę i otwórz wskazany plik', 'dn-btn dn-btn--zarys');
   gospodarz.append(zapiszPrzycisk, porzucPrzycisk);
-  // Wykonanie podpina się później — pasek powstaje razem z powierzchnią okna,
-  // a droga do rdzenia potrzebuje stanu treści, którego wtedy jeszcze nie ma.
-  // Dlatego wykonanie idzie przez uchwyt zmienny, a nie przez drugi zestaw
-  // nasłuchów doklejany do tych samych przycisków.
+  // Wykonanie podpina się później przez uchwyt zmienny — stan treści jeszcze nie istnieje.
   const uchwyt: UchwytOperacji = { wykonaj: () => undefined };
   osadzAkcjeKanoniczne(gospodarz, (akcja) => uchwyt.wykonaj(akcja));
   return { zapiszPrzycisk, porzucPrzycisk, operacje: uchwyt };
 }
 
-/** Uchwyt wykonania operacji kontekstowej — wypełniany po złożeniu okna. */
+/** Uchwyt wykonania operacji kontekstowej panelu akcji — wypełniany dopiero po złożeniu całego okna edytora. */
 interface UchwytOperacji {
   wykonaj(akcja: AkcjaKanoniczna): void;
 }
 
-/** Kontrolki okna: pasek akcji, pole edycji i przełącznik wersji zapisu. */
+/** Kontrolki okna: pasek akcji, pole edycji treści pliku oraz przełącznik wersji zapisu obok niego samego. */
 interface PowierzchniaEdytora extends AkcjeEdytora {
   sciezka: HTMLElement;
   /** Pasek statusu — wyłącznie pola, które rdzeń o pliku naprawdę powiedział. */
@@ -295,17 +220,8 @@ interface PowierzchniaEdytora extends AkcjeEdytora {
 }
 
 /**
- * Pasek statusu edytora złożony z pól `DeveloperFile`.
- *
- * Opracowanie wymienia w tym pasku język, kodowanie, znaki końca linii,
- * wcięcia, liczbę zgłoszeń lintera i gałąź. Kontrakt niesie z tego wyłącznie
- * język, rozmiar, wersję i czas ostatniej zmiany — i tylko te pola pasek
- * pokazuje. Reszta jest tu NAZWANA jako niezmierzona, zamiast być pokazana
- * wartością domyślną: „UTF-8” wypisane bez odczytu byłoby zgadywaniem, a „0
- * błędów” bez lintera mówiłoby o pliku sprawdzonym, choć nikt go nie sprawdzał.
- *
- * Pole nieobecne w odpowiedzi znaczy „rdzeń tego nie podał” i tak jest opisane;
- * milczenie rdzenia nie zamienia się tu w wartość.
+ * Pasek statusu edytora złożony z pól `DeveloperFile`: język, rozmiar, wersja i czas
+ * ostatniej zmiany, jedyne pola, które kontrakt niesie.
  */
 function opiszStatusPliku(miejsce: HTMLElement, plik: DeveloperFile): void {
   const czesci: string[] = [];
@@ -319,8 +235,7 @@ function opiszStatusPliku(miejsce: HTMLElement, plik: DeveloperFile): void {
     ? 'wersja: brak punktu powrotu'
     : `wersja: ${plik.versionId}`);
   czesci.push(`zmieniono: ${new Date(plik.updatedAt).toLocaleString('pl-PL')}`);
-  // Zgłoszenia lintera i kodowanie nie mają w kontrakcie ani jednego pola —
-  // pasek mówi to wprost zamiast wypisywać zero albo wartość domyślną.
+  // Zgłoszenia lintera i kodowanie nie mają w kontrakcie pola — pasek mówi to wprost, nie zero domyślne.
   czesci.push('zgłoszenia lintera i kodowanie: niezmierzone, kontrakt nie ma tych pól');
   miejsce.textContent = czesci.join(' · ');
   miejsce.dataset['wskazana'] = 'tak';
@@ -361,7 +276,7 @@ function zlozPowierzchnieEdytora(
   return { ...akcje, sciezka, status, kod, zaloz, wiersz: edytor };
 }
 
-/** Podpina pasek akcji do czynności okna. */
+/** Podpina pasek akcji do czynności okna edytora: zapis, porzucenie zmiany i operacje kontekstowe rdzenia. */
 function podepnijAkcjeEdytora(
   powierzchnia: PowierzchniaEdytora,
   obsluga: { zapisz: () => void; porzuc: () => void },
@@ -371,12 +286,8 @@ function podepnijAkcjeEdytora(
 }
 
 /**
- * Podpina dziewięć operacji panelu akcji do komendy `developer.contextual.op`.
- *
- * Zaznaczeniem jest to, co Operator zaznaczył w polu edycji; brak zaznaczenia
- * znaczy operację nad całym plikiem. Wynik wraca propozycją i okno pokazuje go
- * w miejscu treści — nie wstawia go do pola edycji, bo to odebrałoby Operatorowi
- * tę jedną chwilę, w której da się pracę modelu odrzucić.
+ * Podpina dziewięć operacji panelu akcji do komendy `developer.contextual.op`: wynik
+ * wraca propozycją, okno pokazuje go w miejscu treści, nie wstawia do pola edycji.
  */
 function podepnijOperacjeKontekstowe(
   powierzchnia: PowierzchniaEdytora,
@@ -389,7 +300,7 @@ function podepnijOperacjeKontekstowe(
   };
 }
 
-/** Wykonuje jedną operację kontekstową i pokazuje jej wynik albo odmowę. */
+/** Wykonuje jedną operację kontekstową panelu akcji i pokazuje w polu treści jej wynik albo odmowę rdzenia. */
 async function wykonajOperacjeKontekstowa(
   akcja: AkcjaKanoniczna,
   powierzchnia: PowierzchniaEdytora,

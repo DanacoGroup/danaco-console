@@ -1,18 +1,8 @@
 /**
- * Znakowanie okna aplikacji kodem katalogu rdzenia.
- *
- * Służy oknom, które mają wiersz w katalogu okien operacyjnych, ale nie noszą
- * ramy z `komponenty/rama-okna.ts`: Okno Konfiguracji i Okno Ustawień są
- * modalami (`<dialog>`, wygląd niesie `dn-modal`), Strona główna jest pełnym
- * widokiem, a Okno Rozmowy dostaje ramę od gniazda układu równoległego
- * (`okna-rownolegle/gniazdo-okna.ts`). Nagłówek, plakietka roli i pas akcji
- * z ramy operacyjnej byłyby w każdym z tych przypadków elementem zbędnym albo
- * powtórzonym.
- *
- * Samo `element.dataset['okno'] = kod` rozsiane po tych plikach dawałoby kilka
- * miejsc do rozjechania się. Ta funkcja nadaje przy okazji etykietę dostępności
- * z tej samej nazwy, więc kod okna i to, co słyszy czytnik ekranu, nie mogą się
- * rozejść.
+ * Znakowanie okna aplikacji kodem katalogu rdzenia. Służy oknom, które mają
+ * wiersz w katalogu okien operacyjnych, lecz nie noszą ramy operacyjnej
+ * z `komponenty/rama-okna.ts`, ponieważ nagłówek, plakietka roli i pas akcji
+ * byłyby w nich powtórzeniem.
  */
 
 export interface OpisOknaAplikacji<T extends HTMLElement> {
@@ -25,12 +15,9 @@ export interface OpisOknaAplikacji<T extends HTMLElement> {
 }
 
 /**
- * Znakuje element kodem katalogu i nadaje mu etykietę dostępności.
- *
- * Zwraca ten sam element i ten sam typ, żeby dało się go użyć w miejscu
- * tworzenia bez utraty rodzaju: modal potrzebuje `HTMLDialogElement`, bo woła
- * `showModal()` i `close()`. Zwracanie `HTMLElement` odbierałoby te metody
- * i zmuszało wywołujących do rzutowania.
+ * Znakuje element kodem katalogu i nadaje mu etykietę dostępności o tej samej
+ * nazwie. Zwraca ten sam element i ten sam typ, żeby dało się go użyć w miejscu
+ * tworzenia bez utraty rodzaju.
  */
 export function oznaczOknoAplikacji<T extends HTMLElement>(opis: OpisOknaAplikacji<T>): T {
   opis.element.dataset['okno'] = opis.kod;

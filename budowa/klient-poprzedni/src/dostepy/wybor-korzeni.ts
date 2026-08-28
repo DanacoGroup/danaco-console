@@ -1,14 +1,7 @@
 /**
- * Wybór korzeni katalogowych nadania — podzbiór korzeni punktu dostępu.
- *
- * Kontrakt mówi wprost: pusty zbiór korzeni nadania znaczy komplet korzeni
- * punktu, a nie brak dostępu. Ta reguła rządzi całą kontrolką, dlatego stoi
- * przy niej zdaniem, a nie w podpowiedzi — Operator, który odznaczy wszystko,
- * ma wiedzieć, że właśnie nadał wszystko.
- *
- * Nadanie nie sięga poza korzenie punktu, więc kontrolka nie przyjmuje ścieżki
- * wpisanej z ręki: pokazuje korzenie punktu i pozwala je zaznaczyć. Poszerzenie
- * obszaru wymaga zmiany punktu, nie nadania.
+ * Wybór korzeni katalogowych nadania — podzbiór korzeni punktu dostępu. Pusty zbiór
+ * korzeni nadania znaczy w kontrakcie komplet korzeni punktu, a nie brak dostępu,
+ * i ta reguła rządzi całą kontrolką.
  */
 export interface WyborKorzeni {
   /** Element osadzany w wierszu nadania albo w karcie punktu. */
@@ -117,7 +110,11 @@ export function utworzWyborKorzeni(zaleznosci: ZaleznosciWyboru): WyborKorzeni {
   };
 }
 
-/** Punkt bez korzeni nie daje pustego prostokąta, tylko zdanie. */
+/**
+ * Punkt bez korzeni nie daje pustego prostokąta, tylko zdanie o tym, że korzeni
+ * nie wymienia. Nadanie obejmie wtedy obszar, który punkt sam potwierdza przy
+ * sprawdzeniu, więc milczenie kontrolki byłoby wprowadzeniem w błąd.
+ */
 function brakKorzeni(): HTMLElement {
   const element = document.createElement('p');
   element.className = 'dd-korzenie__pusty';

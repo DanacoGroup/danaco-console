@@ -1,27 +1,16 @@
 /**
- * Stany okna modułu Browser: pusty, ładowania, błędu i gotowy. Nośnik trzyma
- * stan wraz z komunikatem; widok dostaje `tresc` i wypełnia ją swoim.
- *
- * Stany są rozdzielone, bo „jeszcze nie pytałem", „pytam" i „rdzeń odmówił" to
- * trzy różne sytuacje; zlanie ich w jedno kazałoby Operatorowi zgadywać, czy
- * czekać, czy działać (`dostepy/stany-odczytu.ts`).
- *
- * Stan nie kasuje treści, tylko ją przesłania — nieudane odświeżenie zostawia
- * to, co Operator już widział, a „Spróbuj ponownie" nie zdejmuje komunikatu
- * błędu.
- *
- * Nazwa fazy i jej znakowanie pochodzą z `komponenty/faza-okna`. Wartość
- * trafia do `data-faza`, po którym sięgają arkusze i sprawdziany — własny
- * zestaw nazw w module znaczyłby, że ten sam stan okna nazywa się gdzie
- * indziej inaczej.
- *
- * Opis okna jest argumentem fabryki, bo stan pusty ma nazwać, czym okno jest
- * i zachęcić do pierwszej czynności, zamiast pokazywać komunikat ogólny.
+ * Stany okna modułu Browser: pusty, ładowania, błędu i gotowy. Nośnik trzyma stan
+ * wraz z komunikatem, a widok dostaje osobny element treści i wypełnia go swoim.
+ * Stan nie kasuje treści, tylko ją przesłania.
  */
 
 import { oznaczFaze, type FazaOkna } from '../../komponenty/faza-okna';
 
-/** Zdanie okna o sobie samym — treść stanu pustego przed pierwszym odczytem. */
+/**
+ * Zdanie okna o sobie samym — treść stanu pustego przed pierwszym odczytem. Opis jest
+ * argumentem fabryki, ponieważ stan pusty ma nazwać, czym okno jest, i zachęcić do
+ * pierwszej czynności, zamiast pokazywać komunikat ogólny.
+ */
 export interface OpisOkna {
   /** Tytuł stanu pustego. */
   tytul: string;
@@ -91,8 +80,7 @@ export function utworzStanOkna(opisOkna: OpisOkna): StanOkna {
     opis.textContent = zdanie;
     spinner.hidden = faza !== 'ladowanie';
     ponowienie.hidden = faza !== 'blad' || ponow === null;
-    // Treść zostaje widoczna także w błędzie: odmowa odświeżenia nie kasuje
-    // tego, co Operator już przeczytał. Znika wyłącznie na czas odczytu.
+    // Treść zostaje widoczna także w błędzie; znika wyłącznie na czas odczytu.
     tresc.hidden = faza === 'ladowanie';
   }
 
@@ -102,8 +90,7 @@ export function utworzStanOkna(opisOkna: OpisOkna): StanOkna {
     ustaw('puste', opisOkna.tytul, opisOkna.opis);
   }
 
-  // Między złożeniem okna a pierwszym odświeżeniem Operator widzi zdanie,
-  // które i tak zobaczyłby przy pustym wyniku.
+  // Do pierwszego odświeżenia widoczne jest zdanie stanu pustego.
   pusteZOpisu();
 
   return {

@@ -1,32 +1,19 @@
 /**
- * Ślad adnotacji — model rysunku Operatora i jego wykreślenie na płótnie.
- *
- * Zawiera model rysunku i wykreślenie go pisakiem; elementy dokumentu
- * i zdarzenia wskaźnika należą do `plotno-adnotacji.ts`. Dzięki temu rysunek
- * da się sprawdzić bez przeglądarki, w której nie ma kontekstu 2D.
- *
- * Rysunek żyje w modelu, nie w pikselach: piksele płótna giną przy każdej
- * zmianie jego bufora (zmiana rozmiaru okna zeruje `canvas.width`), więc
- * jedynym trwałym zapisem adnotacji jest wykaz śladów — z niego odtwarza się
- * obraz po każdym przerysowaniu. „Wyczyść adnotacje" opróżnia wykaz, a nie
- * zamalowuje płótno.
- *
- * Ślad zapisuje się w ułamku ramki z tego samego powodu. Punkt zapamiętany
- * bezwzględnie wyskoczyłby poza rysunek, gdy okno zwęzi się między
- * narysowaniem a przerysowaniem; ułamek trzyma oznaczenie tam, gdzie Operator
- * je postawił względem oglądanej ramki.
+ * Ślad adnotacji — model rysunku operatora i jego wykreślenie na płótnie.
+ * Rysunek żyje w modelu, nie w pikselach, więc wykaz śladów jest jedynym
+ * trwałym zapisem adnotacji; ślad zapisuje się w ułamku ramki, nie bezwzględnie.
  */
 
-/** Narzędzia paska adnotacji. */
+/** Narzędzia paska adnotacji dostępne operatorowi sesji: ołówek, linia, prostokąt, elipsa i pole tekstu. */
 export type NarzedzieAdnotacji = 'olowek' | 'linia' | 'prostokat' | 'elipsa' | 'tekst';
 
-/** Punkt w ułamku ramki: 0 to lewa/górna krawędź, 1 to prawa/dolna. */
+/** Punkt zapisany w ułamku ramki płótna: zero to lewa albo górna krawędź, jedynka to prawa albo dolna krawędź. */
 export interface Punkt {
   x: number;
   y: number;
 }
 
-/** Jedno pociągnięcie: narzędzie, barwa i punkty, którymi je poprowadzono. */
+/** Jedno pociągnięcie adnotacji: narzędzie, barwa, treść napisu i wykaz punktów, którymi je poprowadzono. */
 export interface Slad {
   narzedzie: NarzedzieAdnotacji;
   /** Nazwa żetonu motywu, nie rozwiązana barwa — rozwiązuje ją płótno. */
@@ -37,11 +24,8 @@ export interface Slad {
 }
 
 /**
- * Wycinek płótna 2D, którego rysowanie naprawdę używa.
- *
- * `CanvasRenderingContext2D` spełnia ten kształt strukturalnie, więc produkt
- * podaje kontekst przeglądarki wprost, a sprawdzian — atrapę pisaka spisującą
- * wywołania, zamiast odtwarzać całe API płótna.
+ * Wycinek płótna 2D, którego rysowanie naprawdę używa. Produkt podaje kontekst
+ * przeglądarki wprost, a sprawdzian — atrapę pisaka spisującą wywołania.
  */
 export interface PisakPlotna {
   strokeStyle: string | CanvasGradient | CanvasPattern;
@@ -69,12 +53,8 @@ export interface PisakPlotna {
 }
 
 /**
- * Oprawa jednego wykreślenia: rozmiar ramki, barwa i krój.
- *
- * Barwa i krój przychodzą rozwiązane: płótno 2D nie zna `var(--dn-…)` ani
- * skrótu `font` z arkusza i przyjmuje wyłącznie wartości gotowe. Rozwiązanie
- * żetonu należy więc do warstwy, która ma element w dokumencie, a nie do
- * rysowania.
+ * Oprawa jednego wykreślenia: rozmiar ramki, barwa i krój. Barwa i krój
+ * przychodzą już rozwiązane, bo płótno przyjmuje wyłącznie wartości gotowe.
  */
 export interface OprawaSladu {
   szerokosc: number;
@@ -83,7 +63,7 @@ export interface OprawaSladu {
   kroj: string;
 }
 
-/** Grubość kreski i wysokość napisu w pikselach płótna — geometria, nie motyw. */
+/** Grubość kreski i wysokość napisu w pikselach płótna — stała geometria rysunku, niezależna od motywu. */
 const GRUBOSC_KRESKI = 3;
 const WYSOKOSC_NAPISU = 16;
 
@@ -176,7 +156,7 @@ export function narysujSlady(
   }
 }
 
-/** Krój napisu płótna zbudowany z kroju wyliczonego dla elementu. */
+/** Krój napisu płótna zbudowany z kroju czcionki wyliczonego dla elementu dokumentu w bieżącym motywie. */
 export function krojNapisu(rodzina: string): string {
   return `${WYSOKOSC_NAPISU}px ${rodzina}`;
 }

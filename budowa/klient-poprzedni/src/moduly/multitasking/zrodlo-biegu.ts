@@ -29,30 +29,14 @@ import { przenies } from '../../protokol/wynik-czastkowy';
 import { wywolaj } from '../../protokol/wywolanie';
 
 /**
- * Bieg pracy widziany przez klienta — ta połowa źródła, która porusza rolami.
- *
- * Koordynator widzi pełny strumień wykonawcy. Nośnikiem jest `stream.chunk` —
- * jeden strumień całej platformy, w którym `windowId` mówi, czyja to tura.
- * Okno koordynatora nie zakłada drugiego kanału podglądu: subskrybuje ten sam
- * strumień i odsiewa okna swoich wykonawców.
- *
- * Kolejka jest jedna: `queue.create` i `queue.action` to ten sam silnik,
- * którym jedzie pętla sesyjna i moduł Automations — moduł ról nie buduje
- * własnego wykonawcy zleceń.
+ * Bieg pracy widziany przez klienta porusza rolami: koordynator subskrybuje
+ * wspólny strumień wykonawcy, a kolejka jest jednym silnikiem, którym jedzie
+ * też pętla sesyjna i moduł Automations.
  */
 export interface ZrodloBiegu {
   /** `message.send` — wydanie polecenia oknu roli. */
   wyslij(zadanie: MessageSendRequest): Promise<Wynik<Message>>;
-  /**
-   * `window.handoff` — utrwalenie zlecenia koordynator→wykonawca.
-   *
-   * Doręczenie i zapis to dwie różne czynności i obie są potrzebne.
-   * `message.send` niesie treść do okna wykonawcy, więc wykonawca rusza do
-   * pracy; sama ta droga zostawia jednak więź wyłącznie w pamięci przeglądarki
-   * i gubi ją z jej zamknięciem. `window.handoff` zapisuje w bazie rdzenia,
-   * kto komu co zlecił, i zakłada pozycję kolejki — dzięki temu para przeżywa
-   * restart, a Mission Control ma co pokazać.
-   */
+  // Doręczenie i zapis to dwie różne czynności: zapis w bazie rdzenia daje parze przeżyć restart.
   przekaz(zadanie: Omit<WindowHandoffRequest, 'sessionId'>): Promise<Wynik<WindowHandoffResponse>>;
   /** `message.stop` — przerwanie tury okna; przycisk czynny zawsze. */
   zatrzymaj(zadanie: MessageStopRequest): Promise<Wynik<MessageStopResponse>>;
@@ -62,28 +46,11 @@ export interface ZrodloBiegu {
   zalozKolejke(zadanie: QueueCreateRequest): Promise<Wynik<Queue>>;
   /** `queue.action` — sterowanie kolejką: start, pauza, wznowienie, stop, powtórzenie. */
   sterujKolejka(zadanie: QueueActionRequest): Promise<Wynik<Queue>>;
-  /**
-   * `queue.list` — kolejki jednego silnika, zawężone sesją albo oknem.
-   *
-   * Tędy idzie zatrzymanie podagenta. Kontrakt nie ma `subagent.stop`,
-   * a `queue.action` żąda `queueId`, którego `Subagent` nie niesie. Ogniwem
-   * jest nazwa kolejki: rdzeń zakłada kolejkę podagenta pod jego
-   * identyfikatorem (`core/adapter_modul_orkiestracja.go`), więc wykaz kolejek
-   * sesji pozwala odnaleźć `queueId` po `name === subagent.id` — bez komendy
-   * wymyślonej poza kontraktem.
-   */
+  // Tędy idzie zatrzymanie podagenta przez nazwę kolejki założonej pod jego identyfikatorem w rdzeniu.
   wykazKolejek(zadanie: QueueListRequest): Promise<Wynik<Queue[]>>;
-  /**
-   * `monitor.status` — zbiorczy stan bieżący procesów telemetrii, bez zakładania
-   * obserwacji. Rdzeń oddaje `{ statuses }`; wykaz jest pusty, gdy sito nic nie
-   * łapie.
-   */
+  // Zbiorczy stan bieżący procesów telemetrii, bez zakładania obserwacji; pusty, gdy sito nic nie łapie.
   stanMonitora(zadanie: MonitorStatusRequest): Promise<Wynik<MonitorStatusResponse>>;
-  /**
-   * `monitor.subscribe` — zapisuje wskazane okno na telemetrię postępu procesów
-   * i oddaje `{ statuses, subscribed }`. Żądanie z `windowId` zakłada
-   * obserwację (`subscribed` prawdziwe), bez niego jest zwykłym odczytem.
-   */
+  // Zapisuje wskazane okno na telemetrię postępu procesów; żądanie bez okna jest zwykłym odczytem stanu.
   subskrybujMonitor(zadanie: MonitorSubscribeRequest): Promise<Wynik<MonitorSubscribeResponse>>;
   /** Subskrypcja `stream.chunk` — strumień wykonawcy widziany przez koordynatora. */
   naFragment(sluchacz: (tresc: StreamChunkEvent, koperta: Envelope) => void): Odsubskrybuj;
@@ -98,8 +65,7 @@ export interface ZrodloBiegu {
 export function utworzZrodloBiegu(kanal: Kanal): ZrodloBiegu {
   return {
     async przekaz(zadanie) {
-      // Sesję zna kanał, nie sterowanie modułu — podawanie jej z widoku byłoby
-      // przepisywaniem wartości, którą warstwa protokołu i tak trzyma.
+      // Sesję zna kanał, nie sterowanie modułu; podawanie jej z widoku powtarzałoby wartość protokołu.
       return sprawdzKsztalt(
         await wywolaj(kanal, Command.WindowHandoff, { ...zadanie, sessionId: kanal.sesja().id() }),
         Command.WindowHandoff,

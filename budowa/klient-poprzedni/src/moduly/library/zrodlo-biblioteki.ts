@@ -17,16 +17,9 @@ import { utworzWywolaniaWersji } from './zrodlo-wersji';
 import { utworzZarzadRepozytorium, type ZarzadRepozytorium } from './zrodlo-zarzadu';
 
 /**
- * Komendy obszaru `library.*` widziane przez okna modułu.
- *
- * Źródło niczego nie pamięta i nie buduje ani jednego elementu — jest warstwą
- * wywołania i sprawdzianu kształtu odpowiedzi. Zbiór plików mieszka
- * w `stan-biblioteki.ts`, żeby cztery okna patrzyły na jeden wykaz, a nie na
- * cztery kopie.
- *
- * Odmowa rdzenia jest tu drogą równoprawną: komenda, dla której rdzeń nie ma
- * uchwytu, wraca zdarzeniem `library.unknown`, a straż zamienia je w `Wynik`
- * z błędem nazywającym żądany typ.
+ * Interfejs udostępnia komendy obszaru biblioteki widziane przez okna modułu:
+ * źródło niczego nie pamięta, jest warstwą wywołania i sprawdzianu kształtu
+ * odpowiedzi, a odmowa rdzenia wraca jako wynik z błędem.
  */
 export interface ZrodloBiblioteki extends ZarzadRepozytorium {
   wykaz(zadanie: LibraryFileListRequest): Promise<Wynik<{ files: LibraryFile[]; total?: number }>>;
@@ -56,17 +49,14 @@ export interface ZrodloBiblioteki extends ZarzadRepozytorium {
   naZmianePliku(sluchacz: (tresc: LibraryFileChangedEvent) => void): Odsubskrybuj;
 }
 
-/** Górna granica podglądu tekstowego — okno pokazuje fragment, nie cały plik. */
+/** Górna granica podglądu tekstowego — okno pokazuje fragment, nie cały plik, chroniąc wydajność wyświetlania. */
 const ZNAKI_PODGLADU = 4000;
 
 export function utworzZrodloBiblioteki(kanal: Kanal, straz: StrazOdmow): ZrodloBiblioteki {
   return {
-    // Historia dokumentu ma własny plik (`zrodlo-wersji.ts`) — trzy komendy
-    // wersjonowania są jednym łańcuchem i nie mieszczą się już tutaj.
+    // Historia dokumentu ma własny plik: trzy komendy wersjonowania są jednym łańcuchem.
     ...utworzWywolaniaWersji(straz),
-    // Zarząd repozytorium (opis, słownik, reguły, higiena, cykl życia,
-    // utrwalenie, udostępnienia, sugestie) ma własny plik — jeden kształt,
-    // trzy pliki wedle odpowiedzialności.
+    // Zarząd repozytorium ma własny plik: jeden kształt, trzy pliki wedle odpowiedzialności.
     ...utworzZarzadRepozytorium(straz),
 
     async wykaz(zadanie) {
@@ -124,9 +114,7 @@ export function utworzZrodloBiblioteki(kanal: Kanal, straz: StrazOdmow): ZrodloB
           ...(opis === '' ? {} : { description: opis }),
         }),
         Command.LibraryCollectionCreate,
-        // Nazwa wchodzi do sprawdzianu, bo okno buduje z niej zdanie
-        // potwierdzające; wartość nieobjęta sprawdzianem potrafi dojść jako
-        // `undefined` i wpisać się w to zdanie jako nazwa kolekcji.
+        // Nazwa wchodzi do sprawdzianu, bo okno buduje z niej zdanie potwierdzające zapis kolekcji.
         (tresc) => typeof tresc.collectionId === 'string' && typeof tresc.name === 'string',
       );
     },

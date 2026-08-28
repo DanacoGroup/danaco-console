@@ -1,42 +1,30 @@
 import type { ContextTransferResponse, DesignAsset, DesignBoard } from '../../../../shared/contract';
 
 /**
- * Zdania o skutku trzech czynności modułu — budowane z odpowiedzi rdzenia,
- * nigdy z zamówienia okna. Wydzielone z okien, bo okna składają kontrolki,
- * a to jest ocena odpowiedzi (wzór: `assistant/skutek-sterowania.ts`).
- *
- * Każde zdanie porównuje zamówienie z odpowiedzią, a rozbieżność ogłasza
- * odmową. Zdanie zbudowane z tego, co okno wysłało, bywa prawdziwe przypadkiem
- * i skłamie, gdy rdzeń zapisze co innego.
- *
- * Trzy miejsca, w których to ma znaczenie:
- *
- *   (1) Przekazanie. `context.transfer` nie sprawdza katalogu modułów —
- *       przepisuje `targetModuleId` do okna docelowego jak leci i oddaje
- *       `transferred: true` także dla modułu, którego nie ma. Jedynym polem
- *       mówiącym, gdzie zasób wylądował, jest `window.moduleId` z odpowiedzi.
- *
- *   (2) Zapis kompozycji. Odpowiedź niesie całą kompozycję odczytaną po
- *       zapisie — z nazwą i wykazem warstw. Liczba warstw, która wróciła, jest
- *       jedyną miarą tego, ile ich leży w rdzeniu.
- *
- *   (3) Nadanie etykiet. Zestaw zastępuje poprzedni, więc różnica wobec
- *       zamówionego zestawu znaczy, że zapis nie jest tym, o który Operator
- *       prosił — i musi być odmową, nie milczeniem.
+ * Zdania o skutku trzech czynności modułu Design budowane z odpowiedzi rdzenia,
+ * nigdy z zamówienia okna. Każde zdanie zestawia zamówienie z odpowiedzią,
+ * a rozbieżność ogłasza odmową.
  */
 export interface SkutekDesignu {
   zdanie: string;
   udany: boolean;
 }
 
-/** Zestawy równe co do składu, niezależnie od kolejności — rdzeń sortuje wykaz. */
+/**
+ * Rozstrzyga, czy dwa zestawy etykiet są równe co do składu, niezależnie od
+ * kolejności pozycji; rdzeń wykaz sortuje, więc kolejność nie jest miarą
+ * różnicy.
+ */
 function tenSamZestaw(a: readonly string[], b: readonly string[]): boolean {
   if (a.length !== b.length) return false;
   const posortowane = [...b].sort();
   return [...a].sort().every((wartosc, numer) => wartosc === posortowane[numer]);
 }
 
-/** Wykaz etykiet do zdania; pusty zestaw ma własne słowo, nie pusty nawias. */
+/**
+ * Składa wykaz etykiet do zdania o skutku: pozycje rozdzielone przecinkiem,
+ * a zestaw pusty ma własne słowo zamiast pustego nawiasu.
+ */
 function wypisz(etykiety: readonly string[]): string {
   return etykiety.length === 0 ? 'zestaw pusty' : etykiety.join(', ');
 }
@@ -104,11 +92,9 @@ export function skutekPrzekazania(
 
 /**
  * Skutek `design.board.update` — nazwa i liczba warstw z kompozycji, która
- * wróciła.
- *
- * Rdzeń składa odpowiedź z wierszy odczytanych po zapisie
- * (`adapter_modul_design_kompozycje.go`, `zlozBoard`), więc wykaz warstw
- * odpowiedzi jest stanem bazy, a nie powtórzeniem żądania.
+ * wróciła. Rdzeń składa odpowiedź z wierszy odczytanych po zapisie
+ * (`adapter_modul_design_kompozycje.go`), więc wykaz warstw jest stanem bazy,
+ * a nie powtórzeniem żądania.
  */
 export function skutekZapisuKompozycji(
   nazwaZamowiona: string,

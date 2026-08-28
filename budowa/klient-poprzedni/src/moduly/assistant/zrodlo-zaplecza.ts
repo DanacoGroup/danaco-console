@@ -16,25 +16,8 @@ import { wywolaj } from '../../protokol/wywolanie';
 
 /**
  * Zaplecze modułu Assistant — rejestry i czynności, z których moduł korzysta,
- * a których sam nie prowadzi.
- *
- *   `window.list`                — okna komunikacji sesji. `assistant.voice.command`
- *                                  wymaga pola `windowId`, a moduł okien nie
- *                                  zakłada: bierze to, które rdzeń przypisał
- *                                  modułowi.
- *   `action.list`                — katalog akcji zasięgu modułu. Siatka szybkich
- *                                  akcji Voice Console jest widokiem tego
- *                                  katalogu, nie listą zaszytą w kliencie: nowa
- *                                  akcja to nowy wiersz rdzenia, nie zmiana kodu.
- *   `component.list`             — komponenty własne rodzaju `assistant`, czyli
- *                                  Profile asystenta ze strefy 2 strony głównej.
- *                                  To jedyny odczyt kontraktu, którym da się
- *                                  wypełnić selektor profilu Voice Console.
- *   `speech.availability.get`    — czy silnik mowy stoi na tej maszynie. Brak
- *                                  silnika jest odpowiedzią, nie awarią, więc
- *                                  okno mówi o nim wprost.
- *   `speech.transcribe`          — rozpoznanie nagrania wskazanego ścieżką na
- *                                  maszynie silnika.
+ * a których sam nie prowadzi: okna komunikacji sesji, katalog akcji zasięgu
+ * modułu, komponenty profilu asystenta oraz stan i wywołanie silnika mowy.
  */
 export interface ZrodloZaplecza {
   okna(idSesji: string): Promise<Wynik<{ windows: Window[] }>>;
@@ -74,9 +57,7 @@ export function utworzZrodloZaplecza(kanal: Kanal): ZrodloZaplecza {
 
     async profile() {
       return sprawdzKsztalt(
-        // Komponenty wyłączone wchodzą do wykazu: profil wyłączony w strefie 2
-        // wciąż istnieje w rdzeniu i wskazanie go jest decyzją Operatora, a nie
-        // pomyłką okna. Wyłączenie nazywa wiersz selektora.
+        // Komponenty wyłączone wchodzą do wykazu; wyłączenie nazywa wiersz selektora.
         await wywolaj(kanal, Command.ComponentList, {
           kind: ComponentKind.Assistant,
           includeDisabled: true,
@@ -98,9 +79,7 @@ export function utworzZrodloZaplecza(kanal: Kanal): ZrodloZaplecza {
       return sprawdzKsztalt(
         await wywolaj(kanal, Command.SpeechTranscribe, zadanie),
         Command.SpeechTranscribe,
-        // Pusta transkrypcja jest wynikiem prawidłowym, gdy `processed` jest
-        // prawdą (cisza i szum), więc sprawdzian pyta o obecność pól, nie
-        // o niepustą treść.
+        // Pusta transkrypcja przy `processed` prawdziwym jest wynikiem prawidłowym.
         (tresc) => czyLogiczna(tresc.processed) && czyTekst(tresc.transcript),
       );
     },

@@ -5,25 +5,9 @@ import type {
   WartosciCzynnosci,
 } from '../studio/czynnosci-warsztatu';
 
-/**
- * Katalog czynności warsztatów modułu Design — pięć warsztatów opisanych
- * DANYMI, nie pięcioma zestawami formularzy.
- *
- * Wzorem `studio/czynnosci-warsztatu.ts`: okno buduje pola z tego wykazu
- * i składa żądanie funkcją `zloz` czynności. Typy są te same, bo zadanie jest to
- * samo — druga rodzina typów rozjechałaby się z pierwszą przy pierwszym nowym
- * rodzaju pola, a wtedy trzeba by poprawiać dwa okna zamiast jednego.
- *
- * Nazwy pól są nazwami kontraktu, bo to one jadą do rdzenia. Etykiety są zdaniem
- * Operatora i z nazwami się nie pokrywają — Operator czyta „proporcje kadru",
- * a rdzeń dostaje `aspectRatio`.
- *
- * Nazwa komendy przychodzi ze stałych kontraktu (`Command.*`), nigdy jako napis
- * wpisany z pamięci: napis literowany ręcznie przeszedłby sprawdzian typów
- * i padłby dopiero u Operatora.
- */
+// Katalog czynności warsztatów modułu Design zapisuje pięć warsztatów danymi zamiast formularzy.
 
-/** Warsztat, do którego czynność należy — okno bierze z katalogu swoją grupę. */
+/** Warsztat, do którego czynność należy. Okno filtruje wykaz czynności katalogu po tym polu i pokazuje wyłącznie czynności własnej grupy warsztatu. */
 export type GrupaWarsztatu =
   | 'fotografia'
   | 'wektor'
@@ -32,18 +16,18 @@ export type GrupaWarsztatu =
   | 'publikacja'
   | 'makieta';
 
-/** Czynność warsztatu Design wraz z przypisaniem do warsztatu. */
+/** Czynność warsztatu Design wraz z przypisaniem do warsztatu, po którym okno rozdziela wykaz katalogu na osobne listy dla każdego z pięciu warsztatów. */
 export interface CzynnoscWarsztatuDesignu extends CzynnoscWarsztatu {
   grupa: GrupaWarsztatu;
 }
 
-/** Odczyt pola tekstowego; puste zwraca `undefined`, nie pusty napis. */
+/** Odczyt pola tekstowego z wartości czynności. Wartość pusta albo złożona z samych odstępów zwraca undefined, a nie pusty napis, co odróżnia brak od pustki. */
 function tekst(wartosci: WartosciCzynnosci, kod: string): string | undefined {
   const wartosc = (wartosci[kod] ?? '').trim();
   return wartosc === '' ? undefined : wartosc;
 }
 
-/** Odczyt liczby; wartość spoza liczb zwraca `undefined`. */
+/** Odczyt pola liczbowego z wartości czynności. Wartość, której nie da się zamienić na liczbę skończoną, zwraca undefined zamiast liczby niepoprawnej. */
 function liczba(wartosci: WartosciCzynnosci, kod: string): number | undefined {
   const wartosc = tekst(wartosci, kod);
   if (wartosc === undefined) return undefined;
@@ -51,14 +35,14 @@ function liczba(wartosci: WartosciCzynnosci, kod: string): number | undefined {
   return Number.isFinite(odczytana) ? odczytana : undefined;
 }
 
-/** Odczyt przełącznika; nieustawiony zwraca `undefined`, nie fałsz. */
+/** Odczyt pola przełącznika z wartości czynności. Pole nieustawione zwraca undefined, a nie fałsz, ponieważ brak ustawienia i wyłączenie niosą inne znaczenie. */
 function przelacznik(wartosci: WartosciCzynnosci, kod: string): boolean | undefined {
   const wartosc = wartosci[kod];
   if (wartosc === undefined) return undefined;
   return wartosc === 'tak';
 }
 
-/** Rozbiór listy oddzielonej przecinkami na wykaz bez pozycji pustych. */
+/** Rozbiór wartości pola listy tekstu oddzielonej przecinkami na wykaz pozycji, z którego usunięte zostają pozycje puste powstałe z odstępów wokół przecinków. */
 function wykaz(wartosci: WartosciCzynnosci, kod: string): string[] {
   const wartosc = tekst(wartosci, kod);
   if (wartosc === undefined) return [];
@@ -68,14 +52,14 @@ function wykaz(wartosci: WartosciCzynnosci, kod: string): string[] {
     .filter((pozycja) => pozycja !== '');
 }
 
-/** Rozbiór listy liczb oddzielonych przecinkami; pozycja spoza liczb wypada. */
+/** Rozbiór wartości pola listy liczb oddzielonej przecinkami na wykaz liczb. Pozycja, której nie da się zamienić na liczbę skończoną, wypada z wykazu. */
 function wykazLiczb(wartosci: WartosciCzynnosci, kod: string): number[] {
   return wykaz(wartosci, kod)
     .map((pozycja) => Number(pozycja))
     .filter((pozycja) => Number.isFinite(pozycja));
 }
 
-/** Dokłada do żądania wyłącznie pola o wartości podanej. */
+/** Dokłada do podstawy żądania wyłącznie te pola dodatkowe, których wartość jest podana — pole nieustawione oraz pustą listę pomija, zamiast wysyłać je puste. */
 function zPolami(
   podstawa: Record<string, unknown>,
   dodatki: Record<string, unknown>,
@@ -90,17 +74,13 @@ function zPolami(
 }
 
 /**
- * Podpowiedź pola wykazu czynności — przykład zapisu, którego Operator się
- * spodziewa.
- *
- * Nazwa komendy w przykładzie pochodzi ze stałych kontraktu, a nie z napisu
- * wpisanego wprost. Napis literowany ręcznie przeżyłby zmianę nazwy w kontrakcie
- * i podpowiadałby Operatorowi komendę, której rdzeń już nie zna — a podpowiedź
- * jest tu tym, co Operator przepisze do pola.
+ * Podpowiedź pola wykazu czynności — przykładowy zapis, którego Operator się
+ * spodziewa; nazwa komendy pochodzi ze stałych kontraktu, nie z napisu
+ * wpisanego wprost.
  */
 const PODPOWIEDZ_CZYNNOSCI = `[{"command":"${Command.DesignPhotoEnhance}","settings":{"autoLevels":true}}]`;
 
-/** Pole materiału — wskazanie zasobu z magazynu okna. */
+/** Pole materiału czynności — wskazanie zasobu z magazynu okna. Zasób wskazany polem pozostaje niezmieniony, wynik czynności jest jego osobnym wariantem. */
 const POLE_ZASOBU: PoleCzynnosci = {
   kod: 'assetId',
   etykieta: 'Materiał',
@@ -110,7 +90,7 @@ const POLE_ZASOBU: PoleCzynnosci = {
     'więc pomyłka nie kosztuje oryginału.',
 };
 
-/** Pole maski — zasób, którego jasność rozstrzyga o obszarze objętym czynnością. */
+/** Pole maski czynności — zasób, którego jasność rozstrzyga o obszarze objętym czynnością: punkt biały znaczy obszar objęty, czarny — obszar pominięty. */
 const POLE_MASKI: PoleCzynnosci = {
   kod: 'maskAssetId',
   etykieta: 'Maska',
@@ -118,7 +98,7 @@ const POLE_MASKI: PoleCzynnosci = {
   opis: 'Zasób maski: punkt biały znaczy obszar objęty, czarny — pominięty.',
 };
 
-/** Pole kanału modelu obrazowego — dla czynności o wariancie neuronowym. */
+/** Pole kanału modelu obrazowego, stosowane w czynnościach o wariancie neuronowym, dla których wybór kanału rozstrzyga, którą drogą rdzeń liczy wynik. */
 const POLE_KANALU: PoleCzynnosci = {
   kod: 'channelId',
   etykieta: 'Kanał modelu obrazowego',
@@ -128,7 +108,7 @@ const POLE_KANALU: PoleCzynnosci = {
     'naprawdę policzył wynik — kanałem czy rachunkiem wkompilowanym.',
 };
 
-/** Zakresy obszarów zapisane wierszami „x,y,szerokość,wysokość". */
+/** Zakresy obszarów zapisane wierszami w postaci x,y,szerokość,wysokość. Wiersz o mniej niż czterech liczbach nie tworzy obszaru i zostaje pominięty. */
 function obszaryZWierszy(wartosci: WartosciCzynnosci, kod: string): Record<string, number>[] {
   const wartosc = tekst(wartosci, kod);
   if (wartosc === undefined) return [];
@@ -2803,7 +2783,7 @@ export const CZYNNOSCI_WARSZTATOW_DESIGNU: readonly CzynnoscWarsztatuDesignu[] =
   },
 ];
 
-/** Czynności jednego warsztatu — okno bierze z katalogu wyłącznie swoją grupę. */
+/** Czynności jednego warsztatu modułu Design. Okno bierze z katalogu wyłącznie czynności własnej grupy warsztatu i pomija pozostałe. */
 export function czynnosciWarsztatu(grupa: GrupaWarsztatu): readonly CzynnoscWarsztatuDesignu[] {
   return CZYNNOSCI_WARSZTATOW_DESIGNU.filter((czynnosc) => czynnosc.grupa === grupa);
 }

@@ -1,19 +1,15 @@
+/**
+ * Strumień wykonawcy widziany przez koordynatora po stronie widoku: odkładanie
+ * fragmentów przychodzących zdarzeniem `stream.chunk`, żeby okno koordynatora
+ * miało co narysować po przewinięciu.
+ */
 import { ChunkKind, type StreamChunkEvent } from '../../../../shared/contract';
 
 /**
- * Strumień wykonawcy widziany przez koordynatora — po stronie widoku.
- *
- * Bieg naprawczy prowadzi rdzeń (`session.StrumienWykonawcy`); tutaj leży
- * wyłącznie odkładanie fragmentów przychodzących przez `stream.chunk`, żeby
- * okno koordynatora miało co narysować po przewinięciu. Klient niczego nie
- * wybudza ani nie rozpoczyna.
- *
- * Odkładane są wszystkie rodzaje fragmentów, nie sama odpowiedź: tok
- * rozumowania, wywołania narzędzi, ich wyniki i pliki. Bez wywołań narzędzi
- * koordynator nie odróżnia wykonawcy pracującego od zatrzymanego.
+ * Jeden wpis strumienia jednego wykonawcy: okno pochodzenia, wiadomość tury,
+ * rodzaj fragmentu wprost z kontraktu, treść tekstowa oraz chwila przyjęcia
+ * liczona w milisekundach epoki.
  */
-
-/** Jeden wpis strumienia jednego wykonawcy. */
 export interface WpisStrumienia {
   /** Okno wykonawcy, z którego wpis przyszedł. */
   okno: string;
@@ -27,7 +23,11 @@ export interface WpisStrumienia {
   chwila: number;
 }
 
-/** Ile ostatnich wpisów jednego wykonawcy zostaje jawnych. */
+/**
+ * Ile ostatnich wpisów jednego wykonawcy zostaje jawnych. Starsze wypadają
+ * z pamięci okna, ponieważ koordynator czyta ostatni odcinek pracy, a nie całą
+ * historię tury.
+ */
 export const POJEMNOSC_STRUMIENIA = 200;
 
 export interface StrumienWykonawcy {
@@ -46,8 +46,7 @@ export interface StrumienWykonawcy {
 export function utworzStrumienWykonawcy(pojemnosc = POJEMNOSC_STRUMIENIA): StrumienWykonawcy {
   const wpisy = new Map<string, WpisStrumienia[]>();
   const tekst = new Map<string, string>();
-  // Tekst narasta w obrębie jednej tury. Nowa wiadomość zaczyna wynik od nowa,
-  // inaczej „przekaż wynik" niosłoby sklejkę dwóch odpowiedzi wykonawcy.
+  // Tekst narasta w obrębie jednej tury; nowa wiadomość zaczyna wynik od nowa.
   const tury = new Map<string, string>();
 
   function biezace(okno: string): WpisStrumienia[] {

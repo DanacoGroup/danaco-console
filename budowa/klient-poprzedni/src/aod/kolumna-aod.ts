@@ -25,39 +25,9 @@ import { utworzZrodloDecyzji } from './zrodlo-decyzji';
 import { utworzZrodloAod } from './zrodlo-komend';
 
 /**
- * Powierzchnia interakcji Always On Display — KOLUMNA BOCZNA, nie okno.
- *
- * Opracowanie (`docs/funkcje-globalne/always-on-display.md`, rozdz. 2.1, 2.3,
- * 2.6, 8.3) mówi wprost: funkcja nie ma własnego okna. Całą jej powierzchnią
- * jest awatar oraz powierzchnia otwierana jako ROZSZERZENIE BOCZNE po prawej
- * stronie obszaru roboczego — kolumna na pełną wysokość, o regulowanej
- * szerokości. Otwarcie zwęża kolumny obszaru roboczego, nie przesłania ich
- * i nie zamyka żadnego z okien komunikacji operacyjnej.
- *
- * Stąd trzy różnice wobec modala: nie ma przyciemnienia tła, nie ma pułapki
- * ogniska i nie ma zabranej pracy pod spodem. Kolumna leży na warstwie AOD
- * (`--dn-z-aod`, 1200 wg `design/KANON.md`), a nie na warstwie modala.
- *
- * Kolumna woła `aod.status.get`, `aod.context.get`, `aod.suggestion`,
- * `aod.observe.attach`, `aod.observe.detach`, `aod.chat.send`
- * i `aod.voice.command`; obsługiwacze stoją w `core/handlers_aod.go`.
- *
- * Ten plik wyłącznie składa powierzchnię: rama z biblioteki, stan treści
- * z biblioteki, sekcje z osobnych plików, sterowanie obecnością
- * z `sterowanie-obecnoscia.ts` i dwa źródła komend (`zrodlo-komend` — rodzina
- * `aod.*`, `zrodlo-decyzji` — komendy cudzych rodzin potrzebne kolejce decyzji).
- *
- * Kolumna subskrybuje dwa zdarzenia i zdejmuje subskrypcje w `rozlacz()`:
- *   • `progress.changed` — rozgłaszane do każdego połączenia, niesie proces,
- *     etap, procent, stan i okno;
- *   • `window.state.changed` — jedyny żywy nośnik `LoopState`, bo pola `loop`
- *     w `progress.changed` telemetria nie wypełnia.
- * To, co przeleciało przed otwarciem kolumny, nadrabia `monitor.status`.
- *
- * Subskrypcje żyją między zbudowaniem warstwy a `rozlacz()`, nie między
- * otwarciem a zamknięciem kolumny: proces zmienia stan niezależnie od tego, czy
- * Operator patrzy. Dzięki temu plakietka awatara jest prawdziwa także wtedy,
- * gdy kolumna stoi zamknięta.
+ * Powierzchnia interakcji Always On Display to kolumna boczna, nie okno: rozszerzenie boczne
+ * o regulowanej szerokości, bez przyciemnienia tła i pułapki ogniska, otwierane obok obszaru
+ * roboczego.
  */
 export interface KolumnaAod {
   /** Kolumna do osadzenia w warstwie AOD. */
@@ -87,25 +57,19 @@ export interface KolumnaAod {
   rozlacz(): void;
 }
 
-/** Nastawy powierzchni wykraczające poza kanał. */
+/** Nastawy powierzchni Always On Display wykraczające poza sam kanał komunikacji — tożsamość klienta ustalona przy powitaniu połączenia. */
 export interface OpisKolumnyAod {
-  /**
-   * Tożsamość klienta Z POWITANIA POŁĄCZENIA.
-   *
-   * Pole jest opcjonalne, bo wołacz podaje sam kanał. Bez tożsamości czynny
-   * zostaje cały ster przejęcia poza jedną rzeczą — przestawieniem ogniska —
-   * i powierzchnia mówi wprost, czego nie robi (`cztery-stery.ts`).
-   */
+  /** Tożsamość klienta z powitania połączenia; bez niej ster zostaje czynny poza ogniskiem. */
   klient?: TozsamoscDlaOgniska;
 }
 
-/** Szerokość początkowa kolumny w pikselach — punkt wyjścia regulacji. */
+/** Szerokość początkowa kolumny w pikselach — punkt wyjścia regulacji, zanim Operator zmieni ją uchwytem albo klawiaturą. */
 const SZEROKOSC_POCZATKOWA = 420;
 
-/** Najwęższa dopuszczalna szerokość kolumny. */
+/** Najwęższa dopuszczalna szerokość kolumny w pikselach; regulacja uchwytem ani klawiaturą nie schodzi poniżej tej wartości. */
 const SZEROKOSC_MIN = 280;
 
-/** Najszersza dopuszczalna szerokość kolumny — połowa okna, nigdy więcej. */
+/** Najszersza dopuszczalna szerokość kolumny — połowa szerokości okna aplikacji, nigdy więcej, niezależnie od żądanej wartości. */
 function szerokoscMax(): number {
   return Math.max(SZEROKOSC_MIN, Math.round(globalThis.innerWidth / 2));
 }
@@ -150,18 +114,11 @@ export function utworzKolumneAod(
   const sekcjaGlosu = utworzSekcjeGlosu({ zrodlo, zamelduj });
   const sekcjaKontekstu = utworzSekcjeKontekstu();
 
-  /**
-   * Trzon treści budowany raz i wstawiany po każdym odczycie.
-   *
-   * `stany.tresc()` czyści miejsce treści, ale sekcje są tymi samymi
-   * elementami — wpisana i niewysłana wiadomość ani identyfikator procesu
-   * nie giną przy ponownym odczycie.
-   */
+  /** Trzon treści budowany raz i wstawiany po każdym odczycie — sekcje zachowują stan między odczytami. */
   const trzon = document.createElement('div');
   trzon.className = 'ao-trzon';
   trzon.append(
-    // Decyzje na początku: sprawa wymagająca reakcji ma być widoczna od razu,
-    // a nie po przewinięciu sekcji opisujących bieg normalny.
+    // Decyzje na początku: sprawa wymagająca reakcji jest widoczna przed sekcjami biegu normalnego.
     sekcjaDecyzji.element,
     sekcjaStanu.element,
     sekcjaObecnosci.element,
@@ -178,12 +135,9 @@ export function utworzKolumneAod(
   odswiez.addEventListener('click', () => void wczytaj());
   rama.narzedzia.append(odswiez);
 
-  // --- nagłówek powierzchni: tryb obecności, tor głosowy, menu kebab ------
-  // Rozdz. 2.3 opracowania: `[ tryb ▼ ]  [ 🎙 ]  [ ⋮ ]` w nagłówku.
+  // Nagłówek powierzchni: tryb obecności, tor głosowy, menu kebab.
 
-  // Menu kebab nagłówka jest tym samym komponentem, który stoi przy awatarze;
-  // kontekst wyciszenia kontekstowego dojeżdża tu z warstwy, bo tam mieszka
-  // jedna kopia odczytu (`wyciszenie-kontekst.ts`).
+  // Menu kebab nagłówka jest komponentem znanym z awatara; kontekst wyciszenia dojeżdża z warstwy.
   const sterowanie = utworzSterowanieObecnoscia(stanObecnosci, teraz, {
     ...(kontekstWyciszenia === undefined ? {} : { kontekst: kontekstWyciszenia }),
     zamelduj: (zdanie: string) => zamelduj(zdanie, true),
@@ -291,13 +245,7 @@ export function utworzKolumneAod(
 
   // --- odczyt -------------------------------------------------------------
 
-  /**
-   * Odczyt powierzchni.
-   *
-   * Odmowa jednego odczytu nie wywraca powierzchni: każda sekcja niesie swoją
-   * odmowę u siebie, a kolejka decyzji — stojąca na komendach innych rodzin —
-   * nie znika razem z odczytem rodziny `aod.*`.
-   */
+  /** Odczyt powierzchni. Odmowa jednego odczytu nie wywraca całości, bo każda sekcja niesie swoją. */
   async function wczytaj(): Promise<void> {
     stany.ladowanie('Pytam rdzeń o stan nakładki (aod.status.get) i o decyzje czekające…');
 
@@ -305,8 +253,7 @@ export function utworzKolumneAod(
     sekcjaRozmowy.ustawSesje(idSesji);
     sekcjaGlosu.ustawSesje(idSesji);
 
-    // Trzon wchodzi przed odczytami: sekcje mają gdzie nanieść i treść,
-    // i odmowę, a powierzchnia jest widoczna od razu.
+    // Trzon wchodzi przed odczytami, więc sekcje mają gdzie nanieść treść i odmowę od razu.
     stany.tresc().replaceChildren(trzon);
 
     // Odczyt nadrabiający kolejki decyzji — niezależny od rodziny `aod.*`.

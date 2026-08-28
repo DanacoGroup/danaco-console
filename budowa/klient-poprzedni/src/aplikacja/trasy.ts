@@ -1,37 +1,44 @@
 /**
- * Katalog tras aplikacji.
- *
- * Jedna odpowiedzialność: ustalenie, ile widoków najwyższego rzędu ma
- * aplikacja i jak się nazywają. Bez elementów, bez logiki przełączania —
+ * Katalog tras aplikacji ustala, ile widoków najwyższego rzędu ma aplikacja
+ * i jak się nazywają. Nie buduje elementów i nie przełącza widoków —
  * przełączaniem zajmuje się `router.ts`.
- *
- * Trzy trasy:
- *
- *   strona-glowna → Centrum dowodzenia; wejście do produktu
- *   srodowisko    → powłoka środowiska z kartami sesji i modułami
- *   pulpit        → Mission Control jako widok obok strony głównej
- *
- * Nazwa trasy jest zarazem wartością zapisywaną w adresie dokumentu, więc
- * odświeżenie strony wraca do tego samego widoku, a nie na początek.
  */
 
-/** Nazwy tras — jedno źródło prawdy dla routera i wszystkich przycisków. */
+/**
+ * Nazwy tras stanowią jedyne źródło prawdy dla routera oraz dla każdego
+ * przycisku otwierającego widok. Nazwa trasy jest zarazem wartością zapisywaną
+ * w adresie dokumentu, więc odświeżenie strony wraca do tego samego widoku.
+ */
 export const Trasa = {
   StronaGlowna: 'strona-glowna',
   Srodowisko: 'srodowisko',
   Pulpit: 'pulpit',
 } as const;
 
-/** Nazwa trasy. */
+/**
+ * Nazwa trasy jako typ zawężony do wartości katalogu. Wartość spoza katalogu nie
+ * przejdzie kontroli typów, więc router i przyciski operują wyłącznie na trasach
+ * istniejących.
+ */
 export type Trasa = (typeof Trasa)[keyof typeof Trasa];
 
-/** Trasa otwierana przy uruchomieniu — Centrum dowodzenia, nie okno pracy. */
+/**
+ * Trasa otwierana przy uruchomieniu aplikacji. Jest nią Centrum dowodzenia,
+ * a nie okno pracy: wejście do produktu prowadzi przez widok zbiorczy, z którego
+ * Operator wybiera środowisko.
+ */
 export const TRASA_POCZATKOWA: Trasa = Trasa.StronaGlowna;
 
-/** Wszystkie trasy w kolejności przepływu. */
+/**
+ * Wszystkie trasy ułożone w kolejności przepływu pracy. Kolejność wiąże rozpoznanie
+ * nazwy trasy oraz porządek widoków najwyższego rzędu w interfejsie.
+ */
 export const TRASY: readonly Trasa[] = [Trasa.StronaGlowna, Trasa.Srodowisko, Trasa.Pulpit];
 
-/** Nazwa widoku pokazywana Operatorowi. */
+/**
+ * Nazwy widoków pokazywane w interfejsie. Nazwa techniczna trasy pozostaje
+ * wartością adresu, a nazwa z tego odwzorowania trafia do nagłówków i przycisków.
+ */
 export const NAZWY_TRAS: Readonly<Record<Trasa, string>> = {
   [Trasa.StronaGlowna]: 'Centrum dowodzenia',
   [Trasa.Srodowisko]: 'Środowisko',

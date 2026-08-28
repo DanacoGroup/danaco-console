@@ -3,18 +3,9 @@ import { przycisk } from '../../modele/kontrolki-formularza';
 import type { StanTresci } from './dostepnosc-tresci';
 
 /**
- * Jeden wiersz historii wersji dokumentu.
- *
- * Wersje narastają przy każdej zmianie dokumentu w dowolnym module, w tym przy
- * zmianie wykonanej przez model — dlatego wiersz pokazuje sprawcę osobno od etykiety.
- *
- * Osiągalność treści bierze się z odpowiedzi rdzenia (`dostepnosc-tresci.ts`), nie
- * z obecności sumy kontrolnej w opisie wersji: `checksum` bywa obecna przy wersji,
- * której treści rdzeń nie oddaje, i nieobecna przy wersji, którą oddaje w całości.
- * Odpowiedź dotyczy treści, którą dokument niesie jako bieżącą, więc werdykt siada
- * wyłącznie na wierszu bieżącym — kontrakt nie ma komendy pytającej o treść wersji
- * niebieżącej. Werdykt `odmowa` znaczy, że rdzeń treści nie oddał, ale też o niej
- * nie orzekł, i nie odbiera przycisku „Przywróć".
+ * Jeden wiersz historii wersji dokumentu. Wersje narastają przy każdej zmianie
+ * dokumentu w dowolnym module, w tym przy zmianie wykonanej przez model, dlatego
+ * wiersz pokazuje sprawcę osobno od etykiety wersji.
  */
 export interface OpisWierszaWersji {
   /** Czy wersja jest tą, którą plik niesie jako bieżącą. */
@@ -60,11 +51,8 @@ export function utworzWierszWersji(
 
 /**
  * Zdanie wiersza o treści dokumentu — jedno na werdykt, żadne bez werdyktu.
- *
- * Wołane wyłącznie dla wiersza bieżącego: odpowiedź rdzenia o treści dokumentu
- * jest odpowiedzią o treści tej właśnie wersji. „Nie ma do czego wrócić" pada
- * tylko po werdykcie `brak`; `odmowa` oznacza nieudany odczyt, a `odwolanie` —
- * wskazanie miejsca zamiast bajtów.
+ * Wołane wyłącznie dla wiersza bieżącego, ponieważ odpowiedź rdzenia o treści
+ * dokumentu jest odpowiedzią o treści tej właśnie wersji.
  */
 function zdanieOTresci(tresc: StanTresci): string {
   if (tresc.werdykt === 'osiagalna') return 'wersja bieżąca — rdzeń oddaje jej treść';
@@ -74,7 +62,11 @@ function zdanieOTresci(tresc: StanTresci): string {
   return '';
 }
 
-/** Metryka wiersza: sprawca, rozmiar i chwila powstania wersji. */
+/**
+ * Metryka wiersza: sprawca, rozmiar i chwila powstania wersji. Człony nieobecne
+ * w opisie wersji są pomijane, więc metryka nie pokazuje pola pustego ani wartości
+ * zastępczej w miejsce danych, których rdzeń nie podał.
+ */
 function opisMetryki(wersja: LibraryVersion): string {
   const czesci: string[] = [];
   if (wersja.author !== undefined) czesci.push(`sprawca: ${wersja.author}`);

@@ -1,24 +1,30 @@
 /**
- * Drobne części układu nakładki — wykaz pól i nagłówek sekcji.
- *
- * Cztery sekcje okna (stan, podpowiedzi, obecność, kontekst) wypisują pola tym
- * samym wykazem `dl`; wspólne miejsce trzyma pętlę `dt`/`dd` w jednym egzemplarzu.
- *
- * Plik nie zna barw ani odstępów — nadaje wyłącznie klasy z przedrostkiem `ao-`,
- * które pokrywa `aod.css` żetonami `--dn-*`.
+ * Drobne części układu nakładki — wykaz pól i nagłówek sekcji. Cztery sekcje
+ * okna wypisują pola tym samym wykazem `dl`, a plik nadaje wyłącznie klasy
+ * z przedrostkiem `ao-`, które pokrywa `aod.css` żetonami `--dn-*`.
  */
 
-/** Zdanie wypisywane, gdy pole jest puste. Pustka bywa poprawna. */
+/**
+ * Zdanie wypisywane w miejsce wartości, gdy pole jest puste; pustka bywa stanem
+ * poprawnym, więc wykaz nazywa ją wprost zamiast zostawiać puste miejsce.
+ */
 export const BRAK = '(brak)';
 
-/** Buduje pusty wykaz pól. */
+/**
+ * Buduje pusty wykaz pól: element `dl` z klasą `ao-pola`, do którego kolejne
+ * pola dokłada `dodajPole`. Sekcja okna zaczyna się od tego wykazu.
+ */
 export function utworzWykazPol(): HTMLDListElement {
   const lista = document.createElement('dl');
   lista.className = 'ao-pola';
   return lista;
 }
 
-/** Dokłada do wykazu jedno pole: etykietę i wartość. */
+/**
+ * Dokłada do wykazu jedno pole: element `dt` z etykietą i element `dd`
+ * z wartością. Wartość pusta ustępuje miejsca zdaniu o braku, żeby wiersz nie
+ * został bez treści.
+ */
 export function dodajPole(lista: HTMLDListElement, etykieta: string, wartosc: string): void {
   const dt = document.createElement('dt');
   dt.textContent = etykieta;
@@ -31,7 +37,7 @@ export function dodajPole(lista: HTMLDListElement, etykieta: string, wartosc: st
  * Dokłada pole niosące wykaz identyfikatorów.
  *
  * Wykaz pusty ORAZ wykaz nieobecny znaczą dla Operatora to samo — rdzeń nic
- * nie przysłał — i oba wypisujemy jako `(brak)`, nigdy jako `0` czy `[]`.
+ * nie przysłał — i oba idą do wykazu jako `(brak)`, nigdy jako `0` czy `[]`.
  */
 export function dodajPoleWykazu(
   lista: HTMLDListElement,
@@ -42,7 +48,10 @@ export function dodajPoleWykazu(
   dodajPole(lista, etykieta, pozycje.length === 0 ? BRAK : pozycje.join(', '));
 }
 
-/** Buduje podtytuł sekcji okna. */
+/**
+ * Buduje podtytuł sekcji okna: nagłówek czwartego rzędu z klasą `ao-podtytul`,
+ * którą pokrywa `aod.css`. Podtytuł dzieli nakładkę na cztery sekcje.
+ */
 export function utworzPodtytul(tekst: string): HTMLElement {
   const naglowek = document.createElement('h4');
   naglowek.className = 'ao-podtytul';

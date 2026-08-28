@@ -16,17 +16,9 @@ import {
 } from './zasiegi';
 
 /**
- * Wybór adresu w przestrzeni konfiguracji: poziom zasięgu, byt poziomu, oś,
- * byt osi.
- *
- * Ta sama kontrolka obsługuje dwie role okna: pasek u góry ustawia punkt
- * widzenia, względem którego liczone jest dziedziczenie pól, a panel przy polu
- * ustawia adres zapisu wartości nadpisującej. Różni je wyłącznie wykaz
- * dopuszczalnych poziomów i osi — pasek podaje wszystkie, panel pola tylko te
- * z katalogu (`allowedScopes`, `allowedAxes`).
- *
- * Pola bytu znikają tam, gdzie poziom lub oś bytu nie mają (poziom globalny,
- * oś platformy).
+ * Wybór adresu w przestrzeni konfiguracji: poziom zasięgu, byt poziomu, oś
+ * i byt osi. Wykaz dopuszczalnych poziomów i osi podaje wywołujący, a pola bytu
+ * znikają tam, gdzie poziom albo oś bytu nie mają.
  */
 export interface WyborAdresu {
   /** Wiersz kontrolek osadzany w pasku albo w panelu pola. */
@@ -159,7 +151,10 @@ function poleBytu(opis: string): HTMLInputElement {
   return pole;
 }
 
-/** Kontrolka wraz z etykietą nad nią. */
+/**
+ * Składa kontrolkę wraz z etykietą nad nią w jednym elemencie `label`, tak aby
+ * nazwa pola wiązała się z kontrolką bez osobnego identyfikatora.
+ */
 function opisany(etykieta: string, kontrolka: HTMLElement): HTMLElement {
   const koszyk = document.createElement('label');
   koszyk.className = 'dn-pole dk-adres__pole';

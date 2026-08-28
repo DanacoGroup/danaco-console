@@ -1,14 +1,10 @@
 import type { AppComponent } from '../../../../shared/contract';
 
 /**
- * Kanwa diagramu komponentów wraz z liniami zależności.
- *
- * Kanwa rysuje zbiór komponentów i nie zna kontraktu ani kanału — dostaje
- * komponenty i oddaje element.
- *
- * Linia zależności jest nazwana, nie narysowana: kontrakt niesie zależność jako
- * wykaz identyfikatorów (`dependsOn`), bez współrzędnych i bez kierunku
- * przepływu. Rysunek strzałek wymagałby danych, których nie ma.
+ * Kanwa diagramu komponentów wraz z ich zależnościami. Kanwa dostaje zbiór
+ * komponentów i oddaje element, nie znając ani kontraktu, ani kanału. Zależność
+ * jest nazwana, a nie narysowana, ponieważ kontrakt niesie ją jako wykaz
+ * identyfikatorów.
  */
 export interface KanwaKomponentow {
   element: HTMLElement;
@@ -28,7 +24,11 @@ export function utworzKanweKomponentow(usun: (idKomponentu: string) => void): Ka
   };
 }
 
-/** Jeden komponent kanwy: nazwa, rodzaj, stos, zależności, kontrakt API. */
+/**
+ * Jeden kafel kanwy: nazwa komponentu, plakietka rodzaju, przycisk zdjęcia
+ * z kanwy oraz wiersze stosu, opisu, zależności i kontraktu API. Wiersz
+ * nieobowiązkowy powstaje tylko wtedy, gdy komponent niesie jego wartość.
+ */
 function kafel(
   komponent: AppComponent,
   wszystkie: readonly AppComponent[],
@@ -66,7 +66,10 @@ function kafel(
   return element;
 }
 
-/** Wiersz opisu wewnątrz kafla komponentu. */
+/**
+ * Wiersz opisu wewnątrz kafla komponentu: etykieta oraz treść w dwóch osobnych
+ * elementach, żeby arkusz stylów rozróżniał je bez wnikania w tekst.
+ */
 function wiersz(etykieta: string, tresc: string): HTMLElement {
   const nazwa = document.createElement('span');
   nazwa.className = 'mp-kanwa__etykieta';

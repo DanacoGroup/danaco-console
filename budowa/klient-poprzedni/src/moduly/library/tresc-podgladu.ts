@@ -1,14 +1,10 @@
 import { LibraryPreviewKind, type LibraryPreview } from '../../../../shared/contract';
 
 /**
- * Wyrenderowanie podglądu pliku w postaci, którą podał rdzeń.
- *
- * Kontrakt zna cztery rodzaje podglądu i dla każdego niesie co innego: tekst
- * w polu `text`, grafikę i strony PDF wyłącznie jako odnośnik (`imageRef`),
- * plik binarny bez treści. Klient nie ma komendy pobierającej bajty spod
- * odnośnika, więc podgląd graficzny pokazuje sam odnośnik i nazywa brak.
- *
- * Skrócenie podglądu (`truncated`) jest wypisane pod treścią.
+ * Wyrenderowanie podglądu pliku w postaci podanej przez rdzeń. Kontrakt zna
+ * cztery rodzaje podglądu: tekst w polu `text`, grafikę oraz strony PDF jako
+ * odnośnik `imageRef`, a plik binarny bez treści. Skrócenie podglądu wypisuje
+ * zdanie pod treścią.
  */
 export function utworzTrescPodgladu(podglad: LibraryPreview): HTMLElement {
   const element = document.createElement('div');
@@ -24,7 +20,11 @@ export function utworzTrescPodgladu(podglad: LibraryPreview): HTMLElement {
   return element;
 }
 
-/** Zdanie o stanie podglądu widoczne pod jego treścią. */
+/**
+ * Zdanie o stanie podglądu widoczne pod jego treścią: akapit klasy
+ * `dn-pole-opis` niosący komunikat o skróceniu podglądu albo o braku treści
+ * dla danego rodzaju pliku.
+ */
 function zdanie(tresc: string): HTMLElement {
   const element = document.createElement('p');
   element.className = 'dn-pole-opis';
@@ -32,7 +32,11 @@ function zdanie(tresc: string): HTMLElement {
   return element;
 }
 
-/** Ciało podglądu właściwe dla rodzaju z kontraktu. */
+/**
+ * Ciało podglądu właściwe dla rodzaju z kontraktu: blok tekstu dla podglądu
+ * tekstowego, zdanie zastępcze dla pliku binarnego, a dla grafiki i stron PDF
+ * sam odnośnik `imageRef` podany przez rdzeń.
+ */
 function cialoPodgladu(podglad: LibraryPreview): HTMLElement {
   if (podglad.kind === LibraryPreviewKind.Text) {
     const tekst = document.createElement('pre');

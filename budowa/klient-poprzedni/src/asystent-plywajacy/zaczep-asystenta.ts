@@ -1,3 +1,9 @@
+/**
+ * Zaczep pływającego Asystenta — jedyne miejsce, w którym favikon, dymek i stan
+ * schodzą się w jedną warstwę. Warstwa osadza się w widoku środowiska, bo tylko
+ * tam znana jest jednocześnie powłoka i droga do rdzenia.
+ */
+
 import './asystent-plywajacy.css';
 
 import type { ZrodloPosuniec } from '../aplikacja/zrodlo-posuniec';
@@ -7,35 +13,6 @@ import { utworzFavikonPlywajacy } from './favikon-plywajacy';
 import { utworzOknoDymkowe } from './okno-dymkowe';
 import { utworzStanDymka } from './stan-dymka';
 
-/**
- * Zaczep pływającego Asystenta — jedyne miejsce, w którym favikon, dymek i stan
- * schodzą się w jedną warstwę.
- *
- * Warstwa osadza się w `aplikacja/widok-srodowiska.ts`, bo tylko tam znana jest
- * jednocześnie powłoka i droga do rdzenia. Favikon ląduje w korzeniu powłoki,
- * obok obszaru roboczego: moduł podmienia zawartość obszaru
- * (`aplikacja/przestrzen-modulu.ts`), więc favikon leżący poza nim zostaje
- * widoczny przy każdej zmianie modułu.
- *
- * Dwa inne zaczepy nie nadają się. `aplikacja/scena-sesji.ts` trzyma okna
- * równoległe liczone do sufitu `LICZBA_MAX` (`okna-rownolegle/identyfikatory.ts`);
- * asystent nie jest oknem sceny — profil daje mu `granicaOkien: 1` i postać
- * `dymek-glosowy` — więc zabierałby gniazdo oknu komunikacji i znikał razem ze
- * sceną. `powloka/powloka.ts` buduje także stanowisko podglądu
- * (`powloka/podglad.ts`), które o rdzeniu nie wie; zaczep tam wymusiłby albo
- * wersję niemą, albo przeciek drogi do rdzenia w dół.
- *
- * Dymek jest jeden na widok środowiska. Liczby `granicaOkien` nie przepisano
- * tutaj — `okno-dymkowe.ts` bierze ją z rejestru profilów.
- *
- * Profil daje `pamiecSesyjna: true`, więc zwinięcie dymka nie czyści historii:
- * `schowaj()` chowa element. Rozmowa ginąca po zwinięciu wyglądałaby na awarię.
- *
- * Favikon i stan spina jedna subskrypcja: `stan.obserwuj` przenosi na favikon
- * pracę asystenta i licznik nieprzeczytanych posunięć. Otwarcie dymka zeruje
- * licznik, zamknięcie znów go zbiera — dopóki dymek stoi odsłonięty, posunięcia
- * są czytane na bieżąco.
- */
 
 export interface AsystentPlywajacy {
   /** Warstwa do osadzenia; leży poza obszarem roboczym powłoki. */
@@ -43,13 +20,12 @@ export interface AsystentPlywajacy {
   /** Zdejmuje subskrypcje zdarzeń rdzenia i wspólnego źródła posunięć. */
   rozlacz(): void;
 }
-
 /**
- * @param posuniecia wspólne źródło posunięć — ten sam egzemplarz, którym
- *   karmi się pas dolny. Pominięte znaczy, że miejsce montażu źródła nie
- *   podało; dymek mówi o tym wprost, zamiast milczeć.
- * @param idKlienta identyfikator tego połączenia (`uzgodnienie.klient.id`) —
- *   rozstrzyga „Operator z innego urządzenia" wobec `actorClientId`.
+ * Składa warstwę asystenta z favikonu, dymka i stanu.
+ * @param posuniecia wspólne źródło posunięć, to samo co dla pasa dolnego;
+ *   pominięte znaczy, że montaż go nie podał.
+ * @param idKlienta identyfikator połączenia, po którym poznaje się urządzenie
+ *   obce.
  */
 export function zaczepAsystenta(
   kanal: Kanal,

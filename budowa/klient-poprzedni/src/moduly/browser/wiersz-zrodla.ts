@@ -2,13 +2,9 @@ import type { BrowserSource } from '../../../../shared/contract';
 import { KLASA_PRZYCISKU, przyciskCzynnosci } from './przyciski-browser';
 
 /**
- * Jedna pozycja wykazu Sources Panel wraz z jej panelem akcji. Wykaz,
- * formularz dodania i przekazanie do Research mieszkają w oknie.
- *
- * Każda akcja wiersza jest naciskalna — także „Usuń", której kontrakt nie
- * niesie: przycisk odpowiada nazwaniem brakującej komendy zamiast znikać albo
- * gasnąć. Wiersz nie usuwa pozycji z widoku na własną rękę, bo zniknięcie bez
- * zapisu w rdzeniu byłoby udawaniem wykonania.
+ * Jedna pozycja wykazu Sources Panel wraz z jej panelem akcji. Wiersz niesie
+ * zaznaczenie do przekazania, opis źródła, plakietkę wagi oraz cztery przyciski
+ * czynności; wykaz i formularz dodania mieszkają w oknie.
  */
 export interface AkcjeZrodla {
   otworz(zrodlo: BrowserSource): void;

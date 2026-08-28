@@ -19,25 +19,7 @@ import type { ZrodloWarsztatu } from './zrodlo-warsztatu';
 
 /**
  * Dev Tools — kolumna czterech integracji deweloperskich modułu: API Client,
- * Data Console, Containers oraz Dependencies & Security.
- *
- * ── Co się tu zmieniło ─────────────────────────────────────────────────────
- * Okno stało wcześniej jako wykaz braków: kontrakt niósł nazwy komend, lecz
- * rdzeń nie miał dla nich uchwytów, więc każda zakładka nazywała, czego brak.
- * Rdzeń ma dziś wszystkie czternaście komend tych czterech rodzin, więc zakładki
- * naprawdę je wołają. Przycisk, który tylko tłumaczy swój brak, jest właściwy
- * dokładnie do chwili, w której brak zniknie — potem staje się nieprawdą.
- *
- * ── Czego okno nie robi po cichu ───────────────────────────────────────────
- * Nie zamienia odmowy w pustkę. Wykaz kontenerów pusty i wykaz nieodczytany to
- * dwa różne zdania i okno mówi każde z nich osobno; przy braku silnika
- * kontenerów rdzeń oddaje `engineAvailable: false`, a zakładka pisze wprost, że
- * pomiaru nie było, zamiast pokazywać zero kontenerów.
- *
- * ── Poświadczenia ──────────────────────────────────────────────────────────
- * Zakładka bazodanowa nie ma pola hasła i mieć go nie będzie: hasło leży
- * w sejfie, a wiersz połączenia niesie do niego ODWOŁANIE. Pole hasła
- * w przeglądarce byłoby kopią sekretu w miejscu, którego nikt nie rotuje.
+ * Data Console, Containers oraz Dependencies and Security.
  */
 export interface OknoDevTools {
   element: HTMLElement;
@@ -86,9 +68,7 @@ export function utworzOknoDevTools(
   return {
     element: rama.element,
     odswiez() {
-      // Odświeżenie czyta to, co ma stan trwały po stronie rdzenia: kolekcje
-      // zapytań i opisy połączeń. Zapytania, skanów ani czynności na kontenerach
-      // nie uruchamia się samoczynnie — to są czynności Operatora, a nie odczyt.
+      // Odświeżenie czyta stan trwały rdzenia: kolekcje i połączenia; zapytań ani skanów nie uruchamia.
       api.odswiez();
       dane.odswiez();
     },
@@ -96,19 +76,16 @@ export function utworzOknoDevTools(
   };
 }
 
-/** Jedna zakładka okna wraz z jej odczytem. */
+/** Jedna zakładka okna Dev Tools wraz z jej odczytem: element osadzany w karcie i metoda odświeżająca treść. */
 interface ZakladkaWarsztatu {
   element: HTMLElement;
   odswiez(): void;
 }
 
 /**
- * API Client — zapytania HTTP, kolekcje i kontrakty OpenAPI.
- *
- * Zapytanie jedzie przez rdzeń, nie z przeglądarki. Klient siedzi po drugiej
- * stronie gniazda niż katalog roboczy sesji, a dostęp sieciowy podlega zakresowi
- * izolacji okna — zapytanie wysłane z przeglądarki omijałoby jedno i drugie
- * i pokazywałoby wynik z cudzej sieci pod nazwą wyniku sesji.
+ * API Client — zapytania HTTP, kolekcje i kontrakty OpenAPI. Zapytanie jedzie
+ * przez rdzeń, nie z przeglądarki, bo dostęp sieciowy podlega zakresowi
+ * izolacji okna.
  */
 function zakladkaApiClient(zrodlo: ZrodloWarsztatu, stan: StanDevelopera): ZakladkaWarsztatu {
   const tresc = utworzStanTresci();
@@ -273,7 +250,7 @@ function zakladkaApiClient(zrodlo: ZrodloWarsztatu, stan: StanDevelopera): Zakla
   return { element, odswiez: () => void odczytajKolekcje() };
 }
 
-/** naglowkiZadania czyta nagłówki z pola; treść nieczytelna zostaje pominięta. */
+/** Czyta nagłówki zapytania z pola tekstowego jako obiekt JSON; treść nieczytelna zostaje pominięta jako brak. */
 function naglowkiZadania(zapis: string): Record<string, string> | undefined {
   const tresc = zapis.trim();
   if (tresc === '') return undefined;
@@ -287,11 +264,9 @@ function naglowkiZadania(zapis: string): Record<string, string> | undefined {
 }
 
 /**
- * Data Console — połączenia, schemat, zapytania i migracje.
- *
- * Zakładka nie ma pola hasła. Poświadczenie wchodzi ODWOŁANIEM do sejfu, tak
- * samo jak klucze dostawców modeli; hasło wpisane w przeglądarce byłoby kopią
- * sekretu w miejscu, którego nikt nie rotuje.
+ * Data Console — połączenia, schemat, zapytania i migracje. Zakładka nie ma
+ * pola hasła: poświadczenie wchodzi odwołaniem do sejfu, tak samo jak klucze
+ * dostawców modeli.
  */
 function zakladkaDataConsole(zrodlo: ZrodloWarsztatu, stan: StanDevelopera): ZakladkaWarsztatu {
   const tresc = utworzStanTresci();
@@ -470,7 +445,7 @@ function zakladkaDataConsole(zrodlo: ZrodloWarsztatu, stan: StanDevelopera): Zak
   return { element, odswiez: () => void odczytajPolaczenia() };
 }
 
-/** Containers — kontenery, obrazy i stosy usług silnika kontenerów. */
+/** Containers — kontenery, obrazy i stosy usług silnika kontenerów, odczytywane i sterowane przez rdzeń. */
 function zakladkaContainers(zrodlo: ZrodloWarsztatu, stan: StanDevelopera): ZakladkaWarsztatu {
   const tresc = utworzStanTresci();
   const kontener = pole('Kontener', 'identyfikator albo nazwa kontenera');
@@ -501,8 +476,7 @@ function zakladkaContainers(zrodlo: ZrodloWarsztatu, stan: StanDevelopera): Zakl
       tresc.blad(opisOdmowyBledu('Odczyt kontenerów', wynik.blad), wynik.blad);
       return;
     }
-    // Brak silnika NIE jest pustką: „nic nie biegnie” i „nie było czym zapytać”
-    // to dwa różne zdania o tej samej maszynie.
+    // Brak silnika nie jest pustką: brak działających kontenerów i brak silnika to różne zdania.
     if (!wynik.wynik.engineAvailable) {
       tresc.pusto(
         'Na serwerze nie odpowiada żaden silnik kontenerów (Docker ani Podman), więc pomiaru nie ' +
@@ -613,7 +587,7 @@ function zakladkaContainers(zrodlo: ZrodloWarsztatu, stan: StanDevelopera): Zakl
   return { element, odswiez: () => undefined };
 }
 
-/** Dependencies & Security — zależności, podatności, sekrety i licencje. */
+/** Dependencies and Security — zależności, podatności, sekrety i licencje wykrywane skanem repozytorium. */
 function zakladkaBezpieczenstwa(
   zrodlo: ZrodloWarsztatu,
   stan: StanDevelopera,
@@ -679,9 +653,7 @@ function zakladkaBezpieczenstwa(
       return;
     }
     if (wynik.wynik.findings.length === 0) {
-      // Zdanie mówi o SKANIE, nie o repozytorium: pusty wykaz po przebiegu
-      // znaczy „sprawdzono i nie znaleziono”, a to jest inne zdanie niż
-      // „repozytorium jest czyste”, którego okno orzec nie może.
+      // Zdanie mówi o skanie, nie o repozytorium: brak znalezisk nie znaczy, że jest ono czyste.
       tresc.pusto('Przebieg skanowania zakończył się bez znalezisk w sprawdzonym zakresie.');
       return;
     }
@@ -721,7 +693,7 @@ function zakladkaBezpieczenstwa(
   return { element, odswiez: () => undefined };
 }
 
-/** akapit składa jeden wiersz treści okna. */
+/** Składa jeden akapit tekstowy wiersza treści okna Dev Tools z podanym zdaniem, gotowy do wstawienia do drzewa. */
 function akapit(zdanie: string): HTMLElement {
   const element = document.createElement('p');
   element.className = 'mdev-wiersz';
@@ -729,7 +701,7 @@ function akapit(zdanie: string): HTMLElement {
   return element;
 }
 
-/** blokTekstu składa miejsce na treść wielowierszową — log, wynik, plan. */
+/** Składa miejsce na treść wielowierszową okna Dev Tools — log, wynik zapytania SQL albo plan wykonania migracji. */
 function blokTekstu(zawartosc: string): HTMLElement {
   const element = document.createElement('pre');
   element.className = 'mdev-blok';

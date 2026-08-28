@@ -17,28 +17,8 @@ import { nadajEtykieteZbiorczo } from './zapisy-zbiorcze';
 import type { ZrodloOtoczenia } from './zrodlo-otoczenia';
 
 /**
- * Tags & Collections — okno zarządca modułu (`library.tags-collections`).
- *
- * Trzy funkcje Operatora z wiersza wykazu mają dziś drogę do rdzenia: nadanie
- * etykiety (`library.tag.set`), utworzenie kolekcji
- * (`library.collection.create`) i przypisanie zasobu
- * (`library.collection.assign`).
- *
- * Słownik etykiet i wykaz kolekcji przychodzą teraz z rdzenia
- * (`library.tag.list`, `library.collection.list`), więc okno pokazuje słownik
- * repozytorium, a nie próbkę zebraną z odczytanej strony wykazu. Widać w nim
- * także etykiety nieużywane — te, których nie nosi żaden zasób, a które
- * istnieją i dają się usunąć.
- *
- * Słownikiem można zarządzać: zmiana nazwy przechodzi po wszystkich zasobach
- * (`library.tag.update`), łączenie wchłania etykiety duplikujące się
- * (`library.tag.merge`), usunięcie zdejmuje etykietę z repozytorium
- * (`library.tag.remove`) i przy etykiecie używanej żąda potwierdzenia.
- *
- * Tezaurus wychodzi z rdzenia w zapisie SKOS/RDF wraz z relacjami
- * (`library.thesaurus.export`) — relacje ustanawia `library.thesaurus.relate`
- * i klient nie ma ich skąd wziąć sam. Mapa kolekcji zostaje wywozem okna, bo
- * składa się z tego, co okno już pokazuje.
+ * Tags & Collections to okno zarządca modułu biblioteki: nadaje etykiety, tworzy kolekcje
+ * i przypisuje zasoby, korzystając ze słownika etykiet i wykazu kolekcji pobranych z rdzenia.
  */
 export interface OknoEtykiet {
   element: HTMLElement;
@@ -291,18 +271,7 @@ export function utworzOknoEtykiet(stan: StanBiblioteki, otoczenie: ZrodloOtoczen
   rama.pasek.append(wywiezMape, wywiezTezaurus);
   rama.cialo.append(okno.element, odpowiedz.element, panel.element);
 
-  /**
-   * Stany obowiązkowe okna czytane z fazy wykazu plików.
-   *
-   * Okno nie ma własnego odczytu i mieć go nie może: kontrakt nie zna komendy
-   * katalogu etykiet ani kolekcji, więc jedno i drugie składa się z pól `tags`
-   * i `collectionIds` plików przyniesionych przez Library Explorer. Stan tego
-   * okna jest więc stanem tamtego odczytu.
-   *
-   * Trzy pustki są tu rozłączne: „nikt jeszcze nie pytał", „odczyt trwa" i „rdzeń
-   * odpowiedział bez ani jednej etykiety". Wspólne zdanie dla wszystkich trzech
-   * orzekałoby o odpowiedzi rdzenia zanim ta przyjdzie.
-   */
+  /** Stany obowiązkowe okna czytane z fazy wykazu plików — własnego odczytu okno mieć nie może. */
   function ustawStan(): void {
     if (stan.faza() === 'odczyt') {
       okno.ladowanie(
@@ -356,14 +325,7 @@ export function utworzOknoEtykiet(stan: StanBiblioteki, otoczenie: ZrodloOtoczen
   }
 }
 
-/**
- * Jedna pozycja zbioru etykiet albo drzewa kolekcji wraz z licznikiem użycia.
- *
- * Licznik liczy pliki obecne w wykazie, a nie w repozytorium: kontrakt nie ma
- * komendy statystyki etykiet, a wykaz bywa zawężony frazą albo etykietą.
- * Dlatego liczba stoi przy pozycji jako liczba w wykazie i tak jest nazwana
- * w opisie dostępności — inaczej uchodziłaby za rozmiar całego zbioru.
- */
+/** Jedna pozycja zbioru etykiet albo drzewa kolekcji wraz z licznikiem użycia — liczba plików obecnych w wykazie, nie w całym repozytorium. */
 function pozycja(kod: string, rodzaj: string, wWykazie: number): HTMLElement {
   const plakietka = document.createElement('span');
   plakietka.className = 'dn-plakietka';

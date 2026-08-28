@@ -1,20 +1,19 @@
 /**
- * Nadajnik zdarzeń widoku — jedno zdarzenie, wielu odbiorców.
- *
- * Jedna odpowiedzialność: rozesłanie ładunku do subskrybentów i oddanie
- * odwołania subskrypcji. Pulpit nie sięga po magistralę połączenia, bo jego
- * zdarzenia są zdarzeniami widoku, nie kontraktu — powłoka decyduje, którą
- * komendę kontraktu z nich zbuduje.
- *
- * Błąd jednego odbiorcy nie odbiera zdarzenia pozostałym: wywołanie
- * biegnie w bloku ochronnym, a usterka trafia do konsoli, nie do przerwania
- * rozgłoszenia.
+ * Nadajnik zdarzeń widoku: rozsyła ładunek jednego zdarzenia do wielu odbiorców
+ * i oddaje odwołanie subskrypcji. Usterka odbiorcy trafia do konsoli i nie
+ * przerywa rozgłoszenia pozostałym odbiorcom.
  */
 
-/** Odwołanie subskrypcji — wywołanie odpina odbiorcę. */
+/**
+ * Odwołanie subskrypcji. Wywołanie zwróconej czynności odpina odbiorcę
+ * i jest jedynym sposobem wypisania pojedynczego odbiorcy z nadajnika.
+ */
 export type Odpiecie = () => void;
 
-/** Nadajnik jednego rodzaju zdarzenia. */
+/**
+ * Nadajnik jednego rodzaju zdarzenia, o ładunku ustalonym parametrem typu.
+ * Niesie podpięcie odbiorcy, rozesłanie ładunku oraz odpięcie wszystkich naraz.
+ */
 export interface Nadajnik<T> {
   /** Podpina odbiorcę; zwraca odpięcie. */
   sluchaj(odbiorca: (ladunek: T) => void): Odpiecie;
@@ -24,7 +23,10 @@ export interface Nadajnik<T> {
   rozlacz(): void;
 }
 
-/** Buduje nadajnik zdarzenia o zadanym ładunku. */
+/**
+ * Buduje nadajnik zdarzenia o zadanym ładunku. Nazwa zdarzenia służy wyłącznie
+ * wpisowi konsoli zgłaszającemu usterkę odbiorcy i nie wpływa na rozgłoszenie.
+ */
 export function utworzNadajnik<T>(nazwa: string): Nadajnik<T> {
   const odbiorcy = new Set<(ladunek: T) => void>();
 

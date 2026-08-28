@@ -1,15 +1,11 @@
+/**
+ * Wspólny opis zasobu oddanego przez `design.asset.generate` — używany przez Prompt
+ * Buildera i Preview Window, żeby oba mówiły o zasobie tak samo. Pole `name` jest
+ * opcjonalne, więc okno traktuje je jako słowo modelu, a nie tytuł zasobu.
+ */
+
 import { Command, type DesignAsset } from '../../../../shared/contract';
 
-/**
- * Wspólny opis zasobu oddanego przez `design.asset.generate` — używany przez
- * Prompt Buildera i Preview Window, żeby oba mówiły o zasobie tak samo.
- *
- * Rdzeń odkłada bajty obrazu w magazynie pod sumą sha256 i zakłada wiersz zasobu
- * z `uri`, `format` i wymiarami odczytanymi z nagłówka pliku
- * (`adapter_modul_design_generowanie.go`). Pole `name` jest opcjonalne i bywa
- * odpowiedzią modelu tekstowego, więc okno traktuje je jako słowo modelu,
- * a nie tytuł zasobu.
- */
 
 /**
  * Słowo modelu — treść pola `name` bez upiększania.
@@ -21,7 +17,11 @@ export function slowoModelu(zasob: DesignAsset): string {
   return (zasob.name ?? '').trim();
 }
 
-/** Czy rdzeń zna treść obrazu tego zasobu — pole `uri` wypełnione. */
+/**
+ * Czy rdzeń zna treść obrazu tego zasobu — pole `uri` wypełnione. Pole puste znaczy
+ * zasób założony drogą, która treści nie wskazała, i okno mówi o tym wprost zamiast
+ * pokazywać podgląd bez pokrycia.
+ */
 export function czyRdzenZnaObraz(zasob: DesignAsset): boolean {
   return (zasob.uri ?? '').trim() !== '';
 }
@@ -41,11 +41,9 @@ export function zdanieOSlowieModelu(zasob: DesignAsset): string {
 }
 
 /**
- * Zdanie o zasobie, przy którym rdzeń nie podał `uri`.
- *
- * Generowanie zakłada wiersz dopiero po utrwaleniu bajtów w magazynie, a wgranie
- * — po zapisaniu pliku, więc pusty `uri` znaczy zasób założony drogą, która pola
- * nie wypełniła. Okno nie zgaduje którą — mówi, czego nie ma.
+ * Zdanie o zasobie, przy którym rdzeń nie podał pola `uri`. Okno nie zgaduje, którą
+ * drogą taki zasób powstał — mówi, czego nie ma, bo podgląd pokazuje wyłącznie to,
+ * co rdzeń o zasobie wie.
  */
 export function zdanieOBrakuObrazu(): string {
   return (
@@ -57,18 +55,9 @@ export function zdanieOBrakuObrazu(): string {
 }
 
 /**
- * Dlaczego treść obrazu nie wyświetli się w przeglądarce, choć rdzeń ją ma.
- *
- * Pole `uri` zasobu jest ścieżką w systemie plików rdzenia: magazyn treści
- * oddaje `filepath.Join(katalog, suma[:2], suma)` i ta ścieżka wchodzi do
- * wiersza jako odwołanie (`core/adapter_modul_library_magazyn.go`, `Zapisz`).
- * Przeglądarka ścieżki dyskowej nie otworzy, więc wstawiona w `<img src>` daje
- * zdarzenie `error`, którego przyczyną nie jest sama przeglądarka.
- *
- * Komenda oddająca treść zasobu jest już w kontrakcie i obejmuje cały magazyn,
- * nie sam obszar Designu — zasób Design, plik Library i dokument Studia leżą
- * w jednym repozytorium. Brakuje jej uchwytu w rdzeniu, więc okno nadal nie ma
- * skąd wziąć bajtów; to jest jednak brak obsługi, a nie brak drogi.
+ * Dlaczego treść obrazu nie wyświetli się w przeglądarce, choć rdzeń ją ma. Pole
+ * `uri` zasobu jest ścieżką w systemie plików rdzenia, a przeglądarka ścieżki dyskowej
+ * nie otworzy, więc wstawiona w `<img src>` daje zdarzenie błędu.
  */
 export function zdanieOSciezceRdzenia(adres: string): string {
   return (

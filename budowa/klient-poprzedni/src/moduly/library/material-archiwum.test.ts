@@ -11,16 +11,9 @@ import { utworzPanelPakowania } from './archiwum-pakowanie';
 import { utworzNarzedziaMaterialu } from './material-narzedzia';
 import { utworzPanelMaterialu } from './material-panel';
 
-/**
- * Materiał i archiwum — trzy czynności arsenału z powierzchni modułu Library.
- *
- * Sprawdzian pilnuje tego, co stanowi o odbiorze: że każda z trzech komend ma
- * drogę z okna, że żądanie idzie ścieżką z dysku Operatora (bo identyfikator
- * zasobu biblioteki wróciłby odmową), że czynność trwająca mówi o sobie przed
- * końcem, i że wynik jest NAZWANY, a nie potwierdzony ciszą.
- */
+// Materiał i archiwum: trzy czynności arsenału na drodze z okna, ścieżce z dysku i nazwanym wyniku.
 
-/** Zasób w postaci, w której rdzeń oddaje wynik czynności arsenału. */
+/** Zasób w postaci, w której rdzeń oddaje wynik czynności arsenału, gotowy do sprawdzenia jego pól w sprawdzianie. */
 function zasob(zmiany: Partial<DesignAsset> = {}): DesignAsset {
   return {
     id: 'zasob-1',
@@ -33,7 +26,7 @@ function zasob(zmiany: Partial<DesignAsset> = {}): DesignAsset {
   };
 }
 
-/** Kanał próbny: zapamiętuje żądania i oddaje odpowiedź wskazaną per komenda. */
+/** Kanał próbny zapamiętuje wysłane żądania i oddaje odpowiedź wskazaną dla danej komendy, imitując rdzeń. */
 function kanalProbny(odpowiedzi: Record<string, unknown>): {
   kanal: Kanal;
   wyslane: { komenda: string; zadanie: unknown }[];
@@ -58,14 +51,14 @@ function kanalProbny(odpowiedzi: Record<string, unknown>): {
   return { kanal, wyslane };
 }
 
-/** Wpisuje wartość w pole panelu o wskazanej etykiecie dostępności. */
+/** Wpisuje wartość w pole panelu o wskazanej etykiecie dostępności, symulując wpis wykonany przez człowieka. */
 function wpisz(element: HTMLElement, znacznik: string, wartosc: string): void {
   const pole = element.querySelector<HTMLInputElement>(`[data-pole="${znacznik}"]`);
   expect(pole, `pole „${znacznik}" musi stać w panelu`).not.toBeNull();
   if (pole !== null) pole.value = wartosc;
 }
 
-/** Naciska przycisk czynności i oddaje treść wiersza odpowiedzi po niej. */
+/** Naciska przycisk czynności i oddaje treść wiersza odpowiedzi widocznego po jej wykonaniu w tym oknie. */
 async function nacisnij(element: HTMLElement, czynnosc: string): Promise<string> {
   const przycisk = element.querySelector<HTMLButtonElement>(`[data-czynnosc="${czynnosc}"]`);
   expect(przycisk, `czynność „${czynnosc}" musi mieć przycisk`).not.toBeNull();
@@ -92,8 +85,7 @@ describe('rozpoznanie materiału (media.inspect)', () => {
 
     expect(wyslane).toHaveLength(1);
     expect(wyslane[0]?.komenda).toBe(Command.MediaInspect);
-    // Droga zasobu biblioteki wróciłaby odmową, więc żądanie NIE MOŻE nieść
-    // assetId — i to jest rzecz, o którą ten sprawdzian głównie stoi.
+    // Droga zasobu biblioteki wróciłaby odmową, więc żądanie nie może nieść identyfikatora zasobu.
     expect(wyslane[0]?.zadanie).toEqual({ sourcePath: '/dom/operator/nagranie.mp4' });
     expect(zdanie).toContain('mov,mp4,m4a');
     expect(zdanie).toContain('61000 ms');

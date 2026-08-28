@@ -1,56 +1,23 @@
+/**
+ * Most do powłoki wykonuje aktualizację: przekazuje żądanie założenia
+ * wydania wraz z sumą kontrolną i odbiera odpowiedź powłoki natywnej.
+ */
 import { invoke } from '@tauri-apps/api/core';
 import { listen } from '@tauri-apps/api/event';
 
 import { czyPowlokaNatywna } from '../powloka/powloka-natywna';
 import type { Wydanie } from './wykaz-wydan';
 
-/**
- * Most do powłoki — wykonanie aktualizacji.
- *
- * Przeglądarka nie podmieni pliku wykonywalnego i nie uruchomi aplikacji
- * ponownie; potrafi to wyłącznie powłoka natywna (`desktop/src-tauri`), bo to
- * ona stawia proces i zna swoje miejsce na dysku. Interfejs rozpoznaje, że jest
- * co zakładać, i przekazuje żądanie.
- *
- * Suma kontrolna idzie w żądaniu, bo powłoka ma odmówić założenia pliku,
- * którego suma się nie zgadza — dlatego interfejs nigdy nie woła aktualizacji
- * bez sumy z wykazu wydań. Poza powłoką natywną i przy powłoce, która polecenia
- * nie zna, wynikiem jest nazwana odmowa — nie wyjątek i nie cisza.
- */
-
-/** Nazwa polecenia powłoki; odpowiednik `polecenia::wykonaj_aktualizacje`. */
+/** Nazwa polecenia powłoki wykonującego aktualizację; odpowiednik polecenia `wykonaj_aktualizacje` zaimplementowanego w powłoce natywnej. */
 const POLECENIE_AKTUALIZACJI = 'wykonaj_aktualizacje';
 
-/**
- * Nazwa polecenia powłoki pytającego, czym jest ta kopia aplikacji.
- *
- * Wykaz poleceń powłoki (`desktop/src-tauri/src/main.rs`) tego polecenia nie
- * zawiera, więc `drogaAktualizacji()` oddaje `null` — „powłoka nie mówi" —
- * a baner nie obiecuje wtedy restartu. Dołożenie polecenia po stronie powłoki
- * niczego tu nie łamie: odpowiedź zaczyna przychodzić, zdanie banera robi się
- * dokładniejsze.
- */
+/** Nazwa polecenia powłoki pytającego, czym jest ta kopia aplikacji i czy powłoka umie ją podmienić na nowsze wydanie. */
 const POLECENIE_DROGI = 'droga_aktualizacji';
 
-/**
- * Nazwa zdarzenia, którym powłoka rozgłasza postęp pobrania.
- *
- * Powłoka tego zdarzenia jeszcze nie rozgłasza: pętla pobrania (`pobranie.rs`)
- * liczy bajty, ale ich nie wysyła. Nasłuch stoi tu założony, żeby dołożenie
- * rozgłoszenia po stronie powłoki było jedyną potrzebną zmianą; dopóki nic nie
- * przychodzi, pas mówi wprost, że powłoka postępu nie podaje, zamiast rysować
- * pasek bez danych.
- */
+/** Nazwa zdarzenia, którym powłoka natywna rozgłasza bieżący postęp pobrania trwającego wydania aktualizacji aplikacji. */
 const ZDARZENIE_POSTEPU = 'powloka:aktualizacja-postep';
 
-/**
- * Przebieg oddany przez powłokę po udanej aktualizacji — kształt
- * `aktualizacja::Przebieg` (`desktop/src-tauri/src/aktualizacja/mod.rs`).
- *
- * Odpowiedź dociera przed restartem: powłoka odkłada ponowne uruchomienie
- * o `restart_za_ms`, żeby baner zdążył powiedzieć „udało się". Bez tej zwłoki
- * okno ginęłoby przed odebraniem odpowiedzi i wyglądałoby to jak awaria.
- */
+/** Przebieg oddany przez powłokę po udanej aktualizacji, o kształcie zgodnym ze strukturą `aktualizacja::Przebieg`. */
 export interface PrzebiegAktualizacji {
   droga: string;
   zalozone: string;
@@ -61,31 +28,18 @@ export interface PrzebiegAktualizacji {
   zdanie: string;
 }
 
-/** Odmowa powłoki: kod do rozgałęzienia i gotowe zdanie dla Operatora. */
+/** Odmowa powłoki wobec żądania aktualizacji: kod do rozgałęzienia obsługi i gotowe zdanie dla Operatora. */
 interface OdmowaPowloki {
   powod: string;
   zdanie: string;
 }
 
-/**
- * Wynik próby aktualizacji.
- *
- * Odmowa niesie osobno kod i zdanie, bo to dwie różne rzeczy dla dwóch różnych
- * odbiorców: `zdanie` czyta Operator, `kod` czyta baner. Bez kodu każda odmowa
- * wyglądałaby na trwałą, także brak łączności, który minie za minutę.
- */
+/** Wynik próby aktualizacji: powodzenie niosące przebieg albo odmowa niosąca osobno kod i zdanie dla Operatora. */
 export type WynikAktualizacji =
   | { udana: true; przebieg: PrzebiegAktualizacji }
   | { udana: false; kod: string; powod: string };
 
-/**
- * Kody odmów, po których ponowienie ma sens — brakło czegoś, co może wrócić.
- *
- * Reszta kodów (`suma-niezgodna`, `droga-niedostepna`, `adres-nie-https`,
- * `suma-w-zlym-zapisie`, `plik-pusty`, …) opisuje brak trwały: powtórzone
- * kliknięcie powtórzyłoby tę samą odmowę co do słowa, więc baner zostaje przy
- * przeczytanym powodzie aż do następnego obiegu pytania.
- */
+/** Zbiór kodów odmów, po których ponowienie czynności ma sens, ponieważ zabrakło czegoś, co może jeszcze wrócić. */
 const ODMOWY_PRZEMIJAJACE = new Set([
   'brak-lacznosci',
   'odpowiedz-serwera',
@@ -96,23 +50,12 @@ const ODMOWY_PRZEMIJAJACE = new Set([
   'aktualizacja-w-toku',
 ]);
 
-/** Czy po tej odmowie warto dać Operatorowi kliknąć jeszcze raz. */
+/** Rozstrzyga, czy po otrzymanej odmowie warto dać Operatorowi możliwość ponownego kliknięcia przycisku. */
 export function odmowaPrzemijajaca(kod: string): boolean {
   return ODMOWY_PRZEMIJAJACE.has(kod);
 }
 
-/**
- * Droga założenia wydania na tej kopii — odpowiedź powłoki, nie domysł strony.
- *
- * Sama obecność powłoki nie wystarcza za odpowiedź: na kopii z pakietu `.deb`
- * powłoka jest, ale podmiany nie wykona (`droga.rs`: brak zmiennej `APPIMAGE`
- * → odmowa `droga-niedostepna`). Miejsce, w którym pytamy o samą powłokę, woła
- * `czyPowlokaNatywna()` po imieniu.
- *
- * `null` znaczy „powłoka nie mówi", a nie „nie da się" — tak jest wszędzie tam,
- * gdzie powłoka polecenia nie zna. Wywołujący ma wtedy milczeć o restarcie,
- * a nie zgadywać w którąkolwiek stronę.
- */
+/** Droga założenia wydania na tej kopii aplikacji jest odpowiedzią powłoki, nie domysłem samego interfejsu. */
 export interface DrogaAktualizacji {
   /** Czy powłoka umie podmienić TĘ kopię — odpowiednik udanego `droga::rozpoznaj()`. */
   mozliwa: boolean;
@@ -122,15 +65,14 @@ export interface DrogaAktualizacji {
   zdanie: string;
 }
 
-/** Pyta powłokę o drogę założenia; `null`, gdy powłoka nie odpowiada na to pytanie. */
+/** Pyta powłokę natywną o drogę założenia wydania; oddaje `null`, gdy powłoka nie odpowiada na to pytanie. */
 export async function drogaAktualizacji(): Promise<DrogaAktualizacji | null> {
   if (!czyPowlokaNatywna()) return null;
   try {
     const odpowiedz: unknown = await invoke(POLECENIE_DROGI);
     if (typeof odpowiedz !== 'object' || odpowiedz === null) return null;
     const zapis = odpowiedz as Partial<DrogaAktualizacji>;
-    // `mozliwa` jest jedynym polem obowiązkowym: bez niego odpowiedź nie niesie
-    // tego, po co pytaliśmy, i lepiej milczeć niż zgadywać.
+    // `mozliwa` jest jedynym polem obowiązkowym odpowiedzi, reszta ma wartości domyślne.
     if (typeof zapis.mozliwa !== 'boolean') return null;
     return {
       mozliwa: zapis.mozliwa,
@@ -138,23 +80,15 @@ export async function drogaAktualizacji(): Promise<DrogaAktualizacji | null> {
       zdanie: typeof zapis.zdanie === 'string' ? zapis.zdanie : '',
     };
   } catch {
-    // Powłoka bez tego polecenia odrzuca wywołanie. To nie jest awaria —
-    // to jest „nie wiem", i tak właśnie ma zostać przekazane.
+    // Powłoka bez tego polecenia odrzuca wywołanie — to nie jest awaria, tylko brak odpowiedzi.
     return null;
   }
 }
 
-/** Etap, na którym stoi trwająca aktualizacja — słownictwo powłoki. */
+/** Etap, na którym w danej chwili stoi trwająca aktualizacja aplikacji, nazwany słownictwem samej powłoki. */
 export type EtapAktualizacji = 'pobieranie' | 'sprawdzanie-sumy' | 'zakladanie';
 
-/**
- * Postęp rozgłaszany przez powłokę.
- *
- * `calosc` bywa `null` I TO NIE JEST BRAK DANYCH DO ZAŁATANIA. Serwer nie musi
- * podać nagłówka `Content-Length`; wtedy znana jest wyłącznie liczba bajtów już
- * pobranych i procentu NIE MA. Widok ma wtedy pokazać licznik megabajtów, a nie
- * wymyślony udział.
- */
+/** Postęp aktualizacji rozgłaszany przez powłokę: etap, liczba pobranych bajtów i znana całość pobrania. */
 export interface PostepAktualizacji {
   etap: EtapAktualizacji;
   pobrano: number;
@@ -167,7 +101,7 @@ const ETAPY: ReadonlySet<string> = new Set<EtapAktualizacji>([
   'zakladanie',
 ]);
 
-/** Czyta ładunek zdarzenia; `null`, gdy nie ma kształtu postępu. */
+/** Czyta ładunek zdarzenia rozgłoszonego przez powłokę i zwraca `null`, gdy ładunek nie ma kształtu postępu. */
 function odczytajPostep(ladunek: unknown): PostepAktualizacji | null {
   if (typeof ladunek !== 'object' || ladunek === null) return null;
   const zapis = ladunek as Record<string, unknown>;
@@ -179,20 +113,13 @@ function odczytajPostep(ladunek: unknown): PostepAktualizacji | null {
   return {
     etap: etap as EtapAktualizacji,
     pobrano,
-    // Całość podana jako zero jest bezużyteczna tak samo jak niepodana —
-    // dzielenie przez nią dałoby procent, którego nikt nie zmierzył.
+    // Całość podana jako zero jest bezużyteczna tak samo jak niepodana.
     calosc:
       typeof calosc === 'number' && Number.isFinite(calosc) && calosc > 0 ? calosc : null,
   };
 }
 
-/**
- * Zaczyna nasłuchiwać postępu pobrania. Oddaje odwołanie nasłuchu.
- *
- * Poza powłoką i na powłoce, która tego zdarzenia nie rozgłasza, nie dzieje się
- * nic: słuchacz nigdy nie jest wołany, a odwołanie jest czynnością pustą.
- * Nasłuch nie ma prawa przeszkodzić w aktualizacji, o której opowiada.
- */
+/** Zaczyna nasłuchiwać postępu pobrania rozgłaszanego przez powłokę natywną i oddaje odwołanie tego nasłuchu. */
 export async function nasluchujPostepu(
   sluchacz: (postep: PostepAktualizacji) => void,
 ): Promise<() => void> {
@@ -210,14 +137,7 @@ export async function nasluchujPostepu(
   }
 }
 
-/**
- * Prosi powłokę o założenie wydania i ponowne uruchomienie aplikacji.
- *
- * Obietnica rozstrzyga się WYŁĄCZNIE odmową: przy powodzeniu powłoka zamyka
- * proces i nikt na wynik nie czeka, bo nie ma już czego czekać. Kod po tym
- * wywołaniu musi więc zakładać, że może się nie wykonać — i tak właśnie jest
- * napisany baner.
- */
+/** Prosi powłokę o założenie pobranego wydania i ponowne uruchomienie aplikacji po jego zainstalowaniu. */
 export async function wykonajAktualizacje(wydanie: Wydanie): Promise<WynikAktualizacji> {
   if (!czyPowlokaNatywna()) {
     return {
@@ -232,8 +152,7 @@ export async function wykonajAktualizacje(wydanie: Wydanie): Promise<WynikAktual
     return { udana: false, kod: 'wydanie-bez-pliku', powod: 'wydanie nie wskazuje pliku do pobrania' };
   }
   if (!wydanie.suma) {
-    // Świadoma odmowa, nie przeoczenie: bez sumy nie ma czego sprawdzić, a plik
-    // z sieci bez sprawdzenia jest dokładnie tym, czego ten most ma nie robić.
+    // Świadoma odmowa: bez sumy nie ma czego sprawdzić, więc plik nie jest zakładany.
     return {
       udana: false,
       kod: 'wydanie-bez-sumy',
@@ -243,9 +162,7 @@ export async function wykonajAktualizacje(wydanie: Wydanie): Promise<WynikAktual
     };
   }
   try {
-    // Nazwy pól są NAZWAMI Z JS, nie z Rusta: powłoka deklaruje `suma_sha256`,
-    // a Tauri v2 przyjmuje argumenty w camelCase. Rozbieżność jest zapisana
-    // tutaj, bo to jedyne miejsce, w którym da się ją zobaczyć z tej strony.
+    // Nazwy pól są nazwami z interfejsu, nie z rdzenia powłoki.
     const przebieg = await invoke<PrzebiegAktualizacji>(POLECENIE_AKTUALIZACJI, {
       adres: wydanie.plik,
       sumaSha256: wydanie.suma,
@@ -256,13 +173,7 @@ export async function wykonajAktualizacje(wydanie: Wydanie): Promise<WynikAktual
   }
 }
 
-/**
- * Wyjmuje z odmowy powłoki kod do rozgałęzienia.
- *
- * Wyjątek bez kształtu odmowy to powłoka, która polecenia nie zna, albo
- * przerwany most IPC. Dostaje osobny kod zamiast zgadywanego kodu powłoki:
- * baner ma po czym poznać, że kodu nie było.
- */
+/** Wyjmuje z przechwyconej odmowy zgłoszonej przez powłokę kod służący do rozgałęzienia dalszej obsługi błędu. */
 function kodPrzyczyny(przyczyna: unknown): string {
   if (typeof przyczyna === 'object' && przyczyna !== null) {
     const odmowa = przyczyna as Partial<OdmowaPowloki>;
@@ -271,13 +182,7 @@ function kodPrzyczyny(przyczyna: unknown): string {
   return 'odmowa-bez-kodu';
 }
 
-/**
- * Zamienia odmowę powłoki na zdanie dla Operatora.
- *
- * Zdanie układa powłoka, nie interfejs: tylko ona wie, czy zabrakło łączności,
- * prawa zapisu, czy zgodności sumy. Drugi zestaw zdań tutaj byłby drugą prawdą
- * o tej samej odmowie.
- */
+/** Zamienia przechwyconą odmowę zgłoszoną przez powłokę na gotowe zdanie do wyświetlenia Operatorowi na pasie. */
 function opisPrzyczyny(przyczyna: unknown): string {
   if (typeof przyczyna === 'object' && przyczyna !== null) {
     const odmowa = przyczyna as Partial<OdmowaPowloki>;

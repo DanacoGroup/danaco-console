@@ -19,19 +19,8 @@ import { utworzZrodloRozszerzen, type ZrodloRozszerzen } from './zrodlo-rozszerz
 import { utworzZrodloZaplecza, type ZrodloZaplecza } from './zrodlo-zaplecza';
 
 /**
- * Moduł Agents — sześć okien operacyjnych osadzonych w jednym układzie.
- *
- * Układ wynika z roli okna. Agent Builder jest kreatorem i punktem wejścia
- * modułu, więc stoi w pasie pierwszym na całą szerokość. Model Configuration
- * jest oknem pomocniczym, a cztery pozostałe są zarządcami, więc stoją w pasie
- * drugim obok siebie. Trzy z nich odnoszą się do eksperta wybranego w kreatorze;
- * Katalog rozszerzeń stoi na końcu pasa, bo jako jedyny mówi o platformie,
- * nie o ekspercie — i dlatego nie gaśnie, gdy żaden ekspert nie jest wybrany.
- *
- * Jeden ekspert jest czynny na cały moduł: `stan-agentow` jest jeden, więc wybór
- * w bibliotece przestawia okna eksperta naraz. Dlatego zakładka paska edytora
- * nie otwiera drugiego formularza — przenosi ognisko do okna, które daną rzeczą
- * zarządza.
+ * Moduł Agents łączy sześć okien operacyjnych w jednym układzie: Agent Builder w pasie
+ * pierwszym, cztery zarządcy i konfiguracja modelu w pasie drugim.
  */
 export interface ModulAgents {
   /** Element osadzany w obszarze roboczym powłoki. */
@@ -68,13 +57,7 @@ export function utworzModulAgents(kanal: Kanal): ModulAgents {
     'katalog-rozszerzen': katalog.element,
   };
 
-  /**
-   * Przenosi ognisko do okna wskazanego kodem zakładki.
-   *
-   * Kod zakładki nie jest kodem okna: zakładka „Tożsamość” prowadzi do okna
-   * `agent-builder`. Pętla czyszcząca porównuje się z kodem okna, nie z kodem
-   * zakładki — inaczej skasowałaby znacznik postawiony dla okna docelowego.
-   */
+  /** Przenosi ognisko do okna wskazanego kodem zakładki; kod zakładki bywa inny niż kod okna. */
   function przenieOgnisko(kod: string): void {
     const kodOkna = kod === 'tozsamosc' ? 'agent-builder' : kod;
     const cel = okna[kodOkna];
@@ -96,9 +79,7 @@ export function utworzModulAgents(kanal: Kanal): ModulAgents {
     katalog.element,
   );
 
-  // Wykaz braków stoi na końcu modułu, poza pasami okien: mówi o module jako
-  // całości, a nie o żadnym pojedynczym oknie. Pozycje mają też własne
-  // kontrolki tam, gdzie Operator ich szuka; tutaj stoi ich liczba.
+  // Wykaz braków stoi poza pasami okien — dotyczy modułu jako całości, nie pojedynczego okna.
   const braki: WykazBrakow = utworzWykazBrakow(kanal);
 
   const element = document.createElement('div');
@@ -125,9 +106,7 @@ export function utworzModulAgents(kanal: Kanal): ModulAgents {
     element,
 
     async wczytaj(idSesji) {
-      // Odczyty idą równolegle: każdy dotyczy innego obszaru kontraktu, a żaden
-      // nie warunkuje drugiego. Odmowa jednego zostaje w jego oknie i nie gasi
-      // pozostałych.
+      // Odczyty idą równolegle: dotyczą różnych obszarów kontraktu i nie warunkują się nawzajem.
       await Promise.all([
         stan.odswiez(),
         builder.wczytajKategorie(),
@@ -143,9 +122,7 @@ export function utworzModulAgents(kanal: Kanal): ModulAgents {
       odsubskrybuj();
       builder.rozlacz();
       konektory.zamknij();
-      // Drzewo wyboru narzędzi zakłada nasłuchy na dokumencie (zamknięcie
-      // kliknięciem obok, Escape), więc bez tego wiersza przeżyłoby własne okno
-      // i reagowało na klawiaturę w module, którego już nie ma.
+      // Drzewo wyboru narzędzi zakłada nasłuchy na dokumencie, więc wymaga jawnego zamknięcia.
       umiejetnosci.zamknij();
       model.zamknij();
       uprawnienia.zamknij();

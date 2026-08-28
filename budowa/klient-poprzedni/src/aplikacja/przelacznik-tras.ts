@@ -1,7 +1,10 @@
 import { elementIkony, type NazwaIkony } from '../ikony/ikony';
 import { NAZWY_TRAS, Trasa, TRASY } from './trasy';
 
-/** Przełącznik tras zamontowany na pasku. */
+/**
+ * Przełącznik tras zamontowany na pasku aplikacji: grupa przycisków trzech
+ * widoków najwyższego rzędu wraz z oznaczeniem trasy pokazywanej w tej chwili.
+ */
 export interface PrzelacznikTras {
   /** Grupa przycisków montowana na pasku aplikacji. */
   element: HTMLElement;
@@ -9,7 +12,10 @@ export interface PrzelacznikTras {
   ustawBiezaca(trasa: Trasa): void;
 }
 
-/** Znak trasy w przełączniku; ikony z zestawu `ikony/`. */
+/**
+ * Znak trasy w przełączniku — nazwa ikony z zestawu `ikony/` przypisana każdej
+ * z trzech tras, ponieważ przyciski paska stoją bez napisu.
+ */
 const ZNAKI: Readonly<Record<Trasa, NazwaIkony>> = {
   [Trasa.StronaGlowna]: 'dom',
   [Trasa.Srodowisko]: 'folder',
@@ -17,15 +23,9 @@ const ZNAKI: Readonly<Record<Trasa, NazwaIkony>> = {
 };
 
 /**
- * Przełącznik trzech widoków najwyższego rzędu.
- *
- * Buduje przyciski tras i oznacza trasę bieżącą. Sam nie przełącza — zgłasza
- * wybór warstwie, która trzyma router.
- *
- * Żaden przycisk nie jest bramą i żaden nie zostaje wyszarzony: do środowiska
- * można wejść także wprost, bo środowisko domyślne istnieje od pierwszej
- * chwili. Trasa bieżąca jest oznaczona przez `aria-current`, nie przez
- * odebranie klikalności.
+ * Przełącznik trzech widoków najwyższego rzędu. Buduje przyciski tras i oznacza
+ * trasę bieżącą atrybutem `aria-current`; sam nie przełącza — zgłasza wybór
+ * warstwie, która trzyma router.
  */
 export function utworzPrzelacznikTras(naWybor: (trasa: Trasa) => void): PrzelacznikTras {
   const element = document.createElement('nav');
@@ -41,10 +41,7 @@ export function utworzPrzelacznikTras(naWybor: (trasa: Trasa) => void): Przelacz
     przycisk.dataset.trasa = trasa;
     przycisk.title = NAZWY_TRAS[trasa];
 
-    // Sam znak, bez napisu: trasy stoją w grupie akcji paska obok ustawień,
-    // motywu i menu Operatora, które również są ikonami, a nazwa widoku stoi
-    // tuż pod paskiem jako tytuł strony. Nazwę niesie `title` i etykieta
-    // dostępności przycisku.
+    // Sam znak, bez napisu: nazwę widoku niosą `title` oraz etykieta dostępności przycisku.
     przycisk.setAttribute('aria-label', NAZWY_TRAS[trasa]);
     przycisk.append(elementIkony(ZNAKI[trasa], { rozmiar: 18 }));
     przycisk.addEventListener('click', () => naWybor(trasa));

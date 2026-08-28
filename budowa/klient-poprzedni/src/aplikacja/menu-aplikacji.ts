@@ -3,20 +3,9 @@ import { utworzMenuRozwijane, type MenuRozwijane } from '../okna-rownolegle/menu
 import { POZYCJE_USTAWIEN, type PozycjaUstawienia } from '../strona-glowna/pozycje-ustawien';
 
 /**
- * Menu aplikacji w pasku — wejście do ustawień platformy z każdej trasy,
- * która ten pasek nosi (Centrum dowodzenia, Mission Control).
- *
- * Pozycje bierze z `POZYCJE_USTAWIEN` — tego samego wykazu, z którego powstaje
- * listwa ustawień strony głównej; drugi wykaz rozjechałby się przy dopisaniu
- * pozycji. Skutek naciśnięcia również jest wspólny: `wykonajZamiarUstawien`
- * z `akcje-ustawien.ts`. Menu nie wie, co się po naciśnięciu stanie.
- *
- * Rozwijanie niesie `okna-rownolegle/menu-rozwijane.ts` wraz z obsługą
- * klawiatury, `aria-haspopup`, zamykaniem na `pointerdown` poza obszarem
- * i warstwą `--dn-z-przybornik`.
- *
- * Menu nie zastępuje listwy strony głównej — daje te same pozycje tam, gdzie
- * listwy nie ma: na Mission Control i po zwinięciu strony w dół.
+ * Menu aplikacji w pasku, czyli wejście do ustawień platformy z każdej trasy,
+ * która ten pasek nosi. Pozycje pochodzą z tego samego wykazu ustawień co
+ * listwa strony głównej, a skutek naciśnięcia rozstrzyga wykaz skutków.
  */
 export interface MenuAplikacji {
   element: HTMLElement;
@@ -59,8 +48,7 @@ function wpis(
   element.className = 'dn-menu__pozycja';
   element.setAttribute('role', 'menuitem');
   element.dataset['ustawienie'] = pozycja.kod;
-  // Rozwinięcie nazwy idzie do technologii wspomagających i do dymka —
-  // etykieta w menu musi zostać krótka, żeby lista dała się przebiec wzrokiem.
+  // Rozwinięcie nazwy idzie do technologii wspomagających i do dymka, więc etykieta zostaje krótka.
   element.title = pozycja.wyjasnienie;
   element.setAttribute('aria-description', pozycja.wyjasnienie);
 

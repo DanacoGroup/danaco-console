@@ -1,30 +1,14 @@
+/**
+ * Ster nastawy modułu Browser obsadza wspólny mechanizm menu-drzewa: rozwijanie,
+ * filtrowanie, haczyk i wędrówka klawiszami należą do mechanizmu, a ten plik podaje
+ * mu pozycje wyboru i przechowuje wartość nastawy w jednym polu.
+ */
 import { utworzMenuDrzewo, type PozycjaMenu } from '../../komponenty/menu-drzewo';
 
 /**
- * Ster nastawy modułu Browser — obsada wspólnego menu-drzewa.
- *
- * Trzy nastawy modułu — rodzaj wyodrębnienia w pasku dolnym oraz powiązane
- * źródło i moduł docelowy w formularzu notatki — korzystają z jednego
- * mechanizmu rozwijania z `komponenty/menu-drzewo.ts`. Rozwijanie,
- * filtrowanie, haczyk i wędrówka klawiszami należą do tego mechanizmu; ten
- * plik go wyłącznie obsadza.
- *
- * Wartość nastawy mieszka w jednym polu `wybrana`. Napis na uchwycie i haczyk
- * przy pozycji biorą się z niej przy każdym przerysowaniu, a `wartosc()`
- * oddaje to samo pole.
- *
- * Podpis nad sterem jest blokiem, nie `<label>`. Etykieta bez `for` związałaby
- * się z pierwszym potomkiem dającym się etykietować — czyli z uchwytem menu —
- * i wtedy kliknięcie w podpis otwierałoby wykaz, a nazwa dostępna uchwytu
- * konkurowałaby z `aria-label`, które mechanizm składa sam z nazwy nastawy
- * i wartości bieżącej.
- *
- * Podpis staje na ekranie tam, gdzie ster sąsiaduje z polami formularza: sama
- * wartość („bez powiązania") nie mówi, czego dotyczy. Przy pasku dolnym nazwa
- * nastawy idzie wyłącznie do `aria-label` uchwytu.
+ * Jedna pozycja wyboru w sterze: wartość zapisywana w nastawie, napis widoczny dla
+ * Operatora oraz zdanie opisu wyświetlane przy pozycji w rozwiniętym wykazie.
  */
-
-/** Jedna pozycja wyboru: wartość nastawy, napis dla Operatora, zdanie opisu. */
 export interface PozycjaSteru {
   wartosc: string;
   etykieta: string;
@@ -39,15 +23,7 @@ export interface SterWyboru {
   wartosc(): string;
   /** Wymienia pozycje, utrzymując wybór, o ile nadal istnieje. */
   ustawPozycje(pozycje: readonly PozycjaSteru[]): void;
-  /**
-   * Ustawia nastawę bez udziału Operatora i oddaje informację, czy ją przyjęto.
-   *
-   * Wartość spoza wykazu nie zostaje na uchwycie — ster wraca do pozycji
-   * pierwszej i oddaje `false`. Milczące przyjęcie wartości, której w wykazie
-   * nie ma, byłoby uchwytem pokazującym nastawę nie do wybrania;
-   * wołający dostaje więc odpowiedź i sam rozstrzyga, czy to powiedzieć
-   * Operatorowi.
-   */
+  /** Ustawia nastawę bez udziału Operatora; oddaje `false` przy wartości spoza wykazu. */
   ustawWartosc(wartosc: string): boolean;
 }
 
@@ -118,10 +94,7 @@ export function utworzSterWyboru(opcje: OpcjeSteruWyboru): SterWyboru {
 
     ustawPozycje(nowe) {
       pozycje = nowe;
-      // Wybór przeżywa wymianę wykazu, jeśli jego pozycja nadal w nim jest.
-      // Gdy nie jest, nastawą staje się pierwsza pozycja nowego wykazu — ster
-      // nie zostaje przy wartości spoza wykazu, bo uchwyt pokazywałby wtedy
-      // nastawę nie do wybrania.
+      // Wybór przeżywa wymianę wykazu tylko wtedy, gdy jego pozycja nadal w nim stoi.
       if (!nowe.some((pozycja) => pozycja.wartosc === wybrana)) {
         wybrana = nowe[0]?.wartosc ?? '';
       }

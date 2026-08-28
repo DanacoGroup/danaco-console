@@ -1,3 +1,9 @@
+/**
+ * Telemetria procesów widziana przez moduł Diagnostics: rodzina komend
+ * `monitor.*` wraz ze zdarzeniem `progress.changed`. Źródło oddaje wynik
+ * diagnostyki, a nie samą treść, i nie podstawia pustego wykazu za nieudany
+ * odczyt.
+ */
 import {
   Command,
   EventType,
@@ -13,34 +19,10 @@ import { wywolaj } from '../../protokol/wywolanie';
 import { rozstrzygnij, type WynikDiagnostyki } from './zrodlo-diagnostics';
 
 /**
- * Telemetria procesów widziana przez moduł Diagnostics — rodzina `monitor.*`
- * wraz ze zdarzeniem `progress.changed`.
- *
- * Rodzina jest jedynym źródłem obserwowalności, jakie kontrakt niesie poza
- * obszarem `diagnostics.*`. Opracowanie modułu wywodzi metryki wydajności
- * i kontrolę stanu samej platformy z encji `proces_sesji`, a `MonitorStatus`
- * jest dokładnie jej odwzorowaniem w kontrakcie („ta sama telemetria co
- * progress.changed”, opis struktury). Zakładki Metrics & Performance oraz
- * Health & Uptime jadą więc jednym odczytem: dwie perspektywy na ten sam
- * materiał, nie dwa niezależne pomiary, które rozejdą się po pierwszej zmianie.
- *
- * Źródło oddaje `WynikDiagnostyki`, nie samą treść, i nigdzie nie podstawia
- * pustego wykazu za nieudany odczyt — z tego samego powodu, dla którego robi
- * tak `zrodlo-diagnostics.ts`. Odmowa `monitor.status` bywa tu zjawiskiem
- * zwykłym: rdzeń bez wpiętego rejestru telemetrii odmawia głośno
- * (`core/handlers_monitor.go`, gałąź monitora niewpiętego), a wykaz pusty
- * ukryłby ten fakt pod zdaniem „nie ma procesów”.
- *
- * Podział na dwie komendy jest podziałem ról, nie wygodą: `monitor.status`
- * czyta stan bieżący i niczego nie zapisuje, `monitor.subscribe` dodatkowo
- * zapisuje okno na telemetrię. Pole `subscribed` odpowiedzi mówi, czy zapis
- * doszedł do skutku — żądanie bez `windowId` jest zwykłym odczytem
- * (`core/adapter_modul_monitor.go`, `ObserwujProcesy`), a moduł Diagnostics
- * montuje się bez okna. Okno pyta o to pole i mówi Operatorowi wprost, bo
- * „obserwacja założona” i „obserwacja niezałożona” to dwa różne zdania.
+ * Odpowiedź komendy `monitor.subscribe`: stan bieżący procesów wraz z losem
+ * samego zapisu okna na telemetrię. Pole zapisu mówi wprost, czy obserwacja
+ * została założona.
  */
-
-/** Odpowiedź `monitor.subscribe` — stan bieżący wraz z losem samego zapisu. */
 export interface ObserwacjaProcesow {
   statuses: MonitorStatus[];
   /** Czy rdzeń zapisał okno na telemetrię; `false` przy żądaniu bez okna. */
@@ -54,14 +36,7 @@ export interface ZrodloObserwowalnosci {
   obserwujProcesy(
     zadanie: MonitorSubscribeRequest,
   ): Promise<WynikDiagnostyki<ObserwacjaProcesow>>;
-  /**
-   * Subskrypcja `progress.changed` — zmiana stanu procesu na żywo.
-   *
-   * Zdarzenie dochodzi do wszystkich połączeń konta niezależnie od tego, czy
-   * `monitor.subscribe` zapisał okno; zapis mówi rdzeniowi wyłącznie, które
-   * okno których procesów pilnuje. Dlatego wykaz zmienia się na żywo także
-   * wtedy, gdy `subscribed` niesie `false`.
-   */
+  /** Subskrypcja `progress.changed`, czyli zmiana stanu procesu na żywo. */
   naPostep(sluchacz: (tresc: ProgressChangedEvent) => void): Odsubskrybuj;
 }
 

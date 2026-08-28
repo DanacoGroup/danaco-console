@@ -4,14 +4,10 @@ import { nazwaTrybu, TRYBY } from './nazwy-dostepow';
 import { ostrzezenieZapisu } from './ostrzezenie-zapisu';
 
 /**
- * Przełącznik trybu nadania: odczyt albo zapis, per punkt dostępu.
- *
- * Ostrzeżenie należy do przełącznika, nie jest dodatkiem obok niego. Zapis na
- * maszynie chronionej pokazuje pełne zdanie pod przełącznikiem, a nie
- * w podpowiedzi pod kursorem — skutek zapisu na produkcyjnej platformie LEX
- * jest nieodwracalny.
- *
- * Przełącznik nie blokuje zapisu; wybór trybu zostaje po stronie człowieka.
+ * Przełącznik trybu nadania: odczyt albo zapis, osobno dla każdego punktu
+ * dostępu. Ostrzeżenie o zapisie należy do przełącznika, a nie jest dodatkiem
+ * obok niego. Przełącznik zapisu nie blokuje — wybór trybu zostaje po stronie
+ * człowieka.
  */
 export interface PrzelacznikTrybu {
   /** Element osadzany w karcie punktu albo wierszu nadania. */

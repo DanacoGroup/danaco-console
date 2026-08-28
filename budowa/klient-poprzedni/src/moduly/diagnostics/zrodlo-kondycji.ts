@@ -24,20 +24,9 @@ import { czyLogiczna, czyObiekt, czyTablica, sprawdzKsztalt } from '../../protok
 import { wywolaj } from '../../protokol/wywolanie';
 
 /**
- * Dwanaście komend trzech rodzin opisujących STAN PRODUKTU: sondy kondycji
- * (`health.*`), reguły wyzwalania wraz z rejestrem wyzwoleń (`alert.*`) oraz
- * powtórzenie wywołania modelu (`provenance.call.replay`).
- *
- * ── Czego okno NIE ma prawa zrobić ──────────────────────────────────────────
- * Pokazać „w porządku" bez pomiaru. Sonda bez ani jednego przebiegu nie ma
- * dostępności i rdzeń oddaje wtedy pustą wartość procentową — okno pokazuje tę
- * pustkę, a nie sto procent. Brak pomiarów nie jest dowodem sprawności i to
- * jest jedyny powód, dla którego ta rodzina w ogóle istnieje.
- *
- * ── Powtórzenie wywołania kosztuje ──────────────────────────────────────────
- * `provenance.call.replay` nie jest odczytem: to nowe wywołanie kanału modelu,
- * z własnym kosztem i własnym wierszem śladu. Okno woła je wyłącznie na jawne
- * żądanie Operatora, nigdy przy odświeżeniu wykazu.
+ * Interfejs udostępnia dwanaście komend trzech rodzin opisujących stan produktu:
+ * sondy kondycji, reguły wyzwalania z rejestrem wyzwoleń oraz powtórzenie
+ * wywołania modelu, kosztowne jak nowe wywołanie kanału.
  */
 export interface ZrodloKondycji {
   /** `health.probe.save` — definicja sondy; brak identyfikatora zakłada nową. */

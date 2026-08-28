@@ -7,34 +7,9 @@ import {
 } from './katalog-narzedzi';
 
 /**
- * Licznik narzędzi przy definicji eksperta — ile narzędzi ekspert załaduje przy
- * wywołaniu. Nadmiar narzędzi degraduje wywołanie po cichu: docierają do modelu
- * bez opisów, więc model po nie nie sięga, a nic tego nie zgłasza.
- *
- * Liczba pochodzi z jednego wyliczenia (`policz`) obsadzonego w trzech oknach
- * modułu — Agent Builder, Skills Manager, Connectors Manager — więc przypisanie
- * umiejętności w jednym oknie przestawia liczbę w pozostałych.
- *
- * Wtyczki nie wchodzą do liczby: `server/internal/narzedzia/ekspert_definicja.go`
- * bierze do doboru narzędzi wyłącznie `Agent.SkillIds` i `Agent.ConnectorIds`,
- * a wtyczka jedzie katalogiem rozszerzeń powłoki (`--plugin-dir`), nie wykazem
- * `tools/list`. Stoją więc w zdaniu obok liczby, nie w niej.
- *
- * Serwer narzędzi przesiewa nie wykaz kontraktu, lecz wykaz okna — kontrakt
- * powiększony o pozycje dokładane przez rolę okna (`WykazZasiegu`
- * w `zasieg_roli.go`). Licznik zna sam kontrakt, bo klient nie wie tutaj,
- * w jakiej roli okno eksperta zostanie otwarte: kod wskazujący narzędzie roli
- * zostanie tu policzony jako nierozpoznany, choć rdzeń go rozpozna. Liczba jest
- * więc dolnym oszacowaniem dla okien roli asystenta i dokładna dla okien
- * roboczych.
- *
- * Progu znaczeniowego nie ma i licznik go nie udaje — nie maluje pasma
- * zielony/bursztyn/czerwony po zmyślonych wartościach. Bursztyn zapala się
- * wyłącznie przy stanie wyprowadzonym z `ZlozWykazEksperta`: gdy zawężenie nie
- * weszło i model dostanie wykaz w całości.
+ * Wynik pomiaru narzędzi eksperta: ile narzędzi ekspert załaduje przy wywołaniu i skąd
+ * ta liczba się bierze, wraz z rozpoznaniem kodów i wtyczek.
  */
-
-/** Ile narzędzi ekspert załaduje i skąd ta liczba się bierze. */
 export interface PomiarNarzedzi {
   /** Kody z `skillIds` i `connectorIds`, bez pustych i bez powtórzeń. */
   kody: readonly string[];
@@ -54,7 +29,10 @@ export interface PomiarNarzedzi {
   wtyczki: number;
 }
 
-/** Pomiar eksperta niewybranego — okno ma co pokazać, zanim wybór padnie. */
+/**
+ * Pomiar zwracany, gdy żaden ekspert nie jest wybrany — okno ma co pokazać na liczniku,
+ * zanim użytkownik dokona wyboru eksperta.
+ */
 const BEZ_EKSPERTA: PomiarNarzedzi = {
   kody: [],
   rozpoznanie: { nazwy: [], grupy: [], nierozpoznane: [], narzedzia: [] },
@@ -67,14 +45,8 @@ const BEZ_EKSPERTA: PomiarNarzedzi = {
 };
 
 /**
- * Liczy narzędzia eksperta dokładnie tak, jak złoży je serwer narzędzi.
- *
- * Trzy przypadki i każdy jest osobnym zdaniem, bo znaczą co innego:
- *   1. kodów nie ma — zawężenia nie ma czym wykonać, idzie wykaz w całości;
- *   2. kody są, ale żaden nie nazywa narzędzia ani grupy — jak wyżej, tyle że
- *      z winy kodów, więc zdanie wymienia je z nazwy;
- *   3. rozpoznano co najmniej jeden — wykaz zawężony, liczba jest doborem.
- * Ta sama trójka stoi w `ZlozWykazEksperta` (`ekspert_wykaz.go`).
+ * Liczy narzędzia eksperta zgodnie z doborem serwera narzędzi na podstawie kodów
+ * w polach skillIds i connectorIds.
  */
 export function policz(ekspert: Agent | null): PomiarNarzedzi {
   if (ekspert === null) return BEZ_EKSPERTA;
@@ -128,7 +100,10 @@ export function policz(ekspert: Agent | null): PomiarNarzedzi {
   };
 }
 
-/** Odmiana rzeczownika „kod" — liczba w zdaniu ma brzmieć po polsku. */
+/**
+ * Dobiera odmianę rzeczownika „kod" zależnie od liczby, tak aby zdanie z liczebnikiem
+ * brzmiało poprawnie w języku polskim.
+ */
 function odmianaKodow(ile: number): string {
   if (ile === 1) return 'kod';
   const dziesiatki = ile % 100;
@@ -137,7 +112,10 @@ function odmianaKodow(ile: number): string {
   return jednosci >= 2 && jednosci <= 4 ? 'kody' : 'kodów';
 }
 
-/** Odmiana rzeczownika „narzędzie" dla liczby stojącej przy nim. */
+/**
+ * Dobiera odmianę rzeczownika „narzędzie" zależnie od liczby, tak aby zdanie
+ * z liczebnikiem brzmiało poprawnie w języku polskim.
+ */
 function odmianaNarzedzi(ile: number): string {
   if (ile === 1) return 'narzędzie';
   const dziesiatki = ile % 100;
@@ -156,12 +134,8 @@ export interface LicznikNarzedzi {
 }
 
 /**
- * Widok licznika.
- *
- * Stan nigdy nie jest samym kolorem: bursztyn niesie zdanie i znacznik
- * `data-stan`, bo żeton barwy nie zwalnia komponentu z etykiety tekstowej
- * (`motyw/stany.css`). `aria-live` ogłasza zmianę liczby, bo liczba zmienia się
- * w skutek czynności wykonanej w innym oknie modułu.
+ * Tworzy widok licznika narzędzi z liczbą, zdaniem opisowym i polem uwagi, ogłaszanym
+ * elementom pomocniczym przez atrybut aria-live.
  */
 export function utworzLicznikNarzedzi(): LicznikNarzedzi {
   const element = document.createElement('div');
@@ -209,12 +183,8 @@ export function utworzLicznikNarzedzi(): LicznikNarzedzi {
 }
 
 /**
- * Zdanie pod liczbą — mówi, co ta liczba znaczy, i nazywa każdy brak.
- *
- * Trzy rzeczy naraz, bez wchodzenia w drugie okno: powód braku zawężenia (gdy
- * jest), kody nierozpoznane (gdy są) i wtyczki (gdy są) — te ostatnie
- * z zaznaczeniem, że jadą inną drogą niż wykaz narzędzi. Na końcu zawsze
- * zastrzeżenie, że licznik nie orzeka, czy liczba jest bezpieczna.
+ * Buduje zdanie uwagi pod licznikiem, opisujące powód braku zawężenia, kody
+ * nierozpoznane i liczbę wtyczek eksperta.
  */
 function zdanieUwagi(wynik: PomiarNarzedzi): string {
   const czesci: string[] = [];

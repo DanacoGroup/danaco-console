@@ -6,17 +6,10 @@ import {
 } from '../../../../shared/contract';
 
 /**
- * Wykaz komponentów architektury należących do jednej warstwy warsztatu —
- * „drzewo komponentów” Frontend Workspace i „mapa zależności usług” Backend
- * Workspace.
- *
- * Oba okna patrzą na ten sam zbiór komponentów z Architecture Designera
- * i różnią się wyłącznie tym, które rodzaje do nich należą. Wykaz jest do
- * odczytu: komponenty zmienia się tam, gdzie powstają.
- *
- * Przypisanie rodzaju do warstwy jest wyborem klienta, nie kontraktu — nic
- * w `AppWorkspaceLayer` ani `AppComponentKind` tych dwóch zbiorów nie łączy.
- * Podział jest wypisany wprost, żeby stał w jednym miejscu.
+ * Wykaz komponentów architektury należących do jednej warstwy warsztatu:
+ * drzewo komponentów okna Frontend Workspace oraz mapa zależności usług okna
+ * Backend Workspace. Wykaz służy tylko do odczytu, a komponenty zmienia się
+ * tam, gdzie powstają.
  */
 const RODZAJE_WARSTWY: Readonly<Record<WarstwaWarsztatu, readonly string[]>> = {
   [AppWorkspaceLayer.Frontend]: [AppComponentKind.Frontend, AppComponentKind.External],
@@ -61,7 +54,11 @@ export function utworzWykazKomponentowWarstwy(
   };
 }
 
-/** Jeden komponent warstwy wraz z jego zależnościami. */
+/**
+ * Jeden komponent warstwy wraz z jego zależnościami. Wiersz niesie nazwę
+ * komponentu oraz wyliczenie komponentów, od których zależy, albo adnotację
+ * o braku zależności.
+ */
 function wiersz(komponent: AppComponent): HTMLElement {
   const nazwa = document.createElement('span');
   nazwa.className = 'mp-wykaz__nazwa';
@@ -80,7 +77,11 @@ function wiersz(komponent: AppComponent): HTMLElement {
   return element;
 }
 
-/** Identyfikatory komponentów warstwy — do listy wyboru w formularzu zapisu. */
+/**
+ * Komponenty warstwy odsiane z całego zbioru według rodzaju, przeznaczone do
+ * listy wyboru w formularzu zapisu. Kolejność ze zbioru wejściowego zostaje
+ * zachowana.
+ */
 export function komponentyWarstwy(
   warstwa: WarstwaWarsztatu,
   komponenty: readonly AppComponent[],

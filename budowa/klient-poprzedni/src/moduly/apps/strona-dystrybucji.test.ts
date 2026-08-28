@@ -16,30 +16,18 @@ import { utworzOknoIntegrationsHub } from './okno-integrations-hub';
 import { utworzStanRozszerzen } from './stan-rozszerzen';
 
 /**
- * Sprawdziany strony dystrybucji i konsumpcji modułu Apps.
- *
- * Pilnowane jest zachowanie, nie kształt plików — pięć rzeczy, które opracowanie
- * i zasada zero blokad stawiają wprost, a które łatwo zepsuć po cichu:
- *
- *   1. zawężenie katalogu odsiewa po polach, które pozycja NIESIE, i mówi
- *      o zakresie szukania zamiast pozwalać czytać pustkę jako brak pozycji;
- *   2. odczyt katalogu ZASTĘPUJE zbiór, a nie dokłada do niego — inaczej
- *      w wykazie zostawałaby pozycja, której rdzeń już nie zna;
- *   3. zdarzenie `extension.changed` zmienia zbiór niezależnie od tego, gdzie
- *      zaszła zmiana, a usunięcie zdejmuje też wskazanie panelu bocznego;
- *   4. ani jedna kontrolka okien nie ma atrybutu `disabled` — zasada zero
- *      blokad platformy; kontrolka bez pokrycia ma być klikalna i nazywać brak;
- *   5. instalacja niesie pochodzenie pozycji, bo to jedyne pole rozstrzygające
- *      stan wyjściowy rejestracji.
- *
- * Rdzeń jest atrapą: sprawdzian pyta o zachowanie okna, nie serwera.
+ * Sprawdziany strony dystrybucji i konsumpcji modułu Apps pilnują zachowania okna, nie kształtu
+ * plików, wobec zasady zero blokad, a rdzeń w nich jest atrapą.
  */
 interface Zapis {
   komenda: string;
   zadanie: Record<string, unknown>;
 }
 
-/** Pozycje przykładowe z domeny produktu — katalog rozszerzeń platformy. */
+/**
+ * Pozycje przykładowe z domeny produktu tworzą katalog rozszerzeń platformy używany przez
+ * sprawdziany tego pliku jako dane wejściowe testów.
+ */
 const SERWER_REPOZYTORIOW: Extension = {
   id: 'ext-1',
   code: 'mcp-repozytoria',
@@ -104,8 +92,7 @@ function atrapaKanalu(zapisy: Zapis[], odpowiedzi: Record<string, unknown> = {})
     naZdarzenie: () => () => undefined,
     naDowolny: () => () => undefined,
     sesja: () => ({ id: () => 'sesja-1' }) as never,
-    // Droga fail-open modułu czyta dziennik nierozpoznanych, więc atrapa musi
-    // go mieć — inaczej sprawdzian padłby na warstwie, której nie bada.
+    // Droga fail-open modułu czyta dziennik nierozpoznanych, więc atrapa musi go mieć.
     dziennikNieznanych: () => ({ naWpis: () => () => undefined }) as never,
   } as unknown as Kanal;
 }
@@ -129,8 +116,7 @@ describe('zawężenie katalogu rozszerzeń', () => {
     expect(zawez(KATALOG, { ...BEZ_ZAWEZENIA, tekst: 'repozytoriów' })).toEqual([
       SERWER_REPOZYTORIOW,
     ]);
-    // Nazwa narzędzia udostępnianego przez pozycję nie jest polem katalogu —
-    // brak trafienia jest tu stanem prawdziwym, o którym okno musi powiedzieć.
+    // Nazwa narzędzia udostępnianego przez pozycję nie jest polem katalogu; brak bywa prawdą.
     expect(zawez(KATALOG, { ...BEZ_ZAWEZENIA, tekst: 'repo.commit' })).toEqual([]);
   });
 
@@ -266,8 +252,7 @@ describe('opis stanu pozycji', () => {
 
 describe('zdarzenie katalogu rozszerzeń', () => {
   it('wchłania zmianę i usunięcie niezależnie od miejsca ich powstania', async () => {
-    // Słuchacz trzymany w polu obiektu, nie w zmiennej: przypisanie wewnątrz
-    // atrapy jest dla kompilatora niewidoczne i zawęziłby typ zmiennej do `null`.
+    // Słuchacz trzymany w polu obiektu, bo przypisanie wewnątrz atrapy jest dla kompilatora niewidoczne.
     const gniazdo: { sluchacz: ((tresc: unknown) => void) | null } = { sluchacz: null };
     const kanal = {
       wyslij: (_k: Command, _z: unknown, przy?: (w: unknown) => void) => {

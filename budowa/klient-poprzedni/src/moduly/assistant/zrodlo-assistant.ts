@@ -18,22 +18,9 @@ import type { Kanal, Wynik } from '../../protokol/kanal';
 import { czyObiekt, czyTablica, czyTekst, sprawdzKsztalt } from '../../protokol/ksztalt-odpowiedzi';
 import { wywolaj } from '../../protokol/wywolanie';
 
-/**
- * Trzy komendy i jedno zdarzenie obszaru `assistant.*` widziane przez okna
- * modułu.
- *
- * Plik odpowiada wyłącznie za warstwę wywołań kontraktu wraz ze sprawdzianem
- * kształtu odpowiedzi. Źródło nie ma własnego stanu i nie buduje ani jednego
- * elementu — stan zleceń mieszka w `stan-assistant.ts`, żeby trzy okna modułu
- * patrzyły na jeden zbiór, a nie na trzy kopie.
- *
- * Żadne wywołanie nie rzuca wyjątkiem: niepowodzenie wraca polem `blad` wyniku,
- * a okno pokazuje je w swoim stanie błędu. Tą samą drogą wraca odmowa
- * merytoryczna rdzenia i koperta `assistant.unknown` drogi bez uchwytu, więc
- * okno nazywa je wprost zamiast udawać wykonanie.
- */
+/** Trzy komendy i jedno zdarzenie obszaru assistant widziane przez okna modułu. */
 
-/** Polecenie wydane asystentowi z Voice Console. */
+/** Polecenie wydane asystentowi z Voice Console, niosące okno modułu, transkrypcję, profil i nastawę syntezy mowy. */
 export interface PolecenieAsystenta {
   /** Okno modułu; kontrakt wymaga go w każdym poleceniu. */
   idOkna: string;
@@ -45,7 +32,7 @@ export interface PolecenieAsystenta {
   czytaj: boolean;
 }
 
-/** Sterowanie zleceniem wydane z Actions Monitora. */
+/** Sterowanie zleceniem wydane z Actions Monitora, niosące identyfikator zlecenia i nowy priorytet albo jego brak. */
 export interface SterowanieZleceniem {
   idZlecenia: string;
   sterowanie: AssistantActionControl;
@@ -62,34 +49,19 @@ export interface ZrodloAssistant {
   steruj(zlecenie: SterowanieZleceniem): Promise<Wynik<AssistantActionStatusResponse>>;
   /** `assistant.activity.list` — dziennik działań, opcjonalnie jednego zlecenia. */
   dziennik(idOkna: string, idZlecenia: string): Promise<Wynik<AssistantActivityListResponse>>;
-  /**
-   * `assistant.activity.flag` — wyróżnienie wpisu dziennika wraz z powodem.
-   *
-   * Wyróżnienie ma gdzie zamieszkać po stronie rdzenia, więc okno go nie udaje:
-   * znacznik przeżywa odświeżenie wykazu, a zdjęcie wyróżnienia kasuje też
-   * powód — powód bez znacznika byłby notatką do wpisu, którego nikt nie
-   * wyróżnił.
-   */
+  /** Wyróżnienie wpisu dziennika wraz z powodem; znacznik przeżywa odświeżenie, zdjęcie kasuje też powód. */
   oznaczWpis(
     idWpisu: string,
     wazny: boolean,
     powod: string,
   ): Promise<Wynik<AssistantActivityFlagResponse>>;
-  /**
-   * Subskrypcja `assistant.action.changed` — jedynego zdarzenia obszaru.
-   *
-   * Słuchacz dostaje także kopertę, bo treść zdarzenia nie niesie sesji, a
-   * koperta ją niesie (`shared/contract.ts`, pole `sessionId`; rdzeń wypełnia
-   * je sesją okna zlecenia — `adapter_modul_asystent_wykonawca.go`,
-   * `okno.IdSesji`). Bez niej zlecenie założone w innym oknie tej samej sesji
-   * byłoby nie do odróżnienia od zlecenia cudzej sesji i trzeba by odrzucać oba.
-   */
+  /** Subskrypcja jedynego zdarzenia obszaru; słuchacz dostaje kopertę, bo treść nie niesie sesji. */
   naZmianeZlecenia(
     sluchacz: (tresc: AssistantActionChangedEvent, koperta: Envelope) => void,
   ): Odsubskrybuj;
 }
 
-/** Górna granica dziennika — okno pokazuje historię, nie cały zapis rdzenia. */
+/** Górna granica dziennika — okno pokazuje historię, nie cały zapis rdzenia, ograniczony do dwustu wpisów. */
 const GRANICA_DZIENNIKA = 200;
 
 export function utworzZrodloAssistant(kanal: Kanal): ZrodloAssistant {

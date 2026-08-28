@@ -1,29 +1,12 @@
 /**
- * Wspólny kształt paneli dopełniających okna modułu Automations.
- *
- * Cztery panele (wersje, nadzór harmonogramu, zlecenia kolejki, dozór
- * przebiegu) mają tę samą budowę: tytuł, zdanie o przeznaczeniu, garść pól
- * i pas przycisków, a pod nimi jeden nośnik stanu treści. Zamiast czterech razy
- * tego samego rusztowania stoi tu jedno.
- *
- * Panel nie jest oknem operacyjnym i nie udaje nim być. Okna modułu wylicza
- * `kody-okien.ts` i jest ich pięć; panel osadza się WEWNĄTRZ okna, do którego
- * należy jego praca — wersje w Workflow Builderze, zlecenia w Queue Managerze.
- * Szósty kafel na siatce byłby szóstym oknem, którego dokument projektowy nie
- * zna.
- *
- * Odpowiedź rdzenia pokazuje się w całości, zapisem strukturalnym. Panel jest
- * powierzchnią roboczą Operatora nad czynnościami, których kontrakt oddaje
- * bardzo różne kształty — wykaz wersji, różnicę pól, ładunek kroku, punkty
- * wznowienia. Rysunek zmyślony osobno dla każdej z nich pokazywałby MNIEJ, niż
- * rdzeń oddał, a to jest gorsze niż surowy zapis: Operator ma widzieć odpowiedź,
- * a nie jej streszczenie napisane przez okno.
+ * Wspólny kształt paneli dopełniających okna modułu Automations, bo cztery panele mają tę samą
+ * budowę: tytuł, zdanie o przeznaczeniu, pola i pas przycisków.
  */
 import { przyciskAkcji, wiersz } from '../../modele/kontrolki-formularza';
 import type { Wynik } from '../../protokol/kanal';
 import { utworzStanTresci, type StanTresci } from './stany-okna';
 
-/** Panel dopełniający jedno okno operacyjne. */
+/** Panel dopełniający jedno okno operacyjne, osadzany wewnątrz niego wraz z polami, przyciskami i nośnikiem stanu treści. */
 export interface PanelDobudowy {
   /** Element osadzany wewnątrz okna. */
   element: HTMLElement;
@@ -35,7 +18,7 @@ export interface PanelDobudowy {
   dodajCzynnosc(etykieta: string, czynnosc: () => void): HTMLButtonElement;
 }
 
-/** Składa panel o podanym tytule i przeznaczeniu. */
+/** Składa panel o podanym tytule i przeznaczeniu, gotowy do dołożenia pól i czynności przez okno operacyjne. */
 export function utworzPanelDobudowy(tytul: string, przeznaczenie: string): PanelDobudowy {
   const naglowek = document.createElement('h4');
   naglowek.className = 'da-panel__tytul';
@@ -77,12 +60,8 @@ export function utworzPanelDobudowy(tytul: string, przeznaczenie: string): Panel
 }
 
 /**
- * Wykonanie czynności panelu: ładowanie, a po odpowiedzi albo odmowa nazwana
- * powodem rdzenia, albo potwierdzenie wraz z zapisem odpowiedzi.
- *
- * Jedno miejsce, bo wszystkie czterdzieści trzy czynności kończą się tak samo
- * i różnią się wyłącznie zdaniem. Powtórzenie tego bloku czterdzieści trzy razy
- * dałoby czterdzieści trzy okazje do pomylenia odmowy z powodzeniem.
+ * Wykonanie czynności panelu kończy się ładowaniem, potem odmową nazwaną powodem rdzenia albo
+ * potwierdzeniem z zapisem odpowiedzi.
  */
 export function wykonajCzynnoscPanelu<T>(
   panel: PanelDobudowy,
@@ -103,13 +82,8 @@ export function wykonajCzynnoscPanelu<T>(
 }
 
 /**
- * Zapis odpowiedzi rdzenia w postaci czytelnej dla człowieka.
- *
- * Wartości wrażliwych tu nie ma i być nie może: skarbiec oddaje wyłącznie
- * referencje, a ładunki kroków wracają zredagowane przez rdzeń. Panel niczego
- * nie maskuje po swojej stronie, bo maskowanie po stronie okna dawałoby
- * złudzenie ochrony — wartość, która dotarła do przeglądarki, jest już
- * wyniesiona z serwera.
+ * Zapis odpowiedzi rdzenia w postaci czytelnej dla człowieka; wartości wrażliwych tu nie ma
+ * i być nie może.
  */
 function zapisOdpowiedzi(wynik: unknown): HTMLElement {
   const element = document.createElement('pre');
@@ -119,12 +93,8 @@ function zapisOdpowiedzi(wynik: unknown): HTMLElement {
 }
 
 /**
- * Odczyt zapisu strukturalnego z pola tekstowego.
- *
- * Pole puste daje `undefined` — pole nieobecne w żądaniu znaczy co innego niż
- * pole o wartości pustej. Zapis nieczytelny daje `null`, a wołający odmawia
- * wysłania: żądanie z uszkodzonym ładunkiem odbiłoby się od rdzenia komunikatem
- * o kopercie, a Operator ma zobaczyć, że to on pomylił nawias.
+ * Odczyt zapisu strukturalnego z pola tekstowego: pole puste daje undefined, zapis nieczytelny
+ * daje null.
  */
 export function odczytajZapis(tekst: string): unknown | null | undefined {
   const oczyszczony = tekst.trim();
@@ -136,7 +106,7 @@ export function odczytajZapis(tekst: string): unknown | null | undefined {
   }
 }
 
-/** Liczba z pola liczbowego; pole puste albo nieczytelne daje `undefined`. */
+/** Liczba z pola liczbowego; pole puste albo nieczytelne daje undefined zamiast rzucać wyjątkiem parsowania. */
 export function odczytajLiczbe(tekst: string): number | undefined {
   const oczyszczony = tekst.trim();
   if (oczyszczony === '') return undefined;
@@ -144,7 +114,7 @@ export function odczytajLiczbe(tekst: string): number | undefined {
   return Number.isFinite(liczba) ? liczba : undefined;
 }
 
-/** Chwila z pola tekstowego w postaci daty; puste daje `undefined`. */
+/** Chwila z pola tekstowego w postaci daty; puste pole daje undefined, nieczytelny zapis też daje undefined. */
 export function odczytajChwile(tekst: string): number | undefined {
   const oczyszczony = tekst.trim();
   if (oczyszczony === '') return undefined;
@@ -152,7 +122,7 @@ export function odczytajChwile(tekst: string): number | undefined {
   return Number.isFinite(chwila) ? chwila : undefined;
 }
 
-/** Wykaz z pola tekstowego rozdzielonego przecinkami; puste daje wykaz pusty. */
+/** Wykaz z pola tekstowego rozdzielonego przecinkami; puste pole daje wykaz pusty, nie undefined ani null. */
 export function odczytajWykaz(tekst: string): string[] {
   return tekst
     .split(',')

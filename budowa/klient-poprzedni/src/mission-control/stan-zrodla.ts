@@ -10,11 +10,8 @@ import type {
 
 /**
  * Stan surowy pulpitu — dokładnie to, co rdzeń oddał odczytami i zdarzeniami.
- *
- * Plik ustala kształt i wartość początkową wsadu złożenia. `zrodlo-pulpitu.ts`
- * zapisuje tu odpowiedzi i zdarzenia, `zlozenie-danych.ts` czyta i przekłada na
- * `DanePulpitu`. Stan początkowy jest pusty, a `odczytano` mówi, czy rdzeń już
- * się odezwał.
+ * `zrodlo-pulpitu.ts` zapisuje tu odpowiedzi i zdarzenia, `zlozenie-danych.ts`
+ * czyta je i przekłada na `DanePulpitu`. Stan początkowy jest pusty.
  */
 export interface StanZrodla {
   /** Czy odczyt z rdzenia już nadszedł (odpowiedź albo zdarzenie). */
@@ -25,14 +22,15 @@ export interface StanZrodla {
   kanaly: Channel[];
   kolejki: Map<string, Queue>;
   procesy: Map<string, ProgressChangedEvent>;
-  /**
-   * Środowiska platformy z odczytu `environment.list`, kluczowane kodem.
-   * Nazwa kolumny matrycy pochodzi stąd, nie z kopii katalogu w pulpicie.
-   */
+  /** Środowiska platformy z odczytu `environment.list`, kluczowane kodem. */
   srodowiska: Map<string, Environment>;
 }
 
-/** Stan początkowy — nic nie odczytano, wszystkie wykazy puste. */
+/**
+ * Stan początkowy — nic nie odczytano, wszystkie wykazy puste. Złożenie sięga po
+ * tę wartość przy budowie źródła, a odpowiedzi i zdarzenia rdzenia dopisują
+ * pozycje do zwróconych tu map.
+ */
 export function pustyStanZrodla(): StanZrodla {
   return {
     odczytano: false,

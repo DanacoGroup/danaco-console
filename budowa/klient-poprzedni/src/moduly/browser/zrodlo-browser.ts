@@ -103,23 +103,9 @@ import { czyObiekt, czyTablica, sprawdzKsztalt } from '../../protokol/ksztalt-od
 import { wywolaj } from '../../protokol/wywolanie';
 
 /**
- * Sześć komend obszaru `browser.*` widzianych przez okna modułu.
- *
- * Plik jest warstwą wywołań wraz ze sprawdzianem kształtu odpowiedzi. Źródło
- * nie ma stanu i nie buduje elementów — zebrane źródła i notatki mieszkają
- * w `stan-przegladania.ts`, żeby trzy okna modułu patrzyły na jeden zbiór,
- * a nie na trzy kopie.
- *
- * `source.list` i `note.list` czytają dokładnie to, co moduł zapisał przez
- * `browser.source.add` i `browser.note.add`, i nic ponad to.
- *
- * Odmowa wykazu ma dwa znaczenia, które okno rozróżnia. `not_found` znaczy
- * „rdzeń nie zna tego okna przeglądania", a nie „nic nie zebrano" — wykaz
- * pusty przychodzi ze statusem udanym i pustą tablicą.
- *
- * Żadne wywołanie nie rzuca wyjątkiem i nie odrzuca obietnicy: niepowodzenie
- * wraca polem `blad` wyniku. Nazwy komend biorą się wyłącznie ze
- * stałych kontraktu.
+ * Sześć komend obszaru browser.* widzianych przez okna modułu jest warstwą
+ * wywołań wraz ze sprawdzianem kształtu odpowiedzi; źródło nie ma stanu i nie
+ * buduje elementów.
  */
 export interface ZrodloBrowser {
   przejdz(zadanie: BrowserNavigateRequest): Promise<Wynik<BrowserNavigateResponse>>;
@@ -131,9 +117,6 @@ export interface ZrodloBrowser {
   /** `browser.note.list`; notatki okna od najświeższej. */
   wykazNotatek(zadanie: BrowserNoteListRequest): Promise<Wynik<BrowserNoteListResponse>>;
 
-  // ── Rodziny dołożone ponad migawkę, źródło i notatkę ─────────────────────
-  // Każda pozycja jest jedną komendą kontraktu. Warstwa nie ma stanu i nie
-  // buduje elementów — sprawdza wyłącznie kształt odpowiedzi rdzenia.
   /** `BrowserTabOpen`. */
   otworzKarte(zadanie: BrowserTabOpenRequest): Promise<Wynik<BrowserTabOpenResponse>>;
   /** `BrowserTabList`. */

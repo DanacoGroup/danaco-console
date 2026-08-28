@@ -12,29 +12,14 @@ import { utworzZapisyKont } from './zapisy-kont';
 import { uporzadkujKonta, utworzZrodloKont, type ZrodloKont } from './zrodlo-kont';
 
 /**
- * Stan rejestru kont — jedno źródło prawdy dla wykazu, formularza i wyboru
- * bytu osi konta.
- *
- * Wykaz i wybór trzymamy razem, ponieważ każda zmiana rejestru dotyka obu:
- * usunięcie konta czynnego musi przestawić wybór, a nie zostawić formularz
- * wskazujący byt, którego już nie ma.
- *
- * Zdarzenie `account.changed` przychodzi także wtedy, gdy konto założono na innym
- * urządzeniu; stan przyjmuje je tą samą drogą, co własną odpowiedź.
- *
- * Żadna ścieżka nie zatrzymuje widoku: rdzeń, który nie odda wykazu, zostawia go
- * pustym, a zapis nieudany wraca jako `Wynik` z błędem, bez wyjątku.
+ * Stan rejestru kont jest jednym źródłem prawdy dla wykazu, formularza i wyboru konta
+ * czynnego. Odpowiedzi rdzenia oraz zdarzenia zmiany konta przyjmuje tą samą drogą,
+ * a niepowodzenie odczytu i zapisu zostawia widok czynny.
  */
 export type FazaOdczytu = 'spoczynek' | 'odczyt' | 'gotowe' | 'blad';
 
 export interface StanKont {
-  /**
-   * Faza odczytu rejestru kont.
-   *
-   * Bez niej pusty rejestr znaczy trzy rzeczy naraz: „jeszcze nie pytałem",
-   * „pytam" i „rdzeń nie zna ani jednego konta". Każdej należy się inny stan
-   * widoku: nic, wskaźnik odczytu, stan pusty.
-   */
+  /** Faza odczytu rozdziela rejestr pusty od odczytu w toku i od odmowy rdzenia. */
   faza(): FazaOdczytu;
   /** Powód ostatniego niepowodzenia odczytu; pusty, gdy odczyt się powiódł. */
   powodNiepowodzenia(): string;

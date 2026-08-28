@@ -4,15 +4,9 @@ import { WARSTWY_OD_NAJWAZNIEJSZEJ, nazwaWarstwy } from './warstwy-tozsamosci';
 import { znakWykazu } from './znak-wykazu';
 
 /**
- * Wykaz kategorii zasad — lewa kolumna panelu tożsamości, ułożona warstwami.
- *
- * Warstwa jest nagłówkiem grupy: mówi, jak krytyczna jest treść i w jakiej
- * kolejności wejdzie do złożonego promptu. Kategoria spoza warstw kontraktu nie
- * znika — dostaje własną grupę na końcu, żeby było widać, co przyszło z rdzenia.
- *
- * Wiersz mówi dwie rzeczy: czy kategoria jest obowiązkowa i czy ma treść
- * zapisaną na osi czynnej. Brak treści na osi nie znaczy braku treści w ogóle —
- * obowiązuje wtedy zapis z osi szerszej i wiersz nazywa to wprost.
+ * Wykaz kategorii zasad, czyli lewa kolumna panelu tożsamości ułożona
+ * warstwami. Warstwa jest nagłówkiem grupy: mówi, jak krytyczna jest treść
+ * i w jakiej kolejności wejdzie do złożonego promptu.
  */
 export interface WykazKategorii {
   /** Kolumna osadzana w panelu tożsamości. */
@@ -47,7 +41,11 @@ export function utworzWykazKategorii(stan: StanTozsamosci): WykazKategorii {
   return { element, odswiez };
 }
 
-/** Warstwy obecne w katalogu: trzy z kontraktu, potem wszystkie pozostałe. */
+/**
+ * Warstwy obecne w katalogu: najpierw trzy warstwy nazwane w kontrakcie,
+ * w kolejności od najważniejszej, potem wszystkie pozostałe, które przyszły
+ * z rdzenia, żeby żadna z nich nie zniknęła z wykazu.
+ */
 function warstwyWykazu(kategorie: readonly IdentityCategory[]): string[] {
   const obecne = new Set<string>(kategorie.map((kategoria) => kategoria.layer));
   const znane = WARSTWY_OD_NAJWAZNIEJSZEJ.filter((warstwa) => obecne.has(warstwa));
@@ -64,7 +62,11 @@ function naglowekWarstwy(warstwa: string): HTMLElement {
   return element;
 }
 
-/** Jeden wiersz wykazu: nazwa kategorii oraz jej stan na osi czynnej. */
+/**
+ * Jeden wiersz wykazu: nazwa kategorii oraz jej stan na osi czynnej. Wiersz
+ * mówi, czy kategoria jest obowiązkowa i czy ma treść zapisaną właśnie na tej
+ * osi, a nie na osi szerszej.
+ */
 function wiersz(
   kategoria: IdentityCategory,
   czynna: boolean,
@@ -97,7 +99,11 @@ function wiersz(
   return przycisk;
 }
 
-/** Znak wiersza wykazu kategorii — plakietka biblioteki w miejscu znaków wiersza. */
+/**
+ * Znak wiersza wykazu kategorii, budowany plakietką biblioteki komponentów
+ * i osadzany w miejscu znaków wiersza. Wygląd pochodzi z arkusza modułu, więc
+ * plik nie nadaje plakietce własnych barw.
+ */
 function plakietka(tresc: string, klasa: string): HTMLElement {
   return znakWykazu(tresc, klasa, 'dm-kategorie__znak');
 }

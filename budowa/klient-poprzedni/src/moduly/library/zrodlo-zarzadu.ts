@@ -29,19 +29,8 @@ import type { Wynik } from '../../protokol/kanal';
 import type { StrazOdmow } from './straz-odmow';
 
 /**
- * Zarząd repozytorium widziany przez okna: opis zasobu, słownik etykiet,
- * tezaurus, reguły, higiena, cykl życia zasobu, utrwalenie, udostępnienia
- * i sugestie.
- *
- * Wydzielone ze `zrodlo-biblioteki.ts` wzdłuż odpowiedzialności — tam plik,
- * wykaz i podgląd, tutaj czynności zarządcze warstw trzeciej i czwartej modułu.
- * Kształt pozostaje jeden (`ZrodloBiblioteki`), więc okna dalej widzą jedno
- * źródło.
- *
- * Każde wywołanie sprawdza kształt odpowiedzi. Powód jest ten sam co w całym
- * module: pole, którego rdzeń nie przysłał, dochodzi do okna jako `undefined`
- * i wpisuje się w zdanie interfejsu jako liczba albo nazwa — czyli okno pokazuje
- * Operatorowi coś, czego nikt nie policzył.
+ * Zarząd repozytorium udostępnia oknom czynności zarządcze biblioteki i sprawdza
+ * kształt każdej odpowiedzi rdzenia, by nieprzysłane pole nie trafiło do interfejsu.
  */
 export interface ZarzadRepozytorium {
   /** Opis zasobu; `zTechnicznymi` sięga po metadane osadzone w bajtach. */
@@ -416,9 +405,7 @@ export function utworzZarzadRepozytorium(straz: StrazOdmow): ZarzadRepozytorium 
     },
 
     async usunTrwale(idPlikow) {
-      // Potwierdzenie idzie zawsze prawdą, bo okno pyta Operatora osobno —
-      // rdzeń i tak odmówi bez tego pola, a druga zgoda w tym samym kliknięciu
-      // byłaby zgodą pozorną.
+      // Potwierdzenie jest zawsze true: okno pyta Operatora osobno, powtórne pytanie byłoby pozorne.
       return sprawdzKsztalt(
         await straz.wywolaj(Command.LibraryFileDelete, { fileIds: [...idPlikow], confirm: true }),
         Command.LibraryFileDelete,

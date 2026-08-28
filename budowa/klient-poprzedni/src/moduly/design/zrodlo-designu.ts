@@ -74,37 +74,9 @@ import { czyObiekt, czyTablica, sprawdzKsztalt } from '../../protokol/ksztalt-od
 import { wywolaj } from '../../protokol/wywolanie';
 import { przytnijKod } from './przyciecie-pol';
 
-/**
- * Osiem komend obszaru `design.*` widzianych przez okna modułu.
- *
- * Źródło to warstwa wywołań i sprawdzianu kształtu odpowiedzi. Nie ma stanu
- * i niczego nie pamięta — zbiór zasobów mieszka w `stan-designu.ts`, żeby trzy
- * okna patrzyły na jeden zbiór.
- *
- * Zasób wchodzi do modułu dwiema drogami, które się nie zastępują:
- *   `design.asset.generate` — zasób z pracy modelu; wymaga kanału obrazowego
- *                             (adapter „obrazy"), a jego brak jest odmową
- *                             nazywającą brak, nigdy obrazem zastępczym;
- *   `design.asset.upload`   — zasób z pliku wskazanego przez Operatora; działa
- *                             bez żadnego kanału modelu i wnosi treść już
- *                             istniejącą.
- *
- * Przy wgraniu Operator wskazuje plik, klient czyta go i oddaje treść w polu
- * `contentBase64`, a rdzeń zapisuje ją w swoim magazynie pod sumą kontrolną.
- * Od tej chwili zasób nie zależy już od pliku na dysku, który Operator może
- * nadpisać albo skasować.
- *
- * Treść idzie bajtami, nie ścieżką, mimo że kontrakt zna oba pola. `sourcePath`
- * każe rdzeniowi otworzyć plik pod wskazaną ścieżką, a rdzeń biegnie na innej
- * maszynie niż przeglądarka Operatora: ścieżka z jego pulpitu nie znaczy tam
- * nic albo znaczy coś zupełnie innego. Klient czyta plik sam i wysyła to, co
- * przeczytał (`wczytanie-pliku.ts`).
- *
- * Odmowa wraca polem `blad`, nie wyjątkiem. Rdzeń odmawia czynności na zasobie,
- * którego nie zna; okno pokazuje to zdanie i zostaje czynne.
- */
+// Warstwa wywołań i sprawdzianu kształtu odpowiedzi ośmiu komend design.*; stanu nie trzyma.
 
-/** Warunki zawężające odczyt zasobów — pola żądania `design.asset.list`. */
+/** Warunki zawężające odczyt zasobów — pola żądania `design.asset.list`: okno, rodzaj, etykiety, tylko ulubione i granica liczby wyników. */
 export interface ZapytanieZasobow {
   idOkna: string;
   rodzaj: DesignAssetKind | '';
@@ -113,7 +85,7 @@ export interface ZapytanieZasobow {
   granica: number;
 }
 
-/** Zlecenie zapisu kompozycji — pola żądania `design.board.update`. */
+/** Zlecenie zapisu kompozycji — pola żądania `design.board.update`: okno, kompozycja, nazwa i pełny wykaz warstw do zapisania. */
 export interface ZlecenieKompozycji {
   idOkna: string;
   idKompozycji: string;
@@ -122,12 +94,8 @@ export interface ZlecenieKompozycji {
 }
 
 /**
- * Zlecenie generowania — pola żądania `design.asset.generate`.
- *
- * Wskazanie kanału jedzie polem `channelId`: rdzeń sprawdza po nim rodzaj
- * kanału i odmawia wskazania tekstowego. Puste `idKanalu` nie jest brakiem —
- * kontrakt opisuje pominięcie pola jako „weź pierwszy czynny kanał obrazowy
- * konta" i tak właśnie zachowuje się okno, gdy Operator kanału nie wskazał.
+ * Zlecenie generowania — pola żądania `design.asset.generate`. Puste `idKanalu` nie jest brakiem:
+ * rdzeń bierze wtedy pierwszy czynny kanał obrazowy konta.
  */
 export interface ZlecenieGenerowania {
   idOkna: string;
@@ -151,12 +119,8 @@ export interface ZlecenieEtykiet {
 }
 
 /**
- * Zlecenie wgrania zasobu — pola żądania `design.asset.upload`.
- *
- * Treść jest tu zawsze bajtami pliku w zapisie base64. Pola opisowe (nazwa,
- * format, wymiary) idą tylko wtedy, gdy klient je zmierzył; podstawienie
- * wartości domyślnej byłoby wpisaniem rdzeniowi metadanych, których nikt nie
- * sprawdził.
+ * Zlecenie wgrania zasobu — pola żądania `design.asset.upload`. Treść jest zawsze bajtami pliku
+ * w base64; pola opisowe idą tylko wtedy, gdy klient je zmierzył.
  */
 export interface ZlecenieWgrania {
   idOkna: string;
@@ -170,11 +134,8 @@ export interface ZlecenieWgrania {
 }
 
 /**
- * Zlecenie wydania zasobu — pola żądania `design.asset.export`.
- *
- * Skala zerowa znaczy „naturalna", nie „zerowa": pole jest w kontrakcie
- * opcjonalne, a zero wysłane do rdzenia byłoby żądaniem obrazu o zerowym boku
- * i wróciłoby odmową. Tak samo jakość — zero nie jest stopniem kompresji.
+ * Zlecenie wydania zasobu — pola żądania `design.asset.export`. Skala i jakość zerowe nie znaczą
+ * zera — pole jest opcjonalne, zero byłoby żądaniem błędnym.
  */
 export interface ZlecenieWydania {
   idZasobu: string;
@@ -183,7 +144,7 @@ export interface ZlecenieWydania {
   jakosc: number;
 }
 
-/** Zlecenie wydania partii — pola żądania `design.asset.export.batch`. */
+/** Zlecenie wydania partii — pola żądania `design.asset.export.batch`: wykaz zasobów, format pliku, skale wydania i jakość kompresji. */
 export interface ZleceniePartii {
   idZasobow: readonly string[];
   format: string;
@@ -191,14 +152,14 @@ export interface ZleceniePartii {
   jakosc: number;
 }
 
-/** Zlecenie przypisania do kolekcji — pola żądania `design.collection.assign`. */
+/** Zlecenie przypisania do kolekcji — pola żądania `design.collection.assign`: kolekcja, wykaz zasobów i znacznik zdjęcia z kolekcji. */
 export interface ZlecenieKolekcji {
   idKolekcji: string;
   idZasobow: readonly string[];
   zdejmij: boolean;
 }
 
-/** Zlecenie zapisu szablonu promptu — pola żądania `design.prompt.template.save`. */
+/** Zlecenie zapisu szablonu promptu — pola żądania `design.prompt.template.save`: okno, nazwa, treść promptu i nadpisywany szablon. */
 export interface ZlecenieSzablonu {
   idOkna: string;
   nazwa: string;
@@ -207,14 +168,14 @@ export interface ZlecenieSzablonu {
   idSzablonu: string;
 }
 
-/** Zlecenie zapisu wersji kompozycji — pola żądania `design.board.version.save`. */
+/** Zlecenie zapisu wersji kompozycji — pola żądania `design.board.version.save`: kompozycja, nazwa wersji i uzasadnienie zapisu. */
 export interface ZlecenieWersji {
   idKompozycji: string;
   nazwa: string;
   uzasadnienie: string;
 }
 
-/** Zlecenie wyrysu kompozycji — pola żądania `design.board.export`. */
+/** Zlecenie wyrysu kompozycji — pola żądania `design.board.export`: kompozycja, format pliku, skala wydania i obszar wyrysu. */
 export interface ZlecenieWyrysu {
   idKompozycji: string;
   format: string;
@@ -223,7 +184,7 @@ export interface ZlecenieWyrysu {
   obszar: DesignBoardRegion | null;
 }
 
-/** Zlecenie adnotacji — pola żądania `design.annotation.set`. */
+/** Zlecenie adnotacji — pola żądania `design.annotation.set`: kompozycja, treść, warstwa, adnotacja, adnotacja nadrzędna i stan zamknięcia. */
 export interface ZlecenieAdnotacji {
   idKompozycji: string;
   tresc: string;
@@ -234,7 +195,7 @@ export interface ZlecenieAdnotacji {
   zamknieta: boolean | null;
 }
 
-/** Zlecenie zgłoszenia obecności — pola żądania `design.presence.report`. */
+/** Zlecenie zgłoszenia obecności — pola żądania `design.presence.report`: kompozycja, położenie kursora, zaznaczenie i odejście Operatora. */
 export interface ZlecenieObecnosci {
   idKompozycji: string;
   x: number;
@@ -243,7 +204,7 @@ export interface ZlecenieObecnosci {
   odchodzi: boolean;
 }
 
-/** Zlecenie zapisu zestawu żetonów — pola żądania `design.tokenset.save`. */
+/** Zlecenie zapisu zestawu żetonów — pola żądania `design.tokenset.save`: okno, nazwa, wykaz żetonów, nadpisywany zestaw i motyw. */
 export interface ZlecenieZestawu {
   idOkna: string;
   nazwa: string;
@@ -253,7 +214,7 @@ export interface ZlecenieZestawu {
   motyw: string;
 }
 
-/** Zlecenie wczytania zestawu — pola żądania `design.tokenset.import`. */
+/** Zlecenie wczytania zestawu — pola żądania `design.tokenset.import`: okno, nazwa, treść zapisu w base64 i rozpoznawana postać. */
 export interface ZlecenieWczytaniaZetonow {
   idOkna: string;
   nazwa: string;
@@ -358,11 +319,7 @@ export function utworzZrodloDesignu(kanal: Kanal): ZrodloDesignu {
         prompt: zlecenie.prompt,
       };
       if (zlecenie.idReferencji !== '') zadanie.referenceAssetId = zlecenie.idReferencji;
-      // Pola opcjonalne idą wyłącznie wskazane. Pustka wpisana w `channelId`
-      // nie jest tym samym co pole pominięte: rdzeń przycina wskazanie i puste
-      // traktuje jak brak (`kanalObrazowyZadania`), ale wysyłanie pustego napisu
-      // twierdziłoby, że Operator coś wskazał. Pominięcie pola mówi prawdę —
-      // wyboru nie było, więc rdzeń bierze pierwszy czynny kanał obrazowy.
+      // Puste `channelId` nie jest brakiem — pominięcie pola każe rdzeniowi wziąć pierwszy czynny kanał.
       if (zlecenie.idKanalu !== '') zadanie.channelId = zlecenie.idKanalu;
       if (zlecenie.rodzaj !== '') zadanie.kind = zlecenie.rodzaj;
       return sprawdzKsztalt(
@@ -375,8 +332,7 @@ export function utworzZrodloDesignu(kanal: Kanal): ZrodloDesignu {
     async zapiszKompozycje(zlecenie) {
       const zadanie: DesignBoardUpdateRequest = { windowId: zlecenie.idOkna };
       if (zlecenie.idKompozycji !== '') zadanie.boardId = zlecenie.idKompozycji;
-      // Rdzeń nazwy nie przycina, więc przycięcie jest tutaj jedyne i to ono
-      // musi zgadzać się z porównaniem skutku zapisu.
+      // Rdzeń nie przycina nazwy, więc przycięcie tutaj musi zgadzać się z porównaniem skutku zapisu.
       const nazwa = przytnijKod(zlecenie.nazwa);
       if (nazwa !== '') zadanie.name = nazwa;
       zadanie.layers = [...zlecenie.warstwy];
@@ -388,9 +344,7 @@ export function utworzZrodloDesignu(kanal: Kanal): ZrodloDesignu {
     },
 
     async ustawEtykiety(zlecenie) {
-      // Zestaw idzie do rdzenia zawsze, także pusty — inaczej Operator nie
-      // miałby czym zdjąć ostatniej etykiety, a pominięcie pola byłoby
-      // milczącym nieposłuszeństwem wobec kontraktu (`tags` jest wymagane).
+      // Zestaw etykiet idzie zawsze, także pusty — pole `tags` jest wymagane, brak nie zdejmie ostatniej.
       const zadanie: DesignAssetTagSetRequest = {
         assetId: zlecenie.idZasobu,
         tags: [...zlecenie.etykiety],
@@ -408,13 +362,11 @@ export function utworzZrodloDesignu(kanal: Kanal): ZrodloDesignu {
         kind: zlecenie.rodzaj,
         contentBase64: zlecenie.trescBase64,
       };
-      // Nazwa przycinana tak samo jak nazwa kompozycji (`przyciecie-pol.ts`),
-      // żeby nazwa nadana przy wgraniu trafiała we własne zawężenie wykazu.
+      // Nazwa przycinana jak nazwa kompozycji, żeby trafiała we własne zawężenie wykazu wgrania.
       const nazwa = przytnijKod(zlecenie.nazwa);
       if (nazwa !== '') zadanie.name = nazwa;
       if (zlecenie.format !== '') zadanie.format = zlecenie.format;
-      // Wymiary idą wyłącznie zmierzone. Zero jest tu znakiem „nie zmierzono",
-      // a nie szerokością — wpisane do żądania byłoby metadaną zmyśloną.
+      // Wymiary idą wyłącznie zmierzone — zero znaczy nie zmierzono, wpisane byłoby metadaną zmyśloną.
       if (zlecenie.szerokosc > 0) zadanie.width = zlecenie.szerokosc;
       if (zlecenie.wysokosc > 0) zadanie.height = zlecenie.wysokosc;
       if (zlecenie.etykiety.length > 0) zadanie.tags = [...zlecenie.etykiety];
@@ -430,9 +382,7 @@ export function utworzZrodloDesignu(kanal: Kanal): ZrodloDesignu {
       return sprawdzKsztalt(
         await wywolaj(kanal, Command.DesignAssetRemove, zadanie),
         Command.DesignAssetRemove,
-        // Pole `removed` jest logiczne i niesie treść: `false` znaczy „zasobu
-        // nie było", co jest odpowiedzią udaną i innym zdaniem niż odmowa.
-        // Sprawdzamy więc typ, a nie prawdziwość.
+        // Pole `removed` jest logiczne: `false` znaczy zasobu nie było, to odpowiedź udana, nie odmowa.
         (tresc) => typeof tresc.removed === 'boolean',
       );
     },
@@ -457,15 +407,12 @@ export function utworzZrodloDesignu(kanal: Kanal): ZrodloDesignu {
 
     async trescZasobu(idZasobu, granicaBajtow) {
       const zadanie: DesignAssetContentGetRequest = { assetId: idZasobu };
-      // Granica idzie wyłącznie wskazana. Zero wysłane do rdzenia byłoby
-      // żądaniem treści o zerowej wielkości, a nie brakiem granicy.
+      // Granica idzie wyłącznie wskazana — zero wysłane do rdzenia byłoby żądaniem treści zerowej.
       if (granicaBajtow > 0) zadanie.maxBytes = granicaBajtow;
       return sprawdzKsztalt(
         await wywolaj(kanal, Command.DesignAssetContentGet, zadanie),
         Command.DesignAssetContentGet,
-        // Sprawdzamy sumę i miarę, nie samą treść: przy postaci odsyłania
-        // `contentBase64` jest puste zgodnie z kontraktem, a odpowiedź jest
-        // wtedy pełna.
+        // Sprawdza się sumę i miarę, nie treść: przy odsyłaniu `contentBase64` bywa puste z kontraktu.
         (tresc) => typeof tresc.checksum === 'string' && typeof tresc.sizeBytes === 'number',
       );
     },
@@ -480,8 +427,7 @@ export function utworzZrodloDesignu(kanal: Kanal): ZrodloDesignu {
       return sprawdzKsztalt(
         await wywolaj(kanal, Command.DesignAssetExport, zadanie),
         Command.DesignAssetExport,
-        // Wydanie bez treści jest kopertą udaną i pustą — sprawdzamy bajty,
-        // a nie samo powodzenie.
+        // Wydanie bez treści jest kopertą udaną i pustą — sprawdza się bajty, nie samo powodzenie.
         (tresc) => typeof tresc.contentBase64 === 'string' && tresc.contentBase64.length > 0,
       );
     },
@@ -519,8 +465,7 @@ export function utworzZrodloDesignu(kanal: Kanal): ZrodloDesignu {
         collectionId: zlecenie.idKolekcji,
         assetIds: [...zlecenie.idZasobow],
       };
-      // Zdjęcie idzie polem wskazanym; dokładka jest brakiem pola, bo tak
-      // opisuje ją kontrakt („brak znaczy dołóż").
+      // Zdjęcie idzie polem wskazanym, dokładka jest brakiem pola — kontrakt: brak pola znaczy dołóż.
       if (zlecenie.zdejmij) zadanie.remove = true;
       return sprawdzKsztalt(
         await wywolaj(kanal, Command.DesignCollectionAssign, zadanie),
@@ -626,8 +571,7 @@ export function utworzZrodloDesignu(kanal: Kanal): ZrodloDesignu {
       if (zlecenie.idWarstwy !== '') zadanie.layerId = zlecenie.idWarstwy;
       if (zlecenie.idAdnotacji !== '') zadanie.annotationId = zlecenie.idAdnotacji;
       if (zlecenie.idNadrzednej !== '') zadanie.parentId = zlecenie.idNadrzednej;
-      // Stan zamknięcia idzie wyłącznie wskazany: `false` wysłane przy zapisie
-      // treści otwierałoby wątek, którego nikt nie kazał otwierać.
+      // Stan zamknięcia idzie wyłącznie wskazany — false przy zapisie treści otwierałoby wątek bez potrzeby.
       if (zlecenie.zamknieta !== null) zadanie.resolved = zlecenie.zamknieta;
       return sprawdzKsztalt(
         await wywolaj(kanal, Command.DesignAnnotationSet, zadanie),
@@ -648,9 +592,7 @@ export function utworzZrodloDesignu(kanal: Kanal): ZrodloDesignu {
 
     async zglosObecnosc(zlecenie) {
       const zadanie: DesignPresenceReportRequest = { boardId: zlecenie.idKompozycji };
-      // Położenie idzie tylko zmierzone. Zero jest tu prawdziwym położeniem
-      // (lewy górny róg kanwy), więc rozstrzyga skończoność liczby, nie jej
-      // wartość — inaczej kursor w rogu znikałby z widoku pozostałych.
+      // Zero jest tu prawdziwym położeniem (róg kanwy), więc rozstrzyga skończoność liczby, nie jej wartość.
       if (Number.isFinite(zlecenie.x)) zadanie.x = zlecenie.x;
       if (Number.isFinite(zlecenie.y)) zadanie.y = zlecenie.y;
       if (zlecenie.zaznaczone.length > 0) zadanie.selectedLayerIds = [...zlecenie.zaznaczone];
@@ -720,9 +662,7 @@ export function utworzZrodloDesignu(kanal: Kanal): ZrodloDesignu {
       return sprawdzKsztalt(
         await wywolaj(kanal, Command.DesignStyleguidePublish, zadanie),
         Command.DesignStyleguidePublish,
-        // Zasób przewodnika jest tu treścią odpowiedzi: `published: true` bez
-        // identyfikatora zasobu byłoby obietnicą wydania, którego nie da się
-        // odnaleźć.
+        // Odpowiedź niesie zasób przewodnika — published:true bez jego adresu byłoby obietnicą bez pokrycia.
         (tresc) => typeof tresc.assetId === 'string' && tresc.assetId.length > 0,
       );
     },

@@ -3,21 +3,9 @@ import type { Odsubskrybuj } from '../../polaczenie/magistrala-zdarzen';
 import type { ZrodloDiagnostics } from './zrodlo-diagnostics';
 
 /**
- * Analiza bieżąca i zakres czasu modułu — jedna prawda dla czterech okien.
- *
- * Recommendations Panel wyświetla rekomendacje tej analizy, którą uruchomiło
- * Diagnostics Center: kontrakt wiąże je polem `analysisId`
- * (`DiagnosticRecommendation.analysisId`, `DiagnosticsRecommendationListRequest.analysisId`).
- * Gdyby panel trzymał własne wskazanie, pokazywałby rekomendacje analizy
- * poprzedniej obok wyniku nowej — a Operator nie miałby z czego rozpoznać, że
- * patrzy na dwie różne migawki.
- *
- * Zakres czasu stoi obok analizy, bo trzy komendy przyjmują `fromTime`
- * i `toTime` niezależnie: dziennik, wykaz błędów i sama analiza. Rozjechany
- * zakres dałby Errors Panel z błędami jednej doby, dziennik z innej i analizę
- * z trzeciej — zestawienie wewnętrznie sprzeczne, po którym nie da się orzec
- * przyczyny. Zakres pusty (oba końce nieustawione) znaczy „bez zawężenia”
- * i jest stanem poprawnym, nie brakiem.
+ * Analiza bieżąca i zakres czasu modułu Diagnostics, stanowiące jedną prawdę
+ * dla czterech okien. Zakres czasu stoi obok analizy, ponieważ dziennik, wykaz
+ * błędów i sama analiza przyjmują końce zakresu niezależnie.
  */
 export interface StanDiagnostyki {
   /** Identyfikator analizy bieżącej; pusty znaczy „nie uruchomiono”. */
@@ -38,13 +26,20 @@ export interface StanDiagnostyki {
   zamknij(): void;
 }
 
-/** Zakres czasu w milisekundach epoki; końce nieustawione znaczą „bez granicy”. */
+/**
+ * Zakres czasu podawany w milisekundach epoki; końce nieustawione znaczą brak
+ * granicy. Zakres pusty jest stanem poprawnym i mówi, że zawężenia nie ma.
+ */
 export interface ZakresCzasu {
   od?: number;
   do?: number;
 }
 
-/** Zależności stanu: analiza i zakres otwierane od razu. */
+/**
+ * Zależności stanu diagnostyki: identyfikator analizy oraz zakres czasu, które
+ * moduł otwiera od razu przy montażu, zanim Operator wykona pierwszą czynność
+ * w którymkolwiek z czterech okien.
+ */
 export interface OpcjeStanuDiagnostyki {
   analiza?: string;
   zakres?: ZakresCzasu;
@@ -63,11 +58,7 @@ export function utworzStanDiagnostyki(
     for (const sluchacz of [...sluchacze]) sluchacz();
   }
 
-  // Analiza zmienia się także pracą innego okna albo innego urządzenia tego
-  // konta — rdzeń dopisuje do niej rekomendacje po zakończeniu przebiegu.
-  // Dotyczy analizy bieżącej, więc migawka w oknach jest nieaktualna i okna
-  // mają się odczytać ponownie. Migawkę podmieniamy od razu, bo zdarzenie
-  // niesie ją w całości i drugie pytanie rdzenia byłoby zbędne.
+  // Analiza zmienia się także pracą innego okna albo innego urządzenia konta.
   const odsubskrybujAnalize = zrodlo.naZmianeAnalizy((tresc) => {
     if (tresc.analysis.id !== idAnalizy) return;
     migawka = tresc.analysis;

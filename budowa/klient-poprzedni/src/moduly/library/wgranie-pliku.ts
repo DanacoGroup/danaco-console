@@ -5,21 +5,9 @@ import { KOD_MODULU } from './zrodlo-otoczenia';
 import type { StanBiblioteki } from './stan-biblioteki';
 
 /**
- * Wgranie pliku do repozytorium wiedzy — `library.file.upload`.
- *
- * Treść idzie base64, bo takie pole niesie kontrakt (`contentBase64`), a plik
- * wskazany z urządzenia nie ma ścieżki widocznej dla rdzenia: przeglądarka
- * podaje wyłącznie nazwę. Pole `sourcePath` zostaje więc puste — wypełnienie go
- * nazwą pliku byłoby danymi zmyślonymi.
- *
- * Odczyt pliku dzieje się przed wywołaniem i może się nie udać (plik zniknął,
- * odczyt odrzucony). Niepowodzenie odczytu wraca tą samą drogą co odmowa
- * rdzenia — jednym zdaniem w wierszu odpowiedzi, bez wyjątku wywracającego widok.
- *
- * Powodzenie komendy nie jest powodzeniem wgrania: rdzeń bez magazynu treści
- * zakłada wpis o pliku i odmawia jego podglądu. Okno pyta więc rdzeń o treść
- * zaraz po wgraniu (`dostepnosc-tresci.ts`) i podaje to, co rdzeń odpowiedział —
- * kosztem jednej dodatkowej komendy, bo kontrakt nie ma tańszego świadka.
+ * Wgranie pliku do repozytorium wiedzy komendą `library.file.upload`. Treść pliku
+ * jedzie w zapisie base64, a po założeniu wpisu okno pyta rdzeń o dostępność
+ * treści i dopiero jego odpowiedź rozstrzyga o powodzeniu wgrania.
  */
 export interface WgraniePliku {
   /** Kontrolki osadzane w pasku okna. */
@@ -43,9 +31,7 @@ export function utworzWgraniePliku(
   wybor.addEventListener('change', () => {
     const plik = wybor.files?.[0];
     if (plik === undefined) return;
-    // Kontrolka wyboru pliku zgłasza `change` tylko przy zmianie wartości.
-    // Wyczyszczenie jej po przejęciu uchwytu pozwala wskazać ten sam plik
-    // ponownie, na przykład po nieudanym wgraniu.
+    // Wyczyszczenie kontrolki pozwala wskazać ten sam plik ponownie.
     wybor.value = '';
     void wgraj(plik);
   });
@@ -80,10 +66,7 @@ export function utworzWgraniePliku(
       );
       return;
     }
-    // Odpowiedź ze wskazaniem miejsca treści nie jest odmową: taki podgląd
-    // wraca zarówno dla treści leżącej w magazynie, jak i dla wskazania
-    // w próżnię (`dostepnosc-tresci.ts`). Zdanie mówi więc, co przyszło,
-    // i nie orzeka ani wgrania, ani jego braku.
+    // Wskazanie miejsca treści nie jest ani odmową, ani dowodem wgrania.
     if (stanTresci.werdykt === 'odwolanie') {
       odpowiedz(
         `Wpis pliku „${wgrany.name}" stoi w wykazie, a rdzeń na pytanie o treść oddał ` +
@@ -93,9 +76,7 @@ export function utworzWgraniePliku(
       );
       return;
     }
-    // Powodzenie mówi się wyłącznie po werdykcie `osiagalna`. Werdykt `odmowa`
-    // znaczy, że rdzeń treści nie oddał i o niej nie orzekł — okno nie orzeka
-    // wtedy ani obecności treści, ani jej braku.
+    // Powodzenie okno orzeka wyłącznie po werdykcie osiągalności treści.
     if (stanTresci.werdykt !== 'osiagalna') {
       odpowiedz(
         `Wpis pliku „${wgrany.name}" stoi w wykazie, ale rdzeń nie odpowiedział, czy ma ` +

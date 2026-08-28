@@ -1,13 +1,7 @@
 /**
- * Wcielenia roli Results Analyzer.
- *
- * Wcielenie zmienia kryteria oceny, a nie samą etykietę: każde niesie własny
- * wykaz kryteriów, po których analityk czyta wyniki wykonawców, i własny
- * nagłówek zgłoszenia niezgodności kierowanego do koordynatora.
- *
- * Wartość utrwala `config.set` na poziomie okna analityka. Rdzeń nie
- * rejestruje `role.update`, więc profilu wcielenia nie zna — pokrycie mierzy
- * `braki-kontraktu.ts`.
+ * Wcielenia roli Results Analyzer. Wcielenie zmienia kryteria oceny, a nie samą
+ * etykietę: każde niesie własny wykaz kryteriów, po których analityk czyta wyniki
+ * wykonawców, i własny nagłówek zgłoszenia niezgodności dla koordynatora.
  */
 
 export const Wcielenie = {
@@ -21,10 +15,16 @@ export const Wcielenie = {
 } as const;
 export type Wcielenie = (typeof Wcielenie)[keyof typeof Wcielenie];
 
-/** Klucz utrwalenia wcielenia na poziomie okna analityka. */
+/**
+ * Klucz utrwalenia wcielenia na poziomie okna analityka. Wartość zapisuje komenda
+ * `config.set`, więc wybór wcielenia przeżywa zamknięcie okna.
+ */
 export const KLUCZ_WCIELENIA = 'multitasking.wcielenie';
 
-/** Opis wcielenia: nazwa w selektorze i kryteria czytania wyników. */
+/**
+ * Opis wcielenia: nazwa w selektorze i kryteria czytania wyników. Kryteria wchodzą
+ * również do treści zgłoszenia niezgodności, więc odbiorca zna podstawę oceny.
+ */
 export interface OpisWcielenia {
   wcielenie: Wcielenie;
   nazwa: string;
@@ -70,22 +70,26 @@ export const WCIELENIA: readonly OpisWcielenia[] = [
   },
 ];
 
-/** Opis wcielenia po wartości; nieznana schodzi na Validatora. */
+/**
+ * Opis wcielenia po wartości; nieznana schodzi na Validatora. Pierwszy wiersz
+ * wykazu jest wartością zapasową, więc odczyt zawsze oddaje pełny opis.
+ */
 export function opisWcielenia(wartosc: unknown): OpisWcielenia {
   return WCIELENIA.find((opis) => opis.wcielenie === wartosc) ?? WCIELENIA[0]!;
 }
 
-/** Pozycje selektora wcielenia. */
+/**
+ * Pozycje selektora wcielenia: pary wartości utrwalanej i nazwy widocznej,
+ * w kolejności wykazu wcieleń.
+ */
 export function pozycjeWcielen(): ReadonlyArray<[string, string]> {
   return WCIELENIA.map((opis) => [opis.wcielenie, opis.nazwa]);
 }
 
 /**
- * Zgłoszenie niezgodności kierowane do okna koordynatora.
- *
- * Kontrakt nie ma komendy utrwalającej werdykt oceny jako stan: `monitor.status`
- * czyta stan procesów i niczego nie zapisuje. Ocena analityka jest poleceniem
- * dla koordynatora, więc zgłoszenie idzie zwykłym `message.send`.
+ * Zgłoszenie niezgodności kierowane do okna koordynatora. Ocena analityka jest
+ * poleceniem dla koordynatora, więc zgłoszenie idzie zwykłym `message.send`;
+ * kontrakt nie ma komendy utrwalającej werdykt oceny jako stan.
  */
 export function trescZgloszenia(
   opis: OpisWcielenia,

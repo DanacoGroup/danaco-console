@@ -3,20 +3,18 @@ import type { Kanal, Wynik } from '../../protokol/kanal';
 import { czyTablica, sprawdzKsztalt } from '../../protokol/ksztalt-odpowiedzi';
 import { wywolaj } from '../../protokol/wywolanie';
 
-/** Kod modułu w katalogu rdzenia — kolumna `modul.kod`. */
+/**
+ * Kod modułu w katalogu rdzenia, odpowiadający kolumnie `modul.kod`. Rdzeń
+ * przypisuje ten kod oknu przy wejściu w obszar roboczy, więc wybór okna
+ * modułu opiera się na porównaniu z tą stałą.
+ */
 export const KOD_MODULU = 'apps';
 
 /**
- * Skąd moduł bierze `windowId` wymagany przez wszystkie trzy komendy `apps.*`.
- *
- * Każde żądanie obszaru niesie pole `windowId` opisane w kontrakcie jako
- * „Okno modułu Apps”, więc identyfikator musi pochodzić z rdzenia. Bierze go
- * komenda `window.list` zawężona do sesji i do okien modułu Apps:
- * `Window.moduleId` jest tym, co rdzeń przypisał oknu przy `workspace.enter`.
- *
- * Brak okna nie jest błędem: sesja bywa jeszcze nieznana w chwili wejścia
- * w moduł; wtedy wykaz wraca pusty, a okna modułu pokazują stan pusty
- * nazywający brakujący warunek zamiast wysyłać żądanie bez identyfikatora.
+ * Źródło identyfikatora okna, którego żądają wszystkie komendy `apps.*`.
+ * Identyfikator pochodzi z rdzenia: podaje go komenda `window.list` zawężona
+ * do sesji i do okien modułu Apps. Brak okna nie jest błędem, bo sesja bywa
+ * jeszcze nieznana.
  */
 export interface ZrodloOknaModulu {
   /** Okna komunikacji sesji należące do modułu Apps. */
@@ -38,8 +36,8 @@ export function utworzZrodloOknaModulu(kanal: Kanal): ZrodloOknaModulu {
 /**
  * Okno modułu Apps spośród okien sesji.
  *
- * Wybieramy pierwsze okno o module zgodnym z kodem modułu; gdy rdzeń nie
- * przypisał żadnego, oddajemy pusty łańcuch, a nie okno przypadkowe.
+ * Wybór pada na pierwsze okno o module zgodnym z kodem modułu; gdy rdzeń nie
+ * przypisał żadnego, wraca pusty łańcuch, a nie okno przypadkowe.
  */
 export function wybierzOknoModulu(okna: readonly Window[]): string {
   const nasze = okna.find((okno) => okno.moduleId === KOD_MODULU);

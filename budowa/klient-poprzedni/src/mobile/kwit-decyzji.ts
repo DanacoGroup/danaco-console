@@ -1,32 +1,29 @@
 /**
- * Kwit decyzji — dowód, że decyzja Operatora doszła do rdzenia, przeżywający
- * zamknięcie telefonu.
- *
- * Telefon jest kanałem interwencji, nie miejscem pracy: Operator podejmuje
- * jedną decyzję i odchodzi od urządzenia. Potwierdzenie wypisane w oknie ginie
- * razem z oknem, a pytanie „czy tamto przeszło?” wraca później, bez dostępu do
- * pulpitu. Kwit leży w pamięci przeglądarki, więc pierwsze, co telefon pokazuje
- * po ponownym otwarciu, to zdanie w rodzaju „12:03 — wstrzymano kolejkę
- * «przekazanie: krok pierwszy»; rdzeń potwierdził stan paused”.
- *
- * Kwit niesie zdanie rdzenia, nie widoku. Każdy krok zapisuje nazwę komendy,
- * rozstrzygnięcie wywołania i stan po zmianie wyjęty z odpowiedzi rdzenia
- * (stan kolejki, `stopped`, źródło konfiguracji). Kwit nieudany zapisuje treść
- * odmowy, bo niepowodzenie także jest wiadomością, na którą Operator czeka.
- *
- * Magazyn jest wstrzykiwany, wzorem `uwierzytelnienie/sesja-bramki.ts`:
- * domyślnie `window.localStorage`, w sprawdzianie — atrapa. Błąd pamięci nie
- * zatrzymuje drogi interwencji: brak magazynu znaczy „kwitu nie zapiszę”,
- * a nie „decyzji nie wykonam”. Stąd kolejność: najpierw rdzeń, potem kwit.
+ * Kwit decyzji jest dowodem, że decyzja Operatora doszła do rdzenia, i przeżywa
+ * zamknięcie telefonu w pamięci trwałej przeglądarki. Niesie zdanie rdzenia:
+ * nazwę komendy, rozstrzygnięcie wywołania i stan po zmianie.
  */
 
-/** Klucz zapisu kwitów w pamięci przeglądarki. */
+/**
+ * Klucz, pod którym magazyn trzyma wykaz kwitów w pamięci trwałej przeglądarki.
+ * Przestrzeń nazw `danaco-console.mobile` oddziela zapis kanału telefonicznego od
+ * pozostałych zapisów aplikacji na tym samym urządzeniu.
+ */
 export const KLUCZ_KWITOW = 'danaco-console.mobile.kwity';
 
-/** Ile kwitów zostaje; starsze wypadają. Telefon czyta ostatnie, nie archiwum. */
+/**
+ * Ile kwitów zostaje w pamięci; przy dopisaniu starsze wypadają poza ten próg.
+ * Telefon czyta ostatnie interwencje, a nie archiwum, więc zapis nie rośnie
+ * w nieskończoność i mieści się w pojemności pamięci przeglądarki.
+ */
 export const ILE_KWITOW = 20;
 
-/** Droga interwencji, której kwit dotyczy. */
+/**
+ * Droga interwencji, której kwit dotyczy: zatwierdzenie kroku, wstrzymanie,
+ * nastawienie koordynatora albo przejęcie sterowania. Wartości są zapisywane
+ * do pamięci wprost, więc stanowią część zapisu odczytywanego po ponownym
+ * otwarciu telefonu.
+ */
 export const Droga = {
   Zatwierdz: 'zatwierdz-krok',
   Wstrzymaj: 'wstrzymaj',
@@ -35,7 +32,11 @@ export const Droga = {
 } as const;
 export type Droga = (typeof Droga)[keyof typeof Droga];
 
-/** Jedno wywołanie kontraktu wykonane w ramach drogi. */
+/**
+ * Jedno wywołanie kontraktu wykonane w ramach drogi interwencji, wraz z jego
+ * rozstrzygnięciem. Droga składa się z kolejnych kroków, a kwit zapisuje je
+ * wszystkie, żeby widać było, na którym wywołaniu rdzeń odmówił.
+ */
 export interface KrokKwitu {
   /** Nazwa komendy kontraktu — dokładnie ta, która poszła na gniazdo. */
   komenda: string;
@@ -46,7 +47,11 @@ export interface KrokKwitu {
   odmowa?: string;
 }
 
-/** Kwit jednej drogi interwencji. */
+/**
+ * Kwit jednej drogi interwencji: własne oznaczenie, droga, nagłówek pozycji,
+ * wykaz wykonanych kroków, rozstrzygnięcie całości, zdanie dla Operatora oraz
+ * chwila wykonania. Taki zapis idzie do pamięci trwałej i z niej wraca.
+ */
 export interface Kwit {
   id: string;
   droga: Droga;
@@ -60,14 +65,22 @@ export interface Kwit {
   o: number;
 }
 
-/** Magazyn kwitów; wstrzykiwany, żeby sprawdzian nie potrzebował przeglądarki. */
+/**
+ * Magazyn kwitów odczytuje wykaz, dopisuje kwit i czyści zapis. Jest wstrzykiwany
+ * do drogi interwencji, więc sprawdzian podstawia atrapę i obywa się bez
+ * pamięci trwałej przeglądarki.
+ */
 export interface MagazynKwitow {
   odczytaj(): Kwit[];
   dopisz(kwit: Kwit): Kwit[];
   wyczysc(): void;
 }
 
-/** Pamięć trwała przeglądarki; `null`, gdy jej nie ma (node, tryb prywatny). */
+/**
+ * Oddaje pamięć trwałą przeglądarki albo `null`, gdy jej nie ma: pod Node oraz
+ * w oknie prywatnym samo sięgnięcie po `window.localStorage` kończy się błędem,
+ * więc odczyt idzie w bloku przechwytującym wyjątek.
+ */
 export function pamiecPrzegladarki(): Storage | null {
   try {
     return window.localStorage;
@@ -77,12 +90,9 @@ export function pamiecPrzegladarki(): Storage | null {
 }
 
 /**
- * Magazyn kwitów osadzony na dowolnym `Storage`.
- *
- * `null` daje magazyn pusty: odczyt oddaje pustkę, dopisanie oddaje sam
- * dopisany kwit i nic nie utrwala. Ekran pokazuje wtedy potwierdzenie bieżące,
- * a po zamknięciu telefonu go nie ma — taki jest stan faktyczny urządzenia bez
- * pamięci trwałej.
+ * Składa magazyn kwitów osadzony na dowolnym `Storage`. Wartość `null` daje
+ * magazyn pusty: odczyt oddaje pustkę, dopisanie oddaje sam dopisany kwit
+ * i niczego nie utrwala.
  */
 export function utworzMagazynKwitow(pamiec: Storage | null = pamiecPrzegladarki()): MagazynKwitow {
   return {
@@ -122,7 +132,11 @@ export function utworzMagazynKwitow(pamiec: Storage | null = pamiecPrzegladarki(
   };
 }
 
-/** Zdanie kwitu widziane przez Operatora — godzina, droga, stan oddany przez rdzeń. */
+/**
+ * Składa zdanie kwitu widziane przez Operatora: godzinę wykonania w formacie
+ * lokalnym wraz ze zdaniem złożonym ze stanów oddanych przez rdzeń. Godzina
+ * pochodzi z chwili zapisanej w kwicie, nie z chwili odczytu.
+ */
 export function zdanieKwitu(kwit: Kwit): string {
   const godzina = new Date(kwit.o).toLocaleTimeString('pl-PL', {
     hour: '2-digit',
@@ -131,7 +145,11 @@ export function zdanieKwitu(kwit: Kwit): string {
   return `${godzina} — ${kwit.zdanie}`;
 }
 
-/** Czy odczyt z pamięci ma kształt kwitu. Kształt spoza wzorca jest pomijany. */
+/**
+ * Sprawdza, czy odczyt z pamięci ma kształt kwitu. Zapis mógł zostać podmieniony
+ * albo pochodzić z wcześniejszego kształtu danych, więc wartość spoza wzorca
+ * jest pomijana zamiast wchodzić do wykazu.
+ */
 function czyKwit(wartosc: unknown): wartosc is Kwit {
   if (typeof wartosc !== 'object' || wartosc === null) return false;
   const zapis = wartosc as Record<string, unknown>;

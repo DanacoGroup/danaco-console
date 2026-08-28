@@ -17,15 +17,9 @@ import { wywolaj } from '../protokol/wywolanie';
 import { powodOdczytu, type NaNiepowodzenie } from './zrodlo-punktow';
 
 /**
- * Nadania dostępu okna rozmowy.
- *
- * Okno ma zbiór nadań, nie jedno. Kolejność i oznaczenie głównego mają
- * znaczenie, dlatego trzy komendy zapisujące zwracają nie tylko zmienione
- * nadanie, lecz komplet nadań okna po zmianie: przestawienie kolejności albo
- * oznaczenia głównego dotyka pozostałych wierszy i widok musi je zobaczyć
- * w jednej odpowiedzi.
- *
- * Nazwy komend i zdarzeń pochodzą wyłącznie ze stałych kontraktu.
+ * Nadania dostępu okna rozmowy. Okno ma zbiór nadań, a nie jedno nadanie,
+ * przy czym kolejność i oznaczenie głównego mają znaczenie. Nazwy komend
+ * i zdarzeń pochodzą wyłącznie ze stałych kontraktu.
  */
 export interface ZrodloNadan {
   /** `access.grant.list` — nadania okna w kolejności. */
@@ -89,10 +83,18 @@ export function utworzZrodloNadan(
   };
 }
 
-/** Odpowiedź niosąca komplet nadań okna po zapisie. */
+/**
+ * Odpowiedź niosąca komplet nadań okna po zapisie. Kształt jest wspólny dla
+ * trzech komend zapisujących, więc sprawdzian kształtu odpowiedzi powstaje raz
+ * i obsługuje je wszystkie.
+ */
 type OdpowiedzKompletu = { grants: AccessGrant[] };
 
-/** Wspólny sprawdzian odpowiedzi zapisu: nadanie i komplet po zmianie. */
+/**
+ * Wspólny sprawdzian odpowiedzi zapisu: wymaga zarówno zmienionego nadania, jak
+ * i kompletu nadań okna po zmianie, ponieważ widok przestawia wszystkie wiersze
+ * naraz i musi zobaczyć je w jednej odpowiedzi.
+ */
 function sprawdzKomplet<T extends OdpowiedzKompletu & { grant: AccessGrant }>(
   wynik: Wynik<T>,
   komenda: string,
@@ -105,8 +107,9 @@ function sprawdzKomplet<T extends OdpowiedzKompletu & { grant: AccessGrant }>(
 }
 
 /**
- * Porządek nadań: kolejność z rdzenia, a przy jej braku czas założenia.
- * Nadanie bez kolejności trafia na koniec zamiast zniknąć.
+ * Porządek nadań: kolejność podana przez rdzeń, a przy jej braku czas założenia
+ * nadania. Nadanie bez kolejności trafia na koniec zbioru, zamiast zniknąć
+ * z listy pokazywanej Operatorowi.
  */
 export function uporzadkujNadania(nadania: readonly AccessGrant[]): AccessGrant[] {
   return [...nadania].sort((pierwsze, drugie) => {

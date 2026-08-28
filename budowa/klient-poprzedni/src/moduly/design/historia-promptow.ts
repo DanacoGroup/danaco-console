@@ -3,15 +3,9 @@ import { przyciskBrakuDrogi } from './brak-drogi';
 import { BRAKI } from './etykiety-designu';
 
 /**
- * Historia poleceń Prompt Buildera wraz z porównaniem wersji promptu.
- *
- * Wykaz obejmuje wyłącznie prompty wydane w tym oknie i ginie razem z nim.
- * Odczyt historii i zapis szablonu mają już komendy w kontrakcie; brakuje im
- * uchwytów w rdzeniu, więc okno tej drogi jeszcze nie wywołuje i „Zapisz jako
- * szablon" pozostaje na razie kontrolką nazywającą stan, nie wykonującą zapis.
- *
- * Porównanie wymienia pola kontraktu, którymi dwa prompty się różnią — prompt
- * jest zbiorem pól, więc różnica liczona na tekście nic by nie niosła.
+ * Historia poleceń Prompt Buildera wraz z porównaniem wersji promptu. Wykaz
+ * obejmuje wyłącznie prompty wydane w tym oknie i ginie razem z nim, a
+ * porównanie wymienia pola kontraktu `DesignPrompt`, którymi wersje się różnią.
  */
 export interface HistoriaPromptow {
   element: HTMLElement;
@@ -91,7 +85,10 @@ export function utworzHistoriePromptow(
   };
 }
 
-/** Jeden wpis historii: przywrócenie do pól i porównanie z poprzednim. */
+/**
+ * Składa jeden wpis historii: opis promptu wraz z parametrami oraz przyciski
+ * przywrócenia promptu do pól okna i porównania go z wersją poprzednią.
+ */
 function wierszHistorii(
   prompt: DesignPrompt,
   numer: number,
@@ -121,7 +118,10 @@ function wierszHistorii(
   return element;
 }
 
-/** Parametry liczbowe promptu w jednym zdaniu. */
+/**
+ * Zestawia parametry promptu w jedno zdanie opisu: kreatywność i liczbę
+ * wariantów zawsze, a ziarno oraz silnik wtedy, gdy prompt je niesie.
+ */
 function opiszParametry(prompt: DesignPrompt): string {
   const czesci = [`kreatywność ${prompt.creativity ?? 0}`, `warianty ${prompt.variants ?? 1}`];
   if (prompt.seed !== undefined) czesci.push(`ziarno ${prompt.seed}`);
@@ -129,12 +129,14 @@ function opiszParametry(prompt: DesignPrompt): string {
   return czesci.join(' · ');
 }
 
-/** Pola, którymi dwa prompty się różnią. */
+/**
+ * Wylicza pola, którymi dwa prompty się różnią, zestawiając wartość starszą
+ * z nowszą; zgodność pole w pole daje zamiast wykazu osobne zdanie.
+ */
 function opiszRoznice(starszy: DesignPrompt, nowszy: DesignPrompt): string {
   const klucze = new Set<string>([...Object.keys(starszy), ...Object.keys(nowszy)]);
   const wiersze: string[] = [];
-  // Pola promptu mają różne typy; porównanie idzie po ich zapisie tekstowym,
-  // bo wynik trafia na ekran jako tekst.
+  // Pola promptu mają różne typy, więc porównanie idzie po zapisie tekstowym.
   const przedPola = starszy as unknown as Record<string, unknown>;
   const poPola = nowszy as unknown as Record<string, unknown>;
   for (const klucz of [...klucze].sort()) {

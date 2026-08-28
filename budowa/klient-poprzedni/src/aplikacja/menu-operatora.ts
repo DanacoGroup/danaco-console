@@ -2,18 +2,9 @@ import { utworzMenuRozwijane, type MenuRozwijane } from '../okna-rownolegle/menu
 import { POZYCJE_USTAWIEN, type KodUstawienia, type PozycjaUstawienia } from '../strona-glowna/pozycje-ustawien';
 
 /**
- * Menu Operatora w pasku aplikacji — tożsamość i czynności jej dotyczące.
- *
- * Nie ma tu nazwy, adresu, awatara ani przełączania kont, bo platforma kont
- * nie prowadzi: `auth.register` nie zakłada konta i nie przyjmuje adresu
- * e-mail. Nie ma też pozycji „Wyloguj" — rdzeń nie odcina komend po wygaśnięciu
- * sesji, więc taka pozycja mogłaby jedynie skasować zapis sesji i przeładować
- * aplikację.
- *
- * Zostają dwie pozycje, które dotyczą Operatora i mają dokąd prowadzić:
- * „Ustawienia" (hasło, metody wejścia) oraz „Punkty izolacji" (zakres pracy).
- * Obie pochodzą z tego samego wykazu, co listwa strony głównej, i idą tą samą
- * drogą skutku.
+ * Menu Operatora w pasku aplikacji niesie tożsamość oraz czynności jej
+ * dotyczące: pozostają dwie pozycje mające dokąd prowadzić — ustawienia hasła
+ * i metod wejścia oraz punkty izolacji wyznaczające zakres pracy.
  */
 export interface MenuOperatora {
   element: HTMLElement;
@@ -25,7 +16,11 @@ export interface OpcjeMenuOperatora {
   naPozycje(pozycja: PozycjaUstawienia): void;
 }
 
-/** Pozycje wykazu, które dotyczą Operatora, a nie platformy ani modeli. */
+/**
+ * Pozycje wykazu ustawień, które dotyczą Operatora, a nie platformy ani modeli;
+ * wykaz jest filtrem po kodach, więc menu i listwa strony głównej biorą opis
+ * pozycji z jednego źródła.
+ */
 const KODY_OPERATORA: readonly KodUstawienia[] = ['ustawienia', 'punkty-izolacji'];
 
 export function utworzMenuOperatora(opcje: OpcjeMenuOperatora): MenuOperatora {
@@ -44,7 +39,11 @@ export function utworzMenuOperatora(opcje: OpcjeMenuOperatora): MenuOperatora {
   };
 }
 
-/** Nagłówek menu — nazywa rolę zalogowanego, jedyną, jaką platforma zna. */
+/**
+ * Nagłówek menu nazywa rolę zalogowanego, jedyną, jaką platforma zna; nazwy
+ * własnej ani adresu w tym miejscu nie ma, ponieważ rdzeń takich danych
+ * o Operatorze nie prowadzi.
+ */
 function nagl(): HTMLElement {
   const element = document.createElement('p');
   element.className = 'dn-menu__naglowek';

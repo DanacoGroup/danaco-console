@@ -4,34 +4,15 @@ import type { StanBiblioteki } from './stan-biblioteki';
 import { odczytajBase64 } from './tresc-base64';
 
 /**
- * Dołożenie wersji dokumentu — `library.version.add` w Versioning Panelu. To
- * jedyne wejście, którym rośnie historia dokumentu: `library.file.upload`
- * zawsze zakłada nowy plik, więc drugie wgranie dałoby drugi dokument, a nie
- * drugą wersję pierwszego.
- *
- * Kontrakt niesie dwie drogi. Wersja z treścią (`contentBase64`) to nowe
- * wydanie dokumentu; wersja z samą etykietą (`LibraryVersionAddRequest.label`)
- * to kamień milowy postawiony na treści bieżącej — rdzeń przepisuje wtedy
- * wersji treść bieżącą pliku, więc powrót do znacznika niczego nie wymazuje.
- *
- * Pole `author` kontrakt opisuje jako „Operator albo moduł"; tu ruch wykonuje
- * człowiek przy oknie, więc sprawcą jest Operator. Puste pole kazałoby zgadywać,
- * kto zmienił dokument, przy wersji stojącej obok wersji wytworzonych przez
- * model (`wiersz-wersji.ts`).
- *
- * Wersja zapisana to jeszcze nie wersja z treścią: `library.version.add`
- * z `contentBase64` wraca powodzeniem i zakłada wersję z własną sumą kontrolną
- * także wtedy, gdy podgląd dokumentu odmawia. Do takiej wersji „Przywróć" nie
- * ma po co wracać, więc okno pyta rdzeń o treść po dołożeniu i mówi wprost,
- * gdy jej nie ma, a gdy rdzeń nie odpowiedział — że nie wie. Zdanie powodzenia
- * bierze osobno wskazanie wersji przez dokument i osobno zgodność sum
- * kontrolnych, każde z odpowiedzi rdzenia, nie z żądania okna.
+ * Dołożenie wersji dokumentu w Versioning Panelu jest jedynym wejściem, którym
+ * rośnie historia dokumentu: wersja niesie albo nową treść, albo etykietę
+ * kamienia milowego postawionego na treści bieżącej.
  */
 export interface DolozenieWersji {
   element: HTMLElement;
 }
 
-/** Sprawca zmiany wykonanej ręką człowieka przy oknie modułu. */
+/** Sprawca zmiany wykonanej ręką człowieka przy oknie modułu, odróżniający wpis od wersji wytworzonych przez model. */
 const SPRAWCA = 'Operator';
 
 export function utworzDolozenieWersji(
@@ -107,10 +88,7 @@ export function utworzDolozenieWersji(
     etykieta.kontrolka.value = '';
     poZmianie();
 
-    // Rdzeń oddaje wersję i plik po dołożeniu, więc „dokument niesie tę wersję"
-    // stoi w polu `file.versionId`, a nie w domyśle okna. Rozbieżność tych dwóch
-    // pól znaczy, że wiersz historii powstał, ale dokument został przy innej
-    // wersji — okno ogłasza ją odmową.
+    // Wskazanie wersji niesionej przez dokument stoi w polu pliku, a nie w domyśle okna.
     if (plik.versionId !== wersja.id) {
       odpowiedz.pokaz(
         `${czynnosc}: rdzeń założył wersję ${nazwaWersji} (${wersja.id}), ale dokument ` +
@@ -138,8 +116,7 @@ export function utworzDolozenieWersji(
       );
       return;
     }
-    // „Treść dostępna" wolno napisać wyłącznie po `osiagalna`. Odmowa odczytu
-    // nie jest ani potwierdzeniem, ani wyrokiem o braku treści.
+    // Treść dostępna wolno napisać wyłącznie po stwierdzeniu osiągalności, nie po odmowie odczytu.
     if (stanTresci.werdykt !== 'osiagalna') {
       odpowiedz.pokaz(
         `${czynnosc}: wersja ${nazwaWersji} stoi w historii, ale rdzeń nie odpowiedział ` +
@@ -149,10 +126,7 @@ export function utworzDolozenieWersji(
       );
       return;
     }
-    // Sumy kontrolne z JEDNEJ odpowiedzi: zgodne znaczą, że treść oddana przez
-    // podgląd jest treścią TEJ wersji, a nie treścią zastaną. Rozbieżne — że
-    // dokument niesie wersję, ale nie jej bajty; wtedy zdanie mówi o wersji
-    // tyle, ile rdzeń podał, i ani słowa więcej.
+    // Sumy kontrolne z jednej odpowiedzi mówią, czy treść oddana przez podgląd należy do tej wersji.
     if (wersja.checksum !== undefined && wersja.checksum !== plik.checksum) {
       odpowiedz.pokaz(
         `${czynnosc}: dołożona jako ${nazwaWersji}, rdzeń oddaje treść dokumentu — ale suma ` +

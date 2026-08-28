@@ -1,3 +1,8 @@
+/**
+ * Rozstrzygnięcie wartości ustawienia wraz z jej pochodzeniem. Okno
+ * konfiguracji pokazuje nie tylko, ile wynosi wartość, ale i z którego poziomu
+ * zasięgu oraz z której osi przyszła.
+ */
 import {
   ConfigAxis,
   ConfigScope,
@@ -14,29 +19,17 @@ import {
 } from './zasiegi';
 
 /**
- * Rozstrzygnięcie wartości ustawienia wraz z jej pochodzeniem.
- *
- * Okno konfiguracji pokazuje nie tylko, ile wynosi wartość, ale i skąd pochodzi:
- * z którego poziomu zasięgu i z której osi przyszła oraz jakie inne zapisy tego
- * samego klucza istnieją w systemie.
- *
- * Rachunek jest w całości po stronie klienta i opiera się wyłącznie na tym,
- * co przyszło z rdzenia komendą `config.get`: rdzeń oddaje wpisy wraz
- * z poziomem, bytem poziomu, osią i bytem osi, więc dziedziczenie da się
- * odtworzyć bez drugiej komendy.
- *
- * Klient nie zna pełnej ścieżki bytów (środowisko → moduł → … → okno), więc jej
- * nie zgaduje: punkt widzenia wskazuje pasek u góry okna. Łańcuch takiego
- * punktu składa się z wpisów globalnych
- * oraz z wpisów zapisanych dokładnie na wskazanym poziomie i dla wskazanego
- * bytu; zapis na tym samym poziomie, lecz dla innego bytu, dotyczy kogoś
- * innego i do rachunku nie wchodzi.
+ * Punkt widzenia to adres, czyli miejsce, względem którego liczone jest
+ * dziedziczenie wartości. Wskazuje go pasek u góry okna konfiguracji, ponieważ
+ * klient pełnej ścieżki bytów nie zna.
  */
-
-/** Punkt widzenia to adres — miejsce, względem którego liczymy dziedziczenie. */
 export type PunktWidzenia = AdresUstawienia;
 
-/** Skąd pochodzi wartość obowiązująca. */
+/**
+ * Skąd pochodzi wartość obowiązująca: sama wartość, wpis będący jej źródłem,
+ * pełny łańcuch zapisów klucza oraz wskaźnik mówiący, czy obowiązuje wartość
+ * domyślna katalogu ustawień.
+ */
 export interface Rozstrzygniecie {
   /** Wartość obowiązująca w punkcie widzenia. */
   wartosc: unknown;
@@ -48,7 +41,11 @@ export interface Rozstrzygniecie {
   domyslna: boolean;
 }
 
-/** Wpisy dotyczące jednego klucza, uporządkowane od najwęższego zapisu. */
+/**
+ * Wpisy dotyczące jednego klucza, uporządkowane od zapisu najwęższego do
+ * najszerszego. Porządek jest podstawą zarówno rozstrzygnięcia wartości, jak
+ * i podglądu dziedziczenia w oknie konfiguracji.
+ */
 export function wpisyKlucza(
   wpisy: readonly ConfigEntry[],
   klucz: string,
@@ -78,7 +75,11 @@ export function rozstrzygnij(
   };
 }
 
-/** Czy wpis jest tym, z którego pochodzi wartość obowiązująca. */
+/**
+ * Czy wpis jest tym, z którego pochodzi wartość obowiązująca. Podgląd
+ * dziedziczenia zaznacza nim jeden wiersz łańcucha, żeby Operator widział, który
+ * zapis przeważył nad pozostałymi.
+ */
 export function czyZrodlo(
   rozstrzygniecie: Rozstrzygniecie,
   wpis: ConfigEntry,
@@ -86,7 +87,11 @@ export function czyZrodlo(
   return rozstrzygniecie.zrodlo === wpis;
 }
 
-/** Czy wpis wchodzi do łańcucha punktu widzenia. */
+/**
+ * Czy wpis wchodzi do łańcucha punktu widzenia. Wchodzą wpisy globalne oraz
+ * zapisane dokładnie na wskazanym poziomie i dla wskazanego bytu; zapis dla
+ * innego bytu dotyczy kogoś innego.
+ */
 function wpisObowiazuje(wpis: ConfigEntry, punkt: PunktWidzenia): boolean {
   return zasiegObowiazuje(wpis, punkt) && osObowiazuje(wpis, punkt);
 }
@@ -102,7 +107,11 @@ function osObowiazuje(wpis: ConfigEntry, punkt: PunktWidzenia): boolean {
   return os === punkt.os && bytOsiWpisu(wpis) === punkt.bytOsi;
 }
 
-/** Porządek wpisów: najpierw najwęższy poziom, potem najwęższa oś. */
+/**
+ * Porządek wpisów w łańcuchu: najpierw najwęższy poziom zasięgu, a przy równym
+ * poziomie najwęższa oś. Dzięki temu wpis stojący na początku łańcucha jest
+ * zawsze tym, z którego pochodzi wartość obowiązująca.
+ */
 function porownaj(pierwszy: ConfigEntry, drugi: ConfigEntry): number {
   const poziom =
     pierwszenstwoZasiegu(pierwszy.scope) - pierwszenstwoZasiegu(drugi.scope);

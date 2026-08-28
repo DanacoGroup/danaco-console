@@ -8,22 +8,14 @@ import {
 import { KLASY_DYMKA } from './etykiety-assistant';
 
 /**
- * Pasek narzędzi promptu modułu Assistant.
- *
- * Plik odpowiada wyłącznie za kontrolki wydania polecenia. Pasek niczego nie
- * wysyła — oddaje wartości i zgłasza zamiary, a wysyłkę prowadzi okno, żeby
- * droga do rdzenia była jedna.
- *
- * Mikrofon nie jest wygaszony, choć kontrakt nie ma przesyłu dźwięku:
- * naciśnięcie odpowiada zdaniem mówiącym, czego brakuje, i prowadzi ognisko do
- * pola transkrypcji. Rozpoznanie mowy jest warstwą wejścia, nie drugą drogą
- * rozmowy — po transkrypcji treść wchodzi tam, gdzie weszłaby wpisana ręcznie.
+ * Pasek narzędzi promptu modułu Assistant odpowiada wyłącznie za kontrolki wydania polecenia;
+ * wysyłkę prowadzi okno, żeby droga do rdzenia była jedna.
  */
 export interface PasekPolecenia {
   element: HTMLElement;
   /** Treść polecenia po edycji Operatora. */
   transkrypcja(): string;
-  /** Wstawia treść do pola — np. fragment odpowiedzi zamieniany w zadanie. */
+  /** Wstawia treść do pola, na przykład fragment odpowiedzi zamieniany w zadanie. */
   ustawTranskrypcje(tresc: string): void;
   /** Profil asystenta; pusty znaczy profil domyślny rdzenia. */
   profil(): string;
@@ -33,7 +25,7 @@ export interface PasekPolecenia {
   czytaj(): boolean;
 }
 
-/** Zamiary paska obsługiwane przez okno. */
+/** Zamiary paska obsługiwane przez okno: wysyłka, przerwanie, nagranie mikrofonem i wybudzenie ciągłego nasłuchu. */
 export interface UchwytyPaska {
   naWyslij(): void;
   naPrzerwij(): void;
@@ -44,11 +36,8 @@ export interface UchwytyPaska {
 }
 
 /**
- * Kontrolki wnoszone przez okno i osadzane w rzędzie kontrolek paska.
- *
- * Selektor profilu prowadzi własny odczyt rdzenia (`component.list`), więc nie
- * należy do paska, który niczego nie wywołuje. Pasek daje mu miejsce, a nie
- * buduje go sam.
+ * Kontrolki wnoszone przez okno i osadzane w rzędzie kontrolek paska, bo selektor profilu
+ * prowadzi własny odczyt rdzenia.
  */
 export interface KontrolkiOkna {
   katalogProfili: HTMLElement;
@@ -106,7 +95,7 @@ export function utworzPasekPolecenia(
   };
 }
 
-/** Katalog profili, pole profilu i synteza wraz z dymkami [?]. */
+/** Katalog profili, pole profilu i synteza wraz z dymkami objaśnień tłumaczącymi znaczenie każdej kontrolki. */
 function zestawKontrolek(
   katalogProfili: HTMLElement,
   profil: HTMLElement,
@@ -133,14 +122,8 @@ function zestawKontrolek(
 }
 
 /**
- * Mikrofon, Wybudzenie, Wyślij i Przerwij — cztery przyciski, każdy z drogą.
- *
- * Wybudzenie stoi osobno od mikrofonu, bo to dwie różne czynności: mikrofon
- * nagrywa jedno polecenie i wysyła je do rozpoznania (`speech.audio.upload`
- * → `speech.transcribe`), a wybudzenie prowadzi nasłuch ciągły
- * (`speech.listen.start`) i frazę, na którą asystent reaguje
- * (`speech.wake.set`). Sklejone w jedną kontrolkę dałyby jeden przycisk
- * o dwóch znaczeniach.
+ * Mikrofon, wybudzenie, wyślij i przerwij — cztery przyciski paska, każdy z osobną drogą
+ * wywołania rdzenia.
  */
 function zestawPrzyciskow(uchwyty: UchwytyPaska, pole: HTMLTextAreaElement): HTMLElement {
   const mikrofon = przycisk('Mikrofon — nagraj polecenie', 'dn-btn dn-btn--sm dn-btn--zarys');

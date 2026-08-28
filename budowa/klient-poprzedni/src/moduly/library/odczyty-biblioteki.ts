@@ -4,24 +4,9 @@ import type { MagazynBiblioteki, TrybWyszukiwania } from './magazyn-biblioteki';
 import type { ZrodloBiblioteki } from './zrodlo-biblioteki';
 import type { ZrodloZnaczenia } from './zrodlo-znaczenia';
 
-/**
- * Drogi odczytu wykazu plików, osobno od pamięci i od widoku.
- *
- * `library.file.list` zawęża wykaz polami (etykieta, kolekcja, projekt),
- * `library.file.search` dopasowuje SŁOWA w indeksie pełnotekstowym
- * repozytorium, a `knowledge.search` w zakresie biblioteki dopasowuje
- * ZNACZENIE we wskaźniku osadzeń. To trzy różne komendy kontraktu i okno ma dla
- * każdej osobne wejście.
- *
- * Tryb hybrydowy nie jest czwartą komendą: okno wysyła obie i składa
- * odpowiedzi — słowa przed znaczeniem, bo dopasowanie dosłowne jest
- * sprawdzalne, a semantyczne jest przybliżeniem.
- *
- * Nieudany odczyt zostawia powód, nie pustkę: pusty wykaz po odmowie i pusty
- * wykaz na świeżej instalacji to dwa różne stany.
- */
+// Drogi odczytu wykazu osobno od pamięci i widoku: trzy komendy, każda z osobnym wejściem okna.
 
-/** Górna granica wyników wyszukiwania — okno pokazuje trafienia, nie zbiór. */
+/** Górna granica wyników wyszukiwania — okno pokazuje ograniczoną liczbę trafień, nie cały zbiór pasujących plików. */
 const GRANICA_TRAFIEN = 50;
 
 /**
@@ -50,12 +35,8 @@ export async function odczytajWykaz(
 }
 
 /**
- * Wyszukiwanie w trybie wybranym przez Operatora.
- *
- * Zwraca zdanie o tym, co okno zrobiło — nie po to, żeby ozdobić wynik, lecz
- * dlatego, że trzy tryby dają wyniki nieporównywalne: pusty wykaz w trybie
- * semantycznym może znaczyć „wskaźnika znaczenia nie zbudowano", a nie „nie ma
- * takich plików". Zdanie nazywa więc drogę, którą wynik powstał.
+ * Wyszukiwanie w trybie wybranym przez użytkownika zwraca zdanie o drodze, którą
+ * wynik powstał, bo trzy tryby dają wyniki nieporównywalne między sobą.
  */
 export async function szukajWykaz(
   magazyn: MagazynBiblioteki,
@@ -69,7 +50,7 @@ export async function szukajWykaz(
   return szukajHybrydowo(magazyn, zrodlo, wskaznik, fraza);
 }
 
-/** Dopasowanie słów — `library.file.search` w indeksie pełnotekstowym rdzenia. */
+/** Dopasowanie słów w indeksie pełnotekstowym rdzenia, ograniczone górną granicą liczby trafień wyszukiwania. */
 async function szukajSlowami(
   magazyn: MagazynBiblioteki,
   zrodlo: ZrodloBiblioteki,
@@ -84,13 +65,9 @@ async function szukajSlowami(
 }
 
 /**
- * Dopasowanie znaczenia — `knowledge.search` w zakresie biblioteki.
- *
- * Trafienie niesie identyfikator źródła, a nie plik, więc wiersze biorą się
- * z osobnego odczytu wykazu. Trafienie bez pliku w tym wykazie jest wypowiedziane,
- * a nie pominięte: znaczy, że wskaźnik zna dokument, którego wykaz nie oddał —
- * bo wypadł poza granicę odczytu albo zniknął z repozytorium po zbudowaniu
- * wskaźnika.
+ * Dopasowanie znaczenia w zakresie biblioteki: trafienie niesie identyfikator
+ * źródła, a nie plik, więc wiersze biorą się z osobnego odczytu wykazu, a
+ * trafienie bez pliku jest wypowiedziane, nie pominięte.
  */
 async function szukajZnaczeniem(
   magazyn: MagazynBiblioteki,
@@ -126,13 +103,9 @@ async function szukajZnaczeniem(
 }
 
 /**
- * Tryb hybrydowy — obie odpowiedzi złożone po stronie okna.
- *
- * Kolejność jest rozstrzygnięciem, nie wygodą: dopasowanie słów da się
- * sprawdzić w treści pliku, dopasowanie znaczenia jest przybliżeniem wskaźnika.
- * Trafienia obu dróg nie są sumowane w jedną trafność — kontrakt nie niesie
- * skali wspólnej dla indeksu pełnotekstowego i wskaźnika osadzeń, a liczba
- * złożona z dwóch niewspółmiernych wyglądałaby na pomiar.
+ * Tryb hybrydowy składa obie odpowiedzi po stronie okna: dopasowanie słów przed
+ * dopasowaniem znaczenia, bo trafienia obu dróg nie są sumowane w jedną wspólną
+ * trafność.
  */
 async function szukajHybrydowo(
   magazyn: MagazynBiblioteki,
@@ -151,9 +124,7 @@ async function szukajHybrydowo(
     return powod;
   }
   if (!trafienia.udany || trafienia.wynik === undefined) {
-    // Połowa hybrydy padła, druga przyszła. Wynik zostaje pokazany, ale zdanie
-    // mówi, że to już nie jest tryb hybrydowy — inaczej Operator sądziłby, że
-    // znaczenie było brane pod uwagę.
+    // Połowa hybrydy padła, druga przyszła: zdanie mówi, że to już nie jest tryb hybrydowy.
     zapiszZnaczenia(magazyn, []);
     przyjmij(magazyn, slowa.wynik.files, '');
     return (
@@ -179,7 +150,7 @@ async function szukajHybrydowo(
   );
 }
 
-/** Odwzorowanie trafień wskaźnika na wiersze wykazu, w kolejności trafności. */
+/** Odwzorowanie trafień wskaźnika na wiersze wykazu plików, zachowane w kolejności malejącej trafności. */
 function zlozTrafienia(
   trafienia: readonly KnowledgeHit[],
   wykaz: readonly LibraryFile[],
@@ -195,9 +166,7 @@ function zlozTrafienia(
       bezPliku += 1;
       continue;
     }
-    // Wskaźnik dzieli dokument na fragmenty, więc jeden plik potrafi trafić
-    // wielokrotnie. Wiersz wykazu jest jeden, więc liczy się trafienie
-    // pierwsze — czyli najtrafniejsze.
+    // Wskaźnik dzieli dokument na fragmenty, jeden plik trafia wielokrotnie; liczy się trafienie pierwsze.
     if (wziete.has(plik.id)) continue;
     wziete.add(plik.id);
     pliki.push(plik);
@@ -205,7 +174,7 @@ function zlozTrafienia(
   return { pliki, bezPliku };
 }
 
-/** Odkłada trafność i fragment przy pliku; poprzednie trafienia znikają. */
+/** Odkłada trafność i fragment przy pliku w magazynie stanu; poprzednie trafienia znikają przy każdym zapisie. */
 function zapiszZnaczenia(magazyn: MagazynBiblioteki, trafienia: readonly KnowledgeHit[]): void {
   magazyn.znaczenia.clear();
   for (const trafienie of trafienia) {
@@ -218,7 +187,7 @@ function zapiszZnaczenia(magazyn: MagazynBiblioteki, trafienia: readonly Knowled
   }
 }
 
-/** Zdanie o wyniku wyszukiwania po znaczeniu — trzy różne stany, trzy zdania. */
+/** Zdanie o wyniku wyszukiwania po znaczeniu — trzy różne stany wyniku dostają trzy osobne zdania opisowe. */
 function zdanieOZnaczeniu(trafien: number, plikow: number, bezPliku: number): string {
   if (trafien === 0) {
     return (
@@ -239,14 +208,14 @@ function zdanieOZnaczeniu(trafien: number, plikow: number, bezPliku: number): st
   );
 }
 
-/** Zapowiedź trwającego odczytu — okno ma pokazać „pytam", nie „pusto". */
+/** Zapowiedź trwającego odczytu — okno ma pokazać stan pytania rdzenia, a nie stan pustego wykazu plików. */
 function zapowiedz(magazyn: MagazynBiblioteki): void {
   magazyn.faza = 'odczyt';
   magazyn.powod = '';
   magazyn.oglos();
 }
 
-/** Wspólne zakończenie odczytów: jeden powód niepowodzenia, jedno ogłoszenie. */
+/** Wspólne zakończenie odczytów wykazu: jeden powód niepowodzenia i jedno wspólne ogłoszenie zmiany magazynu. */
 function przyjmij(
   magazyn: MagazynBiblioteki,
   pliki: LibraryFile[] | undefined,
@@ -263,9 +232,7 @@ function przyjmij(
   if (magazyn.wskazany !== null && !pliki.some((plik) => plik.id === magazyn.wskazany)) {
     magazyn.wskazany = null;
   }
-  // Nowy odczyt orzeka o całym wykazie, więc zawężenie ustalone poprzednim
-  // raportem przestaje o nim mówić. Zostawione, ukryłoby część świeżej
-  // odpowiedzi bez słowa.
+  // Nowy odczyt orzeka o całym wykazie, więc wcześniejsze zawężenie przestaje o nim mówić.
   magazyn.zawezenie = null;
   magazyn.faza = 'gotowe';
   magazyn.powod = '';

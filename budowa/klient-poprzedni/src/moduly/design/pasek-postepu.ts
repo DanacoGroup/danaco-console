@@ -1,21 +1,9 @@
 import { ProgressStatus, type ProgressChangedEvent } from '../../../../shared/contract';
 
 /**
- * Pasek postępu generowania wraz z miniaturą w budowie.
- *
- * Nośnikiem stanu jest zdarzenie `progress.changed` z rdzenia. Pasek rusza
- * wyłącznie wtedy, gdy rdzeń przyśle postęp procesu tego okna.
- *
- * `design.asset.generate` postępu nie zgłasza — rdzeń nie ma czym wytworzyć
- * obrazu (`slowo-modelu.ts`) — więc okno kreatora wycisza pasek zamiast
- * zostawiać go na „czekam".
- *
- * Pasek bez oczekiwanego procesu milczy: `progress.changed` jedzie z każdego
- * strumienia rozmowy w rdzeniu (`core/telemetria_strumienia.go`), nie tylko
- * z pracy tego okna, więc przyjmowanie każdego zdarzenia pokazywałoby tu
- * postęp pracy, której to okno nie zlecało.
- *
- * Wygląd bierze z biblioteki (`dn-postep`) — plik nie zna ani jednej barwy.
+ * Pasek postępu generowania wraz z miniaturą w budowie. Nośnikiem stanu jest
+ * zdarzenie `progress.changed` z rdzenia, a pasek rusza wyłącznie wtedy, gdy
+ * rdzeń przyśle postęp procesu tego okna.
  */
 export interface PasekPostepu {
   element: HTMLElement;
@@ -53,9 +41,7 @@ export function utworzPasekPostepu(): PasekPostepu {
   pasek.setAttribute('aria-valuemax', '100');
   pasek.append(tor, etykieta);
 
-  // Miniatura w budowie: prostokąt zastępczy rosnący wraz z postępem. Nie jest
-  // podglądem wyniku — wyniku jeszcze nie ma — tylko widocznym śladem tego,
-  // że rdzeń pracuje nad zasobem tego okna.
+  // Miniatura w budowie: prostokąt zastępczy rosnący wraz z postępem.
   const miniatura = document.createElement('div');
   miniatura.className = 'md-postep__miniatura';
   miniatura.dataset['stan'] = 'spoczynek';
@@ -65,11 +51,7 @@ export function utworzPasekPostepu(): PasekPostepu {
   element.hidden = true;
   element.append(pasek, miniatura);
 
-  /**
-   * Czy to postęp tego okna. Bez oczekiwania odpowiedź brzmi „nie". Ze
-   * wskazanym procesem liczy się zgodność procesu; dopóki rdzeń procesu nie
-   * nazwał, wystarczy zgodność okna.
-   */
+  /** Czy to postęp tego okna; bez założonego oczekiwania odpowiedź jest przecząca. */
   function czyNaszPostep(tresc: ProgressChangedEvent): boolean {
     if (oczekiwanyProces === '' && oczekiwaneOkno === '') return false;
     if (oczekiwanyProces !== '') return tresc.processId === oczekiwanyProces;

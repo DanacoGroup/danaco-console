@@ -14,22 +14,7 @@ import type { StanDiagnostyki, ZakresCzasu } from './stan-diagnostyki';
 import { utworzStanTresci, type StanTresci } from './stany-okna';
 import type { ZrodloDiagnostics } from './zrodlo-diagnostics';
 
-/**
- * Diagnostics Center — okno wiodące modułu Diagnostics.
- *
- * Przegląd zagregowanego stanu systemu i uruchomienie analizy: punkt wejścia
- * agregujący Logs Viewer oraz Errors Panel. „Uruchom analizę” jest jedynym
- * przyciskiem sprawczym widoku.
- *
- * Po udanym biegu okno zapisuje identyfikator analizy do stanu
- * (`stan.ustawAnalize`) — Recommendations Panel pyta o rekomendacje tej analizy
- * (`analysisId`). Zakres czasu idzie do `stan.ustawZakres`, bo Logs Viewer
- * i Errors Panel jadą tym samym zakresem.
- *
- * Druga subskrypcja `diagnostics.analysis.changed` tu nie stoi:
- * `stan-diagnostyki.ts` sama nasłuchuje zdarzenia i filtruje po analizie
- * bieżącej — oknu wystarcza `stan.naZmiane(...)`.
- */
+/** Interfejs opisuje okno Diagnostics Center: przegląd zagregowanego stanu systemu wraz z jedynym przyciskiem sprawczym widoku, uruchomieniem analizy. */
 export interface OknoDiagnosticsCenter {
   element: HTMLElement;
   odswiez(): void;
@@ -95,8 +80,7 @@ export function utworzOknoDiagnosticsCenter(
   });
   for (const skrot of powierzchnia.skroty) {
     skrot.przycisk.addEventListener('click', () => {
-      // Jedna chwila odczytu na oba końce: dwa wywołania zegara dałyby zakres
-      // o końcu późniejszym niż początek o czas własnego wyliczenia.
+      // Jedna chwila odczytu na oba końce zakresu, żeby początek i koniec nie rozjechały się w czasie.
       const teraz = Date.now();
       ustawZakres(skrot.okno === undefined ? {} : { od: teraz - skrot.okno, do: teraz });
     });
@@ -108,7 +92,7 @@ export function utworzOknoDiagnosticsCenter(
   return { element: rama.element, odswiez: rysuj, zamknij: odsubskrybuj };
 }
 
-/** Kontrolki okna: zakres czasu, porównanie z migawką i pasek akcji. */
+/** Interfejs zestawia kontrolki okna: pola zakresu czasu, przyciski skrótów, pola porównania z migawką i pasek akcji. */
 interface PowierzchniaCentrum {
   od: HTMLInputElement;
   do: HTMLInputElement;
@@ -120,21 +104,13 @@ interface PowierzchniaCentrum {
   eksportPrzycisk: HTMLButtonElement;
 }
 
-/** Skrót zakresu: przycisk wraz z długością okna; brak okna znaczy „bez granicy”. */
+/** Interfejs opisuje jeden skrót zakresu czasu: przycisk wraz z długością okna; brak okna znaczy brak granicy zakresu. */
 interface SkrotZakresu {
   przycisk: HTMLButtonElement;
   okno?: number;
 }
 
-/**
- * Skróty zakresu czasu wymienione w opracowaniu okna: ostatnia godzina, dzień,
- * tydzień oraz zakres własny. Pozycja bez okna znosi zawężenie — zakres pusty
- * jest stanem poprawnym modułu, nie brakiem.
- *
- * Skrót nie liczy niczego, czego nie widać: wyliczoną chwilę wpisuje w pola
- * początku i końca, więc Operator czyta z okna dokładnie te liczby, które idą
- * do rdzenia.
- */
+/** Stała wylicza gotowe skróty zakresu czasu: ostatnią godzinę, dzień, tydzień oraz zakres bez zawężenia. */
 const OKNA_SKROTOW: ReadonlyArray<{ etykieta: string; okno?: number }> = [
   { etykieta: 'Ostatnia godzina', okno: 60 * 60 * 1000 },
   { etykieta: 'Ostatni dzień', okno: 24 * 60 * 60 * 1000 },
@@ -177,9 +153,7 @@ function zlozPowierzchnieCentrum(
     zakres,
     pasSkrotow,
     zakresPrzycisk,
-    // Objaśnienia mówią, co robi okno, nie co zrobi rdzeń: rdzeń tych dwóch pól
-    // dziś nie honoruje. O skutku orzeka wyłącznie zdanie potwierdzenia, bo ono
-    // jedno czyta odpowiedź.
+    // Objaśnienia mówią, co robi okno, nie co zrobi rdzeń: tych dwóch pól rdzeń dziś nie honoruje.
     wiersz('Porównanie z migawką wcześniejszą', compareId, {
       klasa: 'dg-wiersz',
       objasnienie: 'Pole idzie do rdzenia jako compareAnalysisId. Czy porównanie się odbyło, orzeka zdanie potwierdzenia — po polu comparedAnalysisId w odpowiedzi, nie po tym, że pole wypełniono.',
@@ -205,7 +179,7 @@ function zlozPowierzchnieCentrum(
   return { od, do: doPole, zakresPrzycisk, skroty, compareId, errorIds, uruchomPrzycisk, eksportPrzycisk };
 }
 
-/** Zakres czasu odczytany z pól okna; pole niepoprawne znaczy „bez granicy”. */
+/** Funkcja odczytuje zakres czasu z pól okna; wartość pola niepoprawna liczbowo znaczy brak granicy zakresu. */
 function zakresZKontrolek(powierzchnia: PowierzchniaCentrum): ZakresCzasu {
   const zakres: ZakresCzasu = {};
   const od = Number.parseInt(powierzchnia.od.value, 10);
@@ -240,21 +214,7 @@ function zadanieAnalizy(
   return zadanie;
 }
 
-/**
- * Zdanie potwierdzenia biegu analizy — zestawienie żądania z odpowiedzią.
- *
- * Rdzeń nie honoruje dziś dwóch pól żądania: `UruchomAnalize`
- * (`core/adapter_modul_diagnostics_analiza.go`) dobiera błędy wyłącznie zakresem
- * czasu (`FiltrBledow{Od, Do}`), a `PorownanaKod` migawki nie ustawia nigdy,
- * więc `comparedAnalysisId` nie pojawi się w odpowiedzi nawet wtedy, gdy
- * porównywana analiza istnieje. Potwierdzenie zawsze udane robiłoby z tych
- * dwóch pól bez skutku pola pozornie działające.
- *
- * Zdanie mówi więc liczbami z odpowiedzi, a każde pominięte pole żądania
- * wychodzi na wierzch tonem nieudanym. Gdy rdzeń zacznie te pola honorować,
- * zastrzeżenia znikną same — nic o zachowaniu rdzenia nie jest tu wpisane
- * na sztywno.
- */
+/** Funkcja składa zdanie potwierdzenia biegu analizy, zestawiając żądanie z odpowiedzią: każde pole żądania pominięte przez rdzeń wychodzi na wierzch tonem nieudanym. */
 function zdanieOAnalizie(
   zadanie: DiagnosticsAnalyzeRunRequest,
   analiza: DiagnosticAnalysis,
@@ -284,7 +244,7 @@ function zdanieOAnalizie(
     : { zdanie: `${podstawa} Uwaga: ${zastrzezenia.join('; ')}.`, udane: false };
 }
 
-/** Rysuje migawkę analizy bieżącej albo stan pustki — brak biegu jest poprawny. */
+/** Funkcja rysuje migawkę analizy bieżącej albo stan pustki, gdy żaden bieg analizy jeszcze nie zaszedł. */
 function rysujAnalize(migawka: DiagnosticAnalysis | null, tresc: StanTresci): void {
   if (migawka === null) {
     tresc.pusto('Analiza nie została jeszcze uruchomiona. Ustaw zakres (opcjonalnie) i uruchom analizę.');
@@ -293,7 +253,7 @@ function rysujAnalize(migawka: DiagnosticAnalysis | null, tresc: StanTresci): vo
   tresc.tresc().append(widokAnalizy(migawka));
 }
 
-/** Karta analizy — wszystkie pola nośne `DiagnosticAnalysis` widoczne wprost. */
+/** Funkcja składa kartę analizy, na której widoczne wprost są wszystkie pola nośne wyniku analizy diagnostycznej. */
 function widokAnalizy(migawka: DiagnosticAnalysis): HTMLElement {
   const karta = document.createElement('div');
   karta.className = 'dg-analiza';
@@ -312,7 +272,7 @@ function widokAnalizy(migawka: DiagnosticAnalysis): HTMLElement {
   return karta;
 }
 
-/** Zdanie znacznika: identyfikator, czas, okno, zakres, liczności i migawka porównawcza. */
+/** Funkcja składa zdanie znacznika karty: identyfikator, czas, okno, zakres, liczności i migawka porównawcza. */
 function opisMigawki(migawka: DiagnosticAnalysis): string {
   const czesci = [
     `id ${migawka.id}`,

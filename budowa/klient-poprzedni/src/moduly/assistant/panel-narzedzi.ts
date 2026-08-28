@@ -29,26 +29,8 @@ import type { StanAssistant } from './stan-assistant';
 import type { ZrodloNarzedzi } from './zrodlo-narzedzi';
 
 /**
- * Zakładka narzędzi i serwerów MCP Command & Tools Hub.
- *
- * Wykaz pochodzi z `tools.catalog.list` — jednego katalogu, w którym rdzeń
- * trzyma narzędzia, umiejętności i komendy akcji naraz. Drugiego wykazu na
- * umiejętności okno nie zakłada: kontrakt rozróżnia je polem `kind`
- * (`SlashEntryKind`) i przedrostkiem źródła (`origin`), a nie osobną rodziną
- * komend. Zakładka „Umiejętności" złożona z tej samej komendy byłaby drugim
- * widokiem jednego wykazu, udającym drugie źródło.
- *
- * Zawężenie liczy rdzeń, nie okno: katalog liczy setki pozycji, a żądanie
- * przyjmuje tekst, rodzaj, grupę i granicę wykazu. Filtrowanie po stronie
- * klienta wymagałoby ściągnięcia całości przy każdym naciśnięciu klawisza.
- *
- * Dołożenie idzie do karty sesji (`session.tool.attach`) i żyje w jej stanie —
- * definicji eksperta nie rusza. Pole `attached` odpowiedzi katalogu mówi, co
- * jest dołożone już teraz, więc przycisk wiersza nazywa czynność zgodnie ze
- * stanem, który rdzeń oddał, a nie ze stanem zapamiętanym po ostatnim
- * kliknięciu.
- *
- * Zakresu uprawnień i limitu wywołań pozycji okno nie udaje — nazywa brak.
+ * Zakładka narzędzi i serwerów MCP w Command & Tools Hub czyta jeden katalog rdzenia i dokłada
+ * wskazane pozycje do karty sesji, nie do definicji eksperta.
  */
 export interface PanelNarzedzi {
   element: HTMLElement;
@@ -56,10 +38,10 @@ export interface PanelNarzedzi {
   wczytaj(): Promise<void>;
 }
 
-/** Górna granica wykazu; katalog liczy setki pozycji, okno pokazuje wycinek. */
+/** Górna granica wykazu; katalog liczy setki pozycji, okno pokazuje wyłącznie wycinek zawężony przez rdzeń. */
 const GRANICA_KATALOGU = 60;
 
-/** Pozycja listy grup znacząca „bez zawężenia grupą". */
+/** Pozycja listy grup znacząca brak zawężenia grupą, pokazująca pełny katalog niezależnie od rodzaju pozycji. */
 const KAZDA_GRUPA = 'wszystkie';
 
 export function utworzPanelNarzedzi(
@@ -156,8 +138,7 @@ export function utworzPanelNarzedzi(
     const dolozone2 = await zrodlo.dolozy({
       sessionId: sesja,
       toolName: pozycja.name,
-      // Rękę nazywamy wprost: dołożenie idzie z okna Operatora, nie z komendy
-      // po ukośniku wpisanej przez asystenta.
+      // Rękę nazywamy wprost: dołożenie idzie z okna Operatora, nie z komendy asystenta.
       source: SessionToolSource.Assistant,
     });
     if (!dolozone2.udany || dolozone2.wynik === undefined) {
@@ -194,8 +175,7 @@ export function utworzPanelNarzedzi(
       return;
     }
     const katalog = wynik.wynik;
-    // Grupy przychodzą z rdzenia po zawężeniu, więc wykaz nadąża za katalogiem
-    // bez ani jednej nazwy grupy zapisanej w kliencie.
+    // Grupy przychodzą z rdzenia po zawężeniu, bez ani jednej nazwy grupy zapisanej w kliencie.
     ustawPozycje(grupa, [
       { wartosc: KAZDA_GRUPA, etykieta: 'Grupa: wszystkie' },
       ...katalog.groups.map((nazwa) => ({ wartosc: nazwa, etykieta: `Grupa: ${nazwa}` })),
@@ -217,14 +197,7 @@ export function utworzPanelNarzedzi(
     await naniesDolozenia(sesja);
   }
 
-  /**
-   * Dołożenia karty sesji jako zdanie bilansu.
-   *
-   * Odczyt jest osobny od katalogu, bo mówi o czym innym: katalog mówi, co da
-   * się dołożyć, a `session.tool.list` — co jest dołożone. Bez niego Operator
-   * widziałby stan dołożeń wyłącznie w pozycjach, które akurat weszły do
-   * przyciętego wykazu.
-   */
+  /** Dołożenia karty sesji jako zdanie bilansu, osobne od katalogu, bo mówi, co jest już dołożone. */
   async function naniesDolozenia(sesja: string): Promise<void> {
     if (sesja === '') {
       odpowiedz.pokaz(BRAKI.brakSesji, false);
@@ -244,7 +217,7 @@ export function utworzPanelNarzedzi(
   return { element, wczytaj };
 }
 
-/** Zdanie o dołożeniach karty sesji; brak dołożeń też jest zdaniem. */
+/** Zdanie o dołożeniach karty sesji; brak dołożeń też jest zdaniem, licząc pozycje wprost z odpowiedzi rdzenia. */
 function opisDolozen(dolozenia: readonly SessionTool[]): string {
   if (dolozenia.length === 0) {
     return (
@@ -259,7 +232,7 @@ function opisDolozen(dolozenia: readonly SessionTool[]): string {
   );
 }
 
-/** Jeden wiersz katalogu wraz z czynnością dołożenia albo jej brakiem. */
+/** Jeden wiersz katalogu wraz z czynnością dołożenia albo jej brakiem, nazwaną zgodnie ze stanem rdzenia. */
 function wierszKatalogu(
   pozycja: ToolCatalogEntry,
   naPrzestawienie: (dolozone: boolean) => void,
@@ -290,8 +263,7 @@ function wierszKatalogu(
   );
   przycisk.addEventListener('click', () => {
     if (!pozycja.attachable) {
-      // Pozycja niedokładalna zostaje klikalna i mówi, dlaczego nic nie zrobi.
-      // Wygaszenie kazałoby zgadywać, czy to nastawa rdzenia, czy usterka okna.
+      // Pozycja niedokładalna zostaje klikalna i mówi, dlaczego nic nie zrobi po naciśnięciu.
       zglosBrak(
         'Dołożenie pozycji',
         `Rdzeń oznaczył ${pozycja.shortName} jako pozycję, której nie da się dołożyć do ` +

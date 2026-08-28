@@ -12,21 +12,8 @@ import { KLASA_PRZYCISKU, przyciskCzynnosci } from './przyciski-browser';
 import type { StanPrzegladania } from './stan-przegladania';
 
 /**
- * Macierz izolacji sesji — panel warstwy czwartej modułu Browser.
- *
- * Opracowanie modułu wskazuje punkty izolacji właściwe przeglądaniu: dostęp
- * sieciowy procesu sesji, kontenery tożsamości, zakres pętli wykonawczej.
- * Panel pokazuje, co z nich obowiązuje dla okna przeglądarki — i tylko to.
- * Zapisu tu nie ma: przełączniki i profile zapisuje okno konfiguracji punktów
- * izolacji, a dwa miejsca zapisujące tę samą politykę dawałyby dwa różne
- * zdania o tym, co obowiązuje.
- *
- * Nazwy punktów izolacji przychodzą ze słownika okna punktów izolacji
- * (`punkty-izolacji/katalog-izolacji.ts`). Własny wykaz nazw w module znaczyłby,
- * że ten sam przełącznik nazywa się w dwóch oknach inaczej.
- *
- * Stan przełącznika nigdy nie jest samą barwą: przy każdej pozycji stoi słowo
- * („odcięty" albo „wspólny"), bo panel czyta się także bez rozróżniania barw.
+ * Macierz izolacji sesji — panel warstwy czwartej modułu Browser, pokazujący
+ * punkty izolacji właściwe oknu przeglądarki.
  */
 export interface MacierzIzolacji {
   element: HTMLElement;
@@ -76,9 +63,7 @@ export function utworzMacierzIzolacji(stan: StanPrzegladania): MacierzIzolacji {
     polityka.replaceChildren(...wierszePolityki(wynikPolityki.wynik.policy));
 
     if (!wynikPoziomow.udany || wynikPoziomow.wynik === undefined) {
-      // Poziomy są dopowiedzeniem do polityki, nie jej warunkiem: brak wykazu
-      // poziomów nie unieważnia odczytanych przełączników, więc panel mówi
-      // o obu odczytach osobno.
+      // Brak wykazu poziomów nie unieważnia odczytanych przełączników — panel mówi o obu odczytach osobno.
       poziomy.replaceChildren();
       powiedz(
         opisOdmowy('Odczyt poziomów zasięgu', wynikPoziomow.blad?.code, wynikPoziomow.blad?.message),
@@ -105,7 +90,7 @@ export function utworzMacierzIzolacji(stan: StanPrzegladania): MacierzIzolacji {
   return { element, odczytaj };
 }
 
-/** Zdanie o pochodzeniu polityki — poziom, warstwa i profil, z którego wyszła. */
+/** Zdanie o pochodzeniu polityki izolacji — poziom, warstwa i profil, z którego ta polityka faktycznie wyszła. */
 function zdanieOPolityce(polityka: IsolationPolicy): string {
   const profil = (polityka.profileId ?? '').trim();
   const zrodlo = polityka.origin === undefined ? '' : ` (odziedziczona z poziomu ${ETYKIETY_ZASIEGU[polityka.origin]})`;
@@ -116,7 +101,7 @@ function zdanieOPolityce(polityka: IsolationPolicy): string {
   );
 }
 
-/** Przełączniki polityki — kontekst i zakresy techniczne w jednym wykazie. */
+/** Przełączniki polityki izolacji — kontekst i zakresy techniczne zebrane razem w jednym wspólnym wykazie. */
 function wierszePolityki(polityka: IsolationPolicy): HTMLElement[] {
   const kontekst = POZYCJE_KONTEKSTU.map((pozycja) => {
     const przelacznik = polityka.contextSwitches.find((wpis) => wpis.kind === pozycja.kind);
@@ -130,11 +115,9 @@ function wierszePolityki(polityka: IsolationPolicy): HTMLElement[] {
 }
 
 /**
- * Jeden przełącznik: nazwa, stan słowem i objaśnienie rdzenia.
- *
- * Przełącznik, którego rdzeń w polityce nie oddał, nie przedstawia się jako
- * wspólny — mówi wprost, że polityka o nim milczy. „Nie ma zapisu" i „zapis
- * mówi: wspólny" to dwie różne odpowiedzi.
+ * Jeden przełącznik: nazwa, stan słowem i objaśnienie rdzenia. Przełącznik,
+ * którego rdzeń w polityce nie oddał, mówi wprost, że polityka o nim milczy,
+ * zamiast przedstawiać się jako wspólny.
  */
 function wierszPrzelacznika(
   nazwa: string,
@@ -149,19 +132,19 @@ function wierszPrzelacznika(
   return element;
 }
 
-/** Stan przełącznika słowem — treść widoczna Operatorowi. */
+/** Stan przełącznika izolacji wyrażony słowem, jako treść widoczna wprost dla operatora panelu izolacji. */
 function slowoStanu(odciety: boolean | undefined): string {
   if (odciety === undefined) return 'polityka o nim milczy';
   return odciety ? 'odcięty' : 'wspólny';
 }
 
-/** Ten sam stan wartością `data-stan` — dla arkusza i dla sprawdzianu. */
+/** Ten sam stan przełącznika wyrażony wartością `data-stan` — dla arkusza stylu i dla sprawdzianu automatycznego. */
 function znacznikStanu(odciety: boolean | undefined): string {
   if (odciety === undefined) return 'nieznany';
   return odciety ? 'odciety' : 'wspolny';
 }
 
-/** Poziomy zasięgu w kolejności rozstrzygania, z zaznaczeniem najwęższego. */
+/** Poziomy zasięgu izolacji w kolejności ich rozstrzygania, z zaznaczeniem poziomu najwęższego zasięgu. */
 function wierszePoziomow(poziomy: readonly IsolationScopeLevel[]): HTMLElement[] {
   return poziomy.map((poziom) => {
     const element = document.createElement('li');

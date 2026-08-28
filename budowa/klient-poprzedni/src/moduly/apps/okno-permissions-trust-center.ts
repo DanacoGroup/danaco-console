@@ -21,35 +21,18 @@ import type { StanRozszerzen } from './stan-rozszerzen';
 import type { ZrodloIzolacjiApps } from './zrodlo-izolacji-apps';
 
 /**
- * Permissions & Trust Center — panel boczny uprawnień, izolacji i pochodzenia.
- *
- * Okno otwiera się na pozycji wskazanej gdzie indziej: znacznikiem uprawnień
- * karty App Catalogu albo przyciskiem wiersza Integrations Hubu. Wskazanie
- * mieszka w stanie modułu, więc panel nie prowadzi własnego wyboru.
- *
- * Granica tego okna jest ostra i okno musi ją wypowiedzieć, bo bez tego
- * czytałoby się jak deklaracja bezpieczeństwa, której nikt nie złożył:
- *
- *   — Pochodzenie pozycji jest znane i pokazane. Podpis cyfrowy i suma
- *     kontrolna pakietu NIE są polami pozycji katalogu, więc „zweryfikowany
- *     wydawca" nie ma tu pokrycia i nie pada.
- *   — Wymagane uprawnienia leżą w manifeście rozszerzenia, którego kontrakt nie
- *     przenosi. Okno pokazuje nieprzezroczystą konfigurację pozycji i mówi, że
- *     to nie jest to samo.
- *   — Osiem zakresów izolacji technicznej opisuje warunki, w jakich wykonuje
- *     się kod NA TEJ PLATFORMIE — i w tych samych warunkach wykona się kod
- *     rozszerzenia. Nie jest to izolacja nadana pojedynczej pozycji.
- *
- * Zasada zero blokad obowiązuje tu wprost: żadne ostrzeżenie nie wstrzymuje
- * instalacji ani włączenia. Kontrola zostaje po stronie Operatora — przez
- * świadome włączenie i przez zakres uprawnień.
+ * Permissions & Trust Center jest panelem bocznym uprawnień, izolacji i pochodzenia, otwieranym
+ * na pozycji wskazanej gdzie indziej, bo panel nie prowadzi własnego wyboru.
  */
 export interface OknoPermissionsTrustCenter {
   element: HTMLElement;
   odswiez(): void;
 }
 
-/** Napisy ośmiu zakresów technicznych; wartości kontraktu mają nazwy Operatora. */
+/**
+ * Napisy ośmiu zakresów technicznych w języku Operatora, bo wartości kontraktu niosą wyłącznie
+ * kody wewnętrzne platformy.
+ */
 const NAZWY_ZAKRESOW: Readonly<Record<string, string>> = {
   workingDirectory: 'katalog roboczy',
   processEnvironment: 'środowisko procesu',
@@ -162,14 +145,7 @@ export function utworzOknoPermissionsTrustCenter(
     return [nazwa, tresc];
   }
 
-  /**
-   * Zdanie o zaufaniu — orzeka o tym, co przyszło, nie o bezpieczeństwie pozycji.
-   *
-   * Trzy oznaczenia opracowania (Danaco Plugin, zweryfikowany wydawca,
-   * niezweryfikowany Personal) wymagają weryfikacji podpisu. Kontrakt niesie
-   * samo pochodzenie, więc okno nazywa pochodzenie i mówi wprost, że o podpisie
-   * nie wie nic — zamiast wyprowadzać z pochodzenia orzeczenia o zaufaniu.
-   */
+  /** Zdanie o zaufaniu orzeka wyłącznie o pochodzeniu, bo kontrakt nie niesie podpisu cyfrowego pozycji. */
   function zdanieZaufania(pozycja: Extension): string {
     return (
       `Źródło pochodzenia: ${nazwaPochodzenia(pozycja.origin)}. Podpis cyfrowy i suma ` +
@@ -179,13 +155,7 @@ export function utworzOknoPermissionsTrustCenter(
     );
   }
 
-  /**
-   * Jeden zakres izolacji: nazwa i stan słowem, nigdy samą barwą.
-   *
-   * Objaśnienie przełącznika idzie z odpowiedzi rdzenia, a nie z napisu w oknie:
-   * kontrakt niesie je polem `explanation` właśnie po to, żeby zdanie
-   * o znaczeniu zakresu miało jedno źródło po obu stronach gniazda.
-   */
+  /** Jeden zakres izolacji, nazwa i stan słowem; objaśnienie idzie z odpowiedzi rdzenia, nie stąd. */
   function wierszZakresu(przelacznik: IsolationTechnicalSwitch): HTMLElement {
     const nazwa = document.createElement('span');
     nazwa.className = 'mp-zakresy__nazwa';
@@ -214,10 +184,7 @@ export function utworzOknoPermissionsTrustCenter(
   }
 
   function odswiez(): void {
-    // Zakresy izolacji rysują się niezależnie od wskazania pozycji, bo opisują
-    // platformę, a nie pozycję: warunki wykonania kodu obowiązują tu, zanim
-    // Operator wskaże cokolwiek, i czyta się je także po to, żeby wiedzieć,
-    // w czym rozszerzenie ma się wykonać.
+    // Zakresy izolacji rysują się niezależnie od wskazania pozycji, bo opisują platformę, nie pozycję.
     zakresy.replaceChildren(...(polityka?.technicalSwitches ?? []).map(wierszZakresu));
     const pozycja = stan.wybrane();
     if (pozycja === null) {
@@ -270,7 +237,7 @@ export function utworzOknoPermissionsTrustCenter(
   return { element: rama.element, odswiez };
 }
 
-/** Nagłówek części okna. */
+/** Nagłówek części okna nazywa kolejny fragment panelu, oddzielając wizualnie grupy pól formularza od siebie. */
 function naglowekCzesci(tresc: string): HTMLElement {
   const element = document.createElement('p');
   element.className = 'mp-czesc__tytul';

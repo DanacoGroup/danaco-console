@@ -10,7 +10,10 @@ import {
   type ZmianaMotywu,
 } from '../motyw/motyw';
 
-/** Przełącznik motywu na pasku górnym. */
+/**
+ * Przełącznik motywu na pasku górnym. Niesie dwie kontrolki: przełączenie między
+ * motywem jasnym i ciemnym oraz powrót do preferencji systemu.
+ */
 export interface PrzelacznikMotywu {
   /** Grupa kontrolek montowana w akcjach paska. */
   element: HTMLElement;
@@ -20,12 +23,9 @@ export interface PrzelacznikMotywu {
 
 /**
  * Przełączenie motywu jasnego i ciemnego oraz powrót do preferencji systemu.
- *
- * Oba motywy są równoprawne — kontrolka nie wskazuje żadnego jako domyślnego.
- * Dopóki operator nie dokonał wyboru, obowiązuje preferencja systemu, a druga
- * kontrolka jest w stanie „wciśnięta": pokazuje, że decyzję ma system.
- * Wartości motywu ani żadnej barwy ten plik nie zna — całą pracę wykonuje
- * warstwa `motyw/`, tutaj zostaje wyłącznie obsługa kontrolek.
+ * Oba motywy są równoprawne, kontrolka nie wskazuje żadnego jako domyślnego.
+ * Wartości motywu ani żadnej barwy ten plik nie zna, zostaje w nim sama obsługa
+ * kontrolek.
  */
 export function utworzPrzelacznikMotywu(): PrzelacznikMotywu {
   const element = document.createElement('div');
@@ -52,8 +52,8 @@ export function utworzPrzelacznikMotywu(): PrzelacznikMotywu {
     odswiez();
   });
 
-  // Zmiana preferencji systemu przy braku wyboru operatora dochodzi tą samą
-  // drogą co przełączenie ręczne — kontrolka nadąża bez przeładowania.
+  // Zmiana preferencji systemu dochodzi tą samą drogą co przełączenie ręczne,
+  // bez przeładowania.
   document.addEventListener(ZDARZENIE_MOTYWU, (zdarzenie: Event) => {
     const zmiana = (zdarzenie as CustomEvent<ZmianaMotywu>).detail;
     ubierzPrzelacznik(przelacz, zmiana.obowiazujacy);
@@ -65,7 +65,10 @@ export function utworzPrzelacznikMotywu(): PrzelacznikMotywu {
   return { element, odswiez };
 }
 
-/** Pusty przycisk ikonowy w wariancie przeznaczonym na ramę kokpitu. */
+/**
+ * Pusty przycisk ikonowy w wariancie przeznaczonym na ramę kokpitu. Ikonę i opis
+ * dokładają funkcje ubierające, więc przycisk powstaje raz i nie jest wymieniany.
+ */
 function przyciskIkonowy(): HTMLButtonElement {
   const przycisk = document.createElement('button');
   przycisk.type = 'button';
@@ -84,7 +87,11 @@ function ubierzPrzelacznik(przycisk: HTMLButtonElement, obowiazujacy: Motyw): vo
   przycisk.dataset.motyw = obowiazujacy;
 }
 
-/** Powrót do preferencji systemu; stan wciśnięcia mówi, czy już obowiązuje. */
+/**
+ * Powrót do preferencji systemu; stan wciśnięcia mówi, czy już obowiązuje.
+ * Wciśnięty znaczy brak wyboru własnego, czyli motyw idący za ustawieniem
+ * systemu.
+ */
 function ubierzPowrot(przycisk: HTMLButtonElement, wedlugSystemu: boolean): void {
   const opis = wedlugSystemu
     ? 'Motyw zgodny z systemem'
@@ -93,7 +100,11 @@ function ubierzPowrot(przycisk: HTMLButtonElement, wedlugSystemu: boolean): void
   przycisk.setAttribute('aria-pressed', String(wedlugSystemu));
 }
 
-/** Wymienia ikonę i opis przycisku, zachowując jego tożsamość w dokumencie. */
+/**
+ * Wymienia ikonę i opis przycisku, zachowując jego tożsamość w dokumencie.
+ * Podmiana potomków zostawia nasłuch zdarzeń nietknięty, więc przycisk działa
+ * dalej.
+ */
 function ubierz(przycisk: HTMLButtonElement, ikona: NazwaIkony, opis: string): void {
   przycisk.replaceChildren(elementIkony(ikona, { rozmiar: 18 }));
   przycisk.setAttribute('aria-label', opis);

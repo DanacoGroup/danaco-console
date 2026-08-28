@@ -1,31 +1,17 @@
 import type { LibraryFile, LibraryVersion } from '../../../../shared/contract';
 
-/**
- * Wywóz treści, którą okno już ma, do pliku na urządzeniu Operatora.
- *
- * Żadna z tych czynności nie ma komendy kontraktu i mieć jej nie musi:
- * materiałem jest odpowiedź rdzenia leżąca w oknie, a nie bajty, po które
- * trzeba by wrócić do repozytorium. Granica jest ostra i przebiega przy treści
- * plików — wywóz opisu (metryka, etykiety, suma kontrolna, historia wersji)
- * składa się tutaj, wywóz zawartości nie, bo klient nie ma komendy pobierającej
- * bajty pliku biblioteki.
- *
- * Każdy wytwór nazywa w nagłówku, czego nie zawiera. Manifest bez bajtów
- * podpisany jako „paczka migracyjna" byłby obietnicą archiwum, którym nie jest.
- */
+// Wywóz treści, którą okno już ma, do pliku na urządzenie: opis zasobów wychodzi, bajty plików nie.
 
-/** Nagłówek wspólny wytworów tekstowych — mówi, czym plik jest i czym nie jest. */
+/** Nagłówek wspólny wytworów tekstowych — mówi, czym plik jest i czym nie jest, żeby manifest nie uchodził za archiwum z treścią. */
 const ZASTRZEZENIE_OPISU =
   'Wytwór zawiera wyłącznie opis zasobów (metryka, etykiety, kolekcje, sumy kontrolne). ' +
   'Treści plików w nim nie ma: kontrakt nie niesie komendy pobierającej bajty zasobu ' +
   'biblioteki na urządzenie.';
 
 /**
- * Raport zmian dokumentu — pełna historia wersji w postaci czytelnej.
- *
- * Odpowiednik „eksportu historii wersji jako raportu zmian" z dokumentacji
- * modułu. Wariant archiwalny (historia wraz z treścią każdej wersji) nie
- * powstaje: treści wersji niebieżącej nie oddaje żadna komenda kontraktu.
+ * Raport zmian dokumentu zestawia pełną historię wersji w postaci czytelnej;
+ * wariant z treścią każdej wersji nie powstaje, bo kontrakt nie oddaje treści
+ * wersji niebieżącej.
  */
 export function raportZmian(plik: LibraryFile, wersje: readonly LibraryVersion[]): string {
   const wiersze: string[] = [
@@ -58,13 +44,9 @@ export function raportZmian(plik: LibraryFile, wersje: readonly LibraryVersion[]
 }
 
 /**
- * Mapa struktury kolekcji — dokumentacja porządku repozytorium.
- *
- * Kolekcja jest w kontrakcie samym identyfikatorem: `LibraryFile.collectionIds`
- * niesie kody, a `library.collection.create` oddaje kod i nazwę wyłącznie
- * w chwili założenia. Mapa wypisuje więc kody i przypisane im pliki, bez nazw,
- * których okno nie ma skąd wziąć — i mówi to wprost zamiast podstawiać kod
- * w miejsce nazwy.
+ * Mapa struktury kolekcji dokumentuje porządek repozytorium: kolekcja jest
+ * w kontrakcie samym identyfikatorem, więc mapa wypisuje kody i przypisane
+ * pliki, bez nazw własnych, których okno nie zna.
  */
 export function mapaKolekcji(pliki: readonly LibraryFile[], kolekcje: readonly string[]): string {
   const wiersze: string[] = [
@@ -95,13 +77,9 @@ export function mapaKolekcji(pliki: readonly LibraryFile[], kolekcje: readonly s
 }
 
 /**
- * Tezaurus etykiet w zapisie SKOS, serializacja Turtle.
- *
- * SKOS i RDF to standardy branżowe, a nie oznaczenia wymyślone na potrzeby
- * modułu. Wytwór jest jednak PŁASKI: kontrakt niesie etykietę jako sam napis
- * (`LibraryFile.tags`), więc nie ma z czego zbudować relacji `skos:broader`,
- * `skos:narrower` ani `skos:related`. Brak jest wypisany w komentarzu wytworu,
- * bo tezaurus bez relacji wygląda jak tezaurus, w którym relacji nie ustalono.
+ * Tezaurus etykiet w zapisie SKOS, serializacja Turtle, jest płaski: kontrakt
+ * niesie etykietę jako sam napis, więc nie ma z czego zbudować relacji
+ * nadrzędności ani pokrewieństwa między pojęciami.
  */
 export function tezaurusSkos(etykiety: readonly string[], licznik: (kod: string) => number): string {
   const wiersze: string[] = [
@@ -130,12 +108,9 @@ export function tezaurusSkos(etykiety: readonly string[], licznik: (kod: string)
 }
 
 /**
- * Manifest repozytorium — opis stanu zbioru w punkcie czasu.
- *
- * Odpowiada części opisowej migawki repozytorium i paczki migracyjnej
- * z dokumentacji modułu. Części z bajtami nie ma i pole `zawartosc` mówi to
- * wprost: archiwum z treścią zasobów wymagałoby komendy, której kontrakt nie
- * niesie.
+ * Manifest repozytorium opisuje stan zbioru w punkcie czasu bez treści
+ * zasobów: pole zawartości mówi to wprost, bo archiwum z bajtami wymagałoby
+ * komendy, której kontrakt nie niesie.
  */
 export function manifestRepozytorium(pliki: readonly LibraryFile[]): string {
   return `${JSON.stringify(
@@ -165,7 +140,7 @@ export function manifestRepozytorium(pliki: readonly LibraryFile[]): string {
   )}\n`;
 }
 
-/** Metadane repozytorium w postaci tabelarycznej — wywóz do arkusza. */
+/** Metadane repozytorium w postaci tabelarycznej, gotowe do wywozu jako arkusz kalkulacyjny z pełnym opisem zasobów. */
 export function metadaneCsv(pliki: readonly LibraryFile[]): string {
   const naglowek = [
     'id',
@@ -213,12 +188,12 @@ function poleCsv(wartosc: string): string {
   return `"${wartosc.replaceAll('"', '""')}"`;
 }
 
-/** Adres pojęcia tezaurusa; etykieta wchodzi w identyfikator zakodowana. */
+/** Adres pojęcia tezaurusa; etykieta wchodzi w identyfikator zakodowana, tak aby znaki specjalne nie łamały składni. */
 function adresPojecia(kod: string): string {
   return `urn:danaco:library:etykieta:${encodeURIComponent(kod)}`;
 }
 
-/** Literał Turtle wraz z ucieczkami wymaganymi przez zapis. */
+/** Literał Turtle wraz z ucieczkami wymaganymi przez zapis: lewy ukośnik, cudzysłów oraz znaki końca wiersza. */
 function literal(wartosc: string): string {
   const uciekniety = wartosc
     .replaceAll('\\', '\\\\')

@@ -53,17 +53,8 @@ import { przenies } from '../../protokol/wynik-czastkowy';
 import { wywolaj } from '../../protokol/wywolanie';
 
 /**
- * Moduł Automations widziany przez klienta — komendy obszaru `automation.*`
- * wraz z komendami kolejek, harmonogramów i orkiestracji, których wprost żądają
- * okna modułu.
- *
- * Każda czynność oddaje `Wynik`, nie samą treść: okna mają obowiązkowy stan
- * błędu, więc źródło nie połyka odmowy ani nie podstawia pustego wykazu w jej
- * miejsce — widok musi odróżnić „nic nie ma” od „nie udało się zapytać”.
- *
- * Po stronie klienta nie stoi drugi silnik kolejek: Queue Manager zakłada
- * kolejkę komendą `queue.create` i posuwa ją komendą `automation.queue.action`,
- * która po stronie rdzenia jedzie tym samym adapterem kolejek co pętla sesyjna.
+ * Moduł Automations widziany przez klienta: komendy obszaru automatyk wraz z komendami
+ * kolejek, harmonogramów i orkiestracji, których wprost żądają okna modułu.
  */
 export interface ZrodloAutomations extends ZrodloDobudowyAutomations {
   /** `automation.workflow.save` — zapis definicji automatyki wraz z krokami. */
@@ -96,39 +87,18 @@ export interface ZrodloAutomations extends ZrodloDobudowyAutomations {
   usunZaleznosc(
     zadanie: OrchestrationDependencyRemoveRequest,
   ): Promise<Wynik<OrchestrationDependencyRemoveResponse>>;
-  /**
-   * `orchestration.dependency.list` — zależności układu, opcjonalnie zawężone
-   * do jednego kroku.
-   *
-   * Odrębna od `automation.orchestrator.define`, choć obie mówią o tym samym
-   * grafie: `define` zapisuje układ w całości i oddaje go przy okazji, a `list`
-   * wyłącznie czyta. Sam odczyt jest potrzebny, bo okno musi pokazać układ,
-   * którego nikt wcześniej nie zapisywał z tego okna.
-   */
+  /** `orchestration.dependency.list` — zależności układu, opcjonalnie zawężone do jednego kroku. */
   wykazZaleznosci(
     zadanie: OrchestrationDependencyListRequest,
   ): Promise<Wynik<{ dependencies: AutomationDependency[] }>>;
-  /**
-   * `orchestration.dependency.set` — zapis albo zmiana pojedynczej zależności.
-   *
-   * Zapis nie jest odmawiany: układ z cyklem zostaje zapisany, a zastrzeżenia
-   * wracają w wyniku. Ocena układu nie jest więc oceną samej czynności — okno
-   * rozdziela te dwa zdania.
-   */
+  /** `orchestration.dependency.set` — zapis albo zmiana pojedynczej zależności; cykl nie jest odmawiany. */
   zapiszZaleznosc(
     zadanie: OrchestrationDependencySetRequest,
   ): Promise<Wynik<OrchestrationDependencySetResponse>>;
   /** `orchestration.validate` — cykle, kroki osierocone i ścieżka krytyczna. */
   sprawdzUklad(idUkladu: string): Promise<Wynik<OrchestrationValidateResponse>>;
 
-  /**
-   * Cztery dopełnienia układu, których krawędź nie wyraża.
-   *
-   * Krawędź mówi, że kroki się schodzą. Bramka mówi, KIEDY tory scalają się
-   * w jednym kroku; grupa mówi, że zbiór kroków biegnie razem; kompensacja
-   * mówi, co zrobić, gdy przebieg pękł w pół; spięcie mówi, że kolejki
-   * automatyki prowadzi silnik środowiska MultitaskingAI.
-   */
+  /** Cztery dopełnienia układu, których krawędź nie wyraża: bramka, grupa, kompensacja, spięcie. */
   ustawBramke(zadanie: OrchestrationGateSetRequest): Promise<Wynik<OrchestrationGateSetResponse>>;
   ustawGrupe(zadanie: OrchestrationGroupSetRequest): Promise<Wynik<OrchestrationGroupSetResponse>>;
   ustawKompensacje(
@@ -137,31 +107,15 @@ export interface ZrodloAutomations extends ZrodloDobudowyAutomations {
   spnijZMultitaskingiem(
     zadanie: OrchestrationMultitaskingLinkRequest,
   ): Promise<Wynik<OrchestrationMultitaskingLinkResponse>>;
-  /**
-   * `window.list` — okna komunikacji platformy.
-   *
-   * Moduł sięga po nie w jednej sprawie: przekazanie scenariusza z innego
-   * modułu (`context.transfer`) zakłada okno modułu Automations i to w jego
-   * konfiguracji mieszka przeniesiony komplet. Bez wykazu okien nie ma jak
-   * dojść do tego, komu przekazano.
-   */
+  /** `window.list` — okna komunikacji platformy, potrzebne do ustalenia, komu przekazano scenariusz. */
   oknaKomunikacji(zadanie: WindowListRequest): Promise<Wynik<Window[]>>;
-  /**
-   * `config.effective.get` zawężone do obszaru kontekstu rozmowy — nośnika
-   * przeniesionego kompletu (`SessionConfigConversationContext.transferredContext`).
-   */
+  /** `config.effective.get` zawężone do obszaru kontekstu rozmowy, nośnika przeniesionego kompletu. */
   kontekstOkna(zadanie: ConfigEffectiveGetRequest): Promise<Wynik<SessionConfigEffective>>;
   /** Subskrypcja `automation.execution.status` — Execution Monitor na żywo. */
   naStanPrzebiegu(sluchacz: (tresc: AutomationExecutionStatusEvent) => void): Odsubskrybuj;
   /** Subskrypcja `queue.changed` — Queue Manager na żywo. */
   naZmianeKolejki(sluchacz: (tresc: QueueChangedEvent) => void): Odsubskrybuj;
-  /**
-   * Subskrypcja `automation.link.changed` — zmiana powiązania automatyki
-   * z bytem wyzwalającym.
-   *
-   * Zdarzenie przychodzi także wtedy, gdy scenariusz wpiął tu inny moduł, więc
-   * to ono jest sygnałem, że wykaz automatyk okna jest już nieaktualny.
-   */
+  /** Subskrypcja `automation.link.changed` — zmiana powiązania automatyki z bytem wyzwalającym. */
   naZmianePowiazania(sluchacz: (tresc: AutomationLinkChangedEvent) => void): Odsubskrybuj;
   /** Subskrypcja `orchestration.changed` — układ zmieniony poza tym oknem. */
   naZmianeUkladu(sluchacz: (tresc: OrchestrationChangedEvent) => void): Odsubskrybuj;
@@ -175,8 +129,7 @@ export const OBSZAR_KONTEKSTU_ROZMOWY = SessionConfigArea.ConversationContext;
 
 export function utworzZrodloAutomations(kanal: Kanal): ZrodloAutomations {
   return {
-    // Czynności paneli i szuflad stoją w `zrodlo-dobudowy.ts` — jedno źródło
-    // widziane przez okna, dwa pliki wedle roli czynności.
+    // Czynności paneli i szuflad stoją w osobnym pliku źródłowym — jedno źródło, dwa pliki wedle roli.
     ...utworzZrodloDobudowy(kanal),
 
     async zapiszAutomatyke(zadanie) {
@@ -370,7 +323,7 @@ export function utworzZrodloAutomations(kanal: Kanal): ZrodloAutomations {
   };
 }
 
-/** Sprawdzian kształtu odpowiedzi oddawanej w całości, bez wycinania pola. */
+/** Sprawdzian kształtu odpowiedzi oddawanej w całości, bez wycinania pola — wspólny sprawdzian dla wszystkich komend tego źródła. */
 async function sprawdzKsztaltObietnicy<T>(
   obietnica: Promise<Wynik<T>>,
   komenda: string,

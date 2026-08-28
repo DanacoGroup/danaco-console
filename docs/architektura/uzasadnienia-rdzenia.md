@@ -7360,3 +7360,10 @@ celowo nie podaje — mierzy to, czego model nie może o sobie zataić.
 Port CiagloscRozmowy jest celowo wąski — dwie czynności na jednej kolumnie.
 Rozmowa należy do okna, nie do sesji: dwa okna jednej sesji prowadzą dwie
 niezależne rozmowy z modelem i muszą mieć osobne wznowienia.
+
+## budowa/server/internal/core/dziennik_rozmowy.go
+Dzięki utrwalaniu w bazie rozmowa przeżywa restart rdzenia. Pamięć procesu
+zostaje jako bufor podręczny o ograniczonej pojemności i ma dwa zadania:
+odpowiadać bez odpytywania bazy w trakcie trwającej tury oraz przejąć
+rozmowę, gdy zapis zawiedzie. Awaria trwałości nie przerywa rozmowy — okno
+schodzi na bufor, zdarzenie trafia do dziennika procesu, tura biegnie dalej.

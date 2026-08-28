@@ -1,13 +1,4 @@
-/* ============================================================================
-   Danaco Console — moduł Developer (pięć okien operacyjnych)
-   ----------------------------------------------------------------------------
-   Plik nie zna ani jednej barwy, ani jednego rozmiaru czcionki: wszystko
-   pochodzi z żetonów motywu (`--dn-*`) i z biblioteki `komponenty/`.
-   Tutaj leży wyłącznie rozkład pięciu okien modułu — Code Editor (wiodące),
-   Project Tree (pomocnicze), Git Panel (zarządca), Build Output i Run & Debug
-   (monitor), Dev Tools (pomocnicze) — odróżnienie trzech stanów obowiązkowych
-   oraz oznaczenie wagi zgłoszeń budowania i konfliktów repozytorium.
-   ============================================================================ */
+/* Arkusz opisuje rozkład pięciu okien modułu Developer: edytor kodu, drzewo projektu, panel git, log budowania i zakładki narzędzi. */
 
 .mdev-modul {
   display: flex;
@@ -17,7 +8,7 @@
   min-height: 0;
 }
 
-/* Pas kodu: drzewo projektu przy edytorze, który jest oknem wiodącym. */
+/* Pas kodu w górnej części modułu stawia drzewo projektu obok edytora, ponieważ edytor jest oknem wiodącym całego modułu. */
 .mdev-modul__gora {
   display: grid;
   grid-template-columns: minmax(0, 2fr) minmax(0, 5fr);
@@ -25,7 +16,7 @@
   min-height: 0;
 }
 
-/* Pas repozytorium: zarządca zmian obok monitora budowania. */
+/* Pas repozytorium w górnej części modułu stawia panel git obok monitora budowania, jako dwa okna zarządzające stanem pracy. */
 .mdev-modul__srodek {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -65,7 +56,7 @@
   gap: var(--dn-od-2);
 }
 
-/* Ścieżka pliku bieżącego — jedna prawda czterech okien, więc widoczna wszędzie. */
+/* Ścieżka pliku bieżącego jest jedną prawdą widoczną we wszystkich czterech oknach modułu, niezależnie od tego, które jest aktywne. */
 .mdev-sciezka {
   font-family: var(--dn-ff-mono);
   font-size: var(--dn-fs-xs);
@@ -84,8 +75,7 @@
   color: var(--dn-tekst-3);
 }
 
-/* ── Trzy stany obowiązkowe ────────────────────────────────────────────────── */
-
+/* Sekcja opisuje trzy stany obowiązkowe modułu Developer, wspólne dla wykazu pozycji, drzewa projektu i zakładek okien wielo-obszarowych. */
 .mdev-stany {
   display: flex;
   flex-direction: column;
@@ -122,8 +112,7 @@
   overflow: auto;
 }
 
-/* ── Wykaz pozycji (zmiany repozytorium, zgłoszenia budowania) ─────────────── */
-
+/* Sekcja opisuje wykaz pozycji modułu Developer: zmiany repozytorium w panelu git oraz zgłoszenia budowania w logu monitora. */
 .mdev-wykaz {
   display: flex;
   flex-direction: column;
@@ -161,13 +150,13 @@
   gap: var(--dn-od-1);
 }
 
-/* Ścieżka z konfliktem to rzecz do rozstrzygnięcia, nie zwykły wiersz wykazu. */
+/* Ścieżka z konfliktem w wykazie pozycji jest rzeczą do rozstrzygnięcia przez operatora, nie zwykłym wierszem wykazu zmian. */
 .mdev-pozycja[data-konflikt='tak'] {
   border-left: var(--dn-wym-wstega) solid var(--dn-blad-obrys);
   padding-left: var(--dn-od-2);
 }
 
-/* Waga zgłoszenia budowania — błąd odróżniony od ostrzeżenia i podpowiedzi. */
+/* Waga zgłoszenia budowania odróżnia błąd od ostrzeżenia i podpowiedzi barwą oraz ikoną plakietki w wierszu wykazu. */
 .mdev-pozycja[data-waga='error'] {
   border-left: var(--dn-wym-wstega) solid var(--dn-blad-obrys);
   padding-left: var(--dn-od-2);
@@ -183,8 +172,7 @@
   padding-left: var(--dn-od-2);
 }
 
-/* ── Drzewo projektu (okno pomocnicze) ─────────────────────────────────────── */
-
+/* Sekcja opisuje drzewo projektu, czyli okno pomocnicze modułu Developer pokazujące strukturę katalogów i plików obok edytora. */
 .mdev-drzewo {
   display: flex;
   flex-direction: column;
@@ -214,7 +202,7 @@
   color: var(--dn-tekst-3);
 }
 
-/* Katalog odróżniony od pliku, a plik wskazany — od pozostałych. */
+/* Katalog w drzewie projektu jest odróżniony od pliku kształtem ikony, a plik wskazany jest odróżniony od pozostałych podświetleniem. */
 .mdev-wezel[data-rodzaj='directory'] .mdev-wezel__nazwa {
   font-weight: var(--dn-fw-polgruba);
 }
@@ -233,8 +221,7 @@
   padding-left: var(--dn-od-1);
 }
 
-/* ── Edytor kodu (okno wiodące) ────────────────────────────────────────────── */
-
+/* Sekcja opisuje edytor kodu, czyli okno wiodące modułu Developer, w którym operator czyta i zmienia treść bieżącego pliku. */
 .mdev-edytor {
   display: flex;
   flex-direction: column;
@@ -256,8 +243,7 @@
   padding: var(--dn-od-3);
 }
 
-/* ── Log budowania (okno monitora) ─────────────────────────────────────────── */
-
+/* Sekcja opisuje log budowania, czyli okno monitora modułu Developer pokazujące przebieg i wynik ostatniego budowania. */
 .mdev-log {
   margin: 0;
   padding: var(--dn-od-3);
@@ -274,7 +260,7 @@
   overflow-wrap: anywhere;
 }
 
-/* Stan przebiegu budowania widoczny bez czytania logu. */
+/* Stan przebiegu budowania jest widoczny w pasku bez potrzeby czytania pełnego logu, dzięki plakietce stanu bieżącego etapu. */
 .mdev-przebieg {
   display: flex;
   flex-wrap: wrap;
@@ -304,11 +290,7 @@
   color: var(--dn-tekst-3);
 }
 
-/* ── Zakładki okien wielo-obszarowych (monitor, Dev Tools) ─────────────────── */
-
-/* Pas zakładek stoi w wierszu tytułu ramy — „zakładki w nagłówku kolumny”
-   z opracowania modułu. Zawijanie, bo cztery nazwy własne integracji nie
-   mieszczą się w wąskiej kolumnie. */
+/* Sekcja opisuje zakładki okien wielo-obszarowych: pas w wierszu tytułu ramy, zawijany, bo cztery nazwy integracji nie mieszczą się w wąskiej kolumnie. */
 .mdev-zakladki {
   flex-wrap: wrap;
 }
@@ -344,8 +326,7 @@
   gap: var(--dn-od-2);
 }
 
-/* ── Zależności od programów spoza instalki ────────────────────────────────── */
-
+/* Sekcja opisuje zależności modułu Developer od programów spoza instalki, wymaganych do uruchomienia jego okien pomocniczych. */
 .mdev-zaleznosci {
   display: flex;
   flex-direction: column;

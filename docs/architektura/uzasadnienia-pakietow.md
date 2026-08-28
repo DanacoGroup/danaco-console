@@ -6967,3 +6967,9 @@ WszystkiePanele służy dwóm poleceniom obejmującym cały słownik. Polecenie
 `glossary.apply` traktuje puste `panelId` jako wskazanie wszystkich paneli,
 a polecenie `glossary.occurrences` niesie sam termin, bez wskazania okna —
 zakres bez zawężenia jest tu poprawny, bo słownik jest jeden na instalację.
+
+## budowa/server/internal/dane/workspace_dziennik.go
+Trzy tabele leżą w jednym pliku, bo wszystkie trzy są zapisem tego, co się
+wydarzyło, a nie stanem bieżącym. Stan bieżący instrukcji leży w tabeli
+`ustawienie`, stan bieżący zadania w tabeli `zadanie_projektu` — tutaj leży
+wyłącznie ślad zdarzeń, komentarzy i wersji instrukcji.

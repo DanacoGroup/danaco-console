@@ -6420,3 +6420,21 @@ pozycji, bo po drugiej stronie i tak stoi jedno rozgałęzienie. Siedem osobnych
 siedmioma drogami do tego samego rozgałęzienia. Centrum powiadomień nie jest oknem platformy z listwy
 strony głównej, tylko kolumną powłoki środowiska, a jego wyzwalaczem jest plakietka dzwonka — element
 warstwy pierwszej, jedyna spoczynkowa reprezentacja tego mechanizmu.
+
+## budowa/klient-poprzedni/src/moduly/roundtable/sklad-modeli.ts
+Podział z pliku okna Model Panels idzie po odpowiedzialności: tu leży rysowanie składu, tam
+formularz dodania uczestnika i wywołanie komendy dodania modelu. Każdy panel niesie głos swojego
+uczestnika złożony z obu dróg rdzenia — treści utrwalonej i przyrostu strumienia — i rośnie na
+oczach Operatora, bo złożenie podaje mu strumień wypowiedzi. Atrybut ostatniego głosu dostaje
+uczestnik, którego wypowiedź jest ostatnią w wykazie tury; arkusz modułu ma pod niego regułę
+stylu. To jedyne, co da się o głosie bieżącym orzec z zapisu. Tryb ślepy i metryki są nastawami
+widoku, nie stanem rdzenia: kontrakt nie ma ani nastawy anonimizacji, ani licznika odpowiedzi,
+więc obie żyją w oknie i schodzą wraz z nim — wnoszone są parametrem, bo rysowanie składu jest
+czystą funkcją danych, okno trzyma nastawy, ten plik ich nie pamięta.
+
+Bez zdania o zasięgu trybu ślepego ukryta nazwa czytałaby się jako anonimizacja debaty, a jest
+anonimizacją jednego widoku: wypowiedzi w Debate Panelu i w zestawieniu udziału nadal noszą
+tożsamość mówcy.
+
+Brak promptu systemowego jest stanem poprawnym i nazwanym: uczestnik dodany bez promptu odpowiada
+tak, jak skonfigurowano jego kanał.

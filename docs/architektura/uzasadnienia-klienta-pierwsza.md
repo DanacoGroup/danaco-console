@@ -7249,3 +7249,14 @@ Kontrakt nie ma osobnej komendy zatrzymania podagenta, a sterowanie kolejką
 nazwa kolejki, pod którą rdzeń zakłada kolejkę podagenta jego własnym
 identyfikatorem. Żądanie z oknem przy subskrypcji monitora zakłada
 obserwację.
+
+## budowa/klient-poprzedni/src/moduly/multitasking/zrodlo-nadzoru.ts
+Trzy sekcje mają jedno źródło, bo pracują na tym samym bycie: zależność
+zapisuje się na układzie, harmonogram ustawia się na układzie, a monitor
+pokazuje jego przebieg, więc osobne źródła pytałyby trzy razy o ten sam
+wykaz automatyk. Komendy nadzoru nakładki leżą tutaj, bo przełącznik trybu
+nakładki należy do sekcji Monitor procesu; stan nakładki niesie urządzenie,
+sesję, okno i licznik procesów, ale nie niesie wartości obserwator albo
+operator. Wiązanie kolejki z ekspertem, projektem albo automatyką jest
+czynnością panelu, nie źródła biegu, bo bieg pętli koordynator–wykonawca
+porusza rolami i nie zna projektów.

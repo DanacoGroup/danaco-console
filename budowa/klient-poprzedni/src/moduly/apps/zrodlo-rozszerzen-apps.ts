@@ -1,3 +1,8 @@
+/**
+ * Plik niesie kontrakt strony dystrybucji modułu Apps: pięć komend rodziny
+ * extension oraz jej zdarzenie, żadna z nich nie wymaga okna modułu.
+ */
+
 import {
   Command,
   EventType,
@@ -16,33 +21,6 @@ import type { Kanal, Wynik } from '../../protokol/kanal';
 import { czyLogiczna, czyObiekt, czyTablica, sprawdzKsztalt } from '../../protokol/ksztalt-odpowiedzi';
 import { utworzWywolanieApps, type WywolanieApps } from './odmowa-rdzenia';
 
-/**
- * Pięć komend rodziny `extension.*` i jej zdarzenie — kontrakt strony
- * dystrybucji modułu Apps.
- *
- * Strona dystrybucji i konsumpcji (App Catalog, Installed Apps Manager,
- * Integrations Hub, Permissions & Trust Center) stoi na innym obszarze
- * kontraktu niż strona budowy: obszar `apps` opisuje produkt budowany w module,
- * a obszar `extension` — katalog rozszerzeń, którego moduł jest operacyjnym
- * frontem. Katalog jest bytem rdzenia stojącym poziom wyżej niż moduł, więc
- * żadna z tych komend nie niesie `windowId` i żadna nie wymaga okna modułu.
- *
- * Żądania idą pełnym kształtem kontraktu — `origin` rozstrzyga stan wyjściowy
- * rejestracji (`danaco` staje włączone, `personal` wyłączone), a `accessPointId`
- * wiąże serwer MCP z mostem z katalogu punktów dostępu. Pole pominięte znaczy
- * „bez wskazania”, więc puste wartości nie jadą na drut: rdzeń rozstrzyga
- * wtedy po swojemu, zamiast dostać cudzą wartość domyślną przebraną za wybór
- * Operatora.
- *
- * Droga przez `odmowa-rdzenia.ts` jest ta sama, którą idą komendy `apps.*`:
- * komenda bez uchwytu w rdzeniu wraca kopertą `<obszar>.unknown` bez pola
- * `status`, więc obietnica zwykłego wywołania zostałaby nierozstrzygnięta,
- * a okno stałoby w ładowaniu bez końca.
- *
- * Bliźniacze źródło stoi w module Agents (`moduly/agents/zrodlo-rozszerzen.ts`)
- * i obsługuje węższy kształt żądań — bez `origin`, `accessPointId`
- * i konfiguracji początkowej — oraz nie subskrybuje zdarzenia katalogu.
- */
 export interface ZawezenieKatalogu {
   /** Rodzaj zawężający wykaz; pominięty zwraca wszystkie rodzaje. */
   rodzaj?: ExtensionKind;
@@ -50,7 +28,10 @@ export interface ZawezenieKatalogu {
   tylkoZainstalowane?: boolean;
 }
 
-/** Zlecenie instalacji pozycji katalogu — pełny kształt żądania kontraktu. */
+/**
+ * Zlecenie instalacji pozycji katalogu w pełnym kształcie żądania kontraktu;
+ * pole pominięte znaczy brak wskazania i zostawia rozstrzygnięcie rdzeniowi.
+ */
 export interface ZlecenieInstalacji {
   kod: string;
   rodzaj: ExtensionKind;
@@ -94,8 +75,7 @@ export function utworzZrodloRozszerzenApps(kanal: Kanal): ZrodloRozszerzenApps {
       return sprawdzKsztalt(
         await wywolaj(Command.ExtensionList, zadanie),
         Command.ExtensionList,
-        // Sprawdzamy tablicę, a nie jej długość: katalog pusty jest odpowiedzią
-        // poprawną i znaczy „rdzeń nie zna ani jednej pozycji”.
+        // Sprawdzany jest rodzaj tablicy, nie jej długość: katalog pusty jest poprawny.
         (tresc) => czyTablica(tresc.extensions),
       );
     },
@@ -141,10 +121,7 @@ export function utworzZrodloRozszerzenApps(kanal: Kanal): ZrodloRozszerzenApps {
       return sprawdzKsztalt(
         await wywolaj(Command.ExtensionUninstall, { extensionId: idRozszerzenia }),
         Command.ExtensionUninstall,
-        // Pole `uninstalled` jest w kontrakcie wymagane, a jego wartość `false`
-        // jest odpowiedzią udaną i znaczy „rdzeń pozycji nie zdjął”. Sprawdzamy
-        // więc rodzaj, nie prawdziwość — inaczej odmowa merytoryczna wyglądałaby
-        // na uszkodzony kształt.
+        // Sprawdzany jest rodzaj pola uninstalled, nie jego prawdziwość.
         (tresc) => czyLogiczna(tresc.uninstalled),
       );
     },

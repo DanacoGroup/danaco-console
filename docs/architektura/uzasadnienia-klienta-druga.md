@@ -6665,3 +6665,6 @@ zatrzymanie nie wycofuje niczego, dokumenty przetworzone zostają przetworzone, 
 dostają stan przerwany wraz z powodem. Zbiorcza liczba przyjętych dokumentów jako cała odpowiedź
 jest tu zakazana: każdy dokument ma swój wiersz i swój stan — udana, odrzucona wraz z powodem
 albo przerwana — bo odmowa jednego nie wstrzymuje pozostałych, tak mówi kontrakt i tak to działa.
+
+## budowa/klient-poprzedni/src/powloka/czesci-sekcji.ts
+Kto stoi przed kim w układzie sekcji, rozstrzyga warstwa układu, a czym się to zapisuje — osobne źródło sekcji paneli; ten plik nie wie ani jednego, ani drugiego, więc da się go czytać i sprawdzać bez rdzenia. Skutek zdjęcia sekcji jest odwracalny jednym naciśnięciem przywracającym z pasa sekcji zdjętych, więc potwierdzanie go byłoby przeszkodą bez treści, a pusty pas z napisem o braku zabierałby miejsce, nic nie mówiąc. Stan idzie atrybutem, nie samą barwą: zwinięcie niesie atrybut rozwinięcia na przycisku i ukrycie na ciele, a nie klasa zmieniająca wygląd, inaczej czytnik ekranu ogłaszałby treść, której na ekranie nie ma. Wygląd w całości pochodzi z biblioteki komponentów — plik nie zna ani jednej barwy i ani jednego odstępu.

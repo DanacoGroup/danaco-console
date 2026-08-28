@@ -6882,3 +6882,26 @@ binarnego, co jest przyjętym ograniczeniem wyszukiwania.
 Znacznik dopasowuje się do jednej pozycji wykazu rozdzielanego przecinkiem.
 Otoczenie obu stron przecinkami sprawia, że wyszukiwana fraza „test” nie łapie
 przypadkowo znacznika „testowy”.
+
+## budowa/server/internal/session/izolacja_test.go
+SciezkaWewnatrz jest zaporą, przez którą przechodzi każde sięgnięcie
+rdzenia po plik w imieniu okna, oraz każdy korzeń podawany procesowi
+modelu przy uruchomieniu. Jej pomyłka nie zgłasza się błędem, tylko
+otwiera katalog, którego operator nie dał. Sprawdzian mierzy to samo na
+obu systemach, ponieważ produkt jedzie na Linuksa i na Windowsa; jedyna
+zamierzona różnica dotyczy wielkości liter, ponieważ system plików
+Windowsa jej nie rozróżnia, więc porównanie też nie może.
+
+TestWielkoscLiterRozstrzygaSystemPlikow jest jedynym sprawdzianem w pliku
+dającym różne wyniki na różnych systemach, zgodnie z regułą produktu:
+ścieżki C:\Dane i c:\dane wskazują na Windowsie ten sam katalog, więc
+ścieżka zapisana inną wielkością liter nie może omijać obszaru, podczas
+gdy na Linuksie dane i Dane są dwoma różnymi katalogami, a ich sklejenie
+otwierałoby obszar, którego operator nie wskazał. Gałąź windowsowa
+normalizacji nie wykonuje się nigdy na maszynie budującej; dopiero zadanie
+Windows w bramce sprawdzianów ją uruchamia, więc ten sprawdzian istnieje
+po to, żeby miała co uruchomić.
+
+W teście TestWspoldzielenieWymiaruJestDecyzjaZapisanaWprost każda wartość
+inna niż wartość wskazująca współdzielenie wprost zostawia wymiar odrębny,
+więc pomyłka w zapisie nie może rozszczelnić kontekstu.

@@ -7582,3 +7582,30 @@ Formularz konta i edytor tożsamości opisują byty o polach stałych, wynikają
 
 ## budowa/klient-poprzedni/src/modele/kontrolki-formularza.ts (pole poświadczenia)
 Kontrakt przyjmuje poświadczenie w żądaniu i nie zwraca go żadną komendą. Pole jest zatem wyłącznie wejściem: puste znaczy „nie zmieniaj”, wypełnione znaczy „zapisz nowe”. Nigdy nie pokazuje wartości zapisanej, ponieważ klient jej nie ma.
+
+## budowa/klient-poprzedni/src/moduly/design/modul-design.ts
+Jedna odpowiedzialność: złożenie okien modułu i rozdanie im jednego stanu. Układ idzie warstwami
+widoczności opracowania, nie kolejnością plików. W pasie pierwszym i drugim stoją okna warstwy
+pierwszej — te, które są widoczne bez interakcji. W pasie trzecim stoją rozwinięcia warstw
+wyższych: Tokens & System Panel (warstwa trzecia, wywoływany menu kebab), wyszukiwarka funkcji
+i wykaz skrótów (warstwa czwarta). Zwinięte nie znaczy ukryte — zapowiedź nad każdym mówi, co jest
+pod spodem.
+
+Układ wynika z roli okna. Design Board jest wiodące i stoi w pasie pierwszym na całą szerokość —
+na nim odbywa się praca koncepcyjna. W pasie drugim stoją trzy pozostałe w kolejności katalogu
+rdzenia: Assets Panel (zarządca) wskazuje zasób, Preview Window (pomocnicze) pokazuje zasób
+wskazany, Prompt Builder (kreator) zleca nowy. Podgląd stoi między nimi, bo patrzy i na to, co
+zarządca wskazał, i na to, co kreator dopiero przyniósł.
+
+Jeden zbiór zasobów na cały moduł: wynik generowania z kreatora wchodzi do wykazu zarządcy, stamtąd
+na kanwę wiodącego, a podgląd czyta ten sam wybór, bo stan modułu jest jeden. Zdarzenie zmiany
+zasobu wciąga zasób tą samą drogą także wtedy, gdy zlecenie przyszło z obcego połączenia.
+
+Druga droga na kanwę prowadzi z rozmowy. Zasób zlecony spoza okien modułu wchodzi zdarzeniem
+zmiany zasobu: stan wciąga go do wykazu zarządcy, a to złożenie kładzie go warstwą na kanwie
+wiodącego. Wiązanie mieszka tutaj, bo wiąże dwa okna i nie jest sprawą żadnego z nich z osobna.
+
+Moduł nie osadza się sam — oddaje element; gdzie stanie, rozstrzyga warstwa składająca.
+
+Okno modułu musi być znane przed odczytem zasobów: odczyt zasobów przyjmuje identyfikator okna,
+a bez niego dotyczyłby czegoś innego niż to okno. Zaplecze idzie równolegle — jest niezależne.

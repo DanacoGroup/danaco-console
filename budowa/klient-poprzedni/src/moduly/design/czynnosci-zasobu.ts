@@ -4,20 +4,8 @@ import { nazwaZasobu } from './karta-zasobu';
 import type { StanDesignu } from './stan-designu';
 
 /**
- * Dwie czynności na zasobie wskazanym w wykazie: oznaczenie ulubionym
- * i usunięcie.
- *
- * Usunięcie wykonuje się bez pytania „czy na pewno": bramka potwierdzająca
- * zabiera Operatorowi jedno kliknięcie i uczy odruchowego potwierdzania,
- * zamiast podnosić bezpieczeństwo. Okno wykonuje czynność i mówi, co się stało.
- *
- * Odpowiedź niesie treść, a nie samo powodzenie: `design.asset.remove` oddaje
- * pole `removed`, gdzie `false` znaczy „takiego zasobu nie było" i jest
- * odpowiedzią udaną, a zarazem inną wiadomością niż „usunięto". Zlanie ich
- * w jedno zdanie potwierdzałoby czynność, która się nie odbyła.
- *
- * Przyciski są czynne zawsze: brak wskazanego zasobu nie gasi kontrolki,
- * a naciśnięcie mówi wtedy, czego brakuje.
+ * Udostępnia dwie czynności na zasobie wskazanym w wykazie: oznaczenie ulubionym
+ * i usunięcie bez dodatkowego potwierdzenia, z paskiem odpowiedzi po wykonaniu.
  */
 export interface CzynnosciZasobu {
   element: HTMLElement;
@@ -41,14 +29,7 @@ export function utworzCzynnosciZasobu(stan: StanDesignu): CzynnosciZasobu {
   ulubiony.addEventListener('click', () => void przestawUlubiony());
   usun.addEventListener('click', () => void usunWskazany());
 
-  /**
-   * Przestawia oznaczenie ulubionego zasobu wskazanego.
-   *
-   * Stan docelowy liczy się z zasobu, nie z napisu na przycisku. Napis bywa
-   * o ułamek sekundy starszy od zbioru (zdarzenie mogło właśnie przestawić
-   * ulubionego z drugiego okna), a wtedy przełącznik wysłałby wartość, którą
-   * zasób już ma.
-   */
+  /** Przestawia oznaczenie ulubionego zasobu; stan liczy się z zasobu, nie z napisu przycisku. */
   async function przestawUlubiony(): Promise<void> {
     const zasob = stan.wybrany();
     if (zasob === null) {
@@ -75,9 +56,7 @@ export function utworzCzynnosciZasobu(stan: StanDesignu): CzynnosciZasobu {
       odpowiedz.pokaz(opisOdmowyBledu('Oznaczenie ulubionego', wynik.blad), false);
       return;
     }
-    // Rdzeń oddaje zasób odczytany z bazy po zapisie, więc porównanie zamówienia
-    // z odpowiedzią jest tanie: gdy rdzeń zapisał co innego, okno mówi to wprost
-    // zamiast potwierdzać własne zamówienie.
+    // Rdzeń oddaje zasób po zapisie: porównanie zamówienia z odpowiedzią jest tanie i wiarygodne.
     const oddany = wynik.wynik.asset;
     stan.wchlon(oddany);
     if ((oddany.favorite === true) !== docelowy) {
@@ -97,7 +76,7 @@ export function utworzCzynnosciZasobu(stan: StanDesignu): CzynnosciZasobu {
     );
   }
 
-  /** Usuwa zasób wskazany. Bez bramki — uzasadnienie w nagłówku pliku. */
+  /** Usuwa zasób wskazany, bez bramki potwierdzającej przed wykonaniem czynności. */
   async function usunWskazany(): Promise<void> {
     const zasob = stan.wybrany();
     if (zasob === null) {
@@ -111,9 +90,7 @@ export function utworzCzynnosciZasobu(stan: StanDesignu): CzynnosciZasobu {
       stan.zrodlo.usunZasob(zasob.id),
       {
         wToku: (zdanie) => odpowiedz.pokaz(zdanie, true),
-        // Cisza kanału nie jest odmową usunięcia: rdzeń mógł zasób skasować,
-        // a odpowiedź zginąć z gniazdem. Zdanie mówi o braku rozstrzygnięcia,
-        // a zasób zostaje w wykazie do czasu odczytu (`czuwanie-rdzenia.ts`).
+        // Cisza kanału nie jest odmową: rdzeń mógł zasób skasować, a odpowiedź zginąć w sieci.
         cisza: (zdanie) => odpowiedz.pokaz(zdanie, false),
         powrot: (zdanie) => odpowiedz.pokaz(zdanie, false),
         spozniona: (zdanie) => odpowiedz.pokaz(zdanie, false),
@@ -125,9 +102,7 @@ export function utworzCzynnosciZasobu(stan: StanDesignu): CzynnosciZasobu {
       return;
     }
     if (!wynik.wynik.removed) {
-      // Zasób był w wykazie, a rdzeń go nie zna — wykaz był nieaktualny.
-      // Zdejmujemy go, bo pokazywanie dalej byłoby pokazywaniem bytu, o którym
-      // rdzeń właśnie powiedział, że go nie ma.
+      // Zasób był w wykazie, a rdzeń go nie zna — wykaz był nieaktualny; usuwamy wpis z listy.
       stan.zdejmij(zasob.id);
       odpowiedz.pokaz(
         `Rdzeń nie zna zasobu „${nazwa}" (${zasob.id}) — niczego nie usunął. Wykaz był ` +
@@ -145,9 +120,7 @@ export function utworzCzynnosciZasobu(stan: StanDesignu): CzynnosciZasobu {
 
     odswiez() {
       const zasob = stan.wybrany();
-      // Napis mówi, co przycisk zrobi, a nie w jakim stanie zasób jest —
-      // przełącznik opisany stanem bieżącym czyta się dokładnie odwrotnie do
-      // tego, co wykonuje.
+      // Napis przycisku opisuje czynność do wykonania, a nie bieżący stan zasobu.
       ulubiony.textContent =
         zasob?.favorite === true ? 'Zdejmij oznaczenie ulubionego' : 'Oznacz ulubionym';
     },

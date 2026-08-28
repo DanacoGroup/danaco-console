@@ -1,19 +1,9 @@
 import type { DeveloperBuild, ProblemSeverity } from '../../../../shared/contract';
 import { przyciskAkcji } from '../../modele/kontrolki-formularza-braki';
 
-/**
- * Widok przebiegu budowania — czysta konstrukcja z danych oddanych przez rdzeń.
- *
- * Fragment nie zna ani źródła, ani stanu modułu: dostaje przebieg, zebrany log
- * i zawężenie, oddaje element.
- *
- * Zawężenie jest czynnością wyłącznie kliencką nad materiałem, który już
- * przyszedł. Log narasta ze zdarzenia i nie ma komendy, którą dałoby się
- * dopytać rdzeń o wiersze pominięte, więc szukanie odbywa się w tym, co okno
- * usłyszało — i widok mówi to wprost, zamiast pozorować przeszukanie całości.
- */
+/** Widok przebiegu budowania — czysta konstrukcja z danych oddanych przez rdzeń, bez własnego stanu. */
 
-/** Zawężenie widoku: fraza w logu i waga zgłoszeń. */
+/** Zawężenie widoku: fraza w logu i waga zgłoszeń, obie czynności wyłącznie kliencka, nad materiałem gotowym. */
 export interface ZawezeniePrzebiegu {
   /** Fraza szukana w wierszach logu; pusta znaczy „bez zawężenia”. */
   szukaj: string;
@@ -21,7 +11,7 @@ export interface ZawezeniePrzebiegu {
   waga: ProblemSeverity | '';
 }
 
-/** Materiał widoku przebiegu wraz z zawężeniem i przejściem do pliku. */
+/** Materiał widoku przebiegu wraz z zawężeniem i przejściem do pliku zgłoszenia we wspólnym stanie modułu. */
 export interface OpisWidokuPrzebiegu {
   logi: readonly string[];
   /** Czy okno nie widziało początku przebiegu. */
@@ -30,7 +20,7 @@ export interface OpisWidokuPrzebiegu {
   naWskazanie: (sciezka: string) => void;
 }
 
-/** Zdanie o przebiegu: zadanie, stan, kod wyjścia, czas i liczba zgłoszeń. */
+/** Zdanie o przebiegu: zadanie, stan, kod wyjścia, czas trwania i liczba zgłoszeń podana operatorowi w panelu. */
 function opisPrzebiegu(przebieg: DeveloperBuild): string {
   const kod = przebieg.exitCode === undefined ? '' : `; kod wyjścia ${przebieg.exitCode}`;
   const zgloszenia = przebieg.problems?.length ?? 0;
@@ -108,7 +98,7 @@ function rysujLog(opis: OpisWidokuPrzebiegu): readonly HTMLElement[] {
   return czesci;
 }
 
-/** Treść pola logu — pustka bez zawężenia i pustka po zawężeniu to dwa zdania. */
+/** Treść pola logu — pustka bez zawężenia i pustka po zawężeniu to dwa różne zdania panelu przebiegu okna. */
 function tresc(zebrane: number, widoczne: readonly string[], zawezone: boolean): string {
   if (widoczne.length > 0) return widoczne.join('\n');
   if (zebrane === 0) return 'Log jeszcze nie przyniósł żadnego wiersza.';
@@ -116,7 +106,7 @@ function tresc(zebrane: number, widoczne: readonly string[], zawezone: boolean):
   return 'Log jeszcze nie przyniósł żadnego wiersza.';
 }
 
-/** Zgłoszenia wraz ze zdaniem o zawężeniu wagą. */
+/** Zgłoszenia wraz ze zdaniem o zawężeniu wagą, wyświetlane operatorowi w panelu przebiegu budowania okna. */
 function rysujCzescZgloszen(
   problems: NonNullable<DeveloperBuild['problems']>,
   opis: OpisWidokuPrzebiegu,
@@ -147,15 +137,8 @@ function rysujCzescZgloszen(
 }
 
 /**
- * Wykaz zgłoszeń budowania — czysta konstrukcja z danych.
- *
- * Zgłoszenie ze ścieżką jest przejściem do pliku: nowej komendy to nie wymaga,
- * bo wystarczy wskazać plik we wspólnym stanie modułu, a Code Editor otworzy
- * go sam.
- *
- * Numer wiersza zostaje w napisie i niczego nie otwiera: `developer.file.open`
- * nie ma pola wiersza, a pole edycji nie ma numeracji — przejście otwiera plik,
- * nie miejsce w pliku, i przycisk mówi dokładnie tyle.
+ * Wykaz zgłoszeń budowania — czysta konstrukcja z danych. Zgłoszenie ze
+ * ścieżką jest przejściem do pliku, bez otwierania miejsca w nim.
  */
 function rysujZgloszenia(
   problems: NonNullable<DeveloperBuild['problems']>,
@@ -188,7 +171,7 @@ function rysujZgloszenia(
   return wykaz;
 }
 
-/** Przycisk „Otwórz w edytorze” — wskazuje plik zgłoszenia we wspólnym stanie. */
+/** Przycisk „Otwórz w edytorze” — wskazuje plik zgłoszenia we wspólnym stanie modułu Developer tego okna. */
 function przejscieDoPliku(
   sciezka: string,
   naWskazanie: (sciezka: string) => void,

@@ -14,22 +14,7 @@ import {
 } from './wyciszenie-aod';
 import { brakiCzynne, zdanieBraku, zdanieGranicyWyciszenia } from './wyciszenie-braki-kontraktu';
 
-/**
- * Sprawdziany wyciszania Always On Display — czynność z rozdz. 3.5 opracowania
- * `docs/funkcje-globalne/always-on-display.md`, nie kształt pliku.
- *
- * Pilnowane są rzeczy, których zlecenie żąda wprost:
- *   1. trzy rodzaje wyciszenia wstrzymują to, co mają wstrzymywać, i NIE
- *      wstrzymują niczego więcej (kontekstowe — tylko wskazany byt, klasy —
- *      tylko wskazaną klasę);
- *   2. wyjątek wagi krytycznej przechodzi przez WSZYSTKIE rodzaje wyciszenia
- *      i przez tryb cichy — plakietką, bez dymka;
- *   3. wyciszenie i jego zniesienie idą jednym ruchem;
- *   4. magazyn jest podawany, nie brany z globalnej przestrzeni na sztywno;
- *   5. brak pozycji kontraktu jest nazwany wprost, nie zasłonięty.
- */
-
-/** Magazyn na mapie — dowód, że stan nie sięga po `localStorage` na sztywno. */
+/** Magazyn wyciszeń na mapie w pamięci — sprawdzianowy dowód, że stan nie sięga po `localStorage` na sztywno. */
 function magazynPamieciowy(): MagazynWyciszen & { zapis: Map<string, string> } {
   const zapis = new Map<string, string>();
   return {
@@ -284,14 +269,7 @@ describe('reguła ujawniania wobec trzech rodzajów wyciszenia', () => {
 });
 
 describe('granica wobec kontraktu', () => {
-  /**
-   * Sprawdzian pilnuje tego samego, co przed dobudową wyciszenia w rdzeniu:
-   * granica ma być NAZWANA, a nie zasłonięta. Zmieniła się wyłącznie strona
-   * braku. Kontrakt niesie już wyciszenie nakładki wraz z odczytem, zapisem
-   * i rozgłoszeniem, więc zdanie mówiące „brak po stronie kontraktu" byłoby
-   * dziś nieprawdą — zostaje brak po stronie nakładki, której wołacze piszą
-   * jeszcze do magazynu stanowiska.
-   */
+  // Granica ma być nazwana wprost — dziś brak stoi po stronie nakładki, nie kontraktu.
   it('granica wyciszenia jest nazwana wprost wraz ze stroną braku', () => {
     expect(brakiCzynne().length).toBeGreaterThan(0);
     const zdanie = zdanieGranicyWyciszenia();

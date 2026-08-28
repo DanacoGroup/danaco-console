@@ -14,36 +14,13 @@ import { czyObiekt, sprawdzKsztalt } from '../../protokol/ksztalt-odpowiedzi';
 import { wywolaj } from '../../protokol/wywolanie';
 
 /**
- * Doradca eksperta — konsultacja modelem silniejszym niż model bazowy.
- *
- * Kontrakt nie ma rodziny `agent.advisor.*`, więc konsultacja idzie trzema
- * komendami obszarów `window.*` i `message.*` oraz jednym zdarzeniem:
- *
- *   `window.create`  — okno konsultacji na kanale doradcy, nie na kanale
- *                      eksperta. To jedyne miejsce, w którym wybór modelu
- *                      silniejszego staje się faktem po stronie rdzenia:
- *                      `modelChannelId` jest polem wymaganym żądania.
- *   `message.send`   — pytanie do doradcy, bez strumienia; okno jest
- *                      jednorazowe i nie ma czego rysować na żywo.
- *   `message.changed`— odpowiedź doradcy. `message.send` oddaje wiadomość
- *                      przyjętą (własną, rolę `user`), więc czekanie na jej
- *                      wynik dałoby echo pytania, nie radę.
- *   `window.close`   — okno konsultacji znika po odpowiedzi. Zostawione
- *                      wisiałoby w wykazie okien sesji jako okno bez widoku.
- *
- * Rada nie jest odpowiedzią eksperta. Źródło oddaje treść rady razem
- * z tożsamością doradcy i treścią zadanego pytania — kto pyta, o co pyta i kto
- * odpowiada, są trzema osobnymi polami wyniku, a nie jednym napisem, więc widok
- * nie ma z czego złożyć rady podanej jako własne zdanie eksperta.
- *
- * Źródło nie ma stanu. Okno konsultacji żyje wyłącznie w obrębie jednego
- * wywołania `zapytaj`; nic z niego nie zostaje w polu modułu.
+ * Doradca eksperta prowadzi konsultację modelem silniejszym niż model
+ * bazowy, przez okno komunikacji zakładane i zamykane na czas jednego
+ * zapytania.
  */
-
-/** Kod modułu nadawany oknu konsultacji — ten sam, którym opisuje się moduł. */
 const KOD_MODULU = 'agents';
 
-/** Zlecenie konsultacji: kogo dotyczy, kogo pytamy i o co. */
+/** Zlecenie konsultacji: kogo dotyczy, kogo pytamy o radę i jakie pytanie zadajemy temu doradcy modelu. */
 export interface ZlecenieRady {
   /** Kanał modelu doradcy — model silniejszy od bazowego modelu eksperta. */
   kanalDoradcy: string;
@@ -56,7 +33,7 @@ export interface ZlecenieRady {
   pytanie: string;
 }
 
-/** Rada doradcy wraz z pochodzeniem; treść nigdy nie chodzi bez nich. */
+/** Rada doradcy wraz z pochodzeniem; treść rady nigdy nie chodzi bez tożsamości doradcy i treści pytania. */
 export interface RadaDoradcy {
   /** Treść odpowiedzi doradcy. */
   tresc: string;
@@ -75,27 +52,12 @@ export interface RadaDoradcy {
 }
 
 export interface ZrodloDoradcy {
-  /**
-   * Przeprowadza jedną konsultację od założenia okna do jego zamknięcia.
-   * Niepowodzenie każdego z czterech kroków wraca polem `blad`.
-   */
+  /** Przeprowadza jedną konsultację od założenia okna do jego zamknięcia; niepowodzenie wraca odmową. */
   zapytaj(zlecenie: ZlecenieRady): Promise<Wynik<RadaDoradcy>>;
 }
 
 export function utworzZrodloDoradcy(kanal: Kanal): ZrodloDoradcy {
-  /**
-   * Czeka na pierwszą domkniętą wiadomość modelu w oknie konsultacji.
-   *
-   * `stream.chunk` nie jest tu drogą: okno konsultacji zakładamy z
-   * `stream: false`, a fragment strumienia niesie treść częściową. Domknięta
-   * wiadomość z `message.changed` jest jedyną postacią, której znaczenie jest
-   * pewne.
-   *
-   * Limitu czasu nie ma z tego samego powodu, co w `protokol/wywolanie.ts`:
-   * kontrakt go nie przewiduje, a rozłączenie klienta nie kończy pracy rdzenia.
-   * Zwrócone `odwolaj` zdejmuje subskrypcję wtedy, gdy odpowiedź już nie
-   * nadejdzie — bez niego nasłuch przeżyłby nieudane wysłanie pytania.
-   */
+  /** Czeka na pierwszą domkniętą wiadomość modelu — jedyną postać, której znaczenie jest pewne. */
   function poczekajNaOdpowiedz(idOkna: string): {
     odpowiedz: Promise<Message>;
     odwolaj: Odsubskrybuj;
@@ -119,16 +81,12 @@ export function utworzZrodloDoradcy(kanal: Kanal): ZrodloDoradcy {
     async zapytaj(zlecenie) {
       const okno = sprawdzKsztalt(
         await wywolaj(kanal, Command.WindowCreate, {
-          // Sesję zna kanał, nie widok modułu — ten sam wzorzec, którym idzie
-          // `window.handoff` w `multitasking/zrodlo-biegu.ts`. Przeciąganie jej
-          // przez panel byłoby przepisywaniem wartości, którą warstwa protokołu
-          // i tak trzyma.
+          // Sesję zna kanał, nie widok modułu; panel nie przepisuje wartości warstwy protokołu.
           sessionId: kanal.sesja().id(),
           moduleId: KOD_MODULU,
           modelChannelId: zlecenie.kanalDoradcy,
           workingDirs: [],
-          // Konsultacja jest rozmową, nie robotą na plikach: zasięg rdzenia
-          // i tryb planistyczny znaczą razem „poradź, niczego nie zmieniaj".
+          // Konsultacja jest rozmową, nie robotą na plikach: tryb planistyczny znaczy tu poradę.
           executionEnv: ExecutionEnv.Core,
           permissionMode: PermissionMode.Plan,
           windowRole: WindowRole.Standalone,
@@ -142,9 +100,7 @@ export function utworzZrodloDoradcy(kanal: Kanal): ZrodloDoradcy {
       }
       const idOkna = okno.wynik.window.id;
 
-      // Nasłuch zakładamy przed wysłaniem pytania. Rdzeń bywa szybszy od
-      // obietnicy `message.send`: subskrypcja założona po niej przegapiłaby
-      // odpowiedź i konsultacja wisiałaby na zawsze.
+      // Nasłuch zakładamy przed wysłaniem pytania, bo rdzeń bywa szybszy od obietnicy wysyłki.
       const { odpowiedz, odwolaj } = poczekajNaOdpowiedz(idOkna);
 
       const wyslanie = sprawdzKsztalt(
@@ -192,7 +148,7 @@ async function zamknij(kanal: Kanal, idOkna: string): Promise<void> {
   await wywolaj(kanal, Command.WindowClose, { windowId: idOkna });
 }
 
-/** Kanały doradcze — te, które nie są kanałem bazowym eksperta. */
+/** Kanały doradcze, czyli te kanały modelu widoczne w wykazie, które nie są kanałem bazowym danego eksperta. */
 export function kanalyDoradcze<T extends { id: string }>(
   kanaly: readonly T[],
   kanalBazowy: string,

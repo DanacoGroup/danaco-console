@@ -2,7 +2,7 @@ import type { Transport } from '../polaczenie/gniazdo';
 import type { StanPolaczenia } from '../polaczenie/stan-polaczenia';
 import { stanRdzeniaZPowloki, type StanRdzenia } from '../powloka/most-rdzenia';
 
-/** Wskaźnik łączności zamontowany w grupie akcji paska. */
+/** Wskaźnik łączności zamontowany w grupie akcji paska: plakietka montowana wraz ze sposobem jej odłączenia. */
 export interface WskaznikLacznosci {
   /** Plakietka montowana na pasku. */
   element: HTMLElement;
@@ -10,7 +10,7 @@ export interface WskaznikLacznosci {
   rozlacz(): void;
 }
 
-/** Nazwa stanu widoczna dla Operatora. */
+/** Nazwa stanu łączności widoczna dla Operatora, osobna dla każdego z czterech stanów samego transportu. */
 const NAZWY: Readonly<Record<StanPolaczenia, string>> = {
   rozlaczony: 'Rozłączony',
   laczenie: 'Łączenie',
@@ -18,7 +18,7 @@ const NAZWY: Readonly<Record<StanPolaczenia, string>> = {
   ponawianie: 'Ponawianie',
 };
 
-/** Odmiana kropki stanu ze słownika (`komponenty/plakietka.css`); bez barw własnych. */
+/** Odmiana kropki stanu ze słownika `komponenty/plakietka.css`; wskaźnik sam nie niesie żadnych barw własnych. */
 const KROPKI: Readonly<Record<StanPolaczenia, string>> = {
   rozlaczony: 'dn-kropka--blad',
   laczenie: 'dn-kropka--tetno',
@@ -26,44 +26,16 @@ const KROPKI: Readonly<Record<StanPolaczenia, string>> = {
   ponawianie: 'dn-kropka--ostrzezenie',
 };
 
-/**
- * Stany, w których łączność jest w toku — nośnikiem jest wtedy `.dn-spinner`.
- *
- * Dla łączenia z serwerem nośnikiem jest wskaźnik ładowania z etykietą obok.
- * Spinner zastępuje kropkę zamiast stawać przy niej: dwa ruchy naraz
- * w plakietce wielkości pigułki spierałyby się o uwagę, a znaczenie niesie
- * i tak etykieta, nie sam znak.
- */
+/** Stany, w których łączność jest dopiero w toku — nośnikiem jest wtedy `.dn-spinner`, nie kropka stanu. */
 const W_TOKU: ReadonlySet<StanPolaczenia> = new Set<StanPolaczenia>(['laczenie', 'ponawianie']);
 
-/** Odstęp dobijania licznika kolejki po połączeniu. */
+/** Odstęp dobijania licznika kolejki po połączeniu, wyrażony w milisekundach między kolejnymi odczytami. */
 const KROK_ODSWIEZANIA_MS = 150;
 
-/**
- * Stan łączności z rdzeniem pokazany na pasku.
- *
- * Jedna odpowiedzialność: przełożenie stanu transportu na plakietkę. Wskaźnik
- * niczego nie wyłącza i nie blokuje — stan jest informacją, a nie bramą; treść
- * wpisana przy rozłączeniu czeka w kolejce wychodzącej. Liczba ramek
- * oczekujących trafia do plakietki, bo przy zerze blokad przejrzystość jest
- * jedynym zabezpieczeniem.
- *
- * Transport ogłasza `polaczony` przed opróżnieniem kolejki, więc odczyt zrobiony
- * w chwili zmiany stanu zamarłby na wartości sprzed wysłania. Po połączeniu
- * licznik odświeża się cyklicznie, aż kolejka spadnie do zera — wtedy pętla
- * gaśnie. W stanach innych niż połączony nic z gniazda nie schodzi, więc pętla
- * nie jest potrzebna.
- *
- * Napis „Rozłączony" mówi, co widzi transport, i nic o powodzie. Powód zna
- * powłoka natywna: to ona stawia proces rdzenia, wie, czy nasłuch odpowiada,
- * i prowadzi dziennik uruchomienia. Jej zdanie (polecenie `stan_rdzenia`)
- * dopisuje się do podpowiedzi plakietki, gdy łączności nie ma; poza powłoką
- * natywną pytanie nie pada.
- */
+/** Stan łączności z rdzeniem pokazany na pasku: przełożenie stanu transportu na plakietkę informacyjną. */
 export function utworzWskaznikLacznosci(transport: Transport): WskaznikLacznosci {
   const element = document.createElement('span');
-  // Plakietka neutralna: stan dopowiadają kropka i etykieta obok, nigdy sama
-  // barwa tła.
+  // Plakietka neutralna — stan dopowiadają kropka i etykieta obok, nigdy sama barwa tła.
   element.className = 'dn-plakietka dn-lacznosc';
 
   const kropka = document.createElement('span');
@@ -74,17 +46,14 @@ export function utworzWskaznikLacznosci(transport: Transport): WskaznikLacznosci
   wskaznik.setAttribute('aria-hidden', 'true');
   wskaznik.hidden = true;
 
-  // Napis stanu nie nosi klasy: całe jego zachowanie — barwę, stopień pisma
-  // i zakaz łamania wiersza — niesie już plakietka. Klasa bez ani jednej reguły
-  // we własnym arkuszu byłaby hakiem żyjącym na aliasie zgodności.
+  // Napis stanu nie nosi klasy — całe jego zachowanie niesie już plakietka.
   const opis = document.createElement('span');
 
   element.append(kropka, wskaznik, opis);
 
   // Zdanie powłoki natywnej o rdzeniu; puste, dopóki powłoka nie odpowie.
   let diagnoza = '';
-  // Pytanie w locie — plakietka zmienia stan częściej niż powłoka odpowiada,
-  // a jedno pytanie naraz wystarczy, żeby nie mnożyć wywołań IPC.
+  // Pytanie w locie — jedno naraz wystarczy, żeby nie mnożyć wywołań IPC.
   let pytanie = false;
   // Plakietka zdjęta z paska nie przyjmuje spóźnionej odpowiedzi.
   let czynna = true;
@@ -112,13 +81,7 @@ export function utworzWskaznikLacznosci(transport: Transport): WskaznikLacznosci
     }
   }
 
-  /**
-   * Po połączeniu kolejka opróżnia się już po ogłoszeniu stanu, więc licznik
-   * odczytany w chwili zmiany jest nieaktualny. Dopóki zostają ramki, dobijamy
-   * odczyt cyklicznie; gdy kolejka spadnie do zera, pętla się gasi. W stanach
-   * innych niż połączony nic z otwartego gniazda nie schodzi, więc pętla nie
-   * jest potrzebna.
-   */
+  // Po połączeniu kolejka opróżnia się po ogłoszeniu stanu — licznik dobijany jest do zera.
   function zarzadzajOdswiezaniem(stan: StanPolaczenia): void {
     if (stan === 'polaczony' && transport.oczekujace() > 0) {
       if (uchwytOdswiezania === null) {
@@ -145,8 +108,7 @@ export function utworzWskaznikLacznosci(transport: Transport): WskaznikLacznosci
     pytanie = true;
     void stanRdzeniaZPowloki().then((stan) => {
       pytanie = false;
-      // Odpowiedź spóźniona o odzyskanie łączności jest już nieprawdziwa —
-      // wtedy milczy się zamiast tłumaczyć ciszę, której nie ma.
+      // Odpowiedź spóźniona po odzyskaniu łączności jest już nieprawdziwa — milczy się zamiast tłumaczyć.
       if (!czynna || stan === null || biezacy === 'polaczony') return;
       diagnoza = zdanieORdzeniu(stan);
       element.dataset.rdzen = stan.pracuje ? 'nasluchuje' : 'milczy';
@@ -162,8 +124,7 @@ export function utworzWskaznikLacznosci(transport: Transport): WskaznikLacznosci
     wskaznik.hidden = !wToku;
     element.dataset.stan = stan;
 
-    // Łączność odzyskana unieważnia poprzednią diagnozę: powód ciszy przestał
-    // istnieć, więc nie zostaje w podpowiedzi jako nieaktualna wymówka.
+    // Łączność odzyskana unieważnia poprzednią diagnozę — powód ciszy przestał istnieć.
     if (stan === 'polaczony') {
       diagnoza = '';
       delete element.dataset.rdzen;
@@ -173,17 +134,14 @@ export function utworzWskaznikLacznosci(transport: Transport): WskaznikLacznosci
     if (stan !== 'polaczony') dopytajPowloke();
   }
 
-  // Transport ogłasza subskrybentowi stan bieżący, więc plakietka nie czeka
-  // na pierwszą zmianę; wywołanie poniżej domyka przypadek transportu, który
-  // jeszcze nie ruszył.
+  // Transport ogłasza subskrybentowi stan bieżący — plakietka nie czeka na pierwszą zmianę.
   const odsubskrybuj = transport.naStan(pokaz);
   pokaz(transport.stan());
 
   return {
     element,
     rozlacz: () => {
-      // Plakietka zdjęta z paska: ani spóźniona odpowiedź powłoki, ani pętla
-      // licznika nie mają już czego opisywać.
+      // Plakietka zdjęta z paska — ani odpowiedź powłoki, ani pętla licznika nie mają już czego opisywać.
       czynna = false;
       zatrzymajOdswiezanie();
       odsubskrybuj();

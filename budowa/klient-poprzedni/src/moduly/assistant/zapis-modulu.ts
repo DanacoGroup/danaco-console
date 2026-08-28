@@ -9,7 +9,7 @@ import type { ZrodloAssistant } from './zrodlo-assistant';
  */
 export interface ZapisModulu {
   zlecenia: AssistantAction[];
-  /** Zlecenia tej samej sesji założone poza oknem modułu; bierzemy je wyłącznie ze zdarzenia rdzenia. */
+  /** Zlecenia tej samej sesji spoza okna modułu pochodzą wyłącznie ze zdarzenia rdzenia. */
   zleceniaObce: AssistantAction[];
   dziennik: AssistantActivityEntry[];
   /** Okno modułu przypisane przez rdzeń; pusty napis znaczy brak. */

@@ -4,18 +4,7 @@ import { utworzAkapit, utworzPodtytul } from './pola-wykazu';
 import type { DecyzjaCzekajaca } from './rozpoznanie-decyzji';
 import type { ZrodloDecyzji } from './zrodlo-decyzji';
 
-/**
- * Cztery stery decyzji w jednym pasie przy wpisie: zatwierdzenie kroku,
- * wstrzymanie, konfiguracja Koordynatora, przejęcie bezpośredniego sterowania.
- *
- * Ster ma przycisk tylko wtedy, gdy stoi za nim komenda kontraktu; inaczej
- * wyświetla zdanie nazywające granicę. Zatwierdzenia kroku kontrakt nie zna,
- * a przestawienie ogniska wymaga identyfikatora klienta z powitania połączenia,
- * którego okno nakładki nie otrzymuje. Żaden przycisk nie pyta o potwierdzenie
- * i żaden nie jest wyszarzany — rozstrzyga rdzeń, nakładka pokazuje odpowiedź.
- */
-
-/** Tożsamość klienta potrzebna wyłącznie sterowi przejęcia. */
+/** Tożsamość klienta z powitania połączenia, potrzebna wyłącznie sterowi przejęcia bezpośredniego sterowania. */
 export interface TozsamoscDlaOgniska {
   /** Identyfikator klienta z powitania połączenia; nie wolno nadać go po raz drugi. */
   id: string;
@@ -33,14 +22,14 @@ export interface OpisCzterechSterow {
   klient?: TozsamoscDlaOgniska;
 }
 
-/** Kontekst jednej decyzji — to, co stery mają czym obsłużyć. */
+/** Kontekst jednej decyzji: sama decyzja oczekująca oraz kolejka rdzenia, jeśli udało się ją dopasować. */
 export interface KontekstDecyzji {
   decyzja: DecyzjaCzekajaca;
   /** Kolejka dopasowana do decyzji; brak, gdy `queue.list` żadnej nie wskazał. */
   kolejka?: Queue;
 }
 
-/** Buduje pas czterech sterów dla jednej decyzji. */
+/** Buduje pas czterech sterów dla jednej decyzji: zatwierdzenie, wstrzymanie, konfigurację i przejęcie. */
 export function utworzCzteryStery(
   opis: OpisCzterechSterow,
   kontekst: KontekstDecyzji,
@@ -56,7 +45,7 @@ export function utworzCzteryStery(
   return pas;
 }
 
-/** Wspólna obudowa jednego steru: nazwa drogi, przyciski, granice. */
+/** Wspólna obudowa jednego steru decyzji: podtytuł z nazwą drogi oraz miejsce na przyciski i zdania o granicy. */
 function utworzSter(nazwa: string): { element: HTMLElement; tresc: HTMLElement } {
   const element = document.createElement('div');
   element.className = 'ao-ster';
@@ -68,7 +57,7 @@ function utworzSter(nazwa: string): { element: HTMLElement; tresc: HTMLElement }
   return { element, tresc };
 }
 
-/** Przycisk czynny — bez wyszarzania i bez pytania o potwierdzenie. */
+/** Przycisk pojedynczego steru, zawsze czynny — bez wyszarzania i bez pytania o potwierdzenie przed czynnością. */
 function utworzPrzycisk(napis: string, czynnosc: () => void): HTMLButtonElement {
   const przycisk = document.createElement('button');
   przycisk.type = 'button';
@@ -78,7 +67,7 @@ function utworzPrzycisk(napis: string, czynnosc: () => void): HTMLButtonElement 
   return przycisk;
 }
 
-/** Ster zatwierdzenia kroku. Kontrakt nie zna tej komendy, więc ster nazywa brak. */
+/** Ster zatwierdzenia kroku; kontrakt nie niesie tej komendy, więc ster nazywa brak zamiast udawać przycisk. */
 function sterZatwierdzenia(): HTMLElement {
   const { element, tresc } = utworzSter('1. Zatwierdź krok');
   tresc.append(
@@ -93,7 +82,7 @@ function sterZatwierdzenia(): HTMLElement {
   return element;
 }
 
-/** Ster wstrzymania: kolejka, tura okna, tury sesji. */
+/** Ster wstrzymania decyzji, obsługujący wstrzymanie kolejki rdzenia, tury okna oraz tury całej sesji AOD. */
 function sterWstrzymania(opis: OpisCzterechSterow, kontekst: KontekstDecyzji): HTMLElement {
   const { element, tresc } = utworzSter('2. Wstrzymaj');
   const { decyzja, kolejka } = kontekst;
@@ -144,7 +133,7 @@ function sterWstrzymania(opis: OpisCzterechSterow, kontekst: KontekstDecyzji): H
   return element;
 }
 
-/** Ster konfiguracji Koordynatora; kończy się otwartym oknem konfiguracji klienta. */
+/** Ster konfiguracji Koordynatora; wybrana czynność kończy się otwartym oknem konfiguracji klienta AOD. */
 function sterKonfiguracji(opis: OpisCzterechSterow, kontekst: KontekstDecyzji): HTMLElement {
   const { element, tresc } = utworzSter('3. Zmodyfikuj konfigurację Koordynatora');
 
@@ -179,7 +168,7 @@ function sterKonfiguracji(opis: OpisCzterechSterow, kontekst: KontekstDecyzji): 
   return element;
 }
 
-/** Ster przejęcia sterowania. Kontrakt nie ma jednej komendy przejęcia, tylko jego części. */
+/** Ster przejęcia bezpośredniego sterowania; kontrakt nie niesie jednej komendy przejęcia, tylko jego części. */
 function sterPrzejecia(opis: OpisCzterechSterow, kontekst: KontekstDecyzji): HTMLElement {
   const { element, tresc } = utworzSter('4. Przejmij bezpośrednie sterowanie');
   const { decyzja } = kontekst;

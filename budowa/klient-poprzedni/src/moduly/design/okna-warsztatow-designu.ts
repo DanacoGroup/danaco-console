@@ -8,16 +8,8 @@ import type { StanDesignu } from './stan-designu';
 import { utworzZrodloWarsztatowDesignu } from './zrodlo-warsztatow-designu';
 
 /**
- * Pięć warsztatów modułu Design — nastawy okien i ich złożenie.
- *
- * Bez tych okien siedemdziesiąt pięć komend byłoby funkcjami, których Operator
- * nie ma. Nastawy stoją danymi, nie pięcioma plikami po jednym oknie: różnią się
- * kodem katalogu rdzenia, tytułem, rolą, grupą czynności i zdaniem objaśnienia,
- * a poza tym są tym samym oknem (`okno-warsztatu-designu.ts`).
- *
- * Kody są kodami KATALOGU RDZENIA (migracja 340). Bez wiersza w katalogu klient
- * postawiłby okno, o którym rdzeń nie wie: `module.list` zaniżałby zakres modułu,
- * a pas uczciwości meldowałby „poza katalogiem".
+ * Pięć warsztatów modułu Design — nastawy okien i ich złożenie, oparte na kodach katalogu rdzenia
+ * z migracji 340.
  */
 export const NASTAWY_WARSZTATOW_DESIGNU: readonly NastawyWarsztatuDesignu[] = [
   {
@@ -100,7 +92,7 @@ export const NASTAWY_WARSZTATOW_DESIGNU: readonly NastawyWarsztatuDesignu[] = [
   },
 ];
 
-/** Pięć okien warsztatowych modułu wraz z ich wspólnym źródłem. */
+/** Pięć okien warsztatowych modułu Design wraz z ich wspólnym źródłem danych czerpanym z jednego kanału. */
 export interface WarsztatyDesignu {
   okna: readonly OknoWarsztatuDesignu[];
   /** Zleca odczyt materiału we wszystkich warsztatach. */
@@ -108,14 +100,7 @@ export interface WarsztatyDesignu {
 }
 
 export function utworzWarsztatyDesignu(stan: StanDesignu, kanal: Kanal): WarsztatyDesignu {
-  // Jedno źródło na pięć okien: wszystkie idą tą samą drogą do rdzenia i czytają
-  // ten sam magazyn materiału. Pięć źródeł byłoby pięcioma połączeniami do tego
-  // samego kanału.
-  //
-  // Kanał wchodzi wprost, a nie ze stanu modułu: stan oddaje źródła obszaru
-  // `design.*` i zaplecza, a warsztaty idą DOWOLNĄ komendą z katalogu czynności.
-  // Dołożenie kanału do stanu tylko dla nich otwierałoby wszystkim oknom drogę
-  // obok źródeł, które stan dla nich trzyma.
+  // Jedno źródło na pięć okien: wszystkie idą tą samą drogą i czytają ten sam magazyn materiału.
   const zrodlo = utworzZrodloWarsztatowDesignu(kanal);
   const okna = NASTAWY_WARSZTATOW_DESIGNU.map((nastawy) =>
     utworzOknoWarsztatuDesignu(stan, zrodlo, nastawy),
@@ -123,8 +108,7 @@ export function utworzWarsztatyDesignu(stan: StanDesignu, kanal: Kanal): Warszta
   return {
     okna,
     async wczytaj() {
-      // Odczyt idzie równolegle: pięć warsztatów czyta ten sam wykaz, a szeregowe
-      // odczyty kazałyby Operatorowi czekać pięć razy na to samo.
+      // Odczyt idzie równolegle: pięć warsztatów czyta ten sam wykaz, nie czeka pięć razy na to samo.
       await Promise.all(okna.map((okno) => okno.wczytaj()));
     },
   };

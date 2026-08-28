@@ -16,17 +16,13 @@ import { utworzPasekAplikacji } from './pasek-aplikacji';
 import type { WidokTrasy } from './router';
 import { Trasa } from './trasy';
 
-/** Zależności widoku strony głównej. */
+/** Zależności widoku strony głównej: projekt, kanał, tożsamość klienta oraz przejścia do innych tras aplikacji. */
 export interface ZaleznosciStronyGlownej {
   /** Nazwa projektu na pasku aplikacji. */
   projekt: string;
   /** Kanał kontraktu — źródło sesji w tle i katalogu ustawień. */
   kanal: Kanal;
-  /**
-   * Tożsamość klienta z powitania (`uzgodnienie.klient`) — bez niej strefa
-   * sesji w tle pokazuje wykaz bez czynności powrotu (`session.bind` żąda
-   * `clientId` z powitania, nie tożsamości nadanej po raz drugi).
-   */
+  // Tożsamość klienta z powitania; bez niej strefa sesji w tle pokazuje wykaz bez czynności powrotu.
   klient?: TozsamoscKlienta;
   /** Przejście na inną trasę. */
   naTrase(trasa: Trasa): void;
@@ -34,44 +30,21 @@ export interface ZaleznosciStronyGlownej {
   naSrodowisko(kod: KodSrodowiska, modul?: string): void;
 }
 
-/** Widok trasy „Centrum dowodzenia". */
+/** Widok trasy „Centrum dowodzenia" — strefy środowisk, komponentów, modułów oraz sesji trwających w tle. */
 export interface WidokStronyGlownej extends WidokTrasy {
   /** Oznacza środowisko, w którym trwa praca; `null` zdejmuje oznaczenie. */
   ustawSrodowiskoCzynne(kod: KodSrodowiska | null): void;
-  /**
-   * Pierwszy odczyt strony domknięty — wykaz środowisk stoi albo rdzeń odmówił.
-   *
-   * Obietnica spełnia się w obu przypadkach, bo jest sygnałem „strona ma czym
-   * stanąć", nie sygnałem powodzenia. Czeka na nią scena wejścia
-   * (`ladowanie/`); odmowa, która nigdy nie domyka obietnicy, zostawiłaby scenę
-   * nad gotowym produktem.
-   *
-   * Bez tożsamości klienta `home.enter` nie idzie i obietnica jest spełniona od
-   * razu — stanowisko podglądu buduje stronę bez uzgodnienia i nie ma na co
-   * czekać.
-   */
+  // Pierwszy odczyt strony domknięty — sygnał „strona ma czym stanąć", nie sygnał powodzenia.
   gotowa: Promise<void>;
 }
 
-/**
- * Widok trasy Centrum dowodzenia.
- *
- * Jedna odpowiedzialność: związanie strony głównej z resztą aplikacji.
- * Strona sama nie otwiera środowiska i nie wysyła komendy — zgłasza wybór,
- * a skutek należy do tej warstwy.
- *
- * Zmiana środowiska prowadzi przez tę stronę, dlatego jest ona trasą
- * początkową: uruchomienie aplikacji pokazuje przedpokój pracy, a nie okno
- * komunikacji wyrwane z kontekstu.
- */
+/** Widok trasy Centrum dowodzenia, wiążący stronę główną z resztą aplikacji; strona zgłasza wybór, nie skutek. */
 export function utworzWidokStronyGlownej(
   zaleznosci: ZaleznosciStronyGlownej,
 ): WidokStronyGlownej {
   const strona = utworzStroneGlowna();
 
-  // Wpięcie źródła danych: strefa sesji w tle żyje z `session.list` i zdarzeń
-  // rdzenia, a powrót do sesji prowadzi przez to samo przejście do
-  // środowiska, którym idzie wybór karty.
+  // Wpięcie źródła danych — strefa sesji w tle żyje z `session.list` i zdarzeń rdzenia.
   zasilSesjeStronyGlownej({
     strona,
     kanal: zaleznosci.kanal,
@@ -79,29 +52,7 @@ export function utworzWidokStronyGlownej(
     naPrzejscie: (kod, modul) => zaleznosci.naSrodowisko(kod, modul),
   });
 
-  /**
-   * Wejście na stronę główną idzie komendą `home.enter`.
-   *
-   * Kontrakt daje nawigacji jeden ciąg: `home.enter` → `environment.list` →
-   * `environment.enter` → `module.list` → `workspace.enter`.
-   *
-   * Ponad `environment.list` wejście daje: środowiska z kodami modułów
-   * (`adapterNawigacji.StronaGlowna` woła `srodowiska(ctx, true)`), sesje
-   * czynne konta, sesję ostatnio ogniskowaną na tym kliencie oraz żywy stan
-   * sesji trwających w tle. `environment.list` bez `includeModules` nie niesie
-   * żadnej z tych rzeczy i o żadną nie da się dopytać bez `clientId`.
-   *
-   * Sesje z odpowiedzi zostają nieużyte: strefa sesji ma źródło ciągłe —
-   * `session.list`, zdarzenia rdzenia i archiwum (`zasilSesjeStronyGlownej`) —
-   * a `home.enter` oddaje jedynie migawkę sesji czynnych. Zasilenie strefy
-   * z obu naraz dałoby dwie rozjeżdżające się prawdy o tej samej rzeczy.
-   *
-   * Bez tożsamości klienta wejścia nie ma: `clientId` jest w żądaniu polem
-   * obowiązkowym i musi pochodzić z powitania (drugie wywołanie
-   * `tozsamoscKlienta()` nadałoby identyfikator nowy i rozdzieliło ognisko od
-   * połączenia). Stanowisko podglądu buduje stronę bez uzgodnienia, więc dla
-   * niego zostaje odczyt samego wykazu — brak tożsamości nie gasi ekranu.
-   */
+  // Wejście na stronę główną idzie komendą `home.enter`, dającą jeden ciąg aż po `workspace.enter`.
   const klient = zaleznosci.klient;
   let gotowa: Promise<void>;
   if (klient === undefined) {
@@ -111,8 +62,7 @@ export function utworzWidokStronyGlownej(
     gotowa = zadajWejscieNaStroneGlowna(zaleznosci.kanal, { clientId: klient.id }).then(
       (wynik) => {
         const srodowiska = wynik.wynik?.environments;
-        // Odmowa nie gasi strefy: karty zastane, po których da się wejść do pracy,
-        // są prawdziwsze niż pusty ekran.
+        // Odmowa nie gasi strefy — karty zastane, po których da się wejść, są prawdziwsze niż pusty widok.
         if (!wynik.udany || srodowiska === undefined || srodowiska.length === 0) return;
         strona.srodowiska.ustawWykaz(srodowiska.map(pozycjaZeSrodowiska));
       },
@@ -131,10 +81,7 @@ export function utworzWidokStronyGlownej(
 
   strona.naWyborSrodowiska((pozycja) => zaleznosci.naSrodowisko(pozycja.kod));
 
-  // Kafel komponentu nie jest bramą — prowadzi tam, gdzie komponent pracuje,
-  // a miejsce wskazuje macierz widoczności `srodowisko_modul`. Cel przychodzi
-  // z `environment.list`, więc dopisanie modułu do środowiska w bazie zmienia
-  // cel kafla bez zmiany po tej stronie.
+  // Kafel komponentu nie jest bramą — prowadzi tam, gdzie komponent pracuje wg macierzy widoczności.
   const komponenty = wepnijKomponenty({
     kanal: zaleznosci.kanal,
     strefa: strona.komponenty,
@@ -143,20 +90,14 @@ export function utworzWidokStronyGlownej(
 
   strona.naWyborKomponentu((pozycja) => komponenty.wybierz(pozycja.kod));
 
-  // Moduły bez pozycji w nawigacji mają na tej stronie swoją jedyną drogę:
-  // rdzeń oddaje `automations` i `terminal` z pustym wykazem środowisk, więc
-  // boczna nawigacja ich nie pokazuje. Cel przejścia wyznacza ta sama macierz
-  // co dla kafli komponentów — `komponenty.wybierz` — żeby nie liczyć jej
-  // drugi raz.
+  // Moduły bez pozycji w nawigacji mają tu jedyną drogę wejścia — przez `komponenty.wybierz`.
   wepnijModuly({
     kanal: zaleznosci.kanal,
     strefa: strona.moduly,
     naPrzejscie: (kodModulu) => komponenty.wybierz(kodModulu),
   });
 
-  // Zakładanie komponentu ze strony głównej. Formularz wchodzi w przybornik
-  // strefy komponentów, bo kanał ma warstwa widoku — strefa rdzenia nie zna.
-  // Po założeniu wykaz dociąga się z rdzenia na nowo.
+  // Zakładanie komponentu ze strony głównej — formularz wchodzi w przybornik strefy komponentów.
   const formularz = utworzFormularzKomponentu({
     kanal: zaleznosci.kanal,
     naZalozenie: () => komponenty.odswiez(),
@@ -164,8 +105,7 @@ export function utworzWidokStronyGlownej(
   strona.ustawienia.przybornik.append(formularz.element);
   strona.ustawienia.naDodanie(() => formularz.przelacz());
 
-  // Listwa ustawień prowadzi do okna konfiguracji; dwie pozostałe pozycje
-  // czekają na własne ekrany. Wykaz skutków mieszka w `akcje-ustawien`.
+  // Listwa ustawień prowadzi do okna konfiguracji — wykaz skutków mieszka w `akcje-ustawien`.
   strona.naWyborUstawienia((pozycja) => wykonajZamiarUstawien(pozycja, zaleznosci.kanal));
 
   return {

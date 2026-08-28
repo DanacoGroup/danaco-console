@@ -1,26 +1,9 @@
 /**
  * Programy spoza instalki, na których stoją albo stanęłyby czynności modułu
- * Developer — wraz ze skutkiem ich braku.
- *
- * Instalka Danaco Console niesie rdzeń i klienta. Nie niesie gita, kompilatorów,
- * menedżerów pakietów, serwerów języka, adapterów debugowania ani silnika
- * kontenerów. Czynność, która taki program uruchamia, na maszynie bez niego
- * kończy się odmową systemu operacyjnego — i Operator ma prawo wiedzieć o tym
- * przed naciśnięciem, a nie z komunikatu, który nie mówi, czego brakuje.
- *
- * Uprzejma odmowa bez podania przyczyny jest brakiem funkcji. Dlatego każda
- * pozycja niesie trzy rzeczy naraz: nazwę programu w brzmieniu, jakim woła go
- * rdzeń albo jakim wołałaby dokładana komenda, czynność, która na nim stoi,
- * oraz zdanie o tym, co się stanie, gdy programu na maszynie nie ma.
- *
- * Wykaz jest wykazem WYMAGAŃ, nie pomiarem instalacji. Klient przeglądarki nie
- * ma jak sprawdzić zawartości ścieżki wykonywalnej rdzenia, a kontrakt nie ma
- * komendy odpowiadającej na pytanie „czy ten program jest” — pozycja mówi więc
- * „czego trzeba”, nigdy „czego nie ma”. Rozstrzygnięcie należałoby do komendy
- * `developer.toolchain.check` z wykazu komend do dobudowania.
+ * Developer, wraz ze skutkiem ich braku dla operatora.
  */
 
-/** Jedna zależność zewnętrzna: program, czynność na nim stojąca i skutek braku. */
+/** Jedna zależność zewnętrzna: program, czynność na nim stojąca i skutek jego braku dla operatora okna. */
 export interface ZaleznoscZewnetrzna {
   /** Klucz stały pozycji — po nim okno bierze swój podzbiór wykazu. */
   kod: string;
@@ -35,14 +18,8 @@ export interface ZaleznoscZewnetrzna {
 }
 
 /**
- * Wykaz zależności modułu.
- *
- * Dwie pierwsze pozycje są czynne dzisiaj — rdzeń uruchamia git wprost
- * (`adapter_modul_developer_git_wykonanie.go`), a zadanie budowania rozbiera na
- * program i parametry, gdzie programem jest pierwsze słowo pola „Zadanie”
- * (`adapter_modul_developer_budowanie.go`). Pozostałe czekają na komendy
- * z wykazu do dobudowania i są tu wymienione, bo Operator planujący pracę ma
- * wiedzieć, czego jego maszyna będzie potrzebowała.
+ * Wykaz zależności modułu. Dwie pierwsze pozycje są czynne dzisiaj, pozostałe
+ * czekają na komendy przyszłe.
  */
 export const ZALEZNOSCI_ZEWNETRZNE: readonly ZaleznoscZewnetrzna[] = [
   {
@@ -138,7 +115,7 @@ export const ZALEZNOSCI_ZEWNETRZNE: readonly ZaleznoscZewnetrzna[] = [
   },
 ];
 
-/** Pozycje wykazu o wskazanych kodach, w kolejności wykazu. */
+/** Pozycje wykazu o wskazanych kodach, zwrócone w kolejności samego wykazu zależności modułu Developer. */
 export function zaleznosci(kody: readonly string[]): readonly ZaleznoscZewnetrzna[] {
   const wybrane = new Set(kody);
   return ZALEZNOSCI_ZEWNETRZNE.filter((pozycja) => wybrane.has(pozycja.kod));

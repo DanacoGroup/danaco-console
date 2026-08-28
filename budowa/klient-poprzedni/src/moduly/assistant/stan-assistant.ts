@@ -22,39 +22,9 @@ import { utworzZrodloMowy, type ZrodloMowy } from './zrodlo-mowy';
 import { utworzZrodloSchowka, type ZrodloSchowka } from './zrodlo-schowka';
 import { utworzZrodloZaplecza, type ZrodloZaplecza } from './zrodlo-zaplecza';
 
-/**
- * Jedno źródło prawdy modułu Assistant: subskrypcja rdzenia i powiadamianie
- * widoków.
- *
- * Trzy okna patrzą na ten sam zapis. Voice Console zakłada zlecenie, Actions
- * Monitor nim steruje, Activity Feed pokazuje jego przebieg. Gdyby każde okno
- * prowadziło własny wykaz, wstrzymanie zlecenia w monitorze nie zmieniłoby
- * tego, co Voice Console uważa za polecenie w toku.
- *
- * Poza własnym działaniem jedynym źródłem odświeżenia jest zdarzenie:
- * `assistant.action.changed` wciąga zmianę dokonaną gdzie indziej tak samo jak
- * zmianę własną. Nie ma tu odpytywania w pętli.
- *
- * Zejście zlecenia z toru pociąga odczyt dziennika. Rdzeń dopisuje wpis rodzaju
- * `result` dopiero przy domykaniu zlecenia (`adapter_modul_asystent_wykonawca.go`,
- * `domknijZlecenie`) — czyli po odczycie, który Voice Console robi zaraz po
- * wysłaniu polecenia. Zdarzenie o stanie końcowym jest jedyną chwilą, w której
- * klient wie, że dziennik urósł, więc odczyt jedzie właśnie tu.
- *
- * Zdarzenie przychodzi z całego konta, nie z jednego okna: rdzeń rozgłasza je
- * do wszystkich połączeń konta (`transport/rozgloszenie.go`), a kanał klienta
- * nie zawęża zdarzeń do sesji. Zlecenie cudzej sesji wciągnięte do tego zapisu
- * byłoby cudzą historią pokazaną jako własna, więc granicą jest sesja
- * z koperty, nie okno z treści. Rdzeń wypełnia `sessionId` koperty sesją okna
- * zlecenia (`adapter_modul_asystent_wykonawca.go`, `okno.IdSesji`), więc
- * porównanie z sesją kanału opiera się na danych, nie na domyśle. Zlecenia tej
- * samej sesji spoza okna modułu — na przykład z nakładki Always On Display,
- * która dobiera okno sama (`adapter_modul_aod.go`, `oknoZadania`) — idą do
- * wykazu osobnego (`zapis-modulu.ts`, pole `zleceniaObce`), bo są pracą
- * asystenta widoczną na ekranie, a nie cudzą historią.
- */
+// Jedno źródło prawdy modułu Assistant: subskrypcja rdzenia i powiadamianie widoków.
 
-/** Kod modułu w katalogu rdzenia; jedyne miejsce wiążące widok z danymi. */
+/** Kod modułu w katalogu rdzenia; jedyne miejsce, w którym widok wiąże się z danymi modułu Assistant udostępnianymi przez kanał komunikacyjny. */
 export const KOD_MODULU = 'assistant';
 
 export interface StanAssistant {
@@ -62,21 +32,12 @@ export interface StanAssistant {
   zrodlo: ZrodloAssistant;
   /** Zaplecze: okna sesji i katalog akcji. */
   zaplecze: ZrodloZaplecza;
-  /**
-   * Trzy źródła dobudowane obok rdzenia modułu, każde nad własną rodziną
-   * komend: mowa (`speech.*`), konteksty pamięci wraz z zajętością okna
-   * (`memory.context.*`, `memory.retention.*`, `context.usage.get`) oraz
-   * historia schowka wraz ze słownikiem skrótów i skrótem globalnym
-   * (`clipboard.*`, `snippet.*`, `launcher.*`).
-   *
-   * Osobno, bo osobno znikają: maszyna bez silnika mowy ma sprawną historię
-   * schowka, a maszyna bez powłoki okiennej — sprawne konteksty pamięci.
-   */
+  /** Trzy źródła obok rdzenia: mowa, konteksty pamięci i zajętość okna oraz historia schowka. */
   mowa: ZrodloMowy;
   konteksty: ZrodloKontekstow;
   schowek: ZrodloSchowka;
   zlecenia(): readonly AssistantAction[];
-  /** Zlecenia asystenta tej sesji założone poza oknem modułu — np. z AOD. */
+  /** Zlecenia asystenta tej sesji założone poza oknem modułu, na przykład z nakładki ekranowej. */
   zleceniaObce(): readonly AssistantAction[];
   wpisy(): readonly AssistantActivityEntry[];
   /** Okno modułu przypisane przez rdzeń; pusty napis znaczy brak. */
@@ -95,7 +56,7 @@ export interface StanAssistant {
   pytanoOZlecenia(): boolean;
   /** Czy rdzeń odpowiedział już w sprawie dziennika. */
   pytanoODziennik(): boolean;
-  /** Czy padło już pytanie o okno modułu — patrz `zapis-modulu.ts`. */
+  /** Czy padło już pytanie o okno modułu, niezależnie od udzielonej przez rdzeń odpowiedzi. */
   pytanoOOkno(): boolean;
   /** Ustala okno modułu dla sesji; bez niego polecenia nie ma dokąd wysłać. */
   ustalOkno(idSesji: string): Promise<void>;
@@ -129,7 +90,7 @@ function czyMojaSesja(kanal: Kanal, koperta: Envelope): boolean {
   return moja !== '' && koperta.sessionId === moja;
 }
 
-/** Stany końcowe automatu zlecenia — po nich rdzeń ma dziennik już dopisany. */
+/** Stany końcowe automatu zlecenia, po których osiągnięciu rdzeń ma już dziennik czynności dopisany i gotowy do odczytu. */
 function zeszloZToru(zlecenie: AssistantAction): boolean {
   return (
     zlecenie.status === AssistantActionStatus.Done ||
@@ -181,25 +142,14 @@ export function utworzStanAssistant(kanal: Kanal): StanAssistant {
     );
 
   const odsubskrybuj = zrodlo.naZmianeZlecenia((tresc, koperta) => {
-    // Cudza sesja odpada tu i tylko tu. Pusta sesja kanału znaczy
-    // „rdzeń jeszcze jej nie nadał" — wtedy nie ma z czym porównywać, więc nie
-    // wpuszczamy niczego.
+    // Cudza sesja odpada tu i tylko tu; pusta sesja kanału znaczy, że rdzeń jeszcze jej nie nadał.
     if (!czyMojaSesja(kanal, koperta)) return;
     const moje = czyMojeOkno(zapis.okno, tresc.action);
     if (tresc.change === ChangeKind.Deleted) usunZlecenie(zapis, tresc.action.id);
     else if (moje) wchlonZlecenia(zapis, [tresc.action]);
     else wchlonObce(zapis, [tresc.action]);
     oglos();
-    // Dziennik czytamy dopiero po zejściu zlecenia z toru — wcześniej rdzeń
-    // nie dopisał do niego ani jednego wpisu, więc odczyt byłby ruchem bez treści.
-    //
-    // Zlecenie spoza okna odświeża dziennik tylko wtedy, gdy właśnie na nie
-    // patrzymy. Odczyt bez zawężenia jedzie po `windowId` okna modułu
-    // (`adapter_modul_asystent_czynnosci.go`, `WykazCzynnosci`), więc wpisów
-    // cudzego okna i tak by nie przyniósł — byłoby to wywołanie bez skutku.
-    // Z zawężeniem `actionId` rdzeń czyta dziennik zlecenia bez oglądania się
-    // na okno, więc przebieg zlecenia z nakładki AOD jest widoczny w Activity
-    // Feed po jego wskazaniu w monitorze.
+    // Dziennik czytamy dopiero po zejściu zlecenia z toru; zawężenie `actionId` pomija okno.
     if (!zeszloZToru(tresc.action)) return;
     if (moje || zapis.wybor === tresc.action.id) void odswiezDziennik();
   });
@@ -232,11 +182,9 @@ export function utworzStanAssistant(kanal: Kanal): StanAssistant {
     async ustalOkno(idSesji) {
       zapis.sesja = idSesji;
       const wynik = await zaplecze.okna(idSesji);
-      // Bierzemy okno modułu, nie pierwsze lepsze: polecenie wysłane do okna
-      // innego modułu trafiłoby w cudzą historię.
+      // Bierzemy okno modułu, nie pierwsze lepsze: inne polecenie trafiłoby w cudzą historię.
       zapis.okno = wynik.wynik?.windows.find((wpis) => wpis.moduleId === KOD_MODULU)?.id ?? '';
-      // Znacznik pada także po odmowie: pusty przydział po pytaniu znaczy już
-      // „rdzeń okna nie oddał", a nie „jeszcze nie pytałem".
+      // Znacznik pada także po odmowie: pusty przydział po pytaniu znaczy odmowę, a nie brak pytania.
       zapis.pytanoOOkno = true;
       oglos();
     },

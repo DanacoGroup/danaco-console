@@ -8,23 +8,9 @@ import {
 import { WARSTWY, utworzRozwiniecie, type Rozwiniecie } from './warstwy-designu';
 
 /**
- * Wyszukiwarka funkcji modułu — droga warstwy czwartej do każdej pozycji
- * katalogu.
- *
- * Opracowanie modułu stanowi, że każda ukryta funkcja jest osiągalna jednym
- * kliknięciem, jednym skrótem albo jednym poleceniem w Chat Window.
- * Wyszukiwarka jest tą drogą dla pozycji, które nie mają własnego przycisku
- * w oknie: nazywa je, mówi, w którym oknie stoją i na której warstwie, oraz
- * podaje przy każdej jedno z trojga — komendę kontraktu, czynność samego okna
- * albo brak drogi.
- *
- * Wyszukiwarka niczego nie uruchamia i nie udaje, że uruchamia. Pozycja bez
- * drogi nie dostaje tu przycisku, który po naciśnięciu przeprosi — dostaje
- * zdanie o tym, czego brakuje, czytelne bez naciskania czegokolwiek.
- *
- * Szukanie idzie środkiem nazwy, opisu, grupy i okna, bo nazwy pozycji są
- * w części angielskie i złożone: szukanie wyłącznie od początku nazwy nie
- * znalazłoby „Upscaling neuronowy" po słowie wpisanym z pamięci.
+ * Wyszukiwarka funkcji modułu prowadzi do każdej pozycji katalogu warstwy
+ * czwartej i podaje przy niej komendę kontraktu, czynność okna albo
+ * informację o braku drogi.
  */
 export interface WyszukiwarkaFunkcji {
   /** Element osadzany w module. */
@@ -93,11 +79,9 @@ export function utworzWyszukiwarkeFunkcji(): WyszukiwarkaFunkcji {
 }
 
 /**
- * Zdanie o zasięgu katalogu — trzy liczby liczone z wykazu, żadna wpisana.
- *
- * Opracowanie podsumowuje grupy zdaniem o siedemdziesięciu trzech funkcjach,
- * a wylicza ich więcej; przepisanie tamtej liczby dałoby napis rozjeżdżający się
- * z wykazem, który stoi pod nim.
+ * Zdanie o zasięgu katalogu liczy trzy wartości z wykazu pozycji: łączną
+ * liczbę, liczbę wykonywaną komendą kontraktu oraz liczbę wykonywaną samym
+ * oknem bez rdzenia.
  */
 function zdanieZasiegu(): string {
   return (
@@ -133,7 +117,7 @@ function zdaniePodsumowania(ile: number, szukane: string, wybranaGrupa: string):
   return `Pozycji w wykazie: ${String(ile)} z ${String(KATALOG_FUNKCJI.length)} (${zakres}).`;
 }
 
-/** Nazwa stanu wykonania widoczna dla Operatora — jedno brzmienie na moduł. */
+/** Nazwa stanu wykonania pozycji katalogu widoczna dla operatora, jedno brzmienie wspólne dla całego modułu wyszukiwarki funkcji. */
 const NAZWY_WYKONANIA: Readonly<Record<PozycjaKatalogu['wykonanie'], string>> = {
   komenda: 'komenda kontraktu',
   okno: 'czynność okna',
@@ -141,11 +125,8 @@ const NAZWY_WYKONANIA: Readonly<Record<PozycjaKatalogu['wykonanie'], string>> = 
 };
 
 /**
- * Jeden wiersz katalogu.
- *
- * Zdanie o pokryciu buduje się z pól pozycji, nie z osobnego napisu przy każdej
- * z nich: pozycja z komendami wymienia je co do nazwy, pozycja bez drogi mówi,
- * czego brakuje. Dzięki temu dopisanie komendy do pozycji zmienia zdanie samo.
+ * Jeden wiersz katalogu funkcji: zdanie o pokryciu buduje się z pól pozycji,
+ * więc dopisanie komendy do pozycji zmienia treść wiersza samo.
  */
 function wierszPozycji(pozycja: PozycjaKatalogu): HTMLElement {
   const nazwa = document.createElement('span');

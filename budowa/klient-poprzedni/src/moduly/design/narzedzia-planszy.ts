@@ -4,26 +4,15 @@ import type { OsWyrownania, SzablonUkladu } from './zapis-kompozycji';
 import type { StanKompozycji } from './stan-kompozycji';
 
 /**
- * Przybornik Design Board — narzędzia panelu akcji modułu nad kanwą.
- *
- * Jedna odpowiedzialność: kontrolki zmieniające kompozycję i widok kanwy.
- *
- * Grupy dzielą się tym, co narzędzie zmienia: widok kanwy (powiększenie,
- * przesunięcie, siatka) · układ warstw zaznaczonych (wyrównanie,
- * rozmieszczenie) · skład kompozycji (szablony, elementy pomocnicze,
- * zaznaczenie wszystkiego) · czynności bez drogi w kontrakcie (wersjonowanie,
- * eksport, kursor współpracy).
- *
- * Grupa bez drogi w kontrakcie stoi w przyborniku, a nie poza nim, żeby komplet
- * narzędzi był widoczny razem z tym, które z nich nie mają wykonania — nazwane,
- * klikalne i mówiące dlaczego.
+ * Przybornik Design Board — narzędzia panelu akcji modułu nad kanwą, pogrupowane wedle tego, co
+ * narzędzie zmienia: widok kanwy, układ warstw, skład kompozycji, czynności bez drogi w kontrakcie.
  */
 export interface NarzedziaPlanszy {
   element: HTMLElement;
   odswiez(): void;
 }
 
-/** Wyrównania z panelu akcji, w kolejności czytania układu. */
+/** Wyrównania warstw dostępne z panelu akcji modułu Design, wymienione w kolejności czytania układu strony. */
 const WYROWNANIA: readonly (readonly [OsWyrownania, string])[] = [
   ['lewo', 'Do lewej'],
   ['srodek', 'Do środka w poziomie'],
@@ -33,7 +22,7 @@ const WYROWNANIA: readonly (readonly [OsWyrownania, string])[] = [
   ['dol', 'Do dołu'],
 ];
 
-/** Cztery szablony układu wymienione w panelu akcji modułu Design. */
+/** Cztery szablony układu wymienione w panelu akcji modułu Design, gotowe do nałożenia na kompozycję roboczą. */
 const SZABLONY: readonly (readonly [SzablonUkladu, string])[] = [
   ['tablica-nastroju', 'Tablica nastroju'],
   ['siatka-porownawcza', 'Siatka porównawcza'],
@@ -41,19 +30,10 @@ const SZABLONY: readonly (readonly [SzablonUkladu, string])[] = [
   ['formaty-spolecznosciowe', 'Formaty społecznościowe'],
 ];
 
-/** Biblioteka elementów pomocniczych — warstwy bez zasobu. */
+/** Biblioteka elementów pomocniczych dostępnych z panelu akcji — warstwy bez zasobu przypisanego do nich. */
 const ELEMENTY_POMOCNICZE: readonly string[] = ['Ramka', 'Podpis', 'Strzałka', 'Pole notatki'];
 
-/**
- * Presety ramek obszaru roboczego — szerokości z punktów łamania produktu.
- *
- * Liczby nie są wzięte z cudzych urządzeń: to punkty łamania kierunku
- * projektowego platformy, te same, na których stoi cały jej układ. Dzięki temu
- * ramka makiety ma dokładnie tę szerokość, przy której produkt zmienia postać,
- * a nie szerokość telefonu, który akurat był w sprzedaży.
- *
- * Wysokości preset nie ustawia — punkty łamania jej nie rozstrzygają.
- */
+/** Presety ramek obszaru roboczego — szerokości z punktów łamania produktu, przy których produkt zmienia postać. */
 const RAMKI_URZADZEN: readonly (readonly [string, number])[] = [
   ['Telefon poziomo', 640],
   ['Tablet', 960],
@@ -122,7 +102,7 @@ export function utworzNarzedziaPlanszy(stan: StanKompozycji): NarzedziaPlanszy {
   };
 }
 
-/** Powiększenie w granicach czytelności kanwy. */
+/** Powiększenie kanwy ograniczone do granic, w których treść kompozycji pozostaje czytelna dla Operatora. */
 function zmienPowiekszenie(stan: StanKompozycji, mnoznik: number): void {
   const nowe = stan.widok().powiekszenie * mnoznik;
   stan.ustawWidok({ powiekszenie: Math.min(4, Math.max(0.25, nowe)) });

@@ -10,12 +10,8 @@ import type { StanOknaBadania } from './stan-okna-badania';
 import type { ZlecenieEksportu } from './zlecenia-badania';
 
 /**
- * Czynności Operatora w Export Panel.
- *
- * Przycisk wydania zostaje klikalny także wtedy, gdy raportu jeszcze nie ma:
- * niespełniony warunek wraca komunikatem, a nie wygaszoną kontrolką. Ponowne
- * naciśnięcie w trakcie wywołania odcina logika — zbiór `trwajace` — a nie
- * blokada kontrolki.
+ * Czynności operatora w Export Panel: przycisk wydania zostaje klikalny
+ * nawet wtedy, gdy raportu jeszcze nie ma.
  */
 export interface KontekstEksportu {
   stan: StanBadania;
@@ -30,7 +26,7 @@ export interface KontekstEksportu {
   odswiez(): void;
 }
 
-/** Rozdziela akcję panelu na drogę własną okna i drogę generyczną. */
+/** Rozdziela akcję panelu na drogę własną okna i drogę generyczną, wspólną dla całej rodziny komend eksportu. */
 export async function wykonajAkcjeEksportu(
   kontekst: KontekstEksportu,
   akcja: AkcjaBadania,
@@ -54,7 +50,7 @@ export async function wykonajAkcjeEksportu(
   await przezPanelAkcji(kontekst, akcja);
 }
 
-/** Droga generyczna: `window.action` z identyfikatorem raportu w parametrach. */
+/** Droga generyczna: `window.action` z identyfikatorem raportu w parametrach żądania tego okna panelu eksportu. */
 async function przezPanelAkcji(kontekst: KontekstEksportu, akcja: AkcjaBadania): Promise<void> {
   const { stan, odpowiedz } = kontekst;
   if (stan.idOkna() === '') {
@@ -72,16 +68,14 @@ async function przezPanelAkcji(kontekst: KontekstEksportu, akcja: AkcjaBadania):
     odpowiedz.pokaz(opisOdmowyBledu(`Akcja „${akcja.nazwa}"`, wynik.blad, wynik.nieznanyTyp), false);
     return;
   }
-  // Rdzeń oddaje sukces `window.action` tylko wtedy, gdy akcję wykonał, więc
-  // zdanie mówi o oddanym wyniku, a nie o wykonaniu akcji przez okno. Odmowę
-  // braku wykonawcy pokazuje gałąź wyżej, słowami rdzenia.
+  // Rdzeń oddaje sukces window.action tylko wtedy, gdy akcję wykonał, nie samo wywołanie.
   odpowiedz.pokaz(`Rdzeń oddał wynik akcji „${akcja.nazwa}".`, true);
 }
 
-/** Znacznik trwającego wydania — idempotencja po stronie logiki, nie kontrolki. */
+/** Znacznik trwającego wydania — idempotencja po stronie logiki, nie kontrolki panelu eksportu raportu. */
 const trwajace = new WeakSet<KontekstEksportu>();
 
-/** Wydanie raportu komendą `research.report.export`. */
+/** Wydanie raportu komendą `research.report.export` z pól zlecenia okna panelu eksportu tego badania rdzenia. */
 export async function wydajRaport(kontekst: KontekstEksportu, czynnosc: string): Promise<void> {
   const { stan, okno, odpowiedz } = kontekst;
   const raport = stan.raport();
@@ -98,9 +92,7 @@ export async function wydajRaport(kontekst: KontekstEksportu, czynnosc: string):
   }
   trwajace.add(kontekst);
   okno.ladowanie('Wydawanie raportu…');
-  // Zlecenie zdejmowane z pól jeden raz. Drugi odczyt po odpowiedzi brałby pola takie,
-  // jakie są teraz — a Operator mógł je w tym czasie przestawić; porównanie
-  // odpowiedzi z zamówieniem, którego nie wysłano, nie mówi nic prawdziwego.
+  // Zlecenie zdejmowane z pól jeden raz, zanim operator zdąży je przestawić przed odpowiedzią.
   const zlecenie = kontekst.zlecenie(raport.id);
   const wynik = await stan.zrodlo.eksportuj(zlecenie);
   trwajace.delete(kontekst);
@@ -108,16 +100,14 @@ export async function wydajRaport(kontekst: KontekstEksportu, czynnosc: string):
 
   if (!wynik.udany || wynik.wynik === undefined) {
     const opis = opisOdmowyBledu(czynnosc, wynik.blad, wynik.nieznanyTyp);
-    // Komunikat zostaje po naciśnięciu „Spróbuj ponownie": ponowienie wyzwala
-    // wywołanie, a nie sprząta ekranu.
+    // Komunikat zostaje po naciśnięciu ponowienia: ponowienie wyzwala wywołanie, nie sprząta ekranu.
     okno.blad(opis);
     odpowiedz.pokaz(opis, false);
     return;
   }
   kontekst.odswiez();
   const skutek = opisWydania(zlecenie, wynik.wynik);
-  // Do historii wchodzi zdanie o SKUTKU, nie o zamówieniu: wydanie, przy którym
-  // rdzeń nie oddał pliku, ma zostać w wykazie widoczne jako takie.
+  // Do historii wchodzi zdanie o skutku, nie o zamówieniu, widoczne w wykazie nawet bez pliku.
   kontekst.odnotujWydanie(skutek.zdanie);
   pokazKomunikat({
     tytul: skutek.udany ? 'Raport wydany' : 'Rdzeń przyjął zlecenie, pliku nie oddał',
@@ -128,18 +118,8 @@ export async function wydajRaport(kontekst: KontekstEksportu, czynnosc: string):
 }
 
 /**
- * Skutek wydania nazwany odpowiedzią rdzenia, a nie zamówieniem Operatora.
- *
- * `research.report.export` ze wskazanym `targetPath` albo z `toLibrary` oddaje
- * sam format — bez `path`, bez `libraryFileId`, bez `sizeBytes`. Rdzeń nie ma
- * magazynu plików wyjściowych i pliku nie zapisuje
- * (`budowa/server/internal/core/adapter_modul_badania_raport.go`); zapisuje sam
- * ślad zlecenia. Przemilczenie tej rozbieżności zostawiłoby Operatora z dymkiem
- * o wydanym raporcie tam, gdzie wskazał miejsce docelowe i żadnego pliku nie
- * dostał.
- *
- * Okno nie orzeka też braku, którego rdzeń nie pokazał: przy zleceniu bez
- * ścieżki i bez repozytorium nie ma czego brakować.
+ * Skutek wydania nazwany odpowiedzią rdzenia, a nie zamówieniem operatora,
+ * bo rdzeń oddaje sam format, bez ścieżki pliku.
  */
 function opisWydania(
   zlecenie: ZlecenieEksportu,
@@ -170,7 +150,7 @@ function opisWydania(
   };
 }
 
-/** Miejsce oddane przez rdzeń — wypisywane wyłącznie z pól odpowiedzi. */
+/** Miejsce oddane przez rdzeń — wypisywane wyłącznie z pól odpowiedzi, nigdy z zamówienia tego okna panelu. */
 function opisMiejsca(wynik: ResearchReportExportResponse): string {
   const czesci: string[] = [];
   if ((wynik.path ?? '') !== '') czesci.push(`plik ${String(wynik.path)}`);
@@ -181,11 +161,8 @@ function opisMiejsca(wynik: ResearchReportExportResponse): string {
 }
 
 /**
- * Trzy stany podglądu eksportu: pytam, mam dokument, nie mam czego wydać.
- *
- * Treść pustki stoi w `pustka-okien.ts`, razem z rozróżnieniem pustki od braku
- * okna badania: samo zameldowanie braku raportu nie mówi, czym Export Panel
- * jest ani skąd raport wziąć.
+ * Trzy stany podglądu eksportu: pytam, mam dokument, nie mam czego wydać,
+ * z treścią pustki w osobnym pliku.
  */
 export function ustawStanEksportu(kontekst: KontekstEksportu): void {
   const { stan, okno } = kontekst;
@@ -205,14 +182,10 @@ export function ustawStanEksportu(kontekst: KontekstEksportu): void {
 }
 
 /**
- * Tekst swobodny okna przekazywany komendom bez własnego formularza.
- *
- * Żądanie składane bez wskazania Operatora wracałoby odmową walidacji, z której
- * nic dla niego nie wynika. Ten jeden krok mówi, skąd okno bierze treść — i gdy
- * jej nie ma, `wywolania-komend.ts` nazywa brak, zamiast wysyłać puste pole.
+ * Tekst swobodny okna przekazywany komendom bez własnego formularza, bez
+ * wskazania nazywanego brakiem.
  */
 function tekstDlaKomendy(_kontekst: KontekstEksportu): string {
-  // Panel eksportu nie ma pola tekstowego; komendy tej rodziny biorą wskazania
-  // ze stanu badania, więc tekst jest tu świadomie pusty.
+  // Panel eksportu nie ma pola tekstowego; komendy tej rodziny biorą wskazania ze stanu badania.
   return '';
 }

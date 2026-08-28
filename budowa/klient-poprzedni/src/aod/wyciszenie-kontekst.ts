@@ -9,37 +9,14 @@ import {
 import type { Kanal, Wynik } from '../protokol/kanal';
 import { utworzZrodloAod } from './zrodlo-komend';
 
-/**
- * Kontekst wyciszenia kontekstowego — co dziś znaczy „bieżący moduł" i „bieżąca
- * karta sesji" (opracowanie `docs/funkcje-globalne/always-on-display.md`,
- * rozdz. 3.5, wiersz drugi).
- *
- * Wyciszenie kontekstowe potrzebuje dwóch rzeczy, których reguła rozpoznania
- * decyzji nie ma: nazwy bieżącego bytu (żeby menu mówiło pełną nazwą, nie kodem)
- * i przypisania sugestii do modułu (żeby wiedzieć, czy ją wyciszenie obejmuje).
- * Kontrakt nie niesie modułu ani przy `AodSuggestion`, ani przy `AodStatus`,
- * więc ten plik dochodzi go drogą okrężną, ale prawdziwą:
- *   • `aod.status.get` — okno i karta sesji pokazywane w nakładce;
- *   • `window.list` — moduł i sesja każdego okna komunikacji (`Window.moduleId`);
- *   • `module.list` — pełna nazwa modułu widziana w bocznej nawigacji;
- *   • `session.list` — nazwa karty sesji.
- * Wszystkie cztery komendy stoją w kontrakcie i rdzeń je obsługuje; żadnej
- * nazwy tu nie wymyślono.
- *
- * Czego ten plik NIE robi: nie zgaduje modułu okna, którego `window.list` nie
- * zwróciło, i nie podstawia modułu domyślnego. Sugestia bez rozpoznanego modułu
- * nie wpada w wyciszenie modułu — cisza bez podstawy jest gorsza od ujawnienia.
- * Brak po stronie kontraktu nazywa `wyciszenie-braki-kontraktu.ts`.
- */
-
-/** Byt, którego dotyczy wyciszenie kontekstowe: identyfikator wraz z pełną nazwą. */
+/** Byt, którego dotyczy wyciszenie kontekstowe: identyfikator wraz z pełną nazwą czytelną dla Operatora. */
 export interface BytKontekstu {
   id: string;
   /** Pełna nazwa widziana przez Operatora; nigdy kod wymyślony przez nakładkę. */
   nazwa: string;
 }
 
-/** Kontekst nakładki odczytany z rdzenia. */
+/** Kontekst nakładki odczytany z rdzenia: bieżący moduł, karta sesji oraz moduły okien komunikacji rdzenia. */
 export interface KontekstWyciszenia {
   /** Ponawia odczyt kontekstu; odmowa nie jest awarią, zostaje kontekst poprzedni. */
   odswiez(): Promise<void>;
@@ -51,17 +28,12 @@ export interface KontekstWyciszenia {
   modulOkna(idOkna?: string): string | undefined;
   /** Pełna nazwa modułu; identyfikator, gdy nazwy nie znamy. */
   nazwaModulu(idModulu: string): string;
-  /**
-   * Zdanie mówiące, dlaczego bieżący byt nie jest znany.
-   *
-   * Menu nie wyszarza pozycji i nie pyta o potwierdzenie — naciśnięcie mówi,
-   * czego brakuje i po czyjej stronie (zasada `cztery-stery.ts`).
-   */
+  // Zdanie mówiące, dlaczego bieżący byt nie jest znany — menu nie wyszarza pozycji.
   powodBrakuModulu(): string;
   powodBrakuKarty(): string;
 }
 
-/** Opakowuje `kanal.wyslij` w Promise — tak samo jak pozostałe źródła katalogu. */
+/** Opakowuje `kanal.wyslij` w Promise, tak samo jak pozostałe źródła katalogu kontekstu wyciszenia nakładki. */
 function poslijKomende<K extends Command>(
   kanal: Kanal,
   komenda: K,

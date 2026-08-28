@@ -123,7 +123,7 @@ export function utworzStanProduktu(kanal: Kanal): StanProduktu {
       warsztat.wchlonZdarzenie(tresc);
       oglos();
     }),
-    // Telemetria postępu jest wspólna całej platformie; bierzemy wyłącznie proces okna modułu.
+    // Telemetria postępu jest wspólna całej platformie; filtr przyjmuje wyłącznie proces okna modułu.
     kanal.naZdarzenie(EventType.ProgressChanged, (tresc) => {
       if (idOkna !== '' && tresc.windowId !== undefined && tresc.windowId !== idOkna) return;
       postep = tresc;

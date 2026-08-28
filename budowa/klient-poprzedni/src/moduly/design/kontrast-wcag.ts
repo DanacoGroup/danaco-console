@@ -1,27 +1,9 @@
 import progi from '../../../../shared/kontrasty-progi.json';
 import { wartoscZetonu } from './zetony-systemu';
 
-/**
- * Rachunek kontrastu par żetonów wedle WCAG 2.1.
- *
- * Pary i progi NIE są wymyślone w tym module — pochodzą z wykazu progów
- * kontrastu produktu (`shared/kontrasty-progi.json`), tego samego, którym mierzy
- * przyrząd pomiaru produktu. Ułożenie tu własnej listy par dałoby drugą miarę
- * jednego stanu, a dwie miary zawsze się rozjeżdżają.
- *
- * Wartości barw czytane są z motywu obowiązującego, więc tabela mówi o produkcie
- * w tej chwili, a nie o zapisie sprzed przełączenia motywu. To jest zarazem
- * jedyna droga, żeby ocenić motyw jasny i ciemny osobno — a system wizualny
- * traktuje je jako równoprawne.
- *
- * Czego rachunek NIE rozstrzyga, i mówi to wprost: wykaz progów nie podaje ROLI
- * pary. WCAG dopuszcza próg niższy dla tekstu dużego oraz dla obrysów
- * i wskaźników skupienia, więc para obrysu wychodzi tu poniżej progu, choć wobec
- * właściwej reguły może być zgodna. Wynik oznaczamy więc jako pomiar, a nie jako
- * werdykt.
- */
+// Rachunek kontrastu par żetonów wedle WCAG 2.1, liczony na barwach z motywu obowiązującego
 
-/** Wynik pomiaru jednej pary. */
+/** Wynik pomiaru jednej pary żetonów wraz z wymaganym progiem oraz zdaniem o powodzie, gdy pomiar się nie udał. */
 export interface PomiarPary {
   /** Nazwa pary z wykazu progów. */
   readonly para: string;
@@ -37,14 +19,14 @@ export interface PomiarPary {
   readonly powod: string;
 }
 
-/** Składowe barwy w zapisie sRGB, każda od 0 do 255. */
+/** Składowe barwy zapisanej w modelu sRGB, każda z liczbowego zakresu od zera do dwustu pięćdziesięciu pięciu. */
 export interface Barwa {
   r: number;
   g: number;
   b: number;
 }
 
-/** Kształt wykazu progów — tylko to, czego ten moduł z niego używa. */
+/** Kształt wykazu progów kontrastu prowadzonego przez produkt — tylko te pola, których moduł rzeczywiście używa. */
 interface WykazProgow {
   readonly prog_domyslny: number;
   readonly pomiary: readonly { para: string; zetony: string[]; prog: number }[];
@@ -52,22 +34,18 @@ interface WykazProgow {
 
 const WYKAZ = progi as WykazProgow;
 
-/** Próg wzięty z wykazu produktu, nie z pamięci. */
+/** Próg domyślny kontrastu wzięty wprost z wykazu progów prowadzonego przez produkt, nigdy z pamięci ani domysłu. */
 export const PROG_DOMYSLNY = WYKAZ.prog_domyslny;
 
-/** Liczba par w wykazie progów produktu. */
+/** Liczba par kontrastu wymienionych w wykazie progów prowadzonym przez sam produkt, a nie przez ten moduł. */
 export function liczbaPar(): number {
   return WYKAZ.pomiary.length;
 }
 
 /**
- * Barwa z zapisu CSS.
- *
- * Obsługuje zapis szesnastkowy trzy- i sześcioznakowy oraz zapis `rgb`/`rgba` —
- * to są dwie postacie, w których przeglądarka oddaje wartość własności
- * niestandardowej po jej rozwiązaniu. Zapis, którego nie umiemy odczytać, daje
- * `null`, a nie czerń: podstawienie czerni dałoby pomiar wyglądający na
- * prawdziwy i zafałszowałoby całą tabelę.
+ * Barwa z zapisu CSS. Obsługuje zapis szesnastkowy trzy- i sześcioznakowy oraz zapis `rgb`/`rgba`.
+ * Zapis, którego nie umiemy odczytać, daje `null`, a nie czerń, bo podstawienie czerni
+ * zafałszowałoby całą tabelę.
  */
 export function odczytajBarwe(zapis: string): Barwa | null {
   const tekst = zapis.trim().toLowerCase();
@@ -104,7 +82,7 @@ function zlozBarwe(r?: number, g?: number, b?: number): Barwa | null {
   return { r, g, b };
 }
 
-/** Luminancja względna wedle WCAG 2.1, kryterium 1.4.3. */
+/** Luminancja względna barwy wedle normy WCAG 2.1, kryterium 1.4.3, liczona z jej trzech składowych modelu sRGB. */
 export function luminancja(barwa: Barwa): number {
   const skladowe = [barwa.r, barwa.g, barwa.b].map((wartosc) => {
     const udzial = wartosc / 255;
@@ -114,7 +92,7 @@ export function luminancja(barwa: Barwa): number {
   return 0.2126 * r + 0.7152 * g + 0.0722 * b;
 }
 
-/** Współczynnik kontrastu dwóch barw; wynik od 1 do 21. */
+/** Współczynnik kontrastu dwóch barw wedle WCAG 2.1, jako wynik z przedziału od jeden do dwadzieścia jeden. */
 export function wspolczynnikKontrastu(pierwsza: Barwa, druga: Barwa): number {
   const jasniejsza = Math.max(luminancja(pierwsza), luminancja(druga));
   const ciemniejsza = Math.min(luminancja(pierwsza), luminancja(druga));
@@ -163,12 +141,12 @@ export function zmierzPary(): readonly PomiarPary[] {
   });
 }
 
-/** Pary poniżej progu — sprawdzian dostępności kolorem w jednym wywołaniu. */
+/** Pary poniżej wymaganego progu kontrastu — sprawdzian dostępności kolorem osiągalny jednym wywołaniem funkcji. */
 export function poniejProgu(pomiary: readonly PomiarPary[]): readonly PomiarPary[] {
   return pomiary.filter((pomiar) => !pomiar.spelnia);
 }
 
-/** Współczynnik do pokazania: dwie cyfry po przecinku, bo tak podaje go WCAG. */
+/** Współczynnik przygotowany do pokazania: dwie cyfry po przecinku, bo w takiej postaci podaje go norma WCAG. */
 export function zapisWspolczynnika(wspolczynnik: number | null): string {
   return wspolczynnik === null ? 'bez pomiaru' : `${wspolczynnik.toFixed(2)}:1`;
 }

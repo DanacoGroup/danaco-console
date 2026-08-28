@@ -12,19 +12,9 @@ import type { StanBadania } from './stan-badania';
 import { czyKomendaBadania, wykonajKomendeBadania } from './wywolania-komend';
 import type { StanOknaBadania } from './stan-okna-badania';
 
-/**
- * Czynności Operatora w Reading View: lektura źródła i zamiana zaznaczonego
- * fragmentu w ustalenie.
- *
- * Dwie czynności mają dziś pokrycie w kontrakcie i obie idą nim naprawdę:
- * wczytanie strony (`library.file.preview`) i zapis wypisu jako ustalenia
- * (`research.finding.add` z cytatem w polu `content` i źródłem w `sourceIds`).
- * Podświetlenia trwałe, notatki na marginesie, OCR, ekstrakcja tabel,
- * streszczenie źródła i stan lektury komendy nie mają — idą panelem akcji
- * i wracają odmową rdzenia.
- */
+/** Czynności operatora w Reading View: lektura źródła i zamiana zaznaczonego fragmentu w ustalenie. */
 
-/** Górna granica długości podglądu jednej strony — pole `maxChars` kontraktu. */
+/** Górna granica długości podglądu jednej strony źródła — pole `maxChars` kontraktu badania tego modułu. */
 const LIMIT_ZNAKOW = 20000;
 
 export interface KontekstLektury {
@@ -42,7 +32,7 @@ export interface KontekstLektury {
   przejdz(kodOkna: string): void;
 }
 
-/** Rozdziela akcję panelu na drogę własną okna i drogę generyczną. */
+/** Rozdziela akcję panelu na drogę własną okna i drogę generyczną, wspólną dla całej rodziny komend lektury. */
 export async function wykonajAkcjeLektury(
   kontekst: KontekstLektury,
   akcja: AkcjaBadania,
@@ -74,7 +64,7 @@ export async function wykonajAkcjeLektury(
   await przezPanelAkcji(kontekst, akcja);
 }
 
-/** Droga generyczna: `window.action` ze wskazanym źródłem i stroną w parametrach. */
+/** Droga generyczna: `window.action` ze wskazanym źródłem i stroną w parametrach żądania tego okna lektury. */
 async function przezPanelAkcji(kontekst: KontekstLektury, akcja: AkcjaBadania): Promise<void> {
   const { stan, odpowiedz } = kontekst;
   if (stan.idOkna() === '') {
@@ -97,12 +87,8 @@ async function przezPanelAkcji(kontekst: KontekstLektury, akcja: AkcjaBadania): 
 }
 
 /**
- * Wczytanie treści wskazanego źródła.
- *
- * Droga do treści prowadzi przez dokument repozytorium, więc źródło bez pola
- * `libraryFileId` nie ma czego pokazać — i to okno mówi wprost, zamiast
- * pokazywać pusty czytnik i zostawiać Operatora z domysłem, że materiał się nie
- * wczytał.
+ * Wczytanie treści wskazanego źródła — droga prowadzi przez dokument
+ * repozytorium, bez którego nie ma czego pokazać.
  */
 export async function wczytajZrodlo(kontekst: KontekstLektury): Promise<void> {
   const { stan, okno, odpowiedz } = kontekst;
@@ -142,19 +128,8 @@ export async function wczytajZrodlo(kontekst: KontekstLektury): Promise<void> {
 }
 
 /**
- * Zamiana zaznaczonego fragmentu w ustalenie.
- *
- * To jest ta sama komenda, którą wysyła formularz Findings Panel — czytnik nie
- * ma własnej drogi zapisu i nie potrzebuje jej mieć. Wypis wchodzi z powiązaniem
- * do czytanego źródła, więc kotwica ustalenia sięga materiału, a nie samego
- * napisu.
- *
- * Kotwica fragmentu jest w kontrakcie połowicznie i to jest tu rzecz istotna:
- * żądanie zapisu ustalenia ma pole `anchor`, ale `ResearchFinding`, które rdzeń
- * oddaje, nie niesie ani numeru strony, ani zakresu znaków. Kotwicę da się więc
- * wysłać, a nie da się jej odczytać z powrotem — dopóki byt ustalenia jej nie
- * niesie, okno nie ma jak pokazać, dokąd cytat sięga. Numer strony wchodzi
- * zatem w TREŚĆ cytatu, żeby nie przepadł, i okno mówi o tym wprost.
+ * Zamiana zaznaczonego fragmentu w ustalenie — ta sama komenda, którą wysyła
+ * formularz Findings Panel, więc kotwica sięga materiału.
  */
 export async function zapiszWypis(kontekst: KontekstLektury): Promise<void> {
   const { stan, odpowiedz } = kontekst;
@@ -201,7 +176,7 @@ export async function zapiszWypis(kontekst: KontekstLektury): Promise<void> {
   );
 }
 
-/** Źródło wskazane do lektury; `null` znaczy „nie wskazano albo już go nie ma". */
+/** Źródło wskazane do lektury; `null` znaczy „nie wskazano albo już go nie ma" w wykazie źródeł badania. */
 export function wskazaneZrodlo(stan: StanBadania): ResearchSource | null {
   const wskazane = stan.lektura.wskazane();
   if (wskazane === '') return null;
@@ -232,23 +207,19 @@ export function ustawStanLektury(kontekst: KontekstLektury, maTresc: boolean): v
   pokazPustke(okno, stan, PUSTKA_LEKTURY);
 }
 
-/** Zaznaczenie Operatora ograniczone do obszaru treści źródła. */
+/** Zaznaczenie operatora ograniczone do obszaru treści źródła, poza etykietami i kontrolkami tego okna. */
 function zaznaczonyFragment(tresc: HTMLElement): string {
   const zaznaczenie = document.getSelection();
   if (zaznaczenie === null || zaznaczenie.isCollapsed) return '';
-  // Zaznaczenie spoza obszaru treści nie jest cytatem ze źródła: fragment
-  // etykiety okna albo komunikatu zapisany jako wypis byłby cytatem zmyślonym.
+  // Zaznaczenie spoza obszaru treści nie jest cytatem ze źródła, tylko fragmentem etykiety okna.
   const kotwica = zaznaczenie.anchorNode;
   if (kotwica === null || !tresc.contains(kotwica)) return '';
   return zaznaczenie.toString().trim();
 }
 
 /**
- * Treść wypisu: cytat wraz z miejscem, z którego pochodzi.
- *
- * Numer strony idzie w treści, bo `ResearchFinding` nie ma pola na kotwicę
- * pozycji. Przemilczenie strony zostawiłoby cytat, którego nie da się odnaleźć
- * w materiale — a to jest dokładnie ta rzecz, którą ustalenie ma zapewniać.
+ * Treść wypisu: cytat wraz z miejscem, z którego pochodzi, bo ustalenie nie
+ * ma osobnego pola na kotwicę.
  */
 function trescWypisu(fragment: string, strona: number, zrodlo: ResearchSource | null): string {
   const skad =
@@ -258,7 +229,7 @@ function trescWypisu(fragment: string, strona: number, zrodlo: ResearchSource | 
   return `„${fragment}" [${skad}]`;
 }
 
-/** Zdanie o wczytanym podglądzie — złożone z pól, które rdzeń naprawdę oddał. */
+/** Zdanie o wczytanym podglądzie — złożone z pól, które rdzeń naprawdę oddał, nie z zamówienia tego okna. */
 function opisPodgladu(podglad: LibraryPreview, zrodlo: ResearchSource): string {
   const czesci = [
     `Rdzeń wczytał podgląd źródła „${zrodlo.title}" (rodzaj: ${podglad.kind}).`,
@@ -276,14 +247,10 @@ function opisPodgladu(podglad: LibraryPreview, zrodlo: ResearchSource): string {
 }
 
 /**
- * Tekst swobodny okna przekazywany komendom bez własnego formularza.
- *
- * Żądanie składane bez wskazania Operatora wracałoby odmową walidacji, z której
- * nic dla niego nie wynika. Ten jeden krok mówi, skąd okno bierze treść — i gdy
- * jej nie ma, `wywolania-komend.ts` nazywa brak, zamiast wysyłać puste pole.
+ * Tekst swobodny okna przekazywany komendom bez własnego formularza, bez
+ * wskazania nazywanego brakiem.
  */
 function tekstDlaKomendy(_kontekst: KontekstLektury): string {
-  // Fragment zaznaczony w treści materiału jest tym, czego dotyczy adnotacja
-  // i pytanie o korpus — bierzemy go z zaznaczenia okna, nie z osobnego pola.
+  // Fragment zaznaczony w treści materiału jest tym, czego dotyczy adnotacja i pytanie o korpus.
   return (window.getSelection()?.toString() ?? '').trim();
 }

@@ -10,36 +10,9 @@ import { utworzStanOkna, type StanOkna } from './stan-okna';
 import type { StanAgentow } from './stan-agentow';
 
 /**
- * Skills Manager — okno zarządca modułu Agents; tu odbywa się dobór narzędzi.
- *
- * Wybór idzie z wykazu pogrupowanego po przeznaczeniu: `shared/contract.ts`
- * niesie `NARZEDZIA_MODELU`, każde z komendą i zdaniem „kiedy po nie sięgnąć",
- * a grupą jest obszar komendy. Drzewo (`drzewo-narzedzi.ts`) obsadza tym
- * wykazem `komponenty/menu-drzewo.ts` i nie woła ani jednej komendy, więc
- * działa także wtedy, gdy rdzeń milczy.
- *
- * Drzewo stoi obok pola otwartego, nie zamiast niego: `Agent.skillIds` jest
- * listą napisów bez narzuconego słownika, a serwer narzędzi przyjmuje też kody
- * spoza katalogu kontraktu (melduje je jako nierozpoznane). Obie kontrolki
- * pokazują tę samą nastawę — wskazanie w drzewie wypełnia pole, wpisanie
- * w polu przestawia uchwyt drzewa.
- *
- * Nazwa gałęzi jest kodem obszaru, nie zdaniem „do czego służy". Zdania stoją
- * w `shared/contract.json` (sekcja `obszary`), ale generator nie emituje ich
- * ani do `contract.ts`, ani do `contract.go`, a przepisanie ich ręką dałoby
- * drugą prawdę.
- *
- * Odłączenie kodu ma komendę w kontrakcie, ale nie ma jeszcze uchwytu
- * w rdzeniu. Każdy wiersz wykazu dostaje więc własną kontrolkę odłączenia —
- * widoczną, klikalną i nazywającą stan po naciśnięciu; zdanie bierze się
- * z powitania rdzenia, więc zmieni się samo, gdy uchwyt powstanie. Pozycje
- * drzewa zostają przy tym wyborem kodu do przypisania, a nie przełącznikami
- * dwustanowymi: przełącznik obiecywałby powrót natychmiastowy, a odłączenie
- * jest dziś czynnością, której rdzeń jeszcze nie wykonuje.
- *
- * `agent.skill.add` z umiejętnością już przypisaną kończy się powodzeniem, ale
- * wykaz eksperta, jego wersja i czas zmiany zostają nietknięte. Dlatego zdanie
- * powodzenia rozstrzyga się po tym, czy wykaz eksperta urósł.
+ * Skills Manager jest oknem zarządcą modułu Agents: dobiera narzędzia
+ * z wykazu pogrupowanego po przeznaczeniu, wraz z polem otwartym na kody
+ * spoza katalogu kontraktu.
  */
 export interface OknoSkillsManager {
   element: HTMLElement;
@@ -104,9 +77,7 @@ export function utworzOknoSkillsManager(
   element.dataset['okno'] = 'skills-manager';
   element.append(naglowek('Skills Manager'), licznik.element, okno.element);
 
-  // Dwie kontrolki, jeden kod: wskazanie w drzewie wypełnia pole, pisanie
-  // w polu przestawia uchwyt drzewa. Żadna ze stron nie ogłasza zmiany drugiej
-  // z powrotem, więc pętli nie ma.
+  // Dwie kontrolki, jeden kod: żadna ze stron nie ogłasza zmiany drugiej z powrotem, więc pętli nie ma.
   ster.naZmiane((kod) => {
     pole.kontrolka.value = kod;
   });
@@ -153,13 +124,7 @@ export function utworzOknoSkillsManager(
     odpowiedz.pokaz(`Kod ${umiejetnosc} przypisany ekspertowi „${zapisany.name}".`, true);
   }
 
-  /**
-   * Zdjęcie umiejętności z definicji eksperta (`agent.skill.remove`).
-   *
-   * Brak przypisania nie jest odmową — kontrakt mówi wprost, że zdjęcie
-   * nieistniejącego przypisania znaczy definicję bez niego. Świadectwem
-   * powodzenia jest więc wykaz, który wrócił, a nie sam stan `ok`.
-   */
+  /** Zdjęcie umiejętności z definicji eksperta; świadectwem powodzenia jest wykaz, który wrócił. */
   async function odlacz(umiejetnosc: string): Promise<void> {
     const ekspert = stan.wybrany();
     if (ekspert === null) return;
@@ -191,16 +156,14 @@ export function utworzOknoSkillsManager(
     const ekspert = stan.wybrany();
     licznik.ustaw(ekspert);
     ustawPodpowiedzi();
-    // Kod wpisany dla jednego eksperta nie ma prawa czekać w polu przy drugim:
-    // przycisk przypisałby go nowo wybranemu.
+    // Kod wpisany dla jednego eksperta nie może czekać w polu przy drugim ekspercie.
     if ((ekspert?.id ?? '') !== pokazany) {
       pokazany = ekspert?.id ?? '';
       pole.kontrolka.value = '';
       ster.ustawKod('');
       odpowiedz.wyczysc();
     }
-    // Drzewo znakuje to, co ekspert już ma — obiema listami, bo serwer narzędzi
-    // czyta `skillIds` i `connectorIds` jako jeden zbiór kodów.
+    // Drzewo znakuje to, co ekspert już ma, obiema listami kodów naraz.
     ster.ustawPrzypisane([...(ekspert?.skillIds ?? []), ...(ekspert?.connectorIds ?? [])]);
     if (ekspert === null) {
       lista.replaceChildren();
@@ -221,14 +184,7 @@ export function utworzOknoSkillsManager(
     okno.gotowe();
   }
 
-  /**
-   * Podpowiedź pola otwartego.
-   *
-   * Katalog kontraktu nie wchodzi do podpowiedzi — od tego jest drzewo, a cały
-   * katalog w `datalist` zrobiłby z pola drugi, gorszy wykaz. Podpowiedź
-   * zostaje przy tym, czego drzewo nie zna: kodach spoza katalogu, wpisanych
-   * już komuś w bibliotece.
-   */
+  /** Podpowiedź pola otwartego zostaje przy tym, czego drzewo nie zna — kodach spoza katalogu kontraktu. */
   function ustawPodpowiedzi(): void {
     const zKatalogu = new Set(KATALOG_NARZEDZI.map((pozycja) => pozycja.nazwa));
     const znane = new Set<string>();
@@ -259,11 +215,8 @@ export function utworzOknoSkillsManager(
 }
 
 /**
- * Wiersz przypisanego kodu wraz z kontrolką odłączenia.
- *
- * Odłączenie nie ma dziś drogi do rdzenia, więc kontrolka nie znika i nie jest
- * wykonuje `agent.skill.remove`. Brak przypisania nie jest odmową: kontrakt mówi
- * wprost, że zdjęcie nieistniejącego przypisania znaczy definicję bez niego.
+ * Wiersz przypisanego kodu wraz z kontrolką odłączenia, widoczną i klikalną
+ * niezależnie od tego, czy odłączenie ma dziś drogę do rdzenia.
  */
 function wiersz(kod: string, odlacz: (kod: string) => void): HTMLElement {
   const nazwa = document.createElement('span');
@@ -280,7 +233,7 @@ function wiersz(kod: string, odlacz: (kod: string) => void): HTMLElement {
   return element;
 }
 
-/** Kontrolka odłączenia umiejętności — jedna na wiersz wykazu. */
+/** Kontrolka odłączenia umiejętności, osobna na każdy wiersz wykazu przypisanych kodów tego eksperta w bibliotece. */
 function przyciskOdlaczenia(kod: string, odlacz: (kod: string) => void): HTMLButtonElement {
   const kontrolka = przycisk('Odłącz', 'dn-btn dn-btn--sm dn-btn--zarys');
   kontrolka.title = `zdjęcie kodu ${kod} z definicji tego eksperta`;

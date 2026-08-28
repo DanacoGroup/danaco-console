@@ -6,24 +6,8 @@ import { cialoZakladki, objasnienieZakladki, pasekZakladki } from './zakladki-ok
 import type { ZrodloWarsztatu } from './zrodlo-warsztatu';
 
 /**
- * Historia i pomiary — trzecia część kolumny monitora modułu Developer.
- *
- * ── Po co osobna zakładka obok Build Output ────────────────────────────────
- * Build Output prowadzi przebieg BIEŻĄCY: log narasta zdarzeniem, a okno
- * pokazuje go na żywo. Historia mówi o przebiegach ZAKOŃCZONYCH i o tym, co po
- * nich zostało — wyniku testów i pokryciu kodu. To są dwa różne pytania i dwa
- * różne czasy: pierwsze „co się teraz dzieje”, drugie „co wyszło wtedy”.
- *
- * ── Log historii bywa przycięty i okno o tym mówi ──────────────────────────
- * W dzienniku przebiegu zostaje OGON logu, bo budowanie dużego projektu ma
- * dziesiątki tysięcy wierszy. Odpowiedź niesie znacznik przycięcia i okno go
- * pokazuje: „ostatnie 500 wierszy” to inne zdanie niż „tyle ich było”, a
- * Operator szukający wiersza z początku budowania ma wiedzieć, że go tu nie ma.
- *
- * ── Pusty pomiar to nie zero ───────────────────────────────────────────────
- * Przebieg, w którym nikt nie uruchamiał testów, nie ma wyników — i okno pisze
- * to wprost, zamiast pokazać „0 z 0 przeszło”. Zero przy zerze wygląda jak
- * powodzenie, a znaczy brak pomiaru.
+ * Historia i pomiary — trzecia część kolumny monitora modułu Developer, obok
+ * Build Output, dla przebiegów zakończonych i ich wyników.
  */
 export interface PanelHistoriiBudowan {
   element: HTMLElement;
@@ -58,9 +42,7 @@ export function utworzPanelHistoriiBudowan(
       tresc.pusto('Okno nie ma jeszcze ani jednego przebiegu budowania w dzienniku.');
       return;
     }
-    // Pierwszy przebieg wykazu wchodzi do pola: kolejne pytania dotyczą
-    // najczęściej właśnie ostatniego biegu, a przepisywanie identyfikatora ręką
-    // z wykazu do pola jest przepisywaniem, które okno może zrobić za Operatora.
+    // Pierwszy przebieg wykazu wchodzi do pola: kolejne pytania dotyczą najczęściej ostatniego biegu.
     przebieg.value = wynik.wynik.builds[0]?.id ?? '';
     const miejsce = tresc.tresc();
     miejsce.replaceChildren(
@@ -187,7 +169,7 @@ export function utworzPanelHistoriiBudowan(
   return { element, odswiez: () => void odczytajHistorie() };
 }
 
-/** akapitHistorii składa jeden wiersz treści panelu. */
+/** akapitHistorii składa jeden wiersz treści panelu historii przebiegów budowania modułu Developer okna. */
 function akapitHistorii(zdanie: string): HTMLElement {
   const element = document.createElement('p');
   element.className = 'mdev-wiersz';
@@ -195,7 +177,7 @@ function akapitHistorii(zdanie: string): HTMLElement {
   return element;
 }
 
-/** blokHistorii składa miejsce na treść wielowierszową — log przebiegu. */
+/** blokHistorii składa miejsce na treść wielowierszową — log przebiegu budowania w panelu historii okna. */
 function blokHistorii(zawartosc: string): HTMLElement {
   const element = document.createElement('pre');
   element.className = 'mdev-blok';

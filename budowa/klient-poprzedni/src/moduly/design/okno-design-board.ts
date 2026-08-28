@@ -20,54 +20,19 @@ import { zdanieOSkutkuRozmowy, type SkutekRozmowy } from './wejscie-rozmowy';
 import type { StanDesignu } from './stan-designu';
 
 /**
- * Design Board — okno **wiodące** modułu Design (kod katalogu rdzenia
- * `design-board`): kanwa, panel warstw i przybornik w jednym oknie wraz
- * z zapisem kompozycji do rdzenia.
- *
- * Panel akcji modułu wymienia kanwę swobodną, panel warstw, wyrównanie, siatkę,
- * szablony układu, adnotacje, wersjonowanie, eksport, zaznaczenie wielokrotne,
- * kursor współpracy i bibliotekę elementów pomocniczych, a kontrakt niesie jedną
- * komendę zbiorczą `design.board.update`. Okno dzieli to tak: zestawianie układu
- * dzieje się na kanwie i jedzie do rdzenia jednym zapisem w polu `layers`; to,
- * czego pole `layers` nie unosi — wersje, eksport, obecność drugiego Operatora —
- * jest nazwane brakiem, nie pozorowane.
- *
- * Potwierdzenie zapisu opisuje odpowiedź rdzenia, nie wysłane żądanie:
- * odpowiedź niesie całą kompozycję odczytaną po zapisie, z nazwą i wykazem
- * warstw (`zlozBoard` rdzenia). Liczba warstw, która wróciła, jest jedyną miarą
- * tego, ile ich leży w rdzeniu; rozbieżność wobec wysłanego układu jest odmową,
- * bo kanwa pokazuje wtedy co innego niż baza (`skutek-designu.ts`).
- *
- * Okno robocze modułu stoi w parze z oknem rozmowy. Profil modułu wymienia
- * Design Board wśród okien obowiązkowych
- * (`okno-komunikacji/rejestr-profilow.ts`), a zasób zlecony w Chat Window
- * przychodzi zdarzeniem `design.asset.changed` i kładzie się warstwą na kanwie
- * bez czynności w tym oknie (`wejscie-rozmowy.ts`). Tabliczka nad kanwą opisuje
- * tę drogę także wtedy, gdy nic jeszcze nią nie weszło.
+ * Design Board — okno wiodące modułu Design: kanwa, panel warstw i przybornik w jednym oknie wraz
+ * z zapisem kompozycji do rdzenia jednym polem warstw komendy zbiorczej.
  */
 export interface OknoDesignBoard {
   element: HTMLElement;
   odswiez(): void;
-  /**
-   * Odpina subskrypcje okna — dziś jedną: zdarzenie `design.board.presence`.
-   * Bez tego kursory współpracy trafiałyby do panelu odłączonego od dokumentu.
-   */
+  /** Odpina subskrypcje okna — dziś jedną: bez niej kursory współpracy trafiałyby do panelu odłączonego. */
   rozlacz(): void;
   /** Dokłada zasób na kanwę — droga z Assets Panel. */
   przyjmijZasob(zasob: DesignAsset): void;
-  /**
-   * Przyjmuje skutek rozmowy — droga z Chat Window.
-   *
-   * Zasób nowy ląduje warstwą; każdy inny skutek jest nazwany na tabliczce,
-   * zamiast zniknąć bez śladu.
-   */
+  /** Przyjmuje skutek rozmowy: zasób nowy ląduje warstwą, każdy inny skutek jest nazwany na tabliczce. */
   przyjmijZRozmowy(skutek: SkutekRozmowy, zasob: DesignAsset): void;
-  /**
-   * Prowadzi ognisko do adnotacji warstwy zaznaczonej — droga skrótu.
-   *
-   * Bez zaznaczenia okno mówi, czego brakuje, zamiast milczeć: skrót naciśnięty
-   * bez skutku i skrót niedziałający wyglądają dla Operatora tak samo.
-   */
+  /** Prowadzi ognisko do adnotacji warstwy zaznaczonej; bez zaznaczenia okno mówi wprost, czego brakuje. */
   opiszWarstwe(): void;
 }
 
@@ -79,13 +44,11 @@ export function utworzOknoDesignBoard(stan: StanDesignu): OknoDesignBoard {
   const narzedzia: NarzedziaPlanszy = utworzNarzedziaPlanszy(kompozycja);
   const tabliczka: TabliczkaRozmowy = utworzTabliczkeRozmowy();
   const inspektor: InspektorWarstwy = utworzInspektorWarstwy(kompozycja);
-  // Wersjonowanie, wyrys, adnotacje i obecność dotyczą kompozycji jako całości,
-  // więc stoją pod kanwą, a nie w panelu warstw.
+  // Wersjonowanie, wyrys, adnotacje i obecność dotyczą kompozycji jako całości, więc stoją pod kanwą.
   const wersje: WersjeKompozycji = utworzWersjeKompozycji(stan, kompozycja);
   const adnotacje: AdnotacjeKompozycji = utworzAdnotacjeKompozycji(stan, kompozycja);
 
-  // Tryb kanwy znakuje planszę atrybutem danych, a nie klasą składaną w locie:
-  // atrybut widać w sprawdzianie i w arkuszu, a klasa składana z napisu nie.
+  // Tryb kanwy znakuje planszę atrybutem danych, widocznym w sprawdzianie i arkuszu, nie klasą składaną.
   const tryby: TrybyKanwy = utworzTrybyKanwy((tryb) => {
     plansza.element.dataset['tryb'] = tryb;
   });
@@ -106,9 +69,7 @@ export function utworzOknoDesignBoard(stan: StanDesignu): OknoDesignBoard {
   nazwa.kontrolka.addEventListener('change', () => kompozycja.ustawNazwe(nazwa.kontrolka.value));
 
   const zapisz = przycisk('Zapisz kompozycję w rdzeniu', 'dn-btn dn-btn--sm dn-btn--atrament');
-  // Droga powrotna kompozycji: bez odczytu okno po odświeżeniu przeglądarki
-  // pokazywałoby pustą kanwę nad układem zapisanym w bazie, a kolejny zapis
-  // zakładałby kompozycję nową — identyfikator przepada razem z ekranem.
+  // Droga powrotna kompozycji: bez odczytu okno po odświeżeniu pokazywałoby pustą kanwę.
   const odczytaj = przycisk('Odczytaj kompozycję z rdzenia', 'dn-btn dn-btn--sm dn-btn--zarys');
   const odpowiedz = utworzWierszOdpowiedzi();
 
@@ -120,10 +81,7 @@ export function utworzOknoDesignBoard(stan: StanDesignu): OknoDesignBoard {
   cialo.className = 'md-plansza__cialo';
   cialo.append(plansza.element, bok);
 
-  // Pasek kontekstu stoi najwyżej: mówi, w czym Operator pracuje, zanim
-  // powie cokolwiek o tym, co z tą pracą można zrobić.
-  // Tabliczka wejścia stoi przed przybornikiem: mówi, skąd na kanwie bierze się
-  // praca wniesiona spoza tego okna.
+  // Pasek kontekstu stoi najwyżej, a tabliczka wejścia przed przybornikiem.
   okno.tresc.append(
     kontekst.element,
     tabliczka.element,
@@ -155,9 +113,7 @@ export function utworzOknoDesignBoard(stan: StanDesignu): OknoDesignBoard {
     odpowiedz.pokaz('Zapis kompozycji…', true);
     const nazwaZamowiona = przytnijKod(kompozycja.nazwa());
     const warstwZamowionych = kompozycja.warstwy().length;
-    // Zapis pod czuwaniem: po zerwanym gnieździe okno nie ma prawa stać
-    // w „Zapis kompozycji w rdzeniu…" bez końca ani ogłaszać niepowodzenia
-    // zapisu, który mógł się w rdzeniu odbyć (`czuwanie-rdzenia.ts`).
+    // Zapis pod czuwaniem: po zerwanym gnieździe okno nie ma prawa stać w zapisie bez końca.
     const wynik = await stan.czuwanie.prowadz(
       'zapis kompozycji',
       stan.zrodlo.zapiszKompozycje({
@@ -186,8 +142,7 @@ export function utworzOknoDesignBoard(stan: StanDesignu): OknoDesignBoard {
     kompozycja.ustawIdKompozycji(wynik.wynik.board.id);
     const skutek = skutekZapisuKompozycji(nazwaZamowiona, warstwZamowionych, wynik.wynik.board);
     odpowiedz.pokaz(skutek.zdanie, skutek.udany);
-    // Faza wraca z „ładowania" tutaj, bo odświeżenie samo z niej nie wychodzi —
-    // pilnuje, żeby odczyt w toku nie został przykryty stanem pustym.
+    // Faza wraca z ładowania tutaj, bo odświeżenie samo z niej nie wychodzi.
     okno.gotowe();
     odswiez();
   }
@@ -195,14 +150,7 @@ export function utworzOknoDesignBoard(stan: StanDesignu): OknoDesignBoard {
   zapisz.addEventListener('click', () => void zapiszKompozycje());
   odczytaj.addEventListener('click', () => void odczytajKompozycje());
 
-  /**
-   * Odczyt kompozycji okna z rdzenia.
-   *
-   * Gdy rdzeń odda kilka kompozycji, okno bierze najświeższą po polu `updatedAt`
-   * — jedynej mierze świeżości, którą niesie kontrakt — i mówi o tym w zdaniu
-   * odpowiedzi. Okno prowadzi jedną kanwę, więc wyboru między kilkoma planszami
-   * nie ma czym wyrazić.
-   */
+  /** Odczyt kompozycji okna z rdzenia; gdy rdzeń odda kilka, okno bierze najświeższą po dacie. */
   async function odczytajKompozycje(): Promise<void> {
     if (stan.idOkna() === '') {
       odpowiedz.pokaz(`Odczyt kompozycji wymaga okna modułu. ${stan.opisOkna()}`, false);
@@ -265,8 +213,7 @@ export function utworzOknoDesignBoard(stan: StanDesignu): OknoDesignBoard {
     kontekst.odswiez();
     if (okno.faza() === 'ladowanie') return;
     if (kompozycja.warstwy().length === 0) {
-      // Stan pusty wymienia obie drogi na kanwę: zdanie o samym Assets Panel
-      // przemilczałoby wejście rozmowy.
+      // Stan pusty wymienia obie drogi na kanwę: zdanie o samym Assets Panel przemilczałoby rozmowę.
       okno.puste(
         'Plansza jest bez zestawionych jeszcze zasobów — przenieś zasób z Assets Panel. ' +
           'Drugą drogę na kanwę, wejście rozmowy, opisuje tabliczka nad planszą.',
@@ -303,8 +250,7 @@ export function utworzOknoDesignBoard(stan: StanDesignu): OknoDesignBoard {
     },
 
     przyjmijZRozmowy(skutek, zasob) {
-      // Warstwa powstaje wyłącznie z zasobu nowego i wyłącznie raz. Tabliczka
-      // dostaje zdanie o tym, co okno zrobiło, nie o tym, co zamierza.
+      // Warstwa powstaje wyłącznie z zasobu nowego i wyłącznie raz; tabliczka mówi, co okno zrobiło.
       const naKanwie = skutek === 'zasob-nowy' && !czyWarstwaZasobu(zasob.id);
       if (naKanwie) kompozycja.dolozZasob(zasob);
       tabliczka.zanotuj(zdanieOSkutkuRozmowy(skutek, zasob, naKanwie));

@@ -1,19 +1,11 @@
 /**
- * Kontrolki formularzy sekcji modeli — jeden kształt pola dla całej sekcji.
- *
- * Formularz konta i edytor tożsamości opisują byty o polach **stałych**,
- * wynikających wprost z kontraktu (`AccountAddRequest`, `IdentityDocumentSet`),
- * a nie z katalogu wierszy. Nie mogą więc korzystać z generatora pól okna
- * konfiguracji, który buduje kontrolkę z `SettingDefinition` — nie ma czego mu
- * podać. Zamiast dwóch równoległych sposobów budowania pola w dwóch plikach
- * sekcja ma jeden ten.
- *
- * Wygląd bierzemy w całości z biblioteki `komponenty/` (`dn-pole*`), więc plik
- * nie zna ani jednej barwy i ani jednego odstępu.
+ * Kontrolki formularzy sekcji modeli udostępniają jeden kształt pola dla całej
+ * sekcji, przeznaczony dla bytów o polach stałych wynikających wprost
+ * z kontraktu, a nie z katalogu wierszy konfiguracji.
  */
 export * from './kontrolki-formularza-braki'; // kontrolki okien operacyjnych
 
-/** Pole formularza: etykieta, kontrolka, opcjonalny opis pod nią. */
+/** Pole formularza obejmuje wiersz osadzany w układzie, kontrolkę wewnątrz wiersza oraz opcjonalny opis wyświetlany pod kontrolką. */
 export interface PoleFormularza<T extends HTMLElement> {
   /** Wiersz osadzany w formularzu. */
   element: HTMLElement;
@@ -21,21 +13,21 @@ export interface PoleFormularza<T extends HTMLElement> {
   kontrolka: T;
 }
 
-/** Opis pola: etykieta, podpowiedź w kontrolce i zdanie wyjaśniające. */
+/** Opis pola formularza zawiera etykietę, podpowiedź wyświetlaną w kontrolce oraz opcjonalne zdanie wyjaśniające pod kontrolką. */
 export interface OpisPola {
   etykieta: string;
   podpowiedz?: string;
   opis?: string;
 }
 
-/** Identyfikator wiążący etykietę z kontrolką; unikalny w obrębie dokumentu. */
+/** Identyfikator wiążący etykietę z kontrolką, tworzony z przedrostka i licznika, pozostaje unikalny w obrębie całego dokumentu. */
 let licznik = 0;
 function nowyIdentyfikator(przedrostek: string): string {
   licznik += 1;
   return `dm-${przedrostek}-${licznik}`;
 }
 
-/** Pole tekstowe jednowierszowe. */
+/** Pole tekstowe jednowierszowe formularza, budowane z opisu zawierającego etykietę, podpowiedź i opcjonalne wyjaśnienie. */
 export function poleTekstowe(opis: OpisPola): PoleFormularza<HTMLInputElement> {
   const kontrolka = document.createElement('input');
   kontrolka.type = 'text';
@@ -46,13 +38,9 @@ export function poleTekstowe(opis: OpisPola): PoleFormularza<HTMLInputElement> {
 }
 
 /**
- * Pole poświadczenia — jedyne pole sekcji, którego wartości nie da się
- * odczytać z rdzenia.
- *
- * Kontrakt przyjmuje `credential` w żądaniu i nie zwraca go żadną komendą.
- * Pole jest zatem wyłącznie wejściem: puste znaczy „nie zmieniaj", wypełnione
- * znaczy „zapisz nowe". Nigdy nie pokazuje wartości zapisanej, ponieważ klient
- * jej nie ma.
+ * Pole poświadczenia jest jedynym polem sekcji, którego wartości nie da się
+ * odczytać z rdzenia — służy wyłącznie jako wejście przy zapisie nowej
+ * wartości.
  */
 export function poleTajne(opis: OpisPola): PoleFormularza<HTMLInputElement> {
   const kontrolka = document.createElement('input');
@@ -65,7 +53,7 @@ export function poleTajne(opis: OpisPola): PoleFormularza<HTMLInputElement> {
   return { element: obudowa(opis, kontrolka), kontrolka };
 }
 
-/** Pole tekstowe wielowierszowe. */
+/** Pole tekstowe wielowierszowe formularza, którego liczba wierszy jest parametrem wywołania, budowane z opisu pola. */
 export function poleWielowierszowe(
   opis: OpisPola,
   wiersze: number,
@@ -79,13 +67,13 @@ export function poleWielowierszowe(
   return { element: obudowa(opis, kontrolka), kontrolka };
 }
 
-/** Jedna pozycja listy wyboru. */
+/** Jedna pozycja listy wyboru złożona z wartości zapisywanej oraz etykiety wyświetlanej w kontrolce wyboru. */
 export interface PozycjaWyboru {
   wartosc: string;
   etykieta: string;
 }
 
-/** Lista wyboru zbudowana z podanych pozycji. */
+/** Lista wyboru zbudowana z podanych pozycji, z których każda niesie wartość zapisywaną oraz etykietę widoczną w kontrolce. */
 export function poleWyboru(
   opis: OpisPola,
   pozycje: readonly PozycjaWyboru[],
@@ -97,7 +85,7 @@ export function poleWyboru(
   return { element: obudowa(opis, kontrolka), kontrolka };
 }
 
-/** Wymienia pozycje listy wyboru, utrzymując wybór, o ile nadal istnieje. */
+/** Wymienia pozycje listy wyboru na podane od nowa, utrzymując dotychczasowy wybór, o ile odpowiadająca mu pozycja nadal istnieje. */
 export function ustawPozycje(
   kontrolka: HTMLSelectElement,
   pozycje: readonly PozycjaWyboru[],
@@ -116,7 +104,7 @@ export function ustawPozycje(
   }
 }
 
-/** Pole logiczne: przełącznik wraz z etykietą po jego prawej. */
+/** Pole logiczne formularza łączy przełącznik dwustanowy z etykietą umieszczoną po jego prawej stronie. */
 export function poleLogiczne(opis: OpisPola): PoleFormularza<HTMLInputElement> {
   const kontrolka = document.createElement('input');
   kontrolka.type = 'checkbox';
@@ -136,7 +124,7 @@ export function poleLogiczne(opis: OpisPola): PoleFormularza<HTMLInputElement> {
   return { element: wiersz, kontrolka };
 }
 
-/** Przycisk formularza. */
+/** Przycisk formularza budowany z podanej treści napisu oraz klasy stylu określającej jego wygląd w interfejsie. */
 export function przycisk(tresc: string, klasa: string): HTMLButtonElement {
   const element = document.createElement('button');
   element.type = 'button';
@@ -177,7 +165,7 @@ export function utworzWierszOdpowiedzi(): WierszOdpowiedzi {
   };
 }
 
-/** Etykieta nad kontrolką wraz ze zdaniem wyjaśniającym pod nią. */
+/** Obudowa pola stawia etykietę nad kontrolką wraz z opcjonalnym zdaniem wyjaśniającym umieszczonym pod nią. */
 function obudowa(opis: OpisPola, kontrolka: HTMLElement): HTMLElement {
   const element = document.createElement('div');
   element.className = 'dn-pole dm-pole';

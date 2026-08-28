@@ -16,17 +16,7 @@ import type { StanDostepow } from './stan-dostepow';
 import { utworzPrzyciskUsuniecia } from './usuniecie-punktu';
 import { utworzWyborKorzeni } from './wybor-korzeni';
 
-/**
- * Karta jednego punktu dostępu w wykazie.
- *
- * Karta odpowiada na dwa pytania Operatora: „co to za maszyna albo katalog"
- * oraz „czy w ogóle odpowiada". Do tego daje jedną czynność — nadanie oknu
- * dostępu w wybranym trybie i na wybranych korzeniach.
- *
- * Punkt jest bytem platformy, nadanie bytem okna. Dlatego karta
- * pokazuje stan punktu wspólny dla wszystkich okien, a przycisk nadania działa
- * na oknie, z którym związana jest sekcja.
- */
+/** Karta jednego punktu dostępu w wykazie, odpowiadająca na pytania, co to za maszyna i czy w ogóle odpowiada. */
 export interface KartaPunktu {
   /** Element osadzany w wykazie punktów. */
   element: HTMLElement;
@@ -131,13 +121,13 @@ export function utworzKartePunktu(punkt: AccessPoint, stan: StanDostepow): Karta
   return karta;
 }
 
-/** Zdanie po sprawdzeniu punktu; szczegół niepowodzenia idzie w całości. */
+/** Zdanie po sprawdzeniu punktu; szczegół niepowodzenia idzie w nim w całości, bez skracania jego treści. */
 function zdanieSprawdzenia(stan: string, szczegol: string | undefined): string {
   const podstawa = `Punkt odpowiedział stanem: ${stan}.`;
   return szczegol === undefined || szczegol === '' ? podstawa : `${podstawa} ${szczegol}`;
 }
 
-/** Opis przeznaczenia punktu; brak opisu nie zostawia pustego akapitu. */
+/** Opis przeznaczenia punktu; brak opisu w danych nie zostawia dziś po sobie pustego akapitu na tej karcie. */
 function opisPunktu(punkt: AccessPoint): HTMLElement[] {
   if (punkt.description === undefined || punkt.description === '') return [];
   const element = document.createElement('p');
@@ -146,7 +136,7 @@ function opisPunktu(punkt: AccessPoint): HTMLElement[] {
   return [element];
 }
 
-/** Znak karty punktu — plakietka biblioteki w miejscu znaków tej karty. */
+/** Znak karty punktu — plakietka biblioteki wspólna z innymi znakami, osadzona dziś w miejscu tej karty. */
 function znak(tresc: string, klasa: string): HTMLElement {
   return plakietkaZnaku(tresc, klasa, 'dd-punkt__znak');
 }

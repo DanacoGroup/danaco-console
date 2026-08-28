@@ -8389,3 +8389,18 @@ ma być nazwana, a nie zasłonięta. Zmieniła się wyłącznie strona braku. Ko
 niesie już wyciszenie nakładki wraz z odczytem, zapisem i rozgłoszeniem, więc
 zdanie mówiące „brak po stronie kontraktu” byłoby dziś nieprawdą — zostaje brak
 po stronie nakładki, której wołacze piszą jeszcze do magazynu stanowiska.
+## budowa/klient-poprzedni/src/aod/wyciszenie-kontekst.ts
+Wyciszenie kontekstowe potrzebuje dwóch rzeczy, których reguła rozpoznania decyzji
+nie ma: nazwy bieżącego bytu (żeby menu mówiło pełną nazwą, nie kodem) i przypisania
+sugestii do modułu (żeby wiedzieć, czy ją wyciszenie obejmuje). Kontrakt nie niesie
+modułu ani przy `AodSuggestion`, ani przy `AodStatus`, więc ten plik dochodzi go
+drogą okrężną: `aod.status.get` daje okno i kartę sesji pokazywane w nakładce,
+`window.list` daje moduł i sesję każdego okna komunikacji (`Window.moduleId`),
+`module.list` daje pełną nazwę modułu widzianą w bocznej nawigacji, a `session.list`
+daje nazwę karty sesji. Wszystkie cztery komendy stoją w kontrakcie i rdzeń je
+obsługuje.
+
+Plik nie zgaduje modułu okna, którego `window.list` nie zwróciło, i nie podstawia
+modułu domyślnego. Sugestia bez rozpoznanego modułu nie wpada w wyciszenie modułu —
+cisza bez podstawy jest gorsza od ujawnienia. Brak po stronie kontraktu nazywa
+`wyciszenie-braki-kontraktu.ts`.

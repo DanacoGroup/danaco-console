@@ -9373,3 +9373,30 @@ Rozwijanie, znacznik wyboru, opisy pozycji, wędrówka strzałkami, pole szukani
 
 ## budowa/klient-poprzedni/src/moduly/apps/wybor-z-menu.ts (rejestracja słuchacza)
 Wymiana pozycji z kodu ani ustawienie z odpowiedzi rdzenia nie wołają słuchacza, tak samo jak natywne pole wyboru nie wysyła zdarzenia zmiany przy zmianie z kodu — gdyby wołały, odświeżenie wykazu w oknie filtra zleciłoby odczyt, który sam kończy się odświeżeniem wykazu. Rejestracja jest osobną czynnością, a nie polem konstruktora, bo okna modułu Diagnostics składają powierzchnię najpierw, a podpinają obsługę dopiero wtedy, gdy zna ona całą powierzchnię.
+
+## budowa/klient-poprzedni/src/moduly/apps/zbior-budowy.ts
+
+Odczyt wykazu wdrożeń jest migawką z chwili zapytania, a zdarzenie niesie stan
+z chwili zmiany, więc wpuszczenie odczytu na wierzch cofałoby wdrożenie
+zakończone powodzeniem do stanu biegnącego. Stąd pierwszeństwo strumienia
+zdarzeń nad odpowiedzią komendy — zarówno przy uruchomieniu wdrożenia, jak i przy
+wchłanianiu historii z bazy.
+
+Rdzeń oddaje wdrożenia od najnowszego, a zapis kładzie każdą pozycję na czele
+zbioru, więc odwrócenie wykazu przy wchłanianiu zachowuje porządek zamiast
+wywracać go na drugą stronę. Liczniki ramek zmiany budowy dotyczą wyłącznie ramek
+wchłoniętych przez ten zbiór i nie orzekają, co rdzeń rozgłasza, a czego nie.
+
+## budowa/klient-poprzedni/src/moduly/research/czynnosci-ustalen.ts
+Jedna odpowiedzialność: zachowanie okna ustaleń. Trzy funkcje operatora,
+zapis, powiązanie ze źródłem i edycja, mieszczą się w jednej komendzie:
+powiązanie jedzie polem źródeł, edycja polem identyfikatora ustalenia —
+rozdział na trzy komendy byłby wymyślaniem kontraktu. Zapis ustalenia ze
+wskazaniem źródła, którego rdzeń nie zna, wraca powodzeniem i ustaleniem bez
+pola źródeł, powiązanie przepada bez odmowy — zdanie, które o tym milczy,
+potwierdzałoby czynność, która się nie odbyła; gdy operator źródeł nie
+zaznaczył, nie ma czego brakować i okno o wiązaniu nie mówi ani słowa. Treść
+pustki wykazu ustaleń stoi razem z czterema pozostałymi w osobnym pliku: samo
+zameldowanie braku ustaleń nie mówi, czym Findings Panel jest i jak go
+zapełnić, a przy niewskazanym oknie badania zapraszałoby do zapisu, który
+wróciłby odmową.

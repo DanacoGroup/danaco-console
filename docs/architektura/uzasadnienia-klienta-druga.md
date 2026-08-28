@@ -7331,3 +7331,10 @@ wyjściem pozycje i ich zawężenie, dzięki czemu filtr sprawdza się bez
 stawiania okna. Odpowiedzi w wątkach nie są osobnymi pozycjami wykazu: wątek
 jest jednym znakowaniem, a odpowiedzi widać w dymku; liczba odpowiedzi jedzie
 w zdaniu o pozycji, żeby Operator wiedział, czy wątek ma ciąg dalszy.
+
+## budowa/klient-poprzedni/src/moduly/terminal/stany-okna.ts
+Okno bez stanu błędu jest niegotowe, a w terminalu kosztuje to więcej niż
+gdzie indziej: okno, które po odmowie rdzenia pokazuje pustą listę procesów,
+mówi operatorowi „nic nie biegnie” wtedy, gdy biegnie kompilacja, o którą nie
+udało się zapytać. Kod kontraktu w zdaniu błędu odróżnia odmowę uprawnienia
+od usterki rdzenia.

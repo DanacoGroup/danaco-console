@@ -1,3 +1,6 @@
+// Sprawdziany autozapisu, kopii zapasowych i szeregów wersji: wskaźnik zapisano po zapisie
+// nieudanym, zapisy samoczynne w wykazie wersji Operatora oraz autor wersji podstawiony
+// fałszywie.
 package core
 
 import (
@@ -8,17 +11,8 @@ import (
 	"danacoconsole/shared"
 )
 
-// Sprawdziany autozapisu, kopii zapasowych i szeregów wersji.
-//
-// Szkody, które ten plik ma wykluczyć:
-//  1. wskaźnik „zapisano" pokazany po zapisie NIEUDANYM — Operator zamknie okno
-//     i straci pracę; to jest najgorszy możliwy błąd tego modułu;
-//  2. zapisy samoczynne wchodzące do wykazu wersji Operatora, przez co historia
-//     decyzji zamienia się w dziennik naciśnięć klawisza;
-//  3. autor wersji podstawiony jako Operator tam, gdzie wiersz go nie niesie —
-//     twierdzenie fałszywe dla każdej wersji zapisanej przez model.
-
-// TestAutozapisNieudanyZapisJestWidocznyINazwany jest sednem uczciwości zapisu.
+// TestAutozapisNieudanyZapisJestWidocznyINazwany jest sednem uczciwości zapisu: nieudany
+// zapis nie może wyglądać jak udany.
 func TestAutozapisNieudanyZapisJestWidocznyINazwany(t *testing.T) {
 	powod := "dysk odmówił zapisu: brak miejsca"
 	nastawy := autozapisZlozNastawy(dane.NastawaPracyStudia{
@@ -82,8 +76,8 @@ func TestAutozapisWersjaSzereguJestOdroznialna(t *testing.T) {
 			samoczynna.Label)
 	}
 
-	// Etykieta nadana przez Operatora NIE jest nadpisywana — jego nazwa własna
-	// jest ważniejsza niż podpowiedź rdzenia.
+	// Etykieta Operatora nie jest nadpisywana — nazwa własna jest ważniejsza niż podpowiedź
+	// rdzenia.
 	wlasna := "wersja do wysłania"
 	nazwana := autozapisZlozWersje(dane.WersjaSzereguStudia{
 		Kod: "studio-wer-nazwana", Etykieta: &wlasna,
@@ -94,7 +88,8 @@ func TestAutozapisWersjaSzereguJestOdroznialna(t *testing.T) {
 	}
 }
 
-// TestAutozapisAutorWersjiNiePodstawiaOperatora mierzy trzecią szkodę.
+// TestAutozapisAutorWersjiNiePodstawiaOperatora mierzy trzecią szkodę: autor wersji
+// podstawiony tam, gdzie wiersz go nie niesie.
 func TestAutozapisAutorWersjiNiePodstawiaOperatora(t *testing.T) {
 	bezAutora := autozapisZlozWersje(dane.WersjaSzereguStudia{
 		Kod: "studio-wer-stara", Szereg: string(shared.StudioVersionSeriesOperator),

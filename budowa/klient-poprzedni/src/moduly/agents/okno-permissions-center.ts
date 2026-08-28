@@ -12,35 +12,9 @@ import type { StanAgentow } from './stan-agentow';
 import type { ZrodloZaplecza } from './zrodlo-zaplecza';
 
 /**
- * Permissions Center — okno zarządca modułu Agents.
- *
- * Konfiguracja możliwości, nie kontrola dostępu: nowo założony ekspert ma pełny
- * dostęp operacyjny we wszystkich czterech grupach zakresu, więc odebranie
- * uprawnienia zawęża jego możliwości, a nie stawia bramy przed komendą.
- *
- * Dwa poziomy, dwie komendy. Grupa zakresu należy do eksperta i jedzie
- * `agent.permission.set`. Tryb uprawnień — `manual`, `acceptEdits`, `plan`,
- * `auto`, `dontAsk`, `bypassPermissions` — należy do okna komunikacji
- * i jedzie `window.update`; jest tym samym przełącznikiem, który kanał główny
- * zna jako `--permission-mode`. Zasięg per okno leży więc w części dolnej.
- *
- * Przełącznik pokazuje stan rdzenia, nie ruch palca: przeglądarka przestawia pole
- * wyboru natychmiast, więc każda odmowa kończy się `odswiez()` i wiersz wraca do
- * tego, co rdzeń ma.
- *
- * Zapis zakresu szczegółowego to inna czynność niż zapis grupy: dopisuje wiersz
- * zakresu i zostawia wpis całej grupy nietknięty (`files: granted true` obok
- * `files /opt/danaco: granted false`). Zdanie powodzenia nazywa więc zakres,
- * gdy zakres był podany.
- *
- * Powodzenie rozstrzyga wpis, który wrócił — muszą zgadzać się grupa, zakres
- * i wartość. Argument `przyznane` jest zamiarem Operatora i sam niczego nie
- * potwierdza, a długość wykazu rośnie także wtedy, gdy rdzeń dopisał coś
- * innego, niż proszono: zakres
- * `\u0085/opt/danaco` ze znakiem NEL na przodzie przechodzi
- * przez `trim()` przeglądarki nietknięty — produkcja WhiteSpace języka NEL-a
- * nie zna — a `strings.TrimSpace` rdzenia go zdejmuje, więc rdzeń oddaje wpis
- * o innym zakresie niż zamówiony. Rozbieżność jest odmową.
+ * Permissions Center jest oknem zarządcą modułu Agents: konfiguruje
+ * możliwości eksperta w grupach zakresu i tryb uprawnień okna komunikacji,
+ * nie kontrolę dostępu do aplikacji.
  */
 export interface OknoPermissionsCenter {
   element: HTMLElement;
@@ -51,7 +25,7 @@ export interface OknoPermissionsCenter {
   zamknij(): void;
 }
 
-/** Grupy zakresu wraz z ich znaczeniem dla Operatora. */
+/** Grupy zakresu wraz z ich znaczeniem dla Operatora, wyświetlane w kolejności ustalonej dla tego okna. */
 const OPISY_GRUP: Record<AgentPermissionGroup, string> = {
   [AgentPermissionGroup.Files]: 'odczyt i zapis plików',
   [AgentPermissionGroup.Network]: 'dostęp sieciowy',
@@ -68,17 +42,11 @@ export function utworzOknoPermissionsCenter(
   const okno: StanOkna = utworzStanOkna();
   const zasieg: ZasiegOkien = utworzZasiegOkien(zaplecze);
   const zrodloZakresu: ZrodloZakresuEksperta = utworzZrodloZakresuEksperta(kanal);
-  // Trzy grupy zakresu, których wiersz przełącznika unieść nie potrafi — moduły
-  // zastosowania, macierz ośmiu zakresów izolacji i para „Subagent Network plus
-  // liczba podagentów" — mają własny panel. Wiersze wyżej zostają dla grup
-  // wyrażalnych wartością logiczną.
+  // Trzy grupy zakresu, których wiersz przełącznika unieść nie potrafi, mają własny panel.
   const zakresDzialania: PanelZakresuEksperta = utworzPanelZakresuEksperta(stan, zrodloZakresu);
   const zakresyNarzedzi: PanelZakresowNarzedzi = utworzPanelZakresowNarzedzi(zrodloZakresu);
 
-  // Baner jest elementem obowiązkowym okna, nie ozdobą: bez niego zawężenie
-  // zakresu eksperta czyta się jak odebranie Operatorowi dostępu do własnej
-  // aplikacji. Dostępu do aplikacji pilnuje wyłącznie logowanie; to okno
-  // rozstrzyga, jak szeroko działa ekspert w imieniu już zalogowanego Operatora.
+  // Baner jest elementem obowiązkowym okna: bez niego zawężenie zakresu czyta się jak odebranie dostępu.
   const baner = document.createElement('div');
   baner.className = 'da-baner da-baner--wyjsciowy';
   baner.setAttribute('role', 'note');
@@ -134,15 +102,13 @@ export function utworzOknoPermissionsCenter(
       zakres: wskazanyZakres,
     });
     if (!wynik.udany || wynik.wynik === undefined) {
-      // Wiersz wraca do stanu rdzenia: przełącznik przestawiony przez
-      // przeglądarkę nie ma prawa zostać świadectwem zapisu, którego nie było.
+      // Wiersz wraca do stanu rdzenia: przestawienie przeglądarki nie jest świadectwem zapisu.
       odswiez();
       odpowiedz.pokaz(opisOdmowy('Zapis uprawnienia', wynik.blad?.code, wynik.blad?.message), false);
       return;
     }
     const oddane = wynik.wynik.permissions;
-    // Wchłonięcie idzie przed rozstrzygnięciem, bo wiersze mają pokazać stan
-    // rdzenia niezależnie od tego, czy zapis wyszedł po myśli Operatora.
+    // Wchłonięcie idzie przed rozstrzygnięciem: wiersze mają pokazać stan rdzenia niezależnie od zapisu.
     stan.wchlon({ ...ekspert, permissions: oddane });
     // Świadectwem zapisu jest wpis, który wrócił — o tej grupie, o tym zakresie
     // i o tej wartości.
@@ -178,8 +144,7 @@ export function utworzOknoPermissionsCenter(
   function wierszGrupy(grupa: AgentPermissionGroup, ekspert: Agent): HTMLElement {
     const wpisy = (ekspert.permissions ?? []).filter((wpis) => wpis.group === grupa);
     const calaGrupa = wpisy.find((wpis) => (wpis.scope ?? '') === '');
-    // Brak wiersza znaczy „nie rozstrzygnięto”, a rozstrzygnięciem wyjściowym
-    // jest pełny dostęp operacyjny — dlatego domyślną wartością jest `true`.
+    // Brak wiersza znaczy „nie rozstrzygnięto”; rozstrzygnięciem wyjściowym jest pełny dostęp operacyjny.
     const przyznane = calaGrupa?.granted ?? true;
 
     const przelacznik = document.createElement('input');
@@ -209,17 +174,7 @@ export function utworzOknoPermissionsCenter(
     return element;
   }
 
-  /**
-   * Przywrócenie pełnego dostępu jednym wywołaniem.
-   *
-   * Reset ZDEJMUJE wpisy, a nie przyznaje je z powrotem. Różnica nie jest
-   * kosmetyczna: `agent.permission.set` wyłącznie ustawia wartość, więc po
-   * pierwszym zawężeniu wiersz zakresu zostawałby w wykazie na zawsze — z
-   * wartością przyznaną, ale obecny. `agent.permission.remove` bez wskazania
-   * grupy zdejmuje wpisy wszystkich grup i przywraca stan „brak ustawienia =
-   * wartość domyślna", czyli ten, w którym ekspert był przed pierwszym
-   * zawężeniem.
-   */
+  /** Przywrócenie pełnego dostępu jednym wywołaniem: reset zdejmuje wpisy, a nie przyznaje je z powrotem. */
   async function resetuj(): Promise<void> {
     const ekspert = stan.wybrany();
     if (ekspert === null) {
@@ -254,8 +209,7 @@ export function utworzOknoPermissionsCenter(
 
   function odswiez(): void {
     const ekspert = stan.wybrany();
-    // Zakres wpisany dla jednego eksperta nie ma prawa czekać w polu przy
-    // drugim: pierwszy ruch przełącznika zapisałby go nie temu, komu miał.
+    // Zakres wpisany dla jednego eksperta nie może czekać w polu przy drugim ekspercie.
     if ((ekspert?.id ?? '') !== pokazany) {
       pokazany = ekspert?.id ?? '';
       zakres.kontrolka.value = '';
@@ -283,8 +237,7 @@ export function utworzOknoPermissionsCenter(
       await zasieg.wczytaj(idSesji);
     },
 
-    // Okno nie trzyma już wykazu pokrycia: wszystkie cztery grupy zakresu mają
-    // drogę do rdzenia, więc nie ma czego meldować jako braku.
+    // Okno nie trzyma już wykazu pokrycia: wszystkie cztery grupy zakresu mają drogę do rdzenia.
     zamknij: () => undefined,
   };
 }

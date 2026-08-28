@@ -8708,3 +8708,9 @@ wprost, bo moduł montuje się bez okna. Kod modułu jest stałą, bo czyta go
 także pas okien pomocniczych — po nim idzie spis pozycji i profil rozmowy
 modułu, a dwa osobne zapisy tej samej nazwy w jednym pliku rozjechałyby się
 przy pierwszej zmianie.
+
+## budowa/klient-poprzedni/src/moduly/agents/okno-permissions-center.ts
+Konfiguracja możliwości, nie kontrola dostępu: nowo założony ekspert ma pełny dostęp operacyjny we wszystkich czterech grupach zakresu, więc odebranie uprawnienia zawęża jego możliwości, a nie stawia bramy przed komendą. Grupa zakresu należy do eksperta i jedzie osobną komendą, a tryb uprawnień okna komunikacji jedzie inną — jest tym samym przełącznikiem, który kanał główny zna z linii poleceń. Przełącznik pokazuje stan rdzenia, nie ruch palca: przeglądarka przestawia pole wyboru natychmiast, więc każda odmowa kończy się odświeżeniem i wiersz wraca do tego, co rdzeń ma. Zapis zakresu szczegółowego to inna czynność niż zapis grupy: dopisuje wiersz zakresu i zostawia wpis całej grupy nietknięty. Powodzenie rozstrzyga wpis, który wrócił — muszą zgadzać się grupa, zakres i wartość, ponieważ argument przyznania jest tylko zamiarem Operatora i sam niczego nie potwierdza.
+
+## budowa/klient-poprzedni/src/moduly/agents/okno-permissions-center.ts (reset dostępu)
+Różnica między resetem a przyznaniem nie jest kosmetyczna: komenda ustawienia wyłącznie ustawia wartość, więc po pierwszym zawężeniu wiersz zakresu zostawałby w wykazie na zawsze, z wartością przyznaną, ale obecny. Komenda usunięcia bez wskazania grupy zdejmuje wpisy wszystkich grup i przywraca stan „brak ustawienia = wartość domyślna”, czyli ten, w którym ekspert był przed pierwszym zawężeniem.

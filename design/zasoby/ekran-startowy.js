@@ -38,6 +38,9 @@
        data-czekaj            zatrzymaj przed wygaszeniem do czasu `gotowe()`
        data-powtarzaj         graj w kółko — wyłącznie do oglądania
 
+   Przy `prefers-reduced-motion` kamera stoi, ślad świetlny i pierścień nie
+   powstają; czas biegu i zdarzenie końca zostają bez zmian.
+
    Koniec biegu zgłasza zdarzenie `ekran-startowy-koniec`, bąbelkujące. Powłoka
    na nim pokazuje okno programu i zamyka ekran startowy.
    ============================================================================ */
@@ -79,6 +82,11 @@ function zaloz(host) {
 
   var W=0,H=0,DPR=1,unit=1,cX=0,cY=0;
   var cam={yaw:0,pitch:0,dist:3.2,f:1.9};
+  /* Zniesiony ruch: kamera stoi, ślad świetlny i pierścień nie powstają. Znak
+     kreśli się i wypełnia jak zwykle — to zmiana kształtu, nie ruch kadru, więc
+     nie wywołuje mdłości. Czas biegu i zdarzenie końca zostają bez zmian, bo
+     powłoka czeka na `ekran-startowy-koniec`, żeby postawić okno. */
+  var SKROMNIE = !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
   function p3(x,y,z){
     var cy=Math.cos(cam.yaw),sy=Math.sin(cam.yaw);
     var rx=x*cy-z*sy, rz=x*sy+z*cy;
@@ -185,14 +193,18 @@ function zaloz(host) {
     var prev=t; t+=dt;
     // kamera: lekki obrót w fazie rysowania, wejście w znak na końcu
     var io=ss(t,T.out0,T.end);
-    cam.yaw   = (1-eOut(ss(t,0,T.fill1)))*0.55 + Math.sin(t*0.8)*0.06*(1-io);
-    cam.pitch = (1-eOut(ss(t,0,T.fill1)))*0.18 + Math.sin(t*0.6)*0.03*(1-io);
-    cam.dist  = 3.2 - 1.85*eIn(io);
-    if(prev<T.dot1 && t>=T.dot1) rings.push({t:0,life:0.9*SC});
+    if(SKROMNIE){
+      cam.yaw=0; cam.pitch=0; cam.dist=3.2;
+    } else {
+      cam.yaw   = (1-eOut(ss(t,0,T.fill1)))*0.55 + Math.sin(t*0.8)*0.06*(1-io);
+      cam.pitch = (1-eOut(ss(t,0,T.fill1)))*0.18 + Math.sin(t*0.6)*0.03*(1-io);
+      cam.dist  = 3.2 - 1.85*eIn(io);
+      if(prev<T.dot1 && t>=T.dot1) rings.push({t:0,life:0.9*SC});
+    }
     for(var i=rings.length-1;i>=0;i--){ rings[i].t+=dt; if(rings[i].t>=rings[i].life) rings.splice(i,1); }
     // ślad świetlny czubka kreślącego
     var f=ss(t,T.draw0,T.draw1);
-    if(f>0&&f<1){
+    if(!SKROMNIE && f>0&&f<1){
       var pA=pointAt(CH1,PM1,f), pB=pointAt(CH2,PM2,f);
       trail.push({x:pA.x,y:pA.y,a:1},{x:pB.x,y:pB.y,a:1});
     }

@@ -1,5 +1,43 @@
--- Migracja 400 dodaje do katalogu akcji pozycje kafli komponentów własnych
--- oraz funkcji listwy ustawień Strony głównej.
+-- Migracja 400 — akcje Strefy 2 i Strefy 3 Strony głównej w katalogu akcji.
+--
+-- Zaczyn katalogu (migracja 009) wziął komendy nawigacji platformy, sesji,
+-- okien, konfiguracji i kanałów oraz pasek promptu każdego modułu. Poza nim
+-- zostały dwie strefy Strony głównej, które opracowanie interfejsu użytkownika
+-- wymienia POZYCJA PO POZYCJI, wraz z etykietą działania każdej z nich:
+--
+--   Strefa 2 — kafle komponentów własnych: Automations („Zbuduj automatykę”),
+--   Agents („Skonfiguruj agenta”), Workspace („Załóż projekt”), Assistant
+--   („Ustaw profil asystenta”), panel wysuwany z listą komponentów zapisanych
+--   oraz rozwinięcie `Operacje ▾` z usunięciem komponentu.
+--
+--   Strefa 3 — listwa ustawień: okno konfiguracji, Mobile i Always On Display.
+--
+-- Okno konfiguracji ma już pozycję w katalogu (`config.get` z zaczynu), więc
+-- z listwy dochodzą dwie funkcje globalne. Nazwy kolumny `nazwa` są etykietami
+-- z opracowania, nie tłumaczeniem nazw komend — kafel ma w panelu mówić to samo,
+-- co mówi na Stronie głównej.
+--
+-- ── Czego tu NIE MA i dlaczego ──────────────────────────────────────────────
+-- Rozwinięcie `Operacje ▾` kafla wymienia cztery czynności: duplikowanie,
+-- eksport, import i usunięcie. Kontrakt ma komendę wyłącznie na usunięcie
+-- (`component.delete`), więc wchodzi tylko ono. Pozycja katalogu wskazująca
+-- komendę, której w rejestrze rdzenia nie ma, byłaby atrapą w oknie — kontrola
+-- stoi w `TestKatalogAkcjiWskazujeKomendyKontraktu`.
+--
+-- `component.assign` zostaje poza katalogiem świadomie: kontrakt zapisuje przy
+-- tej komendzie, że znaczenie przypisania nie zostało rozstrzygnięte. Kontrolka
+-- czynności o nierozstrzygniętym skutku jest gorsza od jej braku, bo Operator
+-- naciska ją, nie wiedząc, co się stanie. Wiersz dojdzie razem z rozstrzygnięciem.
+--
+-- ── Kod pozycji ─────────────────────────────────────────────────────────────
+-- Cztery kafle wołają JEDNĄ komendę (`component.create`) z różnym rodzajem
+-- komponentu, a kolumna `kod` ma warunek UNIQUE. Kod pozycji jest więc nazwą
+-- komendy złączoną z wartością `ComponentKind` z kontraktu — pełnymi nazwami
+-- obu bytów, bez ani jednego znaku wymyślonej numeracji.
+--
+-- Warunek dostępności zostaje pusty we wszystkich wierszach: żadna z tych
+-- komend nie wymaga w żądaniu środowiska, sesji, okna, kolejki ani kanału.
+-- Kolejność podejmuje wykaz zaczynu (poziom globalny kończył się na 13).
 
 WITH katalog(kod, nazwa, opis, ikona, komenda, kolejnosc) AS (
     VALUES

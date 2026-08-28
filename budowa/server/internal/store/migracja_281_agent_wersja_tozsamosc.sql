@@ -1,5 +1,25 @@
--- Migracja 281 utrwala widoczność i poziomy pamięci w wersji eksperta, żeby
--- migawka AgentVersionSnapshot spełniała pola wymagane przez kontrakt.
+-- Migracja 281 — widoczność i poziomy pamięci utrwalone w wersji eksperta
+-- (`agent.version.get`, pole `AgentVersionSnapshot`).
+--
+-- `AgentVersion` niesie etykietę, opis zmiany, sprawcę i sumę kontrolną, ale
+-- NIE niesie treści. Podglądu wersji nie ma z czego złożyć, a przywrócenie było
+-- dotąd jedynym sposobem zobaczenia, co w wersji stało — czyli obejrzenie
+-- historii wymagało jej zmiany. Te dwie kolumny domykają migawkę do kształtu,
+-- którego wymaga kontrakt: widoczność i poziomy pamięci są w `Agent` polami
+-- WYMAGANYMI, więc migawka bez nich nie da się złożyć bez zgadywania.
+--
+-- CZEGO TU CELOWO NIE MA: warstw promptu. Warstwy zmienia `agent.layer.set`,
+-- która NIE podnosi licznika `agent.wersja` i nie zakłada migawki. Kolumna
+-- z warstwami wypełniana wyzwalaczem niosłaby więc warstwy BIEŻĄCE wpisane do
+-- wersji starej — czyli odpowiedź nieprawdziwą o tym, co w tej wersji stało.
+-- Pole `layers` snapshotu zostaje puste dopóty, dopóki warstwy nie wersjonują
+-- się razem z tożsamością.
+--
+-- Poziomy pamięci wchodzą napisem rozdzielonym przecinkiem, a nie tabelą
+-- podrzędną migawki: migawkę zakłada wyzwalacz, a wyzwalacz nie umie wstawić
+-- wielu wierszy z podzapytania w jednym kroku bez pętli, której SQLite nie ma.
+-- Napis jest tu zapisem migawkowym — nikt go nie zapytuje po wartości, tylko
+-- odczytuje w całości razem z wersją.
 
 ALTER TABLE agent_wersja ADD COLUMN widocznosc TEXT NOT NULL DEFAULT 'global';
 ALTER TABLE agent_wersja ADD COLUMN poziomy_pamieci TEXT NOT NULL DEFAULT '';
@@ -13,9 +33,11 @@ UPDATE agent_wersja
                                      FROM agent_pamiec_poziom p
                                     WHERE p.agent_id = agent_wersja.agent_id), '');
 
--- Oba wyzwalacze idą przez zdjęcie i założenie od nowa, ponieważ SQLite nie
--- zmienia treści wyzwalacza w miejscu. Warunek WHEN i lista pól zostają te
--- same — dochodzą wyłącznie dwie kolumny.
+-- ── Wyzwalacze na nowo ───────────────────────────────────────────────────────
+-- SQLite nie zmienia treści wyzwalacza w miejscu, więc oba idą przez zdjęcie
+-- i założenie od nowa. Warunek WHEN i lista pól zostają te same — dochodzą
+-- wyłącznie dwie kolumny.
+
 DROP TRIGGER agent_wersja_po_zalozeniu;
 DROP TRIGGER agent_wersja_po_zmianie;
 

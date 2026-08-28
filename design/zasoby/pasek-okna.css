@@ -15,6 +15,12 @@
 }
 .dn-pasek-okna[hidden] { display: none; }
 
+/* Zestaw jednego modułu. Pasek nosi tyle zestawów, ile modułów ma karta w tym
+   oknie; `display: contents` zostawia rozmieszczenie paskowi, więc grupy
+   i rozdzielacze stoją tak samo jak przed wprowadzeniem zestawów. */
+.dn-pasek-okna-zestaw { display: contents; }
+.dn-pasek-okna-zestaw[hidden] { display: none; }
+
 /* Nazwa modułu ustępuje pierwsza: przy wąskim oknie zostaje sam znak modułu,
    nazwa skraca się wielokropkiem. Narzędzia mają pierwszeństwo przed napisem. */
 .dn-pasek-okna-modul {

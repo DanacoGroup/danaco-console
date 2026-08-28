@@ -1,6 +1,28 @@
--- Migracja 165 zakłada tabele zasobów lokalizacyjnych i ich kluczy oraz kwestii napisów wraz z indeksami wspierającymi odczyt okna i panelu.
+-- Migracja 165 — lokalizacja oprogramowania (`translate.resource.*`) i napisy
+-- (`translate.subtitle.*`, `translate.dubbing.script.build`).
+--
+-- Zasób lokalizacyjny to plik kluczy wniesiony do okna: JSON, YAML, properties,
+-- Android XML, iOS strings i stringsdict, RESX, gettext PO. Klucz jest bytem
+-- adresowanym po nazwie w obrębie zasobu (`resource.key.context.set` przyjmuje
+-- `key`, nie identyfikator), więc para (zasób, klucz) jest kluczem naturalnym.
+--
+-- `formy_mnogie` trzyma JSON, i to jest wyjątek świadomy: liczba form mnogich
+-- zależy od języka (angielski ma dwie, polski trzy, arabski sześć), a nazwy
+-- form są nazwami CLDR (`one`, `few`, `many`, `other`). Tabela dziecka miałaby
+-- tyle wierszy, ile form, i ani jednego zapytania, które by po nich zawężało —
+-- formy czyta się zawsze kompletem razem z kluczem.
+--
+-- `zrzut_zasob_id` wskazuje zasób modułu Design (`zasob_design`) ze zrzutem
+-- ekranu, na którym klucz widać. Odwołanie jest miękkie (kod zewnętrzny, bez
+-- klucza obcego), bo zrzut należy do innego modułu i jego usunięcie nie ma
+-- prawa skasować kontekstu klucza.
+--
+-- Kwestia napisów mieszka przy panelu, nie przy oknie: napisy są tłumaczone,
+-- więc każdy język ma własne taktowanie i własny podział linii. Import napisów
+-- wnosi kwestie źródłowe do okna, dlatego `panel_id` bywa pusty — wtedy kwestia
+-- jest kwestią materiału źródłowego, nie przekładu.
 
--- Zakłada tabelę zasob_lokalizacji niosącą plik kluczy wniesiony do okna w jednym z ośmiu obsługiwanych formatów lokalizacji.
+-- ── Zasób lokalizacyjny ─────────────────────────────────────────────────────
 CREATE TABLE zasob_lokalizacji (
     id                       INTEGER PRIMARY KEY AUTOINCREMENT,
     identyfikator_zewnetrzny TEXT    NOT NULL UNIQUE,
@@ -20,7 +42,9 @@ CREATE TABLE klucz_lokalizacji (
     zasob_id       INTEGER NOT NULL REFERENCES zasob_lokalizacji(id) ON DELETE CASCADE,
     klucz          TEXT    NOT NULL,
     tresc          TEXT    NOT NULL,
-    -- Znaczniki podstawienia z treści, rozdzielone nową linią, bez osobnej tabeli.
+    -- Znaczniki podstawienia wypisane z treści, rozdzielone znakiem nowej
+    -- linii. Kontrakt oddaje je wykazem; kolumna trzyma je w postaci, która nie
+    -- wymaga drugiej tabeli na byt bez własnej tożsamości.
     znaczniki      TEXT,
     kontekst       TEXT,
     zrzut_zasob_id TEXT,
@@ -29,7 +53,7 @@ CREATE TABLE klucz_lokalizacji (
     UNIQUE(zasob_id, klucz)
 );
 
--- Zakłada tabelę kwestia_napisow niosącą wiersz napisów przypisany do panelu tłumaczenia albo do materiału źródłowego okna.
+-- ── Kwestia napisów ─────────────────────────────────────────────────────────
 CREATE TABLE kwestia_napisow (
     id         INTEGER PRIMARY KEY AUTOINCREMENT,
     okno_id    INTEGER NOT NULL REFERENCES okno_tlumaczenia(id) ON DELETE CASCADE,

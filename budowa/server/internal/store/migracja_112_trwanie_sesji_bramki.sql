@@ -1,3 +1,24 @@
--- Dodaje do tabeli sesja_bramki kolumnę trwanie, zapisującą długość życia sesji, używaną do wyliczenia chwili wygaśnięcia przy każdym odnowieniu.
+-- Migracja 112 — długość życia sesji bramki zapisana przy sesji.
+--
+-- Migracja 071 dała `sesja_bramki` kolumnę `wygasa`, czyli
+-- chwilę końca, i nic więcej. Przełącznik „nie wyloguj mnie" (`keepSignedIn`)
+-- rozstrzygał wyłącznie o pierwszym wyliczeniu tej chwili, a potem ginął:
+-- `auth.token.refresh` nie miał skąd wiedzieć, na jak długo sesję przedłużyć,
+-- więc brał stałą rdzenia (12 h). Pierwsze uruchomienie klienta woła
+-- przedłużenie zawsze (`client/src/uwierzytelnienie/ekran-logowania.ts`), więc
+-- sesja roczna kurczyła się do doby roboczej przy pierwszym starcie — dokładnie
+-- ten objaw, który przełącznik miał usunąć.
+--
+-- Zapisujemy trwanie, nie flagę. Kolumna logiczna `keep_signed_in` mówiłaby
+-- o żądaniu, a rdzeń potrzebuje odpowiedzi na inne pytanie: „o ile przesunąć
+-- wygaśnięcie". Trwanie odpowiada wprost, przeżywa zmianę stałych rdzenia
+-- (sesja założona rok temu przedłuża się tak, jak ją założono) i nie wymusza,
+-- żeby baza znała nazwę przełącznika z kontraktu. Wygasanie pozostaje
+-- przesuwne: `wygasa = teraz + trwanie` przy każdym odnowieniu.
+--
+-- Zero znaczy „sesja sprzed tej migracji". Domyślna zerówka nie jest długością
+-- ani wartością brakującą do zgadnięcia — jest jawnym śladem wiersza założonego,
+-- gdy kolumny nie było. Rdzeń bierze wtedy trwanie podstawowe (12 h), czyli
+-- zachowuje się dokładnie tak, jak zachowywał się dla tych wierszy dotąd.
 
 ALTER TABLE sesja_bramki ADD COLUMN trwanie INTEGER NOT NULL DEFAULT 0;

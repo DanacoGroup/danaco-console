@@ -30,3 +30,37 @@
     });
   }
 })();
+
+/* Obszar, który się przewija, musi dać się osiągnąć z klawiatury. Bez tego treść
+   dłuższa niż pojemnik jest dostępna wyłącznie myszą — czytnik ekranu i nawigacja
+   tabulatorem zatrzymują się na krawędzi i reszta wpisu przestaje istnieć.
+
+   Warunek jest mierzony, nie zakładany: znacznik dostaje ognisko tylko wtedy, gdy
+   naprawdę przewija się w pionie ORAZ nie ma w środku niczego ogniskowalnego.
+   Ryczałtowe `tabindex` na każdym pojemniku dokładałoby przystanki tabulatora
+   w miejscach, gdzie użytkownik i tak dojdzie do treści przyciskiem lub odnośnikiem. */
+(function () {
+  var OGNISKOWALNE = 'a[href],button,input,select,textarea,[tabindex]:not([tabindex="-1"])';
+
+  function udostepnijPrzewijane() {
+    document.querySelectorAll('*').forEach(function (el) {
+      if (el.hasAttribute('tabindex')) return;
+      var styl = getComputedStyle(el);
+      var przewijalne = (el.scrollHeight > el.clientHeight + 1 &&
+                         (styl.overflowY === 'auto' || styl.overflowY === 'scroll')) ||
+                        (el.scrollWidth > el.clientWidth + 1 &&
+                         (styl.overflowX === 'auto' || styl.overflowX === 'scroll'));
+      if (!przewijalne) return;
+      if (el.querySelector(OGNISKOWALNE)) return;
+      el.setAttribute('tabindex', '0');
+    });
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', udostepnijPrzewijane);
+  } else {
+    udostepnijPrzewijane();
+  }
+  /* Odsłonięcie karty albo panelu zmienia to, co się przewija. */
+  document.addEventListener('click', function () { setTimeout(udostepnijPrzewijane, 0); });
+})();

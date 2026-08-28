@@ -1,5 +1,19 @@
--- Migracja 144 zakłada dwie tabele: przebiegi skanowania bezpieczeństwa okna Dev Tools oraz ich znaleziska, rozdzielone ze względu na osobne zapytania.
-
+-- Migracja 144 — przebiegi skanowania i ich znaleziska (Developer, zakładka
+-- Bezpieczeństwo w Dev Tools).
+--
+-- Skan i znalezisko rozdzielono na dwie tabele, bo pytanie o nie zadaje się
+-- osobno: `developer.scan.run` zakłada przebieg i oddaje jego nagłówek,
+-- a `developer.scan.result.list` czyta znaleziska z filtrem po rodzaju i wadze,
+-- często dla kilku przebiegów naraz. Jedna tabela kazałaby powtarzać nagłówek
+-- przy każdym znalezisku.
+--
+-- Rodzaje skanu przebiegu zapisujemy jako tekst rozdzielony przecinkiem.
+-- Rodzajów jest cztery i są zamkniętym słownikiem kontraktu (ScanKind); tabela
+-- pośrednia na cztery wartości byłaby złożonością bez odbiorcy.
+--
+-- Znalezisko nie ma stanu „przyjęte/odrzucone”. Skan jest pomiarem stanu
+-- repozytorium w danej chwili, a nie listą zadań: kolejny przebieg zakłada nowe
+-- znaleziska, a poprzednie zostają śladem tamtego pomiaru.
 CREATE TABLE developer_skan (
     id          INTEGER PRIMARY KEY AUTOINCREMENT,
     kod         TEXT    NOT NULL UNIQUE,

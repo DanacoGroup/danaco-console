@@ -1,5 +1,14 @@
--- Migracja 271 wprowadza trwały zapis stanu kroku przebiegu wraz z ładunkami wejścia i wyjścia,
--- redagowanymi przy odczycie, a nie przy zapisie, aby regułę redakcji dało się zmieniać.
+-- Migracja 271 — stan kroku przebiegu wraz z ładunkami
+-- (`automation.execution.steps`, `automation.execution.payload.get`).
+--
+-- Stan przebiegu jest wyprowadzany z pozycji kolejki i tak zostaje. Ta tabela
+-- jest czym innym: zapisem TRWAŁYM stanu kroku wraz z jego danymi wejściowymi
+-- i wyjściowymi. Kolejka po opróżnieniu (`clear`) traci pozycje, a drążenie do
+-- poziomu kroku i podgląd ładunku mają dalej mieć co pokazać — inaczej historia
+-- przebiegu kończyłaby się w chwili sprzątnięcia kolejki.
+--
+-- Ładunki są redagowane przy odczycie, nie przy zapisie: reguła redakcji
+-- sekretów bywa zmieniana, a zapis zredagowany nie da się odredagować.
 CREATE TABLE krok_przebiegu_automatyki (
     id              INTEGER PRIMARY KEY AUTOINCREMENT,
     przebieg_id     INTEGER NOT NULL REFERENCES przebieg_automatyki(id) ON DELETE CASCADE,

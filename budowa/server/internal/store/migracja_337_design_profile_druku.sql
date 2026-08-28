@@ -1,5 +1,19 @@
--- Migracja 337 dodaje profile wydania do druku z ustawieniami spadu,
--- znaczników, przestrzeni barw i nośnika.
+-- Migracja 337 — profile wydania do druku (spady, znaczniki, przestrzeń barw,
+-- rozdzielczość, profil ICC, nośnik).
+--
+-- Profil jest bytem okna, nie parametrem jednego wywołania: ta sama drukarnia
+-- dostaje od Operatora te same nastawy przez cały rok, a przepisywanie ich
+-- przy każdym wydaniu jest drogą do pliku wydanego bez spadu. Kontrola
+-- przeddrukowa (`design.print.preflight`) i wydanie (`design.print.export`)
+-- czytają stąd JEDNE nastawy, więc nie ma jak się rozjechać to, wobec czego
+-- mierzymy, z tym, co wydajemy.
+--
+-- Nastawy podane wprost w żądaniu (`profile`) nie mają tu wiersza — są
+-- jednorazowe z zamysłu i nie mają prawa zostać po sobie w oknie.
+--
+-- Rozdzielczość i spad dopuszczają NULL: brak wskazania znaczy „bierz
+-- domyślne rdzenia", a zapisane zero znaczyłoby „drukuj bez spadu", co jest
+-- innym rozstrzygnięciem i innym wynikiem w drukarni.
 
 CREATE TABLE profil_druku_design (
     id                       INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -21,7 +35,6 @@ CREATE TABLE profil_druku_design (
     zaktualizowano           TEXT    NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now'))
 );
 
--- Wykaz profili wydania do druku czyta się dla danego okna, od ostatnio
--- zmienianego profilu wydania do druku.
+-- design.print.profile.list czyta profile okna, od ostatnio zmienianego.
 CREATE INDEX idx_profil_druku_design_okno
     ON profil_druku_design(okno, zaktualizowano DESC, id DESC);

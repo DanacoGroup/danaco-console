@@ -1,5 +1,21 @@
--- Migracja 290 dodaje tabele sond kondycji oraz serii ich wyników,
--- opisujących zmierzony stan produktu w czasie.
+-- Migracja 290 — sondy kondycji i seria ich wyników (rodzina `health.*`).
+--
+-- Rodzina opisuje STAN PRODUKTU, więc wartość, której nikt nie zmierzył, nie ma
+-- prawa się tu znaleźć. Dlatego są dwie tabele, a nie jedna: definicja sondy
+-- mówi, CO i jak często mierzyć, a wiersz wyniku jest zapisem JEDNEGO pomiaru
+-- wykonanego o znanej godzinie. Dostępność (`health.uptime.get`) liczy się
+-- wyłącznie z wierszy serii — nie ma kolumny „dostępność", którą dałoby się
+-- ustawić bez pomiaru.
+--
+-- `ostatni_stan` i `ostatni_przebieg` w definicji są odbiciem ostatniego wiersza
+-- serii, a nie drugim źródłem prawdy: wykaz sond (`health.probe.list`) pokazuje
+-- je obok definicji, żeby okno nie musiało dociągać serii dla każdej sondy.
+-- Zapisuje je wyłącznie przebieg, razem z wierszem wyniku, w jednej transakcji.
+--
+-- Rodzaj sondy i stan wyniku są wartościami kontraktu (HealthProbeKind,
+-- HealthProbeStatus) wprost. Warunku CHECK tu nie ma z tego samego powodu co
+-- przy żetonach Designu: kontrakt bywa rozszerzany, a wartość spoza wykazu
+-- odbija adapter — odmową nazwaną wołającemu, nie awarią schematu.
 
 CREATE TABLE sonda_kondycji (
     id                       INTEGER PRIMARY KEY AUTOINCREMENT,

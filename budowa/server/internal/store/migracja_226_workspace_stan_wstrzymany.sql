@@ -1,5 +1,15 @@
--- Migracja 226 rozszerza dopuszczalne stany projektu o stan wstrzymany,
--- odtwarzając tabelę projekt z nowym warunkiem kolumny stan.
+-- Migracja 226 — stan projektu „wstrzymany".
+--
+-- Kontrakt zna trzy stany projektu (`active`, `paused`, `archived`), a schemat
+-- z migracji 035 dopuszczał dwa. Skutek był taki, że komenda ustawiająca stan
+-- kończyła się odmową o warunku kolumny — zdaniem o schemacie, a nie o pracy
+-- Operatora. Opracowanie modułu wymaga stanu wstrzymanego wprost (rozdz. 6.2:
+-- „projekt tymczasowo nieaktywny, dane zachowane"), więc brak był w schemacie,
+-- nie w żądaniu.
+--
+-- SQLite nie zmienia warunku kolumny w miejscu, dlatego tabela powstaje na nowo
+-- i przejmuje wiersze. Więzy obce wskazujące `projekt(id)` odtwarzają się same,
+-- bo klucze główne idą przepisane bez zmiany wartości.
 
 PRAGMA foreign_keys = off;
 

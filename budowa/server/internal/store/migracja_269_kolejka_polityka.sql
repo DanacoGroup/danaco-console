@@ -1,5 +1,30 @@
--- Migracja 269 wprowadza politykę kolejki jako kolumny tabeli kolejki oraz rodzaj kolejki
--- uruchamianej z zegara, w jednym kroku przepisania tabeli.
+-- Migracja 269 — polityka kolejki (`queue.policy.set`) oraz kolejka odpalona
+-- z zegara.
+--
+-- Dwie rzeczy w jednym kroku, bo obie zmieniają tabelę `kolejka`, a SQLite nie
+-- zmienia warunku kolumny w miejscu: rozdzielenie ich na dwa kroki znaczyłoby
+-- dwa przepisania tej samej tabeli.
+--
+-- POLITYKA idzie kolumnami, nie tabelą obok. Powód jest w kontrakcie:
+-- odwzorowanie `QueueScope` wskazuje `kolejka.zasieg`. I zgadza się to z rzeczą:
+-- `Queue.policy` jest polem bytu `Queue` o krotności jeden do jednego, bez
+-- własnego cyklu życia. Tabela obok kazałaby każdemu odczytowi kolejki robić
+-- złączenie po to, by dowiedzieć się rzeczy o samej kolejce.
+--
+-- RODZAJ dostaje trzecią wartość — `harmonogram`. Warunek z migracji 003
+-- dopuszczał `sesyjna` i `multitasking`, a budzik harmonogramu zakłada kolejkę
+-- rodzaju `harmonogram`, żeby przebieg odpalony z zegara dał się odróżnić od
+-- kolejki sesyjnej i od przekazania okna. Skutek braku był taki, że automatyka
+-- z harmonogramem NIGDY się nie uruchamiała: budzik odbijał się od warunku
+-- kolumny, a okno Scheduler pokazywało cykliczność, która nic nie robi.
+-- Brak był w schemacie, nie w żądaniu.
+--
+-- Wartości domyślne polityki są wartościami domyślnymi MODELU KONFIGURACJI:
+-- zasięg lokalny, bez ograniczenia współbieżności i tempa, trzy próby
+-- z wycofaniem wykładniczym i rozproszeniem, kolejka zadań martwych włączona.
+-- Kolejka założona przed tym krokiem dostaje je tak samo jak założona po nim.
+--
+-- Zasięg idzie słownikiem bazy (kolumna `baza` wyliczenia `QueueScope`).
 
 PRAGMA foreign_keys = off;
 

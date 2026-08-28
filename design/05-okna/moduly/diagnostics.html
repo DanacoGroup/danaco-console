@@ -14,7 +14,6 @@
 <link rel="stylesheet" href="../../zasoby/rama.css">
 <link rel="stylesheet" href="../../zasoby/okna-modalne.css">
 <style>
-  .kanwa { padding:var(--dn-od-4); font-size:var(--dn-fs-md); line-height:var(--dn-lh-luzny); color:var(--dn-tekst); }
   .dg-kpi { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:var(--dn-od-2); padding:var(--dn-od-3); }
   .dg-kpi-karta { border:1px solid var(--dn-obrys-subtelny); border-radius:var(--dn-r-sm); padding:var(--dn-od-2) var(--dn-od-3); background:var(--dn-powierzchnia); }
   .dg-kpi-karta .etk { font-size:var(--dn-fs-xs); text-transform:uppercase; letter-spacing:var(--dn-ls-wersaliki); color:var(--dn-tekst-3); }
@@ -24,11 +23,13 @@
   .dg-log .wiersz { display:flex; gap:var(--dn-od-2); padding:var(--dn-od-1) var(--dn-od-3); border-bottom:1px solid var(--dn-obrys-subtelny); }
   .dg-log .czas { color:var(--dn-tekst-3); flex:none; }
   .dg-log .poz { flex:none; width:52px; }
-  .dg-log .poz-err { color:var(--dn-czerwien-400); }
-  .dg-log .poz-warn { color:var(--dn-bursztyn-400); }
+  .dg-log .poz-err { color:var(--dn-blad-tekst); }
+  .dg-log .poz-warn { color:var(--dn-ostrzezenie-tekst); }
   .dg-log .poz-info { color:var(--dn-sygnal-300); }
   .dg-filtr { display:flex; gap:var(--dn-od-1); padding:var(--dn-od-1) var(--dn-od-3); border-bottom:1px solid var(--dn-obrys-subtelny); flex-wrap:wrap; }
-  .dg-filtr .chip { font-size:var(--dn-fs-xs); padding:var(--dn-od-1) var(--dn-od-2); border:1px solid var(--dn-obrys-subtelny); border-radius:var(--dn-r-sm); color:var(--dn-tekst-2); }
+  /* Bez jawnego tła przycisk bierze `buttonface` z arkusza przeglądarki —
+     w motywie ciemnym Chromium daje #6B6B6B, szarość spoza palety. */
+  .dg-filtr .chip { font-size:var(--dn-fs-xs); padding:var(--dn-od-1) var(--dn-od-2); border:1px solid var(--dn-obrys-subtelny); border-radius:var(--dn-r-sm); background:transparent; color:var(--dn-tekst-2); }
   .dg-filtr .chip[aria-pressed="true"] { background:var(--dn-powierzchnia-2); color:var(--dn-tekst); }
 </style>
 </head>
@@ -348,10 +349,12 @@
 
 
   <!-- ══ PAS KART SESJI ══ -->
-  <div class="dn-karty-sesji" role="tablist" aria-label="Karty sesji">
-    <button class="dn-karta-sesji" role="tab" aria-selected="true" type="button"><span class="pt-tetno" aria-hidden="true"></span><span>Błąd 500 doręczeń — analiza</span></button>
-    <button class="dn-karta-sesji" role="tab" aria-selected="false" type="button"><span>Spadek wydajności kolejki</span></button>
-    <button class="dn-karta-sesji" role="tab" aria-selected="false" type="button"><span>Przegląd zdrowia przed wydaniem</span></button>
+  <div class="dn-karty-sesji">
+    <div class="dn-karty-sesji-tory" role="tablist" aria-label="Karty sesji">
+      <button class="dn-karta-sesji" role="tab" aria-selected="true" type="button"><span class="pt-tetno" aria-hidden="true"></span><span>Błąd 500 doręczeń — analiza</span></button>
+      <button class="dn-karta-sesji" role="tab" aria-selected="false" type="button"><span>Spadek wydajności kolejki</span></button>
+      <button class="dn-karta-sesji" role="tab" aria-selected="false" type="button"><span>Przegląd zdrowia przed wydaniem</span></button>
+    </div>
     <button class="dn-btn-ikona" type="button" aria-label="Nowa karta" data-komunikat="Nowa karta sesji otwiera wybór materiału diagnostycznego i trybu." data-komunikat-tytul="Nowa karta"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></button>
     <span data-przywroc-pas style="display:inline-flex;gap:var(--dn-od-1);align-items:center;margin-left:var(--dn-od-2)"></span>
   </div>
@@ -383,7 +386,7 @@
       </div>
       <div class="dn-szyna-modulu-lista">
         <div class="dn-etyk-mono">Bramka doręczeń</div>
-        <button class="pt-pozycja" type="button" aria-selected="true"><span class="pt-tetno" aria-hidden="true"></span><span class="pt-pozycja-tytul">Błąd 500 doręczeń — analiza</span></button>
+        <button class="pt-pozycja" type="button" aria-current="true"><span class="pt-tetno" aria-hidden="true"></span><span class="pt-pozycja-tytul">Błąd 500 doręczeń — analiza</span></button>
         <button class="pt-pozycja" type="button"><span class="pt-pozycja-tytul">Timeouty SMTP — korelacja</span></button>
         <div class="dn-etyk-mono">Silnik kolejek</div>
         <button class="pt-pozycja" type="button"><span class="pt-pozycja-tytul">Spadek wydajności kolejki</span></button>
@@ -493,9 +496,9 @@
                   <div class="sta-popover-wiersz"><span class="sta-popover-etykieta">Dodaj zrzut błędu</span></div>
                   <div class="sta-popover-wiersz"><span class="sta-popover-etykieta">Polecenia ukośnikowe</span></div>
                   <div class="sta-popover-tytul" style="margin-top:var(--dn-od-2)">Konektory</div>
-                  <div class="sta-popover-wiersz"><span class="sta-popover-etykieta">Desktop Commander</span><button class="dn-przelacznik" data-przelacznik aria-pressed="true" role="switch" aria-checked="true"></button></div>
-                  <div class="sta-popover-wiersz"><span class="sta-popover-etykieta">Serwery (SSH)</span><button class="dn-przelacznik" data-przelacznik aria-pressed="true" role="switch" aria-checked="true"></button></div>
-                  <div class="sta-popover-wiersz"><span class="sta-popover-etykieta">PostgreSQL</span><button class="dn-przelacznik" data-przelacznik aria-pressed="false" role="switch" aria-checked="false"></button></div>
+                  <div class="sta-popover-wiersz"><span class="sta-popover-etykieta">Desktop Commander</span><button class="dn-przelacznik" aria-label="Desktop Commander" data-przelacznik role="switch" aria-checked="true"></button></div>
+                  <div class="sta-popover-wiersz"><span class="sta-popover-etykieta">Serwery (SSH)</span><button class="dn-przelacznik" aria-label="Serwery (SSH)" data-przelacznik role="switch" aria-checked="true"></button></div>
+                  <div class="sta-popover-wiersz"><span class="sta-popover-etykieta">PostgreSQL</span><button class="dn-przelacznik" aria-label="PostgreSQL" data-przelacznik role="switch" aria-checked="false"></button></div>
                   <div class="sta-popover-tytul" style="margin-top:var(--dn-od-2)">Wtyczki</div>
                   <div class="sta-popover-wiersz"><span class="sta-popover-etykieta">Danaco inżynieria</span></div>
                   <div class="sta-popover-wiersz"><span class="sta-popover-etykieta">Danaco analiza danych</span></div>
@@ -507,7 +510,7 @@
                   <div class="sta-popover-tytul">Mikrofon</div>
                   <div class="sta-popover-wiersz"><span class="sta-popover-etykieta">Domyślny — Zestaw nagłowny</span><span class="ptaszek" style="color:var(--dn-sygnal)">✓</span></div>
                   <div class="sta-popover-wiersz"><span class="sta-popover-etykieta">Mikrofon USB</span></div>
-                  <div class="sta-popover-wiersz"><span class="sta-popover-etykieta">Przytrzymaj, aby nagrać</span><button class="dn-przelacznik" data-przelacznik aria-pressed="false" role="switch" aria-checked="false"></button></div>
+                  <div class="sta-popover-wiersz"><span class="sta-popover-etykieta">Przytrzymaj, aby nagrać</span><button class="dn-przelacznik" aria-label="Przytrzymaj, aby nagrać" data-przelacznik role="switch" aria-checked="false"></button></div>
                 </div>
               </div>
               <span class="rozciag"></span>

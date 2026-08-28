@@ -1,4 +1,17 @@
--- Migracja 194 zakłada tabele wariantów, głosów i wyniku agregacji głosowania nad stanowiskami, z jednym głosem na wyborcę zastępowanym przy zmianie zdania.
+-- Migracja 194 — głosowanie nad stanowiskami: warianty, głosy i wynik agregacji.
+--
+-- Wynik agregacji NIE jest kolumną. Liczy się go z głosów przy każdym odczycie
+-- (`roundtable.vote.get`), bo metoda agregacji jest własnością głosowania,
+-- a głos może dojść po pierwszym odczycie. Kolumna z wynikiem byłaby drugą
+-- prawdą, rozjeżdżającą się z pierwszą przy każdym kolejnym głosie.
+--
+-- Głos jest jeden na wyborcę. Powtórne oddanie zastępuje poprzedni (ON CONFLICT
+-- w zapisie), bo zmiana zdania w trakcie otwartego głosowania jest czynnością
+-- dozwoloną, a dwa głosy tej samej osoby liczone dwukrotnie nie są.
+--
+-- Kształt głosu zależy od metody, więc kolumny są trzy i wszystkie mogą być
+-- puste: aprobata wypełnia `aprobaty`, metody rankingowe `ranking`, skala
+-- punktowa i metoda kwadratowa `punkty_json`.
 
 CREATE TABLE debata_glosowanie (
     id                       INTEGER PRIMARY KEY AUTOINCREMENT,

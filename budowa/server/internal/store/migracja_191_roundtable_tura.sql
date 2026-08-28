@@ -1,4 +1,26 @@
--- Migracja 191 przebudowuje tabele debata_tura i debata_wypowiedz do kształtu kontraktu: sześć formatów debaty, tura nadrzędna i granice tury.
+-- Migracja 191 — tura i wypowiedź doprowadzone do kształtu kontraktu.
+--
+-- Trzy braki naraz, wszystkie w warunku CHECK albo w brakującej kolumnie:
+--
+--  1. Format. Migracja 044 dopuszczała cztery formaty, a kontrakt ma sześć:
+--     doszły `delphi` (rundy anonimowe) i `expertPanel` (panel ekspercki).
+--     Warunku CHECK nie da się poszerzyć poleceniem ALTER — stąd przebudowa.
+--  2. Tura nadrzędna. `roundtable.debate.branch` zakłada wariant tury,
+--     a `roundtable.debate.followup` wątek boczny. Obie potrzebują wskazania
+--     tury, przy której stoją; bez niego wariant byłby zwykłą kolejną turą.
+--  3. Granice tury. Opracowanie modułu ma zegar tury i granicę długości
+--     wypowiedzi (2.8.2), a kontrakt pola `timeLimitMs`, `maxStatementChars`
+--     i `anonymous`.
+--
+-- Wypowiedź dostaje redakcję (`roundtable.statement.regenerate` zastępuje
+-- treść, a numer redakcji odróżnia zastąpienie od pierwszego głosu), akt mowy
+-- (klasyfikacja z `roundtable.analysis.run`), pewność deklarowaną (wejście do
+-- kalibracji) i odwołanie do wypowiedzi, na którą odpowiada.
+--
+-- Przebudowa idzie parami, bo `debata_wypowiedz` wiąże się kluczem obcym
+-- z `debata_tura`: przemianowanie tabeli wskazywanej przeciąga za sobą
+-- deklarację klucza w tabeli wskazującej, więc obie muszą powstać na nowo
+-- w jednym kroku.
 
 -- ── 1. Nowe tabele ───────────────────────────────────────────────────────────
 
@@ -15,7 +37,8 @@ CREATE TABLE debata_tura_nowa (
     stan                     TEXT    NOT NULL DEFAULT 'open'
                                      CHECK(stan IN ('open','closed')),
     granica_tur              INTEGER NOT NULL DEFAULT 0,
-    -- Tura nadrzędna wskazywana kodem, nie kluczem, bo tym posługuje się kontrakt w obrębie okna.
+    -- Tura nadrzędna wskazywana kodem, nie kluczem: wariant wskazuje turę
+    -- w tym samym oknie, a kod jest tym, czym posługuje się kontrakt.
     tura_nadrzedna           TEXT    NOT NULL DEFAULT '',
     granica_czasu_ms         INTEGER NOT NULL DEFAULT 0,
     granica_znakow           INTEGER NOT NULL DEFAULT 0,

@@ -1,5 +1,22 @@
--- Migracja 378 przebudowuje tabelę czynności dokumentu, dodając rodzaj
--- zmiany pola do słownika czynności dziennika.
+-- Migracja 378 — „zmiana pola" wchodzi do słownika rodzajów czynności dziennika.
+--
+-- Powód zgłosił wykonawca dziennika Studia: zmiany pól dokumentu odkładały się
+-- jako `objectChange`, więc Operator nie mógł cofnąć zmiany pola OSOBNO — cofał
+-- ją razem z całą zmianą obiektu. Wyliczenie kontraktu `StudioActionKind` niesie
+-- już wartość `fieldChange`; bez tej migracji zapis wywracałby się na warunku
+-- tabeli, czyli w najgorszym możliwym miejscu: PO wykonaniu czynności.
+--
+-- Dlaczego przebudowa tabeli, a nie ALTER. SQLite nie umie poszerzyć warunku
+-- CHECK — warunek jest częścią definicji tabeli. Przebudowa jest tu jedyną drogą
+-- i idzie wzorem zalecanym przez SQLite: nowa tabela, przepisanie wierszy,
+-- podmiana nazwy, odtworzenie indeksów.
+--
+-- Wiersze przepisują się WSZYSTKIE, wraz z kluczami głównymi. Klucze muszą
+-- zostać te same, bo `zaleznosc_czynnosci_studio` wskazuje nimi podstawy
+-- czynności; przenumerowanie zerwałoby zależności i cofnięcie przestałoby
+-- odmawiać tam, gdzie odmawiać musi.
+--
+-- Wymaga restartu: nie.
 
 PRAGMA foreign_keys = OFF;
 

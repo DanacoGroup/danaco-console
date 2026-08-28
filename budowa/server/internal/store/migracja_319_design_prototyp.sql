@@ -1,5 +1,25 @@
--- Migracja 319 dodaje graf prototypu modułu Design: połączenia przejść
--- między ramkami wraz z wyzwalaczem i czasem.
+-- Migracja 319 — graf prototypu modułu Design: połączenia między ramkami
+-- (`design.prototype.link.set`, `design.prototype.get`,
+-- `design.prototype.link.remove`).
+--
+-- ── Dlaczego połączenie ma wiersz, a nie pole ramki ─────────────────────────
+-- Z jednej ramki wychodzi tyle przejść, ile jest na niej elementów klikalnych,
+-- a do jednej ramki wchodzi ich dowolnie wiele. Pole przy ramce wyraziłoby
+-- jedno wyjście i milczałoby o reszcie.
+--
+-- ── Dlaczego ramki wskazuje się kodem ───────────────────────────────────────
+-- Kontrakt nazywa ramki identyfikatorami zewnętrznymi (`fromFrameId`,
+-- `toFrameId`) i tymi samymi wartościami wraca `design.prototype.get`. Klucz
+-- obcy wymagałby przekładu w obie strony przy każdym odczycie grafu, a graf
+-- czyta się w całości — przekład byłby robotą bez odbiorcy. Spójność pilnuje
+-- adapter: obie ramki muszą leżeć w tej samej kompozycji, co połączenie, i to
+-- jest sprawdzane przed zapisem.
+--
+-- ── Bilans zamiast ciszy ────────────────────────────────────────────────────
+-- `design.prototype.get` oddaje ponadto `unreachableFrameIds` — ramki, do
+-- których nie wchodzi żadne połączenie. Liczy je odczyt, nie zapis: ramka
+-- osierocona dziś bywa jutro ramką początkową, więc utrwalanie tej cechy
+-- w kolumnie znaczyłoby przechowywanie wniosku zamiast faktów.
 
 CREATE TABLE polaczenie_prototypu_design (
     id                       INTEGER PRIMARY KEY AUTOINCREMENT,

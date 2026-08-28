@@ -67,11 +67,14 @@ var ZNAK_GOTOWY = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" st
 /* Znak etapu idzie za stanem: ptaszek dla zrobionego, tętno dla trwającego,
    numer dla czekającego. Znak zostawiony z poprzedniego stanu kłamie —
    ptaszek przy „w toku” mówi, że rzecz jest skończona. */
+var ODMIANA = { gotowy: 'dn-krok--poprawny', pracuje: 'dn-krok--pracuje', blad: 'dn-krok--wstrzymany' };
+
 function oznacz(krok, stan, meta, numer) {
   krok.setAttribute('data-stan', stan);
-  var m = krok.querySelector('.we-krok-meta');
+  Object.keys(ODMIANA).forEach(function (k) { krok.classList.toggle(ODMIANA[k], k === stan); });
+  var m = krok.querySelector('.dn-krok-meta');
   if (m) m.textContent = meta;
-  var z = krok.querySelector('.we-krok-znak');
+  var z = krok.querySelector('.dn-krok-znak');
   if (!z) return;
   if (stan === 'gotowy') z.innerHTML = ZNAK_GOTOWY;
   else if (stan === 'pracuje') z.innerHTML = '<span class="pt-tetno" aria-hidden="true"></span>';
@@ -83,7 +86,7 @@ function oznacz(krok, stan, meta, numer) {
 function polacz() {
   var panel = scena.querySelector('[data-po-polaczeniu][data-widok-aktywny="tak"]');
   if (!panel) return;
-  var kroki = [].slice.call(panel.querySelectorAll('.we-krok'));
+  var kroki = [].slice.call(panel.querySelectorAll('.dn-krok'));
   if (!kroki.length) return;
 
   kroki.forEach(function (k, i) {

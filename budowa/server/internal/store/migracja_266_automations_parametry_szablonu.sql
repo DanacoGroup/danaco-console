@@ -1,6 +1,8 @@
--- Migracja 266 wprowadza parametry szablonu przepływu uzupełniane przy zastosowaniu: parametr
--- jest wierszem, a nie polem zapisu strukturalnego szablonu, aby formularz wpięcia budował się
--- z niego pole po polu.
+-- Migracja 266 — parametry szablonu przepływu uzupełniane przy zastosowaniu.
+--
+-- Parametr jest wierszem, nie polem zapisu strukturalnego szablonu: formularz
+-- wpięcia buduje się z niego pole po polu, a zastosowanie szablonu musi umieć
+-- nazwać parametr, dla którego nie podano wartości (`missingParameters`).
 CREATE TABLE parametr_szablonu_automatyki (
     szablon_id       INTEGER NOT NULL REFERENCES szablon_automatyki(id) ON DELETE CASCADE,
     nazwa            TEXT    NOT NULL,

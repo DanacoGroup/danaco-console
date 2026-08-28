@@ -1,4 +1,20 @@
--- Przebudowuje tabelę wyzwalacz_automatyki, aby ograniczenie CHECK dopuściło dodatkowy rodzaj wyzwalacza mail, ponieważ SQLite nie zmienia ograniczeń CHECK w istniejącej tabeli.
+-- Wyzwalacz „przyszedł list": rodzaj `mail` w słowniku wyzwalaczy automatyki.
+--
+-- Odbiór listu robi dwie rzeczy jednym mechanizmem:
+--
+--   1. uruchamia automatyki z czynnym wyzwalaczem rodzaju `mail` — wyzwalacz
+--      startuje bieg od początku;
+--   2. doręcza sygnał `mail:<kod skrzynki>` silnikowi wybudzeń — sygnał wznawia
+--      konkretny bieg zawieszony krokiem oczekiwania.
+--
+-- Wyrażenie wyzwalacza `mail` wskazuje skrzynkę: kod skrzynki pocztowej albo
+-- `*` (puste znaczy to samo). `automation.schedule.set` pomija wyzwalacze
+-- z pustym wyrażeniem, więc drogą kontraktu „każda skrzynka" zapisuje się jako
+-- `*`.
+--
+-- SQLite nie zmienia CHECK w miejscu, więc tabela idzie przez przebudowę.
+-- Na `wyzwalacz_automatyki` nie wskazuje żaden klucz obcy, więc przebudowa
+-- obejmuje jedną tabelę.
 
 CREATE TABLE wyzwalacz_automatyki_nowa (
     id                       INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -25,7 +41,7 @@ DROP TABLE wyzwalacz_automatyki;
 
 ALTER TABLE wyzwalacz_automatyki_nowa RENAME TO wyzwalacz_automatyki;
 
--- Odtwarza indeks tabeli wyzwalacz_automatyki po jej przebudowie, zachowując porządek zapytań według harmonogramu i kolejności.
+-- Indeks odtworzony po przebudowie tabeli.
 CREATE INDEX idx_wyzwalacz_automatyki_harmonogram
     ON wyzwalacz_automatyki(harmonogram_id, kolejnosc, id);
 

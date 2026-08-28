@@ -1,10 +1,32 @@
--- Migracja 160 przebudowuje tabelę pamiec_tlumaczen do kształtu kontraktu rodziny translate.memory, luzując wymóg panelu, i zakłada tabelę polityki pamięci okna.
+-- Migracja 160 — pamięć tłumaczeń modułu Translate w kształcie, którego żąda
+-- kontrakt rodziny `translate.memory.*`, oraz polityka pamięci okna.
+--
+-- Tabela `pamiec_tlumaczen` (migracja 054) powstała pod jedną komendę
+-- (`memory.suggest`) i pod jedną drogę zapisu: parę segmentów zdjętą
+-- z zatwierdzonego panelu. Stąd `panel_id NOT NULL`. Rodzina `memory.*` żąda
+-- czego innego: `memory.set` zakłada parę BEZ panelu (Operator wpisuje ją
+-- wprost), `memory.import` wnosi parę z pliku wymiany, a kontrakt
+-- (`TranslationMemoryEntry`) niesie projekt, klienta, autora i kontekst sąsiedni.
+-- Kolumny da się dołożyć poleceniem ALTER; zdjęcia warunku NOT NULL z kolumny
+-- `panel_id` już nie — SQLite tego nie umie. Dlatego tabela powstaje od nowa,
+-- a wiersze zastane przechodzą do niej przepisaniem: pary zebrane dotąd
+-- z paneli zostają parami z panelem, reszta pól zostaje pusta, bo nikt jej
+-- nigdy nie podał.
+--
+-- Zasięg pary (`zasieg`) niesie wartości `TranslationMemoryScope` kontraktu
+-- wprost. Domyślną jest `card` — pamięć własna karcie sesji; pary szersze
+-- (projekt, zespół) powstają, gdy Operator wskaże zasięg sam.
+--
+-- Polityka pamięci jest osobną tabelą, nie kolumnami okna: `memory.policy.get`
+-- odpowiada wtedy „polityki nie ustawiono” brakiem wiersza, zamiast czterema
+-- kolumnami NULL, których nie da się odróżnić od polityki wyzerowanej.
 
--- Zakłada tabelę pamiec_tlumaczen_nowa niosącą parę segmentów pamięci tłumaczeń wraz z kontekstem sąsiednim i zasięgiem widoczności pary.
+-- ── Pamięć tłumaczeń — para segmentów (Translation Memory) ──────────────────
 CREATE TABLE pamiec_tlumaczen_nowa (
     id                       INTEGER PRIMARY KEY AUTOINCREMENT,
     identyfikator_zewnetrzny TEXT    NOT NULL UNIQUE,
-    -- Panel, z którego zdjęto parę; wartość pusta oznacza parę wniesioną wprost albo z pliku wymiany.
+    -- Panel, z którego para została zdjęta. NULL znaczy „para wniesiona wprost”
+    -- (memory.set) albo „para z pliku wymiany” (memory.import) — nie brak danych.
     panel_id                 INTEGER          REFERENCES panel_tlumaczenia(id) ON DELETE SET NULL,
     jezyk                    TEXT    NOT NULL,
     segment_zrodlowy         TEXT    NOT NULL,
@@ -12,7 +34,9 @@ CREATE TABLE pamiec_tlumaczen_nowa (
     projekt                  TEXT,
     klient                   TEXT,
     autor                    TEXT,
-    -- Zdanie przed i po segmentem; dopasowanie kontekstowe podnosi wynik pary o zgodnym sąsiedztwie.
+    -- Kontekst sąsiedni: zdanie przed i po. Dopasowanie kontekstowe
+    -- (`TranslationMemoryPolicy.contextMatch`) podnosi wynik pary, której
+    -- sąsiedztwo zgadza się z sąsiedztwem segmentu tłumaczonego.
     kontekst_poprzedni       TEXT,
     kontekst_nastepny        TEXT,
     zasieg                   TEXT    NOT NULL DEFAULT 'card'

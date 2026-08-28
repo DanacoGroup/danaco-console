@@ -1,4 +1,8 @@
-/* Okna wejściowe dzielą wspólną budowę dla instalatora, okna startowego, okna rejestracji i logowania oraz okna przygotowania środowiska pracy, w jednym stylu.
+/* ============================================================================
+   DANACO CONSOLE — OKNA WEJŚCIOWE
+   ----------------------------------------------------------------------------
+   Wspólna budowa okien poprzedzających pracę: instalator, okno startowe
+   (łączenie), okno rejestracji i logowania, okno przygotowania środowiska.
 
    Wszystkie dzielą się na dwie kolumny: kolumnę tożsamości (atrament,
    po lewej) i kolumnę stanu albo formularza (powierzchnia, po prawej).
@@ -63,7 +67,7 @@
      samą wartość, którą kolumna wnosi wypełnieniem — inaczej pas urywa się
      w powietrzu zamiast domykać panel. */
   --we-wciecie-x: var(--dn-od-6);
-  --we-wciecie-y: var(--dn-od-5);
+  --we-wciecie-y: var(--dn-od-6);
 
   /* Wymiar stały. Okno wejścia nie zmienia rozmiaru między widokami —
      `min-height` pozwalał mu rosnąć razem z treścią widoku.
@@ -94,36 +98,13 @@
 .we-okno--z-belka { grid-template-rows: var(--dn-wym-belka) minmax(0, 1fr) [pas] auto; }
 
 /* ── 2 · MINIMALNA BELKA OKNA SYSTEMOWEGO ───────────────────────────────── */
-
 /* Okno przed uwierzytelnieniem nie ma ramy aplikacji: ani szyny nawigacji,
    ani wstążki, ani paska stanu. Ma wyłącznie belkę okna systemowego —
    znak, tytuł, uchwyt przeciągania i zamknięcie. */
 
-.we-belka {
-  grid-column: 1 / -1;
-  display: flex;
-  align-items: center;
-  gap: var(--dn-od-3);
-  height: var(--dn-wym-belka);
-  padding: 0 0 0 var(--dn-od-3);
-  /* Strefa pierwsza z trzech w oknie, najciemniejsza; kolumna i pas działań nie mogą mieć tej barwy. */
-  background: var(--dn-okno-belka);
-  color: var(--dn-rama-tekst);
-}
 /* Belka jest ciemna w obu motywach, więc kropka bierze barwę sygnału ramy,
    a nie kropki treści — ta w motywie jasnym byłaby ciemniejsza od tła. */
-.we-belka-znak .kropka { fill: var(--dn-rama-sygnal); }
 
-.we-belka-znak { width: var(--dn-wym-ikona-sm); height: var(--dn-wym-ikona-sm); flex: none; color: var(--dn-rama-tekst-2); }
-.we-belka-tytul { margin: 0; font-size: var(--dn-fs-sm); font-weight: var(--dn-fw-srednia); }
-.we-belka-uchwyt { flex: 1 1 auto; }
-.we-belka-zamknij {
-  display: grid; place-content: center;
-  width: var(--dn-wym-ikonowy); height: var(--dn-wym-belka);
-  border: 0; background: transparent; color: var(--dn-rama-tekst-2); cursor: pointer;
-}
-.we-belka-zamknij:hover { background: var(--dn-blad-tekst); color: var(--dn-tekst-inv); }
-.we-belka-zamknij svg { width: 12px; height: 12px; }
 
 /* ── 3 · KOLUMNA TOŻSAMOŚCI ─────────────────────────────────────────────── */
 
@@ -150,7 +131,7 @@
    Tętno 2,4 s jest wspólnym pulsem sygnału w całej platformie; tu ożywia okno
    wejściowe, w którym poza tym nic się nie porusza. */
 .we-marka-godlo .kropka {
-  fill: var(--dn-sygnal-500);
+  fill: var(--dn-kropka);
   transform-box: fill-box;
   transform-origin: center;
   animation: we-tetno var(--dn-czas-tetno) var(--dn-ease) infinite;
@@ -208,11 +189,11 @@
   background: var(--dn-okno-plotno);
   display: flex;
   flex-direction: column;
-  /* Rytm kolumny. Najwyższa odsłona to logowanie z komunikatem o brakujących
-     danych: przy 16 px wychodziła 22 px poza okno. 12 px mieści ją z zapasem
-     i nie zbliża bloków na tyle, żeby się zlewały — odstęp wewnątrz grupy pól
-     jest i tak mniejszy, więc podział na bloki nadal widać. */
-  gap: var(--dn-od-3);
+  /* Rytm kolumny wzięty z rodziny .dn-okno-wejsciowe. Zapis o tym, że przy
+     16 px najwyższa odsłona wychodzi poza okno, pochodził sprzed przebudowy
+     drabiny — zmierzone ponownie: wszystkie siedem odsłon mieści się bez
+     przewijania. */
+  gap: var(--dn-od-4);
   /* Wcięcie z jednego źródła: stopka sięga krawędzi kolumny ujemnym
      marginesem tej samej wielkości. Dwie wartości wpisane osobno rozjeżdżają
      się przy pierwszej zmianie i zostawiają pas wiszący nad krawędzią. */
@@ -248,7 +229,7 @@
   line-height: var(--dn-lh-ciasny);
   color: var(--dn-tekst);
 }
-/* Obszar komunikatów panelu formularza pozostaje pusty w stanie spoczynku, nie zabierając wtedy odstępu kolumny przeznaczonego na treść formularza. */
+/* Obszar komunikatów panelu — pusty nie zabiera odstępu kolumny. */
 .we-komunikaty { display: contents; }
 .we-lid { margin: 0; max-width: 62ch; font-size: var(--dn-fs-sm); line-height: var(--dn-lh-luzny); color: var(--dn-tekst-2); }
 
@@ -260,37 +241,6 @@
    pod formularzem, który jest właściwym działaniem tego okna. */
 /* ── 5 · TOR KROKÓW URUCHOMIENIA ────────────────────────────────────────── */
 
-.we-kroki { display: flex; flex-direction: column; gap: var(--dn-od-1); margin: 0; padding: 0; list-style: none; }
-.we-krok {
-  display: flex;
-  align-items: center;
-  gap: var(--dn-od-3);
-  padding: var(--dn-od-2) var(--dn-od-3);
-  border: 1px solid transparent;
-  border-radius: var(--dn-r-md);
-  font-size: var(--dn-fs-sm);
-  color: var(--dn-tekst-2);
-}
-.we-krok-znak {
-  display: grid;
-  place-content: center;
-  width: 22px;
-  height: 22px;
-  flex: none;
-  border: 1px solid var(--dn-obrys-mocny);
-  border-radius: var(--dn-r-pill);
-  font-family: var(--dn-ff-mono);
-  font-size: 11px;
-  color: var(--dn-tekst-2);
-}
-.we-krok-znak svg { width: 12px; height: 12px; }
-.we-krok-meta { margin-left: auto; font-family: var(--dn-ff-mono); font-size: var(--dn-fs-xs); color: var(--dn-tekst-2); }
-.we-krok[data-stan='gotowy'] { color: var(--dn-tekst-2); }
-.we-krok[data-stan='gotowy'] .we-krok-znak { border-color: var(--dn-sukces-obrys); background: var(--dn-sukces-tlo); color: var(--dn-sukces-tekst); }
-.we-krok[data-stan='pracuje'] { border-color: var(--dn-obrys-subtelny); background: var(--dn-powierzchnia-2); color: var(--dn-tekst); }
-.we-krok[data-stan='pracuje'] .we-krok-znak { border-color: var(--dn-sygnal-obrys); background: var(--dn-sygnal-tlo); color: var(--dn-sygnal); }
-.we-krok[data-stan='blad'] { color: var(--dn-tekst-2); }
-.we-krok[data-stan='blad'] .we-krok-znak { border-color: var(--dn-blad-obrys); background: var(--dn-blad-tlo); color: var(--dn-blad-tekst); }
 
 /* ── 6 · KOMUNIKAT W KOLUMNIE STANU ─────────────────────────────────────── */
 
@@ -372,11 +322,12 @@
 .we-lacznik { color: var(--dn-tekst-2); font-size: var(--dn-fs-sm); }
 
 /* ── 8 · FORMULARZ UWIERZYTELNIENIA ─────────────────────────────────────── */
-/* Formularz uwierzytelnienia obejmuje rejestrację, logowanie, kod potwierdzający oraz odzyskiwanie dostępu, w jednej wspólnej budowie pól i przycisków. */
+/* Rejestracja, logowanie, kod potwierdzający i odzyskiwanie dostępu. */
+
 .au-pola { display: flex; flex-direction: column; gap: var(--dn-od-4); }
 .au-para { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--dn-od-4); }
 
-/* Pole hasła z odsłonięciem pozwala pokazać albo ukryć wpisany tekst hasła przyciskiem po prawej stronie pola, bez opuszczania formularza logowania. */
+/* pole hasła z odsłonięciem */
 .au-haslo { position: relative; display: flex; }
 .au-haslo > .dn-pole-kontrolka { width: 100%; padding-right: var(--dn-wym-kontrolka); }
 .au-haslo-oko {
@@ -393,7 +344,7 @@
 .au-haslo-oko[aria-pressed='true'] .ik-odkryte { display: none; }
 .au-haslo-oko[aria-pressed='true'] .ik-zakryte { display: block; }
 
-/* Wskaźnik siły hasła pokazuje cztery odcinki toru oraz zdanie o wyniku, informując użytkownika o sile hasła jeszcze przed wysłaniem formularza. */
+/* wskaźnik siły hasła */
 .au-sila { display: flex; flex-direction: column; gap: var(--dn-od-2); margin-top: var(--dn-od-3); }
 .au-sila-tor { display: grid; grid-template-columns: repeat(4, 1fr); gap: 3px; }
 .au-sila-odc { height: 3px; border-radius: var(--dn-r-pill); background: var(--dn-obrys); }
@@ -422,11 +373,11 @@
    nie robił nic — także tego, co robić umiał. */
 .au-haslo > .dn-pole-kontrolka::-ms-reveal { display: none; }
 .au-haslo > .dn-pole-kontrolka::-ms-clear { display: none; }
-/* Ta sama ostrożność dotyczy przeglądarek opartych na silniku WebKit, których własny przycisk wypełniania hasła również trzeba ukryć w polu. */
+/* Ta sama ostrożność wobec przeglądarek opartych na WebKicie. */
 .au-haslo > .dn-pole-kontrolka::-webkit-credentials-auto-fill-button { display: none; }
 .au-haslo > .dn-pole-kontrolka::-webkit-strong-password-auto-fill-button { display: none; }
 
-/* Wiersz opcji sesji zbiera pola wyboru dotyczące zachowania sesji logowania, ułożone w kolumnę pod polami formularza uwierzytelnienia. */
+/* wiersz opcji sesji */
 .au-opcje { display: flex; flex-direction: column; gap: var(--dn-od-3); }
 .au-opcja { display: flex; align-items: flex-start; gap: var(--dn-od-2); font-size: var(--dn-fs-sm); color: var(--dn-tekst-2); cursor: pointer; }
 .au-opcja small { display: block; font-size: var(--dn-fs-xs); color: var(--dn-tekst-2); }
@@ -438,7 +389,8 @@
 /* Odsyłacz w oknie wejściowym. Wpleciony w zdanie stopki różni się od tekstu
    otoczenia wyłącznie barwą (1,03:1 w motywie jasnym), więc niesie też
    podkreślenie — WCAG 1.4.1 wymaga rozróżnienia niebędącego samym kolorem. */
-.au-link { font-size: var(--dn-fs-sm); }
+/* Odnośnik postawiony na przycisku musi zdjąć tło i obrys przeglądarki. */
+.au-link { font-size: var(--dn-fs-sm); border: 0; background: transparent; }
 .we-fraza .au-link { text-decoration: underline; text-underline-offset: 2px; }
 
 
@@ -448,19 +400,8 @@
 .we-panel .dn-pole-opis { color: var(--dn-tekst-2); }
 
 .au-metody { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--dn-od-2); }
-.au-metoda {
-  display: flex; flex-direction: column; align-items: center; gap: var(--dn-od-1);
-  padding: var(--dn-od-3) var(--dn-od-2);
-  border: 1px solid var(--dn-obrys); border-radius: var(--dn-r-md);
-  background: var(--dn-panel); color: var(--dn-tekst-2);
-  font-size: var(--dn-fs-xs); text-align: center; cursor: pointer;
-  transition: border-color var(--dn-czas-1) var(--dn-ease), background-color var(--dn-czas-1) var(--dn-ease), transform var(--dn-czas-1) var(--dn-ease);
-}
-.au-metoda:hover { border-color: var(--dn-obrys-mocny); background: var(--dn-powierzchnia); transform: translateY(-1px); }
-.au-metoda svg { width: var(--dn-wym-ikona); height: var(--dn-wym-ikona); color: var(--dn-tekst-2); }
-.au-metoda-stan { font-family: var(--dn-ff-mono); font-size: 10px; color: var(--dn-tekst-2); }
 
-/* Kod potwierdzający zbiera sześć pól logowania kodu, stopkę z odliczaniem ważności oraz czynność ponownego wysłania wiadomości z kodem. */
+/* ── Kod potwierdzający ─────────────────────────────────────────────────── */
 .au-kod { display: flex; gap: var(--dn-od-2); }
 .au-kod-pole {
   width: 52px; height: 60px; flex: none;
@@ -475,9 +416,8 @@
 .au-odliczanie { font-family: var(--dn-ff-mono); font-size: var(--dn-fs-sm); color: var(--dn-tekst-2); }
 .au-odliczanie b { color: var(--dn-tekst); font-weight: var(--dn-fw-srednia); }
 
-/* Kroki odzyskiwania dostępu tworzą tor trzech etapów: adres, potwierdzenie
-   oraz ustawienie nowego hasła, wyświetlany nad formularzem danego etapu.
-   Tor kroków stoi między tytułem a zdaniem wprowadzającym — dostaje własne
+/* ── Kroki odzyskiwania ─────────────────────────────────────────────────── */
+/* Tor kroków stoi między tytułem a zdaniem wprowadzającym — dostaje własne
    powietrze z obu stron, bo jest wskazaniem miejsca w procesie, nie tekstem. */
 .we-glowa .au-kroki { padding: var(--dn-od-1) 0; }
 .au-kroki { display: flex; align-items: center; gap: var(--dn-od-2); font-size: var(--dn-fs-xs); color: var(--dn-tekst-2); }
@@ -485,23 +425,22 @@
 .au-krok-nr {
   display: grid; place-content: center; width: 20px; height: 20px;
   border: 1px solid var(--dn-obrys-mocny); border-radius: var(--dn-r-pill);
-  font-family: var(--dn-ff-mono); font-size: 11px;
+  font-family: var(--dn-ff-mono); font-size: var(--dn-fs-xs);
 }
 .au-krok[data-biezacy='tak'] { color: var(--dn-tekst); }
 .au-krok[data-biezacy='tak'] .au-krok-nr { border-color: var(--dn-sygnal-obrys); background: var(--dn-sygnal-tlo); color: var(--dn-sygnal); }
-/* Krok zrobiony w torze kroków niesie własny znak zamiast numeru porządkowego, dzięki czemu jego stan nie opiera się wyłącznie na barwie. */
+/* Krok zrobiony — znak zamiast numeru, żeby stan nie stał na samej barwie. */
 .au-krok[data-zrobiony='tak'] { color: var(--dn-tekst-2); }
 .au-krok[data-zrobiony='tak'] .au-krok-nr {
   border-color: var(--dn-sukces-obrys); background: var(--dn-sukces-tlo); color: var(--dn-sukces-tekst);
   font-size: 0;
 }
 .au-krok[data-zrobiony='tak'] .au-krok-nr::after {
-  content: '✓'; font-size: 11px; line-height: 1;
+  content: '✓'; font-size: var(--dn-fs-xs); line-height: 1;
 }
 .au-krok-strzalka { color: var(--dn-tekst-2); }
 
 /* ── 9 · PRZYGOTOWANIE ŚRODOWISKA ───────────────────────────────────────── */
-
 /* Bryła przestrzenna warstw platformy w kolumnie tożsamości — jedyny ruch
    ciągły widoku — oraz pasek postępu w kolumnie stanu. */
 
@@ -534,10 +473,10 @@
   opacity: .7;
 }
 .pg-znak { width: 88px; height: 88px; color: var(--dn-rama-tekst); }
-.pg-znak .kropka { fill: var(--dn-sygnal-500); }
+.pg-znak .kropka { fill: var(--dn-kropka); }
 .pg-warstwa-etykieta {
   position: absolute; left: var(--dn-od-3); bottom: var(--dn-od-2);
-  font-family: var(--dn-ff-mono); font-size: 10px;
+  font-family: var(--dn-ff-mono); font-size: var(--dn-fs-xs);
   letter-spacing: var(--dn-ls-mono-wersaliki); text-transform: uppercase;
   color: var(--dn-rama-tekst-2);
 }
@@ -552,30 +491,13 @@
 @media (max-width: 1000px) {.we-okno { width: 100%; height: auto; min-height: 640px; grid-template-columns: minmax(0, 1fr); }.we-marka { display: none; }}
 @media (max-width: 640px) {.we-panel { padding: var(--dn-od-5) var(--dn-od-4); }.we-scena { padding: var(--dn-od-5) var(--dn-od-4); }.au-para, .au-metody { grid-template-columns: minmax(0, 1fr); }.au-kod-pole { width: 40px; height: 48px; font-size: var(--dn-fs-lg); }}
 /* Dopowiedzenie przy wartości — jeden zapis dla wszystkich wierszy: pismo
-   podstawowe, drobniejsze, przygaszone, oddzielone kropką środkową. *//* ── Sterowanie oknem w belce tytułowej ────────────────────────────────────
-   Trzy przyciski w kolejności systemowej: zwinięcie · rozwinięcie · zamknięcie.
-   Wymiar wg Windows — 46 px szerokości na pełną wysokość belki, znak 14 px.
-   Wcześniej stał jeden przycisk 34 px ze znakiem 12 px, poniżej standardu.
-   Zamknięcie ma czerwień na wskazaniu, tak jak w systemie. */.we-belka-sterowanie {
+   podstawowe, drobniejsze, przygaszone, oddzielone kropką środkową. */
+
+/* Trzy kontrolki okna stoją w rzędzie przy prawej krawędzi belki. Sam ich
+   wygląd — wymiar, barwa, stany, czerwień na zamknięciu — niesie biblioteka
+   (.dn-okno-wejsciowe-belka-btn). Tutaj zostaje wyłącznie rozmieszczenie. */
+.we-belka-sterowanie {
   display: flex;
   margin-left: auto;
   align-self: stretch;
 }
-.we-belka-btn {
-  display: grid; place-items: center; place-content: center;
-  width: var(--dn-wym-belka-btn); height: 100%;
-  padding: 0; margin: 0;
-  flex: none;
-  border: 0; background: transparent;
-  color: var(--dn-rama-tekst-2);
-  cursor: pointer;
-  transition: background-color var(--dn-czas-1) var(--dn-ease), color var(--dn-czas-1) var(--dn-ease);
-}
-/* Znaki sterowania oknem są cieńsze i mniejsze od znaku marki — pole kliknięcia
-   ma 46 px, ale sam rysunek dorównuje wadze tytułu, nie przewyższa go. */.we-belka-btn svg { width: 12px; height: 12px; display: block; stroke-width: 1.2; }
-.we-belka-btn:hover { background: var(--dn-rama-hover); color: var(--dn-rama-tekst); }
-.we-belka-btn:focus-visible {
-  outline: var(--dn-wym-fokus) solid var(--dn-fokus);
-  outline-offset: calc(-1 * var(--dn-wym-fokus));
-}
-.we-belka-btn--zamknij:hover { background: var(--dn-czerwien-700); color: var(--dn-szary-0); }

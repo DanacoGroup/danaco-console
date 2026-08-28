@@ -157,14 +157,13 @@
 
   /* siatki treści sekcji */
   .mt-kolumny { display: grid; gap: var(--dn-od-3); }
-  .mt-kolumny--2 { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
   .mt-kolumny--3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
   .mt-kolumny--waga { grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr); }
   .mt-karta-sekcji {
     border: 1px solid var(--dn-obrys); border-radius: var(--dn-r-md);
     background: var(--dn-powierzchnia); overflow: hidden;
   }
-  .mt-karta-sekcji > h3, .mt-karta-sekcji > .mt-glowa {
+  .mt-karta-sekcji > h3 {
     display: flex; align-items: center; gap: var(--dn-od-2); flex-wrap: wrap;
     margin: 0; padding: var(--dn-od-2) var(--dn-od-3);
     border-bottom: 1px solid var(--dn-obrys-subtelny);
@@ -172,9 +171,8 @@
     font-family: var(--dn-ff-bazowa); font-size: var(--dn-fs-xs); font-weight: var(--dn-fw-polgruba);
     letter-spacing: var(--dn-ls-wersaliki); text-transform: uppercase; color: var(--dn-tekst-2);
   }
-  .mt-karta-sekcji > h3 .mt-glowa-akcje, .mt-karta-sekcji > .mt-glowa .mt-glowa-akcje { margin-left: auto; display: inline-flex; gap: var(--dn-od-1); text-transform: none; letter-spacing: normal; }
+  .mt-karta-sekcji > h3 .mt-glowa-akcje { margin-left: auto; display: inline-flex; gap: var(--dn-od-1); text-transform: none; letter-spacing: normal; }
   .mt-tresc { padding: var(--dn-od-3); display: flex; flex-direction: column; gap: var(--dn-od-3); }
-  .mt-tresc--zwarta { padding: 0; }
 
   /* jedenaście akcji silnika kolejek */
   .mt-akcje { display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: var(--dn-od-2); }
@@ -301,7 +299,7 @@
   .mt-macierz { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: var(--dn-od-2); padding: var(--dn-od-1) 0; border-bottom: 1px solid var(--dn-obrys-subtelny); }
 
   @media (max-width: 1280px) {
-    .mt-para, .mt-kolumny--2, .mt-kolumny--waga { grid-template-columns: minmax(0, 1fr); }
+    .mt-para, .mt-kolumny--waga { grid-template-columns: minmax(0, 1fr); }
     .mt-kolumny--3 { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
     .mt-cwo { grid-template-columns: minmax(0, 1fr); }
   }
@@ -625,8 +623,9 @@
 
 
   <!-- ══ PAS KART SESJI — każda karta = odrębny proces orkiestracji ═════ -->
-  <div class="dn-karty-sesji" role="tablist" aria-label="Karty sesji — procesy orkiestracji">
-    <button class="dn-karta-sesji" role="tab" aria-selected="true" type="button"
+  <div class="dn-karty-sesji">
+    <div class="dn-karty-sesji-tory" role="tablist" aria-label="Karty sesji — procesy orkiestracji">
+      <button class="dn-karta-sesji" role="tab" aria-selected="true" type="button"
             data-karta-procesu="Zespół „Budowa aplikacji”" data-karta-kolejka="4 zadania" data-karta-cykl="22:00">
       <span class="pt-tetno" aria-hidden="true"></span>
       <span>Zespół „Budowa aplikacji”</span>
@@ -643,6 +642,7 @@
       <span class="pt-tetno" aria-hidden="true"></span>
       <span>Pętla ciągła 24/7</span>
     </button>
+    </div>
     <button class="dn-btn-ikona" type="button" aria-label="Nowa karta sesji — pusty proces orkiestracji"
             data-komunikat="Nowa karta otwiera pusty proces orkiestracji i oczekuje konfiguracji zespołu w panelu orkiestracji."
             data-komunikat-tytul="Nowa karta sesji">
@@ -2845,7 +2845,9 @@
   });
 
   /* ═ 14 · WYSZUKIWANIE GLOBALNE — filtruje listy otwartej sekcji ══════ */
-  var szukaj = q('.dn-pasek-szukaj');
+  /* Pole wyszukiwania niesie zaczep `data-szukaj`; `.dn-pasek-szukaj` to inny
+     składnik — pole wpisane w pasek ramy, którego to okno nie ma. */
+  var szukaj = q('[data-szukaj]');
   szukaj.addEventListener('input', function () {
     var fraza = szukaj.value.trim().toLowerCase();
     var sekcja = q('[data-grupa-widoku="sekcja"][data-widok-aktywny="tak"]');

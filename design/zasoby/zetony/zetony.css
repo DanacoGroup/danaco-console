@@ -23,6 +23,7 @@
   --dn-szary-200: #D5D7DC;
   --dn-szary-300: #BDC0C6;
   --dn-szary-400: #9A9EA6;
+  --dn-szary-450: #8D9199;
   --dn-szary-500: #787C85;
   --dn-szary-600: #5D6169;
   --dn-szary-700: #464A52;
@@ -70,11 +71,11 @@
   --dn-znak-poswiata: #5C8CEC;
 
   /* --- STANY — prymitywy (informacja = rodzina sygnału)                */
-  --dn-zielen-700: #1E7A46;  --dn-zielen-400: #4FBD85;
+  --dn-zielen-700: #1C7442;  --dn-zielen-400: #4FBD85;
   --dn-zielen-200: #BCE3CD;  --dn-zielen-100: #E7F5EE;
   --dn-bursztyn-700: #8A5B0C; --dn-bursztyn-400: #E0A63C;
   --dn-bursztyn-200: #EED9A7; --dn-bursztyn-100: #FBF2DE;
-  --dn-czerwien-700: #C0362F; --dn-czerwien-400: #EE7168;
+  --dn-czerwien-700: #BA342E; --dn-czerwien-400: #EE7168;
   --dn-czerwien-200: #F3C8C4; --dn-czerwien-100: #FCEDEB;
 
   /* ====================================================================
@@ -165,6 +166,7 @@
      ==================================================================== */
   --dn-wym-kontrolka: 32px;        /* przyciski, pola, pozycje wyboru */
   --dn-wym-ikonowy: 34px;          /* przycisk ikonowy */
+  --dn-wym-pole-dotyku: 24px;      /* najmniejsze pole trafienia — WCAG 2.5.8 */
   --dn-wym-belka-btn: 46px;        /* przycisk sterowania oknem — szerokość wg Windows */
   --dn-wym-belka: 48px;            /* belka tytułowa okna — jej wysokość wyznacza szerokość szyny nawigacji */
   --dn-wym-stan: 28px;             /* pasek stanu (dolny) */
@@ -357,12 +359,17 @@
      a rozdzielenie ma nieść powierzchnia I kreska, nie jedno z dwojga. */
   --dn-obrys: var(--dn-szary-200);           /* #D5D7DC · L*  86 */
   --dn-obrys-subtelny: var(--dn-szary-150);  /* #E1E3E7 · L* 90,2 */
-  --dn-obrys-mocny: var(--dn-szary-300);     /* #C0C0C0 — obrysy kontrolek */
+  /* Granica kontrolki musi być widoczna: WCAG 1.4.11 wymaga 3:1 dla elementu,
+     który identyfikuje pole. Odcień 300 dawał w jasnym 1,42–1,82:1, a 750
+     w ciemnym 1,26–1,68:1 — pola nie było widać. Odcień 500 przechodzi
+     w OBU motywach (3,26–4,59) i odpowiada domyślnemu obrysowi kontrolki
+     w przeglądarce (#767676). */
+  --dn-obrys-mocny: var(--dn-szary-500);     /* #787C85 — obrysy kontrolek */
   /* Kreska wyrazna — kontrolka stojaca na plotnie, bez wlasnego wypelnienia.
      Obrys mocny daje na powierzchni panelu 8 stopni L* i ginie; ten daje 30. */
   --dn-obrys-wyrazny: var(--dn-szary-400);   /* #9A9EA6 · L* 63 */
 
-  --dn-tekst: var(--dn-szary-900);           /* #181818 · 16,1:1 na tle */
+  --dn-tekst: var(--dn-szary-900);           /* #16181D · 16,1:1 na tle */
   /* Stopień między pierwszym a drugim — dla podtytułów. Bez niego podtytuł
      pożyczał barwę tytułu i różnił się od niego wyłącznie stopniem pisma,
      przez co po nagłówku wszystko czytało się jednym głosem. */
@@ -441,28 +448,32 @@
 
   color-scheme: dark;
 
-  --dn-tlo: var(--dn-szary-950);             /* #0F0F0F */
-  --dn-powierzchnia: var(--dn-szary-900);    /* #181818 — karty, okna */
-  --dn-powierzchnia-2: var(--dn-szary-925);  /* #131313 — wgłębienia */
-  --dn-panel: var(--dn-szary-850);           /* #212121 — panele uniesione */
-  --dn-wstazka: var(--dn-szary-800);         /* #2A2A2A — belka nakładana paska edycji */
-  --dn-wstazka-taca: var(--dn-szary-950);    /* #0F0F0F — taca pod belką nakładaną */
+  --dn-tlo: var(--dn-szary-950);             /* #0D0F13 */
+  --dn-powierzchnia: var(--dn-szary-900);    /* #16181D — karty, okna */
+  --dn-powierzchnia-2: var(--dn-szary-925);  /* #111317 — wgłębienia */
+  --dn-panel: var(--dn-szary-850);           /* #1E2126 — panele uniesione */
+  --dn-wstazka: var(--dn-szary-800);         /* #272A30 — belka nakładana paska edycji */
+  --dn-wstazka-taca: var(--dn-szary-950);    /* #0D0F13 — taca pod belką nakładaną */
   --dn-hover: rgba(255, 255, 255, 0.06);
   --dn-wcisniecie: rgba(255, 255, 255, 0.10);
   --dn-nakladka: rgba(0, 0, 0, 0.62);
 
-  --dn-obrys: var(--dn-szary-800);           /* #2A2A2A */
-  --dn-obrys-subtelny: var(--dn-szary-850);  /* #212121 */
-  --dn-obrys-mocny: var(--dn-szary-750);     /* #3A3A3A */
+  --dn-obrys: var(--dn-szary-800);           /* #272A30 */
+  --dn-obrys-subtelny: var(--dn-szary-850);  /* #1E2126 */
+  --dn-obrys-mocny: var(--dn-szary-500);     /* #787C85 — jak w jasnym: jeden odcień przechodzi w obu */
   --dn-obrys-wyrazny: var(--dn-szary-700);   /* #464A52 · L* 31,4 */
 
-  --dn-tekst: var(--dn-szary-100);           /* #ECECEC · 15,0:1 na tle */
+  --dn-tekst: var(--dn-szary-100);           /* #EBECEF · 15,0:1 na tle */
   /* Stopień między pierwszym a drugim — dla podtytułów. Bez niego podtytuł
      pożyczał barwę tytułu i różnił się od niego wyłącznie stopniem pisma,
      przez co po nagłówku wszystko czytało się jednym głosem. */
   --dn-tekst-wiodacy: var(--dn-szary-300);
-  --dn-tekst-2: var(--dn-szary-400);         /* #9E9E9E · 6,8:1 na tle */
-  --dn-tekst-3: var(--dn-szary-500);         /* #7C7C7C · wyłącznie metadane */
+  --dn-tekst-2: var(--dn-szary-400);         /* #9A9EA6 · 6,8:1 na tle */
+  /* W ciemnym trzeci stopień nie może iść odcieniem 500: na panelu daje 3,86:1,
+     a WCAG 1.4.3 wymaga 4,50 dla pisma drobnego, którym metadane są z definicji.
+     Odcień 450 przechodzi na wszystkich czterech powierzchniach (4,55–5,88)
+     i zostaje odrębny od drugiego stopnia. */
+  --dn-tekst-3: var(--dn-szary-450);         /* #8D9199 · wyłącznie metadane */
   --dn-tekst-inv: var(--dn-szary-950);
 
   /* działanie główne — inwersja atramentu (tu: biel) */
@@ -528,9 +539,9 @@
     --dn-hover: rgba(10, 10, 10, 0.05); --dn-wcisniecie: rgba(10, 10, 10, 0.09);
     --dn-nakladka: rgba(10, 10, 10, 0.45);
     --dn-obrys: var(--dn-szary-150); --dn-obrys-subtelny: var(--dn-szary-100);
-    --dn-obrys-mocny: var(--dn-szary-300);
+    --dn-obrys-mocny: var(--dn-szary-500);
     --dn-tekst: var(--dn-szary-900); --dn-tekst-2: var(--dn-szary-600);
-    --dn-tekst-3: var(--dn-szary-500); --dn-tekst-inv: var(--dn-szary-0);
+    --dn-tekst-3: var(--dn-szary-600); --dn-tekst-inv: var(--dn-szary-0);
     --dn-atrament: var(--dn-szary-900); --dn-atrament-hover: var(--dn-szary-1000);
     --dn-atrament-tekst: var(--dn-szary-0);
     --dn-sygnal: var(--dn-sygnal-600); --dn-sygnal-mocny: var(--dn-sygnal-700);
@@ -575,9 +586,9 @@
     --dn-hover: rgba(255, 255, 255, 0.06); --dn-wcisniecie: rgba(255, 255, 255, 0.10);
     --dn-nakladka: rgba(0, 0, 0, 0.62);
     --dn-obrys: var(--dn-szary-800); --dn-obrys-subtelny: var(--dn-szary-850);
-    --dn-obrys-mocny: var(--dn-szary-750);
+    --dn-obrys-mocny: var(--dn-szary-500);
     --dn-tekst: var(--dn-szary-100); --dn-tekst-2: var(--dn-szary-400);
-    --dn-tekst-3: var(--dn-szary-500); --dn-tekst-inv: var(--dn-szary-950);
+    --dn-tekst-3: var(--dn-szary-450); --dn-tekst-inv: var(--dn-szary-950);
     --dn-atrament: var(--dn-szary-100); --dn-atrament-hover: var(--dn-szary-25);
     --dn-atrament-tekst: var(--dn-szary-950);
     --dn-sygnal: var(--dn-sygnal-300); --dn-sygnal-mocny: var(--dn-sygnal-200);

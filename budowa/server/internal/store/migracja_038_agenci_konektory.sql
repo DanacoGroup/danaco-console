@@ -1,8 +1,27 @@
--- Migracja zakłada tabelę konektorów eksperta oraz tabelę jego uprawnień operacyjnych
--- w czterech grupach zakresu.
+-- Migracja 038 — konektory i uprawnienia eksperta.
+--
+-- Konektor podpina się pod istniejące mosty. Kolumna `punkt_dostepu_id` wskazuje
+-- wiersz `punkt_dostepu` — ten sam katalog, z którego składacz
+-- `core/most_okna.go` buduje wpisy `mcpServers` dla procesu modelu. Drugiego
+-- rejestru serwerów MCP nie zakładamy: konektor rodzaju `mcp` jest
+-- wskazaniem mostu, a nie jego kopią. Klucz obcy jest ON DELETE SET NULL, bo
+-- skasowanie punktu odłącza konektor, lecz nie kasuje eksperta.
+--
+-- Rodzaj. `rodzaj` przyjmuje dosłownie wartości shared.AgentConnectorKind
+-- ('mcp','plugin','api'). Kontrakt nie daje dla tego wyliczenia słownika
+-- przekładu bazy, więc kolumna trzyma wartość kontraktu wprost.
+--
+-- Uprawnienie jest konfiguracją możliwości, nie kontrolą dostępu.
+-- Stanem wyjściowym eksperta jest pełny dostęp operacyjny: przy założeniu
+-- eksperta warstwa `dane` wpisuje cztery wiersze `przyznane = 1`, po jednym na
+-- grupę zakresu. Brak wiersza znaczy więc „nie rozstrzygnięto”, a nie „odmowa”
+-- — Permissions Center pokazuje wtedy wartość wyjściową.
+--
+-- Zakres szczegółowy. `zakres` jest napisem w obrębie grupy (kontrakt: pole
+-- `scope`, opcjonalne). Zakres pusty oznacza całą grupę; para (grupa, zakres)
+-- jest kluczem, więc uprawnienie węższe nie nadpisuje szerszego i odwrotnie.
 
--- Konektor podpina się pod istniejące punkty dostępu; konektor rodzaju mcp jest wskazaniem
--- mostu, nie jego kopią.
+-- ── Konektory eksperta ────────────────────────────────────────────────────────
 CREATE TABLE agent_konektor (
     id               INTEGER PRIMARY KEY AUTOINCREMENT,
     kod              TEXT    NOT NULL UNIQUE,
@@ -17,8 +36,7 @@ CREATE TABLE agent_konektor (
 
 CREATE INDEX idx_agent_konektor_agent ON agent_konektor(agent_id, nazwa);
 
--- Uprawnienie jest konfiguracją możliwości, nie kontrolą dostępu; stanem wyjściowym
--- eksperta jest pełny dostęp operacyjny.
+-- ── Uprawnienia eksperta w czterech grupach zakresu ───────────────────────────
 CREATE TABLE agent_uprawnienie (
     agent_id  INTEGER NOT NULL REFERENCES agent(id) ON DELETE CASCADE,
     grupa     TEXT    NOT NULL CHECK (grupa IN ('files', 'network', 'processes', 'integrations')),

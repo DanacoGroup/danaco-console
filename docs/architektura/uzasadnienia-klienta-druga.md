@@ -7375,3 +7375,22 @@ Uzbrojenie usuwania to nie blokada: przycisk pozostaje czynny w każdej chwili, 
 Wynik komendy channel.check niczego nie warunkuje: nie wyłącza wiersza, nie wstrzymuje zapisu i nie zmienia formularza. Jest odpowiedzią na pytanie operatora, czy kanał działa, a rozstrzygnięcie, co z tą odpowiedzią zrobić, należy do niego.
 
 Po powodzeniu zapisu idzie odświeżenie rejestru: to zamówienie listy kanałów, które rejestr rozgłasza wszystkim swoim czytelnikom. Panel nie dopisuje ani nie kasuje niczego w rejestrze bezpośrednio — nie ma tam własnej drogi zapisu.
+
+## budowa/klient-poprzedni/src/moduly/studio/przybornik-mowa.ts
+Dyktowanie jest funkcją działająca, nie warunkową. Droga jest jedna i już
+stoi w kontrakcie, druga nie jest zakładana: sprawdzenie dostępności bada
+silnik, wniesienie nagrania przyjmuje bajty i oddaje odnośnik, przepisanie
+zamienia nagranie na tekst. Nagranie nie opuszcza maszyny rdzenia — tak
+stanowi kontrakt tych komend i tak tu zostaje: bajty jadą do magazynu nagrań
+rdzenia, nie do sieci. Silnik mowy jest składnikiem pakietu serwera, razem
+z rozpoznaniem pisma i obsługą archiwów, nie rzeczą, którą Operator sobie
+doinstalowuje. Sprawdzenie dostępności zostaje, bo zmieniło znaczenie:
+odmowa nie mówi już, że tej funkcji nie ma w produkcie, lecz że ten serwer
+jest niekompletny, i nazywa brakujący składnik — brak silnika jest usterką
+wdrożenia serwera, nie ograniczeniem produktu, i tak brzmi zdanie, które
+Operator zobaczy. Trzy stany odpowiedzi przepisania są rozróżnione, bo
+znaczą różne rzeczy: rozpoznano tekst, przetworzono, lecz mowy nie było —
+to fakt pomiaru, nie awaria — i nie przetworzono wcale. Ten sam przycisk
+obsadza wiersz polecenia i treść dokumentu; różni je wyłącznie to, komu
+oddają rozpoznany tekst i napis na przycisku, żeby druga droga nagrywania
+nie rozjechała się z pierwszą przy pierwszej poprawce.

@@ -8445,3 +8445,22 @@ zerwania.
 ponownym połączeniu. Odczyt jest powtarzalny i niczego nie zmienia w rdzeniu. Czynności zmieniające
 stan tej drogi nie mają: tam spóźniona odpowiedź jest tylko zdaniem, bo skutek i tak trzeba
 odczytać.
+
+## budowa/klient-poprzedni/src/moduly/developer/zaleznosci-zewnetrzne.ts
+Instalka niesie rdzeń i klienta, nie niesie gita, kompilatorów, menedżerów
+pakietów, serwerów języka, adapterów debugowania ani silnika kontenerów.
+Czynność, która taki program uruchamia, na maszynie bez niego kończy się
+odmową systemu operacyjnego, a operator ma prawo wiedzieć o tym przed
+naciśnięciem, nie z komunikatu, który nie mówi, czego brakuje. Uprzejma
+odmowa bez podania przyczyny jest brakiem funkcji, dlatego każda pozycja
+niesie trzy rzeczy naraz: nazwę programu w brzmieniu, jakim woła go rdzeń
+albo jakim wołałaby dokładana komenda, czynność, która na nim stoi, oraz
+zdanie o tym, co się stanie, gdy programu na maszynie nie ma. Wykaz jest
+wykazem wymagań, nie pomiarem instalacji: klient przeglądarki nie ma jak
+sprawdzić zawartości ścieżki wykonywalnej rdzenia, a kontrakt nie ma komendy
+odpowiadającej na pytanie, czy program jest — pozycja mówi więc, czego
+trzeba, nigdy czego nie ma. Dwie pierwsze pozycje wykazu są czynne dzisiaj:
+rdzeń uruchamia git wprost, a zadanie budowania rozbiera na program
+i parametry, gdzie programem jest pierwsze słowo pola zadania. Pozostałe
+pozycje czekają na komendy przyszłe i są tu wymienione, bo operator planujący
+pracę ma wiedzieć, czego jego maszyna będzie potrzebowała.

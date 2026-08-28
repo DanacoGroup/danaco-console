@@ -14,25 +14,15 @@ import type { StanProjektu } from './stan-projektu';
 import { utworzStanTresci } from './stany-okna';
 
 /**
- * Współpraca i materiały projektu — wyszukiwanie, oś czasu aktywności,
- * komentarze, wydobycie treści plików, duplikaty i historia instrukcji.
- *
- * Okno gromadzi czynności przekrojowe: żadna z nich nie należy do jednego bytu
- * projektu, wszystkie dotyczą projektu jako całości. Wyszukiwanie idzie PO
- * SŁOWACH nad zadaniami, notatkami, plikami, ustaleniami i instrukcjami —
- * dopasowanie po znaczeniu prowadzi osobna rodzina komend i okno go nie
- * obiecuje.
- *
- * Treść pliku wchodzi do wyszukiwania dopiero po wydobyciu: plik bez wyciągu
- * daje się znaleźć wyłącznie po nazwie. Dlatego przycisk wydobycia stoi obok
- * pola wyszukiwania, a nie w innym oknie.
+ * Współpraca i materiały projektu gromadzą czynności przekrojowe: wyszukiwanie po słowach, oś
+ * czasu, komentarze, wydobycie treści, duplikaty i historię instrukcji.
  */
 export interface OknoWspolpracy {
   element: HTMLElement;
   odswiez(): void;
 }
 
-/** Rodzaje bytu komentowanego — wykaz wyliczony z kontraktu, nie przepisany. */
+/** Rodzaje bytu komentowanego to wykaz wyliczony z kontraktu, nie przepisany, dający listę wyboru rodzaju bytu w formularzu. */
 const RODZAJE_BYTU: ReadonlyArray<readonly [string, string]> = Object.values(
   WorkspaceEntityKind,
 ).map((rodzaj) => [rodzaj, `byt: ${rodzaj}`]);

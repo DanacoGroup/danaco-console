@@ -6558,3 +6558,54 @@ wskazuje kartę ponownie. Sesji, okien ani słowników ten rejestr nie
 przechowuje; mają własne repozytoria i własnego nadzorcę.
 
 Powiązanie sesji z klientem odtwarza stan, nie przestawia widoku.
+
+## budowa/server/internal/core/wiez_polaczenia.go
+
+Komenda auth.login zakłada sesję i oddaje token, a token potrzebuje gdzie
+zamieszkać: transportem jest jedno gniazdo WebSocket, nie seria żądań
+HTTP, więc nie ma ani ciasteczka, ani nagłówka na każdym żądaniu. Bez tej
+więzi komenda connection.hello nie zna tokenu, a auth.password.reset
+unieważniałby wszystkie sesje, bo bieżącej nie dałoby się wskazać.
+
+Więź niczego nie sprawdza przed komendą, niczego nie odrzuca i nie zna
+pojęcia zakresu. Odpowiada na jedno pytanie — z którą sesją bramki
+związane jest to połączenie — i odpowiedź służy dokładnie dwóm rzeczom:
+powitaniu (czy klient ma pokazać okno logowania) i wyłączeniu bieżącej
+sesji ze zmiany hasła.
+
+Więź wiąże byt nietrwały (połączenie, które znika z rozłączeniem) z bytem
+trwałym (wiersz sesja_bramki). Zapis do bazy byłby drugą prawdą o czymś,
+co i tak nie przeżywa restartu — a wzorzec rejestru pamięciowego
+odbudowywanego z wierszy rdzeń już ma.
+
+kluczKontekstu jest typem własnym, żeby wartość w kontekście nie mogła się
+zderzyć z wartością innego pakietu — napis jako klucz byłby zderzeniem
+czekającym na okazję.
+
+Dwa wpisy o jednym połączeniu rozjeżdżają się zawsze, a rozjazd tożsamości
+znaczyłby, że korzystający z interfejsu widzi na ekranie rękę nie tę, co
+trzeba — dlatego kluczPolaczenia ma tylko jeden wpis, niosący cały komplet
+transport.Tozsamosc.
+
+nowaWiezBramki zakłada pustą więź: rdzeń bez wpiętej bramki dostaje ją tak
+samo, bo pusta więź odpowiada „nie wiadomo" i nic się nie psuje.
+
+Powtórzone wiązanie w metodzie Zwiaz nadpisuje poprzednie: ten, kto
+zalogował się drugi raz na tym samym połączeniu, pracuje na sesji nowszej,
+nie na dwóch naraz.
+
+SkrotKontekstu jest skrótem myślowym dla dwóch wywołań, które i tak zawsze
+idą razem: wyjmij połączenie z kontekstu, oddaj jego skrót.
+
+Pusty wynik sesjaBiezacaZKontekstu znaczy „nie wiadomo, z której sesji
+przyszło żądanie" i prowadzi do unieważnienia wszystkich sesji.
+
+Metoda PolaczenieZwiazane stoi przy więzi, a nie przy adapterze transportu
+(interfejs transport.StanBramki), bo cała jej treść to odczyt więzi i nic
+ponadto — rdzeń nie może odpowiedzieć klientowi „nie jesteś zalogowany",
+a straży „jest związany" (dwie prawdy o jednej rzeczy). Nie ma tu nazwy
+komendy, roli ani zakresu i mieć nie będzie.
+
+Bez metody Rozwiaz mapa rosłaby przez całe życie procesu o jeden wpis na
+każde nawiązanie połączenia — więź pamięciowa bytu nietrwałego musi umieć
+zapomnieć.

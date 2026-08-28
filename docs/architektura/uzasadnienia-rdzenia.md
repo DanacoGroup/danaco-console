@@ -7083,3 +7083,21 @@ Zdarzeń rodzina nie ma — kontrakt nie zna zdarzenia zmiany kondycji, więc
 O wyzwoleniu alertu na nieudanej sondzie mówi zdarzenie rodziny alertów, nie
 kondycji. Port niewypełniony nie rejestruje niczego: sześć komend odpowie
 wtedy stanem nieznanym, a pozostałe domeny pracują bez zmian.
+
+## budowa/server/internal/core/adapter_rozmowa_petla_test.go
+Powód zakończenia tury wychodzi z tej samej trójcy warunków, co stan
+wiadomości, więc oba rozstrzygnięcia muszą się zgadzać: wiadomość ze stanem
+błędu przy biegu ogłoszonym jako ukończony jest sprzecznością, którą
+uczestnik rozmowy widzi na dwóch kontrolkach naraz.
+
+Atrapa kanału mierzy tylko turę, która przeszła kanałem sprawnie, więc kanał
+musi oddać strumień i zwrócić brak błędu.
+
+Kanał w sprawdzianie zamknięcia błędem działa — oddaje strumień i nie zwraca
+błędu — a mimo to zdarzenie wyniku niesie oznaczenie błędu. Wiadomość dostaje
+wtedy stan błędu; bieg ogłoszony przy tym jako ukończony z wynikiem mówiłby
+odwrotnie, niż mówi wiadomość.
+
+Sprawdzian zamknięcia wynikiem pilnuje drugiej strony rozróżnienia: zamknięcie
+bez błędu nadal kończy bieg ukończeniem z wynikiem. Bez tego sprawdzianu
+naprawa mogłaby odebrać pętli ukończenie w ogóle i nikt by tego nie zauważył.

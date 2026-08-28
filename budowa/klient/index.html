@@ -5,6 +5,35 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Danaco Console</title>
 <link rel="icon" href="../../design/zasoby/marka/favicon/favicon.svg" type="image/svg+xml">
+<!--
+  Arkusze warstwy projektowej, w kolejności wczytania przez źródło prawdy
+  `design/05-okna/przeplyw/centrum-dowodzenia.html` — dwadzieścia plików.
+  Dwa dodatkowe, `wejscie.css` i `okna/studio.css`, stoją poza tym wykazem:
+  niesie je droga wejścia i moduł Studio, strefy poza terenem tego pliku,
+  wstawione w miejscu, gdzie źródło prawdy ładuje wspólny fundament.
+-->
+<link rel="stylesheet" href="../../design/zasoby/zetony/fonty.css">
+<link rel="stylesheet" href="../../design/zasoby/zetony/zetony.css">
+<link rel="stylesheet" href="../../design/zasoby/css/fundament.css">
+<link rel="stylesheet" href="../../design/zasoby/css/komponenty.css">
+<link rel="stylesheet" href="../../design/zasoby/wejscie.css">
+<link rel="stylesheet" href="../../design/zasoby/okna/studio.css">
+<link rel="stylesheet" href="../../design/zasoby/menu.css">
+<link rel="stylesheet" href="../../design/zasoby/stany.css">
+<link rel="stylesheet" href="../../design/zasoby/rama.css">
+<link rel="stylesheet" href="../../design/zasoby/karty-okna.css">
+<link rel="stylesheet" href="../../design/zasoby/panel-sesji.css">
+<link rel="stylesheet" href="../../design/zasoby/pasek-okna.css">
+<link rel="stylesheet" href="../../design/zasoby/izolacja.css">
+<link rel="stylesheet" href="../../design/zasoby/okno-robocze.css">
+<link rel="stylesheet" href="../../design/zasoby/stanowisko.css">
+<link rel="stylesheet" href="../../design/zasoby/okna-modalne.css">
+<link rel="stylesheet" href="../../design/zasoby/prototyp.css">
+<link rel="stylesheet" href="../../design/zasoby/okna/centrum-dowodzenia.css">
+<link rel="stylesheet" href="../../design/zasoby/okna/centrum-kafle.css">
+<link rel="stylesheet" href="../../design/zasoby/okna/centrum-obszar.css">
+<link rel="stylesheet" href="../../design/zasoby/okna/centrum-dymki.css">
+<link rel="stylesheet" href="../../design/zasoby/okna/danaco-anim-3d.css">
 <link rel="stylesheet" href="./arkusze.css">
 </head>
 
@@ -42,6 +71,31 @@
 </div>
 
 <div data-rama-aplikacji hidden></div>
+
+<!--
+  Skrypty biblioteki, w kolejności wczytania przez źródło prawdy — osiemnaście
+  plików, kopiowane do `dist/zasoby/` przez `vite.config.js` (rozstrzygnięcie
+  opisane tam). To funkcje domknięte działające na znaczniku przez klasy
+  i atrybuty `data-*`, nie moduły — bez `type="module"`, tak jak w źródle.
+-->
+<script src="./zasoby/wspolne.js"></script>
+<script src="./zasoby/prototyp.js"></script>
+<script src="./zasoby/menu.js"></script>
+<script src="./zasoby/okna-modalne.js"></script>
+<script src="./zasoby/rama.js"></script>
+<script src="./zasoby/stanowisko.js"></script>
+<script src="./zasoby/stany.js"></script>
+<script src="./zasoby/pasek-stanu.js"></script>
+<script src="./zasoby/karty-okna.js"></script>
+<script src="./zasoby/panel-sesji.js"></script>
+<script src="./zasoby/pasek-okna.js"></script>
+<script src="./zasoby/okno-robocze.js"></script>
+<script src="./zasoby/okna/przelacznik-srodowisk.js"></script>
+<script src="./zasoby/okna/zakladki-paneli.js"></script>
+<script src="./zasoby/okna/centrum-dowodzenia.js"></script>
+<script src="./zasoby/okna/centrum-obszar.js" defer></script>
+<script src="./zasoby/okna/centrum-wejscie.js" defer></script>
+<script src="./zasoby/okna/centrum-dymki.js" defer></script>
 
 <script type="module" src="./src/aplikacja.ts"></script>
 </body>

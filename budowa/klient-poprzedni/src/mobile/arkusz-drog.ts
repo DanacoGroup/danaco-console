@@ -8,19 +8,9 @@ import {
 } from './wywolania-interwencji';
 
 /**
- * Arkusz dróg — drugie dotknięcie. Karta pozycji otwiera arkusz, przycisk
- * w arkuszu wykonuje drogę; od ekranu do decyzji są dwa dotknięcia.
- *
- * Układ jest podporządkowany kciukowi: kontekst decyzji zdaniami u góry (czyta
- * się go raz), drogi u dołu (dotyka się ich w biegu). Arkusz wjeżdża od dołu,
- * bo tam sięga kciuk trzymający telefon jedną ręką.
- *
- * Przycisk powstaje wyłącznie tam, gdzie droga jest przejezdna — `drogiDostepne`
- * pytamy przed rysowaniem. Droga nieprzejezdna dostaje zdanie mówiące, czego
- * brakuje, zamiast przycisku wyszarzonego, który obiecywałby przyszłe działanie.
- *
- * Przycisk przejęcia zostaje czynny także z pustym polem: wywołanie oddaje wtedy
- * kwit ze zdaniem o niepodanym poleceniu, zamiast martwej kontrolki.
+ * Arkusz dróg — drugie dotknięcie: karta pozycji otwiera arkusz, przycisk
+ * w nim wykonuje drogę. Przycisk powstaje tylko tam, gdzie droga jest
+ * przejezdna. Przycisk przejęcia zostaje czynny nawet z pustym polem.
  */
 export interface ArkuszDrog {
   element: HTMLElement;
@@ -36,7 +26,7 @@ export interface OpisArkusza {
   poKwicie: (kwit: Kwit) => void;
 }
 
-/** Trzy gotowe nastawy w kolejności od najczęstszej. */
+/** Trzy gotowe nastawy koordynatora dostępne w arkuszu dróg, uporządkowane od tej najczęściej wybieranej. */
 const NASTAWY: readonly NastawaKoordynatora[] = [
   'pytaj-o-kazdy-krok',
   'stoj-przy-braku-postepu',

@@ -7685,3 +7685,8 @@ Pięć źródeł byłoby pięcioma połączeniami do tego samego kanału. Kanał
 stanu modułu: stan oddaje źródła obszaru Design i zaplecza, a warsztaty idą dowolną komendą
 z katalogu czynności. Dołożenie kanału do stanu tylko dla nich otwierałoby wszystkim oknom drogę
 obok źródeł, które stan dla nich trzyma.
+
+## budowa/klient-poprzedni/src/mobile/arkusz-drog.ts
+Układ arkusza jest podporządkowany kciukowi: kontekst decyzji zdaniami u góry (czyta się go raz), drogi u dołu (dotyka się ich w biegu). Arkusz wjeżdża od dołu, bo tam sięga kciuk trzymający telefon jedną ręką.
+
+Droga nieprzejezdna dostaje zdanie mówiące, czego brakuje, zamiast przycisku wyszarzonego, który obiecywałby przyszłe działanie. Przycisk przejęcia z pustym polem oddaje kwit ze zdaniem o niepodanym poleceniu, zamiast być martwą kontrolką.

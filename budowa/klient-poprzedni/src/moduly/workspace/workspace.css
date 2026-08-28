@@ -1,10 +1,4 @@
-/* ============================================================================
-   DANACO CONSOLE — MODUŁ WORKSPACE (pięć okien operacyjnych)
-   ----------------------------------------------------------------------------
-   Barwy i rozmiary czcionek pochodzą wyłącznie z żetonów motywu (`--dn-*`)
-   i z biblioteki `komponenty/`. Tutaj leży rozkład okien modułu oraz
-   odróżnienie trzech stanów: ładowanie, pustka, błąd.
-   ============================================================================ */
+/* Arkusz obejmuje rozkład pięciu okien operacyjnych modułu Workspace oraz odróżnienie trzech stanów: ładowania, pustki i błędu. */
 
 .dw-modul {
   display: flex;
@@ -14,14 +8,14 @@
   min-height: 0;
 }
 
-/* Okno wiodące szersze od pomocniczego — rola rozstrzyga o miejscu w układzie. */
+/* Okno wiodące jest szersze od okna pomocniczego, ponieważ pełniona rola rozstrzyga o miejscu w układzie. */
 .dw-modul__gora {
   display: grid;
   grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
   gap: var(--dn-od-4);
 }
 
-/* Pas trzech zarządców: pamięć, biblioteka, eksperci. */
+/* Pas trzech zarządców obejmuje kolejno: pamięć, bibliotekę oraz ekspertów dostępnych w module Workspace. */
 .dw-modul__dol {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -128,7 +122,7 @@
   gap: var(--dn-od-1);
 }
 
-/* Propozycja modelu czeka na decyzję — ma być odróżnialna od ustalenia. */
+/* Propozycja modelu czeka na decyzję Operatora i ma pozostawać wyraźnie odróżnialna od ustalenia już podjętego. */
 .dw-pozycja[data-pochodzenie='model'] {
   border-left: var(--dn-wym-wstega) solid var(--dn-informacja-obrys);
   padding-left: var(--dn-od-2);

@@ -706,3 +706,8 @@ Tutaj leży wyłącznie rozkład: co stoi obok czego i ile między elementami
 odstępu. Odróżnienie trafności jedzie plakietkami biblioteki
 `dn-plakietka--sukces` i `dn-plakietka--ostrzezenie`, więc okno nie zakłada
 własnej skali barw.
+
+## budowa/klient-poprzedni/src/moduly/workspace/workspace.css
+Barwy i rozmiary czcionek pochodzą wyłącznie z żetonów motywu `--dn-*`
+i z biblioteki `komponenty/`. Arkusz obejmuje wyłącznie rozkład okien
+modułu Workspace.

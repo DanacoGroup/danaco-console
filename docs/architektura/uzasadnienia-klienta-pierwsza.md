@@ -8174,3 +8174,18 @@ rozstrzyga klucz, żeby nie migotał.
 Porównywane są pola rysowane, a nie całe struktury: `monitor.status` przychodzi
 co odczyt i przy identycznej treści nie ma powodu przerysowywać wykazu —
 przerysowanie gubiłoby ognisko klawiatury na sterach.
+## budowa/klient-poprzedni/src/moduly/developer/katalog-komend.ts
+Zdania stanu pustego orzekają o tym, czym rdzeń rozporządza — napis wpisany na
+stałe byłby stanem wiedzy z chwili wpisania i nie zdjąłby się sam w dniu, w
+którym rdzeń komendę dostanie, dlatego zdania budują się z rejestru rdzenia.
+Źródłem jest powitanie połączenia, nie kontrakt: kontrakt mówi, co obiecano,
+a powitanie rdzenia mówi, co rdzeń naprawdę zarejestrował. Różnica między nimi
+to klasa usterki „martwy port": komenda obecna w kontrakcie i uchwyt obecny
+w kodzie, ale w złożonym rdzeniu żadnej rejestracji, więc wywołanie wraca
+odmową nieznanej komendy. Odczyt idzie raz, przy montażu okna, bo rejestr
+komend zmienia się wraz z wersją rdzenia, a nie w toku sesji. Wykaz komend
+wołanych przez okna modułu jest pisany ręcznie z rozmysłem: to deklaracja, co
+okna modułu naprawdę wołają, a porównanie jej z rejestrem rdzenia wykrywa dwie
+różne usterki — komendę wołaną, a niezarejestrowaną (martwy port), oraz komendę
+zarejestrowaną, a niewołaną (funkcję rdzenia bez drogi z okna). Wykaz
+wywiedziony wprost z kontraktu nie ujawniłby żadnej z tych dwóch usterek.

@@ -6060,3 +6060,16 @@ pracy, ale niekompletna para plików TLS nastawą nie jest, tylko połową wskaz
 tekstem przy wskazanym certyfikacie byłaby cichym zejściem poniżej tego, o co poprosił operator maszyny.
 ## budowa/server/internal/dane/studio_praca_zmiany.go
 Repozytorium sąsiedni zna zmianę śledzoną sprzed dobudowy: rodzaj, autora grubym rozróżnieniem człowiek-model, zakres, brzmienie przed i po, decyzję. Kolumny tożsamości agenta, podagenta oraz postaci przed i po zmianie dołożyła późniejsza migracja i pyta o nie wyłącznie ten odcinek, bo przełącznik pokazujący wszystko, co zrobił model, musi rozdzielić dwóch agentów pracujących naraz, a nie pokazać obu jako jednego. Dopisanie ich do pliku sąsiedniego byłoby wejściem w plik cudzego odcinka; osobny odczyt tych samych wierszy nie zakłada drugiego pojęcia zmiany śledzonej, bo tabela jest jedna, wiersz zakłada zapis zmiany śledzonej, a te kolumny stempluje się na wierszu już istniejącym.
+
+## budowa/server/internal/transport/statyka.go
+
+Katalog niewskazany albo jeszcze niezbudowany nie wstrzymuje nasłuchu ani kanału WebSocket — żądanie
+pliku dostaje wtedy odpowiedź o braku pliku z wyjaśnieniem, a rdzeń pracuje dalej. Katalog sprawdzany
+jest przy każdym żądaniu, więc zbudowanie klienta po starcie rdzenia wystarcza, by pliki zaczęły się
+serwować bez ponownego uruchomienia.
+
+## budowa/server/internal/session/bledy.go
+Odwzorowanie błędów pakietu na kody kontraktu leży w tym pakiecie: pakiet
+session nie zakłada własnego katalogu kodów.
+## budowa/server/internal/dane/studio_propozycje.go
+Propozycja nie jest wersją: porównanie różnic przyjmuje identyfikator propozycji zamiennie z identyfikatorem wersji docelowej, więc porównanie czyta propozycję i wersję tym samym mechanizmem odczytu treści, ale zapis obu bytów jest rozdzielony, bo zatwierdzenie propozycji do repozytorium wykonuje osobny zapis dokumentu, nie ten plik. Fragmentów różnicy tu nie ma: liczą się w locie z dwóch treści w warstwie rdzenia, a ten plik oddaje wyłącznie treść propozycji do porównania, nie sam wynik porównania.

@@ -8283,3 +8283,17 @@ zamknięcie okna nic nie utrwala.
 prowadzi więc przez `queue.list`: najpierw kolejka obsługująca to okno, potem
 kolejka tej sesji. Przy niejednoznaczności zwracane jest `undefined`, a ster
 wstrzymania powie, że kolejki nie dopasowano.
+## budowa/klient-poprzedni/src/moduly/developer/panel-run-debug.ts
+Monitor jest jednym oknem o dwóch częściach: Build Output prowadzi budowanie
+i testy, Run & Debug prowadzi konfiguracje uruchomień i debugger krokowy,
+a obie części przełącza pas zakładek w nagłówku kolumny. Punkt przerwania
+stawia się w pliku i wierszu, zanim cokolwiek ruszy — należy do okna, a nie do
+sesji, i przeżywa kolejne biegi; rdzeń trzyma go w bazie i podaje adapterowi
+przy starcie, a panel pokazuje komplet punktów okna, bo margines edytora
+rysuje wszystkie naraz. Zatrzymanie na punkcie zgłasza debugowany proces, a nie
+operator, więc panel po każdym kroku pyta rdzeń o stos wywołań, zamiast
+rysować stan z samego naciśniętego przycisku, co pokazywałoby stan życzeniowy.
+Panel nie pokazuje przycisków kroku, dopóki sesji nie ma, bo wykonanie
+wyrażenia wymaga ramki, a ramka istnieje tylko w programie zatrzymanym.
+Kontrakt nie niesie zdarzenia zatrzymania, więc panel odczytuje stan na
+żądanie, zamiast udawać widok na żywo.

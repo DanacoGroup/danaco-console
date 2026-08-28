@@ -6836,3 +6836,24 @@ limit_sekund podaje czas oczekiwania na odpowiedź.
 
 Błąd zwracany przez funkcję bladOdpowiedzi ma brzmieć tak samo niezależnie
 od tego, co kanał oddaje, dlatego jest wolną funkcją, a nie metodą.
+
+## budowa/server/internal/dane/terminal_wyposazenie.go
+Odczyt leży w `terminal_wyposazenie_odczyt.go`, zapis w
+`terminal_wyposazenie_zapis.go`. Wszystkie te byty należą do jednego modułu
+i jednego adaptera rdzenia; rozbicie ich na pięć interfejsów dałoby pięć pól
+w zestawie repozytoriów i pięć podpięć w montażu, a ani jednej nowej granicy —
+granica jest tu modułowa, Terminal, i tak ją prowadzimy.
+
+Byty wyposażenia nie niosą materiału tajnego. Wpis hosta niesie adres
+i wskazanie klucza, wpis klucza niesie ścieżkę i odcisk. Hasło i klucz prywatny
+zostają na dysku maszyny rdzenia; baza nie jest sejfem.
+
+Odepnięcie klucza zwraca wpisy do klucza domyślnego konfiguracji maszyny
+rdzenia — kontrakt `terminal.key.remove` wymaga ich wymienienia.
+
+Numeru wersji skryptu zapis nie przyjmuje od wołającego: nadaje go rdzeń
+w jednej transakcji z zapisem, żeby dwa równoległe zapisy nie dostały tego
+samego numeru.
+
+Po osieroceniu tunele przestawione na `inactive` nie przenoszą już ani
+jednego bajtu.

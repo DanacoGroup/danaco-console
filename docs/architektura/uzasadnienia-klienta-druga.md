@@ -8079,3 +8079,26 @@ zniknięcie widoku dałoby pustkę czytającą się jak usterka.
 
 Nota pozycji samodzielnej mówi, że to samo złożenie stoi wewnątrz Developera, Diagnostics i Apps,
 i skąd bierze się ta pozycja w nawigacji.
+## budowa/klient-poprzedni/src/moduly/terminal/ksiazka-hostow.ts
+Prawdą o wpisach jest tabela terminal_host, a okno czyta ją komendą terminal.host.list i zmienia
+komendami terminal.host.save i terminal.host.remove. Ten byt trzyma wpisy w pamięci wyłącznie
+po to, żeby je pogrupować i pokazać — po odświeżeniu strony wykaz wraca z rdzenia.
+
+Czytanie i pisanie pliku konfiguracyjnego OpenSSH zostaje, bo służy czemu innemu niż trwałość:
+wnosi do książki wpisy z maszyny operatora i wynosi je z powrotem, a rdzeń stoi gdzie indziej.
+
+Adres celu ma znaczenie dosłowne: idzie do rdzenia polem remoteTarget otwarcia karty, a rdzeń
+podaje go programowi ssh jako pojedynczy argument. Port jedzie osobnym polem, więc alias
+konfiguracji nie jest już jedyną drogą do portu innego niż domyślny. Alias rozwiązuje wciąż
+program ssh uruchomiony na serwerze, więc alias wczytany z pliku zadziała tylko wtedy, gdy
+serwer zna go również u siebie — dlatego czytanie pliku woli jawne user@host złożone z pól
+User i HostName, a po alias sięga dopiero wtedy, gdy wpis tych pól nie ma.
+
+Przy odczycie konfiguracji czytany jest podzbiór składni, który niesie adres: Host, HostName,
+User, Port. Reszta słów kluczowych zostaje nietknięta i nieodwzorowana — wpis książki nie jest
+kopią bloku konfiguracji, tylko adresem do otwarcia karty. Wzorce (Host *, Host web-*) są
+pomijane: nie są adresem żadnej maszyny, a otwarcie karty do wzorca skończyłoby się odmową
+programu ssh.
+
+Przy zapisie konfiguracji portu domyślnego nie dopisujemy: byłby wymyśleniem danych, których
+nie podano.

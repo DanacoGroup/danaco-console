@@ -575,3 +575,14 @@ Reakcja na wskazanie i naciśnięcie jest widoczna w każdym oknie tego pakietu,
 ## budowa/klient-poprzedni/src/mission-control/stany-pulpitu.css
 Treść stanów pustych buduje plik stan-pusty.ts wraz z widokami poszczególnych
 sekcji; ten arkusz niesie wyłącznie ich wygląd.
+
+## budowa/klient-poprzedni/src/mobile/mobile.css
+Obudowę okna niesie komponenty/rama-okna.ts, a przyciski komponenty/przycisk.css.
+Jeden wymiar jest tu własny — cel dotyku: motyw daje na wskaźnik zgrubny
+40 pikseli z pliku motyw/wymiary.css, a ten ekran potrzebuje 44 pikseli, więc
+próg podnosi żeton lokalny o przedrostku modułu, tak jak robi to Terminal,
+zamiast wyjątku rozsypanego po regułach — podniesienie progu w całej powłoce
+należy do motywu. Układ jest jednoręczny: karty pozycji czyta się oczami
+u góry, a arkusza dróg i paska kwitu dotyka się kciukiem u dołu. Żadne pismo
+nie schodzi poniżej najmniejszego stopnia żetonu, żeby treść pozostała
+czytelna bez powiększania.

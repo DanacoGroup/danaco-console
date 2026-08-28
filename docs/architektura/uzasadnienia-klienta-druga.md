@@ -6634,3 +6634,12 @@ pary i chwilą przekazania naraz, albo sam kod modułu z liczbą okien, gdzie
 scena bierze tyle okien, ile prowadzi wskazany moduł. W produkcie moduł
 sceny przychodzi zdarzeniem zmiany okna, nie parametrem adresu — parametr
 modułu istnieje wyłącznie na potrzeby podglądu bez rdzenia.
+
+## budowa/klient-poprzedni/src/moduly/studio/petla-warsztat-lancucha.ts
+Czynności warsztatu pochodzą z jednego wykazu, nie z dwóch: katalog operacji kontekstowych,
+dwadzieścia osiem czynności w siedmiu grupach, ten plik wyłącznie czyta, a do tego dochodzą
+operacje własne operatora odróżnione plakietką, żeby było wiadomo, czy sięga po czynność
+fabryczną, czy po swoją. Warsztat nie jest drugą maszynerią przebiegu: składa łańcuch i zapisuje
+go, a przebieg prowadzi ta sama kolejka zadań, którą prowadzi rozkład zlecenia — kontrakt mówi
+wprost, że przebieg łańcucha prowadzi pętla wykonawcza okna, więc prowadzi go pętla, nie osobny
+licznik obok.

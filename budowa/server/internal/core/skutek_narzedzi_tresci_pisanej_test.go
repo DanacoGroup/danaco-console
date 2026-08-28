@@ -282,8 +282,8 @@ func TestObrobkaWstepnaProstujeSkosPrzedRozpoznaniem(t *testing.T) {
 		}, &bezObrobki)
 	if bezObrobki.Item.Text != nil && strings.Contains(
 		strings.ToUpper(bezZlamanWiersza(*bezObrobki.Item.Text)), "PROTOKOL") {
-		t.Skip("pomiar bezprzedmiotowy: rozpoznanie czyta materiał pochylony bez obróbki, " +
-			"więc ten sprawdzian nie odróżniłby drogi z unpaperem od drogi bez niego")
+		t.Fatal("materiał pochylony nie różnicuje drogi z unpaperem od drogi bez niego — " +
+			"rozpoznanie czyta go bez obróbki; sprawdzian potrzebuje ostrzejszego skosu")
 	}
 
 	var rozpoznanie shared.StudioIngestRecognizeResponse
@@ -333,8 +333,8 @@ func TestWyciagnijTekstProstujeSkosPrzedRozpoznaniem(t *testing.T) {
 			t.Fatalf("nieczytelny ładunek odpowiedzi odniesienia: %v", err)
 		}
 		if strings.Contains(strings.ToUpper(bezZlamanWiersza(bezObrobki.Text)), "PROTOKOL") {
-			t.Skip("pomiar bezprzedmiotowy: rozpoznanie czyta materiał pochylony bez obróbki, " +
-				"więc ten sprawdzian nie odróżniłby drogi z unpaperem od drogi bez niego")
+			t.Fatal("materiał pochylony nie różnicuje drogi z unpaperem od drogi bez niego — " +
+				"rozpoznanie czyta go bez obróbki; sprawdzian potrzebuje ostrzejszego skosu")
 		}
 	}
 

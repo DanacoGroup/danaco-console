@@ -22,11 +22,6 @@ export interface NastawyRamy {
   sesje: Session[];
 }
 
-/** Zamontowana rama wraz z drogą jej zdjęcia: odłączeniem słuchaczy zdarzeń. */
-export interface ZamontowanaRama {
-  zdejmij(): void;
-}
-
 /** Zapytanie o preferencję systemową motywu — bez odstępu po dwukropku, składnia CSS przyjmuje oba zapisy. */
 const ZAPYTANIE_MOTYW_CIEMNY = '(prefers-color-scheme:dark)';
 
@@ -37,7 +32,7 @@ function motywCiemny(): boolean {
   return globalThis.matchMedia?.(ZAPYTANIE_MOTYW_CIEMNY).matches === true;
 }
 
-export function zamontujRame(w: NastawyRamy): ZamontowanaRama {
+export function zamontujRame(w: NastawyRamy): void {
   const glowna = el('main', { 'aria-label': tekst('glowna.etykieta') });
   const belkaWezel = belka({ srodowisko: w.srodowisko.name });
   let stanWezel = pasStanu({
@@ -84,11 +79,4 @@ export function zamontujRame(w: NastawyRamy): ZamontowanaRama {
     stanWezel = nowy;
   }
   zapytanieMotywu?.addEventListener('change', naZmianeMotywu);
-
-  return {
-    zdejmij() {
-      w.miejsce.removeEventListener('click', naKlikniecie);
-      zapytanieMotywu?.removeEventListener('change', naZmianeMotywu);
-    },
-  };
 }

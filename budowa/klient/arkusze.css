@@ -9,15 +9,9 @@
 
 /* ── Widoczność odsłon ────────────────────────────────────────────────────
 
-   Okno przełącza odsłony atrybutem `data-widok-aktywny`, który nadaje montaż.
-   Regułę wykonującą to przełączenie warstwa projektowa trzyma w `prototyp.css`
-   (w. 319) — czyli w arkuszu podglądu, którego produkt nie wciąga. Bez niej
-   wszystkie odsłony okna stoją naraz jedna pod drugą.
-
-   Okno etapu, w którym nie stoi żadna czynna odsłona, nie jest oknem bieżącym.
-   Montaż wystawia trzy okna w jednym dokumencie i przełącza w nich odsłony,
-   a nie same okna, więc etap rozstrzyga się tutaj tym samym znacznikiem, co
-   odsłona: scena bez czynnej odsłony ustępuje miejsca scenie, która ją ma. */
+   Odsłony przełącza atrybut `data-widok-aktywny`, nadawany przez montaż.
+   Regułę niesie `prototyp.css` (w. 319), arkusz podglądu poza produktem —
+   stąd reguła stoi też tu. Etap bez czynnej odsłony nie jest bieżący. */
 
 [data-widok]:not([data-widok-aktywny='tak']) { display: none; }
 

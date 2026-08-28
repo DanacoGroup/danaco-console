@@ -1,8 +1,4 @@
-// Odpowiedzialność pliku: szablony moderacji i artefakty wydane z debaty
-// (`store/migracja_199_roundtable_wydanie.sql`).
-//
-// Artefakt niesie odwołanie do bajtów w magazynie treści, nie bajty. Transkrypt,
-// graf i nagranie idą w megabajtach, a baza rdzenia trzyma stan, nie treść.
+// Odpowiedzialność pliku: szablony moderacji i artefakty wydane z debaty; artefakt niesie odwołanie do bajtów w magazynie treści, nie bajty.
 package dane
 
 import (
@@ -13,7 +9,7 @@ import (
 	"strings"
 )
 
-// SzablonModeracjiDebaty to zapisany format prowadzenia debaty.
+// SzablonModeracjiDebaty to zapisany format prowadzenia debaty, gotowy do ponownego użycia przy kolejnej debacie.
 type SzablonModeracjiDebaty struct {
 	Kod            string
 	Nazwa          string
@@ -24,7 +20,7 @@ type SzablonModeracjiDebaty struct {
 	Utworzono      string
 }
 
-// ArtefaktDebaty to wydany zapis debaty: transkrypt, graf albo nagranie.
+// ArtefaktDebaty to wydany zapis debaty: transkrypt, graf albo nagranie, z odwołaniem do jego bajtów treści.
 type ArtefaktDebaty struct {
 	Kod           string
 	Okno          string
@@ -81,7 +77,7 @@ const (
 	                          FROM debata_artefakt WHERE okno = ? ORDER BY id DESC`
 )
 
-// ZapiszSzablonDebaty utrwala szablon moderacji.
+// ZapiszSzablonDebaty utrwala szablon moderacji jako osobny wpis gotowy do ponownego użycia w debacie.
 func (r *repozytoriumRoundtable) ZapiszSzablonDebaty(ctx context.Context,
 	szablon SzablonModeracjiDebaty) (SzablonModeracjiDebaty, error) {
 
@@ -102,7 +98,7 @@ func (r *repozytoriumRoundtable) ZapiszSzablonDebaty(ctx context.Context,
 	return odczytajSzablonDebaty(odczyt.QueryRowContext(ctx, szablon.Kod))
 }
 
-// SzablonyDebaty zwraca szablony moderacji od najnowszego.
+// SzablonyDebaty zwraca szablony moderacji tego okna od najnowszego do najstarszego zapisanego szablonu.
 func (r *repozytoriumRoundtable) SzablonyDebaty(ctx context.Context,
 	fraza string) ([]SzablonModeracjiDebaty, error) {
 
@@ -127,7 +123,7 @@ func (r *repozytoriumRoundtable) SzablonyDebaty(ctx context.Context,
 	return szablony, wiersze.Err()
 }
 
-// ZapiszArtefaktDebaty odnotowuje wydany artefakt wraz z odwołaniem do bajtów.
+// ZapiszArtefaktDebaty odnotowuje wydany artefakt wraz z odwołaniem do jego bajtów w magazynie treści.
 func (r *repozytoriumRoundtable) ZapiszArtefaktDebaty(ctx context.Context, artefakt ArtefaktDebaty) error {
 	polecenie, err := r.zapytania.przygotuj(ctx, zapiszArtefaktDebaty)
 	if err != nil {
@@ -141,7 +137,7 @@ func (r *repozytoriumRoundtable) ZapiszArtefaktDebaty(ctx context.Context, artef
 	return nil
 }
 
-// ArtefaktDebatyPoKodzie zwraca artefakt po identyfikatorze.
+// ArtefaktDebatyPoKodzie zwraca artefakt po jego identyfikatorze zewnętrznym, wraz z całą jego treścią.
 func (r *repozytoriumRoundtable) ArtefaktDebatyPoKodzie(ctx context.Context,
 	kod string) (ArtefaktDebaty, error) {
 
@@ -152,7 +148,7 @@ func (r *repozytoriumRoundtable) ArtefaktDebatyPoKodzie(ctx context.Context,
 	return odczytajArtefaktDebaty(polecenie.QueryRowContext(ctx, kod))
 }
 
-// ArtefaktyDebaty zwraca artefakty okna od najnowszego.
+// ArtefaktyDebaty zwraca artefakty danego okna od najnowszego do najstarszego wydanego artefaktu debaty.
 func (r *repozytoriumRoundtable) ArtefaktyDebaty(ctx context.Context,
 	okno string) ([]ArtefaktDebaty, error) {
 
@@ -177,7 +173,7 @@ func (r *repozytoriumRoundtable) ArtefaktyDebaty(ctx context.Context,
 	return artefakty, wiersze.Err()
 }
 
-// odczytajSzablonDebaty składa szablon z jednego wiersza wyniku.
+// odczytajSzablonDebaty składa szablon moderacji z jednego wiersza wyniku zapytania, kolumna po kolumnie.
 func odczytajSzablonDebaty(wiersz interface{ Scan(...any) error }) (SzablonModeracjiDebaty, error) {
 	var szablon SzablonModeracjiDebaty
 	var kolejnosc string
@@ -193,7 +189,7 @@ func odczytajSzablonDebaty(wiersz interface{ Scan(...any) error }) (SzablonModer
 	return szablon, nil
 }
 
-// odczytajArtefaktDebaty składa artefakt z jednego wiersza wyniku.
+// odczytajArtefaktDebaty składa artefakt debaty z jednego wiersza wyniku zapytania, kolumna po kolumnie.
 func odczytajArtefaktDebaty(wiersz interface{ Scan(...any) error }) (ArtefaktDebaty, error) {
 	var artefakt ArtefaktDebaty
 	err := wiersz.Scan(&artefakt.Kod, &artefakt.Okno, &artefakt.Rodzaj, &artefakt.Format,

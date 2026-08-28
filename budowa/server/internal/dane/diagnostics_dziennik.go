@@ -1,10 +1,5 @@
 // Odpowiedzialność pliku: dziennik modułu Diagnostics — dopisanie wpisów
 // partią, odczyt zawężony filtrem, wykaz źródeł i rozkład poziomów.
-//
-// Zawężenie idzie parametrem, nie sklejaniem tekstu. Jedno przygotowane
-// zapytanie obsługuje pięć zawężeń naraz, bo pusty parametr znaczy „nie
-// zawężaj". Wartości nigdy nie wchodzą do treści SQL, a pamięć podręczna
-// zapytań ma jedną pozycję zamiast trzydziestu dwóch.
 package dane
 
 import (
@@ -130,7 +125,7 @@ func (r *repozytoriumDiagnostyki) Wpisy(ctx context.Context,
 	return wpisy, razem, wiersze.Err()
 }
 
-// ZrodlaWpisow zwraca źródła obecne w dzienniku, uporządkowane alfabetycznie.
+// ZrodlaWpisow zwraca wykaz źródeł obecnych w dzienniku diagnostycznym, uporządkowany alfabetycznie rosnąco.
 func (r *repozytoriumDiagnostyki) ZrodlaWpisow(ctx context.Context) ([]string, error) {
 	polecenie, err := r.zapytania.przygotuj(ctx, pobierzZrodlaWpisow)
 	if err != nil {
@@ -153,7 +148,7 @@ func (r *repozytoriumDiagnostyki) ZrodlaWpisow(ctx context.Context) ([]string, e
 	return zrodla, wiersze.Err()
 }
 
-// PoziomyWpisow zwraca rozkład wpisów po poziomach w zakresie czasu.
+// PoziomyWpisow zwraca rozkład liczby wpisów dziennika pogrupowanych według poziomu, w podanym zakresie czasu.
 func (r *repozytoriumDiagnostyki) PoziomyWpisow(ctx context.Context, od, do int64) (LicznikPoziomow, error) {
 	polecenie, err := r.zapytania.przygotuj(ctx, policzPoziomyWpisow)
 	if err != nil {
@@ -177,7 +172,7 @@ func (r *repozytoriumDiagnostyki) PoziomyWpisow(ctx context.Context, od, do int6
 	return licznik, wiersze.Err()
 }
 
-// policz wykonuje zapytanie zliczające na tych samych warunkach co odczyt.
+// policz wykonuje zapytanie zliczające wiersze na tych samych warunkach zawężenia, na których działa odczyt wpisów.
 func (r *repozytoriumDiagnostyki) policz(ctx context.Context, zapytanie string, warunki []any) (int, error) {
 	polecenie, err := r.zapytania.przygotuj(ctx, zapytanie)
 	if err != nil {
@@ -190,7 +185,7 @@ func (r *repozytoriumDiagnostyki) policz(ctx context.Context, zapytanie string, 
 	return razem, nil
 }
 
-// warunkiDziennika składa argumenty zawężeń w kolejności znaków zapytania.
+// warunkiDziennika składa listę argumentów zawężeń w kolejności odpowiadającej znakom zapytania przygotowanego polecenia.
 func warunkiDziennika(filtr FiltrDziennika) []any {
 	poziom, zrodlo, wzorzec := string(filtr.Poziom), filtr.Zrodlo, filtr.Wzorzec
 	return []any{
@@ -202,7 +197,7 @@ func warunkiDziennika(filtr FiltrDziennika) []any {
 	}
 }
 
-// odczytajWpisDiagnostyki przenosi wiersz dziennika do bytu obszaru.
+// odczytajWpisDiagnostyki przenosi wiersz zapytania dziennika diagnostycznego do struktury bytu obszaru danych.
 func odczytajWpisDiagnostyki(s skaner) (WpisDiagnostyki, error) {
 	var wpis WpisDiagnostyki
 	err := s.Scan(&wpis.Kod, &wpis.Chwila, &wpis.Poziom, &wpis.Zrodlo, &wpis.Tresc,

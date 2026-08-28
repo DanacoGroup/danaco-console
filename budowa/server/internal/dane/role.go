@@ -1,23 +1,4 @@
-// Odpowiedzialność pliku: rola okna komunikacji widziana od strony identyfikatora
-// zewnętrznego okna — droga potrzebna rodzinie komend `role.*`.
-//
-// Rola okna mieszka w kolumnie `okno_komunikacji.rola_okna`, a więź
-// koordynator–wykonawca w `okno_komunikacji.okno_koordynatora_id` — tam, gdzie
-// kontrakt widzi `Window.windowRole` i `Window.coordinatorWindowId`. Ten plik nie
-// zakłada żadnego bytu; dokłada wyłącznie zapis i odczyt tych dwóch kolumn po
-// identyfikatorze, którym posługuje się kontrakt.
-//
-// Osobno od `okna.go`, bo tamten plik czyta i pisze kolumnę `rola_okna` wyłącznie
-// jako część pełnego wiersza okna (`Pobierz`/`Aktualizuj`, po identyfikatorze
-// wewnętrznym `int64`), więc zapis samej roli musiałby wpierw wczytać całe okno
-// wraz z katalogami roboczymi i zapisać je z powrotem — nadpisując po drodze
-// pola, o które komenda `role.assign` nie prosi.
-//
-// Wcielenia roli (`persona`) tu nie ma: nie jest kolumną tego wiersza, tylko
-// wpisem w tabeli `ustawienie` na poziomie zasięgu `window`, bo tam zapisuje je
-// klient (`multitasking/wcielenia-analizy.ts`, klucz `multitasking.wcielenie`).
-// Rdzeń sięga po ten sam adres przez RepozytoriumKonfiguracji, zamiast zakładać
-// drugą prawdę o wcieleniu.
+// Odpowiedzialność pliku: rola okna komunikacji widziana od strony identyfikatora zewnętrznego okna, droga potrzebna rodzinie komend role.*.
 package dane
 
 import (
@@ -29,26 +10,18 @@ import (
 	"danacoconsole/shared"
 )
 
-// RolaOkna to rola okna wraz z więzią, którą rola niesie. Koordynator pusty
-// znaczy „okno nie podlega żadnemu koordynatorowi” i jest stanem poprawnym —
-// tak samo poprawnym jak więź wypełniona.
+// RolaOkna to rola okna wraz z więzią, którą rola niesie; koordynator pusty znaczy, że okno nie podlega żadnemu koordynatorowi.
 type RolaOkna struct {
 	Rola shared.WindowRole
-	// Koordynator jest identyfikatorem zewnętrznym okna koordynatora, bo tylko
-	// takim posługuje się kontrakt. Okno koordynatora bez identyfikatora
-	// zewnętrznego oddaje pusty napis — wiersz istnieje, ale kontrakt nie ma jak
-	// go nazwać.
+	// Koordynator jest identyfikatorem zewnętrznym okna koordynatora; tylko takim posługuje się kontrakt.
 	Koordynator string
 }
 
-// RepozytoriumRolOkien jest kontraktem zapisu i odczytu roli okna po
-// identyfikatorze zewnętrznym.
+// RepozytoriumRolOkien jest kontraktem zapisu i odczytu roli okna po identyfikatorze zewnętrznym okna komunikacji.
 type RepozytoriumRolOkien interface {
-	// RolaOkna zwraca rolę okna wraz z więzią. Brak wiersza wraca jako
-	// ErrBrakWiersza — okno żyjące wyłącznie w pamięci rdzenia nie ma tu nic.
+	// RolaOkna zwraca rolę okna wraz z więzią, z ErrBrakWiersza, gdy okno żyje w pamięci rdzenia.
 	RolaOkna(ctx context.Context, okno string) (RolaOkna, error)
-	// ZapiszRoleOkna zapisuje samą rolę. Rola inna niż wykonawca zdejmuje więź
-	// koordynatora, bo koordynatora niesie wyłącznie okno wykonawcy.
+	// ZapiszRoleOkna zapisuje samą rolę; rola inna niż wykonawca zdejmuje więź koordynatora.
 	ZapiszRoleOkna(ctx context.Context, okno string, rola shared.WindowRole) error
 }
 
@@ -64,10 +37,7 @@ const (
 	                                  zaktualizowano = strftime('%Y-%m-%dT%H:%M:%fZ','now')
 	                              WHERE identyfikator_zewnetrzny = ?`
 
-	// Zapis roli innej niż wykonawca zdejmuje więź tym samym poleceniem, a nie
-	// drugim: rola i więź muszą się zgadzać w każdej chwili, także wtedy,
-	// gdy drugie polecenie by nie doszło. Odpowiada to normalizacji roli
-	// w pakiecie `session` (rola_okna.go), żeby pamięć i wiersz mówiły to samo.
+	// Zapis roli innej niż wykonawca zdejmuje więź tym samym poleceniem, a nie drugim: rola i więź muszą się zgadzać w każdej chwili.
 	zapiszRoleSamodzielnaOkna = `UPDATE okno_komunikacji
 	                             SET rola_okna = ?,
 	                                 okno_koordynatora_id = NULL,
@@ -83,11 +53,7 @@ func noweRepozytoriumRolOkien(z *zapytania) *repozytoriumRolOkien {
 	return &repozytoriumRolOkien{zapytania: z}
 }
 
-// RoleOkien oddaje repozytorium ról okien nad tą samą bazą, co reszta zestawu.
-//
-// Metoda, a nie pole struktury: rola okna nie jest osobnym obszarem danych, tylko
-// widokiem na dwie kolumny obszaru okien, który zestaw już niesie polem `Okna`.
-// Pole dołożone obok tamtego zapowiadałoby drugie repozytorium tego samego bytu.
+// RoleOkien oddaje repozytorium ról okien nad tą samą bazą, co reszta zestawu; jest metodą, nie polem struktury, bo rola okna nie jest osobnym obszarem danych.
 func (z *Zestaw) RoleOkien() RepozytoriumRolOkien {
 	if z == nil || z.zapytania == nil {
 		return nil
@@ -95,7 +61,7 @@ func (z *Zestaw) RoleOkien() RepozytoriumRolOkien {
 	return noweRepozytoriumRolOkien(z.zapytania)
 }
 
-// RolaOkna zwraca rolę okna wraz z identyfikatorem zewnętrznym koordynatora.
+// RolaOkna zwraca rolę okna wraz z identyfikatorem zewnętrznym koordynatora, odczytaną po identyfikatorze zewnętrznym okna.
 func (r *repozytoriumRolOkien) RolaOkna(ctx context.Context, okno string) (RolaOkna, error) {
 	polecenie, err := r.zapytania.przygotuj(ctx, rolaOknaZewnetrznego)
 	if err != nil {
@@ -117,12 +83,7 @@ func (r *repozytoriumRolOkien) RolaOkna(ctx context.Context, okno string) (RolaO
 	return RolaOkna{Rola: wartosc, Koordynator: koordynator.String}, nil
 }
 
-// ZapiszRoleOkna zapisuje rolę okna wskazanego identyfikatorem zewnętrznym.
-//
-// Okno bez wiersza wraca jako ErrBrakWiersza, a nie jako cichy brak skutku:
-// wołający ma prawo wiedzieć, czy zapis się odbył. Sam rozstrzyga, czy brak
-// wiersza jest dla niego awarią, czy stanem normalnym — okno komunikacji
-// dostaje wiersz leniwie, przy pierwszej wiadomości.
+// ZapiszRoleOkna zapisuje rolę okna wskazanego identyfikatorem zewnętrznym; okno bez wiersza wraca jako ErrBrakWiersza, nie cichy brak skutku.
 func (r *repozytoriumRolOkien) ZapiszRoleOkna(ctx context.Context, okno string, rola shared.WindowRole) error {
 	kolumna, err := rolaOknaNaBaze(rola)
 	if err != nil {

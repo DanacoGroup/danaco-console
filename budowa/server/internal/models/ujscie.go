@@ -13,7 +13,8 @@ type Ujscie interface {
 // typu tylko po to, by odebrać strumień.
 type UjscieFunkcji func(ctx context.Context, f Fragment) error
 
-// Fragment przekazuje fragment funkcji opakowanej w ujście.
+// Fragment przekazuje fragment funkcji opakowanej w ujście, dopisując do
+// interfejsu Ujscie zwykłą funkcję o zgodnej sygnaturze.
 func (u UjscieFunkcji) Fragment(ctx context.Context, f Fragment) error {
 	if u == nil {
 		return nil
@@ -49,7 +50,8 @@ func NadajKonto(ctx context.Context, u Ujscie, z Zapytanie, k MetadaneKonta) err
 	return u.Fragment(ctx, f)
 }
 
-// NadajTekst wysyła porcję tekstu odpowiedzi modelu.
+// NadajTekst wysyła porcję tekstu odpowiedzi modelu jako kolejny fragment
+// strumienia, w postaci przyjmowanej przez ujście.
 func NadajTekst(ctx context.Context, u Ujscie, z Zapytanie, tekst string) error {
 	if u == nil {
 		return nil

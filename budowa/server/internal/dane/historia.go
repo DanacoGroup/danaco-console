@@ -1,17 +1,6 @@
-// Odpowiedzialność pliku: historia rozmowy okna widziana jako wykaz pozycji —
-// odczyt stronicowany kursorem i usunięcie (rodzina `history.*`). Zasada
-// przechowywania tego wykazu żyje obok, w `historia_retencja.go`: to nastawa,
-// która kasuje sama, i osobna odpowiedzialność.
-//
-// Repozytorium nie zakłada własnej tabeli historii. Pozycją historii jest
-// wiersz `wiadomosc` — tylko on niesie rolę, treść i czas, więc tylko z niego
-// złoży się `HistoryEntry`. Bloki są wnętrzem wypowiedzi, nie pozycją.
-//
-// Osobne repozytorium obok `RepozytoriumWiadomosci` bierze się z drugiego
-// pytania o tę samą tabelę. Tamto prowadzi turę: pisze wypowiedź, czyta okno
-// po kluczu wewnętrznym i nie usuwa nigdy. Historia pyta po identyfikatorze
-// kontraktowym okna, od najnowszej, kursorem czasu — i jako jedyna kasuje;
-// usunięcie zabiera też bloki, bo bez klucza obcego kaskada ich nie sprząta.
+// Odpowiedzialność pliku: historia rozmowy okna jako wykaz pozycji, stronicowany kursorem
+// czasu, wraz z usunięciem. Repozytorium czyta i kasuje wiersze tabeli wiadomości, nie
+// zakłada własnej tabeli historii.
 package dane
 
 import (
@@ -27,8 +16,7 @@ import (
 // PozycjaHistorii to jedna pozycja wykazu historii okna — wiersz `wiadomosc`
 // w kształcie, w jakim pyta o niego rodzina `history.*`.
 type PozycjaHistorii struct {
-	// Identyfikator kontraktowy: identyfikator zewnętrzny wiadomości, a bez
-	// niego klucz wiersza jako napis — bez tożsamości nie da się usunąć.
+	// Identyfikator kontraktowy wiadomości; bez niego klucz wiersza zapisany jako napis.
 	Identyfikator string
 	OknoKod       string
 	// SesjaKod bywa pusty: sesja spoza rdzenia nie ma identyfikatora
@@ -39,31 +27,29 @@ type PozycjaHistorii struct {
 	Tresc  string
 	Chwila int64 // milisekundy epoki
 
-	// klucz i znacznik są wewnętrzne: klucz wiersza i surowy napis kolumny
-	// czasu. Kontrakt ich nie zna (kursor niesie same milisekundy), ale
-	// domknięcie strony po rodzeństwie o tym samym znaczniku potrzebuje
-	// jednego i drugiego — patrz `Pozycje`.
+	// klucz i znacznik są wewnętrzne: klucz wiersza i surowy napis kolumny czasu, poza
+	// kontraktem.
 	klucz    int64
 	znacznik string
 }
 
-// RepozytoriumHistorii jest kontraktem obszaru historii i retencji.
+// RepozytoriumHistorii jest kontraktem obszaru historii i retencji: udostępnia odczyt
+// stronicowany, usunięcie pozycji oraz zarządzanie zasadami przechowywania.
 type RepozytoriumHistorii interface {
-	// Pozycje zwraca wykaz od najnowszej. Kursor `przed` (milisekundy epoki,
-	// 0 znaczy „bez kursora") stronicuje wstecz; limit 0 znaczy całość.
+	// Pozycje zwraca wykaz od najnowszej; kursor w milisekundach stronicuje wstecz, zero —
+	// całość.
 	Pozycje(ctx context.Context, oknoKod string, przed int64, limit int) ([]PozycjaHistorii, error)
-	// Policz liczy wszystkie pozycje historii okna — bez kursora i bez limitu
-	// (pole `total`). Patrz uzasadnienie przy metodzie.
+	// Policz liczy wszystkie pozycje historii okna, bez kursora i bez limitu, do pola total.
 	Policz(ctx context.Context, oknoKod string) (int, error)
 	// Usun kasuje wskazane pozycje; wykaz pusty czyści całą historię okna.
 	Usun(ctx context.Context, oknoKod string, identyfikatory []string) (int, error)
 	// ZapiszZasade zakłada zasadę zakresu albo nadpisuje istniejącą.
 	ZapiszZasade(ctx context.Context, zasada ZasadaPrzechowywania) (ZasadaPrzechowywania, error)
-	// ZasadaOkna rozstrzyga zasadę okna: okno przed sesją, sesja przed globalną.
-	// Fałsz znaczy „zasady nie ma" — stan poprawny.
+	// ZasadaOkna rozstrzyga zasadę okna: okno przed sesją, sesja przed globalną; fałsz
+	// znaczy brak zasady.
 	ZasadaOkna(ctx context.Context, oknoKod string) (ZasadaPrzechowywania, bool, error)
-	// IstniejeByt mówi, czy okno albo sesja wskazana przez zasadę zakresu jest
-	// w bazie; zakres globalny bytu nie wskazuje i zawsze jest prawdziwy.
+	// IstniejeByt mówi, czy okno albo sesja z zakresu jest w bazie; zakres globalny bywa
+	// zawsze prawdziwy.
 	IstniejeByt(ctx context.Context, zakres, zakresKod string) (bool, error)
 	// OknaZakresu wylicza okna objęte zasadą zakresu — tędy idzie egzekucja.
 	OknaZakresu(ctx context.Context, zakres, zakresKod string) ([]string, error)
@@ -85,18 +71,15 @@ const (
 		warunekHistorii + `
 	                   ORDER BY w.utworzono DESC, w.id DESC
 	                   LIMIT CASE WHEN ? > 0 THEN ? ELSE -1 END`
-	// Liczba pozycji całego okna — bez warunku kursora. Kursor zaniżałby ją przy
-	// każdym „Wczytaj starsze", a panel podaje ją Operatorowi jako „ile zniknie"
-	// przy czyszczeniu historii, które kasuje całe okno (`history.delete` bez
-	// wskazania pozycji). Liczba zaniżona przy ostrzeżeniu o czynności
-	// nieodwracalnej jest gorsza niż jej brak.
+	// Liczba pozycji całego okna, bez warunku kursora: kursor zaniżałby ją przy kolejnym
+	// dociąganiu starszych pozycji, a wartość idzie do pola całkowitej liczby w odpowiedzi.
 	liczbaPozycjiHistorii = `SELECT COUNT(*) FROM wiadomosc w
 	                         JOIN okno_komunikacji o ON o.id = w.okno_komunikacji_id
 	                         WHERE o.identyfikator_zewnetrzny = ?`
 
-	// Rodzeństwo ostatniej pozycji strony: wiersze o tym samym znaczniku czasu,
-	// stojące w porządku wykazu za nią. Domykają stronę, żeby kursor czasu nie
-	// przeciął grupy o jednej milisekundzie — patrz `Pozycje`.
+	// Rodzeństwo ostatniej pozycji strony: wiersze o tym samym znaczniku czasu, stojące
+	// w porządku wykazu za nią. Domykają stronę, żeby kursor czasu nie przeciął grupy
+	// o jednej milisekundzie.
 	rodzenstwoHistorii = `SELECT w.id, COALESCE(w.identyfikator_zewnetrzny, ''),
 	                             COALESCE(s.identyfikator_zewnetrzny, ''),
 	                             w.rola, COALESCE(w.tresc, ''), w.utworzono
@@ -139,19 +122,9 @@ func noweRepozytoriumHistorii(z *zapytania, db *sql.DB) *repozytoriumHistorii {
 	return &repozytoriumHistorii{zapytania: z, db: db}
 }
 
-// Pozycje zwraca wykaz historii okna od najnowszej. Okno nieznane albo puste
-// daje wykaz pusty — czytanie nie odmawia z powodu pustki.
-//
-// Strona nie przecina grupy o jednym znaczniku. Porządek wykazu ma dwa klucze
-// (`utworzono DESC, id DESC`), a kursor kontraktu niesie tylko pierwszy z nich
-// — milisekundy. Gdy granica strony wypada w środku pozycji o tym samym
-// znaczniku (a tak wpada zwykła tura: pytanie i odpowiedź powstają w tej samej
-// milisekundzie), strona następna pytana warunkiem ostro mniejszym
-// `utworzono < kursor` przeskoczyłaby rodzeństwo bezpowrotnie. Zamiast dokładać
-// kontraktowi pola rozstrzygającego remis, domykamy stronę tutaj: po pobraniu
-// `limit` wierszy dobieramy jeszcze całe rodzeństwo ostatniego z nich. Strona
-// bywa więc odrobinę dłuższa od limitu, za to kursor zawsze pada między grupami
-// i nic nie ginie.
+// Pozycje zwraca wykaz historii okna od najnowszej, stronicowany kursorem czasu. Okno
+// nieznane albo puste daje wykaz pusty. Strona domyka rodzeństwo ostatniej pozycji, żeby
+// kursor nie przeciął grupy o jednym znaczniku czasu.
 func (r *repozytoriumHistorii) Pozycje(ctx context.Context, oknoKod string,
 	przed int64, limit int) ([]PozycjaHistorii, error) {
 
@@ -166,7 +139,8 @@ func (r *repozytoriumHistorii) Pozycje(ctx context.Context, oknoKod string,
 	return append(lista, rodzenstwo...), nil
 }
 
-// stronaPozycji pobiera samą stronę wykazu — bez domykania rodzeństwa.
+// stronaPozycji pobiera samą stronę wykazu wskazanego rozmiaru, bez domykania rodzeństwa
+// ostatniej pozycji o wspólnym znaczniku czasu.
 func (r *repozytoriumHistorii) stronaPozycji(ctx context.Context, oknoKod string,
 	przed int64, limit int) ([]PozycjaHistorii, error) {
 
@@ -195,9 +169,9 @@ func (r *repozytoriumHistorii) stronaPozycji(ctx context.Context, oknoKod string
 	return lista, nil
 }
 
-// rodzenstwoOstatniej dobiera pozycje o tym samym znaczniku czasu, co ostatnia
-// pozycja strony, stojące za nią w porządku wykazu. Bez nich kursor czasu
-// przeciąłby grupę o jednej milisekundzie (patrz `Pozycje`).
+// rodzenstwoOstatniej dobiera pozycje o tym samym znaczniku czasu, co ostatnia pozycja
+// strony, stojące za nią w porządku wykazu. Bez nich kursor czasu przeciąłby grupę o jednej
+// milisekundzie.
 func (r *repozytoriumHistorii) rodzenstwoOstatniej(ctx context.Context, oknoKod string,
 	ostatnia PozycjaHistorii) ([]PozycjaHistorii, error) {
 
@@ -225,10 +199,8 @@ func (r *repozytoriumHistorii) rodzenstwoOstatniej(ctx context.Context, oknoKod 
 	return lista, nil
 }
 
-// Policz liczy wszystkie pozycje historii okna. Kursora nie bierze pod uwagę:
-// liczba idzie do pola `total`, a warstwa wyższa podaje ją Operatorowi jako
-// rozmiar całej historii okna — także w ostrzeżeniu przed jej wyczyszczeniem,
-// które kasuje okno w całości.
+// Policz liczy wszystkie pozycje historii okna. Kursora nie bierze pod uwagę: liczba idzie
+// do pola total, a warstwa wyższa podaje ją jako rozmiar całej historii okna.
 func (r *repozytoriumHistorii) Policz(ctx context.Context, oknoKod string) (int, error) {
 	polecenie, err := r.zapytania.przygotuj(ctx, liczbaPozycjiHistorii)
 	if err != nil {
@@ -287,7 +259,8 @@ func znacznikKursora(przed int64) string {
 	return time.UnixMilli(przed).UTC().Format(znacznikCzasuHistorii)
 }
 
-// odczytajPozycjeHistorii składa pozycję z jednego wiersza wyniku.
+// odczytajPozycjeHistorii składa pozycję z jednego wiersza wyniku zapytania, uzupełniając
+// identyfikator kluczem wiersza, gdy zewnętrzny jest pusty.
 func odczytajPozycjeHistorii(wiersz skaner, oknoKod string) (PozycjaHistorii, error) {
 	var pozycja PozycjaHistorii
 	var klucz int64
@@ -312,7 +285,8 @@ func odczytajPozycjeHistorii(wiersz skaner, oknoKod string) (PozycjaHistorii, er
 	return pozycja, nil
 }
 
-// wykonajUsuniecie wykonuje polecenie kasujące i oddaje liczbę wierszy.
+// wykonajUsuniecie wykonuje polecenie kasujące w ramach transakcji i oddaje liczbę
+// wierszy, które faktycznie usunięto.
 func wykonajUsuniecie(ctx context.Context, transakcja *sql.Tx,
 	polecenie string, argumenty ...any) (int, error) {
 
@@ -327,7 +301,8 @@ func wykonajUsuniecie(ctx context.Context, transakcja *sql.Tx,
 	return int(liczba), nil
 }
 
-// sprzatnijBloki usuwa bloki wiadomości, których wypowiedzi już nie ma.
+// sprzatnijBloki usuwa bloki wiadomości, których wypowiedzi już nie ma w tabeli
+// wiadomości, po usunięciu pozycji historii.
 func sprzatnijBloki(ctx context.Context, transakcja *sql.Tx, oknoKod string) error {
 	if _, err := transakcja.ExecContext(ctx, usunBlokiOsierocone, oknoKod, oknoKod); err != nil {
 		return fmt.Errorf("dane: czyszczenie bloków okna %q: %w", oknoKod, err)

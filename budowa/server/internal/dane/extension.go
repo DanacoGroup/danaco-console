@@ -1,21 +1,6 @@
-// Odpowiedzialność pliku: katalog rozszerzeń (tabela `rozszerzenie`) —
-// trwałość rodziny `extension.*`.
-//
-// Pozycja katalogu stoi poziom wyżej niż ekspert i nie należy do niego. Nie
-// jest ani mostem MCP (ten mieszka w `punkt_dostepu`, a pozycja rodzaju `mcp`
-// tylko go wskazuje), ani konektorem eksperta (`agent_konektor` ma
-// `agent_id NOT NULL`, więc należy do jednego eksperta).
-//
-// Repozytorium niczego nie pobiera i niczego nie uruchamia. Napis podany
-// w polu `source` komendy `install` ląduje w kolumnie `zrodlo_deklarowane`
-// jako deklaracja — zapis faktu, że taki adres podano. Rdzeń pod ten adres
-// nie sięga.
-//
-// Konstruktor bierze współdzieloną pamięć zapytań zestawu, jak pozostałe
-// repozytoria pakietu — drugiej pamięci poleceń nie miałby kto zamknąć
-// (`Zestaw.Zamknij` zwalnia wyłącznie własną). `*sql.DB` konstruktor nie bierze:
-// żaden zapis tego rejestru nie obejmuje drugiej tabeli, więc transakcji
-// wielotabelowej tu nie ma.
+// Plik utrzymuje trwałość katalogu rozszerzeń w tabeli rozszerzenie wraz
+// z rodziną extension.*, oddzielony od poziomu eksperta, mostu MCP i konektora
+// eksperta, bez pobierania ani uruchamiania zadeklarowanego źródła.
 package dane
 
 import (
@@ -29,12 +14,9 @@ import (
 	"danacoconsole/shared"
 )
 
-// Rozszerzenie to wiersz tabeli `rozszerzenie`.
-//
-// Identyfikatory są dwa, bo kontrakt ma dwa. `Identyfikator` odpowiada polu
-// `Extension.id` (tożsamość wiersza; nią wołają configure, toggle i uninstall),
-// a `Kod` — polu `Extension.code` („kod pozycji, stały między wydaniami"; nim
-// woła install). Sklejenie ich w jedno pole zgubiłoby jedno z dwóch znaczeń.
+// Rozszerzenie to wiersz tabeli rozszerzenie z dwoma identyfikatorami:
+// Identyfikator odpowiada polu Extension.id, a Kod polu Extension.code,
+// kodowi trwałemu między wydaniami.
 type Rozszerzenie struct {
 	ID            int64
 	Identyfikator string
@@ -45,51 +27,30 @@ type Rozszerzenie struct {
 	Wersja        *string
 	Zainstalowane bool
 	Wlaczone      bool
-	// PunktDostepuID wskazuje wiersz `punkt_dostepu`.
-	// PunktDostepuKod niesie jego kod trwały — to on odpowiada polu
-	// `Extension.accessPointId` kontraktu, bo kształt `AccessPoint` niesie
-	// w polu `id` właśnie kod, nie klucz wewnętrzny.
+	// PunktDostepuID i PunktDostepuKod wskazują punkt dostępu: klucz wewnętrzny oraz jego kod trwały.
 	PunktDostepuID  *int64
 	PunktDostepuKod *string
-	// ZrodloDeklarowane to napis podany w `install.source`. Nikt go nie pobiera.
+	// ZrodloDeklarowane to napis podany w install.source. Nikt go nie pobiera.
 	ZrodloDeklarowane string
-	// ZrodloPochodzenia niesie wartość `shared.ExtensionOrigin` wprost:
-	// `danaco` — zestaw wbudowany dostarczany z pakietem serwera, `personal` —
-	// pozycja dołożona samodzielnie.
-	//
-	// Nie mylić ze `ZrodloDeklarowane`. Tamto jest napisem podanym w polu
-	// `install.source` („skąd wziąć paczkę"), to jest faktem pochodzenia
-	// („czyje to jest"). Rdzeń nie rozgałęzia po tej kolumnie ani ładowania,
-	// ani użycia — obowiązuje wspólny kontrakt integracji; jedyne jej działanie
-	// to stan wyjściowy przy rejestracji.
+	// ZrodloPochodzenia niesie shared.ExtensionOrigin: danaco albo personal, nie ZrodloDeklarowane.
 	ZrodloPochodzenia string
 	Konfiguracja      string
 	Zaktualizowano    int64
 }
 
-// FiltrRozszerzen zawęża wykaz — obsługuje oba pola zawężające `extension.list`.
+// FiltrRozszerzen zawęża wykaz rozszerzeń i obsługuje oba pola zawężające
+// polecenia extension.list: rodzaj pozycji oraz ograniczenie do zainstalowanych.
 type FiltrRozszerzen struct {
 	// Rodzaj pusty znaczy „wszystkie rodzaje".
 	Rodzaj string
-	// TylkoZainstalowane odpowiada polu `installedOnly`. Domyślnie zamknięty:
-	// katalog pokazuje także pozycje odinstalowane, bo inaczej przełącznik
-	// kontraktu nie miałby czego zawężać.
+	// TylkoZainstalowane odpowiada polu installedOnly; domyślnie pokazuje też pozycje odinstalowane.
 	TylkoZainstalowane bool
 }
 
-// ZmianaRozszerzenia niesie pola zapisu. Wskaźnik pusty znaczy „bez zmiany".
-//
-// Odpięcia punktu dostępu tu nie ma. Kontrakt oznacza `accessPointId` jako
-// niewymagane w `install` i `configure`, ale nie daje sposobu, by powiedzieć
-// „odepnij punkt". Pominięcie pola znaczy więc „bez zmiany", a nie
-// „wyczyść" — zgadywanie drugiego znaczenia kasowałoby wskazanie mostu bez
-// żądania.
+// ZmianaRozszerzenia niesie pola zapisu polecenia extension.configure; wskaźnik
+// pusty w polu znaczy brak zmiany tego pola, a nie wyczyszczenie wartości.
 type ZmianaRozszerzenia struct {
-	// Nazwa, Opis i Wersja są metrykami pozycji. Zmienia je publikacja pakietu
-	// (`apps.package.publish` wnosi kolejne wydanie tego samego kodu) oraz
-	// przypięcie i cofnięcie wersji w Installed Apps Managerze — bez tych
-	// trzech pól druga publikacja zostawiałaby w katalogu wersję poprzednią,
-	// czyli kłamała o tym, co w rejestrze leży.
+	// Nazwa, Opis i Wersja to metryki zmieniane publikacją pakietu oraz przypięciem wersji w managerze.
 	Nazwa             *string
 	Opis              *string
 	Wersja            *string
@@ -101,18 +62,15 @@ type ZmianaRozszerzenia struct {
 	Konfiguracja      *string
 }
 
-// RepozytoriumRozszerzen jest kontraktem katalogu rozszerzeń.
+// RepozytoriumRozszerzen jest kontraktem katalogu rozszerzeń obejmującym
+// cykl życia, warstwę protokołu, integracje zewnętrzne oraz warstwę zaufania pozycji.
 type RepozytoriumRozszerzen interface {
 	Rozszerzenia(ctx context.Context, filtr FiltrRozszerzen) ([]Rozszerzenie, error)
-	// Rozszerzenie odczytuje pozycję po `Extension.id`.
+	// Rozszerzenie odczytuje pozycję po Extension.id.
 	Rozszerzenie(ctx context.Context, identyfikator string) (Rozszerzenie, error)
-	// RozszerzeniePoKodzie odczytuje pozycję po `Extension.code`. Brak wiersza
-	// wraca jako ErrBrakWiersza — `extension.install` odróżnia po tym założenie
-	// pozycji nowej od przywrócenia odinstalowanej.
+	// RozszerzeniePoKodzie odczytuje pozycję po Extension.code; brak wraca jako ErrBrakWiersza.
 	RozszerzeniePoKodzie(ctx context.Context, kod string) (Rozszerzenie, error)
-	// ZalozRozszerzenie wstawia pozycję katalogu. Czas zmiany podaje warstwa
-	// wyższa w milisekundach epoki — kolumna niesie wartość kontraktu bez
-	// przekładu, więc baza nie wstawia własnego „teraz".
+	// ZalozRozszerzenie wstawia pozycję katalogu; czas zmiany podaje warstwa wyższa w milisekundach epoki.
 	ZalozRozszerzenie(ctx context.Context, rozszerzenie Rozszerzenie) (Rozszerzenie, error)
 	ZmienRozszerzenie(ctx context.Context, identyfikator string,
 		zmiana ZmianaRozszerzenia, teraz int64) (Rozszerzenie, error)
@@ -173,10 +131,9 @@ const (
 
 	rozszerzeniePoKodzie = `SELECT ` + kolumnyRozszerzenia + zrodloRozszerzenia + ` WHERE r.kod = ?`
 
-	// Jedno zapytanie na cztery warianty żądania: puste zawężenie rodzaju
-	// wyłącza pierwszy warunek, a zamknięty `installedOnly` — drugi. Porządek
-	// biegnie indeksem idx_rozszerzenie_wykaz (rodzaj, nazwa, id), więc
-	// „kolejność wyświetlania" kontraktu jest stała między wywołaniami.
+	// Jedno zapytanie obsługuje cztery warianty żądania: puste zawężenie rodzaju
+	// wyłącza pierwszy warunek, a zamknięty parametr installedOnly wyłącza drugi.
+	// Porządek wynika z indeksu wykazu.
 	listaRozszerzen = `SELECT ` + kolumnyRozszerzenia + zrodloRozszerzenia +
 		` WHERE (? = '' OR r.rodzaj = ?) AND (? = 0 OR r.zainstalowane = 1)
 		  ORDER BY r.rodzaj, r.nazwa, r.id`
@@ -206,9 +163,7 @@ const (
 
 type repozytoriumRozszerzen struct {
 	zapytania *zapytania
-	// baza jest połączeniem potrzebnym transakcjom. Kolekcja kuratorska
-	// i publikacja pakietu wymieniają wiersz razem z jego związkami — bez
-	// transakcji awaria w połowie zostawiłaby kolekcję bez pozycji.
+	// baza jest połączeniem potrzebnym transakcjom wielotabelowym repozytorium.
 	baza *sql.DB
 }
 
@@ -216,12 +171,8 @@ type repozytoriumRozszerzen struct {
 // dopiero przy złożeniu zestawu repozytoriów.
 var _ RepozytoriumRozszerzen = (*repozytoriumRozszerzen)(nil)
 
-// Rozszerzenia oddaje katalog rozszerzeń nad pamięcią zapytań zestawu.
-//
-// Rejestr jest metodą, nie polem struktury: nie trzyma stanu poza wskaźnikiem
-// na wspólną pamięć poleceń, więc złożenie go na żądanie kosztuje tyle, co
-// odczyt pola, i nie zakłada drugiej pamięci zapytań obok tej, którą zwalnia
-// `Zestaw.Zamknij`.
+// Rozszerzenia oddaje repozytorium katalogu rozszerzeń złożone nad
+// współdzieloną pamięcią zapytań zestawu, bez własnego stanu poza wskaźnikiem na tę pamięć.
 func (z *Zestaw) Rozszerzenia() RepozytoriumRozszerzen {
 	if z == nil || z.zapytania == nil {
 		return nil
@@ -229,7 +180,8 @@ func (z *Zestaw) Rozszerzenia() RepozytoriumRozszerzen {
 	return &repozytoriumRozszerzen{zapytania: z.zapytania, baza: z.baza}
 }
 
-// Rozszerzenia zwraca wykaz w kolejności wyświetlania.
+// Rozszerzenia zwraca wykaz pozycji katalogu w stałej kolejności wyświetlania,
+// zawężony filtrem rodzaju i stanu instalacji.
 func (r *repozytoriumRozszerzen) Rozszerzenia(ctx context.Context,
 	filtr FiltrRozszerzen) ([]Rozszerzenie, error) {
 
@@ -266,14 +218,16 @@ func (r *repozytoriumRozszerzen) Rozszerzenie(ctx context.Context,
 	return r.jednaPozycja(ctx, pobierzRozszerzenie, identyfikator, "rozszerzenie")
 }
 
-// RozszerzeniePoKodzie zwraca pozycję o wskazanym `Extension.code`.
+// RozszerzeniePoKodzie zwraca pozycję katalogu o wskazanym Extension.code,
+// kodzie trwałym między wydaniami pakietu.
 func (r *repozytoriumRozszerzen) RozszerzeniePoKodzie(ctx context.Context,
 	kod string) (Rozszerzenie, error) {
 
 	return r.jednaPozycja(ctx, rozszerzeniePoKodzie, kod, "rozszerzenie o kodzie")
 }
 
-// jednaPozycja odczytuje jeden wiersz katalogu wskazanym zapytaniem.
+// jednaPozycja odczytuje jeden wiersz katalogu wskazanym zapytaniem i ujednolica
+// obsługę braku wiersza dla obu punktów odczytu.
 func (r *repozytoriumRozszerzen) jednaPozycja(ctx context.Context,
 	zapytanie, wskazanie, nazwaBytu string) (Rozszerzenie, error) {
 
@@ -293,7 +247,8 @@ func (r *repozytoriumRozszerzen) jednaPozycja(ctx context.Context,
 	return pozycja, nil
 }
 
-// ZalozRozszerzenie wstawia pozycję katalogu i oddaje ją po zapisie.
+// ZalozRozszerzenie wstawia nową pozycję katalogu, sprawdza jej wymagane pola
+// i oddaje zapisany wiersz po odczycie.
 func (r *repozytoriumRozszerzen) ZalozRozszerzenie(ctx context.Context,
 	rozszerzenie Rozszerzenie) (Rozszerzenie, error) {
 
@@ -328,12 +283,12 @@ func (r *repozytoriumRozszerzen) ZalozRozszerzenie(ctx context.Context,
 	return r.Rozszerzenie(ctx, rozszerzenie.Identyfikator)
 }
 
-// ZmienRozszerzenie zmienia wyłącznie pola wskazane w żądaniu.
+// ZmienRozszerzenie zmienia wyłącznie pola wskazane w żądaniu, pozostałe
+// zostawiając bez zmiany, i oddaje wiersz po zapisie.
 func (r *repozytoriumRozszerzen) ZmienRozszerzenie(ctx context.Context, identyfikator string,
 	zmiana ZmianaRozszerzenia, teraz int64) (Rozszerzenie, error) {
 
-	// Odczyt przed zapisem, żeby zmiana pozycji nieistniejącej wróciła jako
-	// ErrBrakWiersza, a nie jako UPDATE bez skutku odmeldowany jako sukces.
+	// Odczyt przed zapisem: zmiana pozycji nieistniejącej wraca jako ErrBrakWiersza, nie sukces.
 	if _, err := r.Rozszerzenie(ctx, identyfikator); err != nil {
 		return Rozszerzenie{}, err
 	}
@@ -389,10 +344,8 @@ func zmienionaKonfiguracjaRozszerzenia(tresc *string, wskazanie string) (any, er
 	return sprawdzona, nil
 }
 
-// zrodloPochodzeniaKolumny pilnuje, żeby kolumna nigdy nie dostała pustki.
-// Nieustawione czyta się jako `personal`: pozycja, o której nikt nie powiedział,
-// że przyszła z pakietem serwera, nie jest jego częścią. Katalogu wartości tu
-// nie ma — pilnuje go warunek CHECK na kolumnie `zrodlo_pochodzenia`.
+// zrodloPochodzeniaKolumny pilnuje, żeby kolumna zrodlo_pochodzenia nigdy
+// nie dostała pustki: nieustawiona wartość czyta się jako personal.
 func zrodloPochodzeniaKolumny(zrodlo string) string {
 	if strings.TrimSpace(zrodlo) == "" {
 		return shared.ExtensionOriginPersonal

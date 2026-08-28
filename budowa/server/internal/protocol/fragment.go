@@ -7,21 +7,16 @@ import (
 	"danacoconsole/shared"
 )
 
-// rodzajFragmentu rozstrzyga, co niesie fragment strumienia. Jeden strumień
-// przenosi wszystkie rodzaje treści z każdego kanału, więc odbiorca
-// kieruje się wyłącznie tym polem. Katalog rodzajów jest wyliczeniem ChunkKind
-// kontraktu — warstwa protokołu żadnego rodzaju nie dopisuje.
+// rodzajFragmentu rozstrzyga, co niesie fragment strumienia, wyliczeniem
+// rodzajów kontraktu; warstwa protokołu żadnego rodzaju nie dopisuje.
 type rodzajFragmentu = shared.ChunkKind
 
-// Chunk jest pojedynczym fragmentem strumienia — treścią zdarzenia
-// stream.chunk w kształcie kontraktu.
-//
-// Numeru fragmentu ani znacznika końca tutaj nie ma: kontrakt umieszcza je
-// w kopercie (pola seq i done). Wstawia je KopertaFragmentu, odczytują Numer
-// i Ostatni.
+// Chunk jest pojedynczym fragmentem strumienia zdarzeń: treścią zdarzenia
+// stream.chunk tego kontraktu API.
 type Chunk = shared.StreamChunkEvent
 
-// NowyChunk składa fragment dowolnego rodzaju z treścią nietekstową.
+// NowyChunk składa fragment dowolnego rodzaju z treścią nietekstową, kodując
+// ją do postaci przenoszonej kopertą.
 func NowyChunk(rodzaj rodzajFragmentu, okno, wiadomosc string, dane any) (Chunk, error) {
 	c := Chunk{WindowId: okno, MessageId: wiadomosc, Kind: rodzaj}
 	if dane == nil {
@@ -35,7 +30,8 @@ func NowyChunk(rodzaj rodzajFragmentu, okno, wiadomosc string, dane any) (Chunk,
 	return c, nil
 }
 
-// ChunkTekstu niesie porcję tekstu odpowiedzi modelu.
+// ChunkTekstu niesie porcję tekstu odpowiedzi modelu jako kolejny fragment
+// strumienia dla wskazanego okna.
 func ChunkTekstu(okno, wiadomosc, tekst string) Chunk {
 	return Chunk{
 		WindowId:  okno,
@@ -45,14 +41,8 @@ func ChunkTekstu(okno, wiadomosc, tekst string) Chunk {
 	}
 }
 
-// ChunkWersjiOstatecznej niesie wersję ostateczną odpowiedzi — całą jej treść,
-// nie kolejną porcję.
-//
-// Odbiorca zastępuje nią tekst złożony z fragmentów tekstowych, zamiast dopisywać
-// ją na końcu. Rodzaj `final` odróżnia całość od ciągu dalszego.
-//
-// Fragment pakuje się kopertą ze znacznikiem końca — jest zdarzeniem domykającym
-// strumień.
+// ChunkWersjiOstatecznej niesie wersję ostateczną odpowiedzi, całą jej treść,
+// nie kolejną porcję do dopisania.
 func ChunkWersjiOstatecznej(okno, wiadomosc, tresc string) Chunk {
 	return Chunk{
 		WindowId:  okno,
@@ -75,7 +65,8 @@ func ChunkBledu(okno, wiadomosc string, b Blad) Chunk {
 	return c
 }
 
-// Tresc odczytuje treść tekstową fragmentu; brak tekstu daje pusty napis.
+// Tresc odczytuje treść tekstową danego fragmentu strumienia; brak tekstu
+// daje pusty napis, nigdy błąd.
 func Tresc(c Chunk) string {
 	return wartoscTekstu(c.Text)
 }

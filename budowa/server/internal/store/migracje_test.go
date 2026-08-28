@@ -5,23 +5,9 @@ import (
 	"testing"
 )
 
-// Sprawdziany warstwy trwałości.
-//
-// Migracje są jedyną drogą, którą schemat dojeżdża do maszyny Operatora, i nie
-// mają wersji zapasowej: krok wykonany błędnie zostaje w bazie na zawsze, bo
-// kroku nie da się cofnąć. Dlatego mierzone jest tu nie „czy przechodzi", lecz
-// cztery obietnice, na których stoi cała reszta: pełny przejazd od zera,
-// powtarzalność, niezmienność treści kroku już zastosowanego oraz atomowość
-// kroku nieudanego.
-//
-// Sterownik jest czystym Go, więc każdy sprawdzian zakłada własny plik bazy
-// w katalogu tymczasowym i przejeżdża komplet migracji od nowa. Koszt tego
-// przejazdu jest na tyle mały, że nie opłaca się dzielić bazy między
-// sprawdzianami — a baza dzielona zamieniłaby je w jeden sprawdzian
-// zależny od kolejności.
+// Migracje są jedyną drogą, którą schemat dojeżdża do maszyny odbiorcy, i nie mają wersji zapasowej.
 
-// swiezaBaza zakłada bazę w katalogu sprawdzianu i doprowadza ją do bieżącej
-// wersji schematu.
+// Funkcja swiezaBaza zakłada bazę w katalogu sprawdzianu i doprowadza ją do bieżącej wersji schematu migracjami.
 func swiezaBaza(t *testing.T) *Baza {
 	t.Helper()
 	baza, err := Otworz(filepath.Join(t.TempDir(), "dane.sqlite"))
@@ -88,9 +74,7 @@ func TestPowtornyPrzejazdNiczegoNieZmienia(t *testing.T) {
 		}
 	}
 
-	// Rejestr nie ma prawa dostać drugiego wiersza tej samej wersji — warunek
-	// UNIQUE na kolumnie `wersja` odrzuciłby wpis, ale schemat wykonałby się
-	// wcześniej. Liczony jest więc wiersz, nie klucz mapy.
+	// Rejestr nie ma prawa dostać drugiego wiersza tej samej wersji; liczony jest wiersz, nie klucz mapy.
 	var wierszy int
 	if err := baza.DB.QueryRow("SELECT count(*) FROM migracja").Scan(&wierszy); err != nil {
 		t.Fatalf("nie można policzyć wierszy rejestru: %v", err)
@@ -113,9 +97,7 @@ func TestZmienionyKrokPoZastosowaniuJestBledem(t *testing.T) {
 	}
 	pierwszy := kroki[0]
 
-	// Podmiana idzie po stronie rejestru, bo plików wkompilowanych w binarium
-	// zmienić się nie da. Skutek jest ten sam: suma zapisana rozjeżdża się
-	// z sumą policzoną z treści.
+	// Podmiana idzie po stronie rejestru, bo plików wkompilowanych w binarium zmienić się nie da.
 	if _, err := baza.DB.Exec("UPDATE migracja SET suma_kontrolna = ? WHERE wersja = ?",
 		"suma z innej treści", pierwszy.Wersja); err != nil {
 		t.Fatalf("nie można podmienić sumy kontrolnej: %v", err)
@@ -132,8 +114,7 @@ func TestZmienionyKrokPoZastosowaniuJestBledem(t *testing.T) {
 func TestNieudanyKrokNieZostawiaSladu(t *testing.T) {
 	baza := swiezaBaza(t)
 
-	// Krok wykonuje jedno polecenie poprawne, a potem jedno niepoprawne.
-	// Tabela z pierwszego polecenia jest tu miarą wycofania transakcji.
+	// Krok wykonuje jedno polecenie poprawne, a potem jedno niepoprawne, jako miarę wycofania transakcji.
 	wadliwy := migracja{
 		Wersja: 999999,
 		Nazwa:  "krok_sprawdzianu",
@@ -166,10 +147,7 @@ func TestNieudanyKrokNieZostawiaSladu(t *testing.T) {
 	}
 }
 
-// TestWykazKrokowJestRosnacyIJednoznaczny sprawdza to, na czym stoi cała
-// numeracja: kolejność rosnąca i brak dwóch kroków o tym samym numerze.
-// Ciągłość numeracji nie jest wymagana i nie jest tu sprawdzana — luki
-// powstają przy pracy równoległej i są z zamysłu.
+// TestWykazKrokowJestRosnacyIJednoznaczny sprawdza, na czym stoi cała numeracja: kolejność rosnącą i brak dwóch kroków o tym samym numerze.
 func TestWykazKrokowJestRosnacyIJednoznaczny(t *testing.T) {
 	kroki, err := wczytajMigracje()
 	if err != nil {
@@ -197,10 +175,7 @@ func TestWykazKrokowJestRosnacyIJednoznaczny(t *testing.T) {
 	}
 }
 
-// TestSpojnoscPoPelnymPrzejezdzie puszcza kontrolę, którą rdzeń wystawia
-// diagnostyce: integralność pliku i zgodność kluczy obcych. Schemat złożony
-// z kroków poprawnych osobno może być niespójny razem — najprościej wtedy, gdy
-// krok późniejszy odwołuje się do tabeli usuniętej wcześniej.
+// TestSpojnoscPoPelnymPrzejezdzie puszcza kontrolę integralności pliku i zgodności kluczy obcych po pełnym przejeździe migracji.
 func TestSpojnoscPoPelnymPrzejezdzie(t *testing.T) {
 	baza := swiezaBaza(t)
 	if err := baza.SprawdzSpojnosc(); err != nil {

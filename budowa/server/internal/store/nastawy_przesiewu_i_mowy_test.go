@@ -7,15 +7,7 @@ import (
 	"danacoconsole/server/internal/wiedza"
 )
 
-// Cztery nastawy przesiewu i osi obrazu muszą mieć wiersz w katalogu ustawień.
-//
-// Bez wiersza zdolność dalej działa — rozstrzyganie nastawy czyta zapis
-// niezależnie od katalogu definicji — ale `config.set` odmawia klucza spoza
-// katalogu (`core/walidacja_klucza_ustawienia.go`), a okno konfiguracji
-// wystawia wyłącznie pozycje katalogu. Brak wiersza znaczy więc dokładnie tyle:
-// nastawa jest ustawialna wyłącznie ręcznym zapisem do bazy. Sprawdzian pilnuje
-// jednego i drugiego naraz: że wiersz jest i że jego wartość domyślna mówi to
-// samo, co stała pakietu, z którego liczy silnik.
+// TestNastawyPrzesiewuIObrazuStojaWKatalogu sprawdza, że cztery nastawy przesiewu i osi obrazu mają wiersz w katalogu ustawień.
 func TestNastawyPrzesiewuIObrazuStojaWKatalogu(t *testing.T) {
 	baza := swiezaBaza(t)
 
@@ -39,9 +31,7 @@ func TestNastawyPrzesiewuIObrazuStojaWKatalogu(t *testing.T) {
 		}
 	}
 
-	// Wiersz katalogu bez zasięgu i bez osi jest pozycją, której nie da się
-	// zapisać: rozstrzygacz pyta o wartość dla poziomu i osi, a definicja
-	// niedopuszczająca żadnego poziomu nie ma gdzie stanąć.
+	// Wiersz katalogu bez zasięgu i bez osi jest pozycją, której nie da się zapisać.
 	for klucz := range oczekiwane {
 		var poziomy, osie int
 		if err := baza.DB.QueryRow(`
@@ -59,9 +49,7 @@ func TestNastawyPrzesiewuIObrazuStojaWKatalogu(t *testing.T) {
 		}
 	}
 
-	// Sonda dodatnia dla samego odczytu: klucz, którego w katalogu nie ma, musi
-	// się nie odczytać. Bez niej sprawdzian przechodziłby także wtedy, gdyby
-	// zapytanie milczało o każdym kluczu.
+	// Sonda dodatnia dla samego odczytu: klucz, którego w katalogu nie ma, musi się nie odczytać.
 	var nic string
 	if err := baza.DB.QueryRow(
 		`SELECT wartosc_domyslna FROM definicja_ustawienia WHERE klucz = ?`,
@@ -70,13 +58,7 @@ func TestNastawyPrzesiewuIObrazuStojaWKatalogu(t *testing.T) {
 	}
 }
 
-// Nastawa katalogu wag mowy stoi w dwóch miejscach i musi znaczyć to samo.
-//
-// Wartość domyślną Operator dostaje z bazy (rozstrzygacz zasięgu oddaje
-// `definicja_ustawienia.wartosc_domyslna`), a stała pakietu `mowa` wchodzi tam,
-// gdzie rozstrzygacza nie ma. Rozjazd daje dwie odpowiedzi na pytanie, gdzie
-// leżą wagi, zależne od drogi wywołania — a rozpoznać go można dopiero po tym,
-// że transkrypcja pobiera drugą kopię wag zamiast wystartować.
+// TestNastawaWagMowyWskazujeWagiStojace sprawdza, że nastawa katalogu wag mowy i stała pakietu wskazują te same wagi.
 func TestNastawaWagMowyWskazujeWagiStojace(t *testing.T) {
 	baza := swiezaBaza(t)
 
@@ -91,9 +73,7 @@ func TestNastawaWagMowyWskazujeWagiStojace(t *testing.T) {
 			mowa.KluczKatalogModeli, domyslna, mowa.KatalogModeliDomyslny)
 	}
 
-	// Katalog pusty znaczy „pamięć podręczna biblioteki w katalogu domowym
-	// konta, które uruchomiło rdzeń" — wtedy widoczność wag zależy od tego, na
-	// czyim koncie stoi proces. Wartość pusta jest tu regresją, a nie wyborem.
+	// Katalog pusty znaczy pamięć podręczną biblioteki w katalogu domowym konta uruchamiającego rdzeń.
 	if mowa.KatalogModeliDomyslny == "" {
 		t.Error("domyślny katalog wag mowy jest pusty — wagi widzi tylko konto, " +
 			"w którego katalogu domowym stoi pamięć podręczna")

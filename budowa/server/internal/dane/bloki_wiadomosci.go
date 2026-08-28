@@ -1,16 +1,5 @@
-// Dostęp do obszaru bloków wiadomości (tabela `blok_wiadomosci`) —
-// nietekstowych fragmentów strumienia odpowiedzi, zapisywanych w trakcie tury:
-// toku rozumowania, wywołań narzędzi z wynikami, prowenancji i metadanych
-// konta. Odczyt dokleja je do wiadomości kontraktu w `rozmowa_bloki.go`.
-//
-// Tekstu tutaj nie ma. Fragment rodzaju 'text' domyka dziennik rozmowy
-// w kolumnie `wiadomosc.tresc`; zapisanie go drugi raz tutaj byłoby drugą
-// prawdą o tej samej wypowiedzi, więc warunek CHECK schematu odbija taki zapis,
-// a rejestrator bloków nawet go nie próbuje.
-//
-// Rodzaj jest wartością kontraktu (ChunkKind, angielską): kontrakt nie zapisuje
-// polskiego odwzorowania dla 'provenance' i 'account', a przekład należy
-// wyłącznie do kontraktu.
+// Plik prowadzi dostęp do obszaru bloków wiadomości: nietekstowych fragmentów strumienia odpowiedzi zapisywanych
+// w trakcie tury; odczyt dokleja je do wiadomości kontraktu, a rodzaj jest wartością kontraktu wprost, bez polskiego przekładu.
 package dane
 
 import (
@@ -21,24 +10,22 @@ import (
 	"danacoconsole/shared"
 )
 
-// BlokWiadomosci to wiersz tabeli `blok_wiadomosci`.
+// BlokWiadomosci to wiersz tabeli `blok_wiadomosci` niosący jeden nietekstowy fragment strumienia odpowiedzi.
 type BlokWiadomosci struct {
 	ID int64
 	// Chwila zapisu w milisekundach epoki — czas nadejścia fragmentu, nie zapisu.
 	Chwila int64
-	// OknoKod i WiadomoscKod są identyfikatorami kontraktowymi (napisy), nie
-	// kluczami obcymi — rejestrator strumienia innych nie zna.
+	// OknoKod i WiadomoscKod są identyfikatorami kontraktowymi, nie kluczami obcymi.
 	OknoKod      string
 	WiadomoscKod string
 	Kolejnosc    int
 	Rodzaj       shared.ChunkKind
-	// Tresc niesie pole `text` fragmentu (tak nadchodzi tok rozumowania),
-	// Ladunek — surowe pole `data` (dowód pierwotny); nil znaczy brak ładunku.
+	// Tresc niesie pole text fragmentu, Ladunek niesie surowe pole data; pusty ładunek znaczy jego brak.
 	Tresc   string
 	Ladunek json.RawMessage
 }
 
-// RepozytoriumBlokow jest kontraktem obszaru bloków wiadomości.
+// RepozytoriumBlokow jest kontraktem obszaru bloków wiadomości: zapis i odczyt fragmentów strumienia odpowiedzi.
 type RepozytoriumBlokow interface {
 	Dopisz(ctx context.Context, blok BlokWiadomosci) error
 	ListaOkna(ctx context.Context, oknoKod string) ([]BlokWiadomosci, error)
@@ -115,7 +102,7 @@ func (r *repozytoriumBlokow) ListaOkna(ctx context.Context, oknoKod string) ([]B
 	return lista, nil
 }
 
-// odczytajBlok składa strukturę z jednego wiersza wyniku.
+// odczytajBlok składa strukturę bloku wiadomości wprost z jednego wiersza wyniku zapytania do bazy SQL.
 func odczytajBlok(wiersz skaner) (BlokWiadomosci, error) {
 	var blok BlokWiadomosci
 	var rodzaj string
@@ -132,7 +119,7 @@ func odczytajBlok(wiersz skaner) (BlokWiadomosci, error) {
 	return blok, nil
 }
 
-// ladunekDoKolumny przekłada surowy ładunek na wartość kolumny; pusty daje NULL.
+// ladunekDoKolumny przekłada surowy ładunek na wartość kolumny bazy danych; ładunek pusty daje wartość NULL.
 func ladunekDoKolumny(ladunek json.RawMessage) any {
 	if len(ladunek) == 0 {
 		return nil

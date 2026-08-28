@@ -1,10 +1,5 @@
 // Odpowiedzialność pliku: dostęp do obszaru konfiguracji (tabele `ustawienie`
-// i `poziom_zasiegu`). Repozytorium czyta i zapisuje wartości na wskazanym
-// poziomie zasięgu; rozstrzyganie dziewięciu poziomów należy do pakietu
-// `internal/konfig` (właściciel pojęcia poziomu zasięgu).
-//
-// Brak wiersza oznacza wartość domyślną, nie odmowę działania,
-// dlatego `Odczytaj` zwraca informację „nie ustawiono”, a nie błąd.
+// i `poziom_zasiegu`). Repozytorium czyta i zapisuje wartości na wskazanym poziomie zasięgu.
 package dane
 
 import (
@@ -15,12 +10,8 @@ import (
 	"danacoconsole/shared"
 )
 
-// Ustawienie to wiersz tabeli `ustawienie` opisany poziomem zasięgu kontraktu
-// oraz osią rozstrzygania.
-//
-// Oś jest prostopadła do poziomu: poziom mówi, jak wąsko obowiązuje wartość,
-// oś mówi, dla czego — dla platformy, dla modelu albo dla konta. Oś pusta znaczy
-// `platform`, tak samo jak domyślna wartość kolumny.
+// Ustawienie to wiersz tabeli `ustawienie` opisany poziomem zasięgu kontraktu oraz osią rozstrzygania,
+// dla czego wartość obowiązuje.
 type Ustawienie struct {
 	Poziom         shared.ConfigScope
 	KluczZasiegu   string
@@ -32,11 +23,7 @@ type Ustawienie struct {
 	Zaktualizowano string
 }
 
-// RepozytoriumKonfiguracji jest kontraktem obszaru konfiguracji.
-//
-// Metody tego kontraktu opisują oś platformy. Oś modelu i konta obsługuje
-// rozszerzenie RepozytoriumKonfiguracjiOsi z pliku `ustawienia_osi.go`; obie
-// postaci wypełnia jedna implementacja, więc drugiego rozstrzygania nie ma.
+// RepozytoriumKonfiguracji jest kontraktem obszaru konfiguracji, opisującym metody dotyczące osi platformy.
 type RepozytoriumKonfiguracji interface {
 	Ustaw(ctx context.Context, ustawienie Ustawienie) error
 	Odczytaj(ctx context.Context, poziom shared.ConfigScope, kluczZasiegu, klucz string) (Ustawienie, bool, error)
@@ -116,22 +103,21 @@ func (r *repozytoriumKonfiguracji) Odczytaj(ctx context.Context, poziom shared.C
 	return r.OdczytajOsi(ctx, poziom, kluczZasiegu, shared.ConfigAxisPlatform, "", klucz)
 }
 
-// ListaPoziomu zwraca ustawienia osi platformy dla jednego bytu danego poziomu.
+// ListaPoziomu zwraca ustawienia osi platformy dla jednego bytu danego poziomu zasięgu konfiguracji systemu.
 func (r *repozytoriumKonfiguracji) ListaPoziomu(ctx context.Context, poziom shared.ConfigScope,
 	kluczZasiegu string) ([]Ustawienie, error) {
 
 	return r.ListaOsi(ctx, poziom, kluczZasiegu, shared.ConfigAxisPlatform, "")
 }
 
-// Usun kasuje ustawienie osi platformy — wartość wraca do domyślnej
-// (komenda config.reset).
+// Usun kasuje ustawienie osi platformy; wartość wraca wtedy do wartości domyślnej tej konfiguracji systemu.
 func (r *repozytoriumKonfiguracji) Usun(ctx context.Context, poziom shared.ConfigScope,
 	kluczZasiegu, klucz string) error {
 
 	return r.UsunOsi(ctx, poziom, kluczZasiegu, shared.ConfigAxisPlatform, "", klucz)
 }
 
-// odczytajUstawienie składa strukturę z jednego wiersza wyniku.
+// odczytajUstawienie składa pełną strukturę ustawienia z jednego wiersza wyniku zapytania do bazy danych.
 func odczytajUstawienie(wiersz skaner) (Ustawienie, error) {
 	var ustawienie Ustawienie
 	var kod, os string

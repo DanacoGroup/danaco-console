@@ -1,14 +1,6 @@
 // Odpowiedzialność pliku: zapis nadań dostępu. Zapis dotyka dwóch tabel
 // (`nadanie_dostepu`, `korzen_nadania`) i porządku całego zbioru nadań okna,
 // więc idzie w jednej transakcji.
-//
-// Reguły zbioru. Okno ma zbiór nadań:
-//   - kolejność liczona jest od 1; brak wskazania dokłada nadanie na koniec,
-//   - głównych nadań okna jest najwyżej jedno — pilnuje tego indeks częściowy
-//     bazy, a repozytorium zdejmuje oznaczenie z poprzedniego, zamiast zderzać
-//     się z więzem,
-//   - pierwsze nadanie okna zostaje główne z urzędu; okno z nadaniami, ale bez
-//     głównego, nie miałoby punktu domyślnego.
 package dane
 
 import (
@@ -43,7 +35,7 @@ const (
 	oknoNadania = `SELECT okno_komunikacji_id FROM nadanie_dostepu WHERE id = ?`
 )
 
-// Dodaj wpisuje nadanie do zbioru okna wraz z zawężeniem korzeni.
+// Dodaj wpisuje nadanie do zbioru okna wraz z zawężeniem korzeni punktu dostępu, wyznaczając miejsce w kolejności.
 func (r *repozytoriumNadan) Dodaj(ctx context.Context, nadanie Nadanie) (int64, error) {
 	tryb, err := trybDostepuNaBaze(nadanie.Tryb, "nadanie_dostepu.tryb")
 	if err != nil {
@@ -139,7 +131,7 @@ func (r *repozytoriumNadan) OznaczGlowne(ctx context.Context, id int64) error {
 	})
 }
 
-// Usun cofa nadanie. Korzenie nadania kasuje kaskada więzu klucza obcego.
+// Usun cofa nadanie dostępu; korzenie nadania kasuje kaskada więzu klucza obcego zdefiniowana w schemacie bazy.
 func (r *repozytoriumNadan) Usun(ctx context.Context, id int64) error {
 	polecenie, err := r.zapytania.przygotuj(ctx, usunNadanie)
 	if err != nil {

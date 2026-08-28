@@ -1,13 +1,5 @@
 // Odpowiedzialność pliku: niezgodności kontroli jakości panelu tłumaczenia
 // (tabela `panel_tlumaczenia_niezgodnosc`) — faseta „jakość” modułu Translate.
-//
-// Zapis jest wymianą, nie dokładaniem. `TranslateQualityCheckResponse.Issues`
-// nie niesie pola przyrostowego (brak `Since`, brak identyfikatora poprzedniej
-// kontroli) — kontrakt oddaje płaski wykaz zastrzeżeń bieżącego stanu panelu.
-// Każde wywołanie `translate.quality.check` liczy niezgodności na nowo z treści
-// panelu i zastępuje poprzedni wykaz tej samej kontroli, tym samym wzorcem co
-// `ZapiszKroki` w `automations_kroki.go`. Dopisywanie dawałoby narastającą listę
-// powtórzeń tej samej usterki przy każdej kolejnej kontroli tego samego panelu.
 package dane
 
 import (
@@ -76,8 +68,7 @@ func (r *repozytoriumTlumaczen) ZapiszNiezgodnosci(ctx context.Context,
 	})
 }
 
-// Niezgodnosci zwraca niezgodności panelu z ostatniej kontroli jakości, od
-// najnowszej.
+// Niezgodnosci zwraca niezgodności panelu z ostatniej kontroli jakości, uporządkowane od najnowszej do najstarszej.
 func (r *repozytoriumTlumaczen) Niezgodnosci(ctx context.Context, panelID int64) ([]NiezgodnoscTlumaczenia, error) {
 	polecenie, err := r.zapytania.przygotuj(ctx, listaNiezgodnosciPanelu)
 	if err != nil {

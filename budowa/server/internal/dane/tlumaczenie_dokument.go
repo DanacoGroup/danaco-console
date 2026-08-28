@@ -1,11 +1,6 @@
-// Odpowiedzialność pliku: materiał wniesiony do tłumaczenia — dokument
-// z segmentami (`dokument_tlumaczenia`, `segment_dokumentu_tlumaczenia`,
-// migracja 164), zasób lokalizacyjny z kluczami (`zasob_lokalizacji`,
-// `klucz_lokalizacji`) i kwestie napisów (`kwestia_napisow`, migracja 165).
-//
-// Trzy rodzaje materiału, jeden plik, bo wszystkie trzy wchodzą do modułu tą
-// samą drogą: plik na dysku → wiersze w bazie → panele przekładu. Różnią się
-// wyłącznie tym, co w pliku jest jednostką: akapit, klucz, kwestia.
+// Odpowiedzialność pliku: materiał wniesiony do tłumaczenia to dokument z segmentami, zasób
+// lokalizacyjny z kluczami i kwestie napisów. Trzy rodzaje materiału łączy jedna droga: plik
+// na dysku, wiersze w bazie, panele przekładu.
 package dane
 
 import (
@@ -17,7 +12,8 @@ import (
 	"time"
 )
 
-// DokumentTlumaczenia to wiersz `dokument_tlumaczenia`.
+// DokumentTlumaczenia to wiersz tabeli dokumentów tłumaczenia, niosący ścieżkę pliku
+// źródłowego, format i przynależność do okna.
 type DokumentTlumaczenia struct {
 	ID             int64
 	Kod            string
@@ -96,7 +92,8 @@ func (r *repozytoriumTlumaczen) ZapiszDokument(ctx context.Context,
 	return r.Dokument(ctx, dokument.Kod)
 }
 
-// Dokument oddaje dokument po kodzie zewnętrznym.
+// Dokument oddaje dokument po kodzie zewnętrznym wraz z kodem okna, do którego dokument
+// należy, oraz z liczbą stron.
 func (r *repozytoriumTlumaczen) Dokument(ctx context.Context, kod string) (DokumentTlumaczenia, error) {
 	var dokument DokumentTlumaczenia
 	var strony sql.NullInt64
@@ -121,7 +118,8 @@ func (r *repozytoriumTlumaczen) Dokument(ctx context.Context, kod string) (Dokum
 	return dokument, nil
 }
 
-// SegmentyDokumentu oddaje segmenty dokumentu w kolejności zapisu.
+// SegmentyDokumentu oddaje segmenty dokumentu w kolejności zapisu, gotowe do wyświetlenia
+// w panelu przekładu.
 func (r *repozytoriumTlumaczen) SegmentyDokumentu(ctx context.Context,
 	dokumentID int64) ([]SegmentDokumentu, error) {
 
@@ -149,7 +147,8 @@ func (r *repozytoriumTlumaczen) SegmentyDokumentu(ctx context.Context,
 	return segmenty, wiersze.Err()
 }
 
-// ZasobLokalizacji to wiersz `zasob_lokalizacji`.
+// ZasobLokalizacji to wiersz tabeli zasobów lokalizacyjnych, niosący ścieżkę pliku
+// źródłowego, format i język źródłowy.
 type ZasobLokalizacji struct {
 	ID             int64
 	Kod            string
@@ -174,7 +173,7 @@ type KluczLokalizacji struct {
 	Kolejnosc    int64
 }
 
-// ZapiszZasobLokalizacji zakłada zasób albo nadpisuje zastany i wymienia jego
+// ZapiszZasobLokalizacji zakłada zasób albo nadpisuje zastany po kodzie i wymienia jego
 // klucze w całości.
 func (r *repozytoriumTlumaczen) ZapiszZasobLokalizacji(ctx context.Context,
 	zasob ZasobLokalizacji, klucze []KluczLokalizacji) (ZasobLokalizacji, error) {
@@ -226,7 +225,8 @@ func (r *repozytoriumTlumaczen) ZapiszZasobLokalizacji(ctx context.Context,
 	return r.ZasobLokalizacji(ctx, zasob.Kod)
 }
 
-// znacznikiDoKolumny składa wykaz znaczników w jedną kolumnę tekstową.
+// znacznikiDoKolumny składa wykaz znaczników w jedną kolumnę tekstową, oddzielając
+// poszczególne wpisy nowym wierszem.
 func znacznikiDoKolumny(znaczniki []string) any {
 	if len(znaczniki) == 0 {
 		return nil
@@ -234,7 +234,8 @@ func znacznikiDoKolumny(znaczniki []string) any {
 	return strings.Join(znaczniki, "\n")
 }
 
-// ZasobLokalizacji oddaje zasób po kodzie zewnętrznym.
+// ZasobLokalizacji oddaje zasób po kodzie zewnętrznym wraz z kodem okna, do którego zasób
+// należy, oraz z językiem źródłowym.
 func (r *repozytoriumTlumaczen) ZasobLokalizacji(ctx context.Context,
 	kod string) (ZasobLokalizacji, error) {
 
@@ -258,7 +259,8 @@ func (r *repozytoriumTlumaczen) ZasobLokalizacji(ctx context.Context,
 	return zasob, nil
 }
 
-// KluczeLokalizacji oddaje klucze zasobu w kolejności zapisu.
+// KluczeLokalizacji oddaje klucze zasobu w kolejności zapisu, wraz ze znacznikami
+// i kontekstem każdego klucza.
 func (r *repozytoriumTlumaczen) KluczeLokalizacji(ctx context.Context,
 	zasobID int64) ([]KluczLokalizacji, error) {
 
@@ -311,7 +313,8 @@ func (r *repozytoriumTlumaczen) ZapiszKluczLokalizacji(ctx context.Context,
 	return nil
 }
 
-// KwestiaNapisow to wiersz `kwestia_napisow`.
+// KwestiaNapisow to wiersz tabeli kwestii napisów, niosący czas początku i końca oraz
+// treść wypowiedzi.
 type KwestiaNapisow struct {
 	Kolejnosc  int64
 	PoczatekMs int64

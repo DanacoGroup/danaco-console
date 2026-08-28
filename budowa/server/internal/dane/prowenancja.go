@@ -1,13 +1,6 @@
-// Odpowiedzialność pliku: magazyn śladu wywołań kanału modelu — zapis wywołania
-// wraz z odcinkami i odczyt zawężony do pytania Operatora.
-//
-// Ślad jest podstawą dwóch rzeczy naraz: Provenance Explorer pyta o pojedyncze
-// wywołanie, a rozliczenie zużycia liczy sumy po wymiarze. Obie odpowiedzi
-// powstają z TEJ SAMEJ tabeli — druga tabela z tymi samymi liczbami rozjechałaby
-// się z pierwszą przy pierwszej korekcie cennika.
-//
-// Zawężenie idzie do bazy, nie do pętli w Go. Wywołań przybywa w tempie pracy
-// Operatora, a wykaz bez zawężenia po czasie potrafi zająć całą tabelę.
+// Plik jest magazynem śladu wywołań kanału modelu: zapis wywołania wraz z odcinkami oraz
+// odczyt zawężony do pytania operatora. Uzasadnienie modelu danych niesie rozdział
+// prowenancja.go dokumentacji architektury.
 package dane
 
 import (
@@ -17,11 +10,9 @@ import (
 	"strings"
 )
 
-// WywolanieModelu jest jednym wierszem śladu.
-//
-// Wskaźniki tam, gdzie brak wartości znaczy co innego niż zero: wywołanie
-// biegnące nie ma jeszcze końca ani opóźnienia, a wywołanie kanału bez cennika
-// nie ma kosztu — i to jest inna rzecz niż koszt zerowy.
+// WywolanieModelu jest jednym wierszem śladu wywołania kanału modelu. Wskaźniki niosą
+// brak wartości jako stan różny od zera: wywołanie biegnące nie ma jeszcze końca,
+// a wywołanie bez cennika nie ma kosztu.
 type WywolanieModelu struct {
 	ID               int64
 	Kod              string
@@ -58,7 +49,8 @@ type WywolanieModelu struct {
 	Odpowiedz        *string
 }
 
-// OdcinekWywolania jest jedną gałęzią drzewa wywołania.
+// OdcinekWywolania jest jedną gałęzią drzewa wywołania: pojedynczym krokiem
+// przetwarzania wraz z jego czasem, kosztem i stanem.
 type OdcinekWywolania struct {
 	ID             int64
 	Kod            string
@@ -95,7 +87,8 @@ type SitoWywolan struct {
 	Granica   int
 }
 
-// SumaZuzycia jest jednym wierszem rozliczenia po wymiarze.
+// SumaZuzycia jest jednym wierszem rozliczenia zużycia po wymiarze: liczbą zadań,
+// tokenami i kosztem zsumowanymi dla jednego klucza.
 type SumaZuzycia struct {
 	Wymiar            string
 	Klucz             string
@@ -110,7 +103,8 @@ type SumaZuzycia struct {
 	SrednieOpoznienie int
 }
 
-// RepozytoriumProwenancji jest kontraktem magazynu śladu.
+// RepozytoriumProwenancji jest kontraktem magazynu śladu wywołań modelu wraz z odcinkami
+// i rozliczeniem zużycia.
 type RepozytoriumProwenancji interface {
 	// ZapiszWywolanie wnosi wiersz albo nadpisuje istniejący po kodzie.
 	ZapiszWywolanie(ctx context.Context, wywolanie WywolanieModelu) (WywolanieModelu, error)
@@ -128,12 +122,9 @@ type RepozytoriumProwenancji interface {
 	Zuzycie(ctx context.Context, wymiar string, od, do *int64, granica int) ([]SumaZuzycia, error)
 }
 
-// kolumnaWymiaru przekłada wymiar kontraktu na kolumnę tabeli.
-//
-// Odwzorowanie stoi tutaj, a nie w adapterze, bo to warstwa danych wie, którą
-// kolumną grupuje. Wymiar spoza wykazu jest odmową, nie cichym zejściem do
-// wymiaru domyślnego: suma policzona po innej osi niż zamówiona wygląda
-// identycznie jak zamówiona i nie da się ich odróżnić.
+// kolumnaWymiaru przekłada wymiar kontraktu na kolumnę tabeli. Wymiar spoza wykazu jest
+// odmową, nie cichym zejściem do wymiaru domyślnego, żeby suma policzona po innej osi
+// nie wyglądała identycznie jak zamówiona.
 var kolumnaWymiaru = map[string]string{
 	"channel":     "kanal_kod",
 	"provider":    "dostawca",
@@ -218,11 +209,8 @@ func (r *repozytoriumProwenancji) Wywolanie(ctx context.Context, kod string) (Wy
 	return w, nil
 }
 
-// warunkiSita składa listę warunków wraz z argumentami.
-//
-// Osobno od zapytania, bo ten sam zestaw obsługuje wykaz i licznik wszystkich
-// pasujących — inaczej licznik liczyłby po innym zawężeniu niż wykaz, a Operator
-// widziałby „12 z 340" przy trzystu czterdziestu wierszach niepasujących.
+// warunkiSita składa listę warunków wraz z argumentami, wspólną dla wykazu i licznika
+// wszystkich pasujących, żeby licznik nie liczył po innym zawężeniu niż wykaz.
 func warunkiSita(sito SitoWywolan) ([]string, []any) {
 	var warunki []string
 	var argumenty []any
@@ -388,8 +376,7 @@ func (r *repozytoriumProwenancji) Zuzycie(ctx context.Context, wymiar string,
 		granica = 50
 	}
 
-	// Wywołanie bez wskazania wymiaru wpada do klucza pustego zamiast wypadać
-	// z sumy: rozliczenie, które gubi wiersze, myli brak zapisu z brakiem kosztu.
+	// Wywołanie bez wymiaru wpada do klucza pustego zamiast wypadać z sumy rozliczenia.
 	wiersze, err := r.db.QueryContext(ctx, `
 		SELECT COALESCE(`+kolumna+`, '') AS klucz,
 		       COUNT(*),

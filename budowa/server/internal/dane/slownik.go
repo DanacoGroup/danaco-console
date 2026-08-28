@@ -1,19 +1,4 @@
-// Odpowiedzialność pliku: terminy słownika modułu Translate (tabela
-// `termin_slownika`). Ślady importu i eksportu leżą w `slownik_wymiana.go`,
-// pamięć tłumaczeń w `slownik_pamiec.go` — jedno repozytorium rozdzielone na
-// pliki wedle odpowiedzialności. Typ, interfejs i konstruktor deklaruje
-// wyłącznie `tlumaczenie.go`; ten plik implementuje na `*repozytoriumTlumaczen`
-// wyłącznie metody terminu.
-//
-// Wystąpienia terminu nie mają tu tabeli: `translate.glossary.occurrences` liczy
-// się w locie z treści okna albo panelu przeszukanej względem `Zrodlo` terminu,
-// żeby nie unieważniać zapisu przy każdej korekcie panelu.
-//
-// Zapis ma jedną drogę. `translate.glossary.set` nadsyła zawsze komplet zmian
-// naraz — `ZapiszTerminy` przyjmuje wykaz i zapisuje go w jednej transakcji
-// (`dane/transakcja.go`) przez UPSERT po `identyfikator_zewnetrzny`: termin ze
-// wskazanym kodem aktualizuje się, termin bez zastanego wiersza o tym kodzie
-// zakłada się — ten sam SQL obsługuje obie ścieżki, nie dwie osobne metody.
+// Odpowiedzialność pliku: terminy słownika modułu Translate, wraz z ich zapisem w jednej transakcji przez wstawienie albo aktualizację po kodzie.
 package dane
 
 import (
@@ -24,10 +9,7 @@ import (
 	"time"
 )
 
-// TerminSlownika to wiersz tabeli `termin_slownika` — odpowiednik terminu
-// (Glossary Term) stosowany przy generowaniu tłumaczeń. `NieTlumaczyc` niesie
-// wartość logiczną wprost (kolumna INTEGER z warunkiem CHECK na 0 albo 1) —
-// warstwa wyższa nie widzi liczby, tylko `bool`.
+// TerminSlownika to wiersz tabeli termin_slownika, odpowiednik terminu stosowany przy generowaniu tłumaczeń, wraz z jego wartościami sterującymi.
 type TerminSlownika struct {
 	ID           int64
 	Kod          string
@@ -36,10 +18,7 @@ type TerminSlownika struct {
 	Cel          *string
 	NieTlumaczyc bool
 	Uwaga        *string
-	// Stan i Dziedzina doszły z migracją 162 pod `translate.glossary.list`:
-	// kontrakt zawęża wykaz terminów stanem (`GlossaryTermStatus`) i dziedziną.
-	// Oba pola bywają puste — termin zastany nikogo o stan nie pytał, a nadanie
-	// mu stanu domyślnego byłoby wydaniem zgody, której Operator nie wydał.
+	// Stan i Dziedzina bywają puste; termin zastany nikogo o stan nie pytał wcześniej.
 	Stan           *string
 	Dziedzina      *string
 	Zaktualizowano int64
@@ -70,12 +49,7 @@ const (
 	                         ORDER BY jezyk, zrodlo`
 )
 
-// ZapiszTerminy zapisuje cały nadesłany wykaz terminów w jednej transakcji —
-// `translate.glossary.set` przychodzi termin po terminie z warstwy wyżej, ale
-// jeden termin nie ma prawa zostać zapisany, gdy kolejny w tym samym wywołaniu
-// zawiedzie. Zwraca terminy po zapisie, odczytane z bazy, nie przepisane
-// żądanie — `Zaktualizowano` i pola ustalone przez UPSERT mają wyjść ze stanu
-// faktycznego.
+// ZapiszTerminy zapisuje cały nadesłany wykaz terminów w jednej transakcji i zwraca terminy odczytane z bazy po zapisie, nie przepisane żądanie.
 func (r *repozytoriumTlumaczen) ZapiszTerminy(ctx context.Context,
 	terminy []TerminSlownika) ([]TerminSlownika, error) {
 
@@ -172,7 +146,7 @@ func (r *repozytoriumTlumaczen) Termin(ctx context.Context, kod string) (TerminS
 	return termin, nil
 }
 
-// odczytajTerminSlownika składa strukturę z jednego wiersza wyniku.
+// odczytajTerminSlownika składa strukturę terminu z jednego wiersza wyniku zapytania, kolumna po kolumnie.
 func odczytajTerminSlownika(wiersz skaner) (TerminSlownika, error) {
 	var termin TerminSlownika
 	var cel, uwaga, stan, dziedzina sql.NullString

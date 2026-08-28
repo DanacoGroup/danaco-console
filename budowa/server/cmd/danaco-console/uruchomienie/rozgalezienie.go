@@ -6,17 +6,9 @@ import (
 	"danacoconsole/server/internal/konfiguracja"
 )
 
-// Wedlug uruchamia tory właściwe dla roli procesu i wraca po zamknięciu
-// kontekstu albo po zakończeniu toru wiodącego:
-//
-//	hub    — wyłącznie tor interfejsu: nasłuch transportu na porcie rdzenia;
-//	         strumienie procesu pozostają nietknięte;
-//	agent  — wyłącznie tor wykonawczy: żądania kontraktu ze strumienia wejścia,
-//	         odpowiedzi na strumień wyjścia, żaden port nie jest zajmowany;
-//	all    — oba tory naraz; torem wiodącym jest interfejs.
-//
-// Rola spoza katalogu ról nie zatrzymuje procesu: schodzi na zachowanie roli
-// `all`, bo brak rozpoznanego ustawienia ma dawać pracę, nie odmowę.
+// Wedlug uruchamia tor interfejsu, tor wykonawczy albo oba naraz zależnie od
+// roli procesu i wraca po zamknięciu kontekstu albo zakończeniu toru
+// wiodącego; rola nierozpoznana pracuje jak rola łącząca oba tory.
 func Wedlug(kontekst context.Context, rola konfiguracja.Rola, rdzen Rdzen, o Otoczenie) error {
 	switch rola {
 	case konfiguracja.RolaHub:

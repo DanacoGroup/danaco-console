@@ -1,15 +1,6 @@
-// Odpowiedzialność pliku: obszar modułu Developer — wersja pliku edytora
-// (tabela `developer_wersja_pliku`) i dziennik przebiegów budowania (tabela
-// `developer_budowanie`) — byty obszaru i jego kontrakt. Odczyt leży
-// w `developer_odczyt.go`, zapis w `developer_zapis.go`.
-//
-// Repozytorium nie dotyka plików na dysku. Treść pliku roboczego żyje
-// w katalogu roboczym okna i czyta ją rdzeń; tutaj zapisuje się wyłącznie
-// migawka zakładana na wyraźne żądanie (`createVersion`) — czyli to, czego na
-// dysku po nadpisaniu już nie ma.
-//
-// Repozytorium nie prowadzi budowania. Uchwyt do biegnącego procesu ma rdzeń;
-// tutaj zostaje ślad: zadanie, kod wyjścia, czasy i ogon logu.
+// Warstwa danych obsługuje obszar modułu Developer: wersje pliku edytora
+// w tabeli developer_wersja_pliku i dziennik przebiegów budowania w tabeli
+// developer_budowanie.
 package dane
 
 import (
@@ -43,68 +34,54 @@ type PrzebiegBudowania struct {
 	Zakonczono  *string
 }
 
-// RepozytoriumDevelopera jest kontraktem obszaru Developer.
+// RepozytoriumDevelopera jest kontraktem obszaru Developer: wersje plików,
+// przebiegi budowania, punkty przerwania, kolekcje zapytań, połączenia
+// danych, skanowanie i wyniki testów.
 type RepozytoriumDevelopera interface {
 	// ZapiszWersje zakłada migawkę treści pliku.
 	ZapiszWersje(ctx context.Context, wersja WersjaPliku) error
-	// OstatniaWersja zwraca najnowszą migawkę pliku okna. Brak migawki wraca
-	// jako ErrBrakWiersza — plik bez wersji jest stanem zwykłym, nie usterką.
+	// OstatniaWersja zwraca najnowszą migawkę pliku okna; brak migawki wraca jako ErrBrakWiersza.
 	OstatniaWersja(ctx context.Context, oknoKod, sciezka string) (WersjaPliku, error)
 	// Wersje zwraca migawki pliku od najnowszej; `limit` niedodatni znaczy
 	// wykaz pełny.
 	Wersje(ctx context.Context, oknoKod, sciezka string, limit int) ([]WersjaPliku, error)
-	// WersjaPoKodzie zwraca jedną migawkę. Czyta to
-	// `developer.file.version.restore`, które zna wyłącznie identyfikator
-	// wersji — ścieżka pliku wynika z migawki, a nie z żądania.
+	// WersjaPoKodzie zwraca jedną migawkę po jej identyfikatorze; ścieżka pliku wynika z migawki.
 	WersjaPoKodzie(ctx context.Context, kod string) (WersjaPliku, error)
 
 	// ZapiszPrzebieg zakłada albo odświeża wiersz przebiegu budowania.
 	ZapiszPrzebieg(ctx context.Context, przebieg PrzebiegBudowania) error
-	// ZakonczPrzebieg domyka przebieg wynikiem i ogonem logu. Wiersz już
-	// domknięty zostaje bez zmiany — pierwszy prawdziwy kod wyjścia nie ma
-	// prawa zostać nadpisany przez późniejsze przerwanie.
+	// ZakonczPrzebieg domyka przebieg wynikiem i ogonem logu; przebieg już domknięty zostaje bez zmiany.
 	ZakonczPrzebieg(ctx context.Context, kod string, stan shared.BuildStatus,
 		kodWyjscia *int64, log string) error
-	// OstatniPrzebieg zwraca najnowszy przebieg okna. Czyta to
-	// `developer.build.run` z `stop=true` dla okna, w którym nic nie biegnie.
+	// OstatniPrzebieg zwraca najnowszy przebieg budowania okna.
 	OstatniPrzebieg(ctx context.Context, oknoKod string) (PrzebiegBudowania, error)
-	// OsierocPrzebiegi przestawia przebiegi zostawione w stanie `running` przez
-	// poprzedni bieg rdzenia na `stopped`. Rdzeń po restarcie nie ma do nich
-	// uchwytu, więc wykazywanie ich jako czynnych byłoby nieprawdą.
+	// OsierocPrzebiegi przestawia przebiegi w stanie running po poprzednim biegu rdzenia na stopped.
 	OsierocPrzebiegi(ctx context.Context) (int64, error)
 
-	// Przebiegi zwraca dziennik budowań okna od najnowszego. Stan pusty znaczy
-	// wykaz bez zawężenia, limit niedodatni — wykaz pełny.
+	// Przebiegi zwraca dziennik budowań okna od najnowszego; pusty stan i niedodatni limit nie zawężają.
 	Przebiegi(ctx context.Context, oknoKod, stan string, limit int) ([]PrzebiegBudowania, error)
-	// Przebieg zwraca jeden przebieg po jego identyfikatorze. Czyta to
-	// `developer.build.log.get`, gdy przebieg zdążył się już domknąć.
+	// Przebieg zwraca jeden przebieg budowania po jego identyfikatorze.
 	Przebieg(ctx context.Context, kod string) (PrzebiegBudowania, error)
 
-	// ── Punkty przerwania (Run & Debug) ──────────────────────────────────────
-	// ZapiszPunktPrzerwania zakłada albo odświeża punkt w pliku okna.
+	// ZapiszPunktPrzerwania zakłada albo odświeża punkt przerwania w pliku okna.
 	ZapiszPunktPrzerwania(ctx context.Context, punkt PunktPrzerwania) error
 	// UsunPunktPrzerwania zdejmuje punkt z wiersza pliku.
 	UsunPunktPrzerwania(ctx context.Context, oknoKod, sciezka string, wiersz int64) error
 	// PunktyPrzerwania zwraca punkty okna; ścieżka pusta znaczy wszystkie pliki.
 	PunktyPrzerwania(ctx context.Context, oknoKod, sciezka string) ([]PunktPrzerwania, error)
 
-	// ── Kolekcje zapytań (API Client) ────────────────────────────────────────
 	// ZapiszKolekcjeApi zakłada albo nadpisuje kolekcję zapytań okna.
 	ZapiszKolekcjeApi(ctx context.Context, kolekcja KolekcjaApi) error
 	// KolekcjeApi zwraca kolekcje okna; kod niepusty zawęża do jednej.
 	KolekcjeApi(ctx context.Context, oknoKod, kod string) ([]KolekcjaApi, error)
 
-	// ── Połączenia bazodanowe (Data Console) ─────────────────────────────────
 	// ZapiszPolaczenieDanych zakłada albo nadpisuje opis połączenia.
 	ZapiszPolaczenieDanych(ctx context.Context, polaczenie PolaczenieDanych) error
 	// PolaczeniaDanych zwraca połączenia okna w kolejności nazwy.
 	PolaczeniaDanych(ctx context.Context, oknoKod string) ([]PolaczenieDanych, error)
-	// PolaczenieDanychPoKodzie zwraca jedno połączenie. Brak wraca jako
-	// ErrBrakWiersza — konsola SQL odróżnia „nie ma takiego połączenia” od
-	// „odczyt zawiódł”.
+	// PolaczenieDanychPoKodzie zwraca jedno połączenie; brak wraca jako ErrBrakWiersza.
 	PolaczenieDanychPoKodzie(ctx context.Context, kod string) (PolaczenieDanych, error)
 
-	// ── Skanowanie (bezpieczeństwo i jakość) ─────────────────────────────────
 	// ZapiszSkan zakłada albo domyka przebieg skanowania.
 	ZapiszSkan(ctx context.Context, skan PrzebiegSkanu) error
 	// ZapiszZnaleziska dopisuje znaleziska przebiegu jedną transakcją.
@@ -112,7 +89,6 @@ type RepozytoriumDevelopera interface {
 	// Znaleziska zwraca spostrzeżenia wedle filtru, od najcięższych.
 	Znaleziska(ctx context.Context, filtr FiltrZnalezisk) ([]ZnaleziskoSkanu, error)
 
-	// ── Wyniki testów i pokrycie (Build Output) ──────────────────────────────
 	// ZapiszWynikiTestow zastępuje wyniki testów przebiegu.
 	ZapiszWynikiTestow(ctx context.Context, budowanieKod string, wyniki []WynikTestu) error
 	// WynikiTestow zwraca wyniki przebiegu; stan pusty znaczy wszystkie.

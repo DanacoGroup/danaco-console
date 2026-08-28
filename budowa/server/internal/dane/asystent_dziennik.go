@@ -1,11 +1,5 @@
-// Odpowiedzialność pliku: dziennik działań asystenta — zapis wpisu, odczyt
-// chronologiczny w oknie i odczyt spięty z jednym zleceniem. Zasila komendę
-// `assistant.activity.list` (plik osobny od `asystent.go`).
-//
-// Wpis bez zlecenia jest wpisem prawdziwym, nie półwpisem. Asystent notuje też
-// zdarzenia własne (`rodzaj = note`) bez zlecenia w tle — kolumna `zlecenie_kod`
-// jest opcjonalna z migracji 050, więc metody tego pliku nie wymuszają
-// powiązania i nie odrzucają wpisu, któremu go brakuje.
+// Plik prowadzi dziennik działań asystenta: zapis wpisu, odczyt chronologiczny w oknie i odczyt spięty z jednym
+// zleceniem; wpis bez zlecenia jest wpisem prawdziwym, bo asystent notuje też zdarzenia własne bez zlecenia w tle.
 package dane
 
 import (
@@ -26,9 +20,7 @@ type WpisDziennikaAsystenta struct {
 	Tresc            string
 	NagranieOdnosnik *string
 	Utworzono        int64
-	// Wazny — wyróżnienie wpisu w Activity Feed (`assistant.activity.flag`,
-	// migracja 296). Bez tej kolumny okno pokazywałoby wyróżnienie, którego
-	// rdzeń nie pamięta.
+	// Wazny wyróżnia wpis w Activity Feed; bez kolumny okno pokazywałoby wyróżnienie, nieznane rdzeniowi.
 	Wazny bool
 	// NotatkaWyroznienia — powód wyróżnienia zapisany razem ze znacznikiem.
 	NotatkaWyroznienia *string
@@ -122,7 +114,7 @@ func zebrzWpisyDziennika(wiersze *sql.Rows) ([]WpisDziennikaAsystenta, error) {
 	return wpisy, wiersze.Err()
 }
 
-// odczytajWpisDziennika przenosi jeden wiersz do bytu obszaru.
+// odczytajWpisDziennika przenosi jeden wiersz wyniku zapytania SQL do bytu obszaru dziennika działań asystenta.
 func odczytajWpisDziennika(s skaner) (WpisDziennikaAsystenta, error) {
 	var wpis WpisDziennikaAsystenta
 	var zlecenieKod, nagranieOdnosnik, notatka sql.NullString
@@ -136,12 +128,7 @@ func odczytajWpisDziennika(s skaner) (WpisDziennikaAsystenta, error) {
 	return wpis, err
 }
 
-// OznaczWpisDziennika wyróżnia wpis dziennika albo zdejmuje to oznaczenie.
-//
-// Notatka pusta przy zdejmowaniu wyróżnienia kasuje też powód: powód bez
-// znacznika byłby notatką do wpisu, którego nikt nie wyróżnił. Notatka pusta
-// przy nadawaniu wyróżnienia zostawia powód zastany — wyróżnienie ponowione bez
-// słowa nie ma prawa skasować zdania zapisanego wcześniej.
+// OznaczWpisDziennika wyróżnia wpis dziennika albo zdejmuje to oznaczenie; notatka pusta przy zdejmowaniu kasuje też powód wyróżnienia.
 func (r *repozytoriumAsystenta) OznaczWpisDziennika(ctx context.Context, kod string,
 	wazny bool, notatka *string) (WpisDziennikaAsystenta, error) {
 
@@ -167,7 +154,7 @@ func (r *repozytoriumAsystenta) OznaczWpisDziennika(ctx context.Context, kod str
 	return r.WpisDziennika(ctx, kod)
 }
 
-// WpisDziennika zwraca jeden wpis dziennika po kodzie.
+// WpisDziennika zwraca jeden wpis dziennika działań asystenta po jego kodzie zewnętrznym w bazie danych.
 func (r *repozytoriumAsystenta) WpisDziennika(ctx context.Context,
 	kod string) (WpisDziennikaAsystenta, error) {
 

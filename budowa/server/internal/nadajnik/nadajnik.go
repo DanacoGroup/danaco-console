@@ -1,23 +1,6 @@
-// Odpowiedzialność pakietu: listy, które pisze SAMA APLIKACJA — potwierdzenie
-// adresu przy rejestracji i droga odzyskania konta. Dwa listy, żadnych innych.
-//
-// ── CZYM TEN NADAJNIK RÓŻNI SIĘ OD MODUŁU POCZTY ────────────────────────────
-// Moduł poczty (`internal/poczta`) jest klientem SKRZYNKI OPERATORA: czyta jego
-// listy, wysyła w jego imieniu i odkłada kopię w jego folderze wysłanych. Ten
-// pakiet nadaje w imieniu PLATFORMY, do Operatora, i kopii nigdzie nie odkłada —
-// list systemowy w folderze „wysłane" Operatora byłby śladem czynności, której
-// on nie wykonał.
-//
-// Stąd osobne poświadczenie i osobny host: konto nadawcze platformy nie jest
-// skrzynką Operatora i nie wolno ich mieszać. Gdyby aplikacja pisała jego
-// kontem, utrata dostępu do skrzynki odcinałaby drogę odzyskania konta —
-// czyli dokładnie wtedy, gdy jest potrzebna.
-//
-// ── ANI JEDNEGO SEKRETU W LIŚCIE ────────────────────────────────────────────
-// List niesie DROGĘ potwierdzenia, nie hasło. Hasła platforma nie zna
-// w postaci jawnej i nigdy go nie odsyła.
-//
-// SMTP jedzie biblioteką standardową — bez nowej zależności w go.mod.
+// Pakiet nadajnik wysyła listy pisane przez samą aplikację: potwierdzenie
+// adresu przy rejestracji i drogę odzyskania konta, w imieniu platformy,
+// osobnym poświadczeniem od skrzynki Operatora.
 package nadajnik
 
 import (
@@ -45,19 +28,15 @@ type Nastawy struct {
 	Sekret           string
 	Adres            string
 	NazwaWyswietlana string
-	// SzyfrujStartTLS włącza podniesienie połączenia do TLS. Wyłączenie ma sens
-	// wyłącznie dla przekaźnika na tej samej maszynie; w sieci jest błędem.
+	// SzyfrujStartTLS podnosi połączenie do TLS; ma sens tylko dla przekaźnika
+	// lokalnego.
 	SzyfrujStartTLS bool
-	// WeryfikujTLS wyłącza się WYŁĄCZNIE wtedy, gdy Operator tak zapisał —
-	// nigdy samo, nigdy „bo localhost".
+	// WeryfikujTLS wyłącza się wyłącznie wtedy, gdy Operator tak zapisał.
 	WeryfikujTLS bool
 }
 
-// Gotowe mówi, czy nadajnik ma czym nadać.
-//
-// Rozstrzygnięcie jest tutaj, a nie u wołającego, bo brak konta nadawczego to
-// nie jest usterka do zgłoszenia w połowie rejestracji — to stan, o którym
-// warstwa wyżej musi wiedzieć, ZANIM założy konto i obieca list.
+// Gotowe mówi, czy nadajnik ma czym nadać do odbiorcy; rozstrzygnięcie zapada
+// tutaj, nie u wołającego kodu.
 func (n Nastawy) Gotowe() bool {
 	return strings.TrimSpace(n.Host) != "" && strings.TrimSpace(n.Adres) != ""
 }
@@ -129,15 +108,11 @@ func zloz(n Nastawy, l List) []byte {
 	return []byte(strings.Join(naglowki, "\r\n") + "\r\n\r\n" + l.Tresc + "\r\n")
 }
 
-// nadaj prowadzi rozmowę SMTP: połączenie, STARTTLS, uwierzytelnienie, koperta
-// i treść.
-//
-// Uwierzytelnienie jest warunkowe. Serwer dostawcy zawsze go żąda, ale przekaźnik
-// na tej samej maszynie często nie ogłasza AUTH wcale — wpychanie mu wtedy
-// poświadczenia kończy się odmową przy komendzie, która bez AUTH przeszłaby.
+// nadaj prowadzi całą rozmowę SMTP: połączenie, ewentualny STARTTLS,
+// uwierzytelnienie warunkowe, kopertę i treść listu.
 func nadaj(n Nastawy, odbiorca string, dokument []byte) error {
-	// net.JoinHostPort, a nie sklejenie z dwukropkiem: adres IPv6 sam niesie
-	// dwukropki i sklejenie dałoby adres nie do rozłożenia.
+	// adres IPv6 sam niesie dwukropki, więc łączy się przez JoinHostPort, nie
+	// przez sklejenie.
 	adres := net.JoinHostPort(n.Host, strconv.Itoa(port(n)))
 
 	polaczenie, err := net.DialTimeout("tcp", adres, limitRozmowy)

@@ -9,28 +9,9 @@ import (
 	"testing"
 )
 
-// Zapora katalogu akcji.
-//
-// Panel akcji i siatka szybkich akcji nie mają własnej listy pozycji — biorą ją
-// komendą `action.list` z tabeli `akcja`. Wiersz katalogu wskazuje komendę
-// kolumną `komenda`, a kolumna ta nie jest kluczem obcym i być nim nie może:
-// kontrakt mieszka w `shared/contract.json`, nie w bazie. Baza przyjmie więc
-// każdą nazwę, także nazwę komendy, której nie ma.
-//
-// Skutek takiego wiersza u Operatora: kontrolka jest, daje się nacisnąć i wraca
-// odmową `*.unknown`. To jest ATRAPA — element, który obiecuje czynność, a nie
-// ma za sobą ani jednego wykonawcy. Wykaz braków w tym produkcie już raz mówił
-// o brakach, których nie było; atrapa jest tym samym kłamstwem w drugą stronę.
-//
-// Dlatego kontrola stoi tutaj, a nie w kodzie rdzenia: pyta o stan po PEŁNYM
-// przejeździe migracji, więc obejmuje każdy wiersz katalogu — także wiersz
-// wniesiony migracją, która jeszcze nie istnieje.
-//
-// Sprawdzian wypada niepomyślnie także wtedy, gdy katalog zostanie opróżniony.
-// Zaczyn akcji jest treścią produktu, nie danymi przykładowymi: pusty katalog
-// znaczy panel akcji bez ani jednej pozycji w każdym oknie platformy.
+// Zapora katalogu akcji sprawdza, czy każdy wiersz katalogu wskazuje komendę istniejącą w kontrakcie.
 
-// komendyKontraktu czyta nazwy wszystkich komend kontraktu.
+// Funkcja komendyKontraktu czyta nazwy wszystkich komend zdefiniowanych w kontrakcie na potrzeby sprawdzianu.
 func komendyKontraktu(t *testing.T) map[string]bool {
 	t.Helper()
 
@@ -59,7 +40,7 @@ func komendyKontraktu(t *testing.T) map[string]bool {
 	return nazwy
 }
 
-// pozycjaKatalogu jest wierszem tabeli `akcja` w zakresie, o który pyta zapora.
+// pozycjaKatalogu jest wierszem tabeli akcja w zakresie kolumn, o który dokładnie pyta zapora katalogu.
 type pozycjaKatalogu struct {
 	Kod     string
 	Komenda string
@@ -67,7 +48,7 @@ type pozycjaKatalogu struct {
 	Poziom  string
 }
 
-// pozycjeKataloguAkcji czyta katalog akcji z bazy po pełnym przejeździe migracji.
+// Funkcja pozycjeKataloguAkcji czyta katalog akcji z bazy po pełnym przejeździe wszystkich jej migracji.
 func pozycjeKataloguAkcji(t *testing.T, baza *Baza) []pozycjaKatalogu {
 	t.Helper()
 
@@ -99,12 +80,7 @@ func pozycjeKataloguAkcji(t *testing.T, baza *Baza) []pozycjaKatalogu {
 	return pozycje
 }
 
-// TestKatalogAkcjiWskazujeKomendyKontraktu jest zaporą główną: każda pozycja
-// katalogu wskazuje komendę, która w kontrakcie JEST.
-//
-// Zapory nie wolno osłabić wykazem wyjątków. Pozycja bez pokrycia w kontrakcie
-// nie ma stanu przejściowego „jeszcze nie" — dopóki komendy nie ma, kontrolki
-// też nie ma być, a wiersz dochodzi migracją razem z komendą.
+// TestKatalogAkcjiWskazujeKomendyKontraktu jest zaporą główną: każda pozycja katalogu wskazuje komendę, która istnieje w kontrakcie.
 func TestKatalogAkcjiWskazujeKomendyKontraktu(t *testing.T) {
 	baza := swiezaBaza(t)
 
@@ -116,13 +92,7 @@ func TestKatalogAkcjiWskazujeKomendyKontraktu(t *testing.T) {
 	}
 }
 
-// pozycjeBezPokrycia wylicza pozycje katalogu, których komendy nie ma
-// w kontrakcie. Pozycja bez ani jednej komendy liczy się do tego samego wykazu:
-// kontrolka bez komendy i kontrolka z komendą nieistniejącą kończą się u
-// Operatora tym samym — naciśnięciem bez skutku.
-//
-// Wyliczenie stoi osobno od sprawdzianu po to, żeby dało się je nakarmić
-// wierszem, którego w katalogu nie ma — patrz TestZaporaKataloguWykrywaAtrape.
+// Funkcja pozycjeBezPokrycia wylicza pozycje katalogu, których komendy nie ma w kontrakcie, licząc też pozycje bez żadnej komendy.
 func pozycjeBezPokrycia(pozycje []pozycjaKatalogu, komendy map[string]bool) []string {
 	bezPokrycia := []string{}
 	for _, pozycja := range pozycje {
@@ -139,13 +109,7 @@ func pozycjeBezPokrycia(pozycje []pozycjaKatalogu, komendy map[string]bool) []st
 	return bezPokrycia
 }
 
-// TestZaporaKataloguWykrywaAtrape dowodzi, że zapora wyżej naprawdę zapiera.
-//
-// Sprawdzian, który przechodzi na katalogu zdrowym, ale przeszedłby też na
-// katalogu z atrapą, jest sprawdzianem pozornym — a pozorny sprawdzian jest
-// gorszy od jego braku, bo świeci zielono i nikt nie patrzy dalej. Dlatego droga
-// niepomyślna jest tu mierzona wprost: wiersz wskazujący komendę, której nie ma,
-// oraz wiersz bez komendy muszą wyjść z wyliczenia oba.
+// TestZaporaKataloguWykrywaAtrape dowodzi, że zapora katalogu akcji naprawdę wykrywa wiersz udający działającą kontrolkę.
 func TestZaporaKataloguWykrywaAtrape(t *testing.T) {
 	komendy := komendyKontraktu(t)
 	if komendy["komenda.ktorej.nie.ma"] {
@@ -167,24 +131,7 @@ func TestZaporaKataloguWykrywaAtrape(t *testing.T) {
 	}
 }
 
-// TestKatalogAkcjiNieZmyslaIkon pilnuje drugiej połowy tej samej obietnicy.
-// Pozycja z ikoną, której nie ma w zestawie klienta, wychodzi w oknie kontrolką
-// bez znaku — pustym prostokątem, którego Operator nie umie odczytać. Zestaw
-// czyta się z plików źródłowych ikon, bo one są jedyną prawdą o tym, co klient
-// umie narysować.
-//
-// Miara stoi i czeka, dopóki klient nie ma zestawu ikon. Powód pominięcia:
-// zestaw wchodzi do klienta wraz z ramą aplikacji, a przed nim nie ma czego
-// czytać. Zastępnika nie ma i być nie może — zestaw poprzedniego klienta
-// (`budowa/klient-poprzedni`) jest materiałem do przeszczepu, nie tym, co ten
-// klient umie narysować, a katalog ikon wkompilowany w rdzeń
-// (`core/adapter_modul_design_ikony_katalog.go`) jest materiałem komend
-// `design.icon.*` na innej siatce nazw, nie zestawem kontrolek okna. Miara
-// wzięta z któregokolwiek z nich świeciłaby zielono, nie mierząc okna.
-//
-// Warunek powrotu: katalog wskazany przez `sciezkaZrodelIkon`. Pominięcie jest
-// warunkowe, więc sprawdzian wraca sam w chwili, gdy zestaw stanie — nikt nie
-// musi o nim pamiętać.
+// TestKatalogAkcjiNieZmyslaIkon pilnuje, aby każda ikona pozycji katalogu istniała w zestawie ikon klienta.
 func TestKatalogAkcjiNieZmyslaIkon(t *testing.T) {
 	if !zrodlaIkonKlientaStoja() {
 		t.Skipf("klient nie ma jeszcze zestawu ikon — brak katalogu %s; sprawdzian "+
@@ -196,8 +143,7 @@ func TestKatalogAkcjiNieZmyslaIkon(t *testing.T) {
 
 	for _, pozycja := range pozycjeKataloguAkcji(t, baza) {
 		if strings.TrimSpace(pozycja.Ikona) == "" {
-			// Ikona pusta jest świadomym brakiem — panel stawia wtedy kontrolkę
-			// samym napisem. To jest czytelne, więc nie jest usterką.
+			// Ikona pusta jest świadomym brakiem; panel stawia wtedy kontrolkę samym napisem, co nie jest usterką.
 			continue
 		}
 		if !ikony[pozycja.Ikona] {
@@ -208,27 +154,16 @@ func TestKatalogAkcjiNieZmyslaIkon(t *testing.T) {
 	}
 }
 
-// sciezkaZrodelIkon wskazuje katalog źródeł ikon klienta, licząc od katalogu
-// pakietu store.
+// sciezkaZrodelIkon wskazuje katalog źródeł ikon klienta, liczony od katalogu tego pakietu store aplikacji.
 const sciezkaZrodelIkon = "../../../klient/src/ikony/zrodla"
 
-// zrodlaIkonKlientaStoja orzeka, czy klient ma już zestaw ikon.
-//
-// Ten warunek jest warunkiem powrotu sprawdzianu wyżej. Osobno od
-// `nazwyIkonKlienta`, bo dwa stany trzeba tu odróżnić: zestawu jeszcze nie ma
-// (pominięcie) i zestaw jest, ale nie daje nazw (niepowodzenie — zmienił
-// kształt albo sprawdzian czyta nie ten katalog).
+// Funkcja zrodlaIkonKlientaStoja orzeka, czy klient ma już zestaw ikon, będący warunkiem powrotu sprawdzianu wyżej.
 func zrodlaIkonKlientaStoja() bool {
 	opis, err := os.Stat(filepath.Clean(sciezkaZrodelIkon))
 	return err == nil && opis.IsDir()
 }
 
-// nazwyIkonKlienta czyta nazwy ikon z plików źródłowych zestawu.
-//
-// Odczyt idzie po kluczach zapisu obiektu — nazwa ikony stoi w tych plikach jako
-// klucz wcięty dwoma znakami odstępu. Rozbiór składni TypeScriptu byłby tu
-// kodem, który sam może się mylić; wzorzec klucza wystarcza, bo pliki źródeł mają
-// jeden kształt i pilnuje go formater klienta.
+// Funkcja nazwyIkonKlienta czyta nazwy wszystkich ikon zapisane w plikach źródłowych zestawu ikon klienta.
 func nazwyIkonKlienta(t *testing.T) map[string]bool {
 	t.Helper()
 
@@ -258,7 +193,7 @@ func nazwyIkonKlienta(t *testing.T) map[string]bool {
 	return nazwy
 }
 
-// nazwaIkonyZWiersza wyjmuje nazwę ikony z wiersza zapisu zestawu.
+// Funkcja nazwaIkonyZWiersza wyjmuje nazwę ikony z jednego wiersza tekstu pliku zapisu zestawu ikon klienta.
 func nazwaIkonyZWiersza(wiersz string) (string, bool) {
 	if !strings.HasPrefix(wiersz, "  ") || strings.HasPrefix(strings.TrimSpace(wiersz), "//") {
 		return "", false

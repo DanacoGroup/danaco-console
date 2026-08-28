@@ -1,11 +1,4 @@
-// Odpowiedzialność pliku: stanowisko końcowe debaty (tabela
-// `debata_stanowisko`, migracja 044) — trwałość okna Consensus Panel.
-//
-// Wersja rośnie przy zmianie treści, nie przy każdym odczycie. Consensus Panel
-// ma w panelu akcji „wersjonowanie stanowiska”, a stanowisko powstaje ze
-// złożenia wypowiedzi tury — odczyt bez nowej wypowiedzi daje treść tę samą.
-// Podbijanie wersji przy każdym otwarciu okna zamieniłoby licznik wersji
-// w licznik odczytów.
+// Odpowiedzialność pliku: stanowisko końcowe debaty, trwałość okna Consensus Panel; wersja rośnie przy zmianie treści, nie przy każdym odczycie.
 package dane
 
 import (
@@ -19,10 +12,7 @@ const (
 	kolumnyStanowiska = `identyfikator_zewnetrzny, okno, tura, tresc, wersja, zaktualizowano,
 	                     redagowane, zaakceptowane, kontekst, warianty, konsekwencje, tury`
 
-	// Warunek `redagowane = 0` w klauzuli WHERE broni redakcji Operatora: od
-	// chwili, w której nadał stanowisku własną treść, złożenie z zapisu tur nie
-	// ma prawa jej nadpisać. Bez tego pierwsze otwarcie Consensus Panelu po
-	// redakcji wracałoby do zapisu tur i kasowało pracę Operatora.
+	// Warunek redagowane = 0 broni redakcji Operatora: od chwili nadania własnej treści, złożenie z zapisu tur nie ma prawa jej nadpisać.
 	zapiszStanowiskoDebaty = `INSERT INTO debata_stanowisko
 	                          (identyfikator_zewnetrzny, okno, tura, tresc)
 	                          VALUES (?, ?, ?, ?)
@@ -75,7 +65,7 @@ func (r *repozytoriumRoundtable) ZapiszStanowisko(ctx context.Context,
 	return r.Stanowisko(ctx, stanowisko.Okno, stanowisko.Tura)
 }
 
-// Stanowisko zwraca stanowisko okna albo tury; pusta tura znaczy całą debatę.
+// Stanowisko zwraca stanowisko wskazanego okna albo jednej jego tury; pusta tura znaczy całą tę debatę.
 func (r *repozytoriumRoundtable) Stanowisko(ctx context.Context,
 	okno, tura string) (StanowiskoDebaty, error) {
 
@@ -133,7 +123,7 @@ func (r *repozytoriumRoundtable) RedagujStanowisko(ctx context.Context,
 	return r.Stanowisko(ctx, stanowisko.Okno, stanowisko.Tura)
 }
 
-// odczytajStanowiskoDebaty składa stanowisko z jednego wiersza wyniku.
+// odczytajStanowiskoDebaty składa stanowisko z jednego wiersza wyniku zapytania, kolumna po kolumnie SQL.
 func odczytajStanowiskoDebaty(wiersz interface{ Scan(...any) error }) (StanowiskoDebaty, error) {
 	var stanowisko StanowiskoDebaty
 	err := wiersz.Scan(&stanowisko.Kod, &stanowisko.Okno, &stanowisko.Tura, &stanowisko.Tresc,

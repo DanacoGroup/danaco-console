@@ -18,14 +18,11 @@ import (
 	"danacoconsole/shared"
 )
 
-// Różnica i historia repozytorium.
+// Różnicę repozytorium liczy algorytm Myersa w czystym Go, wynikiem
+// w fragmentach zgodnych z kontraktem, nie tekstem unified diff.
 //
-// Różnicę liczy `gotextdiff` — algorytm Myersa w czystym Go. Wynik wychodzi
-// fragmentami zgodnymi z kontraktem, a nie tekstem `unified diff`: klient
-// koloruje wiersze i przypina do nich uwagi przeglądu, więc potrzebuje wierszy
-// rozpoznanych po rodzaju, a nie napisu z myślnikiem na początku.
-
-// ZadanieRoznicy opisuje, co z czym porównać.
+// ZadanieRoznicy opisuje, co z czym dokładnie porównać: ścieżki, źródło zmian
+// i odwołania repozytorium.
 type ZadanieRoznicy struct {
 	// Sciezki zawężają różnicę; pusta lista obejmuje całość.
 	Sciezki []string
@@ -88,15 +85,16 @@ func Roznica(katalog string, zadanie ZadanieRoznicy) ([]shared.GitDiffHunk, []st
 	return fragmenty, binarne, nil
 }
 
-// paraTresci trzyma treść pliku przed zmianą i po niej.
+// paraTresci trzyma treść jednego danego pliku, i tę przed zmianą, i tę po
+// niej, do policzenia różnicy.
 type paraTresci struct{ przed, po string }
 
-// paryPorownania zbiera pliki objęte różnicą wraz z obiema wersjami treści.
+// paryPorownania zbiera pliki objęte różnicą wraz z obiema wersjami treści,
+// katalogu roboczego albo dwóch odwołań.
 func paryPorownania(repo *git.Repository, korzen string,
 	zadanie ZadanieRoznicy) (map[string]paraTresci, error) {
 
-	// Porównanie dwóch odwołań: obie strony pochodzą z magazynu obiektów, więc
-	// katalog roboczy nie ma tu nic do rzeczy.
+	// Porównanie dwóch odwołań: obie strony pochodzą z magazynu obiektów.
 	if strings.TrimSpace(zadanie.DoOdwolania) != "" || strings.TrimSpace(zadanie.OdOdwolania) != "" {
 		return paryDwochOdwolan(repo, zadanie.OdOdwolania, zadanie.DoOdwolania)
 	}
@@ -134,7 +132,8 @@ func paryPorownania(repo *git.Repository, korzen string,
 	return pary, nil
 }
 
-// paryDwochOdwolan zestawia drzewa dwóch odwołań repozytorium.
+// paryDwochOdwolan zestawia drzewa dwóch odwołań repozytorium, zbierając
+// treść pliku z każdej strony osobno.
 func paryDwochOdwolan(repo *git.Repository, od, doPunktu string) (map[string]paraTresci, error) {
 	drzewoOd, err := drzewoOdwolania(repo, od)
 	if err != nil {
@@ -168,9 +167,7 @@ func paryDwochOdwolan(repo *git.Repository, od, doPunktu string) (map[string]par
 		return nil, fmt.Errorf("odczyt drzewa %q: %w", doPunktu, err)
 	}
 
-	// Pliki niezmienione odpadają tutaj, a nie przy liczeniu różnicy: inaczej
-	// odpowiedź niosłaby tysiąc pustych wpisów dla repozytorium, w którym
-	// zmienił się jeden plik.
+	// Pliki niezmienione odpadają tutaj, a nie przy liczeniu różnicy.
 	for sciezka, para := range pary {
 		if para.przed == para.po {
 			delete(pary, sciezka)
@@ -225,7 +222,8 @@ func trescGlowy(repo *git.Repository) func(string) string {
 	}
 }
 
-// trescIndeksu oddaje treść pliku wpisaną do indeksu repozytorium.
+// trescIndeksu oddaje treść danego pliku wpisaną do indeksu tego repozytorium,
+// pustym napisem przy braku.
 func trescIndeksu(repo *git.Repository, sciezka string) string {
 	indeks, err := repo.Storer.Index()
 	if err != nil {
@@ -273,7 +271,8 @@ func czyBinarna(tresc string) bool {
 	return strings.IndexByte(tresc[:granica], 0) >= 0
 }
 
-// fragmentyPliku liczy różnicę jednego pliku i przenosi ją na kształt kontraktu.
+// fragmentyPliku liczy różnicę jednego pliku i przenosi ją wprost na kształt
+// fragmentów tego kontraktu.
 func fragmentyPliku(sciezka, przed, po string, kontekst int) []shared.GitDiffHunk {
 	zmiany := myers.ComputeEdits(span.URIFromPath(sciezka), przed, po)
 	if len(zmiany) == 0 {
@@ -333,7 +332,8 @@ func fragmentyPliku(sciezka, przed, po string, kontekst int) []shared.GitDiffHun
 	return fragmenty
 }
 
-// ZadanieHistorii zawęża odczyt dziennika repozytorium.
+// ZadanieHistorii zawęża odczyt dziennika repozytorium: gałąź, ścieżkę,
+// autora, zakres czasu i granicę.
 type ZadanieHistorii struct {
 	Galaz   string
 	Sciezka string
@@ -343,7 +343,8 @@ type ZadanieHistorii struct {
 	Granica int
 }
 
-// Historia oddaje zatwierdzenia spełniające warunki wraz z ich liczbą.
+// Historia oddaje zatwierdzenia spełniające warunki tego zadania wraz z ich
+// łączną liczbą w repozytorium.
 func Historia(katalog string, zadanie ZadanieHistorii) ([]shared.GitCommit, int, error) {
 	repo, err := Otworz(katalog)
 	if err != nil {
@@ -391,8 +392,7 @@ func Historia(katalog string, zadanie ZadanieHistorii) ([]shared.GitCommit, int,
 		}
 
 		// Liczba całkowita rośnie także po osiągnięciu granicy, bo odpowiedź
-		// niesie „ile ich jest", a nie „ile pokazano". Bez tego klient nie ma
-		// jak napisać „pokazano 50 z 400".
+		// niesie, ile ich jest.
 		wszystkich++
 		if zadanie.Granica > 0 && len(zatwierdzenia) >= zadanie.Granica {
 			return nil

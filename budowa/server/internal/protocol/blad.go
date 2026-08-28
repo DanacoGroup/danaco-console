@@ -23,7 +23,8 @@ func NowyBlad(kod KodBledu, komunikat string) Blad {
 	return Blad{Code: kod, Message: komunikat, Retryable: shared.KodyPonawialne[kod]}
 }
 
-// Opis składa czytelny tekst błędu z kodu kontraktu i komunikatu.
+// Opis składa czytelny tekst błędu do wyświetlenia Operatorowi z kodu
+// kontraktu i jego komunikatu tekstowego.
 func Opis(b Blad) string {
 	return string(b.Code) + ": " + b.Message
 }
@@ -53,7 +54,8 @@ type bladGo struct {
 	blad Blad
 }
 
-// Error czyni bladGo zwykłym błędem Go.
+// Error czyni typ bladGo zwykłym błędem języka Go, oddając ten sam czytelny
+// opis, co zwraca funkcja Opis.
 func (b bladGo) Error() string {
 	return Opis(b.blad)
 }

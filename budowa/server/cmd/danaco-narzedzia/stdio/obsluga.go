@@ -15,14 +15,8 @@ import (
 const zakonczenieWiersza = '\n'
 
 // Obsluguj prowadzi rozmowę z procesem modelu aż do wyczerpania wejścia albo
-// zamknięcia kontekstu. Zatrzymanie rozpoznaje się między wywołaniami: drogą
-// właściwą wyjścia serwera MCP jest zamknięcie wejścia przez proces modelu,
-// a nie sygnał — sygnał dochodzi do rodzica, który strumień zamyka.
-//
-// Żaden pojedynczy komunikat nie kończy pracy: wiersz nieczytelny dostaje błąd
-// protokołu, metoda nieznana — błąd metody, odmowa narzędzia — wynik oznaczony
-// jako błędny. Serwer schodzi ze sceny wyłącznie wtedy, gdy proces modelu
-// zamknie strumień albo Operator zatrzyma proces.
+// zamknięcia kontekstu. Żaden pojedynczy komunikat nieczytelny albo błędny nie
+// kończy pracy serwera przedwcześnie.
 func Obsluguj(kontekst context.Context, katalog Katalog, wejscie io.Reader, wyjscie io.Writer) error {
 	czytnik := bufio.NewReader(wejscie)
 	pisarz := json.NewEncoder(wyjscie)
@@ -54,8 +48,7 @@ func rozstrzygnij(kontekst context.Context, katalog Katalog, wiersz []byte) (odp
 	}
 	var z zadanie
 	if err := json.Unmarshal(wiersz, &z); err != nil {
-		// Identyfikatora nie ma jak odczytać, więc odpowiedź niesie identyfikator
-		// pusty — tak stanowi JSON-RPC dla komunikatu nieczytelnego.
+		// Identyfikator nieczytelny w komunikacie daje odpowiedź z identyfikatorem pustym.
 		return bledem(json.RawMessage("null"), kodZlyKomunikat,
 			"wywołanie niezgodne z JSON-RPC: "+err.Error()), true
 	}

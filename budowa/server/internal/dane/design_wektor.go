@@ -1,23 +1,5 @@
-// Obszar grafiki wektorowej modułu Design (tabele `sciezka_wektorowa_design`,
-// `symbol_design`, `czlonek_symbolu_design`, migracja 316) — część
-// `RepozytoriumDesignu` zadeklarowanego w `design.go`.
-//
-// Zapis ścieżki jest zawsze pełny. Kontrakt (`DesignVectorPathSetRequest.Nodes`)
-// nadsyła komplet węzłów przy każdej zmianie — zmiana jednego węzła idzie tą
-// samą drogą co narysowanie ścieżki od zera. Repozytorium nie dogaduje różnicy
-// względem kształtu zastanego: zna wyłącznie „załóż albo nadpisz" po
-// identyfikatorze zewnętrznym, wzorem `ZapiszZestawZetonowDesignu`.
-//
-// Węzły, wypełnienie i obrys jadą zapisem JSON w kolumnie. Powód stoi
-// w nagłówku migracji 316: żadne zapytanie nie pyta o pojedynczy węzeł, a wiersz
-// na węzeł znaczyłby kasowanie i wstawianie kilkudziesięciu wierszy przy każdym
-// drgnięciu pióra. Warstwa danych nie zagląda w treść tego zapisu — składa go
-// i rozkłada adapter, bo to on zna kontrakt.
-//
-// Symbol i jego członkowie: definicja symbolu jest wykazem ścieżek i warstw,
-// który podmienia się w całości. Liczba członków jest tym, co rdzeń oddaje jako
-// liczbę miejsc, do których zmiana doszła — liczbą wierszy naprawdę zapisanych,
-// nie obietnicą.
+// Obszar grafiki wektorowej modułu Design: ścieżki, symbole i ich członkowie,
+// zapisywani zawsze pełnym stanem zamiast różnicy.
 package dane
 
 import (
@@ -27,9 +9,8 @@ import (
 	"fmt"
 )
 
-// SciezkaWektorowaDesignu to wiersz tabeli `sciezka_wektorowa_design`.
-// WezlyJSON, WypelnienieJSON i ObrysJSON niosą zapis kontraktu bez rozkładania
-// go w warstwie danych — patrz nagłówek pliku.
+// SciezkaWektorowaDesignu to wiersz tabeli sciezka_wektorowa_design; WezlyJSON,
+// WypelnienieJSON i ObrysJSON niosą zapis kontraktu bez rozkładania.
 type SciezkaWektorowaDesignu struct {
 	ID              int64
 	Kod             string
@@ -293,8 +274,7 @@ func (r *repozytoriumDesignu) ZapiszSymbolDesignu(ctx context.Context, symbol Sy
 			return fmt.Errorf("dane: nie można zapisać symbolu design %q: %w", symbol.Kod, err)
 		}
 
-		// Symbol mógł powstać dopiero w tej transakcji — klucz wiersza czytamy
-		// przed podmianą członków, bo `czlonek_symbolu_design.symbol_id` go wymaga.
+		// Symbol mógł powstać dopiero w tej transakcji: klucz wiersza czyta się przed podmianą jego członków.
 		odczyt, err := r.zapytania.wTransakcji(ctx, transakcja, pobierzSymbolDesignu)
 		if err != nil {
 			return err
@@ -339,7 +319,7 @@ func (r *repozytoriumDesignu) ZapiszSymbolDesignu(ctx context.Context, symbol Sy
 	return r.SymbolDesignuPoKodzie(ctx, symbol.Kod)
 }
 
-// SymbolDesignuPoKodzie zwraca symbol o wskazanym identyfikatorze zewnętrznym.
+// SymbolDesignuPoKodzie zwraca symbol o wskazanym identyfikatorze zewnętrznym, zapisany w tabeli symbol_design.
 func (r *repozytoriumDesignu) SymbolDesignuPoKodzie(ctx context.Context,
 	kod string) (SymbolDesignu, error) {
 
@@ -357,7 +337,7 @@ func (r *repozytoriumDesignu) SymbolDesignuPoKodzie(ctx context.Context,
 	return symbol, nil
 }
 
-// SymboleDesignu zwraca symbole kompozycji wraz z liczbą członków.
+// SymboleDesignu zwraca wykaz symboli kompozycji design wraz z liczbą ich członków zapisanych naprawdę.
 func (r *repozytoriumDesignu) SymboleDesignu(ctx context.Context,
 	kompozycjaID int64) ([]SymbolDesignu, error) {
 
@@ -388,8 +368,7 @@ func (r *repozytoriumDesignu) SymboleDesignu(ctx context.Context,
 	return lista, nil
 }
 
-// CzlonkowieSymbolyDesignu zwraca elementy składowe symbolu w zapisanej
-// kolejności.
+// CzlonkowieSymbolyDesignu zwraca elementy składowe symbolu design w zapisanej kolejności wykazu członków.
 func (r *repozytoriumDesignu) CzlonkowieSymbolyDesignu(ctx context.Context,
 	symbolID int64) ([]CzlonekSymbolyDesignu, error) {
 
@@ -417,7 +396,7 @@ func (r *repozytoriumDesignu) CzlonkowieSymbolyDesignu(ctx context.Context,
 	return lista, nil
 }
 
-// odczytajSciezkeWektorowaDesignu składa strukturę z jednego wiersza wyniku.
+// odczytajSciezkeWektorowaDesignu składa strukturę ścieżki wektorowej z jednego wiersza wyniku zapytania.
 func odczytajSciezkeWektorowaDesignu(wiersz skaner) (SciezkaWektorowaDesignu, error) {
 	var sciezka SciezkaWektorowaDesignu
 	var warstwa, nazwa, wypelnienie, obrys sql.NullString
@@ -434,7 +413,7 @@ func odczytajSciezkeWektorowaDesignu(wiersz skaner) (SciezkaWektorowaDesignu, er
 	return sciezka, nil
 }
 
-// odczytajSymbolDesignu składa strukturę symbolu z jednego wiersza wyniku.
+// odczytajSymbolDesignu składa strukturę symbolu design z jednego wiersza wyniku zapytania bazy danych.
 func odczytajSymbolDesignu(wiersz skaner) (SymbolDesignu, error) {
 	var symbol SymbolDesignu
 	err := wiersz.Scan(&symbol.ID, &symbol.Kod, &symbol.KompozycjaID, &symbol.Nazwa,

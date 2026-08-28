@@ -7,17 +7,7 @@ import (
 	"testing"
 )
 
-// Świeżość generatu kontraktu.
-//
-// `contract.json` jest źródłem prawdy, ale w kompilacji nie bierze udziału:
-// bierze w niej udział `contract.go`, a w budowaniu klienta `contract.ts`.
-// Zmiana źródła bez puszczenia generatora rozjeżdża je po cichu i obie strony
-// kompilują się dalej — rdzeń zna nazwę, której klient nie zna, albo odwrotnie.
-// Rozjazd wychodzi dopiero na gnieździe, u Operatora.
-//
-// Sprawdzian puszcza generator na kopii i porównuje wynik z tym, co leży
-// w drzewie. Kopia, a nie katalog źródłowy: generator zapisuje artefakty na
-// dysk, więc puszczony na miejscu nadpisałby pliki sprawdzanego drzewa.
+// Świeżość generatu kontraktu; sprawdzian puszcza generator na kopii i porównuje wynik z drzewem.
 
 // TestGeneratOdpowiadaZrodluKontraktu porównuje wygenerowane bindingi z tymi,
 // które leżą w repozytorium.
@@ -51,7 +41,7 @@ func TestGeneratOdpowiadaZrodluKontraktu(t *testing.T) {
 	}
 }
 
-// wczytaj czyta plik i przerywa sprawdzian, gdy pliku nie ma.
+// Funkcja wczytaj czyta wskazany plik z dysku i przerywa cały sprawdzian, gdy tego pliku tam wciąż nie ma.
 func wczytaj(t *testing.T, sciezka string) []byte {
 	t.Helper()
 	tresc, err := os.ReadFile(sciezka)
@@ -61,7 +51,7 @@ func wczytaj(t *testing.T, sciezka string) []byte {
 	return tresc
 }
 
-// skopiujPlik przenosi jeden plik do katalogu roboczego sprawdzianu.
+// Funkcja skopiujPlik przenosi jeden wskazany plik do katalogu roboczego tego samego uruchomionego sprawdzianu.
 func skopiujPlik(t *testing.T, zrodlo, cel string) {
 	t.Helper()
 	tresc := wczytaj(t, zrodlo)

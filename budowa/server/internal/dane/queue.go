@@ -1,11 +1,4 @@
-// Odpowiedzialność pliku: dwie czynności obszaru kolejek spoza zakresu komend
-// `queue.create` i `queue.action` obsługiwanych w `kolejki.go` — wykaz kolejek
-// (komenda `queue.list`) oraz powiązania kolejki z oknami, ekspertem, projektem
-// i automatyką (komenda `queue.link`, tabela `powiazanie_kolejki`).
-//
-// Metody wiszą na tym samym typie `repozytoriumKolejek`, nad tą samą bazą
-// i z tym samym dziennikiem akcji (`log_akcji_kolejki`) — obszar kolejek ma
-// jedno repozytorium, rozłożone na dwa pliki wyłącznie dla objętości.
+// Odpowiedzialność pliku: wykaz kolejek zawężony stanem oraz powiązania kolejki z oknami, ekspertem, projektem i automatyką.
 package dane
 
 import (
@@ -28,10 +21,7 @@ const (
 	RodzajPowiazaniaAutomatyka = "automatyka"
 )
 
-// PowiazanieKolejki to wiersz tabeli `powiazanie_kolejki`: jeden byt jednego
-// rodzaju, związany z jedną kolejką. Pole `Byt` niesie identyfikator w kształcie
-// kontraktu (identyfikator okna, kod eksperta, kod projektu, identyfikator
-// automatyki), a nie klucz wewnętrzny.
+// PowiazanieKolejki to wiersz tabeli powiazanie_kolejki: jeden byt jednego rodzaju, związany z jedną kolejką, niosący identyfikator w kształcie kontraktu.
 type PowiazanieKolejki struct {
 	KolejkaID int64
 	Rodzaj    string
@@ -75,15 +65,7 @@ func (r *repozytoriumKolejek) CzyKolejkaIstnieje(ctx context.Context, id int64) 
 	return true, nil
 }
 
-// ListaKolejek zwraca kolejki zawężone stanem. Pusty stan znaczy „wszystkie" —
-// nie „żadne": komenda `queue.list` ma stan jako pole opcjonalne.
-//
-// Zawężenia po sesji i po oknie tu nie ma celowo. Sesja kolejki bywa znana
-// wyłącznie z pamięci powiązań rdzenia (kolejka założona przed pierwszą
-// utrwaloną wiadomością sesji nie ma czym wypełnić `kolejka.sesja_id`), a okna
-// obsługiwane przez kolejkę leżą w `powiazanie_kolejki` albo w tej samej
-// pamięci. Sito po obu tych bytach składa się więc w rdzeniu, na kolejce
-// kontraktu — sito w SQL milczałoby o kolejkach, które warunek spełniają.
+// ListaKolejek zwraca kolejki zawężone stanem; pusty stan znaczy wszystkie, nie żadne, bo stan jest polem opcjonalnym żądania.
 func (r *repozytoriumKolejek) ListaKolejek(ctx context.Context,
 	stan *shared.QueueStatus) ([]Kolejka, error) {
 
@@ -121,7 +103,7 @@ func (r *repozytoriumKolejek) ListaKolejek(ctx context.Context,
 	return lista, nil
 }
 
-// odczytajWierszKolejki składa kolejkę z jednego wiersza wyniku.
+// odczytajWierszKolejki składa strukturę kolejki z jednego wiersza wyniku zapytania, kolumna po kolumnie.
 func odczytajWierszKolejki(wiersz skaner) (Kolejka, error) {
 	var kolejka Kolejka
 	var sesja, okno sql.NullInt64
@@ -139,7 +121,7 @@ func odczytajWierszKolejki(wiersz skaner) (Kolejka, error) {
 	return kolejka, nil
 }
 
-// PowiazaniaKolejki zwraca byty związane ze wskazaną kolejką.
+// PowiazaniaKolejki zwraca wszystkie byty związane ze wskazaną kolejką, wedle rodzaju tego powiązania.
 func (r *repozytoriumKolejek) PowiazaniaKolejki(ctx context.Context,
 	kolejkaID int64) ([]PowiazanieKolejki, error) {
 
@@ -169,14 +151,7 @@ func (r *repozytoriumKolejek) PowiazaniaKolejki(ctx context.Context,
 	return lista, nil
 }
 
-// ZwiazKolejke zapisuje powiązania kolejki i zostawia po nich ślad w dzienniku
-// akcji — tym samym, w którym stoją zmiany stanu. Wszystko idzie w jednej
-// transakcji: powiązanie zapisane bez wpisu w dzienniku byłoby zmianą bez
-// przyczyny widocznej w przeglądzie kolejki.
-//
-// Powiązania dokładają się, nie zastępują. Kontrakt `queue.link` zna wyłącznie
-// wiązanie; komendy rozwiązującej nie ma, więc zapis, który cicho zdejmuje
-// wcześniejsze powiązania, robiłby czynność, o którą nikt nie prosił.
+// ZwiazKolejke zapisuje powiązania kolejki i zostawia po nich ślad w dzienniku akcji, tym samym, w którym stoją zmiany stanu, w jednej transakcji.
 func (r *repozytoriumKolejek) ZwiazKolejke(ctx context.Context, kolejkaID int64,
 	powiazania []PowiazanieKolejki) error {
 

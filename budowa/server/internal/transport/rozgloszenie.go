@@ -2,17 +2,12 @@ package transport
 
 import "danacoconsole/server/internal/protocol"
 
-// Rozglos wysyła kopertę do wszystkich połączeń konta i zwraca liczbę urządzeń,
-// które ją przyjęły. Puste konto oznacza wszystkie połączenia rdzenia.
-//
-// Synchronizacja wielourządzeniowa nie ma własnego protokołu: nośnikiem jest
-// zdarzenie właściwe zmienionemu obszarowi, rozgłoszone tą drogą.
+// Rozglos wysyła kopertę do wszystkich połączeń wskazanego konta i zwraca liczbę urządzeń, które ją przyjęły, traktując puste konto jako wszystkie połączenia rdzenia.
 func (s *Serwer) Rozglos(konto string, k protocol.Koperta) int {
 	return s.rozglosPoza(konto, "", k)
 }
 
-// rozglosPoza rozgłasza z pominięciem jednego połączenia — zwykle nadawcy
-// zmiany, który wynik zna już z odpowiedzi na własną komendę.
+// rozglosPoza rozgłasza kopertę z pominięciem jednego połączenia, zwykle nadawcy zmiany, który wynik zna już z odpowiedzi na własną komendę.
 func (s *Serwer) rozglosPoza(konto, pomijaneId string, k protocol.Koperta) int {
 	dane, err := protocol.Zakoduj(k)
 	if err != nil {

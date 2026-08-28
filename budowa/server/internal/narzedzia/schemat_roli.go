@@ -1,27 +1,5 @@
-// Odpowiedzialność pliku: schemat wejścia narzędzia dołożonego przez rolę okna.
-//
-// Droga osobna od `schemat.go`. Kontrakt wylicza `ToolParameter` — gotowy typ
-// schematu, typ elementu tablicy i komplet wartości wyliczenia — wyłącznie dla
-// komend stojących w sekcji `narzedzia` (generator `shared/gen/narzedzia.mjs`).
-// Komenda dołożona przez rolę okna z tej sekcji nie pochodzi, więc jej
-// `ToolParameter` nie istnieje i nie ma go skąd wziąć.
-//
-// Źródłem jest wygenerowana struktura żądania, nie ręczny opis. Struktury
-// `shared/contract.go` powstają z tego samego `contract.json`, co wykaz
-// narzędzi, więc czytanie ich odbiciem trzyma jedno źródło prawdy: zmiana pola
-// w kontrakcie zmienia schemat bez dotykania tego pliku.
-//
-// Czego ta droga nie daje:
-//   - opisu pola. Generator Go kładzie opis w komentarzu, a komentarza odbicie
-//     nie widzi, więc pole idzie z opisem pustym.
-//   - wykazu wartości wyliczenia. Typ nazwany (`ConfigScope`,
-//     `SessionConfigArea`) jest w Go zwykłym napisem, a rejestru wartości
-//     `shared` nie wystawia. Pole zostaje napisem — model dostaje odmowę
-//     rdzenia przy wartości spoza wykazu i poprawia.
-//   - struktury zagnieżdżonej. Pole rodzaju obiektu idzie jako `object` bez
-//     właściwości: rozwijanie w głąb (`SessionConfig` to dziesiątki pól
-//     i dalsze zagnieżdżenia) urosłoby do schematu większego niż całe okno
-//     kontekstu, a granicy głębokości kontrakt nie stanowi.
+// Plik składa schemat wejścia narzędzia dołożonego przez rolę okna, odbiciem
+// struktury żądania wygenerowanej z kontraktu, drogą osobną od schemat.go.
 package narzedzia
 
 import (
@@ -80,7 +58,8 @@ func nazwaPolaJSON(pole reflect.StructField) (nazwa string, opcjonalne, niesie b
 	return nazwa, opcjonalne, true
 }
 
-// parametrPola składa jeden parametr schematu z typu pola.
+// parametrPola składa jeden parametr schematu wejścia narzędzia z typu Go
+// danego pola struktury żądania.
 func parametrPola(typ reflect.Type, nazwa string, wymagane bool) shared.ToolParameter {
 	rodzaj := typSchematu(typ)
 	parametr := shared.ToolParameter{Name: nazwa, Type: rodzaj, Required: wymagane}
@@ -90,10 +69,8 @@ func parametrPola(typ reflect.Type, nazwa string, wymagane bool) shared.ToolPara
 	return parametr
 }
 
-// typSchematu przekłada typ Go na typ zapisu schematu. Zapis odpowiada temu,
-// który kontrakt wylicza dla narzędzi wykazu (`string`, `integer`, `number`,
-// `boolean`, `object`, `array`) — dwa różne zapisy tego samego pojęcia byłyby
-// dwiema prawdami o schemacie.
+// typSchematu przekłada typ Go na typ zapisu schematu, zgodny z tym, który
+// kontrakt wylicza dla narzędzi wykazu.
 func typSchematu(typ reflect.Type) string {
 	switch rozpakuj(typ).Kind() {
 	case reflect.String:

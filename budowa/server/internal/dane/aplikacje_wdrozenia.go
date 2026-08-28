@@ -1,14 +1,5 @@
-// Odpowiedzialność pliku: obszar Deployment modułu Apps (tabela `wdrozenie_apps`
-// z `migracja_051_aplikacje.sql`) — zapis i odczyt przebiegów wdrożenia.
-// Interfejs `RepozytoriumAplikacji` oraz typ `*repozytoriumAplikacji` deklaruje
-// `dane/aplikacje.go`; tutaj stoją wyłącznie metody obszaru wdrożeń.
-//
-// Rdzeń niczego nie wdraża. Tabela niesie wyłącznie ślad zlecenia
-// `apps.deployment.run` (środowisko, strategia, wersja, notatki, adres,
-// odnośnik do logu) i jego stan — nie prowadzi prawdziwego przebiegu
-// wdrożenia. Repozytorium zapisuje to, co dostało od rdzenia, i nie dorabia
-// przejść stanu, których nikt nie zleca — wzorzec identyczny
-// z `developer_budowanie` (`migracja_042_developer.sql`, `dane/developer.go`).
+// Plik prowadzi obszar Deployment modułu Apps: zapis i odczyt przebiegów wdrożenia; tabela niesie wyłącznie ślad
+// zlecenia wdrożenia i jego stan, rdzeń niczego sam nie wdraża, a repozytorium nie dorabia przejść stanu, których nikt nie zlecił.
 package dane
 
 import (
@@ -79,10 +70,7 @@ const (
 	policzWdrozeniaApp = `SELECT COUNT(*) FROM wdrozenie_apps` + warunekWdrozenApp
 )
 
-// ZapiszWdrozenie zakłada wiersz przebiegu wdrożenia albo odświeża jego stan,
-// gdy `kod` już istnieje — ten sam wzorzec UPSERT co `ZapiszPrzebieg` dla
-// `developer_budowanie`: `apps.deployment.run` obsługuje zarówno pierwsze
-// zlecenie, jak i aktualizację stanu tego samego przebiegu.
+// ZapiszWdrozenie zakłada wiersz przebiegu wdrożenia albo odświeża jego stan, gdy kod przebiegu już istnieje.
 func (r *repozytoriumAplikacji) ZapiszWdrozenie(ctx context.Context,
 	wdrozenie WdrozenieApp) (WdrozenieApp, error) {
 
@@ -125,10 +113,7 @@ func (r *repozytoriumAplikacji) Wdrozenie(ctx context.Context, kod string) (Wdro
 	return wdrozenie, nil
 }
 
-// Wdrozenia zwraca przebiegi wdrożenia okna od najnowszego wraz z liczbą
-// wszystkich spełniających warunki; `limit` niedodatni znaczy wykaz pełny —
-// ten sam wzorzec parametryzowanego LIMIT co `Wersje` w `developer_odczyt.go`.
-// `srodowisko` puste (nil) nie zawęża niczego.
+// Wdrozenia zwraca przebiegi wdrożenia okna od najnowszego wraz z liczbą wszystkich spełniających warunki; limit niedodatni znaczy wykaz pełny.
 func (r *repozytoriumAplikacji) Wdrozenia(ctx context.Context, okno string,
 	srodowisko *shared.AppDeployEnvironment, limit int) ([]WdrozenieApp, int, error) {
 
@@ -170,7 +155,7 @@ func (r *repozytoriumAplikacji) Wdrozenia(ctx context.Context, okno string,
 	return wdrozenia, razem, nil
 }
 
-// odczytajWdrozenieApp składa przebieg wdrożenia z jednego wiersza wyniku.
+// odczytajWdrozenieApp składa przebieg wdrożenia aplikacji wprost z jednego wiersza wyniku zapytania SQL.
 func odczytajWdrozenieApp(wiersz interface{ Scan(...any) error }) (WdrozenieApp, error) {
 	var wdrozenie WdrozenieApp
 	err := wiersz.Scan(&wdrozenie.Kod, &wdrozenie.OknoKod, &wdrozenie.Srodowisko, &wdrozenie.Strategia,

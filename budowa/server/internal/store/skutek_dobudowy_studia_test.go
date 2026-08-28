@@ -5,14 +5,7 @@ import (
 	"testing"
 )
 
-// Skutek migracji dobudowy modułu Studio: czy byty, na których stoją jego
-// funkcje, naprawdę powstały.
-//
-// Migracja, która „przeszła", nie jest dowodem: krok wykonany bez błędu
-// zostawia wersję w dzienniku migracji niezależnie od tego, czy polecenie
-// czegokolwiek dokonało. Dlatego sprawdzian nie pyta o wersję schematu, tylko
-// o tabele, kolumny i wiersz katalogu okien — czyli o to, po co ta migracja
-// powstała.
+// TestMigracjaDobudowyStudiaZakladaByty sprawdza skutek migracji dobudowy modułu Studio: czy byty, na których stoją jego funkcje, naprawdę powstały.
 func TestMigracjaDobudowyStudiaZakladaByty(t *testing.T) {
 	baza, err := Otworz(filepath.Join(t.TempDir(), "dane.sqlite"))
 	if err != nil {
@@ -33,8 +26,7 @@ func TestMigracjaDobudowyStudiaZakladaByty(t *testing.T) {
 		}
 	}
 
-	// Cztery kolumny wersji, bez których rozdział 3.6 opracowania jest
-	// niewykonalny — a najważniejsza z nich jest kolumna autora.
+	// Cztery kolumny wersji są niezbędne, a najważniejsza z nich jest kolumna autora.
 	var kolumny int
 	err = baza.DB.QueryRow(`SELECT COUNT(*) FROM pragma_table_info('wersja_dokumentu_studio')
 	                          WHERE name IN ('autor','kamien_milowy','galaz_id','propozycja_id')`).Scan(&kolumny)
@@ -42,9 +34,7 @@ func TestMigracjaDobudowyStudiaZakladaByty(t *testing.T) {
 		t.Errorf("wersja dokumentu ma %d z 4 kolumn dobudowanych (błąd: %v)", kolumny, err)
 	}
 
-	// Wiersz katalogu okien: definicja ORAZ przypięcie do modułu. Sama
-	// definicja bez przypięcia zostawiłaby okno poza zakresem modułu, czyli
-	// dokładnie tam, gdzie było.
+	// Wiersz katalogu okien niesie definicję oraz przypięcie do modułu, oba naraz.
 	var przypiete int
 	err = baza.DB.QueryRow(`SELECT COUNT(*) FROM okno_operacyjne o
 	                          JOIN okno_operacyjne_modul m ON m.okno_operacyjne_id = o.id

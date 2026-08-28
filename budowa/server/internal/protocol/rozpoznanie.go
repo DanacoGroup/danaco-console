@@ -2,20 +2,14 @@ package protocol
 
 import "danacoconsole/shared"
 
-// RejestrKomend zna zbiór dopuszczalnych nazw komend i zdarzeń.
-//
-// Rejestr nie zawiera ani jednego literału nazwy. Nazwy wstrzykuje punkt
-// wejścia, biorąc je wyłącznie ze stałych wytworzonych do pakietu shared, np.:
-//
-//	rejestr := protocol.NowyRejestrKomend(shared.WszystkieKomendy()...)
-//
-// Dzięki temu warstwa protokołu pozostaje wolna od powielonych literałów,
-// a zbiór nazw znanych rdzeniowi zmienia się wyłącznie razem z kontraktem.
+// RejestrKomend zna zbiór dopuszczalnych nazw komend i zdarzeń, wstrzyknięty
+// wyłącznie ze stałych wytworzonych do pakietu shared, bez literałów własnych.
 type RejestrKomend struct {
 	znane map[shared.MessageType]struct{}
 }
 
-// NowyRejestrKomend buduje rejestr z nazw pochodzących z pakietu shared.
+// NowyRejestrKomend buduje rejestr komend z nazw pochodzących z pakietu
+// shared, gotowy do odpytania metodą zna.
 func NowyRejestrKomend(nazwy ...shared.MessageType) *RejestrKomend {
 	r := &RejestrKomend{znane: make(map[shared.MessageType]struct{}, len(nazwy))}
 	r.Dodaj(nazwy...)
@@ -50,7 +44,8 @@ func (r *RejestrKomend) zna(typ shared.MessageType) bool {
 	return jest
 }
 
-// Liczba zwraca rozmiar rejestru — do diagnostyki startu rdzenia.
+// Liczba zwraca rozmiar rejestru komend znanych, do diagnostyki startu
+// rdzenia i porównania z kontraktem.
 func (r *RejestrKomend) Liczba() int {
 	if r == nil {
 		return 0

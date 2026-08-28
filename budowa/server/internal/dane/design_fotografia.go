@@ -1,18 +1,5 @@
-// Odpowiedzialność pliku: warsztat fotografii modułu Design — łańcuch edycji
-// zasobu obrazowego (tabela `czynnosc_fotografii_design`, migracja 346)
-// i nastawy powtarzalne (tabela `nastawa_fotografii_design`, migracja 347).
-// Kontrakt obszaru deklaruje `design.go`; zasoby i ich warianty leżą
-// w `design_zasoby.go`.
-//
-// ── Łańcuch edycji NIE dubluje wariantów zasobu ─────────────────────────────
-// Że wariant powstał ze źródła, mówi już `zasob_design.wariant_zasobu_id`. Ten
-// plik przechowuje to, czego kolumna wariantu nie niesie: CZYNNOŚĆ i jej
-// NASTAWY. Odczyt łańcucha idzie po zasobie wynikowym, więc każdy krok da się
-// nazwać i powtórzyć.
-//
-// ── Nastawy to zapis JSON, nie wiersz na pole ───────────────────────────────
-// Nastawa jest wykazem czynności w kolejności wykonania i tylko taka ma sens —
-// powód stoi w nagłówku migracji 347.
+// Plik prowadzi warsztat fotografii modułu Design: łańcuch edycji zasobu obrazowego i nastawy powtarzalne; ten plik
+// przechowuje to, czego kolumna wariantu zasobu nie niesie — czynność i jej nastawy, a nastawa jest zapisem JSON, nie wierszem na pole.
 package dane
 
 import (
@@ -86,12 +73,7 @@ const (
 		` FROM nastawa_fotografii_design WHERE okno = ? ORDER BY nazwa, id`
 )
 
-// ZapiszCzynnoscFotografiiDesignu dokłada ogniwo do łańcucha edycji.
-//
-// Niepowodzenie zapisu ogniwa jest błędem oddanym wołającemu, a nie milczeniem:
-// wołający rozstrzyga, czy przeżyć je (zasób z bajtami już powstał i jest
-// prawdziwy), czy odmówić. Rozstrzyganie tego tutaj byłoby decyzją warstwy
-// danych o zakresie komendy.
+// ZapiszCzynnoscFotografiiDesignu dokłada ogniwo do łańcucha edycji; niepowodzenie zapisu jest błędem oddanym wołającemu, nie milczeniem.
 func (r *repozytoriumDesignu) ZapiszCzynnoscFotografiiDesignu(ctx context.Context,
 	czynnosc CzynnoscFotografiiDesignu) error {
 
@@ -119,8 +101,7 @@ func (r *repozytoriumDesignu) ZapiszCzynnoscFotografiiDesignu(ctx context.Contex
 	return nil
 }
 
-// CzynnosciFotografiiDesignuZasobu oddaje ogniwa łańcucha wskazanego zasobu, od
-// najstarszego.
+// CzynnosciFotografiiDesignuZasobu oddaje ogniwa łańcucha wskazanego zasobu, od najstarszego, wprost z bazy.
 func (r *repozytoriumDesignu) CzynnosciFotografiiDesignuZasobu(ctx context.Context,
 	zasobID int64) ([]CzynnoscFotografiiDesignu, error) {
 
@@ -204,7 +185,7 @@ func (r *repozytoriumDesignu) ZapiszNastaweFotografiiDesignu(ctx context.Context
 	return r.NastawaFotografiiDesignuPoKodzie(ctx, nastawa.Kod)
 }
 
-// NastawaFotografiiDesignuPoKodzie czyta nastawę po identyfikatorze zewnętrznym.
+// NastawaFotografiiDesignuPoKodzie czyta nastawę po identyfikatorze zewnętrznym wprost z bazy danych repozytorium.
 func (r *repozytoriumDesignu) NastawaFotografiiDesignuPoKodzie(ctx context.Context,
 	kod string) (NastawaFotografiiDesignu, error) {
 
@@ -223,7 +204,7 @@ func (r *repozytoriumDesignu) NastawaFotografiiDesignuPoKodzie(ctx context.Conte
 	return nastawa, nil
 }
 
-// NastawyFotografiiDesignu oddaje nastawy okna w kolejności nazw.
+// NastawyFotografiiDesignu oddaje nastawy okna w kolejności ich nazw wprost z bazy danych repozytorium.
 func (r *repozytoriumDesignu) NastawyFotografiiDesignu(ctx context.Context,
 	okno string) ([]NastawaFotografiiDesignu, error) {
 
@@ -252,7 +233,7 @@ func (r *repozytoriumDesignu) NastawyFotografiiDesignu(ctx context.Context,
 	return nastawy, nil
 }
 
-// odczytajCzynnoscFotografiiDesignu składa strukturę z jednego wiersza wyniku.
+// odczytajCzynnoscFotografiiDesignu składa strukturę czynności wprost z jednego wiersza wyniku zapytania SQL.
 func odczytajCzynnoscFotografiiDesignu(wiersz skaner) (CzynnoscFotografiiDesignu, error) {
 	var czynnosc CzynnoscFotografiiDesignu
 	var zrodlo sql.NullInt64
@@ -271,7 +252,7 @@ func odczytajCzynnoscFotografiiDesignu(wiersz skaner) (CzynnoscFotografiiDesignu
 	return czynnosc, nil
 }
 
-// odczytajNastaweFotografiiDesignu składa strukturę z jednego wiersza wyniku.
+// odczytajNastaweFotografiiDesignu składa strukturę nastawy wprost z jednego wiersza wyniku zapytania SQL.
 func odczytajNastaweFotografiiDesignu(wiersz skaner) (NastawaFotografiiDesignu, error) {
 	var nastawa NastawaFotografiiDesignu
 	err := wiersz.Scan(&nastawa.ID, &nastawa.Kod, &nastawa.Okno, &nastawa.Nazwa,

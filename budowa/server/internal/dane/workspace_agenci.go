@@ -1,9 +1,6 @@
-// Odpowiedzialność pliku: przypisanie eksperta do projektu — okno Agent Manager
-// (tabela `przypisanie_agenta_projektu`).
-//
-// Projekt ma najwyżej jednego wykonawcę domyślnego. Wskazanie nowego zdejmuje
-// wskazanie z poprzedniego w tej samej transakcji, bo inaczej pasek promptu nie
-// miałby jednoznacznego adresata zlecenia.
+// Plik zapisuje przypisanie eksperta do projektu w tabeli
+// przypisanie_agenta_projektu, z których najwyżej jeden jest wykonawcą
+// domyślnym.
 package dane
 
 import (
@@ -12,7 +9,8 @@ import (
 	"fmt"
 )
 
-// PrzypisanieAgenta to wiersz przypisania eksperta do projektu.
+// PrzypisanieAgenta to wiersz przypisania eksperta do projektu w tabeli
+// przypisanie_agenta_projektu, z rolą i znacznikiem wykonawcy domyślnego.
 type PrzypisanieAgenta struct {
 	ProjektID         int64
 	AgentKod          string
@@ -46,7 +44,8 @@ const (
 	                         ORDER BY domyslny_wykonawca DESC, agent_kod`
 )
 
-// PrzypiszAgenta zapisuje przypisanie i zwraca jego stan po zapisie.
+// PrzypiszAgenta zapisuje przypisanie eksperta do projektu i zwraca jego stan
+// po zapisie, zdejmując poprzedniego wykonawcę domyślnego.
 func (r *repozytoriumPrzestrzeniRoboczej) PrzypiszAgenta(ctx context.Context,
 	przypisanie PrzypisanieAgenta) (PrzypisanieAgenta, error) {
 
@@ -76,7 +75,8 @@ func (r *repozytoriumPrzestrzeniRoboczej) PrzypiszAgenta(ctx context.Context,
 	return r.przypisanieAgenta(ctx, przypisanie.ProjektID, przypisanie.AgentKod)
 }
 
-// PrzypisaniaAgentow zwraca ekspertów projektu; domyślny wykonawca jest pierwszy.
+// PrzypisaniaAgentow zwraca ekspertów przypisanych do projektu w kolejności,
+// w której domyślny wykonawca jest pierwszy.
 func (r *repozytoriumPrzestrzeniRoboczej) PrzypisaniaAgentow(ctx context.Context,
 	projektID int64) ([]PrzypisanieAgenta, error) {
 
@@ -104,7 +104,8 @@ func (r *repozytoriumPrzestrzeniRoboczej) PrzypisaniaAgentow(ctx context.Context
 	return lista, nil
 }
 
-// przypisanieAgenta zwraca jedno przypisanie po zapisie.
+// przypisanieAgenta zwraca jedno przypisanie eksperta do projektu po zapisie,
+// odczytane ponownie z bazy danych.
 func (r *repozytoriumPrzestrzeniRoboczej) przypisanieAgenta(ctx context.Context,
 	projektID int64, agent string) (PrzypisanieAgenta, error) {
 
@@ -119,7 +120,8 @@ func (r *repozytoriumPrzestrzeniRoboczej) przypisanieAgenta(ctx context.Context,
 	return przypisanie, nil
 }
 
-// odczytajPrzypisanie składa strukturę z jednego wiersza wyniku.
+// odczytajPrzypisanie składa strukturę przypisania eksperta z jednego wiersza
+// wyniku zapytania, tłumacząc rolę i znacznik wykonawcy.
 func odczytajPrzypisanie(wiersz skaner) (PrzypisanieAgenta, error) {
 	var przypisanie PrzypisanieAgenta
 	var rola sql.NullString

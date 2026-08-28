@@ -1,12 +1,6 @@
-// Obszar zestawów żetonów systemu projektowego (tabele
-// `zestaw_zetonow_design`, `zeton_design`, migracja 235) — część
-// `RepozytoriumDesignu` zadeklarowanego w `design.go`.
-//
-// Zapis zestawu jest zawsze pełny. Kontrakt (`DesignTokensetSaveRequest.Tokens`)
-// nie zna trybu częściowej zmiany, a Tokens & System Panel nadsyła stan
-// docelowy drzewa — usunięcie i wstawienie kompletu w jednej transakcji, wzorem
-// `UstawEtykietyZasobu`. Inaczej żeton skasowany w panelu zostawałby w bazie
-// i wracał przy następnym odczycie.
+// Warstwa danych obsługuje zestawy żetonów systemu projektowego: tabele
+// zestaw_zetonow_design i zeton_design, z zapisem zestawu zawsze pełnym
+// w jednej transakcji.
 package dane
 
 import (
@@ -104,8 +98,7 @@ func (r *repozytoriumDesignu) ZapiszZestawZetonowDesignu(ctx context.Context,
 			return fmt.Errorf("dane: nie można zapisać zestawu żetonów design %q: %w", zestaw.Kod, err)
 		}
 
-		// Zestaw mógł dopiero powstać w tej transakcji — klucz odczytujemy przed
-		// podmianą żetonów, bo `zeton_design.zestaw_id` wymaga klucza wiersza.
+		// Zestaw mógł dopiero powstać w tej transakcji; klucz odczytujemy przed podmianą żetonów.
 		odczyt, err := r.zapytania.wTransakcji(ctx, transakcja, pobierzZestawZetonowDesignu)
 		if err != nil {
 			return err
@@ -207,7 +200,8 @@ func (r *repozytoriumDesignu) ZestawyZetonowDesignu(ctx context.Context,
 	return lista, nil
 }
 
-// ZetonyZestawuDesignu zwraca żetony zestawu w zapisanej kolejności.
+// ZetonyZestawuDesignu zwraca żetony zestawu wskazanego kluczem wiersza
+// w zapisanej kolejności, odczytane z tabeli zeton_design.
 func (r *repozytoriumDesignu) ZetonyZestawuDesignu(ctx context.Context,
 	zestawID int64) ([]ZetonDesignu, error) {
 
@@ -239,7 +233,8 @@ func (r *repozytoriumDesignu) ZetonyZestawuDesignu(ctx context.Context,
 	return lista, nil
 }
 
-// odczytajZestawZetonowDesignu składa strukturę z jednego wiersza wyniku.
+// odczytajZestawZetonowDesignu składa strukturę ZestawZetonowDesignu z jednego
+// wiersza wyniku zapytania, w tym pole motywu dopuszczające wartość pustą.
 func odczytajZestawZetonowDesignu(wiersz skaner) (ZestawZetonowDesignu, error) {
 	var zestaw ZestawZetonowDesignu
 	var motyw sql.NullString

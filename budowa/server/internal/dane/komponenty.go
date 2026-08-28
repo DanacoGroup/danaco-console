@@ -1,15 +1,5 @@
 // Odpowiedzialność pliku: rejestr komponentów własnych Strefy 2 Strony głównej
 // (tabela `komponent`) — trwałość rodziny `component.*`.
-//
-// Wiersz `komponent` jest kaflem Strefy 2, który wskazuje byt magazynu
-// modułowego kolumną `byt_docelowy`. Nie powiela bytu modułowego i nie jest jego
-// drugą prawdą: kroki automatyki, umiejętności eksperta i pamięć projektu
-// zostają w swoich tabelach, a to repozytorium nie tyka żadnej z nich.
-//
-// Konstruktor bierze współdzieloną pamięć zapytań zestawu, tak jak pozostałe
-// repozytoria pakietu — `Zestaw.Zamknij` zwalnia wyłącznie tę jedną pamięć
-// poleceń. `*sql.DB` konstruktor nie bierze i brać nie musi: żaden zapis tego
-// rejestru nie obejmuje drugiej tabeli, więc transakcji wielotabelowej tu nie ma.
 package dane
 
 import (
@@ -38,13 +28,11 @@ type Komponent struct {
 	Zaktualizowano int64
 }
 
-// FiltrKomponentow zawęża wykaz — obsługuje oba pola żądania `component.list`.
+// FiltrKomponentow zawęża wykaz komponentów — obsługuje oba pola żądania listy komponentów strefy głównej.
 type FiltrKomponentow struct {
 	// Rodzaj pusty znaczy „wszystkie rodzaje”.
 	Rodzaj string
-	// DolaczWylaczone otwiera wykaz na komponenty niczynne. Domyślnie zamknięty:
-	// kontrakt oznacza `includeDisabled` jako niewymagane, a Strefa 2 pokazuje
-	// kafle czynne.
+	// DolaczWylaczone otwiera wykaz na komponenty niczynne; domyślnie pozostaje zamknięty.
 	DolaczWylaczone bool
 }
 
@@ -57,21 +45,15 @@ type ZmianaKomponentu struct {
 	Konfiguracja *string
 }
 
-// RepozytoriumKomponentow jest kontraktem rejestru komponentów.
+// RepozytoriumKomponentow jest kontraktem rejestru komponentów, określającym operacje dostępne na wykazie.
 type RepozytoriumKomponentow interface {
 	ZalozKomponent(ctx context.Context, komponent Komponent) (Komponent, error)
 	Komponent(ctx context.Context, kod string) (Komponent, error)
 	Komponenty(ctx context.Context, filtr FiltrKomponentow) ([]Komponent, error)
-	// ZmienKomponent i PrzypiszKomponent biorą czas zmiany od warstwy wyższej,
-	// w milisekundach epoki — tak samo jak ZalozKomponent. Baza nie wstawia
-	// własnego „teraz”, bo kolumna niesie wartość kontraktu bez przekładu;
-	// dwa zegary dla jednego pola byłyby dwiema prawdami.
+	// ZmienKomponent i PrzypiszKomponent biorą czas zmiany od warstwy wyższej, w milisekundach epoki.
 	ZmienKomponent(ctx context.Context, kod string, zmiana ZmianaKomponentu, teraz int64) (Komponent, error)
 	UsunKomponent(ctx context.Context, kod string) (bool, error)
-	// PrzypiszKomponent zapisuje parę (poziom zasięgu, klucz zasięgu). Drugi
-	// wynik mówi, czy przypisanie coś zmieniło — powtórzenie tego samego
-	// przypisania nie dochodzi do skutku i `component.assign` oddaje wtedy
-	// `assigned: false` zamiast udawać czynność.
+	// PrzypiszKomponent zapisuje parę poziomu zasięgu i klucza zasięgu; drugi wynik mówi, czy coś zmienił.
 	PrzypiszKomponent(ctx context.Context, kod, poziom, kluczZasiegu string, teraz int64) (Komponent, bool, error)
 }
 
@@ -90,10 +72,8 @@ const (
 	pobierzKomponent = `SELECT ` + kolumnyKomponentu + zrodloKomponentu +
 		` WHERE k.identyfikator_zewnetrzny = ?`
 
-	// Jedno zapytanie na cztery warianty żądania: puste zawężenie rodzaju
-	// wyłącza pierwszy warunek, a otwarty `includeDisabled` — drugi. Porządek
-	// biegnie indeksem idx_komponent_wykaz (rodzaj, nazwa, id), więc „kolejność
-	// wyświetlania” kontraktu jest stała między wywołaniami.
+	// Jedno zapytanie na cztery warianty żądania: puste zawężenie rodzaju wyłącza pierwszy warunek, a otwarty
+	// parametr włączenia nieaktywnych — drugi.
 	listaKomponentow = `SELECT ` + kolumnyKomponentu + zrodloKomponentu +
 		` WHERE (? = '' OR k.rodzaj = ?) AND (? = 1 OR k.czynny = 1)
 		  ORDER BY k.rodzaj, k.nazwa, k.id`
@@ -124,7 +104,7 @@ type repozytoriumKomponentow struct {
 	zapytania *zapytania
 }
 
-// noweRepozytoriumKomponentow zakłada rejestr nad pamięcią zapytań zestawu.
+// noweRepozytoriumKomponentow zakłada rejestr komponentów nad współdzieloną pamięcią zapytań tego zestawu.
 func noweRepozytoriumKomponentow(zapytania *zapytania) RepozytoriumKomponentow {
 	if zapytania == nil {
 		return nil
@@ -179,7 +159,7 @@ func (r *repozytoriumKomponentow) Komponent(ctx context.Context, kod string) (Ko
 	return komponent, nil
 }
 
-// Komponenty zwraca wykaz w kolejności wyświetlania.
+// Komponenty zwraca wykaz komponentów w kolejności wyświetlania ustalonej indeksem tabeli bazy danych.
 func (r *repozytoriumKomponentow) Komponenty(ctx context.Context,
 	filtr FiltrKomponentow) ([]Komponent, error) {
 
@@ -214,8 +194,7 @@ func (r *repozytoriumKomponentow) Komponenty(ctx context.Context,
 func (r *repozytoriumKomponentow) ZmienKomponent(ctx context.Context, kod string,
 	zmiana ZmianaKomponentu, teraz int64) (Komponent, error) {
 
-	// Odczyt przed zapisem, żeby zmiana komponentu nieistniejącego wróciła jako
-	// ErrBrakWiersza, a nie jako UPDATE bez skutku odmeldowany jako sukces.
+	// Odczyt przed zapisem, żeby zmiana komponentu nieistniejącego wróciła jako błąd braku wiersza.
 	if _, err := r.Komponent(ctx, kod); err != nil {
 		return Komponent{}, err
 	}
@@ -288,9 +267,7 @@ func (r *repozytoriumKomponentow) PrzypiszKomponent(ctx context.Context,
 	if err != nil {
 		return Komponent{}, false, err
 	}
-	// Poziom spoza słownika `poziom_zasiegu` dałby podzapytanie puste, więc
-	// kolumna zostałaby NULL, a komenda odmeldowałaby sukces bez skutku.
-	// Warstwa wyższa sprawdza wartość kontraktu, ta sprawdza skutek.
+	// Poziom spoza słownika dałby podzapytanie puste, więc kolumna zostałaby pusta bez zgłoszonego skutku.
 	if przypisany.PoziomZasiegu == nil {
 		return Komponent{}, false,
 			fmt.Errorf("dane: poziom zasięgu %q nie istnieje w słowniku", poziom)

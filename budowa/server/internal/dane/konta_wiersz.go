@@ -1,10 +1,5 @@
 // Odpowiedzialność pliku: przekład wiersza tabeli `konto` na strukturę Konto.
-// Wartości słownikowe idą przez przekład z `konta_rotacja.go`, nie przez
-// literały.
-//
-// Kolumna `poswiadczenie_odwolanie` dochodzi tutaj wyłącznie jako znacznik 0/1
-// policzony w zapytaniu — struktura nie ma pola na jej treść, więc odczyt
-// katalogu nie ma czym wynieść odwołania.
+// Wartości słownikowe idą przez przekład z `konta_rotacja.go`, nie przez literały.
 package dane
 
 import (
@@ -12,7 +7,7 @@ import (
 	"fmt"
 )
 
-// zbierzKonta odczytuje wszystkie wiersze wyniku.
+// zbierzKonta odczytuje wszystkie wiersze wyniku zapytania i przekłada je na pełny wykaz struktur kont.
 func zbierzKonta(wiersze *sql.Rows) ([]Konto, error) {
 	lista := []Konto{}
 	for wiersze.Next() {
@@ -28,7 +23,7 @@ func zbierzKonta(wiersze *sql.Rows) ([]Konto, error) {
 	return lista, nil
 }
 
-// odczytajKonto składa strukturę z jednego wiersza wyniku.
+// odczytajKonto składa pełną strukturę konta z jednego wiersza wyniku zapytania do bazy danych rdzenia.
 func odczytajKonto(wiersz skaner) (Konto, error) {
 	var konto Konto
 	var rodzaj, stan string

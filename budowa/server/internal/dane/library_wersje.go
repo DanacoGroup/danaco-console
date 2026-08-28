@@ -1,14 +1,5 @@
 // Odpowiedzialność pliku: wersje pliku repozytorium wiedzy (tabela
 // `wersja_pliku_biblioteki`) — trwałość Versioning Panelu.
-//
-// Wersja jest własnym bytem, nie polem licznika: każdy wiersz niesie własną
-// treść, sumę kontrolną i autora, dlatego `ZapiszWersje` nie nadpisuje niczego,
-// tylko dokłada wiersz historii.
-//
-// `PrzywrocWersje` przestawia kolumny bieżące pliku (wersja_biezaca_id,
-// suma_kontrolna, tresc_odwolanie, rozmiar_bajtow) w jednej transakcji —
-// schemat nie może zostać w stanie, gdzie wskaźnik bieżącej wersji i jej suma
-// kontrolna należą do różnych wersji.
 package dane
 
 import (
@@ -18,7 +9,7 @@ import (
 	"fmt"
 )
 
-// WersjaPlikuBiblioteki to wiersz tabeli `wersja_pliku_biblioteki`.
+// WersjaPlikuBiblioteki to wiersz tabeli `wersja_pliku_biblioteki`, niosący treść i sumę kontrolną wersji.
 type WersjaPlikuBiblioteki struct {
 	ID             int64
 	Kod            string
@@ -108,10 +99,8 @@ func (r *repozytoriumBiblioteki) Wersje(ctx context.Context, plikID int64) ([]We
 	return lista, nil
 }
 
-// PrzywrocWersje przestawia plik na wskazaną wersję historyczną: wskaźnik
-// bieżącej wersji, sumę kontrolną, odwołanie do treści i rozmiar. Plik po
-// zmianie zwraca metoda `Plik`, żeby nie duplikować tu kształtu
-// `PlikBiblioteki`, którego ten plik nie deklaruje.
+// PrzywrocWersje przestawia plik na wskazaną wersję historyczną: wskaźnik bieżącej wersji, sumę kontrolną,
+// odwołanie do treści i rozmiar.
 func (r *repozytoriumBiblioteki) PrzywrocWersje(ctx context.Context, plikID int64, kodWersji string) (PlikBiblioteki, error) {
 	if kodWersji == "" || plikID == 0 {
 		return PlikBiblioteki{}, fmt.Errorf("dane: przywrócenie wersji bez identyfikatora albo bez pliku")
@@ -168,7 +157,7 @@ func (r *repozytoriumBiblioteki) jednaWersja(ctx context.Context, zapytanie stri
 	return wersja, nil
 }
 
-// odczytajWersje składa strukturę z jednego wiersza wyniku.
+// odczytajWersje składa pełną strukturę wersji pliku z jednego wiersza wyniku zapytania do bazy danych.
 func odczytajWersje(wiersz skaner) (WersjaPlikuBiblioteki, error) {
 	var wersja WersjaPlikuBiblioteki
 	var etykieta, autor, sumaKontrolna, trescOdwolanie sql.NullString

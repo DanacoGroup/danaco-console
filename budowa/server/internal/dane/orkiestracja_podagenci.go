@@ -1,19 +1,6 @@
-// Odpowiedzialność pliku: podagenci MultitaskingAI (tabela `podagent`) —
-// trwałość panelu Subagent Network i panelu zadań w tle.
-//
-// Podagent to zadanie w tle, którego trwałą tożsamością jest pozycja kolejki,
-// a proces modelu jest wyłącznie sposobem jej wykonania. Stąd kształt tego
-// repozytorium: wiersz zna swoją pozycję kolejki (`pozycja_kolejki_id`), a cyklu
-// życia zlecenia nie prowadzi — prowadzi go silnik kolejek.
-//
-// Nie ma tu odczytu tabeli `pozycja_kolejki`: jej czytelnikiem jest repozytorium
-// kolejek. Wiersz podagenta niesie wyłącznie to, czego pozycja nie wie — pod kim
-// biegnie, jak się nazywa i ile kosztował.
-//
-// Repozytorium wchodzi metodą zestawu, nie polem — ten sam wzorzec co
-// `Zestaw.Rozszerzenia()` i `Zestaw.RoleOkien()`: rejestr nie trzyma stanu poza
-// wskaźnikiem na wspólną pamięć zapytań, więc złożenie go na żądanie kosztuje
-// tyle, co odczyt pola.
+// Plik obsługuje podagentów MultitaskingAI: trwałość panelu Subagent Network i panelu
+// zadań w tle. Uzasadnienie kształtu repozytorium i granicy wobec silnika kolejek niesie
+// rozdział orkiestracja_podagenci.go dokumentacji architektury.
 package dane
 
 import (
@@ -53,29 +40,22 @@ type FiltrPodagentow struct {
 	Stan     string
 }
 
-// RepozytoriumPodagentow jest kontraktem obszaru podagentów. Rdzeń
-// bierze je metodą `Zestaw.Podagenci()`.
+// RepozytoriumPodagentow jest kontraktem obszaru podagentów wraz z ich żywotnością.
+// Rdzeń bierze je metodą Zestaw.Podagenci().
 type RepozytoriumPodagentow interface {
 	ZalozPodagentow(ctx context.Context, podagenci []Podagent) ([]Podagent, error)
 	Podagenci(ctx context.Context, filtr FiltrPodagentow) ([]Podagent, error)
 	PodagenciPoKodach(ctx context.Context, kody []string) ([]Podagent, error)
 	PrzypiszPozycje(ctx context.Context, kod string, pozycjaID int64) error
 	UstawStan(ctx context.Context, kod, stan string, wynik *string) error
-	// ZapiszWynikPozycji utrwala zebraną treść tury na wierszu podagenta
-	// wskazanym pozycją kolejki — tak pyta ujście wyniku silnika, które zna
-	// pozycję, a podagenta nie. Pozycja bez podagenta jest zapisem donikąd
-	// i nie jest błędem: silnik jest jeden, więc
-	// tą drogą przechodzą też pozycje pętli sesyjnej i Automations.
+	// ZapiszWynikPozycji utrwala treść tury na wierszu podagenta wskazanym pozycją kolejki.
 	ZapiszWynikPozycji(ctx context.Context, pozycjaID int64, wynik string) error
-	// ZywotnoscPodagentow dokłada odpowiedzi na pytanie „co się z podagentem
-	// dzieje po awarii rdzenia i po restarcie". Idzie osobnym
-	// kontraktem, bo osobna jest odpowiedzialność: powyżej stoi trwałość
-	// powołania i wyniku, poniżej — przynależność pracy do uruchomienia.
+	// ZywotnoscPodagentow odpowiada, co dzieje się z podagentem po awarii rdzenia i po restarcie.
 	ZywotnoscPodagentow
 }
 
-// Stany podagenta — słownik zamknięty więzem CHECK, zgodny
-// z wyliczeniem `SubagentStatus` kontraktu.
+// Stany podagenta tworzą słownik zamknięty więzem CHECK schematu, zgodny z wyliczeniem
+// SubagentStatus kontraktu.
 const (
 	StanPodagentaOczekuje   = "pending"
 	StanPodagentaWBiegu     = "running"
@@ -122,14 +102,9 @@ const (
 	zapiszWynikPoPozycji = `UPDATE podagent SET wynik = ?
 	                        WHERE pozycja_kolejki_id = ?`
 
-	// Znaczniki czasu stawia baza, nie rdzeń: chwila rozpoczęcia zapisuje się
-	// raz, przy pierwszym wejściu w bieg, a chwila zakończenia raz, przy
-	// pierwszym stanie końcowym. Dzięki temu powtórzony zapis stanu nie
-	// przesuwa historii podagenta.
-	// Powód zakończenia i oznaka życia dokładają się tym samym poleceniem:
-	// stan mówi co, powód mówi dlaczego, a oznaka — kiedy rdzeń
-	// ostatni raz tego wiersza dotknął. Powód dla stanu niekońcowego zostaje
-	// zastany, bo przejście 'pending'→'running' niczego nie kończy.
+	// ustawStanPodagenta zapisuje stan, wynik, oznakę życia i powód zakończenia jednym
+	// poleceniem, stawiając znaczniki czasu w bazie. Uzasadnienie wyznaczania powodu
+	// niesie rozdział orkiestracja_podagenci.go dokumentacji.
 	ustawStanPodagenta = `UPDATE podagent
 	                         SET stan = ?,
 	                             wynik = COALESCE(?, wynik),
@@ -155,10 +130,12 @@ type repozytoriumPodagentow struct {
 	db        *sql.DB
 }
 
-// Zgodność implementacji z kontraktem sprawdza kompilator, a nie dopiero montaż.
+// Zgodność implementacji z kontraktem sprawdza kompilator w miejscu deklaracji, a nie
+// dopiero montaż zestawu repozytoriów w czasie działania.
 var _ RepozytoriumPodagentow = (*repozytoriumPodagentow)(nil)
 
-// Podagenci oddaje repozytorium podagentów nad pamięcią zapytań zestawu.
+// Podagenci oddaje repozytorium podagentów nad wspólną pamięcią zapytań zestawu, gotowe
+// do zapisu i odczytu wierszy podagenta.
 func (z *Zestaw) Podagenci() RepozytoriumPodagentow {
 	if z == nil || z.zapytania == nil {
 		return nil
@@ -166,14 +143,9 @@ func (z *Zestaw) Podagenci() RepozytoriumPodagentow {
 	return &repozytoriumPodagentow{zapytania: z.zapytania, db: z.zapytania.db}
 }
 
-// ZalozPodagentow zakłada komplet podagentów jednego powołania i oddaje je
-// w stanie po zapisie.
-//
-// Jedna transakcja na całe powołanie. `subagent.spawn` powołuje od jednego do
-// piętnastu podagentów jednym żądaniem; zapis wierszami osobnymi zostawiałby po
-// awarii połowę powołania, czyli podagentów bez reszty ich pracy.
-//
-// Wykaz pusty nie jest błędem — zwraca wykaz pusty.
+// ZalozPodagentow zakłada komplet podagentów jednego powołania jedną transakcją i oddaje
+// je w stanie po zapisie, żeby awaria nie zostawiła połowy powołania bez reszty jego
+// pracy. Wykaz pusty nie jest błędem.
 func (r *repozytoriumPodagentow) ZalozPodagentow(ctx context.Context,
 	podagenci []Podagent) ([]Podagent, error) {
 
@@ -219,7 +191,8 @@ func (r *repozytoriumPodagentow) ZalozPodagentow(ctx context.Context,
 	return zalozeni, nil
 }
 
-// Podagenci zwraca wykaz zawężony filtrem, w kolejności powołania.
+// Podagenci zwraca wykaz podagentów zawężony filtrem okna, sesji i stanu, uporządkowany
+// w kolejności powołania.
 func (r *repozytoriumPodagentow) Podagenci(ctx context.Context,
 	filtr FiltrPodagentow) ([]Podagent, error) {
 
@@ -235,12 +208,9 @@ func (r *repozytoriumPodagentow) Podagenci(ctx context.Context,
 	return zbierzPodagentow(wiersze)
 }
 
-// PodagenciPoKodach zwraca podagentów wskazanych wprost — tak pyta
-// `subagent.result.collect`, gdy Operator zbiera wyniki wybranych.
-//
-// Liczba miejsc w zapytaniu rośnie z wykazem, a pamięć poleceń trzyma po jednym
-// wariancie na długość. Wariantów jest najwyżej tyle, ilu podagentów da się
-// powołać, więc pamięć nie puchnie.
+// PodagenciPoKodach zwraca podagentów wskazanych wprost kodami, tak jak pyta polecenie
+// subagent.result.collect przy zbieraniu wyników wybranych. Liczba miejsc w zapytaniu
+// rośnie z długością wykazu.
 func (r *repozytoriumPodagentow) PodagenciPoKodach(ctx context.Context,
 	kody []string) ([]Podagent, error) {
 
@@ -304,9 +274,8 @@ func (r *repozytoriumPodagentow) UstawStan(ctx context.Context,
 	return nil
 }
 
-// ZapiszWynikPozycji utrwala treść tury na wierszu podagenta związanym
-// z pozycją. Zapis bez trafienia (pozycja spoza podagentów) przechodzi bez
-// błędu — patrz kontrakt interfejsu wyżej.
+// ZapiszWynikPozycji utrwala treść tury na wierszu podagenta związanym z pozycją. Zapis
+// bez trafienia, gdy pozycja jest spoza podagentów, przechodzi bez błędu.
 func (r *repozytoriumPodagentow) ZapiszWynikPozycji(ctx context.Context,
 	pozycjaID int64, wynik string) error {
 
@@ -323,7 +292,8 @@ func (r *repozytoriumPodagentow) ZapiszWynikPozycji(ctx context.Context,
 	return nil
 }
 
-// podagentPoID odczytuje pojedynczy wiersz po kluczu głównym.
+// podagentPoID odczytuje pojedynczy wiersz podagenta po kluczu głównym albo oddaje błąd
+// ErrBrakWiersza.
 func (r *repozytoriumPodagentow) podagentPoID(ctx context.Context, id int64) (Podagent, error) {
 	polecenie, err := r.zapytania.przygotuj(ctx, pobierzPodagentaPoID)
 	if err != nil {
@@ -339,7 +309,8 @@ func (r *repozytoriumPodagentow) podagentPoID(ctx context.Context, id int64) (Po
 	return podagent, nil
 }
 
-// zbierzPodagentow składa wykaz z otwartego wyniku zapytania.
+// zbierzPodagentow składa wykaz podagentów z otwartego wyniku zapytania, zamykając go
+// po odczycie ostatniego wiersza.
 func zbierzPodagentow(wiersze *sql.Rows) ([]Podagent, error) {
 	defer wiersze.Close()
 
@@ -357,7 +328,8 @@ func zbierzPodagentow(wiersze *sql.Rows) ([]Podagent, error) {
 	return lista, nil
 }
 
-// odczytajPodagenta składa strukturę z jednego wiersza wyniku.
+// odczytajPodagenta składa strukturę Podagent z jednego wiersza wyniku zapytania,
+// niezależnie od jego źródła.
 func odczytajPodagenta(wiersz skaner) (Podagent, error) {
 	var p Podagent
 	var oknoKod, sesjaKod, nazwa, wynik, rozpoczeto, zakonczono sql.NullString

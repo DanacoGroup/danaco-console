@@ -1,16 +1,4 @@
-// Odpowiedzialność pliku: notatki powiązane ze źródłem przeglądania (tabela
-// `notatka_przegladania`, `store/migracja_047_przegladarka.sql`) — obsługa
-// `browser.note.add`. Typ `NotatkaPrzegladania` i metody zapisu/odczytu dopisane
-// na `*repozytoriumPrzegladania` zadeklarowanym w `przegladarka.go` (jedno
-// repozytorium, trzy pliki, trzy odpowiedzialności).
-//
-// ZRODLO_ZEWNETRZNY_ID JEST WARTOŚCIĄ TEKSTOWĄ, NIE WIĘZEM OBCYM: notatka może
-// dotyczyć całej strony, nie tylko jednego zebranego źródła, więc kolumna jest
-// nullable bez REFERENCES (wzorem `debata_wypowiedz.uczestnik`).
-//
-// TREŚĆ NOTATKI JEST KRÓTKIM TEKSTEM WPROST, NIE ODWOŁANIEM DO PLIKU — w
-// odróżnieniu od `migawka_strony.tekst_odwolanie`, który trzyma treść obszerną;
-// notatka Operatora nią nie jest. Kolumna `tresc` niesie ją wprost.
+// Odpowiedzialność pliku: notatki powiązane ze źródłem przeglądania, wiersze tabeli notatka_przegladania, obsługujące komendę browser.note.add.
 package dane
 
 import (
@@ -30,9 +18,7 @@ type NotatkaPrzegladania struct {
 	ZrodloID *string
 	Tresc    string
 	Cytat    *string
-	// Trzy własności dołożone migracją 179 wraz z komendą `browser.note.update`:
-	// rodzaj notatki (obserwacja, cytat, pytanie otwarte, wniosek), wątek
-	// tematyczny i przypięcie na początek wykazu.
+	// Trzy pola dołożone komendą update: rodzaj notatki, wątek tematyczny i przypięcie na początek wykazu.
 	Klasyfikacja   *string
 	Watek          *string
 	Przypieta      bool
@@ -63,10 +49,7 @@ const (
 	                      AND (? = '' OR tresc LIKE ? OR IFNULL(cytat,'') LIKE ?)
 	                    ORDER BY (? = 1 AND przypieta = 1) DESC, utworzono DESC, id DESC LIMIT ?`
 
-	// Aktualizacja notatki (`browser.note.update`) zmienia wyłącznie te pola,
-	// które żądanie naprawdę przyniosło. Wzorzec `COALESCE(?, kolumna)` jest tu
-	// jedyną drogą, która nie kasuje cytatu przy zmianie samej treści: żądanie
-	// bez pola znaczy „zostaw jak było", nie „wyczyść".
+	// Aktualizacja notatki zmienia wyłącznie pola, które żądanie naprawdę przyniosło; wzorzec COALESCE nie kasuje pól przy zmianie tylko jednego z nich.
 	aktualizujNotatkePrzegladania = `UPDATE notatka_przegladania SET
 	                                     tresc = COALESCE(?, tresc),
 	                                     cytat = COALESCE(?, cytat),
@@ -78,13 +61,11 @@ const (
 	                                 WHERE identyfikator_zewnetrzny = ?`
 )
 
-// FiltrNotatekPrzegladania zawęża wykaz notatek okna — obsługuje pola żądania
-// `browser.note.list`.
+// FiltrNotatekPrzegladania zawęża wykaz notatek okna, obsługując pola żądania browser.note.list w całości.
 type FiltrNotatekPrzegladania struct {
 	// Okno operacyjne, którego wykaz dotyczy — pole wymagane kontraktem.
 	Okno string
-	// ZrodloID zawęża do notatek jednego źródła; pusty napis znaczy „wszystkie
-	// notatki okna", również te bez źródła.
+	// ZrodloID zawęża do notatek jednego źródła; pusty napis znaczy wszystkie notatki okna.
 	ZrodloID string
 	// Watek zawęża do jednego wątku tematycznego notatek.
 	Watek string
@@ -176,7 +157,7 @@ func (r *repozytoriumPrzegladania) Notatki(ctx context.Context,
 	return lista, nil
 }
 
-// odczytajNotatke składa strukturę z jednego wiersza wyniku.
+// odczytajNotatke składa strukturę notatki przeglądania z jednego wiersza wyniku zapytania, kolumna po kolumnie.
 func odczytajNotatke(wiersz skaner) (NotatkaPrzegladania, error) {
 	var notatka NotatkaPrzegladania
 	var zrodloID, cytat, klasyfikacja, watek sql.NullString

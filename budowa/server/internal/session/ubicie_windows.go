@@ -12,20 +12,7 @@ import (
 	"golang.org/x/sys/windows"
 )
 
-// Drzewo procesów okna na Windows opiera się na Job Object. Proces okna wraz
-// z całym potomstwem należy do jednego zadania, więc jedno wywołanie jądra
-// kończy całe drzewo. Zamiast `taskkill` idzie wywołanie jądra — bez zależności
-// od narzędzi zewnętrznych systemu.
-//
-// Uchwyt zadania trzyma zamek: ubij (obserwator albo zamknięcie okna) czyta go
-// wtedy, gdy zwolnij (obserwator zakończenia procesu) może go właśnie oddawać.
-// Bez zamka byłby to wyścig o pole `zadanie`.
-//
-// pid to identyfikator procesu okna utrwalony w chwili przejęcia. Dogląd
-// posługuje się tym polem, a nie os.Process.Pid — to drugie zeruje Release
-// (wywoływany przez Zwolnij) na wartość -1, więc czytanie go z gorutyny doglądu
-// byłoby wyścigiem danych z ubiciem idącym równolegle. Pole zapisuje się raz,
-// w przejmij, zanim struktura wyjdzie poza jedną gorutynę, i tylko czyta później.
+// drzewoProcesow reprezentuje drzewo procesu okna na Windows, oparte na obiekcie zadania systemu operacyjnego.
 type drzewoProcesow struct {
 	mu      sync.Mutex
 	zadanie windows.Handle
@@ -62,7 +49,7 @@ func przygotujDrzewo() (*drzewoProcesow, error) {
 	return &drzewoProcesow{zadanie: zadanie}, nil
 }
 
-// przejmij przypisuje wstrzymany proces do zadania i wznawia jego pracę.
+// Metoda przejmij przypisuje wstrzymany proces okna do zadania systemowego i wznawia jego dalszą pracę.
 func (d *drzewoProcesow) przejmij(p *os.Process) error {
 	d.pid = uint32(p.Pid)
 	uchwyt, err := windows.OpenProcess(
@@ -93,7 +80,7 @@ func (d *drzewoProcesow) ubij(_ *os.Process) error {
 	return nil
 }
 
-// zwolnij oddaje uchwyt zadania po zakończeniu procesu.
+// Metoda zwolnij oddaje uchwyt zadania systemowego po faktycznym zakończeniu procesu należącego do tego okna.
 func (d *drzewoProcesow) zwolnij() {
 	d.mu.Lock()
 	defer d.mu.Unlock()
@@ -103,11 +90,7 @@ func (d *drzewoProcesow) zwolnij() {
 	}
 }
 
-// czekaj blokuje wywołującego do faktycznego zakończenia procesu. Otwiera własny
-// uchwyt synchronizujący, żeby nie ruszać uchwytu trzymanego przez os.Process
-// (ten oddaje zwolnij). Nieudane otwarcie znaczy, że proces już zniknął.
-//
-// Posługuje się zapamiętanym d.pid, nie os.Process.Pid — patrz opis pola.
+// Metoda czekaj blokuje wywołującego do faktycznego zakończenia procesu, korzystając z własnego uchwytu synchronizującego.
 func (d *drzewoProcesow) czekaj(p *os.Process) {
 	if p == nil || d.pid == 0 {
 		return
@@ -141,7 +124,7 @@ func wznowProces(pid uint32) error {
 	return fmt.Errorf("session: nie znaleziono wątku głównego procesu %d", pid)
 }
 
-// wznowWatek zdejmuje wstrzymanie z jednego wątku.
+// Funkcja wznowWatek zdejmuje wstrzymanie z jednego wątku wskazanego jego identyfikatorem systemowym Windows.
 func wznowWatek(idWatku, pid uint32) error {
 	watek, err := windows.OpenThread(windows.THREAD_SUSPEND_RESUME, false, idWatku)
 	if err != nil {

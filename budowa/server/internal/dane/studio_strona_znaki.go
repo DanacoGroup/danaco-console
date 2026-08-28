@@ -1,25 +1,4 @@
-// Odpowiedzialność pliku: warstwa danych tablicy znaków specjalnych modułu
-// Studio — zasady autozamiany skrótu na znak i znaki ostatnio użyte
-// (migracja 371).
-//
-// Tabela `autozamiana_znaku_studio` stoi w migracji 368 wraz z kolumną
-// `fabryczna` i zasadami fabrycznymi wpisanymi wierszami; migracja 371 dokłada
-// do niej znaki prawnicze i ułamki oraz zakłada `znak_ostatnio_uzyty_studio`.
-//
-// ── Czego tu NIE MA i dlaczego ───────────────────────────────────────────────
-// Nie ma tablicy znaków. Nazwy znaków, ich punkty kodowe i grupy są wiedzą
-// rdzenia — tak samo jak arkusz stylów fabryczny i wykaz nośników druku. Do bazy
-// schodzi wyłącznie to, co Operator zmienił albo czym się posłużył. Drugi wykaz
-// znaków w tabeli rozjechałby się z wykazem rdzenia przy pierwszym uzupełnieniu.
-//
-// Wykaz zasad autozamiany jest odwrotnie: on stoi W BAZIE, także w części
-// fabrycznej, bo migracja 368 tak go założyła i bo Operator ma prawo zasadę
-// fabryczną WYŁĄCZYĆ. Powtórzenie wykazu fabrycznego w kodzie rdzenia dałoby
-// dwie prawdy o tym, co wchodzi w miejsce „(c)".
-//
-// ── Przedrostek nazw pomocniczych ────────────────────────────────────────────
-// Nazwy pomocnicze tego pliku niosą przedrostek `symbol` — przestrzeń nazw
-// pakietu `dane` jest dzielona z innymi wykonawcami.
+// Odpowiedzialność pliku: tablica znaków specjalnych modułu Studio, zasady autozamiany skrótu na znak oraz znaki ostatnio użyte.
 package dane
 
 import (
@@ -30,12 +9,7 @@ import (
 	"strings"
 )
 
-// ZasadaAutozamianyStudia to wiersz tabeli `autozamiana_znaku_studio`.
-//
-// Zasada fabryczna ma tu swój wiersz z kolumną `Fabryczna` — wykaz fabryczny
-// przyszedł migracją, nie z kodu. Zmiana zasady fabrycznej NIE zdejmuje jej
-// oznaczenia: Operator, który wyłączył „--", nadal ma przed sobą zasadę
-// fabryczną wyłączoną, a nie zasadę własną, którą wolno usunąć.
+// ZasadaAutozamianyStudia to wiersz tabeli autozamiana_znaku_studio; zasada fabryczna ma tu swój wiersz z kolumną oznaczenia fabrycznego.
 type ZasadaAutozamianyStudia struct {
 	ID             int64
 	Skrot          string
@@ -46,7 +20,7 @@ type ZasadaAutozamianyStudia struct {
 	Zaktualizowano string
 }
 
-// ZnakOstatnioUzytyStudia to wiersz tabeli `znak_ostatnio_uzyty_studio`.
+// ZnakOstatnioUzytyStudia to wiersz tabeli znak_ostatnio_uzyty_studio, niosący znak, licznik i czas ostatniego użycia.
 type ZnakOstatnioUzytyStudia struct {
 	ID      int64
 	Kod     string
@@ -58,13 +32,7 @@ type ZnakOstatnioUzytyStudia struct {
 const (
 	symbolKolumnyZasady = `id, skrot, zamiennik, czynna, fabryczna, utworzono, zaktualizowano`
 
-	// Zapis zasady jest nadpisaniem wiersza, nie założeniem drugiego: skrót jest
-	// tożsamością zasady, a dwa wiersze o tym samym skrócie znaczyłyby dwie
-	// prawdy o tym, co wchodzi w miejsce „(c)".
-	// Zapis NIE rusza kolumny `fabryczna`: oznaczenie zasady przyszło migracją
-	// i zmiana jej zamiennika ani wyłączenie nie czynią z niej zasady własnej.
-	// Bez tego Operator mógłby usunąć zasadę fabryczną, wpisując ją najpierw
-	// jako własną — czyli obejściem.
+	// Zapis zasady jest nadpisaniem wiersza, nie założeniem drugiego, bo skrót jest tożsamością zasady; zapis nie rusza kolumny oznaczenia fabrycznego.
 	symbolZapiszZasade = `INSERT INTO autozamiana_znaku_studio (skrot, zamiennik, czynna, fabryczna)
 	                      VALUES (?, ?, ?, 0)
 	                      ON CONFLICT(skrot) DO UPDATE SET
@@ -100,8 +68,7 @@ const (
 	                        LIMIT ?`
 )
 
-// ZapiszZasadeAutozamiany zakłada zasadę autozamiany albo nadpisuje zastaną
-// i oddaje stan po zapisie.
+// ZapiszZasadeAutozamiany zakłada zasadę autozamiany albo nadpisuje zastaną i oddaje jej stan po zapisie.
 func (r *repozytoriumStudia) ZapiszZasadeAutozamiany(ctx context.Context,
 	zasada ZasadaAutozamianyStudia) (ZasadaAutozamianyStudia, error) {
 
@@ -124,7 +91,7 @@ func (r *repozytoriumStudia) ZapiszZasadeAutozamiany(ctx context.Context,
 	return r.ZasadaAutozamiany(ctx, skrot)
 }
 
-// ZasadaAutozamiany oddaje zasadę o wskazanym skrócie.
+// ZasadaAutozamiany oddaje zasadę autozamiany o wskazanym skrócie, wraz z jej zamiennikiem i stanem czynności.
 func (r *repozytoriumStudia) ZasadaAutozamiany(ctx context.Context,
 	skrot string) (ZasadaAutozamianyStudia, error) {
 
@@ -143,7 +110,7 @@ func (r *repozytoriumStudia) ZasadaAutozamiany(ctx context.Context,
 	return zasada, nil
 }
 
-// ZasadyAutozamiany oddaje wszystkie zasady — fabryczne i własne Operatora.
+// ZasadyAutozamiany oddaje wszystkie zasady, zarówno fabryczne, jak i własne Operatora, w jednym wykazie.
 func (r *repozytoriumStudia) ZasadyAutozamiany(ctx context.Context) ([]ZasadaAutozamianyStudia, error) {
 	polecenie, err := r.zapytania.przygotuj(ctx, symbolListaZasad)
 	if err != nil {
@@ -169,8 +136,7 @@ func (r *repozytoriumStudia) ZasadyAutozamiany(ctx context.Context) ([]ZasadaAut
 	return lista, nil
 }
 
-// UsunZasadeAutozamiany usuwa zasadę własną Operatora i oddaje, czy wiersz
-// został usunięty. Zasada fabryczna zostaje — patrz zapytanie wyżej.
+// UsunZasadeAutozamiany usuwa zasadę własną Operatora i oddaje, czy wiersz został usunięty; zasada fabryczna zawsze zostaje.
 func (r *repozytoriumStudia) UsunZasadeAutozamiany(ctx context.Context, skrot string) (bool, error) {
 	polecenie, err := r.zapytania.przygotuj(ctx, symbolUsunZasade)
 	if err != nil {
@@ -204,8 +170,7 @@ func (r *repozytoriumStudia) OdnotujUzycieZnaku(ctx context.Context, kod, znak s
 	return nil
 }
 
-// ZnakiOstatnioUzyte oddaje znaki, którymi Operator posłużył się niedawno,
-// od najbliższego ręce.
+// ZnakiOstatnioUzyte oddaje znaki, którymi Operator posłużył się niedawno, od najbliższego użycia wstecz.
 func (r *repozytoriumStudia) ZnakiOstatnioUzyte(ctx context.Context,
 	ile int) ([]ZnakOstatnioUzytyStudia, error) {
 
@@ -236,7 +201,7 @@ func (r *repozytoriumStudia) ZnakiOstatnioUzyte(ctx context.Context,
 	return lista, nil
 }
 
-// symbolOdczytajZasade składa zasadę autozamiany z jednego wiersza wyniku.
+// symbolOdczytajZasade składa zasadę autozamiany z jednego wiersza wyniku zapytania, kolumna po kolumnie.
 func symbolOdczytajZasade(wiersz skaner) (ZasadaAutozamianyStudia, error) {
 	var zasada ZasadaAutozamianyStudia
 	var czynna, fabryczna int64

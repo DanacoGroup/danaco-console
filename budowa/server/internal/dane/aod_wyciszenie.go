@@ -1,23 +1,5 @@
-// Odpowiedzialność pliku: wyciszenia nakładki Always On Display (tabela
-// `wyciszenie_nakladki`, migracja 374) oraz sygnały klas zdarzeń wyzwalających
-// (tabela `sygnal_nakladki`, migracja 375).
-//
-// Dlaczego wyciszenie ma wiersz, a przypięcia obserwacji nie mają. Przypięcie
-// wskazuje proces telemetrii, który ginie razem z rdzeniem, więc wiersz
-// przeżyłby byt, na który wskazuje (`core/adapter_modul_aod.go`). Wyciszenie
-// wskazuje moduł, kartę sesji albo klasę zdarzeń — byty, które restart rdzenia
-// przeżywają — i ma sięgać WSZYSTKICH powłok Operatora. Bez wiersza Operator
-// wyciszał w jednej powłoce, a w drugiej sugestie wchodziły dalej.
-//
-// Wyciszenie przeterminowane nie wchodzi do wykazu i jest z niego usuwane przy
-// odczycie: Operator nie ma odklikiwać ciszy, która sama się skończyła. Usunięcie
-// idzie przy odczycie, a nie zegarem w tle, bo wykaz czyta się przed każdym
-// ujawnieniem sugestii — a proces budzony co minutę po to, żeby zwykle nie zrobić
-// nic, jest kosztem bez skutku.
-//
-// Sygnał wyciszony ODKŁADA SIĘ NADAL: wyciszenie wstrzymuje ujawnienie, nie
-// zapis (rozdz. 3.1 i 3.5 opracowania). Sito wyciszeń stoi po stronie rdzenia,
-// nie w tym zapytaniu — tu leży wyłącznie zapis i odczyt.
+// Plik zapisuje i odczytuje wyciszenia nakładki Always On Display oraz sygnały klas zdarzeń wyzwalających; wyciszenie
+// wskazuje moduł, kartę sesji albo klasę zdarzeń i sięga wszystkich powłok Operatora.
 package dane
 
 import (
@@ -30,7 +12,7 @@ import (
 	"danacoconsole/shared"
 )
 
-// WyciszenieNakladki to wiersz tabeli `wyciszenie_nakladki`.
+// WyciszenieNakladki to wiersz tabeli `wyciszenie_nakladki` wraz z chwilą końca i rodzajem oraz zakresem zniesienia.
 type WyciszenieNakladki struct {
 	ID            int64
 	Identyfikator string
@@ -40,13 +22,12 @@ type WyciszenieNakladki struct {
 	NazwaZakresu  string
 	KlasaZdarzen  shared.AodEventClass
 	Urzadzenie    string
-	// KonczySie jest chwilą końca w zapisie ISO-8601 UTC; pusty znaczy wyciszenie
-	// trwające do zniesienia ręką Operatora.
+	// KonczySie jest chwilą końca w zapisie ISO-8601 UTC; pusty znaczy trwanie do zniesienia.
 	KonczySie string
 	Utworzono string
 }
 
-// SygnalNakladki to wiersz tabeli `sygnal_nakladki`.
+// SygnalNakladki to wiersz tabeli `sygnal_nakladki` niosący klasę zdarzenia wyzwalającego nakładkę Operatora.
 type SygnalNakladki struct {
 	ID              int64
 	Identyfikator   string
@@ -58,28 +39,22 @@ type SygnalNakladki struct {
 	ZdarzyloSie     string
 }
 
-// RepozytoriumWyciszenNakladki jest kontraktem wyciszeń i sygnałów nakładki.
+// RepozytoriumWyciszenNakladki jest kontraktem wyciszeń i sygnałów nakładki: zapis, odczyt i zniesienie.
 type RepozytoriumWyciszenNakladki interface {
-	// ZapiszWyciszenieNakladki zakłada wyciszenie albo oddaje zastane. Drugi wynik
-	// mówi, czy wiersz naprawdę powstał: wyciszenie powtórzone nie jest zmianą
-	// i nie ma czego rozgłaszać pozostałym powłokom.
+	// ZapiszWyciszenieNakladki zakłada wyciszenie albo oddaje zastane, mówiąc, czy wiersz powstał.
 	ZapiszWyciszenieNakladki(ctx context.Context,
 		wyciszenie WyciszenieNakladki) (WyciszenieNakladki, bool, error)
 	// ZniesWyciszenieNakladki usuwa wyciszenie wskazane identyfikatorem kontraktu.
 	ZniesWyciszenieNakladki(ctx context.Context, identyfikator string) (bool, error)
-	// WyciszenieNakladkiPoBycie odnajduje wyciszenie złożone z rodzaju i zakresu —
-	// drogę zniesienia bez identyfikatora, którą idzie okno znoszące to, co samo
-	// wcześniej założyło.
+	// WyciszenieNakladkiPoBycie odnajduje wyciszenie złożone z rodzaju i zakresu, bez identyfikatora.
 	WyciszenieNakladkiPoBycie(ctx context.Context,
 		wzor WyciszenieNakladki) (WyciszenieNakladki, bool, error)
-	// WyciszeniaNakladki zwraca wyciszenia czynne o wskazanej chwili, usuwając po
-	// drodze te przeterminowane.
+	// WyciszeniaNakladki zwraca wyciszenia czynne o wskazanej chwili, usuwając po drodze przeterminowane.
 	WyciszeniaNakladki(ctx context.Context, teraz string) ([]WyciszenieNakladki, error)
 
 	// ZapiszSygnalNakladki odkłada sygnał klasy zdarzeń wyzwalających.
 	ZapiszSygnalNakladki(ctx context.Context, sygnal SygnalNakladki) (SygnalNakladki, error)
-	// SygnalyNakladki zwraca sygnały zawężone niepustymi polami wzoru, najświeższe
-	// na początku. Granica nieustawiona znaczy wykaz pełny.
+	// SygnalyNakladki zwraca sygnały zawężone niepustymi polami wzoru, najświeższe na początku.
 	SygnalyNakladki(ctx context.Context, wzor SygnalNakladki, granica int) ([]SygnalNakladki, error)
 }
 
@@ -133,17 +108,12 @@ type repozytoriumWyciszenNakladki struct {
 	zapytania *zapytania
 }
 
-// noweRepozytoriumWyciszenNakladki zakłada magazyn wyciszeń nad zapytaniami zestawu.
+// noweRepozytoriumWyciszenNakladki zakłada magazyn wyciszeń i sygnałów nakładki nad zapytaniami zestawu.
 func noweRepozytoriumWyciszenNakladki(z *zapytania) *repozytoriumWyciszenNakladki {
 	return &repozytoriumWyciszenNakladki{zapytania: z}
 }
 
-// ZapiszWyciszenieNakladki zakłada wyciszenie. Wyciszenie tego samego bytu jest
-// już zapisane, więc drugie żądanie oddaje wiersz zastany i mówi, że zmiany nie
-// było.
-//
-// Wyjątek dotyczy wyciszenia czasowego: drugi czas ZASTĘPUJE poprzedni, bo dwa
-// czasy naraz nie dałyby Operatorowi jednej odpowiedzi na pytanie „do kiedy".
+// ZapiszWyciszenieNakladki zakłada wyciszenie; drugie żądanie tego samego bytu oddaje wiersz zastany, wyjąwszy czas trwania, który drugie żądanie zastępuje.
 func (r *repozytoriumWyciszenNakladki) ZapiszWyciszenieNakladki(ctx context.Context,
 	wyciszenie WyciszenieNakladki) (WyciszenieNakladki, bool, error) {
 
@@ -187,7 +157,7 @@ func (r *repozytoriumWyciszenNakladki) ZapiszWyciszenieNakladki(ctx context.Cont
 	return zapisane, true, nil
 }
 
-// ZniesWyciszenieNakladki usuwa wiersz wyciszenia.
+// ZniesWyciszenieNakladki usuwa z bazy danych wiersz wyciszenia nakładki po jego identyfikatorze trwałym.
 func (r *repozytoriumWyciszenNakladki) ZniesWyciszenieNakladki(ctx context.Context,
 	identyfikator string) (bool, error) {
 
@@ -211,7 +181,7 @@ func (r *repozytoriumWyciszenNakladki) ZniesWyciszenieNakladki(ctx context.Conte
 	return zmienione > 0, nil
 }
 
-// WyciszenieNakladkiPoBycie odnajduje wyciszenie po rodzaju i zakresie.
+// WyciszenieNakladkiPoBycie odnajduje wyciszenie złożone z rodzaju i zakresu bytu, bez jego identyfikatora.
 func (r *repozytoriumWyciszenNakladki) WyciszenieNakladkiPoBycie(ctx context.Context,
 	wzor WyciszenieNakladki) (WyciszenieNakladki, bool, error) {
 
@@ -231,7 +201,7 @@ func (r *repozytoriumWyciszenNakladki) WyciszenieNakladkiPoBycie(ctx context.Con
 	return wyciszenie, true, nil
 }
 
-// WyciszeniaNakladki zwraca wyciszenia czynne, usuwając po drodze przeterminowane.
+// WyciszeniaNakladki zwraca wyciszenia czynne o wskazanej chwili, usuwając po drodze wpisy przeterminowane.
 func (r *repozytoriumWyciszenNakladki) WyciszeniaNakladki(ctx context.Context,
 	teraz string) ([]WyciszenieNakladki, error) {
 
@@ -268,7 +238,7 @@ func (r *repozytoriumWyciszenNakladki) WyciszeniaNakladki(ctx context.Context,
 	return wykaz, nil
 }
 
-// ZapiszSygnalNakladki odkłada sygnał klasy zdarzeń wyzwalających.
+// ZapiszSygnalNakladki odkłada sygnał klasy zdarzeń wyzwalających nakładkę wraz z chwilą jego wystąpienia.
 func (r *repozytoriumWyciszenNakladki) ZapiszSygnalNakladki(ctx context.Context,
 	sygnal SygnalNakladki) (SygnalNakladki, error) {
 
@@ -301,7 +271,7 @@ func (r *repozytoriumWyciszenNakladki) ZapiszSygnalNakladki(ctx context.Context,
 	return zapisany, nil
 }
 
-// SygnalyNakladki zwraca sygnały zawężone niepustymi polami wzoru.
+// SygnalyNakladki zwraca sygnały zawężone niepustymi polami wzoru wyszukiwania klasy zdarzeń nakładki.
 func (r *repozytoriumWyciszenNakladki) SygnalyNakladki(ctx context.Context,
 	wzor SygnalNakladki, granica int) ([]SygnalNakladki, error) {
 
@@ -331,7 +301,7 @@ func (r *repozytoriumWyciszenNakladki) SygnalyNakladki(ctx context.Context,
 	return wykaz, nil
 }
 
-// odczytajWyciszenieNakladki składa strukturę z jednego wiersza wyniku.
+// odczytajWyciszenieNakladki składa strukturę wyciszenia wprost z jednego wiersza wyniku zapytania SQL.
 func odczytajWyciszenieNakladki(wiersz skaner) (WyciszenieNakladki, error) {
 	var wyciszenie WyciszenieNakladki
 	var rodzaj, zakres, klasa string
@@ -347,7 +317,7 @@ func odczytajWyciszenieNakladki(wiersz skaner) (WyciszenieNakladki, error) {
 	return wyciszenie, nil
 }
 
-// odczytajSygnalNakladki składa strukturę z jednego wiersza wyniku.
+// odczytajSygnalNakladki składa strukturę sygnału nakładki wprost z jednego wiersza wyniku zapytania do bazy.
 func odczytajSygnalNakladki(wiersz skaner) (SygnalNakladki, error) {
 	var sygnal SygnalNakladki
 	var klasa string

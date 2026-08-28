@@ -1,23 +1,5 @@
-// Odpowiedzialność pliku: dwa rachunki, których potrzebuje stan platformy
-// oddawany mobilnemu centrum dowodzenia (`mobile.status.get`) — liczba okien
-// komunikacji otwartych i liczba kolejek czynnych.
-//
-// Warstwa mobilna nie ma własnej tabeli. Proces mobilny jest wpisem rejestru
-// telemetrii postępu trzymanego w pamięci; sesje, okna, procesy i kolejki mają
-// swoich właścicieli, a ten plik dokłada wyłącznie odczyt.
-//
-// Metody siedzą na repozytoriach okien i kolejek, bo tabela ma jednego
-// właściciela. Osobne repozytorium mobilne z własnymi zdaniami SELECT nad
-// `okno_komunikacji` i `kolejka` byłoby drugim czytelnikiem cudzych tabel
-// i rozjechałoby się z właścicielem przy pierwszej zmianie słownika stanów.
-// Osobny jest wyłącznie plik, żeby widać było, po co te rachunki powstały.
-//
-// Czynność bytu mierzy się tu stanem spoza stanów końcowych: sesja czynna to
-// `czynna` albo `wstrzymana`, nigdy `zakonczona` ani `archiwalna`
-// (`adapter_nawigacja.go`). Kolejka idzie tą samą miarą: czynna jest
-// `bezczynna`, `pracuje` i `wstrzymana`, końcowe są `zatrzymana` i
-// `wyczerpana`. Okno komunikacji zna dwa stany, więc liczą się wiersze
-// `otwarte`.
+// Odpowiedzialność pliku: dwa rachunki, których potrzebuje stan platformy oddawany mobilnemu centrum
+// dowodzenia — liczba okien komunikacji otwartych i liczba kolejek czynnych.
 package dane
 
 import (
@@ -39,11 +21,8 @@ const (
 	                       WHERE stan IN ('bezczynna','pracuje','wstrzymana')`
 )
 
-// LiczbaOtwartych zwraca liczbę okien komunikacji o stanie `otwarte`.
-//
-// Zero jest wynikiem poprawnym: platforma bez otwartego okna pracuje dalej.
-// Usterka odczytu wychodzi błędem, a nie zerem — zero policzone i zero
-// nieprzeczytane to dwie różne odpowiedzi.
+// LiczbaOtwartych zwraca liczbę okien komunikacji o stanie otwartym; zero jest wynikiem poprawnym, usterka
+// odczytu wychodzi błędem.
 func (r *repozytoriumOkien) LiczbaOtwartych(ctx context.Context) (int, error) {
 	polecenie, err := r.zapytania.przygotuj(ctx, policzOknaOtwarte)
 	if err != nil {
@@ -56,7 +35,7 @@ func (r *repozytoriumOkien) LiczbaOtwartych(ctx context.Context) (int, error) {
 	return razem, nil
 }
 
-// LiczbaCzynnych zwraca liczbę kolejek poza stanem końcowym.
+// LiczbaCzynnych zwraca liczbę kolejek pozostających poza stanem końcowym ich cyklu pracy tej platformy.
 func (r *repozytoriumKolejek) LiczbaCzynnych(ctx context.Context) (int, error) {
 	polecenie, err := r.zapytania.przygotuj(ctx, policzKolejkiCzynne)
 	if err != nil {

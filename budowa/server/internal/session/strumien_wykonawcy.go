@@ -11,19 +11,12 @@ import (
 	"danacoconsole/shared"
 )
 
-// Strumień daje koordynatorowi pełny obraz pracy wykonawcy: tok rozumowania,
-// wywołania narzędzi, wyniki i pliki. Jest obserwatorem zwykłej drogi fragmentu,
-// a nie drugim silnikiem — fragment idzie do interfejsu swoją drogą, a tutaj
-// zostaje jego odpis dla koordynatora.
-//
-// Kontekst koordynatora jest skończony, więc starsza część strumienia zwija się
-// do liczb — ile wpisów, ile znaków i w jakim przedziale czasu. Ostatnie wpisy
-// w liczbie PojemnoscJawnaDomyslna zostają w całości.
+// Strumień daje koordynatorowi obraz pracy wykonawcy: rozumowanie, wywołania narzędzi, wyniki, pliki.
 
-// PojemnoscJawnaDomyslna — ile ostatnich wpisów strumienia zostaje jawnych.
+// PojemnoscJawnaDomyslna określa, ile ostatnich wpisów strumienia zostaje jawnych, gdy nie podano innej wartości.
 const PojemnoscJawnaDomyslna = 64
 
-// WpisStrumienia jest jednym fragmentem wykonawcy widzianym przez koordynatora.
+// WpisStrumienia jest jednym fragmentem wykonawcy widzianym przez koordynatora w trakcie trwania obiegu.
 type WpisStrumienia struct {
 	// IdOkna — okno wykonawcy, z którego fragment pochodzi.
 	IdOkna string
@@ -37,7 +30,7 @@ type WpisStrumienia struct {
 	Czas time.Time
 }
 
-// Zwiniete opisuje starszą część strumienia sprowadzoną do liczb.
+// Zwiniete opisuje starszą część strumienia sprowadzoną do liczb wpisów, znaków i przedziału czasu ich powstania.
 type Zwiniete struct {
 	Wpisow int
 	Znakow int
@@ -45,7 +38,7 @@ type Zwiniete struct {
 	Do     time.Time
 }
 
-// MigawkaStrumienia jest odpisem strumienia wykonawców jednego koordynatora.
+// MigawkaStrumienia jest odpisem strumienia wykonawców jednego koordynatora w chwili jego faktycznego pobrania.
 type MigawkaStrumienia struct {
 	// IdKoordynatora — okno, dla którego strumień jest prowadzony.
 	IdKoordynatora string
@@ -57,7 +50,7 @@ type MigawkaStrumienia struct {
 	Wpisow int
 }
 
-// StrumienWykonawcy gromadzi fragmenty wykonawców w torach koordynatorów.
+// StrumienWykonawcy gromadzi fragmenty wykonawców w osobnych torach, po jednym torze na każdego koordynatora.
 type StrumienWykonawcy struct {
 	mu        sync.Mutex
 	pojemnosc int
@@ -73,7 +66,7 @@ func NowyStrumienWykonawcy(pojemnosc int) *StrumienWykonawcy {
 	return &StrumienWykonawcy{pojemnosc: pojemnosc, tory: map[string]*torStrumienia{}}
 }
 
-// Dopisz zapisuje fragment wykonawcy w torze jego koordynatora.
+// Metoda Dopisz zapisuje fragment wykonawcy w torze jego koordynatora, zwijając najstarsze wpisy w razie potrzeby.
 func (s *StrumienWykonawcy) Dopisz(idKoordynatora string, w WpisStrumienia) {
 	if idKoordynatora == "" {
 		return
@@ -98,7 +91,7 @@ func (s *StrumienWykonawcy) DopiszFragment(idKoordynatora string, f protocol.Chu
 	})
 }
 
-// Migawka zwraca niezależny odpis toru koordynatora.
+// Metoda Migawka zwraca niezależny odpis toru koordynatora wskazanego identyfikatorem, bez zmiany jego stanu.
 func (s *StrumienWykonawcy) Migawka(idKoordynatora string) MigawkaStrumienia {
 	s.mu.Lock()
 	defer s.mu.Unlock()
@@ -123,15 +116,14 @@ func (s *StrumienWykonawcy) Odetnij(idKoordynatora string) string {
 	return s.tor(idKoordynatora).odetnij()
 }
 
-// Zapomnij usuwa tor zamkniętego koordynatora.
+// Metoda Zapomnij usuwa z pamięci strumienia tor zamkniętego koordynatora, wskazanego jego identyfikatorem.
 func (s *StrumienWykonawcy) Zapomnij(idKoordynatora string) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	delete(s.tory, idKoordynatora)
 }
 
-// tor zwraca tor koordynatora, zakładając go przy pierwszym wpisie.
-// Wywoływane pod założoną blokadą.
+// Metoda tor zwraca tor koordynatora, zakładając go przy pierwszym wpisie; wywoływana pod założoną blokadą strumienia.
 func (s *StrumienWykonawcy) tor(idKoordynatora string) *torStrumienia {
 	tor, jest := s.tory[idKoordynatora]
 	if !jest {
@@ -141,7 +133,7 @@ func (s *StrumienWykonawcy) tor(idKoordynatora string) *torStrumienia {
 	return tor
 }
 
-// torStrumienia jest strumieniem wykonawców jednego koordynatora.
+// torStrumienia jest strumieniem wykonawców należącym do jednego koordynatora obsługiwanego przez rejestr.
 type torStrumienia struct {
 	jawne         []WpisStrumienia
 	zwiniete      Zwiniete
@@ -150,7 +142,7 @@ type torStrumienia struct {
 	odcinekWpisow int
 }
 
-// dopisz dokłada wpis i zwija najstarszy, gdy część jawna przekroczy pojemność.
+// Metoda dopisz dokłada wpis do toru i zwija najstarszy, gdy część jawna przekroczy ustaloną pojemność.
 func (t *torStrumienia) dopisz(w WpisStrumienia, pojemnosc int) {
 	t.jawne = append(t.jawne, w)
 	t.wpisow++
@@ -162,7 +154,7 @@ func (t *torStrumienia) dopisz(w WpisStrumienia, pojemnosc int) {
 	}
 }
 
-// zwin przenosi wpis z części jawnej do podsumowania liczbowego.
+// Metoda zwin przenosi jeden wpis z części jawnej toru do podsumowania liczbowego jego zwiniętej historii.
 func (t *torStrumienia) zwin(w WpisStrumienia) {
 	if t.zwiniete.Wpisow == 0 {
 		t.zwiniete.Od = w.Czas

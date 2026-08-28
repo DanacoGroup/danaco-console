@@ -1,12 +1,4 @@
-// Odpowiedzialność pliku: obszar modułu Roundtable — byty debaty, kontrakt
-// całego obszaru i uczestnik (tabela `debata_uczestnik`
-// z `migracja_044_roundtable.sql`). Tury i wypowiedzi leżą w
-// `roundtable_tury.go`, stanowisko końcowe w `roundtable_stanowisko.go` — jedno
-// repozytorium, trzy pliki wedle odpowiedzialności.
-//
-// Repozytorium nie rozmawia z modelem. Wywołanie kanałów uczestników prowadzi
-// rdzeń przez rejestr kanałów; tutaj leży wyłącznie to, co
-// po debacie zostaje: kto brał w niej udział, o co pytano i co odpowiedziano.
+// Odpowiedzialność pliku: obszar modułu Roundtable, byty debaty, kontrakt całego obszaru i uczestnik, wraz z kanałem jego głosu.
 package dane
 
 import (
@@ -68,8 +60,7 @@ type WypowiedzDebaty struct {
 	TuraKod   string
 	Uczestnik string
 	Tresc     string
-	// Pola z migracji 191. Pewność ujemna znaczy „nie deklarowano”, akt mowy
-	// pusty — „jeszcze nieklasyfikowany”.
+	// Pewność ujemna znaczy nie deklarowano, pusty akt mowy znaczy jeszcze nieklasyfikowany.
 	OdpowiedzNa string
 	AktMowy     string
 	Pewnosc     float64
@@ -78,8 +69,7 @@ type WypowiedzDebaty struct {
 	Utworzono string
 }
 
-// StanowiskoDebaty to wiersz tabeli `debata_stanowisko`. Pusta Tura znaczy
-// stanowisko całej debaty.
+// StanowiskoDebaty to wiersz tabeli debata_stanowisko; pusta Tura znaczy stanowisko całej debaty, nie jednej tury.
 type StanowiskoDebaty struct {
 	Kod            string
 	Okno           string
@@ -97,12 +87,7 @@ type StanowiskoDebaty struct {
 	Tury          string
 }
 
-// RepozytoriumRoundtable jest kontraktem obszaru Roundtable.
-//
-// Obszar urósł ponad jeden plik, więc kontrakt składa się z części: rdzeń
-// debaty stoi tutaj, a zdolności dobudowane migracjami 190–199 leżą we własnych
-// plikach i wchodzą tu przez zanurzenie. Jedno repozytorium, jeden kontrakt,
-// tyle plików, ile odpowiedzialności.
+// RepozytoriumRoundtable jest kontraktem obszaru Roundtable, złożonym z części: rdzeń debaty tu, zdolności dobudowane we własnych plikach.
 type RepozytoriumRoundtable interface {
 	RepozytoriumDebatySkladu
 	RepozytoriumDebatyGrafu
@@ -117,9 +102,7 @@ type RepozytoriumRoundtable interface {
 	Uczestnik(ctx context.Context, kod string) (UczestnikDebaty, error)
 	Uczestnicy(ctx context.Context, okno string) ([]UczestnikDebaty, error)
 	UstawWyciszenie(ctx context.Context, kod string, wyciszony bool) error
-	// UstawKolejnosc zapisuje kolejność głosu w jednej transakcji: wskazanie
-	// moderatora jest jednym ruchem, więc połowiczny zapis zostawiłby debatę
-	// z porządkiem, którego nikt nie wybrał.
+	// UstawKolejnosc zapisuje kolejność głosu w jednej transakcji, jednym ruchem moderatora.
 	UstawKolejnosc(ctx context.Context, okno string, kody []string) error
 
 	ZalozTure(ctx context.Context, tura TuraDebaty) (TuraDebaty, error)
@@ -199,7 +182,7 @@ func (r *repozytoriumRoundtable) ZapiszUczestnika(ctx context.Context,
 	return r.Uczestnik(ctx, uczestnik.Kod)
 }
 
-// Uczestnik zwraca uczestnika po kodzie; brak wiersza wraca jako ErrBrakWiersza.
+// Uczestnik zwraca uczestnika po kodzie zewnętrznym; brak wiersza wraca jako ErrBrakWiersza tej debaty.
 func (r *repozytoriumRoundtable) Uczestnik(ctx context.Context, kod string) (UczestnikDebaty, error) {
 	polecenie, err := r.zapytania.przygotuj(ctx, pobierzUczestnika)
 	if err != nil {
@@ -215,7 +198,7 @@ func (r *repozytoriumRoundtable) Uczestnik(ctx context.Context, kod string) (Ucz
 	return uczestnik, nil
 }
 
-// Uczestnicy zwraca skład debaty okna w kolejności głosu.
+// Uczestnicy zwraca cały skład debaty danego okna operacyjnego, w kolejności głosu ustalonej przez moderatora.
 func (r *repozytoriumRoundtable) Uczestnicy(ctx context.Context, okno string) ([]UczestnikDebaty, error) {
 	polecenie, err := r.zapytania.przygotuj(ctx, pobierzUczestnikow)
 	if err != nil {
@@ -238,7 +221,7 @@ func (r *repozytoriumRoundtable) Uczestnicy(ctx context.Context, okno string) ([
 	return uczestnicy, wiersze.Err()
 }
 
-// UstawWyciszenie przestawia wyciszenie uczestnika w turze.
+// UstawWyciszenie przestawia wyciszenie wskazanego uczestnika debaty w bieżącej turze tej rozmowy okna.
 func (r *repozytoriumRoundtable) UstawWyciszenie(ctx context.Context, kod string, wyciszony bool) error {
 	polecenie, err := r.zapytania.przygotuj(ctx, ustawWyciszenieUczestnika)
 	if err != nil {
@@ -269,7 +252,7 @@ func (r *repozytoriumRoundtable) UstawKolejnosc(ctx context.Context, okno string
 	})
 }
 
-// odczytajUczestnika składa uczestnika z jednego wiersza wyniku.
+// odczytajUczestnika składa uczestnika debaty z jednego wiersza wyniku zapytania, kolumna po kolumnie.
 func odczytajUczestnika(wiersz interface{ Scan(...any) error }) (UczestnikDebaty, error) {
 	var uczestnik UczestnikDebaty
 	err := wiersz.Scan(&uczestnik.Kod, &uczestnik.Okno, &uczestnik.KanalModelu,
@@ -280,13 +263,7 @@ func odczytajUczestnika(wiersz interface{ Scan(...any) error }) (UczestnikDebaty
 	return uczestnik, err
 }
 
-// trafienieDebaty odróżnia zapis, który nic nie zmienił, od zapisu udanego.
-// Bez tego przestawienie stanu bytu, którego nie ma, kończyłoby się cicho.
-//
-// Osobno od `sprawdzTrafienie` z `sesje.go`, bo tamten opisuje wiersz numerem
-// klucza głównego i zwraca błąd opisowy, a obszar Roundtable rozpoznaje brak
-// bytu przez `errors.Is(err, ErrBrakWiersza)` — rdzeń oddaje wtedy kod `not_found`
-// zamiast usterki wewnętrznej.
+// trafienieDebaty odróżnia zapis, który nic nie zmienił, od zapisu udanego, żeby przestawienie nieistniejącego bytu nie kończyło się cicho.
 func trafienieDebaty(wynik sql.Result) error {
 	zmienione, err := wynik.RowsAffected()
 	if err != nil {

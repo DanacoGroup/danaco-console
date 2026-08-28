@@ -1,21 +1,5 @@
-// Odpowiedzialność pliku: przyjęcie polecenia asystenta (głosowego albo
-// tekstowego) z okna Actions Monitor — zasila `assistant.voice.command`.
-// Plik stoi osobno od `asystent.go` i `asystent_dziennik.go`.
-//
-// Zlecenie i pierwszy wpis dziennika powstają w jednej transakcji. Polecenie
-// przyjęte bez śladu w dzienniku (zlecenie jest, rozmowa nie ma pierwszej
-// linii) albo ślad bez zlecenia (wpis wisi na kodzie, którego zlecenie nigdy
-// nie powstało) to stan połowiczny — stąd `wTransakcji`, wzorem
-// `ZapiszKompozycje` w `design_kompozycje.go` i `ZapiszKroki`
-// w `automations_kroki.go`.
-//
-// Ten plik nie rozpoznaje mowy. Kontrakt `assistant.voice.command` daje
-// `AudioRef` (odnośnik do nagranego już pliku) albo `Transcript` (tekst
-// poprawiony przez Operatora), a zapis idzie dosłownie: odnośnik do
-// `nagranie_odnosnik`, tekst do `tresc`. Brak obu jest błędem żądania, nie
-// pustym zapisem — kolumna `tresc` jest `NOT NULL`
-// (`migracja_050_asystent.sql`), bo wpis dziennika bez treści nie opisuje
-// niczego, co się wydarzyło.
+// Plik przyjmuje polecenie asystenta z okna monitorowania działań: zapisuje
+// zlecenie i pierwszy wpis dziennika rozmowy w jednej transakcji.
 package dane
 
 import (
@@ -41,9 +25,7 @@ func (r *repozytoriumAsystenta) PrzyjmijPolecenie(ctx context.Context, zlecenie 
 	if wpis.Kod == "" {
 		return ZlecenieAsystenta{}, WpisDziennikaAsystenta{}, fmt.Errorf("dane: polecenie asystenta %q bez kodu wpisu dziennika", zlecenie.Kod)
 	}
-	// Ani nagranie, ani tekst — rdzeń nie ma z czego złożyć wpisu, a bez
-	// transkrypcji nie ma jak jej dorobić w locie. To błąd żądania,
-	// nie sytuacja, w której zapisujemy pusty wiersz.
+	// Ani nagranie, ani tekst nie dają czym złożyć wpisu; to błąd żądania, nie zapis pustego wiersza.
 	brakTresci := wpis.Tresc == ""
 	brakNagrania := wpis.NagranieOdnosnik == nil || *wpis.NagranieOdnosnik == ""
 	if brakTresci && brakNagrania {
@@ -60,9 +42,7 @@ func (r *repozytoriumAsystenta) PrzyjmijPolecenie(ctx context.Context, zlecenie 
 	if utworzonoWpisu == 0 {
 		utworzonoWpisu = teraz
 	}
-	// Wpis dziennika wisi na kodzie zlecenia, które dopiero powstaje w tej
-	// samej transakcji — powiązanie jest więc zawsze kodem przyjmowanego
-	// zlecenia, niezależnie od tego, co ewentualnie niósł parametr `wpis`.
+	// Wpis dziennika wisi na kodzie zlecenia przyjmowanego w tej transakcji, nie na kodzie parametru wpis.
 	kodZlecenia := zlecenie.Kod
 
 	err := wTransakcji(ctx, r.db, func(transakcja *sql.Tx) error {

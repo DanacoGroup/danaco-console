@@ -1,12 +1,7 @@
-// Odpowiedzialność pliku: przebieg wsadu modułu Studio (tabele
-// `przebieg_wsadu_studio` i `pozycja_wsadu_studio`) — trwały ślad po
-// `studio.batch.run`. Typ i kontrakt obszaru deklaruje `dane/studio.go`; ten
-// plik implementuje wyłącznie metody obszaru wsadu na tym samym
-// `*repozytoriumStudia`, jak `studio_wersje.go` dla wersji.
-//
-// Przebieg i jego pozycje zapisują się w jednej transakcji: liczby `przyjete`
-// i `odrzucone` w nagłówku są sumą wierszy pozycji, więc zapis rozdzielony na
-// dwa polecenia zostawiałby nagłówek, który kłamie o swoich pozycjach.
+// Odpowiedzialność pliku: przebieg wsadu modułu Studio — tabele
+// przebieg_wsadu_studio i pozycja_wsadu_studio — jako trwały ślad uruchomienia
+// wsadu, zapisywany jedną transakcją obejmującą nagłówek przebiegu wraz
+// z kompletem jego pozycji.
 package dane
 
 import (
@@ -16,7 +11,8 @@ import (
 	"fmt"
 )
 
-// PrzebiegWsaduStudia to wiersz tabeli `przebieg_wsadu_studio`.
+// PrzebiegWsaduStudia to wiersz tabeli przebieg_wsadu_studio, niosący nagłówek
+// przebiegu wsadu wraz z sumaryczną liczbą pozycji przyjętych i odrzuconych.
 type PrzebiegWsaduStudia struct {
 	ID            int64
 	Kod           string
@@ -63,7 +59,8 @@ const (
 	                           WHERE w.identyfikator_zewnetrzny = ? ORDER BY p.id`
 )
 
-// ZapiszPrzebiegWsadu zakłada przebieg wsadu wraz z kompletem jego pozycji.
+// ZapiszPrzebiegWsadu zakłada przebieg wsadu wraz z kompletem jego pozycji jedną
+// transakcją i zwraca zapisany nagłówek przebiegu odczytany po zapisie.
 func (r *repozytoriumStudia) ZapiszPrzebiegWsadu(ctx context.Context,
 	przebieg PrzebiegWsaduStudia, pozycje []PozycjaWsaduStudia) (PrzebiegWsaduStudia, error) {
 
@@ -111,7 +108,8 @@ func (r *repozytoriumStudia) ZapiszPrzebiegWsadu(ctx context.Context,
 	return r.PrzebiegWsadu(ctx, przebieg.Kod)
 }
 
-// PrzebiegWsadu zwraca nagłówek przebiegu o wskazanym kodzie.
+// PrzebiegWsadu zwraca nagłówek przebiegu wsadu o wskazanym kodzie wraz z liczbą
+// pozycji przyjętych i odrzuconych, bez samych pozycji.
 func (r *repozytoriumStudia) PrzebiegWsadu(ctx context.Context,
 	kod string) (PrzebiegWsaduStudia, error) {
 
@@ -133,7 +131,8 @@ func (r *repozytoriumStudia) PrzebiegWsadu(ctx context.Context,
 	return przebieg, nil
 }
 
-// PozycjeWsadu zwraca rozstrzygnięcia przebiegu w kolejności zapisu.
+// PozycjeWsadu zwraca rozstrzygnięcia przebiegu wsadu dla poszczególnych
+// dokumentów w kolejności ich zapisu, wskazanego kodem przebiegu.
 func (r *repozytoriumStudia) PozycjeWsadu(ctx context.Context,
 	kodPrzebiegu string) ([]PozycjaWsaduStudia, error) {
 

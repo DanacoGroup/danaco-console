@@ -1,12 +1,4 @@
-// Odpowiedzialność pliku: pętla tykająca kolejki powiadomień. Bez niej
-// „ponowienie i wygaśnięcie" byłoby trzema kolumnami, których nikt nigdy nie
-// rusza — czyli atrapą wymagania, a nie jego spełnieniem.
-//
-// Wzorzec wzięty z działającej pętli rdzenia (core/harmonogram_budzik.go):
-// ticker, `select` na kontekście życia, pierwszy przebieg od razu po starcie
-// i awaria jednego przebiegu, która nie zatrzymuje pętli. Pierwszy przebieg od
-// razu ma znaczenie akurat tutaj: powiadomienia zgłoszone tuż przed postojem
-// rdzenia mają dolecieć zaraz po jego powrocie, a nie po pełnym takcie.
+// Pakiet zdalne niesie pętlę tykającą kolejki powiadomień, wzorowaną na już działającej pętli tego rdzenia.
 package zdalne
 
 import (
@@ -15,20 +7,16 @@ import (
 	"time"
 )
 
-// InterwalBudzikaPowiadomien jest taktem pętli. Trzydzieści sekund to ten sam
-// rząd wielkości, co najkrótszy odstęp ponowienia — takt gęstszy nie przyspiesza
-// niczego (i tak czeka na `nastepna_proba`), a rzadszy opóźniałby pierwsze
-// podejście o więcej, niż wynosi cała jego zwłoka.
+// InterwalBudzikaPowiadomien jest taktem pętli i wynosi trzydzieści sekund, ten sam rząd wielkości ponowienia.
 const InterwalBudzikaPowiadomien = 30 * time.Second
 
-// BudzikPowiadomien tyka kolejką w cyklu życia rdzenia.
+// BudzikPowiadomien tyka kolejką powiadomień w całym cyklu życia rdzenia tej samej aplikacji serwerowej.
 type BudzikPowiadomien struct {
 	dziennik *log.Logger
 	interwal time.Duration
 }
 
-// NowyBudzikPowiadomien składa budzik. Dziennik pusty wyłącza wyłącznie ślad,
-// nie budzik.
+// Funkcja NowyBudzikPowiadomien składa budzik powiadomień, gotowy do uruchomienia w cyklu życia rdzenia.
 func NowyBudzikPowiadomien(dziennik *log.Logger) *BudzikPowiadomien {
 	return &BudzikPowiadomien{dziennik: dziennik, interwal: InterwalBudzikaPowiadomien}
 }
@@ -59,17 +47,7 @@ func (b *BudzikPowiadomien) petla(zycie context.Context) {
 	}
 }
 
-// przebieg wykonuje jeden takt: najpierw gasi przeterminowane, potem doręcza
-// należne.
-//
-// Kolejność jest rozmyślna. Wygaszanie idzie pierwsze, żeby przeterminowane
-// powiadomienie nie zdążyło polecieć w tym samym takcie, w którym straciło
-// ważność. Takt to zawsze jakiś kawałek czasu; gdyby wysyłka szła pierwsza,
-// budzik zabrzmiałby o sprawie, o której sam za chwilę orzeka, że jest
-// nieaktualna.
-//
-// Wygaszanie idzie także wtedy, gdy nadajnika nie ma — sprawa nieaktualna jest
-// nieaktualna niezależnie od tego, czy było komu ją zanieść.
+// Metoda przebieg wykonuje jeden takt: najpierw gasi przeterminowane powiadomienia, potem doręcza należne.
 func (b *BudzikPowiadomien) przebieg(ctx context.Context, teraz time.Time) {
 	if wygaslo, err := Wygas(ctx); err != nil {
 		b.zapisz("budzik powiadomień: wygaszanie przeterminowanych nie powiodło się: %v", err)
@@ -79,9 +57,7 @@ func (b *BudzikPowiadomien) przebieg(ctx context.Context, teraz time.Time) {
 
 	podsumowanie, err := Wyslij(ctx, teraz)
 	if err != nil {
-		// Odmowa przebiegu jest zdaniem trójczęściowym (patrz Wyslij) i ma
-		// trafić do dziennika w całości — brak nadajnika ma być widoczny,
-		// a nie odgadywany z tego, że nic nie dolatuje.
+		// Odmowa przebiegu jest zdaniem trójczęściowym i ma trafić do dziennika w całości.
 		b.zapisz("budzik powiadomień: %v", err)
 		return
 	}

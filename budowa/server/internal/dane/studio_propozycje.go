@@ -1,15 +1,4 @@
-// Odpowiedzialność pliku: propozycje zmiany wypracowane przez operację
-// kontekstową Tools Panel (tabela `propozycja_zmiany_studio`) — zasila
-// `studio.contextual.op` i `studio.diff.compare`.
-//
-// Propozycja nie jest wersją. `diff.compare` przyjmuje `proposalId` zamiennie
-// z `targetVersionId`, więc porównanie czyta propozycję i wersję tym samym
-// mechanizmem odczytu treści, ale zapis obu bytów jest rozdzielony —
-// zatwierdzenie propozycji do repozytorium robi `document.save`, nie ten plik.
-//
-// Fragmentów różnicy tu nie ma: `StudioDiffHunk` liczy się w locie z dwóch
-// treści w warstwie rdzenia. Ten plik oddaje wyłącznie treść propozycji do
-// porównania, nie sam wynik porównania.
+// Odpowiedzialność pliku: propozycje zmiany wypracowane przez operację kontekstową modułu Studio; propozycja nie jest wersją dokumentu.
 package dane
 
 import (
@@ -51,12 +40,7 @@ const (
 	                                  ORDER BY utworzono DESC, id DESC`
 )
 
-// ZapiszPropozycje utrwala wynik operacji kontekstowej Tools Panel i oddaje
-// wiersz z czasem nadanym przez bazę. Identyfikator zewnętrzny nadaje
-// wywołujący (warstwa rdzenia) — tu zapis jest zawsze nowym wierszem, bo
-// każda operacja kontekstowa jest osobną propozycją, nie nadpisaniem
-// poprzedniej (dwie kolejne operacje na tym samym dokumencie mają zostać
-// obie, żeby Operator mógł je porównać w Diff Panel).
+// ZapiszPropozycje utrwala wynik operacji kontekstowej i oddaje wiersz z czasem nadanym przez bazę; zapis jest zawsze nowym wierszem.
 func (r *repozytoriumStudia) ZapiszPropozycje(ctx context.Context, dokumentID int64,
 	propozycja PropozycjaZmiany) (PropozycjaZmiany, error) {
 
@@ -119,7 +103,7 @@ func (r *repozytoriumStudia) Propozycje(ctx context.Context, dokumentID int64) (
 	return lista, nil
 }
 
-// odczytajPropozycjeZmiany składa strukturę z jednego wiersza wyniku.
+// odczytajPropozycjeZmiany składa strukturę propozycji z jednego wiersza wyniku, kolumna po kolumnie SQL.
 func odczytajPropozycjeZmiany(wiersz skaner) (PropozycjaZmiany, error) {
 	var propozycja PropozycjaZmiany
 	var wiadomoscID, trescWyniku, tresc, odwolanie sql.NullString

@@ -6928,3 +6928,15 @@ w migawce i wraca z nimi przy przełączeniu — migawka nie niesie okna osadzen
 wersji, bo okno jest wspólne całemu modułowi, a historia dotyczy dokumentu i doczyta się przy
 przełączeniu. Propozycja bez treści, gdy rdzeń oddał samo odwołanie do niej, też zostaje
 przyjęta, bo decyzja operatora jest wiążąca niezależnie od tego, czy rdzeń dołączył wynik wprost.
+
+## budowa/klient-poprzedni/src/okna-rownolegle/menu-paneli.ts
+Wiersz wykazu ma stały układ: znacznik otwarcia, ikona pozycji, nazwa z
+przeznaczeniem, skrót klawiaturowy po prawej. Pozycje przychodzą z
+zewnątrz przez opcje menu, więc zmiana spisu paneli nie dotyka tego pliku.
+Brak dostępnej pozycji skraca wykaz zamiast stawiać w nim wiersz nieczynny,
+a żeby brak nie zniknął po cichu, pod wykazem stoi jedno zdanie mówiące,
+ilu pozycji spisu nie da się otworzyć — przy zerze takich pozycji zdania
+nie ma wcale. Miejsce na znacznik otwarcia jest zajęte zawsze, bo
+przełączenie panelu zmienia jego widoczność, nie szerokość wiersza.
+Działania sesji nie są panelami i nie powstają tutaj — doklejają się za
+kreską, a kreska rysuje się tylko wtedy, gdy jest co za nią postawić.

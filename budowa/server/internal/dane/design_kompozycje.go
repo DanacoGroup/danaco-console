@@ -1,20 +1,5 @@
-// Obszar kompozycji Design Board (tabele `kompozycja_design`
-// i `warstwa_kompozycji_design`) — część `RepozytoriumDesignu` zadeklarowanego
-// w `design.go`. Prompt strukturalny leży w `design.go`, zasoby i etykiety
-// Assets Panel w `design_zasoby.go`.
-//
-// Zapis jest zawsze pełny. `design.board.update` nadsyła całą listę warstw na
-// nowo — kontrakt (`DesignBoardUpdateRequest.Layers`) nie ma trybu częściowej
-// zmiany. `ZapiszKompozycje` usuwa więc warstwy kompozycji i wstawia przysłany
-// komplet od nowa w jednej transakcji, wzorem `ZapiszKroki`
-// z `automations_kroki.go`; inaczej usunięcie warstwy w oknie nie usunęłoby jej
-// w bazie i kompozycja rozeszłaby się z tym, co widać na ekranie.
-//
-// Brak `BoardId` zakłada kompozycję nową jedną ścieżką zapisu: wzorem
-// `ZapiszPrompt` w `design.go` zapis idzie po identyfikatorze zewnętrznym
-// z klauzulą ON CONFLICT, a brak `BoardId` rozstrzyga wywołujący, generując
-// nowy identyfikator przed wywołaniem tej metody. Repozytorium zna wyłącznie
-// tryb „załóż albo nadpisz".
+// Plik prowadzi obszar kompozycji Design Board, część RepozytoriumDesignu; zapis jest zawsze pełny, więc
+// ZapiszKompozycje usuwa warstwy kompozycji i wstawia przysłany komplet od nowa w jednej transakcji, wzorem ZapiszKroki.
 package dane
 
 import (
@@ -56,10 +41,7 @@ type WarstwaKompozycji struct {
 const (
 	kolumnyKompozycjiDesign = `id, identyfikator_zewnetrzny, okno, nazwa, zaktualizowano`
 
-	// Zapis zakłada kompozycję albo nadpisuje zastaną po identyfikatorze
-	// zewnętrznym — brak `BoardId` w żądaniu (kontrakt: `DesignBoardUpdateRequest.BoardId`
-	// opcjonalny) rozstrzyga wywołujący, nadając nowy identyfikator przed
-	// wywołaniem, więc repozytorium ma jedną ścieżkę zapisu.
+	// Zapis zakłada kompozycję albo nadpisuje zastaną po identyfikatorze zewnętrznym; brak identyfikatora rozstrzyga wywołujący, nadając nowy przed wywołaniem.
 	zapiszKompozycjeDesign = `INSERT INTO kompozycja_design
 	                          (identyfikator_zewnetrzny, okno, nazwa, zaktualizowano)
 	                          VALUES (?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now'))
@@ -70,11 +52,7 @@ const (
 	pobierzKompozycjeDesign = `SELECT ` + kolumnyKompozycjiDesign + ` FROM kompozycja_design
 	                           WHERE identyfikator_zewnetrzny = ?`
 
-	// Wykaz kompozycji okna (`design.board.list`). Porządek jest ten sam, co
-	// w wykazie zasobów — od ostatnio zmienianej, żeby plansza porzucona
-	// najpóźniej stała na górze listy. `id` rozstrzyga remis, bo
-	// `zaktualizowano` ma rozdzielczość milisekundy i dwa zapisy z jednej pętli
-	// okna potrafią w nią trafić razem.
+	// Wykaz kompozycji okna, od ostatnio zmienianej, żeby plansza porzucona najpóźniej stała na górze listy.
 	listaKompozycjiDesign = `SELECT ` + kolumnyKompozycjiDesign + ` FROM kompozycja_design
 	                         WHERE okno = ? ORDER BY zaktualizowano DESC, id DESC`
 
@@ -92,10 +70,7 @@ const (
 	                               ORDER BY kolejnosc, id`
 )
 
-// ZapiszKompozycje zakłada kompozycję albo nadpisuje zastaną po identyfikatorze
-// zewnętrznym, po czym podmienia komplet jej warstw w jednej transakcji —
-// wykaz pusty zostawia kompozycję bez warstw, co jest stanem poprawnym (płótno
-// wyczyszczone w Design Board).
+// ZapiszKompozycje zakłada kompozycję albo nadpisuje zastaną po identyfikatorze zewnętrznym i podmienia komplet jej warstw w jednej transakcji.
 func (r *repozytoriumDesignu) ZapiszKompozycje(ctx context.Context,
 	kompozycja KompozycjaDesignu, warstwy []WarstwaKompozycji) (KompozycjaDesignu, error) {
 
@@ -116,9 +91,7 @@ func (r *repozytoriumDesignu) ZapiszKompozycje(ctx context.Context,
 			return fmt.Errorf("dane: nie można zapisać kompozycji design %q: %w", kompozycja.Kod, err)
 		}
 
-		// Kompozycja mogła dopiero powstać w tej transakcji — ID trzeba odczytać
-		// przed podmianą warstw, bo `warstwa_kompozycji_design.kompozycja_id`
-		// wymaga klucza wewnętrznego, nie identyfikatora zewnętrznego.
+		// Kompozycja mogła dopiero powstać tutaj, więc jej klucz wewnętrzny trzeba odczytać wcześniej.
 		odczyt, err := r.zapytania.wTransakcji(ctx, transakcja, pobierzKompozycjeDesign)
 		if err != nil {
 			return err
@@ -186,15 +159,7 @@ func (r *repozytoriumDesignu) Kompozycja(ctx context.Context, kod string) (Kompo
 	return kompozycja, nil
 }
 
-// Kompozycje zwraca wszystkie kompozycje wskazanego okna, od ostatnio
-// zmienionej. Bez granicy strony: kontrakt `design.board.list` nie niesie ani
-// `limit`, ani `total` liczonego osobno od długości wykazu — `Total` odpowiedzi
-// jest liczbą zwróconych kompozycji, więc przycięcie wykazu tutaj rozjechałoby
-// obie liczby naraz.
-//
-// Okno puste oddaje wykaz pusty, a nie wszystkie kompozycje: brak wskazania
-// okna sprawdza wołający, a zapytanie i tak porównuje kolumnę z pustym
-// tekstem, którego żadne okno nie nosi.
+// Kompozycje zwraca wszystkie kompozycje wskazanego okna, od ostatnio zmienionej, bez granicy strony wykazu.
 func (r *repozytoriumDesignu) Kompozycje(ctx context.Context, okno string) ([]KompozycjaDesignu, error) {
 	polecenie, err := r.zapytania.przygotuj(ctx, listaKompozycjiDesign)
 	if err != nil {
@@ -220,7 +185,7 @@ func (r *repozytoriumDesignu) Kompozycje(ctx context.Context, okno string) ([]Ko
 	return lista, nil
 }
 
-// odczytajKompozycjeDesign składa strukturę z jednego wiersza wyniku.
+// odczytajKompozycjeDesign składa strukturę kompozycji wprost z jednego wiersza wyniku zapytania do SQL.
 func odczytajKompozycjeDesign(wiersz skaner) (KompozycjaDesignu, error) {
 	var kompozycja KompozycjaDesignu
 	var nazwa sql.NullString
@@ -233,7 +198,7 @@ func odczytajKompozycjeDesign(wiersz skaner) (KompozycjaDesignu, error) {
 	return kompozycja, nil
 }
 
-// Warstwy zwraca warstwy kompozycji w zapisanej kolejności renderowania.
+// Warstwy zwraca warstwy kompozycji w zapisanej kolejności renderowania wprost z bazy danych repozytorium.
 func (r *repozytoriumDesignu) Warstwy(ctx context.Context, kompozycjaID int64) ([]WarstwaKompozycji, error) {
 	polecenie, err := r.zapytania.przygotuj(ctx, listaWarstwKompozycjiDesign)
 	if err != nil {

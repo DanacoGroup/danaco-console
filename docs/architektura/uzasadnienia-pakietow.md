@@ -6185,3 +6185,24 @@ procesów kluczowany oknem, pula kont oddająca kod profilu, przydział serwera
 wykonania.
 ## budowa/server/internal/dane/studio_wejscie_pochodzenie.go
 Wiersz pochodzenia zakłada ten, kto fragment wnosi: wniesienie pliku, obrazu, fragmentu z biblioteki albo ze strony sieci. Wykaz pochodzenia czyta go inny odcinek repozytorium, dlatego odczyt jest tu równie pełny jak zapis, żeby tamten odcinek nie musiał zakładać drugiego. Zakres jest liczony w znakach, tak samo jak zakres blokady; fragment usunięty zostawia wiersz o zerowej długości świadomie, bo to, że Operator wniósł kiedyś fragment z danego źródła, jest faktem, którego usunięcie tekstu nie unieważnia.
+
+## budowa/server/internal/dane/design_kompozycje.go
+
+Zapis kompozycji nadsyła zawsze całą listę warstw naraz — kontrakt nie ma trybu częściowej
+zmiany — dlatego ZapiszKompozycje usuwa warstwy zastane i wstawia przysłany komplet od nowa,
+inaczej usunięcie warstwy w oknie nie usunęłoby jej w bazie i kompozycja rozeszłaby się
+z tym, co widać na ekranie.
+
+Brak identyfikatora zewnętrznego przy zapisie zakłada kompozycję nową jedną ścieżką zapisu:
+zapis idzie po identyfikatorze z klauzulą podmiany przy konflikcie, a brak identyfikatora
+rozstrzyga wywołujący, generując nowy przed wywołaniem tej metody — repozytorium zna
+wyłącznie tryb załóż-albo-nadpisz.
+
+Kolejność warstw rozstrzyga porządek listy, bo znacznik czasu ma rozdzielczość milisekundy
+i dwa zapisy z jednej pętli okna potrafią w nią trafić razem.
+
+Kompozycje zwraca wykaz bez granicy strony: kontrakt wykazu kompozycji nie niesie ani
+limitu, ani liczby całkowitej liczonej osobno od długości wykazu — liczba odpowiedzi jest
+liczbą zwróconych kompozycji, więc przycięcie wykazu tutaj rozjechałoby obie liczby naraz.
+Okno puste oddaje wykaz pusty, nie wszystkie kompozycje: brak wskazania okna sprawdza
+wołający, a zapytanie i tak porównuje kolumnę z pustym tekstem, którego żadne okno nie nosi.

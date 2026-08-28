@@ -7644,3 +7644,24 @@ niesie te same klucze co odczyt wykazu, bez klucza promptu, bo repozytorium nie 
 wiersza promptu na kod kontraktu. Zasób świeżo wygenerowany traci więc po otagowaniu wskazanie
 promptu w Preview Window; okno mówi o tym wprost w wierszu „Prompt źródłowy" zamiast dorabiać
 wartość z poprzedniej odpowiedzi.
+
+## budowa/klient-poprzedni/src/moduly/design/narzedzia-planszy.ts
+Jedna odpowiedzialność: kontrolki zmieniające kompozycję i widok kanwy. Grupy dzielą się tym, co
+narzędzie zmienia: widok kanwy (powiększenie, przesunięcie, siatka), układ warstw zaznaczonych
+(wyrównanie, rozmieszczenie), skład kompozycji (szablony, elementy pomocnicze, zaznaczenie
+wszystkiego), czynności bez drogi w kontrakcie (wersjonowanie, eksport, kursor współpracy).
+
+Grupa bez drogi w kontrakcie stoi w przyborniku, a nie poza nim, żeby komplet narzędzi był widoczny
+razem z tym, które z nich nie mają wykonania — nazwane, klikalne i mówiące dlaczego.
+
+Liczby w presetach ramek nie są wzięte z cudzych urządzeń: to punkty łamania kierunku projektowego
+platformy, te same, na których stoi cały jej układ. Dzięki temu ramka makiety ma dokładnie tę
+szerokość, przy której produkt zmienia postać, a nie szerokość telefonu, który akurat był
+w sprzedaży. Wysokości preset nie ustawia — punkty łamania jej nie rozstrzygają.
+
+## budowa/klient-poprzedni/src/mission-control/zlozenie-danych.ts
+Złożenie jest czystym przełożeniem stanu zebranego przez `zrodlo-pulpitu.ts` na kształt, który widok umie wyrysować. Każda wartość pochodzi z odczytu kontraktu, a miara bez źródła zostaje `null` i widok pokazuje ją jako stan pusty.
+
+Kolumny matrycy pochodzą z rdzenia w całości — kod, nazwa, motto i kolejność z odczytu `environment.list`. Przed pierwszą odpowiedzią kolumn nie ma: nagłówek pulpitu mówi „oczekiwanie na rdzeń", a matryca pokazuje ten sam stan zamiast zastępczego kompletu kolumn zbudowanego z kodów modułów.
+
+Treść karty środowiska strony głównej jest osobna od motta kolumny matrycy i nie jest tu powielana. Kolejność kolumn `Environment.order` odpowiada kolumnie `srodowisko.kolejnosc`; klient nie sortuje po nazwie ani po kodzie, bo porządek kart jest zapisany w bazie.

@@ -6,28 +6,8 @@ import type { StanDesignu } from './stan-designu';
 import { wczytajPlik, type WczytanyPlik } from './wczytanie-pliku';
 
 /**
- * Wgranie zasobu do Assets Panel — droga zasobu wnoszonego przez Operatora.
- *
- * Generowanie i wgranie nie zastępują się: generowanie wytwarza treść nową
- * i wymaga kanału obrazowego, wgranie wnosi treść już istniejącą i nie wymaga
- * żadnego kanału modelu.
- *
- * Operator wskazuje plik polem pliku albo upuszcza go na płytę. Oba sposoby
- * kończą się obiektem `File` i oba idą przez `wczytajPlik` do jednego
- * wywołania — dwie osobne drogi wysyłania rozjechałyby się przy pierwszej
- * zmianie i Operator dostawałby inny zasób zależnie od sposobu wskazania.
- *
- * Kontrakt niesie jeden zasób na żądanie, więc pięć plików to pięć wywołań.
- * Kontrolka wypisuje, ile weszło i ile odmówiono, wraz z powodem odmowy;
- * odmowa jednego pliku nie wstrzymuje pozostałych.
- *
- * Nazwa jest nazwą pliku, format rozszerzeniem, a wymiary wynikiem dekodowania
- * obrazu w przeglądarce. Gdy dekodowanie się nie uda, wymiarów nie ma — zera
- * wyglądałyby jak pomiar.
- *
- * Etykiety idą do rdzenia od razu, polem `tags` żądania, i przechodzą przez
- * ten sam rozbiór przecinkami co filtr i kontrolka etykiet — inaczej etykieta
- * nadana przy wgraniu nie trafiałaby we własne zawężenie.
+ * Wgranie zasobu do Assets Panel — droga zasobu wnoszonego przez Operatora, osobna od generowania
+ * i niewymagająca kanału modelu.
  */
 export interface WgranieZasobu {
   element: HTMLElement;
@@ -37,8 +17,7 @@ export function utworzWgranieZasobu(stan: StanDesignu): WgranieZasobu {
   const pole = document.createElement('input');
   pole.type = 'file';
   pole.className = 'dn-pole-kontrolka md-wgranie__pole';
-  // Rodzaje obrazu, bo `DesignAssetKind` zna wyłącznie rastr i wektor —
-  // kompozycja powstaje w rdzeniu z planszy i plikiem nie bywa.
+  // Rodzaje obrazu, bo rodzaj zasobu zna wyłącznie rastr i wektor — kompozycja nie bywa plikiem.
   pole.accept = 'image/*';
   pole.multiple = true;
   pole.id = 'md-wgranie-plik';
@@ -56,8 +35,7 @@ export function utworzWgranieZasobu(stan: StanDesignu): WgranieZasobu {
       'z zasobem i od razu zawężają wykaz w filtrze powyżej.',
   });
 
-  // Objaśnienie stoi przy polu, nie w dymku: mówi, co dokładnie opuszcza
-  // przeglądarkę, a Operator ma to przeczytać przed wskazaniem pliku.
+  // Objaśnienie stoi przy polu, nie w dymku: mówi, co opuszcza przeglądarkę, zanim Operator wskaże plik.
   const objasnienie = document.createElement('p');
   objasnienie.className = 'dn-pole-opis';
   objasnienie.textContent =
@@ -68,8 +46,7 @@ export function utworzWgranieZasobu(stan: StanDesignu): WgranieZasobu {
   const wgraj = przycisk('Wgraj wskazany plik', 'dn-btn dn-btn--sm dn-btn--atrament');
   const odpowiedz = utworzWierszOdpowiedzi();
 
-  // Płyta upuszczania niesie własny opis, nie samo obramowanie — kontrolka
-  // przyjmująca upuszczenie bez opisu pozostaje dla Operatora niewidoczna.
+  // Płyta upuszczania niesie własny opis, nie obramowanie — bez opisu jest dla Operatora niewidoczna.
   const plyta = document.createElement('div');
   plyta.className = 'md-wgranie__plyta';
   plyta.dataset['nad'] = 'nie';
@@ -97,9 +74,7 @@ export function utworzWgranieZasobu(stan: StanDesignu): WgranieZasobu {
     void wgrajPliki(pliki);
   });
 
-  // Bez `preventDefault` na przeciąganiu przeglądarka otwiera upuszczony plik
-  // w karcie i praca Operatora znika z ekranu. Oba zdarzenia są potrzebne:
-  // `dragover` bez blokady odwołuje upuszczenie, zanim do niego dojdzie.
+  // Bez blokady zdarzenia przeglądarka otwiera upuszczony plik w karcie, a praca Operatora znika.
   plyta.addEventListener('dragover', (zdarzenie) => {
     zdarzenie.preventDefault();
     plyta.dataset['nad'] = 'tak';
@@ -143,8 +118,7 @@ export function utworzWgranieZasobu(stan: StanDesignu): WgranieZasobu {
     try {
       wczytany = await wczytajPlik(plik);
     } catch (blad) {
-      // Nieudany odczyt pliku jest usterką przeglądarki, nie odmową rdzenia —
-      // zdanie musi to rozróżnić, bo do rdzenia nic wtedy nie poszło.
+      // Nieudany odczyt pliku jest usterką przeglądarki, nie odmową rdzenia — zdanie musi to rozróżnić.
       const powod = blad instanceof Error ? blad.message : 'przeglądarka nie podała przyczyny';
       return { udane: false, zdanie: `„${plik.name}": pliku nie udało się odczytać — ${powod}` };
     }
@@ -161,16 +135,12 @@ export function utworzWgranieZasobu(stan: StanDesignu): WgranieZasobu {
     if (!wynik.udany || wynik.wynik === undefined) {
       return { udane: false, zdanie: `„${plik.name}": ${opisOdmowyBledu('Wgranie zasobu', wynik.blad)}` };
     }
-    // Zasób wchodzi do jednego zbioru modułu — tą samą drogą co wynik
-    // generowania i co zasób z etykietowania. Wykaz, panel metadanych i kanwa
-    // zobaczą go bez ponownego odczytu całej listy.
+    // Zasób wchodzi do zbioru modułu tą samą drogą co wynik generowania, bez ponownego odczytu listy.
     const zasob = wynik.wynik.asset;
     stan.wchlon(zasob);
     return {
       udane: true,
-      // Zdanie mówi, co oddał rdzeń — nazwę z bazy i rodzaj z odpowiedzi —
-      // a nie to, co okno wysłało; rozmiar wysłanego pliku dokładamy jako
-      // pomiar własny i nazywamy go po stronie klienta.
+      // Zdanie mówi, co oddał rdzeń, nie co okno wysłało; rozmiar pliku dokładamy jako pomiar klienta.
       zdanie:
         `„${nazwaZasobu(zasob)}" (${nazwaRodzaju(zasob.kind)}, ` +
         `wysłano ${wczytany.bajtow} B) — zasób ${zasob.id}`,

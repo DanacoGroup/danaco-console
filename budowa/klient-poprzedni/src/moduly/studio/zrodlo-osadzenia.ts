@@ -8,17 +8,8 @@ import { czyObiekt, czyTablica, sprawdzKsztalt } from '../../protokol/ksztalt-od
 import { wywolaj } from '../../protokol/wywolanie';
 
 /**
- * Osadzenie modułu w sesji — okna komunikacji i parametry wykonania.
- *
- * Każda komenda `studio.*` wymaga identyfikatora okna (`windowId` jest polem
- * obowiązkowym `studio.document.open`), a moduł dostaje z powłoki wyłącznie
- * identyfikator sesji. Wskazanie okna poprzedza więc całą pracę modułu i nie
- * należy do żadnego okna operacyjnego z osobna — stąd własny plik, a nie
- * doklejenie do `zrodlo-studio.ts`.
- *
- * `window.state.get` jest komendą wspólną każdemu oknu operacyjnemu: niesie
- * moduł, kanał modelu, katalogi robocze, zasięg wykonania, tryb uprawnień
- * i rolę.
+ * Osadzenie modułu w sesji — okna komunikacji i parametry wykonania; każda komenda `studio.*`
+ * wymaga identyfikatora okna, którego moduł nie dostaje z powłoki wprost.
  */
 export interface ZrodloOsadzenia {
   /** Okna komunikacji sesji — z nich bierze się `windowId` komend modułu. */

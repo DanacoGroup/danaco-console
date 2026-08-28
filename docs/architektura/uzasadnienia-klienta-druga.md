@@ -7820,3 +7820,18 @@ rodzin design.*, document.*, media.* i archive.*. Podgląd wydania sięga nią p
 wyrysowane przez rdzeń — pole uri zasobu jest ścieżką w systemie plików rdzenia, więc przeglądarka
 nie wczyta spod niego niczego. Osobnej komendy pobierania zasobu Studia nie ma i nie ma jej
 w kontrakcie.
+
+## budowa/klient-poprzedni/src/okna-rownolegle/etykiety-ukladu.ts
+Jedna odpowiedzialność: wszystkie ciągi widoczne dla operatora w jednym
+miejscu. Nazwy ról nie powstają tutaj po raz drugi — pochodzą z etykiet
+okna komunikacji, żeby ta sama rola nie nazywała się w dwóch miejscach
+inaczej. Kontrakt nie ma komendy przekazania zlecenia koordynator-wykonawca;
+scena umie pokazać wyłącznie, jak takie przekazanie wygląda — komunikat
+mówi to wprost, żeby ruch na pasie nie uchodził za wykonaną pracę. Kreska
+średnia w nazwie modułu przy tytule gniazda oddziela dwie odpowiedzi na dwa
+różne pytania: „które to miejsce na scenie” (numer) i „co w nim pracuje”
+(moduł) — bez niej czytałoby się to jak jedna, dłuższa nazwa okna. Moduł
+bez rozmowy i moduł mówiący dymkiem dostają zdanie wprost, bo pusty
+przełącznik czytałby się jak awaria sceny; przy górnej granicy zdanie mówi
+o suficie platformy, nie o liczbie okien modułu, bo dla części modułów ta
+granica jest stanem zastanym, a nie liczbą podaną przez rdzeń.

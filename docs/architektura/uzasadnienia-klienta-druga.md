@@ -6987,3 +6987,16 @@ z komórkami i policzonymi szerokościami. Każda czynność zmieniająca oddaje
 bilans i identyfikator zapisu w dzienniku: bilans mówi, co pominęła blokada
 fragmentu, a zapis w dzienniku daje cofnięcie pojedyncze. Panel czyta oba —
 bez tego scalenie komórek w zablokowanym fragmencie wyglądałoby na wykonane.
+
+## budowa/klient-poprzedni/src/moduly/studio/szablon-zrodlo.ts
+Wykaz szablonów i założenie dokumentu z szablonu stały już w galerii, ale były
+wykazem fabrycznym, bez możliwości założenia ani zmiany szablonu. Siedem
+komend tego modułu domyka warsztat: zapis zakłada szablon z bieżącego
+dokumentu wraz z arkuszem stylów, nastawami strony, nagłówkiem, stopką,
+tabelami i blokadami wzorcowymi, ustawienie i odczyt pól prowadzą pola do
+wypełnienia, wypełnienie wpisuje w nie wartości, wniesienie i eksport
+przenoszą plik szablonu w formacie dotx albo ott, a usunięcie kasuje szablon
+własny. Usunięcie szablonu fabrycznego jest odmawiane nazwanym powodem, tak
+samo jak usunięcie operacji fabrycznej: okno czyta pole deleted i przy
+odpowiedzi odmownej pokazuje powód, zamiast zdejmować pozycję z galerii
+i pozwolić jej wrócić przy następnym odczycie.

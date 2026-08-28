@@ -26,6 +26,7 @@ function pozycjaModulu(modul: Module, biezacy: boolean): HTMLElement {
       klasa: 'dn-szyna-poz dn-szyna-poz--modul',
       type: 'button',
       'data-modul-nazwa': modul.name,
+      'data-modul-kod': modul.code,
       'aria-label': modul.name,
       'aria-current': biezacy ? 'true' : null,
     },

@@ -6,6 +6,8 @@
  */
 
 import type { Environment, Module, Session } from '../../../shared/contract.ts';
+import type { Kanal } from '../protokol/kanal.ts';
+import { zamontujOknoStudio, type OknoStudio } from '../moduly/studio/montaz.ts';
 import { el, tekst } from './narzedzia.ts';
 import { belka } from './skladniki/belka.ts';
 import { szyna } from './skladniki/szyna.ts';
@@ -20,7 +22,12 @@ export interface NastawyRamy {
   moduly: Module[];
   /** Karty sesji odtworzone przez rdzeń — ich liczba zasila pas stanu. */
   sesje: Session[];
+  /** Kanał, którym okno modułu woła komendy rdzenia; brak — rama montuje się bez okna modułu. */
+  kanal?: Kanal;
 }
+
+/** Kod modułu Studio w wykazie rdzenia — jedyny moduł z oknem roboczym dziś zmontowanym. */
+const KOD_MODULU_STUDIO = 'studio';
 
 /** Zapytanie o preferencję systemową motywu — bez odstępu po dwukropku, składnia CSS przyjmuje oba zapisy. */
 const ZAPYTANIE_MOTYW_CIEMNY = '(prefers-color-scheme:dark)';
@@ -51,8 +58,10 @@ export function zamontujRame(w: NastawyRamy): void {
 
   w.miejsce.replaceChildren(powloka);
 
-  /* Wybór modułu w szynie jest sprawą samej ramy: modyfikuje jej własny
-     tytuł, nie otwiera okna modułowego — to osobny teren. */
+  /* Okno modułu czynne dziś wyłącznie dla Studio; zejście na inny moduł je
+     zdejmuje, żeby obszar roboczy nie niósł treści modułu już opuszczonego. */
+  let oknoModulu: OknoStudio | undefined;
+
   function naKlikniecie(zdarzenie: Event): void {
     const przycisk = (zdarzenie.target as Element | null)?.closest(
       '.dn-szyna-poz--modul',
@@ -64,8 +73,23 @@ export function zamontujRame(w: NastawyRamy): void {
     przycisk.setAttribute('aria-current', 'true');
     const nazwa = przycisk.dataset['modulNazwa'] ?? w.srodowisko.name;
     tytulWezel.textContent = `${tekst('belka.marka')} ${tekst('belka.separator')} ${nazwa}`;
+
+    oknoModulu?.zdejmij();
+    oknoModulu = undefined;
+    if (przycisk.dataset['modulKod'] === KOD_MODULU_STUDIO && w.kanal !== undefined) {
+      oknoModulu = zamontujOknoStudio({ miejsce: glowna, kanal: w.kanal });
+    } else {
+      glowna.replaceChildren();
+    }
   }
   w.miejsce.addEventListener('click', naKlikniecie);
+
+  /* Pierwsza pozycja szyny startuje bieżąca — jeśli to Studio, okno wchodzi
+     od razu, bez czekania na klik Operatora. */
+  const pierwszy = w.moduly[0];
+  if (pierwszy?.code === KOD_MODULU_STUDIO && w.kanal !== undefined) {
+    oknoModulu = zamontujOknoStudio({ miejsce: glowna, kanal: w.kanal });
+  }
 
   const zapytanieMotywu = globalThis.matchMedia?.(ZAPYTANIE_MOTYW_CIEMNY);
   function naZmianeMotywu(): void {

@@ -662,3 +662,13 @@ bezwzględnie nad sceną i nie zajmuje żadnego piksela toku dokumentu.
 Arkusz jest wciągany importem z pliku browser.css — moduł wciąga jeden
 arkusz, a podział na dwa pliki wynika z progu trzystu wierszy na arkusz.
 Barwy wyłącznie z żetonów motywu, bez wartości zapisanych wprost.
+
+## budowa/klient-poprzedni/src/dostepy/dostepy.css
+Plik wciąga moduł `sekcja-dostepow.ts` i nie wymaga osobnego wpisu poza tym
+powiązaniem. Prefiks `dd-` należy wyłącznie do tej sekcji i nie koliduje
+z biblioteką komponentów `dn-`, oknem konfiguracji `dk-` ani kompletem
+sterowania `dc-ster-`. Barwy pochodzą wyłącznie z żetonów warstwy `motyw/`.
+Błękit sygnałowy występuje w dwóch miejscach: plakietka nadania głównego oraz
+plakietka punktu już nadanego oknu. Ostrzeżenie o zapisie na maszynie
+chronionej idzie barwą ostrzegawczą, nie sygnałową, ponieważ jest to inny
+rodzaj komunikatu i nie konkuruje z akcentem barwy sygnałowej.

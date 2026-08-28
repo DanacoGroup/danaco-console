@@ -6627,3 +6627,24 @@ kontraktu jako napis, nie jako błąd.
 Rozstrzygacz zbudowany bez źródła sięga po puste źródło pamięciowe, dzięki
 czemu brak warstwy trwałości nie blokuje startu rdzenia, tylko daje
 politykę domyślną.
+
+## budowa/server/internal/konfig/zrodlo_ustawien.go
+Implementacja interfejsu Zrodlo czytająca tabelę ustawienie należy do
+warstwy repozytoriów; implementacja pamięciowa z tego pakietu obsługuje
+pracę bez trwałości i bez sprawdzenia.
+
+Wpisy zwrócone mimo błędu źródła wchodzą do rozstrzygnięcia, a ustawienia
+bez zapisu schodzą na wartości domyślne. Błąd jest widoczny w polityce
+efektywnej jako informacja diagnostyczna, nie jako odmowa, więc
+implementacja może zwrócić wynik częściowy razem z błędem.
+
+## budowa/server/internal/dane/design_prototyp.go
+Ramki wiąże się identyfikatorem zewnętrznym, a nie kluczem obcym: tymi samymi
+wartościami operuje kontrakt i tymi samymi wraca `design.prototype.get`, więc
+przekład klucza w obie strony nie miałby odbiorcy. Spójność pilnuje adapter —
+obie ramki połączenia muszą leżeć w tej samej kompozycji.
+
+Ramek nieosiągalnych repozytorium nie liczy, ponieważ osierocenie ramki jest
+wnioskiem chwilowym z odczytu grafu, a nie trwałą cechą wiersza — ramka
+osierocona dziś bywa jutro ramką początkową, więc utrwalanie tej cechy
+w kolumnie oznaczałoby przechowywanie wniosku, który starzeje się bez zapisu.

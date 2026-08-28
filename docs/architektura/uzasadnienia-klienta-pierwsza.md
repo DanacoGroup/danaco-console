@@ -7757,3 +7757,10 @@ a nie w siatce, żeby oglądać obok siebie kadr tego samego materiału w trzech
 proporcjach. Szerokość ramki obszaru roboczego pochodzi z punktu łamania
 produktu, a wysokość zostaje przy boku wyjściowym, bo punkty łamania opisują
 wyłącznie szerokość; wysokość ustawia się osobno w inspektorze właściwości.
+
+## budowa/klient-poprzedni/src/mobile/ekran-procesow.ts
+Ekran niesie dokładnie te dwa elementy, które nazywa funkcja globalna Mobile: listę procesów z filtrem stanu oraz zestaw czynności przy pozycji — uruchom ponownie, zatrzymaj, wstrzymaj, wznów, zatwierdź, modyfikuj. Dwa dotknięcia dla czynności nieodwracalnej to nie utrudnienie: telefon nosi się w kieszeni, a zatrzymanie pracy, która biegnie bez Operatora, jest jedyną czynnością tego ekranu, której nie da się cofnąć niczym.
+
+Filtr stanu zawęża po stronie rdzenia, polem `status` żądania, a nie po stronie widoku: wykaz przefiltrowany w oknie kłamałby o liczbie procesów, których rdzeń nie przysłał. Urządzenie mobilne nazywa się kartą sesji kanału — tak samo jak w kafelku stanu platformy, żeby rdzeń widział jedno urządzenie, a nie dwa.
+
+Jedno sterowanie bywa widoczne w kilku wierszach naraz (kolejka, tura); odpowiedź opisuje jeden proces, o pozostałych rozstrzyga rdzeń. Napis przycisku zmienia się na czas uzbrojenia, żeby nie dało się go pomylić z pierwszym dotknięciem.

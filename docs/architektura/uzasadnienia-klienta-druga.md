@@ -7200,3 +7200,14 @@ dwustronnego nie rozstrzyga strona, tylko okno drukarki systemu, więc nastawy
 są przenoszone jako życzenie wpisane w podsumowanie, a okno mówi wprost, że
 zatwierdza je drukarka — obietnica, że strona ustawi druk dwustronny, byłaby
 nieprawdą przy pierwszej drukarce jednostronnej.
+
+## budowa/klient-poprzedni/src/moduly/terminal/podglad-wyjscia.ts
+Widok jest odpowiedzią terminal.output.read, nie strumieniem na żywo: wyjście
+na żywo przychodzi zdarzeniem stream.chunk i żyje w buforze okna, który ginie
+wraz z połączeniem, więc podgląd sięga po treść przechowywaną w rdzeniu. Treść
+trafia wyłącznie do węzła jednej pozycji wykazu, a nie do wspólnego bufora
+stanu terminala, więc żaden wiersz nie wchodzi do konsoli dwa razy. Pole
+exitCode jest w kontrakcie opcjonalne i nie przychodzi dla procesu biegnącego
+ani ubitego sygnałem; widok nie podstawia w to miejsce zera, bo czytałoby się
+jako powodzenie. Pusty strumień i treść przycięta dostają własne zdanie,
+zamiast wyglądać jak komplet.

@@ -7709,3 +7709,12 @@ Usuwania w wierszu nie ma, bo przycisk czynności nieodwracalnej przy każdej po
 
 ## budowa/klient-poprzedni/src/sterowanie/zmiana-okna.ts
 Nazwa komendy i nazwa zdarzenia pochodzą z pakietu kontraktu współdzielonego — zmiana nazwy w kontrakcie przerywa kompilację tego pliku. Zmiana idzie komendą aktualizacji okna, potwierdzeniem jest odpowiedź na nią oraz zdarzenie zmiany okna rozgłaszane do wszystkich urządzeń konta. Zdarzenie dotyczące innego okna nie zmienia tego stanu — filtr po identyfikatorze okna jest adresowaniem. Niepowodzenie zmiany nie wstrzymuje sterowania: widok wraca do stanu potwierdzonego i przyjmuje kolejną zmianę.
+
+## budowa/klient-poprzedni/src/sterowanie/zmiana-ustawienia.ts
+Trzy sterowania — host wykonania, kanał zapasowy, nakład rozumowania — nie mają pola w treści żądania aktualizacji okna, więc idą komendą ustawienia poziomu okna, z identyfikatorem okna jako bytem poziomu. Odczyt przy otwarciu kompletu sprawia, że po przeładowaniu ustawienia wracają z bazy, a nie z pamięci przeglądarki.
+
+Adres ustawienia ma cztery człony, nie dwa: przestrzeń konfiguracji ma dwa prostopadłe wymiary — poziom zasięgu z bytem poziomu oraz oś rozstrzygania z bytem osi. Sprawdzanie samego poziomu przyjmowałoby za swój zapis adresowany do innego modelu albo innego konta, na przykład nakład rozumowania na osi modelu. Adres składa moduł adresu ustawienia, jedyny w kliencie przepis na adres tej przestrzeni.
+
+Wpis konfiguracji innego okna, innego poziomu albo innej osi jest pomijany; to adresowanie, a nie wstrzymanie zmiany.
+
+Zdarzenie zmiany konfiguracji niesie rodzaj zmiany: utworzenie i aktualizacja nanoszą wartość, usunięcie ją zdejmuje. Rdzeń rozgłasza usunięcie z wpisem o starej wartości, więc czytanie samego wpisu bez rodzaju nanosiłoby skasowaną wartość jak świeży zapis, a powrót do wartości domyślnej nie docierałby do żadnej powierzchni.

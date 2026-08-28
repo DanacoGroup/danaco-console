@@ -7232,3 +7232,20 @@ nieprawdą.
 
 ## budowa/klient-poprzedni/src/moduly/design/stan-designu.ts
 Trzy okna korzystają z tego samego zbioru zasobów. Prompt Builder oddaje wynik generowania do Assets Panel, Assets Panel oddaje zasób na kanwę Design Board. Gdyby każde okno prowadziło własny wykaz, zasób wygenerowany w kreatorze nie pojawiłby się w panelu, a kanwa układałaby warstwy z zasobów, których panel już nie ma. Zdarzenie zmiany zasobu jest drugim źródłem odświeżenia: wciąga zasób powstały gdziekolwiek, także po stronie rdzenia, dokładnie tak samo jak własny odczyt. Odpytywania w pętli tu nie ma.
+
+## budowa/klient-poprzedni/src/moduly/design/stan-designu.ts — zdjęcie zasobu po usunięciu
+Zdjęcie idzie tą samą funkcją co gałąź zdarzenia usunięcia. Rdzeń rozgłasza usunięcie i zdarzenie i tak przyjdzie, ale okno, które właśnie kazało zasób usunąć, nie ma prawa pokazywać go dalej ani przez chwilę.
+
+## budowa/klient-poprzedni/src/moduly/multitasking/zrodlo-biegu.ts
+Koordynator widzi pełny strumień wykonawcy niesiony wspólnym zdarzeniem
+fragmentu, w którym pole okna mówi, czyja to tura; okno koordynatora nie
+zakłada drugiego kanału podglądu, tylko subskrybuje ten sam strumień
+i odsiewa okna swoich wykonawców. Doręczenie polecenia niesie treść do okna
+wykonawcy, więc wykonawca rusza do pracy, ale sama ta droga zostawia więź
+wyłącznie w pamięci przeglądarki i gubi ją z jej zamknięciem, dlatego zapis
+w bazie rdzenia utrwala, kto komu co zlecił, i zakłada pozycję kolejki.
+Kontrakt nie ma osobnej komendy zatrzymania podagenta, a sterowanie kolejką
+żąda jej identyfikatora, którego podagent nie niesie, więc ogniwem jest
+nazwa kolejki, pod którą rdzeń zakłada kolejkę podagenta jego własnym
+identyfikatorem. Żądanie z oknem przy subskrypcji monitora zakłada
+obserwację.

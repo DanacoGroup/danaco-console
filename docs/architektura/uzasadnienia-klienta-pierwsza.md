@@ -7442,3 +7442,12 @@ wróciła; pętli odpytującej tu nie ma.
 Czuwanie nie ogłasza niepowodzenia czynności i nie zgaduje jej skutku — rdzeń mógł żądanie odebrać
 i wykonać, zanim gniazdo padło. Jedyną drogą do prawdy jest odczyt po powrocie łączności i tak
 brzmi zdanie dla Operatora.
+
+## budowa/klient-poprzedni/src/konfiguracja/zrodlo-wartosci.ts
+Pola osi są w kontrakcie nieobowiązkowe — puste znaczy `platform` — więc adres platformy wychodzi bez nich. `config.get` bez poziomu oddaje samą wartość obowiązującą, bez pozostałych zapisów, a okno pokazuje również, z którego poziomu wartość pochodzi i jakie zapisy stoją obok. Łańcuch punktu widzenia liczy klient (`rozstrzygniecie.ts`) z wpisów globalnych oraz wpisów zapisanych dokładnie na wskazanym poziomie i bycie, więc odczyt pobiera surowe wpisy tych poziomów osobnymi zapytaniami z podanym `scope`.
+
+Surowy odczyt zawęża się do granulacji poziomu (zasięg i byt poziomu), bez osi: łańcuch bierze wszystkie zapisy poziomu niezależnie od osi, a którą oś przyjąć rozstrzyga klient względem punktu widzenia.
+
+Wynik `config.get` zasila rozstrzyganie pochodzenia po stronie klienta. Pominięty punkt znaczy widok globalny.
+
+Bez rodzaju zmiany w zdarzeniu `config.changed` nie da się odróżnić zapisu od usunięcia, bo rdzeń rozgłasza przywrócenie wartości domyślnej wpisem niosącym starą wartość (`core/handlers_config.go`, `core/adapter_ustawienia.go` funkcja `Przywroc`); odczyt samego wpisu wstawiłby skasowany zapis z powrotem do wykazu.

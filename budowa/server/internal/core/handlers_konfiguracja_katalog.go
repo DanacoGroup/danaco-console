@@ -1,13 +1,5 @@
-// Odpowiedzialność pliku: wypełnienie portu KatalogUstawien repozytorium
-// warstwy danych oraz zawężenia katalogu wskazane w żądaniu.
-//
-// Zawężenie robione jest w rdzeniu, a nie zapytaniem SQL per warunek, bo
-// katalog liczy dziesiątki wierszy i jest odczytywany w całości przy otwarciu
-// okna konfiguracji. Drugie zapytanie na każdy filtr kupiłoby tu wyłącznie
-// czterokrotnie większą powierzchnię błędu w warstwie trwałości.
-//
-// Filtr niepasujący do żadnego wiersza daje wykaz pusty, nie błąd: okno
-// konfiguracji ma się otworzyć także wtedy, gdy kategoria jest jeszcze pusta.
+// Plik wypełnia port KatalogUstawien repozytorium warstwy danych, zawężając
+// katalog w rdzeniu do wskazań żądania.
 package core
 
 import (
@@ -18,20 +10,23 @@ import (
 )
 
 // Zgodność adaptera z portem sprawdzana jest przy kompilacji, a nie dopiero
-// przy składaniu rdzenia.
+// przy składaniu rdzenia, więc pomyłka typu ujawnia się od razu.
 var _ KatalogUstawien = (*adapterKatalogUstawien)(nil)
 
-// adapterKatalogUstawien wypełnia port KatalogUstawien tabelami katalogu.
+// adapterKatalogUstawien wypełnia port KatalogUstawien tabelami katalogu,
+// kategorii i pozycji, przez repozytorium.
 type adapterKatalogUstawien struct {
 	repozytorium dane.RepozytoriumKatalogUstawien
 }
 
-// nowyAdapterKatalogUstawien wiąże port z repozytorium katalogu.
+// nowyAdapterKatalogUstawien wiąże port z repozytorium katalogu, jedynym
+// źródłem kategorii i pozycji katalogu.
 func nowyAdapterKatalogUstawien(repozytorium dane.RepozytoriumKatalogUstawien) *adapterKatalogUstawien {
 	return &adapterKatalogUstawien{repozytorium: repozytorium}
 }
 
-// Kategorie zwraca kategorie okna konfiguracji, zawężone kategorią nadrzędną.
+// Kategorie zwraca kategorie okna konfiguracji, zawężone kategorią nadrzędną,
+// w kolejności wyświetlania.
 func (a *adapterKatalogUstawien) Kategorie(ctx context.Context,
 	z shared.SettingsCategoryListRequest) (shared.SettingsCategoryListResponse, error) {
 
@@ -89,7 +84,8 @@ func pasujeRodzic(kategoria shared.SettingCategory, rodzic *string) bool {
 	return kategoria.ParentId != nil && *kategoria.ParentId == *rodzic
 }
 
-// pasujeDefinicja sprawdza pozycję katalogu wobec kompletu zawężeń żądania.
+// pasujeDefinicja sprawdza pozycję katalogu wobec kompletu zawężeń żądania:
+// kategorii, klucza i poziomu.
 func pasujeDefinicja(pozycja shared.SettingDefinition, z shared.SettingsDefinitionListRequest) bool {
 	if z.CategoryId != nil && *z.CategoryId != "" && pozycja.CategoryId != *z.CategoryId {
 		return false

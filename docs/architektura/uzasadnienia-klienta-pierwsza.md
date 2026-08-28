@@ -7353,3 +7353,12 @@ Kanały modelu (`channel.add`, `channel.update`, `channel.remove`) mają panel w
 Pozycja „Izolacja" w nawigacji zakresów prowadzi do okna punktów izolacji, jednego na klienta, które pamięta swój stan — otwarcie z panelu kategorii trafia w ten sam egzemplarz, co otwarcie z listwy Ustawień, nie zakłada drugiego.
 
 Drugi selektor zasięgu byłby powieleniem, a rozjazd między nimi pokazywałby wartości z dwóch różnych zasięgów obok siebie.
+
+## budowa/klient-poprzedni/src/konfiguracja/panel-kategorii.ts
+Zaszycie w tym panelu listy pól oznaczałoby, że dodanie ustawienia wymaga zmiany kodu w dwóch miejscach — czego to okno ma właśnie nie robić.
+
+Zakres „Izolacja" jest jedyną kategorią z przejściem dalej: rozwinięty jest w osobnym, trzypanelowym oknie punktów izolacji, bo ma własną złożoność — dwa rodzaje izolacji, siedem poziomów zasięgu i profile. Jedenaście wierszy katalogu pokazywanych w tym panelu to te same klucze, ale bez selektora zasięgu, macierzy i podglądu polityki efektywnej — przejście stoi nad formularzem, żeby ta pozycja nawigacji prowadziła tam, gdzie zakres jest konfigurowany w całości. To, że pozycja „Izolacja" otwiera okno punktów izolacji, jest wymaganiem struktury okna, nie metadaną ustawienia; katalog niesie wyłącznie wiersze.
+
+Różnica między jedenastoma wierszami katalogu w tym panelu a oknem punktów izolacji z selektorem zasięgu i podglądem polityki efektywnej jest powodem, dla którego przejście do tego okna tu stoi. Przycisk przejścia niczego nie wygasza: obie drogi pozostają czynne.
+
+O błędzie odczytu katalogu mówi komunikat blokowy nad stopką okna, nie stan pusty formularza.

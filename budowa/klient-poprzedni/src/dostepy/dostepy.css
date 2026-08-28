@@ -1,24 +1,4 @@
-/* ============================================================================
-   DANACO CONSOLE — SEKCJA DOSTĘPÓW I KATALOGU ROBOCZEGO · RAMA
-   ----------------------------------------------------------------------------
-   Arkusz opisuje ramę sekcji i wspólną odpowiedź na czynność użytkownika.
-   Wnętrze trzech obszarów prowadzą arkusze wciągane poniżej:
-   wykaz punktów wraz z kartą punktu, zbiór nadań okna oraz katalog roboczy.
-
-   Wciąga go moduł `sekcja-dostepow.ts`, więc trafia do pakietu razem
-   z widokiem i nie potrzebuje wpisu w wykazie warstw wizualnych.
-
-   Prefiks `dd-` należy wyłącznie do tej sekcji i nie koliduje ani z biblioteką
-   komponentów `dn-`, ani z oknem konfiguracji `dk-`, ani z kompletem
-   sterowania `dc-ster-`.
-
-   Barwy pochodzą wyłącznie z żetonów warstwy `motyw/`.
-
-   Błękit sygnałowy pojawia się w dwóch miejscach: plakietka nadania głównego
-   oraz plakietka punktu już nadanego oknu. Ostrzeżenie o zapisie na maszynie
-   chronionej idzie barwą ostrzegawczą, nie sygnałową — to inny rodzaj
-   komunikatu i nie konkuruje z akcentem.
-   ============================================================================ */
+/* Arkusz opisuje ramę sekcji dostępów: prowadzi wykaz punktów z kartą punktu, zbiór nadań okna oraz katalog roboczy, korzystając wyłącznie z żetonów warstwy motywu. */
 
 @import './punkty-dostepu.css';
 @import './nadania-okna.css';
@@ -133,7 +113,7 @@
   border-left: 2px solid var(--dn-blad-tekst);
 }
 
-/* Stan pusty wykazu punktów — biblioteczny układ, węższy oddech w kolumnie. */
+/* Stan pusty wykazu punktów przejmuje biblioteczny układ komponentu i zwęża odstęp pionowy w kolumnie, dopasowując go do sekcji. */
 .dn-pusty-stan.dd-wykaz__pusty {
   padding: var(--dn-od-6) var(--dn-od-4);
 }

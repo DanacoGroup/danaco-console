@@ -1,13 +1,4 @@
-/* ============================================================================
-   DANACO CONSOLE — WYSZUKIWANIE PO ZNACZENIU (okno modułu Poczta i wiedza)
-   ----------------------------------------------------------------------------
-   Plik nie zna ani jednej barwy, ani jednego rozmiaru pisma: wszystko pochodzi
-   z żetonów motywu (`--dn-*`) i z biblioteki `komponenty/`. Tutaj leży wyłącznie
-   rozkład: co obok czego i ile między nimi odstępu.
-
-   Odróżnienie trafności jedzie plakietkami biblioteki
-   (`dn-plakietka--sukces|ostrzezenie`) — własnej skali barw to okno nie zakłada.
-   ============================================================================ */
+/* Arkusz obejmuje okno wyszukiwania po znaczeniu modułu poczty i wiedzy: rozkład paska narzędzi, wykazu trafień oraz stanów obowiązkowych. */
 
 /* ── Pasek narzędzi: pytanie zajmuje cały wiersz, zawężenia stoją obok ─────── */
 
@@ -18,7 +9,7 @@
   min-width: 0;
 }
 
-/* Pytanie jest treścią okna, nie zawężeniem — dostaje całą szerokość wiersza. */
+/* Pytanie jest główną treścią okna, nie zwykłym zawężeniem wyszukiwania, dlatego zajmuje całą szerokość wiersza. */
 .dwz-wiersz--szeroki {
   flex: 1 1 100%;
 }
@@ -52,7 +43,7 @@
   line-height: var(--dn-lh-bazowy);
 }
 
-/* Odmowa rdzenia ma być widoczna od razu, a nie do wyszukania wzrokiem. */
+/* Odmowa rdzenia ma być widoczna od razu w oknie, a nie pozostawać do wyszukania samym wzrokiem po stronie. */
 .dwz-stan[data-stan='blad'] {
   color: var(--dn-blad-tekst);
   background: var(--dn-blad-tlo);
@@ -133,7 +124,7 @@
   overflow-wrap: anywhere;
 }
 
-/* Zdanie o przycięciu wykazu granicą — przypis, nie ostrzeżenie. */
+/* Zdanie o przycięciu wykazu granicą działa jako przypis informacyjny, nigdy jako ostrzeżenie dla Operatora. */
 .dwz-przypis {
   margin: 0;
   color: var(--dn-tekst-3);

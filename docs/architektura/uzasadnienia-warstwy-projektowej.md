@@ -662,3 +662,249 @@ bezwzględnie nad sceną i nie zajmuje żadnego piksela toku dokumentu.
 Arkusz jest wciągany importem z pliku browser.css — moduł wciąga jeden
 arkusz, a podział na dwa pliki wynika z progu trzystu wierszy na arkusz.
 Barwy wyłącznie z żetonów motywu, bez wartości zapisanych wprost.
+
+## budowa/klient-poprzedni/src/dostepy/dostepy.css
+Plik wciąga moduł `sekcja-dostepow.ts` i nie wymaga osobnego wpisu poza tym
+powiązaniem. Prefiks `dd-` należy wyłącznie do tej sekcji i nie koliduje
+z biblioteką komponentów `dn-`, oknem konfiguracji `dk-` ani kompletem
+sterowania `dc-ster-`. Barwy pochodzą wyłącznie z żetonów warstwy `motyw/`.
+Błękit sygnałowy występuje w dwóch miejscach: plakietka nadania głównego oraz
+plakietka punktu już nadanego oknu. Ostrzeżenie o zapisie na maszynie
+chronionej idzie barwą ostrzegawczą, nie sygnałową, ponieważ jest to inny
+rodzaj komunikatu i nie konkuruje z akcentem barwy sygnałowej.
+
+## budowa/klient-poprzedni/src/moduly/design/zasoby.css
+Układ kompozycji modułu ma własny arkusz `kompozycja.css`, oddzielony od
+tego pliku, który obejmuje wyłącznie filtr, wykaz zasobów i kreator promptu.
+
+## budowa/klient-poprzedni/src/moduly/studio/studio-praca.css
+Arkusz zastępuje `studio-kanwa.css`, który opisywał kanwę tekstową i pasek
+narzędzi edytora, oba usunięte przy scaleniu. Pasek powiązania z oknem
+rozmowy przeniósł się tu razem ze swoim elementem. Ani jednej barwy nie
+zapisano wprost, wyłącznie żetony motywu. Rozmiary kartki i marginesów
+przychodzą zmiennymi ustawianymi przez `powierzchnia-dokumentu.ts` z nastaw
+strony `StudioPageSetup`, ponieważ tylko ten plik zna wybrany nośnik.
+
+## budowa/klient-poprzedni/src/moduly/terminal/terminal.css
+Plik nie zapisuje wprost ani jednej barwy, ani jednego rozmiaru czcionki:
+wszystko pochodzi z żetonów motywu `--dn-*` oraz z biblioteki `komponenty/`.
+Moduł terminala obejmuje sześć okien operacyjnych i odróżnia trzy stany
+obowiązkowe: ładowanie, pustkę oraz błąd.
+
+## budowa/klient-poprzedni/src/moduly/translate/translate.css
+Plik nie zapisuje wprost ani jednej barwy: każda wartość pochodzi z żetonów
+motywu. Klasy `dn-*` wnosi biblioteka komponentów, więc tutaj leży wyłącznie
+rozkład trzech okien modułu, pas kontekstu, siatka paneli językowych,
+zestawienie porównawcze oraz znakowanie faz stanu. Kontrolki formularza
+pochodzą z `modele/kontrolki-formularza`, dlatego moduł wciąga też arkusz
+`modele.css`, inaczej pola `dm-*` zostałyby bez oprawy.
+
+## budowa/klient-poprzedni/src/moduly/wiedza/wiedza.css
+Plik nie zapisuje wprost ani jednej barwy, ani jednego rozmiaru pisma:
+wszystko pochodzi z żetonów motywu `--dn-*` i z biblioteki `komponenty/`.
+Tutaj leży wyłącznie rozkład: co stoi obok czego i ile między elementami
+odstępu. Odróżnienie trafności jedzie plakietkami biblioteki
+`dn-plakietka--sukces` i `dn-plakietka--ostrzezenie`, więc okno nie zakłada
+własnej skali barw.
+
+## budowa/klient-poprzedni/src/moduly/workspace/workspace.css
+Barwy i rozmiary czcionek pochodzą wyłącznie z żetonów motywu `--dn-*`
+i z biblioteki `komponenty/`. Arkusz obejmuje wyłącznie rozkład okien
+modułu Workspace.
+
+## budowa/klient-poprzedni/src/motyw/semantyczne-jasny.css
+Jedna odpowiedzialność: wartości żetonów semantycznych motywu jasnego,
+odcienie bieli. Motyw jasny i ciemny są równoprawne — ten plik nie jest
+podstawą, z której wywodzi się motyw ciemny, oba są definiowane osobno
+i w pełni, żeton po żetonie. Plik ma dwa bloki: wybór jawny przez atrybut
+data-theme oraz zapas na wypadek braku jawnego wyboru, sterowany
+preferencją systemu. Powielenie wartości między blokami jest świadome, to
+mechanizm kaskady, a nie drugie źródło prawdy — źródłem pozostaje
+zetony.json. Podział warstwy: stany.css niesie sukces, ostrzeżenie, błąd
+i informację; przestrzen.css niesie cienie obu motywów; rama.css niesie
+pasek górny, atramentowy w obu motywach.
+
+Obrys kontrolki: próg kontrastu WCAG 2.1 AA wynosi 4,50:1, stąd wybrano
+#616161 o współczynniku 5,63:1. Pozostałe dwa obrysy idą za obrysem
+głównym, żeby zachować trzy rozróżnialne wagi obrysu. Trzy wagi tekstu są
+dobrane tak, by każda przechodziła próg kontrastu WCAG 2.1 AA (4,50:1)
+i pozostawała rozróżnialna od dwóch pozostałych. Pierścień fokusu bierze
+ten sam błękit co tekst sygnałowy (#2457C9, współczynnik 5,82:1); poświata
+idzie za nim tą samą barwą, żeby pierścień i jego cień nie tworzyły dwóch
+różnych błękitów.
+
+## budowa/klient-poprzedni/src/okna-rownolegle/czynnosci.css
+Kreskę, listę rozwijaną i sekcję paneli opisuje `menu.css`, ten arkusz jej
+nie dotyka. Rytm jest ten sam co nad kreską: ikona, nazwa i przeznaczenie,
+skrót klawiszowy wyrównany do prawej; odstępy, promienie i rozmiary pisma
+biorą te same żetony, po które sięga `.dn-menu-paneli__pozycja`. Arkusz nie
+ma reguł wygaszenia, ponieważ pozycja bez pokrycia w produkcie nie powstaje.
+Barwa ostrzegawcza idzie żetonem `--dn-blad-*`, nie wartością; rodzinę
+`--dn-ostrzezenie-*` pominięto, bo niosłaby inny kolor. Ten sam żeton nosi
+`.dn-btn--niebezpieczny`, jedna barwa dla jednego znaczenia.
+
+## budowa/klient-poprzedni/src/okna-rownolegle/gniazdo.css
+Rozkład sceny opisuje `uklad.css`, ten arkusz go nie dotyka. Wartości barw,
+odstępów i pisma pochodzą wyłącznie z żetonów `motyw/`.
+
+## budowa/klient-poprzedni/src/okna-rownolegle/menu.css
+Rozkład sceny opisuje `uklad.css`, wygląd samego gniazda opisuje
+`gniazdo.css` — podział arkusza przypada na komponent. Menu rozwijane stoi
+w tym pliku, bo klient nie ma wspólnej formy dropdownu, popoveru ani menu
+kontekstowego, więc powstaje pod nazwą własną `.dn-menu`, a nie na aliasie
+zgodności. Wszystkie wartości pochodzą z żetonów `motyw/`, zero barw,
+odstępów, promieni i rozmiarów pisma zaszytych wprost.
+
+## budowa/klient-poprzedni/src/okna-rownolegle/relacje.css
+Siatka pasa ma te same kolumny co tor okien, więc więź trafia dokładnie
+pod swoją parę, także gdy koordynator i wykonawca nie sąsiadują ze sobą.
+Pas nie znika przy żadnym stanie: brak pary pokazuje stan pusty
+`.dn-pusty-stan`, praca trwająca pokazuje wskaźnik w plakietce stanu
+z `gniazdo.css`, a podgląd przekazania pokazuje komunikat blokowy
+`.dn-okna__uwaga`. Biblioteka stylów nie niesie klasy komunikatu, więc jego
+forma stoi w tym arkuszu pod nazwą własną widoku. Stan pusty mieści się
+w jednym wierszu, żeby pas nie zabierał strefie rozmowy wysokości planszy:
+znak i tytuł w linii, opis obok, bez pionowego oddechu. Kolumny pasa muszą
+odpowiadać kolumnom toru okien z `uklad.css`, inaczej więź traci
+dopasowanie. Czwarta kolumna odpowiada `LICZBA_MAX` z `identyfikatory.ts`.
+
+## budowa/klient-poprzedni/src/okna-rownolegle/uklad.css
+Wygląd samego gniazda opisuje `gniazdo.css`, powiązanie pary opisuje
+`relacje.css` — podział arkusza przypada na komponent. Wszystkie wartości
+pochodzą z żetonów `motyw/` i klas `komponenty/` (`--dn-sygnal-*`,
+`--dn-fw-polgruba`). Poza skalą 4 px stoją dwie wartości: wstęga roli 3 px
+oraz szerokość włosowa 1 px. Pigułki i znak objaśnienia mieszkają w tym
+arkuszu: wspólne klasy niosą pas zakładek `.dn-zakladki` i chmurkę dymka
+`.dn-tooltip`, ale nie niosą ani odmiany pigułkowej grupy jednokrotnego
+wyboru, ani znaku objaśnienia — obie formy stoją więc pod nazwą własną
+widoku, nie na aliasie zgodności.
+
+## budowa/klient-poprzedni/src/okno-komunikacji/okno.css
+Wygląd wpisu, pola promptu, przycisku i kropki stanu niesie biblioteka,
+w tym arkuszu ich nie ma. Arkusz nie niesie ani jednej barwy, ani wymiaru
+własnego, woła żeton w miejscu użycia. Definicje `--dc-*` stoją
+w `powloka.css`, bo sięga po nie `sterowanie/sterowanie.css`. Zerowania,
+podłoża dokumentu ani kroju bazowego arkusz nie powtarza: należą do
+`motyw/fundament.css`, a wysokość gospodarza do `.dn-aplikacja`. Znacznik
+stawia klasy biblioteki: `.dn-wpis` z odmianami `--czlowiek`,
+`--inteligencja`, `--system` z `komponenty/wpis.css`; `.dn-prompt`
+i `.dn-btn--sygnal` w polu wpisywania z `komponenty/drobne.css`
+i `komponenty/przycisk.css`; `.dn-kropka` z odmianą stanu w listwie
+z `komponenty/plakietka.css`. Role kontraktu przekłada na te odmiany
+`historia.ts`: user na czlowiek, assistant na inteligencja, system i tool
+na system. Klasy `.dc-*` w tym arkuszu to wyłącznie rozkład okna: siatka,
+listwa tożsamości, obszar przewijania, biblioteka nie ma dla nich
+odpowiednika. Nazwy wpisu i historii należą do katalogu `rozmowa/`
+(`rozmowa/wpis.css`, `rozmowa/rozmowa.css`), okno ich nie definiuje.
+
+Kropka stanu połączenia jest komponentem biblioteki: barwy stanu wybiera
+`naglowek.ts` odmianą `.dn-kropka--*`. Pole wpisywania nie odtwarza listwy:
+ramka pola już oddziela je od historii, a druga krawędź nad nią byłaby
+kreską bez zadania.
+
+## budowa/klient-poprzedni/src/okno-komunikacji/pasek-zlecenia.css
+Wygląd uchwytu, wykazu, haczyka i opisu niesie `komponenty/menu-drzewo.css`;
+zdanie odmowy ubiera plakietka `.dn-plakietka--blad`. Arkusz nie powtarza
+żadnej z tych reguł. Pasek jest jedną decyzją, kopertą zlecenia, rozłożoną
+na kilka nastaw w rzędzie, a nie w siatce, bo rząd czyta się jak zdanie:
+gdzie, na czym, czym, jak — siatka rozbiłaby to na kratki bez kolejności.
+Zawijanie jest konieczne, bo gniazdo sceny bywa wąskie (trzy okna obok
+siebie), a ster wychodzący poza krawędź przestaje być sterem. Źródłem
+wartości są wyłącznie żetony `motyw/`, ani jednej barwy szesnastkowej, ani
+jednego odstępu spoza skali.
+
+## budowa/klient-poprzedni/src/powloka/obszar-roboczy.css
+Kolumna, bo pasek uczciwości stoi nad widokiem; widok bierze całą resztę
+wysokości, stan pusty staje pośrodku. Okno operacyjne modułu stoi w wierszu
+górnym, pas komunikacji pod nim i bierze do 54% wysokości; okna równoległe
+stają obok siebie dopiero wewnątrz tego pasa. Moduł bez zbudowanego widoku
+oddaje rozmowie całą wysokość: strefa modułu jest wtedy ukryta, a pas
+komunikacji zostaje jedynym wierszem planszy. Próg 496 pikseli to
+najmniejsza wysokość, przy której wnętrze pasa mieści się bez ucinania:
+listwa przełącznika, wyściółka toru, pas relacji, nagłówek gniazda oraz
+sama rozmowa (z `rozmowa/rozmowa.css`: nagłówek modułu, historia minimum
+140 pikseli, pole wysyłki około 148 pikseli) sumują się do blisko 490
+pikseli, a przycięcie nadmiaru gniazda i powłoki obcina go, zamiast
+przewijać. Na ekranach wysokich, gdzie 54% przekracza próg, pas dalej
+bierze swoje 54%. Katalog okien operacyjnych, których jeszcze nie ma,
+niesie kody wprost z rdzenia, krojem maszynowym, bo to identyfikatory,
+nie nazwy własne.
+
+## design/03-marka/emblematy/favicon/naglowek-snippet.html
+Kolejność wpięć jest znacząca: przeglądarka wspierająca SVG bierze
+pierwszy pasujący wpis i pomija ICO; starsza przeglądarka pobiera
+favicon.ico ze ścieżki domyślnej.
+
+## design/03-marka/zastosowania/html/sygnatura-poczty-jasna.html
+Pola w nawiasach kwadratowych uzupełnia się własnymi danymi. Zasady
+budowy: szerokość sto procent do 520 pikseli, znak 168 na 72 piksele
+w podwójnej rozdzielczości pliku, wiersz reguły grubości 1 piksela,
+kropka sygnału jako jedyny akcent barwny.
+
+## design/05-okna/przeplyw/centrum-dowodzenia.html
+Centrum dowodzenia jest przedpokojem, ale nosi ten sam pasek powłoki, aby
+przełączanie środowisk i tryby pozostały spójne z oknami roboczymi, zgodnie
+z kontraktem systemu projektowego. Grupa składników paska okna niesie
+zestaw karty bieżącej i gaśnie na karcie centrum dowodzenia, ponieważ
+pulpit okna nie jest modułem. Warstwa tła karty środowiska ma pole animacji
+stojące przy prawej krawędzi i leżące pod treścią; jest elementem
+dekoracyjnym poza drzewem dostępności i poza trafieniami myszy.
+
+## design/zasoby/zetony/zetony.css
+Trzy role barw wywodzonych stoją w bazie, a nie w blokach motywów, ponieważ
+ich składniki (`--dn-obrys-mocny`, `--dn-wstazka`, `--dn-tekst-2`,
+`--dn-tekst-3`) są już zależne od motywu i rozstrzygają się w miejscu
+użycia. Dzięki temu proporcja domieszki jest zapisana raz, a nie powtórzona
+w czterech kontekstach motywu, więc się między nimi nie rozjeżdża.
+
+## design/zasoby/karty-okna.css
+Wygląd kart należy wyłącznie do tego arkusza — `rama.css` odpowiada za
+obudowę okna, nie za karty. Arkusz wymaga `zetony/zetony.css`,
+`zetony/ruch.css` i `stany.css`; mechanizm dostarcza `karty-okna.js` (menu
+powłok, grot, kontrolka dodania, ustawienia widoku). Porządek pasma jest
+wiążący i idzie od lewej: grot jako pierwsza kontrolka pasma otwiera menu
+kart; powłoki niosą okna robocze bieżącej sesji z licznikiem wewnątrz
+ikony; zakładki to `.dn-karty-lista[role=tablist]` z wyłącznie pozycjami
+`tab`; kontrolka dodania stoi jako jedyna za zakładkami; odstęp rozpycha
+pasmo; narzędzia niosą maksymalizację okna i ustawienia widoku przy prawej
+krawędzi. Pasmo nie jest listą zakładek samo w sobie: rolę `tablist` niesie
+wyłącznie `.dn-karty-lista`, bo lista zakładek nie może mieć dzieci innych
+niż `tab`. Geometria pochodzi ze wzorca pasa kart i jest zapisana raz,
+w jednym bloku zmiennych komponentu — pozostałe reguły wyłącznie się do
+niej odwołują.
+
+## design/zasoby/kreator.css
+Bryła okna prowadzi przez ponumerowane kroki: instalator, przepływ
+wejścia, przygotowanie środowiska. Trzy pasma stoją jedno pod drugim, belka
+tytułowa, korpus złożony z szyny kroków i płótna, oraz pas działań, a korpus
+dzieli się na dwie kolumny. Tym różni się od okna wejściowego
+(`.dn-okno-wejsciowe` w `komponenty.css`), które ma dwie kolumny i nie ma
+pasa działań na dnie: tam czynność stoi w panelu, tu biegnie pod obiema
+kolumnami. Trzy strefy okna rozdziela sama powierzchnia, bez kreski: belka
+jest najciemniejsza, szyna kroków to obrzeże, a płótno treści jest
+najjaśniejsze. Okno kreatora stoi przed uwierzytelnieniem, więc nie ma ramy
+aplikacji — belka tego okna nie jest `.dn-belka` z `rama.css`, tamta należy
+do ramy aplikacji i niesie jej sterowanie. Kolejne okno kreatora nie
+przepisuje stąd żadnej reguły: wpina ten arkusz i używa klas, a to, co
+należy do jednego okna, a nie do rodziny, stoi w `okna/<okno>.css`.
+Wyłącznie żetony `var(--dn-*)`, oba motywy.
+
+Okno instalatora nie zmienia rozmiaru między krokami, bo `min(…, 100%)`
+wiązałoby szerokość z treścią kroku przez rusztowanie prototypu, które
+kurczy się do zawartości. Kolumna boczna traci wcięcie, bo równy podział
+rozjeżdżał wiersze tabeli. Granicę treści kroku z kolumną boczną niesie
+kreska z lewej, ponieważ sama różnica powierzchni ginęła wzrokowo.
+
+Blok dokumentu kroku: wyjaśnienie pod polem stoi w trzecim stopniu
+kontrastu, bo jest przypisem do pola, nie jego treścią. Pole warunków
+bierze całą wolną wysokość kroku — sztywne 190 pikseli zostawiało pod
+spodem prawie dwieście pikseli pustki, a treść i tak się nie mieściła.
+Powierzchnia jest zagłębiona o jeden stopień, nie o cztery: żeton tła na
+ciemnym panelu robił studnię, w której tekst leżał na prawie czarnym. Pole
+warunków licencji jest osadzonym tekstem ciągłym z biblioteki — własne
+zostaje wyłącznie to, czego biblioteka znać nie może: tło strefy tego okna
+i obrys odcinający je od płótna kroku.
+
+## design/zasoby/css/fundament.css
+Arkusz wymaga plików fonty.css oraz zetony.css z warstwy żetonów, niesie
+też drobne wzorce tekstowe poza wymienionymi w nagłówku.

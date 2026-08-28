@@ -1,11 +1,4 @@
-/* ============================================================================
-   POWŁOKA · PAS 4 — OBSZAR ROBOCZY
-   ----------------------------------------------------------------------------
-   Jedna odpowiedzialność: kontener treści wybranej pozycji nawigacji, pasek
-   uczciwości nad nią i stan pusty pokazywany, gdy pozycja zbudowanego widoku
-   nie ma. Kolumna, bo pasek uczciwości stoi nad widokiem; widok bierze całą
-   resztę wysokości, stan pusty staje pośrodku.
-   ============================================================================ */
+/* Arkusz opisuje kontener treści wybranej pozycji nawigacji, pasek uczciwości nad nią oraz stan pusty widoku modułu. */
 
 .dn-obszar {
   display: flex;
@@ -18,8 +11,7 @@
   background: var(--dn-tlo);
 }
 
-/* Warstwa ukryta znika bez zdejmowania z drzewa — patrz `obszar-roboczy.ts`:
-   scena z żywym oknem rozmowy nie może być odmontowywana przy przełączeniu */
+/* Warstwa ukryta znika bez zdejmowania z drzewa, ponieważ scena z żywym oknem rozmowy nie może być odmontowywana przy przełączeniu. */
 .dn-obszar [hidden] {
   display: none;
 }
@@ -54,12 +46,12 @@
   min-height: 0;
 }
 
-/* Bez widoku modułu plansza ma jeden wiersz — rozmowa bierze całą wysokość */
+/* Bez widoku modułu plansza ma jeden wiersz, ponieważ rozmowa przejmuje wtedy całą dostępną wysokość obszaru. */
 .dn-obszar__plansza:has(> .dn-obszar__modul[hidden]) {
   grid-template-rows: minmax(0, 1fr);
 }
 
-/* Okno operacyjne modułu — wiersz górny */
+/* Okno operacyjne modułu zajmuje wiersz górny planszy, tuż nad pasem komunikacji obecnym w każdym module. */
 .dn-obszar__modul {
   display: flex;
   flex-direction: column;
@@ -68,7 +60,7 @@
   overflow: auto;
 }
 
-/* Pas komunikacji — wiersz dolny, obecny w każdym module */
+/* Pas komunikacji zajmuje wiersz dolny planszy i pozostaje obecny w każdym module obszaru roboczego powłoki. */
 .dn-obszar__czat {
   display: flex;
   flex-direction: column;
@@ -87,7 +79,7 @@
   margin: auto;
 }
 
-/* Znak modułu — ikona w obwódce, żeby stan pusty miał punkt ciężkości */
+/* Znak modułu to ikona umieszczona w obwódce, dzięki której stan pusty zyskuje wyraźny punkt ciężkości. */
 .dn-obszar__znak {
   display: inline-flex;
   align-items: center;
@@ -115,7 +107,7 @@
   text-align: left;
 }
 
-/* Pasek uczciwości nad widokiem: mówi, czego w tym module jeszcze nie ma */
+/* Pasek uczciwości nad widokiem mówi wprost i jawnie, czego w danym module jeszcze nie ma tam zbudowanego. */
 .dn-obszar__nota {
   flex: 0 0 auto;
   margin: 0;

@@ -1,11 +1,4 @@
-/* ============================================================================
-   DANACO CONSOLE — GNIAZDO UKŁADU OKIEN RÓWNOLEGŁYCH
-   ----------------------------------------------------------------------------
-   Jedna odpowiedzialność: wygląd jednego miejsca na scenie — nagłówek z rolą
-   i okno komunikacji pod nim. Rozkład sceny opisuje `uklad.css`.
-
-   Wartości barw, odstępów i pisma pochodzą wyłącznie z żetonów `motyw/`.
-   ============================================================================ */
+/* Arkusz opisuje wygląd jednego miejsca na scenie: nagłówek z rolą i okno komunikacji pod nim, w barwach i pismie żetonów motywu. */
 
 /* Gniazdo to kolumna rozmowy plus opcjonalna kolumna paneli obok niej —
    rodzaje obszaru wylicza `rodzaje-obszaru.ts`, a widok pełnoekranowy kładzie
@@ -49,7 +42,7 @@
   grid-column: 1;
 }
 
-/* Uchwyt szerokości i kolumna paneli — druga i trzecia kolumna drugiego wiersza. */
+/* Uchwyt szerokości i kolumna paneli zajmują drugą i trzecią kolumnę drugiego wiersza układu gniazda okien. */
 .dn-okna__gniazdo > .dn-uchwyt {
   grid-row: 2;
   grid-column: 2;
@@ -71,8 +64,7 @@
   box-shadow: none;
 }
 
-/* Miejsce sterowania panelami w nagłówku: skróty i menu `⋮` w jednym rzędzie,
-   bez zawijania. */
+/* Miejsce sterowania panelami w nagłówku mieści skróty oraz menu w jednym rzędzie, bez zawijania treści. */
 .dn-okna__sterowanie {
   display: flex;
   flex: none;
@@ -80,8 +72,7 @@
   gap: var(--dn-od-1);
 }
 
-/* Gniazdo poza sceną znika całkowicie — display siatki nie może przykryć
-   atrybutu hidden */
+/* Gniazdo znajdujące się poza sceną znika całkowicie, ponieważ siatka wyświetlania nie może przykryć atrybutu hidden. */
 .dn-okna__gniazdo[hidden] {
   display: none;
 }
@@ -151,7 +142,7 @@
   display: none;
 }
 
-/* Plakietka roli nie łamie się na dwa wiersze w wąskiej kolumnie gniazda */
+/* Plakietka roli nigdy nie łamie się na dwa wiersze, nawet w wąskiej kolumnie gniazda układu okien równoległych. */
 .dn-okna__rola {
   white-space: nowrap;
 }
@@ -164,7 +155,7 @@
   align-items: center;
 }
 
-/* Wskaźnik pracy trwającej teraz — stoi obok etykiety stanu, nigdy zamiast niej */
+/* Wskaźnik pracy trwającej teraz stoi obok etykiety stanu i nigdy jej nie zastępuje w wąskiej kolumnie. */
 .dn-spinner.dn-okna__stan-wskaznik {
   width: var(--dn-wym-ikona-sm);
   height: var(--dn-wym-ikona-sm);
@@ -195,7 +186,7 @@
   min-width: 0;
 }
 
-/* Miejsce montażu okna komunikacji — okno rozpycha się na całą wysokość */
+/* Miejsce montażu okna komunikacji rozpycha się i zajmuje całą dostępną wysokość kolumny rozmowy gniazda. */
 .dn-okna__okno {
   display: flex;
   min-width: 0;
@@ -208,7 +199,7 @@
   min-width: 0;
 }
 
-/* Chwila przekazania zlecenia — nagłówki obu okien pary rozświetlają się */
+/* Chwila przekazania zlecenia sprawia, że nagłówki obu okien pary rozświetlają się jednocześnie na scenie. */
 .dn-okna__naglowek--przekazanie {
   animation: dn-okna-blysk 0.9s var(--dn-ease) 1;
 }

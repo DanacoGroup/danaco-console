@@ -7231,3 +7231,18 @@ wstrzymać pracę modelu, a nie stracić miejsce, w którym pracuje. Okna zostaj
 otwarte, zapis zostaje w całości, wznowienie pracy jest kolejną wiadomością.
 Okno bez tury w biegu nie jest błędem i po prostu nie trafia do wykazu okien
 przerwanych.
+
+## budowa/server/internal/core/adapter_skroty_tekstowe.go
+Słownik skrótów tekstowych mieszka w rdzeniu, a nie w kliencie, ponieważ skrót
+rozwija się we wszystkich polach tekstowych platformy, a nie w jednym oknie.
+Gdyby mieszkał w kliencie, ta sama fraza rozwijałaby się inaczej na dwóch
+maszynach tego samego profilu, a przeniesienie pracy na inną maszynę
+oznaczałoby przepisywanie słownika od nowa. Samo rozwinięcie wykonuje okno,
+u siebie, w chwili pisania — rdzeń nie widzi pola tekstowego i widzieć go nie
+musi; rdzeń trzyma słownik i pilnuje, żeby jeden profil nie miał dwóch
+rozwinięć tego samego skrótu.
+
+Skrót bywa szablonem z polami do wypełnienia. Rdzeń zna ich nazwy, ale ich nie
+wypełnia — wypełnia je użytkownik w chwili rozwinięcia, a wartości bywają różne
+przy każdym użyciu. Podstawienie czegokolwiek po stronie rdzenia dałoby
+szablon rozwinięty raz na zawsze.

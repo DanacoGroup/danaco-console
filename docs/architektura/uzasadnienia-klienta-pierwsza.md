@@ -8884,3 +8884,30 @@ Kontrakt nie ma osobnej rodziny komend doradcy, więc konsultacja idzie komendam
 
 ## budowa/klient-poprzedni/src/moduly/agents/zrodlo-doradcy.ts (oczekiwanie na odpowiedź)
 Fragment strumienia nie jest tu drogą: okno konsultacji zakładane jest bez strumieniowania, więc domknięta wiadomość jest jedyną postacią, której znaczenie jest pewne. Limitu czasu nie ma z tego samego powodu, co w warstwie protokołu: kontrakt go nie przewiduje, a rozłączenie klienta nie kończy pracy rdzenia. Zwrócone odwołanie zdejmuje subskrypcję wtedy, gdy odpowiedź już nie nadejdzie — bez niego nasłuch przeżyłby nieudane wysłanie pytania.
+
+## budowa/klient-poprzedni/src/moduly/rejestracja.ts
+Ten plik nie powtarza typów powłoki, tylko przekazuje je dalej, żeby moduły
+nie musiały sięgać do katalogu aplikacji po kontrakt, którego używają; import
+typu nie tworzy zależności czasu wykonania, więc krąg nie powstaje. Część
+modułów montuje się do gospodarza podanego z zewnątrz, a nie oddaje własnego
+elementu — przejście daje im gospodarza własnego, zachowanie modułu zostaje
+bez zmian, a powłoka dostaje kształt widoku, którego wymaga; wczytanie jest tu
+bezczynne, bo te moduły odczytują rdzeń już przy montażu. Umowa widoku modułu
+dostaje identyfikator sesji, a moduł pracujący w konkretnym oknie komunikacji
+nie ma bez niego czego otworzyć, dopóki umowa nie niesie okna — moduł sam pyta
+wtedy rdzeń o okna sesji. Każde wyjście bez montażu nazywa swój stan zdaniem
+w obszarze roboczym, bo cichy powrót zostawiałby obszar nie do odróżnienia od
+sesji bez okien i od usterki widoku. Okno wybiera się po polu kodu modułu
+ustawianym przez rdzeń, a nie po pierwszej pozycji wykazu, bo sesja z oknem
+cudzego modułu na początku dałaby modułowi okno nie jego, a komendy
+pojechałyby do rdzenia z obcym kodem okna. Kod modułu jest opcjonalny ze
+względu na granicę własności: wywołania, które kodu nie podają, zachowują
+wybór pierwszego okna sesji — jest to jawny dług, takie wywołania należy
+uzupełnić o kod modułu. Klasa stanu przed montażem nie jest oknem
+operacyjnym ani elementem pakietu design, tylko jednym zdaniem w obszarze
+roboczym na czas przed montażem albo zamiast niego; wartość fazy bierze się
+ze wspólnego słownika, żeby sprawdzian i powłoka rozpoznawały ten stan tak
+samo jak stany okien. Przejście dla modułu potrzebującego sesji już przy
+montażu jest odmianą przejścia dla modułu pracującego w oknie: tamten pyta
+rdzeń o okna, ten wystarcza sobie samą sesją, a montaż jest odroczony do
+wczytania, bo w chwili tworzenia widoku sesja bywa jeszcze nieznana.

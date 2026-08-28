@@ -1,16 +1,6 @@
 // Odpowiedzialność pliku: `developer.tree.get` — drzewo projektu okna Project
-// Tree.
-//
-// session.Ustawienia niesie listę katalogów roboczych, a nie jeden katalog, więc
-// żądanie bez wskazania ścieżki zwraca korzenie wszystkich naraz — każdy jako
-// węzeł bez rodzica. Pole `root` odpowiedzi jest jedno i niesie katalog pierwszy.
-//
-// Ścieżki węzłów są bezwzględne, bo przy wielu korzeniach ścieżka względna jest
-// wieloznaczna: `src/main.go` może istnieć w każdym z katalogów roboczych.
-//
-// Przekroczenie granicy liczby węzłów kończy się odmową, nie obcięciem wyniku:
-// kontrakt nie ma pola „wynik niepełny", więc obcięte drzewo byłoby dla klienta
-// nieodróżnialne od repozytorium mniejszego, niż jest.
+// Tree. Żądanie bez wskazania ścieżki zwraca korzenie wszystkich katalogów
+// roboczych naraz. Ścieżki węzłów są bezwzględne, jednoznaczne przy wielu korzeniach.
 package core
 
 import (
@@ -24,15 +14,19 @@ import (
 )
 
 const (
-	// glebokoscDomyslna wystarcza do nawigacji: korzeń i jego zawartość.
+	// glebokoscDomyslna wystarcza do nawigacji: korzeń i jego zawartość,
+	// bez schodzenia głębiej bez żądania.
 	glebokoscDomyslna = 2
-	// glebokoscNajwieksza chroni przed zejściem w drzewo zależności.
+	// glebokoscNajwieksza chroni przed zejściem w drzewo zależności, na przykład
+	// katalog node_modules o niekończonej głębokości.
 	glebokoscNajwieksza = 8
-	// granicaWezlow jest największą liczbą pozycji jednej odpowiedzi.
+	// granicaWezlow jest największą liczbą pozycji jednej odpowiedzi,
+	// powyżej której komenda odmawia zamiast obcinać wynik.
 	granicaWezlow = 4000
 )
 
-// Drzewo obsługuje `developer.tree.get`.
+// Drzewo obsługuje `developer.tree.get`, składając płaską listę węzłów
+// w drzewo katalogów okna Project Tree.
 func (a *adapterDevelopera) Drzewo(_ context.Context,
 	z shared.DeveloperTreeGetRequest) (shared.DeveloperTreeGetResponse, error) {
 
@@ -124,7 +118,8 @@ func zbierzWezly(wezly []shared.DeveloperTreeNode, katalog string, glebokosc int
 	return wezly, nil
 }
 
-// wezelDrzewa składa jeden węzeł kontraktu. Rodzic pusty znaczy korzeń.
+// wezelDrzewa składa jeden węzeł kontraktu. Rodzic pusty znaczy korzeń bez
+// nadrzędnego katalogu roboczego.
 func wezelDrzewa(sciezka, rodzic string, opis os.FileInfo) shared.DeveloperTreeNode {
 	zmieniono := opis.ModTime().UTC().UnixMilli()
 	wezel := shared.DeveloperTreeNode{

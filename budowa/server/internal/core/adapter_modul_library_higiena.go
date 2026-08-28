@@ -1,18 +1,6 @@
-// Moduł Library — higiena repozytorium: `library.duplicate.scan`,
-// `library.duplicate.merge`, `library.fixity.check`, `library.name.normalize`,
-// `library.stats.get`.
-//
-// Wszystkie pięć czynności są czynnościami RDZENIA, nie okna, i z jednego
-// powodu: sięgają po to, czego okno nie ma. Rozpoznanie przybliżone żąda
-// porównania każdego zasobu z każdym, weryfikacja integralności — przeliczenia
-// sumy z bajtów leżących na dysku, pulpit stanu — przejścia po całym zbiorze.
-// Okno liczące te rzeczy z odczytanej strony wykazu orzeka o próbce.
-//
-// Rozpoznanie dokładne idzie po sumie kontrolnej i jest pewne. Rozpoznania
-// przybliżone niosą trafność, bo to wnioski: podobieństwo treści liczy się
-// odciskiem słów (shingling), podobieństwo obrazu — odciskiem percepcyjnym
-// zbudowanym z obrazu zeskalowanego do siatki. Oba liczy wkompilowany kod Go;
-// żaden nie woła programu z zewnątrz.
+// Moduł Library obsługuje higienę repozytorium komendami
+// `library.duplicate.scan`, `library.duplicate.merge`, `library.fixity.check`,
+// `library.name.normalize` i `library.stats.get`.
 package core
 
 import (
@@ -43,7 +31,8 @@ const granicaZbioruHigieny = 5000
 // niemal-duplikaty. Wartość w setnych, zgodnie z kontraktem.
 const progPodobienstwaDomyslny = 85
 
-// SkanujDuplikaty obsługuje `library.duplicate.scan`.
+// SkanujDuplikaty obsługuje `library.duplicate.scan` i szuka duplikatów
+// dokładnych albo przybliżonych, treścią i obrazem, w zbiorze zasobów.
 func (a *adapterBiblioteki) SkanujDuplikaty(ctx context.Context,
 	z shared.LibraryDuplicateScanRequest) (shared.LibraryDuplicateScanResponse, error) {
 
@@ -178,8 +167,7 @@ func (a *adapterBiblioteki) grupyPrzyblizone(zasoby []dane.PlikBiblioteki, prog 
 				trafnosc = podobienstwoZbiorowSlowBiblioteki(odciski[pierwszy].slowa, odciski[drugi].slowa)
 			}
 			if trafnosc < prog || trafnosc >= 100 {
-				// Trafność stuprocentowa znaczy treść identyczną — to jest
-				// rozpoznanie dokładne, nie przybliżone.
+				// Trafność stuprocentowa jest rozpoznaniem dokładnym, nie przybliżonym.
 				continue
 			}
 			grupa = append(grupa, odciski[drugi].kod)
@@ -271,10 +259,7 @@ func (a *adapterBiblioteki) PolaczDuplikaty(ctx context.Context,
 				return shared.LibraryDuplicateMergeResponse{}, bladBiblioteki(err)
 			}
 			for _, wersja := range wersje {
-				// Wersja wchłonięta wchodzi do historii docelowego jako nowy
-				// wpis pod własnym identyfikatorem: kod wersji jest unikalny
-				// w całym repozytorium, więc przeniesienie go wprost byłoby
-				// zderzeniem kluczy.
+				// Wersja wchłonięta wchodzi jako nowy wpis pod własnym identyfikatorem.
 				_, err := a.repozytorium.ZapiszWersje(ctx, docelowy.ID, dane.WersjaPlikuBiblioteki{
 					Kod: nowyIdentyfikator(przedrostekWersjiBiblioteki), PlikID: docelowy.ID,
 					Etykieta: wskazanieBiblioteki("z zasobu " + zrodlo.Nazwa),
@@ -324,11 +309,9 @@ func (a *adapterBiblioteki) PolaczDuplikaty(ctx context.Context,
 	}, nil
 }
 
-// SprawdzIntegralnosc obsługuje `library.fixity.check`.
-//
-// Suma liczy się z bajtów leżących pod odwołaniem i porównuje z zapisaną przy
-// zasobie. Brak treści pod odwołaniem to trzeci wynik, nie odmiana niezgodności:
-// sum nie ma czego porównać, a zasób i tak jest uszkodzony.
+// SprawdzIntegralnosc obsługuje `library.fixity.check` i porównuje sumę
+// kontrolną policzoną z bajtów pod odwołaniem z sumą zapisaną przy zasobie;
+// brak treści pod odwołaniem jest trzecim wynikiem, nie odmianą niezgodności.
 func (a *adapterBiblioteki) SprawdzIntegralnosc(ctx context.Context,
 	z shared.LibraryFixityCheckRequest) (shared.LibraryFixityCheckResponse, error) {
 
@@ -415,7 +398,8 @@ func (a *adapterBiblioteki) NormalizujNazwy(ctx context.Context,
 	return shared.LibraryNameNormalizeResponse{Results: wyniki, ChangedCount: zmienione}, nil
 }
 
-// PulpitStanu obsługuje `library.stats.get`.
+// PulpitStanu obsługuje `library.stats.get` i oddaje liczby zbiorcze
+// repozytorium: zasoby, archiwum, duplikaty, rozkłady etykiet i kolekcji.
 func (a *adapterBiblioteki) PulpitStanu(ctx context.Context,
 	z shared.LibraryStatsGetRequest) (shared.LibraryStatsGetResponse, error) {
 
@@ -464,12 +448,9 @@ func (a *adapterBiblioteki) zasobyZbioru(ctx context.Context, kody []string,
 	return wiersze, nil
 }
 
-// nazwaZnormalizowanaBiblioteki składa nazwę zasobu według reguły nazewnictwa.
-//
-// Schemat rozumie trzy wzorce: `{nazwa}`, `{rozszerzenie}` i `{numer}`. Bez
-// schematu nazwa zostaje ta sama, a zmianie podlega wyłącznie jej zapis:
-// znaki diakrytyczne schodzą do postaci podstawowej, znaki spoza zakresu
-// bezpiecznego ustępują myślnikowi, a wielkość liter idzie w dół.
+// nazwaZnormalizowanaBiblioteki składa nazwę zasobu według reguły nazewnictwa
+// ze schematem rozumiejącym wzorce `{nazwa}`, `{rozszerzenie}` i `{numer}`,
+// a bez schematu ujednolica sam zapis nazwy zastanej.
 func nazwaZnormalizowanaBiblioteki(zasob dane.PlikBiblioteki, schemat string, transliteracja bool,
 	numer int) string {
 
@@ -493,7 +474,8 @@ func nazwaZnormalizowanaBiblioteki(zasob dane.PlikBiblioteki, schemat string, tr
 	return trzon + "." + zapisBezpiecznyNazwyBiblioteki(rozszerzenie, transliteracja)
 }
 
-// trzonIRozszerzenieBiblioteki rozdziela nazwę na człon główny i rozszerzenie.
+// trzonIRozszerzenieBiblioteki rozdziela nazwę pliku na człon główny
+// i rozszerzenie, dzieląc po ostatniej kropce w nazwie.
 func trzonIRozszerzenieBiblioteki(nazwa string) (string, string) {
 	kropka := strings.LastIndex(nazwa, ".")
 	if kropka <= 0 || kropka == len(nazwa)-1 {
@@ -502,12 +484,11 @@ func trzonIRozszerzenieBiblioteki(nazwa string) (string, string) {
 	return nazwa[:kropka], nazwa[kropka+1:]
 }
 
-// zapisBezpiecznyNazwyBiblioteki sprowadza nazwę do postaci ujednoliconej.
+// zapisBezpiecznyNazwyBiblioteki sprowadza nazwę do postaci ujednoliconej:
+// małe litery, cyfry i myślniki, opcjonalnie z transliteracją znaków.
 func zapisBezpiecznyNazwyBiblioteki(tekst string, transliteracja bool) string {
 	if transliteracja {
-		// Rozkład kanoniczny, zdjęcie znaków łączących, złożenie z powrotem —
-		// „ą" staje się „a", a „ł" zostaje, bo nie jest literą ze znakiem
-		// łączącym. Zamiana liter osobnych idzie niżej, wprost.
+		// Rozkład kanoniczny, zdjęcie znaków łączących, złożenie z powrotem.
 		bezZnakow := transform.Chain(norm.NFD,
 			runes.Remove(runes.In(unicode.Mn)), norm.NFC)
 		if wynik, _, err := transform.String(bezZnakow, tekst); err == nil {
@@ -534,7 +515,8 @@ func zapisBezpiecznyNazwyBiblioteki(tekst string, transliteracja bool) string {
 	return strings.Trim(zapis.String(), "-")
 }
 
-// polaczWykazyBiblioteki scala dwa wykazy kodów bez powtórzeń.
+// polaczWykazyBiblioteki scala dwa wykazy kodów bez powtórzeń, zachowując
+// kolejność pierwszego wystąpienia każdego kodu.
 func polaczWykazyBiblioteki(pierwszy, drugi []string) []string {
 	obecne := map[string]bool{}
 	wynik := make([]string, 0, len(pierwszy)+len(drugi))
@@ -550,7 +532,8 @@ func polaczWykazyBiblioteki(pierwszy, drugi []string) []string {
 	return wynik
 }
 
-// rozkladKontraktuBiblioteki przenosi rozkład warstwy danych na kontrakt.
+// rozkladKontraktuBiblioteki przenosi rozkład liczbowy warstwy danych na
+// kształt odpowiedzi zgodny z kontraktem, jaki widzi klient.
 func rozkladKontraktuBiblioteki(pozycje []dane.LiczbaWedlugKlucza) []shared.LibraryCount {
 	wynik := make([]shared.LibraryCount, 0, len(pozycje))
 	for _, pozycja := range pozycje {
@@ -559,7 +542,8 @@ func rozkladKontraktuBiblioteki(pozycje []dane.LiczbaWedlugKlucza) []shared.Libr
 	return wynik
 }
 
-// terazZnacznikBiblioteki oddaje chwilę bieżącą w zapisie znacznika schematu.
+// terazZnacznikBiblioteki oddaje chwilę bieżącą w zapisie znacznika czasu
+// zgodnym ze schematem bazy danych.
 func terazZnacznikBiblioteki() string {
 	return time.Now().UTC().Format(formatZnacznikaBazy)
 }

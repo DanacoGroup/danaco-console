@@ -1,20 +1,6 @@
 // Odpowiedzialność pliku: cytowania i bibliografia — złożenie cytatu w stylu,
 // wykaz stylów, kontrola kompletności metadanych (Citation Health Check) oraz
 // flaga wycofania pracy.
-//
-// ── Style są wkompilowane, nie doczytywane ─────────────────────────────────
-// Repozytorium CSL liczy około dwóch i pół tysiąca plików XML i procesor, który
-// je czyta, jest biblioteką JavaScriptu. Oparcie cytowań o taki procesor
-// znaczyłoby, że u Operatora, który nie doinstalował środowiska JS, cytowanie
-// nie działa wcale — a cytowanie jest w module badawczym czynnością codzienną,
-// nie ozdobą. Dlatego pięć stylów najczęściej wymaganych (APA, MLA, Chicago,
-// IEEE, Vancouver) jest złożonych tutaj, w Go, i działa od pierwszego
-// uruchomienia. Styl własny Operatora dokłada się obok jako nazwany wariant.
-//
-// ── Kontrola kompletności mówi, czego brak ─────────────────────────────────
-// `research.citation.check` nie mówi „metadane niekompletne". Mówi, które pole
-// brakuje przy którym źródle i skąd da się je uzupełnić — bo to jest jedyna
-// postać tej informacji, z którą Operator może cokolwiek zrobić.
 package core
 
 import (
@@ -28,13 +14,15 @@ import (
 	"danacoconsole/shared"
 )
 
-// stylWbudowanyBadania opisuje jeden styl cytowania złożony w rdzeniu.
+// stylWbudowanyBadania opisuje jeden styl cytowania złożony w rdzeniu: niesie kod stylu
+// oraz jego pełną nazwę widoczną w wykazie stylów.
 type stylWbudowanyBadania struct {
 	kod   string
 	nazwa string
 }
 
-// styleWbudowaneBadania wymienia style dostępne bez żadnej konfiguracji.
+// styleWbudowaneBadania wymienia style dostępne bez żadnej konfiguracji: APA, MLA, Chicago,
+// IEEE oraz Vancouver, złożone wprost w kodzie.
 var styleWbudowaneBadania = []stylWbudowanyBadania{
 	{kod: "apa", nazwa: "APA (7. wydanie)"},
 	{kod: "mla", nazwa: "MLA (9. wydanie)"},
@@ -43,7 +31,8 @@ var styleWbudowaneBadania = []stylWbudowanyBadania{
 	{kod: "vancouver", nazwa: "Vancouver"},
 }
 
-// metadaneCytowaniaBadania to pola pozycji potrzebne do złożenia cytatu.
+// metadaneCytowaniaBadania to pola pozycji potrzebne do złożenia cytatu: tytuł, autorzy, rok,
+// wydawca, adres wydania oraz identyfikator DOI.
 type metadaneCytowaniaBadania struct {
 	kodZrodla string
 	tytul     string
@@ -54,7 +43,8 @@ type metadaneCytowaniaBadania struct {
 	doi       string
 }
 
-// ZlozCytowania obsługuje `research.citation.render`.
+// ZlozCytowania obsługuje żądanie `research.citation.render` i zwraca gotowe cytaty w wybranym
+// stylu dla wskazanych źródeł.
 func (a *adapterBadan) ZlozCytowania(ctx context.Context,
 	z shared.ResearchCitationRenderRequest) (shared.ResearchCitationRenderResponse, error) {
 
@@ -92,8 +82,8 @@ func (a *adapterBadan) ZlozCytowania(ctx context.Context,
 	}, nil
 }
 
-// metadaneCytowaniaBadania składa pola pozycji z wiersza źródła i z metadanych
-// CSL, gdy zostały zapisane przy rozstrzygnięciu identyfikatora.
+// metadaneCytowaniaBadania składa pola pozycji z wiersza źródła i z metadanych CSL, gdy zostały
+// zapisane przy rozstrzygnięciu identyfikatora, w jedną strukturę gotową do sformatowania cytatu.
 func (a *adapterBadan) metadaneCytowaniaBadania(ctx context.Context,
 	kodZrodla string) (metadaneCytowaniaBadania, error) {
 
@@ -145,9 +135,7 @@ func (a *adapterBadan) metadaneCytowaniaBadania(ctx context.Context,
 	}
 	if metadane.rok == "" {
 		if rok := rokZTekstuBadania(zrodlo.PozyskanoO); rok != nil {
-			// Rok pozyskania nie jest rokiem wydania i tak jest traktowany:
-			// wchodzi wyłącznie jako data dostępu do zasobu sieciowego, a przy
-			// pozycji recenzowanej zostaje brakiem, który zgłosi kontrola.
+			// Rok pozyskania to data dostępu do zasobu sieciowego, nie rok wydania pozycji.
 			if zrodlo.Rodzaj == shared.ResearchSourceKindWeb {
 				metadane.rok = strconv.Itoa(*rok)
 			}
@@ -156,7 +144,8 @@ func (a *adapterBadan) metadaneCytowaniaBadania(ctx context.Context,
 	return metadane, nil
 }
 
-// autorzyCytatuBadania oddaje autorów albo wskazanie ich braku.
+// autorzyCytatuBadania oddaje listę autorów sformatowaną do cytatu albo znacznik braku autora,
+// gdy pozycja go nie niesie.
 func autorzyCytatuBadania(m metadaneCytowaniaBadania) string {
 	if len(m.autorzy) == 0 {
 		return "[brak autora]"
@@ -170,7 +159,8 @@ func autorzyCytatuBadania(m metadaneCytowaniaBadania) string {
 	return m.autorzy[0] + " i in."
 }
 
-// nazwiskoPierwszegoBadania oddaje samo nazwisko pierwszego autora.
+// nazwiskoPierwszegoBadania oddaje samo nazwisko pierwszego autora, potrzebne w stylach
+// odwołujących się do niego bez pełnej listy.
 func nazwiskoPierwszegoBadania(m metadaneCytowaniaBadania) string {
 	if len(m.autorzy) == 0 {
 		return "[brak autora]"
@@ -178,7 +168,8 @@ func nazwiskoPierwszegoBadania(m metadaneCytowaniaBadania) string {
 	return strings.TrimSpace(strings.Split(m.autorzy[0], ",")[0])
 }
 
-// rokCytatuBadania oddaje rok albo znacznik jego braku, przyjęty w stylach.
+// rokCytatuBadania oddaje rok wydania pozycji albo znacznik jego braku, przyjęty w stylach
+// cytowania jako zapis "b.d.".
 func rokCytatuBadania(m metadaneCytowaniaBadania) string {
 	if strings.TrimSpace(m.rok) == "" {
 		return "b.d."
@@ -186,7 +177,8 @@ func rokCytatuBadania(m metadaneCytowaniaBadania) string {
 	return m.rok
 }
 
-// cytatWTekscieBadania składa odnośnik wstawiany w treść raportu.
+// cytatWTekscieBadania składa odnośnik wstawiany w treść raportu, w postaci właściwej dla
+// stylu wskazanego przy wywołaniu.
 func cytatWTekscieBadania(styl string, m metadaneCytowaniaBadania) string {
 	switch strings.ToLower(styl) {
 	case "mla":
@@ -200,7 +192,8 @@ func cytatWTekscieBadania(styl string, m metadaneCytowaniaBadania) string {
 	}
 }
 
-// pozycjaBibliograficznaBadania składa pozycję listy literatury.
+// pozycjaBibliograficznaBadania składa pełną pozycję listy literatury, w postaci właściwej
+// dla stylu wskazanego przy wywołaniu.
 func pozycjaBibliograficznaBadania(styl string, m metadaneCytowaniaBadania) string {
 	ogon := ""
 	switch {
@@ -233,7 +226,8 @@ func pozycjaBibliograficznaBadania(styl string, m metadaneCytowaniaBadania) stri
 	}
 }
 
-// WypiszStyleCytowania obsługuje `research.citation.styles`.
+// WypiszStyleCytowania obsługuje żądanie `research.citation.styles` i zwraca style wbudowane
+// razem ze stylami własnymi zapisanymi przez Operatora.
 func (a *adapterBadan) WypiszStyleCytowania(ctx context.Context,
 	z shared.ResearchCitationStylesRequest) (shared.ResearchCitationStylesResponse, error) {
 
@@ -270,7 +264,8 @@ func (a *adapterBadan) WypiszStyleCytowania(ctx context.Context,
 	return shared.ResearchCitationStylesResponse{Styles: style, Total: razem}, nil
 }
 
-// SprawdzCytowania obsługuje `research.citation.check`.
+// SprawdzCytowania obsługuje żądanie `research.citation.check` i zwraca uchybienia metadanych
+// oraz źródła pominięte w raporcie.
 func (a *adapterBadan) SprawdzCytowania(ctx context.Context,
 	z shared.ResearchCitationCheckRequest) (shared.ResearchCitationCheckResponse, error) {
 
@@ -302,8 +297,7 @@ func (a *adapterBadan) SprawdzCytowania(ctx context.Context,
 		}
 	}
 
-	// Źródła niecytowane w raporcie: wykaz literatury, której nikt nie użył, jest
-	// drugą połową kontroli kompletności — pierwszą są braki metadanych.
+	// Źródła niecytowane w raporcie uzupełniają kontrolę kompletności metadanych.
 	if z.ReportId != nil && strings.TrimSpace(*z.ReportId) != "" {
 		uzyte, err := a.zrodlaRaportuBadania(ctx, *z.ReportId)
 		if err != nil {
@@ -322,7 +316,8 @@ func (a *adapterBadan) SprawdzCytowania(ctx context.Context,
 	return shared.ResearchCitationCheckResponse{Issues: uchybienia}, nil
 }
 
-// brakiCytowaniaBadania wymienia pola, bez których cytat będzie ułomny.
+// brakiCytowaniaBadania wymienia pola, bez których cytat będzie ułomny: autora, rok, tytuł
+// oraz identyfikator albo adres źródła.
 func brakiCytowaniaBadania(m metadaneCytowaniaBadania) []string {
 	braki := []string{}
 	if len(m.autorzy) == 0 {
@@ -387,8 +382,8 @@ func (a *adapterBadan) SprawdzWycofania(ctx context.Context,
 	return shared.ResearchRetractionCheckResponse{Flags: flagi}, nil
 }
 
-// zrodlaRaportuBadania oddaje zbiór źródeł, na których stoją ustalenia
-// wykorzystane w sekcjach raportu.
+// zrodlaRaportuBadania oddaje zbiór źródeł, na których stoją ustalenia wykorzystane w sekcjach
+// raportu, potrzebny do wykrycia źródeł niecytowanych.
 func (a *adapterBadan) zrodlaRaportuBadania(ctx context.Context,
 	kodRaportu string) (map[string]bool, error) {
 
@@ -419,7 +414,8 @@ func (a *adapterBadan) zrodlaRaportuBadania(ctx context.Context,
 	return uzyte, nil
 }
 
-// posortowaneKlucze oddaje klucze zbioru w kolejności ustalonej.
+// posortowaneKluczeBadania oddaje klucze zbioru w kolejności alfabetycznej, ustalonej dla
+// powtarzalności wyniku.
 func posortowaneKluczeBadania(zbior map[string]bool) []string {
 	klucze := make([]string, 0, len(zbior))
 	for klucz := range zbior {

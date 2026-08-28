@@ -1,12 +1,6 @@
-// Odpowiedzialność pliku: segmentacja modułu Translate —
-// `translate.segmentation.rules.list`, `translate.segmentation.rules.set`,
-// `translate.segment.merge` i `translate.segment.split`.
-//
-// Scalanie i podział zmieniają trwały podział okna (tabela
-// `segment_okna_tlumaczenia`, migracja 161), a nie sam wynik odpowiedzi.
-// Pierwsze wywołanie utrwala bieżący podział w całości, dopiero potem zmienia
-// w nim jedną rzecz — inaczej numer segmentu z żądania wskazywałby po chwili na
-// inny segment, niż widział Operator.
+// Odpowiedzialność pliku: segmentacja modułu Translate — wykaz i ustawienie
+// reguł segmentacji, scalanie i podział segmentów. Scalanie i podział
+// zmieniają trwały podział okna, a nie sam wynik odpowiedzi.
 package core
 
 import (
@@ -17,10 +11,12 @@ import (
 	"danacoconsole/shared"
 )
 
-// przedrostekZestawuSegmentacji znakuje identyfikator zestawu reguł.
+// przedrostekZestawuSegmentacji znakuje identyfikator zestawu reguł
+// segmentacji tekstu okna przeglądania.
 const przedrostekZestawuSegmentacji = "seg-"
 
-// WykazRegulSegmentacji obsługuje `translate.segmentation.rules.list`.
+// WykazRegulSegmentacji obsługuje `translate.segmentation.rules.list`, oddając
+// bieżący zestaw reguł segmentacji okna.
 func (a *adapterTlumaczenia) WykazRegulSegmentacji(ctx context.Context,
 	z shared.TranslateSegmentationRulesListRequest) (shared.TranslateSegmentationRulesListResponse, error) {
 
@@ -35,7 +31,8 @@ func (a *adapterTlumaczenia) WykazRegulSegmentacji(ctx context.Context,
 	return shared.TranslateSegmentationRulesListResponse{Rulesets: wykaz}, nil
 }
 
-// UstawRegulySegmentacji obsługuje `translate.segmentation.rules.set`.
+// UstawRegulySegmentacji obsługuje `translate.segmentation.rules.set`,
+// zapisując nowy zestaw reguł segmentacji okna.
 func (a *adapterTlumaczenia) UstawRegulySegmentacji(ctx context.Context,
 	z shared.TranslateSegmentationRulesSetRequest) (shared.TranslateSegmentationRulesSetResponse, error) {
 
@@ -73,7 +70,8 @@ func (a *adapterTlumaczenia) UstawRegulySegmentacji(ctx context.Context,
 		Ruleset: zlozZestawSegmentacji(zapisany)}, nil
 }
 
-// zlozZestawSegmentacji przekłada wiersze zestawu na byt kontraktu.
+// zlozZestawSegmentacji przekłada wiersze zestawu reguł z bazy danych na
+// byt kontraktu segmentacji tekstu.
 func zlozZestawSegmentacji(zestaw dane.ZestawRegulSegmentacji) shared.SegmentationRuleset {
 	reguly := make([]shared.SegmentationRule, 0, len(zestaw.Reguly))
 	for _, regula := range zestaw.Reguly {
@@ -120,8 +118,7 @@ func (a *adapterTlumaczenia) ScalSegmenty(ctx context.Context,
 	for numer, segment := range segmenty {
 		if _, wchodzi := doScalenia[numer]; wchodzi {
 			scalony = append(scalony, segment)
-			// Scalony segment wchodzi w miejsce pierwszego ze scalanych — tam,
-			// gdzie Operator go widzi, a nie na końcu wykazu.
+			// Scalony segment wchodzi w miejsce pierwszego ze scalanych.
 			if numer == numery[0] {
 				nowe = append(nowe, "")
 			}
@@ -188,8 +185,8 @@ func (a *adapterTlumaczenia) PodzielSegment(ctx context.Context,
 	}, nil
 }
 
-// oknoISegmenty odczytuje okno i jego bieżący podział — wspólne wejście obu
-// komend zmiany segmentów.
+// oknoISegmenty odczytuje okno i jego bieżący podział na segmenty — wspólne
+// wejście obu komend zmiany segmentów.
 func (a *adapterTlumaczenia) oknoISegmenty(ctx context.Context,
 	kodOkna string) (dane.OknoTlumaczenia, []string, error) {
 
@@ -225,8 +222,7 @@ func numerySegmentow(wskazania []string, ile int) ([]int, error) {
 		}
 		numery = append(numery, numer)
 	}
-	// Kolejność scalania idzie po numerach, nie po kolejności wskazania —
-	// scalenie „3, 1" ma dać ten sam tekst, co „1, 3".
+	// Kolejność scalania idzie po numerach, nie po kolejności wskazania.
 	for i := 1; i < len(numery); i++ {
 		for j := i; j > 0 && numery[j] < numery[j-1]; j-- {
 			numery[j], numery[j-1] = numery[j-1], numery[j]

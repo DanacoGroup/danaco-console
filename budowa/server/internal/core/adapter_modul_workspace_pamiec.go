@@ -1,15 +1,5 @@
 // Odpowiedzialność pliku: pamięć projektu — okno Context Memory modułu
-// Workspace.
-//
-// Propozycja modelu to wpis o pochodzeniu `model`. Przyjęcie propozycji przez
-// Operatora jest ponownym zapisem tego samego wpisu z pochodzeniem `operator`:
-// kontrakt nie ma osobnej komendy przyjęcia ani odrzucenia, a pochodzenie jest
-// jedynym polem, które odróżnia ustalenie przyjęte od zaproponowanego.
-//
-// Zasięg wpisu jest poziomem zasięgu, nie znacznikiem. Wpis zapisany na
-// poziomie szerszym niż projekt (globalny, środowisko, moduł, para modułów)
-// obowiązuje wspólnie i wchodzi do pamięci innych projektów na żądanie
-// `includeShared`.
+// Workspace. Propozycja modelu to wpis o pochodzeniu `model`.
 package core
 
 import (
@@ -19,11 +9,12 @@ import (
 	"danacoconsole/shared"
 )
 
-// przedrostekWpisuPamieci znakuje identyfikator wpisu nadany przez rdzeń.
+// przedrostekWpisuPamieci znakuje identyfikator wpisu nadany przez rdzeń,
+// przy zapisie nowego wpisu pamięci.
 const przedrostekWpisuPamieci = "pam-"
 
 // ZapiszWpisPamieci zakłada wpis pamięci albo zmienia wpis wskazany
-// identyfikatorem.
+// identyfikatorem, z pochodzeniem podanym w żądaniu.
 func (a *adapterPrzestrzeniRoboczej) ZapiszWpisPamieci(ctx context.Context,
 	z shared.WorkspaceContextSetRequest) (shared.WorkspaceContextSetResponse, error) {
 
@@ -43,8 +34,8 @@ func (a *adapterPrzestrzeniRoboczej) ZapiszWpisPamieci(ctx context.Context,
 		Poziom:        zasiegWpisu(z.Scope),
 		KluczZasiegu:  projekt.Kod,
 	}
-	// Byt zasięgu ma sens wyłącznie dla poziomu projektu; poziom szerszy
-	// obowiązuje ponad projektami, więc jego bytu nie znamy z tego żądania.
+	// Byt zasięgu ma sens tylko dla poziomu projektu; poziom szerszy
+	// obowiązuje ponad projektami.
 	if wpis.Poziom != shared.ConfigScopeProject {
 		wpis.KluczZasiegu = ""
 	}
@@ -116,7 +107,8 @@ func zasiegWpisu(wskazany *shared.ConfigScope) shared.ConfigScope {
 	return shared.ConfigScopeProject
 }
 
-// wpisPamieciKontraktu przekłada wiersz pamięci na byt kontraktu.
+// wpisPamieciKontraktu przekłada wiersz pamięci z bazy danych na byt
+// kontraktu zwracany wołającemu oknu.
 func wpisPamieciKontraktu(w dane.WpisPamieciProjektu) shared.WorkspaceMemoryEntry {
 	wpis := shared.WorkspaceMemoryEntry{
 		Id:        w.Identyfikator,

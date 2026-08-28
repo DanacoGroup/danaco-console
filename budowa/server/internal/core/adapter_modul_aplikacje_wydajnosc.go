@@ -1,32 +1,7 @@
-// Odpowiedzialność pliku: audyt wydajności strony produktu —
-// `apps.performance.audit`.
-//
-// ── Dostępność to nie pomiar ─────────────────────────────────────────────────
-// Moduł umiał dotąd powiedzieć o wdrożonym produkcie jedno: czy odpowiada
-// (`apps.deployment.health.get` — dostępność, czas nieprzerwanego działania,
-// wynik ostatniego sprawdzenia kondycji). To jest odpowiedź na pytanie „czy
-// stoi", nie na pytanie „jak szybko się otwiera". Produkt, który odpowiada
-// w cztery sekundy, jest dostępny w stu procentach i nie do użycia.
-//
-// ── Dlaczego programem, a nie własnym stoperem ───────────────────────────────
-// Core Web Vitals nie są czasem odpowiedzi serwera. Największe wymalowanie
-// treści i przesunięcia układu powstają w przeglądarce, po wykonaniu skryptów,
-// a ich wartość zależy od emulacji urządzenia i dławienia sieci. Rdzeń, który
-// mierzyłby to własnym `net/http`, oddałby czas pobrania dokumentu i nazwał go
-// wydajnością strony — liczbę prawdziwą, odpowiadającą na inne pytanie.
-//
-// ── Pomiar, który się nie odbył, nie wychodzi jako wynik ─────────────────────
-// Program pomiarowy mówi o tym wprost: przebieg, w którym strona się nie
-// wczytała, niesie w odpowiedzi pole `runtimeError` wraz z kodem powodu i NIE
-// niesie ocen. Rdzeń czyta to pole przed czymkolwiek innym — bez tego odczytu
-// odpowiedź o produkcie, którego pod adresem nie ma, składałaby się z samych
-// zer i wyglądałaby jak strona wolna, a nie jak strona niezmierzona.
-//
-// ── Granica czasu jest jawna, a jej przekroczenie nazywa się przekroczeniem ──
-// Audyt trwa kilkanaście sekund przy stronie zdrowej i nie kończy się nigdy
-// przy stronie, która nie przestaje się wczytywać. Granica idzie do programu
-// (`--max-wait-for-load`) i osobno do arsenału, z zapasem — pierwszy mija
-// program, więc przekroczenie nazywa ten, kto wie, na co czekał.
+// Audyt wydajności strony produktu obsługuje apps.performance.audit. Core Web
+// Vitals mierzy zewnętrzny program pomiarowy, nie własny stoper rdzenia.
+// Przebieg, w którym strona się nie wczytała, niesie pole runtimeError i nie
+// niesie ocen.
 package core
 
 import (
@@ -58,21 +33,13 @@ const (
 	// nawet wtedy, gdy poprosi o więcej.
 	najdluzszyAudytWydajnosci = 10 * time.Minute
 	// granicaZapasuWydajnosci jest zapasem, o który granica arsenału przewyższa
-	// granicę wczytania podaną programowi. Program potrzebuje czasu na policzenie
-	// miar PO wczytaniu strony; bez zapasu arsenał ubijałby go w połowie liczenia
-	// i przekroczenie wyglądałoby jak awaria.
+	// granicę wczytania podaną programowi, na policzenie miar po wczytaniu.
 	granicaZapasuWydajnosci = 60 * time.Second
 )
 
 // miaryWydajnosciStrony wylicza miary, o które moduł pyta, w kolejności
-// ustalonej. Kolejność jest ustalona, żeby dwa kolejne audyty tej samej strony
-// dawały wykaz w tym samym porządku — wynik ma się różnić wtedy, gdy zmieniła
-// się strona, a nie wtedy, gdy inaczej ułożyła się mapa odpowiedzi programu.
-//
-// Wykaz jest zamknięty i obejmuje Core Web Vitals wraz z miarami, z których te
-// się liczą. Miara dopisana tu bez pokrycia w odpowiedzi programu wyszłaby
-// z audytu jako zero — dlatego brak miary w odpowiedzi pomija się, zamiast
-// wypełniać wartością zastępczą.
+// ustalonej, żeby dwa kolejne audyty tej samej strony dawały wykaz w tym
+// samym porządku. Wykaz jest zamknięty i obejmuje Core Web Vitals.
 var miaryWydajnosciStrony = []string{
 	"first-contentful-paint",
 	"largest-contentful-paint",
@@ -82,7 +49,8 @@ var miaryWydajnosciStrony = []string{
 	"interactive",
 }
 
-// ZmierzWydajnosc obsługuje `apps.performance.audit`.
+// ZmierzWydajnosc obsługuje apps.performance.audit: uruchamia program
+// pomiarowy na wskazanej stronie i przekłada jego raport na wynik kontraktu.
 func (a *adapterAplikacji) ZmierzWydajnosc(ctx context.Context,
 	z shared.AppsPerformanceAuditRequest) (shared.AppsPerformanceAuditResponse, error) {
 
@@ -132,9 +100,7 @@ func (a *adapterAplikacji) ZmierzWydajnosc(ctx context.Context,
 		"--chrome-flags=--headless=new --no-sandbox --disable-gpu --disable-dev-shm-usage " +
 			"--no-first-run --no-default-browser-check",
 	}
-	// Postać biurkowa ma w programie własną nastawę zbiorczą: sam `--form-factor`
-	// zmienia sposób liczenia oceny, lecz zostawia emulację i dławienie telefonu,
-	// więc wynik byłby oceną biurka policzoną na warunkach telefonu.
+	// Postać biurkowa wymaga w programie osobnej nastawy zbiorczej.
 	if postac == shared.AppPerformanceFormFactorDesktop {
 		argumenty = append(argumenty, "--preset=desktop")
 	}
@@ -145,10 +111,7 @@ func (a *adapterAplikacji) ZmierzWydajnosc(ctx context.Context,
 	wynik, err := zewnetrzne.Wolaj(ctx, a.uruchamiacz, oknoProcesu, zasady, obszar,
 		narzedzieLighthouse, argumenty, obszar.KatalogRoboczy, granicaArsenalu)
 	trwanie := time.Since(poczatek)
-	// Program kończy się kodem niezerowym także wtedy, gdy pomiar się nie odbył,
-	// a powód opisał w odpowiedzi. Odpowiedź czytamy więc PRZED rozpatrzeniem
-	// odmowy arsenału — inaczej „strony nie ma pod tym adresem" wyszłoby jako
-	// „program zakończył się niepowodzeniem".
+	// Odpowiedź programu jest czytana przed rozpatrzeniem jego odmowy zakończenia.
 	raport, bladOdczytu := odczytajRaportWydajnosci(wynik.Wyjscie)
 	if bladOdczytu != nil {
 		if err != nil {
@@ -229,7 +192,8 @@ func (r raportWydajnosci) powodNieodbytegoPomiaru() string {
 	return ""
 }
 
-// jakoAudyt składa wynik kontraktu z raportu programu.
+// jakoAudyt składa wynik kontraktu z raportu programu, pomijając miary, które
+// program nie policzył, i zaokrąglając ocenę do skali setnej.
 func (r raportWydajnosci) jakoAudyt(adres, postac string,
 	poczatek time.Time) (shared.AppPerformanceAudit, error) {
 
@@ -237,8 +201,7 @@ func (r raportWydajnosci) jakoAudyt(adres, postac string,
 	for _, klucz := range miaryWydajnosciStrony {
 		sprawdzenie, jest := r.Sprawdzenia[klucz]
 		if !jest || sprawdzenie.Wartosc == nil {
-			// Miara, której program nie policzył, NIE wchodzi z wartością zero:
-			// zero jest w tych miarach wynikiem najlepszym z możliwych.
+			// Miara, której program nie policzył, nie wchodzi z wartością zero.
 			continue
 		}
 		miara := shared.AppPerformanceMetric{
@@ -292,9 +255,8 @@ func wSkaliStu(ocena float64) int {
 }
 
 // postacUrzadzeniaAudytu rozstrzyga postać urządzenia i odmawia wartości spoza
-// wyliczenia. Odmowa jest tu potrzebna mimo bramy kontraktu: brama sprawdza
-// wartości wyliczeń wyłącznie przy komendach wystawionych jako narzędzia modelu,
-// a ta do nich nie należy.
+// wyliczenia, ponieważ brama kontraktu sprawdza wyliczenia wyłącznie przy
+// komendach wystawionych jako narzędzia modelu, a ta do nich nie należy.
 func postacUrzadzeniaAudytu(wskazanie *shared.AppPerformanceFormFactor) (string, error) {
 	if wskazanie == nil || strings.TrimSpace(string(*wskazanie)) == "" {
 		return shared.AppPerformanceFormFactorDesktop, nil
@@ -331,18 +293,9 @@ func (a *adapterAplikacji) zasiegAplikacji(oknoKod string) (session.Okno, sessio
 	return okno, zasady, obszar
 }
 
-// bladProgramuAplikacji odróżnia brak programu i przekroczenie granicy czasu od
-// usterki rdzenia.
-//
-// Brak programu jest brakiem, który Operator serwera usuwa jedną instalacją,
-// a przekroczenie granicy jest przekroczeniem — nie awarią. Obie sytuacje bez
-// tego rozróżnienia wychodziłyby jako `internal_error`, czyli zdanie „usterka
-// rdzenia, zgłoś ją", mówiące czytającemu coś nieprawdziwego o tym, co się
-// stało (wzór: `odmowaSkanuSane`).
-//
-// Przekroczenie rozstrzyga się ZMIERZONYM czasem, nie treścią komunikatu:
-// zdanie, którym arsenał opisuje przerwanie, jest napisem i przy następnej
-// zmianie brzmiałoby inaczej, a stoper mierzy to samo, o co tu chodzi.
+// bladProgramuAplikacji odróżnia brak programu i przekroczenie granicy czasu
+// od usterki rdzenia. Przekroczenie rozstrzyga się zmierzonym czasem, nie
+// treścią komunikatu arsenału, ponieważ treść przy zmianie brzmi inaczej.
 func bladProgramuAplikacji(komenda string, err error, trwanie, granica time.Duration) error {
 	if err == nil {
 		return nil

@@ -1,16 +1,6 @@
-// Siedem komend rodziny `isolation.*` stojących ponad pojedynczym
-// przełącznikiem: pięć komend profilu, przełączenie warstwy oraz podgląd
-// polityki obowiązującej. Macierz przełączników i maszyneria adresu leżą
-// w `adapter_modul_isolation.go`.
-//
-// Profil jest szablonem. Wartość obowiązująca leży w tabeli `ustawienie`
-// i wyłącznie stamtąd czyta ją rozstrzygacz; zapisanie profilu nie zmienia
-// izolacji, skutek daje dopiero `isolation.profile.assign`, który przepisuje
-// przełączniki profilu pod wskazany adres.
-//
-// Podgląd niczego nie zapisuje: `isolation.policy.preview` liczy politykę po
-// ośmiu poziomach zasięgu i oddaje ją wraz ze wskazaniem, skąd wartości
-// pochodzą. Żadna ścieżka tego pliku poza `assign` i `layer.set` nie dotyka bazy.
+// Plik obsługuje siedem komend rodziny `isolation.*` stojących ponad
+// pojedynczym przełącznikiem: pięć komend profilu, przełączenie warstwy oraz
+// podgląd polityki obowiązującej.
 package core
 
 import (
@@ -27,8 +17,6 @@ import (
 // przedrostekProfiluIzolacji poprzedza identyfikator profilu zakładanego przez
 // rdzeń, gdy żądanie zapisu nie wskazuje profilu istniejącego.
 const przedrostekProfiluIzolacji = "profil-izolacji-"
-
-// ── isolation.profile.save ───────────────────────────────────────────────────
 
 // ZapiszProfilIzolacji zakłada profil albo zmienia istniejący.
 //
@@ -70,14 +58,8 @@ func (a *adapterIzolacji) ZapiszProfilIzolacji(ctx context.Context,
 	return shared.IsolationProfileSaveResponse{Profile: a.profilKontraktu(zapisany)}, nil
 }
 
-// ── isolation.profile.list ───────────────────────────────────────────────────
-
 // ProfileIzolacji zwraca profile izolacji, a przy wskazanym poziomie — profil
-// przypisany do wskazanego bytu.
-//
-// Pusty wykaz przy wskazanym poziomie znaczy, że polityka tego bytu nie pochodzi
-// z żadnego profilu, tylko z pojedynczych ustawień. Przypisanie jest jedno na
-// adres, więc wykaz zawężony ma zero albo jeden element.
+// przypisany do wskazanego bytu, wykaz zawężony do zera albo jednego elementu.
 func (a *adapterIzolacji) ProfileIzolacji(ctx context.Context,
 	z shared.IsolationProfileListRequest) (shared.IsolationProfileListResponse, error) {
 
@@ -102,7 +84,8 @@ func (a *adapterIzolacji) ProfileIzolacji(ctx context.Context,
 	return shared.IsolationProfileListResponse{Profiles: profile}, nil
 }
 
-// profilePoziomu zwraca profil przypisany pod adresem — zero albo jeden.
+// profilePoziomu zwraca profil przypisany pod adresem: pustą listę albo
+// dokładnie jeden element wykazu.
 func (a *adapterIzolacji) profilePoziomu(ctx context.Context,
 	adres konfig.Adres) (shared.IsolationProfileListResponse, error) {
 
@@ -121,10 +104,8 @@ func (a *adapterIzolacji) profilePoziomu(ctx context.Context,
 	return shared.IsolationProfileListResponse{Profiles: profile}, nil
 }
 
-// ── isolation.profile.load ───────────────────────────────────────────────────
-
-// WczytajProfilIzolacji oddaje profil do panelu. Niczego nie przypisuje i niczego
-// nie zapisuje.
+// WczytajProfilIzolacji oddaje profil do panelu wskazany jego
+// identyfikatorem, niczego nie przypisując i niczego nie zapisując.
 func (a *adapterIzolacji) WczytajProfilIzolacji(ctx context.Context,
 	z shared.IsolationProfileLoadRequest) (shared.IsolationProfileLoadResponse, error) {
 
@@ -135,17 +116,9 @@ func (a *adapterIzolacji) WczytajProfilIzolacji(ctx context.Context,
 	return shared.IsolationProfileLoadResponse{Profile: a.profilKontraktu(profil)}, nil
 }
 
-// ── isolation.profile.assign ─────────────────────────────────────────────────
-
 // PrzypiszProfilIzolacji przepisuje przełączniki profilu pod wskazany adres
-// i odnotowuje, z którego profilu polityka tego bytu pochodzi.
-//
-// Profil bez ani jednego przełącznika jest odmawiany: nie zmieniłby żadnej
-// wartości, a odpowiedź niosłaby politykę wyliczoną tak samo jak przed
-// wywołaniem, czyli potwierdzenie czynności, której nie było.
-//
-// Punkt nieujęty w profilu zostaje nietknięty — obowiązuje wtedy to, co na
-// poziomie stoi, a w ostateczności wartość domyślna.
+// i odnotowuje, z którego profilu polityka tego bytu pochodzi, odmawiając
+// dla profilu bez przełączników.
 func (a *adapterIzolacji) PrzypiszProfilIzolacji(ctx context.Context,
 	z shared.IsolationProfileAssignRequest) (shared.IsolationProfileAssignResponse, error) {
 
@@ -183,22 +156,14 @@ func (a *adapterIzolacji) PrzypiszProfilIzolacji(ctx context.Context,
 	if err != nil {
 		return shared.IsolationProfileAssignResponse{}, err
 	}
-	// Przypisanie zmienia politykę bytu spod adresu, ale nie sam profil, więc
-	// idzie rozgłoszenie polityki, a nie `isolation.profile.changed`.
+	// Przypisanie zmienia politykę bytu, nie sam profil, więc idzie rozgłoszenie polityki.
 	a.rozglosPolitykeAdresu(adres)
 	return shared.IsolationProfileAssignResponse{Policy: polityka}, nil
 }
 
-// ── isolation.profile.delete ─────────────────────────────────────────────────
-
-// UsunProfilIzolacji kasuje profil wraz z jego przełącznikami i przypisaniami.
-//
-// Wartości już przepisanych nie cofa: przełączniki, które `assign` wniósł do
-// poziomu, są odtąd wartościami tego poziomu i cofa je osobne wywołanie
-// `isolation.context.set` albo `isolation.technical.set`.
-//
-// Profil, którego nie ma, wraca odmową `not_found`, a nie odpowiedzią
-// `deleted: false`.
+// UsunProfilIzolacji kasuje profil wraz z jego przełącznikami i przypisaniami,
+// nie cofając wartości już przepisanych do poziomów przez wcześniejsze
+// przypisanie.
 func (a *adapterIzolacji) UsunProfilIzolacji(ctx context.Context,
 	z shared.IsolationProfileDeleteRequest) (shared.IsolationProfileDeleteResponse, error) {
 
@@ -216,18 +181,9 @@ func (a *adapterIzolacji) UsunProfilIzolacji(ctx context.Context,
 	return shared.IsolationProfileDeleteResponse{Deleted: true}, nil
 }
 
-// ── isolation.layer.set ──────────────────────────────────────────────────────
-
-// UstawWarstweIzolacji zapisuje warstwę, którą panel izolacji pokazuje i zapisuje
-// dla wskazanej karty sesji albo okna komunikacji.
-//
-// Zmienia wyłącznie wybór warstwy, utrwalony w tabeli `warstwa_izolacji`, więc
-// panel otwarty ponownie pokazuje warstwę zapisaną poprzednio. Nie zmienia ani
-// jednej wartości izolacji — te zmieniają `isolation.context.set`
-// i `isolation.technical.set`.
-//
-// Wybór warstwy należy do bytu, dla którego zapadł, więc żądanie bez karty sesji
-// ani okna komunikacji wraca odmową: wiersz bez bytu nie zostałby odczytany.
+// UstawWarstweIzolacji zapisuje warstwę, którą panel izolacji pokazuje dla
+// wskazanej karty sesji albo okna komunikacji, nie zmieniając żadnej
+// wartości izolacji.
 func (a *adapterIzolacji) UstawWarstweIzolacji(ctx context.Context,
 	z shared.IsolationLayerSetRequest) (shared.IsolationLayerSetResponse, error) {
 
@@ -261,18 +217,8 @@ func bytWyboruWarstwy(idSesji, idOkna *string) (shared.ConfigScope, string, erro
 	return "", "", bladZadaniaIzolacji("przełączenie warstwy bez wskazania karty sesji ani okna komunikacji")
 }
 
-// ── isolation.policy.preview ─────────────────────────────────────────────────
-
-// PodgladPolitykiIzolacji zwraca politykę obowiązującą po rozstrzygnięciu ośmiu
-// poziomów zasięgu. Niczego nie zapisuje.
-//
-// Poziom wskazany wprost obowiązuje bez zmian; pominięty znaczy poziom najwęższy
-// z bytów podanych w żądaniu, czyli okno komunikacji przed kartą sesji, a przy
-// braku obu poziom globalny.
-//
-// Warstwa wskazana wprost obowiązuje bez zmian; pominięta znaczy warstwę
-// zapisaną wcześniej dla tego bytu (`isolation.layer.set`), a przy braku zapisu
-// warstwę domyślną platformy.
+// PodgladPolitykiIzolacji zwraca politykę obowiązującą po rozstrzygnięciu
+// ośmiu poziomów zasięgu i wskazanej warstwy, niczego nie zapisując.
 func (a *adapterIzolacji) PodgladPolitykiIzolacji(ctx context.Context,
 	z shared.IsolationPolicyPreviewRequest) (shared.IsolationPolicyPreviewResponse, error) {
 
@@ -292,7 +238,8 @@ func (a *adapterIzolacji) PodgladPolitykiIzolacji(ctx context.Context,
 	return shared.IsolationPolicyPreviewResponse{Policy: polityka}, nil
 }
 
-// poziomPodgladu ustala poziom i byt podglądu z pól żądania.
+// poziomPodgladu ustala poziom i byt podglądu z pól żądania, sięgając po
+// okno komunikacji przed kartą sesji.
 func poziomPodgladu(z shared.IsolationPolicyPreviewRequest) (shared.ConfigScope, string) {
 	if z.Scope != nil && *z.Scope != "" {
 		return *z.Scope, wartoscTekstu(z.ScopeId)
@@ -328,18 +275,8 @@ func (a *adapterIzolacji) warstwaPodgladu(ctx context.Context,
 	return warstwaZadania(&wybrana)
 }
 
-// ── polityka obowiązująca ────────────────────────────────────────────────────
-
-// politykaAdresu liczy politykę izolacji obowiązującą dla bytu spod adresu.
-//
-// Rozstrzyga pakiet `konfig`, a nie ten plik: tutaj składany jest wyłącznie
-// kontekst (byt na właściwym poziomie), a wynik przekładany na kształt kontraktu.
-//
-// Błąd odczytu kończy podgląd. Pakiet `konfig` oddaje politykę mimo błędu źródła
-// i dla samego wykonania jest to słuszne, ale podgląd ma odpowiadać na pytanie,
-// co obowiązuje. Pokazanie wartości domyślnych jako obowiązujących, gdy zapisów
-// nie udało się odczytać, byłoby odpowiedzią nieprawdziwą, więc idzie odmowa
-// `internal_error`.
+// politykaAdresu liczy politykę izolacji obowiązującą dla bytu spod adresu,
+// odmawiając odpowiedzi, gdy zapisów źródła nie udało się odczytać.
 func (a *adapterIzolacji) politykaAdresu(ctx context.Context, adres konfig.Adres,
 	warstwa shared.IsolationLayer) (shared.IsolationPolicy, error) {
 
@@ -374,7 +311,7 @@ func (a *adapterIzolacji) politykaAdresu(ctx context.Context, adres konfig.Adres
 }
 
 // kontekstPoziomu składa kontekst rozstrzygania z jednym bytem — tym, dla
-// którego liczymy politykę. Poziomy szersze zostają puste i rozstrzyganie
+// którego liczona jest polityka. Poziomy szersze zostają puste i rozstrzyganie
 // schodzi na wartości globalne albo domyślne.
 func kontekstPoziomu(poziom shared.ConfigScope, byt string) konfig.Kontekst {
 	kontekst := konfig.Kontekst{}
@@ -397,7 +334,8 @@ func kontekstPoziomu(poziom shared.ConfigScope, byt string) konfig.Kontekst {
 	return kontekst
 }
 
-// przelacznikiKontekstuPolityki przekłada trzy wymiary kontekstu z polityki.
+// przelacznikiKontekstuPolityki przekłada trzy wymiary kontekstu polityki na
+// przełączniki kształtu kontraktu.
 func przelacznikiKontekstuPolityki(polityka konfig.Polityka) []shared.IsolationSwitch {
 	przelaczniki := make([]shared.IsolationSwitch, 0, len(punktyKontekstu))
 	for _, pozycja := range punktyKontekstu {
@@ -411,7 +349,8 @@ func przelacznikiKontekstuPolityki(polityka konfig.Polityka) []shared.IsolationS
 	return przelaczniki
 }
 
-// przelacznikiTechnicznePolityki przekłada osiem zakresów technicznych z polityki.
+// przelacznikiTechnicznePolityki przekłada osiem zakresów technicznych
+// polityki na przełączniki kształtu kontraktu.
 func przelacznikiTechnicznePolityki(polityka konfig.Polityka) []shared.IsolationTechnicalSwitch {
 	przelaczniki := make([]shared.IsolationTechnicalSwitch, 0, len(punktyTechniczne))
 	for _, pozycja := range punktyTechniczne {
@@ -425,7 +364,8 @@ func przelacznikiTechnicznePolityki(polityka konfig.Polityka) []shared.Isolation
 	return przelaczniki
 }
 
-// wynikPunktu wyjmuje z polityki wartość punktu i jego objaśnienie.
+// wynikPunktu wyjmuje z polityki wartość jednego punktu izolacji wraz z jego
+// objaśnieniem, gdy ono istnieje.
 func wynikPunktu(polityka konfig.Polityka, punkt punktIzolacji) (string, *string) {
 	pozycja, jest := polityka.Pozycja(punkt.klucz)
 	if !jest {
@@ -438,13 +378,9 @@ func wynikPunktu(polityka konfig.Polityka, punkt punktIzolacji) (string, *string
 	return pozycja.Wartosc, &objasnienie
 }
 
-// pochodzeniePolityki wskazuje poziom, z którego polityka została odziedziczona.
-//
-// Kontrakt ma na pochodzenie jedno pole, a każdy z jedenastu punktów bywa
-// zapisany na innym poziomie. Poziom wraca więc tylko wtedy, gdy wszystkie punkty
-// zapisane pochodzą z tego samego poziomu; przy polityce złożonej z kilku
-// poziomów pole zostaje puste, bo jedna nazwa byłaby wskazaniem nieprawdziwym dla
-// pozostałych punktów.
+// pochodzeniePolityki wskazuje poziom, z którego polityka została
+// odziedziczona, pozostawiając pole puste, gdy punkty pochodzą z poziomów
+// różnych.
 func pochodzeniePolityki(polityka konfig.Polityka) *shared.ConfigScope {
 	var znaleziony konfig.Poziom
 	for _, pozycja := range punktyKontekstu {
@@ -473,8 +409,6 @@ func pochodzeniePolityki(polityka konfig.Polityka) *shared.ConfigScope {
 	poziom := shared.ConfigScope(znaleziony)
 	return &poziom
 }
-
-// ── wspólne ustalenia żądań ──────────────────────────────────────────────────
 
 // profilZadania odczytuje profil wskazany identyfikatorem. Brak wskazania jest
 // żądaniem niezgodnym z kontraktem, brak wiersza — bytem, którego nie ma.
@@ -523,10 +457,9 @@ func przelacznikiProfilu(kontekst []shared.IsolationSwitch,
 	return przelaczniki, nil
 }
 
-// profilKontraktu przekłada wiersze profilu na kształt kontraktu. Punkt nieujęty
-// w profilu nie jest dopowiadany wartością domyślną: profil częściowy zostaje
-// widoczny jako częściowy, inaczej „punkt pominięty" byłby nie do odróżnienia od
-// „punkt ustawiony na wartość domyślną".
+// profilKontraktu przekłada wiersze profilu na kształt kontraktu, zostawiając
+// punkt nieujęty w profilu pominiętym, a nie dopowiedzianym wartością
+// domyślną.
 func (a *adapterIzolacji) profilKontraktu(profil dane.ProfilIzolacji) shared.IsolationProfile {
 	kontekst := make([]shared.IsolationSwitch, 0, len(punktyKontekstu))
 	techniczne := make([]shared.IsolationTechnicalSwitch, 0, len(punktyTechniczne))
@@ -575,7 +508,8 @@ func (a *adapterIzolacji) profilKontraktu(profil dane.ProfilIzolacji) shared.Iso
 	return wynik
 }
 
-// punktPoKluczu rozpoznaje punkt izolacji po kluczu ustawienia.
+// punktPoKluczu rozpoznaje punkt izolacji po kluczu ustawienia, przeszukując
+// kontekstowe i techniczne punkty.
 func punktPoKluczu(klucz string) (punktIzolacji, bool) {
 	for _, pozycja := range punktyKontekstu {
 		if pozycja.punkt.klucz == klucz {
@@ -590,7 +524,8 @@ func punktPoKluczu(klucz string) (punktIzolacji, bool) {
 	return punktIzolacji{}, false
 }
 
-// bladBrakuProfilu składa odmowę wskazującą profil, którego nie ma.
+// bladBrakuProfilu składa odmowę wskazującą profil, którego magazyn profili
+// izolacji w ogóle nie posiada.
 func bladBrakuProfilu(kod string) error {
 	return protocol.JakoError(protocol.NowyBlad(shared.ErrorCodeNotFound,
 		"izolacja: profil "+kod+" nie istnieje"))

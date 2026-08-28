@@ -1,15 +1,6 @@
-// Odpowiedzialność pliku: napisy i treść mówiona modułu Translate —
-// `translate.subtitle.import`, `.export`, `.timing.check`
-// oraz `translate.dubbing.script.build`.
-//
-// Cztery formaty napisów kontraktu czyta i pisze ten rdzeń sam: SRT i WebVTT są
-// tekstowe, TTML jest XML-em, a EBU STL — zapisem dwójkowym o stałej ramce
-// (blok nagłówkowy GSI liczący 1024 bajty i bloki tekstowe TTI po 128 bajtów).
-// Wszystkie cztery idą bibliotekami wkompilowanymi; żaden nie woła programu.
-//
-// Kwestie są trwałe (tabela `kwestia_napisow`, migracja 165), bo bez nich
-// `subtitle.timing.check` i `dubbing.script.build` nie miałyby czego mierzyć:
-// taktowanie jest własnością materiału, a nie tekstu panelu.
+// Odpowiedzialność pliku: napisy i treść mówiona modułu Translate — import,
+// eksport i sprawdzenie taktowania napisów oraz złożenie scenariusza
+// dubbingu, wraz z rozbiorem i składaniem czterech formatów napisów kontraktu.
 package core
 
 import (
@@ -30,17 +21,19 @@ const (
 	// znakowNaSekundeDomyslnie jest progiem czytelności napisów przyjętym
 	// w branży: powyżej siedemnastu znaków na sekundę widz nie nadąża.
 	znakowNaSekundeDomyslnie = 17
-	// dlugoscLiniiDomyslnie to najdłuższa linia napisu mieszcząca się w kadrze.
+	// dlugoscLiniiDomyslnie to najdłuższa linia napisu mieszcząca się w kadrze
+	// wideo, licząc znaki widoczne łącznie ze spacjami.
 	dlugoscLiniiDomyslnie = 42
-	// najkrotszeWyswietlenieMs — poniżej sekundy napis miga, zamiast być
-	// przeczytany.
+	// najkrotszeWyswietlenieMs jest najkrótszym czasem wyświetlenia napisu:
+	// poniżej sekundy napis miga, zamiast być przeczytany.
 	najkrotszeWyswietlenieMs = 1000
 	// znakowNaSekundeMowy jest tempem mowy lektorskiej przyjętym do wyliczenia
 	// długości kwestii dubbingowej, gdy nie ma taktowania napisów.
 	znakowNaSekundeMowy = 14
 )
 
-// WczytajNapisy obsługuje `translate.subtitle.import`.
+// WczytajNapisy obsługuje komendę importu napisów modułu Translate, rozbierając
+// plik wskazanego formatu na kwestie materiału źródłowego.
 func (a *adapterTlumaczenia) WczytajNapisy(ctx context.Context,
 	z shared.TranslateSubtitleImportRequest) (shared.TranslateSubtitleImportResponse, error) {
 
@@ -83,8 +76,7 @@ func (a *adapterTlumaczenia) WczytajNapisy(ctx context.Context,
 		return shared.TranslateSubtitleImportResponse{}, bladTlumaczenia(err)
 	}
 
-	// Treść kwestii wchodzi do okna jako tekst źródłowy — bez tego napisy byłyby
-	// wczytane, a tłumaczyć nie byłoby czego.
+	// Treść kwestii wchodzi do okna jako tekst źródłowy do tłumaczenia.
 	tresci := make([]string, 0, len(kwestie))
 	for _, kwestia := range kwestie {
 		tresci = append(tresci, kwestia.Tresc)
@@ -109,10 +101,9 @@ func (a *adapterTlumaczenia) WczytajNapisy(ctx context.Context,
 	}, nil
 }
 
-// WydajNapisy obsługuje `translate.subtitle.export`. Bierze taktowanie
-// z kwestii materiału źródłowego, a treść — z przekładu panelu, kwestia po
-// kwestii. Panel bez kwestii własnych nie ma własnego taktowania, więc idzie
-// taktowanie źródła: przekład ma trafiać w te same momenty obrazu.
+// WydajNapisy obsługuje komendę eksportu napisów modułu Translate. Bierze
+// taktowanie z kwestii materiału źródłowego, a treść z przekładu panelu,
+// kwestia po kwestii, żeby przekład trafiał w te same momenty obrazu.
 func (a *adapterTlumaczenia) WydajNapisy(ctx context.Context,
 	z shared.TranslateSubtitleExportRequest) (shared.TranslateSubtitleExportResponse, error) {
 
@@ -132,8 +123,8 @@ func (a *adapterTlumaczenia) WydajNapisy(ctx context.Context,
 	if err := zapiszNapisy(sciezka, z.Format, kwestie); err != nil {
 		return shared.TranslateSubtitleExportResponse{}, err
 	}
-	// Kwestie przekładu zostają przy panelu: kolejne wywołanie ma mierzyć
-	// taktowanie tego, co realnie wydano, a nie składać je od nowa.
+	// Kwestie przekładu zostają przy panelu, żeby kolejne wywołanie mierzyło
+	// to, co realnie wydano.
 	if err := a.repozytorium.ZapiszKwestieNapisow(ctx, panel.OknoID, panel.ID, kwestie); err != nil {
 		return shared.TranslateSubtitleExportResponse{}, bladTlumaczenia(err)
 	}
@@ -182,7 +173,8 @@ func (a *adapterTlumaczenia) kwestiePanelu(ctx context.Context,
 	return kwestie, nil
 }
 
-// SprawdzTaktowanieNapisow obsługuje `translate.subtitle.timing.check`.
+// SprawdzTaktowanieNapisow obsługuje komendę sprawdzenia taktowania napisów
+// modułu Translate, licząc przekroczenia progów czytelności kwestii.
 func (a *adapterTlumaczenia) SprawdzTaktowanieNapisow(ctx context.Context,
 	z shared.TranslateSubtitleTimingCheckRequest) (shared.TranslateSubtitleTimingCheckResponse, error) {
 
@@ -273,8 +265,8 @@ func (a *adapterTlumaczenia) ZlozScenariuszDubbingu(ctx context.Context,
 			return shared.TranslateDubbingScriptBuildResponse{}, err
 		}
 	case shared.DubbingDurationSourceSpeechRate:
-		// Bez taktowania długość docelowa wynika z tempa mowy: tyle czasu, ile
-		// lektor potrzebuje na wypowiedzenie tego zdania.
+		// Bez taktowania długość docelowa wynika z tempa mowy potrzebnego na
+		// wypowiedzenie zdania.
 		tresc, err := trescPanelu(panel)
 		if err != nil {
 			return shared.TranslateDubbingScriptBuildResponse{}, err
@@ -333,7 +325,8 @@ func mowcaKwestii(kwestia dane.KwestiaNapisow, podpowiedzi []string, numer int) 
 	return podpowiedzi[numer%len(podpowiedzi)]
 }
 
-// zlozKwestie przekłada wiersze kwestii na byty kontraktu.
+// zlozKwestie przekłada wiersze kwestii materiału na byty kontraktu, niosące
+// taktowanie, treść źródłową i treść przekładu.
 func zlozKwestie(kwestie []dane.KwestiaNapisow) []shared.SubtitleCue {
 	wykaz := make([]shared.SubtitleCue, 0, len(kwestie))
 	for _, kwestia := range kwestie {
@@ -348,7 +341,8 @@ func zlozKwestie(kwestie []dane.KwestiaNapisow) []shared.SubtitleCue {
 	return wykaz
 }
 
-// formatNapisowZeSciezki rozpoznaje format po końcówce nazwy.
+// formatNapisowZeSciezki rozpoznaje format napisów po końcówce nazwy pliku,
+// odróżniając SRT, WebVTT, TTML i EBU STL.
 func formatNapisowZeSciezki(sciezka string) (shared.SubtitleFormat, bool) {
 	switch strings.ToLower(filepath.Ext(sciezka)) {
 	case ".srt":
@@ -363,7 +357,8 @@ func formatNapisowZeSciezki(sciezka string) (shared.SubtitleFormat, bool) {
 	return "", false
 }
 
-// rozbierzNapisy czyta kwestie z pliku wskazanego formatu.
+// rozbierzNapisy czyta kwestie z pliku wskazanego formatu, kierując rozbiór
+// do procedury właściwej dla tego formatu.
 func rozbierzNapisy(bajty []byte, format shared.SubtitleFormat) ([]dane.KwestiaNapisow, error) {
 	switch format {
 	case shared.SubtitleFormatSrt, shared.SubtitleFormatWebvtt:
@@ -377,9 +372,8 @@ func rozbierzNapisy(bajty []byte, format shared.SubtitleFormat) ([]dane.KwestiaN
 }
 
 // kwestieZTekstu czyta SRT i WebVTT jednym rozbiorem: oba dzielą kwestie pustą
-// linią, oba niosą przedział czasu w linii ze strzałką, oba mają resztę bloku
-// jako treść. Różnią się separatorem części ułamkowej (przecinek w SRT, kropka
-// w WebVTT) i nagłówkiem `WEBVTT`, który wypada wraz z blokiem bez czasu.
+// linią, niosą przedział czasu w linii ze strzałką, a resztę bloku jako treść.
+// Różnią się separatorem części ułamkowej i nagłówkiem formatu.
 func kwestieZTekstu(tresc string) []dane.KwestiaNapisow {
 	bloki := strings.Split(strings.ReplaceAll(tresc, "\r\n", "\n"), "\n\n")
 	kwestie := []dane.KwestiaNapisow{}
@@ -434,7 +428,8 @@ func czasNapisowMs(zapis string) int64 {
 	return int64(razem * 1000)
 }
 
-// zapisCzasuNapisow składa znacznik czasu w postaci wymaganej przez format.
+// zapisCzasuNapisow składa znacznik czasu w postaci wymaganej przez format,
+// z separatorem części ułamkowej właściwym dla SRT albo WebVTT.
 func zapisCzasuNapisow(ms int64, kropka bool) string {
 	godziny := ms / 3600000
 	minuty := (ms % 3600000) / 60000
@@ -465,7 +460,8 @@ func trzyZnaki(wartosc int64) string {
 	return zapis
 }
 
-// kwestieZTtml czyta kwestie z dokumentu TTML.
+// kwestieZTtml czyta kwestie z dokumentu TTML, rozbierając znaczniki czasu
+// i treść napisu z jego struktury XML.
 func kwestieZTtml(bajty []byte) ([]dane.KwestiaNapisow, error) {
 	czytnik := xml.NewDecoder(strings.NewReader(string(bajty)))
 	kwestie := []dane.KwestiaNapisow{}
@@ -514,16 +510,16 @@ func kwestieZTtml(bajty []byte) ([]dane.KwestiaNapisow, error) {
 }
 
 // rozmiarGsi i rozmiarTti to stałe ramki standardu EBU 3264: blok nagłówkowy
-// i blok tekstowy.
+// pliku i blok tekstowy pojedynczej kwestii, oba o niezmiennej długości.
 const (
 	rozmiarGsi = 1024
 	rozmiarTti = 128
 )
 
-// kwestieZStl czyta plik EBU STL. Czas kodowany jest czterema bajtami
-// (godzina, minuta, sekunda, klatka); liczba klatek na sekundę bierze się
-// z pola `DFC` nagłówka, a jego brak oznacza dwadzieścia pięć klatek — tak
-// stanowi standard dla materiału europejskiego.
+// kwestieZStl czyta plik EBU STL. Czas kodowany jest czterema bajtami:
+// godzina, minuta, sekunda, klatka; liczba klatek na sekundę bierze się
+// z nagłówka, a jej brak oznacza dwadzieścia pięć klatek materiału
+// europejskiego.
 func kwestieZStl(bajty []byte) ([]dane.KwestiaNapisow, error) {
 	if len(bajty) < rozmiarGsi+rozmiarTti {
 		return nil, bladWskazaniaTlumaczenia("plik jest krótszy niż nagłówek EBU STL — to nie są napisy STL")
@@ -553,7 +549,8 @@ func kwestieZStl(bajty []byte) ([]dane.KwestiaNapisow, error) {
 	return kwestie, nil
 }
 
-// czasStlMs przekłada czwórkę bajtów standardu na milisekundy.
+// czasStlMs przekłada czwórkę bajtów standardu EBU STL, niosącą godzinę,
+// minutę, sekundę i klatkę, na milisekundy.
 func czasStlMs(bajty []byte, klatek float64) int64 {
 	if len(bajty) < 4 {
 		return 0
@@ -580,7 +577,8 @@ func trescStl(pole []byte) string {
 	return strings.TrimSpace(b.String())
 }
 
-// zapiszNapisy wypisuje kwestie do pliku wskazanego formatu.
+// zapiszNapisy wypisuje kwestie do pliku wskazanego formatu, kierując zapis
+// do procedury właściwej dla tego formatu.
 func zapiszNapisy(sciezka string, format shared.SubtitleFormat,
 	kwestie []dane.KwestiaNapisow) error {
 

@@ -1,61 +1,6 @@
-// Odpowiedzialność pliku: silnik syntezy mowy modułu Translate — przeprowadzenie
-// wybranego syntezatora do pliku dźwiękowego: plik tekstu, wiersz wywołania,
-// sprawdzenie skutku i przekład odmów na kody kontraktu. Metody stoją na
-// wspólnym `*adapterTlumaczenia` (typ i przedrostki deklaruje
-// `adapter_modul_tlumaczenie.go`); `SyntezujMowe` — komenda, która tego silnika
-// używa — mieszka w `adapter_modul_tlumaczenie_mowa.go`, a odpowiedź na pytanie
-// „kogo w ogóle wołamy i jakim głosem" — w
-// `adapter_modul_tlumaczenie_mowa_glos.go`. Nagłówek niesie rozstrzygnięcia
-// wspólne obu plikom, żeby nie rozjechały się przy poprawce.
-//
-// Uruchomienia procesu tu nie ma: sekwencja startu (UruchomProces →
-// PrzejmijDrzewo → pompy strumieni → oczekiwanie → ubicie drzewa) mieszka
-// w pakiecie `zewnetrzne`, wspólnym z Terminalem, Developerem
-// i `mowa/uruchomienie.go`. Ten plik woła `zewnetrzne.Wolaj` i o proces nie
-// pyta.
-//
-// Dźwięk nie opuszcza maszyny Operatora: nie ma tu klienta HTTP ani adresu,
-// a oba syntezatory są programami lokalnymi.
-//
-// Silniki są dwa, w tej kolejności pierwszeństwa:
-//  1. `piper` — synteza neuronowa, głos, którego da się słuchać. Wchodzi
-//     pierwszy, gdy stoi binarium oraz jest głos dla języka panelu. Głos leży
-//     na maszynie jak każde inne binarium arsenału, więc jest zależnością
-//     środowiska, a nie stanem produktu — rdzeń go nie pobiera, nie
-//     wersjonuje i nie sprząta.
-//  2. `espeak-ng` — synteza formantowa, głos mechaniczny, ale program jest
-//     jednym plikiem bez stanu i bez modeli. Droga zapasowa: wchodzi, gdy
-//     pipera nie ma albo nie ma dla tego języka głosu.
-//
-// Operator ma wiedzieć, którym silnikiem słucha: głos zapasowy brzmi inaczej
-// niż dobry i nie ma być mylony z usterką nagrania. Kontrakt
-// (`TranslateSpeechSynthesizeResponse`) niesie same `panelId` i `path`, bez
-// pola na nazwę silnika, więc nazwa silnika idzie w nazwę pliku:
-// `pan-…-piper-….wav` albo `pan-…-espeak-ng-….wav`. `path` jest polem kontraktu
-// i niesie prawdę o tym, co powstało; ta sama nazwa ląduje w kolumnie
-// `nagranie_odnosnik`, więc ślad również mówi, kto czytał. Gdy kontrakt dostanie
-// pole `engine`, wystarczy je wypełnić wartością, którą ten plik już zna.
-//
-// Ścieżka programu i głosu bierze się z dwóch źródeł, w tej kolejności:
-//
-//   - zmienna środowiska (`DANACO_PIPER`, `DANACO_PIPER_GLOSY`,
-//     `DANACO_ESPEAK`) — pierwszeństwo. Arsenał jest instalowany poza
-//     produktem i bywa na każdej maszynie w innym miejscu; zmienna jest jedynym
-//     wskazaniem, które działa bez przebudowy i bez migracji;
-//   - wykrycie w miejscach typowych — nazwa goła w PATH, a przy jej braku
-//     katalog arsenału (`/opt/danaco-arsenal/…`), dzięki czemu instalacja
-//     typowa działa bez ustawiania czegokolwiek.
-//
-// Katalog ustawień produktu (`konfig`, wzór `mowa_model`) źródłem nie jest:
-// wpisywałby położenie cudzego binarium do stanu produktu, a to jest fakt
-// maszyny, nie nastawa Operatora. Gdy arsenał dostanie własną rodzinę ustawień,
-// ten plik ma czytać ją, a nie dokładać trzecią drogę.
-//
-// Brak głosu to inna odmowa niż brak binarium: program stoi, więc `Stoi` mówi
-// „jest", a czynność i tak nie wyjdzie. Rozróżnienie widać w treści odmowy, bo
-// naprawy są różne — „zainstalować pipera" kontra „dołożyć plik głosu dla
-// języka X do katalogu Y". Gdy zawiodą oba silniki, odmowa wymienia obie
-// przyczyny osobno.
+// Odpowiedzialność pliku: silnik syntezy mowy modułu Translate — wybór
+// syntezatora, wiersz wywołania, sprawdzenie skutku i przekład odmów na kody
+// kontraktu. Uruchomienia procesu tu nie ma: idzie ono pakietem zewnetrzne.
 package core
 
 import (
@@ -96,21 +41,15 @@ const (
 	katalogSyntezyMowy = "synteza-mowy"
 
 	// granicaSyntezy to granica czasu jednego uruchomienia syntezatora. Piper
-	// ładuje model sześćdziesięciomegabajtowy przy każdym wywołaniu i na słabszej
-	// maszynie potrzebuje na to kilkunastu sekund — minuta zostawia zapas, a
-	// zarazem nie pozwala programowi, który utknął, trzymać żądania bez końca
-	// (`zewnetrzne.Wolaj` granicy wymaga).
+	// ładuje ciężki model przy każdym wywołaniu; minuta zostawia zapas, a
+	// zarazem nie pozwala utkniętemu programowi trzymać żądania bez końca.
 	granicaSyntezy = 60 * time.Second
 )
 
-// ZSynteza wpina silnik syntezy mowy: uruchamiacz procesów (jedyna droga startu
-// procesu w drzewie), dwa źródła izolacji — te same, którymi jadą
-// Terminal, Developer i silnik rozpoznawania mowy — oraz katalog danych rdzenia,
-// pod którym lądują nagrania.
-//
-// Zależność jest opcjonalna w tym sensie, że jej brak nie psuje pozostałych
-// komend modułu; psuje wyłącznie `speech.synthesize`, która wtedy odmawia
-// nazywając brak, zamiast oddać pustą ścieżkę udającą nagranie.
+// ZSynteza wpina silnik syntezy mowy: uruchamiacz procesów, dwa źródła
+// izolacji i katalog danych rdzenia, pod którym lądują nagrania. Zależność
+// opcjonalna: jej brak psuje wyłącznie `speech.synthesize`, która wtedy
+// odmawia nazywając brak.
 func (a *adapterTlumaczenia) ZSynteza(uruchamiacz session.Uruchamiacz,
 	rozstrzygacz *konfig.Rozstrzygacz, katalog *KatalogRoboczy, katalogDanych string) *adapterTlumaczenia {
 
@@ -122,10 +61,8 @@ func (a *adapterTlumaczenia) ZSynteza(uruchamiacz session.Uruchamiacz,
 }
 
 // zsyntezujDoPliku zamienia tekst na plik WAV i oddaje jego ścieżkę.
-//
-// Kolejność jest rozmyślna: najpierw pada pytanie, czym syntezować, i dopiero potem
-// zakładamy cokolwiek na dysku. Katalog nagrań założony pod plik, który nigdy
-// nie powstał, byłby śmieciem po odmowie.
+// Kolejność jest rozmyślna: najpierw pytanie, czym syntezować, dopiero potem
+// zakłada się cokolwiek na dysku.
 func (a *adapterTlumaczenia) zsyntezujDoPliku(ctx context.Context,
 	kodPanelu, jezyk, tekst string) (string, error) {
 
@@ -145,38 +82,30 @@ func (a *adapterTlumaczenia) zsyntezujDoPliku(ctx context.Context,
 	}
 	sciezka := filepath.Join(katalog, nazwaNagrania(kodPanelu, wybor.silnik))
 
-	// Tekst idzie plikiem, nie argumentem. Piper czyta treść z pliku wskazanego
-	// przełącznikiem `-i` albo ze standardowego wejścia, a port
-	// `session.Uruchamiacz` wejścia procesu nie wystawia — więc plik jest jedyną
-	// drogą, która nie wymaga rozszerzania portu. Znika przy tym granica
-	// długości argumentu, o którą rozbija się treść dłuższego panelu. Espeak
-	// dostaje ten sam plik przełącznikiem `-f`, żeby obie drogi różniły się
-	// wyłącznie wierszem wywołania.
+	// Tekst idzie plikiem, nie argumentem — port procesu nie wystawia
+	// wejścia, a argument ma granicę.
 	sciezkaTekstu := sciezka + ".txt"
 	if err := os.WriteFile(sciezkaTekstu, []byte(tekst), 0o600); err != nil {
 		return "", bladSyntezyMowy("nie można zapisać tekstu do syntezy pod " + sciezkaTekstu + ": " + err.Error())
 	}
-	// Plik tekstowy jest rusztowaniem, nie wynikiem — znika niezależnie od tego,
-	// czy synteza się udała. Zostawiony leżałby obok nagrania i wyglądał jak
-	// część wyniku.
+	// Plik tekstowy jest rusztowaniem, nie wynikiem — znika niezależnie od
+	// tego, czy synteza się udała.
 	defer func() { _ = os.Remove(sciezkaTekstu) }()
 
 	okno, zasady, obszar := a.zasiegProgramowTlumaczenia()
 	wynik, err := zewnetrzne.Wolaj(ctx, a.uruchamiacz, okno, zasady, obszar,
 		wybor.narzedzie, wybor.argumenty(sciezkaTekstu, sciezka), katalogPracySyntezy(obszar), granicaSyntezy)
 	if err != nil {
-		// Naruszenie izolacji znakujemy osobno — punkt izolacji Operatora to nie
-		// jest usterka rdzenia (tak samo znakuje je Terminal i silnik mowy).
+		// Naruszenie izolacji jest znakowane osobno — punkt izolacji Operatora to
+		// nie jest usterka rdzenia.
 		if errors.Is(err, session.ErrIzolacja) {
 			return "", bladIzolacjiSyntezy(err)
 		}
 		return "", bladSyntezyMowy(err.Error() + ogonSyntezatora(wynik.Diagnostyka))
 	}
 
-	// Plik ma istnieć i mieć rozmiar. Syntezator kończący się powodzeniem, ale
-	// nie zostawiający nagrania, byłby odmową udającą sukces. Sprawdzany jest
-	// więc skutek, a nie kod wyjścia procesu; piper potrafi wyjść zerem, gdy
-	// tekst zwęzi się do samych znaków niewymawialnych.
+	// Plik ma istnieć i mieć rozmiar — liczy się skutek, nie kod wyjścia;
+	// piper bywa zerem bez nagrania.
 	opis, err := os.Stat(sciezka)
 	if err != nil {
 		return "", bladSyntezyMowy(wybor.silnik + " zakończył się powodzeniem, ale nie zostawił nagrania pod " +
@@ -190,7 +119,7 @@ func (a *adapterTlumaczenia) zsyntezujDoPliku(ctx context.Context,
 	return sciezka, nil
 }
 
-// wyborSyntezatora niesie rozstrzygnięcie „czym czytamy": nazwę silnika (idzie
+// wyborSyntezatora niesie rozstrzygnięcie „czym jest czytane": nazwę silnika (idzie
 // w nazwę pliku), narzędzie dla `zewnetrzne.Wolaj` i głos, gdy silnik go używa.
 type wyborSyntezatora struct {
 	silnik    string
@@ -205,20 +134,14 @@ func (w wyborSyntezatora) argumenty(sciezkaTekstu, sciezkaNagrania string) []str
 	if w.silnik == silnikPiper {
 		return []string{"-m", w.glos, "-i", sciezkaTekstu, "-f", sciezkaNagrania}
 	}
-	// Espeak dostaje język w `-v`; głosu nie zgadujemy i nie mamy własnej tabelki
-	// nazw — `espeak-ng` rozumie i kody (`pl`, `pl-PL`), i nazwy angielskie
-	// (`polish`), więc tabelka w rdzeniu byłaby drugą prawdą o wykazie głosów.
-	// Języka, którego syntezator nie zna, nie podmieniamy na domyślny: nagranie
-	// polskiego zdania przeczytane po angielsku byłoby atrapą bez słowa
-	// ostrzeżenia.
+	// Espeak dostaje język w -v bez podmiany na domyślny, żeby nie czytać
+	// cicho w złym języku.
 	return []string{"-v", w.glos, "-w", sciezkaNagrania, "-f", sciezkaTekstu}
 }
 
-// katalogNagran zakłada (gdy trzeba) katalog na nagrania pod katalogiem danych
-// rdzenia. Pusty katalog danych jest odmową, nie powodem do wybrania czegoś
-// z własnej głowy: nagranie zapisane w katalogu bieżącym procesu wylądowałoby
-// tam, gdzie Operator go nie szuka, i nie zniknęłoby razem z resztą danych
-// rdzenia.
+// katalogNagran zakłada, gdy trzeba, katalog na nagrania pod katalogiem
+// danych rdzenia. Pusty katalog danych jest odmową: nagranie zapisane
+// w katalogu bieżącym procesu wylądowałoby tam, gdzie Operator go nie szuka.
 func (a *adapterTlumaczenia) katalogNagran() (string, error) {
 	podstawa := strings.TrimSpace(a.katalogDanych)
 	if podstawa == "" {
@@ -233,26 +156,16 @@ func (a *adapterTlumaczenia) katalogNagran() (string, error) {
 }
 
 // nazwaNagrania składa nazwę pliku z kodu panelu, nazwy silnika i chwili
-// syntezy. Silnik jest w nazwie, bo kontrakt nie ma pola na niego, a Operator
-// ma wiedzieć, czy słucha głosu dobrego, czy zapasowego (nagłówek pliku).
-// Chwila jest w nazwie, bo odsłuch bywa powtarzany po korekcie — nadpisywanie
-// kasowałoby plik, do którego może już prowadzić wcześniejszy ślad.
+// syntezy. Silnik jest w nazwie, bo kontrakt jej nie niesie. Chwila jest
+// w nazwie, bo odsłuch bywa powtarzany po korekcie — nadpisanie skasowałoby
+// plik wcześniejszego śladu.
 func nazwaNagrania(kodPanelu, silnik string) string {
 	return kodPanelu + "-" + silnik + "-" + strconv.FormatInt(time.Now().UTC().UnixMilli(), 10) + ".wav"
 }
 
-// zasiegProgramowTlumaczenia składa trójkę okno–zasady–obszar dla zasięgu
-// platformy, tą samą drogą i z tego samego powodu, co `adapterMowy.zasiegPlatformy`:
-// żądanie modułu niesie sam panel, a nie okno rozmowy, więc adresem jest
-// najszerszy z ośmiu poziomów zasięgu, a nie podstawione po cichu
-// puste struktury znaczące „izolacja wyłączona”.
-//
-// Trójka jest jedna dla wszystkich programów modułu — syntezy mowy, rozpoznania
-// pisma w dokumencie i korekty językowej — bo zasięg zależy od kształtu żądania,
-// a nie od tego, który program po nim rusza.
-//
-// Okno dostaje `ExecutionEnvCore` wprost: wynik ma powstać na dysku rdzenia,
-// bo to rdzeń odda potem jego ścieżkę albo treść w odpowiedzi.
+// zasiegProgramowTlumaczenia składa trójkę okno-zasady-obszar zasięgu
+// platformy. Żądanie modułu niesie sam panel, nie okno rozmowy, więc adresem
+// jest najszerszy poziom zasięgu. Okno dostaje `ExecutionEnvCore` wprost.
 func (a *adapterTlumaczenia) zasiegProgramowTlumaczenia() (session.Okno, session.Zasady, session.Obszar) {
 	okno := session.Okno{Ustawienia: session.Ustawienia{
 		SrodowiskoWykonania: shared.ExecutionEnvCore,
@@ -269,10 +182,9 @@ func (a *adapterTlumaczenia) zasiegProgramowTlumaczenia() (session.Okno, session
 }
 
 // katalogPracySyntezy wskazuje katalog uruchomienia. Pusty jest odpowiedzią
-// poprawną, nie brakiem: brama izolacji uzupełnia wtedy katalog własny zasięgu,
-// a przy wyłączonym punkcie izolacji proces rusza w katalogu bieżącym rdzenia.
-// Wpisanie tu czegoś z własnej głowy odbierałoby bramie rozstrzygnięcie, które
-// należy do niej (wzór `mowa/silnik.go`, `katalogPracy`).
+// poprawną, nie brakiem: brama izolacji uzupełnia wtedy katalog własny
+// zasięgu, a przy wyłączonym punkcie izolacji proces rusza w katalogu
+// bieżącym rdzenia.
 func katalogPracySyntezy(obszar session.Obszar) string {
 	return strings.TrimSpace(obszar.KatalogRoboczy)
 }
@@ -286,17 +198,17 @@ func ogonSyntezatora(diagnostyka string) string {
 	return " — syntezator powiedział: " + strings.TrimSpace(diagnostyka)
 }
 
-// bladBrakuSyntezatora znakuje zaplecze syntezy jako niedostępne: żądanie było
-// poprawne, produkt nie jest zepsuty, brakuje czegoś w instalacji i komunikat
-// mówi czego. Ten sam kod i to samo uzasadnienie, co przy braku pomocnika
-// rozpoznawania (`bladSilnikaMowy`, `adapter_modul_mowa.go`) — dwie reguły dla
-// jednego rodzaju braku byłyby rozjazdem.
+// bladBrakuSyntezatora znakuje zaplecze syntezy jako niedostępne: żądanie
+// było poprawne, produkt nie jest zepsuty, brakuje czegoś w instalacji
+// i komunikat mówi czego. Ten sam kod niesie brak pomocnika rozpoznawania
+// mowy.
 func bladBrakuSyntezatora(powod string) error {
 	return protocol.JakoError(protocol.NowyBlad(shared.ErrorCodeChannelUnavailable,
 		"moduł Translate: "+powod))
 }
 
-// bladSyntezyMowy znakuje syntezę, która ruszyła i się nie udała.
+// bladSyntezyMowy znakuje syntezę, która ruszyła i się nie udała — proces
+// wystartował, ale nagranie nie powstało albo jest puste.
 func bladSyntezyMowy(powod string) error {
 	return protocol.JakoError(protocol.NowyBlad(shared.ErrorCodeInternalError,
 		"moduł Translate: "+powod))

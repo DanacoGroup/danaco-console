@@ -1,18 +1,7 @@
-// Odpowiedzialność pliku: wpięcie WSZYSTKICH komend modułu Research — portu
-// `Badania`, przez który rejestr komend rdzenia dociera do adaptera złożonego
-// z dziesięciu plików tego samego typu `*adapterBadan`.
-//
-// Port wymienia komplet komend niezależnie od tego, który plik adaptera je
-// wypełnia: rejestr rdzenia potrzebuje jednego miejsca wiążącego nazwę komendy
-// z metodą portu — tak samo jak `adapter_modul_library_uchwyty.go` rejestruje
-// w jednej funkcji komendy swojego modułu.
-//
-// ── Które komendy rozgłaszają zdarzenie ────────────────────────────────────
-// Kontrakt daje modułowi cztery zdarzenia: `research.report.changed`,
-// `research.source.changed`, `research.finding.changed` i
-// `research.monitor.changed`. Rozgłaszają wyłącznie te działania, które któreś
-// z nich naprawdę opisuje — wzór z Automatyk. Działanie bez zdarzenia
-// w kontrakcie nie wymyśla sobie własnego.
+// Plik wpina do rejestru rdzenia komplet komend portu Badania modułu Research,
+// niezależnie od tego, który plik adaptera je wypełnia, i rozgłasza dla
+// wybranych działań cztery zdarzenia zmiany: raportu, źródła, ustalenia oraz
+// monitora.
 package core
 
 import (
@@ -21,9 +10,10 @@ import (
 	"danacoconsole/shared"
 )
 
-// Badania jest portem modułu Research.
+// Badania jest portem modułu Research: zestawia komendy zarządzania źródłami,
+// odkrywaniem, lekturą, ustaleniami, przestrzenią badania, cytowaniami,
+// raportem i eksportem.
 type Badania interface {
-	// źródła
 	DodajZrodlo(ctx context.Context, z shared.ResearchSourceAddRequest) (shared.ResearchSourceAddResponse, error)
 	WypiszZrodla(ctx context.Context, z shared.ResearchSourceListRequest) (shared.ResearchSourceListResponse, error)
 	ZmienZrodlo(ctx context.Context, z shared.ResearchSourceUpdateRequest) (shared.ResearchSourceUpdateResponse, error)
@@ -38,7 +28,6 @@ type Badania interface {
 	PrzepiszNagranie(ctx context.Context, z shared.ResearchSourceTranscribeRequest) (shared.ResearchSourceTranscribeResponse, error)
 	RozstrzygnijIdentyfikator(ctx context.Context, z shared.ResearchSourceResolveRequest) (shared.ResearchSourceResolveResponse, error)
 
-	// odkrywanie, monitory, import wsadowy
 	SzukajZrodel(ctx context.Context, z shared.ResearchDiscoverySearchRequest) (shared.ResearchDiscoverySearchResponse, error)
 	UlozZapytania(ctx context.Context, z shared.ResearchDiscoveryAssistRequest) (shared.ResearchDiscoveryAssistResponse, error)
 	RozwinCytowania(ctx context.Context, z shared.ResearchDiscoverySnowballRequest) (shared.ResearchDiscoverySnowballResponse, error)
@@ -48,7 +37,6 @@ type Badania interface {
 	OdswiezMonitory(ctx context.Context, z shared.ResearchMonitorRefreshRequest) (shared.ResearchMonitorRefreshResponse, error)
 	WczytajPartieAdresow(ctx context.Context, z shared.ResearchBatchImportRequest) (shared.ResearchBatchImportResponse, error)
 
-	// lektura i ekstrakcja
 	OtworzDoLektury(ctx context.Context, z shared.ResearchReadingOpenRequest) (shared.ResearchReadingOpenResponse, error)
 	DodajAdnotacje(ctx context.Context, z shared.ResearchAnnotationAddRequest) (shared.ResearchAnnotationAddResponse, error)
 	WypiszAdnotacje(ctx context.Context, z shared.ResearchAnnotationListRequest) (shared.ResearchAnnotationListResponse, error)
@@ -60,7 +48,6 @@ type Badania interface {
 	RozpoznajPismoZrodla(ctx context.Context, z shared.ResearchSourceOcrRequest) (shared.ResearchSourceOcrResponse, error)
 	ZapytajKorpus(ctx context.Context, z shared.ResearchCorpusAskRequest) (shared.ResearchCorpusAskResponse, error)
 
-	// ustalenia i analiza
 	DodajUstalenie(ctx context.Context, z shared.ResearchFindingAddRequest) (shared.ResearchFindingAddResponse, error)
 	WypiszUstalenia(ctx context.Context, z shared.ResearchFindingListRequest) (shared.ResearchFindingListResponse, error)
 	ZmienUstalenie(ctx context.Context, z shared.ResearchFindingUpdateRequest) (shared.ResearchFindingUpdateResponse, error)
@@ -76,7 +63,6 @@ type Badania interface {
 	ZweryfikujUstalenie(ctx context.Context, z shared.ResearchFindingFactCheckRequest) (shared.ResearchFindingFactCheckResponse, error)
 	PogrupujUstalenia(ctx context.Context, z shared.ResearchFindingClusterRequest) (shared.ResearchFindingClusterResponse, error)
 
-	// przestrzeń badania
 	UstawPrzestrzenPelna(ctx context.Context, z shared.ResearchWorkspaceSetRequest) (shared.ResearchWorkspaceSetResponse, error)
 	PobierzPrzestrzen(ctx context.Context, z shared.ResearchWorkspaceGetRequest) (shared.ResearchWorkspaceGetResponse, error)
 	UstawPytaniaBadania(ctx context.Context, z shared.ResearchWorkspaceQuestionSetRequest) (shared.ResearchWorkspaceQuestionSetResponse, error)
@@ -87,13 +73,11 @@ type Badania interface {
 	PrzesiewPrisma(ctx context.Context, z shared.ResearchPrismaGetRequest) (shared.ResearchPrismaGetResponse, error)
 	GrafDowodow(ctx context.Context, z shared.ResearchEvidenceGraphRequest) (shared.ResearchEvidenceGraphResponse, error)
 
-	// cytowania
 	ZlozCytowania(ctx context.Context, z shared.ResearchCitationRenderRequest) (shared.ResearchCitationRenderResponse, error)
 	WypiszStyleCytowania(ctx context.Context, z shared.ResearchCitationStylesRequest) (shared.ResearchCitationStylesResponse, error)
 	SprawdzCytowania(ctx context.Context, z shared.ResearchCitationCheckRequest) (shared.ResearchCitationCheckResponse, error)
 	SprawdzWycofania(ctx context.Context, z shared.ResearchRetractionCheckRequest) (shared.ResearchRetractionCheckResponse, error)
 
-	// raport
 	ZbudujRaport(ctx context.Context, z shared.ResearchReportBuildRequest) (shared.ResearchReportBuildResponse, error)
 	PobierzRaport(ctx context.Context, z shared.ResearchReportGetRequest) (shared.ResearchReportGetResponse, error)
 	WypiszSzablonyRaportu(ctx context.Context, z shared.ResearchReportTemplateListRequest) (shared.ResearchReportTemplateListResponse, error)
@@ -107,7 +91,6 @@ type Badania interface {
 	WypiszKomentarzeRaportu(ctx context.Context, z shared.ResearchReportCommentListRequest) (shared.ResearchReportCommentListResponse, error)
 	OperacjaKontekstowaRaportu(ctx context.Context, z shared.ResearchReportContextualOpRequest) (shared.ResearchReportContextualOpResponse, error)
 
-	// eksport
 	WyeksportujRaport(ctx context.Context, z shared.ResearchReportExportRequest) (shared.ResearchReportExportResponse, error)
 	PodejrzyjEksport(ctx context.Context, z shared.ResearchExportPreviewRequest) (shared.ResearchExportPreviewResponse, error)
 	WypiszEksporty(ctx context.Context, z shared.ResearchExportListRequest) (shared.ResearchExportListResponse, error)
@@ -120,13 +103,13 @@ type Badania interface {
 // kompilacja stanie tutaj, a nie dopiero na martwej komendzie u Operatora.
 var _ Badania = (*adapterBadan)(nil)
 
-// zarejestrujBadania wpina komplet komend modułu Research.
+// zarejestrujBadania wpina do rejestru rdzenia komplet komend portu Badania
+// i podłącza rozgłaszanie zdarzeń zmiany dla działań, które je opisują.
 func zarejestrujBadania(r *Rejestr, m Badania, e *emiter) {
 	if r == nil || m == nil {
 		return
 	}
 
-	// ── źródła ──
 	r.Zarejestruj(shared.CommandResearchSourceList, obsluz(m.WypiszZrodla))
 	r.Zarejestruj(shared.CommandResearchSourceMerge, obsluz(m.ScalZrodla))
 	r.Zarejestruj(shared.CommandResearchSourceDuplicates, obsluz(m.SzukajDuplikatowZrodel))
@@ -137,9 +120,7 @@ func zarejestrujBadania(r *Rejestr, m Badania, e *emiter) {
 	r.Zarejestruj(shared.CommandResearchSourceTranscribe, obsluz(m.PrzepiszNagranie))
 	r.Zarejestruj(shared.CommandResearchSourceResolve, obsluz(m.RozstrzygnijIdentyfikator))
 
-	// Trzy drogi wnoszące źródło rozgłaszają `research.source.changed`: okno
-	// katalogu ma zobaczyć nową pozycję bez odpytywania. Zmiana i zdjęcie idą
-	// tym samym zdarzeniem z innym rodzajem zmiany.
+	// Trzy drogi wnoszące źródło rozgłaszają to samo zdarzenie zmiany z innym jej rodzajem.
 	r.Zarejestruj(shared.CommandResearchSourceAdd,
 		obsluz(func(ctx context.Context, z shared.ResearchSourceAddRequest) (shared.ResearchSourceAddResponse, error) {
 			odpowiedz, err := m.DodajZrodlo(ctx, z)
@@ -168,15 +149,13 @@ func zarejestrujBadania(r *Rejestr, m Badania, e *emiter) {
 		obsluz(func(ctx context.Context, z shared.ResearchSourceRemoveRequest) (shared.ResearchSourceRemoveResponse, error) {
 			odpowiedz, err := m.UsunZrodlo(ctx, z)
 			if err == nil {
-				// Zdarzenie niesie samo wskazanie zdjętej pozycji: wiersza już nie
-				// ma, więc pełny byt byłby odtworzeniem czegoś, co nie istnieje.
+				// Zdarzenie niesie samo wskazanie zdjętej pozycji, bo pełny byt już nie istnieje.
 				e.zrodloBadania(shared.ChangeKindDeleted,
 					shared.ResearchSource{Id: odpowiedz.SourceId})
 			}
 			return odpowiedz, err
 		}))
 
-	// ── odkrywanie, monitory, import wsadowy ──
 	r.Zarejestruj(shared.CommandResearchDiscoverySearch, obsluz(m.SzukajZrodel))
 	r.Zarejestruj(shared.CommandResearchDiscoveryAssist, obsluz(m.UlozZapytania))
 	r.Zarejestruj(shared.CommandResearchDiscoverySnowball, obsluz(m.RozwinCytowania))
@@ -207,7 +186,6 @@ func zarejestrujBadania(r *Rejestr, m Badania, e *emiter) {
 			return odpowiedz, err
 		}))
 
-	// ── lektura i ekstrakcja ──
 	r.Zarejestruj(shared.CommandResearchReadingOpen, obsluz(m.OtworzDoLektury))
 	r.Zarejestruj(shared.CommandResearchAnnotationAdd, obsluz(m.DodajAdnotacje))
 	r.Zarejestruj(shared.CommandResearchAnnotationList, obsluz(m.WypiszAdnotacje))
@@ -219,7 +197,6 @@ func zarejestrujBadania(r *Rejestr, m Badania, e *emiter) {
 	r.Zarejestruj(shared.CommandResearchSourceOcr, obsluz(m.RozpoznajPismoZrodla))
 	r.Zarejestruj(shared.CommandResearchCorpusAsk, obsluz(m.ZapytajKorpus))
 
-	// ── ustalenia i analiza ──
 	r.Zarejestruj(shared.CommandResearchFindingList, obsluz(m.WypiszUstalenia))
 	r.Zarejestruj(shared.CommandResearchFindingProvenance, obsluz(m.SladUstalenia))
 	r.Zarejestruj(shared.CommandResearchFindingCode, obsluz(m.PrzypiszKodyUstalenia))
@@ -265,7 +242,6 @@ func zarejestrujBadania(r *Rejestr, m Badania, e *emiter) {
 			return odpowiedz, err
 		}))
 
-	// ── przestrzeń badania ──
 	r.Zarejestruj(shared.CommandResearchWorkspaceSet, obsluz(m.UstawPrzestrzenPelna))
 	r.Zarejestruj(shared.CommandResearchWorkspaceGet, obsluz(m.PobierzPrzestrzen))
 	r.Zarejestruj(shared.CommandResearchWorkspaceQuestionSet, obsluz(m.UstawPytaniaBadania))
@@ -276,13 +252,11 @@ func zarejestrujBadania(r *Rejestr, m Badania, e *emiter) {
 	r.Zarejestruj(shared.CommandResearchPrismaGet, obsluz(m.PrzesiewPrisma))
 	r.Zarejestruj(shared.CommandResearchEvidenceGraph, obsluz(m.GrafDowodow))
 
-	// ── cytowania ──
 	r.Zarejestruj(shared.CommandResearchCitationRender, obsluz(m.ZlozCytowania))
 	r.Zarejestruj(shared.CommandResearchCitationStyles, obsluz(m.WypiszStyleCytowania))
 	r.Zarejestruj(shared.CommandResearchCitationCheck, obsluz(m.SprawdzCytowania))
 	r.Zarejestruj(shared.CommandResearchRetractionCheck, obsluz(m.SprawdzWycofania))
 
-	// ── raport ──
 	r.Zarejestruj(shared.CommandResearchReportGet, obsluz(m.PobierzRaport))
 	r.Zarejestruj(shared.CommandResearchReportTemplateList, obsluz(m.WypiszSzablonyRaportu))
 	r.Zarejestruj(shared.CommandResearchReportBibliography, obsluz(m.ZlozBibliografie))
@@ -304,7 +278,6 @@ func zarejestrujBadania(r *Rejestr, m Badania, e *emiter) {
 			return odpowiedz, err
 		}))
 
-	// ── eksport ──
 	r.Zarejestruj(shared.CommandResearchReportExport, obsluz(m.WyeksportujRaport))
 	r.Zarejestruj(shared.CommandResearchExportPreview, obsluz(m.PodejrzyjEksport))
 	r.Zarejestruj(shared.CommandResearchExportList, obsluz(m.WypiszEksporty))
@@ -324,7 +297,7 @@ func zmianaRaportu(reportId *string) shared.ChangeKind {
 }
 
 // zmianaUstaleniaBadania odróżnia ustalenie nowe od zmienianego tym samym
-// sygnałem co przy raporcie.
+// sygnałem obecności identyfikatora, co przy rozstrzyganiu zmiany raportu.
 func zmianaUstaleniaBadania(findingId *string) shared.ChangeKind {
 	if findingId == nil || *findingId == "" {
 		return shared.ChangeKindCreated

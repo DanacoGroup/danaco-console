@@ -10,14 +10,8 @@ import (
 	"danacoconsole/shared"
 )
 
-// UruchomAnalize zestawia błędy z zakresu czasu w jedną migawkę i wyprowadza
-// z nich rekomendacje.
-//
-// Każda rekomendacja wskazuje błąd, z którego powstała (kolumna `blad_kod`), bo
-// Recommendations Panel pozwala przejść z zalecenia do faktu źródłowego.
-//
-// Zakres pusty jest stanem poprawnym: analiza powstaje z zerem błędów i mówi to
-// w podsumowaniu. Odmowa zlałaby brak znalezisk z niepowodzeniem sprawdzenia.
+// UruchomAnalize zestawia błędy z zakresu czasu w jedną migawkę i
+// wyprowadza z nich rekomendacje. Zakres pusty jest stanem poprawnym.
 func (a *adapterDiagnostyki) UruchomAnalize(ctx context.Context,
 	z shared.DiagnosticsAnalyzeRunRequest) (shared.DiagnosticsAnalyzeRunResponse, error) {
 
@@ -45,7 +39,8 @@ func (a *adapterDiagnostyki) UruchomAnalize(ctx context.Context,
 	return shared.DiagnosticsAnalyzeRunResponse{Analysis: wynik}, nil
 }
 
-// WykazRekomendacji zwraca rekomendacje spełniające warunki.
+// WykazRekomendacji zwraca rekomendacje spełniające warunki żądania,
+// z zachowaniem kolejności migawki analizy.
 func (a *adapterDiagnostyki) WykazRekomendacji(ctx context.Context,
 	z shared.DiagnosticsRecommendationListRequest) (shared.DiagnosticsRecommendationListResponse, error) {
 
@@ -66,11 +61,8 @@ func (a *adapterDiagnostyki) WykazRekomendacji(ctx context.Context,
 	}, nil
 }
 
-// migawkaAnalizy składa wiersz analizy z zakresu żądania i znalezionych błędów.
-//
-// Kody błędów idą do kolumny tablicą JSON, bo migawka ma przetrwać zmianę stanu
-// samych błędów: analiza sprzed tygodnia ma pokazywać to, co widziała wtedy,
-// a nie to, co widać dziś.
+// migawkaAnalizy składa wiersz analizy z zakresu żądania i znalezionych
+// błędów, do zapisu w bazie danych.
 func (a *adapterDiagnostyki) migawkaAnalizy(z shared.DiagnosticsAnalyzeRunRequest,
 	bledy []dane.BladDiagnostyczny) dane.AnalizaDiagnostyczna {
 
@@ -116,11 +108,8 @@ func podsumowanieAnalizy(bledy []dane.BladDiagnostyczny, odrzucone, niezapisane 
 	return podsumowanie
 }
 
-// rekomendacjeZBledow wyprowadza zalecenia z błędów objętych analizą.
-//
-// Jedna rekomendacja na błąd, z zachowaniem jego priorytetu i wskazaniem jego
-// kodu. Rdzeń podaje sam fakt i jego wagę, bez treści poprawki: rozpoznanie
-// przyczyny odbywa się w oknie Diagnostics.
+// rekomendacjeZBledow wyprowadza zalecenia z błędów objętych analizą,
+// jedna rekomendacja na każdy błąd.
 func rekomendacjeZBledow(kodAnalizy string, bledy []dane.BladDiagnostyczny) []dane.RekomendacjaDiagnostyczna {
 	rekomendacje := make([]dane.RekomendacjaDiagnostyczna, 0, len(bledy))
 	teraz := time.Now().UnixMilli()
@@ -141,7 +130,8 @@ func rekomendacjeZBledow(kodAnalizy string, bledy []dane.BladDiagnostyczny) []da
 	return rekomendacje
 }
 
-// kodyRekomendacji wyjmuje kody do migawki analizy.
+// kodyRekomendacji wyjmuje kody rekomendacji do zapisu w kolumnie migawki
+// analizy, jako tablicę JSON kodów.
 func kodyRekomendacji(rekomendacje []dane.RekomendacjaDiagnostyczna) []string {
 	kody := make([]string, 0, len(rekomendacje))
 	for _, rekomendacja := range rekomendacje {

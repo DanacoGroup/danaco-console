@@ -1,20 +1,4 @@
-// Moduł Library — cykl życia zasobu: `library.file.move`,
-// `library.file.archive`, `library.file.restore`, `library.file.delete`.
-//
-// Trzy pierwsze czynności są odwracalne i tak też działają: przeniesienie zmienia
-// miejsce w strukturze, archiwizacja zdejmuje zasób z wykazu domyślnego, a
-// przywrócenie oddaje go z powrotem — w każdym przypadku wiersz, wersje,
-// etykiety i kolekcje zostają nietknięte.
-//
-// Czwarta jest jedyną drogą utraty danych w tym module i wygląda inaczej:
-// wymaga potwierdzenia wprost (`confirm`), zdejmuje wiersz zasobu wraz z jego
-// wersjami i zostawia po sobie wpis w dzienniku audytu, który przeżywa usunięty
-// zasób (dziennik wskazuje zasób kodem, nie kluczem obcym).
-//
-// Bajty treści nie znikają razem z wierszem, i to jest zamierzone: ta sama treść
-// bywa współdzielona przez inny zasób pod tą samą sumą kontrolną (magazyn jest
-// adresowany treścią). Bloby osierocone zdejmuje obchód magazynu przy starcie
-// rdzenia (`adapter_modul_library_sprzatanie.go`).
+// Moduł Library — cykl życia zasobu: library.file.move, .archive, .restore odwracalne, i library.file.delete jedyna droga utraty danych, z wpisem w dzienniku audytu.
 package core
 
 import (
@@ -25,7 +9,7 @@ import (
 	"danacoconsole/shared"
 )
 
-// PrzeniesZasoby obsługuje `library.file.move`.
+// PrzeniesZasoby obsługuje library.file.move, zmieniając miejsce zasobu w strukturze bez ruszania wersji ani etykiet.
 func (a *adapterBiblioteki) PrzeniesZasoby(ctx context.Context,
 	z shared.LibraryFileMoveRequest) (shared.LibraryFileMoveResponse, error) {
 
@@ -38,9 +22,7 @@ func (a *adapterBiblioteki) PrzeniesZasoby(ctx context.Context,
 		return shared.LibraryFileMoveResponse{}, bladWskazaniaBiblioteki(
 			"przeniesienie bez ścieżki docelowej — zasób musi gdzieś stanąć")
 	}
-	// Każdy wskazany zasób jest sprawdzany wprost: wykaz kodów z literówką
-	// przeszedłby po cichu jako „przeniesiono mniej", a Operator zobaczyłby
-	// powodzenie czynności, której nie było.
+	// Każdy wskazany zasób jest sprawdzany wprost, żeby literówka nie przeszła jako powodzenie.
 	for _, kod := range z.FileIds {
 		if _, err := a.plik(ctx, kod); err != nil {
 			return shared.LibraryFileMoveResponse{}, err
@@ -62,7 +44,7 @@ func (a *adapterBiblioteki) PrzeniesZasoby(ctx context.Context,
 	return shared.LibraryFileMoveResponse{MovedCount: len(pliki), Files: pliki}, nil
 }
 
-// ZarchiwizujZasoby obsługuje `library.file.archive`.
+// ZarchiwizujZasoby obsługuje library.file.archive, zdejmując zasób z wykazu domyślnego bez utraty jego treści.
 func (a *adapterBiblioteki) ZarchiwizujZasoby(ctx context.Context,
 	z shared.LibraryFileArchiveRequest) (shared.LibraryFileArchiveResponse, error) {
 
@@ -83,7 +65,7 @@ func (a *adapterBiblioteki) ZarchiwizujZasoby(ctx context.Context,
 	return shared.LibraryFileArchiveResponse{ArchivedCount: len(pliki), Files: pliki}, nil
 }
 
-// PrzywrocZasoby obsługuje `library.file.restore`.
+// PrzywrocZasoby obsługuje library.file.restore, oddając zasób z powrotem do domyślnego wykazu zasobów.
 func (a *adapterBiblioteki) PrzywrocZasoby(ctx context.Context,
 	z shared.LibraryFileRestoreRequest) (shared.LibraryFileRestoreResponse, error) {
 
@@ -152,21 +134,13 @@ func (a *adapterBiblioteki) przestawStan(ctx context.Context, kody []string, sta
 	return a.zlozWiele(ctx, wiersze)
 }
 
-// sciezkaRepozytoriumBiblioteki sprowadza ścieżkę żądania do jednej postaci:
-// człony rozdzielone ukośnikiem, bez ukośnika wiodącego i zamykającego.
-//
-// Postać jest ważna, bo klient czyta pierwszy człon jako katalog nawigacji
-// i zawęża wykaz po przedrostku (`client/src/moduly/library/wykaz-plikow.ts`).
-// Dwie zapisane ścieżki różniące się samym ukośnikiem byłyby dla niego dwoma
-// różnymi katalogami.
+// sciezkaRepozytoriumBiblioteki sprowadza ścieżkę żądania do jednej postaci: człony rozdzielone ukośnikiem, bez ukośnika wiodącego i zamykającego, zgodnej z nawigacją klienta.
 func sciezkaRepozytoriumBiblioteki(sciezka string) string {
 	czlony := strings.Split(strings.TrimSpace(sciezka), "/")
 	wynik := make([]string, 0, len(czlony))
 	for _, czlon := range czlony {
 		oczyszczony := strings.TrimSpace(czlon)
-		// Człon „.." nie ma znaczenia w strukturze repozytorium — to nie jest
-		// system plików. Przepuszczony, byłby zaproszeniem do czytania ścieżki
-		// jak katalogu na dysku.
+		// Człon ".." nie ma znaczenia w strukturze repozytorium, to nie jest system plików.
 		if oczyszczony == "" || oczyszczony == "." || oczyszczony == ".." {
 			continue
 		}

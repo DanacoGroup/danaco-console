@@ -1,19 +1,6 @@
-// Odpowiedzialność pliku: moduł Research — typ adaptera, konstruktor oraz
-// katalogowanie źródeł i zapis ustaleń (Sources Manager, Findings Tracker).
-// Raport, eksport i przestrzeń badania stoją w
-// `adapter_modul_badania_raport.go` i `adapter_modul_badania_uchwyty.go`, gdzie
-// deklarowany jest port `Badania` i `zarejestrujBadania`.
-//
-// Typ adaptera i konstruktor stoją tutaj, bo metody pisane w trzech plikach
-// wiszą na tym samym `*adapterBadan` (jak `dane/badania*.go` na
-// `*repozytoriumBadan`) — deklaracja typu w dwóch miejscach byłaby dwiema
-// prawdami o jednym bycie.
-//
-// Rdzeń nie ocenia wiarygodności sam. `research.source.add` zapisuje ocenę,
-// którą podał Operator w żądaniu — nie wylicza jej z adresu ani z treści, i
-// nie sięga do sieci po źródło. Brak oceny w żądaniu zostaje pusty; warstwa
-// danych nadaje mu wtedy wartość domyślną `unverified` (brak oceny
-// nie udaje oceny wyliczonej).
+// Plik deklaruje typ adaptera modułu Research, jego konstrukcję oraz
+// katalogowanie źródeł i zapis ustaleń; raport i eksport stoją w innych
+// plikach modułu na tym samym typie.
 package core
 
 import (
@@ -42,7 +29,8 @@ const (
 	przedrostekSekcjiRaportu    = "sekc-"
 	przedrostekEksportuRaportu  = "eksp-"
 
-	// Przedrostki bytów dobudowanych migracją 150.
+	// Przedrostki bytów dobudowanych migracją 150, wyodrębnione, żeby widać
+	// było, które kolumny dodano po utworzeniu tabeli pierwotnej.
 	przedrostekZalacznikaBadania    = "zal-"
 	przedrostekAdnotacjiBadania     = "adn-"
 	przedrostekTabeliBadania        = "tab-"
@@ -65,31 +53,25 @@ const (
 // odpowiedzialności, ale niosące jeden typ.
 type adapterBadan struct {
 	repozytorium dane.RepozytoriumBadan
-	// magazyn trzyma BAJTY modułu: migawki stron, załączniki źródeł i pliki
-	// eksportu. Ten sam magazyn treści, którym jadą Design i Library — moduł nie
-	// zakłada trzeciego miejsca na te same bajty, tylko własny podkatalog.
+	// magazyn trzyma bajty modułu: migawki stron, załączniki źródeł i pliki
+	// eksportu.
 	magazyn *magazynTresciBiblioteki
-	// dokumenty jest portem arsenału dokumentowego (Pandoc, poppler, Tesseract).
-	// Lektura źródła, rozpoznanie pisma i zamiana formatu eksportu idą przez
-	// niego — moduł nie uruchamia ani jednego procesu sam.
+	// dokumenty jest portem arsenału dokumentowego dla lektury, rozpoznania
+	// pisma i zamiany formatu.
 	dokumenty Dokumenty
-	// mowa jest silnikiem rozpoznania mowy; przez niego idzie transkrypcja
-	// nagrania na źródło cytowalne. Silnik jest jeden na rdzeń, wspólny
-	// z modułem Assistant.
+	// mowa jest silnikiem rozpoznania mowy, przez który idzie transkrypcja
+	// nagrania na źródło.
 	mowa Mowa
-	// katalogDanych jest korzeniem magazynów rdzenia. Trzymany osobno, bo
-	// odwołania zasobów wychodzące z innych portów są ścieżkami WZGLĘDNYMI tego
-	// korzenia (`design/zasoby/...`) — bez niego eksport nie miałby jak sięgnąć
-	// po bajty, które wytworzył mu arsenał.
+	// katalogDanych jest korzeniem magazynów rdzenia, wobec którego odwołania
+	// zasobów są względne.
 	katalogDanych string
-	// kanaly jest rejestrem kanałów modelu rdzenia, wpiętym wzorem Roundtable
-	// (`ZKanalami`). Operacje badania, które wymagają modelu — streszczanie
-	// źródła, porównanie źródeł, redakcja sekcji raportu ze zebranych ustaleń —
-	// idą przez ten rejestr. Bez niego taka operacja odmawia wprost.
+	// kanaly jest rejestrem kanałów modelu rdzenia; operacje wymagające
+	// modelu idą przez ten rejestr.
 	kanaly *models.Rejestr
 }
 
-// nowyAdapterBadan wiąże adapter z repozytorium modułu.
+// nowyAdapterBadan wiąże adapter z repozytorium modułu i zakłada magazyn
+// bajtów nad katalogiem danych domyślnym.
 func nowyAdapterBadan(repozytorium dane.RepozytoriumBadan) *adapterBadan {
 	return &adapterBadan{
 		repozytorium:  repozytorium,
@@ -115,7 +97,8 @@ func (a *adapterBadan) ZDokumentami(d Dokumenty) *adapterBadan {
 	return a
 }
 
-// ZMowa wpina silnik rozpoznania mowy — transkrypcja nagrania na źródło.
+// ZMowa wpina silnik rozpoznania mowy — transkrypcja nagrania na źródło
+// cytowalne badania, wspólny z modułem Assistant.
 func (a *adapterBadan) ZMowa(m Mowa) *adapterBadan {
 	a.mowa = m
 	return a
@@ -133,16 +116,15 @@ func magazynZasobowBadania(katalogDanych string) *magazynTresciBiblioteki {
 	}
 }
 
-// Podkatalogi magazynu modułu.
+// Podkatalogi magazynu modułu, składane pod katalogiem danych rdzenia
+// w kolejności: badania, a w nim materiały pozyskane.
 const (
 	podkatalogBadania           = "badania"
 	podkatalogMaterialowBadania = "materialy"
 )
 
-// odczytajPlikBadania oddaje bajty spod ścieżki, sprowadzając wskazanie względne
-// do korzenia magazynów rdzenia. Odwołania wychodzące z portów są względne
-// (granica kontraktu: rdzeń nie wypuszcza ścieżek z dysku Operatora), więc
-// otwarcie ich wprost trafiałoby w nieistniejący plik.
+// odczytajPlikBadania oddaje bajty spod ścieżki, sprowadzając wskazanie
+// względne do korzenia magazynów rdzenia przed otwarciem pliku.
 func (a *adapterBadan) odczytajPlikBadania(sciezka string) ([]byte, error) {
 	pelna := sciezka
 	if !filepath.IsAbs(pelna) {
@@ -180,24 +162,16 @@ func (a *adapterBadan) odlozMaterialBadania(bajty []byte) (string, int64, error)
 	return sciezka, int64(len(bajty)), nil
 }
 
-// ZKanalami wpina rejestr kanałów modelu (wzór: `adapter_modul_roundtable.go`).
-// Zwraca adapter, żeby montaż wiązał zależność w łańcuchu. Katalogowanie źródeł
-// i zapis ustaleń modelu nie potrzebują — most służy operacjom słownym, które
-// dopiero kontrakt wskaże kanałem.
+// ZKanalami wpina rejestr kanałów modelu i zwraca adapter, żeby montaż
+// wiązał zależność w łańcuchu wywołań.
 func (a *adapterBadan) ZKanalami(kanaly *models.Rejestr) *adapterBadan {
 	a.kanaly = kanaly
 	return a
 }
 
 // zapytajModel woła wskazany kanał modelu i zbiera całą odpowiedź tekstową —
-// wspólny most modułu do modelu dla operacji słownych (streszczenie, porównanie
-// źródeł, redakcja sekcji). Kanał wskazuje wywołujący; brak rejestru albo pusty
-// kanał to odmowa wprost, nie streszczenie zmyślone bez modelu.
-//
-// Granica kontraktu: żądania modułu Research (`research.report.build` i inne)
-// nie niosą `channelId`, więc wywołujący nie ma czym wskazać kanału z żądania.
-// Dopóki kontrakt tego pola nie ma, operacja bierze domyślny czynny kanał
-// rejestru przez `domyslnyKanalBadania`.
+// wspólny most modułu do modelu dla operacji słownych. Brak rejestru albo
+// pusty kanał to odmowa wprost.
 func (a *adapterBadan) zapytajModel(ctx context.Context, okno, kanal, tresc string) (string, error) {
 	if a.kanaly == nil {
 		return "", bladBrakuKanalowBadan()
@@ -224,11 +198,8 @@ func (a *adapterBadan) zapytajModel(ctx context.Context, okno, kanal, tresc stri
 	return zebrane.String(), nil
 }
 
-// domyslnyKanalBadania wskazuje kanał operacji słownej badania. Żądania modułu
-// Research nie niosą `channelId`, więc most bierze pierwszy czynny kanał
-// rejestru — ten sam, który `channel.list` pokazuje jako
-// gotowy (`Kontrakt(true)`). Brak wpiętego rejestru albo brak czynnego kanału
-// to odmowa wprost, nie streszczenie zmyślone bez modelu.
+// domyslnyKanalBadania wskazuje kanał operacji słownej badania, biorąc
+// pierwszy czynny kanał rejestru, gdy żądanie nie niesie kanału wprost.
 func (a *adapterBadan) domyslnyKanalBadania() (string, error) {
 	if a.kanaly == nil {
 		return "", bladBrakuKanalowBadan()
@@ -255,8 +226,8 @@ func bladBrakuCzynnegoKanaluBadan() error {
 		"moduł Research: rejestr kanałów nie ma czynnego kanału — redakcja sekcji raportu nie ma czym wołać modelu"))
 }
 
-// DodajZrodlo obsługuje `research.source.add`. Katalog źródła i nic więcej —
-// patrz nagłówek pliku o uczciwości oceny wiarygodności.
+// DodajZrodlo obsługuje `research.source.add`: katalogowanie źródła,
+// zapisując ocenę wiarygodności dokładnie taką, jaką podało żądanie.
 func (a *adapterBadan) DodajZrodlo(ctx context.Context,
 	z shared.ResearchSourceAddRequest) (shared.ResearchSourceAddResponse, error) {
 
@@ -282,10 +253,8 @@ func (a *adapterBadan) DodajZrodlo(ctx context.Context,
 		return shared.ResearchSourceAddResponse{}, bladBadan(err)
 	}
 
-	// Katalogowanie i cechy lektury idą tym samym żądaniem, więc zapisują się
-	// razem ze źródłem. Rozbicie ich na drugą komendę zostawiłoby okno w stanie,
-	// w którym Operator wpisał etykiety, a katalog ich nie ma — i nie wiedziałby,
-	// czy pominął krok, czy rdzeń je zgubił.
+	// Katalogowanie i cechy lektury idą tym samym żądaniem i zapisują się
+	// razem ze źródłem.
 	if z.Tags != nil || z.CollectionIds != nil || z.QuestionIds != nil {
 		if err := a.repozytorium.UstawKatalogZrodla(ctx, zapisane.Kod, dane.KatalogZrodlaBadania{
 			Etykiety: z.Tags, Kolekcje: z.CollectionIds, Pytania: z.QuestionIds,
@@ -309,7 +278,7 @@ func (a *adapterBadan) DodajZrodlo(ctx context.Context,
 
 // wiarygodnoscZadania przekłada pole opcjonalne żądania. Brak wskazania
 // zostaje pustą wartością, którą warstwa danych zamienia na `unverified` —
-// adapter nie wylicza oceny sam (nagłówek pliku).
+// adapter nie wylicza oceny sam.
 func wiarygodnoscZadania(wskazana *shared.ResearchCredibility) shared.ResearchCredibility {
 	if wskazana != nil {
 		return *wskazana
@@ -317,7 +286,8 @@ func wiarygodnoscZadania(wskazana *shared.ResearchCredibility) shared.ResearchCr
 	return ""
 }
 
-// zlozZrodloBadania przekłada wiersz repozytorium na byt kontraktu.
+// zlozZrodloBadania przekłada wiersz repozytorium źródła na byt kontraktu
+// wraz z chwilą pozyskania źródła.
 func zlozZrodloBadania(z dane.ZrodloBadania) shared.ResearchSource {
 	return shared.ResearchSource{
 		Id: z.Kod, WindowId: z.Okno, Kind: z.Rodzaj, Url: z.Adres, Title: z.Tytul,
@@ -326,11 +296,9 @@ func zlozZrodloBadania(z dane.ZrodloBadania) shared.ResearchSource {
 	}
 }
 
-// DodajUstalenie obsługuje `research.finding.add`. Wiąże ustalenie ze
-// źródłami wskazanymi w żądaniu, ale odpowiedź niesie komplet, który
-// warstwa danych naprawdę powiązała — kod źródła nieistniejącego jest
-// pomijany po stronie `dane/badania_ustalenia.go`, nie wywraca zapisu, a
-// odpowiedź mówi prawdę o skutku, nie powtarza żądania.
+// DodajUstalenie obsługuje `research.finding.add`: wiąże ustalenie ze
+// źródłami wskazanymi w żądaniu, a odpowiedź niesie komplet naprawdę
+// powiązany przez warstwę danych.
 func (a *adapterBadan) DodajUstalenie(ctx context.Context,
 	z shared.ResearchFindingAddRequest) (shared.ResearchFindingAddResponse, error) {
 
@@ -352,8 +320,8 @@ func (a *adapterBadan) DodajUstalenie(ctx context.Context,
 	if err != nil {
 		return shared.ResearchFindingAddResponse{}, bladBadan(err)
 	}
-	// Klasyfikacja, waga, kotwica i wymóg potwierdzenia przychodzą tym samym
-	// żądaniem — zapisują się razem z ustaleniem, a nie drugą komendą.
+	// Klasyfikacja, waga, kotwica i wymóg potwierdzenia przychodzą tym
+	// samym żądaniem, nie drugą komendą.
 	szczegoly := dane.SzczegolyUstaleniaBadania{AdnotacjaKod: z.AnnotationId}
 	if z.Kind != nil {
 		szczegoly.Rodzaj = string(*z.Kind)
@@ -375,8 +343,8 @@ func (a *adapterBadan) DodajUstalenie(ctx context.Context,
 			return shared.ResearchFindingAddResponse{}, bladBadan(err)
 		}
 	}
-	// Ślad prowenancji zaczyna się przy powstaniu ustalenia, a nie przy jego
-	// pierwszej zmianie — inaczej historia zaczynałaby się od drugiego zdarzenia.
+	// Ślad prowenancji zaczyna się przy powstaniu ustalenia, nie przy jego
+	// pierwszej zmianie.
 	wpis := dane.WpisProwenancjiBadania{
 		UstalenieKod: zapisane.Kod, Aktor: string(shared.ActorKindOperator),
 		Czynnosc: "zapis ustalenia",
@@ -413,7 +381,7 @@ func stanUstaleniaZadania(wskazany *shared.ResearchFindingStatus) shared.Researc
 }
 
 // zlozUstalenieBadania przekłada wiersz repozytorium i jego źródła powiązane
-// na byt kontraktu.
+// na byt kontraktu, w tym znaczniki czasu.
 func zlozUstalenieBadania(u dane.UstalenieBadania, zrodla []dane.ZrodloBadania) shared.ResearchFinding {
 	tresc := ""
 	if u.Tresc != nil {
@@ -439,7 +407,8 @@ func bladBadan(err error) error {
 	return protocol.JakoError(protocol.BladZeZrodla(shared.ErrorCodeInternalError, err))
 }
 
-// bladWskazaniaBadan nazywa brak danych w żądaniu — błąd Operatora, nie rdzenia.
+// bladWskazaniaBadan nazywa brak danych w żądaniu — błąd Operatora, nie
+// rdzenia, i wraca kodem walidacji.
 func bladWskazaniaBadan(powod string) error {
 	return protocol.JakoError(protocol.NowyBlad(shared.ErrorCodeValidationFailed, "moduł Research: "+powod))
 }

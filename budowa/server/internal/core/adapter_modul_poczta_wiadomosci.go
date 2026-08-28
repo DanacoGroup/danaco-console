@@ -1,25 +1,5 @@
-// Odpowiedzialność pliku: odczyt skrzynki od strony kontraktu — foldery, wykaz
-// nagłówków, pełny list wraz z wciągnięciem załączników do magazynu oraz
-// oznaczenie listu. Metody stoją na `*adapterPoczty` z `adapter_modul_poczta.go`.
-//
-// Załącznik wchodzi do magazynu tą samą drogą, co `design.asset.upload`: bajty
-// lądują w magazynie rdzenia pod sumą sha256, a obok powstaje wiersz zasobu
-// w tabeli `zasob_design` — taki sam, jaki zakłada wniesienie pliku do Assets
-// Panelu. Dzięki temu model dostaje w odpowiedzi `assetId`, którym woła
-// `image.*`, `document.text.extract` i pozostałe narzędzia treści. Rdzeń nie ma
-// drugiego magazynu bajtów, więc załącznik odłożony osobno byłby plikiem,
-// którego żadne narzędzie nie widzi.
-//
-// Kolumna `zasob_design.okno` niesie tu odwołanie do skrzynki, nie do okna.
-// Jest `NOT NULL`, bo zasób Designu należy do okna modułu, a załącznik listu do
-// żadnego okna nie należy — należy do skrzynki. Wpisujemy więc „poczta:<kod>":
-// to prawda o pochodzeniu zasobu, daje się odfiltrować i nie miesza się
-// z zasobami okien. Zmyślenie identyfikatora istniejącego okna byłoby
-// wstawieniem cudzych plików do cudzego panelu.
-//
-// Wciągnięcie jest warunkowe (`fetchAttachments`), bo kosztuje: list
-// z wielomegabajtowym skanem odczytany po to, żeby sprawdzić datę, nie ma
-// powodu zostawiać po sobie tych megabajtów w katalogu danych.
+// Odpowiedzialność pliku: odczyt skrzynki od strony kontraktu — foldery, wykaz nagłówków,
+// pełny list wraz z wciągnięciem załączników do magazynu oraz oznaczenie listu.
 package core
 
 import (
@@ -35,16 +15,13 @@ import (
 	"danacoconsole/shared"
 )
 
-// przedrostekZasobuZalacznika znakuje wiersze zasobów powstałe z załączników —
-// odróżnia je w tabeli od `zasob-` wnoszonych i generowanych w Designie.
+// przedrostekZasobuZalacznika znakuje wiersze zasobów powstałe z załączników listu poczty, odróżniając je od zasobów Designu.
 const przedrostekZasobuZalacznika = "zalacznik-"
 
-// domyslnaGranicaWykazu przycina wykaz, gdy żądanie granicy nie podało. Bez
-// niej pierwsze pytanie o skrzynkę Operatora ściągałoby nagłówki wszystkich
-// listów, jakie w niej leżą.
+// domyslnaGranicaWykazu przycina wykaz, gdy żądanie granicy nie podało jej wprost, chroniąc przed nadmiernym ściągnięciem.
 const domyslnaGranicaWykazu = 50
 
-// Foldery oddaje foldery skrzynki — obsługuje `mail.folder.list`.
+// Foldery oddaje foldery skrzynki Operatora — obsługuje żądanie `mail.folder.list` po nawiązaniu połączenia.
 func (a *adapterPoczty) Foldery(ctx context.Context,
 	z shared.MailFolderListRequest) (shared.MailFolderListResponse, error) {
 
@@ -61,8 +38,7 @@ func (a *adapterPoczty) Foldery(ctx context.Context,
 	return shared.MailFolderListResponse{Folders: foldery}, nil
 }
 
-// Wiadomosci oddaje nagłówki listów pasujących do zawężenia — obsługuje
-// `mail.message.list`, czyli krok „odnajdź sprawę, o której mówi Operator".
+// Wiadomosci oddaje nagłówki listów pasujących do zawężenia — obsługuje `mail.message.list` wybranej skrzynki.
 func (a *adapterPoczty) Wiadomosci(ctx context.Context,
 	z shared.MailMessageListRequest) (shared.MailMessageListResponse, error) {
 
@@ -98,8 +74,7 @@ func (a *adapterPoczty) Wiadomosci(ctx context.Context,
 	return shared.MailMessageListResponse{Messages: wiadomosci, Total: wszystkich}, nil
 }
 
-// Wiadomosc pobiera list w całości i — na życzenie — wciąga jego załączniki do
-// magazynu. Obsługuje `mail.message.get`.
+// Wiadomosc pobiera list w całości i, na życzenie, wciąga jego załączniki do magazynu rdzenia platformy.
 func (a *adapterPoczty) Wiadomosc(ctx context.Context,
 	z shared.MailMessageGetRequest) (shared.MailMessageGetResponse, error) {
 
@@ -132,11 +107,7 @@ func (a *adapterPoczty) Wiadomosc(ctx context.Context,
 	return shared.MailMessageGetResponse{Message: wiadomosc, AttachmentAssetIds: zasoby}, nil
 }
 
-// Oznacz zmienia oznaczenia listu — obsługuje `mail.message.flag`.
-//
-// Żądanie bez ani jednego oznaczenia jest odmową. Kontrakt daje oba pola jako
-// opcjonalne, ale komenda bez żadnego z nich niczego nie zmienia, a odpowiedź
-// `ok` z niezmienioną wiadomością wyglądałaby jak wykonana czynność.
+// Oznacz zmienia oznaczenia listu — obsługuje `mail.message.flag`; żądanie bez oznaczenia jest odmową.
 func (a *adapterPoczty) Oznacz(ctx context.Context,
 	z shared.MailMessageFlagRequest) (shared.MailMessageFlagResponse, error) {
 
@@ -161,12 +132,7 @@ func (a *adapterPoczty) Oznacz(ctx context.Context,
 	return shared.MailMessageFlagResponse{Message: wiadomoscKontraktu(naglowek)}, nil
 }
 
-// wciagnijZalaczniki odkłada bajty w magazynie i zakłada wiersze zasobów,
-// oddając ich identyfikatory kontraktowe — patrz nagłówek pliku.
-//
-// Kolejność jest zamierzona: najpierw bajty, potem wiersz — ten sam porządek,
-// co w `design.asset.upload`. Wiersz wskazujący blob, którego nie ma, byłby
-// zasobem, po który model sięgnie i niczego nie znajdzie.
+// wciagnijZalaczniki odkłada bajty w magazynie i zakłada wiersze zasobów; najpierw bajty, potem wiersz.
 func (a *adapterPoczty) wciagnijZalaczniki(ctx context.Context, kodSkrzynki string,
 	zalaczniki []poczta.Zalacznik) ([]string, error) {
 
@@ -183,8 +149,7 @@ func (a *adapterPoczty) wciagnijZalaczniki(ctx context.Context, kodSkrzynki stri
 	identyfikatory := make([]string, 0, len(zalaczniki))
 	for _, zalacznik := range zalaczniki {
 		if len(zalacznik.Bajty) == 0 {
-			// Załącznik pusty pomijamy w ciszy: nie ma czego odkładać, a wiersz
-			// zasobu bez bajtów jest dokładnie tym, czego moduł Design się pozbył.
+			// Załącznik pusty zostaje pominięty bez zgłoszenia — nie ma czego odkładać.
 			continue
 		}
 		suma := sha256.Sum256(zalacznik.Bajty)
@@ -197,10 +162,7 @@ func (a *adapterPoczty) wciagnijZalaczniki(ctx context.Context, kodSkrzynki stri
 		zapisany, err := a.zasoby.ZapiszZasob(ctx, dane.ZasobDesignu{
 			Kod:  nowyIdentyfikator(przedrostekZasobuZalacznika),
 			Okno: podkatalogPoczty + ":" + kodSkrzynki,
-			// Rodzaj `document`, nie `image`: załącznik listu bywa PDF-em,
-			// arkuszem albo obrazem, a zgadywanie po rozszerzeniu byłoby cechą
-			// zmyśloną. Model i tak rozstrzyga po `format`, który niesie
-			// typ MIME wprost z nagłówka części listu.
+			// Rodzaj "document", nie "image": model rozstrzyga po polu format z typem MIME.
 			Rodzaj: "document",
 			Nazwa:  &nazwa,
 			Format: &format,
@@ -214,13 +176,7 @@ func (a *adapterPoczty) wciagnijZalaczniki(ctx context.Context, kodSkrzynki stri
 	return identyfikatory, nil
 }
 
-// bladOdczytuListu nazywa niepowodzenie czynności na konkretnym liście.
-//
-// To brak wiadomości, odróżniony od braku skrzynki (`wybierzSkrzynke`)
-// i od braku łączności (`polacz`). List
-// przeniesiony albo skasowany w kliencie poczty Operatora między wykazem
-// a odczytem jest normalnym stanem cudzej skrzynki, więc kod jest `not_found`,
-// a nie awarią rdzenia.
+// bladOdczytuListu nazywa niepowodzenie czynności na konkretnym liście, kodem `not_found` kontraktu poczty.
 func bladOdczytuListu(przyczyna error) error {
 	return protocolBladPoczty(shared.ErrorCodeNotFound, przyczyna.Error())
 }

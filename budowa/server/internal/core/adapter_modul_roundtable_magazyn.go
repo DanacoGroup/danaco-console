@@ -1,15 +1,7 @@
 // Odpowiedzialność pliku: magazyn artefaktów debaty — miejsce, w którym leżą
-// bajty transkryptu, grafu i nagrania, oraz jedna droga ich wydania.
-//
-// Magazyn jest własny, a nie wspólny z biblioteką, bo artefakt debaty nie jest
-// plikiem Operatora: powstaje z zapisu debaty, wskazuje na okno i ginie razem
-// z katalogiem danych. Wspólny magazyn wymagałby wiersza w bibliotece, czyli
-// kartoteki nad każdym eksportem transkryptu.
-//
-// Odwołanie wychodzące na zewnątrz jest ścieżką WZGLĘDNĄ magazynu, liczoną od
-// katalogu danych, zawsze z ukośnikiem `/` — tak samo jak w bibliotece
-// i w module Design. Ścieżka bezwzględna wynosiłaby układ katalogów serwera do
-// klienta, który i tak stoi na innej maszynie.
+// bajty transkryptu, grafu i nagrania, oraz jedna droga ich wydania. Magazyn
+// jest własny, a nie wspólny z biblioteką, bo artefakt debaty nie jest
+// plikiem Operatora.
 package core
 
 import (
@@ -25,14 +17,18 @@ import (
 )
 
 const (
-	// podkatalogDebaty oddziela magazyn modułu od reszty katalogu danych.
+	// podkatalogDebaty oddziela magazyn modułu od reszty katalogu danych,
+	// swoim własnym podkatalogiem, osobnym dla każdego modułu platformy.
 	podkatalogDebaty = "roundtable"
-	// podkatalogArtefaktowDebaty mieści same bajty wydanych artefaktów.
+	// podkatalogArtefaktowDebaty mieści same bajty wydanych artefaktów,
+	// wewnątrz podkatalogu modułu Roundtable.
 	podkatalogArtefaktowDebaty = "artefakty"
-	// korzenArtefaktowDebaty jest przedrostkiem odwołania wychodzącego z rdzenia.
+	// korzenArtefaktowDebaty jest przedrostkiem odwołania wychodzącego z rdzenia,
+	// ścieżką względną liczoną od katalogu danych.
 	korzenArtefaktowDebaty = podkatalogDebaty + "/" + podkatalogArtefaktowDebaty
 
-	// Rodzaje artefaktu — wartości kolumny `rodzaj` z migracji 199.
+	// Rodzaje artefaktu — wartości kolumny `rodzaj` z migracji 199, transkrypt,
+	// graf debaty i odsłuch nagrania mowy uczestników.
 	rodzajArtefaktuTranskryptu = "transkrypt"
 	rodzajArtefaktuGrafu       = "graf"
 	rodzajArtefaktuOdsluchu    = "odsluch"
@@ -57,10 +53,8 @@ func (a *adapterDebaty) ZKatalogiemDanych(katalogDanych string) *adapterDebaty {
 }
 
 // wydajArtefaktDebaty kładzie bajty w magazynie i odnotowuje artefakt w bazie.
-//
 // Nazwą pliku jest suma kontrolna jego treści, więc dwa wydania tego samego
-// transkryptu zajmują jedno miejsce, a odwołanie jest sprawdzalne: pod tą nazwą
-// leży ta zawartość albo nie leży nic.
+// transkryptu zajmują jedno miejsce.
 func (a *adapterDebaty) wydajArtefaktDebaty(ctx context.Context, okno, rodzaj, format string,
 	bajty []byte, dlugoscMs int) (dane.ArtefaktDebaty, error) {
 
@@ -80,10 +74,7 @@ func (a *adapterDebaty) wydajArtefaktDebaty(ctx context.Context, okno, rodzaj, f
 	docelowa := filepath.Join(katalogBloku, nazwa+"."+format)
 
 	if stan, err := os.Stat(docelowa); err != nil || stan.IsDir() || stan.Size() == 0 {
-		// Plik tymczasowy leży w katalogu docelowym, żeby przemianowanie szło
-		// w obrębie jednego nośnika i było niepodzielne. Przemianowanie między
-		// wolumenami jest kopiowaniem, czyli oknem, w którym pod odwołaniem leży
-		// treść obcięta.
+		// Plik tymczasowy leży w katalogu docelowym: przemianowanie ma być niepodzielne.
 		tymczasowy, err := os.CreateTemp(katalogBloku, "artefakt-*.czesciowy")
 		if err != nil {
 			return dane.ArtefaktDebaty{}, bladDebaty(err)

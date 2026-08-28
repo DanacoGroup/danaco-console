@@ -1,17 +1,5 @@
-// Moduł Library — słownik etykiet, tezaurus i wykaz kolekcji:
-// `library.tag.list`, `library.tag.update`, `library.tag.merge`,
-// `library.tag.remove`, `library.collection.list`,
-// `library.thesaurus.relate`, `library.thesaurus.export`.
-//
-// Etykieta ma tu tożsamość, której `library.tag.set` jej nie daje: barwę, czas
-// założenia i istnienie niezależne od tego, czy nosi ją jakikolwiek zasób.
-// Dzięki temu okno Tags & Collections pokazuje słownik, a nie próbkę zebraną
-// z odczytanej strony wykazu.
-//
-// Wywóz tezaurusa idzie w SKOS/RDF w trzech serializacjach i powstaje w rdzeniu,
-// bo relacje leżą w bazie i klient nie ma ich skąd wziąć. Zapis składa się
-// z tekstu — żadnego programu zewnętrznego: RDF w postaci Turtle, RDF/XML
-// i JSON-LD to formaty tekstowe o znanym kształcie.
+// Moduł Library obsługuje słownik etykiet o własnej tożsamości niezależnej od
+// zasobów, wykaz kolekcji oraz tezaurus wraz z wywozem relacji w formacie SKOS.
 package core
 
 import (
@@ -25,7 +13,8 @@ import (
 	"danacoconsole/shared"
 )
 
-// SlownikEtykiet obsługuje `library.tag.list`.
+// SlownikEtykiet obsługuje `library.tag.list`, wyliczając etykiety słownika
+// wraz z barwą, liczbą plików i możliwością zawężenia do nieużywanych.
 func (a *adapterBiblioteki) SlownikEtykiet(ctx context.Context,
 	z shared.LibraryTagListRequest) (shared.LibraryTagListResponse, error) {
 
@@ -66,9 +55,7 @@ func (a *adapterBiblioteki) ZmienEtykiete(ctx context.Context,
 		strings.TrimSpace(*z.NewName) != nazwa {
 
 		docelowa = strings.TrimSpace(*z.NewName)
-		// Wpis słownika zakłada się przed zmianą nazwy: etykieta nadana przy
-		// zasobie mogła nigdy nie mieć wiersza słownikowego, a bez niego zmiana
-		// nazwy przeszłaby po zasobach i zgubiła barwę.
+		// Wpis słownika zakłada się przed zmianą nazwy, bo etykieta mogła nie mieć wiersza słownikowego.
 		if _, err := a.repozytorium.ZapiszEtykieteSlownika(ctx, nazwa, nil); err != nil {
 			return shared.LibraryTagUpdateResponse{}, bladBiblioteki(err)
 		}
@@ -97,12 +84,10 @@ func (a *adapterBiblioteki) ZmienEtykiete(ctx context.Context,
 	}, nil
 }
 
-// PolaczEtykiety obsługuje `library.tag.merge`.
-//
-// Łączenie jest zmianą nazwy wykonaną wielokrotnie: zasób noszący etykietę
-// źródłową dostaje docelową, a źródłowa znika ze słownika. Etykieta wskazana
-// jako źródłowa i docelowa naraz jest pomijana — wchłonięcie siebie samej
-// zdjęłoby etykietę z zasobów bez powodu.
+// PolaczEtykiety obsługuje `library.tag.merge` jako zmianę nazwy wykonaną
+// wielokrotnie: zasób noszący etykietę źródłową dostaje docelową, a źródłowa
+// znika ze słownika. Etykieta wskazana jako źródłowa i docelowa naraz jest
+// pomijana.
 func (a *adapterBiblioteki) PolaczEtykiety(ctx context.Context,
 	z shared.LibraryTagMergeRequest) (shared.LibraryTagMergeResponse, error) {
 
@@ -130,8 +115,7 @@ func (a *adapterBiblioteki) PolaczEtykiety(ctx context.Context,
 		if err != nil {
 			return shared.LibraryTagMergeResponse{}, bladBiblioteki(err)
 		}
-		// Wiersz słownika etykiety źródłowej znika razem z nią: zmiana nazwy
-		// mogła go nie objąć, gdy etykieta docelowa miała już swój wpis.
+		// Wiersz słownika etykiety źródłowej znika razem z nią, zmiana nazwy mogła go nie objąć.
 		if _, err := a.repozytorium.UsunEtykieteZeSlownika(ctx, nazwa); err != nil {
 			return shared.LibraryTagMergeResponse{}, bladBiblioteki(err)
 		}
@@ -153,11 +137,9 @@ func (a *adapterBiblioteki) PolaczEtykiety(ctx context.Context,
 	}, nil
 }
 
-// UsunEtykiete obsługuje `library.tag.remove`.
-//
-// Usunięcie etykiety noszonej przez zasoby żąda potwierdzenia, bo zdejmuje ją
-// z zasobów, których żądanie nie wymienia. Etykieta nieużywana schodzi bez
-// pytania — nie ma czego stracić.
+// UsunEtykiete obsługuje `library.tag.remove`. Usunięcie etykiety noszonej
+// przez zasoby żąda potwierdzenia, bo zdejmuje ją z zasobów, których żądanie
+// nie wymienia. Etykieta nieużywana schodzi bez pytania.
 func (a *adapterBiblioteki) UsunEtykiete(ctx context.Context,
 	z shared.LibraryTagRemoveRequest) (shared.LibraryTagRemoveResponse, error) {
 
@@ -183,7 +165,8 @@ func (a *adapterBiblioteki) UsunEtykiete(ctx context.Context,
 	return shared.LibraryTagRemoveResponse{Removed: true, AffectedFiles: zdjete}, nil
 }
 
-// WykazKolekcji obsługuje `library.collection.list`.
+// WykazKolekcji obsługuje `library.collection.list`, wyliczając kolekcje
+// biblioteki wraz z ich hierarchią rodzica i regułą przypisania zasobów.
 func (a *adapterBiblioteki) WykazKolekcji(ctx context.Context,
 	z shared.LibraryCollectionListRequest) (shared.LibraryCollectionListResponse, error) {
 
@@ -207,12 +190,9 @@ func (a *adapterBiblioteki) WykazKolekcji(ctx context.Context,
 	return shared.LibraryCollectionListResponse{Collections: kolekcje, Total: lacznie}, nil
 }
 
-// UstawRelacjeTezaurusa obsługuje `library.thesaurus.relate`.
-//
-// Relacja zapisuje się w jednym kierunku, tym wskazanym przez Operatora.
-// Odwrotność wyprowadza odczyt (`nadrzędna` czytana od drugiej strony jest
-// `podrzędną`) — zapis obu kierunków dałby dwa wiersze mówiące to samo i rozjazd
-// przy zdjęciu jednego z nich.
+// UstawRelacjeTezaurusa obsługuje `library.thesaurus.relate`. Relacja zapisuje
+// się w jednym kierunku, tym wskazanym przez Operatora — odwrotność
+// wyprowadza odczyt, a zapis obu kierunków dałby dwa wiersze mówiące to samo.
 func (a *adapterBiblioteki) UstawRelacjeTezaurusa(ctx context.Context,
 	z shared.LibraryThesaurusRelateRequest) (shared.LibraryThesaurusRelateResponse, error) {
 
@@ -228,8 +208,7 @@ func (a *adapterBiblioteki) UstawRelacjeTezaurusa(ctx context.Context,
 	}
 	zdejmij := z.Remove != nil && *z.Remove
 	if !zdejmij {
-		// Obie etykiety wchodzą do słownika: relacja między pojęciami, z których
-		// jedno nie istnieje, byłaby krawędzią donikąd.
+		// Obie etykiety wchodzą do słownika — relacja do nieistniejącego pojęcia byłaby donikąd.
 		if _, err := a.repozytorium.ZapiszEtykieteSlownika(ctx, zrodlo, nil); err != nil {
 			return shared.LibraryThesaurusRelateResponse{}, bladBiblioteki(err)
 		}
@@ -247,7 +226,8 @@ func (a *adapterBiblioteki) UstawRelacjeTezaurusa(ctx context.Context,
 	return shared.LibraryThesaurusRelateResponse{RelationSet: stoi}, nil
 }
 
-// WywiezTezaurus obsługuje `library.thesaurus.export`.
+// WywiezTezaurus obsługuje `library.thesaurus.export`, składając pojęcia
+// i relacje tezaurusa w postać Turtle, RDF/XML albo JSON-LD do wyboru.
 func (a *adapterBiblioteki) WywiezTezaurus(ctx context.Context,
 	z shared.LibraryThesaurusExportRequest) (shared.LibraryThesaurusExportResponse, error) {
 
@@ -305,7 +285,8 @@ func (a *adapterBiblioteki) WywiezTezaurus(ctx context.Context,
 // nazw jest identyfikatorem, nie odnośnikiem do pobrania.
 const przestrzenTezaurusaBiblioteki = "https://danaco-group.pl/biblioteka/tezaurus#"
 
-// orzeczenieSkosBiblioteki przekłada rodzaj relacji na orzeczenie SKOS.
+// orzeczenieSkosBiblioteki przekłada rodzaj relacji zapisany w bazie na
+// odpowiadające mu orzeczenie słownika SKOS używane w wywozie tezaurusa.
 func orzeczenieSkosBiblioteki(rodzaj string) string {
 	switch rodzaj {
 	case "nadrzedna":
@@ -317,7 +298,8 @@ func orzeczenieSkosBiblioteki(rodzaj string) string {
 	}
 }
 
-// tezaurusTurtleBiblioteki składa wywóz w serializacji Turtle.
+// tezaurusTurtleBiblioteki składa pojęcia, relacje i kolekcje tezaurusa
+// w serializacji Turtle, zapisując każde pojęcie jako `skos:Concept`.
 func tezaurusTurtleBiblioteki(pojecia []string, relacje []dane.RelacjaTezaurusaBiblioteki,
 	kolekcje []shared.LibraryCollection) string {
 
@@ -339,7 +321,8 @@ func tezaurusTurtleBiblioteki(pojecia []string, relacje []dane.RelacjaTezaurusaB
 	return zapis.String()
 }
 
-// tezaurusRdfXmlBiblioteki składa wywóz w serializacji RDF/XML.
+// tezaurusRdfXmlBiblioteki składa pojęcia, relacje i kolekcje tezaurusa
+// w serializacji RDF/XML, zapisując każde pojęcie jako element `skos:Concept`.
 func tezaurusRdfXmlBiblioteki(pojecia []string, relacje []dane.RelacjaTezaurusaBiblioteki,
 	kolekcje []shared.LibraryCollection) (string, error) {
 
@@ -372,7 +355,8 @@ func tezaurusRdfXmlBiblioteki(pojecia []string, relacje []dane.RelacjaTezaurusaB
 	return zapis.String(), nil
 }
 
-// tezaurusJsonLdBiblioteki składa wywóz w serializacji JSON-LD.
+// tezaurusJsonLdBiblioteki składa pojęcia, relacje i kolekcje tezaurusa
+// w serializacji JSON-LD jako jeden graf pod kluczem `@graph` dokumentu.
 func tezaurusJsonLdBiblioteki(pojecia []string, relacje []dane.RelacjaTezaurusaBiblioteki,
 	kolekcje []shared.LibraryCollection) (string, error) {
 
@@ -435,13 +419,15 @@ func kodPojeciaTezaurusa(nazwa string) string {
 	return kod
 }
 
-// ucieczkaTekstuTezaurusa zabezpiecza treść etykiety w zapisie Turtle.
+// ucieczkaTekstuTezaurusa zabezpiecza treść etykiety przed złamaniem składni
+// zapisu Turtle, zamieniając ukośnik wsteczny, cudzysłów i znaki końca wiersza.
 func ucieczkaTekstuTezaurusa(tekst string) string {
 	zamiana := strings.NewReplacer(`\`, `\\`, `"`, `\"`, "\n", `\n`, "\r", `\r`)
 	return zamiana.Replace(tekst)
 }
 
-// ucieczkaXmlTezaurusa zabezpiecza treść etykiety w zapisie XML.
+// ucieczkaXmlTezaurusa zabezpiecza treść etykiety przed złamaniem składni
+// zapisu XML, zamieniając znaki zastrzeżone na odpowiadające im encje.
 func ucieczkaXmlTezaurusa(tekst string) string {
 	var zapis strings.Builder
 	_ = xml.EscapeText(&zapis, []byte(tekst))

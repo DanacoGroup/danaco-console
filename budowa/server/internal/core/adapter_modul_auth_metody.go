@@ -1,12 +1,7 @@
 // Cztery czynności bramki wykonywane po wejściu: założenie i zdjęcie metody
 // szybkiego wejścia, zmiana hasła i przedłużenie sesji. Założenie bramki
-// i wejście leżą w `adapter_modul_auth.go`.
-//
-// Hasło jest kotwicą bramki i ta zasada przechodzi przez cały plik.
-// `auth.method.add` hasła nie zakłada (kotwica powstaje przy `auth.register`),
-// `auth.method.remove` hasła nie zdejmuje, a `auth.password.reset` zmienia je
-// wyłącznie ze znajomością hasła bieżącego — drogi odzyskania listem nie ma,
-// bo rdzeń poczty nie wysyła.
+// i wejście leżą w `adapter_modul_auth.go`. Hasło jest kotwicą bramki
+// w całym pliku.
 package core
 
 import (
@@ -20,23 +15,17 @@ import (
 
 // ── auth.method.add ──────────────────────────────────────────────────────────
 
-// ZalozMetodeWejscia zakłada PIN na wskazanym urządzeniu.
-//
-// Trzy przypadki kończą się odmową, każdy z własnym powodem. Rodzaj `password`
-// odmawia, bo kotwicę zakłada `auth.register`. Rodzaj `hello` odmawia, bo rdzeń
-// go nie obsługuje — jawną odmową, nie cichym pominięciem. PIN na urządzeniu,
-// które PIN już ma, odmawia `conflict` zamiast dokładać drugi: baza trzyma parę
-// (urządzenie, rodzaj) jako jednoznaczną, a zmiana PIN-u to zdjęcie starego
-// i założenie nowego, czyli dwie jawne decyzje Operatora.
+// ZalozMetodeWejscia zakłada PIN na wskazanym urządzeniu. Trzy przypadki
+// kończą się odmową, każdy z własnym powodem: rodzaj `password`, rodzaj
+// `hello` i PIN już założony na urządzeniu.
 func (a *adapterUwierzytelnienia) ZalozMetodeWejscia(ctx context.Context,
 	z shared.AuthMethodAddRequest) (shared.AuthMethodAddResponse, error) {
 
 	if err := a.gotowa(); err != nil {
 		return shared.AuthMethodAddResponse{}, err
 	}
-	// Sprawdzenie „wolno" i samo założenie idą pod jednym zamkiem: inaczej dwa
-	// równoległe żądania na to samo urządzenie przechodzą oba sprawdzenie,
-	// a drugie rozbija się dopiero o indeks bazy.
+	// Sprawdzenie „wolno” i założenie idą pod jednym zamkiem, by dwa żądania
+	// nie przeszły oba sprawdzenia.
 	a.zamekZmiany.Lock()
 	defer a.zamekZmiany.Unlock()
 	if err := a.wolnoZalozyc(ctx, z); err != nil {
@@ -83,8 +72,8 @@ func (a *adapterUwierzytelnienia) wolnoZalozyc(ctx context.Context,
 	if z.Secret == nil || *z.Secret == "" {
 		return bladBramki(shared.ErrorCodeValidationFailed, "założenie PIN-u bez PIN-u")
 	}
-	// Metoda szybkiego wejścia bez kotwicy byłaby jedynym wejściem do platformy
-	// i dałaby się zdjąć razem z urządzeniem — bramka zostałaby wtedy bez hasła.
+	// Metoda szybkiego wejścia bez kotwicy zdjęta z urządzeniem zostawiłaby
+	// bramkę bez hasła.
 	if _, err := a.kotwica(ctx); errors.Is(err, dane.ErrBrakWiersza) {
 		return bladBramki(shared.ErrorCodeConflict,
 			"bramki jeszcze nie ustawiono; PIN zakłada się po ustawieniu hasła (auth.register)")
@@ -137,8 +126,8 @@ func (a *adapterUwierzytelnienia) ZdejmijMetodeWejscia(ctx context.Context,
 		return shared.AuthMethodRemoveResponse{}, bladBramki(shared.ErrorCodeNotFound,
 			"metoda wejścia "+z.MethodId+" nie istnieje")
 	}
-	// Sekret bez właściciela byłby śmieciem w sejfie; niepowodzenie sprzątania
-	// nie cofa zdjęcia metody, bo wiersza już nie ma.
+	// Sekret bez właściciela byłby śmieciem w sejfie; sprzątanie nie cofa
+	// zdjęcia metody.
 	usunPoswiadczenie(ctx, a.sejf, przedrostekBytuSejfu+metoda.Kod)
 	metody, err := a.MetodyWejscia(ctx)
 	if err != nil {
@@ -174,15 +163,9 @@ func (a *adapterUwierzytelnienia) wolnoZdjac(ctx context.Context,
 
 // ── auth.password.reset ──────────────────────────────────────────────────────
 
-// ZmienHasloBramki podmienia hasło ze znajomością hasła bieżącego.
-//
-// Zmiana hasła unieważnia sesje bramki poza bieżącą. Żądanie tej komendy tokenu
-// nie niesie, więc sesję wołającego wskazuje więź gniazda z sesją zawiązana
-// w `wiez_polaczenia.go`. `revokedSessions` liczy to, co naprawdę unieważniono.
-//
-// Połączenie niezwiązane z żadną sesją traci wszystkie: skrót pusty znaczy
-// „nie wiadomo, kto woła", a wtedy oszczędzenie którejkolwiek sesji byłoby
-// zgadywaniem.
+// ZmienHasloBramki podmienia hasło ze znajomością hasła bieżącego. Zmiana
+// hasła unieważnia sesje bramki poza bieżącą; `revokedSessions` liczy to,
+// co naprawdę unieważniono.
 func (a *adapterUwierzytelnienia) ZmienHasloBramki(ctx context.Context,
 	z shared.AuthPasswordResetRequest) (shared.AuthPasswordResetResponse, error) {
 
@@ -190,10 +173,7 @@ func (a *adapterUwierzytelnienia) ZmienHasloBramki(ctx context.Context,
 		return shared.AuthPasswordResetResponse{}, err
 	}
 	// Sprawdzenie hasła bieżącego i podmiana sekretu idą pod jednym zamkiem jako
-	// jedna czynność. Rozdzielone przepuszczają dwie równoległe zmiany, obie
-	// potwierdzone `changed: true`, po których bramkę otwiera tylko jedno z dwóch
-	// nowych haseł: drugi zapis nadpisuje pierwszy w sejfie, a Operator dostaje
-	// potwierdzenie hasła, którym nie wejdzie.
+	// jedna czynność.
 	a.zamekZmiany.Lock()
 	defer a.zamekZmiany.Unlock()
 	if z.CurrentPassword == "" || z.NewPassword == "" {
@@ -229,9 +209,8 @@ func (a *adapterUwierzytelnienia) ZmienHasloBramki(ctx context.Context,
 }
 
 // podmienSekret kładzie nowy zapis pod tym samym bytem sejfu i odświeża
-// odwołanie w bazie. Sejf nadpisuje wpis bytu i oddaje to samo odwołanie, więc
-// zapis do bazy jest tu asekuracją na wypadek, gdyby magazyn kiedyś zmienił
-// postać odwołania — nie drugą prawdą.
+// odwołanie w bazie: sejf nadpisuje wpis bytu, a zapis do bazy jest tu
+// asekuracją.
 func (a *adapterUwierzytelnienia) podmienSekret(ctx context.Context,
 	metoda dane.MetodaUwierzytelnienia, sekret string) error {
 
@@ -251,12 +230,9 @@ func (a *adapterUwierzytelnienia) podmienSekret(ctx context.Context,
 
 // ── auth.token.refresh ───────────────────────────────────────────────────────
 
-// PrzedluzSesjeBramki przesuwa wygaśnięcie sesji wskazanej tokenem.
-//
-// Pusty token znaczy sesję bieżącego połączenia — dokładnie to, co zapowiada
-// kontrakt przy `AuthTokenRefreshRequest.Token`. Sesja bierze się wtedy z więzi
-// tego gniazda (`wiez_polaczenia.go`), nigdy z domysłu „jedyna czynna" —
-// inaczej przedłużałoby się cudze wejście.
+// PrzedluzSesjeBramki przesuwa wygaśnięcie sesji wskazanej tokenem. Pusty
+// token znaczy sesję bieżącego połączenia, zgodnie z kontraktem
+// `AuthTokenRefreshRequest.Token`.
 func (a *adapterUwierzytelnienia) PrzedluzSesjeBramki(ctx context.Context,
 	z shared.AuthTokenRefreshRequest) (shared.AuthTokenRefreshResponse, error) {
 
@@ -267,8 +243,7 @@ func (a *adapterUwierzytelnienia) PrzedluzSesjeBramki(ctx context.Context,
 	skrot := skrotTokenu(token)
 	if token == "" {
 		// Skrót przychodzi kontekstem z więzi gniazda, tak samo jak przy zmianie
-		// hasła. Połączenie niezwiązane — bieg wewnętrzny albo gniazdo, które nie
-		// przedstawiło tokenu — dostaje odmowę opisującą właśnie ten brak.
+		// hasła.
 		skrot = sesjaBiezacaZKontekstu(ctx)
 		if skrot == "" {
 			return shared.AuthTokenRefreshResponse{}, bladBramki(shared.ErrorCodeValidationFailed,
@@ -294,24 +269,14 @@ func (a *adapterUwierzytelnienia) PrzedluzSesjeBramki(ctx context.Context,
 	if err != nil {
 		return shared.AuthTokenRefreshResponse{}, err
 	}
-	// Token wraca taki, jaki przyszedł; przy przedłużeniu przez więź nie
-	// przychodzi żaden i wraca pusty. Rdzeń trzyma wyłącznie skrót, więc
-	// odtworzyć tokenu nie może, a wpisanie tam skrótu byłoby oddaniem klientowi
-	// napisu, którym nie da się wejść. Wołający, który tokenu nie podał, ma go
-	// u siebie; z odpowiedzi bierze nowy czas wygaśnięcia.
+	// Token wraca taki, jaki przyszedł; przy przedłużeniu przez więź wraca
+	// pusty.
 	return shared.AuthTokenRefreshResponse{Session: sesjaBramkiKontraktu(token, przedluzona)}, nil
 }
 
 // trwanieSesji oddaje długość, o którą przesuwa się wygaśnięcie tej sesji.
-//
-// Tu działa opcja „nie wyloguj mnie" po pierwszym starcie: przełącznik
-// rozstrzyga przy zakładaniu sesji, a wynik zostaje zapisany przy wierszu sesji
-// i odczytany z powrotem przy odnowieniu, zamiast brać stałą. Bez tego każde
-// `auth.token.refresh` — a klient woła je przy każdym uruchomieniu
-// (`client/src/uwierzytelnienie/ekran-logowania.ts`) — ścinałoby sesję roczną
-// do dwunastu godzin.
-//
-// Wiersz bez zapisanego trwania niesie zero i dostaje trwanie podstawowe.
+// Tu działa opcja „nie wyloguj mnie”: przełącznik rozstrzyga przy zakładaniu
+// sesji.
 func trwanieSesji(sesja dane.SesjaBramki) time.Duration {
 	if sesja.Trwanie <= 0 {
 		return trwanieSesjiBramki

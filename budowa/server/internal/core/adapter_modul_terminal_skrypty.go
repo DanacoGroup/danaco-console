@@ -1,16 +1,6 @@
-// Komendy `terminal.script.save`, `terminal.script.list` i
-// `terminal.script.remove` — biblioteka skryptów i snippetów okna Script Library.
-//
-// ── Czego brakowało ─────────────────────────────────────────────────────────
-// Biblioteka żyła jedno posiedzenie, a jedyną drogą jej zachowania był wywóz do
-// pliku. Skrypt uruchamiany na maszynach Operatora jest treścią, do której trzeba
-// móc wrócić, więc każdy zapis zakłada KOLEJNĄ WERSJĘ, a nie nadpisuje
-// poprzedniej (migracja 247).
-//
-// ── Numer wersji nadaje rdzeń, nie żądanie ──────────────────────────────────
-// Kontrakt mówi to wprost, a powód jest współbieżnościowy: numer odczytany przed
-// zapisem rozjechałby się przy dwóch zapisach naraz. Numer nadaje więc baza
-// w jednej transakcji z wpisem wersji (`dane/terminal_wyposazenie_zapis.go`).
+// Komendy terminal.script.save, terminal.script.list i terminal.script.remove
+// — biblioteka skryptów i snippetów okna Script Library. Każdy zapis zakłada
+// kolejną wersję, a nie nadpisuje poprzedniej.
 package core
 
 import (
@@ -22,10 +12,10 @@ import (
 	"danacoconsole/shared"
 )
 
-// przedrostekSkryptu znakuje identyfikator pozycji biblioteki.
+// przedrostekSkryptu znakuje identyfikator pozycji biblioteki skryptów terminala Operatora tej platformy.
 const przedrostekSkryptu = "tscr-"
 
-// ZapiszSkrypt obsługuje `terminal.script.save`.
+// ZapiszSkrypt obsługuje terminal.script.save, zakładając kolejną wersję pozycji biblioteki skryptów terminala.
 func (a *adapterTerminala) ZapiszSkrypt(ctx context.Context,
 	z shared.TerminalScriptSaveRequest) (shared.TerminalScriptSaveResponse, error) {
 
@@ -122,7 +112,7 @@ func (a *adapterTerminala) UsunSkrypt(ctx context.Context,
 	return shared.TerminalScriptRemoveResponse{Removed: usunieta}, nil
 }
 
-// skryptKontraktu przekłada wiersz biblioteki na byt kontraktu.
+// skryptKontraktu przekłada wiersz biblioteki skryptów na byt kontraktu TerminalScript panelu tego okna.
 func skryptKontraktu(w dane.SkryptTerminala) shared.TerminalScript {
 	pozycja := shared.TerminalScript{
 		Id:        w.Kod,
@@ -143,7 +133,7 @@ func skryptKontraktu(w dane.SkryptTerminala) shared.TerminalScript {
 	return pozycja
 }
 
-// skryptZDziennika odnajduje pozycję biblioteki albo odmawia jej brakiem.
+// skryptZDziennika odnajduje pozycję biblioteki albo odmawia jej brakiem, kodem not_found kontraktu terminala.
 func (a *adapterTerminala) skryptZDziennika(ctx context.Context,
 	kod string) (dane.SkryptTerminala, error) {
 

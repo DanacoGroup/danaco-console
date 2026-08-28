@@ -1,15 +1,6 @@
-// Odpowiedzialność pliku: rodzina komend `memory.*`. Okno Context Memory stoi
-// na `workspace.context.*`; obie rodziny pracują na tych samych tabelach
-// `wpis_pamieci_projektu` i `konfiguracja_pamieci_sesji`.
-//
-// Źródła są dwa. Wpis pamięci mieszka w `wpis_pamieci_projektu` — to byt, który
-// niosą `memory.list`, `memory.set`, `memory.detach` i `memory.delete`.
-// Konfiguracja dostępu karty sesji do poziomów pamięci mieszka
-// w `konfiguracja_pamieci_sesji` — to byt, który niesie `memory.toggle`;
-// komenda przestawiająca poziomy nie dotyka żadnego wpisu.
-//
-// Typ poniżej osadza adapter modułu Workspace, więc niesie komplet jego metod
-// i jest tym samym bytem, którym pracuje okno Context Memory.
+// Rodzina komend memory.* obsługuje wpis pamięci w tabeli wpis_pamieci_projektu
+// oraz konfigurację dostępu karty sesji do poziomów pamięci w tabeli
+// konfiguracja_pamieci_sesji.
 package core
 
 import (
@@ -21,13 +12,9 @@ import (
 	"danacoconsole/shared"
 )
 
-// repozytoriumWpisowPamieci to rozszerzenie repozytorium przestrzeni roboczej
+// repozytoriumWpisowPamieci rozszerza repozytorium przestrzeni roboczej
 // o czynności, których okno Context Memory nie potrzebuje: odczyt jednego
 // wpisu, jego usunięcie i przestawienie zasięgu.
-//
-// Interfejs stoi po stronie konsumenta: deklaracja mieszka tutaj, a nie
-// w `dane.RepozytoriumPrzestrzeniRoboczej`, bo wymaga jej wyłącznie rodzina
-// `memory.*`.
 type repozytoriumWpisowPamieci interface {
 	WpisPamieciPoIdentyfikatorze(ctx context.Context, identyfikator string) (dane.WpisPamieciProjektu, bool, error)
 	UsunWpisPamieci(ctx context.Context, identyfikator string) (bool, error)
@@ -39,15 +26,12 @@ type repozytoriumWpisowPamieci interface {
 // Workspace rozszerzony o pamięć sesji i wykaz kart sesji.
 type adapterPamieciPrzestrzeni struct {
 	*adapterPrzestrzeniRoboczej
-	// wpisy jest niezerowe, gdy repozytorium modułu niesie rozszerzenie wyżej.
-	// Zerowe znaczy odmowę z kodem `internal_error`.
+	// wpisy zerowe daje odmowę z kodem internal_error.
 	wpisy  repozytoriumWpisowPamieci
 	pamiec dane.RepozytoriumPamieci
 	sesje  dane.RepozytoriumSesji
-	// wylaczenia jest magazynem wyłączeń pamięci (`memory.disable.*`). Zerowe
-	// znaczy odmowę z nazwą niewpiętego składnika — także w `memory.list`, bo
-	// wykaz oddany bez odsiania wyłączeń byłby wykazem, o którym rdzeń nie wie,
-	// czy jest prawdziwy.
+	// wylaczenia jest magazynem wyłączeń pamięci; zerowe daje odmowę także
+	// w memory.list.
 	wylaczenia dane.RepozytoriumWylaczenPamieci
 }
 
@@ -90,11 +74,8 @@ func (a *adapterPamieciPrzestrzeni) UsunWpisPamieciKomenda(ctx context.Context,
 	return shared.MemoryDeleteResponse{Deleted: true}, nil
 }
 
-// WpisPamieciKontraktu zwraca wskazany wpis w kształcie kontraktu.
-//
-// Służy dwóm rozgłoszeniom po `memory.delete`: `workspace.project.changed`
-// bierze stąd projekt, a `memory.changed` — cały wpis. Żądanie tej komendy
-// niesie sam identyfikator, więc odczyt musi nastąpić przed usunięciem.
+// WpisPamieciKontraktu zwraca wskazany wpis w kształcie kontraktu. Służy
+// dwóm rozgłoszeniom po memory.delete, którym odczyt musi poprzedzić usunięcie.
 func (a *adapterPamieciPrzestrzeni) WpisPamieciKontraktu(ctx context.Context,
 	identyfikator string) (shared.WorkspaceMemoryEntry, error) {
 
@@ -107,22 +88,10 @@ func (a *adapterPamieciPrzestrzeni) WpisPamieciKontraktu(ctx context.Context,
 
 // ── memory.detach ────────────────────────────────────────────────────────────
 
-// OdepnijWpisPamieci sprowadza wpis pamięci z zasięgu współdzielonego z powrotem
-// do projektu, który go niesie. Treść zostaje nietknięta.
-//
-// Odpięcie znaczy zwężenie zasięgu do `project` z bytem zasięgu równym
-// projektowi wpisu. Poziom szerszy niż projekt (globalny, środowisko, moduł,
-// para modułów) jest jedynym wiązaniem wpisu poza własnym projektem — to on
-// wprowadza wpis do pamięci innych projektów na żądanie `includeShared`.
-// Treść zostaje nietknięta, a `memory.set` może zasięg przywrócić.
-//
-// Odpięcia od projektu, który wpisu nie niesie, nie da się wykonać tą komendą
-// i nie jest to już brak: wstrzymanie ustalenia wspólnego w cudzym projekcie,
-// module, parze modułów albo karcie sesji robi `memory.disable.set` — wyłączenie,
-// które nie rusza ani zasięgu wpisu, ani jego treści. Odpięcie zwęża zasięg
-// SAMEGO WPISU i dlatego dotyczy wyłącznie projektu, który go niesie; żądanie
-// wskazujące inny projekt kończy się odmową `conflict` kierującą do wyłączenia.
-// Zdjęcie samego przypięcia (`pinned`) należy do `memory.set`.
+// OdepnijWpisPamieci zwęża zasięg wpisu pamięci ze wspólnego z powrotem do
+// projektu, który go niesie, zostawiając treść wpisu nietkniętą. Odpięcia od
+// projektu, który wpisu nie niesie, komenda nie wykonuje i odmawia z kodem
+// conflict.
 func (a *adapterPamieciPrzestrzeni) OdepnijWpisPamieci(ctx context.Context,
 	z shared.MemoryDetachRequest) (shared.MemoryDetachResponse, error) {
 
@@ -133,8 +102,7 @@ func (a *adapterPamieciPrzestrzeni) OdepnijWpisPamieci(ctx context.Context,
 	if err := a.sprawdzProjektOdpiecia(ctx, wpis, z); err != nil {
 		return shared.MemoryDetachResponse{}, err
 	}
-	// Zasięg równy projektowi albo węższy nie sięga ponad projekt, więc nie ma
-	// czego zdejmować; odpowiedź niesie wtedy `detached` równe fałszowi.
+	// Zasięg równy projektowi albo węższy nie ma czego zdejmować.
 	if !zasiegSzerszyNizProjekt(wpis.Poziom) {
 		return shared.MemoryDetachResponse{Entry: wpisPamieciKontraktu(wpis), Detached: false}, nil
 	}
@@ -170,9 +138,7 @@ func (a *adapterPamieciPrzestrzeni) sprawdzProjektOdpiecia(ctx context.Context,
 }
 
 // zasiegSzerszyNizProjekt mówi, czy wpis obowiązuje ponad swoim projektem.
-// Poziomy szersze wymienione są wprost, bo pierwszeństwo poziomów prowadzi baza
-// (kolumna `poziom_zasiegu.pierwszenstwo`); porównanie liczbowe w Go byłoby
-// drugą kopią tego samego porządku.
+// Poziomy szersze wymienione są wprost, bo pierwszeństwo poziomów prowadzi baza.
 func zasiegSzerszyNizProjekt(poziom shared.ConfigScope) bool {
 	switch poziom {
 	case shared.ConfigScopeGlobal, shared.ConfigScopeEnvironment,
@@ -185,14 +151,9 @@ func zasiegSzerszyNizProjekt(poziom shared.ConfigScope) bool {
 
 // ── memory.list ──────────────────────────────────────────────────────────────
 
-// WpisyPamieciZasiegu zwraca wpisy pamięci widoczne w zasięgu żądania.
-// Projekt bierze się ze wskazania wprost albo z karty sesji, gdy projektu nie
-// wskazano — tak mówi kontrakt tej komendy.
-//
-// Wpis wyłączony NIE WCHODZI do wykazu czynnych, ale też nie znika bez słowa:
-// idzie osobnym wykazem `disabledEntries` wraz z zasięgiem, który go wyłączył,
-// i tożsamością wyłączenia, którym Operator znosi je jednym ruchem. Treść wpisu
-// zostaje nietknięta — to różnica wobec `memory.delete`.
+// WpisyPamieciZasiegu zwraca wpisy pamięci widoczne w zasięgu żądania. Wpis
+// wyłączony nie wchodzi do wykazu czynnych, lecz idzie osobnym wykazem
+// disabledEntries wraz z zasięgiem wyłączenia, a jego treść zostaje nietknięta.
 func (a *adapterPamieciPrzestrzeni) WpisyPamieciZasiegu(ctx context.Context,
 	z shared.MemoryListRequest) (shared.MemoryListResponse, error) {
 
@@ -208,8 +169,7 @@ func (a *adapterPamieciPrzestrzeni) WpisyPamieciZasiegu(ctx context.Context,
 	if z.Limit != nil {
 		granica = *z.Limit
 	}
-	// Przy sicie granica idzie na koniec, nie do bazy: obcięcie przed sitem
-	// oddałoby mniej wpisów, niż prosi żądanie, i wyglądałoby na koniec wykazu.
+	// Przy sicie granica idzie na koniec, nie do bazy.
 	sito := sitoZasieguWpisow(z.Scope, z.ScopeId)
 	granicaBazy := granica
 	if sito != nil {
@@ -232,9 +192,8 @@ func (a *adapterPamieciPrzestrzeni) WpisyPamieciZasiegu(ctx context.Context,
 		if sito != nil && !sito(wiersz) {
 			continue
 		}
-		// Wyłączenie odsiewa się PRZED granicą i osobno od zawężenia zasięgu:
-		// wpis wstrzymany nie zajmuje miejsca w wykazie czynnych, ale musi zostać
-		// nazwany, bo cisza bez powodu jest gorsza od wyłączenia.
+		// Wyłączenie odsiewa się przed granicą; wpis wstrzymany musi zostać
+		// nazwany, nie zniknąć bez śladu.
 		if wylaczone != nil {
 			if opis, wylaczony := wylaczone(wiersz); wylaczony {
 				wstrzymane = append(wstrzymane, opis)
@@ -275,13 +234,9 @@ func sitoZasieguWpisow(poziom *shared.ConfigScope,
 
 // ── memory.set ───────────────────────────────────────────────────────────────
 
-// ZapiszPamiec zapisuje ustalenie w pamięci. Puste `entryId` zakłada wpis,
-// podane zmienia istniejący — tak samo, jak robi to `workspace.context.set`.
-//
-// Różnica wobec okna: kontrakt tej komendy niesie `scopeId`, którego
-// `workspace.context.set` nie ma. Wskazany byt zasięgu jest brany wprost;
-// bez wskazania obowiązuje reguła okna — bytem poziomu projektu jest projekt,
-// a byt poziomu szerszego pozostaje pusty.
+// ZapiszPamiec zapisuje ustalenie w pamięci. Puste entryId zakłada wpis,
+// podane zmienia istniejący. Wskazany byt zasięgu jest brany wprost; bez
+// wskazania bytem poziomu projektu jest projekt, a poziomu szerszego — pustka.
 func (a *adapterPamieciPrzestrzeni) ZapiszPamiec(ctx context.Context,
 	z shared.MemorySetRequest) (shared.MemorySetResponse, error) {
 
@@ -382,7 +337,8 @@ func (a *adapterPamieciPrzestrzeni) kodProjektuZadania(ctx context.Context,
 	return kod, nil
 }
 
-// bladBrakuWpisuPamieci składa odmowę wskazującą wpis, którego nie ma.
+// bladBrakuWpisuPamieci składa odmowę z kodem not_found wskazującą, że wpis
+// pamięci o podanym identyfikatorze w repozytorium nie istnieje.
 func bladBrakuWpisuPamieci(identyfikator string) error {
 	return protocol.JakoError(protocol.NowyBlad(shared.ErrorCodeNotFound,
 		"moduł Workspace: wpis pamięci "+identyfikator+" nie istnieje"))

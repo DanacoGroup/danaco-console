@@ -1,15 +1,4 @@
-// Odpowiedzialność pliku: czynności moderatora debaty — komenda
-// `roundtable.moderator.direct` (okno Moderator Panel).
-//
-// Kontrakt zamyka sterowanie debatą w jednym
-// wyliczeniu `ModeratorAction`: ukierunkowanie, zamknięcie tury, zmiana
-// zagadnienia, wyciszenie i zdjęcie wyciszenia. Rdzeń nie dokłada szóstej
-// wartości i nie tłumaczy ich na własne nazwy.
-//
-// Pole `speakingOrder`
-// przychodzi obok każdej z pięciu wartości, więc zapisujemy je zawsze, gdy
-// przyszło — moderator ustawia porządek przy zamknięciu tury równie dobrze jak
-// przy interwencji.
+// Odpowiedzialność pliku: czynności moderatora debaty — komenda roundtable.moderator.direct okna Moderator Panel, sześć wartości ModeratorAction bez rozszerzeń.
 package core
 
 import (
@@ -21,7 +10,7 @@ import (
 	"danacoconsole/shared"
 )
 
-// Moderuj wykonuje czynność moderatora i oddaje turę po zmianie.
+// Moderuj wykonuje czynność moderatora i oddaje turę po zmianie, zapisując porządek wypowiedzi, gdy przyszedł w żądaniu.
 func (a *adapterDebaty) Moderuj(ctx context.Context,
 	z shared.RoundtableModeratorDirectRequest) (shared.RoundtableModeratorDirectResponse, error) {
 
@@ -123,16 +112,13 @@ func (a *adapterDebaty) ukierunkuj(ctx context.Context, tura dane.TuraDebaty,
 		return tura, err
 	}
 	kontekst, anuluj := context.WithCancel(a.zycie)
-	// Ukierunkowanie dyskusji jest aktem przerwania
-	// z definicji — moderator wchodzi uczestnikom w słowo, żeby zawrócić
-	// rozmowę. Przerwanie jest tu treścią komendy, nie skutkiem ubocznym.
+	// Ukierunkowanie dyskusji jest aktem przerwania: treścią komendy, nie skutkiem ubocznym.
 	a.przejmijBieg(tura.Okno, anuluj)
 	go a.prowadzTure(kontekst, tura, adresaci, tresc)
 	return tura, nil
 }
 
-// adresaciInterwencji zawęża skład do wskazanego uczestnika albo oddaje cały
-// skład niewyciszony.
+// adresaciInterwencji zawęża skład do wskazanego uczestnika albo oddaje cały skład niewyciszony debaty.
 func (a *adapterDebaty) adresaciInterwencji(ctx context.Context, okno string,
 	wskazanie *string) ([]dane.UczestnikDebaty, error) {
 
@@ -166,8 +152,7 @@ func (a *adapterDebaty) zamknijTure(ctx context.Context, tura dane.TuraDebaty) (
 	if err := a.repozytorium.ZmienTure(ctx, tura); err != nil {
 		return tura, bladDebaty(err)
 	}
-	// Stanowisko składa się po zamknięciu tury — Consensus Panel aktualizuje
-	// się po zakończeniu tury albo całej debaty.
+	// Stanowisko składa się po zamknięciu tury; Consensus Panel aktualizuje się po turze albo debacie.
 	a.zloz(ctx, tura.Okno, tura.Kod)
 	a.zloz(ctx, tura.Okno, "")
 	a.rozglos(shared.ChangeKindUpdated, turaKontraktu(tura), nil)
@@ -197,7 +182,7 @@ func (a *adapterDebaty) kolejneZagadnienie(ctx context.Context, okno string,
 	return nowa, nil
 }
 
-// przestawWyciszenie wycisza uczestnika w turze albo zdejmuje wyciszenie.
+// przestawWyciszenie wycisza uczestnika w turze albo zdejmuje wyciszenie, zapisując zmianę stanu składu.
 func (a *adapterDebaty) przestawWyciszenie(ctx context.Context,
 	z shared.RoundtableModeratorDirectRequest) error {
 

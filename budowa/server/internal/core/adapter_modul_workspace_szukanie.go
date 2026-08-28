@@ -1,17 +1,6 @@
-// Odpowiedzialność pliku: wyszukiwanie w projekcie (`workspace.search.project`),
-// oś czasu aktywności (`workspace.activity.list`) i komentarze
-// (`workspace.comment.add`, `workspace.comment.list`, `workspace.comment.delete`).
-//
-// ── Czego to wyszukiwanie nie zastępuje ────────────────────────────────────
-// `library.file.search` przeszukuje bibliotekę centralną i wyłącznie pliki. Ta
-// komenda przeszukuje JEDEN projekt i więcej niż pliki: zadania, notatki,
-// ustalenia pamięci i instrukcje. Wyszukiwanie po ZNACZENIU prowadzi rodzina
-// `knowledge.*` — tutaj idzie dopasowanie po słowach.
-//
-// Treść pliku wchodzi do wyszukiwania przez wskaźnik zbudowany komendą
-// `workspace.library.text.extract`; plik bez wyciągu jest dopasowywany po samej
-// nazwie. To jest różnica widoczna dla Operatora, więc trafienie z wyciągu
-// niesie fragment treści, a trafienie po nazwie — nie.
+// Plik obsługuje wyszukiwanie w projekcie, oś czasu aktywności oraz komentarze
+// przestrzeni roboczej: dopasowanie po słowach w zadaniach, notatkach, wpisach
+// pamięci, plikach i instrukcjach projektu.
 package core
 
 import (
@@ -24,7 +13,9 @@ import (
 	"danacoconsole/shared"
 )
 
-// SzukajWProjekcie obsługuje `workspace.search.project`.
+// SzukajWProjekcie obsługuje komendę workspace.search.project: dopasowuje frazę
+// po słowach w zadaniach, notatkach, wpisach pamięci, plikach i instrukcjach
+// jednego projektu, ważąc trafienie w nazwę wyżej niż w treść.
 func (a *adapterPrzestrzeniRoboczej) SzukajWProjekcie(ctx context.Context,
 	z shared.WorkspaceSearchProjectRequest) (shared.WorkspaceSearchProjectResponse, error) {
 
@@ -144,7 +135,9 @@ func (a *adapterPrzestrzeniRoboczej) SzukajWProjekcie(ctx context.Context,
 	}, nil
 }
 
-// OsCzasu obsługuje `workspace.activity.list`.
+// OsCzasu obsługuje komendę workspace.activity.list: zwraca zdarzenia projektu
+// odfiltrowane po rodzaju, bycie i przedziale czasu, posortowane chronologicznie
+// i przycięte do żądanej strony wyniku.
 func (a *adapterPrzestrzeniRoboczej) OsCzasu(ctx context.Context,
 	z shared.WorkspaceActivityListRequest) (shared.WorkspaceActivityListResponse, error) {
 
@@ -186,7 +179,9 @@ func (a *adapterPrzestrzeniRoboczej) OsCzasu(ctx context.Context,
 	}, nil
 }
 
-// DolozKomentarz obsługuje `workspace.comment.add`.
+// DolozKomentarz obsługuje komendę workspace.comment.add: zapisuje komentarz
+// przy wskazanym bycie, wyciąga z treści przywołania znakiem małpy i odnotowuje
+// zdarzenie na osi czasu projektu.
 func (a *adapterPrzestrzeniRoboczej) DolozKomentarz(ctx context.Context,
 	z shared.WorkspaceCommentAddRequest) (shared.WorkspaceCommentAddResponse, error) {
 
@@ -222,7 +217,9 @@ func (a *adapterPrzestrzeniRoboczej) DolozKomentarz(ctx context.Context,
 	}, nil
 }
 
-// Komentarze obsługuje `workspace.comment.list`.
+// Komentarze obsługuje komendę workspace.comment.list: zwraca komentarze
+// projektu odfiltrowane po rodzaju i identyfikatorze bytu, do którego się
+// odnoszą, przycięte do żądanej strony wyniku.
 func (a *adapterPrzestrzeniRoboczej) Komentarze(ctx context.Context,
 	z shared.WorkspaceCommentListRequest) (shared.WorkspaceCommentListResponse, error) {
 
@@ -284,7 +281,9 @@ func (a *adapterPrzestrzeniRoboczej) UsunKomentarz(ctx context.Context,
 	}, nil
 }
 
-// odpowiedziWatkuWorkspace zbiera poddrzewo odpowiedzi komentarza.
+// odpowiedziWatkuWorkspace zbiera poddrzewo odpowiedzi komentarza
+// przeszukiwaniem wszerz od korzenia wątku, żeby usunięcie komentarza zabrało
+// wraz z nim całą gałąź odpowiedzi.
 func odpowiedziWatkuWorkspace(wszystkie []dane.KomentarzWorkspace, korzen string) []string {
 	odpowiedzi := []string{}
 	kolejka := []string{korzen}
@@ -302,7 +301,9 @@ func odpowiedziWatkuWorkspace(wszystkie []dane.KomentarzWorkspace, korzen string
 	return odpowiedzi
 }
 
-// przywolaniaTresciWorkspace wyjmuje z treści byty przywołane znakiem małpy.
+// przywolaniaTresciWorkspace wyjmuje z treści komentarza byty przywołane
+// znakiem małpy, usuwając powtórzenia i końcową interpunkcję przyklejoną do
+// nazwy przywołania.
 func przywolaniaTresciWorkspace(tresc string) []string {
 	przywolania := []string{}
 	widziane := map[string]bool{}
@@ -349,7 +350,9 @@ func dopasujWorkspace(fraza, kod string, rodzaj shared.WorkspaceEntityKind,
 	return trafienie, true
 }
 
-// fragmentTrafieniaWorkspace wycina fragment treści wokół trafienia.
+// fragmentTrafieniaWorkspace wycina z treści bytu fragment otaczający trafioną
+// frazę z obu stron o stałą liczbę znaków, żeby wynik wyszukiwania niósł
+// kontekst, a nie całą treść.
 func fragmentTrafieniaWorkspace(tresc, fraza string) string {
 	const otoczenie = 80
 	miejsce := strings.Index(strings.ToLower(tresc), fraza)
@@ -367,7 +370,9 @@ func fragmentTrafieniaWorkspace(tresc, fraza string) string {
 	return strings.TrimSpace(strings.ReplaceAll(tresc[poczatek:koniec], "\n", " "))
 }
 
-// zdarzenieKontraktuWorkspace przekłada wiersz osi czasu na byt kontraktu.
+// zdarzenieKontraktuWorkspace przekłada wiersz osi czasu z magazynu na byt
+// kontraktu WorkspaceActivityEntry, pomijając pola puste zamiast wypełniać je
+// wartością pozorną.
 func zdarzenieKontraktuWorkspace(idProjektu string, z dane.ZdarzenieWorkspace,
 	chwila int64) shared.WorkspaceActivityEntry {
 
@@ -396,7 +401,9 @@ func zdarzenieKontraktuWorkspace(idProjektu string, z dane.ZdarzenieWorkspace,
 	return zdarzenie
 }
 
-// komentarzKontraktuWorkspace przekłada wiersz komentarza na byt kontraktu.
+// komentarzKontraktuWorkspace przekłada wiersz komentarza z magazynu na byt
+// kontraktu WorkspaceComment, pomijając pola puste zamiast wypełniać je
+// wartością pozorną.
 func komentarzKontraktuWorkspace(k dane.KomentarzWorkspace) shared.WorkspaceComment {
 	komentarz := shared.WorkspaceComment{
 		Id: k.Identyfikator, ProjectId: k.ProjektKod, TargetKind: k.RodzajBytu,

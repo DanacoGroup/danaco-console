@@ -1,18 +1,7 @@
 // Odpowiedzialność pliku: wywołania kanału modelu, które NIE są głosem
 // uczestnika — analiza zapisu, werdykt sędziego i powtórzenie wypowiedzi.
-//
-// Różnica wobec `adapter_modul_roundtable_glos.go` jest istotna i nie jest
-// kosmetyczna: tamten zapisuje wypowiedź w turze i strumieniuje ją do Model
-// Panels, bo uczestnik właśnie mówi. Tutaj model pracuje nad zapisem, a nie
-// w debacie — wynik nie jest niczyim głosem, więc nie wchodzi do transkryptu
-// jako wypowiedź i nie idzie strumieniem.
-//
-// ── Czego rdzeń nie robi z odpowiedzią modelu ────────────────────────────────
-// Rdzeń nie dopisuje do niej ani jednego słowa i nie zgaduje, co model miał na
-// myśli. Odpowiedź, której nie da się odczytać jako wykazu, zostaje jednym
-// ustaleniem o treści dokładnie takiej, jaką model wypowiedział. To nie jest
-// obejście: ustalenie analizy jest cudzym zdaniem, a rdzeń jest tu wyłącznie
-// tym, kto je zapisał.
+// Wynik nie jest niczyim głosem, więc nie wchodzi do transkryptu jako
+// wypowiedź i nie idzie strumieniem.
 package core
 
 import (
@@ -25,10 +14,7 @@ import (
 )
 
 // wywolajModelDebaty prowadzi jedno wywołanie kanału i oddaje całą odpowiedź.
-//
 // Ujście zbiera tekst zamiast go rozgłaszać: odbiorcą jest rdzeń, nie okno.
-// Kanał, który zawiódł, wraca błędem — cisza podana dalej jako pusta odpowiedź
-// wyglądałaby jak analiza, która niczego nie znalazła.
 func (a *adapterDebaty) wywolajModelDebaty(ctx context.Context,
 	okno, kanal, promptSystemowy, tresc string) (string, error) {
 
@@ -64,12 +50,8 @@ func (a *adapterDebaty) wywolajModelDebaty(ctx context.Context,
 }
 
 // kanalAnalizy rozstrzyga, który kanał wykonuje pracę nad zapisem debaty.
-//
 // Kolejność jest rozmyślna: wskazanie z żądania, potem kanał pierwszego
-// uczestnika składu. Debata bez składu nie ma kanału domyślnego i odmawia
-// wprost, zamiast sięgać po dowolny kanał z rejestru — analiza wykonana
-// kanałem, którego Operator do tej debaty nie dopuścił, byłaby wyborem rdzenia
-// za niego.
+// uczestnika składu.
 func (a *adapterDebaty) kanalAnalizy(ctx context.Context, okno string, wskazany *string) (string, error) {
 	if kanal := strings.TrimSpace(wartoscTekstu(wskazany)); kanal != "" {
 		return kanal, nil
@@ -138,15 +120,9 @@ func (a *adapterDebaty) zapisDebatyDoAnalizy(ctx context.Context,
 	return strings.TrimSpace(zapis.String()), istotne, nil
 }
 
-// wierszeOdpowiedzi rozbija odpowiedź modelu na pozycje wykazu.
-//
-// Model poproszony o wykaz oddaje go zwykle wierszami, czasem z myślnikiem albo
-// numerem na początku. Rdzeń zdejmuje sam znacznik pozycji, bo jest znakiem
-// formatowania, a nie treścią — reszta wiersza zostaje słowo w słowo.
-//
-// Odpowiedź, w której nie da się rozpoznać wykazu, wraca jako jedna pozycja
-// o treści całej odpowiedzi. To jest wynik uczciwy: model powiedział jedną
-// rzecz, więc jest jedno ustalenie.
+// wierszeOdpowiedzi rozbija odpowiedź modelu na pozycje wykazu. Model
+// poproszony o wykaz oddaje go zwykle wierszami, czasem z myślnikiem albo
+// numerem na początku.
 func wierszeOdpowiedzi(odpowiedz string) []string {
 	pozycje := make([]string, 0, 8)
 	for _, wiersz := range strings.Split(odpowiedz, "\n") {

@@ -1,23 +1,4 @@
-// Odpowiedzialność pliku: materiały projektu — wydobycie tekstu z pliku
-// (`workspace.library.text.extract`) oraz duplikaty
-// (`workspace.library.duplicate.list`, `workspace.library.duplicate.merge`).
-//
-// ── Skąd bierze się treść ──────────────────────────────────────────────────
-// Wydobycie nie zakłada drugiego warsztatu dokumentów: idzie tą samą drogą, co
-// `document.text.extract` — najpierw warstwa tekstowa dokumentu, a dopiero po
-// jej braku rozpoznanie pisma z pikseli. Dzięki temu pole `method` mówi prawdę
-// o tym, skąd wzięły się znaki, a nie o tym, czego rdzeń próbował.
-//
-// ── Duplikaty rozpoznaje treść, nie nazwa ──────────────────────────────────
-// Grupę składa suma kontrolna SHA-256 liczona z bajtów pliku (biblioteka
-// wkompilowana, żadnego programu z zewnątrz). Dwa pliki o różnych nazwach i tej
-// samej treści są duplikatami; dwa pliki o tej samej nazwie i różnej treści nie
-// są nimi wcale.
-//
-// ── Wykaz niczego nie scala ────────────────────────────────────────────────
-// `duplicate.list` wskazuje plik proponowany do zachowania — najstarszy
-// w grupie — i na tym kończy. Scalenie jest osobną komendą, bo usunięcie pliku
-// z dysku jest czynnością nieodwracalną i ma być decyzją Operatora.
+// Odpowiedzialność pliku: materiały projektu — wydobycie tekstu z pliku oraz wykrywanie i scalanie duplikatów treści w bibliotece workspace.
 package core
 
 import (
@@ -47,7 +28,7 @@ func (a *adapterPrzestrzeniRoboczej) ZDokumentamiWorkspace(warsztat WydobycieTek
 	return a
 }
 
-// WydobadzTekst obsługuje `workspace.library.text.extract`.
+// WydobadzTekst obsługuje workspace.library.text.extract, wydobywając tekst warstwą tekstową dokumentu albo rozpoznaniem pisma z pikseli.
 func (a *adapterPrzestrzeniRoboczej) WydobadzTekst(ctx context.Context,
 	z shared.WorkspaceLibraryTextExtractRequest) (shared.WorkspaceLibraryTextExtractResponse, error) {
 
@@ -63,8 +44,7 @@ func (a *adapterPrzestrzeniRoboczej) WydobadzTekst(ctx context.Context,
 	if err != nil {
 		return shared.WorkspaceLibraryTextExtractResponse{}, err
 	}
-	// Gotowy wyciąg wraca bez powtórnego czytania pliku: rozpoznanie pisma
-	// z wielostronicowego skanu potrafi trwać minuty, a treść się nie zmienia.
+	// Gotowy wyciąg wraca bez powtórnego czytania: rozpoznanie pisma ze skanu trwa minuty.
 	if z.Force == nil || !*z.Force {
 		if gotowy, err := a.repozytorium.WyciagWorkspace(ctx, projekt.ID, z.FileId); err == nil {
 			return shared.WorkspaceLibraryTextExtractResponse{
@@ -122,7 +102,7 @@ func (a *adapterPrzestrzeniRoboczej) WydobadzTekst(ctx context.Context,
 	}, nil
 }
 
-// Duplikaty obsługuje `workspace.library.duplicate.list`.
+// Duplikaty obsługuje workspace.library.duplicate.list, wskazując grupy plików o identycznej treści wedlug sumy kontrolnej.
 func (a *adapterPrzestrzeniRoboczej) Duplikaty(ctx context.Context,
 	z shared.WorkspaceLibraryDuplicateListRequest) (shared.WorkspaceLibraryDuplicateListResponse, error) {
 
@@ -205,9 +185,7 @@ func (a *adapterPrzestrzeniRoboczej) ScalDuplikaty(ctx context.Context,
 		}
 		suma, err := sumaPlikuWorkspace(korzen, kod)
 		if err != nil || suma != sumaZachowanego {
-			// Plik o innej treści nie jest duplikatem i scalenie go nie ruszy:
-			// usunięcie pliku o innej treści byłoby utratą materiału, nie
-			// porządkowaniem.
+			// Plik o innej treści nie jest duplikatem; jego usunięcie byłoby utratą materiału.
 			continue
 		}
 		opis, err := os.Stat(sciezka)
@@ -261,7 +239,7 @@ func (a *adapterPrzestrzeniRoboczej) sciezkaPlikuProjektuWorkspace(kodProjektu,
 	return pelna, nil
 }
 
-// sumaPlikuWorkspace liczy sumę kontrolną treści pliku projektu.
+// sumaPlikuWorkspace liczy sumę kontrolną treści pliku projektu biblioteką standardową, bez programu z zewnątrz.
 func sumaPlikuWorkspace(korzen, plik string) (string, error) {
 	bajty, err := os.ReadFile(filepath.Join(korzen, filepath.FromSlash(plik)))
 	if err != nil {
@@ -271,8 +249,7 @@ func sumaPlikuWorkspace(korzen, plik string) (string, error) {
 	return hex.EncodeToString(suma[:]), nil
 }
 
-// sposobWydobyciaWorkspace ustala sposób: wskazanie żądania, a przy jego braku
-// — rodzaj treści pliku.
+// sposobWydobyciaWorkspace ustala sposób wydobycia: wskazanie żądania, a przy jego braku rodzaj treści pliku.
 func sposobWydobyciaWorkspace(wskazany *shared.WorkspaceExtractionMethod,
 	sciezka string) shared.WorkspaceExtractionMethod {
 
@@ -291,7 +268,7 @@ func sposobWydobyciaWorkspace(wskazany *shared.WorkspaceExtractionMethod,
 	}
 }
 
-// wyciagKontraktuWorkspace przekłada wiersz wyciągu na byt kontraktu.
+// wyciagKontraktuWorkspace przekłada wiersz wyciągu tekstu na byt kontraktu wymiany z klientem workspace.
 func wyciagKontraktuWorkspace(w dane.WyciagWorkspace) shared.WorkspaceTextExtraction {
 	wyciag := shared.WorkspaceTextExtraction{
 		FileId: w.Plik, Method: w.Sposob, CharacterCount: w.LiczbaZnakow,

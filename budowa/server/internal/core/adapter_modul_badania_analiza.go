@@ -1,20 +1,6 @@
-// Odpowiedzialność pliku: Findings Panel — przegląd i zmiana ustaleń, kodowanie
-// jakościowe (książka kodów, macierz kod × źródło), wykrywanie i rozstrzyganie
-// sprzeczności, weryfikacja twierdzenia, grupowanie w wątki, scalanie oraz ślad
-// prowenancji.
-//
-// ── Sprzeczność jest bytem, nie widokiem ───────────────────────────────────
-// Wykrycie sprzeczności zapisuje ją w bazie, zamiast oddać listę wyliczoną
-// w locie. Bez wiersza `research.contradiction.resolve` nie miałby czego
-// rozstrzygnąć, a rozstrzygnięcie nie przeżyłoby odświeżenia panelu — Operator
-// rozstrzygałby tę samą rozbieżność w kółko.
-//
-// ── Heurystyka liczbowa przed modelem ──────────────────────────────────────
-// Rozbieżność dwóch liczb w zdaniach o tym samym przedmiocie da się wskazać bez
-// modelu i tak jest wskazywana: para ustaleń z tym samym rdzeniem słownym
-// i różnymi liczbami wchodzi jako sprzeczność z podaną różnicą. Model dokłada
-// sprzeczności, których liczba nie widzi — ale nie jest warunkiem, żeby detektor
-// w ogóle działał.
+// Pakiet obsługuje panel ustaleń badania: przegląd i zmianę ustaleń, kodowanie
+// jakościowe wraz z książką kodów i macierzą kod na źródło, wykrywanie
+// i rozstrzyganie sprzeczności, grupowanie w wątki, scalanie oraz ślad prowenancji.
 package core
 
 import (
@@ -31,7 +17,8 @@ import (
 	"danacoconsole/shared"
 )
 
-// WypiszUstalenia obsługuje `research.finding.list`.
+// WypiszUstalenia obsługuje `research.finding.list`: wykaz ustaleń zapisanych
+// dotąd przy wskazanym oknie badania.
 func (a *adapterBadan) WypiszUstalenia(ctx context.Context,
 	z shared.ResearchFindingListRequest) (shared.ResearchFindingListResponse, error) {
 
@@ -183,7 +170,8 @@ func (a *adapterBadan) ZmienUstalenie(ctx context.Context,
 	}, nil
 }
 
-// UsunUstalenie obsługuje `research.finding.remove`.
+// UsunUstalenie obsługuje `research.finding.remove`: usuwa ustalenie wskazane
+// żądaniem z okna badania.
 func (a *adapterBadan) UsunUstalenie(ctx context.Context,
 	z shared.ResearchFindingRemoveRequest) (shared.ResearchFindingRemoveResponse, error) {
 
@@ -202,7 +190,8 @@ func (a *adapterBadan) UsunUstalenie(ctx context.Context,
 	}, nil
 }
 
-// ScalUstalenia obsługuje `research.finding.merge`.
+// ScalUstalenia obsługuje `research.finding.merge`: przenosi źródła ustaleń
+// scalanych na ustalenie docelowe.
 func (a *adapterBadan) ScalUstalenia(ctx context.Context,
 	z shared.ResearchFindingMergeRequest) (shared.ResearchFindingMergeResponse, error) {
 
@@ -238,7 +227,8 @@ func (a *adapterBadan) ScalUstalenia(ctx context.Context,
 	}, nil
 }
 
-// SladUstalenia obsługuje `research.finding.provenance`.
+// SladUstalenia obsługuje `research.finding.provenance`: oddaje ślad
+// pochodzenia ustalenia od źródła do wpisu w bazie.
 func (a *adapterBadan) SladUstalenia(ctx context.Context,
 	z shared.ResearchFindingProvenanceRequest) (shared.ResearchFindingProvenanceResponse, error) {
 
@@ -269,7 +259,8 @@ func (a *adapterBadan) SladUstalenia(ctx context.Context,
 
 // ── Kodowanie jakościowe ───────────────────────────────────────────────────
 
-// PobierzKsiazkeKodow obsługuje `research.codebook.get`.
+// PobierzKsiazkeKodow obsługuje `research.codebook.get`: oddaje książkę
+// kodów jakościowych zapisaną przy oknie badania.
 func (a *adapterBadan) PobierzKsiazkeKodow(ctx context.Context,
 	z shared.ResearchCodebookGetRequest) (shared.ResearchCodebookGetResponse, error) {
 
@@ -283,7 +274,8 @@ func (a *adapterBadan) PobierzKsiazkeKodow(ctx context.Context,
 	return shared.ResearchCodebookGetResponse{Codes: zlozKodyBadania(kody)}, nil
 }
 
-// UstawKsiazkeKodow obsługuje `research.codebook.set`.
+// UstawKsiazkeKodow obsługuje `research.codebook.set`: zapisuje książkę
+// kodów jakościowych okna badania.
 func (a *adapterBadan) UstawKsiazkeKodow(ctx context.Context,
 	z shared.ResearchCodebookSetRequest) (shared.ResearchCodebookSetResponse, error) {
 
@@ -358,7 +350,8 @@ func (a *adapterBadan) PrzypiszKodyUstalenia(ctx context.Context,
 	}, nil
 }
 
-// MacierzKodowania obsługuje `research.finding.matrix`.
+// MacierzKodowania obsługuje `research.finding.matrix`: krzyżuje kody
+// jakościowe ze źródłami ustaleń, którym te kody nadano.
 func (a *adapterBadan) MacierzKodowania(ctx context.Context,
 	z shared.ResearchFindingMatrixRequest) (shared.ResearchFindingMatrixResponse, error) {
 
@@ -399,7 +392,8 @@ func (a *adapterBadan) MacierzKodowania(ctx context.Context,
 	}, nil
 }
 
-// zlozKodyBadania przekłada wiersze książki kodów na byty kontraktu.
+// zlozKodyBadania przekłada wiersze książki kodów z bazy danych na byty
+// kodów jakościowych zwracane kontraktem komunikacji.
 func zlozKodyBadania(kody []dane.KodBadania) []shared.ResearchCode {
 	przelozone := make([]shared.ResearchCode, 0, len(kody))
 	for _, kod := range kody {
@@ -421,7 +415,8 @@ func zlozKodyBadania(kody []dane.KodBadania) []shared.ResearchCode {
 // dziesiętnym, bo tak zapisuje się liczby w tekście polskim.
 var wzorzecLiczbyBadania = regexp.MustCompile(`-?\d+(?:[.,]\d+)?`)
 
-// SzukajSprzecznosci obsługuje `research.finding.contradictions`.
+// SzukajSprzecznosci obsługuje `research.finding.contradictions`: wykrywa
+// sprzeczności między ustaleniami heurystyką liczbową i modelem.
 func (a *adapterBadan) SzukajSprzecznosci(ctx context.Context,
 	z shared.ResearchFindingContradictionsRequest) (shared.ResearchFindingContradictionsResponse, error) {
 
@@ -455,8 +450,7 @@ func (a *adapterBadan) SzukajSprzecznosci(ctx context.Context,
 			kod := kodSprzecznosciBadania(wybrane[i].Kod, wybrane[j].Kod)
 			zastana, err := a.repozytorium.Sprzecznosc(ctx, kod)
 			if err == nil && zastana.Rozstrzygnieta {
-				// Sprzeczność raz rozstrzygnięta nie wraca jako nowa: wykrycie ma
-				// pokazać rozbieżności otwarte, a nie budzić zamknięte.
+				// Sprzeczność raz rozstrzygnięta nie wraca jako nowa przy kolejnym wykryciu.
 				continue
 			}
 			if _, err := a.repozytorium.ZapiszSprzecznosc(ctx, dane.SprzecznoscBadania{
@@ -519,7 +513,8 @@ func rozbieznoscLiczbowaBadania(pierwsze, drugie dane.UstalenieBadania,
 	return streszczenie, strconv.FormatFloat(roznica, 'f', 1, 64) + "%", true
 }
 
-// liczbyZTekstuBadania wyławia liczby z treści ustalenia.
+// liczbyZTekstuBadania wyławia liczby z treści ustalenia, do porównania
+// heurystyką sprzeczności liczbowej.
 func liczbyZTekstuBadania(tekst string) []float64 {
 	liczby := []float64{}
 	for _, trafienie := range wzorzecLiczbyBadania.FindAllString(tekst, -1) {
@@ -531,7 +526,8 @@ func liczbyZTekstuBadania(tekst string) []float64 {
 	return liczby
 }
 
-// RozstrzygnijSprzecznosc obsługuje `research.contradiction.resolve`.
+// RozstrzygnijSprzecznosc obsługuje `research.contradiction.resolve`: zapisuje
+// werdykt sprzeczności, żeby nie wracała jako otwarta.
 func (a *adapterBadan) RozstrzygnijSprzecznosc(ctx context.Context,
 	z shared.ResearchContradictionResolveRequest) (shared.ResearchContradictionResolveResponse, error) {
 
@@ -685,7 +681,8 @@ func (a *adapterBadan) ZweryfikujUstalenie(ctx context.Context,
 	}}, nil
 }
 
-// werdyktZnanyBadania sprawdza, czy model oddał werdykt z listy kontraktu.
+// werdyktZnanyBadania sprawdza, czy model oddał werdykt sprzeczności z listy
+// wartości, które kontrakt komunikacji dopuszcza.
 func werdyktZnanyBadania(werdykt string) bool {
 	switch shared.ResearchFactCheckVerdict(werdykt) {
 	case shared.ResearchFactCheckVerdictSupported, shared.ResearchFactCheckVerdictUnsupported,

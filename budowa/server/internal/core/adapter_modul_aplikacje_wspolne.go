@@ -1,11 +1,6 @@
 // Moduł Apps — drobiazgi wspólne wszystkim obszarom modułu: sprawdzenie okna
-// w żądaniu, odmowa nazywająca brak bytu, wskaźnik na napis, rodzaj zmiany przy
-// zapisie oraz rozgłoszenie etapu budowy.
-//
-// Osobny plik, bo te same cztery czynności powtarzają się w każdym z sześciu
-// plików obszaru. Przedrostek `…App` w nazwach jest wymogiem przestrzeni nazw
-// pakietu `core`: pracuje w niej kilku wykonawców naraz i nazwa bez przedrostka
-// obszaru zderzyłaby się z cudzą.
+// w żądaniu, odmowa nazywająca brak bytu, wskaźnik na napis, rodzaj zmiany
+// przy zapisie oraz rozgłoszenie etapu budowy.
 package core
 
 import (
@@ -21,9 +16,7 @@ import (
 )
 
 // oknoAplikacji przycina i sprawdza okno żądania. Nazwa komendy wchodzi do
-// treści odmowy, bo Operator czyta ją w oknie i musi wiedzieć, która droga
-// stanęła — wszystkie komendy modułu wymagają `windowId`, więc bez nazwy każda
-// odmawiałaby tym samym zdaniem.
+// treści odmowy, bo bez niej każda odmowa brzmiałaby tym samym zdaniem.
 func oknoAplikacji(okno, komenda string) (string, error) {
 	przyciete := strings.TrimSpace(okno)
 	if przyciete == "" {
@@ -68,10 +61,8 @@ func isBrakWierszaApp(err error) bool {
 }
 
 // Magazyn wytworów modułu leży w katalogu danych rdzenia, obok magazynu
-// biblioteki (`biblioteka/tresc`) i zasobów Designu (`design/zasoby`). Osobny
-// podkatalog, bo moduły nie dzielą stanu: skasowanie wytworów Apps nie ma prawa
-// ruszyć treści biblioteki, a artefakt wdrożenia nie ma prawa mieszać się
-// z zasobem wizualnym.
+// biblioteki i zasobów Designu. Osobny podkatalog, bo moduły nie dzielą
+// stanu: skasowanie wytworów Apps nie ma prawa ruszyć treści biblioteki.
 const (
 	podkatalogAplikacji = "aplikacje"
 	podkatalogWytworow  = "wytwory"
@@ -117,11 +108,9 @@ func zmianaZalozenia(nowy bool) shared.ChangeKind {
 	return shared.ChangeKindUpdated
 }
 
-// rozglosEtap oddaje etap obsługiwaczowi, który rozsyła `apps.build.changed`.
+// rozglosEtap oddaje etap obsługiwaczowi, który rozsyła apps.build.changed.
 // Zdarzenie łączy etap budowy z wdrożeniem w jednym kształcie; przy zmianie
-// samego etapu pole `Deployment` zostaje puste, bo nie ma tu przebiegu do
-// pokazania. Brak podpięcia nie zmienia pracy modułu — rdzeń zapisuje także
-// wtedy, gdy nikt nie słucha zdarzeń.
+// samego etapu pole Deployment zostaje puste.
 func (a *adapterAplikacji) rozglosEtap(zmiana shared.ChangeKind, etap shared.AppStage) {
 	if a.przyrostEtapu == nil {
 		return

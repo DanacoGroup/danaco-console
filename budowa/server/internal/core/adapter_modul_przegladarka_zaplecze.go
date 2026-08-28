@@ -1,16 +1,6 @@
 // Odpowiedzialność pliku: zaplecze wspólne wszystkim rodzinom modułu Browser
-// dołożonym ponad migawkę i notatkę — magazyn bajtów sesji przeglądania, silnik
-// przeglądarki, przekłady czasu oraz odmowy nazywające brak.
-//
-// Magazyn jest ten sam co w Library i Design co do mechaniki (blob pod sumą
-// sha256, zapis niepodzielny), a inny co do miejsca: bajty modułu Browser leżą
-// w `<dane>/przegladarka/tresc`. Wspólny katalog z biblioteką mieszałby materiał
-// trwały (dokument wniesiony do repozytorium wiedzy) z materiałem sesji (zrzut
-// strony, archiwum, rejestr sieciowy) — a te dwa mają różny cykl życia.
-//
-// Silnik przeglądarki wchodzi tu jednym polem, nie jednym na rodzinę: Chromium
-// startuje ten sam dla zrzutu, dla drzewa DOM i dla konsoli, więc drugie pole
-// byłoby drugą prawdą o tym, czym rdzeń renderuje stronę.
+// dołożonym ponad migawkę i notatkę — magazyn bajtów sesji przeglądania,
+// silnik przeglądarki, przekłady czasu oraz odmowy nazywające brak.
 package core
 
 import (
@@ -36,7 +26,8 @@ import (
 
 const (
 	// podkatalogPrzegladarki oddziela materiał sesji przeglądania od reszty
-	// katalogu danych rdzenia.
+	// katalogu danych rdzenia, trzymając bajty modułu Browser osobno od materiału
+	// trwałego.
 	podkatalogPrzegladarki = "przegladarka"
 	// podkatalogTresciPrzegladarki mieści same bajty — zrzuty, archiwa,
 	// odniesienia monitorów i rejestry sieciowe.
@@ -65,7 +56,9 @@ const (
 	przedrostekWatkuNotatek       = "thread-"
 )
 
-// magazynTresciPrzegladarki składa magazyn bajtów modułu nad katalogiem danych.
+// magazynTresciPrzegladarki składa magazyn bajtów modułu przeglądarki nad
+// katalogiem danych, korzystając z tego samego mechanizmu blobów pod sumą
+// sha256 co Library i Design.
 func magazynTresciPrzegladarki(katalogDanych string) *magazynTresciBiblioteki {
 	if strings.TrimSpace(katalogDanych) == "" {
 		return nil
@@ -76,9 +69,9 @@ func magazynTresciPrzegladarki(katalogDanych string) *magazynTresciBiblioteki {
 }
 
 // ZMagazynem przestawia adapter na wskazany katalog danych i wpina magazyn
-// bajtów sesji przeglądania. Wołane przy montażu — bez niego rodziny wytwarzające
-// materiał (zrzut, archiwum, rejestr) nie mają gdzie odłożyć bajtów i mówią to
-// wprost, zamiast meldować powodzenie bez treści.
+// bajtów sesji przeglądania. Wołane przy montażu — bez niego rodziny
+// wytwarzające materiał (zrzut, archiwum, rejestr) odmawiają zamiast meldować
+// powodzenie bez treści.
 func (a *adapterPrzegladarki) ZMagazynem(katalogDanych string) *adapterPrzegladarki {
 	a.katalogDanych = katalogDanych
 	a.magazyn = magazynTresciPrzegladarki(katalogDanych)
@@ -117,7 +110,8 @@ func (a *adapterPrzegladarki) zapiszTresc(bajty []byte) (string, error) {
 	return odwolanie, nil
 }
 
-// odczytajTresc czyta bajty leżące pod odwołaniem magazynu.
+// odczytajTresc czyta bajty leżące pod odwołaniem magazynu, zwracając
+// zawartość dokładnie taką, jaką zapisało zapiszTresc.
 func (a *adapterPrzegladarki) odczytajTresc(odwolanie string) ([]byte, error) {
 	if a.magazyn == nil {
 		return nil, bladZapleczaPrzegladarki("rdzeń nie ma magazynu treści przeglądania")
@@ -130,7 +124,9 @@ func (a *adapterPrzegladarki) odczytajTresc(odwolanie string) ([]byte, error) {
 	return bajty, nil
 }
 
-// upewnijSieOSilniku odmawia wcześnie, gdy nie ma czym uruchomić strony.
+// upewnijSieOSilniku odmawia wcześnie, gdy nie ma czym uruchomić strony,
+// zamiast pozwolić rodzinom wymagającym silnika dojść do niepowodzenia dalej w
+// łańcuchu.
 func (a *adapterPrzegladarki) upewnijSieOSilniku(komenda string) error {
 	if a.silnik == nil {
 		return bladZapleczaPrzegladarki("rdzeń nie ma silnika przeglądarki — komenda " + komenda +
@@ -158,9 +154,8 @@ func (a *adapterPrzegladarki) otworzStrone(ctx context.Context, komenda string,
 }
 
 // adresOstatniejStrony oddaje adres, pod którym okno stoi. Komendy inspekcyjne
-// kontrakt opisuje bez pola adresu — pytają o „bieżącą stronę okna", a bieżącą
-// stroną okna jest ostatnia jego migawka. Okno bez migawki dostaje odmowę
-// `not_found`, nie pustą inspekcję udającą stronę bez treści.
+// pytają o „bieżącą stronę okna", czyli ostatnią migawkę; okno bez migawki
+// dostaje odmowę `not_found`, nie pustą inspekcję udającą treść.
 func (a *adapterPrzegladarki) adresOstatniejStrony(ctx context.Context, okno, komenda string) (dane.MigawkaStrony, error) {
 	if strings.TrimSpace(okno) == "" {
 		return dane.MigawkaStrony{}, bladWskazaniaPrzegladarki("komenda " + komenda + " bez okna")
@@ -195,7 +190,8 @@ func chwilaZeZnacznika(znacznik *string) *int64 {
 	return &chwila
 }
 
-// terazWBazie oddaje bieżącą chwilę w zapisie kolumn czasu.
+// terazWBazie oddaje bieżącą chwilę w zapisie kolumn czasu bazy, w jednym
+// miejscu wspólnym dla wszystkich zapisów znacznika.
 func terazWBazie() *string {
 	znak := time.Now().UTC().Format(formatZnacznikaBazy)
 	return &znak
@@ -229,7 +225,8 @@ func wykazZJson(zapis *string) []string {
 	return wykaz
 }
 
-// wartoscTekstuLubPusta oddaje treść wskaźnika albo pusty napis.
+// wartoscTekstuLubPusta oddaje treść wskaźnika tekstu albo pusty napis, gdy
+// wskaźnik jest nieustawiony.
 func wartoscTekstuLubPusta(wskazanie *string) string {
 	if wskazanie == nil {
 		return ""
@@ -244,20 +241,16 @@ func bladZapleczaPrzegladarki(powod string) error {
 		"moduł Browser: "+powod))
 }
 
-// bladNieznanegoBytu nazywa wskazanie, pod którym w module nic nie leży.
+// bladNieznanegoBytu nazywa wskazanie, pod którym w module nic nie leży,
+// odróżniając brak bytu od usterki odczytu.
 func bladNieznanegoBytu(co, wskazanie string) error {
 	return protocol.JakoError(protocol.NowyBlad(shared.ErrorCodeNotFound,
 		"moduł Browser: nie ma "+co+" o wskazaniu: "+wskazanie))
 }
 
-// bladSilnikaPrzegladarki przekłada niepowodzenie silnika na odmowę kontraktu.
-//
-// Brak programu i usterka uruchomienia idą tym samym kodem `channel_unavailable`
-// — tak samo jak w pozostałych rodzinach arsenału (obraz, dokument, media).
-// Kontrakt nie ma kodu „brakuje programu"; `validation_failed` kłamałby o winie
-// żądania, a `internal_error` o usterce rdzenia. Treść odmowy nazywa różnicę
-// wprost: przy braku niesie nazwę programu i podpowiedź instalacyjną z samego
-// `zewnetrzne.BrakNarzedzia`.
+// bladSilnikaPrzegladarki przekłada niepowodzenie silnika na odmowę kontraktu,
+// kodem `channel_unavailable` wspólnym dla braku programu i usterki
+// uruchomienia, z treścią nazywającą różnicę wprost.
 func bladSilnikaPrzegladarki(komenda string, err error) error {
 	if err == nil {
 		return nil
@@ -301,12 +294,8 @@ func isBrakWiersza(err error) bool {
 }
 
 // jakoLiteral, jakoLiczba i jakoLogiczna wstawiają wartości rdzenia do wyrażeń
-// wykonywanych na stronie.
-//
-// Wstawienie idzie przez zapis literału (`strconv.Quote`), nie przez sklejenie
-// napisów: selektor przychodzi z żądania, a selektor z apostrofem albo
-// z domknięciem nawiasu przerwałby wyrażenie i wykonał na stronie coś innego,
-// niż rdzeń napisał. To jest ta sama zasada, co parametry zapytania zamiast
+// wykonywanych na stronie, zapisem literału (`strconv.Quote`) zamiast
+// sklejenia napisów — ta sama zasada, co parametry zapytania zamiast
 // sklejanego SQL-a.
 func jakoLiteral(wartosc string) string {
 	return strconv.Quote(wartosc)

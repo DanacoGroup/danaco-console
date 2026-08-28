@@ -1,15 +1,4 @@
-// Odpowiedzialność pliku: wydanie grafu argumentów — `roundtable.argument.export`
-// w sześciu formatach kontraktu: DOT, GraphML, Argdown, AIF, SVG i PNG.
-//
-// Wszystkie sześć składa rdzeń sam, bez ani jednego programu z zewnątrz.
-// Cztery pierwsze są formatami tekstowymi i pisze się je wprost. SVG jest
-// dokumentem XML, więc też. PNG powstaje rysowaniem po mapie bitowej
-// biblioteką standardową — rasteryzator zewnętrzny byłby zależnością, której
-// instalka nie niesie, po to, żeby narysować prostokąty i podpisy.
-//
-// Układ jest kolumnowy i wynika z treści: węzły stoją w kolumnach według aktu
-// mowy (teza, argument, kontrargument, …), więc czytelnik widzi strukturę
-// sporu, zanim przeczyta choć jedno zdanie.
+// Plik wydaje graf argumentów roundtable.argument.export w szesciu formatach: DOT, GraphML, Argdown, AIF, SVG i PNG, budowanych bez zaleznosci zewnetrznych.
 package core
 
 import (
@@ -39,7 +28,7 @@ const (
 	marginesRysunkuGrafu  = 24
 )
 
-// WydajGraf wydaje graf argumentów w formacie wymiany albo jako obraz.
+// WydajGraf wydaje graf argumentów w formacie wymiany albo jako obraz, wybierając funkcję budującą zapis na podstawie formatu żądania.
 func (a *adapterDebaty) WydajGraf(ctx context.Context,
 	z shared.RoundtableArgumentExportRequest) (shared.RoundtableArgumentExportResponse, error) {
 
@@ -89,7 +78,7 @@ func (a *adapterDebaty) WydajGraf(ctx context.Context,
 	}, nil
 }
 
-// grafWDot zapisuje graf w języku DOT.
+// grafWDot zapisuje graf w języku DOT, z węzłami w prostokątach i krawędziami skierowanymi zgodnie z relacją argumentu.
 func grafWDot(graf shared.RoundtableArgumentGraph) string {
 	var zapis strings.Builder
 	zapis.WriteString("digraph debata {\n  rankdir=LR;\n  node [shape=box];\n")
@@ -105,7 +94,7 @@ func grafWDot(graf shared.RoundtableArgumentGraph) string {
 	return zapis.String()
 }
 
-// wCudzyslowieDot chroni znaki, które w DOT kończyłyby etykietę.
+// wCudzyslowieDot chroni znaki, które w składni DOT kończyłyby etykietę przed czasem: cudzysłów, znak nowego wiersza i ukośnik wsteczny.
 func wCudzyslowieDot(tekst string) string {
 	zamiennik := strings.NewReplacer(`"`, `\"`, "\n", `\n`, `\`, `\\`)
 	return zamiennik.Replace(tekst)
@@ -153,7 +142,7 @@ type zawartoscGraphml struct {
 	Krawedzie []krawedzGraphml `xml:"edge"`
 }
 
-// grafWGraphml zapisuje graf w GraphML.
+// grafWGraphml zapisuje graf w formacie GraphML, budując dokument XML biblioteką standardową i unikając ręcznego sklejania znaczników.
 func grafWGraphml(graf shared.RoundtableArgumentGraph) ([]byte, error) {
 	dokument := grafGraphml{
 		Przestrzen: "http://graphml.graphdrawing.org/xmlns",
@@ -215,7 +204,7 @@ func grafWArgdown(graf shared.RoundtableArgumentGraph) string {
 	return zapis.String()
 }
 
-// pozycjaAif opisuje węzeł w formacie wymiany argumentów (AIF).
+// pozycjaAif opisuje węzeł w formacie wymiany argumentów AIF: niesie identyfikator, treść oraz typ węzła zgodny z tym standardem.
 type pozycjaAif struct {
 	NodeID   string `json:"nodeID"`
 	Text     string `json:"text"`
@@ -223,7 +212,7 @@ type pozycjaAif struct {
 	Category string `json:"category,omitempty"`
 }
 
-// polaczenieAif opisuje krawędź AIF.
+// polaczenieAif opisuje krawędź w formacie wymiany argumentów AIF: łączy węzeł źródłowy z docelowym i niesie typ relacji między nimi.
 type polaczenieAif struct {
 	EdgeID   string `json:"edgeID"`
 	FromID   string `json:"fromID"`
@@ -231,12 +220,7 @@ type polaczenieAif struct {
 	FormEdge string `json:"formEdgeID,omitempty"`
 }
 
-// grafWAif zapisuje graf w formacie wymiany argumentów.
-//
-// Węzeł treści ma typ „I" (information), a relacja typ zależny od jej rodzaju:
-// wsparcie „RA" (rule application), podważenie „CA" (conflict application),
-// przeformułowanie „MA" (preference/restatement). To jest podział z samego AIF,
-// nie nazwa wymyślona tutaj.
+// grafWAif zapisuje graf w formacie wymiany argumentów AIF, z typami węzłów i relacji I, RA, CA oraz MA zgodnymi z tym standardem.
 func grafWAif(graf shared.RoundtableArgumentGraph) ([]byte, error) {
 	dokument := struct {
 		Nodes []pozycjaAif    `json:"nodes"`
@@ -269,7 +253,7 @@ func grafWAif(graf shared.RoundtableArgumentGraph) ([]byte, error) {
 	return bajty, nil
 }
 
-// ukladGrafu rozstawia węzły w kolumnach według aktu mowy.
+// ukladGrafu rozstawia węzły w kolumnach według aktu mowy: teza, argument, kontrargument, niosąc pozycję każdego węzła i wymiary całości.
 type ukladGrafu struct {
 	Kolumny    []string
 	Pozycje    map[string]struct{ X, Y int }
@@ -278,7 +262,7 @@ type ukladGrafu struct {
 	SzerKolumn int
 }
 
-// rozstawGraf liczy położenie każdego węzła.
+// rozstawGraf liczy położenie każdego węzła grafu, przydzielając kolumnę według aktu mowy i wiersz według kolejności wystąpienia.
 func rozstawGraf(graf shared.RoundtableArgumentGraph) ukladGrafu {
 	kolumny := make([]string, 0, 6)
 	wKolumnie := make(map[string][]string, 6)
@@ -311,7 +295,7 @@ func rozstawGraf(graf shared.RoundtableArgumentGraph) ukladGrafu {
 	}
 }
 
-// grafWSvg rysuje graf jako dokument SVG.
+// grafWSvg rysuje graf jako dokument SVG, korzystając z układu kolumnowego i opisując węzły oraz krawędzie znacznikami wektorowymi.
 func grafWSvg(graf shared.RoundtableArgumentGraph) string {
 	uklad := rozstawGraf(graf)
 	var zapis strings.Builder
@@ -358,7 +342,7 @@ func grafWSvg(graf shared.RoundtableArgumentGraph) string {
 	return zapis.String()
 }
 
-// grafWPng rysuje ten sam układ po mapie bitowej.
+// grafWPng rysuje ten sam układ po mapie bitowej, korzystając z biblioteki standardowej zamiast zewnętrznego rasteryzatora obrazu.
 func grafWPng(graf shared.RoundtableArgumentGraph) ([]byte, error) {
 	uklad := rozstawGraf(graf)
 	plotno := image.NewRGBA(image.Rect(0, 0, uklad.Szerokosc, uklad.Wysokosc))
@@ -405,7 +389,7 @@ func grafWPng(graf shared.RoundtableArgumentGraph) ([]byte, error) {
 	return bufor.Bytes(), nil
 }
 
-// narysujOdcinek kreśli linię prostą między dwoma punktami.
+// narysujOdcinek kreśli linię prostą między dwoma punktami na mapie bitowej, stawiając piksele algorytmem przyrostowym krok po kroku.
 func narysujOdcinek(plotno *image.RGBA, x1, y1, x2, y2 int, kolor color.Color) {
 	kroki := abs(x2-x1) + abs(y2-y1)
 	if kroki == 0 {
@@ -418,7 +402,7 @@ func narysujOdcinek(plotno *image.RGBA, x1, y1, x2, y2 int, kolor color.Color) {
 	}
 }
 
-// narysujRamke kreśli obwód prostokąta.
+// narysujRamke kreśli obwód prostokąta na mapie bitowej, rysując cztery boki wzdłuż jego granic zadanym kolorem.
 func narysujRamke(plotno *image.RGBA, prostokat image.Rectangle, kolor color.Color) {
 	for x := prostokat.Min.X; x < prostokat.Max.X; x++ {
 		plotno.Set(x, prostokat.Min.Y, kolor)
@@ -430,7 +414,7 @@ func narysujRamke(plotno *image.RGBA, prostokat image.Rectangle, kolor color.Col
 	}
 }
 
-// napiszTekst kładzie napis na mapie bitowej fontem wkompilowanym w bibliotekę.
+// napiszTekst kładzie napis na mapie bitowej fontem wkompilowanym w bibliotekę, bez zależności od czcionek systemowych.
 func napiszTekst(plotno *image.RGBA, x, y int, tekst string, kolor color.Color) {
 	rysownik := &font.Drawer{
 		Dst: plotno, Src: &image.Uniform{C: kolor}, Face: basicfont.Face7x13,
@@ -460,7 +444,7 @@ func jednymWierszem(tekst string) string {
 	return strings.Join(strings.Fields(tekst), " ")
 }
 
-// trescWezla odnajduje treść węzła po kodzie.
+// trescWezla odnajduje treść węzła po kodzie, przeszukując listę węzłów grafu i zwracając pierwsze dopasowanie identyfikatora.
 func trescWezla(graf shared.RoundtableArgumentGraph, kod string) string {
 	for _, wezel := range graf.Nodes {
 		if wezel.Id == kod {
@@ -470,14 +454,14 @@ func trescWezla(graf shared.RoundtableArgumentGraph, kod string) string {
 	return kod
 }
 
-// wXml chroni znaki, które w dokumencie XML mają znaczenie składniowe.
+// wXml chroni znaki, które w dokumencie XML mają znaczenie składniowe, kodując je biblioteką standardową przed zapisem do znacznika.
 func wXml(tekst string) string {
 	var bufor bytes.Buffer
 	_ = xml.EscapeText(&bufor, []byte(tekst))
 	return bufor.String()
 }
 
-// abs oddaje wartość bezwzględną liczby całkowitej.
+// abs oddaje wartość bezwzględną liczby całkowitej, odwracając znak liczb ujemnych i zwracając liczby nieujemne bez zmian.
 func abs(wartosc int) int {
 	if wartosc < 0 {
 		return -wartosc

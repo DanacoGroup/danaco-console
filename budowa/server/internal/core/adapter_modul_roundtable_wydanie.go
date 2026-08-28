@@ -1,15 +1,5 @@
-// Odpowiedzialność pliku: szablony moderacji i wydanie transkryptu —
-// `roundtable.moderation.template.save`, `roundtable.moderation.template.list`
-// i `roundtable.transcript.export`.
-//
-// ── Cztery formaty, trzy drogi ───────────────────────────────────────────────
-// Markdown i JSON składa rdzeń wprost, bez niczego z zewnątrz. PDF powstaje
-// biblioteką wkompilowaną w binarium (`pdfcpu`) — dokument i kryptografia są
-// w tym produkcie wyjątkiem bezwzględnym od wołania programów serwerowych.
-// DOCX powstaje Pandokiem, bo formatu biurowego nie da się złożyć bibliotecznie
-// w rdzeniu, a Pandoc jest programem serwerowym zadeklarowanym w sondzie
-// zależności (`zaleznosci_zewnetrzne.go`) i używanym już przez Studio,
-// Translate i Bibliotekę.
+// Modul Roundtable — szablony moderacji i wydanie transkryptu debaty: zapis
+// szablonu, wykaz szablonow oraz eksport transkryptu w czterech formatach.
 package core
 
 import (
@@ -41,11 +31,13 @@ const (
 	// znakowWWierszuPdf — ile znaków mieści się w wierszu dokumentu przy foncie
 	// o rozmiarze 11 punktów i marginesach domyślnych.
 	znakowWWierszuPdf = 96
-	// wierszyNaStroniePdf — ile wierszy mieści strona.
+	// wierszyNaStroniePdf mowi, ile wierszy tekstu miesci pojedyncza strona
+	// dokumentu wydawanego jako artefakt.
 	wierszyNaStroniePdf = 46
 )
 
-// ZapiszSzablon utrwala format, liczbę tur i kolejność głosu jako szablon.
+// ZapiszSzablon utrwala format, liczbe tur i kolejnosc glosu ostatniej tury
+// debaty jako szablon moderacji.
 func (a *adapterDebaty) ZapiszSzablon(ctx context.Context,
 	z shared.RoundtableModerationTemplateSaveRequest) (shared.RoundtableModerationTemplateSaveResponse, error) {
 
@@ -60,9 +52,7 @@ func (a *adapterDebaty) ZapiszSzablon(ctx context.Context,
 			bladWskazaniaDebaty("szablon moderacji bez nazwy")
 	}
 
-	// Format i granice bierze się z tury ostatniej — to w niej debata biegła
-	// tak, jak Operator ją ustawił. Debata bez ani jednej tury nie ma czego
-	// zapisać jako szablon.
+	// Format i granice biora sie z ostatniej tury. Debata bez ani jednej tury nie ma czego zapisac.
 	tury, err := a.repozytorium.Tury(ctx, okno, 1)
 	if err != nil {
 		return shared.RoundtableModerationTemplateSaveResponse{}, bladDebaty(err)
@@ -88,7 +78,8 @@ func (a *adapterDebaty) ZapiszSzablon(ctx context.Context,
 	}, nil
 }
 
-// Szablony oddaje zapisane szablony moderacji.
+// Szablony oddaje zapisane szablony moderacji debaty spelniajace wskazane
+// zapytanie wyszukiwania tekstowego.
 func (a *adapterDebaty) Szablony(ctx context.Context,
 	z shared.RoundtableModerationTemplateListRequest) (shared.RoundtableModerationTemplateListResponse, error) {
 
@@ -103,7 +94,8 @@ func (a *adapterDebaty) Szablony(ctx context.Context,
 	return shared.RoundtableModerationTemplateListResponse{Templates: wykaz}, nil
 }
 
-// WydajTranskrypt wydaje pełny zapis debaty jako artefakt.
+// WydajTranskrypt wydaje pelny zapis debaty jako artefakt w formacie wskazanym
+// przez zadanie eksportu.
 func (a *adapterDebaty) WydajTranskrypt(ctx context.Context,
 	z shared.RoundtableTranscriptExportRequest) (shared.RoundtableTranscriptExportResponse, error) {
 
@@ -360,12 +352,9 @@ func (a *adapterDebaty) zamienNaDocx(ctx context.Context, tekst string) ([]byte,
 	return bajty, nil
 }
 
-// zasiegNarzedziDebaty składa trójkę okno–zasady–obszar dla wywołań arsenału.
-//
-// Żądania modułu niosą okno debaty, a nie okno sesji terminalowej, więc zasady
-// izolacji bierze się z zasięgu platformy — tak samo jak w rodzinie narzędzi
-// mediów. Gdy Operator włączy punkt izolacji globalnie, brama zadziała tu tak
-// samo jak dla Terminala.
+// zasiegNarzedziDebaty skada trojke okno-zasady-obszar dla wywolan arsenalu;
+// zasady izolacji biora sie z zasiegu platformy, tak samo jak w rodzinie
+// narzedzi mediow.
 func (a *adapterDebaty) zasiegNarzedziDebaty() (session.Okno, session.Zasady, session.Obszar) {
 	okno := session.Okno{Ustawienia: session.Ustawienia{
 		SrodowiskoWykonania: shared.ExecutionEnvCore,
@@ -377,7 +366,8 @@ func (a *adapterDebaty) zasiegNarzedziDebaty() (session.Okno, session.Zasady, se
 	return okno, zasady, session.Obszar{}
 }
 
-// szablonKontraktu przekłada szablon moderacji na byt kontraktu.
+// szablonKontraktu przeklada szablon moderacji zapisany w repozytorium na byt
+// oddawany w odpowiedzi kontraktu.
 func szablonKontraktu(s dane.SzablonModeracjiDebaty) shared.RoundtableModerationTemplate {
 	szablon := shared.RoundtableModerationTemplate{
 		Id: s.Kod, Name: s.Nazwa, Format: shared.RoundtableFormat(s.Format),

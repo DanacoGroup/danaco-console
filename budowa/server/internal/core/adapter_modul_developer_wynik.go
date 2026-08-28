@@ -1,24 +1,6 @@
-// Odpowiedzialność pliku: cztery komendy odczytu okna Build Output —
-// `developer.build.list` (historia przebiegów), `developer.build.log.get` (log
-// przebiegu), `developer.test.result.get` (wynik testów) i
-// `developer.coverage.get` (pokrycie kodu) — wraz z rozbiorem wyjścia testów
-// i profilu pokrycia.
-//
-// ── Dlaczego rozbiór idzie w chwili biegu, a nie w chwili pytania ────────────
-// W dzienniku przebiegu zostaje wyłącznie OGON logu: rdzeń przycina go do
-// kilkuset wierszy, bo budowanie dużego projektu ma ich dziesiątki tysięcy.
-// Gdyby wynik testu powstawał z odczytu dziennika, przebieg z tysiącem testów
-// oddałby ich kilkadziesiąt — i nikt by nie zauważył, bo odpowiedź byłaby
-// formalnie poprawna. Dlatego wiersze mówiące o testach zbiera pompa logu, gdy
-// jeszcze płyną, a wynik zapisuje się do bazy przy domknięciu przebiegu.
-//
-// ── Skąd bierze się pokrycie ─────────────────────────────────────────────────
-// Z dwóch źródeł, w tej kolejności. Gdy zadanie budowania niosło
-// `-coverprofile`, rdzeń czyta ten plik i ma pomiar co do instrukcji i wiersza —
-// to on zasila nakładkę pokrycia w edytorze. Gdy profilu nie ma, zostaje wiersz
-// `coverage: 85.7% of statements`, który daje procent pakietu bez wierszy.
-// Drugie źródło jest uboższe, ale prawdziwe; udawanie, że bez profilu wiadomo,
-// które wiersze są niepokryte, byłoby zmyśleniem.
+// Plik obsługuje cztery komendy odczytu okna Build Output: listę przebiegów
+// budowania, log przebiegu, wynik testów oraz pokrycie kodu, wraz z rozbiorem
+// wyjścia testów i profilu pokrycia.
 package core
 
 import (
@@ -83,11 +65,11 @@ func (a *adapterDevelopera) WykazBudowan(ctx context.Context,
 	return shared.DeveloperBuildListResponse{Builds: budowania, Total: &razem}, nil
 }
 
-// LogBudowania obsługuje `developer.build.log.get`.
+// LogBudowania obsługuje komendę odczytu logu przebiegu budowania.
 //
 // Przebieg czynny czyta się z pamięci, domknięty — z dziennika. Odpowiedź mówi
-// wprost, czy log jest przycięty i od którego wiersza: Build Output ma prawo
-// napisać „pokazano ostatnie 500 wierszy”, a nie udawać, że tyle ich było.
+// wprost, czy log jest przycięty i od którego wiersza, żeby okno nie musiało
+// zgadywać.
 func (a *adapterDevelopera) LogBudowania(ctx context.Context,
 	z shared.DeveloperBuildLogGetRequest) (shared.DeveloperBuildLogGetResponse, error) {
 
@@ -125,7 +107,9 @@ func (a *adapterDevelopera) LogBudowania(ctx context.Context,
 	return odpowiedz, nil
 }
 
-// trescLoguPrzebiegu oddaje log przebiegu wraz z informacją o przycięciu.
+// trescLoguPrzebiegu oddaje log przebiegu wraz z informacją o przycięciu:
+// sięga do pamięci rdzenia dla przebiegu czynnego, a do dziennika dla
+// przebiegu już domkniętego.
 func (a *adapterDevelopera) trescLoguPrzebiegu(ctx context.Context,
 	kod string) (string, bool, error) {
 
@@ -147,12 +131,14 @@ func (a *adapterDevelopera) trescLoguPrzebiegu(ctx context.Context,
 	if wiersz.Log == nil {
 		return "", false, nil
 	}
-	// Dziennik trzyma ogon, a nie całość — mówimy o tym wprost, bo pusty
-	// znacznik przycięcia znaczyłby „to jest cały log”.
+	// Dziennik trzyma ogon, nie całość: pusty znacznik przycięcia znaczyłby,
+	// że to jest cały log.
 	return *wiersz.Log, true, nil
 }
 
-// WynikTestow obsługuje `developer.test.result.get`.
+// WynikTestow obsługuje komendę odczytu wyniku testów przebiegu budowania
+// i liczy podsumowanie po wszystkich wynikach, niezależnie od zawężenia
+// odpowiedzi stanem testu.
 func (a *adapterDevelopera) WynikTestow(ctx context.Context,
 	z shared.DeveloperTestResultGetRequest) (shared.DeveloperTestResultGetResponse, error) {
 
@@ -170,9 +156,8 @@ func (a *adapterDevelopera) WynikTestow(ctx context.Context,
 	if z.Status != nil {
 		stan = string(*z.Status)
 	}
-	// Podsumowanie liczy się po wszystkich wynikach, nie po zawężonych: pasek
-	// „3 z 40 nie przeszło” ma pokazać czterdzieści także wtedy, gdy Operator
-	// patrzy wyłącznie na te trzy.
+	// Podsumowanie liczy się po wszystkich wynikach, nie po zawężonych
+	// stanem.
 	wszystkie, err := a.repozytorium.WynikiTestow(ctx, kod, "")
 	if err != nil {
 		return shared.DeveloperTestResultGetResponse{}, bladWykonaniaDevelopera(
@@ -220,7 +205,9 @@ func (a *adapterDevelopera) WynikTestow(ctx context.Context,
 	return odpowiedz, nil
 }
 
-// Pokrycie obsługuje `developer.coverage.get`.
+// Pokrycie obsługuje komendę odczytu pokrycia kodu przebiegu budowania i liczy
+// procent zbiorczy po całym przebiegu, niezależnie od zawężenia odpowiedzi do
+// jednego pliku.
 func (a *adapterDevelopera) Pokrycie(ctx context.Context,
 	z shared.DeveloperCoverageGetRequest) (shared.DeveloperCoverageGetResponse, error) {
 
@@ -238,9 +225,8 @@ func (a *adapterDevelopera) Pokrycie(ctx context.Context,
 	if z.Path != nil {
 		sciezka = strings.TrimSpace(*z.Path)
 	}
-	// Procent zbiorczy liczy się po całym przebiegu, także wtedy, gdy Operator
-	// pyta o jeden plik: „pokrycie repozytorium” nie zmienia się od tego, na co
-	// się patrzy.
+	// Procent zbiorczy liczy się po całym przebiegu, nawet gdy odpowiedź jest
+	// zawężona do jednego pliku.
 	wszystkie, err := a.repozytorium.Pokrycie(ctx, kod, "")
 	if err != nil {
 		return shared.DeveloperCoverageGetResponse{}, bladWykonaniaDevelopera(
@@ -268,8 +254,8 @@ func (a *adapterDevelopera) Pokrycie(ctx context.Context,
 	if instrukcje > 0 {
 		procent = int((pokryte * 100) / instrukcje)
 	} else if len(wszystkie) > 0 {
-		// Pomiar bez profilu zna procent pakietu, lecz nie zna instrukcji —
-		// wtedy średnia po plikach jest jedyną prawdą, jaką rdzeń ma.
+		// Pomiar bez profilu nie zna instrukcji, więc średnia po plikach jest
+		// jedyną dostępną wartością.
 		var suma int64
 		for _, wiersz := range wszystkie {
 			suma += wiersz.Procent
@@ -279,7 +265,8 @@ func (a *adapterDevelopera) Pokrycie(ctx context.Context,
 	return shared.DeveloperCoverageGetResponse{Files: pliki, Percent: procent}, nil
 }
 
-// wierszeZTekstu rozbiera zapis `12,14,15` na numery wierszy.
+// wierszeZTekstu rozbiera zapis numerów wierszy rozdzielonych przecinkiem na
+// wykaz liczb całkowitych, pomijając człony, które liczbą nie są.
 func wierszeZTekstu(zapis *string) []int {
 	if zapis == nil || strings.TrimSpace(*zapis) == "" {
 		return nil
@@ -294,7 +281,8 @@ func wierszeZTekstu(zapis *string) []int {
 	return wiersze
 }
 
-// liczbaZDuzej sprowadza wskaźnik liczby długiej do wskaźnika liczby kontraktu.
+// liczbaZDuzej sprowadza wskaźnik liczby długiej do wskaźnika liczby
+// kontraktu, zachowując pustą wartość, gdy wskaźnik źródłowy jest pusty.
 func liczbaZDuzej(wartosc *int64) *int {
 	if wartosc == nil {
 		return nil
@@ -305,7 +293,9 @@ func liczbaZDuzej(wartosc *int64) *int {
 
 // ── Rozbiór wyjścia testów ───────────────────────────────────────────────────
 
-// zdarzenieTestuGo jest kształtem jednego wiersza `go test -json`.
+// zdarzenieTestuGo jest kształtem jednego wiersza strumienia zdarzeń
+// narzędzia testowego w postaci maszynowej, niosącym czynność, pakiet, nazwę
+// testu i wyjście.
 type zdarzenieTestuGo struct {
 	Action  string  `json:"Action"`
 	Package string  `json:"Package"`
@@ -317,8 +307,7 @@ type zdarzenieTestuGo struct {
 // czyWierszTestu rozpoznaje wiersz, który niesie wynik testu albo pokrycie.
 //
 // Rozpoznanie jest jawnym sitem, a nie zachowaniem całego logu: wyjście
-// kompilatora bywa wielokrotnie obszerniejsze od wyjścia testów i trzymanie go
-// w pamięci przez cały przebieg byłoby drugim, niepotrzebnym ogonem.
+// kompilatora bywa dużo obszerniejsze od wyjścia testów.
 func czyWierszTestu(wiersz string) bool {
 	tresc := strings.TrimSpace(wiersz)
 	switch {
@@ -336,9 +325,9 @@ func czyWierszTestu(wiersz string) bool {
 
 // wynikiTestowZLogu składa wyniki testów z zebranych wierszy.
 //
-// Najpierw próbujemy postaci maszynowej (`go test -json`), bo niesie czas,
-// pakiet i treść niepowodzenia. Gdy jej nie ma, zostaje postać czytelna
-// (`--- PASS: TestX (0.01s)`), która niesie mniej, lecz nadal niesie wynik.
+// Najpierw sprawdza się postać maszynowa, bo niesie czas, pakiet i treść
+// niepowodzenia; gdy jej nie ma, zostaje postać czytelna, która niesie mniej,
+// lecz nadal niesie wynik.
 func wynikiTestowZLogu(wiersze []string) []dane.WynikTestu {
 	jesliMaszynowe := wynikiTestowZPostaciMaszynowej(wiersze)
 	if len(jesliMaszynowe) > 0 {
@@ -347,12 +336,13 @@ func wynikiTestowZLogu(wiersze []string) []dane.WynikTestu {
 	return wynikiTestowZPostaciCzytelnej(wiersze)
 }
 
-// wynikiTestowZPostaciMaszynowej rozbiera strumień `go test -json`.
+// wynikiTestowZPostaciMaszynowej rozbiera strumień zdarzeń testowych
+// w postaci maszynowej i składa z nich wyniki testów wraz z czasem trwania
+// i treścią niepowodzenia.
 func wynikiTestowZPostaciMaszynowej(wiersze []string) []dane.WynikTestu {
 	wyniki := make([]dane.WynikTestu, 0, 32)
-	// Treść niepowodzenia przychodzi zdarzeniami `output` PRZED zdarzeniem
-	// `fail`, więc zbiera się ją po drodze i dokleja do wyniku w chwili jego
-	// domknięcia.
+	// Treść niepowodzenia przychodzi zdarzeniami wyjścia przed zdarzeniem
+	// porażki.
 	tresci := map[string]*strings.Builder{}
 
 	for _, wiersz := range wiersze {
@@ -418,7 +408,9 @@ func stanTestuZCzynnosci(czynnosc string) (shared.TestStatus, bool) {
 	}
 }
 
-// wynikiTestowZPostaciCzytelnej rozbiera wiersze `--- PASS: TestX (0.01s)`.
+// wynikiTestowZPostaciCzytelnej rozbiera wiersze dziennika testów w postaci
+// czytelnej dla człowieka i składa z nich wyniki testów wraz z czasem
+// trwania, gdy jest podany.
 func wynikiTestowZPostaciCzytelnej(wiersze []string) []dane.WynikTestu {
 	wyniki := make([]dane.WynikTestu, 0, 32)
 	for _, wiersz := range wiersze {
@@ -449,7 +441,8 @@ func wynikiTestowZPostaciCzytelnej(wiersze []string) []dane.WynikTestu {
 	return wyniki
 }
 
-// czasTestuZNawiasu rozbiera zapis `(0.01s)` na milisekundy.
+// czasTestuZNawiasu rozbiera zapis czasu testu w nawiasie, wyrażony
+// w sekundach, na liczbę całkowitą milisekund.
 func czasTestuZNawiasu(zapis string) (int64, bool) {
 	tresc := strings.TrimSuffix(strings.TrimPrefix(zapis, "("), ")")
 	tresc = strings.TrimSuffix(tresc, "s")
@@ -492,7 +485,9 @@ func miejsceNiepowodzeniaTestu(tresc string) (string, int64, bool) {
 
 // ── Rozbiór pokrycia ─────────────────────────────────────────────────────────
 
-// pokrycieZPrzebiegu składa pomiar pokrycia z profilu albo z wierszy logu.
+// pokrycieZPrzebiegu składa pomiar pokrycia z profilu, gdy jest dostępny,
+// a w przeciwnym razie z wierszy logu niosących podsumowanie pokrycia
+// pakietu.
 func pokrycieZPrzebiegu(katalog string, argumenty, wiersze []string) []dane.PokryciePliku {
 	if profil, jest := profilPokryciaZArgumentow(katalog, argumenty); jest {
 		if pomiar := pokrycieZProfilu(profil); len(pomiar) > 0 {
@@ -502,7 +497,9 @@ func pokrycieZPrzebiegu(katalog string, argumenty, wiersze []string) []dane.Pokr
 	return pokrycieZWierszyLogu(wiersze)
 }
 
-// profilPokryciaZArgumentow odnajduje w parametrach zadania ścieżkę profilu.
+// profilPokryciaZArgumentow odnajduje w parametrach zadania budowania ścieżkę
+// profilu pokrycia i sprowadza ją do ścieżki bezwzględnej względem katalogu
+// zadania.
 func profilPokryciaZArgumentow(katalog string, argumenty []string) (string, bool) {
 	for i, argument := range argumenty {
 		wartosc := ""
@@ -599,7 +596,8 @@ func pokrycieZProfilu(sciezka string) []dane.PokryciePliku {
 	return pokrycie
 }
 
-// wierszeZakresuProfilu rozbiera zapis `12.5,18.2` na numery wierszy bloku.
+// wierszeZakresuProfilu rozbiera zapis zakresu bloku profilu pokrycia na pełny
+// wykaz numerów wierszy, które ten blok obejmuje.
 func wierszeZakresuProfilu(zakres string) []int {
 	czesci := strings.SplitN(zakres, ",", 2)
 	if len(czesci) != 2 {
@@ -611,7 +609,7 @@ func wierszeZakresuProfilu(zakres string) []int {
 		return nil
 	}
 	// Blok bez pokrycia bywa długi, lecz nakładka edytora potrzebuje każdego
-	// jego wiersza — to on jest podświetlany.
+	// jego wiersza.
 	wiersze := make([]int, 0, doWiersza-od+1)
 	for numer := od; numer <= doWiersza; numer++ {
 		wiersze = append(wiersze, numer)
@@ -619,7 +617,8 @@ func wierszeZakresuProfilu(zakres string) []int {
 	return wiersze
 }
 
-// zapisWierszy składa numery wierszy w jeden tekst kolumny bazy.
+// zapisWierszy składa numery wierszy niepokrytych w jeden tekst kolumny bazy,
+// rozdzielając je przecinkiem, w postaci odwrotnej do wierszeZTekstu.
 func zapisWierszy(wiersze []int) string {
 	zapis := make([]string, 0, len(wiersze))
 	for _, numer := range wiersze {
@@ -628,11 +627,11 @@ func zapisWierszy(wiersze []int) string {
 	return strings.Join(zapis, ",")
 }
 
-// pokrycieZWierszyLogu czyta wiersze `ok  pakiet  0.4s  coverage: 85.7% of statements`.
+// pokrycieZWierszyLogu czyta wiersze podsumowania testu niosące procent
+// pokrycia pakietu.
 //
-// Pomiar bez profilu zna procent pakietu i nie zna instrukcji ani wierszy.
-// Wpisujemy więc sam procent, a instrukcje zostawiamy zerowe — liczba zmyślona
-// po to, żeby pole nie było puste, byłaby gorsza od jego pustki.
+// Pomiar bez profilu zna procent, a nie zna instrukcji ani wierszy, więc
+// zapisuje się sam procent, a instrukcje zostają zerowe.
 func pokrycieZWierszyLogu(wiersze []string) []dane.PokryciePliku {
 	pokrycie := make([]dane.PokryciePliku, 0, 8)
 	widziane := map[string]bool{}
@@ -656,7 +655,8 @@ func pokrycieZWierszyLogu(wiersze []string) []dane.PokryciePliku {
 	return pokrycie
 }
 
-// procentZZapisu rozbiera `85.7% of statements` na liczbę całkowitą procent.
+// procentZZapisu rozbiera zapis procentu pokrycia pakietu na liczbę całkowitą,
+// odrzucając ułamkową część wartości.
 func procentZZapisu(zapis string) (int64, bool) {
 	pola := strings.Fields(zapis)
 	if len(pola) == 0 {
@@ -669,7 +669,8 @@ func procentZZapisu(zapis string) (int64, bool) {
 	return int64(liczba), true
 }
 
-// pakietZWierszaPokrycia wyjmuje nazwę pakietu z początku wiersza `ok  pakiet …`.
+// pakietZWierszaPokrycia wyjmuje nazwę pakietu z początku wiersza
+// podsumowania testu, pomijając wynik przebiegu i czas jego trwania.
 func pakietZWierszaPokrycia(poczatek string) string {
 	pola := strings.Fields(poczatek)
 	for _, pole := range pola {
@@ -682,16 +683,10 @@ func pakietZWierszaPokrycia(poczatek string) string {
 	return ""
 }
 
-// odlozPomiarPrzebiegu zapisuje wynik testów i pokrycie domkniętego przebiegu.
-//
-// Wywołuje się to raz, przy domknięciu, kiedy pełne wyjście jeszcze jest
-// w zasięgu rdzenia. Niepowodzenie zapisu nie zatrzymuje niczego: budowanie już
-// się skończyło i jego wynik jest znany — brak pomiaru jest ubytkiem wiedzy,
-// a nie usterką przebiegu.
-//
-// Przebieg bez testów nie zakłada ani jednego wiersza. Zapisanie pustego pomiaru
-// kazałoby Build Output pokazać „0 z 0 testów” tam, gdzie testów nikt nie
-// uruchamiał — a to nie to samo, co „testy przeszły”.
+// odlozPomiarPrzebiegu zapisuje wynik testów i pokrycie domkniętego
+// przebiegu, wywołane raz przy domknięciu, kiedy pełne wyjście jeszcze jest
+// w zasięgu rdzenia; niepowodzenie zapisu nie zatrzymuje niczego, bo wynik
+// budowania jest już znany.
 func (a *adapterDevelopera) odlozPomiarPrzebiegu(przebieg *przebiegBudowania) {
 	wiersze := przebieg.WierszeTestow()
 	if len(wiersze) == 0 {

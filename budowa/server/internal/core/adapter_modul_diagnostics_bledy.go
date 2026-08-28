@@ -1,16 +1,6 @@
 // Odpowiedzialność pliku: błędy modułu Diagnostics — przyjęcie odmowy
-// wykonania komendy jako faktu i obsługa komendy `diagnostics.error.list`
+// wykonania komendy jako faktu i obsługa komendy diagnostics.error.list
 // zasilającej okno Errors Panel.
-//
-// Błędy biorą się z odmów, które rdzeń rzeczywiście wydał. Dyspozytor komend
-// oddaje tu każdą odpowiedź błędną wraz z kodem ze słownika ErrorCode
-// kontraktu, więc Errors Panel pokazuje błędy ostatnich tur i operacji. Innego
-// źródła moduł nie ma.
-//
-// Odcisk łączy komendę z kodem i treścią: ta sama odmowa tej samej komendy jest
-// jednym błędem o wielu wystąpieniach. Identyfikatory sesji i okna do odcisku
-// nie wchodzą — gdyby wchodziły, ten sam błąd w dziesięciu oknach dałby
-// dziesięć wierszy zamiast jednej usterki.
 package core
 
 import (
@@ -25,12 +15,9 @@ import (
 	"danacoconsole/shared"
 )
 
-// kontekstBledu jest treścią pola `DiagnosticError.context`.
-//
-// Kod błędu powtarza się tutaj obok pola `DiagnosticError.errorCode`, bo
-// kontekst opisuje jedno wystąpienie odmowy wraz z komendą i sesją, a pole
-// błędu niesie kod całej grupy spiętej odciskiem. Czytelnik kontekstu ma
-// widzieć kod tego wystąpienia bez sięgania do nagłówka grupy.
+// kontekstBledu jest treścią pola DiagnosticError.context. Kod błędu powtarza
+// się tutaj obok pola DiagnosticError.errorCode, bo kontekst opisuje jedno
+// wystąpienie odmowy, a pole błędu niesie kod całej grupy spiętej odciskiem.
 type kontekstBledu struct {
 	ErrorCode string `json:"errorCode"`
 	Command   string `json:"command"`
@@ -39,11 +26,9 @@ type kontekstBledu struct {
 	WindowId  string `json:"windowId,omitempty"`
 }
 
-// ZapiszNiepowodzenie przyjmuje odmowę wykonania komendy.
-//
-// Czynność jest bezzwrotna z zamysłem: dyspozytor odpowiada klientowi i nie ma
-// czekać, aż diagnostyka dopisze wiersz. Niepowodzenie samego zapisu nie może
-// zmienić odpowiedzi na komendę, której dotyczy.
+// ZapiszNiepowodzenie przyjmuje odmowę wykonania komendy. Czynność jest
+// bezzwrotna: dyspozytor odpowiada klientowi i nie czeka, aż diagnostyka
+// dopisze wiersz.
 func (a *adapterDiagnostyki) ZapiszNiepowodzenie(ctx context.Context, n NiepowodzenieKomendy) {
 	if a == nil || a.repozytorium == nil || n.Komenda == "" {
 		return
@@ -55,8 +40,7 @@ func (a *adapterDiagnostyki) ZapiszNiepowodzenie(ctx context.Context, n Niepowod
 	}
 	chwila := time.Now().UnixMilli()
 
-	// Wpis dziennika powstaje zawsze, także gdy zapis błędu się nie powiedzie:
-	// Logs Viewer jest wtedy jedynym śladem odmowy.
+	// Wpis dziennika powstaje zawsze, nawet gdy zapis błędu się nie powiedzie.
 	poziom := poziomKoduBledu(n.Blad.Code)
 	a.zakolejkuj(dane.WpisDiagnostyki{
 		Kod:      nowyIdentyfikator(przedrostekWpisuDziennika),
@@ -74,8 +58,7 @@ func (a *adapterDiagnostyki) ZapiszNiepowodzenie(ctx context.Context, n Niepowod
 		SessionId: n.IdSesji, WindowId: n.IdOkna,
 	})
 	if err != nil {
-		// Kontekst nieserializowalny nie ma prawa zabrać ze sobą błędu — wiersz
-		// powstaje bez niego.
+		// Kontekst nieserializowalny nie ma prawa zabrać ze sobą błędu.
 		kontekst = nil
 	}
 
@@ -96,7 +79,7 @@ func (a *adapterDiagnostyki) ZapiszNiepowodzenie(ctx context.Context, n Niepowod
 	}
 }
 
-// WykazBledow obsługuje `diagnostics.error.list` — okno Errors Panel.
+// WykazBledow obsługuje diagnostics.error.list, zasilając okno Errors Panel wykazem błędów rdzenia platformy.
 func (a *adapterDiagnostyki) WykazBledow(ctx context.Context,
 	z shared.DiagnosticsErrorListRequest) (shared.DiagnosticsErrorListResponse, error) {
 
@@ -114,11 +97,7 @@ func (a *adapterDiagnostyki) WykazBledow(ctx context.Context,
 	if err != nil {
 		return shared.DiagnosticsErrorListResponse{}, bladDiagnostyki(err)
 	}
-	// `total` liczy się osobno, bez granicy. Długość zwróconej listy zgadzałaby
-	// się sama ze sobą i niczego nie mówiła: repozytorium ucina wykaz na 500
-	// wierszach po cichu. Kontrakt nie niesie tu pola `truncated` (ma je
-	// `diagnostics.log.query`), więc osobno liczony `total` jest jedyną drogą,
-	// którą okno porówna „ile oddano” z „ile jest”.
+	// total liczy się osobno, bez granicy: repozytorium ucina wykaz na 500 wierszach po cichu.
 	razem, err := a.repozytorium.LiczbaBledow(ctx, filtr)
 	if err != nil {
 		return shared.DiagnosticsErrorListResponse{}, bladDiagnostyki(err)
@@ -129,18 +108,15 @@ func (a *adapterDiagnostyki) WykazBledow(ctx context.Context,
 	}, nil
 }
 
-// odciskBledu grupuje wystąpienia tej samej odmowy.
+// odciskBledu grupuje wystąpienia tej samej odmowy tej samej komendy w jeden byt zbiorczy usterki rdzenia.
 func odciskBledu(komenda, kod, tresc string) string {
 	suma := sha256.Sum256([]byte(komenda + "\x00" + kod + "\x00" + tresc))
 	return hex.EncodeToString(suma[:16])
 }
 
-// poziomKoduBledu przekłada kod kontraktu na poziom wpisu dziennika.
-//
-// Odmowa z powodu braku uprawnienia albo braku bytu jest zdarzeniem zwykłej
-// pracy — sygnalizuje ją poziom `warn`. Usterka rdzenia i niedostępność kanału
-// są awarią i idą poziomem `error`. Zrównanie obu kazałoby przeglądać setki
-// odmów normalnych, żeby znaleźć jedną awarię.
+// poziomKoduBledu przekłada kod kontraktu na poziom wpisu dziennika. Odmowa
+// z powodu braku uprawnienia albo braku bytu idzie poziomem warn, usterka
+// rdzenia i niedostępność kanału idą poziomem error.
 func poziomKoduBledu(kod shared.ErrorCode) shared.LogLevel {
 	switch kod {
 	case shared.ErrorCodeInternalError, shared.ErrorCodeChannelUnavailable:

@@ -6,6 +6,56 @@ przyjęta. Zasady podziału opisuje [ustrój budowy](ustroj-budowy.md).
 
 ## Tereny otwarte
 
+### powloka-okna-studia
+
+| | |
+|---|---|
+| **Galaz** | `teren/powloka-studia` z `main` |
+| **Drzewo** | `~/robocze/powloka-studia` |
+| **Wykaz plikow** | `budowa/klient/src/moduly/studio/` wraz z podkatalogami; `budowa/klient/arkusze.css` wylacznie w zakresie arkuszy Studia |
+| **Poza terenem** | `src/rama/`, `src/wejscie/`, `polaczenie/`, `protokol/`; rdzen; kontrakt; **`design/` — CZYTASZ, NIE ZMIENIASZ**; `prowadzenie/` |
+
+**Przedmiot.** Okno Studia w kliencie ma dzis 517 wierszy, wola **6 komend ze 179**
+i pokazuje dwa panele zamiast siedmiu. Prototyp `design/05-okna/moduly/studio.html`
+(988 wierszy) niesie 13 stref powloki i **7 paneli dokowanych**.
+
+Ten teren stawia SAMA POWLOKE — zaczep, w ktory panele wejda osobno. Panele NIE
+naleza do tego terenu.
+
+**Strefy do postawienia, wszystkie z prototypu:**
+1. `div.dn-karty-pasmo.st-pasmo` wraz z `div.st-karty[role=tablist]` — **7 kart**:
+   Studio Editor, Tools, Diff, Repo, Preview, Pliki, Plan.
+2. `div.st-wstazka` — wstazka okna roboczego: znacznik sesji, grupy czynnosci, stan.
+3. `nav.st-szyna` — szyna dokumentow sesji wraz z naglowkiem i grupami.
+4. `div.sta-czaty > section.sta-kom` — okno czatu: belka, naglowek, kontekst,
+   historia, dol z polem polecenia.
+5. `div.sta-robocza` — zaczep na panele, z `[role=tabpanel]` po jednym na karte.
+6. `div.dn-stan[role=status]` — pas stanu okna.
+
+**Przewiazanie juz wykonane** — nie odtwarzaj go i nie cofaj. Szesnascie skladnikow
+Studia korzysta teraz z klas `.dn-*` biblioteki; `studio.css` schudl z 453 do 357
+wierszy. Klasy, ktore ZOSTALY jako meble Studia, sa w tym arkuszu i ich uzywasz:
+`.st-wstazka*`, `.st-pasmo*`, `.st-szyna*`, `.st-karty`, `.st-cialo`, `.st-okno-robocze`,
+`.st-status*`, `.st-panel-*`, `.st-podglad`, `.st-miara`, `.st-obudowa`.
+
+**Czego NIE WOLNO przeniesc:** tresci przykladowej prototypu — nazw dokumentow,
+sesji, wersji, liczb slow, tresci rozmowy. To material pokazowy. Kazda karta bez
+danych z rdzenia pokazuje **nazwany stan pusty**, nie wypelniacz.
+
+**Arkusze.** Prototyp wciaga 10 arkuszy; klient ma dzis 8. Dolóz brakujace WYLACZNIE
+te, ktorych prototyp Studia uzywa. **`okno-robocze.css` i `panel-sesji.css` sa
+ZAKAZANE** — pomiar odciskiem wykazal, ze przestawiaja w tym oknie wszystkie 2860
+elementow. To jest przyczyna, dla ktorej wstazka raz juz zapadla sie w kolumne.
+
+**Kryteria odbioru.**
+1. Siedem kart w pasmie, przelaczanie dziala, karta biezaca oznaczona.
+2. Wszystkie szesc stref stoi i jest widoczna przy 2560 px.
+3. Zrzut zestawiony z prototypem, oceniony strefa po strefie przez wykonawce.
+4. Zero tresci przykladowej. Panel bez danych mowi, ze ich nie ma.
+5. `npm run typy` i `npm run budowanie` przechodza.
+6. Zaden plik `design/` nie zmieniony — `git status` to pokazuje.
+
+
 ### narzedzia-obszaru-badan
 
 | | |

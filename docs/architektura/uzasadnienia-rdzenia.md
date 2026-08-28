@@ -7073,3 +7073,13 @@ który zniknął, a nie pusty kształt bez tożsamości. Przypisanie rozgłasza 
 tylko wtedy, gdy doszło do skutku: powtórzone przypisanie niczego nie zmienia,
 a zdarzenie zmiany po czynności, która nic nie zmieniła, byłoby fałszywym
 powiadomieniem.
+
+## budowa/server/internal/core/handlers_kondycja.go
+Rodzina jest przekrojowa, nie modułowa: kondycję czyta Health & Uptime Panel
+modułu Diagnostics, ale też Always On Display i pulpit operatora, a rdzeń nie
+ma prawa wiedzieć, że istnieje moduł Diagnostics, więc port jest własny.
+Zdarzeń rodzina nie ma — kontrakt nie zna zdarzenia zmiany kondycji, więc
+żadna z sześciu komend niczego nie rozgłasza i port nie bierze nadajnika.
+O wyzwoleniu alertu na nieudanej sondzie mówi zdarzenie rodziny alertów, nie
+kondycji. Port niewypełniony nie rejestruje niczego: sześć komend odpowie
+wtedy stanem nieznanym, a pozostałe domeny pracują bez zmian.

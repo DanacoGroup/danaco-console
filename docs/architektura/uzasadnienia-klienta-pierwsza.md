@@ -7183,3 +7183,27 @@ wartość mówi, co stoi w konfiguracji okna koordynatora.
 
 ## budowa/klient-poprzedni/src/moduly/assistant/okno-activity-feed.ts
 Zapis jest chronologiczny i wspólny dla poleceń głosowych i tekstowych. Wpisy stoją w grupach dziennych: nagłówek doby rozdziela zapis tak, jak rozdziela go pamięć Operatora, a grupę składa okno, bo rdzeń oddaje wykaz płaski bez pola grupowania. Zawężenie, pole szukania i rodzaj wpisu, liczy się również w oknie, bo rdzeń nie ma czym zawęzić tego wykazu. Pustki są rozróżnione na pięć stanów: jeszcze nie pytałem, pytam, rdzeń nie zna ani jednego wpisu, pustka po zawężeniu — wpisy są, tylko żaden nie pasuje — i odmowa rdzenia wraz z jej powodem; komunikat zostaje w układzie, a ponowienie go nie usuwa. Powrót do wyniku nie potrzebuje osobnej komendy: wpis rodzaju wynik niesie treść wyniku, a zawężenie dziennika do jednego zlecenia idzie polem identyfikatora zlecenia w odczycie dziennika. Odsłuch pobiera bajty i odtwarza je w karcie, bo rdzeń oddaje wyłącznie nagrania, które sam wystawił; wyróżnienie idzie do rdzenia, więc przeżywa odświeżenie wykazu — po zapisie czytamy dziennik ponownie, żeby wykaz pokazywał stan zapisany, a nie przewidywany.
+
+## budowa/klient-poprzedni/src/moduly/design/adnotacje-kompozycji.ts
+Pole notatki warstwy niesie jedno zdanie bez autora i bez wątku, a przy każdym zapisie układu jedzie razem z całym układem i wraca przepisane od nowa. Uwaga zostawiona przez jedną osobę znikała więc przy pierwszym przesunięciu warstwy przez drugą — adnotacja dostała więc własny wiersz i własny czas. Pola autora tu nie ma i nie będzie: rdzeń bierze go z kontekstu wywołania, bo pole, w które da się wpisać cudze nazwisko, odbierałoby oznaczeniom osób w wątku całe ich znaczenie. Położenie kursora sprzed godziny nie jest wiedzą o niczym: panel zgłasza obecność na żądanie operatora, a nie w pętli, bo odpytywanie dziesięć razy na sekundę byłoby ruchem, którego nikt nie zamawiał. Kursory pozostałych przychodzą zdarzeniem obecności kompozycji.
+
+## budowa/klient-poprzedni/src/moduly/design/adnotacje-kompozycji.ts — obecność zdarzeniem
+Kursory pozostałych przychodzą zdarzeniem, nie odpytywaniem, i niosą komplet obecnych, więc panel je podmienia zamiast doliczać stan z ciągu przyrostów, którego początku nie widział.
+
+## budowa/klient-poprzedni/src/moduly/multitasking/wykaz-nadan-rol.ts
+Panel obsady składa scenę z wykazu okien: bierze okna i odczytuje z nich
+pole roli, co wystarcza do pokazania sceny, ale nie jest rejestrem nadań;
+rejestrem jest rdzeń, a jego odpowiedź niesie wcielenie, pole, którego okno
+nie ma w ogóle. Przesiewanie odpowiedzi w kliencie dałoby ten sam obraz, ale
+kłamałoby przy wykazie uciętym po stronie rdzenia i byłoby drugą regułą
+przynależności do pętli obok tej z kontraktu. Zdejmij rolę wykonuje się bez
+pytania, czy na pewno, bez wygaszania i bez uprawnienia per okno: okno
+zostaje, traci wyłącznie rolę, a nadać ją z powrotem można paskiem obsady
+stojącym wyżej w tym samym panelu. Zgoda nie jest dowodem: odpowiedź udana
+z polem usunięcia fałszywym znaczy, że nie było czego zdjąć, a zdanie
+o skutku powstaje z tego pola, nie z faktu, że wywołanie nie zwróciło
+błędu. Zawężenie do wykonawców koordynatora wykonuje rdzeń, bo pole
+identyfikatora koordynatora z pustym napisem byłoby zawężeniem do okna,
+którego nie ma, i oddałoby wykaz pusty bez powodu. Odczyt wywołany po
+zdjęciu roli zawraca też do wykazu nadań, więc drugiego wywołania stąd nie
+ma: byłoby tym samym pytaniem zadanym dwa razy pod rząd.

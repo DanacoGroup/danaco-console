@@ -12,7 +12,6 @@ import (
 	"danacoconsole/server/internal/zewnetrzne"
 )
 
-
 // TestWydrukWykazuNiesieKazdaPozycje pilnuje kompletności: wydruk ma mieć
 // dokładnie tyle wierszy danych, ile wykaz ma pozycji. Wiersz pominięty to
 // program, którego prowizjonowanie nie postawi.

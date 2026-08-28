@@ -95,7 +95,7 @@ func (a *adapterAplikacji) UruchomPodglad(ctx context.Context,
 				" nie ma ani jednego pliku — podgląd nie ma czego pokazać")
 	}
 
-		// Nasłuch zastany zostaje zatrzymany przed podniesieniem nowego: jedno okno ma jeden podgląd.
+	// Nasłuch zastany zostaje zatrzymany przed podniesieniem nowego: jedno okno ma jeden podgląd.
 	a.zatrzymajNasluchPodgladuApp(okno)
 
 	nasluch, err := net.Listen("tcp", "127.0.0.1:0")

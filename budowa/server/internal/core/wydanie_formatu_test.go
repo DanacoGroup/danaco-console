@@ -12,7 +12,6 @@ import (
 	"danacoconsole/shared"
 )
 
-
 // TestWydanieTekstemNazywaZgubionaTabele mierzy zasadę rozstrzygającą wydania:
 // format uboższy niż dokument jest normalny, przemilczenie straty — nie.
 func TestWydanieTekstemNazywaZgubionaTabele(t *testing.T) {

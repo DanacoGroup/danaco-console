@@ -7451,3 +7451,17 @@ Surowy odczyt zawęża się do granulacji poziomu (zasięg i byt poziomu), bez o
 Wynik `config.get` zasila rozstrzyganie pochodzenia po stronie klienta. Pominięty punkt znaczy widok globalny.
 
 Bez rodzaju zmiany w zdarzeniu `config.changed` nie da się odróżnić zapisu od usunięcia, bo rdzeń rozgłasza przywrócenie wartości domyślnej wpisem niosącym starą wartość (`core/handlers_config.go`, `core/adapter_ustawienia.go` funkcja `Przywroc`); odczyt samego wpisu wstawiłby skasowany zapis z powrotem do wykazu.
+
+## budowa/klient-poprzedni/src/moduly/design/eksport-tokenow.ts
+Wszystko tutaj składa przeglądarka z wartości odczytanych z motywu obowiązującego — rdzeń nie
+bierze w tym udziału i nie musi. To jest ta część grupy wydań tokenów projektowych, która komendy
+nie potrzebuje, więc nazwanie jej brakiem kontraktu byłoby zmyśleniem długu.
+
+Opracowanie wymienia przy eksporcie także wydanie dla systemów mobilnych oraz wydanie przewodnika
+do modułów Library i Studio. Pierwszego nie ma, bo wymagałoby przekładu ról systemu wizualnego na
+pojęcia dwóch obcych platform — a taki przekład jest rozstrzygnięciem projektowym, nie zapisem
+pliku. Drugiego nie ma, bo wydanie czegokolwiek do innego modułu wymaga komendy, której kontrakt
+nie zna; okno nazywa ten brak zamiast wysyłać plik w próżnię.
+
+Postacie wydania nie są tu ozdobą: zmienne CSS to postać, w której ten produkt żetony trzyma;
+pozostałe trzy są postaciami, w których przyjmuje je kod korzystający z systemu.

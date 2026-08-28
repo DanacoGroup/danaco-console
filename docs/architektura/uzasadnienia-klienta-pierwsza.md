@@ -8775,3 +8775,6 @@ nie złożył świadomie.
 Odmowa za przekroczenie granicy, której Operator nie ustawił, byłaby odmową bez powodu.
 
 Wykaz krótszy bez słowa byłby ciszą, której kontrakt tej komendy wprost zabrania.
+
+## budowa/klient-poprzedni/src/moduly/agents/okno-skills-manager.ts
+Wybór idzie z wykazu pogrupowanego po przeznaczeniu: katalog narzędzi niesie każde z komendą i zdaniem, kiedy po nie sięgnąć, a grupą jest obszar komendy. Drzewo obsadza tym wykazem komponent menu i nie woła ani jednej komendy, więc działa także wtedy, gdy rdzeń milczy. Drzewo stoi obok pola otwartego, nie zamiast niego: lista umiejętności jest listą napisów bez narzuconego słownika, a serwer narzędzi przyjmuje też kody spoza katalogu kontraktu. Obie kontrolki pokazują tę samą nastawę — wskazanie w drzewie wypełnia pole, wpisanie w polu przestawia uchwyt drzewa. Odłączenie kodu ma komendę w kontrakcie, ale nie ma jeszcze uchwytu w rdzeniu, więc każdy wiersz wykazu dostaje własną kontrolkę odłączenia, widoczną, klikalną i nazywającą stan po naciśnięciu.

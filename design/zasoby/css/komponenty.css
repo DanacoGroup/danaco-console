@@ -3993,3 +3993,88 @@ button.dn-link {
    krawedz okna zlewa sie z obrzezem paneli. */
 [data-wnetrze='przyrzadowe'] .dn-belka,
 [data-wnetrze='przyrzadowe'] .dn-szyna-nawigacji { background: var(--dn-rama); }
+
+/* ── Pasek stanu ─────────────────────────────────────────────────────────
+   Koncepcja prowadzi dolna belke pismem maszynowym, z cyfra tabelaryczna
+   i odstepem zamiast kreski rozdzielajacej. */
+[data-wnetrze='przyrzadowe'] .dn-stan {
+  gap: var(--dn-od-5);
+  font-family: var(--dn-ff-mono);
+  font-size: var(--dn-fs-sm);
+  font-variant-numeric: tabular-nums;
+}
+[data-wnetrze='przyrzadowe'] .dn-stan b,
+[data-wnetrze='przyrzadowe'] .dn-stan-miara {
+  color: var(--dn-rama-tekst);
+  font-weight: var(--dn-fw-srednia);
+}
+[data-wnetrze='przyrzadowe'] .dn-stan-sep { display: none; }
+[data-wnetrze='przyrzadowe'] .dn-stan-tor {
+  width: 42px;
+  height: 3px;
+  border-radius: var(--dn-r-pill);
+  background: var(--dn-obrys-mocny);
+  overflow: hidden;
+}
+[data-wnetrze='przyrzadowe'] .dn-stan-tor > span { background: var(--dn-sygnal-wypelnienie); }
+
+/* Iskra przepustowosci — przebieg obciazenia lacza w pasku stanu. */
+.dn-iskra { width: 52px; height: 12px; flex: none; }
+.dn-iskra path { stroke: var(--dn-sygnal); stroke-width: 1; fill: none; }
+
+/* ── Przelacznik paneli: Sesje / Projekty ────────────────────────────────
+   W koncepcji to plaskie przelaczniki wersalikowe, nie karty z podium. */
+[data-wnetrze='przyrzadowe'] .dn-obszar-panel--boczny .dn-karta-widoku {
+  width: auto;
+  min-width: 0;
+  height: 24px;
+  padding: 0 var(--dn-od-3);
+  border-radius: var(--dn-r-sm);
+  color: var(--dn-tekst-3);
+  font-family: var(--dn-ff-mono);
+  font-size: var(--dn-fs-sm);
+  font-weight: var(--dn-fw-normalna);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+[data-wnetrze='przyrzadowe'] .dn-obszar-panel--boczny .dn-karta-widoku:hover {
+  background: var(--dn-panel);
+  color: var(--dn-tekst-2);
+}
+[data-wnetrze='przyrzadowe'] .dn-obszar-panel--boczny .dn-karta-widoku[aria-selected='true'] {
+  background: var(--dn-sygnal-tlo);
+  color: var(--dn-tekst);
+}
+[data-wnetrze='przyrzadowe'] .dn-obszar-panel--boczny .dn-karta-widoku::before,
+[data-wnetrze='przyrzadowe'] .dn-obszar-panel--boczny .dn-karta-widoku::after { content: none; }
+
+/* ── Karty okna roboczego ────────────────────────────────────────────────
+   Karta biezaca wchodzi na barwe plotna i dostaje kreske sygnalu u gory,
+   zamiast kresek po bokach. */
+[data-wnetrze='przyrzadowe'] .dn-obszar-panel--glowny .dn-karta-widoku {
+  height: 26px;
+  border-radius: var(--dn-r-sm) var(--dn-r-sm) 0 0;
+  color: var(--dn-tekst-3);
+  font-family: var(--dn-ff-mono);
+  font-size: var(--dn-fs-sm);
+  font-weight: var(--dn-fw-normalna);
+}
+[data-wnetrze='przyrzadowe'] .dn-obszar-panel--glowny .dn-karta-widoku:hover {
+  background: var(--dn-panel);
+  color: var(--dn-tekst-2);
+}
+[data-wnetrze='przyrzadowe'] .dn-obszar-panel--glowny .dn-karta-widoku[aria-selected='true'] {
+  background: var(--dn-powierzchnia);
+  color: var(--dn-tekst);
+}
+[data-wnetrze='przyrzadowe'] .dn-obszar-panel--glowny .dn-karta-widoku[aria-selected='true']::before { content: none; }
+[data-wnetrze='przyrzadowe'] .dn-obszar-panel--glowny .dn-karta-widoku[aria-selected='true']::after {
+  left: var(--dn-od-2);
+  right: var(--dn-od-2);
+  top: 0;
+  bottom: auto;
+  width: auto;
+  height: 2px;
+  background: var(--dn-sygnal);
+}
+[data-wnetrze='przyrzadowe'] .dn-obszar-panel--glowny .dn-karta-widoku-zamknij { border-radius: var(--dn-r-xs); }

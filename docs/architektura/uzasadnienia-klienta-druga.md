@@ -7475,3 +7475,16 @@ bufor, ale mają różne miejsce: konsola jest oknem obserwacyjnym na pół
 ekranu, a ogon w karcie stoi pod opisem karty i ma być podglądem, nie drugą
 konsolą — nastawa okna rysowania stoi w widoku wyjścia, a nie w drugiej
 wytwórni wierszy, żeby dwa rysowania tej samej treści się nie rozjechały.
+
+## budowa/klient-poprzedni/src/sterowanie/klucze-ustawien.ts
+Trzy sterowania kompletu nie mają odpowiednika w treści żądania aktualizacji okna: host wykonania (nazwa hosta jest ustawieniem, nie wartością wyliczenia środowiska wykonania), kanał zapasowy oraz nakład rozumowania. Ich drogą jest ustawienie poziomu zasięgu okna — poziomu najwęższego, wygrywającego z pozostałymi. Rdzeń zna wyłącznie klucze katalogu ustawień z bazy; klucz wymyślony po stronie klienta przechodzi zapis, ale nie ma żadnego skutku. Klucze kompletu są przepisane z katalogu co do znaku.
+
+Katalog rdzenia opisuje klucz nakładu rozumowania jako wyliczenie napisowe, więc suwak niesie napis wyliczenia, nie liczbę położenia. Napis pusty jest pełnoprawnym stopniem katalogu — znaczy rozstrzygnięcie przez kanał modelu, nie brak ustawienia.
+
+Klucz katalogu rdzenia trzeba przełożyć na pole kompletu w czterech czynnościach: naniesieniu zapisu, zdjęciu zapisu przy zdarzeniu usunięcia wpisu, rozpoznaniu przynależności klucza do kompletu oraz naniesieniu wartości obowiązującej. Wszystkie cztery czynności czytają ten jeden wykaz odwzorowań, więc dopisanie klucza jest zmianą w jednym miejscu.
+
+Brak ustawienia znaczy wartość domyślną, nie blokadę uruchomienia. Wartość domyślna nakładu jest pusta, tak jak wartość domyślna w katalogu rdzenia.
+
+Klucz spoza kompletu jest pomijany bez błędu przy naniesieniu wpisu — konfiguracja poziomu okna może nieść ustawienia innych warstw interfejsu.
+
+Przywrócenie wartości domyślnej rdzeń rozgłasza zdarzeniem zmiany konfiguracji niosącym wpis ze starą wartością, tak żeby odbiorca wiedział, co zniknęło. Wpisu z takiego zdarzenia nie wolno nanosić jak świeżego zapisu; zdjęcie zapisu jest osobną czynnością od naniesienia zapisu.

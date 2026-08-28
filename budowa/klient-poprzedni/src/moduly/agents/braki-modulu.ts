@@ -3,30 +3,9 @@ import type { Kanal } from '../../protokol/kanal';
 import { utworzPokrycieKomend, type PokrycieKomend } from '../pokrycie-komend';
 
 /**
- * Wykaz pozycji modułu Agents bez drogi do rdzenia — zamknięty i policzony.
- *
- * Wykaz stoi w module, a nie rozsypany po oknach, bo odpowiada na pytanie
- * zadawane raz i o całość: czego ten moduł nie potrafi i po czyjej stronie brak
- * leży. Pozycje mają też własne kontrolki tam, gdzie Operator ich szuka — przy
- * wierszu umiejętności, przy wierszu konektora, przy grupie zakresu — ale tamte
- * mówią o jednej rzeczy naraz i nie dają liczby.
- *
- * Nazwa komendy pochodzi ze stałej generatu, nie z napisu. Napis przetrwałby
- * zmianę nazwy w kontrakcie i zostawiłby w oknie zdanie o pozycji, której już
- * nie ma pod tą nazwą; stała przerywa kompilację i każe poprawkę wykonać.
- *
- * Zdanie o każdej pozycji bierze się z odpowiedzi rdzenia, nie ze stałej
- * wpisanej w moduł. Byt pokrycia rozstrzyga pięć stanów i odróżnia „kontrakt
- * tego nie ma” od „kontrakt ma, rdzeń nie ma uchwytu” — więc wykaz sam
- * przeszedł ze stanu pierwszego w drugi w chwili scalenia definicji, bez ani
- * jednej poprawki w tym pliku. O to w tym bycie chodziło.
- *
- * Pozycja nie znika i nie jest wygaszona. Kontrolka zostaje klikalna i po
- * naciśnięciu nazywa stan pozycji — okno bez niej wyglądałoby na skończone,
- * a brak przestałby być widoczny.
+ * Wykaz pozycji modułu Agents bez drogi do rdzenia — zamknięty i policzony
+ * wykaz, gdzie każda pozycja niesie komendę kontraktu, która ma ją unieść.
  */
-
-/** Jedna pozycja opracowania wraz z komendą, która ma ją unieść. */
 export interface PozycjaBraku {
   /** Nazwa pozycji w języku Operatora — tak brzmi w opracowaniu modułu. */
   etykieta: string;
@@ -39,18 +18,8 @@ export interface PozycjaBraku {
 }
 
 /**
- * Dwie pozycje — wykaz zamknięty i krótki.
- *
- * Wykaz liczył czternaście pozycji, dopóki rodzina `agent.*` nie miała
- * uchwytów. Dwanaście z nich zeszło stąd nie dlatego, że przestały być
- * potrzebne, lecz dlatego, że mają już drogę z okna do rdzenia: umiejętności
- * i konektory w swoich zarządcach, podgląd wersji w panelu historii, licznik
- * przypisań na karcie eksperta, a cztery grupy zakresu w Permissions Center.
- *
- * Zostają dwie i obie należą do rodziny `channel.*`, czyli do rejestru kanałów
- * modelu — nie do modułu Agents. Moduł ich potrzebuje (Model Configuration
- * chce sprawdzić kanał przed zapisem eksperta), ale nie jest ich właścicielem
- * i dobudowanie ich stąd byłoby wejściem w cudzy obszar.
+ * Dwie pozycje modułu — wykaz zamknięty i krótki, obejmujący wyłącznie
+ * pozycje z rodziny komend rejestru kanałów modelu.
  */
 export const BRAKI_MODULU: readonly PozycjaBraku[] = [
   {
@@ -108,13 +77,7 @@ export function utworzWykazBrakow(kanal: Kanal): WykazBrakow {
     lista.append(wiersz);
   }
 
-  /**
-   * Zdanie zbiorcze i znakowanie wierszy — czytane z rdzenia po każdym odczycie.
-   *
-   * Liczby nie ma przed odpowiedzią rdzenia i nie jest to niedopatrzenie:
-   * policzenie braków z ciszy byłoby orzeczeniem, którego nikt nie wydał.
-   * Dopiero powitanie mówi, ile z tych komend rdzeń faktycznie rejestruje.
-   */
+  /** Zdanie zbiorcze i znakowanie wierszy, czytane z rdzenia po odpowiedzi na powitanie połączenia. */
   function przerysuj(): void {
     let bezUchwytu = 0;
     let nieustalone = 0;

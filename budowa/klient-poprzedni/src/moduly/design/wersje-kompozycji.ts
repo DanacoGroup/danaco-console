@@ -11,24 +11,8 @@ import type { StanKompozycji } from './stan-kompozycji';
 import type { StanDesignu } from './stan-designu';
 
 /**
- * Wersjonowanie i wyrys kompozycji w Design Board —
- * `design.board.version.save`, `design.board.version.list`,
- * `design.board.version.restore`, `design.board.export`.
- *
- * ── Po co wersje ────────────────────────────────────────────────────────────
- * `design.board.update` zapisuje układ BIEŻĄCY i zastępuje poprzedni, więc
- * ciągu postaci tablicy nie było skąd wziąć: praca sprzed godziny znikała przy
- * pierwszym przesunięciu warstwy.
- *
- * ── Przywrócenie nie kasuje stanu porzuconego ───────────────────────────────
- * Rdzeń zakłada przy przywróceniu wersję z układu sprzed przywrócenia i oddaje
- * ją w odpowiedzi. Panel pokazuje jej identyfikator wprost, żeby droga powrotna
- * była widoczna od razu, a nie po ponownym odczycie wykazu.
- *
- * ── Wyrys jest plikiem, nie zapowiedzią ─────────────────────────────────────
- * Odpowiedź melduje nazwę pliku i jego typ treści. Kompozycja bez ani jednej
- * warstwy z bajtami kończy się odmową rdzenia i panel pokazuje to zdanie
- * w całości — pusty prostokąt podany jako plik wyglądałby jak plik uszkodzony.
+ * Wersjonowanie i wyrys kompozycji w Design Board, bo zapis bieżący zastępuje poprzedni i ciągu
+ * postaci tablicy nie było skąd wziąć.
  */
 export interface WersjeKompozycji {
   element: HTMLElement;
@@ -36,7 +20,7 @@ export interface WersjeKompozycji {
   wczytaj(): Promise<void>;
 }
 
-/** Formaty wyrysu, które rdzeń składa biblioteką wkompilowaną. */
+/** Formaty wyrysu, które rdzeń składa biblioteką wkompilowaną, bez zależności od usług zewnętrznych sieci. */
 const FORMATY_WYRYSU = [
   { wartosc: 'png', etykieta: 'PNG — warstwy złożone na jedno płótno' },
   { wartosc: 'pdf', etykieta: 'PDF — wyrys osadzony w dokumencie' },
@@ -100,14 +84,7 @@ export function utworzWersjeKompozycji(
   przywroc.addEventListener('click', () => void przywrocWersje());
   wyrysuj.addEventListener('click', () => void wyrysujKompozycje());
 
-  /**
-   * Sprawdza, czy kompozycja jest już w rdzeniu.
-   *
-   * Wszystkie cztery komendy tego panelu wskazują kompozycję identyfikatorem,
-   * który nadaje rdzeń przy pierwszym `design.board.update`. Kanwa nigdy
-   * niezapisana nie ma czego wersjonować ani wyrysowywać, a odmowa rdzenia
-   * mówiłaby wtedy o kompozycji nieznanej zamiast o zapisie, którego zabrakło.
-   */
+  /** Sprawdza, czy kompozycja jest już w rdzeniu: niezapisana kanwa nie ma czego wersjonować. */
   function bezKompozycji(komenda: string): boolean {
     if (kompozycja.idKompozycji() !== '') return false;
     odpowiedz.pokaz(
@@ -160,8 +137,7 @@ export function utworzWersjeKompozycji(
     wersje = [wersja, ...wersje];
     pokazWersje();
     wybor.kontrolka.value = wersja.id;
-    // Liczba warstw z odpowiedzi, nie z kanwy: wersja opisuje układ ZAPISANY
-    // w rdzeniu, a kanwa mogła zmienić się po ostatnim zapisie kompozycji.
+    // Liczba warstw z odpowiedzi, nie z kanwy: wersja opisuje układ zapisany, a kanwa mogła się zmienić.
     odpowiedz.pokaz(
       `Rdzeń utrwalił wersję ${wersja.id} — warstw w migawce: ${wersja.layerCount}.`,
       true,
@@ -218,8 +194,7 @@ export function utworzWersjeKompozycji(
       return;
     }
     const plansza = wynik.wynik.board;
-    // Kanwa bierze układ z odpowiedzi rdzenia, nie odtwarza go z migawki
-    // trzymanej w oknie: prawdą o kompozycji jest to, co zapisała baza.
+    // Kanwa bierze układ z odpowiedzi rdzenia, nie z migawki w oknie: prawdą jest to, co zapisała baza.
     kompozycja.wczytaj(plansza.id, plansza.name ?? '', plansza.layers ?? []);
     const odlozona = wynik.wynik.supersededVersion;
     odpowiedz.pokaz(
@@ -241,8 +216,7 @@ export function utworzWersjeKompozycji(
         idKompozycji: kompozycja.idKompozycji(),
         format: format.kontrolka.value,
         skala: krotnosc(),
-        // Obszaru okno nie narzuca: kadr wskazuje się zaznaczeniem na kanwie,
-        // a wyrys bez wskazania bierze całość — tak stanowi kontrakt.
+        // Obszaru okno nie narzuca: kadr wskazuje zaznaczenie na kanwie, a wyrys bez wskazania bierze całość.
         obszar: null,
       }),
       {

@@ -7302,3 +7302,18 @@ klient ma wtedy wejść na stronę główną, a nie stracić połączenie.
 Zawężenie okien w zapamietaj dotyczy wyłącznie okien objętych powiązaniem —
 sesja niesie komplet swoich okien niezależnie od tego, które z nich klient
 chce słyszeć.
+
+## budowa/server/internal/core/adapter_sesje_kosz.go
+Kontrakt mówi o komendzie przywracania sesji jako przywróceniu do historii
+bieżącej — i dokładnie to robi powrót z kosza; osobnej komendy kosz nie
+dostaje.
+
+Powrót ma dwie części, bo usunięcie miało dwie: usunięcie sesji zdjęło
+znacznikiem wiersz z wykazów oraz wyprowadziło sesję z rejestru żywego.
+Przywrócenie czyści znacznik i wnosi sesję z powrotem do rejestru — bez tego
+wykaz sesji, czytający rejestr, dalej by jej nie widział, a przywrócenie
+byłoby słowem bez skutku.
+
+Wniesienie do rejestru żywego idzie po przestawieniu stanu w bazie, więc
+wiersz wraca do rejestru już jako czynny, a nie w stanie sprzed usunięcia.
+Ślad niepowodzenia jednej sesji zostaje w dzienniku rdzenia.

@@ -8470,3 +8470,13 @@ Zasięg i pamięć stoją tutaj, a nie w oknie osobnym, bo są komponentami defi
 
 ## budowa/klient-poprzedni/src/moduly/agents/formularz-tozsamosci.ts (dopisywanie instrukcji)
 Rozdzielenie wklejenia od zapisu jest tu treścią, nie ostrożnością: rada doradcy przeniesiona do instrukcji ma najpierw stanąć Operatorowi przed oczami w polu, które sam potem zatwierdzi przyciskiem. Zapis wykonany automatycznie zmieniłby tożsamość eksperta cudzym zdaniem, którego Operator jeszcze nie przeczytał.
+
+## budowa/klient-poprzedni/src/aod/wyciszenie-menu.test.ts
+Sprawdziany menu kebab wyciszania pilnują czynności Operatora, nie kształtu pliku.
+Menu jest tą samą powierzchnią przy awatarze i w nagłówku kolumny, więc pilnowane
+jest to, czego zlecenie żąda od obu: komplet wyciszeń stoi w jednym menu — trzy
+czasy, moduł, karta sesji, sześć klas zdarzeń, tryb cichy; żadna pozycja nie jest
+wyszarzana i żadna nie pyta o potwierdzenie; wyciszenie i jego zniesienie idą
+jednym kliknięciem; podgląd wyciszeń czynnych mówi, co jest wyciszone i do kiedy;
+pozycja, której nakładka nie ma czym wykonać, mówi czego brakuje, zamiast zniknąć
+albo zmilczeć.

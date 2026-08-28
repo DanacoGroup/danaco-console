@@ -6591,3 +6591,15 @@ czynności sekcji zostają płaskie. Bez portu widoku sekcja czynności jest
 krótsza o tę pozycję — nie ma wiersza wygaszonego ani strzałki do pustki.
 Tryb bieżący nosi ptaszek, a wybór jest jednokrotny, więc rola wiersza jest
 rolą przycisku radiowego menu, nie pola wyboru.
+
+## budowa/klient-poprzedni/src/moduly/studio/petla-stan.ts
+Okno pętli wykonawczej składa się z czterech widoków obserwujących te same byty: kolejka zadań,
+obsada wykonawców, warsztat łańcucha i tryb wsadowy. Gdyby każdy prowadził własną kopię rozkładu,
+zatrzymanie w kolejce nie przestawiłoby wskaźnika przebiegu, a bilans wsadu pokazywałby stan
+sprzed ostatniego dokumentu. Nastawy pętli, takie jak włączenie pętli, tryb wieloagentowy,
+granice obiegów i zachowanie przy spięciu, nie są stanem tego okna: mieszkają w zasięgach
+konfiguracji i idą osobnymi komendami odczytu i zapisu nastaw wykonawców. Okno je czyta i
+pamięta odczyt, żeby nie pytać rdzenia przy każdym przerysowaniu, ale nigdy ich nie zapisuje po
+swojemu i nie zgaduje wartości domyślnych: brak odczytu znaczy „nie wiem", a nie „wyłączone".
+Stan początkowy okna jest zamknięty, żeby dokument miał całą szerokość, dopóki operator nie
+poprosi o pętlę.

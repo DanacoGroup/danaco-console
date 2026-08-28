@@ -276,7 +276,7 @@
 .sta-popover-etykieta small { display: block; font-size: var(--dn-fs-xs); color: var(--dn-tekst-3); }
 
 /* ── 7 · KONFIGURACJA PER OKNO (miniatura okna Konfiguracji jako panel) ──── */
-/* każde okno ma WŁASNY, osobny komplet ustawień — źródło: okna/konfiguracja.md */
+/* każde okno ma własny, osobny komplet ustawień */
 .sta-konfig {
   position: absolute; top: 30px; right: var(--dn-od-2); z-index: var(--dn-z-modal);
   width: 320px; max-height: calc(100% - 40px); overflow: auto;

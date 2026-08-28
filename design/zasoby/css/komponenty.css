@@ -3778,7 +3778,7 @@ button.dn-link {
   color: var(--dn-tekst-3);
   white-space: nowrap;
 }
-.dn-plakietka--rodzaj[data-rodzaj='Automations'] { border-color: var(--dn-sygnal-obrys); color: var(--pz-akcent-2); }
+.dn-plakietka--rodzaj[data-rodzaj='Automations'] { border-color: var(--dn-sygnal-obrys); color: var(--dn-sygnal); }
 .dn-plakietka--rodzaj[data-rodzaj='Agents'] { border-color: var(--dn-sukces-obrys, var(--dn-obrys-mocny)); color: var(--dn-sukces); }
 .dn-plakietka--rodzaj[data-rodzaj='Workspace'] { border-color: var(--dn-obrys-wyrazny); color: var(--dn-tekst-2); }
 .dn-plakietka--rodzaj[data-rodzaj='Assistant'] { border-color: var(--dn-ostrzezenie-obrys, var(--dn-obrys-mocny)); color: var(--dn-ostrzezenie); }
@@ -3791,6 +3791,9 @@ button.dn-link {
 .dn-panel-wiersz--przyrzadowy .dn-obszar-pozycja[aria-current='true'] {
   border-left-color: var(--dn-sygnal);
 }
+/* Na wierszu czynnym opis jaśnieje razem z nazwą: tło wybrania jest jaśniejsze
+   od płótna, więc stopień metadanych schodziłby tam poniżej 4,5:1. */
+.dn-obszar-pozycja[aria-current='true'] .dn-wiersz-meta { color: var(--dn-tekst-2); }
 .dn-wiersz-meta {
   display: flex;
   align-items: center;

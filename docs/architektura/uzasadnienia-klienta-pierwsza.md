@@ -9403,3 +9403,35 @@ wróciłby odmową.
 
 ## budowa/klient-poprzedni/src/moduly/apps/zbior-budowy.ts
 Zbiór stoi osobno od stanu modułu, bo to inna odpowiedzialność: stan modułu prowadzi okno rdzenia i architekturę oraz ogłasza zmiany oknom, a ten zbiór wyłącznie gromadzi to, co przynoszą zdarzenia i odpowiedzi. Wdrożenia mają trzy źródła, etapy jedno: wdrożenie wchodzi zdarzeniem, odpowiedzią na uruchomienie albo wykazem historii, a etapów budowy żadna komenda odczytu nie zwraca, więc ich pusty zbiór na starcie jest stanem prawdziwym, nie brakiem odczytu. Odpowiedź komendy jest starsza niż zdarzenie: uruchomienie wdrożenia kończy się, gdy przebieg ruszy, nie gdy się skończy, więc jej odpowiedź niesie migawkę ze stanem oczekującym, a przejścia przychodzą wyłącznie zdarzeniem. Dlatego źródła są rozróżnione, a nie uporządkowane po stanie: rozstrzyga pochodzenie, nie zgadywanie cyklu życia po stronie klienta. Etap bez identyfikatora nie jest etapem — zdarzenie dotyczące samego wdrożenia wypełnia pole etapu zaślepką, którą zbiór mija, biorąc wdrożenie z tej samej ramki normalnie. Zbiór liczy też ramki, które minął, żeby zdanie o pustce składało się z rachunku ramek, zamiast być wpisanym na stałe napisem o zachowaniu rdzenia.
+
+## budowa/klient-poprzedni/src/moduly/apps/zrodlo-rozszerzen-apps.ts
+
+Strona dystrybucji i konsumpcji — App Catalog, Installed Apps Manager,
+Integrations Hub oraz Permissions & Trust Center — stoi na innym obszarze
+kontraktu niż strona budowy. Obszar apps opisuje produkt budowany w module,
+natomiast obszar extension opisuje katalog rozszerzeń, którego moduł jest
+operacyjnym frontem. Katalog jest bytem rdzenia stojącym poziom wyżej niż
+moduł, dlatego żadna z tych komend nie niesie pola windowId i żadna nie wymaga
+okna modułu.
+
+Żądania idą pełnym kształtem kontraktu. Pole origin rozstrzyga stan wyjściowy
+rejestracji: wartość danaco staje włączona, wartość personal wyłączona. Pole
+accessPointId wiąże serwer MCP z mostem z katalogu punktów dostępu. Pole
+pominięte znaczy brak wskazania, więc puste wartości nie jadą na drut, a rdzeń
+rozstrzyga wtedy po swojemu, zamiast dostać cudzą wartość domyślną przebraną za
+wybór dokonany w oknie.
+
+Droga przez odmowa-rdzenia.ts jest ta sama, którą idą komendy obszaru apps:
+komenda bez uchwytu w rdzeniu wraca kopertą zakończoną słowem unknown i bez
+pola status, więc obietnica zwykłego wywołania zostałaby nierozstrzygnięta,
+a okno stałoby w ładowaniu bez końca.
+
+Bliźniacze źródło stoi w module Agents, w pliku moduly/agents/zrodlo-rozszerzen.ts.
+Obsługuje węższy kształt żądań, bez pól origin oraz accessPointId i bez
+konfiguracji początkowej, a także nie subskrybuje zdarzenia katalogu.
+
+Katalog pusty jest odpowiedzią poprawną i znaczy, że rdzeń nie zna ani jednej
+pozycji, dlatego sprawdzany jest rodzaj tablicy, a nie jej długość. Podobnie
+pole uninstalled jest w kontrakcie wymagane, a jego wartość fałszywa jest
+odpowiedzią udaną i znaczy, że rdzeń pozycji nie zdjął — sprawdzany jest rodzaj,
+nie prawdziwość, inaczej odmowa merytoryczna wyglądałaby na uszkodzony kształt.

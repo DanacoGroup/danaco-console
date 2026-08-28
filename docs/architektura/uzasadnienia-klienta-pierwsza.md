@@ -9130,3 +9130,8 @@ Zdanie składane jest znak w znak tak samo jak na pasie dolnym
 przed etapem. Ta sama praca pokazana w trzech miejscach ma się czytać jednakowo —
 różnica choćby w przecinku każe Operatorowi sprawdzać, czy to na pewno to samo
 zlecenie.
+## budowa/klient-poprzedni/src/moduly/apps/okno-product-builder.ts
+Okno ma w kontrakcie wyłącznie zdarzenie przejścia budowy i ani jednej komendy odczytu: nie ma czym wczytać etapów, kamieni milowych, metadanych ani dziennika wydań. Rysuje więc to, co przyszło zdarzeniami, a przy pustce mówi wprost, czego w kontrakcie brakuje. Wykaz etapów bywa pusty przy niepustym dzienniku wydań i jest to stan prawdziwy, nie usterka odczytu — nagłówek wykazu zostaje, a pod nim stoi zdanie mówiące, dlaczego jest pusto, bo cisza pod nagłówkiem czytałaby się jak nieudany odczyt.
+
+## budowa/klient-poprzedni/src/moduly/apps/okno-product-builder.ts (zdanie o pustym wykazie etapów)
+Rozróżniane są trzy stany: zero ramek znaczy „jeszcze nic nie przyszło” i nic ponadto, ramki bez identyfikatora etapu znaczą „przyszło, ale etapów w tym nie było”, a trzeci przypadek to wykaz opróżniony zdarzeniami usunięcia. Żadna gałąź nie orzeka o tym, czego rdzeń nie robi — zdanie mówi wyłącznie o tym, co padło albo nie padło w tej sesji gniazda, więc nowy nadawca etapów po stronie rdzenia zmienia je samo, bez dotykania tego pliku.

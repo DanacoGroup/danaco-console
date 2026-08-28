@@ -5,6 +5,10 @@
  *
  * Okno modułu jest bytem rdzenia, nie widoku — bez niego żadna komenda Studia
  * dotykająca dokumentu nie ma gdzie stanąć, bo wszystkie wymagają `windowId`.
+ *
+ * Panel stoi jako treść pierwszej karty pasma okna roboczego — jedyna karta
+ * z rzeczywistym przekrojem do rdzenia; pozostałe sześć kart tego terenu
+ * niosą nazwany stan pusty, bo panele wejdą osobnym zakresem prac.
  */
 
 import {
@@ -55,12 +59,16 @@ export function panelDokumentu(w: NastawyDokumentu): PanelDokumentu {
   let okno = '';
 
   const tresc = el('div', { klasa: 'sta-okno-tresc' });
-  const wezel = el('section', { klasa: 'sta-okno', 'data-aktywne': 'tak' }, [
-    el('header', { klasa: 'sta-okno-belka' }, [
-      el('span', { klasa: 'sta-okno-tytul' }, [el('b', { tekst: tekst('dokument.tytul') })]),
-    ]),
-    tresc,
-  ]);
+  const wezel = el(
+    'section',
+    { klasa: 'sta-okno', id: 'panel-editor', role: 'tabpanel', 'aria-labelledby': 'karta-editor' },
+    [
+      el('header', { klasa: 'sta-okno-belka' }, [
+        el('span', { klasa: 'sta-okno-tytul' }, [el('b', { tekst: tekst('dokument.tytul') })]),
+      ]),
+      tresc,
+    ],
+  );
 
   odswiez({ rodzaj: 'zakladanie' });
   void zaloz();

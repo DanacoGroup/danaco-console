@@ -10,13 +10,60 @@ export const tresci = {
     etykieta: 'Okno robocze — Studio',
   },
 
-  panel: {
-    tytul: 'Urządzenia wejściowe',
-    ladowanie: 'Odpytywanie rdzenia…',
+  pasmo: {
+    etykietaKart: 'Karty okna roboczego',
+    nowe: 'Nowe okno pomocnicze',
+    maksymalizuj: 'Maksymalizuj okno robocze',
+  },
+
+  karty: {
+    editor: 'Studio Editor',
+    tools: 'Tools',
+    diff: 'Diff',
+    repo: 'Repo',
+    preview: 'Preview',
+    pliki: 'Pliki',
+    plan: 'Plan',
+  },
+
+  wstazka: {
+    etykieta: 'Wstążka okna roboczego — narzędzia modułu Studio',
+    bezSesji: '(bez nazwy sesji)',
+    ukladEtykieta: 'Układ okna roboczego',
+    oknoKomunikacji: 'Okno komunikacji',
+    podzialPionowy: 'Podział pionowy',
+    wersjeEtykieta: 'Wersje dokumentu',
+    zapiszWersje: 'Zapisz wersję',
+    porownajWersje: 'Porównaj wersje',
+    podgladWydruku: 'Podgląd wydruku',
+    dostosuj: 'Dostosuj wstążkę okna roboczego',
+  },
+
+  szyna: {
+    etykieta: 'Dokumenty sesji',
+    nowyDokument: '+ Nowy dokument',
+    filtry: 'Filtr, sortowanie, grupowanie',
+    brakDokumentow: 'Rdzeń nie zgłosił żadnego dokumentu w tej sesji.',
+  },
+
+  czat: {
+    tytul: 'Chat Window',
+    etykietaKontekst: 'Kontekst',
+    brakParametrow: 'Rdzeń nie podał jeszcze parametrów tej rozmowy.',
+    brakKontekstu: 'Brak przypiętego kontekstu.',
+    brakWiadomosci: 'Brak wiadomości w tej rozmowie.',
+    etykietaTresci: 'Pole polecenia',
+    zastepczaTresc: 'Opisz operację na dokumencie lub zaznaczeniu…',
+    wyslij: 'Do kolejki',
+  },
+
+  panelNiegotowy: {
+    tytul: 'Panel jeszcze nie powstał',
+    opis: 'Ten panel wejdzie osobnym zakresem prac.',
   },
 
   dokument: {
-    tytul: 'Dokument',
+    tytul: 'Studio Editor',
     nazwaNowego: 'Dokument bez tytułu',
     zakladanie: 'Zakładanie okna roboczego w rdzeniu…',
     etykietaTresci: 'Treść dokumentu',
@@ -35,18 +82,7 @@ export const tresci = {
     zapis: 'Rdzeń odmówił zapisu dokumentu',
   },
 
-  pusto: {
-    tytul: 'Brak urządzeń wejściowych',
-    opis: 'Rdzeń nie zgłosił żadnego skanera ani kamery podłączonych do maszyny.',
-  },
-
   odmowa: {
-    glowa: 'Rdzeń odmówił wykazu urządzeń',
     brakOpisu: 'Rdzeń nie podał powodu odmowy.',
-  },
-
-  urzadzenie: {
-    podajnik: 'z podajnikiem',
-    dpi: 'dpi',
   },
 } as const;

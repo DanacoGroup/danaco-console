@@ -1,23 +1,25 @@
 /**
- * Okno modułu Studio — montaż. Woła `studio.ingest.device.list` przez
- * `wywolaj` nad `Kanal`, jak droga wejścia; wynik rozstrzyga trzy stany —
- * lista, pustka, odmowa. Bryła powtarza `.st-okno-robocze`/`.sta-okno`
- * z prototypu; wykaz urządzeń idzie klasą biblioteki `.dn-wykaz-modulu`.
+ * Okno modułu Studio — montaż. Powtarza kształt `rama/montaz.ts`: składa
+ * strefy z prototypu (`design/05-okna/moduly/studio.html`) — pasmo siedmiu
+ * kart, wstążkę okna roboczego, szynę dokumentów sesji, okno czatu i zaczep
+ * paneli — i wstawia je w miejsce wskazane przez ramę. Karta „Studio Editor"
+ * niesie jedyny dziś rzeczywisty przekrój do rdzenia (`dokument.ts`); pozostałe
+ * sześć kart wchodzą osobnym zakresem prac.
+ *
+ * Pas stanu (strefa 6 z wpisu terenu) montuje `rama/skladniki/stan.ts` —
+ * stoi raz dla całej powłoki aplikacji, nie osobno na moduł.
  */
 
-import {
-  Command,
-  StudioInputDeviceKind,
-  type ErrorInfo,
-  type Module,
-  type Session,
-  type StudioInputDevice,
-} from '../../../../shared/contract.ts';
+import type { Module, Session } from '../../../../shared/contract.ts';
 import type { Kanal } from '../../protokol/kanal.ts';
-import { wywolaj } from '../../protokol/wywolanie.ts';
-import { ikony, type NazwaZnaku } from './ikony.ts';
 import { panelDokumentu } from './dokument.ts';
-import { el, tekst, zeZnacznika } from './narzedzia.ts';
+import { el, tekst } from './narzedzia.ts';
+import { KARTA_EDITOR, karty } from './skladniki/definicje.ts';
+import { pasmoKart } from './skladniki/pasmo.ts';
+import { wstazkaOkna } from './skladniki/wstazka.ts';
+import { szynaDokumentow } from './skladniki/szyna.ts';
+import { oknoCzatu } from './skladniki/czat.ts';
+import { panelNiegotowy } from './skladniki/panel-niegotowy.ts';
 
 export interface NastawyOknaStudio {
   /** Miejsce w dokumencie, w które okno się wstawia — `main` ramy aplikacji. */
@@ -35,132 +37,53 @@ export interface OknoStudio {
   zdejmij(): void;
 }
 
-type StanPanelu =
-  | { rodzaj: 'ladowanie' }
-  | { rodzaj: 'lista'; urzadzenia: StudioInputDevice[] }
-  | { rodzaj: 'pusto' }
-  | { rodzaj: 'odmowa'; blad?: ErrorInfo };
+/**
+ * Wiąże klik na karcie pasma z widocznością panelu w zaczepie: oznacza kartę
+ * wskazaną jako bieżącą i odsłania wyłącznie panel jej odpowiadający — ten
+ * sam mechanizm co `karty-okna.js` dla pasma aplikacji, tu własny, bo ten
+ * skrypt czyta wyłącznie pasmo poziomu aplikacji, nie zagnieżdżone pasmo
+ * okna roboczego.
+ */
+function wirujKarty(bryla: HTMLElement): void {
+  const wykazKart = Array.from(bryla.querySelectorAll<HTMLElement>('.dn-karta[data-karta]'));
+  const wykazPaneli = Array.from(bryla.querySelectorAll<HTMLElement>('.sta-robocza > [role="tabpanel"]'));
+  const lista = bryla.querySelector('.st-karty');
 
-function znak(nazwa: NazwaZnaku): SVGElement {
-  const rysunek = zeZnacznika(ikony[nazwa]);
-  rysunek.setAttribute('aria-hidden', 'true');
-  return rysunek;
-}
-
-/** Znak zależny od rodzaju urządzenia — kamera dostaje własny rysunek, reszta rysunek ogólny. */
-function znakUrzadzenia(rodzaj: StudioInputDevice['kind']): SVGElement {
-  return znak(rodzaj === StudioInputDeviceKind.Kamera ? 'kamera' : 'urzadzenie');
-}
-
-/** Nota wiersza: rozdzielczości i podajnik — wyłącznie to, co rdzeń podał, nic dopisanego. */
-function notaUrzadzenia(u: StudioInputDevice): string | null {
-  const czesci: string[] = [];
-  if (u.resolutions !== undefined && u.resolutions.length > 0) {
-    czesci.push(`${u.resolutions.join(' · ')} ${tekst('urzadzenie.dpi')}`);
-  }
-  if (u.hasFeeder === true) czesci.push(tekst('urzadzenie.podajnik'));
-  return czesci.length > 0 ? czesci.join(' · ') : null;
-}
-
-function wierszUrzadzenia(u: StudioInputDevice): HTMLElement {
-  const nota = notaUrzadzenia(u);
-  return el('div', { klasa: 'dn-wykaz-modulu-poz' }, [
-    znakUrzadzenia(u.kind),
-    el('b', { tekst: u.name }),
-    nota === null ? null : el('span', { klasa: 'dn-meta', tekst: nota }),
-  ]);
-}
-
-function panelLadowania(): HTMLElement[] {
-  return [
-    el('div', { klasa: 'dn-wykaz-modulu-poz' }, [
-      el('span', {
-        klasa: 'dn-kropka dn-kropka--sygnal dn-kropka--tetno',
-        'aria-hidden': 'true',
-      }),
-      tekst('panel.ladowanie'),
-    ]),
-  ];
-}
-
-function panelPusty(): HTMLElement[] {
-  return [
-    el('div', { klasa: 'dn-pusty-stan' }, [
-      znak('pusto'),
-      el('span', { klasa: 'dn-pusty-stan-tytul', tekst: tekst('pusto.tytul') }),
-      el('span', { klasa: 'dn-pusty-stan-opis', tekst: tekst('pusto.opis') }),
-    ]),
-  ];
-}
-
-function panelOdmowy(blad: ErrorInfo | undefined): HTMLElement[] {
-  return [
-    el('div', { klasa: 'dn-alert dn-alert--wstega dn-alert--blad', role: 'alert' }, [
-      el('span', { klasa: 'dn-alert-znak', 'aria-hidden': 'true' }, [znak('ostrzezenie')]),
-      el('span', { klasa: 'dn-alert-tresc' }, [
-        el('b', { tekst: tekst('odmowa.glowa') }),
-        el('span', { tekst: blad?.message ?? tekst('odmowa.brakOpisu') }),
-      ]),
-    ]),
-  ];
-}
-
-function panelListy(urzadzenia: StudioInputDevice[]): HTMLElement[] {
-  return urzadzenia.map(wierszUrzadzenia);
-}
-
-function zawartoscPanelu(stan: StanPanelu): HTMLElement[] {
-  switch (stan.rodzaj) {
-    case 'ladowanie':
-      return panelLadowania();
-    case 'pusto':
-      return panelPusty();
-    case 'odmowa':
-      return panelOdmowy(stan.blad);
-    case 'lista':
-      return panelListy(stan.urzadzenia);
-  }
+  lista?.addEventListener('click', (zdarzenie) => {
+    const wskazana = (zdarzenie.target as Element | null)?.closest('.dn-karta[data-karta]') as HTMLElement | null;
+    if (wskazana === null) return;
+    for (const inna of wykazKart) {
+      const biezaca = inna === wskazana;
+      inna.setAttribute('aria-selected', biezaca ? 'true' : 'false');
+      inna.tabIndex = biezaca ? 0 : -1;
+    }
+    const kodKarty = wskazana.dataset['karta'];
+    for (const panel of wykazPaneli) {
+      panel.hidden = panel.id !== `panel-${kodKarty}`;
+    }
+  });
 }
 
 export function zamontujOknoStudio(w: NastawyOknaStudio): OknoStudio {
-  let zdjete = false;
-
-  const tresc = el('div', { klasa: 'sta-okno-tresc dn-wykaz-modulu' });
-  const panel = el('section', { klasa: 'sta-okno', 'data-aktywne': 'tak' }, [
-    el('header', { klasa: 'sta-okno-belka' }, [
-      el('span', { klasa: 'sta-okno-tytul' }, [znak('urzadzenie'), el('b', { tekst: tekst('panel.tytul') })]),
-    ]),
-    tresc,
-  ]);
   const dokument = panelDokumentu({ kanal: w.kanal, sesje: w.sesje, modul: w.modul });
-  const obszar = el('div', { klasa: 'sta-obszar', 'data-czaty': 'ukryte' }, [
-    el('div', { klasa: 'sta-robocza', 'data-liczba': '2' }, [dokument.wezel, panel]),
+  const panele = karty.filter((k) => k.kod !== KARTA_EDITOR).map(panelNiegotowy);
+  const robocza = el('div', { klasa: 'sta-robocza' }, [dokument.wezel, ...panele]);
+  const obszar = el('div', { klasa: 'sta-obszar', 'data-robocza': 'widoczna' }, [oknoCzatu(), robocza]);
+  const cialo = el('div', { klasa: 'sta-cialo st-cialo' }, [szynaDokumentow(), obszar]);
+
+  /* `<section>`, nie `<main>` jak w prototypie: bryła wchodzi wewnątrz
+     `<main id="dn-obszar-glowna">` ramy, a dokument nie niesie dwóch `<main>`. */
+  const bryla = el('section', { klasa: 'st-okno-robocze', 'aria-label': tekst('okno.etykieta') }, [
+    pasmoKart(),
+    wstazkaOkna({ sesje: w.sesje }),
+    cialo,
   ]);
-  const bryla = el('section', { klasa: 'st-okno-robocze', 'aria-label': tekst('okno.etykieta') }, [obszar]);
 
   w.miejsce.replaceChildren(bryla);
-  odswiez({ rodzaj: 'ladowanie' });
-  void zaladuj();
-
-  async function zaladuj(): Promise<void> {
-    const wynik = await wywolaj(w.kanal, Command.StudioIngestDeviceList, {});
-    // Odmontowane w trakcie oczekiwania na odpowiedź — wynik nie ma już gdzie wylądować.
-    if (zdjete) return;
-    if (!wynik.udany) {
-      odswiez({ rodzaj: 'odmowa', blad: wynik.blad });
-      return;
-    }
-    const urzadzenia = wynik.wynik?.devices ?? [];
-    odswiez(urzadzenia.length === 0 ? { rodzaj: 'pusto' } : { rodzaj: 'lista', urzadzenia });
-  }
-
-  function odswiez(stan: StanPanelu): void {
-    tresc.replaceChildren(...zawartoscPanelu(stan));
-  }
+  wirujKarty(bryla);
 
   return {
     zdejmij() {
-      zdjete = true;
       dokument.zdejmij();
       if (bryla.isConnected) bryla.remove();
     },

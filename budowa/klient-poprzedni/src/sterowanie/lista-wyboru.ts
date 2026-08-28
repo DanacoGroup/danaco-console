@@ -1,41 +1,17 @@
 import { utworzNaglowekSterowania } from './naglowek-sterowania';
 import { utworzWskaznikOdczytu } from './wskaznik-odczytu';
 
-/** Pojedyncza pozycja listy wyboru. */
+/** Pojedyncza pozycja listy wyboru: wartość, nazwa widoczna i opcjonalna nazwa sekcji, w której pozycja stoi. */
 export interface OpcjaWyboru {
   wartosc: string;
   nazwa: string;
   /**
-   * Nazwa sekcji, w której pozycja ma stanąć; pominięta znaczy „poza sekcjami".
-   *
-   * Sekcje służą wyborowi modelu: modele surowe i agenci stoją w jednym menu,
-   * ale w dwóch sekcjach — „Modele" i „Moi agenci". Wybór pozostaje jeden
-   * (okno obsługuje agent), a rodzaj pozycji jest widoczny: agent stoi na
-   * modelu, więc płaska lista zatarłaby tę zależność, a przy licznych agentach
-   * modele surowe utonęłyby między nimi.
-   *
-   * Sekcje rysują się natywnym `optgroup`, nie własnym menu: czytnik ekranu
-   * czyta wtedy nazwę sekcji przy pozycji bez dodatkowych atrybutów `aria-*`.
+   * Nazwa sekcji pozycji w menu; pominięta znaczy pozycję poza sekcjami.
    */
   sekcja?: string;
 }
 
-/**
- * Lista wyboru — prymityw wspólny sterowaniom wybierającym jedną wartość.
- *
- * Lista nigdy nie dostaje atrybutu `disabled`, także wtedy, gdy katalog
- * wartości jest pusty albo jeszcze nie przyszedł z rdzenia. Wartość bieżąca
- * okna pojawia się na liście również wtedy, gdy nie ma jej w katalogu —
- * interfejs pokazuje stan okna, zamiast podmieniać go na pozycję pierwszą.
- *
- * Znak [?] obok etykiety niesie zdanie z wykazu adnotacji, w tym zdanie o tym,
- * że sterowanie zapisuje wartość, której wykonanie jeszcze nie czyta.
- *
- * Wskaźnik odczytu stoi obok pola, nigdy zamiast niego: lista pozostaje
- * klikalna i przyjmuje wybór, dopóki katalog jedzie z rdzenia. Etykieta jest
- * osobnym `<label for>`, a nie obudową pola, bo znak [?] jest przyciskiem —
- * wewnątrz obudowy jego naciśnięcie przenosiłoby się na listę.
- */
+/** Lista wyboru: prymityw wspólny sterowaniom wybierającym jedną wartość, z wartością bieżącą zawsze widoczną na liście. */
 export interface ListaWyboru {
   /** Element montowany w kompletach sterowania. */
   element: HTMLElement;
@@ -47,23 +23,10 @@ export interface ListaWyboru {
   ustawUwage(tresc: string): void;
 }
 
-/** Identyfikator wiążący etykietę z listą; unikalny w obrębie dokumentu. */
+/** Identyfikator wiążący etykietę z polem listy; liczony rosnąco, więc pozostaje unikalny w obrębie dokumentu. */
 let licznik = 0;
 
-/**
- * Tworzy listę wyboru z opcjonalnym polem zawężania nad listą.
- *
- * Zawężanie stoi nad listą, a nie w jej rozwinięciu, bo rozwinięcie natywnego
- * `<select>` rysuje system operacyjny, nie dokument — pola tekstowego nie da się
- * tam wstawić, a filtr wewnątrz rozwinięcia wymagałby zastąpienia `<select>`
- * własnym bytem rozwijanym. Pole nad listą przycina katalog pozycji: wpisana
- * fraza zostawia pozycje pasujące, sekcje zwężają się razem z nimi. Ceną jest
- * ruch dwutaktowy — najpierw fraza, potem rozwinięcie.
- *
- * Fraza bez trafień nie kasuje wyboru ani nie blokuje listy: wartość bieżąca
- * okna zostaje na liście zawsze (`zKatalogiem`), a pod polem staje zdanie
- * o braku trafień.
- */
+/** Tworzy listę wyboru z opcjonalnym polem zawężania nad listą, przycinającym katalog pozycji do frazy wpisanej przez operatora. */
 export function utworzListeWyboru(
   etykieta: string,
   przyWyborze: (wartosc: string) => void,
@@ -100,8 +63,7 @@ export function utworzListeWyboru(
 
   element.append(naglowek, fraza, lista, brakTrafien, uwaga);
 
-  // Ostatni katalog i wybór trzymane po to, by przepisanie frazy odrysowało
-  // listę bez pytania rejestru o cokolwiek — zawężanie jest czynnością widoku.
+  // Ostatni katalog i wybór trzymane, by przepisanie frazy odrysowało listę bez pytania rejestru.
   let katalog: OpcjaWyboru[] = [];
   let wybor = '';
 
@@ -149,27 +111,18 @@ function pasuje(opcja: OpcjaWyboru, szukane: string): boolean {
   return tekst.includes(szukane);
 }
 
-/** Katalog wartości poszerzony o wartość bieżącą, jeżeli jej w nim nie ma. */
+/** Katalog wartości poszerzony o wartość bieżącą okna, jeżeli katalog przysłany z rejestru jej nie zawiera. */
 function zKatalogiem(opcje: OpcjaWyboru[], wybrana: string): OpcjaWyboru[] {
   if (opcje.some((opcja) => opcja.wartosc === wybrana)) return opcje;
   return [{ wartosc: wybrana, nazwa: nazwaWlasna(wybrana) }, ...opcje];
 }
 
-/** Nazwa wartości spoza katalogu; pusta wartość znaczy brak wskazania. */
+/** Nazwa wartości spoza katalogu pokazywana na liście; pusta wartość znaczy brak wskazania w tym oknie. */
 function nazwaWlasna(wartosc: string): string {
   return wartosc.length > 0 ? `${wartosc} (spoza wykazu)` : 'Bez wskazania';
 }
 
-/**
- * Węzły listy: pozycje bez sekcji wprost, pozycje z sekcją w `optgroup`.
- *
- * Kolejność sekcji wynika z kolejności pierwszego wystąpienia, nie z sortowania
- * po nazwie: wołający układa katalog w wybranym przez siebie porządku (modele
- * surowe przed agentami), a lista tego porządku nie przestawia.
- *
- * Sekcja pusta nie powstaje — `optgroup` bez pozycji byłby nagłówkiem nad
- * niczym.
- */
+/** Węzły listy: pozycje bez sekcji wprost, pozycje z sekcją zebrane w grupę, w kolejności pierwszego wystąpienia sekcji. */
 function wezly(opcje: OpcjaWyboru[]): Node[] {
   const wynik: Node[] = [];
   const grupy = new Map<string, HTMLOptGroupElement>();
@@ -193,7 +146,7 @@ function wezly(opcje: OpcjaWyboru[]): Node[] {
   return wynik;
 }
 
-/** Pojedyncza pozycja listy. */
+/** Pojedyncza pozycja listy jako element wyboru, z wartością i nazwą przepisanymi wprost z opcji katalogu. */
 function pozycja(opcja: OpcjaWyboru): HTMLOptionElement {
   const element = document.createElement('option');
   element.value = opcja.wartosc;

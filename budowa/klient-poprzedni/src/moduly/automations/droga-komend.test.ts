@@ -9,23 +9,9 @@ import {
 import type { Kanal, Wynik } from '../../protokol/kanal';
 import { utworzZrodloAutomations } from './zrodlo-automations';
 
-/**
- * Droga z okna do rdzenia dla trzech rodzin modułu Automations:
- * `automation.*`, `queue.*` i `schedule.*`.
- *
- * Wykaz oczekiwany bierze się z KONTRAKTU, nie z tego pliku: komenda dołożona
- * do którejkolwiek z rodzin i pominięta w źródle wypadnie tu jako brak, bez
- * dopisywania czegokolwiek w sprawdzianie. Sprawdzian nie mierzy więc tego,
- * co ktoś pamiętał, tylko to, czego rodzina naprawdę wymaga.
- *
- * Przelot woła KAŻDĄ czynność źródła raz. Nie sprawdza jej wyniku — od tego są
- * sprawdziany skutku po stronie rdzenia — tylko to, że okno ma czym daną
- * komendę wysłać. Moduł, który wygląda na kompletny, a nie umie wysłać jednej
- * komendy z czterdziestu dziewięciu, jest modułem niekompletnym w miejscu,
- * którego nie widać.
- */
+/** Droga z okna do rdzenia dla trzech rodzin modułu Automations, mierzona wprost z kontraktu. */
 
-/** Kanał próbny: zapamiętuje komendy i oddaje odpowiedź pustą. */
+/** Kanał próbny zapamiętuje komendy i oddaje odpowiedź pustą, mierząc warstwę kliencką, nie zachowanie rdzenia. */
 function kanalProbny(): { kanal: Kanal; wyslane: string[] } {
   const wyslane: string[] = [];
   const kanal = {
@@ -42,7 +28,7 @@ function kanalProbny(): { kanal: Kanal; wyslane: string[] } {
   return { kanal, wyslane };
 }
 
-/** Woła każdą czynność źródła raz — pełny przelot trzech rodzin. */
+/** Woła każdą czynność źródła po kolei raz, dając pełny przelot trzech rodzin komend modułu Automations. */
 async function przelotAutomations(kanal: Kanal): Promise<void> {
   const zrodlo = utworzZrodloAutomations(kanal);
   const automatyka = 'automat-przykladowa';
@@ -59,9 +45,7 @@ async function przelotAutomations(kanal: Kanal): Promise<void> {
   await zrodlo.przebiegi({ workflowId: automatyka });
   await zrodlo.zalozKolejke({ sessionId: 'sesja-1' });
   await zrodlo.dzialanieKolejki({ queueId: kolejka, action: QueueAction.Start });
-  // `queue.action` obok `automation.queue.action`: ta druga wskazuje automatykę
-  // i zasila kolejkę jej krokami, ta pierwsza posuwa kolejkę samą — na przykład
-  // kolejkę przeglądu ręcznego, która żadnej automatyki nie wykonuje.
+  // Akcja kolejki posuwa kolejkę samą, na przykład kolejkę przeglądu bez automatyki.
   await zrodlo.dzialanieNaKolejce({ queueId: kolejka, action: QueueAction.Pause });
   await zrodlo.wykazKolejek({});
   await zrodlo.powiazKolejke({ queueId: kolejka, workflowId: automatyka });
@@ -141,10 +125,7 @@ describe('droga z okna do rdzenia — moduł Automations', () => {
   });
 
   it('nie wysyła pól opcjonalnych, których Operator nie wskazał', async () => {
-    // Pole nieobecne w żądaniu znaczy co innego niż pole o wartości pustej:
-    // `queue.item.enqueue` bez klucza idempotencji ma założyć zlecenie, a nie
-    // dopasować się do zlecenia o kluczu pustym. To samo dotyczy priorytetu
-    // i terminu — priorytet zero jest priorytetem, a termin zero jest datą.
+    // Pole nieobecne w żądaniu znaczy co innego niż pole o wartości pustej lub zerowej.
     const wyslaneZadania: Record<string, unknown> = {};
     const kanal = {
       wyslij(komenda: string, zadanie: unknown, przyWyniku?: (wynik: Wynik<unknown>) => void) {

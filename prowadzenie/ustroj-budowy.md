@@ -143,12 +143,10 @@ Poniższe reguły obowiązują bezwarunkowo i nie podlegają ocenie sytuacyjnej.
   wersji nie należą do repozytorium.
 - **Bez kroniki w treści.** Dokument i komentarz opisują stan obecny oraz jego
   uzasadnienie. Przebieg prac przechowuje historia rewizji.
-- **Komentarz w granicy 250 znaków na 1000 wierszy — bezwzględnie.** Pliki z kodem
-  nie służą do prowadzenia dyskusji: komentarz stwierdza regułę obowiązującą, nie
-  waży wariantów i nie prowadzi wykładu. Uzasadnienie dłuższe niż zdanie idzie do
-  `docs/` (kod) albo `design/01-dokumentacja-md/` (warstwa projektowa), a plik
-  niesie zdanie i odsyłacz. Rozstrzygnięcie Właściciela, pozycja 18 rejestru
-  decyzji. **Granica jest kryterium odbioru każdego terenu.**
+- **Objętość komentarza rozstrzyga standard redakcji, nie ten dokument.**
+  Granica stoi w `docs/standard-redakcji.md` i egzekwuje ją walidator dyscypliny.
+  Dwie wartości w dwóch dokumentach dawały osiem razy różniące się wyniki, więc
+  druga została zniesiona — jedno pojęcie ma jedną miarę.
 - **Bez zapisu stanu przejściowego w dokumencie trwałym.** Ostrzeżenie w rodzaju
   „ten plik jest niesprawny", „nie czerp stąd ustaleń", „czeka na poprawę" nie
   należy do dokumentu prowadzenia. Stan przejściowy mija, a zapis zostaje —

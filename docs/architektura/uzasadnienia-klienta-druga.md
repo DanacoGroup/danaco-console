@@ -6271,3 +6271,9 @@ panelu sterowania oknem, więc powtarzanie ich tutaj zajmowałoby przestrzeń be
 Warstwa widoku czyta nazwy stanów kolejki wprost z kontraktu, zamiast
 prowadzić własny katalog nazw, żeby uniknąć rozjazdu przy zmianie
 kontraktu.
+
+## budowa/klient-poprzedni/src/uwierzytelnienie/indeks.ts
+Źródło komend i odmowy pozostają wewnątrz katalogu — żaden inny moduł nie ma powodu wołać logowania
+z pominięciem ekranu. Wpięcie ekranu należy do punktu wejścia aplikacji: przesłona montuje się po
+złożeniu aplikacji, a przed pierwszym uruchomieniem tras. Ekran logowania tylko sprawdza, czy jest czym
+wskazać maszynę; ten sam klucz odczytuje sekcja tożsamości urządzenia w oknie ustawień.

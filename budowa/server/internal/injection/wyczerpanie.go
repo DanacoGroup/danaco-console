@@ -17,10 +17,10 @@ var wzorceWyczerpania = []string{
 	"429",
 }
 
-// Wyczerpanie opisuje rozpoznane wyczerpanie limitu konta.
+// Wyczerpanie opisuje rozpoznane wyczerpanie limitu konta wraz z powodem
+// rozpoznania oraz chwilą, w której limit konta się odnawia.
 type Wyczerpanie struct {
-	// Powod jest krótkim opisem źródła rozpoznania — jedzie do dziennika
-	// i do fragmentu prowenancji następnej próby.
+	// Powod jest krótkim opisem źródła rozpoznania dla dziennika i prowenancji.
 	Powod string
 	// DoChwili jest momentem odnowienia limitu; zero znaczy „nieznany".
 	DoChwili time.Time

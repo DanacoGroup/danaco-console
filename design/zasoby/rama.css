@@ -1,30 +1,19 @@
-/* ============================================================================
-   DANACO CONSOLE — RAMA OKNA APLIKACJI
-   ----------------------------------------------------------------------------
-   Pasy ramy, obecne w każdym oknie platformy niezależnie od środowiska,
-   modułu i widoku:
+/* Rama okna aplikacji obejmuje szynę nawigacji, belkę tytułową oraz pasek narzędzi, obecne w każdym oknie platformy niezależnie od środowiska, modułu i widoku.
+   Szyna nawigacji jest pionowym pasem przy lewej krawędzi, biegnącym od samej
+   góry okna; jej pierwszą pozycją jest menu aplikacji, a szerokość szyny
+   równa się wysokości belki tytułowej, więc pozycja ta zajmuje kwadrat
+   w narożniku okna. Belka tytułowa jest pasem atramentowym zaczynającym się
+   na prawo od szyny: po lewej znak i nazwa produktu, pośrodku tytuł bieżącego
+   widoku, po prawej sterowanie oknem systemowym. Pasek narzędzi jest belką
+   nakładaną pod belką tytułową: po lewej narzędzia operowania oknem i
+   treścią, dalej pole wyszukiwania, za nim pasmo kart otwartych sesji, po
+   prawej narzędzia widoku i aplikacji. Każda kontrolka pasa niesie etykietę
+   ujawnianą najechaniem i fokusem oraz mikroreakcję ruchu w czasie
+   --dn-czas-1. Rozwijane menu korzystają z mechaniki .sta-menu. Wyłącznie
+   żetony `var(--dn-*)`, zero wartości szesnastkowych, oba motywy. */
 
-   1 · SZYNA NAWIGACJI — pionowy pas przy lewej krawędzi, biegnący od samej
-       góry okna. Jej pierwszą pozycją jest menu aplikacji; szerokość szyny
-       równa się wysokości belki tytułowej, więc pozycja ta zajmuje kwadrat
-       w narożniku okna.
-
-   2 · BELKA TYTUŁOWA — pas atramentowy zaczynający się na prawo od szyny.
-       Po lewej znak i nazwa produktu, pośrodku tytuł bieżącego widoku,
-       po prawej sterowanie oknem systemowym.
-
-   3 · PASEK EDYCJI — belka nakładana pod belką tytułową. Po lewej narzędzia
-       operowania oknem i treścią, dalej pole wyszukiwania, za nim pasmo kart
-       otwartych sesji, po prawej narzędzia widoku i aplikacji.
-
-   Każda kontrolka pasa niesie etykietę ujawnianą najechaniem i fokusem oraz
-   mikroreakcję ruchu w czasie --dn-czas-1. Rozwijane menu korzystają
-   z mechaniki .sta-menu.
-
-   Wyłącznie żetony var(--dn-*). Zero wartości szesnastkowych. Oba motywy.
-   ============================================================================ */
-
-/* Żeton --dn-wym-belka należy do rejestru w zetony.css. */
+/* Żeton --dn-wym-belka, który wyznacza wysokość belki tytułowej i szerokość
+   szyny nawigacji, należy do rejestru żetonów w pliku zetony.css. */
 
 /* ══ 1 · BELKA TYTUŁOWA ═══════════════════════════════════════════════════ */
 
@@ -56,7 +45,7 @@
 }
 .dn-belka-nazwa b { font-weight: var(--dn-fw-polgruba); }
 
-/* Tytuł bieżącego widoku — środek belki, przycięty przy ciasnym oknie. */
+/* Tytuł bieżącego widoku stoi na środku belki tytułowej i zostaje przycięty wielokropkiem, gdy okno jest zbyt ciasne, by go pomieścić w całości. */
 .dn-belka-tytul {
   flex: 1;
   min-width: 0;
@@ -68,7 +57,7 @@
   white-space: nowrap;
 }
 
-/* Sterowanie oknem systemowym — po prawej, bez odstępu od krawędzi. */
+/* Sterowanie oknem systemowym stoi po prawej stronie belki, bez odstępu od krawędzi okna, tak jak przyciski systemowe innych aplikacji. */
 .dn-belka-okno { display: flex; flex: none; -webkit-app-region: no-drag; }
 .dn-belka-btn {
   display: grid;
@@ -218,7 +207,7 @@
   padding-right: var(--dn-od-8);
 }
 
-/* Rozwijany zakres — lista środowisk do zaznaczenia. */
+/* Rozwijany zakres pokazuje listę środowisk do zaznaczenia, otwierany przyciskiem filtru przy polu wyszukiwania paska narzędzi. */
 .dn-szukaj-zakres {
   position: absolute;
   top: calc(100% + var(--dn-od-1));
@@ -260,7 +249,8 @@
   overflow: hidden;
 }
 
-/* ── Dostosowanie wstążki ───────────────────────────────────────────────── */
+/* Sekcja opisuje okno dostosowania wstążki, w którym operator zmienia skład,
+   kolejność i postać kontrolek paska narzędzi. */
 
 /* Przycisk jest wejściem w konfigurację samego pasa, nie czynnością na treści,
    więc nie należy do żadnej rodziny ikon. Wstążka niesie same ikony bez napisów,
@@ -345,7 +335,8 @@
   content: none;
 }
 
-/* ── Always On Display — pozycja zamykająca pas ──────────────────────────── */
+/* Pozycja Always On Display zamyka pas narzędzi jako osobna kapsuła,
+   oddzielona od pozostałych rodzin ikon paska. */
 
 /* Nakładka podglądu jest odrębną warstwą pracy, nie czynnością na treści okna:
    zamyka pas jako pozycja własna, wyróżniona kapsułą w błękicie sygnałowym.
@@ -365,11 +356,10 @@
    ikon pasa — jest wejściem w funkcję globalną i ma być rozpoznawalna bez
    najeżdżania kursorem.
 
-   Menu niesie wyłącznie funkcje udokumentowane w funkcje-globalne/always-on-display.md:
-   powierzchnię interakcji (rozdz. 8.2, skrót Ctrl+Shift+A), listę oczekujących sugestii
-   i historię sugestii (rozdz. 2 i 13, warstwy 2–3), tor głosowy, obserwację procesu,
-   wyciszanie (warstwa 3) oraz reguły wyzwalania (warstwa 4). Żadnej pozycji spoza tego
-   zbioru menu nie zawiera. */
+   Menu zawiera wyłącznie ustalony zbiór funkcji: powierzchnię interakcji ze
+   skrótem Ctrl+Shift+A, listę oczekujących sugestii i historię sugestii, tor
+   głosowy, obserwację procesu, wyciszanie oraz reguły wyzwalania, i żadnej
+   pozycji spoza tego zbioru. */
 .dn-narzedzia-aod {
   display: inline-flex;
   align-items: center;
@@ -390,7 +380,7 @@
     color var(--dn-czas-1) var(--dn-ease);
 }
 .dn-narzedzia-aod svg { width: var(--dn-wym-ikona); height: var(--dn-wym-ikona); flex: none; }
-/* Grot zapowiada menu — mniejszy od ikony wiodącej, nie konkuruje z nazwą. */
+/* Grot zapowiadający menu jest mniejszy od ikony wiodącej kontrolki, żeby nie konkurował wzrokowo z nazwą funkcji obok niego. */
 .dn-narzedzia-aod .dn-aod-grot { width: var(--dn-wym-ikona-sm); height: var(--dn-wym-ikona-sm); opacity: 0.75; }
 .dn-narzedzia-aod:hover {
   background: var(--dn-sygnal-wypelnienie);
@@ -401,7 +391,7 @@
   outline: var(--dn-wym-fokus) solid var(--dn-fokus);
   outline-offset: var(--dn-wym-fokus-odsuniecie);
 }
-/* Menu otwarte albo powierzchnia interakcji czynna — kapsuła wypełniona. */
+/* Gdy menu jest otwarte albo powierzchnia interakcji jest czynna, kapsuła Always On Display pozostaje w pełni wypełniona barwą sygnału. */
 .dn-narzedzia-aod[aria-expanded='true'],
 .dn-narzedzia-aod[data-czynna='tak'] {
   background: var(--dn-sygnal-wypelnienie);
@@ -409,14 +399,13 @@
   color: var(--dn-szary-0);
 }
 
-/* Wąskie okno — nazwa ustępuje, zostaje ikona z grotem. */
+/* Przy wąskim oknie nazwa funkcji ustępuje miejsca, a w kapsule Always On Display zostaje wyłącznie ikona z grotem rozwinięcia. */
 @media (max-width: 1200px) {
   .dn-narzedzia-aod span { display: none; }
   .dn-narzedzia-aod { padding: 0 var(--dn-od-2); }
 }
 
-/* ── Kontrolka narzędziowa: ikona z mikroreakcją ruchu ──────────────────── */
-
+/* Kontrolka narzędziowa łączy ikonę z mikroreakcją ruchu, wspólną dla wszystkich przycisków ikonowych paska narzędzi. */
 .dn-nrz-btn {
   position: relative;
   display: grid;
@@ -452,8 +441,7 @@
 }
 .dn-nrz-btn[disabled] { cursor: default; }
 
-/* ── Etykieta ujawniana najechaniem i fokusem ───────────────────────────── */
-
+/* Etykieta kontrolki ujawnia się dopiero po najechaniu kursorem albo po ustawieniu fokusu na przycisku, nie stoi widoczna na stałe. */
 .dn-etykietka { position: relative; }
 .dn-etykietka::after {
   content: attr(data-etykietka);
@@ -516,7 +504,7 @@
   transform: translate(0, 0);
 }
 
-/* Menu otwarte przejmuje uwagę — etykieta ustępuje. */
+/* Gdy menu kontrolki przejmuje uwagę operatora, etykieta najechania ustępuje miejsca i nie pokazuje się jednocześnie z menu. */
 .dn-etykietka[aria-expanded='true']::after { content: none; }
 
 /* Pozycja szyny nosi własną etykietę — panel `.dn-szyna-etyk` wysuwany w bok.
@@ -590,7 +578,7 @@
    bo jej pozycje mają stać w jednym pasie — ale menu są jej potomkami i bez tego
    dziedziczą zakaz łamania: długi opis pod pozycjami rozpychał wtedy rozwinięcie
    na całą swoją długość, dając menu szersze od okna treści. */
-/* Wiersz pozycji zostaje w jednym wierszu — łamie się wyłącznie proza objaśnień. */
+/* Wiersz pozycji menu zostaje w jednym wierszu bez łamania; łamie się wyłącznie proza objaśnień pod pozycją, jeśli jakieś niesie. */
 .dn-narzedzia .sta-menu-poz,
 .dn-szyna-nawigacji .sta-menu-poz { white-space: nowrap; }
 .dn-menu-naglowek {
@@ -610,7 +598,7 @@
 .dn-menu-poz-ikona { width: var(--dn-wym-ikona-sm); height: var(--dn-wym-ikona-sm); flex: none; color: var(--dn-tekst-3); }
 .sta-menu-poz:hover .dn-menu-poz-ikona { color: var(--dn-tekst-2); }
 
-/* Wiersz przypisania skrótu klawiszowego. */
+/* Wiersz przypisania skrótu klawiszowego pokazuje etykietę czynności obok pola, w którym operator wpisuje własną kombinację klawiszy. */
 .dn-menu-skrot {
   display: flex;
   align-items: center;
@@ -632,7 +620,7 @@
   text-align: center;
 }
 
-/* Pole wyszukiwania rozwijane spod lupy. */
+/* Pole wyszukiwania rozwija się spod ikony lupy w menu, dając miejsce na wpisanie frazy bez zajmowania stałej przestrzeni paska. */
 .dn-menu-szukaj { padding: var(--dn-od-2); }
 .dn-menu-szukaj .dn-szukaj { width: 100%; }
 
@@ -653,7 +641,7 @@
   background: var(--dn-tlo);
   overflow: hidden;
 }
-/* Strefa treści bierze resztę wysokości; pasy ramy zachowują własną. */
+/* Strefa treści powłoki z ramą bierze resztę dostępnej wysokości okna, podczas gdy pasy ramy zachowują własną, stałą wysokość. */
 .sta-powloka > .sta-cialo,
 .sta-powloka > .cd-plotno,
 .sta-powloka > main,
@@ -746,7 +734,7 @@
      kreska modułów nie były przycinane przy krawędziach pasa. */
   overflow: visible;
 }
-/* Strefa pracy i kreski nie ustępują miejsca nigdy. */
+/* Strefa pracy szyny nawigacji oraz kreski rozdzielające jej strefy nie ustępują miejsca nigdy, niezależnie od wysokości okna. */
 .dn-szyna-tresc > .dn-szyna-sekcja,
 .dn-szyna-tresc > .dn-szyna-kreska { flex: none; }
 
@@ -816,7 +804,7 @@
   mask-image: linear-gradient(to bottom, transparent 0, #000 var(--szyna-zanik),
                               #000 calc(100% - var(--szyna-zanik)), transparent 100%);
 }
-/* Menu aplikacji — kwadrat narożnika o boku równym wysokości belki. */
+/* Menu aplikacji zajmuje w szynie nawigacji kwadrat narożnika, którego bok równa się wysokości belki tytułowej okna. */
 .dn-szyna-nawigacji > .sta-menu:first-child {
   display: grid;
   place-items: center;
@@ -825,7 +813,8 @@
   flex: none;
 }
 
-/* ── Trzy strefy szyny ──────────────────────────────────────────────────── */
+/* Sekcja opisuje trzy strefy szyny nawigacji: strefę pracy, strefę środowisk
+   oraz strefę szybkiego wyboru, rozdzielone kreską. */
 
 /* Szyna dzieli się na trzy strefy o różnym przeznaczeniu: praca (nowa sesja,
    historia, nowy projekt), środowiska oraz szybki wybór. Strefy rozdziela
@@ -846,7 +835,7 @@
   background: var(--dn-rama-obrys-mocny);
 }
 
-/* Strefa pracy — pozycje wielkości modułu, bez ramki. */
+/* Strefa pracy szyny nawigacji mieści pozycje wielkości modułu, bez ramki wokół nich, tak jak pozostałe pozycje tego rodzaju. */
 .dn-szyna-poz--praca {
   width: 34px;
   height: 34px;
@@ -855,7 +844,8 @@
 }
 .dn-szyna-poz--praca svg { width: var(--dn-wym-ikona); height: var(--dn-wym-ikona); }
 
-/* ── Szybki wybór — komponenty własne i okna platformowe ────────────────── */
+/* Sekcja opisuje szybki wybór szyny nawigacji, obejmujący komponenty własne
+   operatora oraz skróty do okien platformowych. */
 
 /* Grupa stoi pod środowiskami i odcina się od nich odstępem, nie kreską:
    szyna nie niesie żadnych linii. Pozycje są tego samego rodzaju co moduły —
@@ -883,19 +873,19 @@
 
 /* „Dodaj skrót" bez obrysu: biała ramka na atramentowej belce czytała się jak
    stan wybrania i rzucała się w oczy mocniej niż same pozycje pracy. Miejsce
-   czekające na wypełnienie znaczy sam znak plus (rozstrzygnięcie Właściciela). */
+   czekające na wypełnienie znaczy sam znak plus. */
 .dn-szyna-poz--dodaj {
   border: 0;
   margin-top: var(--dn-od-1);
 }
-/* Najechanie zmienia samo tło i kreskę znaku — bez ramki. */
+/* Najechanie na pozycję dodania skrótu zmienia samo tło i kreskę znaku plus, bez pojawienia się ramki wokół pozycji. */
 .dn-szyna-poz--dodaj:hover { border-color: transparent; }
 
 .dn-szyna-stopka { margin-top: auto; display: flex; flex-direction: column; align-items: center; gap: var(--dn-od-2); }
 /* Stopka szyny niesie narzędzia stanowiska — ustawienia, dostosowanie, motyw,
-   profil — a nie pracę. Rozstrzygnięcie Właściciela (2026-08-20): ikony pracy
-   zostają w pełnej jasności ramy, stopka schodzi do --dn-rama-tekst-4
-   (3,10 : 1 na ramie — próg grafiki nietekstowej). Najechanie i fokus przywracają pełną
+   profil — a nie pracę. Ikony pracy zostają w pełnej jasności ramy, stopka
+   schodzi do --dn-rama-tekst-4, przy kontraście 3,10 do 1 na ramie, czyli
+   progu dla grafiki nietekstowej. Najechanie i fokus przywracają pełną
    jasność, żeby cel kliknięcia nie był bledszy od pozostałych. */
 .dn-szyna-stopka .dn-szyna-poz { color: var(--dn-rama-tekst-4); }
 .dn-szyna-stopka .dn-szyna-poz:hover,
@@ -917,8 +907,7 @@
   .dn-szyna-stopka { gap: var(--dn-od-1); }
 }
 
-/* ── Pozycja szyny ─────────────────────────────────────────────────────── */
-
+/* Sekcja opisuje pojedynczą pozycję szyny nawigacji: jej geometrię, barwę spoczynkową oraz zachowanie przy wskazaniu i fokusie. */
 .dn-szyna-poz {
   position: relative;
   display: grid;
@@ -931,10 +920,10 @@
   border: 1px solid transparent;
   border-radius: var(--dn-r-md);
   background: transparent;
-  /* Cztery stopnie jasności w belce (rozstrzygnięcie Właściciela 2026-08-21):
-     menu aplikacji pełną bielą, środowiska i praca lekko przydymione, moduły
-     wysunięte z środowiska mocniej, ustawienia w stopce najmocniej. Różnica
-     jasności mówi, na którym poziomie wyboru stoi Operator. */
+  /* Cztery stopnie jasności w belce: menu aplikacji pełną bielą, środowiska
+     i praca lekko przydymione, moduły wysunięte ze środowiska mocniej,
+     ustawienia w stopce najmocniej. Różnica jasności mówi, na którym
+     poziomie wyboru stoi operator. */
   color: var(--dn-rama-tekst-2);
   cursor: pointer;
   transition:
@@ -943,7 +932,7 @@
     color var(--dn-czas-1) var(--dn-ease);
 }
 .dn-szyna-poz svg { width: var(--dn-wym-ikona-szyna); height: var(--dn-wym-ikona-szyna); stroke-width: 1.9; }
-/* Menu aplikacji zostaje w pełnej jasności — jest wejściem do wszystkiego. */
+/* Menu aplikacji zostaje w szynie nawigacji w pełnej jasności koloru, ponieważ jest wejściem do wszystkich funkcji platformy. */
 .dn-szyna-nawigacji > .sta-menu:first-child > .dn-szyna-poz { color: var(--dn-rama-tekst); }
 /* Moduły wysunięte z środowiska: stopień niżej od środowisk, bo to wybór
    wewnątrz już wybranego środowiska. */
@@ -977,7 +966,7 @@
 .dn-szyna-poz--srodowisko[data-biezace='true'] {
   border-color: var(--dn-sygnal-500);
 }
-/* Moduł — pozycja bez ramki, wcięta, ikona mniejsza. */
+/* Moduł w szynie nawigacji jest pozycją bez ramki, wciętą względem środowiska nadrzędnego, z ikoną mniejszą niż pozycja środowiska. */
 .dn-szyna-poz--modul {
   width: 34px;
   height: 34px;
@@ -990,7 +979,7 @@
   color: var(--dn-tekst-inv);
 }
 
-/* Grupa modułów rozwijana pod środowiskiem. */
+/* Grupa modułów rozwija się pod środowiskiem po jego zaznaczeniu, pokazując wszystkie moduły należące do tego środowiska. */
 .dn-szyna-moduly {
   display: flex;
   flex-direction: column;
@@ -1008,8 +997,7 @@
 }
 .dn-szyna-moduly[hidden] { display: none; }
 
-/* ── Etykieta pozycji: nazwa i zdanie o przeznaczeniu ───────────────────── */
-
+/* Sekcja opisuje etykietę pozycji szyny nawigacji, złożoną z nazwy pozycji oraz krótkiego zdania o jej przeznaczeniu. */
 .dn-szyna-etyk {
   position: fixed;
   z-index: var(--dn-z-tooltip);
@@ -1039,7 +1027,8 @@
   .dn-szyna-etyk { transition: none; }
 }
 
-/* ── Menu wywołane z szyny ──────────────────────────────────────────────── */
+/* Sekcja opisuje menu wywoływane z pozycji szyny nawigacji, otwierane
+   wskazaniem albo klawiszem na wybranej pozycji. */
 
 /* Szyna stoi przy krawędzi okna, więc jej menu wychodzi w prawo od niej,
    nie w dół. Menu głowy kotwiczy się górą, menu stopki — dołem, inaczej
@@ -1058,7 +1047,7 @@
   outline-offset: calc(-1 * var(--dn-wym-fokus));
 }
 
-/* Etykieta ustępuje, gdy menu pozycji jest otwarte — menu samo się nazywa. */
+/* Etykieta pozycji szyny ustępuje, gdy menu tej pozycji jest otwarte, ponieważ otwarte menu samo nazywa swoją zawartość. */
 .dn-szyna-poz[aria-expanded='true'] .dn-szyna-etyk { display: none; }
 
 /* ══ 6 · PASEK STANU ══════════════════════════════════════════════════════ */
@@ -1094,7 +1083,7 @@
    dziedziczonym z paska. Nowy znacznik używa `.dn-meta .dn-meta--mocna`. */
 .dn-stan-miara { font-family: var(--dn-ff-mono); color: var(--dn-tekst-2); }
 
-/* Miniaturowy wykres obciążenia — pasek wypełnienia bez animacji. */
+/* Miniaturowy wykres obciążenia w pasku stanu pokazuje pasek wypełnienia bez animacji, jako stały odczyt bieżącej wartości. */
 .dn-stan-tor {
   width: 40px;
   height: 4px;
@@ -1177,8 +1166,7 @@
 .dn-dost-widok[data-widok-aktywny='nie'] { display: none; }
 .dn-dost-widok { padding-top: var(--dn-od-5); }
 
-/* ── Przenoszenie składników ────────────────────────────────────────────── */
-
+/* Sekcja opisuje przenoszenie składników między kolumnami okna dostosowania wstążki, z listy dostępnych do listy wybranych. */
 .dn-dost-przenoszenie {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -1226,7 +1214,7 @@
   color: var(--dn-tekst-3);
 }
 .dn-dost-poz:hover { background: var(--dn-hover); }
-/* Wskazanie pozycji niesie wypełnienie i kreska sygnałowa, nie sama barwa. */
+/* Wskazanie wybranej pozycji na liście przenoszenia niesie wypełnienie tła oraz kreskę sygnałową, nie samą zmianę barwy tekstu. */
 .dn-dost-poz[aria-selected='true'] {
   background: var(--dn-sygnal-tlo);
   box-shadow: inset 2px 0 0 var(--dn-sygnal-500);
@@ -1253,8 +1241,7 @@
   color: var(--dn-tekst-3);
 }
 
-/* ── Grupy ustawień ─────────────────────────────────────────────────────── */
-
+/* Sekcja opisuje grupy ustawień okna dostosowania wstążki, rozłożone w siatce dopasowującej liczbę kolumn do szerokości okna. */
 .dn-dost-siatka {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
@@ -1341,8 +1328,8 @@
 /* ══ 8 · POWIERZCHNIA INTERAKCJI ALWAYS ON DISPLAY ════════════════════════ */
 
 /* Kolumna boczna rozszerzenia — powierzchnia rozmowy z agentem towarzyszącym.
-   Postać wg funkcje-globalne/always-on-display.md rozdz. 2: kolumna po prawej
-   stronie obszaru roboczego, na pełną wysokość, szerokość regulowana; nagłówek
+   Stoi po prawej stronie obszaru roboczego, na pełną wysokość, o szerokości
+   regulowanej; nagłówek
    niesie przycisk mikrofonu toru głosowego, korpus — listę oczekujących sugestii
    i strumień rozmowy, stopka — pole polecenia wysyłające `aod.chat.send`.
 
@@ -1377,7 +1364,7 @@
   color: var(--dn-tekst);
 }
 .dn-aod-glowa svg { width: var(--dn-wym-ikona); height: var(--dn-wym-ikona); flex: none; }
-/* Awatar agenta w nagłówku — ten sam byt co awatar pływający, w postaci małej. */
+/* Awatar agenta w nagłówku powierzchni interakcji jest tym samym bytem co awatar pływający, pokazanym w postaci małej ikony. */
 .dn-aod-awatar {
   display: grid;
   place-content: center;
@@ -1389,7 +1376,7 @@
   color: var(--dn-sygnal);
 }
 
-/* Sekcja sugestii — lista pozycji `.dn-karta--klikalna` ze stanem pustym. */
+/* Sekcja sugestii pokazuje listę pozycji typu karta klikalna, a przy braku sugestii pokazuje zamiast tego stan pusty. */
 .dn-aod-sekcja {
   flex: none;
   padding: var(--dn-od-3);
@@ -1409,7 +1396,7 @@
   color: var(--dn-tekst-3);
 }
 
-/* Strumień rozmowy — rośnie i przewija się; stopka i nagłówek stoją. */
+/* Strumień rozmowy rośnie i przewija się w miarę przybywania wpisów, podczas gdy stopka i nagłówek powierzchni pozostają nieruchome. */
 .dn-aod-strumien {
   flex: 1 1 auto;
   min-height: 0;
@@ -1439,7 +1426,7 @@
   color: var(--dn-tekst);
 }
 
-/* Stopka — pole polecenia poza kontekstem karty sesji. */
+/* Stopka powierzchni interakcji niesie pole polecenia niezależne od pola polecenia karty sesji w oknie komunikacji. */
 .dn-aod-stopka {
   display: flex;
   align-items: center;
@@ -1500,13 +1487,13 @@
   border-radius: 0 var(--dn-r-lg) 0 0;
 }
 
-/* Okno główne stoi między panelami: oba jego górne narożniki są wewnętrzne. */
+/* Okno główne obszaru roboczego stoi między dwoma panelami bocznymi, więc oba jego górne narożniki pozostają wewnętrzne, bez zaokrąglenia. */
 .dn-obszar-panel--glowny {
   flex: 1 1 auto;
   min-width: 0;
 }
 
-/* Panel samouczka wychodzi poza prawą krawędź — widoczny jest lewy górny róg. */
+/* Panel samouczka wychodzi poza prawą krawędź obszaru roboczego, przez co widoczny pozostaje wyłącznie jego lewy górny róg. */
 .dn-obszar-panel--samouczek {
   flex: none;
   width: 320px;
@@ -1516,7 +1503,8 @@
 }
 .dn-obszar-panel--samouczek[hidden] { display: none; }
 
-/* ── Pasmo zakładek panelu ─────────────────────────────────────────────── */
+/* Sekcja opisuje pasmo zakładek panelu, rozdzielające sesje od projektów
+   w panelu bocznym oraz otwarte widoki w oknie głównym. */
 
 /* Zakładki dzielą panel na sekcje: w panelu bocznym rozdzielają sesje od
    projektów, w oknie głównym — otwarte widoki. Pasmo stoi nieruchomo u góry,
@@ -1552,13 +1540,13 @@
   outline: var(--dn-wym-fokus) solid var(--dn-fokus);
   outline-offset: calc(-1 * var(--dn-wym-fokus));
 }
-/* Zakładka wybrana — wstęga sygnałowa pod nią, nie samo pogrubienie. */
+/* Zakładka wybrana w pasmie panelu nosi wstęgę sygnałową pod spodem, nie samo pogrubienie napisu na zakładce. */
 .dn-obszar-zakladka[aria-selected='true'] {
   color: var(--dn-tekst);
   border-bottom-color: var(--dn-sygnal-500);
 }
 
-/* Treść panelu przewija się pod nieruchomym pasmem zakładek. */
+/* Treść panelu przewija się pod nieruchomym pasmem zakładek, które pozostaje widoczne niezależnie od pozycji przewijania. */
 .dn-obszar-tresc {
   flex: 1 1 auto;
   min-height: 0;
@@ -1566,7 +1554,7 @@
 }
 .dn-obszar-tresc[hidden] { display: none; }
 
-/* Nagłówek panelu samouczka — nazwa i zwinięcie. */
+/* Nagłówek panelu samouczka pokazuje nazwę panelu oraz przycisk zwinięcia, stojące w jednym wierszu nad treścią panelu. */
 .dn-obszar-glowa {
   display: flex;
   align-items: center;
@@ -1582,7 +1570,7 @@
 .dn-obszar-glowa svg { width: var(--dn-wym-ikona); height: var(--dn-wym-ikona); flex: none; }
 .dn-obszar-glowa-odstep { flex: 1 1 auto; }
 
-/* Znak marki w nagłówku widoku — sygnet obok nadtytułu. */
+/* Znak marki w nagłówku widoku pokazuje sygnet obok nadtytułu, nadając widokowi rozpoznawalną tożsamość wizualną. */
 .dn-obszar-marka {
   display: inline-flex;
   align-items: center;
@@ -1591,7 +1579,7 @@
 }
 .dn-obszar-marka img { width: 64px; height: 64px; display: block; }
 
-/* Stan pusty panelu bocznego i samouczka. */
+/* Stan pusty panelu bocznego i panelu samouczka pokazuje jednolity komunikat zamiast pustej listy pozycji. */
 .cd-boczny-pusty {
   padding: var(--dn-od-3);
   font-size: var(--dn-fs-sm);
@@ -1599,7 +1587,8 @@
   color: var(--dn-tekst-3);
 }
 
-/* ── Sterowanie panelu: przyciski w paśmie zakładek ───────────────────────── */
+/* Sekcja opisuje sterowanie panelu w pasmie zakładek: dodanie pozycji,
+   zawężenie wykazu oraz menu widoku panelu. */
 
 /* Pasmo zakładek niesie po prawej sterowanie panelu: dodanie pozycji, zawężenie
    wykazu i menu widoku. Przyciski stoją w tym samym paśmie co zakładki, bo
@@ -1618,8 +1607,7 @@
 }
 .dn-obszar-sterowanie .dn-btn-ikona svg { width: var(--dn-wym-ikona-sm); height: var(--dn-wym-ikona-sm); }
 
-/* ── Wykaz pozycji panelu bocznego ────────────────────────────────────────── */
-
+/* Sekcja opisuje wykaz pozycji panelu bocznego, obejmujący grupy pozycji oraz pojedyncze wiersze sesji i projektów. */
 .dn-obszar-grupa {
   padding: var(--dn-od-3) var(--dn-od-3) var(--dn-od-1);
   font-size: var(--dn-fs-xs);
@@ -1695,12 +1683,13 @@
 .dn-obszar-pozycja:hover .dn-obszar-pozycja-menu,
 .dn-obszar-pozycja:focus-within .dn-obszar-pozycja-menu { opacity: 1; }
 
-/* ── Znacznik zasięgu wykonania i katalogu roboczego ─────────────────────── */
+/* Sekcja opisuje znacznik zasięgu wykonania oraz katalogu roboczego,
+   pokazywany w oknie komunikacji nad polem polecenia. */
 
-/* Okno komunikacji niesie zasięg wykonania (ExecutionEnv: local · core · remote)
-   oraz katalogi robocze (Window.workingDirs). Oba są stanem, który Operator musi
-   widzieć bez otwierania konfiguracji: polecenie wykonane na niewłaściwym hoście
-   albo w niewłaściwym katalogu jest kosztowną pomyłką. */
+/* Okno komunikacji niesie zasięg wykonania oraz katalogi robocze. Oba są
+   stanem, który operator musi widzieć bez otwierania konfiguracji: polecenie
+   wykonane na niewłaściwym hoście albo w niewłaściwym katalogu jest kosztowną
+   pomyłką. */
 .dn-zasieg {
   display: inline-flex;
   align-items: center;
@@ -1729,11 +1718,11 @@
   text-overflow: ellipsis;
   white-space: nowrap;
 }
-/* Zasięg zdalny wyróżniamy: wykonanie opuszcza stanowisko Operatora. */
+/* Zasięg zdalny wyróżnia się osobną barwą, ponieważ przy nim wykonanie polecenia opuszcza stanowisko operatora. */
 .dn-zasieg[data-zasieg='remote'] { border-color: var(--dn-ostrzezenie-obrys); color: var(--dn-ostrzezenie-tekst); }
 .dn-zasieg[data-zasieg='core'] { border-color: var(--dn-sygnal-obrys); color: var(--dn-sygnal); }
 
-/* Wiersz ścieżki w menu — kopiowanie katalogu roboczego. */
+/* Wiersz ścieżki w menu zasięgu pozwala skopiować katalog roboczy bieżącego okna komunikacji jednym kliknięciem. */
 .dn-menu-sciezka {
   display: flex;
   align-items: center;
@@ -1763,7 +1752,8 @@
    potrzebne; górne trzyma pasmo kart. */
 .dn-obszar-tresc { border-radius: 0; }
 
-/* ── Pasek narzędzi panelu — sterowanie wewnątrz okna, nie w wierszu kart ── */
+/* Sekcja opisuje pasek narzędzi panelu ze sterowaniem wewnątrz okna,
+   oddzielony od wiersza kart nad nim. */
 
 /* Sterowanie widoku (zasięg wykonania, katalog roboczy, narzędzia, menu
    przestrzeni roboczej) należy do wnętrza okna, nie do pasma kart: karty mówią,
@@ -1810,7 +1800,8 @@
    ----------------------------------------------------------------------------
    Czerń szyny, belki i tła aplikacji pozostaje nietknięta: reakcję niosą
    warstwy nakładane, skala ikony i błękit sygnałowy. Ikony pasa narzędzi
-   i pola wyszukiwania nie rosną (rozdz. 0 `stanowisko.css`).
+   i pola wyszukiwania nie rosną, zgodnie z tą samą zasadą co w pliku
+   `stanowisko.css`.
    ============================================================================ */
 
 .dn-szyna-poz {
@@ -1842,7 +1833,7 @@
 }
 .dn-szyna-poz:active::after { opacity: 1; transform: scale(1); transition-duration: 0s; }
 
-/* Środowisko bieżące i moduł bieżący: poświata zamiast samego obrysu. */
+/* Środowisko bieżące oraz moduł bieżący w szynie nawigacji noszą poświatę zamiast samego obrysu, jako znak stanu aktywności. */
 .dn-szyna-poz--srodowisko[data-biezace='true'] { box-shadow: var(--dn-poswiata-szyna); }
 .dn-szyna-poz--modul[aria-current='true'] { box-shadow: var(--dn-poswiata-szyna); }
 .dn-szyna-poz--srodowisko[aria-expanded='true'] > svg { transform: scale(var(--dn-skala-ikony)); }
@@ -1873,8 +1864,7 @@
    barwa, skala ikony). Bez obrotu: obrót o 90° prowadzi znak plus przez kształt
    krzyżyka, więc dodawanie czytałoby się jak zamykanie. */
 
-/* ── Pas narzędzi: pole wyszukiwania ─────────────────────────────────────── */
-
+/* Sekcja opisuje ruch pola wyszukiwania paska narzędzi: przejścia barwy obrysu, cienia i ikony przy fokusie i rozwinięciu. */
 .dn-szukaj > input,
 .dn-szukaj > .dn-pole-kontrolka {
   transition:

@@ -594,3 +594,6 @@ Arkusz niesie wyłącznie rozkład pięciu okien modułu — edytora kodu, drzew
 projektu, panelu git, logu budowania i zakładek narzędzi — wraz
 z odróżnieniem trzech stanów obowiązkowych oraz oznaczeniem wagi zgłoszeń
 budowania i konfliktów repozytorium.
+
+## design/zasoby/rama.css
+Stopka szyny nawigacji niesie cztery stopnie jasności — menu aplikacji pełną bielą, środowiska i pozycje pracy lekko przydymione, moduły wysunięte ze środowiska mocniej, ustawienia w stopce najmocniej — tak aby różnica jasności mówiła, na którym poziomie wyboru stoi operator. Ikony pracy zostają w pełnej jasności ramy, a ikony stopki schodzą do żetonu --dn-rama-tekst-4, przy kontraście 3,10 do 1 na ramie, czyli progu ustalonego dla grafiki nietekstowej; najechanie i fokus przywracają pełną jasność, żeby cel kliknięcia nie był bledszy od pozostałych pozycji.

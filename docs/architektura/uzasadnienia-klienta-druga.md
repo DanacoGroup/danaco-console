@@ -6763,3 +6763,17 @@ a ikona jest dobierana pod czynność wyniesienia treści poza jej ramy.
 Obudową nie jest rama okna: rama daje trzy pasy, a ta powierzchnia mieści
 jeden wiersz — rama zostaje wewnątrz okna podglądu w tle, które jest oknem
 operacyjnym pasa modułu.
+
+## budowa/klient-poprzedni/src/moduly/roundtable/sufit-uczestnikow.ts
+Liczby uczestników debaty nie ogranicza dziś nic: sufit gniazd sceny okien równoległych jest
+sufitem gniazd sceny, a nie liczby uczestników debaty; schemat bazy nie zakłada na tabelę
+uczestnika debaty żadnego więzu na liczbę wierszy, a dodanie modelu sprawdza okno i kanał, po czym
+zapisuje kolejność bez odmowy przy jakiejkolwiek liczbie; żądanie dodania modelu niesie cztery
+pola i ani jednego licznika; jedyną granicą obszaru jest granica liczby tur, nie liczby głosów przy
+stole. Dla okna znaczy to tyle, że piąty uczestnik przejdzie przez rdzeń bez odmowy i okno go nie
+blokuje; próg blokujący pracę byłby wymyślonym prawem klienta. Nie zmieściłby się natomiast
+w scenie okien równoległych, gdyby każdemu uczestnikowi dawać własne gniazdo — gniazd jest tyle,
+ile mówi sufit sceny. To dwie różne rzeczy i nota pokazuje obie. Sufit sceny jest importowany,
+a nie przepisywany: liczba przepisana tutaj rozminęłaby się ze sceną, gdy ta zyska piąte gniazdo.
+Tak samo wiąże się z liczbą w profilu modułu komunikacji. Atrybut danych daje arkuszowi odróżnić
+stan „skład szerszy niż scena" od zwykłego opisu, ale i wtedy jest to opis stanu, nie sprzeciw.

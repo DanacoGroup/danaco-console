@@ -612,3 +612,10 @@ maluje trzy z nich, bo tylko trzy znaczą coś innego niż stan w porządku: bra
 w kontrakcie, brak uchwytu w rdzeniu i stan nieustalony. Stan nieustalony nie
 dostaje barwy ostrzeżenia, ponieważ brak odpowiedzi rdzenia nie jest
 orzeczeniem o braku.
+
+## budowa/klient-poprzedni/src/moduly/agents/doradca.css
+Arkusz stoi osobno obok pliku agents.css, ponieważ podział stylów modułu
+idzie wzdłuż komponentu. Barwy biorą się z żetonów, nie z literałów —
+etykieta rady i ostrzeżenie o urwanej turze sięgają po te same żetony
+ostrzeżenia, którymi mówi odstępstwo promptu w pliku agents.css, żeby rada
+była rozpoznawalna kolorem bez czytania nagłówka.

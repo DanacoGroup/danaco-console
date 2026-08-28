@@ -571,3 +571,7 @@ reguły disabled ani żadnej innej reguły wygaszającej.
 
 ## design/zasoby/stanowisko.css
 Reakcja na wskazanie i naciśnięcie jest widoczna w każdym oknie tego pakietu, nie tylko w centrum dowodzenia: belka narzędzi, żetony polecenia i pulpit ramy podnoszą się o jeden piksel i ustępują pod naciśnięciem, nośnikiem reakcji jest tło, barwa i przekształcenie, nigdy sama zmiana rozmiaru ikony.
+
+## budowa/klient-poprzedni/src/mission-control/stany-pulpitu.css
+Treść stanów pustych buduje plik stan-pusty.ts wraz z widokami poszczególnych
+sekcji; ten arkusz niesie wyłącznie ich wygląd.

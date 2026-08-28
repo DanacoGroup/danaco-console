@@ -7006,3 +7006,9 @@ przypadek nie jest błędem i panel go tak nie nazywa.
 
 ## budowa/klient-poprzedni/src/moduly/automations/panel-wersji.ts
 Przebieg próbny sprawdza definicję automatyki przed wpięciem, wersje ją cofają i porównują, zmienne i mapowania opisują przepływ danych między jej krokami, notatka i położenie należą do jej węzłów, a szablon jest jej odbiciem zapisanym do wielokrotnego użycia. Automatyka bierze się ze stanu modułu, nie z pola panelu: pięć okien pracuje nad jedną automatyką naraz, panel z własnym polem automatyki pozwalałby zapisać wersję jednej, patrząc przy tym na kanwę drugiej. Odpowiedź rdzenia niesie automatykę po zmianie i to ona jest prawdą — panel pokazuje ją w całości pod przyciskiem.
+
+## budowa/klient-poprzedni/src/moduly/browser/skutek-zapisu.ts — adnotacja dołączona do rozmowy
+Polecenie wysyłania wiadomości przepisuje załączniki do zakładanej wiadomości i oddaje ją w odpowiedzi, więc rozbieżność jest widoczna wprost: wiadomość przyjęta bez obrazu znaczy, że w rozmowie stoi sam opis adnotacji, a zdanie „adnotacja dołączona" mówiłoby o rysunku, którego rdzeń nie zapisał.
+
+## budowa/klient-poprzedni/src/moduly/browser/skutek-zapisu.ts — nazwa czynności przeniesienia
+Czynność nazywa, co przeniesiono, na przykład „Przekazano 3 źródła", bo tego rdzeń nie oddaje: odpowiedź przeniesienia kontekstu niesie okno docelowe i znacznik przeniesienia, nie zawartość kompletu. Zdanie mówi więc osobno, co wysłano, i osobno, co potwierdził rdzeń.

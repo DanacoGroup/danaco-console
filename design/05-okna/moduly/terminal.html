@@ -40,14 +40,21 @@
   .tt-ntool svg { width:14px; height:14px; }
   /* wiersz wpisu polecenia w konsoli */
   .tt-wiersz { display:flex; align-items:baseline; gap:var(--dn-od-1); }
-  .tt-wiersz input { flex:1; border:none; background:transparent; color:var(--dn-tekst); font-family:var(--dn-ff-mono); font-size:var(--dn-fs-sm); }
+  /* Barwa dziedziczona po konsoli, nie brana z motywu: konsola jest ciemna
+     niezależnie od motywu, więc --dn-tekst dawał w jasnym 1,11:1 — pismo
+     atramentowe na atramencie. */
+  .tt-wiersz input { flex:1; border:none; background:transparent; color:inherit; font-family:var(--dn-ff-mono); font-size:var(--dn-fs-sm); }
+  .tt-wiersz input::placeholder { color:var(--dn-szary-500); }
   .tt-wiersz input:focus { outline:none; }
 
   .metoda { display:inline-grid; place-content:center; min-width:56px; height:18px; padding:0 6px; border-radius:var(--dn-r-xs); font-family:var(--dn-ff-mono); font-size:var(--dn-fs-xs); font-weight:var(--dn-fw-polgruba); background:var(--dn-powierzchnia-2); color:var(--dn-tekst-2); }
   .oc-wiersz { display:flex; gap:var(--dn-od-2); font-family:var(--dn-ff-mono); font-size:var(--dn-fs-xs); padding:2px var(--dn-od-2); border-left:2px solid transparent; }
   .oc-wiersz .zrodlo { color:var(--dn-sygnal); flex:none; min-width:74px; }
   .oc-wiersz .czas { color:var(--dn-tekst-3); flex:none; }
-  .oc-wiersz.blad { border-left-color:var(--dn-czerwien-400); background:var(--dn-blad-tlo); }
+  .oc-wiersz.blad { border-left-color:var(--dn-blad-obrys); background:var(--dn-blad-tlo); }
+  /* Tło stanu jest jaśniejsze od powierzchni, więc trzeci stopień pisma spada
+     pod próg (4,26:1). Na tle stanu nota bierze stopień drugi. */
+  .oc-wiersz.blad .czas { color:var(--dn-tekst-2); }
   .oc-wiersz.ostrz { border-left-color:var(--dn-bursztyn-400); }
   .oc-akcje { display:flex; gap:var(--dn-od-1); padding:2px var(--dn-od-2) var(--dn-od-1) 84px; }
   .pm-wiersz { padding:var(--dn-od-1) var(--dn-od-2); border-bottom:1px solid var(--dn-obrys-subtelny); font-size:var(--dn-fs-sm); }

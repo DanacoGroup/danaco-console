@@ -7403,3 +7403,16 @@ Etykiety stopni nakładu rozumowania są przepisane z kolumny etykiety opcji ust
 Brak wartości nazwy stopnia nakładu schodzi na napis pusty, bo to pełnoprawny stopień katalogu o nazwie „Bez wskazania" — nie etykieta wymyślona w tym pliku. Stopień spoza wykazu, ale niepusty, zostaje pokazany dosłownie: rdzeń może znać stopień, którego ten słownik jeszcze nie zna, a jego kod jest prawdą o oknie.
 
 Rdzeń przysyła moduły komendą listy modułów z gotową nazwą; funkcja nazwy modułu jest wyłącznie zapasem na kod, dopóki katalog rdzenia się nie naładuje. Oddaje identyfikator bez zmiany, bo moduł spoza wykazu ma zachować swój kod zamiast zniknąć z widoku pod nazwą zmyśloną po stronie klienta.
+
+## budowa/klient-poprzedni/src/moduly/studio/praca-z-dokumentem.test.ts
+Cztery okna tekstowe zeszły się w jedno okno pracy z dokumentem. Sprawdziany
+tego pliku wykluczają pięć szkód scalenia: funkcję zgubioną w scaleniu, gdzie
+okno pracy ma nieść wszystkie czynności poprzednich czterech okien i sprawdzian
+pyta o zbudowany widok modułu, nie o kształt plików źródłowych; widok
+formatowany, z którego treść nie wraca, mimo że wpisana treść musi dać się
+odczytać z powrotem tą samą składnią; zmianę modelu oznaczoną w niewłaściwym
+miejscu, skoro odcinki treści liczą się z zakresów znakowych i muszą pokrywać
+treść bez dziur; paginację, która nie dzieli, skoro kartka ma się kończyć,
+gdzie się kończy, a podział jawny ma kończyć ją niezależnie od rachunku;
+i liczbę w panelu redaktora bez rachunku pod spodem. Rdzeń w sprawdzianach
+jest atrapą, ponieważ pytanie dotyczy modułu, nie serwera.

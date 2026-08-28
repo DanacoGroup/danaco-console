@@ -30,7 +30,7 @@ type Agent struct {
 	Zaktualizowano      string
 	// ImieWlasne to imię widoczne dla Operatora; `Nazwa` pozostaje napisem technicznym porządku wykazu.
 	ImieWlasne string
-	Favikon string
+	Favikon    string
 	// UstawieniaJSON niesie treść pliku `--settings` eksperta; pusty znaczy brak ustawień własnych.
 	UstawieniaJSON string
 	// TrybNakladki rozstrzyga, czy instrukcja eksperta dopisuje się do promptu, czy go zastępuje.

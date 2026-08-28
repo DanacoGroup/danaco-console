@@ -21,7 +21,7 @@ const (
 	// obrazów naraz, jednym przebiegiem wyszukiwania.
 	granicaLiczbyObrazow = 50
 	// przedrostekRodzajuObrazu rozpoznaje rodzaj treści będący obrazem, po
-// prefiksie MIME zapisanym przy wgraniu pliku do biblioteki.
+	// prefiksie MIME zapisanym przy wgraniu pliku do biblioteki.
 	przedrostekRodzajuObrazu = "image/"
 )
 

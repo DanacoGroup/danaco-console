@@ -99,8 +99,8 @@ func (a *adapterPrzestrzeniRoboczej) ZmienZadanie(ctx context.Context,
 	}
 	if z.Status != nil && *z.Status != "" {
 		zadanie.Stan = *z.Status
-// Stan końcowy niesie czas ukończenia: pasek postępu liczy zadania zamknięte,
-// nie plakietkę.
+		// Stan końcowy niesie czas ukończenia: pasek postępu liczy zadania zamknięte,
+		// nie plakietkę.
 		if *z.Status == shared.WorkspaceTaskStatusDone && zadanie.UkonczonoMs == 0 {
 			zadanie.UkonczonoMs = terazWMilisekundachWorkspace()
 			zadanie.PostepProcent = 100

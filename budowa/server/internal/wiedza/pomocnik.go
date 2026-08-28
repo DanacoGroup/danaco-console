@@ -13,16 +13,19 @@ import (
 
 // skryptPomocnika — treść pomocnika osadzeń wkompilowana w binarium przez
 // dyrektywę embed poniżej, gotowa do wyłożenia na dysk przy uruchomieniu.
+//
 //go:embed pomocnik_osadzen.py
 var skryptPomocnika string
 
 // skryptPrzesiewu — treść pomocnika przesiewu wkompilowana w binarium
 // przez dyrektywę embed poniżej, gotowa do wyłożenia na dysk.
+//
 //go:embed pomocnik_przesiewu.py
 var skryptPrzesiewu string
 
 // skryptObrazu — treść pomocnika osi obrazu wkompilowana w binarium przez
 // dyrektywę embed poniżej, gotowa do wyłożenia na dysk przy uruchomieniu.
+//
 //go:embed pomocnik_obrazu.py
 var skryptObrazu string
 

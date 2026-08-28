@@ -6973,3 +6973,9 @@ Trzy tabele leżą w jednym pliku, bo wszystkie trzy są zapisem tego, co się
 wydarzyło, a nie stanem bieżącym. Stan bieżący instrukcji leży w tabeli
 `ustawienie`, stan bieżący zadania w tabeli `zadanie_projektu` — tutaj leży
 wyłącznie ślad zdarzeń, komentarzy i wersji instrukcji.
+
+## budowa/server/internal/dane/workspace_notatki.go
+Odnośniki strony zapisują się kompletem: zapis notatki najpierw kasuje
+odnośniki wychodzące z tej strony, potem zakłada je na nowo. Dopisywanie
+zostawiałoby w bazie odnośniki z akapitów, których w treści już nie ma,
+a graf wiedzy pokazywałby wtedy powiązania nieistniejące.

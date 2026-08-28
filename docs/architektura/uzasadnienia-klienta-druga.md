@@ -7100,3 +7100,17 @@ drogą już obecną w kontrakcie i nie wymagają jego zmiany. Rdzeń dziś pola
 params do polecenia modelu nie dokłada, dlatego okno pisze przy suwakach, że
 wielkość jedzie w żądaniu, i dokłada ją także do treści polecenia wysyłanego
 wierszem polecenia, gdzie model ją przeczyta.
+
+## budowa/klient-poprzedni/src/moduly/studio/przybornik-znaczniki.ts
+Znaczników własnych w rdzeniu nie ma i mają zostać dobudowane wraz z nazwą,
+barwą i wykazem. Kontrakt niesie komentarz, adnotację przy fragmencie różnicy
+i zmianę śledzoną, lecz żadna z tych trzech rzeczy nie jest znacznikiem:
+komentarz niesie treść wątku, adnotacja wisi przy numerze fragmentu różnicy,
+a zmiana śledzona jest w treści dokumentu. Znacznik żyje przez sesję okna
+i przybornik mówi to Operatorowi wprost, przy każdym znaczniku. Zapisywanie
+znacznika jako komentarza o umownej treści byłoby wpisem, którego nikt
+później nie odróżni od komentarza prawdziwego, i zaśmieciłoby wykaz
+komentarzy. Znacznik nosi barwę jako żeton motywu, nie jako wartość
+szesnastkową: arkusz modułu nie zna ani jednej barwy zapisanej wprost i oba
+motywy obsługują się same, więc paleta jest wykazem żetonów. Plik nie zna
+struktury dokumentu obiektowego.

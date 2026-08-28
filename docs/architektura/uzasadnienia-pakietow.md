@@ -7079,3 +7079,10 @@ treść JSON, a argumenty procesu realną ścieżkę pliku tymczasowego.
 Katalog tymczasowy systemu daje ścieżkę widoczną dla procesu niezależnie od
 jego katalogu roboczego. Przy każdym potknięciu zapisu plik tymczasowy zostaje
 usunięty, żeby nie zostawić pliku bez właściciela.
+
+## budowa/server/internal/injection/proces.go
+Ubijanie drzewa procesów nie należy do tego pakietu — robi to warstwa sesji,
+dlatego Proces udostępnia identyfikator procesu i honoruje odwołanie kontekstu,
+zamiast samodzielnie zarządzać cyklem życia drzewa procesów. Sam start procesu
+leży w pliku `rozruch.go` i jest jedyny w drzewie; tutaj zostaje wyłącznie to,
+co swoiste dla tury: kształt wejścia JSON-lines.

@@ -6294,3 +6294,6 @@ ma tu żadnej, a pole pominięte przez rdzeń mówi o sobie wprost. Zestawienie 
 zera przy liczniku kafla — o liczbie pozycji nie wiadomo wtedy nic. Pole pominięte przez rdzeń
 w opisie liczby nie jest zerem: wartość domyślna zero stawiałaby przed oczami liczbę, której
 rdzeń nie podał, nie do odróżnienia od zmierzonego zera.
+
+## budowa/klient-poprzedni/src/polaczenie/zrodlo-zdarzen.ts
+Gdyby obserwator importował kanał wprost, strzałka zależności odwróciłaby się i powstałby cykl warstw; zamiast tego obserwator opisuje dokładnie to, czego potrzebuje — subskrypcję zdarzenia po nazwie z kontraktu i podgląd całego ruchu — a kanał spełnia ten opis samym kształtem, bez ani jednej dodatkowej deklaracji.

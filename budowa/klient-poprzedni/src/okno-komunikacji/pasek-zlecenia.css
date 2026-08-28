@@ -1,21 +1,4 @@
-/* ============================================================================
-   DANACO CONSOLE — PASEK ZLECENIA · RZĄD STERÓW POD POLEM WYPOWIEDZI
-   ----------------------------------------------------------------------------
-   Jedna odpowiedzialność: ustawienie sterów koperty zlecenia w jednym rzędzie
-   i oddanie im tyle miejsca, ile zajmują. Wygląd uchwytu, wykazu, haczyka
-   i opisu niesie `komponenty/menu-drzewo.css`; zdanie odmowy ubiera plakietka
-   `.dn-plakietka--blad`. Tutaj nie ma ani jednej reguły powtarzającej tamte.
-
-   Rząd, a nie siatka: pasek jest jedną decyzją — kopertą zlecenia — rozłożoną
-   na kilka nastaw, a rząd czyta się jak zdanie (gdzie · na czym · czym · jak).
-   Siatka rozbiłaby to na kratki bez kolejności.
-
-   Zawijanie jest konieczne, bo gniazdo sceny bywa wąskie (trzy okna obok
-   siebie), a ster wychodzący poza krawędź przestaje być sterem.
-
-   ŹRÓDŁO WARTOŚCI. Wyłącznie żetony `motyw/`: ani jednej barwy szesnastkowej,
-   ani jednego odstępu spoza skali.
-   ============================================================================ */
+/* Arkusz opisuje pasek zlecenia: rząd sterów koperty zlecenia pod polem wypowiedzi, rozłożonych w jednej decyzji ruchu. */
 
 .dc-pasek-zlecenia {
   display: flex;
@@ -72,7 +55,7 @@
   gap: var(--dn-od-1);
 }
 
-/* Zdanie o wyniku dyktowania idzie pod oba uchwyty, nie pod jeden z nich. */
+/* Zdanie o wyniku dyktowania idzie wspólnie pod oba uchwyty mikrofonu, a nigdy pod jeden z nich osobno. */
 .dc-ster-zlecenia:has(> .dc-ster-mikrofonu__nagraj) > .dc-ster-zlecenia__odmowa {
   grid-column: 1 / -1;
 }

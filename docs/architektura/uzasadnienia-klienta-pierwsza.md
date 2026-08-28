@@ -9191,3 +9191,13 @@ Podgląd wyniku pokazuje to, co potwierdził rdzeń: odpowiedź komendy niesie �
 
 ## budowa/klient-poprzedni/src/moduly/apps/okno-warsztatu.ts (rozbieżność zapisu)
 Klucz naturalny warsztatu to trójka złożona z okna, warstwy i ścieżki, więc rozejście się choćby jednego z tych pól znaczy nadpisanie innego pliku niż zamierzony. Rdzeń przyjmuje ścieżkę poprzedzoną znakiem niewidocznym i zapisuje ją dosłownie, a na ekranie wygląda ona identycznie jak ścieżka bez tego znaku, choć klucz naturalny czyni z nich dwa różne pliki — potwierdzenie zapisu byłoby wtedy prawdziwe co do znaku i mylące co do rzeczy.
+
+## budowa/klient-poprzedni/src/dostepy/pole-katalogu.ts
+Wartość domyślna jest pokazana wprost, nie ukryta pod pustym polem: katalog
+powstaje sam w miejscu instalacji aplikacji głównej i dopiero świadomy zapis to
+nadpisuje. Puste pole bez zdania o wartości domyślnej wyglądałoby jak brak
+ustawienia — a ustawienie jest, tylko pochodzi z wartości domyślnej rdzenia.
+
+Wskazanie katalogu oknem powłoki jest dostępne tam, gdzie ma sens: przy
+podstawie. Wzorzec nazwy katalogu sesji nie jest ścieżką na dysku i okna
+systemowego nie potrzebuje.

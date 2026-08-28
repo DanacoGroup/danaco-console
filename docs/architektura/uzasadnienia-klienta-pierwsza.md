@@ -7066,3 +7066,20 @@ brakującego pola, a nie kontrolką bez skutku.
 
 ## budowa/klient-poprzedni/src/moduly/automations/kalendarz-uruchomien.ts
 Wykaz pięciu najbliższych terminów mówi kiedy najbliżej; kalendarz mówi jak gęsto i pokazuje to razem z historią, dzięki czemu widać dzień, w którym uruchomienie wypadało, a przebiegu nie było. Terminy zaplanowane liczy okno z wpisanej cykliczności, bo dotyczą reguły jeszcze niezapisanej; terminem obowiązującym pozostaje najbliższe uruchomienie liczone przez rdzeń — kalendarz jest podglądem i mówi to wprost w swoim podpisie. Dni układają się według czasu miejscowego przeglądarki, bo tak Operator czyta kalendarz; rachunek terminu idzie w UTC, tak samo jak w rdzeniu.
+
+## budowa/klient-poprzedni/src/moduly/browser/stan-przegladania.ts
+Migawkę odświeżają dwie drogi: własne wywołanie odczytu treści strony i zdarzenie zmiany strony — odpytywania w pętli nie ma. Wykazy źródeł i notatek oraz migawka idą zaraz po ustaleniu okna, bo ich treść mieszka w rdzeniu, nie w pamięci karty. Stan warstw widoczności stoi tutaj razem z resztą, a nie osobno przy pasku kontekstu: odsłonięcie rozszerzenia jest zmianą, na którą okna reagują tak samo jak na nową migawkę, więc idzie tym samym ogłoszeniem.
+
+## budowa/klient-poprzedni/src/moduly/multitasking/sekcja-monitor.ts
+Przełącznik trybu nakładki rozstrzyga, co nakładka może zrobić z procesem:
+obserwator wyłącznie patrzy, podpowiada i ostrzega, a operator dodatkowo
+zatwierdza i wstrzymuje kroki z dowolnego miejsca. Stan nakładki podaje
+urządzenie, sesję, okno, procesy przypięte i licznik procesów w biegu, ale
+komendy ustawiającej tryb nie ma wcale, dlatego wartość operatora przy
+rdzeniu, który nic nie zapisał, mówiłaby nieprawdę o tym, kto może
+wstrzymać krok. Statusy idą na żywo: subskrypcja monitora zapisuje okno na
+telemetrię i oddaje stan bieżący jednym ruchem, a zdarzenie postępu donosi
+zmiany, choć nie niesie etykiety ani sesji, więc widok złożony z samych
+zdarzeń gubiłby nazwy przebiegów po pierwszej zmianie. Okna analizy wyników
+i monitora wykonania należą do tej sekcji, ale są osobnymi oknami produktu,
+więc panel nie buduje trzeciego monitora.

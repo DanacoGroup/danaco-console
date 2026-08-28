@@ -1,9 +1,6 @@
-// Pakiet session prowadzi trzy byty przekroju wykonawczego Danaco Console:
-// sesję — wspólną dla plików, pamięci, projektu i agentów, okno
-// komunikacji — nośnik parametrów wykonania, oraz proces okna. Proces wiąże
-// się z oknem, nie z sesją: jedna sesja prowadzi wiele okien i wiele procesów
-// biegnących równolegle, każde z własnym kanałem modelu i własnym katalogiem
-// roboczym.
+// Pakiet session prowadzi trzy byty przekroju wykonawczego: sesję wspólną dla
+// plików i agentów, okno komunikacji oraz proces okna, wiązany z oknem, nie
+// z sesją.
 package session
 
 import (
@@ -21,7 +18,8 @@ const (
 	przedrostekProcesu = "prc"
 )
 
-// dlugoscLosowa — liczba bajtów losowych identyfikatora (16 znaków szesnastkowych).
+// dlugoscLosowa jest liczbą bajtów losowych identyfikatora, dającą szesnaście
+// znaków zapisu szesnastkowego.
 const dlugoscLosowa = 8
 
 // licznikZapasowy zasila identyfikator, gdy generator losowy systemu odmówi

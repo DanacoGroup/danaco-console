@@ -39,7 +39,7 @@ const (
 
 	usunPunktDostepu = `DELETE FROM punkt_dostepu WHERE id = ?`
 
-	// Wskazanie urządzenia sprawdzamy przed zapisem, bo więz klucza obcego
+	// Wskazanie urządzenia jest sprawdzane przed zapisem, bo więz klucza obcego
 	// zgłasza pomyłkę dopiero jako awarię INSERT-a.
 	istnieniUrzadzenia = `SELECT id FROM urzadzenie WHERE id = ?`
 

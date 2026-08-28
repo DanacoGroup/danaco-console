@@ -157,7 +157,7 @@
 }
 .sta-kom-naglowek::-webkit-scrollbar { display: none; }
 .sta-kom-pole { display: flex; flex-direction: column; gap: 0; white-space: nowrap; }
-.sta-kom-pole span { font-family: var(--dn-ff-mono); font-size: 10px; letter-spacing: var(--dn-ls-mono-wersaliki);
+.sta-kom-pole span { font-family: var(--dn-ff-mono); font-size: var(--dn-fs-xs); letter-spacing: var(--dn-ls-mono-wersaliki);
   text-transform: uppercase; color: var(--dn-tekst-3); }
 .sta-kom-pole b { font-size: var(--dn-fs-sm); font-weight: var(--dn-fw-polgruba); color: var(--dn-tekst); }
 .sta-kom-pole b.dane { font-family: var(--dn-ff-mono); }
@@ -244,12 +244,6 @@
 .sta-nrz-przycisk[aria-pressed="true"] { background: var(--dn-sygnal-tlo); color: var(--dn-sygnal); border-color: var(--dn-sygnal-obrys); }
 .sta-nrz-przycisk[aria-expanded="true"] { background: var(--dn-wcisniecie); color: var(--dn-tekst); }
 .sta-nrz-rozdzielacz { width: 1px; height: 16px; background: var(--dn-obrys); margin: 0 var(--dn-od-1); flex: none; }
-.sta-nrz-licznik {
-  position: absolute; top: -2px; right: -2px; min-width: 13px; height: 13px; padding: 0 3px;
-  display: grid; place-content: center; border-radius: var(--dn-r-pill);
-  background: var(--dn-sygnal-wypelnienie); color: var(--dn-szary-0);
-  font-family: var(--dn-ff-mono); font-size: 9px; font-weight: var(--dn-fw-polgruba);
-}
 
 /* popover przybornika (rozwijane menu ustawień/konfiguracji) */
 .sta-popover {
@@ -286,7 +280,7 @@
   letter-spacing: var(--dn-ls-wersaliki); color: var(--dn-tekst-2); list-style: none; display: flex;
   align-items: center; gap: var(--dn-od-1); }
 .sta-konfig-sekcja > summary::-webkit-details-marker { display: none; }
-.sta-konfig-sekcja > summary::before { content: '▸'; font-size: 10px; color: var(--dn-tekst-3); }
+.sta-konfig-sekcja > summary::before { content: '▸'; font-size: var(--dn-fs-xs); color: var(--dn-tekst-3); }
 .sta-konfig-sekcja[open] > summary::before { content: '▾'; }
 .sta-konfig-pole { display: grid; gap: 3px; margin-top: var(--dn-od-2); }
 .sta-konfig-pole label { font-size: var(--dn-fs-xs); color: var(--dn-tekst-2); }
@@ -302,7 +296,7 @@
 .sta-wpis--inteligencja .sta-wpis-medalion { background: var(--dn-powierzchnia-2); color: var(--dn-tekst); }
 .sta-wpis-tozsamosc { display: flex; align-items: center; gap: var(--dn-od-1); margin-bottom: 2px; }
 .sta-wpis-nadawca { font-size: var(--dn-fs-sm); font-weight: var(--dn-fw-polgruba); color: var(--dn-tekst); }
-.sta-wpis-godzina { font-family: var(--dn-ff-mono); font-size: 10px; color: var(--dn-tekst-3); margin-left: auto; }
+.sta-wpis-godzina { font-family: var(--dn-ff-mono); font-size: var(--dn-fs-xs); color: var(--dn-tekst-3); margin-left: auto; }
 .sta-wpis-tresc { font-size: var(--dn-fs-md); line-height: var(--dn-lh-luzny); color: var(--dn-tekst); }
 .sta-wpis-tresc mark { background: var(--dn-sygnal-tlo); color: var(--dn-tekst); border-bottom: 1px solid var(--dn-sygnal-obrys); }
 .sta-wpis--system .sta-wpis-tresc { font-family: var(--dn-ff-mono); font-size: var(--dn-fs-sm); color: var(--dn-tekst-2); }
@@ -358,7 +352,7 @@
 
 /* — hamburger / menu podręczne na ramie — */
 /* Menu rozwijane należą do biblioteki komponentów — patrz komponenty.css. */
-.sta-menu-etyk { padding:var(--dn-od-1) var(--dn-od-2); font-size:10px; text-transform:uppercase;
+.sta-menu-etyk { padding:var(--dn-od-1) var(--dn-od-2); font-size:var(--dn-fs-xs); text-transform:uppercase;
   letter-spacing:var(--dn-ls-wersaliki); color:var(--dn-tekst-3); }
 
 /* — obszar polecenia: pasek kontekstu (23) — */
@@ -385,7 +379,7 @@
 .sta-chip--glowny:hover { background:var(--dn-atrament-hover); }
 
 /* — suwak wysiłku (7) w popoverze — */
-.sta-suwak-opis { display:flex; justify-content:space-between; font-size:10px; color:var(--dn-tekst-3);
+.sta-suwak-opis { display:flex; justify-content:space-between; font-size:var(--dn-fs-xs); color:var(--dn-tekst-3);
   font-family:var(--dn-ff-mono); text-transform:uppercase; letter-spacing:var(--dn-ls-mono-wersaliki); margin-top:2px; }
 input[type="range"].sta-suwak { width:100%; accent-color:var(--dn-sygnal-wypelnienie); }
 

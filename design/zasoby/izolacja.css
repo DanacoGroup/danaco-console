@@ -39,7 +39,7 @@
 
 /* Okno w izolacji: kreska sygnałowa u góry pasma kart. Jedyny znak barwny
    stanu izolacji w oknie. */
-[data-izolacja='incognito'] .dn-karty-pasmo { box-shadow: inset 0 var(--dn-wym-wstega) 0 0 var(--dn-sygnal-500); }
+[data-izolacja='incognito'] .dn-karty-pasmo { box-shadow: inset 0 var(--dn-wym-wstega) 0 0 var(--dn-kropka); }
 
 /* Okno na własnej gałęzi: kreska neutralna — izolacja plików nie jest izolacją
    wiedzy, więc nie sięga po barwę sygnałową. */

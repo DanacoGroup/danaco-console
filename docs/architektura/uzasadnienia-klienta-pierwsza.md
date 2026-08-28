@@ -8778,3 +8778,48 @@ Wykaz krótszy bez słowa byłby ciszą, której kontrakt tej komendy wprost zab
 
 ## budowa/klient-poprzedni/src/moduly/agents/okno-skills-manager.ts
 Wybór idzie z wykazu pogrupowanego po przeznaczeniu: katalog narzędzi niesie każde z komendą i zdaniem, kiedy po nie sięgnąć, a grupą jest obszar komendy. Drzewo obsadza tym wykazem komponent menu i nie woła ani jednej komendy, więc działa także wtedy, gdy rdzeń milczy. Drzewo stoi obok pola otwartego, nie zamiast niego: lista umiejętności jest listą napisów bez narzuconego słownika, a serwer narzędzi przyjmuje też kody spoza katalogu kontraktu. Obie kontrolki pokazują tę samą nastawę — wskazanie w drzewie wypełnia pole, wpisanie w polu przestawia uchwyt drzewa. Odłączenie kodu ma komendę w kontrakcie, ale nie ma jeszcze uchwytu w rdzeniu, więc każdy wiersz wykazu dostaje własną kontrolkę odłączenia, widoczną, klikalną i nazywającą stan po naciśnięciu.
+
+## budowa/klient-poprzedni/src/aplikacja/wiazanie-gniazda.ts
+Okno jest bytem podrzędnym wobec sesji i należy do dokładnie jednej, więc
+wiązanie niesie ją ze sobą. Bez tego scena nie umiałaby powiedzieć, czyje okna
+pokazuje — a po powiązaniu połączenia z inną sesją (`session.bind`) to przestaje
+być oczywiste.
+
+Jedna odpowiedzialność: doprowadzenie do gniazda dwóch warstw, które okno czynią
+użytecznym — rozmowy i kompletu sterowania. Ten plik nie buduje ani jednego pola,
+ani jednej kontrolki: bierze gotowe z `rozmowa/` i `widok-sterowania/`.
+
+Rozmowa wstawia się wprost do gniazda: na scenie sesji gniazdo nie buduje
+własnego wbudowanego okna komunikacji (`GniazdoOkna.OpcjeGniazda.wbudowanaRozmowa`
+zostaje wyłączone w `okna-rownolegle/gniazdo-okna.ts`), więc miejsce pod
+nagłówkiem gniazda ma dokładnie jednego mieszkańca: tury rozmowy z modelem
+prowadzone komendą `message.send`, z podziałem na nadawców, prowenancją
+i podsumowaniem tury.
+
+`zamontujWidokSterowania` wymaga miejsca „akcji paska”. Sceną sesji rządzi kilka
+okien naraz, więc jednakowe uchwyty na wspólnym pasku górnym byłyby nie do
+rozróżnienia; uchwyt trafia do nagłówka własnego gniazda — obok numeru, roli
+i stanu pętli.
+
+Moduł bez pamięci sesyjnej — dziś Agents, którego czat jest środowiskiem
+testowania agenta — nie odtwarza wątku z rdzenia i czyści go przy zmianie
+testowanego eksperta. Polityka wchodzi tutaj, bo tylko powłoka widzi naraz
+okno sceny i widok modułu.
+
+Wybór maszyny dokonuje się w oknie komunikacji jednym przełącznikiem, a przełącznik
+żąda kompletu sterowania okna — rozmowa go nie widzi, komplet nie widzi rozmowy.
+Kontrolki ten plik nie buduje: bierze gotową z `okno-komunikacji/` i gotowy port
+stanu z `zrodlo-srodowiska`, a rozmowie podaje wyłącznie element do postawienia
+nad polem wypowiedzi.
+
+Stery katalogu roboczego, modelu, wysiłku i trybu zatwierdzania żądają kompletu
+sterowania okna, a rozmowa go nie widzi. Pasek nie buduje ani jednego menu (robi
+to `komponenty/menu-drzewo.ts`) i nie zna kontraktu (zna go
+`okno-komunikacji/zrodlo-zlecenia.ts`); ten plik podaje mu tylko port, rejestr
+kanałów i drogę do kolumny sterowania.
+
+Menu pokazuje tryby zapisu i je przestawia, a tryby są własnością rozmowy, nie
+układu okien. Wykaz idzie z `rozmowa/`, odczyt i zapis to wywołania
+`ZamontowanaRozmowa`; `rozpoznajWidokZapisu` jest przekładem napisu na kod trybu
+z tamtego katalogu, a nie drugim wykazem. Port podpinany jest dopiero tutaj, bo
+dopiero tutaj rozmowa istnieje.

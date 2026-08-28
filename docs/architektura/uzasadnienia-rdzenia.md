@@ -6633,3 +6633,19 @@ nie starczyłaby na zapis modelu.
 
 Brak wpiętego przerwania nie blokuje zamykania — okno zamyka się wtedy bez
 łagodnego kroku, od razu ubiciem drzewa procesu.
+
+## budowa/server/internal/core/zapora_warsztatu_pdf_test.go
+
+Warsztat dokumentu stał wcześniej na programach qpdf i Ghostscript.
+Sprawdziany świeciły zielono, bo maszyna deweloperska miewa oba
+doinstalowane ręcznie, a instalka produktu ich nie niesie i nieść nie ma:
+każda z tych czynności odmawiałaby za każdym razem na instalacji
+docelowej, mimo że rdzeń meldowałby komendę jako obsłużoną.
+
+Dlatego rodziny studio.pdf.* i studio.security.* pracują wyłącznie
+bibliotekami wkompilowanymi w binarium: pdfcpu dla dokumentu, crypto ze
+standardowej biblioteki dla podpisu i szyfrowania. Zapora patrzy na pliki
+tych rodzin i nie przepuszcza ani zewnetrzne.Wolaj, ani exec.Command.
+
+Zapora działa w obie strony: gdy plik rodziny zniknie albo zmieni nazwę,
+kończy się niepowodzeniem zamiast cicho przestać czegokolwiek pilnować.

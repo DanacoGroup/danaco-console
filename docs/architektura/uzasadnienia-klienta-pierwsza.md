@@ -7764,3 +7764,35 @@ Ekran niesie dokładnie te dwa elementy, które nazywa funkcja globalna Mobile: 
 Filtr stanu zawęża po stronie rdzenia, polem `status` żądania, a nie po stronie widoku: wykaz przefiltrowany w oknie kłamałby o liczbie procesów, których rdzeń nie przysłał. Urządzenie mobilne nazywa się kartą sesji kanału — tak samo jak w kafelku stanu platformy, żeby rdzeń widział jedno urządzenie, a nie dwa.
 
 Jedno sterowanie bywa widoczne w kilku wierszach naraz (kolejka, tura); odpowiedź opisuje jeden proces, o pozostałych rozstrzyga rdzeń. Napis przycisku zmienia się na czas uzbrojenia, żeby nie dało się go pomylić z pierwszym dotknięciem.
+
+## budowa/klient-poprzedni/src/moduly/design/okno-design-board.ts
+Panel akcji modułu wymienia kanwę swobodną, panel warstw, wyrównanie, siatkę, szablony układu,
+adnotacje, wersjonowanie, eksport, zaznaczenie wielokrotne, kursor współpracy i bibliotekę
+elementów pomocniczych, a kontrakt niesie jedną komendę zbiorczą aktualizacji planszy. Okno dzieli
+to tak: zestawianie układu dzieje się na kanwie i jedzie do rdzenia jednym zapisem w polu warstw;
+to, czego pole warstw nie unosi — wersje, eksport, obecność drugiego Operatora — jest nazwane
+brakiem, nie pozorowane.
+
+Potwierdzenie zapisu opisuje odpowiedź rdzenia, nie wysłane żądanie: odpowiedź niesie całą
+kompozycję odczytaną po zapisie, z nazwą i wykazem warstw. Liczba warstw, która wróciła, jest
+jedyną miarą tego, ile ich leży w rdzeniu; rozbieżność wobec wysłanego układu jest odmową, bo
+kanwa pokazuje wtedy co innego niż baza.
+
+Okno robocze modułu stoi w parze z oknem rozmowy. Profil modułu wymienia Design Board wśród okien
+obowiązkowych, a zasób zlecony w Chat Window przychodzi zdarzeniem zmiany i kładzie się warstwą na
+kanwie bez czynności w tym oknie. Tabliczka nad kanwą opisuje tę drogę także wtedy, gdy nic
+jeszcze nią nie weszło.
+
+Kolejny zapis po odświeżeniu bez wcześniejszego odczytu zakładałby kompozycję nową, bo
+identyfikator kompozycji przepada razem z ekranem.
+
+Bez zaznaczenia okno mówi, czego brakuje, zamiast milczeć: skrót naciśnięty bez skutku i skrót
+niedziałający wyglądają dla Operatora tak samo.
+
+Okno prowadzi jedną kanwę, więc wyboru między kilkoma planszami nie ma czym wyrazić; data
+aktualizacji jest jedyną miarą świeżości, którą niesie kontrakt.
+
+Faza wraca z ładowania, żeby odczyt w toku nie został przykryty stanem pustym.
+
+Zapis pod czuwaniem nie ogłasza niepowodzenia zapisu, który mógł się w rdzeniu odbyć mimo
+zerwanego gniazda.

@@ -7631,3 +7631,10 @@ przedrostek rośnie z numerem wiersza; rodzaj blok dokłada gotowy blok w osobny
 Zestaw narzędzi znacznikowych obejmuje szesnaście pozycji w czterech grupach. Stoją tu wyłącznie
 przekształcenia będące składnią tekstu; formaty binarne wiersza Studio Editor (PDF, DOCX)
 wymagają konwersji i klient ich nie wykona.
+
+## budowa/klient-poprzedni/src/sterowanie/stan-sterowania.ts
+Menu i suwaki pokazują ustawienia zapisane na poziomie okna jako swoje położenie. Nakład zapisany globalnie obowiązuje okno, w którym nikt go nie ustawił — wartość obowiązująca jest więc drugą prawdą, nie tą samą co ustawienie okna. Etykieta steru niesie wartość obowiązującą.
+
+Egzemplarz stanu powstaje osobno dla każdego okna i domyka się na jego identyfikatorze. Nie ma tu ani jednej zmiennej na poziomie modułu, więc dwa okna otwarte obok siebie mają dwa niezależne stany: zmiana w jednym nie ma żadnej drogi, którą mogłaby dosięgnąć drugiego. Komunikat dotyczący innego okna jest pomijany; nie jest to brama wykonania, lecz kierowanie ruchu do właściwego adresata.
+
+Bez drogi przyjmującej zdjęcie zapisu wpis skasowany przez rdzeń wchodziłby jak świeży zapis, zamiast wracać do wartości domyślnej katalogu.

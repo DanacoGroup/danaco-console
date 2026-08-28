@@ -1,3 +1,4 @@
+/* Skrypt obsługuje interakcje okna centrum dowodzenia: wskazówkę startową, karty środowisk, kafle komponentów oraz przełączniki konfiguracji i widoku mobilnego. */
 (function () {
   'use strict';
   function q(s, k) { return (k || document).querySelector(s); }

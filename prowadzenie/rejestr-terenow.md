@@ -6,6 +6,123 @@ przyjęta. Zasady podziału opisuje [ustrój budowy](ustroj-budowy.md).
 
 ## Tereny otwarte
 
+### narzedzia-obszaru-badan
+
+| | |
+|---|---|
+| **Galaz** | `teren/narzedzia-badan` z `main` |
+| **Drzewo** | `~/robocze/narzedzia-badan` |
+| **Wykaz plikow** | `budowa/shared/contract.json`; wytwory `contract.go` i `contract.ts` WYLACZNIE z generatora |
+| **Poza terenem** | rdzen, klient, migracje, `design/`, `prowadzenie/` |
+
+**Podstawa: rozstrzygniecie 20, etap trzeci.** Po dwoch etapach wykaz narzedzi modelu ma
+395 pozycji, a 686 komend nadal stoi poza nim wbrew zasadzie zapisanej w kontrakcie.
+Kolejnosc idzie po tym, gdzie model jest SLEPY, a nie po wielkosci braku:
+
+| Obszar | Wystawionych | Wszystkich |
+|---|---|---|
+| research | 5 | 76 |
+| design | 8 | 104 |
+| extension | 1 | 37 |
+
+Ten teren bierze **research** — obszar badan, do ktorego wlasnie wpieto obrobke wstepna
+unpaperem i rozciecie wykazu jezykow. Model ma dzis w nim piec narzedzi na siedemdziesiat
+szesc komend: nie przeszuka zrodel, nie zalozy zbioru, nie zada rozpoznania pisma
+w materiale, ktory sam znalazl.
+
+**Zadanie.** Dopisac do `narzedzia.pozycje` DOKLADNIE ponizsze 71 pozycji:
+
+1. `research.source.list` — Zwraca zrodla skatalogowane w oknie badania
+2. `research.finding.list` — Zwraca ustalenia zapisane w oknie badania
+3. `research.report.get` — Zwraca raport badania wraz z sekcjami
+4. `research.workspace.get` — Zwraca zakres, etapy i pytania badawcze przestrzeni badania
+5. `research.source.update` — Zmienia metadane zrodla, jego ocene wiarygodnosci i stan lektury
+6. `research.source.remove` — Usuwa zrodlo z katalogu badania wraz z jego powiazaniami
+7. `research.source.merge` — Scala zrodla powtorzone w jedno, przenoszac ich powiazania
+8. `research.source.duplicates` — Wskazuje duplikaty i niemal-duplikaty w katalogu zrodel
+9. `research.source.tag` — Nadaje zrodlu etykiety tematyczne i przypisuje je do kolekcji
+10. `research.source.attachment.add` — Wiaze ze zrodlem zalacznik: pelny tekst, migawke, notatke albo dane
+11. `research.source.attachment.list` — Zwraca zalaczniki zrodla wraz z kontrola ich kompletnosci
+12. `research.source.import` — Wczytuje bibliografie zbiorcza i zaklada z niej zrodla badania
+13. `research.source.capture` — Zapisuje strone jako zrodlo badania: wyodrebniona tresc, migawke albo oba
+14. `research.source.transcribe` — Zamienia nagranie w cytowalny transkrypt ze znacznikami czasu
+15. `research.source.resolve` — Rozstrzyga identyfikator pozycji do pelnych metadanych w schemacie CSL-JSON
+16. `research.discovery.search` — Wyszukuje zrodla w sieci albo w bazach publikacji naukowych
+17. `research.discovery.assist` — Przeksztalca pytanie badawcze w zestaw zapytan wyszukiwawczych z operatorami
+18. `research.discovery.snowball` — Rozwija graf cytowan pozycji wstecz i wprzod
+19. `research.discovery.reject` — Oznacza pozycje wyniku jako odrzucona wraz z uzasadnieniem; zasila liczniki przesiewu
+20. `research.monitor.set` — Zaklada albo zmienia monitor tematu lub kanal RSS i Atom
+21. `research.monitor.list` — Zwraca monitory tematow i kanaly okna badania wraz z liczba nowych pozycji
+22. `research.monitor.refresh` — Odswieza monitory i zwraca nowe pozycje do skrzynki nowych zrodel
+23. `research.batch.import` — Przyjmuje liste adresow do pozyskania w tle jako zadanie petli wykonawczej
+24. `research.reading.open` — Wczytuje tresc zrodla do okna lektury, niezaleznie od tego, czy zrodlo jest plikiem repozytorium
+25. `research.annotation.add` — Zapisuje podswietlenie, notatke albo zakladke zakotwiczona w pozycji zrodla
+26. `research.annotation.list` — Zwraca adnotacje jednego zrodla albo calego okna badania
+27. `research.annotation.remove` — Usuwa adnotacje zrodla
+28. `research.excerpt.list` — Zbiera wypisy z jednego lub wielu zrodel w jedna liste gotowa do syntezy
+29. `research.source.summarize` — Sklada streszczenie pojedynczego zrodla: abstrakt roboczy, tezy, metodologie i wnioski
+30. `research.source.extractTable` — Wyodrebnia tabele i dane liczbowe ze zrodla do postaci ustrukturyzowanej
+31. `research.source.extractClaims` — Wydobywa ze zrodla kluczowe twierdzenia, dane liczbowe i podmioty
+32. `research.source.ocr` — Rozpoznaje tekst w skanie zrodla i wlacza go do wyszukiwania pelnotekstowego
+33. `research.corpus.ask` — Odpowiada na pytanie na podstawie tresci wskazanych zrodel, zakotwiczajac odpowiedz w cytatach
+34. `research.finding.update` — Zmienia tresc ustalenia, jego rodzaj, wage i oznaczenie wymagajace potwierdzenia
+35. `research.finding.remove` — Usuwa ustalenie wraz z jego powiazaniami do zrodel i sekcji
+36. `research.finding.code` — Przypisuje ustaleniu kody tematyczne kodowania jakosciowego
+37. `research.codebook.get` — Zwraca ksiazke kodow badania wraz z licznoscia wystapien
+38. `research.codebook.set` — Zapisuje ksiazke kodow badania: nazwy, definicje i hierarchie kodow
+39. `research.finding.matrix` — Sklada macierz kod na zrodlo wraz z liczba wystapien
+40. `research.finding.contradictions` — Wykrywa sprzecznosci miedzy ustaleniami pochodzacymi z roznych zrodel
+41. `research.contradiction.resolve` — Oznacza sprzecznosc jako rozstrzygnieta wraz z uzasadnieniem i ustaleniem rozstrzygajacym
+42. `research.finding.factCheck` — Weryfikuje twierdzenie wzgledem korpusu zrodel i wyszukiwania
+43. `research.finding.cluster` — Grupuje ustalenia w watki tematyczne przez klastrowanie
+44. `research.finding.merge` — Scala powtorzone ustalenia w jedno z wieloma odnosnikami do zrodel
+45. `research.finding.provenance` — Zwraca slad pochodzenia ustalenia: zrodlo, fragment, sprawce i czas
+46. `research.workspace.question.set` — Zapisuje pytania badawcze przestrzeni badania
+47. `research.workspace.coverage` — Zwraca pokrycie pytan badawczych zrodlami i ustaleniami
+48. `research.workspace.note.set` — Zapisuje notatke robocza badania — hipotezy i pytania otwarte niezwiazane ze zrodlem
+49. `research.workspace.freshness` — Zwraca date ostatniej aktualizacji materialu badania wraz z sugestia odswiezenia
+50. `research.gap.find` — Wskazuje obszary tematu niepokryte zrodlami oraz pytania bez odpowiedzi
+51. `research.prisma.get` — Zwraca liczniki przesiewu przegladu systematycznego wedlug protokolu PRISMA
+52. `research.evidence.graph` — Zwraca graf zrodel, ustalen i twierdzen wraz z relacjami poparcia, sprzecznosci i cytowania
+53. `research.citation.render` — Sklada cytat w tekscie i pozycje bibliograficzna w wybranym stylu CSL
+54. `research.citation.styles` — Zwraca style cytowania dostepne w repozytorium CSL wraz z wariantami wlasnymi
+55. `research.citation.check` — Sprawdza kompletnosc metadanych do cytowania oraz zgodnosc cytowan z bibliografia
+56. `research.retraction.check` — Sprawdza, czy cytowane prace zostaly wycofane albo skorygowane
+57. `research.report.template.list` — Zwraca wzorce struktury raportu wraz z szablonami wlasnymi Operatora
+58. `research.report.summarize` — Sklada streszczenie zarzadcze z ustalen kluczowych i wstawia je na poczatek dokumentu
+59. `research.report.bibliography` — Sklada bibliografie koncowa raportu w wybranym stylu CSL
+60. `research.report.footnote.set` — Ustawia sposob prowadzenia przypisow raportu i przelicza ich numeracje
+61. `research.report.insert` — Osadza w sekcji raportu macierz porownawcza, os czasu, wykres albo tabele dowodow
+62. `research.report.version.list` — Zwraca kolejne kompletacje raportu
+63. `research.report.diff` — Porownuje dwie wersje raportu i oddaje zestawienie roznicowe tresci
+64. `research.report.comment.add` — Zaklada komentarz trybu recenzji zakotwiczony we fragmencie raportu
+65. `research.report.comment.list` — Zwraca komentarze trybu recenzji raportu
+66. `research.report.contextual.op` — Wykonuje operacje kontekstowa na zaznaczonym fragmencie raportu: korekte, streszczenie, zmiane s
+67. `research.export.preview` — Sklada podglad dokumentu w formacie docelowym przed jego wygenerowaniem
+68. `research.export.list` — Zwraca slady wykonanych eksportow raportu
+69. `research.export.template.set` — Zapisuje szablon eksportu — kombinacje formatu, miejsca docelowego i skladu dokumentu
+70. `research.export.template.list` — Zwraca zapisane szablony eksportu
+71. `research.export.share` — Generuje odnosnik do raportu przekazywany odbiorcy bez pobierania pliku
+
+**Jak pisac zdanie `zastosowanie` — szesc rzeczy, na ktorych padla runda pierwsza.**
+1. Zdanie mowi KIEDY siegnac, nie CO komenda robi. Model widzi opis komendy I zdanie
+   w JEDNYM napisie; powtorzenie opisu zostawia pole wyzwalacza puste co do tresci.
+2. Zdanie NIE powiela ksztaltu zadania: zadnych wartosci pol ani wyliczen.
+3. Zdanie NIE ZAWEZA skutku wbrew opisowi komendy. Poprzednio zdanie obiecalo, ze kasowana
+   bedzie „cala historia NIEPRZYPIETA", a komenda kasuje takze przypiete.
+4. Wyzwalacz ma byc SPRAWDZALNY PRZEZ MODEL — warunek, ktorego model nie widzi, nim nie jest.
+5. Zdanie nie gubi OSTRZEZENIA stojacego w opisie komendy.
+6. Pary bliskie sobie maja byc rozroznialne. W tym obszarze rozroznij zwlaszcza
+   wyszukiwanie od czytania zrodla i zakladanie zbioru od dopisania do niego.
+
+**Kryteria odbioru.**
+1. Dopisane DOKLADNIE 71 pozycji, roznica zbiorow policzona programem.
+2. Zero wiszacych, zero powtorzen, zero pustych `zastosowanie`.
+3. Wytwory przebudowane GENERATOREM, nie recznie.
+4. `bash narzedzia/drabina.sh szybka` przechodzi wraz ze szczeblem swiezosci wytworow.
+5. Zadna inna sekcja `contract.json` nie ruszona.
+
+
 ### instalator-jako-program
 
 | | |

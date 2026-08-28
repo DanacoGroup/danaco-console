@@ -1,7 +1,4 @@
-// Odpowiedzialność pliku: dojście wyboru Operatora do decyzji toru. Dwa
-// odczyty bazy — nazwa hosta z ustawienia `host_wykonania` (migracja 012)
-// i wiersz hosta ze zgodą (`host_zdalny`, migracja 088) — oraz odmowy
-// trójczęściowe dla każdej brakującej części drogi.
+// Pakiet zdalne prowadzi wybór operatora maszyny od nazwy hosta wykonania do decyzji toru zdalnego SSH.
 package zdalne
 
 import (
@@ -10,7 +7,7 @@ import (
 	"strings"
 )
 
-// Host to wiersz tabeli `host_zdalny` potrzebny torowi do zbudowania połączenia.
+// Host to wiersz tabeli hostów zdalnych, potrzebny torowi do zbudowania połączenia SSH z daną zdalną maszyną.
 type Host struct {
 	Id         int64
 	Nazwa      string
@@ -29,13 +26,7 @@ func (h Host) AdresPolaczenia() string {
 	return h.Nazwa
 }
 
-// hostOkna czyta nazwę hosta wykonania obowiązującą dla okna. Odczyt idzie po
-// dwóch poziomach zasięgu, które pakiet zna z tożsamości okna: `okno` (zapis
-// kontrolki „Host wykonania") i `globalny`; węższy wygrywa.
-// Poziomy pośrednie (sesja, projekt, moduł…) zna wyłącznie rozstrzygacz rdzenia
-// — pełne rozstrzyganie ośmiu poziomów wymaga osobnego wpięcia, a do tego czasu
-// odczyt węższego i najszerszego poziomu jest uczciwym podzbiorem, nie atrapą
-// całości.
+// Funkcja hostOkna czyta nazwę hosta wykonania obowiązującą dla danego okna, po dwóch poziomach zasięgu.
 func hostOkna(idOkna string) (string, error) {
 	db := baza()
 	if db == nil {

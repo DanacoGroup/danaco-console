@@ -6627,3 +6627,10 @@ nie wyglądały identycznie.
 Pole składu w odpowiedzi czynności moderatora jest polem nieobowiązkowym; rdzeń dokłada je tylko
 przy zmianie składu albo kolejności głosu. Odczyt składu jest w kontrakcie, ale żadne okno modułu
 go jeszcze nie wywołuje, więc wykaz raz wymazany zostaje w tym stanie nieodzyskiwalny.
+
+## budowa/klient-poprzedni/src/okna-rownolegle/parametry-podgladu.ts
+Adres podglądu dopuszcza kombinacje takie jak liczba okien z motywem, stanem
+pary i chwilą przekazania naraz, albo sam kod modułu z liczbą okien, gdzie
+scena bierze tyle okien, ile prowadzi wskazany moduł. W produkcie moduł
+sceny przychodzi zdarzeniem zmiany okna, nie parametrem adresu — parametr
+modułu istnieje wyłącznie na potrzeby podglądu bez rdzenia.

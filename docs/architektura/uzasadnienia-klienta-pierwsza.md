@@ -7012,3 +7012,16 @@ Polecenie wysyłania wiadomości przepisuje załączniki do zakładanej wiadomo�
 
 ## budowa/klient-poprzedni/src/moduly/browser/skutek-zapisu.ts — nazwa czynności przeniesienia
 Czynność nazywa, co przeniesiono, na przykład „Przekazano 3 źródła", bo tego rdzeń nie oddaje: odpowiedź przeniesienia kontekstu niesie okno docelowe i znacznik przeniesienia, nie zawartość kompletu. Zdanie mówi więc osobno, co wysłano, i osobno, co potwierdził rdzeń.
+
+## budowa/klient-poprzedni/src/moduly/multitasking/panel-subagent-network.ts
+Definicje podagentów dostępnych w sesji stoją w obszarze narzędzi
+konfiguracji sesji, odczytywanym na poziomie sesji, a panel zestawia ten
+wykaz z górnym limitem podagentów na wykonawcę. Powołanie, wykaz biegnących
+i zebranie wyników wymagają okna wykonawcy, a to panel dostaje wyłącznie
+w polu opcjonalnym. Gdy wołający je podał, panel stawia formularz powołania
+oraz żywy wykaz z odświeżeniem i zbieraniem; gdy nie podał, nie ma
+identyfikatora okna, więc nie ma czego wołać, i w to samo miejsce wchodzą
+kontrolki nieczynne z powodem wziętym z wykazu komend oddanego przez
+rdzeń. Definicje jako pole nieokreślonego kształtu należą do dostawcy
+kanału, nie do kontraktu, dlatego widok bierze zapis surowy zamiast udawać,
+że definicji nie ma.

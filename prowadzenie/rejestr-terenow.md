@@ -6,6 +6,70 @@ przyjęta. Zasady podziału opisuje [ustrój budowy](ustroj-budowy.md).
 
 ## Tereny otwarte
 
+### domkniecie-obrobki-wstepnej
+
+| | |
+|---|---|
+| **Galaz** | `teren/domkniecie-obrobki-wstepnej` z `teren/obrobka-wstepna-dokumentow`, scalona z `main` przy zalozeniu |
+| **Drzewo** | `~/robocze/domkniecie-obrobki-wstepnej` |
+| **Wykaz plikow** | `budowa/server/internal/core/adapter_narzedzia_dokument_tekst.go`; `budowa/server/internal/core/skutek_narzedzi_tresci_pisanej_test.go`; `budowa/server/internal/core/adapter_modul_badania_lektura.go`; `budowa/server/internal/core/adapter_modul_badania_lektura_test.go` |
+| **Poza terenem** | kontrakt i jego wytwory, `adapter_modul_studio_cyfryzacja.go`, migracje, `prowadzenie/` |
+
+**Przedmiot.** Teren `obrobka-wstepna-dokumentow` przyjeto: `preprocess` dziala na drodze
+`document.text.extract`, sprawdzian mierzy roznice wyniku i pada przed naprawa. Kontrola
+nazwala jednak szesc oslabien, a osobny werdykt — jedna usterke BLOKUJACA scalenie.
+Ten teren domyka je wszystkie, zanim lancuch wejdzie do `main`.
+
+**1. USTERKA BLOKUJACA — wielojezycznosc rozsypuje sie na dwoch jezykach.**
+`adapter_modul_badania_lektura.go:99-101` sklada jezyki przez `strings.Join(jezyki, "+")`,
+a `jezykRozpoznaniaDokumentu` (`adapter_narzedzia_dokument_tekst.go:342-353`) rozpoznaje
+wylacznie nazwy pojedyncze i lancucha po `+` nie rozcina. `Languages: ["pl","en"]` daje
+`-l pl+en`. Maszyna niesie wylacznie `eng`, `osd`, `pol`. Zadanie POPRAWNE WOBEC KONTRAKTU
+konczy sie cicha awaria rozpoznania. Jeden jezyk przechodzi, wiec usterka czeka na drugi.
+
+**2. Dwie prawdy o wierszu wywolania unpapera.** `argumentyObrobkiWstepnejDokumentu`
+(`adapter_narzedzia_dokument_tekst.go:397-401`) powiela argumenty z `argumentyCzyszczenia`
+(`adapter_modul_studio_cyfryzacja.go:454-468`) w wariancie „wszystko wlaczone". Komentarz
+zapewnia „tak samo jak w drodze Studia" — dzis prawda, ale NIC TEGO NIE WIAZE. Zmiana
+jednej strony rozejdzie sie po cichu.
+
+**3. Straznik odmowy nie biegnie na zadnej maszynie drabiny.**
+`skutek_narzedzi_tresci_pisanej_test.go:357-359` pomija sie sam wszedzie tam, gdzie
+unpaper STOI — czyli na kazdej maszynie weryfikacji. W drabinie wypada SKIP, nie PASS.
+Regresja w tresci odmowy przejdzie niezauwazona.
+
+**4. Sprawdzian potrafi sam sie rozbroic.** `:329-334` niesie `t.Skip("pomiar
+bezprzedmiotowy")` na wypadek, gdyby rozpoznanie odczytalo material pochylony bez obrobki.
+Mocniejszy tesseract albo lagodniejszy skos zamieni miare w zielony SKIP. Rozbrojenie
+bedzie wygladalo jak powodzenie — a to jest grozniejsze od bledu.
+
+**5. Droga PDF nieprzemierzona z polem `preprocess`.** `:255-256, 301-302, 321` przekazuja
+`obrobkaWstepna` przez `tekstZPdf` i `rozpoznajPismoWPdf`; kompiluje sie, ale zaden
+sprawdzian ta galezia nie idzie. Zmierzona jest wylacznie droga obrazu.
+
+**6. Odmowa zapada po pelnym renderze.** `zewnetrzne.Stoi(narzedzieCzyszczeniaSkanu)`
+siedzi w `rozpoznajPismo` (`:355-364`), wiec na drodze PDF Operator bez unpapera placi
+renderem wszystkich stron w 300 dpi, zanim zobaczy odmowe. Studio pyta o program PRZED praca.
+
+**7. Sprawdzian, ktory klamie o sobie.** `adapter_modul_badania_lektura_test.go:29-32`
+fabrykuje roznice wewnatrz atrapy (`if z.Preprocess != nil && *z.Preprocess { tekst =
+"tekst po obrobce wstepnej" }`), a komentarz w wierszach 62-65 oglasza, ze „mierzy skutek".
+Miare skutku na drodze produkcyjnej wnosi juz teren poprzedni. Ten sprawdzian albo znika,
+albo przestaje twierdzic o sobie rzecz nieprawdziwa.
+
+**Kryteria odbioru.**
+1. `Languages: ["pl","en"]` daje Tesseractowi wykaz, ktory ten rozumie, albo ODMOWE NAZWANA
+   dla jezyka, ktorego maszyna nie niesie. Cicha awaria nie jest dopuszczalna. Sprawdzian
+   mierzy to na drodze produkcyjnej i PADA przed naprawa.
+2. Argumenty unpapera maja jedna prawde: albo jedno zrodlo, albo sprawdzian wiazacy obie
+   strony, ktory pada przy rozejsciu.
+3. Zaden sprawdzian tego obszaru nie przechodzi milczkiem tam, gdzie mial mierzyc.
+   Rozstrzygniecie o drodze nalezy do wykonawcy i ma byc nazwane.
+4. Droga PDF z polem `preprocess` jest zmierzona uruchomieniem, nie czytaniem.
+5. Odmowa braku programu zapada PRZED kosztowna praca, tak jak w drodze Studia.
+6. `go build ./...` oraz sprawdziany obszaru tresci pisanej przechodza.
+
+
 ### miara-skutku-twarzy
 
 | | |

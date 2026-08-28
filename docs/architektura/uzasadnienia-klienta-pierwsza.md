@@ -7994,3 +7994,36 @@ Wykaz procesów nie zastępuje obrazu interwencji. Obraz stoi na pięciu komenda
 Sterowanie nie ma w kontrakcie zdarzenia własnego, więc po każdym udanym poleceniu wykaz czyta się na nowo. Proces oddany w odpowiedzi opisuje jeden wiersz; o pozostałych rozstrzyga rdzeń, a nie widok, który je wcześniej widział.
 
 Zatrzymanie i ponowne uruchomienie przerywają pracę, która biegnie: tego, co proces zdążył zrobić, żadne z nich nie odda. Zatwierdzenie i modyfikacja idą naprzód, nie w tył.
+
+## budowa/klient-poprzedni/src/moduly/design/panel-zasobow.ts
+Ma kształt panelu pomocniczego, więc staje w pasie paneli dowolnego modułu i w kolumnie paneli
+sceny okien równoległych. Poza nim zasoby Designu są osiągalne wyłącznie wewnątrz złożenia modułu
+Design.
+
+Panel jest osobnym, gęstszym widokiem tych samych danych, a nie opakowaniem okna Assets Panel.
+Tamto okno nie ma czynności zamknięcia — subskrypcję zmiany zasobu trzyma stan modułu, a zdejmuje
+ją rozłączenie wołane przez moduł — i żąda całego stanu modułu wraz z komendami odczytu okien,
+stanu okna, kanałów, modułów oraz kanwy Design Board, której poza modułem Design nie ma. Tu mieści
+się jeden wiersz nagłówka, nie trzy pasy kontrolek okna operacyjnego.
+
+Własnych reguł o zasobie panel nie pisze — pożycza komplet od modułu: źródło danych jako jedyna
+warstwa wywołań odczytu i subskrypcji zmiany, zapis jako całe wciąganie zmian wraz z gałęzią
+usunięcia, kartę zasobu i predykat frazy jako jedną kopię na moduł, stan okna jako trzy stany
+obowiązkowe, tor komendy jako zdanie doklejane do odmowy. Oba widoki zbiegają się na tym samym
+zdarzeniu rdzenia.
+
+Panel czyta zasoby wszystkich okien Designu i nazywa to w stanie pustym. Okno gospodarza niesie
+okno panelu pomocniczego, a nie okno modułu Design; pole okna żądania jest opcjonalne, a warunki
+filtra dokładają warunek okna tylko wtedy, gdy pole przyszło. Podstawienie okna gospodarza
+zawęziłoby wykaz do zasobów obcego okna, czyli najczęściej do pustki, więc panel pola nie
+podstawia.
+
+Panel nie oddaje zasobu gospodarzowi: komendy wstawiającej zasób Designu w rozmowę obcego modułu
+kontrakt nie ma, a przekazanie kontekstu biegnie przeciwnie — z okna źródłowego do modułu
+docelowego, otwierając tam okno. Nie generuje, nie nadaje etykiet i nie zapisuje kompozycji; te
+czynności zostają w oknach modułu Design.
+
+Rozdział po rodzaju zmiany idzie z modułu wraz z gałęzią usunięcia, żeby panel nie pokazał jako
+obecnego zasobu, o którym rdzeń właśnie powiedział, że go nie ma.
+
+Czytanie przy pierwszym odczycie zleciłoby odczyt zasobów dwa razy pod rząd.

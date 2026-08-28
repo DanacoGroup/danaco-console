@@ -15,19 +15,8 @@ import { utworzZrodloDesignu, type ZapytanieZasobow, type ZrodloDesignu } from '
 import { utworzZrodloZaplecza, type ZrodloZaplecza } from './zrodlo-zaplecza';
 
 /**
- * Jeden zbiór zasobów i jedno okno modułu na cały moduł Design.
- *
- * Jedna odpowiedzialność: rozdanie trzem oknom tej samej prawdy i powiadomienie
- * ich o każdej jej zmianie.
- *
- * Trzy okna patrzą na ten sam zbiór. Prompt Builder oddaje wynik generowania do
- * Assets Panel, Assets Panel oddaje zasób na kanwę Design Board. Gdyby każde
- * okno prowadziło własny wykaz, zasób wygenerowany w kreatorze nie pojawiłby
- * się w panelu, a kanwa układałaby warstwy z zasobów, których panel już nie ma.
- *
- * Zdarzenie `design.asset.changed` jest drugim źródłem odświeżenia: wciąga
- * zasób powstały gdziekolwiek — także po stronie rdzenia — dokładnie tak samo
- * jak własny odczyt. Odpytywania w pętli tu nie ma.
+ * Jeden zbiór zasobów i jedno okno modułu na cały moduł Design, rozdane trzem oknom wraz
+ * z powiadomieniem o zmianie.
  */
 export type { FazaZasobow } from './zapis-designu';
 
@@ -36,12 +25,7 @@ export interface StanDesignu {
   zrodlo: ZrodloDesignu;
   /** Zaplecze: okno modułu, rejestry, przekazanie międzymodułowe, postęp. */
   zaplecze: ZrodloZaplecza;
-  /**
-   * Czuwanie nad czynnościami okien — jedno na moduł.
-   *
-   * Stoi tutaj, a nie w każdym oknie osobno, bo próba życia kanału jest
-   * pytaniem o jedną wspólną drogę do rdzenia, nie o okno.
-   */
+  /** Czuwanie nad czynnościami okien — jedno na moduł, bo próba życia pyta o wspólną drogę, nie o okno. */
   czuwanie: CzuwanieRdzenia;
   /** Okno modułu Design w bieżącej sesji; puste, gdy rdzeń go nie wskazał. */
   idOkna(): string;
@@ -68,14 +52,7 @@ export interface StanDesignu {
   odswiezZaplecze(): Promise<void>;
   /** Wciąga zasób po własnej zmianie, bez czekania na zdarzenie. */
   wchlon(zasob: DesignAsset): void;
-  /**
-   * Zdejmuje zasób po własnym usunięciu, bez czekania na zdarzenie.
-   *
-   * Idzie tą samą funkcją co gałąź `deleted` zdarzenia. Rdzeń rozgłasza
-   * usunięcie i zdarzenie i tak przyjdzie, ale okno, które właśnie kazało zasób
-   * usunąć, nie ma prawa pokazywać go dalej ani przez chwilę — a kolejność
-   * ramek nie jest niczym zagwarantowana.
-   */
+  /** Zdejmuje zasób po własnym usunięciu, bez czekania na zdarzenie o niezagwarantowanej kolejności. */
   zdejmij(idZasobu: string): void;
   obserwuj(sluchacz: () => void): () => void;
   rozlacz(): void;
@@ -87,10 +64,7 @@ export function utworzStanDesignu(kanal: Kanal): StanDesignu {
   const sluchacze = new Set<() => void>();
   const zapis: ZapisDesignu = pustyZapisDesignu();
 
-  // Próbą życia kanału jest najtańszy odczyt obszaru: jeden zasób, warunki
-  // bieżącego okna. Komenda ma uchwyt w rdzeniu i odpowiada w milisekundach,
-  // a odmowa też jest odpowiedzią — dowodzi, że kanał żyje. Wynik nigdzie nie
-  // wsiąka: próba niczego nie zapisuje w stanie i nie rusza wykazu.
+  // Próbą życia kanału jest najtańszy odczyt; odmowa też jest odpowiedzią, dowodzi, że kanał żyje.
   const czuwanie = utworzCzuwanieRdzenia(() =>
     zrodlo.zasoby({ ...zapis.warunki, idOkna: zapis.oknoModulu, granica: 1 }),
   );
@@ -105,23 +79,14 @@ export function utworzStanDesignu(kanal: Kanal): StanDesignu {
     oglos();
   }
 
-  // Rozdział po rodzaju zmiany. Nadawcą rodzaju `deleted` jest komenda
-  // `design.asset.remove`: usunięcie zlecone w drugim oknie albo w obcym
-  // połączeniu zdejmuje tu zasób z wykazu.
+  // Rozdział po rodzaju zmiany: usunięcie zlecone gdzie indziej zdejmuje tu zasób z wykazu.
   const odsubskrybuj = zrodlo.naZmianeZasobu((tresc) => {
     if (tresc.change === ChangeKind.Deleted) usunZasob(zapis, tresc.asset.id);
     else wchlonZasob(zapis, tresc.asset);
     oglos();
   });
 
-  /**
-   * Odczyt zasobów pod czuwaniem.
-   *
-   * Odczyt zlecony przed zerwaniem gniazda nie dostaje odpowiedzi nigdy, więc
-   * okno zarządcy stałoby w „Odczyt zasobów w toku…" także po powrocie rdzenia.
-   * Cisza kanału trafia więc do fazy błędu wraz z powodem, który mówi prawdę:
-   * odczytu nie ma, a wykaz na ekranie jest sprzed zerwania.
-   */
+  /** Odczyt zasobów pod czuwaniem; cisza kanału trafia do fazy błędu z powodem mówiącym prawdę o wykazie. */
   async function odczytajPodCzuwaniem(): Promise<void> {
     const wywolanie = zrodlo.zasoby(zapis.warunki);
     const wynik = await czuwanie.prowadz('odczyt zasobów', wywolanie, {
@@ -136,9 +101,7 @@ export function utworzStanDesignu(kanal: Kanal): StanDesignu {
         oglos();
       },
       powrot: (zdanie) => {
-        // Zdanie o powrocie należy się wyłącznie oknu, które nadal stoi na
-        // ciszy. Gdy odpowiedź zdążyła przyjść, prawdą jest ona, nie zapowiedź
-        // jej braku.
+        // Zdanie o powrocie należy się wyłącznie oknu, które stoi na ciszy, nie temu, co już ma odpowiedź.
         if (!zapis.bezRozstrzygniecia) return;
         zapis.powod = zdanie;
         oglos();
@@ -148,12 +111,7 @@ export function utworzStanDesignu(kanal: Kanal): StanDesignu {
       przyjmijOdczytZasobow(zapis, wynik);
       return;
     }
-    // Odpowiedź spóźniona jest nadal prawdą o rdzeniu i odczyt może ją przyjąć.
-    // Żądanie złożone przy martwym rdzeniu czeka w kolejce wychodzącej, a rdzeń
-    // odpowiada na nie po ponownym połączeniu. Odczyt jest powtarzalny i niczego
-    // nie zmienia w rdzeniu, więc przyjęcie takiej odpowiedzi nie niesie ryzyka.
-    // Czynności zmieniające stan tej drogi nie mają: tam spóźniona odpowiedź
-    // jest tylko zdaniem, bo skutek i tak trzeba odczytać.
+    // Odpowiedź spóźniona jest wciąż prawdą; powtarzalny odczyt nie niesie ryzyka jej przyjęcia.
     void wywolanie.then((spozniony) => {
       przyjmijOdczytZasobow(zapis, spozniony);
       oglos();

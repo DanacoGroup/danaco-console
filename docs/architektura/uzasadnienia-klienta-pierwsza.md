@@ -8415,3 +8415,33 @@ sąsiedniej zakładki. Wędrówka strzałkami należy do wzorca zakładek: pas m
 jeden przystanek tabulatora, zakładkę czynną, a strzałki przenoszą wybór
 między zakładkami — bez tego pas byłby tyloma przystankami przed treścią, ile
 ma pozycji. Bliźniaczy mechanizm stoi w module Diagnostics i w oknie modeli.
+
+## budowa/klient-poprzedni/src/moduly/design/stan-designu.ts
+Trzy okna obserwują ten sam zbiór. Prompt Builder oddaje wynik generowania do Assets Panel, Assets
+Panel oddaje zasób na kanwę Design Board. Gdyby każde okno prowadziło własny wykaz, zasób
+wygenerowany w kreatorze nie pojawiłby się w panelu, a kanwa układałaby warstwy z zasobów, których
+panel już nie ma.
+
+Zdarzenie zmiany zasobu jest drugim źródłem odświeżenia: wciąga zasób powstały gdziekolwiek —
+także po stronie rdzenia — dokładnie tak samo jak własny odczyt. Odpytywania w pętli tu nie ma.
+
+Czuwanie stoi tutaj, a nie w każdym oknie osobno, bo próba życia kanału jest pytaniem o jedną
+wspólną drogę do rdzenia, nie o okno.
+
+Zdejmowanie zasobu idzie tą samą funkcją co gałąź usunięcia zdarzenia. Rdzeń rozgłasza usunięcie
+i zdarzenie i tak przyjdzie, ale okno, które właśnie kazało zasób usunąć, nie ma prawa pokazywać
+go dalej ani przez chwilę.
+
+Próba życia to jeden zasób z warunkami bieżącego okna. Komenda ma uchwyt w rdzeniu i odpowiada
+w milisekundach. Wynik nigdzie nie wsiąka: próba niczego nie zapisuje w stanie i nie rusza wykazu.
+
+Nadawcą rodzaju zmiany usunięcia jest komenda usunięcia zasobu.
+
+Odczyt zlecony przed zerwaniem gniazda nie dostaje odpowiedzi nigdy, więc okno zarządcy stałoby
+w stanie odczytu w toku także po powrocie rdzenia; odczytu nie ma, a wykaz na ekranie jest sprzed
+zerwania.
+
+Żądanie złożone przy martwym rdzeniu czeka w kolejce wychodzącej, a rdzeń odpowiada na nie po
+ponownym połączeniu. Odczyt jest powtarzalny i niczego nie zmienia w rdzeniu. Czynności zmieniające
+stan tej drogi nie mają: tam spóźniona odpowiedź jest tylko zdaniem, bo skutek i tak trzeba
+odczytać.

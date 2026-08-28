@@ -67,7 +67,7 @@
      samą wartość, którą kolumna wnosi wypełnieniem — inaczej pas urywa się
      w powietrzu zamiast domykać panel. */
   --we-wciecie-x: var(--dn-od-6);
-  --we-wciecie-y: var(--dn-od-5);
+  --we-wciecie-y: var(--dn-od-6);
 
   /* Wymiar stały. Okno wejścia nie zmienia rozmiaru między widokami —
      `min-height` pozwalał mu rosnąć razem z treścią widoku.
@@ -189,11 +189,11 @@
   background: var(--dn-okno-plotno);
   display: flex;
   flex-direction: column;
-  /* Rytm kolumny. Najwyższa odsłona to logowanie z komunikatem o brakujących
-     danych: przy 16 px wychodziła 22 px poza okno. 12 px mieści ją z zapasem
-     i nie zbliża bloków na tyle, żeby się zlewały — odstęp wewnątrz grupy pól
-     jest i tak mniejszy, więc podział na bloki nadal widać. */
-  gap: var(--dn-od-3);
+  /* Rytm kolumny wzięty z rodziny .dn-okno-wejsciowe. Zapis o tym, że przy
+     16 px najwyższa odsłona wychodzi poza okno, pochodził sprzed przebudowy
+     drabiny — zmierzone ponownie: wszystkie siedem odsłon mieści się bez
+     przewijania. */
+  gap: var(--dn-od-4);
   /* Wcięcie z jednego źródła: stopka sięga krawędzi kolumny ujemnym
      marginesem tej samej wielkości. Dwie wartości wpisane osobno rozjeżdżają
      się przy pierwszej zmianie i zostawiają pas wiszący nad krawędzią. */

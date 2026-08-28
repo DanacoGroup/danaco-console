@@ -6313,3 +6313,12 @@ uczciwym podzbiorem, nie atrapą całości.
 
 Brak wiersza hosta i brak zgody na jego użycie są odmowami trójczęściowymi — każda nazywa dokładnie ten
 ruch operatora maszyny, który ją zdejmuje.
+
+## budowa/server/internal/zdalne/pliki.go
+
+Każdy wykonany ruch bajtów zostawia wiersz prowenancji w tabeli przeniesień zdalnych. Nagrania dźwięku
+nie jadą tym torem: dźwięk nie opuszcza maszyny operatora, a potrzeby też nie ma, ponieważ silnik mowy
+jest usługą rdzenia i bierze ścieżkę na maszynie silnika, więc transkrypcja domyka się przed torem,
+a do procesu zdalnego jedzie wyłącznie tekst. Wykaz rozszerzeń nagrań jest jeden, wspólny ze słownikiem
+formatów nagrań silnika mowy — drugiej listy ten plik nie zakłada. W rdzeniu funkcję przenoszenia woła
+spoina katalogów roboczych przy zasięgu zdalnym.

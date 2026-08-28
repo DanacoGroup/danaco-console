@@ -6,19 +6,14 @@ import (
 	"danacoconsole/shared"
 )
 
-// ZajetoscKontekstu jest portem `context.usage.get` — pomiaru zajętości okna
-// kontekstu rozmowy.
-//
-// Port osobny od `Przenoszenie`, mimo wspólnego przedrostka `context.`.
-// Przeniesienie kompletu kontekstu między oknami i pomiar zajętości okna nie
-// mają ze sobą nic wspólnego poza słowem w nazwie: pierwsze zakłada okno,
-// drugie liczy żetony tokenizatorem. Wspólny port związałby ich dostępność
-// w jedno „jest albo nie ma".
+// ZajetoscKontekstu jest portem `context.usage.get`, portem pomiaru zajętości
+// okna kontekstu rozmowy, osobnym od portu `Przenoszenie`.
 type ZajetoscKontekstu interface {
 	ZajetoscKontekstu(ctx context.Context, z shared.ContextUsageGetRequest) (shared.ContextUsageGetResponse, error)
 }
 
-// Adapter wypełnia port w całości.
+// Adapter wypełnia port w całości. Gdyby port i adapter się rozjechały,
+// kompilacja stanie tutaj, a nie dopiero na martwej komendzie u Operatora.
 var _ ZajetoscKontekstu = (*adapterZajetosciKontekstu)(nil)
 
 // zarejestrujZajetoscKontekstu wpina `context.usage.get`.
@@ -32,14 +27,9 @@ func zarejestrujZajetoscKontekstu(r *Rejestr, z ZajetoscKontekstu) {
 	r.Zarejestruj(shared.CommandContextUsageGet, obsluz(z.ZajetoscKontekstu))
 }
 
-// zarejestrujPrzenoszenie wpina przekazanie kompletu kontekstu między modułami
-// jedną komendą: polecenie, dokumenty, projekt, agenci, historia,
-// źródła wiedzy i parametry wykonania idą razem.
-//
-// Jedna komenda, nie ścieżka per moduł — dlatego rdzeń nie rozgałęzia się tu na
-// moduł docelowy. Przeniesienie kończy się oknem docelowym, więc rdzeń rozgłasza
-// zmianę tego okna: klient dowiaduje się o nowym oknie tą samą drogą, co przy
-// window.create.
+// zarejestrujPrzenoszenie wpina przekazanie kompletu kontekstu między
+// modułami jedną komendą, obejmującą polecenie, dokumenty, projekt, agentów,
+// historię, źródła wiedzy i parametry wykonania.
 func zarejestrujPrzenoszenie(r *Rejestr, przenoszenie Przenoszenie, e *emiter) {
 	if r == nil || przenoszenie == nil {
 		return

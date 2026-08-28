@@ -6784,3 +6784,35 @@ Macierz środowisk buduje jedno złączenie zamiast pętli zapytań po jednym na
 moduł. Porządek wiersza w wyniku ustala zapytanie z pliku dane/macierz.go,
 sortujące po kolejności środowiska, kodzie środowiska, kolejności modułu
 w środowisku i kodzie modułu.
+
+## budowa/server/internal/core/handlers_context.go
+Port `ZajetoscKontekstu` jest osobny od portu `Przenoszenie`, mimo wspólnego
+przedrostka `context.`: przeniesienie kompletu kontekstu między oknami i pomiar
+zajętości okna nie mają ze sobą nic wspólnego poza słowem w nazwie — pierwsze
+zakłada okno, drugie liczy żetony tokenizatorem. Wspólny port związałby ich
+dostępność w jedno rozstrzygnięcie zamiast dwóch niezależnych. Komenda
+`context.usage.get` niczego nie rozgłasza: pomiar jest odczytem, a zmianę
+zajętości wywołuje tura, o której mówi już rodzina `message.*`. Przekazanie
+kompletu kontekstu idzie jedną komendą, nie ścieżką per moduł, więc rdzeń nie
+rozgałęzia się tu na moduł docelowy; przeniesienie kończy się oknem docelowym,
+więc rdzeń rozgłasza zmianę tego okna tą samą drogą, co przy założeniu okna.
+
+## budowa/server/internal/core/handlers_diagnostics.go
+Moduł Diagnostics obejmuje cztery okna operacyjne: Diagnostics Center, Logs
+Viewer, Errors Panel i Recommendations Panel. Cały moduł ma jedno zdarzenie —
+kontrakt daje mu wyłącznie zdarzenie zmiany analizy, więc Recommendations Panel
+odświeża się z jednej subskrypcji po każdym uruchomieniu analizy w Diagnostics
+Center. Dziennik i błędy zdarzenia nie mają: kontrakt nie niesie ani zdarzenia
+dopisania wpisu, ani zgłoszenia błędu, więc Logs Viewer odczytuje dziennik
+w odstępie zadanym przez operatora, a rdzeń niczego nie rozgłasza na wyrost.
+Port obserwatora niepowodzeń jest osobny od portu modułu ze względu na kierunek
+zależności: rdzeń nie ma prawa wiedzieć, że istnieje moduł Diagnostics, wie
+wyłącznie, że ktoś może chcieć usłyszeć o niepowodzeniu — bez tego rozdzielenia
+dyspozytor komend zależałby od jednego z modułów. Funkcja `odmowaNieznanej`
+odnotowuje odmowę ze źródłem równym typowi żądanemu, nie nazwie zdarzenia
+obszaru, bo Errors Panel stawia to źródło w tytule pozycji i po nim grupuje
+wystąpienia — nazwa zdarzenia obszaru zlepiłaby wszystkie nieobsłużone komendy
+w jeden nierozróżnialny wiersz. Rozgłoszenia po uruchomieniu analizy nie ma
+w obsługiwaczu z zamysłem: nadaje je adapter, bo tylko on wie, czy migawka
+rzeczywiście powstała — rozgłoszenie z obsługiwacza powiadamiałoby także
+o analizie, której zapis się nie powiódł.

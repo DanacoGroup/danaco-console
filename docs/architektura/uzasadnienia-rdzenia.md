@@ -7025,3 +7025,33 @@ Kod punktu odczytywany jest raz na punkt, nie raz na nadanie: okno bywa
 związane z kilkoma nadaniami tego samego mostu, przy odczycie i zapisie
 osobno, więc bez pamięci podręcznej ten sam wiersz punktu szedłby z bazy
 wielokrotnie przy jednym odczycie zbioru.
+
+## budowa/server/internal/core/adapter_rozmowa_petla.go
+Pakiet sesji rozstrzyga, kiedy zacząć obieg koordynatora — pilnuje wybudzeń,
+licznika obiegów i warunku zatrzymania. Ten plik rozstrzyga, jak go zacząć.
+Drugiego silnika tury w rdzeniu nie ma.
+
+Warunki zamknięcia tury i ich kolejność są te same, co przy ustalaniu stanu
+odpowiedzi ze zdarzeń kanału w innym pliku rdzenia, celowo: pętla poznaje
+wynik pracy po powodzie tury, a uczestnik rozmowy po stanie wiadomości, oba
+wychodzą z jednego zamknięcia zdarzenia. Zdarzenie wyniku z oznaczeniem błędu
+liczy się także wtedy, gdy kanał dowiózł turę bez błędu — inaczej tura
+zamknięta błędem przy sprawnym kanale szłaby do pętli jako wynik i bieg
+ogłaszałby ukończenie, choć wiadomość ma stan błędu.
+
+## budowa/server/internal/core/handlers_isolation.go
+Dwanaście komend obsługuje jedno okno i jedną maszynerię: te same jedenaście
+punktów izolacji, ten sam adres zapisu i ten sam rozstrzygacz ośmiu poziomów —
+trzy porty, dla macierzy, profili i podglądu, byłyby trzema prawdami o jednym
+module. Rodzina ma trzy zdarzenia i żadne nie leci z tego pliku, bo rozgłasza
+je adapter, jedyny, który wie, co naprawdę poszło do bazy i pod jaki adres:
+`config.changed`, bo zapis punktu izolacji zmienia wiersz tabeli `ustawienie`
+i idzie tym samym zdarzeniem, co zapis rodziny `config.*`; `isolation.profile.
+changed` przy założeniu, zmianie i skasowaniu profilu; `isolation.policy.
+changed`, gdy polityka obowiązująca okna stała się inna, po zapisie punktu pod
+adresem okna, po przypisaniu profilu do okna i po przełączeniu warstwy okna.
+Zapis samego profilu polityki nie zmienia, bo profil jest szablonem, więc
+`isolation.profile.changed` i `isolation.policy.changed` nie chodzą parami —
+uchwyty w tym pliku nie biorą nadajnika, bo brałyby go po to, żeby go nie
+użyć. Port niewypełniony nie rejestruje niczego: komendy odpowiedzą wtedy
+`isolation.unknown`, a pozostałe domeny pracują bez zmian.

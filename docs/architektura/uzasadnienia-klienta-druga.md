@@ -6490,3 +6490,9 @@ tak samo jak po zamknięciu sesji. Ognisko jest właściwością klienta. Kartę
 przeniesienie ogniska tego klienta, nie konta — zdarzenia z innego identyfikatora klienta pas
 pomija. Zanim padnie pierwsze zdarzenie, czynna jest sesja powiązana z tym połączeniem. Odmowa albo
 odpowiedź o złym kształcie daje stan błędu z treścią odmowy, a nie pusty pas udający brak sesji.
+
+## budowa/klient-poprzedni/src/moduly/workspace/workspace-planowanie.test.ts
+Wykaz komend nie jest tu przepisany — powstaje z wywołań czynności, a porównywany jest ze stałymi
+kontraktu, więc komenda dołożona do kontraktu i pominięta w oknie zostanie tu nazwana. Pozostałe
+sprawdziany dotyczą bytów rozstrzygalnych bez rdzenia: kolejności kart w kolumnie tablicy, paska
+postępu, wcięcia drzewa stron i odnośników wyjętych z treści notatki.

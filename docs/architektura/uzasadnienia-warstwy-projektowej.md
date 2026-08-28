@@ -849,3 +849,10 @@ zestaw karty bieżącej i gaśnie na karcie centrum dowodzenia, ponieważ
 pulpit okna nie jest modułem. Warstwa tła karty środowiska ma pole animacji
 stojące przy prawej krawędzi i leżące pod treścią; jest elementem
 dekoracyjnym poza drzewem dostępności i poza trafieniami myszy.
+
+## design/zasoby/zetony/zetony.css
+Trzy role barw wywodzonych stoją w bazie, a nie w blokach motywów, ponieważ
+ich składniki (`--dn-obrys-mocny`, `--dn-wstazka`, `--dn-tekst-2`,
+`--dn-tekst-3`) są już zależne od motywu i rozstrzygają się w miejscu
+użycia. Dzięki temu proporcja domieszki jest zapisana raz, a nie powtórzona
+w czterech kontekstach motywu, więc się między nimi nie rozjeżdża.

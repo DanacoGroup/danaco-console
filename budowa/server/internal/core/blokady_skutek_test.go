@@ -100,7 +100,7 @@ func (u *blokadaUprzazSprawdzianu) blokadaWykonajJakoModel(t *testing.T,
 	if err != nil {
 		t.Fatalf("nie można złożyć koperty %s: %v", komenda, err)
 	}
-	ctx, przerwij := context.WithTimeout(u.zycie, granicaKomendySprawdzianu)
+	ctx, przerwij := context.WithTimeout(u.zycie, granicaSprawdzianuKomendy(komenda))
 	defer przerwij()
 	// Rodzaj `narzedzia` przedstawia się przy nawiązaniu jako gniazdo modelu.
 	ctx = zPolaczeniem(ctx, transport.Tozsamosc{

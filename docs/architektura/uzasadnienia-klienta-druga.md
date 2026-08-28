@@ -6277,3 +6277,6 @@ kontraktu.
 z pominięciem ekranu. Wpięcie ekranu należy do punktu wejścia aplikacji: przesłona montuje się po
 złożeniu aplikacji, a przed pierwszym uruchomieniem tras. Ekran logowania tylko sprawdza, czy jest czym
 wskazać maszynę; ten sam klucz odczytuje sekcja tożsamości urządzenia w oknie ustawień.
+
+## budowa/klient-poprzedni/src/polaczenie/warstwa-lacznosci.test.ts
+Sprawdziany tego pliku mierzą dokładnie obietnicę warstwy łączności: kolejkowanie przy braku rdzenia, opróżnienie kolejki po powrocie połączenia oraz ponawianie, które nie ustaje.

@@ -24,3 +24,7 @@ __pycache__/
 
 # Katalog roboczy sesji
 .claude/
+
+# Zlozone instalatory. Wytwor budowy, nie zrodlo — powstaje skryptem
+# ze zrodel repozytorium i wazy megabajty, wiec do historii nie wchodzi.
+budowa/wydania/

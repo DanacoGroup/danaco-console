@@ -1,36 +1,9 @@
--- Migracja 166 — nastawy silników i wymiana zewnętrzna modułu Translate:
--- profile silników (`translate.engine.profile.*`), polityka tłumaczenia
--- pivotowego (`translate.pivot.policy.*`), pakiety przekazania
--- (`translate.handoff.*`), pakietowy przebieg operacji (`translate.batch.run`)
--- oraz most do dokumentu (`translate.bridge.*`).
---
--- Profil silnika wskazuje kanały modelu wykazem, więc kanały mają tabelę
--- dziecka: wykaz w jednej kolumnie nie da się złączyć z `kanal_modelu` ani
--- zawęzić zapytaniem „które profile używają tego kanału". Kolejność w wykazie
--- jest znacząca (pierwszy kanał jest kanałem pierwszego wyboru), stąd kolumna
--- `kolejnosc`.
---
--- Polityka pivota jest jedna na zasięg (`ConfigScope` + byt zasięgu), a pary
--- języków są jej dzieckiem. Para mówi: przekład z języka A na B idzie przez
--- język C. `jezyk_domyslny` jest pivotem dla par, których Operator nie wymienił.
---
--- Pakiet przekazania ma stan (`HandoffStatus`), bo jego cykl życia jest realny:
--- złożony → przekazany → zwrot przyjęty. Zwrot (`handoff.receive`) przestawia
--- ten sam wiersz, zamiast zakładać drugi — inaczej nie dałoby się odpowiedzieć,
--- czy materiał wrócił.
---
--- Przebieg pakietowy ma własną kolejkę, nie kolejkę modułu Automations:
--- `batch.run` oddaje `queueId`, po którym okno Translate pyta o postęp, a jego
--- pozycje niosą operacje własne tego modułu (przekład, kontrola jakości,
--- korekta, wydanie). Wpięcie w cudzą kolejkę związałoby moduł z modułem, który
--- Operator ma prawo mieć wyłączony.
---
--- Most do dokumentu jest wiązaniem dwustronnym: okno Translate wie, z którego
--- dokumentu wzięło materiał, a wysyłka wyniku wie, dokąd go odesłać. Bez
--- wiersza `bridge.result.send` musiałby dostać wskazanie dokumentu drugi raz,
--- czego kontrakt nie przewiduje.
+-- Migracja tworzy nastawy silników i wymianę zewnętrzną modułu Translate: profile
+-- silników, politykę tłumaczenia pivotowego, pakiety przekazania, przebieg
+-- pakietowy i most do dokumentu.
 
--- ── Profil silnika tłumaczenia ──────────────────────────────────────────────
+-- Tabela profil_silnika_tlumaczenia trzyma profil silnika tłumaczenia wraz z
+-- kanałami modelu w kolejności pierwszeństwa wyboru.
 CREATE TABLE profil_silnika_tlumaczenia (
     id                       INTEGER PRIMARY KEY AUTOINCREMENT,
     identyfikator_zewnetrzny TEXT    NOT NULL UNIQUE,
@@ -54,7 +27,8 @@ CREATE TABLE kanal_profilu_silnika (
     UNIQUE(profil_id, kanal_kod)
 );
 
--- ── Polityka tłumaczenia pivotowego ─────────────────────────────────────────
+-- Tabela polityka_pivota trzyma politykę tłumaczenia pivotowego jedną na zasięg
+-- konfiguracji, z parami języków jako jej dzieckiem.
 CREATE TABLE polityka_pivota (
     id              INTEGER PRIMARY KEY AUTOINCREMENT,
     zasieg          TEXT    NOT NULL DEFAULT 'global',
@@ -73,13 +47,13 @@ CREATE TABLE para_pivota (
     UNIQUE(polityka_id, jezyk_zrodla, jezyk_celu)
 );
 
--- ── Pakiet przekazania wykonawcy ────────────────────────────────────────────
+-- Tabela pakiet_przekazania trzyma pakiet przekazania wykonawcy wraz ze stanem
+-- cyklu życia: złożony, przekazany, zwrot przyjęty.
 CREATE TABLE pakiet_przekazania (
     id                       INTEGER PRIMARY KEY AUTOINCREMENT,
     identyfikator_zewnetrzny TEXT    NOT NULL UNIQUE,
     okno_id                  INTEGER NOT NULL REFERENCES okno_tlumaczenia(id) ON DELETE CASCADE,
-    -- Zawartości pakietu i panele objęte pakietem, po jednym na wiersz kolumny.
-    -- Byt bez własnej tożsamości: nikt nie adresuje pojedynczej zawartości.
+    -- Zawartości i panele pakietu są bytem bez własnej tożsamości: nikt nie adresuje pojedynczej pozycji.
     zawartosci               TEXT    NOT NULL,
     panele                   TEXT    NOT NULL,
     instrukcje               TEXT,
@@ -91,7 +65,8 @@ CREATE TABLE pakiet_przekazania (
 );
 CREATE INDEX idx_pakiet_przekazania_okno ON pakiet_przekazania(okno_id, utworzono DESC);
 
--- ── Przebieg pakietowy modułu Translate ─────────────────────────────────────
+-- Tabele zlecenie_pakietu_tlumaczenia i pozycja_pakietu_tlumaczenia trzymają
+-- własną kolejkę przebiegu pakietowego modułu Translate.
 CREATE TABLE zlecenie_pakietu_tlumaczenia (
     id                       INTEGER PRIMARY KEY AUTOINCREMENT,
     identyfikator_zewnetrzny TEXT    NOT NULL UNIQUE,
@@ -112,7 +87,8 @@ CREATE TABLE pozycja_pakietu_tlumaczenia (
 );
 CREATE INDEX idx_pozycja_pakietu_zlecenie ON pozycja_pakietu_tlumaczenia(zlecenie_id, id);
 
--- ── Most do dokumentu ───────────────────────────────────────────────────────
+-- Tabela most_tlumaczenia trzyma dwustronne wiązanie okna Translate z dokumentem,
+-- z którego wzięto materiał do tłumaczenia.
 CREATE TABLE most_tlumaczenia (
     id            INTEGER PRIMARY KEY AUTOINCREMENT,
     okno_id       INTEGER NOT NULL UNIQUE REFERENCES okno_tlumaczenia(id) ON DELETE CASCADE,

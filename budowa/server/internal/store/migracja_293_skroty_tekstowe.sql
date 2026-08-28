@@ -1,18 +1,5 @@
--- Migracja 293 — słownik skrótów tekstowych (rodzina `snippet.*`).
---
--- Skrót rozwija się we WSZYSTKICH polach tekstowych platformy, a nie w jednym
--- oknie — dlatego słownik należy do rdzenia. Gdyby mieszkał w kliencie, ta sama
--- fraza rozwijałaby się inaczej na dwóch maszynach tego samego Operatora.
---
--- Para (profil, skrót) jest kluczem: jeden profil asystenta nie może mieć dwóch
--- rozwinięć tego samego skrótu, bo wtedy rozwinięcie rozstrzygałby przypadek
--- kolejności odczytu. Profil pusty (skrót wspólny) zapisuje się jako pusty
--- napis, nie NULL — w SQLite NULL nie jest równy NULL, więc warunek UNIQUE
--- przepuściłby dowolną liczbę duplikatów skrótu bez profilu.
---
--- Pola szablonu (`variables` kontraktu) idą zapisem strukturalnym w jednej
--- kolumnie: są wykazem nazw bez własnych atrybutów, a wypełnia je okno przy
--- rozwinięciu.
+-- Migracja 293 dodaje słownik skrótów tekstowych rozwijanych we wszystkich
+-- polach tekstowych platformy.
 
 CREATE TABLE skrot_tekstowy (
     id                       INTEGER PRIMARY KEY AUTOINCREMENT,

@@ -1,14 +1,5 @@
--- Migracja 274 — skarbiec poświadczeń i dziennik audytu modułu Automations
--- (`automation.secret.*`, `automation.audit.list`).
---
--- Tabela poświadczeń NIE ma kolumny na wartość i mieć jej nie będzie. Wartość
--- leży w sejfie plikowym katalogu danych (`dane/sejf_poswiadczen.go`), tym
--- samym, którym jadą sekrety kont i punktów dostępu. Baza zna wyłącznie nazwę,
--- zasięg i odwołanie — dzięki temu odczyt bazy nie może wynieść sekretu, bo
--- kolumny na niego nie ma, a nie dlatego, że ktoś pamiętał o filtrze.
---
--- Zasięg idzie słownikiem kontraktu (`ConfigScope`), bo poświadczenie
--- rozstrzyga się warstwowo tak samo jak reszta modelu konfiguracji.
+-- Migracja 274 wprowadza skarbiec poświadczeń automatyki bez kolumny na wartość, ponieważ
+-- wartość leży w sejfie plikowym katalogu danych, a baza zna wyłącznie nazwę, zasięg i odwołanie.
 CREATE TABLE poswiadczenie_automatyki (
     id             INTEGER PRIMARY KEY AUTOINCREMENT,
     odwolanie      TEXT    NOT NULL UNIQUE,
@@ -20,11 +11,8 @@ CREATE TABLE poswiadczenie_automatyki (
 );
 CREATE INDEX idx_poswiadczenie_automatyki_nazwa ON poswiadczenie_automatyki(nazwa, id);
 
--- Dziennik audytu jest zapisem niezmiennym: wiersz raz dopisany nie jest
--- zmieniany ani kasowany przez żadną komendę modułu. Automatyka usunięta
--- zabiera swoje wpisy (ON DELETE CASCADE), lecz wpis o automatyce nieznanej
--- jest dopuszczony (kolumna pusta) — audytowana bywa czynność, która żadnej
--- automatyki nie dotyczy.
+-- Dziennik audytu jest zapisem niezmiennym: wiersz raz dopisany nie jest zmieniany ani kasowany
+-- przez żadną komendę modułu, a wpis o automatyce nieznanej jest dopuszczony.
 CREATE TABLE wpis_audytu_automatyki (
     id                       INTEGER PRIMARY KEY AUTOINCREMENT,
     identyfikator_zewnetrzny TEXT    NOT NULL UNIQUE,
@@ -34,8 +22,8 @@ CREATE TABLE wpis_audytu_automatyki (
     szczegoly                TEXT,
     chwila                   TEXT    NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now'))
 );
--- automation.audit.list czyta dziennik od najnowszego, zawężając po
--- automatyce i po zakresie dat.
+-- Indeksy porządkują dziennik audytu od najnowszego wpisu, osobno dla całego dziennika i osobno
+-- zawężony do jednej automatyki, aby oba odczyty pomijały pełne przeglądanie tabeli.
 CREATE INDEX idx_wpis_audytu_automatyki_czas ON wpis_audytu_automatyki(chwila DESC, id DESC);
 CREATE INDEX idx_wpis_audytu_automatyki_wlasciciel
     ON wpis_audytu_automatyki(automatyka_id, chwila DESC, id DESC);

@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# Skrypt narzędzia budowy generuje treść umowy licencyjnej ze źródłowego dokumentu Markdown do pliku JavaScript osadzanego w instalatorze.
 """Składa treść warunków licencji z dokumentu źródłowego do pliku treści.
 
 Wynikiem jest `zasoby/tresci/licencja.js` — skrypt wpisujący fragment HTML do
@@ -32,7 +33,7 @@ html = subprocess.run(
     ['pandoc', '-f', 'gfm+gfm_auto_identifiers', '-t', 'html', '--wrap=none'],
     input=tresc, capture_output=True, text=True, check=True).stdout
 
-# Zestawienia bywają szersze niż kolumna tekstu — przewijają się we własnym polu.
+# Zestawienia bywają szersze niż kolumna tekstu w oknie instalatora, dlatego otrzymują własne przewijane pole, aby nie rozsuwały układu strony.
 html = html.replace('<table>', '<div class="dn-zestawienie-pole"><table>')
 html = html.replace('</table>', '</table></div>')
 

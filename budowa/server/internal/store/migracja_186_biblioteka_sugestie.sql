@@ -1,18 +1,4 @@
--- Migracja 186 — moduł Library: sugestie porządkujące.
---
--- Domyślnym zachowaniem modułu jest sugestia z akceptacją Operatora, nie zapis
--- bez pytania: klasyfikacja wsadowa (`library.classify.run`) wytwarza wiersze
--- tej tabeli, a dopiero `library.suggestion.apply` zamienia je w zmianę zasobu.
--- Sugestia musi więc przeżyć między jednym żądaniem a drugim — stąd tabela,
--- a nie wynik oddany i zapomniany.
---
--- Uzasadnienie jest kolumną obowiązkową. Sugestia bez powodu jest poleceniem
--- podanym bez podstawy, a Operator ma decydować, nie zgadywać, skąd wzięła się
--- propozycja.
---
--- Decyzja zostaje przy wierszu (`stan`), zamiast kasować go przy odrzuceniu:
--- sugestia odrzucona ma nie wracać przy kolejnym przebiegu klasyfikacji, więc
--- rdzeń musi wiedzieć, że raz już padła i została odsunięta.
+-- Migracja 186 zakłada tabelę sugestii porządkujących modułu Library, niosącą uzasadnienie jako pole obowiązkowe oraz stan decyzji Operatora.
 
 CREATE TABLE sugestia_biblioteki (
     id                       INTEGER PRIMARY KEY AUTOINCREMENT,

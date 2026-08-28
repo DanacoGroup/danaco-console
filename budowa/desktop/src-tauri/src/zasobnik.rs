@@ -11,10 +11,12 @@ use tauri::AppHandle;
 use crate::menu_zasobnika;
 use crate::okno;
 
-/// Identyfikator ikony w zasobniku.
+/// Identyfikator ikony powłoki w zasobniku systemowym, używany przy budowie ikony i obsłudze
+/// jej zdarzeń kliknięcia.
 pub const ETYKIETA: &str = "powloka";
 
-/// Buduje ikonę zasobnika wraz z menu.
+/// Buduje ikonę zasobnika systemowego wraz z menu i podpina obsługę zdarzeń kliknięcia oraz
+/// zdarzeń pozycji menu.
 pub fn zbuduj(aplikacja: &AppHandle) -> tauri::Result<()> {
     let menu = zbuduj_menu(aplikacja)?;
     let mut budowniczy = TrayIconBuilder::with_id(ETYKIETA)
@@ -35,7 +37,8 @@ pub fn zbuduj(aplikacja: &AppHandle) -> tauri::Result<()> {
     Ok(())
 }
 
-/// Składa menu zasobnika. Identyfikatory pozycji prowadzi `menu_zasobnika`.
+/// Składa menu zasobnika z pozycji stałych, każdej zawsze czynnej; identyfikatory pozycji
+/// prowadzi osobno moduł menu.
 fn zbuduj_menu(aplikacja: &AppHandle) -> tauri::Result<Menu<tauri::Wry>> {
     let pokaz = pozycja(aplikacja, menu_zasobnika::POKAZ, "Pokaż okno")?;
     let katalog = pozycja(aplikacja, menu_zasobnika::KATALOG, "Wskaż katalog roboczy…")?;
@@ -56,7 +59,8 @@ fn zbuduj_menu(aplikacja: &AppHandle) -> tauri::Result<Menu<tauri::Wry>> {
     )
 }
 
-/// Tworzy pojedynczą pozycję menu; każda jest zawsze czynna, bez wyszarzeń.
+/// Tworzy pojedynczą pozycję menu zasobnika o podanym identyfikatorze i napisie; każda
+/// pozycja jest zawsze czynna.
 fn pozycja(
     aplikacja: &AppHandle,
     identyfikator: &str,

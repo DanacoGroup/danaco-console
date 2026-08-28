@@ -1,19 +1,8 @@
--- Migracja 043 — trwałość modułu Diagnostics: dziennik (Logs Viewer), błędy
--- zgrupowane po odcisku (Errors Panel), analiza stanu systemu (Diagnostics
--- Center) i rekomendacje z niej wyprowadzone (Recommendations Panel).
---
--- Dziennik ma wiersze, a nie bufor w pamięci: Logs Viewer pokazuje także to, co
--- działo się przed restartem rdzenia, a bufor pamięci ginie razem z procesem.
---
--- Czas jest liczbą, a nie napisem ISO. Kontrakt niesie czas wpisu
--- (`LogEntry.timestamp`), zakres zapytania (`fromTime`, `toTime`) i czasy błędu
--- w milisekundach epoki. Kolumna INTEGER przenosi dokładnie wartość kontraktu,
--- bez przekładu w obie strony przy każdym porównaniu zakresu.
+-- Migracja zakłada trwałość modułu diagnostyki: dziennik zdarzeń, błędy zgrupowane po
+-- odcisku, analizy stanu i rekomendacje z nich wyprowadzone.
 
--- ── Wpis dziennika (Logs Viewer) ─────────────────────────────────────────────
--- `odcisk` jest kolumną, a nie wyrażeniem liczonym przy odczycie: deduplikacja
--- z licznikiem grupuje po nim setki tysięcy wierszy i musi mieć indeks, którego
--- nie da się założyć na wyrażeniu sklejającym trzy kolumny w locie.
+-- Kolumna odcisku jest kolumną, nie wyrażeniem liczonym przy odczycie, bo deduplikacja
+-- z licznikiem musi mieć indeks na tej wartości.
 CREATE TABLE diagnostyka_wpis (
     id         INTEGER PRIMARY KEY AUTOINCREMENT,
     kod        TEXT    NOT NULL UNIQUE,
@@ -32,15 +21,8 @@ CREATE INDEX idx_diagnostyka_wpis_poziom ON diagnostyka_wpis(poziom, chwila DESC
 CREATE INDEX idx_diagnostyka_wpis_zrodlo ON diagnostyka_wpis(zrodlo, chwila DESC);
 CREATE INDEX idx_diagnostyka_wpis_odcisk ON diagnostyka_wpis(odcisk, chwila DESC);
 
--- ── Błąd zgrupowany po odcisku (Errors Panel) ────────────────────────────────
--- Odcisk jest unikalny, wystąpienia są licznikiem. Ta sama odmowa powtórzona
--- wielokrotnie jest jednym błędem o wielu wystąpieniach, a nie wieloma wierszami
--- — inaczej panel pokazywałby wyłącznie ostatnią minutę pracy i gubił błąd
--- rzadki, lecz istotny.
---
--- Kod błędu kontraktu ma własną kolumnę, mimo że `DiagnosticError` go nie ma.
--- Kolumna jest źródłem, z którego kod wychodzi do klienta polem `context` —
--- dzięki temu da się po nim także zawęzić zapytanie, czego pole JSON by nie dało.
+-- Odcisk jest unikalny, a wystąpienia licznikiem: ta sama odmowa powtórzona wielokrotnie
+-- jest jednym błędem o wielu wystąpieniach.
 CREATE TABLE diagnostyka_blad (
     id          INTEGER PRIMARY KEY AUTOINCREMENT,
     kod         TEXT    NOT NULL UNIQUE,
@@ -65,10 +47,8 @@ CREATE INDEX idx_diagnostyka_blad_ostatnie ON diagnostyka_blad(ostatnie DESC);
 CREATE INDEX idx_diagnostyka_blad_stan ON diagnostyka_blad(stan, ostatnie DESC);
 CREATE INDEX idx_diagnostyka_blad_priorytet ON diagnostyka_blad(priorytet, ostatnie DESC);
 
--- ── Analiza stanu systemu (Diagnostics Center) ───────────────────────────────
--- Analiza jest migawką, nie widokiem liczonym na bieżąco: wiersz przechowuje
--- wynik z chwili uruchomienia, bo bez niego „porównanie z migawką wcześniejszą"
--- z panelu akcji nie miałoby z czym porównywać.
+-- Analiza jest migawką, nie widokiem liczonym na bieżąco: wiersz przechowuje wynik
+-- z chwili uruchomienia analizy.
 CREATE TABLE diagnostyka_analiza (
     id            INTEGER PRIMARY KEY AUTOINCREMENT,
     kod           TEXT    NOT NULL UNIQUE,
@@ -82,9 +62,8 @@ CREATE TABLE diagnostyka_analiza (
 );
 CREATE INDEX idx_diagnostyka_analiza_utworzono ON diagnostyka_analiza(utworzono DESC);
 
--- ── Rekomendacja wyprowadzona z analizy (Recommendations Panel) ──────────────
--- Klucz obcy do analizy jest twardy: rekomendacja bez analizy nie ma faktu,
--- z którego wynika, a taka rekomendacja jest zgadywaniem.
+-- Klucz obcy do analizy jest twardy: rekomendacja bez analizy nie ma faktu, z którego
+-- wynika, a to byłoby zgadywaniem.
 CREATE TABLE diagnostyka_rekomendacja (
     id          INTEGER PRIMARY KEY AUTOINCREMENT,
     kod         TEXT    NOT NULL UNIQUE,

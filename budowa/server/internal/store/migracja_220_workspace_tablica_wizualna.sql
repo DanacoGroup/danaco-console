@@ -1,9 +1,4 @@
--- Migracja 220 — tablica wizualna projektu (płótno, mapa myśli).
---
--- Scena leży jednym zapisem JSON i rdzeń jej nie rozbiera. Kształt sceny —
--- kartki, strzałki, grupy, osadzenia — należy do widoku, który ją rysuje;
--- rozbiór na wiersze związałby schemat bazy z rysunkiem interfejsu i każda
--- zmiana kształtu kartki byłaby migracją.
+-- Migracja 220 zakłada tabelę tablicy wizualnej projektu, przechowującą scenę płótna jako jeden zapis JSON nierozbierany przez rdzeń.
 
 CREATE TABLE tablica_wizualna_projektu (
     id                       INTEGER PRIMARY KEY AUTOINCREMENT,

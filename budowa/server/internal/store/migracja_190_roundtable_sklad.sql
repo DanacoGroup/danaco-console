@@ -1,17 +1,4 @@
--- Migracja 190 — skład debaty rozszerzony do kształtu kontraktu: tożsamość
--- uczestnika, rola w naradzie, waga kompetencji, oznaczenie kluczowego oraz
--- zespoły i biblioteka ról.
---
--- Migracja 044 zakładała skład pod cztery komendy obszaru i wprost odnotowała,
--- że kolumny „kluczowy" nie ma, bo żadna komenda nie potrafiła jej ustawić.
--- Kontrakt ma dziś `roundtable.model.update` z polami `key`, `weight`, `role`,
--- `avatar`, `roleDescription` i `agentId` — kolumny przestały być miejscem,
--- do którego nic nie pisze, więc powstają.
---
--- Zespół (`roundtable.team.save`) jest kopią składu, nie odwołaniem do niego.
--- Skład okna zmienia się po zapisaniu zespołu, a zespół ma zostać taki, jaki
--- był w chwili zapisu — inaczej „wnieś zespół" wnosiłoby stan bieżący cudzego
--- okna zamiast zapamiętanego układu.
+-- Migracja 190 rozszerza skład debaty do kształtu kontraktu o wagę, rolę i oznaczenie kluczowego uczestnika oraz zakłada zespoły i bibliotekę ról.
 
 ALTER TABLE debata_uczestnik ADD COLUMN kluczowy INTEGER NOT NULL DEFAULT 0
     CHECK(kluczowy IN (0,1));
@@ -27,7 +14,7 @@ ALTER TABLE debata_uczestnik ADD COLUMN opis_roli TEXT;
 -- własnej). Zero i jeden znaczą jedną odpowiedź.
 ALTER TABLE debata_uczestnik ADD COLUMN liczba_probek INTEGER NOT NULL DEFAULT 0;
 
--- ── Zespół debaty — zapisany skład do ponownego użycia ────────────────────────
+-- Zakłada tabelę debata_zespol niosącą zapisany skład debaty do ponownego użycia wraz z uczestnikami zespołu.
 CREATE TABLE debata_zespol (
     id                       INTEGER PRIMARY KEY AUTOINCREMENT,
     identyfikator_zewnetrzny TEXT    NOT NULL UNIQUE,
@@ -52,9 +39,7 @@ CREATE TABLE debata_zespol_uczestnik (
 );
 CREATE INDEX idx_debata_zespol_uczestnik ON debata_zespol_uczestnik(zespol_id, kolejnosc, id);
 
--- ── Biblioteka ról debaty ────────────────────────────────────────────────────
--- Rola jest DANĄ: Operator ją czyta, kopiuje i zmienia. Zestaw wnoszony
--- migracją odpowiada wykazowi z opracowania modułu (2.1.3).
+-- Rola jest daną: Operator ją czyta, kopiuje i zmienia. Zestaw wnoszony migracją odpowiada siedmiu rolom fabrycznym debaty.
 CREATE TABLE debata_rola (
     id                       INTEGER PRIMARY KEY AUTOINCREMENT,
     identyfikator_zewnetrzny TEXT    NOT NULL UNIQUE,

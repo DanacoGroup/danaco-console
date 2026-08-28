@@ -1,14 +1,5 @@
--- Migracja 018 — ciągłość rozmowy okna.
---
--- Program `claude` podaje własny identyfikator rozmowy w strumieniu zdarzeń;
--- bez utrwalenia istniałby przez jedną turę i przepadał, a przełącznik
--- `--resume` nie miałby wartości. Identyfikator rozmowy należy do okna
--- komunikacji, nie do sesji ani do wiadomości: dwa okna jednej sesji prowadzą
--- dwie niezależne rozmowy z modelem i muszą mieć osobne wznowienia.
---
--- Kolumna jest pusta do pierwszej tury. Okno nowo założone nie ma jeszcze
--- rozmowy po stronie programu `claude`; pusta wartość znaczy „zacznij nową
--- rozmowę" i jest stanem poprawnym, nie brakiem danych.
+-- Migracja dokłada kolumnę identyfikatora rozmowy narzędzia wiersza poleceń do okna
+-- komunikacji, utrwalającą ciągłość rozmowy między turami.
 
 ALTER TABLE okno_komunikacji ADD COLUMN id_rozmowy_cli TEXT NOT NULL DEFAULT '';
 

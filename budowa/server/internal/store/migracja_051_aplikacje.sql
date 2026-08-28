@@ -1,54 +1,9 @@
--- Migracja 051 — trwałość modułu Apps: architektura produktu (Architecture
--- Designer), plik warsztatu frontendu/backendu (Workspace okna Apps) oraz
--- dziennik przebiegów wdrożenia (Deployment).
---
--- Warsztat Apps to nie projekt modułu Workspace. `apps.workspace.update` niesie
--- `Layer` (frontend/backend), `Path`, `Content` i opcjonalny `ComponentId` —
--- kształt identyczny z zapisem pliku edytora w module Developer
--- (`developer_wersja_pliku`), nie z `projekt`. `projekt` to byt bez treści:
--- nazwa, opis, stan — kontener, do którego przypięta jest sesja i pamięć
--- kontekstu. Warsztat Apps to sama treść pliku warstwy frontendu/backendu
--- produktu, bez nazwy, bez stanu, bez przypisania eksperta. Współdzielenie jednej
--- tabeli `projekt` znaczyłoby, że wiersz projektu dostaje kolumny treści pliku,
--- których większość wierszy nigdy nie użyje. Dlatego warsztat Apps ma własną
--- tabelę, budowaną na wzór `developer_wersja_pliku`. Commity kodu produktu jadą
--- wspólną komendą `developer.git.action`, poza zasięgiem tej migracji.
---
--- Plik warsztatu trzyma jeden wiersz na (okno, warstwa, ścieżka), nie historię
--- wersji. Kontrakt `AppsWorkspaceUpdateRequest` nie niesie odpowiednika
--- `createVersion` z modułu Developer — nie ma pola, którym Operator zakłada
--- migawkę. `apps.workspace.update` jest więc zwykłym nadpisaniem stanu bieżącego;
--- tabela odzwierciedla to wprost przez UPSERT po kluczu (okno, warstwa, ścieżka),
--- bez tabeli-dziennika obok.
---
--- Architektura trzyma komponenty jako tabelę własną, nie zapis w kolumnie.
--- `AppComponent` niesie pola, po których trzeba filtrować i wiązać przy odczycie:
--- `Kind` (rodzaj komponentu wchodzi do walidacji układu) i `DependsOn` (graf
--- zależności) — gdyby leżały w jednym polu JSON rodzica, walidacja układu
--- (`AppArchitecture.ValidationIssues`) i zapytanie „które komponenty zależą od X"
--- musiałyby parsować JSON przy każdym odczycie. `apps.architecture.define`
--- nadsyła całą listę komponentów na nowo (kontrakt: `Components []AppComponent`,
--- bez trybu częściowej zmiany), więc zapis jest zawsze „usuń komponenty
--- architektury, wstaw przysłane od nowa".
---
--- Zależność między komponentami ma własną tabelę złącznikową, nie kolumnę JSON.
--- `AppComponent.DependsOn []string` jest listą identyfikatorów zewnętrznych
--- innych komponentów tej samej architektury.
---
--- Dziennik wdrożeń powtarza wzór `developer_budowanie`. `apps.deployment.run`
--- i `developer.build.run` mają identyczny kształt zadania: zlecenie z zewnętrznym
--- kodem, oknem, czasem startu i końca, stanem i śladem tekstowym. Rdzeń niczego
--- naprawdę nie wdraża — tabela niesie wyłącznie ślad zlecenia (środowisko,
--- strategia, wersja, notatki, adres po wdrożeniu, odnośnik do logu) i jego stan;
--- sam przebieg prowadzi rdzeń w pamięci. `RollbackToDeploymentId`
--- i `RolledBackFromId` są parą pól tego samego łuku — jedna kolumna samoodwołania
--- wystarcza, bo odczyt idzie zawsze od strony cofnięcia.
---
--- Log wdrożenia jest odwołaniem, nie treścią w bazie. Kontrakt niesie
--- `LogRef *string` — nazwa pola już mówi „odnośnik", nie „treść" — więc kolumna
--- `log_odwolanie` przechowuje ten odnośnik wprost.
+-- Migracja 051 tworzy trwałość modułu Apps: architekturę produktu, plik
+-- warsztatu warstwy frontendu i backendu oraz dziennik przebiegów wdrożenia.
 
 -- ── Architektura produktu — Architecture Designer ────────────────────────────
+-- Wiersz trzyma definicję układu produktu w jednej wersjonowanej całości,
+-- oddzielnej od komponentów i zależności zapisanych w tabelach własnych.
 CREATE TABLE architektura_apps (
     id                       INTEGER PRIMARY KEY AUTOINCREMENT,
     identyfikator_zewnetrzny TEXT    NOT NULL UNIQUE,
@@ -56,13 +11,11 @@ CREATE TABLE architektura_apps (
     nazwa                    TEXT,
     szablon                  TEXT    NOT NULL DEFAULT 'monolith'
                                      CHECK(szablon IN ('monolith','microservices','serverless')),
-    -- Wersja rośnie przy każdym zapisie definicji: panel Architecture Designer
-    -- musi umieć powiedzieć, którą wersję układu Operator ogląda.
+    -- Wersja rośnie przy każdym zapisie definicji układu, by panel mógł
+    -- wskazać oglądaną wersję.
     wersja                   INTEGER NOT NULL DEFAULT 1,
-    -- Zastrzeżenia walidacji układu (ValidationIssues []string) są wynikiem
-    -- obliczonym przy zapisie, nie wejściem Operatora — jeden wiersz tekstu
-    -- rozdzielony znakiem nowej linii wystarcza, bo nikt nie filtruje ani nie
-    -- sortuje po pojedynczym zastrzeżeniu.
+    -- Zastrzeżenia walidacji układu to wynik obliczony przy zapisie, nie
+    -- wejście Operatora.
     zastrzezenia_walidacji   TEXT,
     utworzono                TEXT    NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now')),
     zaktualizowano           TEXT    NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now'))
@@ -102,10 +55,9 @@ CREATE TABLE zaleznosc_komponentu_apps (
 CREATE INDEX idx_zaleznosc_komponentu_apps_do
     ON zaleznosc_komponentu_apps(architektura_id, komponent_do);
 
--- ── Plik warsztatu — Workspace (okno Apps, nie moduł Workspace) ─────────────
--- Klucz (okno, warstwa, ścieżka) niesie tożsamość pliku; `apps.workspace.update`
--- działa jako UPSERT po tym kluczu, bez tabeli-dziennika wersji — patrz
--- rozstrzygnięcie na czole pliku.
+-- ── Plik warsztatu — Workspace okna Apps, odrębny od modułu Workspace ───────
+-- Klucz złożony z okna, warstwy i ścieżki niesie tożsamość pliku; zapis
+-- działa jako nadpisanie stanu bieżącego, bez tabeli wersji obok.
 CREATE TABLE plik_warsztatu_apps (
     id             INTEGER PRIMARY KEY AUTOINCREMENT,
     okno           TEXT    NOT NULL,
@@ -113,9 +65,8 @@ CREATE TABLE plik_warsztatu_apps (
     sciezka        TEXT    NOT NULL,
     tresc          TEXT    NOT NULL,
     rozmiar        INTEGER NOT NULL DEFAULT 0,
-    -- Komponent architektury, którego dotyczy zmiana — wartość danych (kod
-    -- zewnętrzny), nie więz obcy: plik może wskazywać komponent usunięty
-    -- z architektury po zapisie.
+    -- Komponent architektury dotknięty zmianą; wartość danych, nie więź
+    -- obca, bo komponent mógł zniknąć.
     komponent_id   TEXT,
     utworzono      TEXT    NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now')),
     zaktualizowano TEXT    NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now')),
@@ -124,8 +75,8 @@ CREATE TABLE plik_warsztatu_apps (
 CREATE INDEX idx_plik_warsztatu_apps_okno ON plik_warsztatu_apps(okno, warstwa, sciezka);
 
 -- ── Dziennik przebiegów wdrożenia — Deployment ───────────────────────────────
--- Kształt zadania jak w `developer_budowanie` — patrz nagłówek pliku. Wartości
--- kolumny `stan` są wartościami kontraktu (AppDeployStatus).
+-- Tabela niesie wyłącznie ślad zlecenia wdrożenia i jego stan; sam przebieg
+-- wdrożenia prowadzi rdzeń w pamięci procesu.
 CREATE TABLE wdrozenie_apps (
     id                    INTEGER PRIMARY KEY AUTOINCREMENT,
     kod                   TEXT    NOT NULL UNIQUE,
@@ -139,8 +90,8 @@ CREATE TABLE wdrozenie_apps (
     notatki_wydania       TEXT,
     adres                 TEXT,
     log_odwolanie         TEXT,
-    -- Wdrożenie źródłowe cofnięcia — patrz rozstrzygnięcie o jednej kolumnie
-    -- samoodwołania na czole pliku.
+    -- Wdrożenie źródłowe, z którego nastąpiło cofnięcie; kolumna
+    -- samoodwołania jednego łuku.
     cofniete_do_kodu      TEXT,
     rozpoczeto             TEXT    NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now')),
     zakonczono             TEXT

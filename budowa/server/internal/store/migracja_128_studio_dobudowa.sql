@@ -1,33 +1,7 @@
--- Migracja 128 — dobudowa modułu Studio: byty, których dotąd nie było.
---
--- Moduł miał w kontrakcie sześć komend i trzy tabele: dokument, wersję,
--- propozycję zmiany. Opracowanie modułu opisuje osiem okien i dwanaście rodzin
--- funkcji, więc dobudowa wnosi byty, na których te funkcje stoją: komentarze
--- i adnotacje, zmiany śledzone, gałęzie dokumentu, kolejkę cyfryzacji, operacje
--- własne, łańcuchy, profile wydania, szablony i odwołania do wersji.
---
--- ── Dlaczego komentarz i adnotacja są jedną tabelą ───────────────────────────
--- Komentarz redakcyjny wisi przy zakresie znaków treści, adnotacja różnicy przy
--- numerze fragmentu porównania. Poza tym jednym polem oba byty mają te same
--- kolumny: dokument, wątek nadrzędny, autor, treść, stan rozwiązania, czas.
--- Dwie tabele o sześciu wspólnych kolumnach rozjechałyby się przy pierwszej
--- poprawce, a zapytanie „pokaż wszystko, co ktoś napisał przy tym dokumencie"
--- wymagałoby sumy dwóch zapytań.
---
--- ── Dlaczego autor jest kolumną wersji, a nie osobną tabelą ──────────────────
--- Rozdział 3.6 opracowania żąda przy każdej wersji rozróżnienia zmiany
--- Operatora od zmiany modelu. Autor jest cechą wersji, nie bytem samodzielnym:
--- nie ma stanu, nie ma historii i nie istnieje bez wersji. Kolumna dopuszcza
--- NULL, więc wersje założone przed tą migracją pozostają poprawne i czytają się
--- jako autor nieznany — a nie jako Operator, którym mogły nie być.
---
--- ── Dlaczego kroki łańcucha i pola szablonu są tekstem ───────────────────────
--- Krok łańcucha i pole szablonu nie są wyszukiwane, nie mają własnego cyklu
--- życia i nie wiąże się z nimi nic z zewnątrz — istnieją wyłącznie jako
--- zawartość swojego rodzica. Tabela podrzędna dałaby złączenie przy każdym
--- odczycie i nie dałaby w zamian niczego.
+-- Migracja 128 dobudowuje moduł Studio o komentarze, zmiany śledzone, gałęzie
+-- dokumentu, kolejkę cyfryzacji, operacje, łańcuchy, profile wydania, szablony
+-- i odwołania do wersji. Uzasadnienie stoi w dokumentacji architektury.
 
--- ── Komentarze redakcyjne i adnotacje przy różnicach ─────────────────────────
 CREATE TABLE komentarz_studio (
     id                       INTEGER PRIMARY KEY AUTOINCREMENT,
     identyfikator_zewnetrzny TEXT    NOT NULL UNIQUE,
@@ -38,8 +12,7 @@ CREATE TABLE komentarz_studio (
     watek_nadrzedny_id       TEXT,
     autor                    TEXT    NOT NULL DEFAULT 'uzytkownik'
                                      CHECK(autor IN ('uzytkownik','model')),
-    -- Zakres znaków niesie komentarz redakcyjny; numer fragmentu — adnotacja
-    -- różnicy. Wypełnione jest jedno albo drugie, nigdy oba naraz.
+    -- Zakres znaków niesie komentarz, numer fragmentu adnotację, nigdy oba naraz.
     zakres_od                INTEGER,
     zakres_do                INTEGER,
     fragment_numer           INTEGER,
@@ -52,7 +25,6 @@ CREATE TABLE komentarz_studio (
 );
 CREATE INDEX idx_komentarz_studio_dokument ON komentarz_studio(dokument_id, rodzaj, id);
 
--- ── Zmiany zarejestrowane przez śledzenie zmian ──────────────────────────────
 CREATE TABLE zmiana_sledzona_studio (
     id                       INTEGER PRIMARY KEY AUTOINCREMENT,
     identyfikator_zewnetrzny TEXT    NOT NULL UNIQUE,
@@ -71,7 +43,6 @@ CREATE TABLE zmiana_sledzona_studio (
 );
 CREATE INDEX idx_zmiana_sledzona_studio_dokument ON zmiana_sledzona_studio(dokument_id, decyzja, zakres_od);
 
--- ── Gałęzie dokumentu ────────────────────────────────────────────────────────
 CREATE TABLE galaz_studio (
     id                       INTEGER PRIMARY KEY AUTOINCREMENT,
     identyfikator_zewnetrzny TEXT    NOT NULL UNIQUE,
@@ -84,9 +55,6 @@ CREATE TABLE galaz_studio (
 );
 CREATE INDEX idx_galaz_studio_dokument ON galaz_studio(dokument_id, id);
 
--- ── Kolejka wczytywania i cyfryzacji ─────────────────────────────────────────
--- Warstwa słów rozpoznanych i bloki układu stoją tekstem w formacie JSON: są
--- odczytem z materiału, nie bytem samodzielnym, i giną razem z pozycją.
 CREATE TABLE pozycja_wczytywania_studio (
     id                       INTEGER PRIMARY KEY AUTOINCREMENT,
     identyfikator_zewnetrzny TEXT    NOT NULL UNIQUE,
@@ -107,7 +75,6 @@ CREATE TABLE pozycja_wczytywania_studio (
 );
 CREATE INDEX idx_pozycja_wczytywania_studio_okno ON pozycja_wczytywania_studio(okno, id);
 
--- ── Operacje własne Tools Panel ──────────────────────────────────────────────
 CREATE TABLE operacja_studio (
     id                       INTEGER PRIMARY KEY AUTOINCREMENT,
     identyfikator_zewnetrzny TEXT    NOT NULL UNIQUE,
@@ -120,7 +87,6 @@ CREATE TABLE operacja_studio (
 );
 CREATE INDEX idx_operacja_studio_zasieg ON operacja_studio(zasieg, zasieg_id, kategoria, nazwa);
 
--- ── Łańcuchy operacji ────────────────────────────────────────────────────────
 CREATE TABLE lancuch_studio (
     id                       INTEGER PRIMARY KEY AUTOINCREMENT,
     identyfikator_zewnetrzny TEXT    NOT NULL UNIQUE,
@@ -132,7 +98,6 @@ CREATE TABLE lancuch_studio (
 );
 CREATE INDEX idx_lancuch_studio_zasieg ON lancuch_studio(zasieg, zasieg_id, nazwa);
 
--- ── Profile wydania ──────────────────────────────────────────────────────────
 CREATE TABLE profil_wydania_studio (
     id                       INTEGER PRIMARY KEY AUTOINCREMENT,
     identyfikator_zewnetrzny TEXT    NOT NULL UNIQUE,
@@ -145,7 +110,6 @@ CREATE TABLE profil_wydania_studio (
 );
 CREATE INDEX idx_profil_wydania_studio_zasieg ON profil_wydania_studio(zasieg, zasieg_id, nazwa);
 
--- ── Szablony dokumentów ──────────────────────────────────────────────────────
 CREATE TABLE szablon_studio (
     id                       INTEGER PRIMARY KEY AUTOINCREMENT,
     identyfikator_zewnetrzny TEXT    NOT NULL UNIQUE,
@@ -160,7 +124,6 @@ CREATE TABLE szablon_studio (
 );
 CREATE INDEX idx_szablon_studio_nazwa ON szablon_studio(nazwa);
 
--- ── Odwołania do wersji ──────────────────────────────────────────────────────
 CREATE TABLE odwolanie_wersji_studio (
     id                       INTEGER PRIMARY KEY AUTOINCREMENT,
     identyfikator_zewnetrzny TEXT    NOT NULL UNIQUE,
@@ -171,9 +134,8 @@ CREATE TABLE odwolanie_wersji_studio (
 );
 CREATE INDEX idx_odwolanie_wersji_studio_wersja ON odwolanie_wersji_studio(wersja_id);
 
--- ── Wersja dokumentu: autor i przynależność ──────────────────────────────────
--- Cztery kolumny dopuszczające NULL, więc historia zastana pozostaje poprawna
--- bez przepisywania danych.
+-- Wersja dokumentu dostaje cztery kolumny dopuszczające NULL, więc historia
+-- zastana pozostaje poprawna bez przepisywania jakichkolwiek danych wcześniejszych.
 ALTER TABLE wersja_dokumentu_studio ADD COLUMN autor TEXT
     CHECK(autor IS NULL OR autor IN ('uzytkownik','model'));
 ALTER TABLE wersja_dokumentu_studio ADD COLUMN kamien_milowy INTEGER NOT NULL DEFAULT 0
@@ -181,15 +143,11 @@ ALTER TABLE wersja_dokumentu_studio ADD COLUMN kamien_milowy INTEGER NOT NULL DE
 ALTER TABLE wersja_dokumentu_studio ADD COLUMN galaz_id TEXT;
 ALTER TABLE wersja_dokumentu_studio ADD COLUMN propozycja_id TEXT;
 
--- ── Dokument: stan śledzenia zmian ───────────────────────────────────────────
 ALTER TABLE dokument_studio ADD COLUMN sledzenie_zmian INTEGER NOT NULL DEFAULT 0
     CHECK(sledzenie_zmian IN (0,1));
 
--- ── Ingest/OCR Panel wchodzi do katalogu okien ───────────────────────────────
--- Ósme okno modułu z opracowania. Katalog rdzenia znał dla Studia pięć okien,
--- więc okno zbudowane w kliencie nie miało wiersza, do którego mogłoby się
--- odwołać. Kategoria „narzedzia" kończyła się na pozycji 15, więc 16 dokleja
--- się na końcu i nie przestawia żadnego wiersza zastanego.
+-- Ingest/OCR Panel jest ósmym oknem modułu; kategoria narzedzia kończyła się
+-- na pozycji piętnastej, więc szesnasta dokleja się bez przestawienia zastanych.
 INSERT INTO okno_operacyjne (kod, nazwa, rola, kategoria, kolejnosc)
 VALUES ('ingest-ocr-panel', 'Ingest/OCR Panel', 'pomocnicze', 'narzedzia', 16)
 ON CONFLICT(kod) DO NOTHING;

@@ -1,16 +1,4 @@
--- Migracja 205 — moduł Apps: artefakty budowania.
---
--- Artefakt jest plikiem na dysku, nie wpisem o pliku. Wiersz powstaje wtedy,
--- gdy silnik wykonania wdrożenia spakuje przestrzeń roboczą okna do archiwum
--- w magazynie treści rdzenia — kolumna `sciezka` trzyma odwołanie względne
--- magazynu (ten sam wzorzec co `zasob_designu.sciezka`), a `rozmiar`
--- i `suma_kontrolna` opisują bajty, które tam naprawdę leżą. Wiersz bez pliku
--- byłby dokładnie tym wzorcem szkody, który w tym produkcie już wystąpił:
--- wykazem zasobów, za którymi nie ma ani jednego bajtu.
---
--- `wdrozenie_kod` jest kodem zewnętrznym, nie więzem obcym — artefakt przeżywa
--- przebieg, z którego powstał, bo to on idzie potem do pakowania
--- (`apps.package.build` bierze „artefakt ostatniego wdrożenia udanego").
+-- Migracja 205 zakłada tabelę artefaktów budowania modułu Apps, niosącą odwołanie do archiwum spakowanego przez silnik wykonania wdrożenia.
 
 CREATE TABLE artefakt_apps (
     id                       INTEGER PRIMARY KEY AUTOINCREMENT,

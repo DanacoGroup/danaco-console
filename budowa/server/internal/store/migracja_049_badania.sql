@@ -1,55 +1,5 @@
--- Migracja 049 — trwałość modułu Research: źródła badania (Sources Manager),
--- ustalenia (Findings), raport składany z ustaleń (Report Builder) wraz z
--- eksportem, oraz przestrzeń badania (Research Workspace).
---
--- `ResearchSource` nie jest `BrowserSource`. Migracja 047 (Browser) kataloguje
--- odcisk odwiedzonej strony — cykl życia zaczyna się od nawigacji przeglądarki
--- i kończy z kartą. `ResearchSource` tu zaczyna się od decyzji Operatora
--- „to źródło wchodzi do badania" i niesie własną, ręczną ocenę wiarygodności
--- (`ResearchCredibility`), której `BrowserSource` nie ma i mieć nie może — to
--- inna prawda o innym momencie. Stąd `zrodlo_badania` jest tabelą
--- osobną, bez więzu do tabeli źródeł modułu Browser.
---
--- `LibraryFileId` jest tekstem bez więzu obcego, po wzorze migracji 046
--- (`dokument_studio.plik_repozytorium_id`). Plik biblioteki żyje w module
--- Library (migracja 045), budowanym równolegle — więz obcy
--- do niego wiązałby kolejność migracji, której migracja Research nie
--- kontroluje, i wymagałby, żeby wiersz `plik_biblioteki` istniał już w chwili
--- katalogowania źródła. Kontrakt dopuszcza źródło bez pliku repozytorium
--- (pole opcjonalne — źródło może być samym adresem `Url` albo notatką), więc
--- kolumna tekstowa dopuszczająca NULL bez sztywnego więzu jest właściwym
--- wyborem, nie ustępstwem.
---
--- Treść ustalenia i sekcji raportu idzie przez parę `tresc`/`tresc_odwolanie`,
--- po wzorze migracji 046: `ResearchFinding.Content` i
--- `ResearchReportSection.Content` bywają krótką notatką albo długim akapitem
--- przeniesionym z dokumentu — para kolumn obsługuje oba przypadki bez osobnej
--- ścieżki dla „długiej" treści. Migracja 045 (Library) używa samego
--- `tresc_odwolanie`, bo tam treść zawsze jest plikiem (dokument repozytorium);
--- tu treść bywa krótkim zdaniem wpisanym wprost przez Operatora, więc krótka
--- ścieżka (kolumna `tresc`) musi zostać dostępna tak jak w Studio.
---
--- Eksport raportu jest bytem trwałym, nie czynnością bez śladu. Kontrakt
--- `research.report.export` oddaje `LibraryFileId`, `Path` i `SizeBytes` —
--- trzy fakty o wyniku, które muszą przeżyć samo wywołanie komendy, inaczej
--- Operator traci możliwość odpowiedzieć na pytanie „czy i dokąd ten raport
--- już wyeksportowałem" bez ponownego eksportu. Panel Report Builder pokazuje
--- historię eksportów obok wersji raportu, więc ślad ma własną tabelę
--- (`eksport_raportu_badania`), osobną od `raport_badania` — dwa eksporty tego
--- samego raportu do różnych formatów to dwa wiersze, nie nadpisanie jednego.
---
--- Przestrzeń badania jest bytem własnym bez okna, jak `automatyka` w migracji
--- 039. `ResearchWorkspaceSetRequest` nie niesie `windowId` ani identyfikatora
--- rozbudowywanego bytu — zakres i etapy badania są jedną, bieżącą definicją
--- całego modułu, nie stanem karty. Stąd `przestrzen_badania` jest tabelą
--- jednowierszową (klucz `id` wymuszony na 1), a `research.workspace.set`
--- nadpisuje ten jeden wiersz zamiast zakładać nowy — tak jak zapis definicji
--- automatyki nadpisuje jej pola, nie mnoży wierszy.
---
--- Związek ustalenie↔źródło i sekcja↔ustalenie mają własne tabele złącznikowe,
--- po wzorze `zaleznosc_kroku_automatyki` (migracja 039). `SourceIds` przy
--- ustaleniu i `FindingIds` przy sekcji raportu to relacje wiele-do-wielu —
--- jedno źródło zasila wiele ustaleń, jedno ustalenie zasila wiele sekcji.
+-- Migracja 049 zakłada trwałość modułu badań: źródła, ustalenia, raport
+-- składany z ustaleń wraz z eksportem oraz jednowierszową przestrzeń badania.
 
 -- ── Źródło badania — Sources Manager ───────────────────────────────────────
 -- Wartości `rodzaj` i `wiarygodnosc` są wartościami kontraktu
@@ -71,7 +21,8 @@ CREATE TABLE zrodlo_badania (
 );
 CREATE INDEX idx_zrodlo_badania_okno ON zrodlo_badania(okno, pozyskano_o DESC);
 
--- ── Ustalenie badania — Findings ────────────────────────────────────────────
+-- Ustalenie badania niesie treść przez parę kolumn tresc i tresc_odwolanie,
+-- bo bywa krótką notatką albo długim akapitem przeniesionym z dokumentu.
 CREATE TABLE ustalenie_badania (
     id                       INTEGER PRIMARY KEY AUTOINCREMENT,
     identyfikator_zewnetrzny TEXT    NOT NULL UNIQUE,
@@ -85,7 +36,8 @@ CREATE TABLE ustalenie_badania (
 );
 CREATE INDEX idx_ustalenie_badania_okno ON ustalenie_badania(okno, zaktualizowano DESC);
 
--- ── Powiązanie ustalenia ze źródłami ────────────────────────────────────────
+-- Powiązanie ustalenia ze źródłami jest tabelą złącznikową relacji wiele do
+-- wielu: jedno źródło zasila wiele ustaleń, jedno ustalenie może mieć wiele źródeł.
 CREATE TABLE zrodlo_ustalenia_badania (
     ustalenie_id  INTEGER NOT NULL REFERENCES ustalenie_badania(id) ON DELETE CASCADE,
     zrodlo_id     INTEGER NOT NULL REFERENCES zrodlo_badania(id) ON DELETE CASCADE,
@@ -94,7 +46,8 @@ CREATE TABLE zrodlo_ustalenia_badania (
 );
 CREATE INDEX idx_zrodlo_ustalenia_badania_zrodlo ON zrodlo_ustalenia_badania(zrodlo_id, ustalenie_id);
 
--- ── Raport badania — Report Builder ─────────────────────────────────────────
+-- Raport badania jest bytem własnym budowanym z ustaleń; sekcje raportu i ich
+-- powiązania z ustaleniami mają osobne tabele niżej.
 CREATE TABLE raport_badania (
     id                       INTEGER PRIMARY KEY AUTOINCREMENT,
     identyfikator_zewnetrzny TEXT    NOT NULL UNIQUE,
@@ -105,7 +58,8 @@ CREATE TABLE raport_badania (
 );
 CREATE INDEX idx_raport_badania_okno ON raport_badania(okno, zaktualizowano DESC);
 
--- ── Sekcja raportu ───────────────────────────────────────────────────────────
+-- Sekcja raportu niesie treść tą samą parą kolumn co ustalenie, bo tak samo
+-- bywa krótką notatką albo długim akapitem z dokumentu.
 CREATE TABLE sekcja_raportu_badania (
     id                       INTEGER PRIMARY KEY AUTOINCREMENT,
     identyfikator_zewnetrzny TEXT    NOT NULL UNIQUE,
@@ -118,7 +72,8 @@ CREATE TABLE sekcja_raportu_badania (
 );
 CREATE INDEX idx_sekcja_raportu_badania_raport ON sekcja_raportu_badania(raport_id, kolejnosc, id);
 
--- ── Powiązanie sekcji raportu z ustaleniami ─────────────────────────────────
+-- Powiązanie sekcji raportu z ustaleniami jest tabelą złącznikową: jedno
+-- ustalenie zasila wiele sekcji, jedna sekcja opiera się na wielu ustaleniach.
 CREATE TABLE ustalenie_sekcji_raportu_badania (
     sekcja_id     INTEGER NOT NULL REFERENCES sekcja_raportu_badania(id) ON DELETE CASCADE,
     ustalenie_id  INTEGER NOT NULL REFERENCES ustalenie_badania(id) ON DELETE CASCADE,
@@ -143,7 +98,8 @@ CREATE TABLE eksport_raportu_badania (
 );
 CREATE INDEX idx_eksport_raportu_badania_raport ON eksport_raportu_badania(raport_id, utworzono DESC);
 
--- ── Przestrzeń badania — Research Workspace (byt jednowierszowy) ───────────
+-- Przestrzeń badania jest bytem własnym bez okna, jednowierszowym: klucz
+-- główny jest wymuszony na jeden, a zapis nadpisuje ten jeden wiersz zamiast zakładać nowy.
 CREATE TABLE przestrzen_badania (
     id             INTEGER NOT NULL PRIMARY KEY CHECK(id = 1),
     zakres         TEXT    NOT NULL DEFAULT '',

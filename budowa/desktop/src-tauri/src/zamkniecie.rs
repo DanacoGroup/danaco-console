@@ -1,18 +1,12 @@
-//! Zachowanie powłoki przy zamknięciu okna.
-//!
-//! Zamknięcie okna nie kończy pracy sesji: okno jest widokiem, nie właścicielem
-//! pracy. Praca toczy się w rdzeniu na serwerze wdrożenia i biegnie dalej bez
-//! względu na to, czy okno stoi otwarte. Zamknięcie chowa je więc do zasobnika,
-//! a ponowne otwarcie wraca do tej samej sesji.
-//!
-//! To nie jest blokada: przycisk zamknięcia działa natychmiast i bez pytania,
-//! zmienia się wyłącznie skutek.
+//! Moduł chowa okno do zasobnika przy zamknięciu, bo okno jest widokiem sesji, nie jej
+//! właścicielem, a praca toczy się w rdzeniu dalej.
 
 use tauri::{AppHandle, Manager, WebviewWindow, WindowEvent};
 
 use crate::okno;
 
-/// Obsługuje zdarzenia okna głównego.
+/// Obsługuje zdarzenia okna głównego powłoki, chowając je do zasobnika zamiast zamykać
+/// przy żądaniu zamknięcia.
 pub fn obsluz(okno: &WebviewWindow, zdarzenie: &WindowEvent) {
     if let WindowEvent::CloseRequested { api, .. } = zdarzenie {
         api.prevent_close();

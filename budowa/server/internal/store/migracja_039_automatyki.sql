@@ -1,42 +1,23 @@
--- Migracja 039 — trwałość modułu Automations, część pierwsza: definicja
--- automatyki (Workflow Builder) i układ zależności między jej krokami
--- (Orchestrator).
---
--- Automatyka jest komponentem własnym, nie bytem sesji. Dlatego tabela nie ma
--- kolumny sesji ani okna: ta sama automatyka jest widoczna ze strony głównej
--- niezależnie od karty sesji, w której Operator akurat pracuje.
---
--- Silnika kolejek tu nie ma. Wykonaniem kroków zajmuje się jeden silnik
--- kolejek: krok automatyki staje się pozycją kolejki dopiero w chwili
--- uruchomienia. Tabele poniżej opisują wyłącznie definicję — to, co Operator
--- zbudował, zanim cokolwiek ruszyło.
---
--- Zależność ma jedno miejsce zapisu. Kontrakt niesie zależność dwa razy: raz
--- polem `AutomationStep.dependsOn`, raz strukturą `AutomationDependency`.
--- Dwie tabele znaczyłyby dwie prawdy o tym samym łuku grafu, więc prawda jest
--- jedna — tabela `zaleznosc_kroku_automatyki` — a `dependsOn` powstaje z niej
--- przy odczycie.
+-- Migracja zakłada tabele definicji automatyki, jej kroków i zależności między krokami,
+-- jako trwałość modułu automatyzacji.
 
--- ── Definicja automatyki ──────────────────────────────────────────────────────
+-- Automatyka jest komponentem własnym, widocznym niezależnie od karty sesji, w której
+-- Operator akurat pracuje.
 CREATE TABLE automatyka (
     id                       INTEGER PRIMARY KEY AUTOINCREMENT,
     identyfikator_zewnetrzny TEXT    NOT NULL UNIQUE,
     nazwa                    TEXT    NOT NULL,
     opis                     TEXT,
     czynna                   INTEGER NOT NULL DEFAULT 1 CHECK(czynna IN (0,1)),
-    -- Wersja rośnie przy każdym zapisie definicji. Panel akcji Workflow Buildera
-    -- ma pozycję „Wersje”, a bez licznika nie da się powiedzieć, którą wersję
-    -- Operator właśnie ogląda.
+    -- Wersja rośnie przy każdym zapisie, by dało się powiedzieć, którą wersję Operator ogląda.
     wersja                   INTEGER NOT NULL DEFAULT 1,
     utworzono                TEXT    NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now')),
     zaktualizowano           TEXT    NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now'))
 );
 CREATE INDEX idx_automatyka_nazwa ON automatyka(nazwa, id);
 
--- ── Krok automatyki ───────────────────────────────────────────────────────────
--- Wartości kolumny `rodzaj` są wartościami kontraktu (AutomationStepKind), nie
--- ich tłumaczeniem. Dzięki temu przekład wiersza na krok kontraktu nie
--- potrzebuje słownika pośredniego.
+-- Wartości kolumny rodzaju są wartościami kontraktu wprost, więc przekład wiersza na
+-- krok kontraktu nie potrzebuje słownika.
 CREATE TABLE krok_automatyki (
     id                       INTEGER PRIMARY KEY AUTOINCREMENT,
     automatyka_id            INTEGER NOT NULL REFERENCES automatyka(id) ON DELETE CASCADE,
@@ -54,10 +35,8 @@ CREATE TABLE krok_automatyki (
 );
 CREATE INDEX idx_krok_automatyki_kolejnosc ON krok_automatyki(automatyka_id, kolejnosc, id);
 
--- ── Zależność między krokami — Orchestrator ───────────────────────────────────
--- Więz pierwotny obejmuje parę kroków, więc ten sam łuk nie powstanie dwa razy.
--- Pętli własnej (krok zależny od siebie) schemat nie dopuszcza wprost; cykl
--- dłuższy wykrywa walidacja układu, bo SQLite nie ma na to więzu.
+-- Więz pierwotny obejmuje parę kroków, więc ten sam łuk nie powstanie dwa razy; pętli
+-- własnej schemat nie dopuszcza wprost.
 CREATE TABLE zaleznosc_kroku_automatyki (
     automatyka_id  INTEGER NOT NULL REFERENCES automatyka(id) ON DELETE CASCADE,
     krok_z         TEXT    NOT NULL,

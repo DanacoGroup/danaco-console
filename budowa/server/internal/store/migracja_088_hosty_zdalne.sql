@@ -1,36 +1,5 @@
--- Hosty zdalne wykonania: wykaz maszyn, na których rdzeń może uruchomić proces,
--- wraz z parametrami połączenia i zgodą wydaną osobno dla każdej z nich.
---
--- Torem jest SSH, nie własny agent sieciowy:
---   · SSH daje semantykę procesu w całości — strumienie wejścia, wyjścia
---     i diagnostyki, kod wyjścia, zakończenie po zerwaniu połączenia — czyli
---     kształt `session.UchwytProcesu`, bez ani jednej linii własnego protokołu;
---   · SSH daje uwierzytelnienie i szyfrowanie, których transport rdzenia nie ma,
---     więc tor nie otwiera nowej drogi wejścia, tylko jedzie usługą, którą host
---     zdalny już wystawia;
---   · proces transportu (`ssh`) startuje w tym samym jedynym spawnerze
---     (`injection.Wystartuj`), a po stronie zdalnej proces uruchamia `sshd` —
---     istniejąca usługa systemowa. Rola `agent` komponuje się z tym torem
---     wprost: `ssh host danaco-console --role agent` wykonuje żądania kontraktu
---     na hoście zdalnym tym samym produktem.
---
--- Kolumna `zgoda` ma DEFAULT 0: samo wpisanie hosta jeszcze niczego nie otwiera.
--- Rdzeń nie zainicjuje połączenia SSH z maszyną, której zgoda nie obejmuje,
--- i nie zapyta interaktywnie o hasło (tor jedzie z BatchMode=yes).
---
--- Wiersz hosta zakłada się poleceniem:
---
---   INSERT INTO host_zdalny (nazwa, adres, uzytkownik, port, zgoda, zgode_wydano)
---   VALUES ('danaco-system', 'danaco-system.example', 'operator', 22, 1,
---           strftime('%Y-%m-%dT%H:%M:%fZ','now'));
---
--- a zgodę cofa: UPDATE host_zdalny SET zgoda = 0 WHERE nazwa = '…';
--- Klucz publiczny rdzenia musi stać na hoście w authorized_keys — ta część
--- zgody zapada po stronie hosta, nie w tej tabeli; sekrety nie idą przez bazę.
---
--- `nazwa` odpowiada dosłownie wartości ustawienia `host_wykonania` — tak wybór
--- w oknie komunikacji dochodzi do tego wiersza. `adres` jest adresem sieciowym
--- dla SSH; pusty znaczy: adresem jest nazwa.
+-- Migracja zakłada wykaz zdalnych hostów wykonania, na których rdzeń może uruchomić
+-- proces przez SSH, z osobną zgodą dla każdego.
 
 CREATE TABLE host_zdalny (
     id             INTEGER PRIMARY KEY AUTOINCREMENT,

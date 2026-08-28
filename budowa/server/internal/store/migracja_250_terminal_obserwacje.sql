@@ -1,18 +1,5 @@
--- Migracja 250 — obserwacje plików modułu Terminal (okno Task & Schedule).
---
--- Obserwacja uruchamia polecenie karty przy zmianie plików pasujących do
--- wzorca. Wyzwalacz plikowy istniał dotąd wyłącznie w automatykach, czyli poza
--- powłoką: nie dało się powiedzieć „po każdej zmianie w tym katalogu zbuduj
--- projekt W TEJ karcie, w jej katalogu i jej środowisku”.
---
--- `licznik` i `wyzwolono` są dziennikiem, nie stanem żywym — po restarcie rdzenia
--- obserwacja nie biegnie (przy montażu przechodzi w `stopped`), ale liczba
--- dotychczasowych wyzwoleń zostaje. Bez niej Operator nie odróżniłby obserwacji
--- założonej i niedziałającej od takiej, która po prostu nie miała czego złapać.
---
--- Klucza obcego do `terminal_karta` nie ma z tego samego powodu, dla którego nie
--- ma go karta do okna: karta bywa bytem pamięci rdzenia bez wiersza, a wpis
--- obserwacji nie ma prawa nie powstać z tego powodu.
+-- Migracja 250 zakłada tabelę obserwacji zmian plików modułu Terminal,
+-- uruchamiającą polecenie karty przy dopasowaniu wzorca ścieżek.
 
 CREATE TABLE terminal_obserwacja (
     id          INTEGER PRIMARY KEY AUTOINCREMENT,

@@ -1,12 +1,4 @@
--- Migracja 223 — komentarze przy bytach projektu.
---
--- Jedna tabela na komentarze wszystkich bytów: cel opisuje para rodzaj + byt,
--- a nie osobna tabela per byt. Wątek składa wskazanie komentarza nadrzędnego —
--- tak samo jak strona wiki składa hierarchię wskazaniem strony nadrzędnej.
---
--- Przywołania znakiem małpy leżą kolumną obok treści: rozpoznaje się je raz,
--- przy zapisie, bo panel powiadomień pyta o nie częściej, niż komentarz się
--- zmienia.
+-- Migracja 223 zakłada tabelę komentarzy przy bytach projektu, wspólną dla wszystkich rodzajów bytu, z przywołaniami znakiem małpy w osobnej kolumnie.
 
 CREATE TABLE komentarz_projektu (
     id                       INTEGER PRIMARY KEY AUTOINCREMENT,

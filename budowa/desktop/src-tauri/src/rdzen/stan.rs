@@ -1,11 +1,5 @@
-//! Opis stanu rdzenia przekazywany oknu i zasobnikowi.
-//!
-//! Stanu nie ma czego przechowywać między wywołaniami. Rdzeń stoi na serwerze
-//! wdrożenia, więc powłoka nie zna jego procesu, nie zna chwili jego startu
-//! i nie ma nad nim władzy — wie wyłącznie, pod jakim adresem go szukać
-//! (`Ustawienia`) i czy ten adres w tej chwili odpowiada (`nasluch`). Opis jest
-//! więc liczony przy każdym pytaniu z ustawień obowiązujących, a nie odczytywany
-//! z kopii spod zamka: kopia rozjeżdżałaby się ze wskazaniem złożonym w oknie.
+//! Moduł opisuje stan rdzenia przekazywany oknu i zasobnikowi, licząc go przy każdym
+//! pytaniu z ustawień obowiązujących.
 
 use serde::Serialize;
 
@@ -13,7 +7,8 @@ use super::nasluch;
 use crate::dziennik;
 use crate::ustawienia::Ustawienia;
 
-/// Opis stanu rdzenia przekazywany interfejsowi i oknom dialogowym.
+/// Opis stanu rdzenia przekazywany interfejsowi i oknom dialogowym powłoki, złożony przy
+/// każdym zapytaniu na nowo.
 #[derive(Clone, Debug, Serialize)]
 pub struct OpisRdzenia {
     /// Czy rdzeń odpowiada pod wskazanym adresem w chwili zapytania.
@@ -26,11 +21,8 @@ pub struct OpisRdzenia {
     pub opis: String,
 }
 
-/// Składa opis stanu rdzenia z ustawień obowiązujących.
-///
-/// Rozpoznanie pyta serwer wskazany, nie pętlę zwrotną: rdzeń stoi na serwerze
-/// wdrożenia, więc pytanie pętli zwrotnej dawałoby fałsz niezależnie od jego
-/// rzeczywistego stanu. Serwer nierozwiązywalny daje `pracuje: false`, nie panikę.
+/// Składa opis stanu rdzenia z ustawień obowiązujących, pytając serwer wskazany, nigdy
+/// pętlę zwrotną urządzenia.
 pub fn opisz(ustawienia: &Ustawienia) -> OpisRdzenia {
     let dziennik = dziennik::sciezka().display().to_string();
 

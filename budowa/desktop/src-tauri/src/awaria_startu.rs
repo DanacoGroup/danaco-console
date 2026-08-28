@@ -1,32 +1,12 @@
-//! Hak paniki — ostatnia linia obrony przed ciszą przy nieudanym starcie.
-//!
-//! `tauri::App::run` panikuje samodzielnie, gdy hak `setup` (tu: `montaz::zloz`,
-//! czyli otwarcie okna i budowa zasobnika) zwróci błąd — działanie
-//! udokumentowane wprost w źródłach `tauri` (`app.rs`, funkcja wolna `setup`,
-//! wołana z domknięcia pętli zdarzeń przy `RuntimeRunEvent::Ready`):
-//! `panic!("Failed to setup app: {e}")`. Dzieje się to wewnątrz `run()`, zanim
-//! jakiekolwiek okno powstanie — powłoka nie tworzy okien deklaratywnie
-//! w `tauri.conf.json`, więc do chwili tej paniki nie istnieje żadne.
-//!
-//! Powłoka pracuje w podsystemie okienkowym poza kompilacją debug
-//! (`windows_subsystem = "windows"`, `main.rs`) i profil release ma
-//! `panic = "abort"` (`Cargo.toml`). Bez własnego haka ta panika kończy
-//! proces natychmiast: bez konsoli (nie ma dokąd wypisać), bez okna (jeszcze
-//! nie powstało) i bez wpisu w dzienniku (`dziennik::dopisz` z `montaz::zloz`
-//! nie zdążyło zapisać przyczyny — panika przerywa w miejscu błędu). Proces
-//! znika wtedy bez śladu dla Operatora.
-//!
-//! Hak paniki uruchamia się zawsze przed odwinięciem/przerwaniem procesu —
-//! nawet przy `panic = "abort"` (gwarancja `std::panic`, niezależna od
-//! strategii paniki). To jedyne miejsce, w którym powłoka może jeszcze coś
-//! powiedzieć Operatorowi, zanim zniknie — dlatego instalacja haka jest
-//! pierwszą instrukcją `main`, przed jakąkolwiek inną pracą.
+//! Moduł instaluje hak paniki procesu, który przy nieudanym starcie zapisuje
+//! przyczynę w dzienniku i pokazuje Operatorowi natywny komunikat błędu, zanim proces zniknie bez śladu.
 
 use std::panic;
 
 use crate::dziennik;
 
-/// Instaluje hak paniki procesu. Wołać jako pierwszą instrukcję `main`.
+/// Instaluje hak paniki procesu jako pierwszą instrukcję funkcji `main`, zanim jakiekolwiek
+/// okno powłoki zdąży powstać.
 pub fn zainstaluj() {
     panic::set_hook(Box::new(|informacja| {
         let tresc = format!("KRYTYCZNE — powłoka kończy się awaryjnie: {informacja}");

@@ -1,20 +1,4 @@
--- Migracja 126 — okna dobudowane modułom wchodzą do katalogu rdzenia.
---
--- Siedem modułów buduje okna, których katalog rdzenia nie zna, więc `module.list`
--- zaniża zakres modułu: klient stawia okno, a rdzeń o nim nie wie i pas uczciwości
--- modułu melduje kod „poza katalogiem". Migracja domyka ten rozjazd — definicje
--- idą do `okno_operacyjne`, przypięcia do `okno_operacyjne_modul`, tak jak
--- ustaliły to migracje 030 i 031.
---
--- Rola i kategoria każdego okna są dobrane wzorem pozycji już obecnych w katalogu:
--- okno prowadzące pracę operatora jest `wiodace`, okno pokazujące przebieg jest
--- `monitor`, okno rządzące zbiorem jest `zarzadca`, okno wspierające inne jest
--- `pomocnicze`, a okno prowadzące przez tworzenie bytu jest `kreator`.
--- Kolejność definicji jest pierwszą wolną w obrębie kategorii.
---
--- Kolejność w module jest dopisaniem na koniec, nie przestawieniem. Okna zastane
--- zostają na swoich miejscach: zmiana porządku wyświetlania należy do projektu
--- interfejsu, nie do migracji domykającej katalog.
+-- Migracja 126 dopisuje do katalogu okno_operacyjne i przypięć okno_operacyjne_modul definicje siedmiu okien dobudowanych modułom, z rolą i kategorią dobraną wzorem pozycji już obecnych w katalogu.
 
 INSERT INTO okno_operacyjne (kod, nazwa, rola, kategoria, kolejnosc)
 VALUES
@@ -38,7 +22,7 @@ VALUES
     ('session-manager',          'Session Manager',            'zarzadca',   'narzedzia',   15)
 ON CONFLICT(kod) DO NOTHING;
 
--- ── Przypięcia do modułów ────────────────────────────────────────────────────
+-- Wiąże w tabeli okno_operacyjne_modul nowo dodane okna z modułami, w których pracują, ustalając kolejność wyświetlenia w obrębie każdego modułu docelowego.
 WITH macierz(okno_kod, modul_kod, kolejnosc) AS (
     VALUES
         ('automation-studio',        'browser',      4),

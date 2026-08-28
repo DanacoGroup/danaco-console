@@ -1,21 +1,6 @@
-//! Aktualizacja zdalna powłoki — pobranie wydania, sprawdzenie sumy, założenie,
-//! ponowny start. To strona powłoki dla banera „aktualizuj".
-//!
-//! Przedmiotem aktualizacji jest wyłącznie plik powłoki na urządzeniu
-//! Operatora. Rdzeń stoi na serwerze wdrożenia i jest utrzymywany tam, więc ten
-//! przebieg go nie dotyka: niczego mu nie podmienia i niczego nie wygasza.
-//!
-//! Droga nie idzie przez wtyczkę `updater` Tauri: wtyczka nie występuje ani
-//! w `Cargo.toml`, ani w `tauri.conf.json`, ani w `capabilities/domyslne.json`.
-//! Wymaga własnego podpisu minisign, czyli pary kluczy wydawcy, i narzuca
-//! własny kształt pliku `latest.json`, podczas gdy wykazem wydań jest
-//! `budowa/witryna/wydania.json` — ten sam plik, z którego strona „Pobierz"
-//! bierze chronologię.
-//!
-//! Zamiast tego: HTTPS po plik i SHA-256 z wykazu. Suma wiąże plik z wykazem
-//! tak samo jak podpis, a wykaz przychodzi po HTTPS z domeny wydawcy. Przejście
-//! na podpis dotknie jednego pliku (`pobranie.rs`); reszta przebiegu zostaje
-//! bez zmiany.
+//! Aktualizacja zdalna powłoki: pobranie wydania, sprawdzenie sumy, założenie
+//! i ponowny start na urządzeniu operatora, drogą HTTPS i sumy SHA-256
+//! z wykazu wydań, a nie wtyczką aktualizacji Tauri.
 
 pub mod droga;
 pub mod pobranie;
@@ -30,20 +15,14 @@ use tauri::AppHandle;
 
 use crate::dziennik;
 
-/// Ile czasu dostaje interfejs na odebranie odpowiedzi, zanim powłoka zniknie.
-///
-/// Restart natychmiastowy zabiłby okno, zanim odpowiedź polecenia doszłaby do
-/// strony — baner nie zdążyłby powiedzieć Operatorowi, że się udało, i wyglądałoby
-/// to jak awaria. Ta zwłoka nie jest blokadą: nic nie pyta i niczego
-/// nie wstrzymuje, daje tylko odpowiedzi czas dolecieć.
+/// Ile czasu dostaje interfejs na odebranie odpowiedzi, zanim powłoka zniknie;
+/// restart natychmiastowy zabiłby okno, zanim baner zdążyłby pokazać
+/// powodzenie, i wyglądałoby to jak awaria.
 const ZWLOKA_RESTARTU: Duration = Duration::from_millis(1500);
 
-/// Odmowa wykonania aktualizacji — opisuje brak, nigdy zakaz.
-///
-/// Powłoka nie mówi Operatorowi „nie wolno". Mówi, czego zabrakło (sieci,
-/// zgodnej sumy, prawa zapisu, drogi na tym systemie) i — gdy to możliwe —
-/// co da się z tym zrobić samemu. `powod` jest kodem dla interfejsu,
-/// `zdanie` jest zdaniem dla człowieka.
+/// Odmowa wykonania aktualizacji opisuje brak, nigdy zakaz: niesie kod
+/// przyczyny dla rozgałęzienia w interfejsie oraz zdanie po polsku, gotowe
+/// do pokazania operatorowi.
 #[derive(Clone, Debug, Serialize)]
 pub struct Odmowa {
     /// Kod przyczyny, stały i nadający się do rozgałęzienia w interfejsie.
@@ -62,7 +41,8 @@ impl Odmowa {
     }
 }
 
-/// Przebieg udanej aktualizacji — to, co interfejs dostaje tuż przed restartem.
+/// Przebieg udanej aktualizacji — dane, jakie interfejs dostaje tuż przed
+/// restartem powłoki, wraz z drogą założenia i sumą kontrolną pobranego pliku.
 #[derive(Clone, Debug, Serialize)]
 pub struct Przebieg {
     /// Droga systemowa, którą poszło założenie: `appimage` albo `instalka-nsis`.
@@ -79,16 +59,9 @@ pub struct Przebieg {
     pub zdanie: String,
 }
 
-/// Czy aktualizacja właśnie trwa.
-///
-/// To zapora wejścia, nie bramka na Operatora. Droga pobierania jest
-/// deterministyczna: bez wykluczenia dwa wywołania (dwuklik w baner, dwa okna)
-/// otwierają `File::create` na tym samym pliku roboczym obok aplikacji, piszą
-/// w niego przeplotem i każde liczy SHA-256 z własnego strumienia, a nie z tego,
-/// co ostatecznie leży na dysku. Suma zgadzałaby się wtedy dla pliku, którego
-/// w tej postaci nie ma, po czym oba przebiegi wołałyby `rename` na plik
-/// aplikacji. Odmowa stąd opisuje brak (aktualizacja już zajęta), nie zakaz,
-/// i mija sama, gdy pierwszy przebieg się skończy.
+/// Czy aktualizacja właśnie trwa — zapora wejścia przeciw dwóm równoległym
+/// pobraniom do tego samego pliku roboczego; odmowa stąd opisuje brak, nie
+/// zakaz, i mija sama, gdy pierwszy przebieg się skończy.
 static W_TOKU: AtomicBool = AtomicBool::new(false);
 
 /// Zwalnia zaporę także wtedy, gdy przebieg wyszedł błędem albo paniką —
@@ -101,16 +74,9 @@ impl Drop for StrazWylacznosci {
     }
 }
 
-/// Zajmuje wyłączność na aktualizację albo odmawia, bo już trwa.
-///
-/// Wydzielone z `wykonaj`, żeby dało się to sprawdzić bez stawiania okna —
-/// zapora jest tu jedyną rzeczą stojącą między dwoma kliknięciami a dwoma
-/// pobraniami do tego samego pliku.
-///
-/// Zwróconą straż trzeba związać z nazwą na cały czas przebiegu. Wartość
-/// upuszczona od razu zwalnia zaporę i przywraca usterkę, przed którą ta
-/// funkcja stoi — stąd `#[must_use]`, a `wykonaj` przekazuje straż pożyczką
-/// do `przebieg_pod_straza`.
+/// Zajmuje wyłączność na aktualizację albo odmawia, bo już trwa. Zwróconą
+/// straż trzeba związać z nazwą na cały czas przebiegu — wartość upuszczona
+/// od razu zwalnia zaporę i przywraca usterkę, przed którą ta funkcja stoi.
 #[must_use = "straż zwalnia zaporę w chwili upuszczenia — zwiąż ją z nazwą na czas całego przebiegu"]
 pub fn zajmij_wylacznosc() -> Result<StrazWylacznosci, Odmowa> {
     if W_TOKU
@@ -136,7 +102,7 @@ pub fn zajmij_wylacznosc() -> Result<StrazWylacznosci, Odmowa> {
 pub fn wykonaj(aplikacja: &AppHandle, adres: &str, suma_sha256: &str) -> Result<Przebieg, Odmowa> {
     dziennik::dopisz(&format!("aktualizacja: żądanie wydania spod {adres}"));
 
-    // Jedna aktualizacja naraz — zob. `W_TOKU`.
+    // Jedna aktualizacja naraz: zapora wyłączności nie dopuszcza drugiego przebiegu.
     let straz = zajmij_wylacznosc().inspect_err(|odmowa| {
         dziennik::dopisz(&format!(
             "aktualizacja: odmowa ({}) {}",
@@ -144,31 +110,20 @@ pub fn wykonaj(aplikacja: &AppHandle, adres: &str, suma_sha256: &str) -> Result<
         ));
     })?;
 
-    // Straż idzie dalej pożyczką, a nie zostaje tu w luźnym wiązaniu.
-    //
-    // Przy samym wiązaniu `let _straz = …` skrócenie go do `let _ = …`
-    // upuszczałoby straż natychmiast: wyłączność znikałaby, dwuklik znów
-    // uruchamiałby dwa pobrania do jednego pliku roboczego, i nie zapaliłby
-    // się przy tym ani test, ani ostrzeżenie clippy. Przy pożyczce ten sam błąd
-    // jest niemożliwy do zapisania: bez nazwy nie ma czego pożyczyć, a pożyczka
-    // trzyma straż przy życiu do końca wywołania.
+    // Straż idzie dalej pożyczką, nie luźnym wiązaniem, żeby uniknąć jej wcześniejszej utraty.
     przebieg_pod_straza(&straz, aplikacja, adres, suma_sha256)
 }
 
-/// Właściwy przebieg aktualizacji, wykonywany pod zajętą wyłącznością.
-///
-/// `_straz` nie jest tu do niczego używana i o to chodzi: jej obecność
-/// w podpisie jest dowodem — sprawdzanym przez kompilator — że nikt nie
-/// wywoła tego przebiegu bez zajętej zapory ani nie zwolni jej w połowie.
+/// Właściwy przebieg aktualizacji, wykonywany pod zajętą wyłącznością; parametr
+/// straży, choć nieużywany, jest dowodem sprawdzanym przez kompilator, że nikt
+/// nie wywoła tego przebiegu bez zajętej zapory.
 fn przebieg_pod_straza(
     _straz: &StrazWylacznosci,
     aplikacja: &AppHandle,
     adres: &str,
     suma_sha256: &str,
 ) -> Result<Przebieg, Odmowa> {
-    // Rozpoznanie drogi: czy na tym systemie w ogóle jest co podmieniać.
-    // Pytamy przed pobraniem — ściąganie całego wydania po to, żeby odmówić,
-    // byłoby marnotrawstwem łącza Operatora.
+    // Rozpoznanie drogi sprawdza, czy jest co podmieniać, zanim ściągnie się wydanie.
     let droga = droga::rozpoznaj().inspect_err(|odmowa| {
         dziennik::dopisz(&format!(
             "aktualizacja: odmowa ({}) {}",
@@ -177,8 +132,7 @@ fn przebieg_pod_straza(
     })?;
     let plik_roboczy = droga.plik_roboczy();
 
-    // Pobranie wraz ze sprawdzeniem sumy. Plik niezgodny nie wraca stąd nigdy
-    // — `pobranie.rs` kasuje go przed zwróceniem odmowy.
+    // Pobranie wraz ze sprawdzeniem sumy; plik niezgodny nie wraca stąd nigdy.
     let pobrany =
         pobranie::pobierz_i_sprawdz(adres, suma_sha256, &plik_roboczy).inspect_err(|odmowa| {
             dziennik::dopisz(&format!(
@@ -213,20 +167,14 @@ fn przebieg_pod_straza(
     })
 }
 
-/// Odkłada ponowny start powłoki o `ZWLOKA_RESTARTU`.
-///
-/// `restart()` Tauri sam radzi sobie z AppImage: sięga po zmienną `APPIMAGE`,
-/// a nie po `current_exe()`, które wskazywałoby chwilowo podmontowany obraz
-/// starego wydania. Dzięki temu po podmianie wstaje wydanie nowe.
-///
-/// Gdy zakłada instalator zewnętrzny (Windows), powłoka wyłącznie schodzi
-/// z drogi — `zakoncz_powloke` kończy proces okna i nic poza nim.
+/// Odkłada ponowny start powłoki o czas zwłoki restartu; obsługa obrazu
+/// przenośnego działa sama i wstaje po podmianie w wydaniu nowym, a przy
+/// instalatorze zewnętrznym powłoka wyłącznie schodzi z drogi.
 fn zaplanuj_ponowny_start(aplikacja: &AppHandle, restartuje_powloka: bool) {
     let aplikacja = aplikacja.clone();
     std::thread::spawn(move || {
         std::thread::sleep(ZWLOKA_RESTARTU);
-        // Wątek roboczy nie może sam kończyć aplikacji — Tauri wymaga do tego
-        // wątku głównego, inaczej sprzątanie okna bywa niedokończone.
+        // Wątek roboczy nie może sam kończyć aplikacji — wymaga do tego wątku głównego.
         let _ = aplikacja.clone().run_on_main_thread(move || {
             if restartuje_powloka {
                 dziennik::dopisz("aktualizacja: ponowny start powłoki");

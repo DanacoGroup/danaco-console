@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
+# Generator sygnatury poczty elektronicznej modułu Danaco Console, wytwarzający
+# pliki HTML w wersji jasnej i ciemnej.
 """
 Danaco Console — generator sygnatury poczty elektronicznej (B6).
 

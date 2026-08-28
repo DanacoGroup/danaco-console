@@ -1,35 +1,6 @@
--- Migracja 208 — rodzina `extension.*`, warstwa protokołu: narzędzia odkryte
--- u integracji, dziennik ramek JSON-RPC, wywołania wraz z ich czasem oraz
--- wyniki sprawdzeń kondycji.
---
--- NARZĘDZIE JEST WIERSZEM, BO ODKRYCIE MA PRZEŻYĆ ODPOWIEDŹ. `extension.tool.list`
--- ma pole `refresh`: bez niego oddaje to, co odkryto wcześniej, z nim — pyta
--- serwer na nowo. Wykaz trzymany wyłącznie w pamięci znikałby przy restarcie
--- rdzenia i pierwsze otwarcie konsoli po starcie zawsze musiałoby czekać na
--- handshake, także wtedy, gdy serwer akurat nie odpowiada.
---
--- TRZY WYKAZY PROTOKOŁU MCP W JEDNEJ TABELI. `ExtensionToolKind` niesie `tool`,
--- `resource` i `prompt` — trzy wykazy `tools/list`, `resources/list`,
--- `prompts/list` — a kształt wpisu jest dla nich wspólny (nazwa, opis, schemat
--- wejścia, adres). Trzy tabele o tych samych kolumnach byłyby trzema prawdami
--- o jednym bycie.
---
--- RAMKA PROTOKOŁU JEST DZIENNIKIEM DIAGNOSTYCZNYM, NIE STANEM POŁĄCZENIA.
--- `extension.protocol.log.list` czyta ją przy diagnozie błędu integracji; wiersz
--- powstaje przy każdym wywołaniu narzędzia i przy każdym powitaniu, po jednym
--- na kierunek, z korelacją żądania z odpowiedzią.
---
--- WYWOŁANIE MA WIERSZ, BO METRYKA UŻYCIA MUSI SIĘ Z CZEGOŚ LICZYĆ.
--- `extension.usage.get` oddaje liczbę wywołań, liczbę niepowodzeń i średni czas
--- odpowiedzi w oknie czasu — żadnej z tych trzech wartości nie da się policzyć
--- z licznika nadpisywanego w miejscu. `extension.audit.list` czyta te same
--- wiersze od strony eksperta, który wywołania dokonał.
---
--- KONDYCJA JEST DZIENNIKIEM SPRAWDZEŃ. `extension.health.check` dopisuje wynik
--- każdego sprawdzenia; panel zdrowia Integrations Hub pokazuje najnowszy, a
--- historia zostaje, bo z niej widać, kiedy integracja zaczęła się psuć.
+-- Migracja 208 zakłada tabele warstwy protokołu rodziny extension: narzędzia odkryte u integracji, dziennik ramek JSON-RPC, wywołania i wyniki sprawdzeń kondycji.
 
--- ── Narzędzie, zasób albo prompt odkryty u integracji ────────────────────────
+-- Zakłada tabelę narzedzie_rozszerzenia niosącą wykaz narzędzi, zasobów i promptów odkrytych u integracji protokołem MCP.
 CREATE TABLE narzedzie_rozszerzenia (
     id               INTEGER PRIMARY KEY AUTOINCREMENT,
     rozszerzenie_kod TEXT    NOT NULL,
@@ -37,19 +8,17 @@ CREATE TABLE narzedzie_rozszerzenia (
     rodzaj           TEXT    NOT NULL CHECK(rodzaj IN ('tool','resource','prompt')),
     nazwa            TEXT    NOT NULL,
     opis             TEXT,
-    -- Surowy JSON Schema wejścia narzędzia; rdzeń go nie rozkłada, bo kształt
-    -- należy do serwera MCP, nie do platformy.
+    -- Surowy JSON Schema wejścia narzędzia, nierozkładany, bo kształt należy do serwera MCP.
     schemat_wejscia  TEXT,
     adres            TEXT,
     odkryto          INTEGER NOT NULL DEFAULT 0,
-    -- Wersja protokołu podana w powitaniu; ta sama dla całego wykazu jednego
-    -- odkrycia, ale trzymana przy wpisie, bo wykaz oddaje się w częściach.
+    -- Wersja protokołu z powitania, wspólna wykazowi jednego odkrycia, trzymana przy każdym wpisie.
     wersja_protokolu TEXT,
     UNIQUE (rozszerzenie_kod, rodzaj, nazwa)
 );
 CREATE INDEX idx_narzedzie_rozszerzenia ON narzedzie_rozszerzenia(rozszerzenie_kod, rodzaj, nazwa);
 
--- ── Ramka protokołu JSON-RPC ─────────────────────────────────────────────────
+-- Zakłada tabelę ramka_protokolu_rozszerzenia niosącą dziennik diagnostyczny ramek JSON-RPC wymienianych z integracją.
 CREATE TABLE ramka_protokolu_rozszerzenia (
     id                       INTEGER PRIMARY KEY AUTOINCREMENT,
     identyfikator_zewnetrzny TEXT    NOT NULL UNIQUE,
@@ -65,7 +34,7 @@ CREATE TABLE ramka_protokolu_rozszerzenia (
 CREATE INDEX idx_ramka_protokolu_rozszerzenia
     ON ramka_protokolu_rozszerzenia(rozszerzenie_kod, zaszlo DESC, id DESC);
 
--- ── Wywołanie narzędzia integracji ───────────────────────────────────────────
+-- Zakłada tabelę wywolanie_rozszerzenia niosącą wiersz każdego wywołania narzędzia integracji jako podstawę metryki użycia.
 CREATE TABLE wywolanie_rozszerzenia (
     id               INTEGER PRIMARY KEY AUTOINCREMENT,
     rozszerzenie_kod TEXT    NOT NULL,
@@ -81,7 +50,7 @@ CREATE TABLE wywolanie_rozszerzenia (
 CREATE INDEX idx_wywolanie_rozszerzenia ON wywolanie_rozszerzenia(rozszerzenie_kod, zaszlo DESC);
 CREATE INDEX idx_wywolanie_rozszerzenia_agent ON wywolanie_rozszerzenia(agent_kod, zaszlo DESC);
 
--- ── Wynik sprawdzenia kondycji integracji ────────────────────────────────────
+-- Zakłada tabelę kondycja_rozszerzenia niosącą dziennik wyników sprawdzeń kondycji integracji w czasie.
 CREATE TABLE kondycja_rozszerzenia (
     id               INTEGER PRIMARY KEY AUTOINCREMENT,
     rozszerzenie_kod TEXT    NOT NULL,

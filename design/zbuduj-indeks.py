@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+# Skrypt buduje INDEKS.html ze skanu bieżącego stanu drzewa katalogu design na
+# potrzeby przeglądu prototypów i opracowań.
 """Buduje INDEKS.html ze skanu drzewa design/. Katalog powstaje z rzeczywistości,
    więc nie może się z nią rozminąć."""
 import os, re, html, sys, subprocess
@@ -65,7 +67,8 @@ def sekcja(idn, tytul_s, opis, pozycje, wyroz=False):
 
 sekcje, spis = [], []
 
-# 1 · przedmiot bieżącej pracy
+# Sekcja przedmiotu bieżącej pracy pokazuje prototypy oznaczone plakietką
+# postępu, wyróżnione wizualnie na czele katalogu.
 prace = [karta('05-okna/platformowe/instalator.html', ('w pracy',)),
          karta('05-okna/przeplyw/przeplyw-wejscia.html', ('w pracy',))]
 s1, w1 = sekcja('w-pracy', 'Przedmiot bieżącej pracy',
@@ -73,7 +76,8 @@ s1, w1 = sekcja('w-pracy', 'Przedmiot bieżącej pracy',
     prace, wyroz=True)
 sekcje.append(s1); spis.append(w1)
 
-# 2 · pozostałe okna
+# Sekcja pozostałych okien zbiera pliki katalogu okien pominięte w sekcji
+# bieżącej pracy, posortowane alfabetycznie.
 poz = [p for p in zbierz('05-okna') if p.endswith('.html')
        and 'instalator.html' not in p and 'przeplyw-wejscia.html' not in p]
 s2, w2 = sekcja('okna', 'Prototypy okien platformy',
@@ -81,7 +85,8 @@ s2, w2 = sekcja('okna', 'Prototypy okien platformy',
     [karta(p) for p in poz])
 sekcje.append(s2); spis.append(w2)
 
-# 3 · normy i wykazy
+# Sekcja norm i wykazów zbiera opracowania tekstowe katalogu okien,
+# obowiązujące przy budowie kolejnych prototypów.
 normy = [p for p in zbierz('05-okna') if p.endswith('.md')]
 s3, w3 = sekcja('normy', 'Normy i wykazy',
     'Zasady obowiązujące przy budowie okien oraz rejestr długu składników.',
@@ -99,7 +104,8 @@ for kat, idn, tyt, op in [
     s, w = sekcja(idn, tyt, op, [karta(p) for p in zbierz(kat)])
     sekcje.append(s); spis.append(w)
 
-# metryki
+# Blok metryk liczy opracowania, linie i okna drzewa design oraz składniki
+# biblioteki wyprowadzone z arkuszy stylu.
 wszystkie = [p for w in [zbierz('05-okna'), zbierz('01-dokumentacja-md'), zbierz('02-dokumentacja-html'),
                           zbierz('03-marka'), zbierz('04-portfolio'), zbierz('_prace')] for p in w]
 linii = sum(sum(1 for _ in open(p, encoding='utf-8', errors='ignore')) for p in wszystkie)

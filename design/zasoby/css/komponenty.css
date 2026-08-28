@@ -2689,7 +2689,10 @@ label.dn-pasek-szukaj:focus-within {
   border-radius: var(--dn-r-sm);
   transition: color var(--dn-czas-2) var(--dn-ease);
 }
-.dn-link:hover { color: var(--dn-sygnal-600); }
+/* Najechanie idzie żetonem mocnego sygnału, nie prymitywem: prymityw 600 jest
+   wartością motywu jasnego i w ciemnym dawał 2,52–3,00:1, czyli po najechaniu
+   odnośnik czytał się gorzej niż przed nim. */
+.dn-link:hover { color: var(--dn-sygnal-mocny); }
 .dn-link:focus-visible {
   outline: var(--dn-wym-fokus) solid var(--dn-fokus);
   outline-offset: var(--dn-wym-fokus-odsuniecie);
@@ -3349,7 +3352,7 @@ button.dn-link {
   text-decoration: none;
   border-bottom: 1px solid transparent;
 }
-.dn-spis-tresci a:hover { color: var(--dn-sygnal-500); border-bottom-color: currentColor; }
+.dn-spis-tresci a:hover { color: var(--dn-sygnal-mocny); border-bottom-color: currentColor; }
 .dn-spis-tresci a:focus-visible {
   outline: var(--dn-wym-fokus) solid var(--dn-fokus);
   outline-offset: 2px;

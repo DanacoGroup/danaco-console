@@ -801,23 +801,27 @@ Do rozstrzygnięcia: czy rysowanie diagramu ma powstać poza obszarem Design
 (nowa komenda i nowe miejsce), czy zostaje niezrobione. Rozstrzygnięcie dotyka
 zapory niosącej rozstrzygnięcie Właściciela, więc nie jest samą robotą.
 
-### Komunikat rdzenia radzi budowę usuniętymi skryptami
+### Komunikat rdzenia radzi budowę usuniętymi skryptami — nieaktualne
 
-`budowa/server/internal/narzedzia/wpiecie.go:52` i `:111` — komentarz i treść
-komunikatu błędu wskazują `scripts/wydanie.sh` i `scripts/pakowanie.sh`,
-usunięte z repozytorium jako materiał instalek natywnych (pozycja 8 pkt 4).
-Odmowa radzi Operatorowi drogę naprawy, której nie ma. Drobny teren rdzenia.
+**Zdjęte 28.08 po sprawdzeniu.** Przeszukanie `wpiecie.go` nie znajduje odwołań
+do `scripts/wydanie.sh` ani `scripts/pakowanie.sh`; usterkę naprawiono wcześniej,
+a zapis ją przeżył.
 
-### Skrypty hybrydowe wskazują usunięte profile i nieistniejący katalog
+### Skrypty hybrydowe wskazują usunięte profile i nieistniejący katalog — nieaktualne
 
-Wszystkie trzy `budowa/scripts/instalka-hybryda-*.sh` wskazują profile
-`tauri.hybryda-*.conf.json`, których nie ma (w `budowa/desktop/src-tauri/`
-stoi wyłącznie `tauri.conf.json`), oraz `budowa/client/` zamiast
-`budowa/klient/`; to samo `pakiet-serwera.sh` i `pokaz.sh`. Hybryda jest
-jedyną postacią produktu, więc skrypty są żywe, a odmawiają na starcie.
-Naturalny moment terenu: powstanie prawdziwej budowy `budowa/klient/dist`.
-Osobno do rozstrzygnięcia: `instalka-hybryda-linux.sh` wobec pozycji 8
-(jedyna platforma Windows 11), gdy `droga.rs` wciąż niesie tor AppImage.
+**Zdjęte 28.08 po sprawdzeniu, każdy człon osobno.** Żaden skrypt nie wskazuje
+profili `tauri.hybryda-*`. Skryptu `instalka-hybryda-linux.sh` nie ma, więc
+sprzeczność z jedyną platformą Windows 11 rozstrzygnęła się sama; zostały dwa
+skrypty Windows, x64 i ARM64.
+
+Ścieżka `client` w `pakiet-serwera.sh` **nie jest literówką**: to układ wdrożenia
+wewnątrz pakietu, wskazany jednostce systemd zmienną
+`DANACO_KATALOG_KLIENTA=/opt/danaco-console/client/dist`, którą rdzeń czyta.
+Wartość `klient/dist` w `konfiguracja/katalog_klienta.go` jest wyłącznie domyślną
+dla uruchomienia z drzewa budowy.
+
+Oba skrypty przeszły 28.08 przelotem do końca i złożyły instalatory obu
+architektur — zapis o odmowie na starcie był nieprawdziwy.
 
 ### Kontrast metadanych w przedsionkach — naprawione
 

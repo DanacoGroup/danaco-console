@@ -7070,3 +7070,16 @@ pozycji, ponieważ wiersz z siedmioma przyciskami byłby nieczytelny, a te
 cztery są czynnościami rzadkimi. Czynność rozgałęzienia wersji pozostaje poza
 zakresem tego modułu — komendy studio.branch.* pracują w rdzeniu dalej. Plik
 nie woła rdzenia: oddaje przyciski, a rozmowę prowadzi okno historii.
+
+## budowa/klient-poprzedni/src/moduly/studio/tabela-panel.test.ts
+Warsztat tabel sprawdza czynność i bilans, nie kształt pliku, pilnując tego,
+co przy poprawce najłatwiej zepsuć po cichu. Wskazanie rozmiaru siatką
+prowadzi do komendy studio.table.insert z rozmiarem wskazanym, a nie
+z rozmiarem domyślnym okna. Bilans czynności jest wypisywany zawsze, także
+przy pełnym powodzeniu, ponieważ wypisywanie go tylko przy pominięciu
+uczyłoby, że brak bilansu znaczy pełne powodzenie, a to jest cisza, której
+zlecenie zakazuje. Pominięcie z powodu blokady fragmentu nazywa blokadę,
+a czynność nie przedstawia się jako udana — scalenie komórek, które blokada
+zatrzymała, nie może wyglądać na wykonane. Szerokości kolumn są wypisywane
+liczbami, a szerokość zerowa jest nazwana wprost, ponieważ sprawdzian skutku
+zlecenia mierzy właśnie to, że tabela po scaleniu ma szerokości policzone.

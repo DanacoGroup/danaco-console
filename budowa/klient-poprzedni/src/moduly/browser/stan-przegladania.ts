@@ -18,21 +18,9 @@ import { utworzZrodloIzolacji, type ZrodloIzolacji } from './zrodlo-izolacji';
 import { oknoModulu, opisOkna, utworzZrodloOkien, type ZrodloOkien } from './zrodlo-okien';
 
 /**
- * Jedno źródło prawdy modułu Browser.
- *
- * Pięć okien modułu — Browser Window, Sources Panel, Notes Panel, Automation
- * Studio, Capture & Monitor Panel — pracuje na tym samym oknie przeglądarki,
- * tej samej migawce i tym samym zbiorze zebranym; osobne stany rozjechałyby
- * notatkę ze źródłem, a zaznaczenie ze stroną.
- *
- * Migawkę odświeżają dwie drogi: własne wywołanie `browser.snapshot.get`
- * i zdarzenie `browser.page.changed` — odpytywania w pętli nie ma. Wykazy
- * źródeł i notatek oraz migawka idą zaraz po ustaleniu okna, bo ich treść
- * mieszka w rdzeniu, nie w pamięci karty.
- *
- * Stan warstw widoczności stoi tutaj razem z resztą, a nie osobno przy pasku
- * kontekstu: odsłonięcie rozszerzenia jest zmianą, na którą okna reagują tak
- * samo jak na nową migawkę, więc idzie tym samym ogłoszeniem.
+ * Jedno źródło prawdy modułu Browser. Pięć okien modułu pracuje na tym samym
+ * oknie przeglądarki, tej samej migawce i tym samym zbiorze zebranym; osobne
+ * stany rozjechałyby notatkę ze źródłem, a zaznaczenie ze stroną.
  */
 export type FazaOdczytu = 'spoczynek' | 'odczyt' | 'gotowe' | 'blad';
 
@@ -47,10 +35,7 @@ export interface StanPrzegladania {
   izolacja: ZrodloIzolacji;
   /** Materiał przechwycony w sesji — zaplecze Capture & Monitor Panel. */
   material: MaterialSesji;
-  /**
-   * Pokrycie komend modułu w rdzeniu — jedno na moduł, wspólne dla wszystkich
-   * pozycji, których okno jeszcze nie wykonuje. Odczyt idzie raz na połączenie.
-   */
+  /** Pokrycie komend modułu w rdzeniu — jedno na moduł, odczyt idzie raz na połączenie. */
   pokrycie: PokrycieKomend;
   /** Stan stopniowego ujawniania okien i paneli modułu. */
   warstwy: WarstwyWidocznosci;
@@ -76,16 +61,9 @@ export interface StanPrzegladania {
   zaciagnijMigawke(zeZrodlem?: boolean): Promise<void>;
   /** Zaciąga z rdzenia wykaz źródeł i notatek okna (dwie komendy `*.list`). */
   zaciagnijZebrane(): Promise<void>;
-  /**
-   * Zdanie o ostatnim zaciągnięciu wykazów — puste, gdy przyszły bez uwag.
-   * Osobno od `powod()`, bo dotyczy czego innego niż samo ustalenie okna.
-   */
+  /** Zdanie o ostatnim zaciągnięciu wykazów — puste, gdy przyszły bez uwag; osobno od powodu okna. */
   powodZebranego(): string;
-  /**
-   * Stan ostatniego zaciągnięcia wykazów — rozstrzyga, czy panel pokazuje
-   * czekanie, pustkę czy odmowę. Samo zdanie tego nie niosło: `powodZebranego`
-   * bywa niepuste również wtedy, gdy rdzeń po prostu nie zna jeszcze okna.
-   */
+  /** Stan ostatniego zaciągnięcia wykazów — rozstrzyga, czy panel pokazuje czekanie, pustkę czy odmowę. */
   stanZebranego(): StanZaciagniecia;
   /** Powiadamia widoki o każdej zmianie stanu. */
   obserwuj(sluchacz: () => void): () => void;
@@ -99,8 +77,7 @@ export function utworzStanPrzegladania(kanal: Kanal): StanPrzegladania {
   const zapisy = utworzZapisyPrzekazania(kanal);
   const rozglos = utworzOgloszenia();
   const oglos = rozglos.oglos;
-  // Zbiór zebranego ogłasza każdą swoją zmianę tym samym kanałem co odczyt
-  // okna: trzy okna modułu mają zobaczyć nowe źródło w tej samej chwili.
+  // Zbiór zebranego ogłasza zmianę tym samym kanałem co odczyt okna, żeby okna zobaczyły ją naraz.
   const zebrane = utworzZebraneWSesji(oglos);
   const odczyt = utworzOdczytOkna(okna, utworzWykazyZebranego(zrodlo, zebrane), oglos);
   const migawki = utworzOdczytMigawki(zrodlo, oglos);
@@ -110,9 +87,7 @@ export function utworzStanPrzegladania(kanal: Kanal): StanPrzegladania {
 
   let fragment = '';
 
-  // Zdarzenie cudzego okna jest odrzucane, a przed ustaleniem okna odrzucane
-  // jest każde: jedna sesja bywa oglądana w kilku oknach, a migawka nie swojego
-  // okna przestawiłaby podgląd na stronę, której Operator tu nie otwierał.
+  // Zdarzenie cudzego okna jest odrzucane, a przed ustaleniem okna odrzucane jest każde zdarzenie.
   const odsubskrybuj = zrodlo.naZmianeStrony((tresc) => {
     if (odczyt.idOkna() === '' || tresc.windowId !== odczyt.idOkna()) return;
     migawki.wchlon(tresc.snapshot);
@@ -148,9 +123,7 @@ export function utworzStanPrzegladania(kanal: Kanal): StanPrzegladania {
 
     wchlonMigawke: migawki.wchlon,
 
-    // Migawka idzie zaraz po ustaleniu okna, tak samo jak wykazy: rdzeń zna
-    // treść strony tego okna również wtedy, gdy przejście odbyło się w innej
-    // karcie albo przed przeładowaniem powłoki.
+    // Migawka idzie zaraz po ustaleniu okna, tak samo jak wykazy — rdzeń zna treść strony zawsze.
     async ustalOkno(idSesji) {
       await odczyt.ustalOkno(idSesji);
       await zaciagnijMigawke();
@@ -164,9 +137,7 @@ export function utworzStanPrzegladania(kanal: Kanal): StanPrzegladania {
 
     rozlacz() {
       odsubskrybuj();
-      // Pozycje pokrycia odpinają się od wspólnego wykazu z tego samego powodu,
-      // co pasek uczciwości od katalogu okien: wpis kanału trzymałby inaczej
-      // przerysowanie kontrolek zdjętych już z drzewa.
+      // Pozycje pokrycia odpinają się od wspólnego wykazu z tego samego powodu co pasek uczciwości.
       pokrycie.zamknij();
       rozglos.wyczysc();
     },
@@ -236,14 +207,9 @@ function utworzOdczytOkna(
     oglos();
   }
 
-  // Odmowa wykazu nie wywraca okna przeglądarki w stan błędu: okno jest
-  // ustalone i działa, nieudany jest jeden odczyt — dlatego `faza` zostaje
-  // nietknięta, a wynik idzie osobnym stanem. Panel sam rozstrzyga, co z nim
-  // zrobić: wykaz z pozycjami zostaje na widoku, a wykaz pusty po odmowie nie
-  // przedstawia się jako pusty.
-  //
-  // Zapowiedź odczytu idzie przed wywołaniem komend, żeby panele nie stały
-  // w stanie pustym przez cały czas trwania obu komend `*.list`.
+  // Odmowa wykazu nie wywraca okna w stan błędu — wynik nieudanego odczytu idzie osobnym stanem.
+
+  // Zapowiedź odczytu idzie przed wywołaniem komend, żeby panele nie stały cały czas w stanie pustym.
   async function zaciagnijZebrane(): Promise<void> {
     stanZebranego = 'odczyt';
     powodZebranego = 'Odczyt wykazów okna z rdzenia w toku…';
@@ -270,8 +236,7 @@ function utworzOdczytOkna(
       przyjmij(odczytWToku());
       const rozstrzygniecie = rozstrzygnijOkno(await okna.okna(idSesji));
       przyjmij(rozstrzygniecie);
-      // Wykaz zaciąga się dopiero z identyfikatorem okna — obie komendy `*.list`
-      // wymagają go tak samo jak `window.state.get`.
+      // Wykaz zaciąga się dopiero z identyfikatorem okna, tak samo jak odczyt stanu okna.
       if (rozstrzygniecie.zaciagacWykazy) await zaciagnijZebrane();
     },
   };
@@ -291,7 +256,7 @@ interface RozstrzygniecieOkna {
   zaciagacWykazy: boolean;
 }
 
-/** Stan sprzed otwarcia sesji: modułowi nie ma kto wskazać okna. */
+/** Stan sprzed otwarcia sesji: modułowi nie ma kto wskazać okna przeglądarki, więc odczyt jeszcze nie ruszył. */
 function brakSesji(): RozstrzygniecieOkna {
   return {
     faza: 'spoczynek',
@@ -301,7 +266,7 @@ function brakSesji(): RozstrzygniecieOkna {
   };
 }
 
-/** Zapowiedź odczytu: okna modułu mają pokazać czekanie, a nie pustkę. */
+/** Zapowiedź odczytu okna sesji: okna modułu mają pokazać czekanie, a nie pustkę, dopóki rdzeń nie odpowie. */
 function odczytWToku(): RozstrzygniecieOkna {
   return {
     faza: 'odczyt',
@@ -311,7 +276,7 @@ function odczytWToku(): RozstrzygniecieOkna {
   };
 }
 
-/** Odpowiedź `window.list` przełożona na stan okna modułu. */
+/** Odpowiedź na odczyt okien sesji przełożona na stan okna modułu, wraz z pełnym rozstrzygnięciem odmowy. */
 function rozstrzygnijOkno(wynik: Wynik<WindowListResponse>): RozstrzygniecieOkna {
   if (!wynik.udany || wynik.wynik === undefined) {
     return {

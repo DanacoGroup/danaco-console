@@ -18,6 +18,8 @@
   .brw-pasek { display:flex; align-items:center; gap:var(--dn-od-1); padding:var(--dn-od-1) var(--dn-od-2); border-bottom:1px solid var(--dn-obrys-subtelny); }
   .brw-adres { flex:1; display:flex; align-items:center; gap:var(--dn-od-2); background:var(--dn-powierzchnia-2); border:1px solid var(--dn-obrys); border-radius:var(--dn-r-lg); padding:var(--dn-od-1) var(--dn-od-2); font-family:var(--dn-ff-mono); font-size:var(--dn-fs-xs); color:var(--dn-tekst-2); }
   .brw-adres input { flex:1; background:transparent; border:0; color:var(--dn-tekst); font-family:var(--dn-ff-mono); font-size:var(--dn-fs-xs); outline:none; }
+  /* Zawijak niesie rolę listy zakładek; układ pasa zostaje bez zmian. */
+  .brw-zakladki-tory { display:flex; align-items:center; gap:var(--dn-od-1); min-width:0; }
   .brw-zakladki { display:flex; align-items:center; gap:var(--dn-od-1); padding:var(--dn-od-1) var(--dn-od-2); border-bottom:1px solid var(--dn-obrys-subtelny); overflow:auto; }
   .brw-tab { display:inline-flex; align-items:center; gap:var(--dn-od-1); padding:var(--dn-od-1) var(--dn-od-2); border:1px solid var(--dn-obrys-subtelny); border-radius:var(--dn-r-md); font-size:var(--dn-fs-xs); color:var(--dn-tekst-2); white-space:nowrap; background:transparent; cursor:pointer; }
   .brw-tab[aria-selected="true"] { color:var(--dn-tekst); border-color:var(--dn-obrys); background:var(--dn-powierzchnia-2); }
@@ -357,10 +359,12 @@
 
 
   <!-- ══ PAS KART SESJI ══ -->
-  <div class="dn-karty-sesji" role="tablist" aria-label="Karty sesji">
-    <button class="dn-karta-sesji" role="tab" aria-selected="true" type="button"><span class="pt-tetno" aria-hidden="true"></span><span>Analiza konkurencji — cenniki</span></button>
-    <button class="dn-karta-sesji" role="tab" aria-selected="false" type="button"><span>Weryfikacja źródeł — raport branżowy</span></button>
-    <button class="dn-karta-sesji" role="tab" aria-selected="false" type="button"><span>Research wizualny — interfejsy</span></button>
+  <div class="dn-karty-sesji">
+    <div class="dn-karty-sesji-tory" role="tablist" aria-label="Karty sesji">
+      <button class="dn-karta-sesji" role="tab" aria-selected="true" type="button"><span class="pt-tetno" aria-hidden="true"></span><span>Analiza konkurencji — cenniki</span></button>
+      <button class="dn-karta-sesji" role="tab" aria-selected="false" type="button"><span>Weryfikacja źródeł — raport branżowy</span></button>
+      <button class="dn-karta-sesji" role="tab" aria-selected="false" type="button"><span>Research wizualny — interfejsy</span></button>
+    </div>
     <button class="dn-btn-ikona" type="button" aria-label="Nowa karta" data-komunikat="Nowa karta sesji otwiera wybór trybu." data-komunikat-tytul="Nowa karta"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></button>
     <span data-przywroc-pas style="display:inline-flex;gap:var(--dn-od-1);align-items:center;margin-left:var(--dn-od-2)"></span>
   </div>
@@ -392,7 +396,7 @@
       </div>
       <div class="dn-szyna-modulu-lista">
         <div class="dn-etyk-mono">Analiza rynku</div>
-        <button class="pt-pozycja" type="button" aria-selected="true"><span class="pt-tetno" aria-hidden="true"></span><span class="pt-pozycja-tytul">Analiza konkurencji — cenniki</span></button>
+        <button class="pt-pozycja" type="button" aria-current="true"><span class="pt-tetno" aria-hidden="true"></span><span class="pt-pozycja-tytul">Analiza konkurencji — cenniki</span></button>
         <button class="pt-pozycja" type="button"><span class="pt-pozycja-tytul">Porównanie ofert dostawców</span></button>
         <button class="pt-pozycja" type="button"><span class="pt-pozycja-tytul">Monitoring cen — kwartał</span></button>
         <div class="dn-etyk-mono">Weryfikacja faktów</div>
@@ -497,9 +501,9 @@
                   <div class="sta-popover-wiersz"><span class="sta-popover-etykieta">Dodaj adres URL</span></div>
                   <div class="sta-popover-wiersz"><span class="sta-popover-etykieta">Polecenia ukośnikowe</span></div>
                   <div class="sta-popover-tytul" style="margin-top:var(--dn-od-2)">Konektory</div>
-                  <div class="sta-popover-wiersz"><span class="sta-popover-etykieta">Claude in Chrome</span><button class="dn-przelacznik" data-przelacznik aria-pressed="true" role="switch" aria-checked="true"></button></div>
-                  <div class="sta-popover-wiersz"><span class="sta-popover-etykieta">Desktop Commander</span><button class="dn-przelacznik" data-przelacznik aria-pressed="false" role="switch" aria-checked="false"></button></div>
-                  <div class="sta-popover-wiersz"><span class="sta-popover-etykieta">pdf-viewer</span><button class="dn-przelacznik" data-przelacznik aria-pressed="true" role="switch" aria-checked="true"></button></div>
+                  <div class="sta-popover-wiersz"><span class="sta-popover-etykieta">Claude in Chrome</span><button class="dn-przelacznik" aria-label="Claude in Chrome" data-przelacznik role="switch" aria-checked="true"></button></div>
+                  <div class="sta-popover-wiersz"><span class="sta-popover-etykieta">Desktop Commander</span><button class="dn-przelacznik" aria-label="Desktop Commander" data-przelacznik role="switch" aria-checked="false"></button></div>
+                  <div class="sta-popover-wiersz"><span class="sta-popover-etykieta">pdf-viewer</span><button class="dn-przelacznik" aria-label="pdf-viewer" data-przelacznik role="switch" aria-checked="true"></button></div>
                   <div class="sta-popover-tytul" style="margin-top:var(--dn-od-2)">Wtyczki</div>
                   <div class="sta-popover-wiersz"><span class="sta-popover-etykieta">Danaco marketing</span></div>
                   <div class="sta-popover-wiersz"><span class="sta-popover-etykieta">Danaco analiza danych</span></div>
@@ -511,7 +515,7 @@
                   <div class="sta-popover-tytul">Mikrofon</div>
                   <div class="sta-popover-wiersz"><span class="sta-popover-etykieta">Domyślny — Zestaw nagłowny</span><span class="ptaszek" style="color:var(--dn-sygnal)">✓</span></div>
                   <div class="sta-popover-wiersz"><span class="sta-popover-etykieta">Mikrofon USB</span></div>
-                  <div class="sta-popover-wiersz"><span class="sta-popover-etykieta">Przytrzymaj, aby nagrać</span><button class="dn-przelacznik" data-przelacznik aria-pressed="false" role="switch" aria-checked="false"></button></div>
+                  <div class="sta-popover-wiersz"><span class="sta-popover-etykieta">Przytrzymaj, aby nagrać</span><button class="dn-przelacznik" aria-label="Przytrzymaj, aby nagrać" data-przelacznik role="switch" aria-checked="false"></button></div>
                 </div>
               </div>
               <span class="rozciag"></span>
@@ -584,10 +588,12 @@
             <button class="dn-btn-ikona" type="button" aria-label="Zakładka" title="Dodaj do zakładek"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m12 3 2.9 6 6.6.5-5 4.3 1.6 6.4L12 17l-6.1 3.2 1.6-6.4-5-4.3 6.6-.5Z"/></svg></button>
           </div>
           <!-- karty przeglądania -->
-          <div class="brw-zakladki" role="tablist" aria-label="Karty przeglądania">
-            <button class="brw-tab" role="tab" aria-selected="true" type="button"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M3 12h18"/></svg>Cennik · adres-strony.pl</button>
-            <button class="brw-tab" role="tab" aria-selected="false" type="button"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M3 12h18"/></svg>Oferta konkurenta · konkurent.pl</button>
-            <button class="brw-tab" role="tab" aria-selected="false" type="button"><span class="pt-tetno" aria-hidden="true"></span>Artykuł branżowy · branza.pl</button>
+          <div class="brw-zakladki">
+            <div class="brw-zakladki-tory" role="tablist" aria-label="Karty przeglądania">
+              <button class="brw-tab" role="tab" aria-selected="true" type="button"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M3 12h18"/></svg>Cennik · adres-strony.pl</button>
+              <button class="brw-tab" role="tab" aria-selected="false" type="button"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M3 12h18"/></svg>Oferta konkurenta · konkurent.pl</button>
+              <button class="brw-tab" role="tab" aria-selected="false" type="button"><span class="pt-tetno" aria-hidden="true"></span>Artykuł branżowy · branza.pl</button>
+            </div>
             <button class="dn-btn-ikona" type="button" aria-label="Nowa karta przeglądania"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></button>
           </div>
           <!-- płótno strony (wspólny podgląd) -->

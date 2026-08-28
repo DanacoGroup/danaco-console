@@ -18,9 +18,6 @@
   /* Agent Builder — kanwa */
   .ab { display:grid; grid-template-columns:minmax(0,1.6fr) minmax(0,0.85fr); gap:var(--dn-od-2); padding:var(--dn-od-2); min-height:0; overflow:auto; }
   .ab-kol { min-width:0; display:flex; flex-direction:column; gap:var(--dn-od-2); }
-  .ab-pasek { display:flex; align-items:center; gap:var(--dn-od-2); flex-wrap:wrap; }
-  .ab-tytul { display:inline-flex; align-items:center; gap:var(--dn-od-1); font-family:var(--dn-ff-naglowek); font-weight:var(--dn-fw-polgruba); font-size:var(--dn-fs-lg); color:var(--dn-tekst); }
-  .ab-tytul svg { width:20px; height:20px; }
   .ab-filtry { display:flex; align-items:center; gap:var(--dn-od-1); flex-wrap:wrap; }
   .ab-siatka { display:grid; grid-template-columns:repeat(auto-fill,minmax(200px,1fr)); gap:var(--dn-od-2); }
   .ab-karta { display:flex; flex-direction:column; gap:4px; padding:var(--dn-od-2); border:1px solid var(--dn-obrys); border-radius:var(--dn-r-md); background:var(--dn-powierzchnia-2); cursor:pointer; transition:border-color var(--dn-czas-1) var(--dn-ease), transform var(--dn-czas-1) var(--dn-ease); }
@@ -39,6 +36,8 @@
   .ab-nazwa-inline { font-family:var(--dn-ff-naglowek); font-size:var(--dn-fs-lg); font-weight:var(--dn-fw-polgruba); color:var(--dn-tekst); background:none; border:1px solid transparent; border-radius:var(--dn-r-sm); padding:2px var(--dn-od-1); }
   .ab-nazwa-inline:hover, .ab-nazwa-inline:focus { border-color:var(--dn-obrys-mocny); outline:none; }
   .ab-zapis { display:inline-flex; align-items:center; gap:4px; font-size:var(--dn-fs-xs); color:var(--dn-tekst-3); margin-left:auto; }
+  /* Zawijak niesie rolę listy zakładek; układ pasa zostaje bez zmian. */
+  .ab-zakl-tory { display:flex; gap:2px; flex-wrap:wrap; min-width:0; }
 
   .ab-zakl { display:flex; gap:2px; flex-wrap:wrap; border-bottom:1px solid var(--dn-obrys-subtelny); padding-bottom:2px; }
   .ab-zakl button { display:inline-flex; align-items:center; gap:4px; height:28px; padding:0 var(--dn-od-2); border:none; background:none; border-radius:var(--dn-r-sm); color:var(--dn-tekst-2); font-size:var(--dn-fs-sm); cursor:pointer; }
@@ -72,7 +71,7 @@
   .ab-sum-w:hover { background:var(--dn-hover); }
   .ab-sum-w span:first-child { color:var(--dn-tekst-2); }
   .ab-sum-w b { font-family:var(--dn-ff-mono); font-size:var(--dn-fs-xs); color:var(--dn-tekst); }
-  .ab-histria .panel-wiersz b { font-family:var(--dn-ff-mono); }
+  .ab-historia .dn-wykaz-modulu-poz b { font-family:var(--dn-ff-mono); }
 
   .ab-stopka { display:flex; align-items:center; gap:var(--dn-od-2); justify-content:flex-end; padding-top:var(--dn-od-2); border-top:1px solid var(--dn-obrys-subtelny); }
 
@@ -432,10 +431,12 @@
 
 
   <!-- ══ PAS KART SESJI ══ -->
-  <div class="dn-karty-sesji" role="tablist" aria-label="Karty sesji">
-    <button class="dn-karta-sesji" role="tab" aria-selected="true" type="button"><span class="pt-tetno" aria-hidden="true"></span><span>Agent Redaktor — w.3</span></button>
-    <button class="dn-karta-sesji" role="tab" aria-selected="false" type="button"><span>Agent Backend — kanał CLI</span></button>
-    <button class="dn-karta-sesji" role="tab" aria-selected="false" type="button"><span>Agent Security — nowy szkic</span></button>
+  <div class="dn-karty-sesji">
+    <div class="dn-karty-sesji-tory" role="tablist" aria-label="Karty sesji">
+      <button class="dn-karta-sesji" role="tab" aria-selected="true" type="button"><span class="pt-tetno" aria-hidden="true"></span><span>Agent Redaktor — w.3</span></button>
+      <button class="dn-karta-sesji" role="tab" aria-selected="false" type="button"><span>Agent Backend — kanał CLI</span></button>
+      <button class="dn-karta-sesji" role="tab" aria-selected="false" type="button"><span>Agent Security — nowy szkic</span></button>
+    </div>
     <button class="dn-btn-ikona" type="button" aria-label="Nowa karta" data-komunikat="Nowa karta sesji otwiera wybór trybu." data-komunikat-tytul="Nowa karta"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></button>
     <span data-przywroc-pas style="display:inline-flex;gap:var(--dn-od-1);align-items:center;margin-left:var(--dn-od-2)"></span>
   </div>
@@ -468,7 +469,7 @@
       </div>
       <div class="dn-szyna-modulu-lista">
         <div class="dn-etyk-mono">Biblioteka ekspertów</div>
-        <button class="pt-pozycja" type="button" aria-selected="true"><span class="pt-tetno" aria-hidden="true"></span><span class="pt-pozycja-tytul">Agent Redaktor</span></button>
+        <button class="pt-pozycja" type="button" aria-current="true"><span class="pt-tetno" aria-hidden="true"></span><span class="pt-pozycja-tytul">Agent Redaktor</span></button>
         <button class="pt-pozycja" type="button"><span class="pt-pozycja-tytul">Agent Backend</span></button>
         <button class="pt-pozycja" type="button"><span class="pt-pozycja-tytul">Agent Security</span></button>
         <button class="pt-pozycja" type="button"><span class="pt-pozycja-tytul">Agent Analityk Danych</span></button>
@@ -579,9 +580,9 @@
                   <div class="sta-popover-wiersz"><span class="sta-popover-etykieta">Wskaż definicję eksperta</span></div>
                   <div class="sta-popover-wiersz"><span class="sta-popover-etykieta">Polecenia ukośnikowe</span></div>
                   <div class="sta-popover-tytul" style="margin-top:var(--dn-od-2)">Konektory</div>
-                  <div class="sta-popover-wiersz"><span class="sta-popover-etykieta">Repozytorium kodu</span><button class="dn-przelacznik" data-przelacznik aria-pressed="true" role="switch" aria-checked="true"></button></div>
-                  <div class="sta-popover-wiersz"><span class="sta-popover-etykieta">Serwer MCP „LexAI”</span><button class="dn-przelacznik" data-przelacznik aria-pressed="true" role="switch" aria-checked="true"></button></div>
-                  <div class="sta-popover-wiersz"><span class="sta-popover-etykieta">Słownik terminologiczny</span><button class="dn-przelacznik" data-przelacznik aria-pressed="false" role="switch" aria-checked="false"></button></div>
+                  <div class="sta-popover-wiersz"><span class="sta-popover-etykieta">Repozytorium kodu</span><button class="dn-przelacznik" aria-label="Repozytorium kodu" data-przelacznik role="switch" aria-checked="true"></button></div>
+                  <div class="sta-popover-wiersz"><span class="sta-popover-etykieta">Serwer MCP „LexAI”</span><button class="dn-przelacznik" aria-label="Serwer MCP „LexAI”" data-przelacznik role="switch" aria-checked="true"></button></div>
+                  <div class="sta-popover-wiersz"><span class="sta-popover-etykieta">Słownik terminologiczny</span><button class="dn-przelacznik" aria-label="Słownik terminologiczny" data-przelacznik role="switch" aria-checked="false"></button></div>
                   <div class="sta-popover-tytul" style="margin-top:var(--dn-od-2)">Wtyczki</div>
                   <div class="sta-popover-wiersz"><span class="sta-popover-etykieta">Danaco marketing</span></div>
                   <div class="sta-popover-wiersz"><span class="sta-popover-etykieta">Danaco analiza danych</span></div>
@@ -594,7 +595,7 @@
                   <div class="sta-popover-tytul">Mikrofon</div>
                   <div class="sta-popover-wiersz"><span class="sta-popover-etykieta">Domyślny — Zestaw nagłowny</span><span class="ptaszek" style="color:var(--dn-sygnal)">✓</span></div>
                   <div class="sta-popover-wiersz"><span class="sta-popover-etykieta">Mikrofon USB</span></div>
-                  <div class="sta-popover-wiersz"><span class="sta-popover-etykieta">Przytrzymaj, aby nagrać</span><button class="dn-przelacznik" data-przelacznik aria-pressed="false" role="switch" aria-checked="false"></button></div>
+                  <div class="sta-popover-wiersz"><span class="sta-popover-etykieta">Przytrzymaj, aby nagrać</span><button class="dn-przelacznik" aria-label="Przytrzymaj, aby nagrać" data-przelacznik role="switch" aria-checked="false"></button></div>
                 </div>
               </div>
               <span class="rozciag"></span>
@@ -653,9 +654,11 @@
 
           <div class="sta-okno-tresc">
             <!-- pasek widoków Biblioteka / Edytor -->
-            <div class="ab-zakl" role="tablist" aria-label="Widok Agent Builder" style="padding:var(--dn-od-1) var(--dn-od-2)">
-              <button type="button" role="tab" aria-selected="false" data-widok="widok-biblioteka"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="7" height="7"/><rect x="14" y="4" width="7" height="7"/><rect x="3" y="13" width="7" height="7"/></svg>Biblioteka ekspertów</button>
-              <button type="button" role="tab" aria-selected="true" data-widok="widok-edytor"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></svg>Edytor</button>
+            <div class="ab-zakl" style="padding:var(--dn-od-1) var(--dn-od-2)">
+              <div class="ab-zakl-tory" role="tablist" aria-label="Widok Agent Builder">
+                <button type="button" role="tab" aria-selected="false" data-widok="widok-biblioteka"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="7" height="7"/><rect x="14" y="4" width="7" height="7"/><rect x="3" y="13" width="7" height="7"/></svg>Biblioteka ekspertów</button>
+                <button type="button" role="tab" aria-selected="true" data-widok="widok-edytor"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></svg>Edytor</button>
+              </div>
               <button class="dn-btn dn-btn--zarys dn-btn--sm" type="button" style="margin-left:auto" data-nowy-ekspert><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg> Nowy ekspert</button>
             </div>
 
@@ -804,7 +807,7 @@
                     <div class="ab-sum-w" data-jump="panel-permissions"><span>Uprawnienia</span><b>pełny dostęp</b></div>
                     <div class="ab-sum-w" data-tab="tab-tozsamosc"><span>Pamięć</span><b>sesja</b></div>
                   </div>
-                  <div class="ab-sum ab-histria">
+                  <div class="ab-sum ab-historia">
                     <div class="ab-sum-tytul">Historia wersji <span style="color:var(--dn-tekst-3)">— Agent Redaktor</span></div>
                     <div class="dn-wykaz-modulu" style="padding:0">
                       <div class="dn-wykaz-modulu-poz"><span class="dn-kropka dn-kropka--sukces" aria-hidden="true"></span> <b>w.3</b> Aktywna <span class="dn-meta">12:04</span></div>
@@ -850,9 +853,9 @@
           <header class="sta-okno-belka"><span class="sta-okno-tytul"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m12 3 2.9 6 6.6.6-5 4.3 1.5 6.4L12 17l-6 3.3L7.5 14l-5-4.3 6.6-.6z"/></svg><b>Skills Manager</b></span><span class="sta-okno-znacznik">2 przypisane</span><span class="sta-okno-akcje"><button class="dn-btn-ikona" type="button" data-okno-zamknij aria-label="Zamknij"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></button></span></header>
           <div class="sta-okno-tresc pk">
             <label class="dn-szukaj"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><input type="search" placeholder="szukaj umiejętności…" aria-label="Szukaj umiejętności"></label>
-            <div class="pk-wiersz"><span class="ik"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="m12 3 2.9 6 6.6.6-5 4.3 1.5 6.4L12 17l-6 3.3L7.5 14l-5-4.3 6.6-.6z"/></svg></span><div class="tresc"><span class="nazwa">Korekta i redakcja tekstu</span><small>Danaco Plugin · włączona w rejestrze</small></div><button class="dn-przelacznik" data-przelacznik data-etykieta="Korekta i redakcja tekstu" aria-pressed="true" role="switch" aria-checked="true"></button></div>
-            <div class="pk-wiersz"><span class="ik"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="m12 3 2.9 6 6.6.6-5 4.3 1.5 6.4L12 17l-6 3.3L7.5 14l-5-4.3 6.6-.6z"/></svg></span><div class="tresc"><span class="nazwa">Streszczenia wielojęzyczne</span><small>Danaco Plugin · włączona w rejestrze</small></div><button class="dn-przelacznik" data-przelacznik data-etykieta="Streszczenia wielojęzyczne" aria-pressed="true" role="switch" aria-checked="true"></button></div>
-            <div class="pk-wiersz"><span class="ik"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="m12 3 2.9 6 6.6.6-5 4.3 1.5 6.4L12 17l-6 3.3L7.5 14l-5-4.3 6.6-.6z"/></svg></span><div class="tresc"><span class="nazwa">Analiza sentymentu</span><small>Personal · <span style="color:var(--dn-ostrzezenie-tekst)">wyłączona w rejestrze</span> — włącz w oknie konfiguracji</small></div><button class="dn-przelacznik" data-przelacznik data-etykieta="Analiza sentymentu" aria-pressed="false" role="switch" aria-checked="false"></button></div>
+            <div class="pk-wiersz"><span class="ik"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="m12 3 2.9 6 6.6.6-5 4.3 1.5 6.4L12 17l-6 3.3L7.5 14l-5-4.3 6.6-.6z"/></svg></span><div class="tresc"><span class="nazwa">Korekta i redakcja tekstu</span><small>Danaco Plugin · włączona w rejestrze</small></div><button class="dn-przelacznik" aria-label="Korekta i redakcja tekstu" data-przelacznik data-etykieta="Korekta i redakcja tekstu" role="switch" aria-checked="true"></button></div>
+            <div class="pk-wiersz"><span class="ik"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="m12 3 2.9 6 6.6.6-5 4.3 1.5 6.4L12 17l-6 3.3L7.5 14l-5-4.3 6.6-.6z"/></svg></span><div class="tresc"><span class="nazwa">Streszczenia wielojęzyczne</span><small>Danaco Plugin · włączona w rejestrze</small></div><button class="dn-przelacznik" aria-label="Streszczenia wielojęzyczne" data-przelacznik data-etykieta="Streszczenia wielojęzyczne" role="switch" aria-checked="true"></button></div>
+            <div class="pk-wiersz"><span class="ik"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="m12 3 2.9 6 6.6.6-5 4.3 1.5 6.4L12 17l-6 3.3L7.5 14l-5-4.3 6.6-.6z"/></svg></span><div class="tresc"><span class="nazwa">Analiza sentymentu</span><small>Personal · <span style="color:var(--dn-ostrzezenie-tekst)">wyłączona w rejestrze</span> — włącz w oknie konfiguracji</small></div><button class="dn-przelacznik" aria-label="Analiza sentymentu" data-przelacznik data-etykieta="Analiza sentymentu" role="switch" aria-checked="false"></button></div>
             <button class="dn-btn dn-btn--zarys dn-btn--sm" type="button"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg> Zainstaluj umiejętność Personal…</button>
           </div>
         </section>
@@ -868,9 +871,9 @@
               <button type="button" aria-pressed="false" data-rodzaj>Konektory</button>
               <button type="button" aria-pressed="false" data-rodzaj>Serwery MCP</button>
             </div>
-            <div class="pk-wiersz"><span class="ik"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h6v6M10 14 21 3"/></svg></span><div class="tresc"><span class="nazwa">Repozytorium kodu <span class="dn-plakietka">Konektor</span></span><small>Danaco Plugin · podłączony temu ekspertowi</small></div><button class="dn-przelacznik" data-przelacznik data-etykieta="Repozytorium kodu" aria-pressed="true" role="switch" aria-checked="true"></button></div>
-            <div class="pk-wiersz"><span class="ik"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h6v6M10 14 21 3"/></svg></span><div class="tresc"><span class="nazwa">Serwer MCP „LexAI” <span class="dn-plakietka">Serwer MCP</span></span><small>Personal · podłączony · adres serwera · dane dostępowe</small></div><button class="dn-przelacznik" data-przelacznik data-etykieta="Serwer MCP LexAI" aria-pressed="true" role="switch" aria-checked="true"></button></div>
-            <div class="pk-wiersz"><span class="ik"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h6v6M10 14 21 3"/></svg></span><div class="tresc"><span class="nazwa">Słownik terminologiczny <span class="dn-plakietka">Wtyczka</span></span><small>Danaco Plugin · niepodłączony</small></div><button class="dn-przelacznik" data-przelacznik data-etykieta="Słownik terminologiczny" aria-pressed="false" role="switch" aria-checked="false"></button></div>
+            <div class="pk-wiersz"><span class="ik"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h6v6M10 14 21 3"/></svg></span><div class="tresc"><span class="nazwa">Repozytorium kodu <span class="dn-plakietka">Konektor</span></span><small>Danaco Plugin · podłączony temu ekspertowi</small></div><button class="dn-przelacznik" aria-label="Repozytorium kodu" data-przelacznik data-etykieta="Repozytorium kodu" role="switch" aria-checked="true"></button></div>
+            <div class="pk-wiersz"><span class="ik"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h6v6M10 14 21 3"/></svg></span><div class="tresc"><span class="nazwa">Serwer MCP „LexAI” <span class="dn-plakietka">Serwer MCP</span></span><small>Personal · podłączony · adres serwera · dane dostępowe</small></div><button class="dn-przelacznik" aria-label="Serwer MCP LexAI" data-przelacznik data-etykieta="Serwer MCP LexAI" role="switch" aria-checked="true"></button></div>
+            <div class="pk-wiersz"><span class="ik"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h6v6M10 14 21 3"/></svg></span><div class="tresc"><span class="nazwa">Słownik terminologiczny <span class="dn-plakietka">Wtyczka</span></span><small>Danaco Plugin · niepodłączony</small></div><button class="dn-przelacznik" aria-label="Słownik terminologiczny" data-przelacznik data-etykieta="Słownik terminologiczny" role="switch" aria-checked="false"></button></div>
             <div class="pk-baner"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l7 4v5c0 5-3.5 7.5-7 9-3.5-1.5-7-4-7-9V7z"/></svg><span>Zakres wykorzystania (odczyt / zapis / wywołanie akcji) ustala się w <b>Permissions Center</b>. <button class="dn-btn dn-btn--duch dn-btn--sm" type="button" data-jump="panel-permissions">→</button></span></div>
             <button class="dn-btn dn-btn--zarys dn-btn--sm" type="button"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg> Podłącz nowy plugin / konektor / MCP…</button>
           </div>
@@ -896,8 +899,8 @@
                 <table class="pk-tabela">
                   <thead><tr><th>Rozszerzenie</th><th>odczyt</th><th>zapis</th><th>akcja</th></tr></thead>
                   <tbody>
-                    <tr><td>Repozytorium kodu</td><td><input type="checkbox" checked></td><td><input type="checkbox" checked></td><td><input type="checkbox" checked></td></tr>
-                    <tr><td>Serwer MCP „LexAI”</td><td><input type="checkbox" checked></td><td><input type="checkbox" checked></td><td><input type="checkbox" checked></td></tr>
+                    <tr><td>Repozytorium kodu</td><td><input type="checkbox" aria-label="Repozytorium kodu — odczyt" checked></td><td><input type="checkbox" aria-label="Repozytorium kodu — zapis" checked></td><td><input type="checkbox" aria-label="Repozytorium kodu — akcja" checked></td></tr>
+                    <tr><td>Serwer MCP „LexAI”</td><td><input type="checkbox" aria-label="Serwer MCP „LexAI” — odczyt" checked></td><td><input type="checkbox" aria-label="Serwer MCP „LexAI” — zapis" checked></td><td><input type="checkbox" aria-label="Serwer MCP „LexAI” — akcja" checked></td></tr>
                   </tbody>
                 </table>
                 <p class="dn-tekst-ciagly dn-tekst-ciagly--drobny" style="margin-top:var(--dn-od-1)">Rozszerzenia niepodłączone w Connectors Manager nie pojawiają się na tej liście.</p>
@@ -916,19 +919,19 @@
               </div>
               <div class="pk-grz" id="grupa-izolacja" hidden>
                 <div class="pk-macierz">
-                  <div class="pk-mrz"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg><span class="rozc">Katalog roboczy</span><button class="dn-przelacznik" data-przelacznik data-etykieta="Izolacja: katalog roboczy" aria-pressed="false" role="switch" aria-checked="false"></button></div>
-                  <div class="pk-mrz"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82M4.6 9a1.65 1.65 0 0 0-.33-1.82"/></svg><span class="rozc">Zmienne środowiskowe</span><button class="dn-przelacznik" data-przelacznik data-etykieta="Izolacja: zmienne środowiskowe" aria-pressed="false" role="switch" aria-checked="false"></button></div>
-                  <div class="pk-mrz"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h11l5 5v11a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1z"/></svg><span class="rozc">Dostęp do plików</span><button class="dn-przelacznik" data-przelacznik data-etykieta="Izolacja: dostęp do plików" aria-pressed="false" role="switch" aria-checked="false"></button></div>
-                  <div class="pk-mrz"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a15 15 0 0 1 0 18M12 3a15 15 0 0 0 0 18"/></svg><span class="rozc">Dostęp sieciowy</span><button class="dn-przelacznik" data-przelacznik data-etykieta="Izolacja: dostęp sieciowy" aria-pressed="false" role="switch" aria-checked="false"></button></div>
-                  <div class="pk-mrz"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9l-6-6z"/></svg><span class="rozc">Zakres dokumentów</span><button class="dn-przelacznik" data-przelacznik data-etykieta="Izolacja: zakres dokumentów" aria-pressed="false" role="switch" aria-checked="false"></button></div>
-                  <div class="pk-mrz"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg><span class="rozc">Konto i token per sesja</span><button class="dn-przelacznik" data-przelacznik data-etykieta="Izolacja: konto i token per sesja" aria-pressed="false" role="switch" aria-checked="false"></button></div>
-                  <div class="pk-mrz"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="m8 6-6 6 6 6M16 6l6 6-6 6"/></svg><span class="rozc">Wykonywanie kodu</span><button class="dn-przelacznik" data-przelacznik data-etykieta="Izolacja: wykonywanie kodu" aria-pressed="false" role="switch" aria-checked="false"></button></div>
-                  <div class="pk-mrz"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="m5 3 14 9-14 9z"/></svg><span class="rozc">Serwer wykonania</span><button class="dn-przelacznik" data-przelacznik data-etykieta="Izolacja: serwer wykonania" aria-pressed="false" role="switch" aria-checked="false"></button></div>
+                  <div class="pk-mrz"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg><span class="rozc">Katalog roboczy</span><button class="dn-przelacznik" aria-label="Katalog roboczy" data-przelacznik data-etykieta="Izolacja: katalog roboczy" role="switch" aria-checked="false"></button></div>
+                  <div class="pk-mrz"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82M4.6 9a1.65 1.65 0 0 0-.33-1.82"/></svg><span class="rozc">Zmienne środowiskowe</span><button class="dn-przelacznik" aria-label="Zmienne środowiskowe" data-przelacznik data-etykieta="Izolacja: zmienne środowiskowe" role="switch" aria-checked="false"></button></div>
+                  <div class="pk-mrz"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h11l5 5v11a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1z"/></svg><span class="rozc">Dostęp do plików</span><button class="dn-przelacznik" aria-label="Dostęp do plików" data-przelacznik data-etykieta="Izolacja: dostęp do plików" role="switch" aria-checked="false"></button></div>
+                  <div class="pk-mrz"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a15 15 0 0 1 0 18M12 3a15 15 0 0 0 0 18"/></svg><span class="rozc">Dostęp sieciowy</span><button class="dn-przelacznik" aria-label="Dostęp sieciowy" data-przelacznik data-etykieta="Izolacja: dostęp sieciowy" role="switch" aria-checked="false"></button></div>
+                  <div class="pk-mrz"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9l-6-6z"/></svg><span class="rozc">Zakres dokumentów</span><button class="dn-przelacznik" aria-label="Zakres dokumentów" data-przelacznik data-etykieta="Izolacja: zakres dokumentów" role="switch" aria-checked="false"></button></div>
+                  <div class="pk-mrz"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg><span class="rozc">Konto i token per sesja</span><button class="dn-przelacznik" aria-label="Konto i token per sesja" data-przelacznik data-etykieta="Izolacja: konto i token per sesja" role="switch" aria-checked="false"></button></div>
+                  <div class="pk-mrz"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="m8 6-6 6 6 6M16 6l6 6-6 6"/></svg><span class="rozc">Wykonywanie kodu</span><button class="dn-przelacznik" aria-label="Wykonywanie kodu" data-przelacznik data-etykieta="Izolacja: wykonywanie kodu" role="switch" aria-checked="false"></button></div>
+                  <div class="pk-mrz"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="m5 3 14 9-14 9z"/></svg><span class="rozc">Serwer wykonania</span><button class="dn-przelacznik" aria-label="Serwer wykonania" data-przelacznik data-etykieta="Izolacja: serwer wykonania" role="switch" aria-checked="false"></button></div>
                 </div>
                 <p class="dn-tekst-ciagly dn-tekst-ciagly--drobny" style="margin-top:var(--dn-od-1)">0/8 zakresów włączonych — pełna operacyjna swoboda procesu.</p>
               </div>
               <div class="pk-grz" id="grupa-mtai" hidden>
-                <div class="pk-mrz"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="7" cy="7" r="3"/><circle cx="17" cy="7" r="3"/><circle cx="12" cy="17" r="3"/></svg><span class="rozc">Subagent Network</span><button class="dn-przelacznik" data-przelacznik data-etykieta="Subagent Network" aria-pressed="true" role="switch" aria-checked="true"></button></div>
+                <div class="pk-mrz"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="7" cy="7" r="3"/><circle cx="17" cy="7" r="3"/><circle cx="12" cy="17" r="3"/></svg><span class="rozc">Subagent Network</span><button class="dn-przelacznik" aria-label="Subagent Network" data-przelacznik data-etykieta="Subagent Network" role="switch" aria-checked="true"></button></div>
                 <div class="dn-wykaz-modulu-poz" style="margin-top:var(--dn-od-2)"><span>Liczba dozwolonych podagentów</span><input class="pk-num" type="number" min="1" max="15" value="15" aria-label="Liczba podagentów"></div>
                 <p class="dn-tekst-ciagly dn-tekst-ciagly--drobny" style="margin-top:var(--dn-od-1)">Górny limit 15 to parametr techniczny platformy.</p>
               </div>

@@ -28,11 +28,11 @@ W.skladniki.metodyLogowania = function (N, w) {
       var znak = N.zeZnacznika(W.ikony[m.ikona]);
       znak.setAttribute('aria-hidden', 'true');
       var czynna = dostepne.indexOf(m.klucz) !== -1;
-      return N.el('button', { klasa: 'au-metoda', type: 'button' }, [
+      return N.el('button', { klasa: 'dn-kafel dn-kafel--wybor', type: 'button' }, [
         znak,
         N.el('span', { tekst: N.tekst('dostep.logowanie.metody.' + m.klucz) }),
         N.el('span', {
-          klasa: 'au-metoda-stan',
+          klasa: 'dn-kafel-stan',
           tekst: N.tekst('dostep.logowanie.metody.' + (czynna ? 'aktywna' : 'nieaktywna'))
         })
       ]);

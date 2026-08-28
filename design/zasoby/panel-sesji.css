@@ -10,11 +10,6 @@
    która należy do karty odsłoniętej. */
 .dn-obszar-panel--boczny:has(#panel-projekty:not([hidden])) [data-filtr='sesje'],
 .dn-obszar-panel--boczny:has(#panel-sesje:not([hidden])) [data-filtr='projekty'] { display: none; }
-/* Menu nagłówka karty stoi przy prawej krawędzi panelu — wyrównuje się prawą
-   stroną, inaczej wchodzi na okno obok. Zapas arkuszowy dla widoków bez
-   `menu.js`; z nim położenie liczy komponent. */
-.dn-panel-glowa .sta-menu-tresc { left: auto; right: 0; }
-
 /* Karta panelu jest kolumną: nagłówek i stopka stoją, wykaz przewija się.
    Warunek `:not([hidden])` jest konieczny — `display` zadeklarowany przez autora
    wygrywa z `[hidden]` z arkusza przeglądarki i karta odłożona zostałaby

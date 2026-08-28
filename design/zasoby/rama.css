@@ -73,7 +73,7 @@
 .dn-belka-btn {
   display: grid;
   place-content: center;
-  width: 46px;
+  width: var(--dn-wym-belka-btn);
   height: var(--dn-wym-belka);
   border: 0;
   background: transparent;
@@ -1001,7 +1001,7 @@
    Ramka w błękicie sygnałowym; błękit godła jest w platformie barwą aktywności
    i tu, i niżej w wypełnieniu modułu bieżącego. */
 .dn-szyna-poz--srodowisko[data-biezace='true'] {
-  border-color: var(--dn-sygnal-500);
+  border-color: var(--dn-rama-sygnal-wypelnienie);
 }
 /* Moduł — pozycja bez ramki, wcięta, ikona mniejsza. */
 .dn-szyna-poz--modul {
@@ -1013,7 +1013,10 @@
 .dn-szyna-poz--modul svg { width: var(--dn-wym-ikona); height: var(--dn-wym-ikona); }
 .dn-szyna-poz--modul[aria-current='true'] {
   background: var(--dn-sygnal-wypelnienie);
-  color: var(--dn-tekst-inv);
+  /* Biel, nie --dn-tekst-inv: w motywie ciemnym odwrotność tekstu jest niemal
+     czarna i na wypełnieniu sygnałowym daje 4,14:1. Konwencja domu stoi
+     przy .dn-btn--sygnal. */
+  color: var(--dn-szary-0);
 }
 
 /* Grupa modułów rozwijana pod środowiskiem. */
@@ -1029,7 +1032,7 @@
      która stoi w kropce godła. */
   /* Kreska stoi na samej krawędzi okna — bez odsunięcia, żeby czytała się jako
      znak brzegowy środowiska, nie jako obrys grupy w środku belki. */
-  border-left: 2px solid var(--dn-sygnal-500);
+  border-left: 2px solid var(--dn-rama-sygnal-wypelnienie);
   margin-left: 0;
 }
 .dn-szyna-moduly[hidden] { display: none; }
@@ -1253,7 +1256,7 @@
 /* Wskazanie pozycji niesie wypełnienie i kreska sygnałowa, nie sama barwa. */
 .dn-dost-poz[aria-selected='true'] {
   background: var(--dn-sygnal-tlo);
-  box-shadow: inset 2px 0 0 var(--dn-sygnal-500);
+  box-shadow: inset 2px 0 0 var(--dn-kropka);
 }
 .dn-dost-poz[aria-selected='true'] svg,
 .dn-dost-poz[aria-selected='true'] .dn-dost-poz-rodzina { color: var(--dn-sygnal); }
@@ -1356,8 +1359,8 @@
 .dn-dost-probka--stal      { background: var(--dn-szary-400); }
 .dn-dost-probka--indygo    { background: var(--dn-sygnal-800); }
 .dn-dost-barwa:has(input:checked) {
-  border-color: var(--dn-sygnal-500);
-  box-shadow: inset 0 0 0 1px var(--dn-sygnal-500);
+  border-color: var(--dn-kropka);
+  box-shadow: inset 0 0 0 1px var(--dn-kropka);
   color: var(--dn-tekst);
 }
 .dn-dost-barwa:has(input:focus-visible) { outline: var(--dn-wym-fokus) solid var(--dn-fokus); outline-offset: 2px; }
@@ -1579,7 +1582,7 @@
 /* Zakładka wybrana — wstęga sygnałowa pod nią, nie samo pogrubienie. */
 .dn-obszar-zakladka[aria-selected='true'] {
   color: var(--dn-tekst);
-  border-bottom-color: var(--dn-sygnal-500);
+  border-bottom-color: var(--dn-kropka);
 }
 
 /* Treść panelu przewija się pod nieruchomym pasmem zakładek. */
@@ -1666,7 +1669,7 @@
 }
 .dn-obszar-pozycja[aria-current='true'] {
   background: var(--dn-sygnal-tlo);
-  border-left-color: var(--dn-sygnal-500);
+  border-left-color: var(--dn-kropka);
 }
 .dn-obszar-pozycja-tekst { flex: 1 1 auto; min-width: 0; }
 .dn-obszar-pozycja-nazwa {
@@ -1869,7 +1872,7 @@
    staje się dla nich blokiem odniesienia. */
 .dn-szyna-moduly:not([hidden]) {
   animation: dn-pojawienie var(--dn-czas-3) var(--dn-ease) backwards;
-  border-left-color: var(--dn-sygnal-500);
+  border-left-color: var(--dn-rama-sygnal-wypelnienie);
 }
 .dn-szyna-moduly:not([hidden]) .dn-szyna-poz {
   animation: dn-pojawienie var(--dn-czas-3) var(--dn-ease) backwards;
@@ -1929,7 +1932,7 @@
 @supports not (color: color-mix(in oklab, red, blue)) {
   .dn-pulpit .dn-karta-widoku[aria-selected='true'],
   .dn-pulpit .dn-karta-sesji[aria-selected='true'] {
-    box-shadow: inset 0 calc(-1 * var(--dn-wym-wstega)) 0 var(--dn-sygnal-500);
+    box-shadow: inset 0 calc(-1 * var(--dn-wym-wstega)) 0 var(--dn-kropka);
   }
 }
 

@@ -347,10 +347,12 @@
 
 
   <!-- ══ PAS KART SESJI ══ -->
-  <div class="dn-karty-sesji" role="tablist" aria-label="Karty sesji">
-    <button class="dn-karta-sesji" role="tab" aria-selected="true" type="button"><span class="pt-tetno" aria-hidden="true"></span><span>Regulamin usługi — EN/DE/FR</span></button>
-    <button class="dn-karta-sesji" role="tab" aria-selected="false" type="button"><span>Kampania rynkowa — lokalizacja</span></button>
-    <button class="dn-karta-sesji" role="tab" aria-selected="false" type="button"><span>Napisy szkoleniowe — 4 języki</span></button>
+  <div class="dn-karty-sesji">
+    <div class="dn-karty-sesji-tory" role="tablist" aria-label="Karty sesji">
+      <button class="dn-karta-sesji" role="tab" aria-selected="true" type="button"><span class="pt-tetno" aria-hidden="true"></span><span>Regulamin usługi — EN/DE/FR</span></button>
+      <button class="dn-karta-sesji" role="tab" aria-selected="false" type="button"><span>Kampania rynkowa — lokalizacja</span></button>
+      <button class="dn-karta-sesji" role="tab" aria-selected="false" type="button"><span>Napisy szkoleniowe — 4 języki</span></button>
+    </div>
     <button class="dn-btn-ikona" type="button" aria-label="Nowa karta" data-komunikat="Nowa karta sesji otwiera wybór trybu." data-komunikat-tytul="Nowa karta"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></button>
     <span data-przywroc-pas style="display:inline-flex;gap:var(--dn-od-1);align-items:center;margin-left:var(--dn-od-2)"></span>
   </div>
@@ -382,7 +384,7 @@
       </div>
       <div class="dn-szyna-modulu-lista">
         <div class="dn-etyk-mono">Dokumentacja produktu</div>
-        <button class="pt-pozycja" type="button" aria-selected="true"><span class="pt-tetno" aria-hidden="true"></span><span class="pt-pozycja-tytul">Regulamin usługi — EN/DE/FR</span></button>
+        <button class="pt-pozycja" type="button" aria-current="true"><span class="pt-tetno" aria-hidden="true"></span><span class="pt-pozycja-tytul">Regulamin usługi — EN/DE/FR</span></button>
         <button class="pt-pozycja" type="button"><span class="pt-pozycja-tytul">Polityka prywatności — EN/DE</span></button>
         <div class="dn-etyk-mono">Marketing międzynarodowy</div>
         <button class="pt-pozycja" type="button"><span class="pt-pozycja-tytul">Kampania rynkowa — lokalizacja</span></button>
@@ -486,9 +488,9 @@
                   <div class="sta-popover-wiersz"><span class="sta-popover-etykieta">Importuj tekst źródłowy</span></div>
                   <div class="sta-popover-wiersz"><span class="sta-popover-etykieta">Polecenia ukośnikowe</span></div>
                   <div class="sta-popover-tytul" style="margin-top:var(--dn-od-2)">Konektory</div>
-                  <div class="sta-popover-wiersz"><span class="sta-popover-etykieta">Pamięć tłumaczeń (TM)</span><button class="dn-przelacznik" data-przelacznik aria-pressed="true" role="switch" aria-checked="true"></button></div>
-                  <div class="sta-popover-wiersz"><span class="sta-popover-etykieta">Studio (wersja dwujęzyczna)</span><button class="dn-przelacznik" data-przelacznik aria-pressed="true" role="switch" aria-checked="true"></button></div>
-                  <div class="sta-popover-wiersz"><span class="sta-popover-etykieta">Synteza mowy (odsłuch)</span><button class="dn-przelacznik" data-przelacznik aria-pressed="false" role="switch" aria-checked="false"></button></div>
+                  <div class="sta-popover-wiersz"><span class="sta-popover-etykieta">Pamięć tłumaczeń (TM)</span><button class="dn-przelacznik" aria-label="Pamięć tłumaczeń (TM)" data-przelacznik role="switch" aria-checked="true"></button></div>
+                  <div class="sta-popover-wiersz"><span class="sta-popover-etykieta">Studio (wersja dwujęzyczna)</span><button class="dn-przelacznik" aria-label="Studio (wersja dwujęzyczna)" data-przelacznik role="switch" aria-checked="true"></button></div>
+                  <div class="sta-popover-wiersz"><span class="sta-popover-etykieta">Synteza mowy (odsłuch)</span><button class="dn-przelacznik" aria-label="Synteza mowy (odsłuch)" data-przelacznik role="switch" aria-checked="false"></button></div>
                   <div class="sta-popover-tytul" style="margin-top:var(--dn-od-2)">Wtyczki</div>
                   <div class="sta-popover-wiersz"><span class="sta-popover-etykieta">Danaco marketing</span></div>
                   <div class="sta-popover-wiersz"><span class="sta-popover-etykieta">Danaco analiza danych</span></div>
@@ -500,7 +502,7 @@
                   <div class="sta-popover-tytul">Mikrofon</div>
                   <div class="sta-popover-wiersz"><span class="sta-popover-etykieta">Domyślny — Zestaw nagłowny</span><span class="ptaszek" style="color:var(--dn-sygnal)">✓</span></div>
                   <div class="sta-popover-wiersz"><span class="sta-popover-etykieta">Mikrofon USB</span></div>
-                  <div class="sta-popover-wiersz"><span class="sta-popover-etykieta">Przytrzymaj, aby nagrać</span><button class="dn-przelacznik" data-przelacznik aria-pressed="false" role="switch" aria-checked="false"></button></div>
+                  <div class="sta-popover-wiersz"><span class="sta-popover-etykieta">Przytrzymaj, aby nagrać</span><button class="dn-przelacznik" aria-label="Przytrzymaj, aby nagrać" data-przelacznik role="switch" aria-checked="false"></button></div>
                 </div>
               </div>
               <span class="rozciag"></span>
@@ -535,7 +537,7 @@
 
         <!-- Source Panel + Translation Panels — OKNO WIODĄCE, pełna szerokość -->
         <section class="sta-okno" id="panel-obszar-tlum" data-nazwa="Source + Translation Panels" style="grid-column:1 / -1; grid-row:span 2">
-          <header class="sta-okno-belka"><span class="sta-okno-tytul"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5h7M4 5v14M9 5v3M6 10s1 3 3 3M11 8s-2 5-5 5"/><path d="M14 19l3-8 3 8M15 16h4"/></svg><b>Source Panel · Translation Panels</b></span><span class="dn-plakietka dn-plakietka--rola">okno wiodące</span><span class="sta-okno-akcje"><button class="dn-btn dn-btn--atrament dn-btn--sm" type="button">+ Dodaj język ▾</button><span class="sta-chip" style="margin:0 var(--dn-od-2)">Zsynchronizowane przewijanie <button class="dn-przelacznik" data-przelacznik aria-pressed="true" role="switch" aria-checked="true"></button></span><button class="dn-btn-ikona" type="button" data-okno-zamknij aria-label="Zamknij"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></button></span></header>
+          <header class="sta-okno-belka"><span class="sta-okno-tytul"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5h7M4 5v14M9 5v3M6 10s1 3 3 3M11 8s-2 5-5 5"/><path d="M14 19l3-8 3 8M15 16h4"/></svg><b>Source Panel · Translation Panels</b></span><span class="dn-plakietka dn-plakietka--rola">okno wiodące</span><span class="sta-okno-akcje"><button class="dn-btn dn-btn--atrament dn-btn--sm" type="button">+ Dodaj język ▾</button><span class="sta-chip" style="margin:0 var(--dn-od-2)">Zsynchronizowane przewijanie <button class="dn-przelacznik" data-przelacznik aria-label="Zsynchronizowane przewijanie" role="switch" aria-checked="true"></button></span><button class="dn-btn-ikona" type="button" data-okno-zamknij aria-label="Zamknij"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></button></span></header>
 
           <!-- Source Panel -->
           <div class="tr-glowa">

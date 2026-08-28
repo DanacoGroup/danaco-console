@@ -8644,3 +8644,43 @@ filtr i kontrolka etykiet — inaczej etykieta nadana przy wgraniu nie trafiała
 
 Oba zdarzenia przeciągania są potrzebne: zdarzenie nad płytą bez blokady odwołuje upuszczenie,
 zanim do niego dojdzie.
+
+## budowa/klient-poprzedni/src/aplikacja/rozstrzyganie-sprawcy.ts
+Rdzeń rozgłasza każdą zmianę do wszystkich połączeń konta (`transport/rozgloszenie.go`),
+nie pomijając nadawcy, a zdarzenie nie niesie ani identyfikatora połączenia, ani autora:
+`WindowChangedEvent` ma okno, `MessageChangedEvent` ma wiadomość. Kontrakt jest zamrożony,
+więc pola sprawcy w nim nie przybędzie, a Operator ma odróżnić własny ruch od cudzego.
+
+Mechanizm odpowiada wyłącznie „to połączenie / nie to połączenie”. Nie mówi „asystent”,
+bo drugie urządzenie Operatora wygląda stąd identycznie — wołający mówi „spoza tego
+połączenia”.
+
+Dwa rodzaje zapisu, bo dwa rodzaje pytania: wiadomość powstaje raz i nigdy się nie
+zmienia, więc wystarczy identyfikator — wiadomość, której to połączenie nie dostało
+w odpowiedzi, napisał ktoś inny; okno żyje długo i zmienia się wiele razy, więc sam
+identyfikator odpowiadałby na pytanie „czy kiedykolwiek dotknąłem tego okna” zamiast
+„czy to przestawienie jest moje”, więc zapisywany jest odcisk ustawień z odpowiedzi
+(`ustawienia-okna-sledzone.ts`).
+
+Zwłoka jest konieczna: rdzeń rozgłasza zdarzenie przed oddaniem odpowiedzi
+(`handlers_window.go` — `e.okno(...)` przed `return`), więc zdarzenie o własnej
+czynności zawsze wyprzedza własną odpowiedź. Bez zwłoki każde kliknięcie Operatora
+meldowałoby się jako cudze.
+
+700 ms pokrywa drogę powrotną własnej odpowiedzi z rdzenia lokalnego na maszynie
+obciążonej. Krócej daje fałszywe „cudze” przy własnych kliknięciach, dłużej
+rozjeżdża napis z tym, co widać na scenie. Zwłoka dotyczy samego werdyktu:
+pokazanie okna i wpisu nie czeka na nic.
+
+1500 ms dzieli zdarzenie od odpowiedzi na tę samą komendę. Odcisk starszy nie jest
+już świadkiem niczego, a szersze okno unieważnia cudze posunięcie: odcisk stanu
+„okno w Studiu” zapisany przy starcie aplikacji zjadłby powrót asystenta do Studia
+kilka sekund później i Operator zobaczyłby okno pracujące w innym module, niż
+wskazuje kolumna.
+
+Odcisk opisuje stan, a nie czynność, więc ten sam stan potrafi wystąpić dwa razy
+z różnych powodów (Operator przechodzi Studio → Workspace, asystent wraca do
+Studia). Stąd dwa zabezpieczenia: wiek — nie starszy niż pamięć odcisku — i zużycie.
+Jedna własna komenda rodzi dokładnie jedno rozgłoszone zdarzenie, więc odcisk
+unieważnia jedno zdarzenie i znika; drugie zdarzenie o tym samym stanie pochodzi
+z innej czynności i nie ma już czym się wylegitymować.

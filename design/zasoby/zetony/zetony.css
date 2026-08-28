@@ -717,7 +717,9 @@
   --dn-rama-obrys-mocny: rgba(26, 95, 208, .34);
   --dn-rama-tlo: rgba(13, 20, 28, .04);
   --dn-rama-pole: rgba(13, 20, 28, .06);
-  --dn-tlo: #EAEEF3;
+  --dn-tlo: #DFE4EA;
+  --dn-wstazka: #F4F7FA;
+  --dn-wstazka-taca: #DFE4EA;
   --dn-powierzchnia-2: #EAEEF3;
   --dn-panel: #FFFFFF;
   --dn-obrys: #DBE2EA;
@@ -754,7 +756,9 @@
   --dn-rama-obrys-mocny: rgba(140, 176, 224, .30);
   --dn-rama-tlo: rgba(140, 176, 224, .06);
   --dn-rama-pole: rgba(140, 176, 224, .08);
-  --dn-tlo: #0A0F15;
+  --dn-tlo: #05080B;
+  --dn-wstazka: #0E141C;
+  --dn-wstazka-taca: #05080B;
   --dn-powierzchnia-2: #0A0F15;
   --dn-panel: #131B25;
   --dn-obrys: #1A2430;
@@ -791,7 +795,11 @@
     --dn-rama-obrys-mocny: rgba(26, 95, 208, .34);
     --dn-rama-tlo: rgba(13, 20, 28, .04);
     --dn-rama-pole: rgba(13, 20, 28, .06);
-    --dn-tlo: #EAEEF3;
+    --dn-tlo: #DFE4EA;
+    --dn-wstazka: #F4F7FA;
+    --dn-wstazka-taca: #DFE4EA;
+  --dn-wstazka: #F4F7FA;
+  --dn-wstazka-taca: #DFE4EA;
     --dn-powierzchnia-2: #EAEEF3;
     --dn-panel: #FFFFFF;
     --dn-obrys: #DBE2EA;

@@ -3980,3 +3980,16 @@ button.dn-link {
 }
 .dn-karta-srodowiska--przyrzadowa:is(:hover, :focus-within) .dn-wejdz-grot { gap: var(--dn-od-3); }
 .dn-karta-srodowiska--przyrzadowa .dn-wejdz-napis { color: inherit; }
+
+/* Panel boczny stoi na obrzezu, nie na plotnie: koncepcja prowadzi trzy
+   stopnie — belka, obrzeze, plotno — a taca paneli daje tylko dwa. */
+[data-wnetrze='przyrzadowe'] .dn-obszar-panel--boczny,
+[data-wnetrze='przyrzadowe'] .dn-obszar-panel--samouczek { background: var(--dn-powierzchnia-2); }
+/* Pasek stanu na barwie belki, tak jak rama okna. */
+[data-wnetrze='przyrzadowe'] .dn-stan { background: var(--dn-rama); color: var(--dn-rama-tekst-2); }
+[data-wnetrze='przyrzadowe'] .dn-karty-pasmo { background: var(--dn-powierzchnia-2); }
+
+/* Belka i szyna na barwie ramy — bez tego biora barwe gruntu i cala lewa
+   krawedz okna zlewa sie z obrzezem paneli. */
+[data-wnetrze='przyrzadowe'] .dn-belka,
+[data-wnetrze='przyrzadowe'] .dn-szyna-nawigacji { background: var(--dn-rama); }

@@ -5,21 +5,9 @@ import type {
   WindowRole,
 } from '../../../shared/contract';
 
-/**
- * Model danych pulpitu operacyjnego (Mission Control).
- *
- * Jedna odpowiedzialność: kształt danych, które widok pulpitu umie wyrysować.
- * Wartości buduje `zlozenie-danych.ts` wyłącznie z odczytów i zdarzeń rdzenia.
- *
- * Pole `null` znaczy brak źródła: miara, której kontrakt nie niesie, ma w modelu
- * typ `X | null`, a widok wypisuje przy niej etykietę „brak źródła danych
- * w kontrakcie" zamiast liczby.
- *
- * Nazwy stanów pochodzą z kontraktu (`shared/contract`) zamiast z powtarzanych
- * literałów.
- */
+// Model danych pulpitu — kształt danych, budowany wyłącznie z odczytów rdzenia.
 
-/** Skąd pochodzą liczby pokazane na pulpicie. */
+/** Skąd pochodzą liczby pokazane na pulpicie: odczyt jeszcze nie nadszedł albo dane odczytane z rdzenia. */
 export const ZrodloDanych = {
   /** Odczyt z rdzenia jeszcze nie nadszedł — pulpit czeka na dane. */
   Oczekiwanie: 'oczekiwanie',
@@ -30,19 +18,12 @@ export type ZrodloDanych = (typeof ZrodloDanych)[keyof typeof ZrodloDanych];
 
 /**
  * Kod środowiska Danaco Console — wartość kolumny `srodowisko.kod` z rdzenia.
- *
- * Typ jest napisem, a nie unią wywiedzioną z `KnownModuleIds`, bo wykaz środowisk
- * należy do rdzenia jako dane i `environment.list` niesie go w całości. Unia
- * zamykałaby matrycę na kody znane klientowi, a środowisko spoza niej trafiałoby
- * do wykazu „poza środowiskami" jako sesja bez wskazania środowiska.
- *
- * `KnownModuleIds` pilnuje kodów tam, gdzie klient sam je wymienia
- * (`strona-glowna/pozycje-srodowisk.ts`); kolumna matrycy przepisuje to,
- * co przyszło z rdzenia.
+ * Typ jest napisem, nie unią, bo wykaz środowisk należy do rdzenia jako dane,
+ * a środowisko spoza znanej unii trafiałoby do wykazu „poza środowiskami".
  */
 export type IdSrodowiska = string;
 
-/** Rodzaj kafla w rzędzie „Utwórz". */
+/** Rodzaj kafla w rzędzie „Utwórz" pulpitu operacyjnego — jedna z dostępnych pozycji szybkiego tworzenia. */
 export const RodzajUtworzenia = {
   Sesja: 'sesja',
   Projekt: 'projekt',
@@ -53,7 +34,7 @@ export const RodzajUtworzenia = {
 } as const;
 export type RodzajUtworzenia = (typeof RodzajUtworzenia)[keyof typeof RodzajUtworzenia];
 
-/** Cztery liczby sekcji „Aktywność AI"; dwie ostatnie bez źródła — `null`. */
+/** Cztery liczby sekcji „Aktywność AI" pulpitu; dwie ostatnie nie mają dziś źródła w kontrakcie — `null`. */
 export interface AktywnoscAI {
   /** Procesy w stanie `running` z telemetrii `progress.changed`. */
   aktywneProcesy: number;
@@ -65,7 +46,7 @@ export interface AktywnoscAI {
   walidatoryOczekuja: number | null;
 }
 
-/** Pas eskalacji koordynatora — przepływy czekające na człowieka. */
+/** Pas eskalacji koordynatora na pulpicie operacyjnym — przepływy sesji czekające na decyzję użytkownika. */
 export interface PasDecyzji {
   /** Ile przepływów wstrzymano do decyzji użytkownika. */
   przeplywyDoDecyzji: number;
@@ -76,10 +57,9 @@ export interface PasDecyzji {
 }
 
 /**
- * Plakietka jednego kanału modelu w sekcji „Operacje AI" — odwzorowanie wiersza
- * `channel.list`. Miary wysycenia, kolejki, limitu i kosztu nie mają dziś
- * źródła w kontrakcie, więc plakietka ich nie niesie — widok wypisuje przy nich
- * etykietę braku źródła.
+ * Plakietka jednego kanału modelu w sekcji „Operacje AI" — odwzorowanie
+ * wiersza `channel.list`. Miary wysycenia, kolejki, limitu i kosztu nie mają
+ * dziś źródła w kontrakcie, więc plakietka ich nie niesie.
  */
 export interface KanalOperacyjny {
   id: string;
@@ -93,7 +73,7 @@ export interface KanalOperacyjny {
   czynny: boolean;
 }
 
-/** Jedna sesja w kolumnie środowiska. */
+/** Jedna sesja odwzorowana w kolumnie środowiska macierzy pulpitu operacyjnego aplikacji Mission Control. */
 export interface SesjaMatrycy {
   /** Identyfikator sesji kontraktu — trafia do zdarzenia wejścia. */
   id: string;
@@ -108,7 +88,7 @@ export interface SesjaMatrycy {
   pracaWTle: boolean;
 }
 
-/** Kolumna matrycy — jedno środowisko wraz z sesjami. */
+/** Kolumna matrycy pulpitu operacyjnego — jedno środowisko Danaco Console wraz ze wszystkimi jego sesjami. */
 export interface KolumnaSrodowiska {
   id: IdSrodowiska;
   nazwa: string;
@@ -116,7 +96,7 @@ export interface KolumnaSrodowiska {
   sesje: SesjaMatrycy[];
 }
 
-/** Rodzaj powiązania między dwiema sesjami w pasie RELACJE. */
+/** Rodzaj powiązania między dwiema sesjami w pasie „Relacje" pulpitu operacyjnego aplikacji Mission Control. */
 export const RodzajRelacji = {
   /** Wymiana dwustronna: obie sesje zasilają się nawzajem. */
   Wymiana: 'wymiana',
@@ -125,7 +105,7 @@ export const RodzajRelacji = {
 } as const;
 export type RodzajRelacji = (typeof RodzajRelacji)[keyof typeof RodzajRelacji];
 
-/** Powiązanie dwóch sesji, także z różnych środowisk. */
+/** Powiązanie dwóch sesji pulpitu operacyjnego, także pochodzących z dwóch różnych środowisk Danaco Console. */
 export interface RelacjaSesji {
   id: string;
   zrodloId: string;
@@ -137,7 +117,7 @@ export interface RelacjaSesji {
   przedmiot: string;
 }
 
-/** Proces biegnący w tle — kolumna „Procesy w tle" (zdarzenie `progress.changed`). */
+/** Proces biegnący w tle — kolumna „Procesy w tle" pulpitu operacyjnego, zasilana zdarzeniem `progress.changed`. */
 export interface ProcesWTle {
   /** Identyfikator procesu z telemetrii — `processId`. */
   id: string;
@@ -155,7 +135,6 @@ export interface ProcesWTle {
 
 /**
  * Kolejka na pulpicie — odwzorowanie bytu `Queue` ze zdarzeń `queue.changed`.
- *
  * Kontrakt nie niesie roli kolejki ani liczby zadań czekających; nie ma też
  * odczytu `queue.list`, więc przed pierwszym zdarzeniem wykaz jest pusty.
  */
@@ -171,7 +150,7 @@ export interface KolejkaPulpitu {
   obiegi: number | null;
 }
 
-/** Agent zespołu — kolumna „Zespół agentów"; odwzorowanie otwartego okna. */
+/** Agent zespołu w kolumnie „Zespół agentów" pulpitu operacyjnego — odwzorowanie jednego otwartego okna. */
 export interface AgentZespolu {
   /** Identyfikator okna komunikacji. */
   id: string;
@@ -185,7 +164,7 @@ export interface AgentZespolu {
   czynny: boolean;
 }
 
-/** Komplet danych jednego wyrysowania pulpitu. */
+/** Komplet danych potrzebny do jednego wyrysowania pulpitu operacyjnego Mission Control całej aplikacji. */
 export interface DanePulpitu {
   /** Rozstrzyga, czy odczyt z rdzenia już nadszedł. */
   zrodloDanych: ZrodloDanych;

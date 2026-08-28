@@ -9247,3 +9247,29 @@ Sześć okien strony dystrybucji patrzy na ten sam rejestr, więc dwa równoleg�
 
 ## budowa/klient-poprzedni/src/moduly/apps/stan-rozszerzen.ts (dobudowa obszaru rozszerzeń)
 Dobudowa jest osobnym źródłem, nie rozrostem pierwszego: pierwsze źródło obsługuje cykl życia pozycji — wykaz, instalację, konfigurację, przełącznik, odinstalowanie — a dobudowa obsługuje wszystko, co robi się na pozycji już stojącej. Rozdzielenie jest czytelne w oknach: część z nich pracuje na pierwszym źródle, część na drugim.
+
+## budowa/klient-poprzedni/src/moduly/research/czynnosci-zrodel.ts
+
+Zachowanie okna wydzielono z pliku okna, ponieważ okno składa widok, a ten plik
+niesie jego zachowanie — dwie odpowiedzialności rozdzielone na dwa pliki, każdy
+w rozmiarze możliwym do przeczytania naraz. Każde naciśnięcie daje odpowiedź:
+brak okna badania oraz brak treści pola wracają zdaniem, nie ciszą i nie
+wygaszeniem kontrolki.
+
+Przycisk lektury przy pozycji wykazu wskazuje źródło wprost, natomiast akcja
+paska działa na zaznaczeniu. Czytać można jedno źródło naraz, więc przy wielu
+zaznaczonych okno nazywa źródło, które wzięło, zamiast wybierać po cichu.
+
+Rdzeń kwituje sukcesem samo przyjęcie zgłoszenia akcji, dlatego zdanie mówi
+o wyniku oddanym przez rdzeń, a nie o wykonaniu akcji. Odmowę braku wykonawcy
+pokazuje gałąź wcześniejsza, słowami rdzenia.
+
+Pustka wykazu źródeł nie jest tym samym, co brak miejsca na wykaz: przy
+niewskazanym oknie badania komenda research.source.add odmawia, bo pole
+windowId jest obowiązkowe, więc zaproszenie do skatalogowania pierwszego źródła
+byłoby wtedy mylące. Właściwe zdanie dobiera plik pustka-okien.ts.
+
+Żądanie składane bez wskazania treści wracałoby odmową walidacji, z której nic
+nie wynika dla obsługującego okno. Pole tytułu formularza źródła niesie tekst
+swobodny tej rodziny: adres do pozyskania, ścieżkę bibliografii albo etykiety
+rozdzielone przecinkiem.

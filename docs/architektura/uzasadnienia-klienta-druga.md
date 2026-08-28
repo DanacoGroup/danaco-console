@@ -7183,3 +7183,20 @@ pół. Moduł nie zna dokumentu ani stanu modułu wyższego poziomu — bierze d
 elementy i rozkłada je na powierzchni, a to, który dokument stoi w którym
 polu, rozstrzyga okno pracy, inaczej podział trzymałby drugi stan dokumentu
 obok stanu modułu i oba rozjechałyby się przy pierwszym zapisie.
+
+## budowa/klient-poprzedni/src/moduly/studio/widok-druku.ts
+Drukowanie jest, na tym etapie, czynnością Operatora, nie rdzenia. W całym
+kontrakcie nie ma ani jednej komendy drukowania i nie jest to przeoczenie:
+drukarka stoi na maszynie Operatora, a rdzeń pracuje na serwerze. Rdzeń nie
+ma czym drukować i nie udaje, że ma, tak samo jak uczciwie odmawia skaner.
+Wydanie do pliku jest czynnością inną i jedno nie zastępuje drugiego.
+Drukuje się to, co pokazuje podgląd, nie surowy tekst: wydruk różniący się od
+podglądu byłby usterką gorszą niż brak funkcji, więc drukowanie bierze kartki
+powierzchni takimi, jakimi są — nośnik, orientacja, marginesy, paginacja,
+nagłówek i stopka. Moduł nie rysuje własnej kartki i nie zna struktury
+dokumentu obiektowego powierzchni: składa nastawy i woła drogę druku,
+a przygotowanie kartek należy do powierzchni. Liczby kopii i druku
+dwustronnego nie rozstrzyga strona, tylko okno drukarki systemu, więc nastawy
+są przenoszone jako życzenie wpisane w podsumowanie, a okno mówi wprost, że
+zatwierdza je drukarka — obietnica, że strona ustawi druk dwustronny, byłaby
+nieprawdą przy pierwszej drukarce jednostronnej.

@@ -840,3 +840,12 @@ Pola w nawiasach kwadratowych uzupełnia się własnymi danymi. Zasady
 budowy: szerokość sto procent do 520 pikseli, znak 168 na 72 piksele
 w podwójnej rozdzielczości pliku, wiersz reguły grubości 1 piksela,
 kropka sygnału jako jedyny akcent barwny.
+
+## design/05-okna/przeplyw/centrum-dowodzenia.html
+Centrum dowodzenia jest przedpokojem, ale nosi ten sam pasek powłoki, aby
+przełączanie środowisk i tryby pozostały spójne z oknami roboczymi, zgodnie
+z kontraktem systemu projektowego. Grupa składników paska okna niesie
+zestaw karty bieżącej i gaśnie na karcie centrum dowodzenia, ponieważ
+pulpit okna nie jest modułem. Warstwa tła karty środowiska ma pole animacji
+stojące przy prawej krawędzi i leżące pod treścią; jest elementem
+dekoracyjnym poza drzewem dostępności i poza trafieniami myszy.

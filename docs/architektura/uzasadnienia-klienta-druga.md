@@ -6201,3 +6201,20 @@ jeszcze nie jest ustalony; przypisanie nastąpi samo przy następnym fragmencie.
 
 Kontekst czytelności powstaje na jedno rysowanie: znaczniki mówców i role wstęgi mają odpowiadać
 temu, co widać teraz, a nie narastać między przerysowaniami.
+
+## budowa/klient-poprzedni/src/moduly/studio/okno-tools-panel.ts
+Ustalono, że katalog operacji nie może zajmować stałej kolumny powierzchni na stałe: drogą
+domyślną są narzędzia ukryte, pływak przy zaznaczeniu i uchwyt katalogu, a ten panel zostaje,
+bo dla części pracy jest wygodniejszy — otwiera się jednak wyborem operatora, a nastawa jest
+jawna, odwracalna i pamiętana w rdzeniu. Zwinięty panel nie zajmuje kolumny: niesie jeden wiersz
+z przełącznikiem i znacznikiem, po którym arkusz stylów schodzi pas wiodący do jednej kolumny —
+zwinięcie do zera byłoby wygodniejsze wizualnie i błędne, bo operator nie miałby czym panelu
+przywrócić. Panel woła operację kontekstową na zaznaczonym fragmencie albo całym dokumencie, ze
+sterowaniem złożonym z przełącznika zakresu, wskaźnika zakresu i przycisku uruchomienia.
+Zaznaczenie w edytorze przestawia przełącznik na zaznaczenie, a wybór ręczny ma pierwszeństwo
+do następnej zmiany zaznaczenia; wybór zaznaczenia bez samego zaznaczenia nie jest blokowany,
+tylko wskaźnik mówi, czego brakuje. Nastawa zakresu mieszka w stanie modułu, nie w polu listy,
+dzięki czemu wskaźnik obok, pasek zaznaczenia w edytorze i żądanie operacji kontekstowej czytają
+jedną wspólną nastawę. Wszystkie operacje idą jedną komendą, rozróżnianą polem identyfikatora
+akcji z rejestru, stąd jedna ścieżka wywołania i wykaz identyfikatorów zamiast osobnej ścieżki
+na każdą operację.

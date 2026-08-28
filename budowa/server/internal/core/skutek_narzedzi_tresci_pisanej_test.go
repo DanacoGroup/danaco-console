@@ -425,6 +425,50 @@ func TestWyciagnijTekstOdmawiaObrobkiWstepnejBezUnpapera(t *testing.T) {
 	}
 }
 
+// TestWyciagnijTekstProstujeSkosPrzedRozpoznaniemNaDrodzePdf wykazuje drogę
+// PDF-u: pole preprocess dochodzi przez tekstZPdf i rozpoznajPismoWPdf aż do
+// samego rozpoznania obrazu strony, nie tylko się kompiluje — skan pochylony
+// zawinięty w PDF bez warstwy tekstowej przechodzi przez prostowanie tak
+// samo jak obraz podany wprost.
+func TestWyciagnijTekstProstujeSkosPrzedRozpoznaniemNaDrodzePdf(t *testing.T) {
+	pomijBezProgramu(t, narzedzieCzyszczeniaSkanu.Nazwa, narzedzieCzyszczeniaSkanu.Program)
+	pomijBezProgramu(t, narzedzieTesseract.Nazwa, narzedzieTesseract.Program)
+	zmontowany, zycie, _ := zmontujDoPomiaruSkutku(t)
+
+	const tresc = "PROTOKOL ODBIORU"
+	sciezka := pdfObrazowy(t, skanPochylonyOStopnie(t, tresc, "4"))
+
+	// Przebieg pierwszy bez obróbki jest odniesieniem — bez niego drugi
+	// przebieg nie dowiódłby zmiany.
+	odpowiedzOdniesienia := wykonajKomende(t, zmontowany, zycie, shared.CommandDocumentTextExtract,
+		shared.DocumentTextExtractRequest{SourcePath: wskaznik(sciezka), Language: wskaznik("pol")})
+	if odpowiedzOdniesienia.Error == nil {
+		var bezObrobki shared.DocumentTextExtractResponse
+		if err := protocol.LadunekDo(odpowiedzOdniesienia, &bezObrobki); err != nil {
+			t.Fatalf("nieczytelny ładunek odpowiedzi odniesienia: %v", err)
+		}
+		if strings.Contains(strings.ToUpper(bezZlamanWiersza(bezObrobki.Text)), "PROTOKOL") {
+			t.Fatal("materiał pochylony nie różnicuje drogi z unpaperem od drogi bez niego na PDF-ie — " +
+				"rozpoznanie czyta go bez obróbki; sprawdzian potrzebuje ostrzejszego skosu")
+		}
+	}
+
+	var poObrobce shared.DocumentTextExtractResponse
+	wykonajUdana(t, zmontowany, zycie, shared.CommandDocumentTextExtract,
+		shared.DocumentTextExtractRequest{
+			SourcePath: wskaznik(sciezka), Language: wskaznik("pol"), Preprocess: wskaznik(true),
+		}, &poObrobce)
+
+	odczytane := strings.ToUpper(bezZlamanWiersza(poObrobce.Text))
+	if !strings.Contains(odczytane, "PROTOKOL") {
+		t.Fatalf("tekst rozpoznany po obróbce na drodze PDF-u nie niesie słowa z materiału\n"+
+			" materiał: %q\n po obróbce: %q", tresc, poObrobce.Text)
+	}
+	if !poObrobce.UsedOcr {
+		t.Fatal("odczyt PDF-u obrazowego zgłosił brak rozpoznania pisma — sprawdzian mierzyłby inną drogę")
+	}
+}
+
 // TestWyciagnijTekstOdmawiaObrobkiPrzedRasteryzacjaPdf wykazuje, że odmowa
 // braku unpapera na drodze PDF zapada PRZED rasteryzacją stron: gdy brakuje
 // obu programów, odmowa nazywa unpaper, a nie poppler — dowód, że rasteryzacja
@@ -581,6 +625,14 @@ func TestJezykKorektyNieZmyslaOdmianyKrajowej(t *testing.T) {
 // sprawdzian mierzy skutek dwoma przebiegami, z obróbką i bez niej.
 func skanPochylony(t *testing.T, tresc string) string {
 	t.Helper()
+	return skanPochylonyOStopnie(t, tresc, "2")
+}
+
+// skanPochylonyOStopnie jest skanPochylony ze wskazanym kątem pochylenia —
+// droga PDF-u rasteryzuje materiał wtórnie, więc dwa stopnie bywają za mało,
+// żeby ta sama różnica przetrwała okrążenie przez pdftoppm.
+func skanPochylonyOStopnie(t *testing.T, tresc, stopnie string) string {
+	t.Helper()
 
 	rysownik, err := exec.LookPath("magick")
 	if err != nil {
@@ -590,7 +642,7 @@ func skanPochylony(t *testing.T, tresc string) string {
 	polecenie := exec.Command(rysownik,
 		"-background", "white", "-fill", "black", "-pointsize", "72", "-density", "300",
 		"label:"+tresc, "-bordercolor", "white", "-border", "80",
-		"-rotate", "2", "-background", "white", "-flatten", sciezka)
+		"-rotate", stopnie, "-background", "white", "-flatten", sciezka)
 	if wyjscie, err := polecenie.CombinedOutput(); err != nil {
 		t.Skipf("pomiar niewykonany: nie udało się narysować materiału: %v (%s)", err, wyjscie)
 	}

@@ -1,38 +1,4 @@
--- Migracja 390 — POSTAĆ fragmentu w historii schowka.
---
--- ── Co było nie tak ─────────────────────────────────────────────────────────
--- Tabela `wpis_schowka` (migracja 292) niosła sam TEKST. Wklejenie sposobem
--- `keepFormat` — „zachowaj postać źródła", i to jest sposób DOMYŚLNY wedle
--- kontraktu — nie miało więc czego zachować: przejmowało postać MIEJSCA
--- wklejenia. Bilans mówił o tym wprost i kierował do malarza formatów, więc
--- Operator nie był oszukiwany, ale obietnica kontraktu nie była dowożona:
--- „zachowaj postać źródła" i „przejmij postać miejsca" (`mergeFormat`) robiły
--- dokładnie to samo.
---
--- ── Dlaczego kolumna, a nie druga tabela ────────────────────────────────────
--- Postać należy do TEGO wpisu schowka i ginie razem z nim. Osobna tabela
--- wiązana kluczem obcym dawałaby wiersz postaci bez wpisu po każdym zdjęciu
--- wpisu z historii — albo kasowanie kaskadowe, czyli dokładnie to, co robi
--- kolumna, tylko dwoma tabelami.
---
--- ── Dlaczego JEDNA kolumna JSON, a nie kolumny na cechy ─────────────────────
--- Postać znaku ma w kontrakcie siedemnaście cech, postać akapitu dwadzieścia,
--- i oba wykazy rosną razem z kontraktem. Kolumna na każdą cechę znaczyłaby
--- migrację przy każdym dołożonym polu — a wpisu schowka nikt nie przeszukuje po
--- kroju pisma, więc kolumny nie dałyby ani jednego zapytania, którego dziś nie
--- da się wykonać.
---
--- ── Dlaczego kolumna jest nieobowiązkowa ────────────────────────────────────
--- Wpisy odłożone przed tą dobudową postaci nie mają i mają zostać poprawne.
--- Wpis bez postaci znaczy „nie wiadomo, jaka była postać źródła" — brak wiedzy,
--- nie twierdzenie o postaci pustej. Wklejenie takiego wpisu zachowuje się jak
--- dotąd i mówi to bilansem.
---
--- Kolumna jest ogólna, nie studiowa: schowek jest JEDEN, wspólny Operatorowi
--- i wykonawcom (rodzina `clipboard.*` oraz `studio.clipboard.*`), więc postać
--- odłożona w Studiu ma się dać wkleić w Studiu, a wpis odłożony innym oknem
--- zostaje wpisem bez postaci i to jest prawda o nim.
---
--- Wymaga restartu: nie.
+-- Migracja 390 dodaje kolumnę postaci fragmentu do wpisu historii schowka,
+-- aby wklejenie mogło zachować postać źródła.
 
 ALTER TABLE wpis_schowka ADD COLUMN postac_json TEXT;

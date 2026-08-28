@@ -1,15 +1,5 @@
--- Migracja 275 — okna wykonania, nadzór obecności uruchomień, wyzwalacz
--- webhook i historia wyzwoleń (rodzina `schedule.*`).
---
--- Wszystko tu ma przeżyć restart rdzenia i taki jest powód istnienia tego
--- kroku. Okno wykonania trzymane w pamięci procesu przestałoby ograniczać
--- budzik po pierwszym ponownym złożeniu rdzenia, a Scheduler pokazywałby
--- ograniczenie, które już niczego nie ogranicza. To samo dotyczy tolerancji
--- nadzoru i klucza podpisu webhooka.
---
--- Okno wykonania jest wierszem, bo jest ich wiele na harmonogram: godziny
--- robocze poniedziałku bywają inne niż piątku. Dni tygodnia leżą zapisem
--- strukturalnym, bo kontrakt niesie je wykazem liczb ustalanym w całości.
+-- Migracja 275 wprowadza okna wykonania, nadzór obecności uruchomień, wyzwalacz webhook
+-- i historię wyzwoleń harmonogramu, trwałe wobec restartu rdzenia.
 CREATE TABLE okno_wykonania_harmonogramu (
     id             INTEGER PRIMARY KEY AUTOINCREMENT,
     harmonogram_id INTEGER NOT NULL REFERENCES harmonogram_automatyki(id) ON DELETE CASCADE,
@@ -22,10 +12,8 @@ CREATE TABLE okno_wykonania_harmonogramu (
 CREATE INDEX idx_okno_wykonania_harmonogramu_wlasciciel
     ON okno_wykonania_harmonogramu(harmonogram_id, kolejnosc, id);
 
--- Nadzór obecności uruchomień i adres wejściowy webhooka są polami pojedynczymi
--- harmonogramu — po jednym na harmonogram, bez własnego cyklu życia.
--- `tolerancja_sekundy` zero wyłącza nadzór, tak samo jak mówi kontrakt.
--- Kolumna webhooka niesie ODWOŁANIE do sejfu, nigdy wartość klucza podpisu.
+-- Nadzór obecności uruchomień i adres wejściowy webhooka są polami pojedynczymi harmonogramu,
+-- po jednym na harmonogram, a kolumna webhooka niesie odwołanie do sejfu, nigdy wartość klucza.
 ALTER TABLE harmonogram_automatyki ADD COLUMN tolerancja_sekundy INTEGER NOT NULL DEFAULT 0;
 ALTER TABLE harmonogram_automatyki ADD COLUMN regula_nadzoru TEXT;
 ALTER TABLE harmonogram_automatyki ADD COLUMN odwolanie_podpisu TEXT;
@@ -43,7 +31,8 @@ CREATE TABLE wyzwolenie_automatyki (
     przebieg_id    INTEGER REFERENCES przebieg_automatyki(id) ON DELETE SET NULL,
     chwila         TEXT    NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now'))
 );
--- schedule.trigger.history czyta wyzwolenia od najnowszego.
+-- Indeksy porządkują wyzwolenia harmonogramu od najnowszego, osobno dla całej automatyki
+-- i osobno zawężone do jednego harmonogramu.
 CREATE INDEX idx_wyzwolenie_automatyki_czas
     ON wyzwolenie_automatyki(automatyka_id, chwila DESC, id DESC);
 CREATE INDEX idx_wyzwolenie_automatyki_harmonogram

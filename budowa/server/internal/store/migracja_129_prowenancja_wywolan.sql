@@ -1,29 +1,10 @@
--- Migracja 129 — ślad wywołania kanału modelu wraz z drzewem odcinków.
---
--- Podsystem prowenancji: rdzeń zapisuje, co poszło do modelu i co wróciło.
--- Bez tego zapisu Provenance Explorer modułu Diagnostics nie ma czego pokazać,
--- a rozliczenie zużycia nie ma po czym liczyć — dlatego obie rodziny komend
--- stoją na tej jednej tabeli, a nie na dwóch osobnych. Dwie tabele o tych samych
--- liczbach rozjechałyby się przy pierwszej korekcie cennika.
---
--- ── Dlaczego treść leży w tej samej tabeli, a nie obok ────────────────────────
--- Prompt i odpowiedź to kolumny osobne, ale wiersza tego samego. Wyłączenie
--- zapisu treści ustawieniem zostawia wiersz z liczbami i przebiegiem, a kolumny
--- treści puste — ślad wywołania zostaje mierzalny nawet wtedy, gdy jego treść
--- świadomie nie jest przechowywana. Kolumna `tresc_zapisana` odróżnia treść
--- pustą od treści niezapisanej: bez niej wiersz bez promptu znaczyłby dwie różne
--- rzeczy naraz.
---
--- ── Dlaczego drzewo jest listą krawędzi ──────────────────────────────────────
--- Odcinek wywołania (wejście modelu, użycie narzędzia, tura podagenta) niesie
--- wskazanie rodzica. Zapytanie o jeden odcinek czyta wtedy jeden wiersz, a nie
--- rozbiera cały dokument JSON, żeby dojść do gałęzi.
+-- Migracja 129 wprowadza ślad wywołania kanału modelu wraz z drzewem odcinków,
+-- na którym stoi Provenance Explorer i rozliczenie zużycia.
 
 CREATE TABLE prowenancja_wywolanie (
     id                       INTEGER PRIMARY KEY AUTOINCREMENT,
     kod                      TEXT    NOT NULL UNIQUE,
-    -- slad_kod spina wywołania jednego zlecenia Operatora; rodzic_kod wiąże
-    -- wywołanie podagenta z wywołaniem, które je zleciło.
+    -- slad_kod spina wywołania jednego zlecenia; rodzic_kod wiąże wywołanie podagenta z nadrzędnym.
     slad_kod                 TEXT,
     rodzic_kod               TEXT,
     proces_kod               TEXT,
@@ -34,14 +15,10 @@ CREATE TABLE prowenancja_wywolanie (
     dostawca                 TEXT,
     model                    TEXT,
     konto_kod                TEXT,
-    -- projekt_kod i srodowisko istnieją po to, żeby rozliczenie zużycia miało
-    -- po czym grupować. Bez nich wymiary „projekt" i „środowisko" byłyby
-    -- wymiarami bez danych.
+    -- projekt_kod i srodowisko dają rozliczeniu zużycia wymiary grupowania po projekcie i środowisku.
     projekt_kod              TEXT,
     srodowisko               TEXT,
-    -- Wartości kolumn biorą się z odwzorowania w kontrakcie (pole `baza` przy
-    -- każdej wartości wyliczenia), a nie z wyobrażenia migracji. Kontrakt jest
-    -- źródłem prawdy nazw i to on rozstrzyga, co kolumna przyjmuje.
+    -- Wartości kolumn pochodzą z pola baza w kontrakcie, który jest źródłem prawdy nazw wyliczeń.
     stan                     TEXT    NOT NULL DEFAULT 'biegnie'
                                      CHECK(stan IN ('biegnie','zakonczone','bledne',
                                                     'limit_czasu','przerwane')),

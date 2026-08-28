@@ -1,16 +1,5 @@
--- Migracja 306 — przebieg wsadu modułu Studio (`studio.batch.run`).
---
--- ── Dlaczego wsad ma tabelę, a nie samą odpowiedź ────────────────────────────
--- Kontrakt oddaje `runId`. Identyfikator, za którym nic nie stoi, byłby napisem
--- bez znaczenia: Operator nie miałby czym zapytać, co się z jego dziesięcioma
--- dokumentami stało, a Execution Loop Window nie miałby czego pokazać. Przebieg
--- jest więc bytem trwałym, tak samo jak przebieg automatyki.
---
--- ── Dlaczego pozycja jest osobnym wierszem ───────────────────────────────────
--- Rozdział 4.5 opracowania żąda, żeby odmowa jednego dokumentu nie wstrzymywała
--- pozostałych. Wynik wsadu jest więc wykazem rozstrzygnięć per dokument, nie
--- jednym stanem całości: wiersz na dokument niesie stan i powód odmowy własnymi
--- słowami, a suma tych wierszy daje liczby `accepted` i `rejected`.
+-- Migracja 306 dodaje tabele przebiegu oraz pozycji wsadu modułu Studio,
+-- niosące trwały stan i wynik przetwarzania każdego dokumentu.
 
 CREATE TABLE przebieg_wsadu_studio (
     id                       INTEGER PRIMARY KEY AUTOINCREMENT,

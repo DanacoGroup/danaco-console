@@ -1,11 +1,5 @@
 #!/usr/bin/env bash
-# Podgląd stanu Danaco Console — na żądanie, o każdej porze.
-#
-# Skrypt składa stan drzewa, sprawdza, czy klient się buduje, i podnosi serwer
-# klienta oraz rdzeń, żeby stan dało się zobaczyć na ekranie.
-#
-# Użycie:  bash budowa/scripts/pokaz.sh
-#          bash budowa/scripts/pokaz.sh --stop     zatrzymuje serwery
+# Podgląd stanu Danaco Console: skrypt składa stan drzewa, sprawdza, czy klient się buduje, i podnosi serwer klienta oraz rdzeń, aby stan dało się obejrzeć w przeglądarce na żądanie o każdej porze.
 
 set -u
 

@@ -1,14 +1,5 @@
--- Migracja 174 — kolejka czytania (`browser.readlist.*`).
---
--- Kolejka czytania jest odłożeniem strony na później wraz z przypomnieniem
--- (opracowanie modułu, rozdz. 2.2). Pozycja przeczytana nie znika z tabeli:
--- `browser.readlist.remove` z polem `markRead` oddaje pozycję, a nie sam fakt
--- usunięcia — kolejka ma pamiętać, co już przeczytano, żeby ta sama strona nie
--- wracała jako nowa.
---
--- Przypomnienie jest chwilą, nie flagą: kontrakt niesie `remindAt` jako czas
--- w milisekundach epoki, więc kolumna trzyma znacznik ISO 8601 tej chwili,
--- a jego brak znaczy „bez przypomnienia".
+-- Migracja 174 zakłada tabelę kolejki czytania, niosącą stan przeczytania pozycji oraz znacznik czasu przypomnienia w formacie ISO 8601.
+
 CREATE TABLE pozycja_czytania_przegladania (
     id                       INTEGER PRIMARY KEY AUTOINCREMENT,
     identyfikator_zewnetrzny TEXT    NOT NULL UNIQUE,

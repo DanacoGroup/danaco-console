@@ -8,5 +8,6 @@ CREATE TABLE etykieta_automatyki (
     etykieta      TEXT    NOT NULL,
     PRIMARY KEY (automatyka_id, etykieta)
 );
--- Wyszukiwanie automatyk po etykiecie idzie od etykiety do automatyki.
+-- Indeks porządkuje wiersze etykiet automatyki po treści etykiety, co pozwala odnaleźć wszystkie
+-- automatyki niosące wskazaną etykietę bez przeglądania pełnej tabeli.
 CREATE INDEX idx_etykieta_automatyki_nazwa ON etykieta_automatyki(etykieta);

@@ -1,18 +1,5 @@
-//! Nastawy powłoki zapisane trwale — wskazanie Operatora, gdzie stoi rdzeń.
-//!
-//! Po co plik, skoro jest zmienna środowiska. Adresu serwera wdrożenia nie zna
-//! instalator i znać go nie może: w chwili rozpakowania plików nikt jeszcze nie
-//! wie, pod jaką nazwą stoi rdzeń tego Operatora. Wiedza pojawia się przy
-//! pierwszym uruchomieniu okna i musi przetrwać jego zamknięcie — inaczej przy
-//! każdym starcie powłoka pytałaby o to samo.
-//!
-//! Zmienna `DANACO_HOST_RDZENIA` zostaje i stoi WYŻEJ niż ten plik: jest
-//! narzędziem wykonawcy i środowiska serwerowego, gdzie nastawę wnosi jednostka
-//! usługi, a nie okno. Kolejność warstw rozstrzyga `ustawienia.rs`.
-//!
-//! Plik leży w katalogu danych powłoki (`dziennik::katalog_danych`), obok jej
-//! dziennika: oba pliki należą do powłoki i drugie miejsce zapisu byłoby drugim
-//! stanem do pogodzenia przy przenoszeniu profilu.
+//! Moduł zapisuje trwale nastawy powłoki: wskazanie Operatora, gdzie stoi serwer
+//! wdrożenia z rdzeniem, w pliku katalogu danych powłoki.
 
 use std::fs::{create_dir_all, rename, File};
 use std::io::Write;
@@ -22,10 +9,10 @@ use serde::{Deserialize, Serialize};
 
 use crate::dziennik;
 
-/// Nazwa pliku nastaw powłoki w katalogu danych.
+/// Nazwa pliku nastaw powłoki, zapisywanego trwale w katalogu danych powłoki, tuż obok pliku dziennika powłoki.
 pub const NAZWA_PLIKU: &str = "powloka-nastawy.json";
 
-/// Rozszerzenie pliku przejściowego zapisu.
+/// Rozszerzenie pliku przejściowego zapisu, zastępowanego docelowym plikiem nastaw dopiero po zakończeniu zapisu.
 const ROZSZERZENIE_PRZEJSCIOWE: &str = "nowy";
 
 /// Nastawy zapisane trwale. Brak pola znaczy „Operator nie wskazał", a nie
@@ -42,23 +29,19 @@ pub struct Nastawy {
 }
 
 impl Nastawy {
-    /// Czy nastawy niosą wskazanie Operatora. Plik pusty (`{}`) znaczy brak
-    /// wskazania — tak samo jak brak pliku.
+    /// Czy nastawy niosą wskazanie Operatora; plik pusty znaczy brak wskazania, tak jak brak pliku.
     pub fn wskazanie_zlozone(&self) -> bool {
         self.host_rdzenia.is_some()
     }
 }
 
-/// Ścieżka pliku nastaw powłoki.
+/// Ścieżka pliku nastaw powłoki, złożona z katalogu danych powłoki oraz nazwy pliku nastaw tej powłoki.
 pub fn sciezka() -> PathBuf {
     dziennik::katalog_danych().join(NAZWA_PLIKU)
 }
 
-/// Czyta nastawy z pliku. Brak pliku, plik nieczytelny i treść niezgodna
-/// z umową dają nastawy puste — odczyt nie jest bramą i nie wstrzymuje startu
-/// okna. Powód nieczytelności trafia do dziennika powłoki, bo inaczej Operator
-/// zobaczyłby ekran pierwszego uruchomienia bez wyjaśnienia, dlaczego jego
-/// poprzednie wskazanie zniknęło.
+/// Czyta nastawy z pliku, oddając nastawy puste przy braku pliku, treści nieczytelnej lub
+/// niezgodnej z umową danych.
 pub fn czytaj() -> Nastawy {
     let sciezka = sciezka();
     let tresc = match std::fs::read_to_string(&sciezka) {
@@ -84,17 +67,8 @@ pub fn czytaj() -> Nastawy {
     }
 }
 
-/// Zapisuje nastawy trwale i zwraca zdanie o niepowodzeniu, gdy zapis się nie
-/// udał.
-///
-/// Zapis idzie przez plik przejściowy i przemianowanie, żeby przerwanie w trakcie
-/// pisania nie zostawiło pliku obciętego — wskazanie odczytane w połowie byłoby
-/// gorsze niż wskazanie nieodczytane, bo okno łączyłoby się z adresem złożonym
-/// z połowy nazwy hosta.
-///
-/// W przeciwieństwie do odczytu, niepowodzenie zapisu JEST bramą: wywołujący ma
-/// odmówić Operatorowi, a nie przyjąć wskazanie, które zniknie przy następnym
-/// starcie.
+/// Zapisuje nastawy trwale przez plik przejściowy i przemianowanie, zwracając zdanie
+/// o niepowodzeniu zapisu.
 pub fn zapisz(nastawy: &Nastawy) -> Result<(), String> {
     let sciezka = sciezka();
     if let Some(katalog) = sciezka.parent() {

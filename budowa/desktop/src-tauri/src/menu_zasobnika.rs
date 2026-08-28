@@ -1,11 +1,4 @@
-//! Rozstrzyganie pozycji menu zasobnika.
-//!
-//! Pozycja nieznana nie przerywa pracy powłoki — zostaje pominięta
-//! (nieznana nazwa nie zrywa kanału).
-//!
-//! Czego w tym menu nie ma: zatrzymania rdzenia. Rdzeń stoi na serwerze
-//! wdrożenia, powłoka go nie postawiła i nie ma czym go wygasić — pozycja
-//! obiecywałaby władzę, której powłoka nie ma.
+//! Moduł rozstrzyga pozycję menu zasobnika w czynność powłoki, pomijając bez przerwania pracy pozycję nieznaną.
 
 use tauri::{AppHandle, Manager};
 use tauri_plugin_dialog::{DialogExt, MessageDialogKind};
@@ -16,18 +9,17 @@ use crate::rdzen;
 use crate::ustawienia::Ustawienia;
 use crate::zamkniecie;
 
-/// Identyfikatory pozycji menu — jedyne miejsce, w którym te nazwy występują.
+/// Identyfikatory pozycji menu zasobnika — jedyne miejsce, w którym te napisy nazw pozycji występują.
 pub const POKAZ: &str = "powloka.pokaz";
 pub const KATALOG: &str = "powloka.katalog";
 pub const STAN: &str = "powloka.stan";
 pub const ZAKONCZ: &str = "powloka.zakoncz";
 
-/// Wykonuje czynność przypisaną pozycji menu.
+/// Wykonuje czynność przypisaną wskazanej pozycji menu zasobnika, pomijając pozycję o nieznanym identyfikatorze.
 pub fn obsluz(aplikacja: &AppHandle, identyfikator: &str) {
     match identyfikator {
         POKAZ => okno::pokaz(aplikacja),
-        // Zasobnik nie ma sprawy, w której wskazuje — bierze napis domyślny
-        // i rozgłasza wybór; adresat po stronie interfejsu decyduje, co z nim.
+        // Zasobnik bierze napis domyślny; adresat po stronie interfejsu decyduje o rozgłoszonym wyborze.
         KATALOG => dialog_katalogu::wybierz_i_rozglos(aplikacja),
         STAN => pokaz_stan(aplikacja),
         ZAKONCZ => zamkniecie::zakoncz_powloke(aplikacja),
@@ -35,7 +27,7 @@ pub fn obsluz(aplikacja: &AppHandle, identyfikator: &str) {
     }
 }
 
-/// Pokazuje opis stanu rdzenia w natywnym oknie komunikatu.
+/// Pokazuje opis bieżącego stanu rdzenia w natywnym oknie komunikatu, wraz z adresem i stanem dziennika.
 fn pokaz_stan(aplikacja: &AppHandle) {
     let ustawienia = aplikacja.state::<Ustawienia>();
     let stan = rdzen::opisz(&ustawienia);
@@ -49,7 +41,7 @@ fn pokaz_stan(aplikacja: &AppHandle) {
     komunikat(aplikacja, "Stan rdzenia", &tresc, MessageDialogKind::Info);
 }
 
-/// Wyświetla komunikat bez wstrzymywania wątku okna.
+/// Wyświetla natywny komunikat o podanym tytule, treści i rodzaju, bez wstrzymywania wątku okna powłoki.
 fn komunikat(aplikacja: &AppHandle, tytul: &str, tresc: &str, rodzaj: MessageDialogKind) {
     aplikacja
         .dialog()

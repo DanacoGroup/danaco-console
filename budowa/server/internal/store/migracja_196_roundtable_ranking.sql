@@ -1,14 +1,4 @@
--- Migracja 196 — ranking uczestników akumulowany między sesjami.
---
--- Kluczem rankingu jest tożsamość, nie uczestnik. Uczestnik jest bytem okna
--- i ginie razem z debatą, a ranking ma przetrwać sesję (opracowanie, 2.5.5).
--- Tożsamością jest para „kanał modelu + nazwa persony", zapisana jako jeden
--- klucz — dzięki temu ten sam model w dwóch personach ma dwie punktacje, a ta
--- sama persona w dwóch oknach jedną.
---
--- Zakres i algorytm wchodzą do klucza jednoznaczności, bo ta sama tożsamość ma
--- odrębną punktację w rankingu środowiska i w rankingu jednego okna, a Elo
--- i Glicko liczą się inaczej i nie wolno ich sumować.
+-- Migracja 196 zakłada tabelę rankingu uczestników debaty, kluczowaną tożsamością kanału modelu i persony, akumulowaną między sesjami w danym zakresie.
 
 CREATE TABLE debata_ranking (
     id                       INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -19,8 +9,7 @@ CREATE TABLE debata_ranking (
     okno                     TEXT    NOT NULL DEFAULT '',
     algorytm                 TEXT    NOT NULL CHECK(algorytm IN ('elo','glicko','trueSkill')),
     punktacja                REAL    NOT NULL DEFAULT 1500,
-    -- Odchylenie punktacji: Glicko i TrueSkill trzymają w nim niepewność
-    -- oszacowania. Elo go nie używa i zostawia wartość wnoszoną.
+    -- Odchylenie punktacji: Glicko i TrueSkill niosą w nim niepewność oszacowania, Elo go nie używa.
     odchylenie               REAL    NOT NULL DEFAULT 350,
     pojedynki                INTEGER NOT NULL DEFAULT 0,
     wygrane                  INTEGER NOT NULL DEFAULT 0,

@@ -1,23 +1,17 @@
-//! Okno główne powłoki — jedno okno natywne z interfejsem.
-//!
-//! Interfejs pochodzi z pakietu wkompilowanego w powłokę (`frontendDist`
-//! w `tauri.conf.json`) i z żadnego innego miejsca. To jest cały produkt
-//! na urządzeniu Operatora: okno wraz z interfejsem, bez rdzenia. Dlatego
-//! adresu strony nie ma czego rozstrzygać w czasie pracy — nastawa budowania
-//! rozstrzyga go raz, a powłoka nie niesie żadnego adresu zapasowego, w tym
-//! adresu serwera rozwojowego.
+//! Moduł otwiera jedyne okno natywne powłoki, niosące wkompilowany pakiet interfejsu,
+//! bez adresu zapasowego ani rdzenia.
 
 use tauri::{AppHandle, Manager, WebviewUrl, WebviewWindow, WebviewWindowBuilder};
 
 use crate::zamkniecie;
 
-/// Etykieta okna głównego. Ta sama wartość występuje w `capabilities/domyslne.json`.
+/// Etykieta okna głównego powłoki, jedynego okna natywnego aplikacji; ta sama wartość występuje w pliku uprawnień domyślnych aplikacji.
 pub const ETYKIETA: &str = "glowne";
 
-/// Tytuł okna widoczny na pasku systemu.
+/// Tytuł okna głównego powłoki, widoczny na pasku systemu operacyjnego przy oknie oraz w jego własnej belce tytułowej.
 pub const TYTUL: &str = "Danaco Console";
 
-/// Otwiera okno główne z pakietem interfejsu.
+/// Otwiera okno główne powłoki z wkompilowanym pakietem interfejsu i wiąże jego zdarzenia systemowe z obsługą zamknięcia okna.
 pub fn otworz(aplikacja: &AppHandle) -> tauri::Result<WebviewWindow> {
     let okno = WebviewWindowBuilder::new(aplikacja, ETYKIETA, WebviewUrl::default())
         .title(TYTUL)
@@ -33,7 +27,7 @@ pub fn otworz(aplikacja: &AppHandle) -> tauri::Result<WebviewWindow> {
     Ok(okno)
 }
 
-/// Przywraca okno główne z zasobnika i ustawia na nim uwagę.
+/// Przywraca okno główne powłoki z ukrycia w zasobniku systemowym i ustawia na nim uwagę systemu okienkowego.
 pub fn pokaz(aplikacja: &AppHandle) {
     if let Some(okno) = aplikacja.get_webview_window(ETYKIETA) {
         let _ = okno.show();

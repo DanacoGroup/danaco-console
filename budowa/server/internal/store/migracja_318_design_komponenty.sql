@@ -1,25 +1,5 @@
--- Migracja 318 — komponenty makiety wraz z wariantami i ich instancje
--- (`design.component.save`, `design.component.list`,
--- `design.component.instance.add`).
---
--- ── Dlaczego komponent wisi na oknie, a nie na kompozycji ───────────────────
--- Kontrakt (`DesignComponentSaveRequest.WindowId`, `DesignComponent.WindowId`)
--- wiąże komponent z oknem modułu. Tak jest, bo biblioteka UI jest wspólna dla
--- wszystkich plansz stanowiska: przycisk zdefiniowany przy makiecie ekranu
--- logowania ma dać się wstawić na planszę ekranu ustawień. Komponent przypięty
--- do kompozycji byłby biblioteką na jedną planszę, czyli nie byłby biblioteką.
---
--- ── Dlaczego instancja ma wiersz ────────────────────────────────────────────
--- `instanceCount` i `propagatedTo` są liczbami mierzonymi, nie deklarowanymi.
--- Bez wiersza na instancję rdzeń mógłby oddać co najwyżej zero albo zmyślenie,
--- a zdanie „zmiana doszła do siedmiu instancji" ma znaczyć siedem wierszy.
--- Instancja wskazuje warstwę identyfikatorem zewnętrznym z tego samego powodu,
--- co przynależność do ramki (migracja 317): `design.board.update` przepisuje
--- warstwy od nowa i klucz wiersza warstwy nie przeżywa zapisu planszy.
---
--- Warianty jadą jednym zapisem JSON, bo kontrakt nadsyła ich komplet przy
--- każdym zapisie komponentu (`DesignComponentSaveRequest.Variants`) i żadne
--- zapytanie nie pyta o pojedynczy wariant w oderwaniu od komponentu.
+-- Migracja 318 dodaje komponenty makiety wraz z wariantami oraz ich
+-- instancjami rozmieszczonymi na kompozycjach.
 
 CREATE TABLE komponent_design (
     id                       INTEGER PRIMARY KEY AUTOINCREMENT,

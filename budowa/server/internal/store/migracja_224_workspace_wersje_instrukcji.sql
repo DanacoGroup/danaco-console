@@ -1,13 +1,6 @@
--- Migracja 224 — wersje instrukcji systemowych projektu.
---
--- Instrukcja obowiązująca leży w tabeli `ustawienie` — jest ustawieniem ośmiu
--- poziomów zasięgu i drugiego porządku poziomów nie ma. Tutaj leży HISTORIA:
--- każdy zapis odkłada wersję, a panel „Wersje" czyta wyłącznie ten wykaz.
---
--- Przywrócenie zakłada wersję nową o treści wersji wskazanej i zapisuje, skąd
--- treść wzięto (`przywrocono_z`). Historii się nie przepisuje: wersja raz
--- zapisana zostaje w wykazie na zawsze, bo inaczej „przywróć" byłoby cofnięciem
--- czasu, a nie czynnością odnotowaną.
+-- Migracja 224 zakłada tabelę wersji instrukcji projektu, w której każdy zapis
+-- odkłada nową wersję tworzącą pełną historię, niezależną od ustawienia
+-- obowiązującego w tabeli ustawienie.
 
 CREATE TABLE wersja_instrukcji_projektu (
     id                       INTEGER PRIMARY KEY AUTOINCREMENT,

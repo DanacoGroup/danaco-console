@@ -1,12 +1,4 @@
--- Migracja 217 — zależności między zadaniami projektu.
---
--- Zależność wiąże dwa zadania tego samego projektu: poprzednik i następnik.
--- Warunek UNIQUE na parze pilnuje, żeby ta sama krawędź nie powstała dwa razy —
--- graf zależności ma jedną krawędź między dwoma zadaniami, a nie tyle, ile razy
--- Operator kliknął.
---
--- Cyklu baza nie wykryje: to jest sprawdzenie rdzenia przed zapisem, bo cykl
--- rozpoznaje się przejściem grafu, a nie warunkiem kolumny.
+-- Migracja 217 zakłada tabelę zależności między zadaniami projektu, wiążącą poprzednika i następnika z warunkiem unikalności pary.
 
 CREATE TABLE zaleznosc_zadan_projektu (
     id                       INTEGER PRIMARY KEY AUTOINCREMENT,

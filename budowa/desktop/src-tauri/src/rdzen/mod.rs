@@ -1,9 +1,5 @@
-//! Rdzeń, z którym rozmawia powłoka — stojący na serwerze wdrożenia.
-//!
-//! Powłoka rdzenia nie stawia i nie wygasza: nie ma go w instalce i nie ma go na
-//! urządzeniu Operatora. Zostaje jej wobec rdzenia dwoje: rozpoznać, czy pod
-//! wskazanym adresem ktoś odpowiada (`nasluch`), i złożyć z tego opis stanu dla
-//! okna oraz zasobnika (`stan`).
+//! Moduł opisuje rdzeń, z którym rozmawia powłoka: rozpoznaje łączność pod wskazanym
+//! adresem i składa z niej opis stanu dla okna i zasobnika.
 
 pub mod nasluch;
 pub mod stan;

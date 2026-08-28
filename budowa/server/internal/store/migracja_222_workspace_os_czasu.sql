@@ -1,9 +1,4 @@
--- Migracja 222 — oś czasu aktywności projektu.
---
--- Zdarzenie zapisuje się w chwili czynności, a nie wylicza z bytów przy
--- odczycie. Wyliczanie z bytów pokazałoby wyłącznie to, co jeszcze istnieje:
--- usunięte zadanie znikałoby również z historii, a wtedy oś czasu przestaje być
--- zapisem zdarzeń i staje się drugim widokiem stanu bieżącego.
+-- Migracja 222 zakłada tabelę osi czasu aktywności projektu, zapisującą zdarzenie w chwili czynności zamiast wyliczać je z bytów przy odczycie.
 
 CREATE TABLE zdarzenie_projektu (
     id                       INTEGER PRIMARY KEY AUTOINCREMENT,

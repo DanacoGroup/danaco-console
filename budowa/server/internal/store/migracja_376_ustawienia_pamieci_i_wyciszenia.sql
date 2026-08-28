@@ -1,44 +1,5 @@
--- Migracja 376 — zakres ustawień „Pamięć" i reguły wyciszania Always On Display
--- wchodzą do katalogu okna Konfiguracji.
---
--- Powód. Rozstrzygnięcie Właściciela z 17.08.2026 mówi, że wyłączanie pamięci
--- „ma się sterować z pozycji Operatora w konfiguracji". Rodzina `config.*`
--- niesie odczyt i zapis ustawienia zasięgiem OGÓLNYM (`config.get`,
--- `config.set`, `config.reset`), a `settings.category.list` wraz
--- z `settings.definition.list` budują z katalogu formularz okna. Drugiej drogi
--- komend nie trzeba i nie wolno jej dokładać — brakowało wyłącznie WIERSZY
--- katalogu, więc okno nie miało czym sterować. Ta migracja je wnosi i nie wnosi
--- ani jednej komendy.
---
--- Skąd te pozycje. Zakres 5.10 modelu konfiguracji nazywa cztery: poziom
--- pamięci, stan włączenia pamięci na poziomie, odłączenie pamięci w sesji,
--- zawartość zasobu pamięci. Zawartość zasobu NIE jest ustawieniem katalogu —
--- to treść wpisu, byt tabeli `wpis_pamieci_projektu`, i jedzie rodziną
--- `memory.*`. Do katalogu wchodzą więc trzy pozycje, a czwarta stoi tam, gdzie
--- mieszka: w pamięci, nie w ustawieniach. Wpisanie treści wpisu jako ustawienia
--- dałoby dwa magazyny jednego bytu.
---
--- Reguły wyciszania (opracowanie always-on-display.md, rozdz. 10.1) są jedną
--- pozycją warstwy globalnej — „zakresy i czasy wyciszenia dostępne w menu
--- funkcji" — i tak są tu zapisane. Wyciszenia CZYNNE nie są ustawieniem: mają
--- własną tabelę (`migracja_374`), bo powstają i giną w czasie pracy, a nie
--- przy nastawianiu platformy.
---
--- Warstwy. Model konfiguracji, rozdz. 5.10, daje pamięci wszystkie cztery
--- warstwy ogólne (globalna → środowisko → projekt → sesja), a odłączeniu
--- pamięci w sesji wyłącznie sesję. Reguły wyciszania — wyłącznie warstwę
--- globalną (rozdz. 10.1). Zasięgi poniżej idą dokładnie za tym; poziomu
--- szerszego nie dokładamy ani jednej pozycji, bo zapis na poziomie, którego
--- opracowanie nie daje, byłby nastawą, o której Operator nie umiałby
--- powiedzieć, skąd się wzięła.
---
--- Objaśnienia kontekstowe `[?]` (model konfiguracji, rozdz. 3.3) stoją
--- w kolumnie `opis` i odpowiadają na dwa pytania: co ustawienie robi i jaki ma
--- wpływ. Przy wyłączeniu pamięci odpowiadają też na trzecie, bo bez niego
--- Operator nie odróżni wyłączenia od usunięcia: treść zostaje.
---
--- Wymaga restartu: żadna z pozycji. Pamięć czyta rozstrzygacz przy każdym
--- złożeniu kontekstu, reguły wyciszania — nakładka przy każdym otwarciu menu.
+-- Migracja 376 wprowadza do katalogu ustawień okna Konfiguracji zakres Pamięć
+-- oraz reguły wyciszania nakładki Always On Display.
 
 INSERT INTO kategoria_ustawien (kod, nazwa, opis, ikona, kolejnosc) VALUES
     ('pamiec', 'Pamięć',
@@ -110,10 +71,10 @@ SELECT d.id, wykaz.wartosc, wykaz.etykieta, wykaz.opis, wykaz.kolejnosc
   JOIN definicja_ustawienia d ON d.klucz = wykaz.klucz
 ON CONFLICT DO NOTHING;
 
--- Zasięgi zapisu. Pamięć: cztery warstwy ogólne modelu konfiguracji, poszerzone
--- o moduł i parę modułów przy stanie włączenia — bo rozstrzygnięcie Właściciela
--- żąda wyłączenia „tylko dla niektórych modułów", a bez tych dwóch poziomów
--- takiego zapisu nie da się zrobić. Odłączenie w sesji: wyłącznie karta sesji.
+-- Pamięć obejmuje cztery warstwy ogólne modelu konfiguracji, poszerzone
+-- o moduł i parę modułów przy stanie włączenia, aby dało się wyłączyć pamięć
+-- tylko dla wybranych modułów; odłączenie w sesji obejmuje wyłącznie kartę
+-- sesji.
 INSERT INTO definicja_ustawienia_zasieg (definicja_id, poziom_zasiegu_id)
 SELECT d.id, p.id
   FROM definicja_ustawienia d

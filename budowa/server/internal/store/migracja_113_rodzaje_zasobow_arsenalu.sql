@@ -1,36 +1,4 @@
--- Migracja 113 — rodzaj zasobu przestaje kłamać o tym, co powstało.
---
--- Kolumna `zasob_design.rodzaj` miała warunek CHECK dopuszczający trzy wartości:
--- 'image', 'vector', 'composition'. Rdzeń wytwarza jednak także film, dźwięk,
--- dokument i archiwum (rodziny narzędzi `image.*`, `media.*`, `document.*`,
--- `archive.*`), a kontrakt niesie cztery brakujące wartości (`document`,
--- `audio`, `video`, `archive`), które bez tej migracji rozbiłyby się o warunek
--- schematu.
---
--- Dlaczego przebudowa, a nie ALTER. SQLite nie zna zmiany warunku CHECK
--- w miejscu — warunek jest częścią tekstu CREATE TABLE. Jedyną drogą jest
--- przebudowa. Kolumny, typy, wartości domyślne i pozostałe warunki są
--- przepisane co do znaku; ta migracja poszerza dokładnie jedną
--- listę wartości i nie zmienia niczego innego.
---
--- Dlaczego etykiety też są przebudowywane. `etykieta_zasobu_design.zasob_id`
--- wskazuje `zasob_design(id)` z ON DELETE CASCADE, a rdzeń trzyma
--- `PRAGMA foreign_keys` włączoną i stosuje
--- migracje w transakcji, więc pragmy tu wyłączyć się nie da. Przy włączonych
--- kluczach DROP starej tabeli zasobów wywołałby kaskadę i skasował wszystkie
--- etykiety. Dlatego kolejność jest odwrotna do naturalnej: najpierw kopiujemy
--- etykiety do tabeli tymczasowej, potem porzucamy oryginał (nie ma już wtedy
--- dzieci), potem tabelę zasobów, a na końcu zmieniamy nazwy. SQLite przy
--- zmianie nazwy tabeli przepisuje odwołania w tabelach potomnych, więc klucz
--- obcy kopii etykiet sam trafia na nową nazwę.
---
--- Wiersze zastane zostają nietknięte. Kusi, żeby przy okazji naprawić stare
--- kłamstwa (film zapisany jako 'image' na 'video'). Nie robimy tego: z kolumny
--- `format` da się to wywnioskować tylko czasem, a wiersz poprawiony
--- zgadywaniem jest w panelu nieodróżnialny od prawdziwego. Stare
--- wiersze mówią to, co mówiły; prawdę mówią wiersze zakładane od tej chwili.
--- Wartości `id` przepisujemy co do wartości, więc powiązania etykiet po
--- podmianie wskazują te same zasoby, co przed nią.
+-- Przebudowuje tabele zasob_design i etykieta_zasobu_design, aby warunek CHECK rodzaju zasobu dopuścił dokument, dźwięk, film i archiwum obok wartości istniejących.
 
 CREATE TABLE zasob_design_nowy (
     id                       INTEGER PRIMARY KEY AUTOINCREMENT,

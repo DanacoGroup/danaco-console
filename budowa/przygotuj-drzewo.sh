@@ -1,12 +1,5 @@
 #!/usr/bin/env bash
-# Dowiązanie zależności klienta w równoległym drzewie roboczym gita.
-#
-# `node_modules` nie jest w repozytorium, więc `git worktree add` tworzy drzewo
-# bez zależności i kompilator TypeScriptu nie ma czym ruszyć. Skrypt wskazuje
-# katalog zależności z drzewa głównego, zamiast pobierać je drugi raz.
-#
-# W drzewie głównym nie ma nic do zrobienia — skrypt to rozpoznaje i kończy.
-# Wolno go uruchamiać wielokrotnie.
+# Dowiązanie zależności klienta w równoległym drzewie roboczym gita: skrypt wskazuje katalog node_modules z drzewa głównego zamiast pobierać zależności powtórnie i jest bezpieczny do wielokrotnego użycia.
 
 set -eu
 

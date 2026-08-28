@@ -1,13 +1,4 @@
-/* ============================================================================
-   DANACO CONSOLE — MODUŁ TERMINAL (sześć okien operacyjnych)
-   ----------------------------------------------------------------------------
-   Plik nie zna ani jednej barwy, ani jednego rozmiaru czcionki: wszystko
-   pochodzi z żetonów motywu (`--dn-*`) i z biblioteki `komponenty/`.
-   Tutaj leży wyłącznie rozkład okien modułu, warstwy widoczności, odróżnienie
-   trzech stanów obowiązkowych (ładowanie, pustka, błąd) oraz to, bez czego
-   konsola nie działa: przewijanie ogona wyjścia i czcionka o stałej szerokości
-   znaku.
-   ============================================================================ */
+/* Arkusz obejmuje rozkład okien modułu terminala, warstwy widoczności, trzy stany obowiązkowe oraz przewijanie ogona wyjścia. */
 
 .dt-modul {
   display: flex;
@@ -17,28 +8,28 @@
   min-height: 0;
 }
 
-/* Okno wiodące na całej szerokości — z niego biorą się karty i polecenia. */
+/* Okno wiodące zajmuje całą szerokość modułu, ponieważ z niego biorą się otwierane karty i wydawane polecenia. */
 .dt-modul__gora {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
   gap: var(--dn-od-4);
 }
 
-/* Pas obserwacyjny: konsola szersza od monitora, bo niesie strumień. */
+/* Pas obserwacyjny mieści konsolę szerszą od pozostałych okien monitora, bo niesie ciągły strumień wyjścia. */
 .dt-modul__dol {
   display: grid;
   grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
   gap: var(--dn-od-4);
 }
 
-/* Pas rozszerzeń: trzy okna przygotowujące pracę, którą wykonuje okno wiodące. */
+/* Pas rozszerzeń mieści trzy okna, które przygotowują wcześniej pracę wykonywaną następnie przez okno wiodące. */
 .dt-modul__rozszerzenia {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: var(--dn-od-4);
 }
 
-/* Pas nastaw wspólnych modułu — widoczność warstw i paleta poleceń. */
+/* Pas nastaw wspólnych modułu udostępnia przełącznik widoczności warstw oraz paletę poleceń terminala. */
 .dt-modul__pas {
   display: flex;
   flex-wrap: wrap;
@@ -110,7 +101,7 @@
   align-items: center;
 }
 
-/* Zakładka niesie znak przypięcia przed nazwą karty — stąd układ wierszowy. */
+/* Zakładka niesie znak przypięcia umieszczony przed nazwą karty, stąd wynika jej wierszowy układ treści. */
 .dt-karta {
   display: inline-flex;
   align-items: center;
@@ -134,7 +125,7 @@
   white-space: pre;
 }
 
-/* Zawijanie jest przełącznikiem okna, więc steruje nim znacznik na ramie. */
+/* Zawijanie wiersza jest przełącznikiem właściwym całemu oknu, więc steruje nim znacznik na ramie okna. */
 .dt-okno[data-zawijanie='true'] .dt-konsola {
   white-space: pre-wrap;
   overflow-wrap: anywhere;
@@ -372,7 +363,7 @@
   color: var(--dn-tekst-2);
 }
 
-/* Formularz parametrów skryptu: etykieta, pole i objaśnienie w jednym wierszu. */
+/* Formularz parametrów skryptu mieści etykietę, pole wprowadzania i objaśnienie w jednym wspólnym wierszu. */
 .dt-parametry__wiersz {
   display: grid;
   grid-template-columns: max-content minmax(0, 1fr);
@@ -388,12 +379,12 @@
   white-space: pre-wrap;
 }
 
-/* Pole wyboru pliku stoi w pasku narzędzi obok pól tekstowych. */
+/* Pole wyboru pliku stoi w pasku narzędzi terminala bezpośrednio obok pozostałych pól tekstowych formularza. */
 .dt-plik {
   padding: var(--dn-od-1);
 }
 
-/* Paleta poleceń: uchwyt menu wraz ze zdaniem o wybranej pozycji katalogu. */
+/* Paleta poleceń niesie uchwyt otwierający menu wraz ze zdaniem opisującym aktualnie wybraną pozycję katalogu. */
 .dt-paleta {
   display: flex;
   flex-wrap: wrap;

@@ -684,3 +684,9 @@ rozmowy przeniósł się tu razem ze swoim elementem. Ani jednej barwy nie
 zapisano wprost, wyłącznie żetony motywu. Rozmiary kartki i marginesów
 przychodzą zmiennymi ustawianymi przez `powierzchnia-dokumentu.ts` z nastaw
 strony `StudioPageSetup`, ponieważ tylko ten plik zna wybrany nośnik.
+
+## budowa/klient-poprzedni/src/moduly/terminal/terminal.css
+Plik nie zapisuje wprost ani jednej barwy, ani jednego rozmiaru czcionki:
+wszystko pochodzi z żetonów motywu `--dn-*` oraz z biblioteki `komponenty/`.
+Moduł terminala obejmuje sześć okien operacyjnych i odróżnia trzy stany
+obowiązkowe: ładowanie, pustkę oraz błąd.

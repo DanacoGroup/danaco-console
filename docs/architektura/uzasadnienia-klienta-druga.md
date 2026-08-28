@@ -7222,3 +7222,21 @@ wygaszany, bo stan procesu znany oknu jest kopią z wykazu i zdarzeń rdzenia,
 a kopia bywa nieświeża — blokada mogłaby wtedy odebrać jedyną drogę
 zakończenia albo podglądu. Proces wstrzymany zostaje w stanie running, bo
 ma PID, pamięć i otwarte pliki, a kontrakt stanu wstrzymany nie ma.
+
+## budowa/klient-poprzedni/src/moduly/studio/przybornik-uzycie.ts
+Zasada z użycia, nie z domysłu nie pozwala wpisać w kod czterech czynności
+uznanych za najczęstsze na sztywno. Liczba użyć i czas ostatniego użycia są
+policzone: każde uruchomienie operacji podnosi licznik, a kolejność pływaka
+bierze się z tych dwóch liczb, a wykaz początkowy operacji jest wyłącznie
+stanem startowym — pierwsze użycie Operatora go zastępuje. Nastawy jadą do
+rdzenia, a nie do pamięci karty, ponieważ wymaganie mówi o ustawieniu
+pamiętanym: pamięć karty ginie z zamknięciem przeglądarki, więc kolejność
+wracałaby do stanu początkowego co dzień. Rodzina komend nastaw daje zapis
+trwały o dowolnym kluczu i poziomie zasięgu, z przywróceniem wartości
+domyślnej komendą osobną — czyli ustawienie jawne i odwracalne, jak żąda
+zasada ogólna zlecenia; druga droga zapisu nastaw nie jest zakładana. Klucze
+są pełnymi nazwami, bez numeracji wymyślonej, i stoją na poziomie globalnym,
+bo dotyczą Operatora, a nie jednej sesji: klucz liczników użycia niesie
+licznik i czas ostatniego użycia, klucz czynności przypiętych niesie
+czynności przypięte przez Operatora, a klucz trybu niesie wybór między
+pływakiem a stałym panelem bocznym.

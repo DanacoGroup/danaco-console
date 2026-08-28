@@ -166,6 +166,24 @@
     transform var(--dn-czas-1) var(--dn-ease);
 }
 .dn-btn-ikona:hover { background: var(--dn-hover); color: var(--dn-tekst); }
+
+/* Pole dotyku — WCAG 2.5.8 wymaga 24×24 px, a przycisk ikonowy bywa mniejszy
+   tam, gdzie wiersz jest zwarty (np. `.dn-obszar-pozycja-menu` bierze wymiar
+   ze skali ikon, nie kontrolek). Nakładka powiększa pole trafienia, nie
+   zmieniając rysunku; przy przycisku 24 px i większym `max()` jest bezczynne.
+   Nakładka idzie przez `::before`, bo `::after` przycisku nosi już dymek
+   etykietki (`rama.css`) — dwie nakładki na jednym pseudoelemencie znosiłyby
+   się nawzajem. */
+.dn-btn-ikona { position: relative; }
+.dn-btn-ikona::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: max(100%, var(--dn-wym-pole-dotyku));
+  height: max(100%, var(--dn-wym-pole-dotyku));
+  transform: translate(-50%, -50%);
+}
 .dn-btn-ikona:active { transform: translateY(1px); }
 .dn-btn-ikona[aria-pressed='true'] {
   background: var(--dn-sygnal-tlo);

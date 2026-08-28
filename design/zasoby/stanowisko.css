@@ -181,8 +181,20 @@
 /* Tło i obrys deklarowane wprost: przycisk bez nich bierze `buttonface` i `buttonborder`
    z arkusza przeglądarki — w motywie ciemnym Chromium daje szarość #6B6B6B spoza palety. */
 .sta-zrodlo .odepnij { display: inline-grid; place-content: center; width: 14px; height: 14px;
+  position: relative;
   border: 0; background: transparent;
   border-radius: var(--dn-r-pill); color: var(--dn-tekst-3); }
+/* Znak odpięcia jest drobny z rozmysłu — stoi wewnątrz plakietki źródła.
+   Pole trafienia dochodzi do progu WCAG 2.5.8 nakładką, bez zmiany rysunku. */
+.sta-zrodlo .odepnij::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: var(--dn-wym-pole-dotyku);
+  height: var(--dn-wym-pole-dotyku);
+  transform: translate(-50%, -50%);
+}
 .sta-zrodlo .odepnij:hover { background: var(--dn-hover); color: var(--dn-tekst); }
 
 /* 6c. historia — w pionie, pełna wysokość, minimalny scroll */

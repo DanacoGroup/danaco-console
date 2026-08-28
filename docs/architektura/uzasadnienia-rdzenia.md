@@ -7179,3 +7179,8 @@ rejestru drugi raz byłoby powtórzeniem odczytu, który wywołujący już wykon
 Tryb nakładki — czy tożsamość zamienia treść systemową, czy się do niej
 dokłada — pochodzi z jedynego przekładu trybu w rdzeniu, więc rozstrzygnięcie
 dojeżdża do procesu modelu tą samą drogą, którą pokazuje okno konfiguracji.
+
+## budowa/server/internal/core/adapter_rozmowa_wykonanie.go
+Konfiguracja przechowuje pod kluczem kanal_modelu_zapasowy kod wiersza
+rejestru kanałów, a przełącznik --fallback-model oczekuje identyfikatora
+modelu u dostawcy, stąd potrzeba odwzorowania kodu kanału na identyfikator.

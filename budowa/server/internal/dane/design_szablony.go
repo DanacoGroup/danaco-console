@@ -1,15 +1,5 @@
-// Obszar szablonów promptu (tabela `szablon_promptu_design`, migracja 231)
-// oraz historii promptów wydanych w oknie (`prompt_design` wzbogacony
-// migracją 232) — część `RepozytoriumDesignu` zadeklarowanego w `design.go`.
-//
-// Szablon i prompt wydany mają ten sam kształt kontraktu (`DesignPrompt`)
-// i różne życie: szablon Operator nadpisuje, prompt wydany jest zapisem tego,
-// co się stało. Powód rozdziału tabel stoi w nagłówku migracji 231.
-//
-// Historia niesie prowenancję: prompt wydany wraca wraz z kodami zasobów, które
-// z niego powstały. Bez tego pole `DesignAsset.PromptId` byłoby kodem bez
-// drugiej strony — kontrakt komendy `design.prompt.history.list` mówi wprost,
-// że to ona ten przekład wnosi.
+// Repozytorium obsługuje szablony promptu w tabeli `szablon_promptu_design` z migracji
+// 231 oraz historię wydanych promptów w tabeli `prompt_design` wzbogaconej migracją 232.
 package dane
 
 import (
@@ -104,8 +94,7 @@ func (r *repozytoriumDesignu) ZapiszSzablonPromptuDesignu(ctx context.Context,
 	if err != nil {
 		return SzablonPromptuDesignu{}, err
 	}
-	// Kontrakt niesie Ziarno i Warianty jako *int, a kolumna przyjmuje int64 —
-	// przekład wprost, tak samo jak w `ZapiszPrompt`.
+	// Kontrakt niesie Ziarno i Warianty jako wskaźnik na int, kolumna SQL wymaga typu int64.
 	var ziarno, warianty, kreatywnosc any
 	if szablon.Ziarno != nil {
 		ziarno = int64(*szablon.Ziarno)
@@ -138,7 +127,8 @@ func (r *repozytoriumDesignu) ZapiszSzablonPromptuDesignu(ctx context.Context,
 	return zapisany, nil
 }
 
-// SzablonyPromptuDesignu zwraca szablony okna, od ostatnio zmienianego.
+// SzablonyPromptuDesignu zwraca szablony promptu przypisane do okna, uporządkowane od
+// ostatnio zmienianego.
 func (r *repozytoriumDesignu) SzablonyPromptuDesignu(ctx context.Context,
 	okno string) ([]SzablonPromptuDesignu, error) {
 
@@ -234,7 +224,8 @@ func (r *repozytoriumDesignu) ZasobyPromptuDesignu(ctx context.Context,
 	return lista, nil
 }
 
-// odczytajSzablonPromptuDesignu składa strukturę z jednego wiersza wyniku.
+// odczytajSzablonPromptuDesignu składa strukturę SzablonPromptuDesignu z jednego wiersza
+// wyniku zapytania SQL.
 func odczytajSzablonPromptuDesignu(wiersz skaner) (SzablonPromptuDesignu, error) {
 	var szablon SzablonPromptuDesignu
 	var styl, kompozycja, oswietlenie, paleta, proporcje, wykluczenia, silnik sql.NullString

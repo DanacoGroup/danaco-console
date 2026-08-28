@@ -8551,3 +8551,59 @@ bo tylko rejestr mówi, która komenda naprawdę ma uchwyt. Odpowiedź wraca
 w całości, bo pole wykazu komend jest w kontrakcie opcjonalne, a jego brak
 nie jest błędem kształtu i nie zamienia się w odmowę — rozstrzyga to
 wywołujący.
+
+## budowa/klient-poprzedni/src/aplikacja/przestrzen-modulu.ts
+Scena rozmowy nie jest alternatywą dla widoku modułu: katalog rdzenia daje każdemu
+modułowi okno rozmowy `<kod>.chat-window` obok okien operacyjnych, a okno rozmowy
+jest oknem wiodącym modułu. Scena zostaje więc na planszy zawsze, gdy pozycja ma
+moduł, a widok modułu staje obok niej. Stąd trzy ścieżki: pozycja z modułem
+i widokiem niesie widok modułu i scenę; pozycja z modułem bez widoku niesie samą
+scenę plus pasek uczciwości wymieniający brakujące okna operacyjne; pozycja bez
+modułu niesie sekcję panelu orkiestracji, znaną panelowi lub przy stanie pustym.
+
+Panel orkiestracji jest wołany wprost, a nie przez rejestr modułów: rejestr
+kluczuje po kodzie modułu z tabeli `modul` rdzenia, a sekcja panelu modułu nie ma,
+bo środowisko MultitaskingAI nie udostępnia modułów w bocznej nawigacji. Wpisanie
+sekcji do rejestru wprowadziłoby do niego byty, których rdzeń za moduły nie
+uważa. Moduły idą rejestrem, sekcje panelem.
+
+`workspace.enter` idzie z identyfikatorem żywego okna rozmowy: okno wskazane
+przestawia moduł i zachowuje historię, a dopiero jego brak zakłada okno nowe.
+Okno założone po stronie rdzenia nie dostaje kanału modelu, więc pierwsze
+`message.send` skończyłoby się odmową — gdy rdzeń odda okno bez kanału, klient
+mówi o tym wprost, zamiast zgadywać.
+
+Numer bieżącego wyboru pozycji istnieje po to, żeby przy trzech kliknięciach pod
+rząd widoczna została pozycja trzecia, a nie ta, której rdzeń odpowiedział
+najpóźniej. Bez żetonu odczyt zlecony przy pozycji pierwszej dopisywałby się do
+widoku już zdjętego z planszy.
+
+Widoki modułów powstają raz na moduł i zostają. Odbudowa przy każdym przejściu
+gubiłaby stan okien operacyjnych, a obszar roboczy i tak przestawia widoczność,
+zamiast zdejmować widok z drzewa.
+
+Mapa jest całym cyklem życia widoków modułów: przestrzeń powstaje raz
+(`widok-srodowiska.ts`), a router nie zdejmuje widoku opuszczonej trasy, więc
+mapa żyje tyle, co karta przeglądarki, i nigdy się nie opróżnia. `WidokModulu.zamknij`
+nie ma tu wołacza, bo nie ma chwili, w której byłby prawdziwy; pełne uzasadnienie
+stoi przy tym polu w `rejestr-modulow.ts`.
+
+Widoki sekcji panelu orkiestracji mieszkają w tej samej mapie co widoki modułów,
+bo mają ten sam cykl życia: powstają raz, zostają w drzewie i są wyłącznie
+przełączane widocznością. Klucz sekcji („zespoly”, „role”…) nie zderzy się
+z kodem modułu, bo rdzeń takich kodów w tabeli `modul` nie ma.
+
+Kolejność wejścia do przestrzeni roboczej przed odczytem widoku modułu nie jest
+stylem. `workspace.enter` przestawia okno rozmowy na wybrany moduł po stronie
+rdzenia, a widok modułu szuka swojego okna komendą `window.list` zawężoną do
+modułu — znajdzie je wyłącznie wtedy, gdy przestawienie już się dokonało. Rdzeń
+prowadzi każde żądanie osobnym biegiem i odpowiada w kolejności zależnej od czasu
+obsługi, więc puszczenie obu komend naraz dawałoby widok modułu poprzedniego albo
+stan pusty. Odmowa wejścia odczytu nie uruchamia: bez przestawienia okna
+`window.list` opisałby stan cudzy, a prawdziwa przyczyna idzie komunikatem.
+
+Plik `migracja_030_rejestr_okien_operacyjnych.sql` zakłada kod bez przedrostka
+(`chat-window`); postać przedrostkowana (`studio.chat-window`) pojawia się tam,
+gdzie moduł powiela okno u siebie. Warunek pytający wyłącznie o końcówkę
+`.chat-window` pominąłby postać bezprzedrostkową i pasek uczciwości wymieniałby
+działające okno rozmowy jako niezbudowane.

@@ -7109,3 +7109,25 @@ zna wyłącznie sposób odczytania katalogu, więc całe okno konfiguracji
 obsługuje jeden port, a nie obsługiwacz na ustawienie. Odczyt katalogu
 niczego nie zmienia, więc zdarzenia zmiany tu nie ma — wartości zmienia
 rodzina `config.*` i to ona rozgłasza zdarzenie zmiany konfiguracji.
+
+## budowa/server/internal/core/adapter_rozmowa_przerwanie.go
+Kontrakt zna zatrzymanie odpowiedzi jako osobną komendę; klient, który chce
+przerwać i wysłać wiadomość od razu, wysyła najpierw zatrzymanie, potem
+wysłanie.
+
+Odczyt zajętości okna osobny od zapisu zostawiłby szczelinę, w której dwie
+wiadomości nadane w tej samej chwili obie zobaczyłyby okno wolne i obie
+ruszyłyby turę. Okno zajęte nie jest przerywane — wywołujący dostaje fałsz
+i dostaje odmowę.
+
+Przerwanie tury jest wydzielone z zatrzymania przycisku, bo zamykanie okna
+nie jest przyciskiem uczestnika rozmowy: nie dotyczy pętli naprawczej i nie
+odpowiada kontraktem.
+
+## budowa/server/internal/core/handlers_konfiguracja_katalog.go
+Zawężenie katalogu robione jest w rdzeniu, a nie zapytaniem SQL per warunek,
+bo katalog liczy dziesiątki wierszy i jest odczytywany w całości przy
+otwarciu okna konfiguracji — drugie zapytanie na każdy filtr kupiłoby tu
+wyłącznie czterokrotnie większą powierzchnię błędu w warstwie trwałości.
+Filtr niepasujący do żadnego wiersza daje wykaz pusty, nie błąd: okno
+konfiguracji ma się otworzyć także wtedy, gdy kategoria jest jeszcze pusta.

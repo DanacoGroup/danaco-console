@@ -6,36 +6,7 @@ import type { Kanal } from '../protokol/kanal';
 import type { SekcjaUstawien } from './sekcje';
 import { utworzZrodloUrzadzen, type ZrodloUrzadzen } from './zrodlo-urzadzen';
 
-/**
- * Sekcja „Urządzenia" Okna Ustawień — wykaz maszyn powiązanych z kontem
- * i unieważnienie tokenu dostępu.
- *
- * Konto jest jedno, urządzeń dowolnie wiele; każde niesie własny token. Wykaz
- * jest więc jedynym miejscem, w którym Operator widzi, co ma dostęp do
- * platformy, i jedynym, z którego może ten dostęp odebrać.
- *
- * Wykaz wchodzi komendą `device.list` przy wejściu do sekcji, a dalej odświeża
- * się zdarzeniem `device.changed`, które rdzeń rozgłasza do wszystkich
- * połączonych urządzeń. Odpytywania w tle nie ma i nie jest potrzebne:
- * unieważnienie wykonane na drugiej maszynie dolatuje tu samo. Odpowiedź na
- * `device.revoke` niesie samo `revoked`, więc to zdarzenie — nie odpowiedź —
- * przerysowuje wiersze.
- *
- * Wiersz urządzenia bieżącego (`current`) jest oznaczony plakietką i kreską,
- * a przy jego czynności stoi zdanie o skutku. Rdzeń celowo nie blokuje
- * unieważnienia własnego tokenu, więc ostrzeżenie należy do ekranu — ale jako
- * opis obok przycisku, nie jako przesłona przed nim. Okna „czy na pewno" tu nie
- * ma z zasady produktu: czynność jest odwracalna ponownym zalogowaniem, a
- * bramka przed nią uczyłaby wyłącznie odklikiwania.
- *
- * Urządzenie bez ważnego tokenu (`hasToken`) nie dostaje przycisku, tylko
- * zdanie: nie ma czego unieważnić, a przycisk pewnej odmowy byłby gorszy od
- * jego braku — ten sam zamysł, co przy kotwicy bramki w sekcji
- * „Uwierzytelnianie".
- *
- * Stanu nie niesie tu sama barwa: przy każdej plakietce stoi ikona i etykieta,
- * bo kreska w barwie sygnału znika dla Operatora, który barw nie rozróżnia.
- */
+/** Sekcja urządzeń w oknie ustawień pokazuje wykaz maszyn powiązanych z kontem i pozwala unieważnić token dostępu, odświeżając się na żywo zdarzeniem rdzenia. */
 export function utworzSekcjeUrzadzenia(kanal: Kanal): SekcjaUstawien {
   const zrodlo: ZrodloUrzadzen = utworzZrodloUrzadzen(kanal);
 
@@ -67,8 +38,7 @@ export function utworzSekcjeUrzadzenia(kanal: Kanal): SekcjaUstawien {
 
   function pokazUrzadzenia(urzadzenia: readonly Device[]): void {
     if (urzadzenia.length === 0) {
-      // Pustka bez słowa wyglądałaby jak odczyt, który się nie udał. Wykaz bez
-      // ani jednego urządzenia jest jednak stanem możliwym i mówimy to wprost.
+      // Pustka bez słowa wyglądałaby jak nieudany odczyt; wykaz bez urządzeń jest jednak stanem możliwym.
       const pusto = document.createElement('li');
       pusto.className = 'du-urzadzenia__pusto';
       pusto.textContent =
@@ -83,8 +53,7 @@ export function utworzSekcjeUrzadzenia(kanal: Kanal): SekcjaUstawien {
   function zbudujWiersz(urzadzenie: Device): HTMLElement {
     const wiersz = document.createElement('li');
     wiersz.className = 'du-urzadzenie';
-    // Atrybuty niosą stan do arkusza; treść stanu i tak stoi obok w etykiecie,
-    // więc odczyt nie zależy od tego, czy ktoś widzi kreskę.
+    // Atrybuty niosą stan do arkusza; treść stanu stoi obok w etykiecie, odczyt nie zależy od kreski.
     wiersz.dataset['biezace'] = String(urzadzenie.current);
     wiersz.dataset['token'] = String(urzadzenie.hasToken);
 
@@ -119,8 +88,7 @@ export function utworzSekcjeUrzadzenia(kanal: Kanal): SekcjaUstawien {
       uniewaznij.addEventListener('click', () => void uniewaznijDostep(urzadzenie));
       czynnosc.append(uniewaznij);
     } else {
-      // Przycisku pewnej odmowy tu nie ma: token już zszedł, więc nie ma czego
-      // unieważnić. Zamiast kontrolki wyłączonej stoi zdanie, dlaczego jej nie ma.
+      // Przycisku pewnej odmowy tu nie ma: token już zszedł, więc nie ma czego unieważnić.
       const brak = document.createElement('span');
       brak.className = 'du-urzadzenie__bez-czynnosci';
       brak.textContent = 'nie ma czego unieważnić';
@@ -131,8 +99,7 @@ export function utworzSekcjeUrzadzenia(kanal: Kanal): SekcjaUstawien {
     wiersz.append(glowa, szczegol(urzadzenie));
 
     if (urzadzenie.current) {
-      // Ostrzeżenie stoi pod czynnością, nie przed nią: opisuje skutek, a nie
-      // pyta o zgodę. Rdzeń tej czynności nie blokuje i ekran też jej nie broni.
+      // Ostrzeżenie stoi pod czynnością, nie przed nią: opisuje skutek, a nie pyta o zgodę.
       const ostrzezenie = document.createElement('p');
       ostrzezenie.className = 'du-urzadzenie__ostrzezenie';
       ostrzezenie.append(
@@ -156,9 +123,7 @@ export function utworzSekcjeUrzadzenia(kanal: Kanal): SekcjaUstawien {
       powiedz(opisOdmowyBledu('Unieważnienie dostępu', wynik.blad), false);
       return;
     }
-    // Rozstrzyga odpowiedź rdzenia, nie samo powodzenie wywołania: rdzeń może
-    // przyjąć wywołanie i tokenu nie zdjąć, a wtedy „unieważniono" byłoby
-    // potwierdzeniem czynności, która się nie odbyła.
+    // Rozstrzyga odpowiedź rdzenia, nie samo powodzenie wywołania, bo rdzeń może tokenu nie zdjąć.
     if (!wynik.wynik.revoked) {
       powiedz(
         'Rdzeń przyjął wywołanie, ale tokenu nie unieważnił — dostęp został ' +
@@ -167,9 +132,7 @@ export function utworzSekcjeUrzadzenia(kanal: Kanal): SekcjaUstawien {
       );
       return;
     }
-    // Wykazu tu nie przerysowujemy: pełny wykaz po zmianie niesie
-    // `device.changed`, a druga droga do tych samych wierszy rozjeżdżałaby się
-    // z pierwszą przy każdej zmianie kontraktu.
+    // Wykazu tu nie przerysowujemy: pełny wykaz po zmianie niesie zdarzenie rdzenia.
     powiedz(zdanieUniewaznienia(urzadzenie), true);
   }
 
@@ -181,16 +144,11 @@ export function utworzSekcjeUrzadzenia(kanal: Kanal): SekcjaUstawien {
       return;
     }
     pokazUrzadzenia(wynik.wynik.devices);
-    // Po udanym odczycie odpowiedzią jest sam wykaz — zdanie „odczytano"
-    // powtarzałoby to, co Operator ma przed oczami.
+    // Po udanym odczycie odpowiedzią jest sam wykaz — zdanie odczytano powtarzałoby to, co operator widzi.
     powiedz('', true);
   }
 
-  /**
-   * Zmiana wykonana gdziekolwiek dolatuje tutaj: `device.changed` niesie komplet
-   * urządzeń do każdego gniazda, więc sekcja przerysowuje wykaz bez pytania
-   * rdzenia.
-   */
+  // Zmiana wykonana gdziekolwiek dolatuje tutaj zdarzeniem niosącym komplet urządzeń do każdego gniazda.
   const odsubskrybuj = zrodlo.naZmianeUrzadzen((zmiana) => {
     pokazUrzadzenia(zmiana.devices);
     const zdanie = zdanieZmiany(zmiana);
@@ -204,12 +162,7 @@ export function utworzSekcjeUrzadzenia(kanal: Kanal): SekcjaUstawien {
   };
 }
 
-/**
- * Zdanie o skutku unieważnienia — jedno na oba głosy, odpowiedź i zdarzenie.
- *
- * Oba potrafią dojść w dowolnej kolejności, więc gdyby każdy miał własne
- * brzmienie, Operator zobaczyłby dwa różne opisy jednej czynności.
- */
+/** Zdanie o skutku unieważnienia jest jedno na oba głosy, odpowiedź i zdarzenie, żeby operator nie zobaczył dwóch opisów jednej czynności. */
 function zdanieUniewaznienia(urzadzenie: Device): string {
   return urzadzenie.current
     ? 'Dostęp odebrany temu urządzeniu: token unieważniony. Przy najbliższym ' +
@@ -218,15 +171,7 @@ function zdanieUniewaznienia(urzadzenie: Device): string {
         'się ponownie przy następnym uruchomieniu.';
 }
 
-/**
- * Zdanie o zmianie przyniesionej zdarzeniem. Bez niego zmiana wykonana na innej
- * maszynie byłaby niema: wykaz podmieniłby się pod ręką Operatora bez słowa
- * o tym, co zaszło.
- *
- * Pole `deviceId` jest w kontrakcie opcjonalne — tak przychodzi zmiana hasła,
- * która unieważnia tokeny hurtem. Wtedy zdanie nazywa zmianę ogólnie, zamiast
- * zgadywać za rdzeń, którego urządzenia dotyczyła.
- */
+/** Zdanie o zmianie przyniesionej zdarzeniem, bo pole urządzenia jest w kontrakcie opcjonalne i bywa puste przy zmianie hasła. */
 function zdanieZmiany(zmiana: DeviceChangedEvent): string {
   const wskazane = (zmiana.deviceId ?? '').trim();
   if (wskazane === '') {
@@ -240,19 +185,13 @@ function zdanieZmiany(zmiana: DeviceChangedEvent): string {
   return `Rdzeń zgłosił zmianę urządzenia ${nazwijUrzadzenie(dotkniete)} — wykaz odświeżony zdarzeniem device.changed.`;
 }
 
-/**
- * Nazwa urządzenia do zdania i do wiersza.
- *
- * `name` jest w kontrakcie opcjonalne. Zamiast pustego miejsca idzie wtedy
- * identyfikator: brzydszy, ale jednoznaczny — a wiersz bez nazwy nie daje się
- * odróżnić od sąsiedniego.
- */
+/** Nazwa urządzenia do zdania i do wiersza; brak nazwy w kontrakcie zastępuje identyfikator, brzydszy, ale jednoznaczny. */
 function nazwijUrzadzenie(urzadzenie: Device): string {
   const nazwa = (urzadzenie.name ?? '').trim();
   return nazwa === '' ? urzadzenie.deviceId : nazwa;
 }
 
-/** Wiersz szczegółu: identyfikator i ostatnia widziana aktywność. */
+/** Wiersz szczegółu urządzenia niesie identyfikator i ostatnią widzianą aktywność, w jednym wspólnym elemencie. */
 function szczegol(urzadzenie: Device): HTMLElement {
   const element = document.createElement('p');
   element.className = 'du-urzadzenie__szczegol';
@@ -268,13 +207,7 @@ function szczegol(urzadzenie: Device): HTMLElement {
   return element;
 }
 
-/**
- * Ostatnia widziana aktywność słowami.
- *
- * `lastSeenAt` jest opcjonalne, a jego brak znaczy „rdzeń tego nie odnotował" —
- * nie „urządzenie nigdy nie było czynne". Podstawienie w to miejsce daty
- * zerowej czytałoby się jako aktywność w 1970 roku.
- */
+/** Ostatnia widziana aktywność słowami; brak znacznika czasu znaczy, że rdzeń jej nie odnotował, nigdy że urządzenie nie było czynne. */
 function opiszAktywnosc(znacznik?: number): string {
   if (znacznik === undefined || !Number.isFinite(znacznik)) {
     return 'ostatnia aktywność nieodnotowana';
@@ -282,7 +215,7 @@ function opiszAktywnosc(znacznik?: number): string {
   return `ostatnio widziane: ${new Date(znacznik).toLocaleString('pl')}`;
 }
 
-/** Plakietka stanu: ikona i etykieta, nigdy sama barwa. */
+/** Plakietka stanu niesie ikonę i etykietę, nigdy samą barwę, bo sama barwa bywa nieczytelna dla operatora. */
 function plakietka(odmiana: string, ikona: 'uzytkownik' | 'ptaszek' | 'klodka', tresc: string): HTMLElement {
   const element = document.createElement('span');
   element.className = `dn-plakietka ${odmiana}`;
@@ -290,7 +223,7 @@ function plakietka(odmiana: string, ikona: 'uzytkownik' | 'ptaszek' | 'klodka', 
   return element;
 }
 
-/** Tekst w elemencie własnym — ikona i treść muszą stać obok siebie, nie w jednym węźle. */
+/** Tekst w elemencie własnym, bo ikona i treść muszą stać obok siebie, nie w jednym wspólnym węźle DOM. */
 function znak(tresc: string): HTMLElement {
   const element = document.createElement('span');
   element.textContent = tresc;

@@ -6047,3 +6047,16 @@ Usunięcie wpisu idzie komendą usunięcia: kasuje ona wpis założony zapisem k
 znacznik usunięcia, a usunięcie wpisu nieistniejącego kończy odmową; odrzucenie propozycji modelu
 jest właśnie takim usunięciem i woła tę samą komendę. Odpięcie wpisu nie jest tu wołane, bo jego
 znaczenie nie jest w kontrakcie ustalone, więc okno nie nadaje mu własnego sensu.
+
+## budowa/klient-poprzedni/src/ustawienia/sekcja-urzadzenia.ts
+Konto jest jedno, urządzeń dowolnie wiele; każde niesie własny token. Wykaz jest jedynym miejscem,
+w którym operator widzi, co ma dostęp do platformy, i jedynym, z którego może ten dostęp odebrać.
+Odpytywania w tle nie ma i nie jest potrzebne: unieważnienie wykonane na drugiej maszynie dolatuje tu
+samo, bo odpowiedź na unieważnienie niesie samo potwierdzenie, więc to zdarzenie, nie odpowiedź,
+przerysowuje wiersze. Wiersz urządzenia bieżącego jest oznaczony plakietką i kreską, a przy jego
+czynności stoi zdanie o skutku; rdzeń celowo nie blokuje unieważnienia własnego tokenu, więc ostrzeżenie
+należy do ekranu, jako opis obok przycisku, nie jako przesłona przed nim. Okna z potwierdzeniem tu nie ma
+z zasady produktu: czynność jest odwracalna ponownym zalogowaniem, a bramka przed nią uczyłaby wyłącznie
+odklikiwania. Urządzenie bez ważnego tokenu nie dostaje przycisku, tylko zdanie: nie ma czego unieważnić,
+a przycisk pewnej odmowy byłby gorszy od jego braku — ten sam zamysł, co przy kotwicy bramki w sekcji
+uwierzytelniania.

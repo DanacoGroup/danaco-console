@@ -1786,16 +1786,6 @@ label.dn-pasek-szukaj:focus-within {
 [data-waga='2'] .dn-sekcja-tytul::before { opacity: 0.62; }
 [data-waga='3'] .dn-sekcja-tytul::before { opacity: 0.38; }
 
-/* Kreska rozdzielająca w pasie narzędzi — pion na wysokość ikony. Rodzina
-   paska stanu ma własną (`.dn-stan-sep`) o stałej wysokości 14 px; ta idzie
-   żetonem ikony, bo stoi między przyciskami ikonowymi. */
-.dn-sep-pionowy {
-  width: 1px;
-  height: var(--dn-wym-ikona);
-  flex: none;
-  margin: 0 var(--dn-od-1);
-  background: var(--dn-obrys);
-}
 .dn-modal-stopka {
   display: flex;
   justify-content: flex-end;

@@ -256,6 +256,7 @@ mieć jedną nazwę.
 | `.cd-archiwum-tresc` | Zero wystapien w .html i .js. Blok (padding, color:var(--dn-tekst-2), fs-sm, lh-luzny, ani |
 | `.cd-karta-menu` | Zero wystapien w atrybutach class w .html. Jedyne odwolanie w calym drzewie to selektor ob |
 | ~~`.cd-listwa-menu`~~ | ZROBIONE — skreślona z centrum-dowodzenia.css i centrum-obszar.css |
+| ~~`.dn-sep-pionowy`~~ | ZROBIONE — synonim `.dn-separator--pionowy`; złożone w jedną rodzinę, wysokość znaku wyraża modyfikator `--znak`. Trzecia postać tej samej roli, `.dn-stan-sep` w `rama.css`, została przy swoich 108 użyciach — do złożenia przy porządkowaniu paska stanu |
 | ~~`.dn-panel-glowa`~~ | ZROBIONE — klasa nie występowała w żadnym znaczniku ani skrypcie; jedyne odwołanie to selektor `.dn-panel-glowa .sta-menu-tresc` w `panel-sesji.css`, który nie mógł trafić w nic. Skreślona wraz z regułą i pozycją wykazu |
 | `.cd-nadtytul` | Zero wystapien w atrybutach class w .html i zero w .js w calym /home/ubuntu/robocze/protot |
 | `.cd-naglowek-akcje` | Zero wystapien w .html i .js. Blok display:flex; align-items:center; gap:var(--dn-od-2) ni |

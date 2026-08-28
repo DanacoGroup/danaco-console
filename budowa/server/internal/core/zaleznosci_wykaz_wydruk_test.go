@@ -92,12 +92,13 @@ func TestSilnikKontenerowStoiWWarstwieDecyzyjnej(t *testing.T) {
 // znaczy pozycję, której nikt nie postawi i nikt tego nie zauważy.
 func TestKazdaPozycjaMaZnanaWarstwe(t *testing.T) {
 	znane := map[string]bool{
-		WarstwaObowiazkowa:  true,
-		WarstwaWarsztatGo:   true,
-		WarstwaWarsztatNpm:  true,
-		WarstwaSnap:         true,
-		WarstwaModelRecznie: true,
-		WarstwaDecyzyjna:    true,
+		WarstwaObowiazkowa:        true,
+		WarstwaObowiazkowaRecznie: true,
+		WarstwaWarsztatGo:         true,
+		WarstwaWarsztatNpm:        true,
+		WarstwaSnap:               true,
+		WarstwaModelRecznie:       true,
+		WarstwaDecyzyjna:          true,
 	}
 	for _, pozycja := range ZaleznosciZewnetrzne() {
 		if warstwa := WarstwaZaleznosci(pozycja); !znane[warstwa] {
@@ -130,6 +131,19 @@ func TestWarstwaRozpoznajePostaciPodpowiedzi(t *testing.T) {
 		{"środowisko pythonowe", "rembg", "rembg[cli] w osobnym środowisku pythonowym", WarstwaModelRecznie},
 		{"silnik kontenerów", "docker", "docker.io albo podman", WarstwaDecyzyjna},
 		{"silnik kontenerów pod podmanem", "podman", "podman", WarstwaDecyzyjna},
+		// Podpowiedź zapisana zdaniem: rozbita na spacjach dałaby apt-get niepakietowe
+		// tokeny, a apt padłby na pierwszym z nich.
+		{"podpowiedź zdaniem — środowisko Javy", "java",
+			"środowisko uruchomieniowe Javy (default-jre) wraz z wydaniem Apache Tika w /opt/tika",
+			WarstwaObowiazkowaRecznie},
+		{"podpowiedź zdaniem — plik z wydania projektu", "typst",
+			"typst (jeden plik wykonywalny z wydania projektu)", WarstwaObowiazkowaRecznie},
+		{"podpowiedź zdaniem — pakiet wraz ze słownikiem", "hunspell",
+			"hunspell wraz ze słownikiem języka (hunspell-pl, hunspell-en-us)", WarstwaObowiazkowaRecznie},
+		{"polecenie pip install", "ruff", "pip install ruff", WarstwaObowiazkowaRecznie},
+		// cargo install zawiera podnapis „go install" („cargo” kończy się na „go”),
+		// a mimo to nie jest poleceniem Go.
+		{"polecenie cargo install", "typos", "cargo install typos-cli", WarstwaObowiazkowaRecznie},
 	}
 	for _, przypadek := range przypadki {
 		t.Run(przypadek.nazwa, func(t *testing.T) {
@@ -140,6 +154,54 @@ func TestWarstwaRozpoznajePostaciPodpowiedzi(t *testing.T) {
 				t.Errorf("warstwa %q, oczekiwano %q", warstwa, przypadek.oczekuje)
 			}
 		})
+	}
+}
+
+// TestWarstwaPodpowiedziZdaniemNieTrafiaDoApt pilnuje usterki, w której pole Pakiet zapisane zdaniem albo
+// poleceniem menedżera pakietów innego niż go/npm wpadało do warstwy obowiązkowej apt: rozbite na
+// spacjach dawało apt-get niepakietowe tokeny, apt padał na pierwszym z nich, a set -e zabijał
+// prowizjonowanie przed warstwami Go, npm, snap i mowy.
+func TestWarstwaPodpowiedziZdaniemNieTrafiaDoApt(t *testing.T) {
+	oczekiwane := map[string]bool{
+		"java": true, "hunspell": true, "vale": true, "typst": true, "ruff": true, "semgrep": true,
+	}
+	znalezione := map[string]bool{}
+	for _, pozycja := range ZaleznosciZewnetrzne() {
+		program := pozycja.Narzedzie.Program
+		if !oczekiwane[program] {
+			continue
+		}
+		znalezione[program] = true
+		if warstwa := WarstwaZaleznosci(pozycja); warstwa != WarstwaObowiazkowaRecznie {
+			t.Errorf("pozycja %q z podpowiedzią %q trafiła do warstwy %q zamiast obowiązkowej ręcznej",
+				pozycja.Narzedzie.Nazwa, pozycja.Narzedzie.Pakiet, warstwa)
+		}
+	}
+	for program := range oczekiwane {
+		if !znalezione[program] {
+			t.Errorf("w wykazie nie ma programu %q — sprawdzian nie ma czego pilnować", program)
+		}
+	}
+}
+
+// TestWarstwaCargoInstallNieTrafiaDoWarsztatuGo pilnuje usterki, w której reguła pytała o podnapis
+// „go install", a ten stoi wewnątrz „cargo install typos-cli" („cargo” kończy się na „go”, dalej
+// idzie spacja i „install”); pozycja wpadała do warstwy warsztatu Go i zostałaby wykonana
+// poleceniem go install zamiast cargo install.
+func TestWarstwaCargoInstallNieTrafiaDoWarsztatuGo(t *testing.T) {
+	policzone := 0
+	for _, pozycja := range ZaleznosciZewnetrzne() {
+		if !strings.HasPrefix(strings.TrimSpace(pozycja.Narzedzie.Pakiet), "cargo install ") {
+			continue
+		}
+		policzone++
+		if warstwa := WarstwaZaleznosci(pozycja); warstwa == WarstwaWarsztatGo {
+			t.Errorf("pozycja %q z poleceniem %q trafiła do warsztatu Go — zostałaby wykonana go install",
+				pozycja.Narzedzie.Nazwa, pozycja.Narzedzie.Pakiet)
+		}
+	}
+	if policzone == 0 {
+		t.Fatal("w wykazie nie ma pozycji cargo install — sprawdzian nie ma czego pilnować")
 	}
 }
 

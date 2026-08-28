@@ -1,21 +1,4 @@
-/* ============================================================================
-   DANACO CONSOLE — SEKCJA CZYNNOŚCI SESJI W MENU ⋮ OKNA ROZMOWY
-   ----------------------------------------------------------------------------
-   Jedna odpowiedzialność: wygląd sekcji stojącej za kreską, pod sekcją
-   „Panele". Kreskę, listę rozwijaną i sekcję paneli opisuje `menu.css` —
-   ten arkusz jej nie dotyka.
-
-   Rytm ten sam co nad kreską: ikona · nazwa i przeznaczenie · <kbd> wyrównany
-   do prawej. Odstępy, promienie i rozmiary pisma biorą te same żetony, po
-   które sięga `.dn-menu-paneli__pozycja`.
-
-   Arkusz nie ma reguł wygaszenia (`:disabled`, `opacity`, `not-allowed`):
-   pozycja bez pokrycia w produkcie nie powstaje, więc nie ma czego wygaszać.
-
-   Barwa ostrzegawcza idzie żetonem `--dn-blad-*`, nie wartością. Rodzina
-   `--dn-ostrzezenie-*` to bursztyn i byłaby tu innym kolorem. Ten sam żeton
-   nosi `.dn-btn--niebezpieczny` — jedna barwa dla jednego znaczenia.
-   ============================================================================ */
+/* Arkusz opisuje wygląd sekcji czynności sesji w menu okna rozmowy, stojącej za kreską pod sekcją paneli. */
 
 .dn-czynnosci-sesji {
   display: flex;
@@ -24,7 +7,7 @@
   min-width: 0;
 }
 
-/* Nagłówek sekcji — drobny, nie wersalikami, jak „Panele" nad kreską */
+/* Nagłówek sekcji jest drobny i nie stosuje wersalików, podobnie jak nagłówek Panele umieszczony nad kreską. */
 .dn-czynnosci-sesji__naglowek {
   margin: 0;
   padding: var(--dn-od-1) var(--dn-od-2);
@@ -72,7 +55,7 @@
   outline-offset: var(--dn-wym-fokus-odsuniecie);
 }
 
-/* „Usuń" — czerwień ostrzega, nie zabrania: wiersz zostaje w pełni klikalny */
+/* Czerwień polecenia Usuń ostrzega, lecz nie zabrania działania, więc wiersz pozostaje w pełni klikalny. */
 .dn-czynnosci-sesji__pozycja--grozna {
   color: var(--dn-blad-tekst);
 }

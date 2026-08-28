@@ -271,20 +271,13 @@
   /* Zakres: awatary bez zdjęcia, rdzeń AOD, grafiki brandowe.
      Gradient NIGDY nie jest tłem przycisku, karty ani sekcji. */
 
-  /* ==================================================================== *
-   *  9a · BARWY WYWODZONE — proporcja stoi tutaj, nie w oknie *
-   * ==================================================================== */
-  /* Trzy role powstają z domieszki, nie z osobnego odcienia palety. Stoją
-     w bazie, a nie w blokach motywów, ponieważ ich składniki (--dn-obrys-mocny,
-     --dn-wstazka, --dn-tekst-2/3) są już zależne od motywu i rozstrzygają się
-     w miejscu użycia. Dzięki temu proporcja domieszki jest zapisana raz, a nie
-     powtórzona w czterech kontekstach motywu — i nie rozjeżdża się między nimi. */
+  /* Barwy wywodzone: trzy role powstają z domieszki color-mix, nie z osobnego odcienia palety. */
   --dn-obrys-marki: color-mix(in oklab, var(--dn-sygnal-500) 46%, var(--dn-obrys-mocny));
   --dn-tlo-wybrane: color-mix(in oklab, var(--dn-sygnal-500) 13%, var(--dn-wstazka));
   --dn-tekst-opis:  color-mix(in oklab, var(--dn-tekst-3) 60%, var(--dn-tekst-2));
 }
 
-/* Przeglądarka bez color-mix dostaje najbliższy odcień palety zamiast domieszki. */
+/* Przeglądarka bez obsługi funkcji color-mix dostaje najbliższy odcień palety zamiast wyliczonej domieszki barw. */
 @supports not (color: color-mix(in oklab, red, blue)) {
   :root {
     --dn-obrys-marki: var(--dn-sygnal-800);
@@ -300,7 +293,7 @@
 
 
   /* ── Okno przedaplikacyjne: trzy strefy, trzy barwy ──────────────────────
-     Zasada właściciela: belka tytułowa jest najciemniejsza, a kolumna boczna
+     Zasada obowiązująca: belka tytułowa jest najciemniejsza, a kolumna boczna
      i pas działań NIE MOGĄ mieć jej barwy. Trzy stopnie, obowiązkowo różne
      w obu motywach — instalator, uruchomienie, logowanie i każde następne
      okno tego rodzaju biorą je stąd, nie ustalają własnych. */
@@ -436,7 +429,7 @@
 :root[data-theme='dark'] {
 
   /* ── Okno przedaplikacyjne: trzy strefy, trzy barwy ──────────────────────
-     Zasada właściciela: belka tytułowa jest najciemniejsza, a kolumna boczna
+     Zasada obowiązująca: belka tytułowa jest najciemniejsza, a kolumna boczna
      i pas działań NIE MOGĄ mieć jej barwy. Trzy stopnie, obowiązkowo różne
      w obu motywach — instalator, uruchomienie, logowanie i każde następne
      okno tego rodzaju biorą je stąd, nie ustalają własnych. */

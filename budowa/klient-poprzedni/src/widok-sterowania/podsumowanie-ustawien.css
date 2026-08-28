@@ -111,7 +111,7 @@
   overflow-wrap: anywhere;
 }
 
-/* Katalogi robocze czytamy krojem technicznym — to ścieżki, nie treść */
+/* Katalogi robocze wyświetlają się krojem technicznym — to ścieżki, nie treść */
 
 .dc-widok-ster__wartosc[data-ustawienie='katalogi'] {
   font-family: var(--dn-ff-mono);

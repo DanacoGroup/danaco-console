@@ -6166,3 +6166,11 @@ bierze się figura, oraz miejsce na trwałą uwagę o podglądzie przekazania.
 Każda z trzech mierzonych rzeczy ma cenę w oknie, gdyby zawiodła: baza świeża czytana błędnie jako
 wszystko wyłączone, zapis idący na poziom, którego katalog nie dopuszcza, i piętnaście par pytań tam,
 gdzie wystarczą dwa.
+
+## budowa/klient-poprzedni/src/moduly/workspace/panel-instrukcji.ts
+Instrukcje obowiązują domyślnie w zakresie projektu, a współdzieleniem jest poziom zasięgu: zapis
+na poziomie szerszym niż projekt obowiązuje w każdym projekcie tego zasięgu. Dziedziczenie
+warstwowe panel pokazuje, ale go nie przelicza: warstwę obowiązującą rozstrzyga rdzeń i oddaje ją
+w wyniku zapisu wraz ze wskazaniem poziomu, z którego pochodzi, bo drugi rozstrzygacz po stronie
+okna rozjechałby się z rdzeniem przy pierwszej zmianie reguł. Podgląd warstwy pyta rdzeń o zapis
+jednego poziomu — to odczyt, nie rozstrzyganie: odpowiada na pytanie, czy ta warstwa ma własną treść.

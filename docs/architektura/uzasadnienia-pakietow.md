@@ -6928,3 +6928,15 @@ i zapisuje to, co przyszło z wyższej warstwy.
 
 Zapis okna nie ustala języka źródłowego, gdy przyszedł pusty, ponieważ rdzeń
 nie rozpoznaje języka — wartość pusta zostaje pusta.
+
+## budowa/server/internal/dane/tlumaczenie_pamiec.go
+Plik `slownik_pamiec.go` obsługuje jedną, wąską drogę tej samej tabeli: zapis
+pary zdjętej z zatwierdzonego panelu i dopasowanie przybliżone dla polecenia
+`memory.suggest`. Ten plik odpowiada za pamięć jako byt Operatora — wykaz,
+zapis wprost, usunięcie, utrzymanie i wymianę z plikiem. Dwa pliki, jedna
+tabela, dwie różne odpowiedzialności.
+
+Zapytania składane są tu wprost na `*sql.DB`, nie przez pamięć przygotowanych
+poleceń: wykaz pamięci ma cztery nieobowiązkowe zawężenia i limit, więc treść
+zapytania zależy od żądania, a pamięć przygotowanych poleceń trzymałaby
+kilkanaście wariantów jednego odczytu.

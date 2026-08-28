@@ -5,82 +5,90 @@ import { LICZBA_MAX, numerGniazda, type IdGniazda } from './identyfikatory';
 import type { StanPary } from './stan-pary';
 
 /**
- * Napisy układu okien równoległych.
- *
- * Jedna odpowiedzialność: wszystkie ciągi widoczne dla operatora w jednym
- * miejscu. Nazwy ról nie powstają tutaj po raz drugi — pochodzą z etykiet
- * okna komunikacji, żeby ta sama rola nie nazywała się w dwóch miejscach
- * inaczej.
+ * Napisy układu okien równoległych, wszystkie w jednym miejscu.
  */
 
-/** Etykieta przełącznika liczby okien. */
+/**
+ * Etykieta przełącznika liczby okien widoczna w pasku sterowania układem okien równoległych sceny. Dotyczy sceny okien równoległych.
+ */
 export const ETYKIETA_PRZELACZNIKA = 'Okna komunikacji';
 
-/** Objaśnienie pod przełącznikiem: co naprawdę zmienia liczba okien. */
+/**
+ * Objaśnienie pod przełącznikiem liczby okien: co naprawdę zmienia się w scenie po zmianie tej liczby.
+ */
 export const OPIS_PRZELACZNIKA =
   'Każde okno ma własny model, katalogi robocze, tryb uprawnień i rolę.';
 
-/** Treść dymka [?] przy przełączniku liczby okien. */
+/**
+ * Treść dymka pomocy przy przełączniku liczby okien, wyjaśniająca skutek zmiany tej liczby okien. Dotyczy sceny okien równoległych.
+ */
 export const OBJASNIENIE_PRZELACZNIKA =
   'Wprowadzenie okna na scenę zamawia dla niego okno w rdzeniu komendą '
   + 'window.create. Ustawienia okna są jego własne — zmiana w jednym oknie '
   + 'nie przenosi się na pozostałe.';
 
-/** Nagłówek pasa relacji — pas pokazuje powiązanie między oknami. */
+/**
+ * Nagłówek pasa relacji, który pokazuje powiązanie koordynator–wykonawca między dwoma oknami sceny. Dotyczy sceny okien równoległych.
+ */
 export const ETYKIETA_RELACJI = 'Relacje';
 
-/** Treść dymka [?] przy pasie relacji. */
+/**
+ * Treść dymka pomocy przy pasie relacji, wyjaśniająca, co pas relacji pokazuje operatorowi sceny. Dotyczy sceny okien równoległych.
+ */
 export const OBJASNIENIE_RELACJI =
   'Pas rysuje jedną parę koordynator–wykonawca: kto komu zleca i w jakim '
   + 'położeniu jest pętla. Położenie przychodzi ze stanu kolejki rdzenia '
   + '(zdarzenie queue.changed), a rola okna ze zdarzenia window.changed.';
 
-/** Tytuł stanu pustego pasa relacji — pary nie ma. */
+/**
+ * Tytuł stanu pustego pasa relacji, pokazywany, gdy para koordynator–wykonawca jeszcze nie istnieje na scenie.
+ */
 export const PUSTKA_RELACJI_TYTUL = 'Brak pary koordynator–wykonawca';
 
-/** Opis stanu pustego pasa relacji: co zrobić, żeby para powstała. */
+/**
+ * Opis stanu pustego pasa relacji: co operator ma zrobić, żeby para koordynator–wykonawca powstała na scenie.
+ */
 export const PUSTKA_RELACJI_OPIS =
   'Pętla biegnie między dwoma oknami — jednym w roli koordynatora i jednym '
   + 'w roli wykonawcy. Ustaw co najmniej dwa okna przełącznikiem powyżej.';
 
 /**
- * Uwaga przy przekazaniu zlecenia.
- *
- * Kontrakt (`shared/contract.json`, klucz `komendy`) nie ma komendy przekazania
- * zlecenia koordynator→wykonawca; scena umie pokazać wyłącznie, jak takie
- * przekazanie wygląda. Komunikat mówi to wprost, żeby ruch na pasie nie uchodził
- * za wykonaną pracę.
+ * Kontrakt nie ma komendy przekazania zlecenia koordynator-wykonawca; scena pokazuje wyłącznie jego wygląd.
  */
 export const PRZEKAZANIE_TYTUL = 'Przekazanie zlecenia — podgląd układu';
 
-/** Treść uwagi o przekazaniu; wymienia powód, nie samą niemożność. */
+/**
+ * Treść uwagi o przekazaniu zlecenia; wymienia powód braku obsługi, nie samą niemożność wykonania jej.
+ */
 export const PRZEKAZANIE_OPIS =
   'Nic nie zostało wysłane do rdzenia: kontrakt nie ma komendy przekazania '
   + 'zlecenia koordynator→wykonawca. Wpisy w obu oknach i ruch żetonu pokazują '
   + 'wyłącznie układ tej chwili.';
 
-/** Tytuł gniazda widoczny w jego nagłówku. */
+/**
+ * Tytuł gniazda widoczny w jego własnym nagłówku na scenie okien równoległych tej budowy. Dotyczy sceny okien równoległych.
+ */
 export function tytulGniazda(id: IdGniazda): string {
   return `Okno ${numerGniazda(id)}`;
 }
 
 /**
- * Nazwa modułu przy tytule gniazda — wartość bieżąca, nie napis rodzajowy.
- *
- * Kreska średnia oddziela dwie odpowiedzi na dwa różne pytania: „które to
- * miejsce na scenie" (numer) i „co w nim pracuje" (moduł). Bez niej czytałoby
- * się to jak jedna, dłuższa nazwa okna.
+ * Nazwa modułu przy tytule gniazda jest wartością bieżącą, nie napisem rodzajowym tego gniazda sceny. Dotyczy sceny okien równoległych.
  */
 export function nazwaModuluGniazda(nazwaModulu: string): string {
   return `— ${nazwaModulu}`;
 }
 
-/** Nazwa gniazda wraz z rolą — używana na końcach pasa relacji. */
+/**
+ * Nazwa gniazda wraz z jego rolą, używana na obu końcach pasa relacji koordynator–wykonawca sceny. Dotyczy sceny okien równoległych.
+ */
 export function opisGniazdaZRola(id: IdGniazda, rola: WindowRole): string {
   return `${tytulGniazda(id)} · ${nazwaRoli(rola)}`;
 }
 
-/** Nazwa stanu pary koordynator–wykonawca. */
+/**
+ * Nazwa stanu pary koordynator–wykonawca widoczna operatorowi na scenie okien równoległych aplikacji. Dotyczy sceny okien równoległych.
+ */
 export function nazwaStanuPary(stan: StanPary): string {
   switch (stan) {
     case 'brak-pary':
@@ -98,12 +106,16 @@ export function nazwaStanuPary(stan: StanPary): string {
   }
 }
 
-/** Kierunek widoczny w nagłówku koordynatora: komu zleca. */
+/**
+ * Kierunek widoczny w nagłówku koordynatora: komu ten koordynator zleca pracę na scenie okien. Dotyczy sceny okien równoległych.
+ */
 export function kierunekKoordynatora(wykonawca: IdGniazda): string {
   return `Zleca ${celownik(wykonawca)}`;
 }
 
-/** Kierunek widoczny w nagłówku wykonawcy: od kogo bierze zlecenia. */
+/**
+ * Kierunek widoczny w nagłówku wykonawcy: od kogo ten wykonawca bierze zlecenia na scenie okien. Dotyczy sceny okien równoległych.
+ */
 export function kierunekWykonawcy(koordynator: IdGniazda): string {
   return `Zlecenia z ${dopelniacz(koordynator)}`;
 }
@@ -119,32 +131,44 @@ export function komunikatWyslania(wykonawca: IdGniazda, tresc: string): string {
     + 'Nic nie wysłano do rdzenia: kontrakt nie ma komendy przekazania.';
 }
 
-/** Wpis historii w oknie wykonawcy w chwili przyjęcia zlecenia. */
+/**
+ * Wpis historii w oknie wykonawcy w chwili przyjęcia zlecenia od koordynatora sceny okien. Dotyczy sceny okien równoległych.
+ */
 export function komunikatPrzyjecia(koordynator: IdGniazda, tresc: string): string {
   return `Podgląd układu — zlecenie od ${dopelniacz(koordynator)}: ${tresc}. `
     + 'Nic nie przyjęto z rdzenia: kontrakt nie ma komendy przekazania.';
 }
 
-/** Treść zlecenia przyjmowana, gdy wywołanie własnej nie podaje. */
+/**
+ * Treść zlecenia przyjmowana, gdy samo wywołanie zlecenia nie podaje treści tego zlecenia wprost. Dotyczy sceny okien równoległych.
+ */
 export const TRESC_ZLECENIA_DOMYSLNA = 'treść zastępcza podglądu, nie zlecenie rdzenia';
 
-/** „Oknu 2" — celownik nazwy gniazda. */
+/**
+ * Celownik nazwy gniazda, na przykład „Oknu 2”, używany w zdaniach kierowanych wprost do gniazda. Dotyczy sceny okien równoległych.
+ */
 function celownik(id: IdGniazda): string {
   return `Oknu ${numerGniazda(id)}`;
 }
 
-/** „Okna 2" — dopełniacz nazwy gniazda. */
+/**
+ * Dopełniacz nazwy gniazda, na przykład „Okna 2”, używany w zdaniach opisujących to gniazdo sceny. Dotyczy sceny okien równoległych.
+ */
 function dopelniacz(id: IdGniazda): string {
   return `Okna ${numerGniazda(id)}`;
 }
 
-/** Gniazdo wraz z rolą, jaką bierze przy figurze modułu. */
+/**
+ * Gniazdo wraz z rolą, jaką to gniazdo bierze przy budowie figury rozmowy modułu na scenie. Dotyczy sceny okien równoległych.
+ */
 export interface GniazdoZRola {
   id: IdGniazda;
   rola: WindowRole;
 }
 
-/** Tyle o figurze modułu, ile potrzeba do zbudowania zdania dla Operatora. */
+/**
+ * Tyle informacji o figurze modułu, ile potrzeba do zbudowania pełnego zdania dla operatora sceny. Dotyczy sceny okien równoległych.
+ */
 export interface FiguraDoNapisu {
   /** Nazwa modułu widoczna dla Operatora. */
   nazwa: string;
@@ -169,14 +193,7 @@ export const ZDANIE_MODUL_NIEUSTALONY =
   + 'stanie zastanym, a nie na rozstrzygnięciu o module.';
 
 /**
- * Zdanie o figurze rozmowy modułu — ile okien i w jakich rolach.
- *
- * Moduł bez rozmowy (`brak`) i moduł mówiący dymkiem dostają zdanie wprost, bo
- * pusty przełącznik czytałby się jak awaria sceny.
- *
- * Przy `LICZBA_MAX` zdanie mówi o suficie platformy, nie o liczbie okien
- * modułu: dla części modułów czwórka jest stanem zastanym
- * (`GRANICA_NIEPODANA`), a nie liczbą podaną przez rdzeń.
+ * Zdanie o figurze rozmowy modułu mówi, ile okien i w jakich rolach ta figura modułu obejmuje. Dotyczy sceny okien równoległych.
  */
 export function zdanieFiguryModulu(figura: FiguraDoNapisu): string {
   const modul = `Moduł ${figura.nazwa}`;
@@ -204,7 +221,9 @@ export function zdanieFiguryModulu(figura: FiguraDoNapisu): string {
       + `Role są domyślne dla tej liczby okien (${obsada}) i Operator może je przestawić.`;
 }
 
-/** Zdanie o pozycjach przełącznika ponad figurą modułu — czemu nie dokładają okna. */
+/**
+ * Zdanie o pozycjach przełącznika ponad figurą modułu — wyjaśnia, czemu okna się nie dokładają same. Dotyczy sceny okien równoległych.
+ */
 export function zdanieNadwyzkiPozycji(liczbaOkien: number): string {
   return `Pozycja wyższa niż ${liczbaOkien} nie dokłada tu okna.`;
 }
@@ -222,7 +241,9 @@ export function zdanieNadmiaruSceny(naScenie: number, liczbaOkien: number): stri
     + 'okna zamyka je również w rdzeniu i należy do Operatora.';
 }
 
-/** „dwa okna" — liczba okien w mianowniku; poza zakresem sceny zostaje cyfra. */
+/**
+ * Liczba okien w mianowniku, na przykład „dwa okna”; poza zakresem sceny zostaje sama cyfra liczby. Dotyczy sceny okien równoległych.
+ */
 function okienMianownik(liczba: number): string {
   switch (liczba) {
     case 1:
@@ -238,7 +259,9 @@ function okienMianownik(liczba: number): string {
   }
 }
 
-/** „czterech okien" — liczba okien w dopełniaczu. */
+/**
+ * Liczba okien w dopełniaczu, na przykład „czterech okien”, używana w zdaniach o liczbie okien sceny. Dotyczy sceny okien równoległych.
+ */
 function okienDopelniacz(liczba: number): string {
   switch (liczba) {
     case 1:

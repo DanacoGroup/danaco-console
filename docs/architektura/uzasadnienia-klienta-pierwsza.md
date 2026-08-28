@@ -7332,3 +7332,8 @@ Rola okna stoi w nagłówku, bo rozstrzyga układ: okna dzielą się na wiodące
 Fazy okna (puste, ładowanie, błąd, gotowe) nie należą do ramy. Rama daje `cialo`; przesłonę stanu buduje osobny byt modułu (`stany-okna`) i moduł osadza ją w ciele. Inaczej obudowa znałaby cykl życia danych, których nie pobiera.
 
 Klasy modułu w `OpisRamyOkna.przedrostek` nie wnoszą wyglądu — wygląd jest w bibliotece — ale bywają uchwytem reguł własnych arkusza: `.dt-okno` niesie rozmiar pisma terminala i selektor `[data-zawijanie]`. Moduł bez takiej reguły nie podaje nic i dostaje wygląd biblioteczny.
+
+## budowa/klient-poprzedni/src/konfiguracja/kontrolki-tekstowe.ts
+Zatwierdzenie wartości następuje na zdarzeniu `change`, czyli po opuszczeniu pola, nie po każdym znaku. Zapis co znak zasypałby rdzeń komendami `config.set` i odbierał możliwość poprawienia wartości przed wysyłką.
+
+Wartość rodzaju `secret` nie wraca z rdzenia: pole pozostaje puste i mówi to wprost. Kontrolka przyjmuje wartość nową, nie pokazuje wartości zapisanej.

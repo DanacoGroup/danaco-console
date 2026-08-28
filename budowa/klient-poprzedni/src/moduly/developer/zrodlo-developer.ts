@@ -22,29 +22,14 @@ import { przenies } from '../../protokol/wynik-czastkowy';
 import { wywolaj } from '../../protokol/wywolanie';
 
 /**
- * Nazwa odczytu przedstawiana rdzeniowi w powitaniu katalogu komend.
- *
- * Nie jest to nowa tożsamość klienta i dlatego nie idzie przez
- * `tozsamoscKlienta().id`: ognisko sesji jest właściwością klienta połączenia
- * (`protokol/uzgodnienie.ts`), a drugi identyfikator rozdzieliłby ognisko od
- * połączenia, które je zgłosiło. Uchwyt `connection.hello` w rdzeniu nie czyta
- * treści żądania — oddaje `Rejestr.Nazwy()` i nic poza tym
- * (`handlers_connection.go`) — więc ta nazwa służy wyłącznie czytelności
- * dziennika po stronie rdzenia.
+ * Nazwa odczytu przedstawiana rdzeniowi w powitaniu katalogu komend, służąca
+ * wyłącznie czytelności dziennika rdzenia.
  */
 const NAZWA_ODCZYTU_KATALOGU = 'developer-katalog-komend';
 
 /**
  * Moduł Developer widziany przez klienta — pięć komend obszaru `developer.*`
- * oraz zdarzenie przyrostu budowania.
- *
- * Każda czynność oddaje `Wynik`, nie samą treść. Okna modułu mają obowiązkowy
- * stan błędu, więc źródło nie połyka odmowy i nie zwraca w jej miejsce pustego
- * wykazu — Project Tree musi odróżnić „katalog jest pusty” od „nie udało się
- * odczytać drzewa”. Stąd brak `?? []` w całym pliku.
- *
- * `windowId` jest wymagany kontraktem we wszystkich pięciu żądaniach; źródło go
- * nie dorabia — podaje go okno przez `StanDevelopera`.
+ * oraz zdarzenie przyrostu budowania, każda oddająca wynik.
  */
 export interface ZrodloDeveloper {
   /** `developer.file.open` — wczytanie pliku repozytorium do Code Editor. */
@@ -59,17 +44,7 @@ export interface ZrodloDeveloper {
   budowanie(zadanie: DeveloperBuildRunRequest): Promise<Wynik<DeveloperBuild>>;
   /** Subskrypcja `developer.build.changed` — Build Output na żywo. */
   naZmianeBudowania(sluchacz: (tresc: DeveloperBuildChangedEvent) => void): Odsubskrybuj;
-  /**
-   * `connection.hello` — wykaz komend zarejestrowanych w rdzeniu.
-   *
-   * Nie jest to powtórzenie uzgodnienia połączenia: uzgodnienie
-   * (`protokol/uzgodnienie.ts`) porzuca wykaz z powitania, a okna modułu nie
-   * mają skąd wziąć odpowiedzi na pytanie, czym ten rdzeń dysponuje. Rdzeń
-   * odpowiada tu wykazem z rejestru, nie wykazem z kontraktu — tylko rejestr
-   * mówi, która komenda naprawdę ma uchwyt. Odpowiedź wraca w całości, bo pole
-   * `commands` jest w kontrakcie opcjonalne: jego brak to milczenie rdzenia,
-   * nie orzeczenie o braku komend.
-   */
+  /** `connection.hello` — wykaz komend zarejestrowanych w rdzeniu, z rejestru, nie z kontraktu. */
   komendyRdzenia(): Promise<Wynik<ConnectionHelloResponse>>;
 }
 
@@ -131,8 +106,7 @@ export function utworzZrodloDeveloper(kanal: Kanal): ZrodloDeveloper {
           protocolVersion: PROTOCOL_VERSION,
         }),
         Command.ConnectionHello,
-        // `commands` jest w kontrakcie opcjonalne — jego brak nie jest błędem
-        // kształtu i nie zamienia się w odmowę. Rozstrzyga to wywołujący.
+        // `commands` jest w kontrakcie opcjonalne: jego brak to milczenie rdzenia, nie brak komend.
         (tresc) => tresc.commands === undefined || czyTablica(tresc.commands),
       );
     },

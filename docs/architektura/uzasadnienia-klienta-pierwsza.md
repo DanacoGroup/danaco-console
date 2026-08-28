@@ -8532,3 +8532,22 @@ pusty prostokąt podany jako plik wyglądałby jak plik uszkodzony.
 Wszystkie cztery komendy tego panelu wskazują kompozycję identyfikatorem, który nadaje rdzeń przy
 pierwszym zapisie; odmowa rdzenia mówiłaby wtedy o kompozycji nieznanej zamiast o zapisie, którego
 zabrakło.
+
+## budowa/klient-poprzedni/src/moduly/developer/zrodlo-developer.ts
+Nazwa odczytu nie jest nową tożsamością klienta, więc nie idzie przez
+tożsamość klienta połączenia: ognisko sesji jest właściwością klienta
+połączenia, a drugi identyfikator rozdzieliłby ognisko od połączenia, które je
+zgłosiło. Uchwyt powitania w rdzeniu nie czyta treści żądania, oddaje wykaz
+nazw z rejestru i nic poza tym. Każda czynność źródła oddaje wynik, nie samą
+treść: okna modułu mają obowiązkowy stan błędu, więc źródło nie połyka
+odmowy i nie zwraca w jej miejsce pustego wykazu, bo drzewo projektu musi
+odróżnić katalog pusty od nieudanego odczytu. Kod okna jest wymagany
+kontraktem we wszystkich pięciu żądaniach; źródło go nie dorabia, podaje go
+okno przez stan modułu. Wykaz komend z powitania połączenia nie jest
+powtórzeniem uzgodnienia połączenia: uzgodnienie porzuca wykaz z powitania,
+a okna modułu nie mają skąd wziąć odpowiedzi na pytanie, czym ten rdzeń
+dysponuje — rdzeń odpowiada tu wykazem z rejestru, nie wykazem z kontraktu,
+bo tylko rejestr mówi, która komenda naprawdę ma uchwyt. Odpowiedź wraca
+w całości, bo pole wykazu komend jest w kontrakcie opcjonalne, a jego brak
+nie jest błędem kształtu i nie zamienia się w odmowę — rozstrzyga to
+wywołujący.

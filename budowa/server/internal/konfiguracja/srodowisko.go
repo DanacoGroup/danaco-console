@@ -14,7 +14,9 @@ const (
 	zmiennaKatalogDanych  = "DANACO_KATALOG_DANYCH"
 	zmiennaKatalogKlienta = "DANACO_KATALOG_KLIENTA"
 	zmiennaKatalogProfili = "DANACO_KATALOG_PROFILI"
-	// Brzeg transportu — patrz komentarz przy polach Konfiguracji.
+	// Nazwy zmiennych brzegu transportu: adres nasłuchu, wystawienie na
+	// wszystkie interfejsy, certyfikat i klucz TLS, pochodzenia i wymóg
+	// logowania.
 	zmiennaAdres               = "DANACO_ADRES"
 	zmiennaWszystkieInterfejsy = "DANACO_WSZYSTKIE_INTERFEJSY"
 	zmiennaCertyfikatTLS       = "DANACO_TLS_CERTYFIKAT"
@@ -22,11 +24,10 @@ const (
 	zmiennaPochodzenia         = "DANACO_POCHODZENIA"
 	zmiennaWymogLogowania      = "DANACO_WYMOG_LOGOWANIA"
 
-	// Konto nadawcze PLATFORMY — nie skrzynka Operatora. Idą nim dwa listy
-	// systemowe: potwierdzenie adresu przy rejestracji i droga odzyskania konta.
-	// Osobne od skrzynki Operatora z rozmysłem: gdyby platforma pisała jego
-	// kontem, utrata dostępu do skrzynki odcinałaby drogę odzyskania — czyli
-	// dokładnie wtedy, gdy jest potrzebna.
+	// Konto nadawcze platformy, nie skrzynka operatora. Idą nim dwa listy
+	// systemowe: potwierdzenie adresu przy rejestracji i droga odzyskania
+	// konta. Jest osobne od skrzynki operatora, aby utrata dostępu do niej
+	// nie odcinała drogi odzyskania.
 	zmiennaNadawcaHost       = "DANACO_NADAWCA_HOST"
 	zmiennaNadawcaPort       = "DANACO_NADAWCA_PORT"
 	zmiennaNadawcaUzytkownik = "DANACO_NADAWCA_UZYTKOWNIK"
@@ -38,11 +39,7 @@ const (
 
 // ZmienneSrodowiska zwraca nazwy zmiennych czytanych przez rdzeń
 // w kolejności prezentacji. Jest to jedyny wykaz tych nazw: zasila pomoc
-// wiersza poleceń i sprawdzenie zgodności ze wzorcem `.env.example`.
-//
-// Odczyt zmiennej z pominięciem tego wykazu rozjeżdża wzorzec z implementacją.
-// Pilnuje tego granica pakietu: nazwy są nieeksportowane, więc odczyt po nazwie
-// dosłownej spoza tego pakietu jest widoczny w przeglądzie zmian.
+// wiersza poleceń i sprawdzenie zgodności ze wzorcem .env.example.
 func ZmienneSrodowiska() []string {
 	return []string{
 		zmiennaRola, zmiennaPort, zmiennaKatalogDanych,
@@ -108,9 +105,7 @@ func zastosujSrodowisko(kon *Konfiguracja, odczyt func(string) string) error {
 		kon.NadawcaNazwa = nazwa
 	}
 	if tekst := odczyt(zmiennaNadawcaStartTLS); tekst != "" {
-		// Wartość nieczytelna zatrzymuje start, zamiast po cichu znaczyć „nie".
-		// Ciche zejście do rozmowy otwartym tekstem oddałoby poświadczenie
-		// nadawcy każdemu po drodze.
+		// Wartość nieczytelna zatrzymuje start, zamiast po cichu znaczyć nie.
 		startTLS, err := strconv.ParseBool(tekst)
 		if err != nil {
 			return fmt.Errorf("%s: wartość %q nie jest wartością logiczną (true|false)",
@@ -119,10 +114,8 @@ func zastosujSrodowisko(kon *Konfiguracja, odczyt func(string) string) error {
 		kon.NadawcaStartTLS = &startTLS
 	}
 	if tekst := odczyt(zmiennaWszystkieInterfejsy); tekst != "" {
-		// Wartość nieczytelna zatrzymuje start, zamiast po cichu znaczyć „nie".
-		// Pomyłka w zapisie tej jednej zmiennej rozstrzyga o tym, czy rdzeń
-		// stanie w sieci, czy na pętli zwrotnej — milczące „nie" byłoby tu
-		// najgorszym z możliwych wyników w drugą stronę niż przy TLS.
+		// Wartość nieczytelna zatrzymuje start, zamiast po cichu znaczyć nie,
+		// jak przy wystawieniu na sieć.
 		wszystkie, err := strconv.ParseBool(tekst)
 		if err != nil {
 			return fmt.Errorf("%s: wartość %q nie jest wartością logiczną (true|false)",
@@ -137,9 +130,8 @@ func zastosujSrodowisko(kon *Konfiguracja, odczyt func(string) string) error {
 		kon.KluczTLS = plik
 	}
 	if tekst := odczyt(zmiennaWymogLogowania); tekst != "" {
-		// Wartość nieczytelna zatrzymuje start z tego samego powodu, co przy
-		// wystawieniu na wszystkie interfejsy: literówka rozstrzyga tu o tym,
-		// czy rdzeń pyta wołającego o token, czy nie pyta nikogo o nic.
+		// Wartość nieczytelna zatrzymuje start z tego samego powodu, co
+		// wystawienie na wszystkie interfejsy.
 		wymog, err := strconv.ParseBool(tekst)
 		if err != nil {
 			return fmt.Errorf("%s: wartość %q nie jest wartością logiczną (true|false)",

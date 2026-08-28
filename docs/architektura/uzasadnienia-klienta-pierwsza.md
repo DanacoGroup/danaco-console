@@ -7003,3 +7003,6 @@ podagencie. Sekcja niesie wyżej definicje podagentów i kontrolki wytwórni,
 zanim żywy wykaz się otworzy. Rdzeń oddaje osobno podagentów, których
 zatrzymał, i tych, którzy w chwili wywołania nie pracowali; ten drugi
 przypadek nie jest błędem i panel go tak nie nazywa.
+
+## budowa/klient-poprzedni/src/moduly/automations/panel-wersji.ts
+Przebieg próbny sprawdza definicję automatyki przed wpięciem, wersje ją cofają i porównują, zmienne i mapowania opisują przepływ danych między jej krokami, notatka i położenie należą do jej węzłów, a szablon jest jej odbiciem zapisanym do wielokrotnego użycia. Automatyka bierze się ze stanu modułu, nie z pola panelu: pięć okien pracuje nad jedną automatyką naraz, panel z własnym polem automatyki pozwalałby zapisać wersję jednej, patrząc przy tym na kanwę drugiej. Odpowiedź rdzenia niesie automatykę po zmianie i to ona jest prawdą — panel pokazuje ją w całości pod przyciskiem.

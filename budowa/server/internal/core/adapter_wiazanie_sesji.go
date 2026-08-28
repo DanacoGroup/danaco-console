@@ -9,31 +9,23 @@ import (
 	"danacoconsole/shared"
 )
 
-// adapterWiazaniaSesji wypełnia port WiazanieSesji: ognisko karty sesji
-// i powiązanie połączenia z sesją trwającą na rdzeniu.
-//
-// Obie czynności należą do klienta, nie do konta. Rejestr więzi jest wspólny
-// z nawigacją — strona główna i wejście do środowiska odpowiadają tym samym
-// ogniskiem, które ustawił `session.focus` (jeden byt, jeden moduł).
+// adapterWiazaniaSesji wypełnia port WiazanieSesji: ognisko karty sesji i powiązanie
+// połączenia z sesją trwającą na rdzeniu. Obie czynności należą do klienta, nie do konta.
 type adapterWiazaniaSesji struct {
 	zestaw   *dane.Zestaw
 	nadzorca *session.Nadzorca
 	klienci  *wieziKlientow
 }
 
-// nowyAdapterWiazaniaSesji wiąże port z repozytoriami, nadzorcą i rejestrem
-// więzi klientów.
+// nowyAdapterWiazaniaSesji wiąże port z repozytoriami, nadzorcą sesji i rejestrem więzi
+// klientów urządzeń.
 func nowyAdapterWiazaniaSesji(zestaw *dane.Zestaw, nadzorca *session.Nadzorca,
 	klienci *wieziKlientow) *adapterWiazaniaSesji {
 	return &adapterWiazaniaSesji{zestaw: zestaw, nadzorca: nadzorca, klienci: klienci}
 }
 
-// Ogniskuj przenosi ognisko klienta na wskazaną kartę sesji i — gdy wskazano —
-// na okno w jej wnętrzu.
-//
-// Istnienia karty nie warunkujemy: ognisko jest zapisem tego, co klient ma na
-// wierzchu, a nie czynnością na sesji. Zdarzenie `session.focus.changed`
-// rozgłasza obsługiwacz, bo to on zna warstwę transportu.
+// Ogniskuj przenosi ognisko klienta na wskazaną kartę sesji i, gdy wskazano, na okno w jej
+// wnętrzu. Istnienia karty nie warunkuje: ognisko jest zapisem tego, co klient ma na wierzchu.
 func (a *adapterWiazaniaSesji) Ogniskuj(_ context.Context, z shared.SessionFocusRequest) (shared.SessionFocusResponse, error) {
 	zmiana := a.klienci.Ogniskuj(z.ClientId, z.SessionId, z.WindowId)
 	wynik := shared.SessionFocusResponse{SessionId: zmiana.IdSesji, FocusedAt: zmiana.Chwila.UnixMilli()}
@@ -48,13 +40,8 @@ func (a *adapterWiazaniaSesji) Ogniskuj(_ context.Context, z shared.SessionFocus
 	return wynik, nil
 }
 
-// Powiaz wiąże połączenie z sesją i odtwarza jej okna.
-//
-// `resumed` odpowiada na pytanie, czy sesja trwała na rdzeniu mimo rozłączenia
-// klienta. Prawda znaczy, że okna mają procesy i stan bieżący; fałsz — że sesja
-// wraca z wierszy, więc klient odtwarza historię, a procesów nie ma. Sesja
-// nieznana obu warstwom daje `bound` równe fałsz zamiast błędu: klient ma
-// wtedy wejść na stronę główną, a nie stracić połączenie.
+// Powiaz wiąże połączenie z sesją i odtwarza jej okna. Pole resumed odpowiada na pytanie,
+// czy sesja trwała na rdzeniu mimo rozłączenia klienta.
 func (a *adapterWiazaniaSesji) Powiaz(ctx context.Context, z shared.SessionBindRequest) (shared.SessionBindResponse, error) {
 	wynik := shared.SessionBindResponse{Windows: []shared.Window{}}
 	if sesja, okna, jest := a.sesjaZywa(z.SessionId); jest {
@@ -104,11 +91,8 @@ func (a *adapterWiazaniaSesji) sesjaUtrwalona(ctx context.Context, idSesji strin
 	return sesja, okna, true, nil
 }
 
-// zapamietaj domyka powiązanie: zawęża okna do wskazanych, uzupełnia relację
-// 1:N sesji i zapisuje więź klienta z sesją.
-//
-// Zawężenie dotyczy wyłącznie okien objętych powiązaniem — sesja niesie komplet
-// swoich okien niezależnie od tego, które z nich klient chce słyszeć.
+// zapamietaj domyka powiązanie: zawęża okna do wskazanych, uzupełnia relację jeden do wielu
+// sesji i zapisuje więź klienta z sesją.
 func (a *adapterWiazaniaSesji) zapamietaj(idKlienta string, wynik shared.SessionBindResponse,
 	okna []shared.Window, wskazane []string) shared.SessionBindResponse {
 	wynik.Session.WindowIds = identyfikatoryOkien(okna)

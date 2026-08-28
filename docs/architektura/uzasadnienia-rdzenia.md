@@ -7291,3 +7291,14 @@ restartu rdzenia.
 Rozmowa programu wywoływanego z wiersza poleceń nie jest przenoszona przy
 kopiowaniu: kopia zaczyna własną, bo wznowienie cudzej rozmowy dołączałoby
 nowe tury do wątku źródła.
+
+## budowa/server/internal/core/adapter_wiazanie_sesji.go
+Pole resumed odpowiedzi Powiaz mówi, czy sesja trwała na rdzeniu mimo
+rozłączenia klienta. Prawda znaczy, że okna mają procesy i stan bieżący;
+fałsz — że sesja wraca z wierszy, więc klient odtwarza historię, a procesów
+nie ma. Sesja nieznana obu warstwom daje bound równe fałsz zamiast błędu:
+klient ma wtedy wejść na stronę główną, a nie stracić połączenie.
+
+Zawężenie okien w zapamietaj dotyczy wyłącznie okien objętych powiązaniem —
+sesja niesie komplet swoich okien niezależnie od tego, które z nich klient
+chce słyszeć.

@@ -7037,3 +7037,13 @@ StudioIngestState i ma pięć wartości, nie cztery — wartość ponowienia jes
 stanem osobnym, który nazywa sytuację, gdy rozpoznanie wypadło poniżej progu
 pewności i pozycja wraca do rozpoznania, czego ani stan gotowy, ani stan
 odmowy nie opisuje.
+
+## budowa/klient-poprzedni/src/moduly/studio/widok-skali.ts
+Skala do szerokości strony nie jest wartością stałą, jest rachunkiem: zależy
+od szerokości pola widoku, od nośnika, od orientacji i od liczby kartek
+w rzędzie. Wartość wpisana na sztywno rozjechałaby się przy pierwszej zmianie
+nośnika, więc rachunek stoi jako funkcja czysta, którą da się sprawdzić bez
+przeglądarki — wołający podaje zmierzone pole widoku, a funkcja oddaje
+procenty. Skala jest pamiętana przy dokumencie, nie przy oknie, zgodnie
+z wymogiem zlecenia: po powrocie do pisma po dwóch dniach dokument pokazuje
+się w skali, w której nad nim pracowano, a drugie pismo w swojej własnej.

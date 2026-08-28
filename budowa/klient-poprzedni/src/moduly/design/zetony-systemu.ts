@@ -1,31 +1,9 @@
-/**
- * Odczyt żetonów systemu wizualnego z motywu obowiązującego w tej chwili.
- *
- * Panel żetonów **nie kopiuje ani jednej wartości**. Wykaz poniżej niesie
- * wyłącznie NAZWY — role, które system wizualny nazywa — a wartość każdej
- * czytana jest z dokumentu przy każdym odświeżeniu. Dzięki temu panel pokazuje
- * stan produktu, a nie jego opis: przełączenie motywu zmienia tu wszystko bez
- * ani jednej linii kodu, a barwa poprawiona w arkuszu motywu jest widoczna
- * natychmiast.
- *
- * Konsekwencja jest zamierzona: żeton wymieniony w wykazie, którego motyw nie
- * definiuje, wychodzi na wierzch jako „motyw nie definiuje tego żetonu"
- * zamiast zniknąć. Rozjazd nazw między modułem a motywem ma być widoczny, bo
- * to jest usterka produktu, a nie szczegół panelu.
- *
- * Wykaz obejmuje żetony SEMANTYCZNE — te, po które wolno sięgać komponentom.
- * Prymitywów skali szarości tu nie ma, bo sięganie po nie wprost jest w tym
- * produkcie zabronione i panel nie ma ich po co pokazywać jako narzędzia pracy.
- *
- * Moduł nie zapisuje żetonów i nie nadpisuje motywu. Motyw jest własnością
- * powłoki; kontrakt nie zna bytu zestawu żetonów, więc trwałego zapisu nie ma
- * gdzie odłożyć — i panel mówi to wprost, zamiast udawać edytor.
- */
+/** Odczyt żetonów systemu wizualnego z motywu obowiązującego w tej chwili, bez kopiowania ich wartości do modułu. */
 
-/** Rodzaj wartości żetonu — rozstrzyga, co panel z nią potrafi zrobić. */
+/** Rodzaj wartości żetonu, rozstrzygający, co panel z nią potrafi zrobić, na przykład jak ją wyświetlić w wykazie żetonów. */
 export type RodzajZetonu = 'barwa' | 'miara' | 'krój' | 'czas' | 'liczba';
 
-/** Jeden żeton wraz z wartością odczytaną z motywu. */
+/** Jeden żeton wraz z wartością odczytaną z motywu obowiązującego w chwili odczytu przez panel żetonów systemu. */
 export interface Zeton {
   /** Nazwa bez przedrostka — tak nazywa rolę system wizualny. */
   readonly nazwa: string;
@@ -36,13 +14,13 @@ export interface Zeton {
   readonly wartosc: string;
 }
 
-/** Grupa żetonów jednej roli. */
+/** Grupa żetonów jednej roli systemu wizualnego, wraz z pełnym wykazem żetonów należących do tej grupy produktu. */
 export interface GrupaZetonow {
   readonly nazwa: string;
   readonly zetony: readonly Zeton[];
 }
 
-/** Nazwy żetonów jednej grupy wraz z rodzajem ich wartości. */
+/** Nazwy żetonów jednej grupy systemu wizualnego wraz z rodzajem ich wartości, bez samej wartości z motywu produktu. */
 interface OpisGrupy {
   readonly nazwa: string;
   readonly rodzaj: RodzajZetonu;
@@ -199,10 +177,10 @@ const GRUPY: readonly OpisGrupy[] = [
   },
 ];
 
-/** Przedrostek własności niestandardowych systemu wizualnego. */
+/** Przedrostek własności niestandardowych systemu wizualnego, wspólny dla wszystkich żetonów motywu produktu. */
 const PRZEDROSTEK = '--dn-';
 
-/** Pełna nazwa własności niestandardowej danego żetonu. */
+/** Pełna nazwa własności niestandardowej danego żetonu, złożona z przedrostka oraz nazwy tego żetonu motywu. */
 export function zmiennaZetonu(nazwa: string): string {
   return `${PRZEDROSTEK}${nazwa}`;
 }
@@ -219,7 +197,7 @@ export function wartoscZetonu(nazwa: string): string {
   return getComputedStyle(korzen).getPropertyValue(zmiennaZetonu(nazwa)).trim();
 }
 
-/** Wszystkie grupy wraz z wartościami odczytanymi w chwili wywołania. */
+/** Wszystkie grupy żetonów wraz z wartościami odczytanymi z motywu obowiązującego w chwili wywołania funkcji. */
 export function odczytajZetony(): readonly GrupaZetonow[] {
   return GRUPY.map((grupa) => ({
     nazwa: grupa.nazwa,
@@ -232,7 +210,7 @@ export function odczytajZetony(): readonly GrupaZetonow[] {
   }));
 }
 
-/** Liczba żetonów, których motyw nie definiuje — miara rozjazdu, nie napis. */
+/** Liczba żetonów, których motyw obowiązujący nie definiuje, jako miara rozjazdu nazw, a nie sam napis informacyjny. */
 export function liczbaBezDefinicji(grupy: readonly GrupaZetonow[]): number {
   return grupy.reduce(
     (suma, grupa) => suma + grupa.zetony.filter((zeton) => zeton.wartosc === '').length,
@@ -242,15 +220,8 @@ export function liczbaBezDefinicji(grupy: readonly GrupaZetonow[]): number {
 
 /**
  * Selektory arkuszy produktu, w których żeton występuje — powiązanie żetonu
- * z komponentami.
- *
- * Przegląd idzie po arkuszach wczytanych do dokumentu. Arkusz z obcego źródła
- * odmawia dostępu do swoich reguł i rzuca wyjątkiem — taki arkusz pomijamy,
- * zamiast przerywać cały przegląd, bo w tym produkcie arkusze są własne
- * i pominięcie dotyczy co najwyżej zasobu wstrzykniętego przez środowisko.
- *
- * @param granica górna liczba selektorów w wyniku; przegląd kończy się po niej,
- *   bo wykaz na kilkaset pozycji nie jest odpowiedzią, tylko zrzutem.
+ * z komponentami. Pomija arkusze z obcego źródła, które rzucają wyjątkiem
+ * przy odczycie reguł.
  */
 export function selektoryZetonu(nazwa: string, granica = 40): readonly string[] {
   const szukane = `var(${zmiennaZetonu(nazwa)}`;
@@ -261,8 +232,7 @@ export function selektoryZetonu(nazwa: string, granica = 40): readonly string[] 
     try {
       reguly = arkusz.cssRules;
     } catch {
-      // Arkusz spoza źródła dokumentu nie oddaje reguł. Pomijamy go w ciszy:
-      // to nie jest usterka panelu ani produktu.
+      // Arkusz spoza źródła dokumentu nie oddaje reguł, więc pomijamy go bez zgłaszania usterki.
       continue;
     }
     if (zbierzZRegul(reguly, szukane, znalezione, granica)) return znalezione;
@@ -290,8 +260,7 @@ function zbierzZRegul(
       if (regula.style.cssText.includes(szukane)) znalezione.push(regula.selectorText);
       continue;
     }
-    // Reguła grupująca (warunek motywu, punkt łamania, warstwa) niesie własne
-    // reguły — wchodzimy w nie, zamiast je pomijać.
+    // Reguła grupująca niesie własne reguły zagnieżdżone — wchodzimy w nie, zamiast je pomijać.
     const zagniezdzone = (regula as CSSGroupingRule).cssRules as CSSRuleList | undefined;
     if (zagniezdzone !== undefined && zbierzZRegul(zagniezdzone, szukane, znalezione, granica)) {
       return true;

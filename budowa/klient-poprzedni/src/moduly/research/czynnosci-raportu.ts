@@ -10,11 +10,8 @@ import { czyKomendaBadania, wykonajKomendeBadania } from './wywolania-komend';
 import type { StanOknaBadania } from './stan-okna-badania';
 
 /**
- * Czynności Operatora w Report Builderze.
- *
- * Jedna odpowiedzialność: kompozycja raportu i rozdział akcji panelu.
- * Materiał wejściowy pochodzi z Findings Panel — pole `findingIds` bierze
- * zaznaczenie ustaleń wspólne obu oknom przez `stan-badania`.
+ * Czynności operatora w Report Builderze: kompozycja raportu i rozdział akcji
+ * panelu na dwie drogi rdzenia.
  */
 export interface KontekstRaportu {
   stan: StanBadania;
@@ -24,7 +21,7 @@ export interface KontekstRaportu {
   przejdz(kodOkna: string): void;
 }
 
-/** Rozdziela akcję panelu na drogę własną okna i drogę generyczną. */
+/** Rozdziela akcję panelu na drogę własną okna i drogę generyczną, wspólną dla całej rodziny komend raportu. */
 export async function wykonajAkcjeRaportu(
   kontekst: KontekstRaportu,
   akcja: AkcjaBadania,
@@ -55,7 +52,7 @@ export async function wykonajAkcjeRaportu(
   await przezPanelAkcji(kontekst, akcja);
 }
 
-/** Droga generyczna: `window.action` z identyfikatorem raportu w parametrach. */
+/** Droga generyczna: `window.action` z identyfikatorem raportu w parametrach żądania tego całego okna panelu. */
 async function przezPanelAkcji(kontekst: KontekstRaportu, akcja: AkcjaBadania): Promise<void> {
   const { stan, odpowiedz } = kontekst;
   if (stan.idOkna() === '') {
@@ -73,29 +70,13 @@ async function przezPanelAkcji(kontekst: KontekstRaportu, akcja: AkcjaBadania): 
     odpowiedz.pokaz(opisOdmowyBledu(`Akcja „${akcja.nazwa}"`, wynik.blad, wynik.nieznanyTyp), false);
     return;
   }
-  // Zdanie mówi o wyniku oddanym przez rdzeń, nie o wykonaniu akcji: rdzeń
-  // kwituje sukcesem samo przyjęcie zgłoszenia. Odmowę braku wykonawcy
-  // pokazuje gałąź wyżej, słowami rdzenia.
+  // Zdanie mówi o wyniku oddanym przez rdzeń, nie o wykonaniu akcji: rdzeń kwituje samo przyjęcie.
   odpowiedz.pokaz(`Rdzeń oddał wynik akcji „${akcja.nazwa}".`, true);
 }
 
 /**
- * Złożenie raportu; przycisk kreatora zostaje czynny przez cały czas.
- *
- * Rdzeń ma dwie drogi budowy, a rozstrzyga o nich redakcja:
- * `research.report.build` z polem `sections` składa raport z samych podanych
- * sekcji i odkłada `findingIds` na bok; to samo żądanie bez pola `sections`
- * woła kanał modelu po sekcję nadrzędną, a po niej idzie sekcja na każde
- * zaznaczone ustalenie. Okno nie obchodzi tej reguły po swojej stronie —
- * nazywa ją Operatorowi, żeby zaznaczenie ustaleń nie znikało bez słowa.
- *
- * Droga modelu kończy się sukcesem także wtedy, gdy model nic nie powiedział:
- * bez czynnego logowania do programu `claude` budowa wraca ze `status: "ok"`,
- * raport zostaje zapisany, a treścią sekcji nadrzędnej jest komunikat procesu
- * kanału. Rdzeń zbiera z kanału same fragmenty `text`, więc odpowiedź modelu
- * i komunikat jego procesu docierają tą samą drogą i jako ta sama treść.
- * Czynność nie orzeka o tym po napisie — skutek nazywa `skutek-zlozenia.ts`,
- * z odpowiedzi.
+ * Złożenie raportu; przycisk kreatora zostaje czynny przez cały czas, bo
+ * rdzeń ma dwie drogi budowy, rozstrzygane przez redakcję.
  */
 export async function zlozRaport(kontekst: KontekstRaportu): Promise<void> {
   const { stan, kreator, odpowiedz } = kontekst;
@@ -106,9 +87,7 @@ export async function zlozRaport(kontekst: KontekstRaportu): Promise<void> {
     return;
   }
   const ustalenia = stan.wybraneUstalenia.wybrane();
-  // Wiersze puste nie liczą się do niczego: kreator dokłada jeden przy każdym
-  // otwarciu, więc licząc wiersze zamiast sekcji okno przepuszczałoby budowę
-  // pustego dokumentu i kwitowało ją sukcesem.
+  // Wiersze puste nie liczą się do niczego, bo kreator dokłada jeden przy każdym otwarciu formularza.
   const sekcje = kreator.sekcje.zebrane();
   if (ustalenia.length === 0 && sekcje.length === 0) {
     kreator.stan.blad(
@@ -116,9 +95,7 @@ export async function zlozRaport(kontekst: KontekstRaportu): Promise<void> {
     );
     return;
   }
-  // Komunikat czekania nazywa drogę, którą pójdzie rdzeń, a nie skutek, którego
-  // jeszcze nie ma: bez czynnego logowania rdzeń streszczenia modelu nie
-  // dostarcza.
+  // Komunikat czekania nazywa drogę, którą pójdzie rdzeń, a nie skutek, którego jeszcze nie ma.
   kreator.stan.ladowanie(
     sekcje.length === 0
       ? 'Składanie raportu — rdzeń woła kanał modelu po streszczenie zaznaczonych ustaleń…'
@@ -136,26 +113,18 @@ export async function zlozRaport(kontekst: KontekstRaportu): Promise<void> {
     return;
   }
   stan.wchlonRaport(wynik.wynik.report);
-  // Redakcja przejmuje sekcje potwierdzone przez rdzeń — razem z sekcjami,
-  // które rdzeń napisał sam, i z wiązaniem sekcja↔ustalenia. Bez tego kolejne
-  // złożenie wysyłałoby zastane wiersze kreatora i wycierało to, co rdzeń
-  // dopiero co zbudował.
+  // Redakcja przejmuje sekcje potwierdzone przez rdzeń wraz z wiązaniem sekcja i ustalenia.
   kreator.sekcje.wczytaj(wynik.wynik.report.sections ?? []);
   kreator.stan.gotowe();
   kreator.zamknij();
-  // Zdanie o skutku powstaje z raportu, który wrócił, porównanego
-  // z zamówieniem — patrz `skutek-zlozenia.ts`. Liczby policzone przed
-  // wysłaniem nie wystarczą: nie mówią nic o tym, co rdzeń dopisał sam.
+  // Zdanie o skutku powstaje z raportu, który wrócił, porównanego z zamówieniem, nie z liczby wysłanej.
   const skutek = opisZlozenia(wynik.wynik.report, sekcje, ustalenia);
   odpowiedz.pokaz(skutek.zdanie, skutek.udany);
 }
 
 /**
- * Trzy stany podglądu raportu: pytam, mam dokument, nie mam czego pokazać.
- *
- * Zdanie pustki dobiera `pustka-okien.ts`: przy niewskazanym oknie badania
- * `research.report.build` odmawia i żadna z dwóch dróg budowy nie ruszy, więc
- * tłumaczenie tam reguły dwóch dróg myliłoby Operatora.
+ * Trzy stany podglądu raportu: pytam, mam dokument, nie mam czego pokazać
+ * przy braku okna tego badania.
  */
 export function ustawStanRaportu(kontekst: KontekstRaportu): void {
   const { stan, okno } = kontekst;
@@ -175,14 +144,10 @@ export function ustawStanRaportu(kontekst: KontekstRaportu): void {
 }
 
 /**
- * Tekst swobodny okna przekazywany komendom bez własnego formularza.
- *
- * Żądanie składane bez wskazania Operatora wracałoby odmową walidacji, z której
- * nic dla niego nie wynika. Ten jeden krok mówi, skąd okno bierze treść — i gdy
- * jej nie ma, `wywolania-komend.ts` nazywa brak, zamiast wysyłać puste pole.
+ * Tekst swobodny okna przekazywany komendom bez własnego formularza, bez
+ * wskazania nazywanego brakiem.
  */
 function tekstDlaKomendy(_kontekst: KontekstRaportu): string {
-  // Kreator raportu nie ma pola swobodnego; komendy tej rodziny pracują na
-  // raporcie bieżącym, którego wskazanie niesie stan badania.
+  // Kreator raportu nie ma pola swobodnego; komendy tej rodziny pracują na raporcie bieżącym.
   return '';
 }

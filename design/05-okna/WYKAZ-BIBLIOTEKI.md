@@ -1,4 +1,4 @@
-# Wykaz biblioteki — 474 składników
+# Wykaz biblioteki — 475 składników
 
 Warstwa wspólna to trzynaście arkuszy. Okno składa się WYŁĄCZNIE z tych klas.
 Arkusze do wpięcia w oknie wejściowym: fonty.css, zetony.css, ruch.css, fundament.css, komponenty.css.
@@ -9,7 +9,7 @@ Arkusze do wpięcia w oknie wejściowym: fonty.css, zetony.css, ruch.css, fundam
 .dn-kod--wiersz .dn-separator .dn-separator--na-plotnie .dn-separator--pionowy .dn-separator--znak .dn-sr-only
 ```
 
-## komponenty.css — 289
+## komponenty.css — 290
 ```
 .dn-akcje .dn-akcje--poboczne .dn-akcje-tekst .dn-akcje-tekst--blad .dn-alert .dn-alert--blad
 .dn-alert--info .dn-alert--ostrzezenie .dn-alert--sukces .dn-alert--wstega .dn-alert-tresc .dn-alert-znak
@@ -57,9 +57,9 @@ Arkusze do wpięcia w oknie wejściowym: fonty.css, zetony.css, ruch.css, fundam
 .dn-wejscie-kaskada .dn-wersja .dn-wersja-akcje .dn-wpis .dn-wpis--czlowiek .dn-wpis--inteligencja
 .dn-wpis--pracuje .dn-wpis--system .dn-wpis-godzina .dn-wpis-medalion .dn-wpis-nadawca .dn-wpis-tozsamosc
 .dn-wpis-tresc .dn-wybor .dn-wybor--blokowy .dn-wybor--pole .dn-wybor-nazwa .dn-wybor-opis
-.dn-wykaz-cichy .dn-wykaz-modulu .dn-wykaz-modulu-poz .dn-zakladka .dn-zakladki .dn-zakladki--bez-kreski
-.dn-zakladki--pigulki .dn-zakladki--wybor .dn-zakladki--zawijane .dn-zazn .dn-zestawienie .dn-zestawienie--cichy
-.dn-zestawienie-pole
+.dn-wykaz-cichy .dn-wykaz-modulu .dn-wykaz-modulu-poz .dn-wykaz-modulu-poz--dzialanie .dn-zakladka .dn-zakladki
+.dn-zakladki--bez-kreski .dn-zakladki--pigulki .dn-zakladki--wybor .dn-zakladki--zawijane .dn-zazn .dn-zestawienie
+.dn-zestawienie--cichy .dn-zestawienie-pole
 ```
 
 ## menu.css — 1

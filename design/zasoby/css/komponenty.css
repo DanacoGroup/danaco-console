@@ -2046,12 +2046,15 @@ label.dn-pasek-szukaj:focus-within {
    oznacza się stan włączony. Ikony wszystkich wierszy zaczynają się od lewej,
    bez rezerwowanej kolumny z przodu (rozstrzygnięcie Właściciela 2026-08-20).
    Kolejność w wierszu: ikona · etykieta · skrót · znacznik. */
+/* Znacznik wyboru niesie barwę sygnału niezależnie od pojemnika: ta sama rola
+   w menu, w popoverze i w wykazie. Reguły niżej dokładają wyłącznie rozmieszczenie
+   właściwe dla menu. */
+.ptaszek { color: var(--dn-sygnal); }
 .sta-menu-poz .ptaszek {
   order: 3;
   flex: none;
   width: var(--dn-wym-ikona-sm);
   text-align: right;
-  color: var(--dn-sygnal);
 }
 /* Wiersz bez skrótu: znacznik sam dosuwa się do prawej krawędzi. */
 .sta-menu-poz:not(:has(.skrot)) .ptaszek { margin-left: auto; }
@@ -3429,6 +3432,13 @@ button.dn-link {
 /* Nota kończy wiersz i sama się do niego dosuwa — dosunięcie należy do wiersza,
    przepis pisma do `.dn-meta`. */
 .dn-wykaz-modulu-poz > .dn-meta { margin-left: auto; }
+
+/* Wiersz zamykający wykaz czynnością, nie daną. Kreska oddziela go od wierszy
+   z danymi — bez niej przycisk czyta się jak kolejna pozycja wykazu. */
+.dn-wykaz-modulu-poz--dzialanie {
+  border-top: 1px solid var(--dn-obrys-subtelny);
+  padding-top: var(--dn-od-2);
+}
 
 /* Dosunięcie do końca pasa dla wszystkiego, co notą nie jest — plakietki stanu,
    żetonu, przycisku. Wcześniej te elementy nosiły klasę `meta`, przez co brały

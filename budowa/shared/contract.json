@@ -47038,6 +47038,12 @@
           "typ": "bool",
           "wymagane": false,
           "opis": "Wymus rozpoznanie pisma, nawet gdy dokument ma warstwe tekstowa"
+        },
+        {
+          "nazwa": "preprocess",
+          "typ": "bool",
+          "wymagane": false,
+          "opis": "Czy poddac obraz obrobce wstepnej przed rozpoznaniem"
         }
       ],
       "wynik": [

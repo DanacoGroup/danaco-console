@@ -310,3 +310,49 @@ func wierszProgramu(wydruk, program string) string {
 	}
 	return ""
 }
+
+// TestPolecenieObcegoMenedzeraNieWchodziDoWarstwyApt odtwarza usterkę, przez którą
+// prowizjonowanie serwera przerywało się przed warstwami Go, npm, snap i mowy.
+// Pole `cargo install typos-cli` składa się z członów o kształcie nazwy pakietu,
+// więc sito kształtu przepuszczało je do warstwy apt, a rozbicie na spacjach dawało
+// programowi apt nazwy `install` i `typos-cli`, których dystrybucja nie zna.
+func TestPolecenieObcegoMenedzeraNieWchodziDoWarstwyApt(t *testing.T) {
+	pozycja := ZaleznoscZewnetrzna{}
+	pozycja.Narzedzie.Program = "typos"
+	pozycja.Narzedzie.Pakiet = "cargo install typos-cli"
+
+	if warstwa := WarstwaZaleznosci(pozycja); warstwa != WarstwaObowiazkowaRecznie {
+		t.Fatalf("polecenie obcego menedżera trafiło do warstwy %q zamiast %q",
+			warstwa, WarstwaObowiazkowaRecznie)
+	}
+}
+
+// TestPodpowiedzZdaniemNieWchodziDoWarstwyApt odtwarza drugą połowę tej samej usterki:
+// podpowiedź zapisana zdaniem rozbijała się na spacjach na słowa języka polskiego.
+func TestPodpowiedzZdaniemNieWchodziDoWarstwyApt(t *testing.T) {
+	for _, pole := range []string{
+		"środowisko uruchomieniowe Javy (default-jre) wraz z wydaniem Apache Tika w /opt/tika",
+		"hunspell wraz ze słownikiem języka (hunspell-pl, hunspell-en-us)",
+		"typst (jeden plik wykonywalny z wydania projektu)",
+	} {
+		pozycja := ZaleznoscZewnetrzna{}
+		pozycja.Narzedzie.Pakiet = pole
+		if warstwa := WarstwaZaleznosci(pozycja); warstwa != WarstwaObowiazkowaRecznie {
+			t.Errorf("podpowiedź zdaniem trafiła do warstwy %q zamiast %q: %s",
+				warstwa, WarstwaObowiazkowaRecznie, pole)
+		}
+	}
+}
+
+// TestWykazNazwPakietowZostajeWWarstwieApt pilnuje, że zawężenie nie zabrało warstwie apt
+// pozycji, które prowizjonowanie ma postawić samo, wraz z poleceniem pip mającym własną gałąź.
+func TestWykazNazwPakietowZostajeWWarstwieApt(t *testing.T) {
+	for _, pole := range []string{"ffmpeg", "tesseract-ocr tesseract-ocr-pol", "pip install ruff"} {
+		pozycja := ZaleznoscZewnetrzna{}
+		pozycja.Narzedzie.Pakiet = pole
+		if warstwa := WarstwaZaleznosci(pozycja); warstwa != WarstwaObowiazkowa {
+			t.Errorf("pozycja apt trafiła do warstwy %q zamiast %q: %s",
+				warstwa, WarstwaObowiazkowa, pole)
+		}
+	}
+}

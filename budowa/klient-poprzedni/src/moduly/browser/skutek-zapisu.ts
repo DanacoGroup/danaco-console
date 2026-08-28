@@ -12,21 +12,8 @@ import { nazwaRodzaju, type RodzajPrzechwycenia } from './material-sesji';
 
 /**
  * Zdania o skutku czynności modułu Browser — budowane z odpowiedzi rdzenia,
- * nigdy z zamówienia, które okno wysłało.
- *
- * Jedna odpowiedzialność: przekład tego, co wróciło z komendy, na zdanie dla
- * Operatora. Stoi osobno od plików czynności, bo tamte prowadzą rozmowę
- * z rdzeniem, a to ocenia jego odpowiedź (wzór: `assistant/skutek-sterowania.ts`).
- *
- * Zdanie zbudowane z flagi żądania twierdziłoby o rzeczy, której w odpowiedzi
- * może nie być. Rdzeń pobiera dziś stronę biblioteką `net/http`
- * (`przegladarka_pobieranie.go`) i zostawia `screenshotRef` pusty; zdanie czyta
- * to pole, więc mówi prawdę i dziś, i po dobudowie zrzutów.
- * Tak samo z wartością pola — `trim()` przeglądarki i `strings.TrimSpace`
- * rdzenia to dwie różne funkcje: JavaScript zdejmuje U+FEFF, a Go go zostawia;
- * odwrotnie Go zdejmuje U+0085 (NEL), a JavaScript nie. Adres, kod i nazwa
- * jednoznaczna jadą do rdzenia jako identyfikator, a o tym, co się zapisało,
- * rozstrzyga wyłącznie odpowiedź.
+ * nigdy z zamówienia, które okno wysłało. Jedna odpowiedzialność: przekład
+ * tego, co wróciło z komendy, na zdanie dla operatora.
  */
 export interface Skutek {
   /** Zdanie dla Operatora — wiersz odpowiedzi okna. */
@@ -77,12 +64,9 @@ export function skutekZrzutu(migawka: BrowserSnapshot): Skutek {
 }
 
 /**
- * Pozycja materiału sesji — nazwana tym, co rdzeń w migawce naprawdę oddał.
- *
- * Przechwycenie zamawia i zrzut ekranu, i źródło strony, a wraca z tym, co
- * rdzeń ma. Zdanie nazywa więc rodzaj rozpoznany po odpowiedzi i osobno mówi
- * o zamówionym zrzucie, którego nie było — bez tego Operator zobaczyłby
- * w wykazie „archiwum" i nie wiedziałby, czemu nie „zrzut".
+ * Pozycja materiału sesji — nazwana tym, co rdzeń w migawce naprawdę oddał,
+ * nie tym, co przechwycenie zamówiło. Zdanie osobno mówi o zamówionym
+ * zrzucie, którego w odpowiedzi nie było.
  */
 export function skutekPrzechwycenia(
   migawka: BrowserSnapshot,
@@ -105,10 +89,8 @@ export function skutekPrzechwycenia(
 
 /**
  * Automatyka zapisana w rdzeniu — nazwa i liczba kroków brane z definicji,
- * którą rdzeń oddał, nie z formularza okna.
- *
- * Liczba kroków ma znaczenie osobne: definicja przyjęta z krokami odrzuconymi
- * jest scenariuszem, który nic nie zrobi, a samo „zapisano" tego nie pokazuje.
+ * którą rdzeń oddał, nie z formularza okna. Definicja przyjęta z krokami
+ * odrzuconymi jest scenariuszem, który nic nie zrobi.
  */
 export function skutekZapisuAutomatyki(
   automatyka: AutomationWorkflow,
@@ -134,7 +116,7 @@ export function skutekZapisuAutomatyki(
   };
 }
 
-/** Harmonogram zapisany w rdzeniu — cykliczność brana z wiersza zwrotnego. */
+/** Harmonogram zapisany w rdzeniu — cykliczność brana zawsze z wiersza zwrotnego, nie z pola formularza okna. */
 export function skutekHarmonogramu(harmonogram: AutomationSchedule, zamowionyCron: string): Skutek {
   const cron = (harmonogram.cron ?? '').trim();
   if (cron !== zamowionyCron) {
@@ -153,7 +135,7 @@ export function skutekHarmonogramu(harmonogram: AutomationSchedule, zamowionyCro
   };
 }
 
-/** Źródło zapisane w rdzeniu — adres brany z wiersza, który wrócił. */
+/** Źródło zapisane w rdzeniu — adres brany z wiersza, który wrócił w odpowiedzi, nie z pola formularza. */
 export function skutekZapisuZrodla(zrodlo: BrowserSource, zamowiony: string): Skutek {
   if (zrodlo.url !== zamowiony) {
     return {
@@ -166,7 +148,7 @@ export function skutekZapisuZrodla(zrodlo: BrowserSource, zamowiony: string): Sk
   return { zdanie: `Źródło ${zrodlo.url} zapisane w rdzeniu (${zrodlo.id}).`, udany: true };
 }
 
-/** Notatka zapisana w rdzeniu — treść, powiązanie i cytat brane z wiersza zwrotnego. */
+/** Notatka zapisana w rdzeniu — treść, powiązanie i cytat brane zawsze z wiersza zwrotnego, nie z formularza. */
 export function skutekZapisuNotatki(notatka: BrowserNote, zamowione: TrescNotatki): Skutek {
   const rozjazdy: string[] = [];
   if (notatka.content !== zamowione.tresc) rozjazdy.push('treść notatki');
@@ -187,7 +169,7 @@ export function skutekZapisuNotatki(notatka: BrowserNote, zamowione: TrescNotatk
   return { zdanie: `Notatka ${notatka.id} zapisana w rdzeniu${dopisekNotatki(notatka)}.`, udany: true };
 }
 
-/** Co notatka niesie po zapisie — z wiersza zwrotnego, nie z formularza. */
+/** Co notatka niesie po zapisie w rdzeniu — brane z wiersza zwrotnego odpowiedzi, nie z formularza okna. */
 function dopisekNotatki(notatka: BrowserNote): string {
   const czesci: string[] = [];
   if ((notatka.sourceId ?? '') !== '') czesci.push(`ze źródłem ${notatka.sourceId ?? ''}`);
@@ -197,12 +179,8 @@ function dopisekNotatki(notatka: BrowserNote): string {
 
 /**
  * Pytanie zadane w oknie rozmowy — sprawdzane po wiadomości, którą rdzeń
- * założył, a nie po tym, że w ogóle odpowiedział.
- *
- * `message.send` oddaje wiersz wiadomości wraz z oknem; wiadomość zapisana
- * w cudzym oknie znaczy, że pytanie o zaznaczony fragment poszło nie tam, gdzie
- * Operator je zadał — i wtedy zdanie o „przyjęciu przez okno rozmowy" byłoby
- * prawdą o czymś innym niż to okno.
+ * założył, a nie po tym, że w ogóle odpowiedział. Wiadomość zapisana w cudzym
+ * oknie znaczy, że pytanie poszło nie tam, gdzie operator je zadał.
  */
 export function skutekPytania(wiadomosc: Message, zamowioneOkno: string): Skutek {
   if (wiadomosc.windowId !== zamowioneOkno) {
@@ -221,12 +199,7 @@ export function skutekPytania(wiadomosc: Message, zamowioneOkno: string): Skutek
 
 /**
  * Adnotacja spłaszczona do PNG i dołączona do rozmowy — oceniana po tym, co
- * rdzeń oddał w polu `attachments`, nie po tym, że okno obraz wysłało.
- *
- * `message.send` przepisuje załączniki do zakładanej wiadomości i oddaje ją
- * w odpowiedzi, więc rozbieżność jest widoczna wprost: wiadomość przyjęta bez
- * obrazu znaczy, że w rozmowie stoi sam opis adnotacji, a zdanie „adnotacja
- * dołączona" mówiłoby o rysunku, którego rdzeń nie zapisał.
+ * rdzeń oddał w polu załączników, nie po tym, że okno obraz wysłało.
  */
 export function skutekAdnotacji(wiadomosc: Message, zamowioneOkno: string, obraz: string): Skutek {
   if (wiadomosc.windowId !== zamowioneOkno) {
@@ -252,13 +225,8 @@ export function skutekAdnotacji(wiadomosc: Message, zamowioneOkno: string, obraz
 }
 
 /**
- * Przeniesienie kompletu kontekstu — oceniane po polu `transferred` i po module
- * okna, które wróciło, a nie po kodzie, który okno wysłało.
- *
- * `czynnosc` nazywa, co przeniesiono („Przekazano 3 źródła"), bo tego rdzeń nie
- * oddaje: `ContextTransferResponse` niesie okno docelowe i znacznik przeniesienia,
- * nie zawartość kompletu. Zdanie mówi więc osobno, co wysłano, i osobno, co
- * potwierdził rdzeń.
+ * Przeniesienie kompletu kontekstu — oceniane po znaczniku przeniesienia
+ * i module okna, które wróciło w odpowiedzi, a nie po tym, co okno wysłało.
  */
 export function skutekPrzekazania(
   odpowiedz: ContextTransferResponse,

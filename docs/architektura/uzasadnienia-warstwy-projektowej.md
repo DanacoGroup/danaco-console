@@ -629,3 +629,9 @@ modele.css, inaczej pola dm-* byłyby bez oprawy.
 Podział wobec pliku apps.css idzie wzdłuż odpowiedzialności: tamten arkusz
 opisuje ramę modułu i ramę okna, ten arkusz opisuje wnętrza okien. Barwy
 biorą się wyłącznie z żetonów warstwy motyw/.
+
+## budowa/klient-poprzedni/src/moduly/assistant/assistant.css
+Plik nie zna ani jednej barwy zapisanej wprost — wszystkie wartości pochodzą
+z żetonów motywu. Kontrolki formularza modułu pochodzą z
+modele/kontrolki-formularza, więc moduł wciąga też arkusz modele.css, inaczej
+pola dm-* byłyby bez oprawy.

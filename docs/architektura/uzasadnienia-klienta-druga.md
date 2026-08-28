@@ -7577,3 +7577,8 @@ miałoby czego znaczyć.
 Liczby w opisie zmiany są policzone z treści zmiany, nie oszacowane: tyle znaków stało przed,
 tyle stoi po. Bez nich określenie zmiany modelu nie mówi, czy chodzi o przecinek, czy
 o przepisanie akapitu.
+
+## budowa/klient-poprzedni/src/sterowanie/panel-sterowania.ts
+Każde wywołanie komponujące komplet buduje osobny stan, osobne sterowania i osobne subskrypcje, domknięte na identyfikatorze swojego okna. Dwa komplety otwarte obok siebie nie mają wspólnej zmiennej: zmiana w jednym idzie komendą aktualizacji okna z identyfikatorem tego okna, a potwierdzenie — odpowiedź i zdarzenie zmiany okna — trafia wyłącznie do stanu okna o tym identyfikatorze. Wspólny pozostaje jedynie wykaz kanałów modelu: katalog wyboru, nie ustawienie okna.
+
+Rejestr ekspertów powstaje w miejscu, wzorem rejestru modułów wiersz wyżej, bo jest katalogiem wyboru czytanym z rdzenia, nie stanem okna, więc nie ma po co przeciągać go przez umowę kompletu. Rozesłanie wyboru na całą kartę sesji idzie osobną komendą ustawienia kanału modelu z identyfikatorem sesji — to jedyna jej zdolność, której żądanie aktualizacji okna nie ma.

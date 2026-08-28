@@ -1,21 +1,25 @@
 package konfig
 
-// Pochodzenie mówi, skąd wzięła się wartość rozstrzygnięta.
+// Pochodzenie mówi, skąd wzięła się wartość rozstrzygnięta: z zapisu,
+// z wartości domyślnej albo z braku definicji i zapisu.
 type Pochodzenie string
 
-// Wartości Pochodzenie.
+// Wartości typu Pochodzenie, obejmujące pochodzenie zapisu, wartości
+// domyślnej oraz braku definicji i zapisu.
 const (
-	// Wartość zapisana na poziomie zasięgu wskazanym w wyniku.
+	// Wartość zapisana na poziomie zasięgu wskazanym w wyniku rozstrzygnięcia;
+	// jest to najczęstsze pochodzenie zwracanej wartości.
 	PochodzenieZapis Pochodzenie = "zapis"
-	// Wartość domyślna z rejestru definicji — brak zapisu na którymkolwiek
-	// z ośmiu poziomów.
+	// Wartość domyślna z rejestru definicji, zwracana przy braku zapisu na
+	// którymkolwiek z ośmiu poziomów zasięgu.
 	pochodzenieDomyslna Pochodzenie = "domyslna"
-	// Klucz bez definicji i bez zapisu. Odczyt nie jest błędem — zwracana jest
-	// wartość pusta.
+	// Klucz bez definicji i bez zapisu w żadnym z poziomów zasięgu; odczyt
+	// nie jest błędem, zwracana jest wartość pusta.
 	PochodzenieNieznane Pochodzenie = "nieznane"
 )
 
-// Wynik to rozstrzygnięcie jednego ustawienia wraz ze wskazaniem źródła.
+// Wynik to rozstrzygnięcie jednego ustawienia wraz ze wskazaniem źródła,
+// z którego pochodzi zwrócona wartość.
 type Wynik struct {
 	Klucz        string
 	Wartosc      string
@@ -28,16 +32,14 @@ type Wynik struct {
 	Objasnienie  string      // opis z rejestru definicji
 }
 
-// Rozstrzygacz rozstrzyga ustawienia po dziewięciu poziomach zasięgu.
+// Rozstrzygacz rozstrzyga ustawienia po dziewięciu poziomach zasięgu,
+// sięgając po zapis, a w jego braku po wartość domyślną.
 type Rozstrzygacz struct {
 	zrodlo  Zrodlo
 	rejestr *Rejestr
 
-	// rozglos jest drugą stroną tej samej drogi: `Rozstrzygnij` odpowiada
-	// pytającemu, rozgłośnia zawiadamia nasłuchującego (rozgloszenie.go).
-	// Obie liczą wartość tym samym rozstrzyganiem z tego samego źródła, więc
-	// drugiej prawdy o nastawie nie ma. Wartość zerowa jest zdatna do
-	// pracy, więc rozstrzygacz zbudowany bez nasłuchów niczego nie kosztuje.
+	// rozglos jest drugą stroną drogi Rozstrzygnij, zawiadamiającą
+	// nasłuchujących w rozgloszenie.go.
 	rozglos rozglosnia
 }
 
@@ -54,7 +56,8 @@ func Nowy(zrodlo Zrodlo, rejestr *Rejestr) *Rozstrzygacz {
 	return &Rozstrzygacz{zrodlo: zrodlo, rejestr: rejestr}
 }
 
-// Rejestr zwraca rejestr definicji użyty przez rozstrzygacz.
+// Rejestr zwraca rejestr definicji użyty przez rozstrzygacz do wyznaczenia
+// wartości domyślnych ustawień.
 func (r *Rozstrzygacz) Rejestr() *Rejestr {
 	if r == nil {
 		return nil
@@ -71,9 +74,8 @@ func (r *Rozstrzygacz) Rozstrzygnij(kontekst Kontekst, klucz string) Wynik {
 }
 
 // zapisy pobiera zapisane ustawienia dla adresów kontekstu. Błąd źródła nie
-// zatrzymuje rozstrzygania: wpisy odczytane mimo błędu wchodzą do rozstrzygnięcia,
-// a ustawienia bez zapisu schodzą na wartość domyślną. Błąd
-// wraca obok wyniku i służy wyłącznie diagnostyce.
+// zatrzymuje rozstrzygania: wpisy odczytane mimo błędu wchodzą do
+// rozstrzygnięcia, a ustawienia bez zapisu schodzą na wartość domyślną.
 func (r *Rozstrzygacz) zapisy(kontekst Kontekst) (map[kluczWpisu]Wpis, error) {
 	indeks := make(map[kluczWpisu]Wpis)
 	if r == nil || r.zrodlo == nil {

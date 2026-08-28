@@ -6609,3 +6609,12 @@ wartość do warstwy trwałości. Uchwyt zdejmuje ten koszt bez zdejmowania
 prawdy: nie jest drugą wartością mogącą rozjechać się ze źródłem, ponieważ
 jedyną drogą jego zmiany jest ogłoszenie ze źródła, a własnego zapisu
 uchwyt nie przyjmuje.
+
+## budowa/server/internal/konfig/rozstrzyganie.go
+Rozstrzygnij i rozgłośnia liczą wartość tym samym rozstrzyganiem z tego
+samego źródła, więc drugiej prawdy o nastawie nie ma. Wartość zerowa pola
+rozgloszenia jest zdatna do pracy, więc rozstrzygacz zbudowany bez
+nasłuchów niczego nie kosztuje.
+
+Błąd zwracany przez funkcję zapisy wraca obok wyniku rozstrzygnięcia
+i służy wyłącznie diagnostyce; nie zatrzymuje samego rozstrzygania.

@@ -6958,3 +6958,11 @@ wysłanie, zatrzymanie i wykaz wiadomości; gdyby były wybieralne, uruchomienie
 pozycji wysłania wysłałoby jej identyfikator jako operację redakcyjną i wróciło wynikiem
 wyglądającym na udany. Wiersz zostaje więc widoczny, bo rejestr go niesie, ale nie zostaje
 wybieralny, a plakietka źródła mówi, z czego wiersz pochodzi i którą komendę wskazuje.
+
+## budowa/klient-poprzedni/src/moduly/studio/przybornik-zaplecze.ts
+Zaplecze przybornika nie ma własnego stanu i nie buduje elementu interfejsu:
+jest sumą pięciu warstw wywołań, które odcinek studia wywoływał dotąd osobno.
+Składa źródła komend znakowania i operacji, schowka, mowy, osadzenia oraz
+użycia w jeden interfejs, żeby dołożenie kolejnej rodziny komend nie było
+zmianą w podpisie okna. Nazwy metod noszą przedrostki swoich rodzin, więc suma
+nie ma ani jednej kolizji nazw.

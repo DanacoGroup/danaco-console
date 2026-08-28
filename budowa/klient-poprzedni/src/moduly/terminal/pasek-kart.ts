@@ -2,14 +2,7 @@ import { elementIkony } from '../../ikony/ikony';
 import type { StanTerminala } from './stan-terminala';
 
 /**
- * Pasek kart okna Terminal Tabs — przełączanie między powłokami.
- *
- * Pasek pokazuje komplet kart, wskazuje ognisko i oddaje dwie czynności: wybór
- * i zamknięcie. Karty przypięte stoją przed zwykłymi.
- *
- * Krzyżyk jest zwykłym przyciskiem, a przypięcia pilnuje `zamknijKarte` w oknie
- * wiodącym — dzięki temu odmowa ma jedno miejsce i jeden powód widoczny
- * w stanie treści, zamiast bramy w pasku i obejścia w panelu akcji.
+ * Pasek kart okna Terminal Tabs pokazuje otwarte powłoki, wskazuje kartę aktywną i pozwala ją wybierać oraz zamykać; karty przypięte stoją przed zwykłymi.
  */
 export interface CzynnosciPaska {
   wybierz(idKarty: string): void;
@@ -53,8 +46,7 @@ export function pasekKart(stan: StanTerminala, czynnosci: CzynnosciPaska): Pasek
       zakladka.dataset['ognisko'] = String(karta.id === biezaca?.id);
       zakladka.setAttribute('aria-selected', String(karta.id === biezaca?.id));
       zakladka.textContent = karta.title ?? karta.shell;
-      // Przypięcie niesie znak z zestawu ikon platformy wraz z etykietą dla
-      // czytnika ekranu — stan karty nie jest tu przekazywany samym kształtem.
+      // Przypięcie niesie znak z zestawu ikon platformy wraz z etykietą dla czytnika ekranu.
       if (stan.czyPrzypieta(karta.id)) {
         zakladka.prepend(
           elementIkony('spinacz', { rozmiar: 14, etykieta: 'karta przypięta' }),

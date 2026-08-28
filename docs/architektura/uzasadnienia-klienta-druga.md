@@ -7146,3 +7146,9 @@ krawędzi powierzchni, nie stała wpisana w kod. Stały panel boczny zostaje
 dostępny jako wybór: przełącznik trybu stoi na pływaku, bo pływak jest zawsze
 pod ręką, a nastawa trybu jest pamiętana w rdzeniu i jest jawna oraz
 odwracalna, zgodnie z zasadą ogólną zlecenia.
+
+## budowa/klient-poprzedni/src/moduly/terminal/pasek-kart.ts
+Zamknięcie karty przypiętej jest zwykłym przyciskiem, a odmowę zamknięcia rozstrzyga
+funkcja zamknijKarte w oknie wiodącym. Dzięki temu powód odmowy ma jedno miejsce
+i jest widoczny w stanie treści, zamiast bramy sprawdzającej przypięcie w samym pasku
+oraz osobnego obejścia w panelu akcji.

@@ -7055,3 +7055,21 @@ Zapis samego profilu polityki nie zmienia, bo profil jest szablonem, więc
 uchwyty w tym pliku nie biorą nadajnika, bo brałyby go po to, żeby go nie
 użyć. Port niewypełniony nie rejestruje niczego: komendy odpowiedzą wtedy
 `isolation.unknown`, a pozostałe domeny pracują bez zmian.
+
+## budowa/server/internal/core/handlers_komponenty.go
+Adapter rodziny leży w `adapter_modul_komponenty.go`, a schemat rejestru
+w `store/migracja_059_komponenty_strony_glownej.sql`. Komend jest pięć, choć
+rodzina liczy sześć pozycji kontraktu: `component.changed` jest zdarzeniem,
+nie komendą, stoi w dziale zdarzeń kontraktu i niesie ładunek, nie parę
+żądanie-wynik, więc nie rejestruje się go w rejestrze komend, tylko wychodzi
+nadajnikiem po komendzie, która zmieniła stan. Na całą rodzinę przypada jedno
+zdarzenie, wzorem `agent.changed` i `workspace.project.changed`: założenie,
+zmiana, przypisanie i usunięcie rozgłaszają się tym samym zdarzeniem, różniąc
+się polem zmiany, więc Strefa 2 odświeża się z jednej subskrypcji. Usunięcie
+rozgłasza komponent z samym identyfikatorem, bo po usunięciu nie ma już czego
+dobrać z rejestru, tak samo jak `agent.changed` przy usunięciu agenta —
+kontrakt wymaga pola komponentu w ładunku, więc idzie tam identyfikator bytu,
+który zniknął, a nie pusty kształt bez tożsamości. Przypisanie rozgłasza się
+tylko wtedy, gdy doszło do skutku: powtórzone przypisanie niczego nie zmienia,
+a zdarzenie zmiany po czynności, która nic nie zmieniła, byłoby fałszywym
+powiadomieniem.

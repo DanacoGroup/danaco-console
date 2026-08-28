@@ -17,18 +17,9 @@ import { utworzStanyOdczytu } from './stany-odczytu';
 
 /**
  * Okno konfiguracji — szkielet: pasek punktu widzenia, kolumna kategorii,
- * formularz kategorii.
- *
- * Okno stoi na natywnym `<dialog>`, więc warstwę tła, stos okien i zamknięcie
- * klawiszem Esc daje przeglądarka, a nie własna nakładka. Wygląd bierze
- * z biblioteki `komponenty/` (`dn-modal`) — plik nie zna ani jednej barwy.
- *
- * Kategorie i pola przychodzą z katalogu rdzenia; ten plik zna wyłącznie trzy
- * obszary układu i sposób ich związania.
- *
- * Okno otwiera się natychmiast, przed odpowiedzią rdzenia. Katalog, który nie
- * dotarł, zostawia komunikat w miejscu formularza; okno pozostaje czynne,
- * a przycisk odświeżenia pozwala spytać rdzeń ponownie.
+ * formularz kategorii. Stoi na natywnym `<dialog>`, otwiera się przed
+ * odpowiedzią rdzenia; katalog, który nie dotarł, zostawia komunikat
+ * w formularzu, okno pozostaje czynne.
  */
 export interface OknoKonfiguracji {
   /** Element `<dialog>` osadzony w dokumencie. */
@@ -41,7 +32,7 @@ export interface OknoKonfiguracji {
   rozlacz(): void;
 }
 
-/** Pas rejestrów okna konfiguracji: obszary sesji i kanały modelu. */
+/** Pas rejestrów okna konfiguracji: obszary sesji i kanały modelu, obie strony pobierane raz i współdzielone przez panele okna. */
 interface Rejestry {
   element: HTMLElement;
   obszary: StanObszarowSesji;
@@ -51,31 +42,14 @@ interface Rejestry {
 }
 
 /**
- * Składa pas dwóch rejestrów globalnych: obszarów sesji i kanałów modelu.
- *
- * Obszary sesji (`config.effective.get`, `config.session.set`). Rozstrzygnięcie
- * obszaru bierze się z rdzenia, bo tylko on zszywa je z rejestrami spoza rodziny
- * `config.*` (konta, kanały, tożsamości, dostępy). Łańcuch pojedynczych kluczy
- * zostaje po stronie klienta (`rozstrzygniecie.ts`), bo podgląd dziedziczenia
- * potrzebuje wszystkich zapisów, nie samego zwycięzcy.
- *
- * Kanały modelu (`channel.add`, `channel.update`, `channel.remove`). Panel stoi
- * w oknie konfiguracji, a nie w komplecie sterowania, bo rejestr kanałów jest
- * bytem globalnym — katalogiem wyboru, nie ustawieniem okna
- * (`sterowanie/panel-sterowania.ts`) — a komplet sterowania jest per okno:
- * wstawiony tam panel powstawałby raz na każde otwarte okno.
- *
- * Egzemplarz rejestru zakładany tutaj jest czytającą pamięcią podręczną nad
- * `channel.list`, bez ani jednej drogi zapisu, więc drugi egzemplarz to drugi
- * odczyt tej samej prawdy, nie druga prawda. Po każdym udanym zapisie panel woła
- * `rejestr.odswiez()`, co ogłasza zmianę wszystkim czytelnikom naraz — oknu
- * rozmowy, obu sterowaniom modelu, panelowi modeli i Roundtable.
+ * Składa pas dwóch rejestrów globalnych: obszarów sesji, rozstrzyganych przez
+ * rdzeń, oraz kanałów modelu, utrzymywanych jako czytająca pamięć podręczna
+ * nad `channel.list` i odświeżanych po każdym udanym zapisie.
  */
 function zlozRejestry(kanal: Kanal): Rejestry {
   const obszary = utworzStanObszarowSesji(kanal);
   const panelObszarow = utworzPanelObszarowSesji(obszary, () => void obszary.odswiez());
-  // Zaczepy stoją na tym samym stanie obszarów — jeden punkt widzenia, jeden
-  // adres zapisu; panel dokłada wyłącznie redakcję treści obszaru.
+  // Zaczepy stoją na tym samym stanie obszarów — jeden punkt widzenia, jeden adres zapisu.
   const panelZaczepow = utworzPanelZaczepow(obszary);
   const rejestrKanalow = utworzRejestrKanalow(kanal);
   const panelKanalow = utworzPanelKanalow({ kanal, rejestrKanalow });
@@ -91,10 +65,7 @@ export function utworzOknoKonfiguracji(kanal: Kanal): OknoKonfiguracji {
   const stan = utworzStanKonfiguracji(kanal);
   const punkt = utworzPasekPunktuWidzenia();
   const kategorie = utworzNawigacjeKategorii();
-  // Pozycja „Izolacja" w nawigacji zakresów prowadzi do okna punktów izolacji
-  // (rozdz. 3.2 Modelu konfiguracji). Okno tamto jest jedno na klienta
-  // i pamięta swój stan, więc otwarcie stąd trafia w ten sam egzemplarz, co
-  // otwarcie z listwy Ustawień — nie zakłada drugiego.
+  // Pozycja „Izolacja" prowadzi do jedynego okna punktów izolacji, otwierając ten sam egzemplarz.
   const panel = utworzPanelKategorii(stan, () => void otworzOknoPunktowIzolacji(kanal));
   const stany = utworzStanyOdczytu(stan, () => wczytaj());
 
@@ -130,10 +101,7 @@ export function utworzOknoKonfiguracji(kanal: Kanal): OknoKonfiguracji {
 
   kategorie.naWybor((kategoria) => panel.pokaz(kategoria));
 
-  // Jeden pasek zasięgu na okno: punkt widzenia rządzi zarówno katalogiem
-  // kluczy, jak i obszarami sesji, więc oba czytają i zapisują pod tym samym
-  // adresem. Drugi selektor byłby powieleniem, a rozjazd między nimi pokazywałby
-  // wartości z dwóch różnych zasięgów obok siebie.
+  // Jeden pasek zasięgu na okno: punkt widzenia rządzi katalogiem kluczy i obszarami sesji.
   punkt.naZmiane((wybrany) => {
     stan.ustawPunkt(wybrany);
     obszary.ustawPunkt(wybrany);
@@ -145,20 +113,13 @@ export function utworzOknoKonfiguracji(kanal: Kanal): OknoKonfiguracji {
     panelZaczepow.odswiez();
   });
 
-  /**
-   * Zmiana stanu nanosi wartości na pola już zbudowane. Formularza nie
-   * przebudowuje: zapis dokonany gdzie indziej zmienia wartość i pochodzenie,
-   * nie skład katalogu.
-   */
+  /** Zmiana stanu nanosi wartości na pola zbudowane; nie przebudowuje formularza, zmienia tylko wartość. */
   stan.naZmiane(() => {
     stany.odswiez();
     panel.odswiez();
   });
 
-  /**
-   * Pierwsze wczytanie i każde ponowne — ta sama droga: katalog, kolumna
-   * kategorii, formularz kategorii czynnej.
-   */
+  /** Pierwsze wczytanie i każde ponowne idą tą samą drogą: katalog, kategorie, formularz czynny. */
   function wczytaj(): void {
     void stan.odswiez().then(() => {
       kategorie.odswiez(stan.kategorie());
@@ -193,7 +154,7 @@ export function utworzOknoKonfiguracji(kanal: Kanal): OknoKonfiguracji {
   };
 }
 
-/** Nagłówek okna: ikona, tytuł, przycisk zamknięcia. */
+/** Nagłówek okna konfiguracji: ikona modułu, tytuł okna oraz przycisk zamknięcia osadzony po prawej stronie paska. */
 function naglowek(naZamkniecie: () => void): HTMLElement {
   const element = document.createElement('header');
   element.className = 'dn-modal-naglowek dk-okno__naglowek';

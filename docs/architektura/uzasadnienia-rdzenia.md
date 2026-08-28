@@ -7101,3 +7101,11 @@ odwrotnie, niż mówi wiadomość.
 Sprawdzian zamknięcia wynikiem pilnuje drugiej strony rozróżnienia: zamknięcie
 bez błędu nadal kończy bieg ukończeniem z wynikiem. Bez tego sprawdzianu
 naprawa mogłaby odebrać pętli ukończenie w ogóle i nikt by tego nie zauważył.
+
+## budowa/server/internal/core/handlers_konfiguracja.go
+Katalog jest sterowany danymi: nowa pozycja okna konfiguracji to nowy wiersz
+migracji, nie nowa gałąź w rdzeniu. Rdzeń nie zna ani jednego klucza z osobna,
+zna wyłącznie sposób odczytania katalogu, więc całe okno konfiguracji
+obsługuje jeden port, a nie obsługiwacz na ustawienie. Odczyt katalogu
+niczego nie zmienia, więc zdarzenia zmiany tu nie ma — wartości zmienia
+rodzina `config.*` i to ona rozgłasza zdarzenie zmiany konfiguracji.

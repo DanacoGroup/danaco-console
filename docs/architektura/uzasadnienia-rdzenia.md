@@ -7317,3 +7317,14 @@ byłoby słowem bez skutku.
 Wniesienie do rejestru żywego idzie po przestawieniu stanu w bazie, więc
 wiersz wraca do rejestru już jako czynny, a nie w stanie sprzed usunięcia.
 Ślad niepowodzenia jednej sesji zostaje w dzienniku rdzenia.
+
+## budowa/server/internal/core/adapter_zdarzenia_zaczepow.go
+Dziennik zdarzeń dostaje każde zdarzenie zaczepu wraz z surową kopertą jako
+dowodem, a tabela zamknięć dostaje zdarzenie result wraz ze stanem, który
+z niego wyprowadzono. Zapis następuje po zdarzeniu i nie steruje przebiegiem
+tury.
+
+W stanOdpowiedziZeZdarzen pole is_error rozstrzyga niezależnie od podtypu,
+ponieważ podtyp success występuje także przy is_error równym true. Tura bez
+zamknięcia — na kanale, który zamknięcia nie nadaje, na przykład echo albo
+api — kończy się stanem ukończonym.

@@ -2,27 +2,12 @@ import { przycisk } from '../../modele/kontrolki-formularza';
 import { utworzRozwiniecie } from './warstwy-translate';
 
 /**
- * Karta oceny jakości językowej w modelu MQM/DQF — warstwa czwarta
- * QA & Review Center.
- *
- * Kategorie błędu i wagi dotkliwości nie są tu wymyślone: pochodzą
- * z ujednoliconej metryki MQM/DQF, przyjętej w zawodzie jako model oceny
- * jakości przekładu. Kategorie górnego poziomu to dokładność, poprawność
- * językowa, terminologia, styl, konwencje lokalne, zgodność z rzeczywistością
- * oraz postać i skład; dotkliwości to obojętna, drobna, poważna i krytyczna
- * o wagach 0, 1, 5 i 25.
- *
- * Wynik końcowy liczy się wzorem metryki: sto minus iloraz sumy ważonej kar
- * przez liczbę słów materiału, przemnożony przez sto. Liczba słów pochodzi
- * z tekstu źródłowego widzianego w oknie — bez niej wzór nie ma mianownika
- * i karta wyniku nie podaje, zamiast podstawiać jedynkę.
- *
- * Karta liczy się w oknie i w oknie zostaje: kontrakt nie ma komendy zapisu
- * oceny ani wydania raportu, więc rdzeń o wyniku nie wie. Karta mówi to przy
- * wyniku, żeby nikt nie wziął liczby na ekranie za zapis w rdzeniu.
+ * Karta oceny jakości językowej modelu MQM/DQF na warstwie czwartej QA & Review Center.
  */
 
-/** Kategoria błędu górnego poziomu metryki MQM/DQF. */
+/**
+ * Kategoria błędu górnego poziomu metryki jakości MQM/DQF, przypisana ocenianemu fragmentowi przekładu.
+ */
 export interface KategoriaOceny {
   /** Nazwa kategorii. */
   readonly nazwa: string;
@@ -40,7 +25,9 @@ export const KATEGORIE_OCENY: readonly KategoriaOceny[] = [
   { nazwa: 'Postać i skład', opis: 'Znaczniki, symbole zastępcze, układ i długość treści.' },
 ];
 
-/** Dotkliwość błędu wraz z wagą metryki. */
+/**
+ * Dotkliwość błędu wraz z wagą metryki, jaką ta dotkliwość wnosi do liczbowego wyniku oceny tej karty.
+ */
 export interface Dotkliwosc {
   readonly nazwa: string;
   readonly waga: number;
@@ -53,14 +40,18 @@ export const DOTKLIWOSCI: readonly Dotkliwosc[] = [
   { nazwa: 'krytyczna', waga: 25 },
 ];
 
-/** Jedna liczba karty: kategoria, dotkliwość, liczba stwierdzonych błędów. */
+/**
+ * Jedna liczba karty oceny: kategoria błędu, jego dotkliwość i liczba stwierdzonych błędów tego rodzaju.
+ */
 export interface WpisOceny {
   readonly kategoria: string;
   readonly dotkliwosc: Dotkliwosc;
   readonly liczba: number;
 }
 
-/** Wynik przeliczenia karty. */
+/**
+ * Wynik przeliczenia karty oceny jakości językowej na liczbę punktów modelu MQM/DQF dla tego przekładu.
+ */
 export interface OcenaLqa {
   /** Suma ważona kar — liczba błędów przemnożona przez wagę dotkliwości. */
   readonly sumaWazona: number;
@@ -72,7 +63,9 @@ export interface OcenaLqa {
   readonly wynik: number | null;
 }
 
-/** Liczy słowa tekstu — odcinki rozdzielone białymi znakami. */
+/**
+ * Liczy słowa ocenianego tekstu jako odcinki rozdzielone białymi znakami w treści całego przekładu tekstu.
+ */
 export function liczSlowa(tekst: string): number {
   const przyciety = tekst.trim();
   if (przyciety === '') return 0;
@@ -98,7 +91,9 @@ export function policzOcene(
   return { sumaWazona, liczbaBledow, liczbaSlow, wynik: Math.max(0, Math.round(wynik * 100) / 100) };
 }
 
-/** Zdanie o wyniku — liczby wraz z tym, czego rdzeń o nich nie wie. */
+/**
+ * Zdanie o wyniku oceny: liczby punktów wraz z tym, czego rdzeń o samym tekście przekładu nie może wiedzieć.
+ */
 export function zdanieOceny(ocena: OcenaLqa): string {
   const podstawa =
     `Błędów stwierdzonych: ${String(ocena.liczbaBledow)}, suma ważona kar: ` +
@@ -115,7 +110,9 @@ export function zdanieOceny(ocena: OcenaLqa): string {
   );
 }
 
-/** Karta oceny jako element warstwy czwartej. */
+/**
+ * Karta oceny jakości językowej przekładu jako element warstwy czwartej QA & Review Center tej budowy.
+ */
 export interface KartaLqa {
   element: HTMLElement;
   /** Rozwija kartę z zewnątrz. */
@@ -215,8 +212,7 @@ function odczytajWpisy(pola: Map<string, HTMLInputElement>): readonly WpisOceny[
     for (const dotkliwosc of DOTKLIWOSCI) {
       const pole = pola.get(klucz(kategoria.nazwa, dotkliwosc.nazwa));
       const liczba = Number(pole?.value ?? '0');
-      // Wartość nieliczbowa albo ujemna schodzi do zera: pole liczbowe da się
-      // opróżnić, a pusty napis w mnożeniu dałby wynik niebędący liczbą.
+      // Wartość nieliczbowa albo ujemna schodzi do zera przy przeliczaniu pola karty.
       wpisy.push({
         kategoria: kategoria.nazwa,
         dotkliwosc,
@@ -227,7 +223,9 @@ function odczytajWpisy(pola: Map<string, HTMLInputElement>): readonly WpisOceny[
   return wpisy;
 }
 
-/** Raport oceny jako tekst do przeniesienia — kontrakt nie ma komendy eksportu. */
+/**
+ * Raport oceny jakości jako tekst gotowy do przeniesienia, bo kontrakt nie ma osobnej komendy jego eksportu.
+ */
 function zlozRaport(wpisy: readonly WpisOceny[], ocena: OcenaLqa): string {
   const wiersze = wpisy
     .filter((wpis) => wpis.liczba > 0)

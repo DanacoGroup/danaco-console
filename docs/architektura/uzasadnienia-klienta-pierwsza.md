@@ -7957,3 +7957,22 @@ udaną także dla kodu, którego katalog nie zna. Jedynym polem mówiącym, gdzi
 pole modułu w odpowiedzi okna; rozbieżność wobec zamówienia jest odmową.
 
 Etykietowanie, wgranie i usunięcie zasobu mają własne kontrolki wykonujące.
+
+## budowa/klient-poprzedni/src/moduly/design/zetony-systemu.ts
+Panel żetonów nie kopiuje ani jednej wartości: wykaz niesie wyłącznie nazwy, role
+które system wizualny nazywa, a wartość każdej czytana jest z dokumentu przy
+każdym odświeżeniu. Dzięki temu panel pokazuje stan produktu, a nie jego opis —
+przełączenie motywu zmienia tu wszystko bez linii kodu, a barwa poprawiona
+w arkuszu motywu jest widoczna natychmiast. Konsekwencja jest zamierzona: żeton
+wymieniony w wykazie, którego motyw nie definiuje, wychodzi na wierzch jako brak
+definicji zamiast zniknąć, bo rozjazd nazw między modułem a motywem ma być
+widoczny jako usterka produktu. Wykaz obejmuje żetony semantyczne, te po które
+wolno sięgać komponentom; prymitywów skali szarości tu nie ma, bo sięganie po nie
+wprost jest w tym produkcie zabronione. Moduł nie zapisuje żetonów i nie
+nadpisuje motywu: motyw jest własnością powłoki, więc trwałego zapisu nie ma
+gdzie odłożyć, i panel mówi to wprost zamiast udawać edytor. Przegląd selektorów
+arkuszy idzie po arkuszach wczytanych do dokumentu; górna liczba selektorów
+w wyniku kończy przegląd wcześniej, bo wykaz na kilkaset pozycji nie jest
+odpowiedzią, tylko zrzutem. Zagnieżdżenie reguł ma znaczenie, bo definicje
+motywu ciemnego stoją w regule warunkowej, więc przegląd płaski przeoczyłby
+połowę produktu.

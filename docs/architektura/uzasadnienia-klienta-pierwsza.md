@@ -7337,3 +7337,8 @@ Klasy modułu w `OpisRamyOkna.przedrostek` nie wnoszą wyglądu — wygląd jest
 Zatwierdzenie wartości następuje na zdarzeniu `change`, czyli po opuszczeniu pola, nie po każdym znaku. Zapis co znak zasypałby rdzeń komendami `config.set` i odbierał możliwość poprawienia wartości przed wysyłką.
 
 Wartość rodzaju `secret` nie wraca z rdzenia: pole pozostaje puste i mówi to wprost. Kontrolka przyjmuje wartość nową, nie pokazuje wartości zapisanej.
+
+## budowa/klient-poprzedni/src/konfiguracja/obszary-sesji.ts
+Plik nie buduje ani jednego elementu widoku i nie woła rdzenia — tak samo jak `zasiegi.ts`, którego jest odpowiednikiem dla drugiego kształtu wartości. Nazwy poziomu i osi bierze z `adres-ustawienia.ts`: pochodzenie obszaru składa się na `AdresUstawienia` i idzie przez `opisAdresu`, więc poziom nazywa się w oknie tak samo, jak nazywa się w łańcuchu zapisów. Wartości wyliczeń pochodzą wyłącznie z kontraktu; literału nazwy obszaru w kodzie nie ma.
+
+Rozejście katalogu roboczego z `checkedAt` równym zeru składane jest z samej konfiguracji obowiązującej, bez dotykania dysku, zgodnie z `core/sesja_konfiguracja_skladanie.go`.

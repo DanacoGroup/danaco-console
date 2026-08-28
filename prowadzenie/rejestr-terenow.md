@@ -113,7 +113,22 @@ wtedy jak wynik dobry.
 3. Przejrzyj CALY plik zapory i wypisz KAZDA petle oraz KAZDY wykaz, ktory moze
    przejsc na zerze przebiegow. Nie naprawiasz jednego miejsca, gdy sasiednie ma
    te sama dziure — ale i nie wychodzisz poza ten plik.
-4. `go test -run 'Zapor|Design' ./internal/core/` przechodzi.
+4. `go test -run 'Zapor|Design|Warsztat|Obszar' ./internal/core/` przechodzi.
+   **Poprawka Prowadzacego 28.08:** poprzedni wybieg `-run 'Zapor|Design'` NIE WYBIERAL
+   `TestWarsztatFotografiiNieWolaProcesu` — sprawdzone uruchomieniem, wybieral cztery inne
+   sprawdziany, a glownej zapory nie dotykal. Bramka terenu przepuszczala stan, w ktorym
+   pliki Design wolaja proces wlasna droga. Blad Prowadzacego, nie wykonawcy.
+
+**RUNDA DRUGA — praca zwrocona przez obie kontrole 28.08.** Zalatana zostala JEDNA petla,
+a trzy wykazy obok zostaly bez oslony — kazdy obalony uruchomieniem:
+`silnikiSpozaInstalki` (`:12-20`, petla `:120`), `wolaniaProcesu` (`:23-28`, petla `:82`)
+oraz `wolaniaWlasneProcesu` (`:31-35`, petla `:66`). Oproznienie ktoregokolwiek daje bieg
+zdany. Zaden nie ma odpowiednika `if len(...) == 0 { t.Fatal(...) }`.
+
+Do tego oslona zera nie wystarcza: pilnuje wylacznie przypadku, w ktorym zniknely WSZYSTKIE
+pliki. Pokazane uruchomieniem — 40 z 41 plikow Design przemianowanych, `imagemagick`
+i `potrace` wpisane do jednego z pozostalych, oba sprawdziany zdane. Miara ma trzymac
+PODLOGE liczby plikow albo porownanie z rzeczywistym wykazem plikow obszaru, nie samo zero.
 
 
 ### domkniecie-obrobki-wstepnej
@@ -166,6 +181,22 @@ fabrykuje roznice wewnatrz atrapy (`if z.Preprocess != nil && *z.Preprocess { te
 "tekst po obrobce wstepnej" }`), a komentarz w wierszach 62-65 oglasza, ze „mierzy skutek".
 Miare skutku na drodze produkcyjnej wnosi juz teren poprzedni. Ten sprawdzian albo znika,
 albo przestaje twierdzic o sobie rzecz nieprawdziwa.
+
+**RUNDA DRUGA — praca zwrocona przez kontrole awarii 28.08.** Kontroler miary przyjal,
+kontroler awarii obalil. Punkty 1-7 wykonane, ale naprawa wniosla nowa brame, ktora sama
+odmawia. Naprawiasz brame, nie przerabiasz calosci.
+
+| | Rzecz | Gdzie |
+|---|---|---|
+| A | `osd` przechodzi weryfikacje jezyka, choc jest danymi ORIENTACJI PISMA, nie jezykiem. `language: "osd"` konczy sie odpowiedzia UDANA z trescia bedaca smieciami i `usedOcr: true` — odczyt zmyslony podany Operatorowi jako rozpoznanie. Wykaz z `--list-langs` NIE JEST wykazem jezykow rozpoznania. | `adapter_narzedzia_dokument_tekst.go:463-478` |
+| B | Pusty odczyt `--list-langs` przy `err == nil` jest brany za prawde o maszynie: `wiersze[1:]` na wyniku jednoelementowym daje pusta mape, po czym KAZDY jezyk zostaje odrzucony. Brak dwoch oslon: wynik pusty ma dac odmowe zamiast isc dalej, a pierwszy wiersz ma byc sciety dopiero po sprawdzeniu, ze to naglowek. Prowadzenie NIE odtworzylo czestosci podanej przez kontrolera (40 przebiegow sekwencyjnych — wszystkie zdane), ale brak oslony jest w kodzie i zamienia kazde potkniecie w bledna odmowe na drodze produkcyjnej. | `:483-497` |
+| C | Czlon pusty (`["pl",""]`) daje odmowe, ktora niczego nie nazywa: tresc brzmi „nie niesie danych jezykowych  — " i konczy sie „dla ". | `:470-475` |
+| D | Przebieg odniesienia, gdy ODMOWI, po cichu opuszcza cala roznice przed/po — sprawdzian schodzi z pomiaru ROZNICY do pomiaru OBECNOSCI slowa. Ten sam gatunek co `t.Skip` z punktu 4, tyle ze bez sladu w wyjsciu drabiny. | `skutek_narzedzi_tresci_pisanej_test.go:445` i `:330` |
+| E | Zaden sprawdzian nie przejezdza pelnego lancucha `research.source.ocr` z ladunkiem `Languages: ["pl","en"]` — a to jest ladunek nazwany w kryterium 1. Dzis mierzy sie forma juz poprawna `["pol","eng"]`, czyli dokladnie tak, jak usterka przeszla poprzednio. | `adapter_modul_badania_lektura_test.go:95` |
+| F | Odmowa czlonu wewnatrz wykazu zlozonego (`"pol+xx"`) nie jest zmierzona zadnym uruchomieniem — tylko czlon pojedynczy. | `skutek_narzedzi_tresci_pisanej_test.go:379-395` |
+
+**Kryterium dodatkowe rundy drugiej:** `go test -count=20` na sprawdzianach tego obszaru
+przechodzi ZA KAZDYM przebiegiem. Sprawdzian oblewajacy przygodnie nie jest zdany.
 
 **Kryteria odbioru.**
 1. `Languages: ["pl","en"]` daje Tesseractowi wykaz, ktory ten rozumie, albo ODMOWE NAZWANA

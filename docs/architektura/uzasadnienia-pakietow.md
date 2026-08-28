@@ -7105,3 +7105,33 @@ z pierwotnych.
 Zawiadomienie o starcie procesu idzie zaraz po starcie, przed podaniem
 wejścia: gdyby tura padła w połowie, proces i tak jest już objęty uchwytem
 sesji.
+
+## budowa/server/internal/injection/pula_kont.go
+Wartość zerowa pola WyczerpaneDo oznacza, że konto nie było wyczerpane;
+kolumny `konto.stan` i `konto.wyczerpane_do` niosą ten sam stan trwale, dzięki
+czemu wyczerpanie przeżywa restart rdzenia — pula odtwarza pamięć limitu
+z bazy, zamiast zaczynać od czystej mapy.
+
+Pole utrwal, wartość nil, znaczy pulę bez trwałości, na przykład złożoną
+z katalogu profili na dysku; funkcja jest wołana poza zamkiem, bo zapis do
+bazy nie może blokować rotacji.
+
+Pole zrodlo, wartość nil, znaczy pulę nieodświeżalną. Pula sięga po źródło na
+progu tury, dzięki czemu konto dodane komendą account.* wchodzi do rotacji bez
+restartu, analogicznie do odświeżania rejestru kanałów.
+
+Wyczerpanie rozpoznane w bieżącej turze zapisało się już do bazy, ale odczyt
+z katalogu mógł je wyprzedzić, więc pula zachowuje późniejszą z dwóch chwil.
+
+PoKodzie jest drogą dla wskazania konta per okno: tura wskazana jedzie
+dokładnie tą tożsamością, a wskaźnik bieżącej rotacji pozostaje nietknięty —
+dwa okna na dwóch kontach nie przestawiają sobie nawzajem puli.
+
+Pula pusta oznacza, że Operator nie wskazał żadnej tożsamości, a wtedy program
+`claude` ma użyć tożsamości otoczenia, czyli własnego logowania na maszynie,
+bo zmienna CLAUDE_CONFIG_DIR jest wyłącznie nośnikiem tożsamości, nie
+warunkiem uruchomienia; odmowa w takiej sytuacji łamałaby zasadę bezpiecznego
+działania domyślnego.
+
+Brak utrwalacza znaczy pulę bez trwałości — pamięć limitu żyje wtedy tylko do
+restartu.

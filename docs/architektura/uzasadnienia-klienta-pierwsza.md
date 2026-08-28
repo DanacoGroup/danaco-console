@@ -8879,3 +8879,8 @@ ręcznie; inaczej okno i kolumna nawigacji pokazywałyby dwa różne moduły.
 Gdy pole wypowiedzi jest w trakcie pisania, wstrzymane zostaje wyłącznie
 przesunięcie ekranu — posunięcie asystenta już się wykonało w rdzeniu. Przejście
 nie przepada: ląduje na pasie jako jedno kliknięcie.
+## budowa/klient-poprzedni/src/moduly/agents/zrodlo-doradcy.ts
+Kontrakt nie ma osobnej rodziny komend doradcy, więc konsultacja idzie komendami okna i wiadomości oraz jednym zdarzeniem: okno konsultacji na kanale doradcy, nie na kanale eksperta, jest jedynym miejscem, w którym wybór modelu silniejszego staje się faktem po stronie rdzenia. Wysłanie pytania oddaje wiadomość przyjętą, więc czekanie na jej wynik dałoby echo pytania, nie radę. Okno konsultacji znika po odpowiedzi — zostawione wisiałoby w wykazie okien sesji jako okno bez widoku. Rada nie jest odpowiedzią eksperta: źródło oddaje treść rady razem z tożsamością doradcy i treścią zadanego pytania jako trzy osobne pola wyniku, nie jeden napis. Źródło nie ma stanu — okno konsultacji żyje wyłącznie w obrębie jednego wywołania, nic z niego nie zostaje w polu modułu.
+
+## budowa/klient-poprzedni/src/moduly/agents/zrodlo-doradcy.ts (oczekiwanie na odpowiedź)
+Fragment strumienia nie jest tu drogą: okno konsultacji zakładane jest bez strumieniowania, więc domknięta wiadomość jest jedyną postacią, której znaczenie jest pewne. Limitu czasu nie ma z tego samego powodu, co w warstwie protokołu: kontrakt go nie przewiduje, a rozłączenie klienta nie kończy pracy rdzenia. Zwrócone odwołanie zdejmuje subskrypcję wtedy, gdy odpowiedź już nie nadejdzie — bez niego nasłuch przeżyłby nieudane wysłanie pytania.

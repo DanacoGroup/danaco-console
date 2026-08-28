@@ -904,3 +904,7 @@ ciemnym panelu robił studnię, w której tekst leżał na prawie czarnym. Pole
 warunków licencji jest osadzonym tekstem ciągłym z biblioteki — własne
 zostaje wyłącznie to, czego biblioteka znać nie może: tło strefy tego okna
 i obrys odcinający je od płótna kroku.
+
+## design/zasoby/css/fundament.css
+Arkusz wymaga plików fonty.css oraz zetony.css z warstwy żetonów, niesie
+też drobne wzorce tekstowe poza wymienionymi w nagłówku.

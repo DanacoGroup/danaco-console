@@ -6,6 +6,73 @@ przyjęta. Zasady podziału opisuje [ustrój budowy](ustroj-budowy.md).
 
 ## Tereny otwarte
 
+### obrobka-wstepna-w-porcie-dokumentow
+
+| | |
+|---|---|
+| **Galaz** | `teren/obrobka-wstepna-dokumentow` z `teren/wpiecie-unpaper` — nie z `main`, bo praca zada pola `preprocess`, ktore wnosi tamten teren |
+| **Drzewo** | `~/robocze/obrobka-wstepna-dokumentow` |
+| **Wykaz plikow** | `budowa/server/internal/core/adapter_narzedzia_dokument_tekst.go` wraz ze sprawdzianami; `budowa/server/internal/core/skutek_narzedzi_tresci_pisanej_test.go` |
+| **Poza terenem** | kontrakt i jego wytwory, `adapter_modul_badania_lektura.go`, `adapter_modul_studio_cyfryzacja.go`, migracje, `prowadzenie/` |
+
+**Przedmiot.** Teren `wpiecie-unpaper` doprowadzil pola `preprocess` i `languages`
+do granicy portu: `RozpoznajPismoZrodla` przekazuje je w `shared.DocumentTextExtractRequest`
+do `Dokumenty.WyciagnijTekst`. Za ta granica pole jest jednak martwe —
+`adapterNarzedziDokumentu.WyciagnijTekst` w ogole go nie czyta i nie wola programu
+unpaper. Program jest dzis wolany wylacznie w module Studio, droga `studio.ingest.recognize`.
+
+Skutek: obrobka wstepna pozostaje nieosiagalna z drogi `document.text.extract`,
+a wiec i z `research.source.ocr`, mimo ze kontrakt i uchwyt ja niosa.
+
+**Rzeczy zmierzone, ktore skracaja prace.** `adapterNarzedziDokumentu` ma juz metode
+`wolaj` (`adapter_narzedzia_dokument.go:128`), wiec wolanie programu jest osiagalne
+bez zmiany struktury adaptera. Funkcje `argumentyCzyszczenia`, `materialWPnm`,
+`czyPnm` i `zapiszPpm` sa wolnymi funkcjami pakietu `core`, nie metodami adaptera
+Studia — nadaja sie do ponownego uzycia bez przenoszenia kodu.
+
+**Kryteria odbioru.**
+1. `WyciagnijTekst` honoruje `z.Preprocess`: przy wartosci prawdziwej material
+   przechodzi przez unpaper przed rozpoznaniem, przy falszywej i przy braku — nie.
+2. Sprawdzian mierzy ROZNICE WYNIKU rozpoznania na materiale przekrzywionym,
+   wzorem `TestObrobkaWstepnaProstujeSkosPrzedRozpoznaniem`, ktory robi to samo dla
+   drogi Studia. Sprawdzian ma isc DROGA PRODUKCYJNA przez `montaz_porty.go`,
+   nie przez atrape portu. Sprawdzian mierzacy samo wywolanie zamiast roznicy wyniku
+   jest brakiem sprawdzianu.
+3. Brak programu unpaper jest odmowa nazwana, nie cicha praca bez obrobki.
+4. `go build ./...` oraz sprawdziany pakietu `core` dotyczace tresci pisanej przechodza.
+
+
+### rama-aplikacji-w-kliencie
+
+| | |
+|---|---|
+| **Galaz** | `teren/rama-aplikacji` z `main` |
+| **Drzewo** | `~/robocze/rama-aplikacji` |
+| **Wykaz plikow** | `budowa/klient/src/rama/` (nowy katalog) wraz ze sprawdzianami; `budowa/klient/src/aplikacja.ts` (nowy); `budowa/klient/index.html` i `budowa/klient/arkusze.css` wylacznie w zakresie wpiecia ramy |
+| **Poza terenem** | `budowa/klient/src/wejscie/`, `polaczenie/`, `protokol/`; caly `design/`; rdzen; `prowadzenie/` |
+
+**Przedmiot.** Droga wejscia konczy sie komenda `environment.enter` i okno zostaje
+na ekranie na zawsze, bo nie ma dokad prowadzic. Klient bierzacy liczy 51 plikow
+i wola piec komend z tysiaca osiemdziesieciu jeden. Teren stawia RAME APLIKACJI:
+powierzchnie, w ktora droga wejscia przekazuje sterowanie po wejsciu do srodowiska.
+
+Zrodlem ksztaltu jest przyjety prototyp `design/05-okna/przeplyw/centrum-dowodzenia.html`
+wraz z opisem `docs/interfejs-uzytkownika/pakiet-pieciu-okien.md`. Rama obejmuje
+trzy strefy prototypu: szyne nawigacji, belke tytulowa i pas stanu. Zawartosc okna
+roboczego NIE nalezy do tego terenu.
+
+**Kryteria odbioru.**
+1. Po `environment.enter` droga wejscia oddaje sterowanie ramie, a scena wejscia
+   schodzi. Sprawdzian mierzy przejscie, nie sama obecnosc funkcji.
+2. Rama bierze barwy, odstepy i pismo WYLACZNIE z zetonow warstwy projektowej.
+   Zero wartosci wpisanych liczbowo — wykazane przeszukaniem z sonda dodatnia.
+3. Zadnego lancucha widocznego dla Operatora poza katalogiem tresci — tak samo,
+   jak pilnuje tego droga wejscia swoim sprawdzianem.
+4. `npm run typy`, `npm run testy` i `npm run budowanie` w `budowa/klient` przechodza.
+5. Rama nie wola zadnej komendy kontraktu poza tymi, ktore juz sa w kliencie —
+   okna modulowe to osobny teren.
+
+
 ### silnik-twarzy
 
 | | |

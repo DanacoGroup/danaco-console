@@ -7502,3 +7502,17 @@ w części angielskie i złożone — szukanie wyłącznie od początku nazwy ni
 znalazłoby pozycji po słowie wpisanym z pamięci. Liczba w zdaniu o zasięgu
 katalogu liczy się z wykazu przy każdym odświeżeniu, bo zapisanie jej wprost
 rozjeżdżałoby się z listą pozycji przy zmianie wykazu.
+
+## budowa/klient-poprzedni/src/moduly/design/inspektor-warstwy.ts
+Inspektor mówi też, czego warstwa NIE niesie: wypełnienie, obrys, efekty, więzy responsywne
+i auto-layout — warstwa kompozycji nie ma pola na żadne z nich, więc wykaz stawia je jako brak
+nazwany, zamiast pokazywać puste pola sugerujące, że wartość istnieje, tylko jest niewypełniona.
+
+Zmiana liczby idzie do zapisu kompozycji, nie do rdzenia. Do rdzenia jedzie dopiero cały układ,
+zapisem kompozycji — tak samo jak przy przeciąganiu warstwy po kanwie.
+
+Przy zaznaczeniu wielokrotnym inspektor opisuje warstwę pierwszą z wykazu i mówi o tym wprost:
+cztery liczby opisują jeden prostokąt, a nie zbiór.
+
+Pole zostawione z wpisem, którego nie da się odczytać jako liczby, zostawia wymiar bez zmiany,
+zamiast zsuwać warstwę do lewego górnego rogu.

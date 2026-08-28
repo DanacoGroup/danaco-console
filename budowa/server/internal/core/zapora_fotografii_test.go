@@ -100,6 +100,7 @@ func TestObszarDesignNieWymieniaSilnikowObrazuSpozaInstalki(t *testing.T) {
 	if err != nil {
 		t.Fatalf("nie można przejrzeć rdzenia: %v", err)
 	}
+	sprawdzonych := 0
 	for _, wpis := range wpisy {
 		nazwa := wpis.Name()
 		if wpis.IsDir() || !strings.HasSuffix(nazwa, ".go") ||
@@ -113,6 +114,8 @@ func TestObszarDesignNieWymieniaSilnikowObrazuSpozaInstalki(t *testing.T) {
 		if err != nil {
 			t.Fatalf("nie można odczytać %s: %v", nazwa, err)
 		}
+		sprawdzonych++
+
 		maly := strings.ToLower(string(tresc))
 		for _, silnik := range silnikiSpozaInstalki {
 			if strings.Contains(maly, silnik) {
@@ -121,5 +124,10 @@ func TestObszarDesignNieWymieniaSilnikowObrazuSpozaInstalki(t *testing.T) {
 					"jest wskazówką ku tej szkodzie", nazwa, silnik)
 			}
 		}
+	}
+	// Zapora, która nie przejrzała ani jednego pliku, jest zaporą, która nie broni niczego.
+	if sprawdzonych == 0 {
+		t.Fatal("zapora nie znalazła ani jednego pliku obszaru Design; sprawdź, czy nazwy " +
+			"plików nie zmieniły przedrostka — inaczej ta zapora przestała czegokolwiek pilnować")
 	}
 }

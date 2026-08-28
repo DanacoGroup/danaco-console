@@ -6,6 +6,61 @@ przyjęta. Zasady podziału opisuje [ustrój budowy](ustroj-budowy.md).
 
 ## Tereny otwarte
 
+### rama-wpieta-w-biblioteke
+
+| | |
+|---|---|
+| **Galaz** | `teren/rama-wpieta` z `main` |
+| **Drzewo** | `~/robocze/rama-wpieta` |
+| **Wykaz plikow** | `budowa/klient/src/rama/` wraz z podkatalogami; `budowa/klient/src/aplikacja.ts`; `budowa/klient/index.html`; `budowa/klient/arkusze.css`; `budowa/klient/vite.config.*` jesli zajdzie potrzeba; `budowa/klient/package.json` |
+| **Poza terenem** | `src/wejscie/`, `polaczenie/`, `protokol/`, `moduly/`; rdzen; kontrakt; **`design/` — CZYTASZ, NIE ZMIENIASZ**; `prowadzenie/` |
+
+**Rzecz, ktora ten teren naprawia.** Rama zbudowana wczesniej NIE JEST wpieta w warstwe
+projektowa — jest jej imitacja napisana od zera. Zmierzone przez prowadzenie:
+
+| | Prototyp centrum dowodzenia | Klient dzis |
+|---|---|---|
+| arkuszy stylow | **20** | 8 |
+| skryptow zachowania | **18** | **0** |
+
+Wlasciciel zbudowal biblioteke wlasnie po to, zeby ja podpiac: 27 arkuszy i 79 skryptow
+w `design/zasoby/`. Skladniki to funkcje domkniete dzialajace na ZNACZNIKU przez klasy
+i atrybuty — `pasek-stanu.js` wystawia `window.dnPasekStanu` i czyta
+`.dn-stan-tor[data-udzial]`. Kompozycja siedzi w znaczniku prototypu, zachowanie
+w skryptach, wyglad w arkuszach. Klient ma wytwarzac TEN SAM ZNACZNIK i wciagac
+TE SAME arkusze i skrypty, a nie pisac wlasnych klas.
+
+**Wina lezy po stronie prowadzenia.** Poprzednie zlecenie mowilo „trzy strefy" zamiast
+„wepnij biblioteke", a kryteria odbioru pytaly o wezly i lancuchy zamiast o zgodnosc
+obrazu z prototypem. Wykonawca zrobil dokladnie to, o co go poproszono.
+
+**Zrodlo prawdy: `design/05-okna/przeplyw/centrum-dowodzenia.html`.** Znacznik tego pliku
+jest wzorcem struktury. Bierzesz z niego uklad, nazwy klas i atrybuty, a wypelniasz
+DANYMI Z RDZENIA. Tresc przykladowa prototypu — nazwy sesji, kafle, liczby — NIE WCHODZI
+do klienta; wchodzi tam, skad rdzen odda odpowiedz, albo stan pusty.
+
+**Strefy, ktore maja stanac**, wszystkie sa w prototypie:
+pasek okna ze sterowaniem oknem, lewa szyna ikon z OSOBNA IKONA NA MODUL, panel Sesje
+i Projekty, pasmo kart, pasek narzedzi z wyszukiwaniem, obszar roboczy, pasek stanu
+z tozsamoscia Operatora i licznikami.
+
+**Kryteria odbioru — jedyne, ktore maja sens.**
+1. Klient wciaga WSZYSTKIE 20 arkuszy i WSZYSTKIE 18 skryptow, ktorych uzywa prototyp.
+   Policz je programem i przytocz liczbe.
+2. ZRZUT EKRANU przy 2560x1440 zestawiony z prototypem. Robisz go SAM, ogladasz SAM
+   i opisujesz roznice strefa po strefie. Zrzut jest dowodem; deklaracja nim nie jest.
+3. Zadna ikona modulu nie powtarza sie miedzy modulami.
+4. Zero tresci przykladowej z prototypu. Kazda wartosc pochodzi z rdzenia albo jest
+   nazwanym stanem pustym.
+5. `npm run typy` i `npm run budowanie` przechodza, a `dist/` niesie arkusze i skrypty
+   biblioteki — sprawdz, ze wytworzona strona je naprawde laduje, nie tylko `index.html`.
+
+**Pulapka do rozstrzygniecia:** skrypty biblioteki sa funkcjami domknietymi, nie modulami
+— nie maja `export`. Vite ich nie zapakuje jak modulow. Rozstrzygnij, jak je wydac
+(kopia do zasobow statycznych, wpis w `index.html`, alias w nastawach Vite) i NAZWIJ
+wybor. Warstwy projektowej NIE ZMIENIASZ — jest wlasnoscia Wlasciciela.
+
+
 ### okno-studia-w-kliencie
 
 | | |

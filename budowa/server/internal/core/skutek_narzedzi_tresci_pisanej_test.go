@@ -418,6 +418,44 @@ func TestWyciagnijTekstOdmawiaObrobkiWstepnejBezUnpapera(t *testing.T) {
 	}
 }
 
+// TestWyciagnijTekstOdmawiaObrobkiPrzedRasteryzacjaPdf wykazuje, że odmowa
+// braku unpapera na drodze PDF zapada PRZED rasteryzacją stron: gdy brakuje
+// obu programów, odmowa nazywa unpaper, a nie poppler — dowód, że rasteryzacja
+// w ogóle nie ruszyła, tak jak Studio pyta o program przed pracą.
+func TestWyciagnijTekstOdmawiaObrobkiPrzedRasteryzacjaPdf(t *testing.T) {
+	pomijBezProgramu(t, "ImageMagick", "magick")
+
+	zastaneCzyszczenie := narzedzieCzyszczeniaSkanu
+	narzedzieCzyszczeniaSkanu = zewnetrzne.Narzedzie{
+		Nazwa: zastaneCzyszczenie.Nazwa, Program: "danaco-unpaper-ktorego-nie-ma",
+		Pakiet: zastaneCzyszczenie.Pakiet,
+	}
+	t.Cleanup(func() { narzedzieCzyszczeniaSkanu = zastaneCzyszczenie })
+
+	zastanyPoppler := narzedziePdfDoObrazu
+	narzedziePdfDoObrazu = zewnetrzne.Narzedzie{
+		Nazwa: zastanyPoppler.Nazwa, Program: "danaco-pdftoppm-ktorego-nie-ma",
+		Pakiet: zastanyPoppler.Pakiet,
+	}
+	t.Cleanup(func() { narzedziePdfDoObrazu = zastanyPoppler })
+
+	zmontowany, zycie, _ := zmontujDoPomiaruSkutku(t)
+	sciezka := pdfObrazowy(t, kartkaTekstu(t, "MATERIAL"))
+
+	blad := wykonajOdmowna(t, zmontowany, zycie, shared.CommandDocumentTextExtract,
+		shared.DocumentTextExtractRequest{
+			SourcePath: wskaznik(sciezka), Preprocess: wskaznik(true),
+		})
+	if blad.Code != shared.ErrorCodeChannelUnavailable {
+		t.Fatalf("odmowa braku unpapera niesie kod %q, oczekiwano %q",
+			blad.Code, shared.ErrorCodeChannelUnavailable)
+	}
+	if !strings.Contains(strings.ToLower(blad.Message), "unpaper") {
+		t.Fatalf("odmowa nie nazywa unpapera — rasteryzacja PDF-u pobiegła przed sprawdzeniem "+
+			"jego obecności: %q", blad.Message)
+	}
+}
+
 // TestObrobkaWstepnaNieRuszaBezNastaw pilnuje, żeby program nie startował tam,
 // gdzie nikt o niego nie prosił: pozycja bez nastaw obróbki idzie do rozpoznania
 // wprost.
@@ -573,6 +611,27 @@ func kartkaTekstu(t *testing.T, tresc string) string {
 	}
 	if opis, err := os.Stat(sciezka); err != nil || opis.Size() == 0 {
 		t.Skip("pomiar niewykonany: materiał sprawdzianu nie powstał albo jest pusty")
+	}
+	return sciezka
+}
+
+// pdfObrazowy zawija obraz w jednostronicowy PDF bez warstwy tekstowej —
+// materiał, który document.text.extract musi odczytać rozpoznaniem pisma,
+// nie warstwą zapisanych znaków.
+func pdfObrazowy(t *testing.T, sciezkaObrazu string) string {
+	t.Helper()
+
+	rysownik, err := exec.LookPath("magick")
+	if err != nil {
+		t.Skipf("pomiar niewykonany: brak programu magick — nie ma czym złożyć PDF-u: %v", err)
+	}
+	sciezka := filepath.Join(t.TempDir(), "obrazowy.pdf")
+	polecenie := exec.Command(rysownik, sciezkaObrazu, sciezka)
+	if wyjscie, err := polecenie.CombinedOutput(); err != nil {
+		t.Skipf("pomiar niewykonany: nie udało się złożyć PDF-u: %v (%s)", err, wyjscie)
+	}
+	if opis, err := os.Stat(sciezka); err != nil || opis.Size() == 0 {
+		t.Skip("pomiar niewykonany: PDF sprawdzianu nie powstał albo jest pusty")
 	}
 	return sciezka
 }

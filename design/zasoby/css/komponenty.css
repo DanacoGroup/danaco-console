@@ -3896,3 +3896,87 @@ button.dn-link {
 .dn-kafel:is(:hover, :focus-within) .dn-grawer-slup:nth-child(7) { animation-delay: .48s; }
 .dn-kafel:is(:hover, :focus-within) .dn-grawer-slup:nth-child(8) { animation-delay: .56s; }
 .dn-kafel:is(:hover, :focus-within) .dn-grawer-slup:nth-child(9) { animation-delay: .64s; }
+
+/* Numer grupy w szynie nawigacji — porzadkuje kolumne na cztery odcinki
+   zamiast jednego ciagu ikon. Sam podpis, bez zmiany kolejnosci i zawartosci. */
+.dn-szyna-numer {
+  display: block;
+  width: 24px;
+  margin: var(--dn-od-2) auto 0;
+  padding: var(--dn-od-3) 0 var(--dn-od-1);
+  border-top: 1px solid var(--dn-rama-obrys);
+  font-family: var(--dn-ff-mono);
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  color: var(--dn-rama-tekst-2);
+  text-align: center;
+}
+
+/* Naglowek grupy w tasmie sesji, z linia dobiegajaca do krawedzi. */
+.dn-tasma-grupa {
+  display: flex;
+  align-items: baseline;
+  gap: var(--dn-od-2);
+  padding: var(--dn-od-4) var(--dn-od-3) var(--dn-od-2);
+  font-family: var(--dn-ff-mono);
+  font-size: var(--dn-fs-xs);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--dn-tekst-3);
+}
+.dn-tasma-grupa::after { content: ''; flex: 1; height: 1px; background: var(--dn-obrys); }
+
+/* Kroki wskazowki — cztery etapy samouczka wypisane obok zdania. */
+.dn-kroki {
+  display: flex;
+  gap: var(--dn-od-2);
+  margin-left: var(--dn-od-3);
+  font-family: var(--dn-ff-mono);
+  font-size: var(--dn-fs-xs);
+  color: var(--dn-tekst-3);
+}
+.dn-kroki b { color: var(--dn-tekst-2); font-weight: var(--dn-fw-srednia); }
+
+/* Pasek polecenia do sesji czynnej — stoi nad trescia w prawym dolnym rogu. */
+.dn-dok {
+  position: absolute;
+  right: var(--dn-od-6);
+  /* Nad plakietka prototypu, ktora stoi w tym samym rogu. */
+  bottom: var(--dn-od-12);
+  z-index: 40;
+  display: flex;
+  align-items: center;
+  gap: var(--dn-od-2);
+  padding: var(--dn-od-2);
+  background: var(--dn-panel);
+  border: 1px solid var(--dn-obrys-mocny);
+  border-radius: var(--dn-r-md);
+  box-shadow: var(--dn-cien-3);
+}
+.dn-dok input {
+  width: 230px;
+  height: 28px;
+  padding: 0 var(--dn-od-3);
+  background: var(--dn-powierzchnia);
+  border: 1px solid var(--dn-obrys);
+  border-radius: var(--dn-r-sm);
+  color: var(--dn-tekst);
+  font-family: var(--dn-ff-bazowa);
+  font-size: var(--dn-fs-base);
+  outline: none;
+  transition: width var(--dn-czas-3) var(--dn-ease), border-color var(--dn-czas-1) var(--dn-ease);
+}
+.dn-dok input:focus { width: 330px; border-color: var(--dn-sygnal); }
+
+/* Wejscie do srodowiska: napis i strzalka, jak w koncepcji. */
+.dn-wejdz-napis + .dn-strzalka-wejscia { width: 19px; height: 19px; }
+.dn-karta-srodowiska--przyrzadowa .dn-wejdz-grot {
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--dn-od-2);
+  color: var(--dn-sygnal);
+  transition: gap var(--dn-czas-2) var(--dn-ease), color var(--dn-czas-1) var(--dn-ease);
+}
+.dn-karta-srodowiska--przyrzadowa:is(:hover, :focus-within) .dn-wejdz-grot { gap: var(--dn-od-3); }
+.dn-karta-srodowiska--przyrzadowa .dn-wejdz-napis { color: inherit; }

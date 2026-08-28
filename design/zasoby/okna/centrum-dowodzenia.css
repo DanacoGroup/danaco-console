@@ -119,3 +119,11 @@
   align-items: center;
   gap: var(--dn-od-2);
 }
+
+/* Pas wskazówki bierze całą szerokość: z krokami samouczka połowa blatu
+   już nie mieści zdania, przycisku i zamknięcia w jednym wierszu. */
+.cd-strona[data-wnetrze='przyrzadowe'] .cd-start { width: 100%; flex-wrap: nowrap; }
+.cd-strona[data-wnetrze='przyrzadowe'] .cd-start > .dn-btn { margin-left: auto; }
+
+/* Pasek polecenia zaczepia się o panel główny, nie o dalszego przodka. */
+.cd-strona[data-wnetrze='przyrzadowe'] .dn-obszar-panel--glowny { position: relative; }

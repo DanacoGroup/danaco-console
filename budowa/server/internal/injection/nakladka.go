@@ -22,7 +22,7 @@ const (
 	// (--append-system-prompt). Narzędzia i zachowanie powłoki zostają.
 	TrybDopisz = "dopisz"
 	// TrybZastap podmienia prompt programu w całości, przełącznikiem
-// --system-prompt, tracąc prompt oryginalny.
+	// --system-prompt, tracąc prompt oryginalny.
 	TrybZastap = "zastap"
 )
 

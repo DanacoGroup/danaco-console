@@ -9157,3 +9157,23 @@ Wskaźnik pracy niesie tę samą prawdę, którą niesie favikon i pas dolny,
 rozwiniętą w zdanie. Wiersz pojawiający się i znikający przeskakiwałby treścią.
 
 Milczące zbudowanie dymka wbrew profilowi byłoby drugą prawdą o module.
+## budowa/klient-poprzedni/src/moduly/research/czynnosci-lektury.ts
+Dwie czynności mają dziś pokrycie w kontrakcie i obie idą nim naprawdę:
+wczytanie strony i zapis wypisu jako ustalenia z cytatem i źródłem.
+Podświetlenia trwałe, notatki na marginesie, OCR, ekstrakcja tabel,
+streszczenie źródła i stan lektury komendy nie mają, idą panelem akcji
+i wracają odmową rdzenia. Zapis wypisu jest tą samą komendą, którą wysyła
+formularz ustaleń — czytnik nie ma własnej drogi zapisu i nie potrzebuje jej
+mieć, a wypis wchodzi z powiązaniem do czytanego źródła, więc kotwica
+ustalenia sięga materiału, a nie samego napisu. Kotwica fragmentu jest
+w kontrakcie połowicznie: żądanie zapisu ustalenia ma pole kotwicy, ale byt
+ustalenia, który rdzeń oddaje, nie niesie ani numeru strony, ani zakresu
+znaków — kotwicę da się więc wysłać, a nie da się jej odczytać z powrotem,
+dopóki byt ustalenia jej nie niesie, okno nie ma jak pokazać, dokąd cytat
+sięga, więc numer strony wchodzi w treść cytatu, żeby nie przepadł. Treść
+czytnika bez pola identyfikatora pliku biblioteki nie ma czego pokazać, i to
+okno mówi wprost, zamiast pokazywać pusty czytnik i zostawiać operatora
+z domysłem, że materiał się nie wczytał. Żądanie składane bez wskazania
+operatora wracałoby odmową walidacji, z której nic dla niego nie wynika —
+ten jeden krok mówi, skąd okno bierze treść, a gdy jej nie ma, wywołanie
+komendy nazywa brak, zamiast wysyłać puste pole.

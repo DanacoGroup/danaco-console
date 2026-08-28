@@ -6958,3 +6958,1199 @@ wysłanie, zatrzymanie i wykaz wiadomości; gdyby były wybieralne, uruchomienie
 pozycji wysłania wysłałoby jej identyfikator jako operację redakcyjną i wróciło wynikiem
 wyglądającym na udany. Wiersz zostaje więc widoczny, bo rejestr go niesie, ale nie zostaje
 wybieralny, a plakietka źródła mówi, z czego wiersz pochodzi i którą komendę wskazuje.
+
+## budowa/klient-poprzedni/src/moduly/studio/przybornik-zaplecze.ts
+Zaplecze przybornika nie ma własnego stanu i nie buduje elementu interfejsu:
+jest sumą pięciu warstw wywołań, które odcinek studia wywoływał dotąd osobno.
+Składa źródła komend znakowania i operacji, schowka, mowy, osadzenia oraz
+użycia w jeden interfejs, żeby dołożenie kolejnej rodziny komend nie było
+zmianą w podpisie okna. Nazwy metod noszą przedrostki swoich rodzin, więc suma
+nie ma ani jednej kolizji nazw.
+
+## budowa/klient-poprzedni/src/moduly/studio/roznica-i-trafienia.ts
+Kontrakt komendy studio.diff.compare łączy porównanie wersji i wyszukiwanie
+wzorca w jednej odpowiedzi: pole hunks, pole matches albo oba naraz. Wyrys
+funkcji wyrysFragmentow jest przez to jeden i nie zakłada, która tablica
+przyszła — brak obu jest poprawnym wynikiem, który panel przedstawia jako
+pustkę merytoryczną, nie błąd. Rodzaj fragmentu jest daną przenoszoną do
+atrybutu data-rodzaj elementu, nie barwą ustaloną w kodzie; barwę dobiera
+arkusz stylu modułu na podstawie żetonów motywu.
+
+## budowa/klient-poprzedni/src/moduly/studio/tabela-zrodlo.ts
+Rodzina komend tabeli jest zamknięta i pokrywa cały zamówiony zakres: wstawianie
+zakłada tabelę o wskazanym rozmiarze albo ze stylu gotowego, edycja struktury
+wstawia i usuwa wiersz oraz kolumnę, scala i dzieli komórki, formatowanie
+ustawia szerokości kolumn, obramowanie, cieniowanie, wyrównanie w komórce,
+styl i powtarzanie wiersza nagłówkowego, sortowanie porządkuje zawartość,
+zamiana zamienia tekst na tabelę i odwrotnie, a wykaz oddaje tabele wraz
+z komórkami i policzonymi szerokościami. Każda czynność zmieniająca oddaje
+bilans i identyfikator zapisu w dzienniku: bilans mówi, co pominęła blokada
+fragmentu, a zapis w dzienniku daje cofnięcie pojedyncze. Panel czyta oba —
+bez tego scalenie komórek w zablokowanym fragmencie wyglądałoby na wykonane.
+
+## budowa/klient-poprzedni/src/moduly/studio/szablon-zrodlo.ts
+Wykaz szablonów i założenie dokumentu z szablonu stały już w galerii, ale były
+wykazem fabrycznym, bez możliwości założenia ani zmiany szablonu. Siedem
+komend tego modułu domyka warsztat: zapis zakłada szablon z bieżącego
+dokumentu wraz z arkuszem stylów, nastawami strony, nagłówkiem, stopką,
+tabelami i blokadami wzorcowymi, ustawienie i odczyt pól prowadzą pola do
+wypełnienia, wypełnienie wpisuje w nie wartości, wniesienie i eksport
+przenoszą plik szablonu w formacie dotx albo ott, a usunięcie kasuje szablon
+własny. Usunięcie szablonu fabrycznego jest odmawiane nazwanym powodem, tak
+samo jak usunięcie operacji fabrycznej: okno czyta pole deleted i przy
+odpowiedzi odmownej pokazuje powód, zamiast zdejmować pozycję z galerii
+i pozwolić jej wrócić przy następnym odczycie.
+
+## budowa/klient-poprzedni/src/moduly/studio/widok-ukladu-stron.ts
+Moduł oblicza układ kartek na powierzchni dokumentu — pojedynczą, wieloma obok
+siebie albo rozkładówką — przyjmując liczbę stron i nastawy, bez odwołań do
+struktury dokumentu obiektowego. Trzy pojęcia nie mogą się mylić: widok dwóch
+stron to dwie strony tego samego dokumentu obok siebie i stoi w tym module;
+dwa dokumenty obok siebie to podział powierzchni i stoi w module
+widok-podzialu-powierzchni.ts; rozkładówka nie jest parą dowolnych stron obok
+siebie, lecz układem książkowym, w którym strona pierwsza stoi sama po prawej,
+a dalej idą pary parzysta–nieparzysta — bez tego rozróżnienia rozkładówka
+pokazywałaby parę pierwszą i drugą, której w oprawionym piśmie nigdy nie widać
+naraz.
+
+## budowa/klient-poprzedni/src/moduly/studio/przybornik-zrodlo.ts
+Kontrakt przy komendzie studio.annotation.add niesie uwagę, że czynność ta
+idzie drogą generyczną window.action i wraca odmowa not_found, ponieważ
+katalog akcji nie ma jej wiersza. Sprawdzenie potwierdziło, że okno pracy
+z dokumentem wołało adnotację właśnie tak, z identyfikatorem
+studio.diff.adnotacja, czyli nazwą, której w katalogu akcji rdzenia nie ma —
+skutkiem była odmowa not_found przy każdym naciśnięciu, mimo że własna
+komenda w kontrakcie istnieje i ma parę: studio.annotation.add oraz
+studio.annotation.list. Ten moduł woła te dwie komendy wprost. Gdy uchwyt po
+stronie rdzenia nie stoi, odpowiedź wraca z odmową nazywającą samą komendę,
+a nie odmową nazywającą brakujący wiersz katalogu akcji — ta różnica pozwala
+rozpoznać, czego rdzeniowi rzeczywiście brakuje. Źródło nie ma stanu i nie
+buduje elementu interfejsu.
+
+## budowa/klient-poprzedni/src/moduly/studio/wiersz-cyfryzacji.ts
+Wiersz nie wywołuje niczego sam: oddaje przyciski, a czynności podpina okno,
+dzięki czemu rozmowa z rdzeniem zostaje w jednym miejscu, a wiersz odpowiada
+wyłącznie za to, co widać. Stan jest treścią, nie barwą: nazwa stanu idzie do
+atrybutu data-stan i do plakietki słownej naraz, więc pozycja odmówiona jest
+rozpoznawalna także bez odczytu barwy. Stan przychodzi z rdzenia jako
+StudioIngestState i ma pięć wartości, nie cztery — wartość ponowienia jest
+stanem osobnym, który nazywa sytuację, gdy rozpoznanie wypadło poniżej progu
+pewności i pozycja wraca do rozpoznania, czego ani stan gotowy, ani stan
+odmowy nie opisuje.
+
+## budowa/klient-poprzedni/src/moduly/studio/widok-skali.ts
+Skala do szerokości strony nie jest wartością stałą, jest rachunkiem: zależy
+od szerokości pola widoku, od nośnika, od orientacji i od liczby kartek
+w rzędzie. Wartość wpisana na sztywno rozjechałaby się przy pierwszej zmianie
+nośnika, więc rachunek stoi jako funkcja czysta, którą da się sprawdzić bez
+przeglądarki — wołający podaje zmierzone pole widoku, a funkcja oddaje
+procenty. Skala jest pamiętana przy dokumencie, nie przy oknie, zgodnie
+z wymogiem zlecenia: po powrocie do pisma po dwóch dniach dokument pokazuje
+się w skali, w której nad nim pracowano, a drugie pismo w swojej własnej.
+
+## budowa/klient-poprzedni/src/moduly/studio/szablon-panel.test.ts
+Warsztat szablonów sprawdza cztery zachowania, których pominąć nie wolno.
+Szablon zapisany z bieżącego dokumentu niesie blokady wzorcowe: fragmenty
+wzorcowe pisma mają zostać wzorcowe także w dokumentach powstałych z tego
+szablonu, więc pole includeLocks jedzie do rdzenia jawnie. Szablonu
+fabrycznego rdzeń nie usuwa, a panel czyta odpowiedź deleted: pozycja zostaje
+na miejscu, a powód jest nazwany, ponieważ zdjęcie jej z widoku byłoby
+udawaniem skutku, który nie zaszedł. Wypełnienie, przy którym pominięto pole
+wymagane, mówi to wprost i nie przedstawia się jako powodzenie, ponieważ
+dokument powstał z dziurami. Szablon bez postaci wzorcowej albo bez blokad
+nazywa ten brak, zamiast pokazać sam tytuł.
+
+## budowa/klient-poprzedni/src/moduly/studio/wiersz-wersji.ts
+Wersja bieżąca jest wyróżniona kropką pełną, a archiwalne kropką pustą; stan
+nigdy nie jest niesiony samą barwą, bo kropce towarzyszy słowo, więc barwa bez
+słowa nie mówi nic użytkownikowi, który jej nie rozróżnia. Podgląd, przywrócenie
+i porównanie stoją w wierszu wprost, bo sięga się po nie najczęściej;
+etykieta, eksport, odwołanie i schowanie miejscowe siedzą w rozwijanym menu
+pozycji, ponieważ wiersz z siedmioma przyciskami byłby nieczytelny, a te
+cztery są czynnościami rzadkimi. Czynność rozgałęzienia wersji pozostaje poza
+zakresem tego modułu — komendy studio.branch.* pracują w rdzeniu dalej. Plik
+nie woła rdzenia: oddaje przyciski, a rozmowę prowadzi okno historii.
+
+## budowa/klient-poprzedni/src/moduly/studio/tabela-panel.test.ts
+Warsztat tabel sprawdza czynność i bilans, nie kształt pliku, pilnując tego,
+co przy poprawce najłatwiej zepsuć po cichu. Wskazanie rozmiaru siatką
+prowadzi do komendy studio.table.insert z rozmiarem wskazanym, a nie
+z rozmiarem domyślnym okna. Bilans czynności jest wypisywany zawsze, także
+przy pełnym powodzeniu, ponieważ wypisywanie go tylko przy pominięciu
+uczyłoby, że brak bilansu znaczy pełne powodzenie, a to jest cisza, której
+zlecenie zakazuje. Pominięcie z powodu blokady fragmentu nazywa blokadę,
+a czynność nie przedstawia się jako udana — scalenie komórek, które blokada
+zatrzymała, nie może wyglądać na wykonane. Szerokości kolumn są wypisywane
+liczbami, a szerokość zerowa jest nazwana wprost, ponieważ sprawdzian skutku
+zlecenia mierzy właśnie to, że tabela po scaleniu ma szerokości policzone.
+
+## budowa/klient-poprzedni/src/moduly/studio/suwaki-koncepcyjne.ts
+Skrócenie i rozwinięcie tekstu nie są dwiema odrębnymi czynnościami, tylko
+dwoma końcami jednej wielkości ciągłej: objętości. To samo dotyczy tonu,
+rejestru, poziomu szczegółu i stopnia dopracowania. Przycisk daje jeden skok
+o nieznanej wielkości, a drugie naciśnięcie skacze znowu; suwak nazywa, o ile
+wielkość ma się zmienić, i pokazuje to przed wysłaniem żądania. Operacje
+suwaków pochodzą z istniejącego katalogu akcji, nie z nowego wykazu — każdy
+suwak wskazuje identyfikator akcji, który już tam stoi, i dokłada mu
+wielkość; operacje, które wielkością ciągłą nie są, jak korekta interpunkcji,
+spis treści czy tłumaczenie, zostają przyciskami w swoich miejscach. Nastawa
+jedzie polem params żądania operacji kontekstowej, które kontrakt opisuje
+jako parametry operacji wymagane przez pozycję rejestru, więc nastawy jadą
+drogą już obecną w kontrakcie i nie wymagają jego zmiany. Rdzeń dziś pola
+params do polecenia modelu nie dokłada, dlatego okno pisze przy suwakach, że
+wielkość jedzie w żądaniu, i dokłada ją także do treści polecenia wysyłanego
+wierszem polecenia, gdzie model ją przeczyta.
+
+## budowa/klient-poprzedni/src/moduly/studio/przybornik-znaczniki.ts
+Znaczników własnych w rdzeniu nie ma i mają zostać dobudowane wraz z nazwą,
+barwą i wykazem. Kontrakt niesie komentarz, adnotację przy fragmencie różnicy
+i zmianę śledzoną, lecz żadna z tych trzech rzeczy nie jest znacznikiem:
+komentarz niesie treść wątku, adnotacja wisi przy numerze fragmentu różnicy,
+a zmiana śledzona jest w treści dokumentu. Znacznik żyje przez sesję okna
+i przybornik mówi to Operatorowi wprost, przy każdym znaczniku. Zapisywanie
+znacznika jako komentarza o umownej treści byłoby wpisem, którego nikt
+później nie odróżni od komentarza prawdziwego, i zaśmieciłoby wykaz
+komentarzy. Znacznik nosi barwę jako żeton motywu, nie jako wartość
+szesnastkową: arkusz modułu nie zna ani jednej barwy zapisanej wprost i oba
+motywy obsługują się same, więc paleta jest wykazem żetonów. Plik nie zna
+struktury dokumentu obiektowego.
+
+## budowa/klient-poprzedni/src/moduly/studio/widok-nastawy-operatora.ts
+Zasada ogólna zlecenia mówi, że gdzie da się zrobić dwojako i obie drogi mają
+sens, wybór należy do Operatora jako jawne, odwracalne i pamiętane ustawienie,
+a nie rozstrzygnięcie wykonawcy zapisane w kodzie na sztywno. Ten moduł jest
+jednym miejscem, w którym takie wybory stoją — zakładki kontra podział
+powierzchni, przewijanie, jednostka linijki, tryb źródłowy, układ kartek.
+Rozsypane po kilku plikach rozjechałyby się, a część z nich zostałaby na
+twardo. Nastawy dotyczą powierzchni na danym urządzeniu i nie mają swojego
+bytu w kontrakcie, podobnie jak układ sekcji panelu i motyw interfejsu; gdy
+kontrakt dostanie kiedyś pozycję na nastawy widoku dokumentu, zapis przejdzie
+do rdzenia bez zmiany wołających funkcji, dlatego magazyn jest podawany jako
+parametr, a nie brany z globalnej przestrzeni na sztywno. Awaria magazynu,
+na przykład w trybie prywatnym albo przy osadzeniu w ramce, zostawia wartości
+domyślne i nie jest zgłaszana jako błąd, ponieważ nastawa widoku nie jest
+powodem, żeby okno nie wstało.
+
+## budowa/klient-poprzedni/src/moduly/studio/przybornik-plywak.ts
+Katalog operacji nie może zajmować stałej kolumny powierzchni. Pływak
+kontekstowy pojawia się w chwili zaznaczenia fragmentu i znika po jego
+zdjęciu; gdy operacje nie są używane, nie zajmują ani jednego punktu ekranu.
+Pływak ma trzy warstwy: czynności na wierzchu, wzięte z policzonego użycia,
+z przypięciem własnym przy każdej; uchwyt pełnego katalogu z resztą
+czynności, z grupami, opisami i szukaniem po nazwie; oraz suwaki wielkości
+ciągłych — objętość, ton, rejestr, poziom szczegółu i stopień dopracowania —
+jako sterowanie ciągłe, a nie przycisk dający skok o nieznanej wielkości.
+Pływak staje nad zaznaczeniem, a gdy nad nim nie ma miejsca, staje pod nim;
+rozstrzyga to zmierzona wysokość pływaka i odległość kursora od górnej
+krawędzi powierzchni, nie stała wpisana w kod. Stały panel boczny zostaje
+dostępny jako wybór: przełącznik trybu stoi na pływaku, bo pływak jest zawsze
+pod ręką, a nastawa trybu jest pamiętana w rdzeniu i jest jawna oraz
+odwracalna, zgodnie z zasadą ogólną zlecenia.
+
+## budowa/klient-poprzedni/src/moduly/terminal/pasek-kart.ts
+Zamknięcie karty przypiętej jest zwykłym przyciskiem, a odmowę zamknięcia rozstrzyga
+funkcja zamknijKarte w oknie wiodącym. Dzięki temu powód odmowy ma jedno miejsce
+i jest widoczny w stanie treści, zamiast bramy sprawdzającej przypięcie w samym pasku
+oraz osobnego obejścia w panelu akcji.
+
+## budowa/klient-poprzedni/src/moduly/studio/schowek-historia.ts
+Historia schowka jest wykazem do wyboru, nie samym wklejeniem ostatniego
+wpisu. Panel łączy wykaz wpisów sprzed kilku ruchów, przypinanie wpisów,
+które mają zostać na stałe, i wklejanie w dwóch postaciach: z zachowaniem
+postaci akapitu albo jako czysty tekst — to jest jawny wybór Operatora,
+a oba warianty są równorzędne, więc przycisk jest jeden dla każdego, a nie
+jeden domyślny z ukrytym drugim. Malarz formatów stoi w tym panelu, nie
+w schowku rdzenia, ponieważ kopiuje postać, nie treść, i nie jest wpisem
+schowka rdzenia: kontrakt schowka niesie treść i rodzaj — tekst, obraz,
+ścieżkę pliku — a nie arkusz nastaw akapitu. Malarz trzyma więc pobraną
+postać w tym panelu i oddaje ją oknu, które jedyne wie, czym postać akapitu
+jest. Gdy postać dokumentu wejdzie do kontraktu, malarz przejdzie na komendę
+rdzenia i przetrwa zamknięcie karty; dziś żyje przez sesję okna i panel mówi
+to wprost.
+
+## budowa/klient-poprzedni/src/moduly/studio/widok-podzialu-powierzchni.ts
+Zakładki i podział powierzchni są trybami równorzędnymi, a Operator przełącza
+się między nimi kiedy chce, bez utraty stanu. Przełączenie na zakładki nie
+rozbiera drugiego pola i nie oddaje jego zawartości — pole zostaje złożone,
+tylko schowane; niewidoczny nie znaczy niedostępny, bo dokument w polu
+schowanym jest dalej otwarty, dalej ma swoje zaznaczenie i dalej jest
+dostępny modelowi. Granica podziału jest elementem separatora z wartością
+w procentach, a nie samą kreską do chwytania myszą, ponieważ podział
+powierzchni bez klawiatury byłby czynnością dostępną tylko części
+Operatorów: strzałki przesuwają granicę o dwa punkty procentowe, klawisze
+Home i End dosuwają ją do granic pola pracy, a Enter przywraca podział na
+pół. Moduł nie zna dokumentu ani stanu modułu wyższego poziomu — bierze dwa
+elementy i rozkłada je na powierzchni, a to, który dokument stoi w którym
+polu, rozstrzyga okno pracy, inaczej podział trzymałby drugi stan dokumentu
+obok stanu modułu i oba rozjechałyby się przy pierwszym zapisie.
+
+## budowa/klient-poprzedni/src/moduly/studio/widok-druku.ts
+Drukowanie jest, na tym etapie, czynnością Operatora, nie rdzenia. W całym
+kontrakcie nie ma ani jednej komendy drukowania i nie jest to przeoczenie:
+drukarka stoi na maszynie Operatora, a rdzeń pracuje na serwerze. Rdzeń nie
+ma czym drukować i nie udaje, że ma, tak samo jak uczciwie odmawia skaner.
+Wydanie do pliku jest czynnością inną i jedno nie zastępuje drugiego.
+Drukuje się to, co pokazuje podgląd, nie surowy tekst: wydruk różniący się od
+podglądu byłby usterką gorszą niż brak funkcji, więc drukowanie bierze kartki
+powierzchni takimi, jakimi są — nośnik, orientacja, marginesy, paginacja,
+nagłówek i stopka. Moduł nie rysuje własnej kartki i nie zna struktury
+dokumentu obiektowego powierzchni: składa nastawy i woła drogę druku,
+a przygotowanie kartek należy do powierzchni. Liczby kopii i druku
+dwustronnego nie rozstrzyga strona, tylko okno drukarki systemu, więc nastawy
+są przenoszone jako życzenie wpisane w podsumowanie, a okno mówi wprost, że
+zatwierdza je drukarka — obietnica, że strona ustawi druk dwustronny, byłaby
+nieprawdą przy pierwszej drukarce jednostronnej.
+
+## budowa/klient-poprzedni/src/moduly/terminal/podglad-wyjscia.ts
+Widok jest odpowiedzią terminal.output.read, nie strumieniem na żywo: wyjście
+na żywo przychodzi zdarzeniem stream.chunk i żyje w buforze okna, który ginie
+wraz z połączeniem, więc podgląd sięga po treść przechowywaną w rdzeniu. Treść
+trafia wyłącznie do węzła jednej pozycji wykazu, a nie do wspólnego bufora
+stanu terminala, więc żaden wiersz nie wchodzi do konsoli dwa razy. Pole
+exitCode jest w kontrakcie opcjonalne i nie przychodzi dla procesu biegnącego
+ani ubitego sygnałem; widok nie podstawia w to miejsce zera, bo czytałoby się
+jako powodzenie. Pusty strumień i treść przycięta dostają własne zdanie,
+zamiast wyglądać jak komplet.
+
+## budowa/klient-poprzedni/src/moduly/terminal/pozycja-procesu.ts
+Inicjator stoi w opisie pozycji, nie w podpowiedzi, bo różnica między procesem
+uruchomionym przez operatora a uruchomionym przez model jest różnicą
+odpowiedzialności i ma być widoczna bez najeżdżania kursorem. Zakończenie ma
+dwa przyciski, bo ma dwa skutki: sygnał łagodny kończy sam proces polecenia,
+wymuszony obejmuje całe drzewo potomstwa. Żaden przycisk pozycji nie jest
+wygaszany, bo stan procesu znany oknu jest kopią z wykazu i zdarzeń rdzenia,
+a kopia bywa nieświeża — blokada mogłaby wtedy odebrać jedyną drogę
+zakończenia albo podglądu. Proces wstrzymany zostaje w stanie running, bo
+ma PID, pamięć i otwarte pliki, a kontrakt stanu wstrzymany nie ma.
+
+## budowa/klient-poprzedni/src/moduly/studio/przybornik-uzycie.ts
+Zasada z użycia, nie z domysłu nie pozwala wpisać w kod czterech czynności
+uznanych za najczęstsze na sztywno. Liczba użyć i czas ostatniego użycia są
+policzone: każde uruchomienie operacji podnosi licznik, a kolejność pływaka
+bierze się z tych dwóch liczb, a wykaz początkowy operacji jest wyłącznie
+stanem startowym — pierwsze użycie Operatora go zastępuje. Nastawy jadą do
+rdzenia, a nie do pamięci karty, ponieważ wymaganie mówi o ustawieniu
+pamiętanym: pamięć karty ginie z zamknięciem przeglądarki, więc kolejność
+wracałaby do stanu początkowego co dzień. Rodzina komend nastaw daje zapis
+trwały o dowolnym kluczu i poziomie zasięgu, z przywróceniem wartości
+domyślnej komendą osobną — czyli ustawienie jawne i odwracalne, jak żąda
+zasada ogólna zlecenia; druga droga zapisu nastaw nie jest zakładana. Klucze
+są pełnymi nazwami, bez numeracji wymyślonej, i stoją na poziomie globalnym,
+bo dotyczą Operatora, a nie jednej sesji: klucz liczników użycia niesie
+licznik i czas ostatniego użycia, klucz czynności przypiętych niesie
+czynności przypięte przez Operatora, a klucz trybu niesie wybór między
+pływakiem a stałym panelem bocznym.
+
+## budowa/klient-poprzedni/src/moduly/terminal/profil-karty.ts
+Wykaz powłok jest danymi, nie łańcuchem warunków: nowa wartość powłoki
+w kontrakcie wchodzi jedną pozycją, a wiersz polecenia dla niej dokłada
+rdzeń po swojej stronie. Nazwy pozycji są wartościami, nie podpisami nastawy:
+na uchwycie wyboru stoi wybrana wartość, na przykład „Atrament", a nie
+„Schemat: atrament", bo przedrostek rodzajowy powtarzałby na uchwycie nazwę
+nastawy. Inicjator „AI" zostaje klikalny mimo że w oknie o trybie manual
+wywołanie modelu wraca odmową permission_denied — odmowę wydaje rdzeń, a nie
+okno zgadujące z góry tryb uprawnień.
+
+## budowa/klient-poprzedni/src/moduly/studio/wiersz-polecenia.ts
+Narzędzia ukryte niosą czynność modelu czterema drogami wprost: pływak przy
+zaznaczeniu, uchwyt pełnego katalogu, ten wiersz polecenia i skrót ukośnika
+w oknie rozmowy sesji. Wykaz czynności jest przy tym jeden, więc żadna droga
+nie zna czynności, których nie znają pozostałe. Wiersz stoi przy kursorze,
+a nie w panelu, bo model pracuje tam, gdzie stoi Operator: pole polecenia
+otwiera się w miejscu zaznaczenia, wynik wchodzi w to samo miejsce jako
+zmiana oznaczona autorem, a Operator nie przenosi się do żadnego okna.
+Wiersz nosi przy tym cały pływak narzędzi ukrytych: czynności najczęstsze,
+uchwyt katalogu i suwaki wielkości ciągłych. Operator pisze polecenie
+własnymi słowami, a wiersz podpowiada mu nazwy czynności z katalogu tym
+samym mechanizmem, którym obsadzony jest skrót ukośnika w oknie rozmowy:
+strzałki chodzą po podpowiedziach, Enter wybiera wyróżnioną, a gdy żadnej
+nie ma, zleca polecenie własnymi słowami; ognisko zostaje w polu, więc
+pisanie nie jest przerywane. Polecenie jedzie polem params żądania operacji
+kontekstowej wraz z nastawami suwaków: rdzeń dokłada params do treści
+polecenia dla modelu, więc słowa Operatora dojeżdżają tą samą drogą, którą
+jedzie zakres zaznaczenia, a identyfikator akcji zostaje przy tym prawdziwy —
+pochodzi z wykazu, nie ze zdania Operatora.
+## budowa/klient-poprzedni/src/moduly/studio/wykaz-operacji.ts
+Pozycje wykazu mają dwa pochodzenia i panel je rozróżnia. Rejestr akcji rdzenia jest źródłem
+właściwym: nowa operacja ma być wierszem tabeli akcja, nie zmianą w kodzie. Dopóki rejestr nie
+niesie operacji redakcyjnych Studia, brakujące pozycje daje wykaz dokumentacji, a przy każdej
+pozycji stoi jej pochodzenie.
+
+Wybór jest jeden na cały panel, bo komenda studio.contextual.op przyjmuje dokładnie jeden
+identyfikator akcji. Pozycja bez wiersza rejestru pozostaje wybieralna: uruchomienie wychodzi
+do rdzenia i wraca jego odpowiedzią.
+
+Mechanizm rozwijania pochodzi z komponentu menu-drzewo: gałąź to kategoria, liść to operacja,
+grupa to pochodzenie. Menu wnosi pole szukania po przekroczeniu progu liczby liści, znacznik
+wyboru widoczny na gałęzi bez wchodzenia w nią oraz wędrówkę strzałkami; ten plik żadnej z tych
+rzeczy nie odtwarza. Etykieta uchwytu niesie nazwę wybranej operacji, nie nazwę rodzajową.
+
+Wiersz rejestru zdejmuje pozycję z wykazu dokumentacji. Oba wykazy mówią o tych samych
+identyfikatorach postaci studio.kategoria.kod, więc bez tej zapory operacja pokazywałaby się
+dwa razy. Wykaz dokumentacji kurczy się sam, w miarę jak rejestr się zapełnia, i znika w całości,
+gdy rejestr obejmie komplet.
+
+Wiersze rejestru wskazujące inną komendę stoją poza menu. Menu z biblioteki nie zna pozycji
+niewybieralnych, a wybieralne te wiersze być nie mogą: rdzeń nie sprawdza identyfikatora akcji
+względem katalogu komendy, więc wysłanie takiego identyfikatora wraca odpowiedzią wyglądającą
+na udaną. Zostają widoczne obok menu jako wiersze rejestru o innej komendzie.
+
+## budowa/klient-poprzedni/src/sterowanie/atrapa-rdzenia.ts
+Plik jest przyrządem pomiarowym sprawdzianów, nieużywanym poza plikami testowymi klienta. Odwzorowuje rdzeń tak, żeby sprawdzian mierzył zachowanie klienta wobec zachowania rdzenia rzeczywistego; każda odwzorowana gałąź ma wskazane miejsce w kodzie rdzenia, które naśladuje.
+
+Odwzorowane zachowania: rozgłoszenie idzie także do nadawcy (`transport/rozgloszenie.go`, funkcja `Rozglos` woła `rozglosPoza` z pustym identyfikatorem pomijanym) — na tym stoi zbieżność równoległych egzemplarzy stanu okna. Komenda `config.set` daje odpowiedź z wpisem i zdarzenie `config.changed` rodzaju `updated` (`core/handlers_config.go`). Komenda `config.reset` daje odpowiedź z listą wpisów i zdarzenie `config.changed` rodzaju `deleted`, niosące wpis ze starą wartością (`core/handlers_config.go`, `core/adapter_ustawienia.go`, funkcja `Przywroc`, która usuwa wiersz i oddaje to, co usunęła). Komenda `config.get` z podanym poziomem zwraca surowe wpisy tego poziomu, niezależnie od osi (`core/adapter_ustawienia.go`, gałąź `ListaPoziomu`). Komenda `config.get` bez poziomu zwraca politykę efektywną: po jednym zwycięskim wpisie na klucz, z polem niosącym poziom, na którym wartość znaleziono (`core/adapter_ustawienia.go`, gałąź rozstrzygająca przez `PolitykaEfektywna` i `kontekstZasiegu`, dalej `konfig/odwzorowanie_kontraktu.go`, funkcja `WpisKontraktu`); kontekst tej gałęzi ma wypełnione wyłącznie okno, więc rozstrzyganie obejmuje poziom okna i poziom globalny osi platformy, a karty sesji ani osi modelu ta droga nie widzi. Komenda `window.update` daje odpowiedź z oknem i zdarzenie `window.changed`.
+
+Funkcja wewnętrzna wyznaczająca politykę efektywną zwycięża poziomem najwęższym; kontekst gałęzi bez poziomu zna wyłącznie okno, więc wykaz adresów, po których szuka wpisu, obejmuje okno i poziom globalny.
+
+## budowa/klient-poprzedni/src/moduly/terminal/stan-terminala.ts
+Karty otwiera Terminal Tabs, procesy kończy Process Monitor, a wyjście zbiera
+Output Console — wszystkie trzy patrzą na ten sam przebieg. Gdyby każde okno
+trzymało własny wykaz, zakończenie procesu w monitorze nie zgasłoby w konsoli,
+a karta zamknięta w oknie wiodącym dalej przyjmowałaby polecenia. Okna
+monitorujące żyją ze zdarzeń, nie z odpytywania; odczyt pełnej listy procesów
+służy wyłącznie pierwszemu wypełnieniu i wznowieniu po rozłączeniu. Podzbiór
+kart domyka się sam — zamknięcie karty gasi jej przypięcie i jej ostatnie
+polecenie w jednym miejscu; zapis ostatniego polecenia nie budzi okien, bo
+jest nośnikiem czynności „uruchom ponownie”, a nie treścią okna.
+
+## budowa/klient-poprzedni/src/moduly/studio/przybornik-wykaz.ts
+W długim dokumencie znakowanie ginie: dymek stoi przy akapicie, którego
+Operator w tej chwili nie widzi, a wyróżnienie ze strony ósmej nie woła
+o siebie. Wymaganie jest więc podwójne: znakowanie przy miejscu oraz jedna
+lista, po której skacze się po kolei i którą się odhacza. Wykaz zbiera
+komentarze, propozycje zmian, zmiany śledzone, adnotacje przy fragmentach
+różnicy i znaczniki własne; rodzaj jedzie w każdej pozycji i przybornik
+rysuje go osobno, ponieważ trzy z tych bytów są rozłączne i Operator ma po
+wyglądzie wiedzieć, na co patrzy — komentarz nie niesie brzmienia i mówi
+o fragmencie, nie zamiast niego; propozycja zmiany niesie brzmienie, ale nie
+weszła w treść; zmiana śledzona jest już w treści i czeka na decyzję.
+Zlanie ich w jedną pozycję byłoby stratą rozróżnienia, po którym Operator
+poznaje, czy dokument już się zmienił, czy jeszcze nie. Moduł nie zna
+struktury dokumentu obiektowego ani rdzenia: wejściem są wykazy z kontraktu,
+wyjściem pozycje i ich zawężenie, dzięki czemu filtr sprawdza się bez
+stawiania okna. Odpowiedzi w wątkach nie są osobnymi pozycjami wykazu: wątek
+jest jednym znakowaniem, a odpowiedzi widać w dymku; liczba odpowiedzi jedzie
+w zdaniu o pozycji, żeby Operator wiedział, czy wątek ma ciąg dalszy.
+
+## budowa/klient-poprzedni/src/moduly/terminal/stany-okna.ts
+Okno bez stanu błędu jest niegotowe, a w terminalu kosztuje to więcej niż
+gdzie indziej: okno, które po odmowie rdzenia pokazuje pustą listę procesów,
+mówi operatorowi „nic nie biegnie” wtedy, gdy biegnie kompilacja, o którą nie
+udało się zapytać. Kod kontraktu w zdaniu błędu odróżnia odmowę uprawnienia
+od usterki rdzenia.
+
+## budowa/klient-poprzedni/src/moduly/studio/przybornik-katalog.ts
+Katalog jest wykazem jednym, nie dwoma — ten sam dla Operatora i dla modelu.
+Pozycje mają jednak trzy pochodzenia, które katalog rozróżnia, żeby Operator
+wiedział, czym rozporządza: rejestr akcji rdzenia niesie pozycje wskazujące
+komendę operacji kontekstowej i jest źródłem właściwym, bo nowa operacja to
+wiersz rejestru; operacje zapisane w rdzeniu obejmują fabryczne i własne
+Operatora, rozdzielone polem builtin; wykaz dokumentacji niesie czynności
+w siedmiu grupach, dopóki dwa pierwsze źródła ich nie przejmą, a pozycja
+przejęta znika z wykazu dokumentacji, żeby nie stała w menu dwa razy. Katalog
+nie odtwarza rozwijania, wyszukiwania po nazwie, opisów przy pozycjach,
+wędrówki strzałkami ani znacznika wyboru na gałęzi — to wszystko niesie
+mechanizm menu drzewa, stąd bierze się dostępność z klawiatury: cały katalog
+jest osiągalny bez myszki, bo mechanizm menu obsługuje strzałki, Enter
+i Escape sam, a drugi mechanizm rozwijania byłby rozjazdem. Czynność będąca
+wielkością ciągłą zostaje w katalogu, ale jej opis mówi, że sterowanie ma
+suwakiem, nie jednym naciśnięciem, i wskazuje pływak, żeby Operator nie
+szukał jej w dwóch miejscach.
+## budowa/klient-poprzedni/src/moduly/studio/wyszukiwanie-tekstu.ts
+Czynność wyszukiwania w treści dokumentu jest bliźniacza wobec narzędzi znacznikowych: pracuje
+na buforze edytora, więc rdzenia nie potrzebuje. Komenda studio.diff.compare też umie szukać
+wzorca, ale szuka go w treści wersji zapisanej w repozytorium — a to inna rzecz niż wzorzec
+w tekście, który jest właśnie pisany i jeszcze nie zapisany. Oba wyszukiwania istnieją obok
+siebie z zamysłem i każde mówi, po czym szuka.
+
+Wzorzec niepoprawny nie jest wyciszany. Wyrażenie regularne rzuca na złej składni, a przechwycenie
+tego bez słowa zamieniłoby literówkę w ciszę wyglądającą jak brak trafień. Wynik niesie więc
+powód wprost.
+
+## budowa/klient-poprzedni/src/sterowanie/czynnosci-kanalow.ts
+Kontekst niesie trzy czynności panelu rejestru kanałów, każda jako funkcja nad wspólnym kontekstem, nie jako gałąź jednego domknięcia — kontekst wędruje jawnym parametrem, więc żadna z tych funkcji nie zamyka się nad stanem panelu. Odmowa idzie dwiema drogami naraz: pasek komunikatów niesie kod oraz treść rdzenia, a wykaz przechodzi w fazę błędu z rolą powiadomienia. Wiersz przy odmowie usunięcia zostaje na wykazie, bo panel nie kasuje niczego lokalnie — wykaz odrysowuje się wyłącznie z rejestru.
+
+Uzbrojenie usuwania to nie blokada: przycisk pozostaje czynny w każdej chwili, a pierwsze naciśnięcie odpowiada — nazywa wiersz i mówi, że czynność jest nieodwracalna. Blokadą byłoby wyłączenie przycisku, którego tu nie ma.
+
+Wynik komendy channel.check niczego nie warunkuje: nie wyłącza wiersza, nie wstrzymuje zapisu i nie zmienia formularza. Jest odpowiedzią na pytanie operatora, czy kanał działa, a rozstrzygnięcie, co z tą odpowiedzią zrobić, należy do niego.
+
+Po powodzeniu zapisu idzie odświeżenie rejestru: to zamówienie listy kanałów, które rejestr rozgłasza wszystkim swoim czytelnikom. Panel nie dopisuje ani nie kasuje niczego w rejestrze bezpośrednio — nie ma tam własnej drogi zapisu.
+
+## budowa/klient-poprzedni/src/moduly/studio/przybornik-mowa.ts
+Dyktowanie jest funkcją działająca, nie warunkową. Droga jest jedna i już
+stoi w kontrakcie, druga nie jest zakładana: sprawdzenie dostępności bada
+silnik, wniesienie nagrania przyjmuje bajty i oddaje odnośnik, przepisanie
+zamienia nagranie na tekst. Nagranie nie opuszcza maszyny rdzenia — tak
+stanowi kontrakt tych komend i tak tu zostaje: bajty jadą do magazynu nagrań
+rdzenia, nie do sieci. Silnik mowy jest składnikiem pakietu serwera, razem
+z rozpoznaniem pisma i obsługą archiwów, nie rzeczą, którą Operator sobie
+doinstalowuje. Sprawdzenie dostępności zostaje, bo zmieniło znaczenie:
+odmowa nie mówi już, że tej funkcji nie ma w produkcie, lecz że ten serwer
+jest niekompletny, i nazywa brakujący składnik — brak silnika jest usterką
+wdrożenia serwera, nie ograniczeniem produktu, i tak brzmi zdanie, które
+Operator zobaczy. Trzy stany odpowiedzi przepisania są rozróżnione, bo
+znaczą różne rzeczy: rozpoznano tekst, przetworzono, lecz mowy nie było —
+to fakt pomiaru, nie awaria — i nie przetworzono wcale. Ten sam przycisk
+obsadza wiersz polecenia i treść dokumentu; różni je wyłącznie to, komu
+oddają rozpoznany tekst i napis na przycisku, żeby druga droga nagrywania
+nie rozjechała się z pierwszą przy pierwszej poprawce.
+
+## budowa/klient-poprzedni/src/sterowanie/etykiety-sterowania.ts
+Nazwy roli okna i środowiska wykonania są już nazwane w komplecie etykiet okna komunikacji — ten komplet czyta je stamtąd, zamiast zakładać drugi słownik tych samych wartości. Ta sama wartość jest pokazywana w trzech miejscach o trzech różnych szerokościach, więc każda wartość ma trzy postacie w jednym wykazie: postać pełną jako wiersz listy wyboru w kolumnie sterowania i podsumowanie szuflady, gdzie miejsca jest na całe zdanie; postać krótką jako uchwyt steru w pasku zlecenia, gdzie etykieta jest bieżącą wartością, a pasek ma zostać jednym rzędem („Ręczny", nie „Ręczny — pytanie przed każdą zmianą"); opis jako zdanie przy pozycji menu, mówiące o skutku wyboru, nie powtarzające nazwy. Postać pełna nie jest osobnym napisem, tylko złożeniem krótkiej z dopiskiem — inaczej pasek i szuflada rozjechałyby się przy pierwszej zmianie słownika.
+
+Etykiety stopni nakładu rozumowania są przepisane z kolumny etykiety opcji ustawienia katalogu rdzenia dla klucza nakładu rozumowania; stopień jest napisem wyliczenia, nie liczbą.
+
+Brak wartości nazwy stopnia nakładu schodzi na napis pusty, bo to pełnoprawny stopień katalogu o nazwie „Bez wskazania" — nie etykieta wymyślona w tym pliku. Stopień spoza wykazu, ale niepusty, zostaje pokazany dosłownie: rdzeń może znać stopień, którego ten słownik jeszcze nie zna, a jego kod jest prawdą o oknie.
+
+Rdzeń przysyła moduły komendą listy modułów z gotową nazwą; funkcja nazwy modułu jest wyłącznie zapasem na kod, dopóki katalog rdzenia się nie naładuje. Oddaje identyfikator bez zmiany, bo moduł spoza wykazu ma zachować swój kod zamiast zniknąć z widoku pod nazwą zmyśloną po stronie klienta.
+
+## budowa/klient-poprzedni/src/moduly/studio/praca-z-dokumentem.test.ts
+Cztery okna tekstowe zeszły się w jedno okno pracy z dokumentem. Sprawdziany
+tego pliku wykluczają pięć szkód scalenia: funkcję zgubioną w scaleniu, gdzie
+okno pracy ma nieść wszystkie czynności poprzednich czterech okien i sprawdzian
+pyta o zbudowany widok modułu, nie o kształt plików źródłowych; widok
+formatowany, z którego treść nie wraca, mimo że wpisana treść musi dać się
+odczytać z powrotem tą samą składnią; zmianę modelu oznaczoną w niewłaściwym
+miejscu, skoro odcinki treści liczą się z zakresów znakowych i muszą pokrywać
+treść bez dziur; paginację, która nie dzieli, skoro kartka ma się kończyć,
+gdzie się kończy, a podział jawny ma kończyć ją niezależnie od rachunku;
+i liczbę w panelu redaktora bez rachunku pod spodem. Rdzeń w sprawdzianach
+jest atrapą, ponieważ pytanie dotyczy modułu, nie serwera.
+
+## budowa/klient-poprzedni/src/sterowanie/formularz-kanalu.ts
+Jeden formularz obsługuje oba żądania, bo żądanie założenia i żądanie zmiany różnią się dwoma polami: żądanie zmiany ma identyfikator kanału, a nie ma rodzaju. Nazwa, model, czynność i parametry są wspólne dla obu żądań.
+
+Rodzaj kanału jest polem wpisu, nie listą wyboru: wykaz znanych rodzajów jest listą informacyjną, nie bramą — nowy rodzaj kanału to nowy wiersz rejestru, a nie zmiana kodu. Znane rodzaje idą podpowiedzią i objaśnieniem pod polem, a wpis pozostaje otwarty.
+
+Rodzaju nie da się zmienić po założeniu kanału. Pole nie jest wyłączane; obok niego stoi zdanie ostrzegające, że wpis rodzaju nie dojdzie do rdzenia dla kanału już istniejącego.
+
+Parametry idą jako tekst JSON, bo kontrakt nie narzuca im żadnej struktury. Wpis nieczytelny kończy się odmową z komunikatem, a nie wysyłką pustych parametrów: ciche wysłanie pustego obiektu skasowałoby dotychczasowe parametry kanału.
+
+Wygląd formularza pochodzi w całości z biblioteki kontrolek i z arkusza stylu panelu.
+
+## budowa/klient-poprzedni/src/sterowanie/host-wykonania.ts
+Nazwa hosta jest ustawieniem okna, a nie wartością wyliczenia środowiska wykonania, dzięki czemu dopisanie kolejnego hosta nie wymaga zmiany kodu. Pole przyjmuje dowolną nazwę; lista hostów znanych skraca drogę do trzech używanych dziś.
+
+Wartość idzie ustawieniem poziomu okna, ponieważ treść żądania aktualizacji okna nie ma dla niej pola. Pole pozostaje czynne przy każdym zasięgu wykonania; przy zasięgu lokalnym i przy zasięgu rdzenia wpis nie ma zastosowania.
+
+## budowa/klient-poprzedni/src/moduly/terminal/terminal.test.ts
+Sprawdziany pilnują tego, co przy poprawce łatwo zepsuć po cichu: każda
+komenda rodziny wychodzi pod swoją nazwą z kontraktu i z otrzymanym ładunkiem,
+odpowiedź o kształcie innym niż kontraktowy nie przechodzi jako wynik udany,
+wykaz książki hostów i biblioteki jest zastępowany wykazem z rdzenia, a nie
+scalany, a czytanie konfiguracji OpenSSH bierze port do wpisu, bo rdzeń
+podaje go programowi ssh przełącznikiem. Rdzeń w sprawdzianach jest atrapą:
+sprawdzian pyta o zachowanie modułu, nie serwera. Zapora rozstrzygnięcia rodziny
+komend harmonogramu pilnuje, żeby cykliczność zadań szła komendami automatyki,
+a nie osobną rodziną komend terminala — rozjazd rozstrzygnięto na korzyść
+kontraktu.
+
+## budowa/klient-poprzedni/src/sterowanie/katalogi-robocze.ts
+Katalogi są listą, nie pojedynczą wartością: dodaje się i usuwa po jednym, a każda operacja idzie komendą aktualizacji okna z pełną listą po zmianie, bo kontrakt niesie listę katalogów roboczych jako całość. Lista pokazywana operatorowi jest listą okna, nie listą wspólną: dwa okna jednej sesji mogą pracować na dwóch różnych zestawach katalogów.
+
+## budowa/klient-poprzedni/src/moduly/studio/studio.test.ts
+Sprawdziany modułu Studio pilnują czynności, nie kształtu pliku: tego, czego
+opracowanie żąda wprost, co da się wykonać bez rdzenia i co przy poprawce
+łatwo zepsuć po cichu. Kolejka cyfryzacji odbija pięć stanów rdzenia wraz
+z ponowieniem poniżej progu pewności i nie gubi bilansu, gdy jedna pozycja
+odmawia — wsad idzie dalej mimo błędu. Liczniki dokumentu liczą to, co pasek
+statusu obiecuje. Znajdź i zamień traktuje frazę dosłownie, a złą składnię
+wzorca nazywa, zamiast oddawać ją jako brak trafień. Statystyka różnicy
+liczy fragment zmieniony do obu stron. Filtr historii zawęża po polach,
+które wersja naprawdę niesie. Narzędziownia cyfryzacji prowadzi kolejkę
+rdzenia rodziną komend studio.ingest: dokłada materiał, rozpoznaje go
+z nastawami, które naprawdę jadą do rdzenia, daje poprawić rozpoznane słowo
+przed przyjęciem i kończy dokumentem wraz z pierwszą wersją — dowód, że
+droga od pliku do dokumentu jest cała. Pusty wykaz urządzeń wejściowych jest
+nazwany jako brak maszyny rdzenia, a nie jako odmowa produktu, i nazwany
+przed próbą, nie po niej. Rdzeń w sprawdzianach jest atrapą, ponieważ
+sprawdzian pyta o zachowanie modułu, nie serwera.
+
+## budowa/klient-poprzedni/src/moduly/terminal/widok-wyjscia.ts
+Wzorzec wyszukiwania wpisuje operator w trakcie pisania, więc przez większość
+czasu jest niedokończony i niepoprawny; niepoprawne wyrażenie regularne
+wraca stąd jako treść błędu, a nie jako wyjątek, żeby okno pokazało stan
+błędu z powodem zamiast gasnąć. Konsola i karta powłoki patrzą na ten sam
+bufor, ale mają różne miejsce: konsola jest oknem obserwacyjnym na pół
+ekranu, a ogon w karcie stoi pod opisem karty i ma być podglądem, nie drugą
+konsolą — nastawa okna rysowania stoi w widoku wyjścia, a nie w drugiej
+wytwórni wierszy, żeby dwa rysowania tej samej treści się nie rozjechały.
+
+## budowa/klient-poprzedni/src/sterowanie/klucze-ustawien.ts
+Trzy sterowania kompletu nie mają odpowiednika w treści żądania aktualizacji okna: host wykonania (nazwa hosta jest ustawieniem, nie wartością wyliczenia środowiska wykonania), kanał zapasowy oraz nakład rozumowania. Ich drogą jest ustawienie poziomu zasięgu okna — poziomu najwęższego, wygrywającego z pozostałymi. Rdzeń zna wyłącznie klucze katalogu ustawień z bazy; klucz wymyślony po stronie klienta przechodzi zapis, ale nie ma żadnego skutku. Klucze kompletu są przepisane z katalogu co do znaku.
+
+Katalog rdzenia opisuje klucz nakładu rozumowania jako wyliczenie napisowe, więc suwak niesie napis wyliczenia, nie liczbę położenia. Napis pusty jest pełnoprawnym stopniem katalogu — znaczy rozstrzygnięcie przez kanał modelu, nie brak ustawienia.
+
+Klucz katalogu rdzenia trzeba przełożyć na pole kompletu w czterech czynnościach: naniesieniu zapisu, zdjęciu zapisu przy zdarzeniu usunięcia wpisu, rozpoznaniu przynależności klucza do kompletu oraz naniesieniu wartości obowiązującej. Wszystkie cztery czynności czytają ten jeden wykaz odwzorowań, więc dopisanie klucza jest zmianą w jednym miejscu.
+
+Brak ustawienia znaczy wartość domyślną, nie blokadę uruchomienia. Wartość domyślna nakładu jest pusta, tak jak wartość domyślna w katalogu rdzenia.
+
+Klucz spoza kompletu jest pomijany bez błędu przy naniesieniu wpisu — konfiguracja poziomu okna może nieść ustawienia innych warstw interfejsu.
+
+Przywrócenie wartości domyślnej rdzeń rozgłasza zdarzeniem zmiany konfiguracji niosącym wpis ze starą wartością, tak żeby odbiorca wiedział, co zniknęło. Wpisu z takiego zdarzenia nie wolno nanosić jak świeżego zapisu; zdjęcie zapisu jest osobną czynnością od naniesienia zapisu.
+
+## budowa/klient-poprzedni/src/sterowanie/lista-wyboru.ts
+Sekcje służą wyborowi modelu: modele surowe i agenci stoją w jednym menu, ale w dwóch sekcjach — „Modele" i „Moi agenci". Wybór pozostaje jeden, a rodzaj pozycji jest widoczny: agent stoi na modelu, więc płaska lista zatarłaby tę zależność, a przy licznych agentach modele surowe utonęłyby między nimi. Sekcje rysują się natywnym elementem grupy opcji, nie własnym menu: czytnik ekranu czyta wtedy nazwę sekcji przy pozycji bez dodatkowych atrybutów dostępności.
+
+Lista nigdy nie dostaje atrybutu blokującego, także wtedy, gdy katalog wartości jest pusty albo jeszcze nie przyszedł z rdzenia. Wartość bieżąca okna pojawia się na liście również wtedy, gdy nie ma jej w katalogu — interfejs pokazuje stan okna, zamiast podmieniać go na pozycję pierwszą. Znak pytajnika obok etykiety niesie zdanie z wykazu adnotacji, w tym zdanie o tym, że sterowanie zapisuje wartość, której wykonanie jeszcze nie czyta. Wskaźnik odczytu stoi obok pola, nigdy zamiast niego: lista pozostaje klikalna i przyjmuje wybór, dopóki katalog jedzie z rdzenia. Etykieta jest osobnym elementem powiązanym atrybutem, a nie obudową pola, bo znak pytajnika jest przyciskiem — wewnątrz obudowy jego naciśnięcie przenosiłoby się na listę.
+
+Zawężanie stoi nad listą, a nie w jej rozwinięciu, bo rozwinięcie natywnej listy wyboru rysuje system operacyjny, nie dokument — pola tekstowego nie da się tam wstawić, a filtr wewnątrz rozwinięcia wymagałby zastąpienia natywnej listy własnym bytem rozwijanym. Pole nad listą przycina katalog pozycji: wpisana fraza zostawia pozycje pasujące, sekcje zwężają się razem z nimi. Ceną jest ruch dwutaktowy — najpierw fraza, potem rozwinięcie. Fraza bez trafień nie kasuje wyboru ani nie blokuje listy: wartość bieżąca okna zostaje na liście zawsze, a pod polem staje zdanie o braku trafień.
+
+Kolejność sekcji węzłów listy wynika z kolejności pierwszego wystąpienia, nie z sortowania po nazwie: wołający układa katalog w wybranym przez siebie porządku, a lista tego porządku nie przestawia. Sekcja pusta nie powstaje — grupa opcji bez pozycji byłaby nagłówkiem nad niczym.
+
+## budowa/klient-poprzedni/src/sterowanie/model-glowny.ts
+Kanał jest parametrem okna, nie sesji: dwa okna jednej sesji pracują na dwóch różnych modelach równocześnie. Wykaz pochodzi z rejestru kanałów — nowy model to nowy wiersz rejestru, nie zmiana w tym pliku. Menu ma dwie sekcje i jeden wybór: modele surowe w sekcji „Modele", agenci w „Moi agenci". Okno obsługuje albo model, albo agenta nałożonego na model. Lista płaska zatarłaby tę zależność i przy licznych agentach utopiłaby między nimi modele surowe. Agent nie jest kanałem: kanał to droga do modelu, agent to tożsamość nałożona na tę drogę. Wybór agenta niesie więc jego kod w polu identyfikatora agenta, a pole kanału modelu bierze kanał bazowy agenta — model, na którym agent stoi. Kanał oznaczony jako nieczynny zostaje na liście i pozostaje wybieralny; o jego stanie mówi nazwa pozycji.
+
+Rola okna czy tryb uprawnień mają pozycji tyle, ile ma ich kontrakt, więc pole zawężania byłoby tam kontrolką nad niczym — dlatego zawężanie jest włączone wyłącznie w tym sterowaniu.
+
+Wybór dotyczy okna; rozesłanie na kartę sesji stoi pod listą, bo jedna wspólna kontrolka nie pokazywałaby, ile okien obejmuje zmiana.
+
+Kolejność katalogu wyboru jest treścią, nie porządkiem alfabetycznym: modele surowe stoją pierwsze, bo agent bez modelu nie istnieje. Sekcja bez pozycji nie powstaje, więc pusty rejestr agentów nie tworzy nagłówka nad pustką.
+
+Okno z nałożonym agentem niesie oba pola — identyfikator agenta i kanał bazowy tego agenta — więc zaznaczenie kanału pokazywałoby model surowy tam, gdzie pracuje agent.
+
+Kolumna sterowania, pasek zlecenia i wiersz podsumowania szuflady czytają tę samą funkcję nazwy modelu, więc pokazują tę samą nastawę. Rejestr agentów jest nieobowiązkowy. Czytelnik, który go nie ma, nie zobaczy modelu surowego zamiast agenta: dostanie kod agenta z rzeczownikiem, a nie podmieniony kanał. Identyfikator spoza obu rejestrów zostaje pokazany dosłownie, nigdy jako „Bez wskazania" — wskazanie jest, tylko wykaz go nie zna.
+
+Wybór modelu surowego zdejmuje agenta pustym identyfikatorem agenta; bez tego agent zostawałby nałożony na model, który nie jest już wybrany, a wykaz pokazywałby co innego niż stan okna. Agent bez kanału bazowego, gdy jest założony, ale model jeszcze nie przypisany, nie jest odmową: idzie sam identyfikator agenta, a kanał zostaje ten, który okno miało.
+
+Rozróżnienie stanu, w którym rdzeń jeszcze nie odpowiedział, od stanu, w którym rejestr jest pusty, jest konieczne: bez niego wskaźnik odczytu nigdy nie zgasłby na rdzeniu z pustym rejestrem, zapowiadając wykaz, który nie nadejdzie.
+
+Kanał zakłada się komendą channel.add; okna do zakładania kanałów w tym wydaniu nie ma, więc zdanie stanu pustego mówi to wprost zamiast odsyłać do nieistniejącego ekranu.
+
+## budowa/klient-poprzedni/src/sterowanie/model-karty-sesji.ts
+Żądanie aktualizacji okna nadaje kanał jednemu oknu; żądanie ustawienia kanału modelu przyjmuje identyfikator sesji i przestawia wszystkie okna karty naraz. Karta z czterema oknami to jedno żądanie zamiast czterech, a więc i jedna okazja do niepowodzenia zamiast czterech. Żądanie niesie identyfikator agenta obok identyfikatora kanału modelu, bo karta ma dostać ten sam wybór, który stoi w oknie: kanał surowy albo agenta nałożonego na kanał. Pominięcie agenta przestawiłoby pozostałe okna na model surowy. Przycisk jest zawsze klikalny. Karta jednookienna nie jest powodem do wyszarzenia — nadanie jednemu oknu tą drogą daje ten sam skutek co przez okno.
+
+## budowa/klient-poprzedni/src/sterowanie/model-zapasowy.ts
+Treść żądania aktualizacji okna nie ma pola na kanał zapasowy, więc wartość idzie ustawieniem poziomu okna — poziomem najwęższym, wygrywającym z każdym szerszym.
+## budowa/klient-poprzedni/src/moduly/studio/zadania-wykaz.ts
+Ten sam wykaz prowadzi zadania rozkładu zlecenia, kroki łańcucha operacji i pozycje wsadu.
+Rozstrzygnięcie jest wyraźne: krok łańcucha i dokument wsadu wchodzą do kolejki jako zadania
+tego samego rozkładu, a nie do drugiej maszynerii obok. Widoczne jest jedno miejsce, w którym
+widać, co dzieje się ze zleceniem.
+
+Stan zadania mówi prawdę, także niewygodną. Zadanie nieudane pokazuje powód przy sobie, nie
+w dzienniku obok. Zadanie przerwane zatrzymaniem pętli wraca do czekania i niesie zdanie
+o przerwaniu — nie znika i nie udaje domkniętego. Zadanie wstrzymane mówi, na czym stoi. Pusty
+wiersz z ikoną bez wyjaśnienia byłby tu tym samym co cisza.
+
+Wykonawca nienazwany nie jest brakiem do przemilczenia: „wykonawca nienazwany" mówi prawdę
+o tym, że rozkład powierzono komuś bez wskazania eksperta, a puste miejsce sugerowałoby, że
+nikomu.
+
+## budowa/klient-poprzedni/src/sterowanie/naklad-rozumowania.ts
+Stopień jest wartością wyliczenia katalogu rdzenia, nie nazwą modelu — zmiana kanału nie unieważnia ustawienia, a kanał przekłada stopień na własny parametr. Suwak pokazuje położenie w wykazie stopni, wysyła zaś sam stopień, bo rdzeń nie przyjmuje numeru położenia. Wartość idzie ustawieniem poziomu okna, bo treść żądania aktualizacji okna nie ma dla niej pola. Suwak nie ma stanu wyłączonego: przesunięcie jest czynne zawsze, także gdy rdzeń nie odpowiada.
+
+Położenie suwaka to wartość ustawiona tutaj i zmieniana przesunięciem. Zdanie pod suwakiem to wartość obowiązująca po rozstrzygnięciu poziomów zasięgu. Gdy wartość przychodzi z poziomu szerszego niż okno, zdanie podaje ten poziom; bez tego suwak stojący na „Bez wskazania" przeczyłby nakładowi narzuconemu z poziomu globalnego.
+
+## budowa/klient-poprzedni/src/moduly/terminal/wybor-drzewem.ts
+Plik nie rysuje ani jednego wiersza menu — strzałki, rozwijanie i znacznik
+wyboru niesie mechanizm biblioteki menu drzewa, który oddaje wołającemu
+klucz pozycji zamiast wykonywać wybór. Zostają tu dwie rzeczy, których
+mechanizm nie robi: pamięć wybranej wartości, bo biblioteka dostaje drzewo
+z zewnątrz przy każdym ustawieniu, oraz przełożenie wykazów modułu na
+pozycje menu jako dane, a nie łańcuch warunków. Uchwyt niesie wartość, nie
+nazwę nastawy: stoi na nim „Bash”, a nie „Powłoka” — nazwa rodzajowa idzie
+do etykiety dostępności i do podpowiedzi. Wartość pusta jest wartością:
+pusty ciąg znaczy „bez zawężenia” w wykazie procesów i ma własną pozycję
+„Wszystkie procesy”, inaczej z filtra nie byłoby drogi powrotnej.
+
+## budowa/klient-poprzedni/src/sterowanie/panel-kanalow.ts
+Panel obsługuje wszystkie trzy czynności rejestru, bo instalacja ma na starcie jeden kanał, a okno komunikacji bez kanału nie ma czym rozmawiać. Rejestr kanałów pozostaje bytem tylko do odczytu: panel nie ma do rejestru żadnej drogi zapisu. Po udanym zapisie woła odświeżenie rejestru — zamówienie listy kanałów, którego wynik rejestr rozgłasza wszystkim czytelnikom: oknu rozmowy, sterowaniom modelu głównego i zapasowego, panelowi modeli i widokowi wspólnemu. Jeden zapis odświeża wszystkich, a żaden z czytelników nie wie o istnieniu tego panelu. Usunięcie idzie w dwóch krokach, przyciskiem w wariancie ostrzegawczym stojącym na końcu panelu akcji; w wierszach wykazu przycisku usuwania nie ma.
+
+Panel nie ma ani jednej reguły stylu własnej dla gniazd ramy okna, więc klasy modułu byłyby uchwytami bez żadnej reguły.
+## budowa/klient-poprzedni/src/moduly/studio/zmiany-modelu.ts
+Rdzeń rejestruje wynik operacji kontekstowej jako zmianę śledzoną autora model o zakresie liczonym
+w znakach treści bieżącej. Treść ma więc już w sobie tekst modelu, a zmiana mówi, który to fragment
+i co stało tam wcześniej. Zadaniem tego pliku jest przełożyć to na odcinki treści, żeby powierzchnia
+mogła oznaczyć fragment modelu w miejscu, a nie obok.
+
+Plik nie zna DOM ani rdzenia: wejściem jest napis i wykaz zmian, wyjściem odcinki. Dzięki temu
+nakładanie sprawdza się bez stawiania okna.
+
+Zakresy sięgające poza treść są pomijane, a nie przycinane: zakres spoza treści znaczy, że
+dokument zmienił się od czasu zarejestrowania zmiany, więc oznaczenie fragmentu wskazywałoby
+niewłaściwe miejsce. Tak samo rozstrzyga rdzeń przy decyzji o zmianie — treść zostawia
+nietkniętą. Zakresy nachodzące na siebie liczą się pierwszy wygrywa: dwie zmiany na tym samym
+fragmencie to stan, którego rdzeń nie zakłada, a oznaczenie fragmentu dwoma autorami naraz nie
+miałoby czego znaczyć.
+
+Liczby w opisie zmiany są policzone z treści zmiany, nie oszacowane: tyle znaków stało przed,
+tyle stoi po. Bez nich określenie zmiany modelu nie mówi, czy chodzi o przecinek, czy
+o przepisanie akapitu.
+
+## budowa/klient-poprzedni/src/sterowanie/panel-sterowania.ts
+Każde wywołanie komponujące komplet buduje osobny stan, osobne sterowania i osobne subskrypcje, domknięte na identyfikatorze swojego okna. Dwa komplety otwarte obok siebie nie mają wspólnej zmiennej: zmiana w jednym idzie komendą aktualizacji okna z identyfikatorem tego okna, a potwierdzenie — odpowiedź i zdarzenie zmiany okna — trafia wyłącznie do stanu okna o tym identyfikatorze. Wspólny pozostaje jedynie wykaz kanałów modelu: katalog wyboru, nie ustawienie okna.
+
+Rejestr ekspertów powstaje w miejscu, wzorem rejestru modułów wiersz wyżej, bo jest katalogiem wyboru czytanym z rdzenia, nie stanem okna, więc nie ma po co przeciągać go przez umowę kompletu. Rozesłanie wyboru na całą kartę sesji idzie osobną komendą ustawienia kanału modelu z identyfikatorem sesji — to jedyna jej zdolność, której żądanie aktualizacji okna nie ma.
+
+## budowa/klient-poprzedni/src/sterowanie/rejestr-agentow.ts
+Moduł agentów komponuje ekspertów, a ich wynik ma dać się wybrać we wszystkich oknach roboczych — bez tego wykazu portfolio jest martwe. Rejestr jest osobny, a nie doklejony do kanałów, bo agent kanałem nie jest: kanał to droga do modelu, agent to tożsamość nałożona na tę drogę. Wrzucenie go do rejestru kanałów zatarłoby tę różnicę już w typie, a przy setce agentów surowe modele utonęłyby w wykazie. Dwa rejestry znaczą dwie sekcje jednego menu: „Modele" i „Moi agenci". Kształt jest bliźniaczy wobec rejestru kanałów z zamysłem: ta sama umowa pozwala sterowaniu modelu obsłużyć oba wykazy jedną drogą, bez rozgałęzień na typ. Rejestr nie zna okna i niczego w nim nie zapisuje — jest katalogiem wyboru wspólnym dla klienta, nie ustawieniem okna. Nie filtruje też ekspertów po module ani po środowisku: agent nie jest własnością modułu.
+
+Pusty wykaz ekspertów znaczy dwie różne rzeczy — jeszcze nie wiadomo albo operator nie ma ani jednego eksperta. Pierwsza to wskaźnik odczytu, druga to stan poprawny, o którym nie ma po co mówić ani słowa.
+
+## budowa/klient-poprzedni/src/sterowanie/rejestr-kanalow.ts
+Rejestr jest sterowany danymi: nowy kanał to nowy wiersz, nie nowy typ w kodzie. Sterowania modelu głównego i zapasowego czytają wykaz stąd, zamiast prowadzić własną listę nazw. Wykaz jest katalogiem wyboru wspólnym dla całego klienta, nie ustawieniem okna — jeden egzemplarz obsługuje dowolną liczbę okien i żadne z nich nie zapisuje w nim swojego stanu. Pusty wykaz nie wyłącza sterowania: pole pokazuje wartość bieżącą okna i przyjmuje wpis operatora.
+
+Pusty wykaz kanałów znaczy dwie różne rzeczy — jeszcze nie wiadomo albo rejestr jest pusty — a widok musi je rozróżnić: pierwsza to wskaźnik ładowania, druga to stan pusty ze zdaniem o pustym rejestrze. Bez tej flagi wskaźnik ładowania nie zgasłby nigdy na rdzeniu z autentycznie pustym rejestrem.
+
+## budowa/klient-poprzedni/src/moduly/terminal/zaleznosci-zewnetrzne.ts
+Instalka Danaco Console nie niesie żadnego programu zewnętrznego: terminal
+nie ma własnego interpretera powłoki, własnego klienta SSH ani własnego
+lintera — uruchamia programy leżące na maszynie, na której stoi rdzeń
+serwera. Milczenie o tym byłoby brakiem funkcji, nie oszczędnością słowa —
+operator, który klika „Uruchom” i dostaje odmowę startu procesu bez
+wskazania programu, nie ma jak odróżnić braku narzędzia na serwerze od
+usterki platformy. Dlatego każde okno, którego czynność zależy od programu
+zewnętrznego, nazywa ten program wprost. Wykaz powłok jest odwzorowaniem
+wykazu wykonawczego rdzenia, a nie domysłem: rdzeń startuje dokładnie te
+programy z dokładnie tymi argumentami. Wykaz zależności powłoki jest
+niepełny wobec słownika powłok kontraktu i taki ma być, bo dopisanie programu
+dla powłoki, której rdzeń nie uruchamia, byłoby zależnością zmierzoną
+podaną z wyobrażenia.
+
+## budowa/klient-poprzedni/src/sterowanie/srodowisko-wykonania.ts
+Wyliczenie zasięgu wykonania ma trzy rodzaje: urządzenie operatora, host rdzenia, host zdalny. Nazwa konkretnego serwera nie jest wartością wyliczenia — wskazuje ją sterowanie hostem, jako ustawienie poziomu okna. Dzięki temu dopisanie kolejnego serwera nie wymaga zmiany kontraktu ani schematu bazy. Zasięg wykonania jest parametrem okna, nie właściwością wdrożenia: dwa okna jednej sesji mogą pracować w dwóch różnych zasięgach równocześnie.
+## budowa/klient-poprzedni/src/moduly/studio/znaczniki-markdown.ts
+Narzędzia nie pytają rdzenia, bo markdown jest tekstem: nagłówek to znak krzyżyka na początku
+wiersza, pogrubienie to dwie gwiazdki wokół fragmentu. Przekształcenie zapisuje się w buforze
+edytora w całości, a treść bufora idzie do rdzenia dopiero komendą studio.document.save, tak
+samo jak każdy znak wpisany z klawiatury.
+
+Format PDF i DOCX to inna rzecz: tam przekształcenie jest konwersją do formatu binarnego, klient
+jej nie wykona i kontraktu na nią nie ma, więc przycisk odmawia z powodem.
+
+Plik nie zna DOM. Wejściem jest treść i zakres, wyjściem nowa treść i nowy zakres — dzięki temu
+przekształcenia sprawdza się bez stawiania okna, a pasek narzędzi nie zna reguł składni.
+
+Rodzaj znacznika określa sposób, w jaki narzędzie dotyka tekstu: rodzaj otoczenie obejmuje
+zaznaczenie parą znaczników (pogrubienie, kod); rodzaj wiersz stawia przedrostek na początku
+każdego zaznaczonego wiersza (nagłówek, lista, cytat); rodzaj numeracja działa jak wiersz, ale
+przedrostek rośnie z numerem wiersza; rodzaj blok dokłada gotowy blok w osobnych wierszach
+(tabela, linia).
+
+Zestaw narzędzi znacznikowych obejmuje szesnaście pozycji w czterech grupach. Stoją tu wyłącznie
+przekształcenia będące składnią tekstu; formaty binarne wiersza Studio Editor (PDF, DOCX)
+wymagają konwersji i klient ich nie wykona.
+
+## budowa/klient-poprzedni/src/sterowanie/stan-sterowania.ts
+Menu i suwaki pokazują ustawienia zapisane na poziomie okna jako swoje położenie. Nakład zapisany globalnie obowiązuje okno, w którym nikt go nie ustawił — wartość obowiązująca jest więc drugą prawdą, nie tą samą co ustawienie okna. Etykieta steru niesie wartość obowiązującą.
+
+Egzemplarz stanu powstaje osobno dla każdego okna i domyka się na jego identyfikatorze. Nie ma tu ani jednej zmiennej na poziomie modułu, więc dwa okna otwarte obok siebie mają dwa niezależne stany: zmiana w jednym nie ma żadnej drogi, którą mogłaby dosięgnąć drugiego. Komunikat dotyczący innego okna jest pomijany; nie jest to brama wykonania, lecz kierowanie ruchu do właściwego adresata.
+
+Bez drogi przyjmującej zdjęcie zapisu wpis skasowany przez rdzeń wchodziłby jak świeży zapis, zamiast wracać do wartości domyślnej katalogu.
+
+## budowa/klient-poprzedni/src/moduly/translate/czynnosci-panelu.ts
+Status ok nie wystarcza za wynik: trzy odpowiedzi bywają puste mimo
+powodzenia i rozpoznaje się to po samej odpowiedzi, bez wiedzy o wnętrzu
+rdzenia — pusta ścieżka w eksporcie panelu i w syntezie mowy oraz przekład
+zwrotny tożsamy z treścią panelu. Sprawozdanie wraca wtedy negatywne i mówi,
+czego brakuje. Wskazanie kanału jest wskazaniem ze steru kanału; puste
+znaczy „kanał czynny okna” i wtedy żądanie pola kanału nie niesie. Gałąź
+pozytywna przy pliku potwierdza samo wskazanie, nie plik: klient dysku nie
+czyta, wie tylko, że rdzeń ścieżkę podał.
+
+## budowa/klient-poprzedni/src/sterowanie/tryb-uprawnien.ts
+Wartości trybu uprawnień odpowiadają dosłownie przełącznikowi trybu uprawnień kanału głównego i pochodzą z wyliczenia kontraktu. Żadna pozycja nie jest wyszarzona ani ukryta, w tym pominięcie kontroli uprawnień: kontrolą dostępu jest uwierzytelnianie, a nie ta lista. Tryb jest parametrem okna, więc okno planistyczne i okno wykonawcze mogą pracować obok siebie.
+## budowa/klient-poprzedni/src/moduly/studio/znajdz-zamien.ts
+Panel pracuje na buforze edytora i rdzenia nie woła. Wyszukiwanie po treści wersji zapisanej
+stoi w Diff/Grep Panelu i jest inną czynnością — panel mówi to w objaśnieniu, żeby dwa pola
+wyszukiwania w jednym module nie wyglądały na powielenie.
+
+Zamiana ma podgląd przed zatwierdzeniem: opcja Zamień wszystko prezentuje podgląd zmian przed
+zatwierdzeniem. Podgląd nie jest ozdobą — zamiana wyrażeniem regularnym potrafi przepisać
+dokument inaczej, niż zamierzano, a cofnięcia po zapisie już nie ma.
+
+## budowa/klient-poprzedni/src/sterowanie/wartosc-obowiazujaca.ts
+Prawdy są dwie i zlanie ich dałoby trzeci rozjazd. Ster zapisuje na poziomie okna, ale rdzeń buduje wywołanie z wartości rozstrzygniętej po wszystkich poziomach zasięgu. Nakład ustawiony globalnie obowiązuje model, a ster czytający sam poziom okna napisałby „Bez wskazania". Etykieta niesie więc wartość obowiązującą; menu i suwak nadal ustawiają poziom okna.
+
+Komenda odczytu efektywnej konfiguracji sesji jest komendą o czym innym: składa obszary konfiguracji sesji zapisane pod osobnymi kluczami rezolwera. Klucza prostego nakładu rozumowania — tego, który ster zapisuje i który czyta budowa wywołania — ta droga nie ogląda wcale, więc pokazywałaby pustkę tam, gdzie nastawa jest ustawiona.
+
+Drogą właściwą jest odczyt konfiguracji bez podanego poziomu. Adapter rdzenia rozgałęzia odczyt: z podanym poziomem oddaje surowe wpisy tego poziomu, a bez poziomu — politykę efektywną, czyli po jednym zwycięskim wpisie na klucz, z polem niosącym poziom, na którym wartość znaleziono. Poziom pusty znaczy wartość domyślną katalogu, nie błąd.
+
+Czego ta droga nie obejmuje: kontekst rozstrzygania budowany przez rdzeń dla tej gałęzi ma wypełnione wyłącznie okno, a droga tury wypełnia dodatkowo kartę sesji i oś modelu. Wartość zapisana na karcie sesji albo na osi kanału modelu obowiązuje więc wywołanie, a tą komendą się nie pokaże — klient nie ma jak tego domknąć po swojej stronie i nie udaje, że ma.
+
+Poziom okna bierzemy ze stałej kontraktu, nie z literału zapisanego wprost w kodzie.
+
+Zdanie steru niesie nazwę wartości, którą naprawdę pojedzie model, z dopiskiem o poziomie, gdy wartość przychodzi spoza okna.
+## budowa/klient-poprzedni/src/moduly/studio/zrodlo-akcji-studio.ts
+Dla zasięgu modułu Studio komenda action.list oddaje akcje okna komunikacji — studio.message.send,
+studio.message.stop, studio.message.list — a nie operacje redakcyjne. Wierszy operacji
+kontekstowych Studia w katalogu nie ma; okno pokazuje to wprost, zamiast dorabiać je po stronie
+klienta.
+
+Komenda window.action jest drogą generyczną dla akcji bez własnej komendy. Uchwyt komendy
+istnieje, ale akcja spoza katalogu wraca zwykłą kopertą błędu not_found z powodem, że akcja nie
+istnieje w katalogu akcji. Brakuje więc wiersza katalogu, a nie uchwytu komendy, i tak ma to być
+widoczne. Osłona funkcji wywolajUczciwie zostaje na wypadek koperty window.unknown, która nie
+niesie pola status i sama by się nie skorelowała.
+
+## budowa/klient-poprzedni/src/moduly/translate/etykiety-translate.ts
+Teksty są wyjęte z plików budujących elementy, żeby zmiana zdania nie była
+zmianą widoku. Dwa rodzaje katalogu są rozdzielone: katalog zamknięty
+pochodzi z kontraktu i jest listą wyboru, bo formaty eksportu i stany panelu
+mają w kontrakcie skończony zbiór wartości; katalog otwarty jest wyłącznie
+podpowiedzią, bo kontrakt przyjmuje język i ton jako dowolny napis i nie ma
+komendy zwracającej ich wykaz — pole zostaje edytowalne, a podpowiedź nie
+udaje katalogu rdzenia. Rdzeń oddaje ton panelu w odpowiedziach dodania
+celu, ustawienia przekładu i ustawienia tonu; nagłówek pokazuje tę właśnie
+wartość, a nie treść pola wejściowego. Pole języka źródłowego jest
+wejściem: rozpoznanie wpisuje tam rdzeń, którego jeszcze nie ma u siebie,
+więc wartość bieżącą pokazuje osobne zdanie obok pola. Tytuł i opis stanu
+pustego są rozdzielone, bo nośnik stanu pustego ma dwa stopnie pisma.
+
+## budowa/klient-poprzedni/src/sterowanie/wykaz-kanalow.ts
+Drugiej listy kanałów tu nie ma: treść pochodzi w całości z rejestru kanałów, a nazwa wiersza z funkcji nazwy kanału — tej samej, którą niesie sterowanie modelu okna. Wykaz nie pyta rdzenia i nie trzyma własnej kopii kanałów, tylko wskazanie.
+
+Stan „jeszcze nie wiadomo" to co innego niż stan „rejestr pusty"; rozróżnia je znacznik odpowiedzi otrzymanej z rejestru. Bez tego wskaźnik ładowania nie zgasłby na rdzeniu o autentycznie pustym rejestrze, a taki rejestr jest stanem poprawnym — wpisy zaczynu dają się skasować.
+
+Odmowa nie jest pustką. Rejestr po odmowie odczytu listy kanałów zachowuje wykaz poprzedni i samej odmowy nie niesie, więc jej treść wkłada tu panel osobnym wywołaniem; inaczej nieudany odczyt wyglądałby jak rejestr pusty.
+
+Usuwania w wierszu nie ma, bo przycisk czynności nieodwracalnej przy każdej pozycji leży na wyciągnięcie omyłkowego kliknięcia; usuwanie stoi w panelu akcji, dotyczy kanału wskazanego i wymaga potwierdzenia.
+
+## budowa/klient-poprzedni/src/sterowanie/zmiana-okna.ts
+Nazwa komendy i nazwa zdarzenia pochodzą z pakietu kontraktu współdzielonego — zmiana nazwy w kontrakcie przerywa kompilację tego pliku. Zmiana idzie komendą aktualizacji okna, potwierdzeniem jest odpowiedź na nią oraz zdarzenie zmiany okna rozgłaszane do wszystkich urządzeń konta. Zdarzenie dotyczące innego okna nie zmienia tego stanu — filtr po identyfikatorze okna jest adresowaniem. Niepowodzenie zmiany nie wstrzymuje sterowania: widok wraca do stanu potwierdzonego i przyjmuje kolejną zmianę.
+
+## budowa/klient-poprzedni/src/sterowanie/zmiana-ustawienia.ts
+Trzy sterowania — host wykonania, kanał zapasowy, nakład rozumowania — nie mają pola w treści żądania aktualizacji okna, więc idą komendą ustawienia poziomu okna, z identyfikatorem okna jako bytem poziomu. Odczyt przy otwarciu kompletu sprawia, że po przeładowaniu ustawienia wracają z bazy, a nie z pamięci przeglądarki.
+
+Adres ustawienia ma cztery człony, nie dwa: przestrzeń konfiguracji ma dwa prostopadłe wymiary — poziom zasięgu z bytem poziomu oraz oś rozstrzygania z bytem osi. Sprawdzanie samego poziomu przyjmowałoby za swój zapis adresowany do innego modelu albo innego konta, na przykład nakład rozumowania na osi modelu. Adres składa moduł adresu ustawienia, jedyny w kliencie przepis na adres tej przestrzeni.
+
+Wpis konfiguracji innego okna, innego poziomu albo innej osi jest pomijany; to adresowanie, a nie wstrzymanie zmiany.
+
+Zdarzenie zmiany konfiguracji niesie rodzaj zmiany: utworzenie i aktualizacja nanoszą wartość, usunięcie ją zdejmuje. Rdzeń rozgłasza usunięcie z wpisem o starej wartości, więc czytanie samego wpisu bez rodzaju nanosiłoby skasowaną wartość jak świeży zapis, a powrót do wartości domyślnej nie docierałby do żadnej powierzchni.
+
+## budowa/klient-poprzedni/src/moduly/translate/formularz-terminu.ts
+Jeden formularz obsługuje definiowanie odpowiednika terminu (formularz
+pusty) i edycję glosariusza (formularz wczytany terminem z wykazu), bo
+kontrakt rozróżnia je polem identyfikatora terminu — obecne znaczy zmianę,
+nieobecne termin nowy. Po odmowie formularz zostaje wypełniony, a pola
+edytowalne, żeby operator poprawił wpisane wartości zamiast wpisywać je od
+nowa. Sprawdzane są cztery pola, bo tylko tyle niesie żądanie i tyle wraca
+w odpowiedzi rdzenia; identyfikator terminu sprawdzany jest wyłącznie przy
+edycji, bo przy terminie nowym nadaje go rdzeń i nie ma go z czym
+porównać.
+## budowa/klient-poprzedni/src/moduly/studio/zrodlo-dokumentu-studio.ts
+Obszar studio nie ma komendy przyjmującej plik ani wydającej dokument w formacie wyjściowym:
+studio.document.open ze wskazaniem ścieżki albo pliku Library zakłada dokument pusty,
+a studio.document.save przyjmuje sam napis. Cyfryzacja materiału i zamiana formatu są
+w kontrakcie, ale w obszarze document — i to one są jedynym wejściem modułu od strony pliku
+oraz jedynym wyjściem do formatu binarnego. Moduł ich nie kopiuje: woła je wprost, tak samo
+jak woła window.list i action.list.
+
+Wywołanie idzie zwykłą drogą protokołu, nie osłoną funkcji wywolajUczciwie z odmowa-rdzenia.ts:
+ta rozpoznaje koperty studio.unknown i window.unknown, a obszar document własnego zdarzenia
+nierozpoznanego nie ma — kontrakt kieruje go na zdarzenie połączenia, więc odmowa przychodzi
+kopertą ze statusem i korelacja rozpoznaje ją bez pomocy.
+
+Ścieżka pliku jest ścieżką po stronie rdzenia. Klient dysku nie czyta i nie zapisuje — podaje
+wskazanie i oddaje wynik odpowiedzi rdzenia.
+
+Zamiana formatu: treść jedzie polem content, a nie ścieżką, bo dokument Studia mieszka
+w rdzeniu pod studio.document.save, a nie na dysku, więc wskazanie ścieżki oddawałoby do
+zamiany plik, którego treść mogła się już rozejść z treścią zaakceptowaną w module.
+
+## budowa/klient-poprzedni/src/moduly/translate/indeks.ts
+Powłoka zna stąd jedną rzecz: opis modułu. Kod translate pochodzi z kolumny
+kodu modułu w rdzeniu, nie z literału wymyślonego w kliencie, więc rozjazd
+między nazwą w mapie a rzeczywistością staje się niemożliwy. Kod stoi razem
+z kodami okien, bo obie rzeczy są tym samym — oznaczeniami, którymi moduł
+zgłasza się rdzeniowi. Moduł nie zna powłoki: warstwa składająca decyduje,
+gdzie postawić oddany element, dzięki czemu te same okna dają się osadzić
+w różnych układach.
+
+## budowa/klient-poprzedni/src/strona-glowna/menu-sesji.ts
+Menu buduje przyciski czynności sensownych dla tego wiersza i prowadzi jedną z nich od naciśnięcia do meldunku. O tym, które czynności są sensowne, rozstrzyga moduł czynności sesji; ten plik nie zna stanów sesji. Pusty wykaz czynności daje wartość pustą zamiast pustego pojemnika — wiersz czysto informacyjny nie dostaje ramki po menu, którego nie ma.
+
+Na czas wykonania wiersz nie przyjmuje drugiej czynności — także z innego przycisku niż naciśnięty: archiwizacja w trakcie zmiany nazwy dawałaby dwa żądania o tę samą sesję o przypadkowej kolejności skutków. Zajętość nie jest bramą i nie gasi przycisków: atrybutu blokującego nie stawiamy nigdzie w produkcie. Przycisk zostaje klikalny, a stan niesie napis — przycisk czynny dopisuje wielokropek, więc zajętość jest widoczna bez samego koloru. Naciśnięcie w trakcie biegu wraca meldunkiem, nie ciszą.
+
+Odmowa wraca meldunkiem, nie wyjątkiem: wykonanie oddaje zdanie albo wartość pustą, a ten plik podaje ją dalej. Wyjątek nieprzewidziany też kończy się meldunkiem, żeby wiersz nie został z zablokowanymi przyciskami.
+
+## budowa/klient-poprzedni/src/moduly/translate/karta-lqa.ts
+Kategorie błędu i wagi dotkliwości nie są tu wymyślone: pochodzą
+z ujednoliconej metryki MQM/DQF, przyjętej w zawodzie jako model oceny
+jakości przekładu. Kategorie górnego poziomu to dokładność, poprawność
+językowa, terminologia, styl, spójność, zamiana znaczeniowa i inne błędy
+tej metryki.
+## budowa/klient-poprzedni/src/moduly/studio/zrodlo-materialu-studio.ts
+Przed rozpoznaniem pisma potrzebne bywa prostowanie skosu, odszumianie, podniesienie kontrastu
+i przycięcie marginesów oraz wczytywanie wsadowe z archiwum. Obszar studio nie niesie żadnej
+z tych czynności, ale kontrakt niesie je gdzie indziej i mają one uchwyt w rdzeniu: poprawka
+obrazu idzie komendą image.adjust, przekształcenie geometryczne komendą image.transform,
+a rozpakowanie wsadu komendą archive.unpack. Panel woła je wprost, zamiast nazywać brakiem
+czynność, którą rdzeń umie.
+
+Każda poprawka obrazu oddaje nowy zasób magazynu, a źródło zostaje nietknięte. Pozycja kolejki
+przestawia się więc na zasób wynikowy i od tej chwili rozpoznanie pisma pracuje na obrazie
+po czyszczeniu.
+
+Zrównanie skali szarości z binaryzacją byłoby obietnicą progowania, którego nikt nie wykonuje.
+## budowa/klient-poprzedni/src/moduly/studio/zrodlo-osadzenia.ts
+Windowid jest polem obowiązkowym komendy studio.document.open, a moduł dostaje z powłoki
+wyłącznie identyfikator sesji. Wskazanie okna poprzedza więc całą pracę modułu i nie należy
+do żadnego okna operacyjnego z osobna — stąd własny plik, a nie doklejenie do zrodlo-studio.ts.
+
+Komenda window.state.get jest wspólna każdemu oknu operacyjnemu: niesie moduł, kanał modelu,
+katalogi robocze, zasięg wykonania, tryb uprawnień i rolę.
+
+## budowa/klient-poprzedni/src/moduly/translate/katalog-okien-translate.ts
+Kody nie są wymyślone: kod modułu oraz kody okien panelu źródła, paneli
+tłumaczenia i menedżera glosariusza pochodzą z rejestru okien operacyjnych
+rdzenia. Trzy pozostałe okna — pamięć tłumaczeń, studio formatów i centrum
+kontroli jakości — w rejestrze rdzenia nie występują, więc ich kody powstają
+tutaj wedle tej samej reguły: nazwa własna okna zapisana małymi literami
+z łącznikami. Rozjazd nie jest przemilczany: moduł zgłasza katalogowi okien
+komplet sześciu kodów, a byt wspólny wypowiada obie strony różnicy — okna
+rejestru, których moduł nie buduje, oraz okna budowane spoza rejestru.
+Dopisanie trzech okien do rejestru rdzenia zdejmie tę drugą połowę bez
+zmiany ani jednej linii tutaj.
+## budowa/klient-poprzedni/src/moduly/studio/zrodlo-pracy-studio.ts
+Plik zrodlo-studio.ts niesie sześć komend obszaru, na których stały Studio Editor i Diff/Grep
+Panel: otwarcie, zapis, operacja, porównanie, wykaz wersji, przywrócenie. Jedno okno pracy
+potrzebuje ponad to sześciu dalszych rodzin obecnych w kontrakcie: komendy studio.tracking.*
+niosą wynik modelu w miejscu, w którym stoi treść; studio.proposal.decide to decyzja o propozycji
+po stronie rdzenia, z fragmentami wskazanymi wybiórczo polem hunkIndexes; studio.export.profile.*
+to nastawy strony, jedyne miejsce w kontrakcie z zapisem trwałym kartki, marginesów, nagłówka
+i stopki; studio.preview.render liczy paginację i typografię po stronie rdzenia; studio.template.*
+to galeria szablonów i zakładanie dokumentu z szablonu; studio.search.semantic i studio.diff.source
+to pomiary panelu Redaktora — bliskość znaczeniowa i rozbieżność wobec materiału wejściowego.
+
+Rodzina komendy design.asset.content.get nazywa się design.*, ale komenda nie należy do modułu
+Design: kontrakt mówi wprost, że dotyczy każdego zasobu magazynu, bo magazyn jest jeden dla
+rodzin design.*, document.*, media.* i archive.*. Podgląd wydania sięga nią po obrazy stron
+wyrysowane przez rdzeń — pole uri zasobu jest ścieżką w systemie plików rdzenia, więc przeglądarka
+nie wczyta spod niego niczego. Osobnej komendy pobierania zasobu Studia nie ma i nie ma jej
+w kontrakcie.
+
+## budowa/klient-poprzedni/src/okna-rownolegle/etykiety-ukladu.ts
+Jedna odpowiedzialność: wszystkie ciągi widoczne dla operatora w jednym
+miejscu. Nazwy ról nie powstają tutaj po raz drugi — pochodzą z etykiet
+okna komunikacji, żeby ta sama rola nie nazywała się w dwóch miejscach
+inaczej. Kontrakt nie ma komendy przekazania zlecenia koordynator-wykonawca;
+scena umie pokazać wyłącznie, jak takie przekazanie wygląda — komunikat
+mówi to wprost, żeby ruch na pasie nie uchodził za wykonaną pracę. Kreska
+średnia w nazwie modułu przy tytule gniazda oddziela dwie odpowiedzi na dwa
+różne pytania: „które to miejsce na scenie” (numer) i „co w nim pracuje”
+(moduł) — bez niej czytałoby się to jak jedna, dłuższa nazwa okna. Moduł
+bez rozmowy i moduł mówiący dymkiem dostają zdanie wprost, bo pusty
+przełącznik czytałby się jak awaria sceny; przy górnej granicy zdanie mówi
+o suficie platformy, nie o liczbie okien modułu, bo dla części modułów ta
+granica jest stanem zastanym, a nie liczbą podaną przez rdzeń.
+## budowa/klient-poprzedni/src/moduly/studio/zrodlo-przekazania.ts
+Przekazanie do Library nie ma własnej komendy w kontrakcie, ma za to odpowiednik ogólny:
+komenda context.transfer przenosi komplet kontekstu między modułami i ma uchwyt w rdzeniu.
+## budowa/klient-poprzedni/src/moduly/studio/zrodlo-studio.ts
+Dokument czynny mieszka w stan-studio.ts, żeby pięć okien patrzyło na jeden dokument, a nie na
+pięć jego kopii. Wszystkie sześć komend ma uchwyt w rdzeniu, który wpina port Studia przez
+funkcję zarejestrujStudio w core/kompozycja.go. Komenda document.open zakłada albo wczytuje
+dokument, document.save zapisuje treść i zakłada wersję, repository.list oddaje wykaz wersji,
+repository.restore przestawia treść dokumentu na wskazaną wersję i zostawia wersje nowsze,
+diff.compare liczy fragmenty różnicy i trafienia wzorca, contextual.op wychodzi do kanału modelu
+okna. Zapis i przywrócenie rozgłaszają zdarzenie studio.document.changed.
+
+Osłona odmowy zostaje mimo to: funkcja wywolajUczciwie broni przed kopertą studio.unknown, która
+nie niesie pola status i nigdy by się nie skorelowała, przez co okno stałoby w ładowaniu bez
+końca. Kosztuje jedną subskrypcję.
+
+## budowa/klient-poprzedni/src/okna-rownolegle/gniazdo-okna.ts
+Gniazdo nie zna ani pary, ani liczby okien na scenie — te należą do układu.
+Zmiana roli i moduł nadany gniazdu zgłaszane są także wtedy, gdy przychodzą
+z rdzenia zdarzeniem window.changed, inaczej więź koordynator–wykonawca
+i pas relacji zostawałyby przy poprzedniej figurze. Kod okna wykonania
+przychodzi dopiero po uzgodnieniu z rdzeniem, więc gniazdo powstaje bez
+niego i dostaje go później przez ustawOknoWykonania; pusty napis do tej
+chwili nie jest awarią, tylko stanem, który panel nazywa wprost. Widok
+rozmowy wbudowany w gniazdo jest domyślnie wyłączony, bo scena sesji osadza
+właściwy widok z zewnątrz przez wiązanie gniazda; stanowisko podglądu
+układu nie ma takiego wiązania, więc włącza wbudowany widok jawnie, inaczej
+jego gniazda stałyby puste. Szerokość gniazda na kolumnę rozmowy i kolumnę
+paneli jest liczona w kodzie, nie w arkuszu stylu, bo kontrakt szerokości
+musi być tą samą liczbą, o którą opiera się uchwyt — dwa progi rozjechałyby
+się przy pierwszej poprawce. Bez wbudowanej rozmowy fasada jest jawnie
+nieczynna dla treści i stanu: operator widzi rozmowę w widoku osadzonym
+z zewnątrz, a stan łączności płynie do niego inną drogą, więc drugi zapis
+tej samej historii w gnieździe nie miałby odbiorcy. Rola widnieje
+w nagłówku okna komunikacji, więc po jej zmianie widok musi powstać na
+nowo, inaczej gniazdo pokazywałoby jedną rolę, a okno pod nim drugą; bez
+wbudowanej rozmowy nie ma czego przebudować, bo rolę widzi operator już
+w nagłówku gniazda.
+## budowa/klient-poprzedni/src/moduly/studio/zrodlo-warsztatu-dokumentu.ts
+Warsztat pracuje na dokumentach wniesionych do okna, a te leżą w jednym magazynie całego
+produktu, zasilanym komendą design.asset.list. Drugi magazyn dokumentów byłby drugim miejscem,
+w którym ta sama treść żyje.
+
+Funkcja wykonaj jest jedną drogą na piętnaście komend, bo wszystkie idą tak samo: nazwa komendy
+ze stałych kontraktu, treść żądania złożona z formularza. Nazwa nie jest tu nigdy napisem
+wpisanym z pamięci — przychodzi z katalogu czynności, a ten bierze ją ze stałych.
+
+Sprawdzenie kształtu żądania wykonuje rdzeń i odsyła odmowę walidacji z nazwą pola — to
+sprawdzenie, którego klient i tak nie zastąpi, bo kontrakt rozstrzyga po stronie rdzenia.
+
+## budowa/klient-poprzedni/src/okna-rownolegle/menu-rozwijane.ts
+Jedyny byt rozwijany w kliencie, wzorowany na szufladzie sterowania: znacznik
+aria-expanded na uchwycie, klawisz Escape zwijający z powrotem ognisko na
+uchwyt oraz zasada, że zwinięcie nie jest blokadą. Menu dostaje gotowe
+elementy przez ustawienie treści i nie rozstrzyga, czy stoją w niej panele
+czy działania sesji, więc ten sam byt obsłuży menu nagłówka rozmowy i menu
+wewnątrz nagłówka panelu. Nie zakłada, że jest jedyny na scenie — cztery
+gniazda razy kilka paneli to wiele menu naraz, dlatego żaden identyfikator
+nie powstaje (powiązanie uchwytu z listą niesie atrybut haspopup, nie
+controls z id), nasłuchy dokumentu istnieją wyłącznie w czasie rozwinięcia,
+a warstwa jest wspólnym żetonem dla wszystkich egzemplarzy. Podmenu nie
+jest tu budowane, ale nie jest wykluczone: wędrówka ogniska strzałkami
+chodzi po każdym elemencie roli menuitem bez pytania, co on otwiera.
+Ikoną jest znak trzech kropek poziomych za czynnością „pokaż więcej”.
+Znacznik „jest tu coś nowego” ma mechanizm ustawienia, ale nic go tu nie
+zapala samo z siebie — źródło sygnału ustala wołający.
+## budowa/klient-poprzedni/src/moduly/studio/zrodlo-wstawien-studio.test.ts
+Sprawdzian pilnuje ciszy zakazanej wprost: wydanie do formatu uboższego niż dokument wypisuje
+wykaz cech pominiętych, bo milczące zgubienie tabeli przy wydaniu do tekstu czystego jest
+dokładnie tym błędem, którego nie wolno popełnić. PDF bez warstwy tekstowej nie udaje konwersji:
+bilans mówi to wprost, a okno kieruje na rozpoznanie tekstu wraz z numerem pozycji kolejki.
+Fragment wniesiony z Biblioteki niesie zapis pochodzenia oddany przez rdzeń, nie tylko wiersz
+w treści — bo tamten ginie razem z kartą. Pusty dokument zakłada się komendą rdzenia, a odmowa
+nie znika w ciszy. Wydanie do PDF bez profilu wydania jest odmową nazwaną przed próbą, bo profil
+niesie paginację i stopkę.
+
+## budowa/klient-poprzedni/src/moduly/terminal/bufor-wyjscia.ts
+
+Pierścień zamiast rosnącej tablicy, ponieważ jedno `npm install` albo jedno
+`find /` daje setki tysięcy wierszy. Tablica bez granicy rośnie do wyczerpania
+pamięci karty, a odrysowanie jej przy każdym fragmencie zatrzymuje wątek
+interfejsu. Bufor trzyma stałą liczbę wierszy najnowszych i podaje, ile wierszy
+przepadło, żeby było widać, że w oknie stoi ogon, a nie całość.
+
+Fragment nie jest wierszem: rdzeń wysyła porcje bajtów, więc jeden fragment bywa
+połową wiersza, a inny trzema wierszami naraz. Bufor skleja ogon niedokończonego
+wiersza z początkiem następnego fragmentu; bez tego wyjście rozsypałoby się na
+przypadkowych granicach odczytu.
+
+## budowa/klient-poprzedni/src/moduly/terminal/odtwarzanie.ts
+
+Odtwarzanie jest czynnością w całości kliencką: wiersze wyjścia leżą już
+w buforze wraz ze znacznikami czasu, więc powtórzenie przebiegu jest
+przesuwaniem granicy widocznych wierszy, a nie ponownym pytaniem rdzenia.
+Kontrakt nie ma komendy odtwarzania i mieć jej nie musi. Suwak stoi
+w położeniu ostatniego wiersza, dopóki Operator go nie ruszy, ponieważ konsola
+ma domyślnie pokazywać teraźniejszość.
+
+Wartością oznaczającą „wszystko" nie może być zero, ponieważ zero jest także
+poprawnym położeniem suwaka: zsunięty na sam początek pokazywałby wtedy cały
+bufor, a opis pod nim mówiłby o wierszu zerowym. Rozróżnienie stanu nietkniętego
+od ustawionego na zero musi istnieć w wartości, a nie w domyśle — stąd liczba
+ujemna.
+## budowa/klient-poprzedni/src/moduly/terminal/biblioteka-skryptow.ts
+Biblioteka jest widokiem na dziennik rdzenia: wykaz czyta komendą terminal.script.list,
+a zapis idzie przez terminal.script.save, który zakłada kolejną wersję pozycji. Ten byt trzyma
+pozycje w pamięci wyłącznie po to, żeby je pokazać i sprawdzić przed uruchomieniem — po
+odświeżeniu strony wykaz wraca z rdzenia. Wywóz do pliku zostaje jako droga wyniesienia treści
+poza rdzeń.
+
+Uruchomienie idzie tą samą drogą co każde polecenie karty: rdzeń podaje treść jako pojedynczy
+argument programowi powłoki (bash -c, powershell -Command, python -u -c, node -e), więc skrypt
+wieloliniowy wykonuje się bez zapisywania go do pliku. Stąd wynika warunek, o którym okno
+przypomina: powłoka karty musi być tą, w której skrypt napisano — treść Basha podana programowi
+python nie jest skryptem, tylko błędem składni.
+
+Parametry deklaruje się nagłówkiem w komentarzu na początku treści, postaci:
+  # args:
+  #   srodowisko: nazwa środowiska wdrożenia
+  #   wersja: numer wydania
+a w treści stoją jako {{srodowisko}}. Podstawienie dzieje się w kliencie przed wysłaniem, więc
+w potwierdzeniu widać polecenie, które naprawdę poszło do rdzenia — nie szablon.
+
+Nagłówek deklaracji parametrów stoi w komentarzu, bo skrypt ma pozostać uruchamialny także poza
+platformą — plik z deklaracją w składni obcej powłoce nie wykonałby się nigdzie indziej.
+Przyjmowane są oba znaki komentarza wykazu powłok: kratka (Bash, PowerShell, Python) i podwójny
+ukośnik (Node.js).
+
+Podstawienie parametrów: skrypt z pustą ścieżką w miejscu parametru wykonałby się na katalogu
+głównym zamiast odmówić, dlatego odwołanie bez wartości zostaje w treści widoczne.
+
+Kontrola wstępna nie jest linterem. Analizę statyczną prowadzą osobne programy (shellcheck,
+shfmt, PSScriptAnalyzer, ruff), których instalka nie niesie; komenda uruchamiająca je nad treścią
+stoi w kontrakcie i okno ją wywołuje osobną czynnością. Kontrola wstępna działa niezależnie od
+nich i wychwytuje to, co daje się rozstrzygnąć pewnie: pustkę, znaki końca wiersza rodem
+z Windows, znacznik kolejności bajtów i rozjazd między deklaracją parametrów a ich użyciem.
+
+Sprawdzenie składni: pozostałe powłoki wykazu kontraktu nie mają przełącznika sprawdzającego albo
+jego użycie wymagałoby przeniesienia treści przez plik, którego moduł nie ma czym zapisać — okno
+mówi to wprost, zamiast pokazywać przycisk bez skutku.
+## budowa/klient-poprzedni/src/moduly/terminal/czynnosci-okna.ts
+Moduł zastępuje emulator terminala, multiplekser sesji, klienta SSH, harmonogram zadań
+i bibliotekę skryptów naraz. Gdyby każda z tych zdolności miała stale własny przycisk,
+przestrzeń pracy byłaby ścianą kontrolek, przez którą nie widać powłoki. Dlatego każdy element
+sterujący należy do jednej z czterech warstw, a moduł pokazuje naraz tylko tyle, ile potrzeba
+do bieżącego zadania.
+
+Ukrycie nie jest blokadą i nie wolno go z blokadą mylić. Element warstwy zwiniętej nie dostaje
+atrybutu disabled, nie znika z drzewa dostępności przez aria-hidden na przodku ogniskowalnym
+i nie przestaje działać — zostaje zdjęty z pola widzenia, a droga do niego prowadzi paletą
+poleceń albo skrótem klawiszowym. Każda czynność modułu jest osiągalna jednym wskazaniem
+niezależnie od nastawy widoczności.
+
+Czynność jest opisem, nie przyciskiem: paleta i skróty nie sięgają do węzłów okien, bo węzeł
+przerysowuje się przy każdej zmianie stanu i uchwyt trzymany na zewnątrz wskazywałby po chwili
+element, którego nie ma w dokumencie. Okno oddaje więc wywołanie, a nie kontrolkę.
+
+Widoczność pełna nie jest trybem administracyjnym ani ukrytym — to zwykła nastawa o jedno
+wskazanie dalej.
+## budowa/klient-poprzedni/src/moduly/terminal/grupowanie-procesow.ts
+Filtr stanu i inicjatora jedzie do rdzenia parametrem terminal.process.list, bo tak stanowi
+kontrakt i tylko tak wynik jest spójny z dziennikiem rdzenia. Grupowanie nie zmienia zbioru,
+wyłącznie porządek wyświetlania, więc zostaje w kliencie. Różnicę niesie objaśnienie przy każdej
+pozycji, bo wykazy karmią menu z biblioteki.
+
+Wartość pusta ma własną pozycję: „Wszystkie procesy” i „Każdy inicjator” to brak zawężenia,
+a nie brak wyboru. Bez niej filtr byłby drogą w jedną stronę.
+
+## budowa/klient-poprzedni/src/okna-rownolegle/przepelnienie-pasa.ts
+Zwężanie odbiera czytelność wszystkim pozycjom naraz — przy kilkunastu
+kartach każda ma tytuł ścięty do zera i żadnej nie da się rozpoznać, a wraz
+z tytułem znika plakietka stanu, czyli informacja o awarii. Przewijanie
+odbiera czytelność wyłącznie temu, co wyszło poza kadr; warunkiem jest
+podłoga szerokości pozycji w arkuszu pasa, bez której pozycje kurczą się,
+zanim przewijak w ogóle ruszy. Wiązanie dokłada to, czego arkusz nie umie:
+utrzymanie pozycji czynnej w kadrze i uchwyty krawędziowe, które nie są
+bramą, tylko skrótem do tego, co i tak zrobi kółko myszy albo klawiatura,
+i pokazują się wyłącznie wtedy, gdy jest dokąd przewijać. Element z
+przewijaniem poziomym w arkuszu jest pasem, który przewija swoją zawartość;
+wartość null przy elemencie w kadrze znaczy, że nic nie trzeba pilnować.
+
+## budowa/klient-poprzedni/src/okna-rownolegle/lacznosc-okna.ts
+Interfejs transportu nie wystawia przebiegu ponowienia: klasa gniazda trzyma
+numer próby i uchwyt zaplanowanej próby jako pola prywatne, więc port jest
+opcjonalny — plakietka bez niego pokazuje stan i kolejkę, a brak numeru
+próby nazywa w podpowiedzi, zamiast liczyć próby u siebie. Wartości polityki
+ponawiania pochodzą z modułu ponawiania i to tam są ustalane, ten napis
+tylko je nazywa: baza 500 ms, bo rdzeń wstający lokalnie wraca zwykle
+w pierwszej albo drugiej próbie, więc przerwa bywa niezauważalna; mnożnik
+dwa z pułapem 15 s, żeby klient nie dobijał się co pół sekundy bez końca,
+a 15 s to jeszcze czekanie, po którym produkt nie wygląda na martwy;
+rozproszenie do 25%, bo okna równoległe i karty sesji ponawiają
+niezależnie i bez rozproszenia trafiałyby w rdzeń równocześnie; brak
+górnego limitu prób, bo poddanie się po ustalonej liczbie zostawiłoby
+użytkownika z produktem wymagającym przeładowania strony — przyspieszenie
+daje czynność „Ponów teraz”, rezygnacji nie ma.
+
+## budowa/klient-poprzedni/src/sterowanie/adnotacje-wykonania.ts
+Pole eksperta wybranego dla okna się utrwala w polach rdzenia, lecz nałożenie
+tożsamości eksperta — warstw promptu, skilli, wtyczek — na wywołanie modelu
+nie potwierdza żadna znana ścieżka rdzenia, więc milczenie kazałoby uznać,
+że okno pracuje tożsamością eksperta; sekcja „Moi agenci” nie jest przy tym
+wyszarzana, bo to byłaby blokada. Zasięg local startuje na hoście rdzenia,
+bo toru zwrotnego do urządzenia operatora w drzewie nie ma; wybór jest
+honorowany dosłownie dopóty, dopóki rdzeń stoi na urządzeniu operatora.
+Host wykonania, kanał zapasowy i nakład rozumowania mają konsumenta
+wskazanego w nagłówku pliku; pusty wykaz kluczy bez konsumenta zostaje,
+bo droga dopisania ma być ta sama co droga wycofania — następny klucz bez
+konsumenta wpisuje się tutaj, a nie w nowym mechanizmie.
+## budowa/klient-poprzedni/src/moduly/terminal/indeks.ts
+Układ wynika z ról okien. Terminal Tabs jest oknem wiodącym, więc stoi w obszarze głównym jako
+punkt wejścia. Output Console i Process Monitor są oknami monitora — stoją pod nim w pasie
+obserwacyjnym, bo obserwuje się to, co okno wiodące uruchomiło. Session Manager, Task & Schedule
+i Script Library są oknami zarządcy i kreatora: przygotowują pracę, którą okno wiodące wykonuje,
+więc stoją w pasie rozszerzeń pod pasem obserwacyjnym. Okno rozmowy modułu i okno pętli
+wykonawczej nie należą do tego złożenia: są bytami sesji i składa je warstwa rozmowy.
+
+Wszystkie sześć okien patrzy na jeden stan modułu, więc karta otwarta w Session Managerze jest
+od razu kartą bieżącą okna wiodącego, a proces uruchomiony w Task & Schedule stoi w Process
+Monitorze i w Output Console bez żadnego przekazywania między oknami.
+
+Nad oknami stoi pas modułu z dwiema nastawami wspólnymi: widocznością warstw i paletą poleceń.
+Warstwy zdejmują z ekranu kontrolki, których bieżące zadanie nie wymaga; paleta pilnuje, żeby
+zdjęcie z ekranu nie stało się schowaniem — każda czynność każdego okna jest w niej o jedno
+wskazanie.
+
+Sześć okien, pas nastaw, skróty klawiszowe i załącznik skrótów należą do pozycji samodzielnej.
+Złożenie wchodzące jako okno pomocnicze gospodarza niesie trzy okna rdzenne — dokładnie to, co
+obiecuje rama tamtego okna.
+
+Moduł widać wyłącznie w środowisku CodeStudio. Macierz widoczności jest własnością nawigacji,
+a nie modułu — złożenie nie sprawdza środowiska samo, bo drugi egzekutor widoczności rozjechałby
+się z pierwszym.
+
+Terminal nie jest samodzielnym modułem, tylko dodatkowym oknem pomocniczym sesji CodeStudio.
+Złożenie wchodzi dwiema drogami: jako okno pomocnicze gospodarza (wołane z modułów Developer,
+Diagnostics i Apps; karta powstaje w oknie gospodarza i dziedziczy jego tryb uprawnień oraz
+katalog roboczy), albo jako samodzielna pozycja nawigacji, która nie da się zdjąć z klienta —
+pochodzi z macierzy widoczności rdzenia, a klient bierze wykaz modułów wyłącznie z komend
+environment.enter i module.list. Dopóki rdzeń pozycję oddaje, moduł mówi wprost, czym jest —
+zniknięcie widoku dałoby pustkę czytającą się jak usterka.
+
+Nota pozycji samodzielnej mówi, że to samo złożenie stoi wewnątrz Developera, Diagnostics i Apps,
+i skąd bierze się ta pozycja w nawigacji.
+## budowa/klient-poprzedni/src/moduly/terminal/ksiazka-hostow.ts
+Prawdą o wpisach jest tabela terminal_host, a okno czyta ją komendą terminal.host.list i zmienia
+komendami terminal.host.save i terminal.host.remove. Ten byt trzyma wpisy w pamięci wyłącznie
+po to, żeby je pogrupować i pokazać — po odświeżeniu strony wykaz wraca z rdzenia.
+
+Czytanie i pisanie pliku konfiguracyjnego OpenSSH zostaje, bo służy czemu innemu niż trwałość:
+wnosi do książki wpisy z maszyny operatora i wynosi je z powrotem, a rdzeń stoi gdzie indziej.
+
+Adres celu ma znaczenie dosłowne: idzie do rdzenia polem remoteTarget otwarcia karty, a rdzeń
+podaje go programowi ssh jako pojedynczy argument. Port jedzie osobnym polem, więc alias
+konfiguracji nie jest już jedyną drogą do portu innego niż domyślny. Alias rozwiązuje wciąż
+program ssh uruchomiony na serwerze, więc alias wczytany z pliku zadziała tylko wtedy, gdy
+serwer zna go również u siebie — dlatego czytanie pliku woli jawne user@host złożone z pól
+User i HostName, a po alias sięga dopiero wtedy, gdy wpis tych pól nie ma.
+
+Przy odczycie konfiguracji czytany jest podzbiór składni, który niesie adres: Host, HostName,
+User, Port. Reszta słów kluczowych zostaje nietknięta i nieodwzorowana — wpis książki nie jest
+kopią bloku konfiguracji, tylko adresem do otwarcia karty. Wzorce (Host *, Host web-*) są
+pomijane: nie są adresem żadnej maszyny, a otwarcie karty do wzorca skończyłoby się odmową
+programu ssh.
+
+Przy zapisie konfiguracji portu domyślnego nie dopisujemy: byłby wymyśleniem danych, których
+nie podano.
+## budowa/klient-poprzedni/src/moduly/terminal/manifesty-zadan.ts
+Treść manifestu czyta rdzeń komendą terminal.file.read, a nie polecenie powłoki: dzięki temu
+wykrycie zadań nie zależy ani od programu wypisującego plik, ani od składni powłoki karty,
+i działa jednakowo w każdej z nich. Przeglądania katalogu kontrakt nie ma wcale, więc nazwa
+manifestu pochodzi z zamkniętego wykazu — okno nie zgaduje, co leży w katalogu. Gdy manifestu
+nie ma, rdzeń odmawia kodem not_found, a okno pokazuje tę odmowę dosłownie zamiast pustego
+wykazu zadań.
+
+Rozbiór jest czytaniem, nie wykonaniem: treść manifestu nigdy nie trafia do powłoki z powrotem.
+Do powłoki idzie wyłącznie polecenie złożone z nazwy programu i nazwy zadania odczytanej
+z manifestu. Nazwy plików pochodzą z zamkniętego wykazu, nie z pola wpisywania — dlatego wchodzą
+w treść polecenia bez cudzysłowu obliczanego w czasie działania.
+
+Każda powłoka wykazu kontraktu ma swoją drogę wypisania pliku: Node.js i Python czytają plik
+własną biblioteką standardową, więc nie potrzebują do tego żadnego programu zewnętrznego.
+Powłoki systemowe sięgają po program wypisujący plik i to jest ich zależność zewnętrzna.
+
+Treść pola scripts niebędąca poprawnym JSON-em nie jest błędem programu, tylko odpowiedzią
+powłoki — plik bywa nieobecny, a wtedy w wyjściu stoi komunikat błędu. Rozbiór oddaje wtedy
+pusty wykaz, a zdanie o powodzie składa okno z treści wyjścia.
+
+Przy celach Makefile: wiersz wcięty jest przepisem celu, a nie celem; nazwa zaczynająca się
+kropką jest dyrektywą programu make; zapis nazwa := jest przypisaniem zmiennej.
+
+Głębsze klucze bloku tasks pliku Taskfile są polami zadania (cmds, desc), a nie zadaniami,
+więc wejście na nie dawałoby wykaz nazw, których program task nie zna.
+## budowa/klient-poprzedni/src/moduly/terminal/okno-output-console.ts
+Panel akcji niesie eksport, wyczyszczenie, przełączniki zawijania, znaczników czasu
+i auto-przewijania, grep, odtwarzanie sesji, podział widoku i ponowne uruchomienie ostatniego
+polecenia. Bufor jest jeden na całe okno, a wiersz niesie swoją kartę i swój proces. Zawężenie
+do jednej karty jest filtrem widoku, nie osobnym buforem — inaczej wynik zbiorczy rozpadłby się
+na tyle konsol, ile kart.
+
+Powód pustego widoku: wyciąć wszystko potrafią trzy nastawy — wzorzec grepa, zawężenie do karty
+bieżącej (osobno przypadek, w którym karty bieżącej nie ma wcale) oraz suwak odtwarzania sesji.
+
+Funkcja składająca kontrolki nie domyka się na stanie okna ani na buforze. Jedyne wiązanie
+z wytwórnią to funkcja przyOdtwarzaniu — odtwarzacz musi obudzić rysowanie, a rysowanie zostaje
+w wytwórni. Pozycja bez pokrycia w kontrakcie jest jawnie nieczynna: wyjaśnienie zaznaczenia
+jedzie oknem rozmowy modułu.
+
+## budowa/klient-poprzedni/src/moduly/terminal/okno-pomocnicze.ts
+
+Podanie okna wykonania gospodarza wolno wołać wielokrotnie: to samo okno nie
+przebudowuje niczego, a inne przebudowuje złożenie wraz z zamknięciem
+poprzednich subskrypcji. Napis pusty znaczy, że rdzeń nie dał modułowi okna,
+i wypełnia ciało zdaniem o braku.
+
+Montaż terminala sam podmienia zawartość gospodarza, więc osobne czyszczenie
+ciała byłoby drugą drogą do tego samego skutku. Zdanie stanu o gospodarzu bez
+okna cytuje odmowę rdzenia przy próbie założenia karty powłoki, ponieważ karta
+wymaga wskazania okna.

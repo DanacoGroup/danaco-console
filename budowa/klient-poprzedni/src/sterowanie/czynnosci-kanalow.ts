@@ -7,16 +7,7 @@ import type { RejestrKanalow } from './rejestr-kanalow';
 import type { WykazKanalow } from './wykaz-kanalow';
 import type { ZrodloKanalow } from './zrodlo-kanalow';
 
-/**
- * Trzy czynności panelu rejestru kanałów, każda jako funkcja nad wspólnym
- * kontekstem, nie jako gałąź jednego domknięcia. Kontekst wędruje jawnym
- * parametrem, więc żadna z tych funkcji nie zamyka się nad stanem panelu.
- *
- * Odmowa idzie dwiema drogami naraz: pasek komunikatów niesie kod oraz treść
- * rdzenia, a wykaz przechodzi w fazę `blad` z rolą `alert`. Wiersz przy odmowie
- * usunięcia zostaje na wykazie, bo panel nie kasuje niczego lokalnie — wykaz
- * odrysowuje się wyłącznie z rejestru.
- */
+/** Definiuje kontekst współdzielony trzech czynności panelu rejestru kanałów, przekazywany jawnym parametrem zamiast domknięcia nad stanem panelu. */
 export interface KontekstKanalow {
   zrodlo: ZrodloKanalow;
   formularz: FormularzKanalu;
@@ -27,13 +18,7 @@ export interface KontekstKanalow {
   zglos(komunikat: KomunikatZmiany): void;
 }
 
-/**
- * Uzbrojenie usuwania — dwa kroki zamiast jednego kliknięcia.
- *
- * To nie jest blokada: przycisk pozostaje czynny w każdej chwili, a pierwsze
- * naciśnięcie odpowiada — nazywa wiersz i mówi, że czynność jest nieodwracalna.
- * Blokadą byłoby `disabled`, którego tu nie ma.
- */
+/** Uzbrojenie usuwania: wymaga dwóch naciśnięć przycisku zamiast jednego, nie blokując go w żadnej chwili między nimi. */
 export interface Uzbrojenie {
   /** Kanał uzbrojony do usunięcia; pusty napis znaczy „rozbrojone". */
   kanal(): string;
@@ -43,7 +28,7 @@ export interface Uzbrojenie {
   rozbroj(): void;
 }
 
-/** Etykieta spoczynkowa przycisku usuwania. */
+/** Etykieta spoczynkowa przycisku usuwania, przywracana po rozbrojeniu i wyświetlana, dopóki żaden wiersz nie jest uzbrojony. */
 const ETYKIETA_USUWANIA = 'Usuń wiersz rejestru';
 
 export function utworzUzbrojenie(przycisk: HTMLButtonElement): Uzbrojenie {
@@ -67,7 +52,7 @@ export const OSTRZEZENIE_USUNIECIA =
   'Usunięcie wiersza jest NIEODWRACALNE. Kanał używany przez okno komunikacji rdzeń odrzuci ' +
   '(więź ON DELETE RESTRICT w schemacie bazy) — wiersz zostanie, a Ty zobaczysz odmowę z kodem.';
 
-/** Wskazanie wiersza: formularz dostaje jego treść, uzbrojenie usuwania pada. */
+/** Wskazanie wiersza: formularz dostaje jego treść, pole rodzaju dostaje ostrzeżenie, a uzbrojenie usuwania zostaje rozbrojone. */
 export function wskazWiersz(k: KontekstKanalow, wskazany: Channel | undefined): void {
   k.formularz.wypelnij(wskazany);
   k.formularz.ostrzezRodzaj(wskazany !== undefined);
@@ -79,7 +64,7 @@ export function wskazWiersz(k: KontekstKanalow, wskazany: Channel | undefined): 
   );
 }
 
-/** `channel.add` — jedyna droga zakładania kanału w produkcie. */
+/** Obsługuje komendę `channel.add`, jedyną drogę zakładania kanału, i po powodzeniu wskazuje założony wiersz na wykazie. */
 export async function zalozKanal(k: KontekstKanalow): Promise<void> {
   const odczyt = k.formularz.odczytaj();
   if (odczyt.blad !== '') return k.zglos({ tresc: odczyt.blad, udany: false });
@@ -97,7 +82,7 @@ export async function zalozKanal(k: KontekstKanalow): Promise<void> {
   });
 }
 
-/** `channel.update` — zmiana wiersza wskazanego na wykazie. */
+/** Obsługuje komendę `channel.update`: zapisuje zmianę wiersza wskazanego na wykazie i odmawia, gdy żaden wiersz nie jest wskazany. */
 export async function zapiszKanal(k: KontekstKanalow): Promise<void> {
   const wskazany = k.wykaz.wskazany();
   if (wskazany === undefined) {
@@ -113,7 +98,7 @@ export async function zapiszKanal(k: KontekstKanalow): Promise<void> {
   );
 }
 
-/** `channel.remove` — dwa kroki, nigdy jeden. */
+/** Obsługuje komendę `channel.remove`: pierwsze naciśnięcie uzbraja wiersz, dopiero drugie naciśnięcie usuwa go trwale. */
 export async function usunKanal(k: KontekstKanalow): Promise<void> {
   const wskazany = k.wykaz.wskazany();
   if (wskazany === undefined) {
@@ -132,13 +117,7 @@ export async function usunKanal(k: KontekstKanalow): Promise<void> {
   );
 }
 
-/**
- * `channel.check` — sprawdzenie, czy wskazany kanał odpowiada.
- *
- * Wynik NICZEGO nie warunkuje: nie wyłącza wiersza, nie wstrzymuje zapisu i nie
- * zmienia formularza. Jest odpowiedzią na pytanie Operatora „czy to działa",
- * a rozstrzygnięcie, co z nią zrobić, należy do niego.
- */
+/** Obsługuje komendę `channel.check`: sprawdza, czy wskazany kanał odpowiada, a wyniku nie warunkuje niczym poza samym zgłoszeniem. */
 export async function sprawdzKanal(k: KontekstKanalow): Promise<void> {
   const wskazany = k.wykaz.wskazany();
   if (wskazany === undefined) {
@@ -196,13 +175,7 @@ export async function stanPoswiadczeniaKanalu(k: KontekstKanalow): Promise<void>
   );
 }
 
-/**
- * Rozstrzygnięcie zapisu — jedno miejsce dla wszystkich trzech czynności.
- *
- * Po powodzeniu idzie `rejestr.odswiez()`: to zamówienie `channel.list`, które
- * rejestr rozgłasza wszystkim swoim czytelnikom. Panel nie dopisuje ani nie
- * kasuje niczego w rejestrze — nie ma tam drogi zapisu.
- */
+/** Rozstrzygnięcie zapisu wspólne dla trzech czynności panelu: po powodzeniu odświeża rejestr, przerysowuje wykaz i zgłasza wynik operatorowi. */
 export function rozstrzygnij<T>(
   k: KontekstKanalow,
   czynnosc: string,
@@ -220,7 +193,7 @@ export function rozstrzygnij<T>(
   k.zglos(potwierdzenie(czynnosc));
 }
 
-/** Treść żądania `channel.add`; parametry idą tylko wtedy, gdy je podano. */
+/** Buduje treść żądania `channel.add` z odczytu formularza; pole parametrów dołącza tylko wtedy, gdy operator je podał. */
 function zadanieZalozenia(odczyt: OdczytKanalu): {
   name: string;
   kind: string;
@@ -237,7 +210,7 @@ function zadanieZalozenia(odczyt: OdczytKanalu): {
   };
 }
 
-/** Treść żądania `channel.update` bez `channelId` — ten dokłada wywołujący. */
+/** Buduje treść żądania `channel.update` bez pola `channelId`, które dokłada wywołujący na podstawie wiersza wskazanego na wykazie. */
 function zadanieZmiany(odczyt: OdczytKanalu): {
   name: string;
   model: string;

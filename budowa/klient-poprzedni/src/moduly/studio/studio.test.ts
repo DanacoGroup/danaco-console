@@ -19,30 +19,6 @@ import { utworzZrodloDokumentuStudio } from './zrodlo-dokumentu-studio';
 import { utworzZrodloMaterialuStudio } from './zrodlo-materialu-studio';
 import { utworzZrodloWstawienStudio } from './zrodlo-wstawien-studio';
 
-/**
- * Sprawdziany modułu Studio — czynność, nie kształt pliku.
- *
- * Pilnowane jest to, czego opracowanie żąda wprost, a co da się wykonać bez
- * rdzenia i co przy poprawce łatwo zepsuć po cichu:
- *
- *   1. kolejka cyfryzacji odbija PIĘĆ stanów rdzenia (wraz z ponowieniem poniżej
- *      progu pewności) i nie gubi bilansu, gdy jedna pozycja odmawia (rozdz. 3.8:
- *      wsad idzie dalej mimo błędu);
- *   2. liczniki dokumentu liczą to, co pasek statusu obiecuje (rozdz. 3.3);
- *   3. Znajdź/Zamień traktuje frazę dosłownie, a złą składnię wzorca nazywa,
- *      zamiast oddawać ją jako brak trafień (rozdz. 3.3, funkcja E5);
- *   4. statystyka różnicy liczy fragment zmieniony do obu stron (rozdz. 3.5);
- *   5. filtr historii zawęża po polach, które wersja naprawdę niesie;
- *   6. narzędziownia cyfryzacji prowadzi kolejkę RDZENIA rodziną studio.ingest.*:
- *      dokłada materiał, rozpoznaje go z nastawami, które naprawdę jadą do rdzenia,
- *      daje poprawić rozpoznane słowo PRZED przyjęciem i kończy dokumentem wraz
- *      z pierwszą wersją — dowód, że droga od pliku do dokumentu jest cała;
- *   7. pusty wykaz urządzeń wejściowych jest nazwany jako brak maszyny rdzenia,
- *      a nie jako odmowa produktu — i nazwany PRZED próbą, nie po niej.
- *
- * Rdzeń jest atrapą: sprawdzian pyta o zachowanie modułu, nie serwera.
- */
-
 interface Zapis {
   komenda: string;
   zadanie: Record<string, unknown>;
@@ -71,7 +47,7 @@ function atrapaKanalu(zapisy: Zapis[], odpowiedzi: Record<string, unknown> = {})
   } as unknown as Kanal;
 }
 
-/** Pozycja kolejki w kształcie kontraktu — atrapa odpowiedzi rdzenia. */
+/** Funkcja pozycjaKolejki zwraca pozycję kolejki cyfryzacji w kształcie kontraktu, jako atrapę odpowiedzi rdzenia w sprawdzianie. */
 function pozycjaKolejki(
   id: string,
   state: StudioIngestState,
@@ -106,13 +82,10 @@ describe('kolejka cyfryzacji', () => {
     expect(bilans.gotowe).toBe(1);
     expect(bilans.odmowy).toBe(1);
     expect(bilans.oczekujace).toBe(1);
-    // Ponowienie jest stanem OSOBNYM: pozycja poniżej progu pewności nie jest ani
-    // gotowa, ani odmówiona, a zlanie jej z którymkolwiek z tych dwóch kłamałoby
-    // o tym, co Operator ma z nią zrobić.
+    // Ponowienie jest stanem osobnym: pozycja poniżej progu pewności nie jest ani gotowa, ani odmówiona.
     expect(bilans.ponowienia).toBe(1);
     expect(bilans.zTekstem).toBe(1);
-    // Odmowa jednej pozycji nie zdejmuje pozostałych: następna do rozpoznania to
-    // pierwsza oczekująca, a po niej wraca ta z ponowienia.
+    // Odmowa jednej pozycji nie zdejmuje pozostałych: następna do rozpoznania to pierwsza oczekująca.
     expect(kolejka.nastepnaDoRozpoznania()?.id).toBe('pozycja-3');
   });
 
@@ -137,9 +110,7 @@ describe('kolejka cyfryzacji', () => {
       undefined,
     );
 
-    // Odświeżenie kolejki z rdzenia nie może przestawiać Operatora na inną
-    // pozycję ani zdejmować słów, na których stoi poprawianie: `queue.list`
-    // słów nie powtarza, więc jedynym ich miejscem jest odbicie okna.
+    // Odświeżenie kolejki nie przestawia Operatora ani nie zdejmuje słów, na których stoi poprawianie.
     kolejka.ustawPozycje([
       pozycjaKolejki('pozycja-1', StudioIngestState.Gotowa, { text: 'Umowa' }),
       pozycjaKolejki('pozycja-2', StudioIngestState.Oczekuje),
@@ -147,8 +118,7 @@ describe('kolejka cyfryzacji', () => {
     expect(kolejka.wskazana()).toBe('pozycja-1');
     expect(kolejka.slowa('pozycja-1')).toHaveLength(1);
 
-    // Pozycja, której rdzeń już nie oddaje, przestaje być wskazana — wskazanie na
-    // byt nieistniejący byłoby czynnością bez przedmiotu.
+    // Pozycja, której rdzeń nie oddaje, przestaje być wskazana: wskazanie na nieistniejący byt jest puste.
     kolejka.ustawPozycje([pozycjaKolejki('pozycja-2', StudioIngestState.Oczekuje)]);
     expect(kolejka.wskazana()).toBe('');
   });
@@ -166,8 +136,7 @@ describe('liczniki dokumentu', () => {
     expect(liczniki.akapity).toBe(2);
     expect(liczniki.znaki).toBe(tresc.length);
     expect(liczniki.znakiBezOdstepow).toBeLessThan(liczniki.znaki);
-    // Tekst krótszy niż minuta czytania nie dostaje zera minut — zero znaczyłoby
-    // „nie ma czego czytać", a jest co.
+    // Tekst krótszy niż minuta czytania nie dostaje zera minut — zero znaczyłoby brak treści do czytania.
     expect(liczniki.minutyCzytania).toBe(1);
   });
 
@@ -226,8 +195,7 @@ describe('statystyka różnicy', () => {
     expect(statystyka.dodane).toBe(1);
     expect(statystyka.usuniete).toBe(1);
     expect(statystyka.zmienione).toBe(1);
-    // Dodane: 4 słowa fragmentu dodanego + 3 słowa strony „po" fragmentu
-    // zmienionego. Kontekst nie liczy się do żadnej strony.
+    // Dodane: 4 słowa fragmentu dodanego i 3 słowa strony po fragmentu zmienionego, bez kontekstu.
     expect(statystyka.slowaDodane).toBe(7);
     // Usunięte: 2 słowa fragmentu usuniętego + 2 słowa strony „przed".
     expect(statystyka.slowaUsuniete).toBe(4);
@@ -257,8 +225,7 @@ describe('filtr historii', () => {
 
 describe('format źródłowy zamiany', () => {
   it('treść dokumentu prowadzonego jako PDF idzie do zamiany jako tekst czysty', () => {
-    // Zamiana dostaje napis, a nie plik: nazwanie go PDF-em kazałoby rdzeniowi
-    // szukać struktury, której w napisie nie ma.
+    // Zamiana dostaje napis, nie plik: nazwanie go PDF-em każe rdzeniowi szukać struktury, której nie ma.
     expect(formatZrodlowy('pdf')).toBe('txt');
     expect(formatZrodlowy('docx')).toBe('txt');
     expect(formatZrodlowy('markdown')).toBe('markdown');
@@ -310,8 +277,7 @@ describe('narzędziownia cyfryzacji', () => {
     expect(zrodlo, 'panel pyta o źródło materiału').not.toBeUndefined();
     zrodlo!.value = 'sciezka';
 
-    // Nastawy rozpoznawania mają skutek, a nie stoją jako ozdoba: silnik, zestaw
-    // języków i próg pewności jadą do rdzenia w polu `settings`.
+    // Nastawy rozpoznawania mają skutek: silnik, języki i próg pewności jadą do rdzenia w polu settings.
     const jezyki = [...panel.element.querySelectorAll<HTMLInputElement>('input[type="text"]')];
     const wskazanie = jezyki[0];
     wskazanie!.value = '/dane/umowa-skan.tif';
@@ -335,8 +301,7 @@ describe('narzędziownia cyfryzacji', () => {
     const rozpoznanie = zapisy.find((z) => z.komenda === Command.StudioIngestRecognize);
     expect(rozpoznanie?.zadanie['itemId']).toBe('pozycja-1');
 
-    // Słowo rozpoznane poprawia się PRZED przyjęciem — na warstwie tekstowej
-    // pozycji kolejki, a nie w dokumencie, którego jeszcze nie ma.
+    // Słowo rozpoznane poprawia się przed przyjęciem, na warstwie tekstowej pozycji, nie w dokumencie.
     const poprawka = panel.element.querySelector<HTMLButtonElement>('button[data-slowo="0"]');
     expect(poprawka, 'panel daje poprawić rozpoznane słowo').not.toBeNull();
     poprawka!.click();
@@ -349,8 +314,7 @@ describe('narzędziownia cyfryzacji', () => {
 
     const przyjecie = zapisy.find((z) => z.komenda === Command.StudioIngestItemAccept);
     expect(przyjecie?.zadanie['itemIds']).toEqual(['pozycja-1']);
-    // Przyjęcie kończy się DOKUMENTEM wraz z pierwszą wersją, a nie samą treścią
-    // w buforze — to była różnica, której starsza droga nie umiała pokryć.
+    // Przyjęcie kończy się dokumentem wraz z pierwszą wersją, a nie samą treścią w buforze.
     expect(stan.dokument()?.id).toBe('dokument-1');
   });
 

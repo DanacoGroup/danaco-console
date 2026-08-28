@@ -3,38 +3,7 @@ import { utworzMenuDrzewo, type GalazMenu, type MenuDrzewo, type PozycjaMenu } f
 import { KATEGORIE_OPERACJI, nazwaOperacji } from './kategorie-operacji';
 import { WIELKOSCI_CIAGLE } from './suwaki-koncepcyjne';
 
-/**
- * Katalog operacji pod jednym uchwytem — miejsce, w którym Operator znajduje
- * czynność, której nie zna na pamięć.
- *
- * ── Trzy pochodzenia w jednym wykazie ───────────────────────────────────────
- * Rozstrzygnięcie Właściciela: **wykaz jest jeden, nie dwa** — ten sam dla
- * Operatora i dla modelu. Pozycje mają jednak trzy pochodzenia i katalog je
- * rozróżnia, bo Operator ma wiedzieć, czym rozporządza:
- *
- *   — **rejestr akcji rdzenia** (`action.list`) — pozycje wskazujące komendę
- *     `studio.contextual.op`; źródło właściwe: nowa operacja to wiersz rejestru;
- *   — **operacje zapisane w rdzeniu** (`studio.operation.list`) — fabryczne
- *     i własne Operatora, rozdzielone polem `builtin`;
- *   — **wykaz dokumentacji** (`kategorie-operacji.ts`) — 28 czynności
- *     w siedmiu grupach, dopóki dwa pierwsze źródła ich nie przejmą. Pozycja
- *     przejęta znika z wykazu dokumentacji, żeby nie stała w menu dwa razy.
- *
- * ── Czego katalog NIE odtwarza ──────────────────────────────────────────────
- * Rozwijania, wyszukiwania po nazwie, opisów przy pozycjach, wędrówki
- * strzałkami i znacznika wyboru na gałęzi. To wszystko niesie
- * `komponenty/menu-drzewo.ts` i stąd bierze się dostępność z klawiatury: cały
- * katalog jest osiągalny bez myszki, bo mechanizm menu obsługuje strzałki,
- * Enter i Escape sam. Drugi mechanizm rozwijania byłby rozjazdem.
- *
- * ── Wielkości ciągłe są tu oznaczone, nie wyjęte ────────────────────────────
- * Czynność będąca wielkością ciągłą (objętość, ton, rejestr, poziom szczegółu,
- * stopień dopracowania) zostaje w katalogu — ale jej opis mówi, że sterowanie
- * ma suwakiem, nie jednym naciśnięciem, i wskazuje pływak. Wyjęcie jej z menu
- * kazałoby Operatorowi szukać jej w dwóch miejscach.
- */
-
-/** Czynności katalogu zlecane oknu. */
+/** Interfejs CzynnosciKatalogu niesie czynności katalogu operacji zlecane oknu: uruchomienie, zapis operacji własnej i jej usunięcie. */
 export interface CzynnosciKatalogu {
   /** Uruchamia operację o wskazanym identyfikatorze. */
   naOperacje(idAkcji: string): void;
@@ -44,7 +13,7 @@ export interface CzynnosciKatalogu {
   naUsuniecieOperacji(idOperacji: string): void;
 }
 
-/** Katalog wraz z jego zasilaniem. */
+/** Interfejs KatalogOperacji niesie katalog operacji wraz z jego zasilaniem: elementem, menu, wstawianiem rejestru i operacji, odpowiedzią i zamknięciem. */
 export interface KatalogOperacji {
   element: HTMLElement;
   /** Menu — wołający może je rozwinąć albo zwinąć z zewnątrz. */
@@ -59,12 +28,12 @@ export interface KatalogOperacji {
   zamknij(): void;
 }
 
-/** Identyfikatory czynności sterowanych suwakiem — do opisu w menu. */
+/** Stała STEROWANE_SUWAKIEM niesie identyfikatory czynności sterowanych suwakiem, do opisu tych czynności w menu katalogu. */
 const STEROWANE_SUWAKIEM: ReadonlySet<string> = new Set(
   WIELKOSCI_CIAGLE.flatMap((wielkosc) => [wielkosc.idAkcji, `${wielkosc.kod}`]),
 );
 
-/** Zdanie dopisywane do opisu czynności, która jest wielkością ciągłą. */
+/** Stała ZDANIE_SUWAKA niesie zdanie dopisywane do opisu czynności katalogu, która jest wielkością ciągłą sterowaną suwakiem. */
 const ZDANIE_SUWAKA =
   'Ta czynność jest wielkością ciągłą: na pływaku przy zaznaczeniu ma suwak, którym wskazujesz, ' +
   'o ile ma się zmienić. Uruchomienie z menu pojedzie z nastawą suwaka bieżącą.';
@@ -167,11 +136,7 @@ export function utworzKatalogOperacji(czynnosci: CzynnosciKatalogu): KatalogOper
 }
 
 /**
- * Składa drzewo katalogu z trzech pochodzeń.
- *
- * Plik oddaje je osobną funkcją, bez DOM, żeby złożenie sprawdzało się bez
- * stawiania menu: reguła „pozycja przejęta przez rdzeń znika z wykazu
- * dokumentacji" jest tu jedyną nieoczywistą rzeczą i ma dać się zmierzyć.
+ * Funkcja przybornikZlozDrzewo składa drzewo katalogu z trzech pochodzeń osobną funkcją, bez elementu menu, żeby reguła zaniku pozycji przejętej dała się zmierzyć.
  */
 export function przybornikZlozDrzewo(
   zRejestru: readonly Action[],
@@ -249,7 +214,7 @@ export function przybornikZlozDrzewo(
   return drzewo;
 }
 
-/** Gałęzie operacji rdzenia ułożone wedle ich kategorii. */
+/** Funkcja przybornikGaleziePoKategorii zwraca gałęzie operacji rdzenia ułożone wedle ich kategorii, gotowe do wstawienia w menu. */
 function przybornikGaleziePoKategorii(
   operacje: readonly StudioOperation[],
   zUsuwaniem: boolean,

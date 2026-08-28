@@ -50,7 +50,7 @@ export function utworzZrodloRoundtable(kanal: Kanal): ZrodloRoundtable {
     },
 
     async uruchomDebate(zadanie) {
-      // Kształt sprawdzamy po obu polach koperty, bo okno rysuje turę i wykaz uczestników razem.
+      // Sprawdzenie kształtu obejmuje oba pola koperty, bo okno rysuje turę i wykaz uczestników razem.
       return sprawdzKsztalt(
         await wywolaj(kanal, Command.RoundtableDebateStart, zadanie),
         Command.RoundtableDebateStart,

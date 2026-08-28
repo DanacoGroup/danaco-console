@@ -7,36 +7,7 @@ import {
 } from './suwaki-koncepcyjne';
 import { TrybOperacji } from './przybornik-uzycie';
 
-/**
- * Pływak kontekstowy przy zaznaczeniu — narzędzia ukryte, a nie stały panel.
- *
- * ── Rozstrzygnięcie Właściciela ─────────────────────────────────────────────
- * Katalog operacji nie może zjadać stałej kolumny powierzchni. Pływak pojawia
- * się w chwili zaznaczenia fragmentu i znika po jego zdjęciu; gdy Operator
- * z operacji nie korzysta, nie zajmuje ani jednego punktu ekranu.
- *
- * ── Trzy warstwy pływaka ────────────────────────────────────────────────────
- *   1. **czynności na wierzchu** — kilka najczęstszych, wzięte z policzonego
- *      użycia (`przybornik-uzycie.ts`), z przypięciem własnym przy każdej;
- *   2. **uchwyt pełnego katalogu** — reszta czynności pod jednym uchwytem
- *      (`przybornik-katalog.ts`), z grupami, opisami i szukaniem po nazwie;
- *   3. **suwaki wielkości ciągłych** — objętość, ton, rejestr, poziom szczegółu
- *      i stopień dopracowania jako sterowanie CIĄGŁE, nie przycisk dający skok
- *      o nieznanej wielkości.
- *
- * ── Nie zasłania zaznaczenia ────────────────────────────────────────────────
- * Wymaganie wprost: pływak staje **nad** zaznaczeniem, a gdy nad nim nie ma
- * miejsca — **pod** nim. Rozstrzyga to zmierzona wysokość pływaka i odległość
- * kursora od górnej krawędzi powierzchni, nie stała wpisana w kod.
- *
- * ── Stały panel zostaje, ale jako wybór ─────────────────────────────────────
- * Przełącznik trybu stoi na pływaku, bo pływak jest zawsze pod ręką: Operator
- * może wrócić do stałego panelu bocznego jednym naciśnięciem, a nastawa jest
- * pamiętana w rdzeniu. Wybór jest jawny i odwracalny — tak stanowi zasada ogólna
- * zlecenia.
- */
-
-/** Czynności pływaka zlecane oknu. */
+/** Interfejs CzynnosciPlywaka niesie czynności pływaka zlecane oknu: uruchomienie operacji, przypięcie, suwak i przełączenie trybu wykazu. */
 export interface CzynnosciPlywaka {
   /** Uruchamia operację o wskazanym identyfikatorze. */
   naOperacje(idAkcji: string): void;
@@ -48,7 +19,7 @@ export interface CzynnosciPlywaka {
   naTryb(tryb: TrybOperacji): void;
 }
 
-/** Pływak wraz z jego sterowaniem. */
+/** Interfejs PlywakOperacji niesie pływak kontekstowy wraz z jego sterowaniem: czynnościami, suwakami, trybem i położeniem wobec zaznaczenia. */
 export interface PlywakOperacji {
   element: HTMLElement;
   /** Przerysowuje czynności na wierzchu wraz z ich przypięciem. */
@@ -61,21 +32,16 @@ export interface PlywakOperacji {
   ustawSuwaki(nastawy: NastawySuwakow): void;
   /** Zapisuje tryb wykazu, żeby przełącznik mówił prawdę. */
   ustawTryb(tryb: TrybOperacji): void;
-  /**
-   * Ustawia pływak wobec kursora tak, żeby nie zasłonił zaznaczenia.
-   *
-   * `wysokoscWiersza` jest wysokością wiersza treści — pod nią pływak stanie,
-   * gdy nad kursorem nie ma dla niego miejsca.
-   */
+  /** Ustawia pływak wobec kursora, by nie zasłonił zaznaczenia; drugi parametr to wysokość wiersza. */
   ustawPolozenie(polozenie: { x: number; y: number }, wysokoscWiersza: number): void;
   /** Gdzie pływak ostatecznie stanął — do zdania paska stanu i sprawdzianu. */
   strona(): 'nad' | 'pod';
 }
 
-/** Ile czynności staje na wierzchu pływaka. */
+/** Stała CZYNNOSCI_NA_WIERZCHU wyznacza, ile czynności najczęstszych staje na wierzchu pływaka kontekstowego. */
 export const CZYNNOSCI_NA_WIERZCHU = 4;
 
-/** Odstęp pływaka od wiersza treści w punktach. */
+/** Stała ODSTEP_OD_TRESCI wyznacza odstęp pływaka kontekstowego od wiersza treści dokumentu, w punktach ekranu. */
 const ODSTEP_OD_TRESCI = 8;
 
 export function utworzPlywakOperacji(
@@ -130,9 +96,7 @@ export function utworzPlywakOperacji(
     uruchom.type = 'button';
     uruchom.className = 'dn-btn dn-btn--sm dn-btn--duch';
     uruchom.textContent = 'Zastosuj';
-    // Klucz zbioru `dataset` jest w postaci wielbłądziej; myślnik w nazwie
-    // klucza jest błędem składni, a nie nazwą atrybutu. Atrybut wychodzi z tego
-    // jako `data-suwak-uruchom`.
+    // Klucz dataset jest wielbłądzi; myślnik w nazwie jest błędem składni, stąd data-suwak-uruchom.
     uruchom.dataset['suwakUruchom'] = wielkosc.kod;
     uruchom.addEventListener('click', () => czynnosci.naOperacje(wielkosc.idAkcji));
 
@@ -205,9 +169,7 @@ export function utworzPlywakOperacji(
 
     ustawPolozenie(polozenie, wysokoscWiersza) {
       element.style.left = `${Math.max(0, polozenie.x)}px`;
-      // Wysokość pływaka mierzy się na elemencie, a nie zakłada: liczba czynności
-      // na wierzchu i liczba suwaków mogą się zmienić, a wpisana stała przestałaby
-      // wtedy mówić prawdę i pływak zasłoniłby tekst.
+      // Wysokość pływaka mierzy się na elemencie, bo liczba czynności i suwaków może się zmienić.
       const wysokosc = element.offsetHeight;
       const zmiescSieNad = polozenie.y - wysokosc - ODSTEP_OD_TRESCI >= 0;
       gdzieStanal = zmiescSieNad ? 'nad' : 'pod';
@@ -221,7 +183,7 @@ export function utworzPlywakOperacji(
   };
 }
 
-/** Jedna czynność na wierzchu pływaka wraz z jej przypięciem. */
+/** Funkcja przybornikCzynnoscSzybka tworzy jedną czynność na wierzchu pływaka kontekstowego wraz z jej przypięciem. */
 function przybornikCzynnoscSzybka(
   idAkcji: string,
   przypieta: boolean,

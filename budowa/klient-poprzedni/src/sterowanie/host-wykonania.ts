@@ -5,29 +5,15 @@ import type { ZmianaUstawienia } from './zmiana-ustawienia';
 
 const NAZWA = 'Host wykonania';
 
-/**
- * Hosty znane w chwili wydania — podpowiedź, nie katalog zamknięty.
- *
- * Nazwa hosta jest ustawieniem okna, a nie wartością wyliczenia `ExecutionEnv`,
- * dzięki czemu dopisanie kolejnego hosta nie wymaga zmiany kodu. Pole przyjmuje
- * dowolną nazwę; poniższa lista skraca drogę do trzech używanych dziś.
- */
+/** Hosty znane w chwili wydania — podpowiedź w polu wpisu, a nie katalog zamknięty ograniczający treść ustawienia. */
 const HOSTY_ZNANE = ['danaco-system', 'danaco-data', 'danaco-web'] as const;
 
-/**
- * Sterowanie nazwą hosta wykonania.
- *
- * Wartość idzie ustawieniem poziomu okna (`config.set`, zasięg `window`),
- * ponieważ treść `window.update` nie ma dla niej pola. Pole pozostaje czynne
- * przy każdym zasięgu wykonania; przy zasięgu `local` i `core` wpis nie ma
- * zastosowania.
- */
+/** Sterowanie nazwą hosta wykonania, zapisywane ustawieniem poziomu okna, czynne przy każdym zasięgu wykonania. */
 export function utworzSterowanieHostu(
   stan: StanSterowania,
   ustawienia: ZmianaUstawienia,
 ): HTMLElement {
-  // Identyfikator listy podpowiedzi zawiera identyfikator okna, więc dwa
-  // komplety otwarte obok siebie nie dzielą jednego elementu dokumentu.
+  // Identyfikator podpowiedzi zawiera identyfikator okna, by dwa komplety się nie dzieliły.
   const idPodpowiedzi = `dc-ster-hosty-${stan.idOkna()}`;
 
   const identyfikator = `dc-ster-host-${stan.idOkna()}`;
@@ -57,7 +43,7 @@ export function utworzSterowanieHostu(
   return element;
 }
 
-/** Lista podpowiedzi hostów; nie ogranicza treści wpisu. */
+/** Lista podpowiedzi hostów w polu wpisu; nie ogranicza treści, którą operator może wpisać ręcznie w polu. */
 function podpowiedzi(identyfikator: string): HTMLDataListElement {
   const lista = document.createElement('datalist');
   lista.id = identyfikator;

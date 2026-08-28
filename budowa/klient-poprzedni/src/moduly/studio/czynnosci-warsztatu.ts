@@ -1,6 +1,6 @@
 import { Command, StudioPdfPageOperationKind } from '../../../../shared/contract';
 
-/** Katalog czynności warsztatu dokumentu: piętnaście komend opisanych danymi, nie formularzami. */
+/** Katalog czynności warsztatu dokumentu: piętnaście komend rdzenia opisanych danymi, nie formularzami. */
 
 /** Rodzaj kontrolki, którą pole czynności zbiera od Operatora: tekst, hasło, liczba, przełącznik, wielowiersz, zasób, zasoby albo wybór z wykazu. */
 export type RodzajPola =

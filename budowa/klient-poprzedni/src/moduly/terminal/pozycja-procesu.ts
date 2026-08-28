@@ -7,24 +7,7 @@ import {
 import { pozycjaWykazu, przyciskAkcji } from '../../modele/kontrolki-formularza';
 
 /**
- * Jedna pozycja wykazu Process Monitora wraz z jej czynnościami.
- *
- * Inicjator stoi w opisie pozycji, nie w podpowiedzi: różnica między procesem
- * uruchomionym przez Operatora a uruchomionym przez model jest różnicą
- * odpowiedzialności i ma być widoczna bez najeżdżania kursorem.
- *
- * Zakończenie ma dwa przyciski, bo ma dwa skutki: sygnał łagodny kończy sam
- * proces polecenia, wymuszony obejmuje całe drzewo potomstwa. Jeden przycisk
- * z przełącznikiem ukryłby tę różnicę.
- *
- * Żaden przycisk pozycji nie jest wygaszany. Stan procesu znany oknu jest kopią —
- * przychodzi wykazem `terminal.process.list` i zdarzeniami
- * `terminal.process.changed` — a kopia bywa nieświeża: zgubione zdarzenie albo
- * rozłączenie zostawia `finished` przy procesie, który biegnie, i blokada odbiera
- * wtedy jedyną drogę zakończenia. Wygaszenie w drugą stronę też nic nie daje:
- * zakończenie procesu już zakończonego nie ma skutku, a odpowiedź na taką próbę
- * należy do rdzenia, nie do okna. Stan jest więc informacją — stoi w opisie
- * pozycji i w podpowiedzi przycisku — a nie bramą.
+ * Jedna pozycja wykazu Process Monitora niesie opis procesu, jego stan oraz czynności zakończenia łagodnego i wymuszonego wraz z wstrzymaniem i wznowieniem.
  */
 export interface CzynnosciProcesu {
   przypiety: boolean;
@@ -32,12 +15,7 @@ export interface CzynnosciProcesu {
   podgladOtwarty: boolean;
   zakoncz(wymuszony: boolean): void;
   /**
-   * Wstrzymanie procesu albo jego wznowienie (`terminal.process.suspend`).
-   *
-   * Czynność jest odrębna od zakończenia, bo służy czemu innemu: oddaje procesor
-   * BEZ utraty wykonanej pracy. Proces wstrzymany zostaje w stanie `running`,
-   * bo taka jest prawda — ma PID, pamięć i otwarte pliki — a kontrakt stanu
-   * „wstrzymany” nie ma.
+   * Wstrzymanie procesu albo jego wznowienie; oddaje procesor bez utraty wykonanej dotąd pracy.
    */
   wstrzymaj(wznowienie: boolean): void;
   uruchomPonownie(): void;
@@ -93,10 +71,7 @@ export function pozycjaProcesu(proces: TerminalProcess, czynnosci: CzynnosciProc
       : `Przestawia okno wiodące na kartę ${proces.sessionId}.`;
   doKarty.addEventListener('click', () => czynnosci.doKarty());
 
-  // Podgląd wyjścia — jedyna droga do treści, którą rdzeń pamięta, a bufor okna
-  // już nie (bufor umiera z połączeniem, rejestr rdzenia żyje cały jego bieg).
-  // Bez `disabled` jak reszta: stan procesu znany oknu jest kopią i nie ma prawa
-  // odbierać jedynej drogi do wyjścia.
+  // Podgląd wyjścia sięga po treść z rdzenia, bo bufor okna umiera wraz z połączeniem.
   const wyjscie = przyciskAkcji(
     czynnosci.podgladOtwarty ? 'Ukryj wyjście' : 'Pokaż wyjście',
     'dn-btn dn-btn--atrament',
@@ -112,7 +87,9 @@ export function pozycjaProcesu(proces: TerminalProcess, czynnosci: CzynnosciProc
   return element;
 }
 
-/** Opis procesu: PID, rodzic, inicjator, stan, kod wyjścia i czasy. */
+/**
+ * Opis procesu: identyfikator, proces rodzica, inicjator polecenia, bieżący stan, kod wyjścia oraz czasy startu i końca.
+ */
 function opisProcesu(proces: TerminalProcess): string {
   const czesci = [
     `PID ${proces.pid ?? '—'}`,
@@ -123,8 +100,7 @@ function opisProcesu(proces: TerminalProcess): string {
     `start: ${chwila(proces.startedAt)}`,
   ];
   if (proces.finishedAt !== undefined) czesci.push(`koniec: ${chwila(proces.finishedAt)}`);
-  // Zużycia procesora i pamięci nie pokazujemy: rdzeń ich nie mierzy, a wpisanie
-  // tu zera znaczyłoby „nic nie zużywa”, co byłoby nieprawdą.
+  // Zużycia procesora i pamięci nie pokazujemy: rdzeń ich nie mierzy.
   return czesci.join(' · ');
 }
 

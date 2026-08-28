@@ -18,49 +18,8 @@ import { KOD_MODULU } from './wynik-czastkowy';
 import { utworzZrodloTerminala, type ZrodloTerminala } from './zrodlo-terminala';
 
 /**
- * Moduł Terminal — złożenie sześciu okien operacyjnych wokół jednego okna
- * komunikacji.
- *
- * Układ wynika z ról okien. Terminal Tabs jest oknem wiodącym, więc stoi
- * w obszarze głównym jako punkt wejścia. Output Console i Process Monitor są
- * oknami monitora — stoją pod nim w pasie obserwacyjnym, bo obserwuje się to,
- * co okno wiodące uruchomiło. Session Manager, Task & Schedule i Script Library
- * są oknami zarządcy i kreatora: przygotowują pracę, którą okno wiodące
- * wykonuje, więc stoją w pasie rozszerzeń pod pasem obserwacyjnym. Okno rozmowy
- * modułu (Chat Window) i okno pętli wykonawczej nie należą do tego złożenia:
- * są bytami sesji i składa je warstwa rozmowy.
- *
- * Wszystkie sześć okien patrzy na jeden stan modułu, więc karta otwarta
- * w Session Managerze jest od razu kartą bieżącą okna wiodącego, a proces
- * uruchomiony w Task & Schedule stoi w Process Monitorze i w Output Console
- * bez żadnego przekazywania między oknami.
- *
- * Nad oknami stoi pas modułu z dwiema nastawami wspólnymi: widocznością warstw
- * i paletą poleceń. Warstwy zdejmują z ekranu kontrolki, których bieżące
- * zadanie nie wymaga; paleta pilnuje, żeby zdjęcie z ekranu nie stało się
- * schowaniem — każda czynność każdego okna jest w niej o jedno wskazanie.
- *
- * Sześć okien, pas nastaw, skróty klawiszowe i załącznik skrótów należą do
- * pozycji samodzielnej. Złożenie wchodzące jako okno pomocnicze gospodarza
- * niesie trzy okna rdzenne — dokładnie to, co obiecuje rama tamtego okna.
- *
- * Moduł widać wyłącznie w środowisku CodeStudio. Macierz widoczności jest
- * własnością nawigacji, a nie modułu — złożenie nie sprawdza środowiska samo,
- * bo drugi egzekutor widoczności rozjechałby się z pierwszym.
- *
- * Terminal nie jest samodzielnym modułem, tylko dodatkowym oknem pomocniczym
- * sesji CodeStudio. Złożenie wchodzi więc dwiema drogami:
- *
- *  1. jako okno pomocnicze gospodarza — `moduly/terminal/okno-pomocnicze.ts`,
- *     wołane z modułów Developer, Diagnostics i Apps; karta powstaje w oknie
- *     gospodarza i dziedziczy jego tryb uprawnień oraz katalog roboczy,
- *  2. jako samodzielna pozycja nawigacji. Nie da się jej zdjąć z klienta:
- *     pozycja pochodzi z macierzy widoczności rdzenia
- *     (`store/migracja_007_zaczyn_slownikow.sql`, wiersz `('codestudio',
- *     'terminal', 3)`), a klient bierze wykaz modułów wyłącznie z
- *     `environment.enter` / `module.list`. Dopóki rdzeń pozycję oddaje, moduł
- *     mówi wprost, czym jest — zniknięcie widoku dałoby pustkę czytającą się
- *     jak usterka.
+ * Moduł Terminal — złożenie sześciu okien operacyjnych wokół jednego okna komunikacji,
+ * ułożonych wedle roli: wiodące, obserwacyjne, zarządcy i kreatora.
  */
 export interface ZamontowanyTerminal {
   /** Element osadzony w dokumencie. */
@@ -73,16 +32,11 @@ export interface ZamontowanyTerminal {
   zamknij(): void;
 }
 
-/** Zależności złożenia. */
+/** Zależności złożenia modułu Terminal: okno komunikacji, w którym pracuje moduł, i tryb pozycji nawigacji. */
 export interface OpcjeTerminala {
   /** Okno komunikacji, w którym pracuje moduł — bez niego nie ma czego otworzyć. */
   okno: string;
-  /**
-   * Złożenie stoi jako samodzielna pozycja nawigacji, a nie w oknie pomocniczym
-   * gospodarza. Wtedy — i tylko wtedy — nad oknami staje nota mówiąca, czym
-   * Terminal jest. W pasie okien pomocniczych ta sama nota byłaby powtórzeniem
-   * zdania, które rama okna pomocniczego już niesie.
-   */
+  /** Złożenie stoi jako samodzielna pozycja nawigacji, a nie w oknie pomocniczym gospodarza. */
   samodzielny?: boolean;
 }
 
@@ -93,19 +47,13 @@ export function zamontujTerminal(
 ): ZamontowanyTerminal {
   const zrodlo = utworzZrodloTerminala(kanal);
   const stan = utworzStanTerminala(zrodlo, { okno: opcje.okno });
-  // Pozycje, których okna jeszcze nie wykonują, biorą swoje zdanie z odczytu
-  // wykazu komend rdzenia, a nie z napisu w kodzie. Po scaleniu kontraktu
-  // wszystkie komendy tego modułu w nim stoją, więc zdanie „kontrakt tego nie
-  // ma" byłoby dziś nieprawdą — brak przeszedł na stronę rdzenia i tylko odczyt
-  // potrafi powiedzieć, kiedy przestanie tam być.
+  // Pozycje bez wykonania biorą zdanie z odczytu komend rdzenia, nie z napisu w kodzie.
   const pokrycie = utworzPokrycieKomend(kanal);
 
   const obszar = document.createElement('div');
   obszar.className = 'dt-modul';
   obszar.dataset['modul'] = KOD_MODULU;
-  // Widoczność podstawowa jest stanem wyjściowym: funkcja niepotrzebna do
-  // bieżącego zadania nie stoi na ekranie. To nie jest blokada — kontrolka
-  // zdjęta z pola widzenia działa i sięga po nią paleta poleceń.
+  // Widoczność podstawowa jest stanem wyjściowym; to nie jest blokada, tylko zdjęcie z ekranu.
   obszar.dataset['widocznosc'] = 'podstawowa';
 
   const karty = utworzOknoKart(zrodlo, stan, pokrycie);
@@ -120,11 +68,7 @@ export function zamontujTerminal(
   dolny.className = 'dt-modul__dol';
   dolny.append(konsola.element, monitor.element);
 
-  // Pas rozszerzeń, nastawy wspólne i skróty wchodzą wyłącznie w pozycji
-  // samodzielnej. W oknie pomocniczym gospodarza rama obiecuje kartę powłoki,
-  // jej procesy i wyjście na żywo — trzy okna. Doklejenie tam zarządcy sesji,
-  // zadań i biblioteki rozrosłoby panel wewnątrz cudzego modułu, a przejęcie
-  // skrótów klawiszowych odebrałoby je gospodarzowi.
+  // Pas rozszerzeń i skróty wchodzą tylko w pozycji samodzielnej, nie u gospodarza.
   const rozszerzenia =
     opcje.samodzielny === true ? zlozRozszerzenia(zrodlo, stan, pokrycie, obszar) : null;
 
@@ -134,9 +78,7 @@ export function zamontujTerminal(
   if (rozszerzenia !== null) obszar.append(rozszerzenia.element, rozszerzenia.zalacznik);
   gospodarz.replaceChildren(obszar);
 
-  // Paleta i skróty biorą ten sam wykaz czynności: pozycja palety i skrót mają
-  // wywoływać dokładnie to samo, a dwa wykazy składane osobno rozjechałyby się
-  // przy pierwszej dołożonej czynności.
+  // Paleta i skróty biorą ten sam wykaz czynności, żeby oba wywołania nie rozjechały się z czasem.
   const wszystkieCzynnosci: readonly CzynnoscOkna[] = [
     ...karty.czynnosci,
     ...konsola.czynnosci,
@@ -161,8 +103,7 @@ export function zamontujTerminal(
   }
 
   odswiez();
-  // Odczyt wykazu komend rdzenia idzie raz na połączenie, nie raz na okno:
-  // wszystkie moduły kanału czekają na tę samą odpowiedź.
+  // Odczyt wykazu komend rdzenia idzie raz na połączenie, nie raz na okno.
   void pokrycie.odczytaj();
 
   return {
@@ -178,7 +119,7 @@ export function zamontujTerminal(
   };
 }
 
-/** Pas rozszerzeń modułu wraz z nastawami wspólnymi — wyłącznie pozycja samodzielna. */
+/** Pas rozszerzeń modułu Terminal wraz z nastawami wspólnymi — wyłącznie pozycja samodzielna nawigacji. */
 interface RozszerzeniaModulu {
   /** Pas trzech okien: zarządca sesji, zadania i harmonogram, biblioteka skryptów. */
   element: HTMLElement;
@@ -250,15 +191,8 @@ function zlozRozszerzenia(
 }
 
 /**
- * Wiąże czynności okien ze skrótami klawiszowymi po zapisie skrótu.
- *
- * Zapis skrótu jest jedynym łącznikiem: czynność zna swój skrót, bo pokazuje go
- * w palecie, a wiązanie zna kombinację klawiszy. Dobieranie po zapisie zamyka
- * to w jednym miejscu — czynność bez zapisu nie dostaje wiązania, a wiązanie
- * bez czynności nie przechwytuje klawisza, więc skrót bez skutku nie powstaje.
- *
- * Paleta jest jedynym wyjątkiem: należy do modułu, nie do żadnego okna, więc
- * jej wykonanie wchodzi tu wprost.
+ * Wiąże czynności okien ze skrótami klawiszowymi po zapisie skrótu; zapis skrótu jest jedynym
+ * łącznikiem między nimi.
  */
 function przypisaniaSkrotow(
   czynnosci: readonly CzynnoscOkna[],
@@ -276,11 +210,8 @@ function przypisaniaSkrotow(
 }
 
 /**
- * Nota pozycji samodzielnej — zdanie o tym, czym Terminal jest.
- *
- * Nie jest ostrzeżeniem o usterce i nic nie odbiera: okna pod nią działają
- * w pełni. Mówi, że to samo złożenie stoi wewnątrz Developera, Diagnostics
- * i Apps, i skąd bierze się ta pozycja w nawigacji.
+ * Nota pozycji samodzielnej — zdanie o tym, czym Terminal jest; nie jest ostrzeżeniem o usterce
+ * i nic nie odbiera.
  */
 function notaOknaPomocniczego(): HTMLElement {
   const element = document.createElement('p');
@@ -309,11 +240,7 @@ export const MODUL: OpisModulu = {
       kanal,
       (gospodarz: HTMLElement, k: Kanal, okno: string) =>
         zamontujTerminal(gospodarz, k, { okno, samodzielny: true }),
-      // Okno własne, nie pierwsze z brzegu. Bez tego kodu `widokZOknaSesji`
-      // bierze `okna[0]` — okno, które w wykazie sesji stoi pierwsze, choćby
-      // należało do cudzego modułu. Wszystkie cztery komendy tego modułu niosą
-      // `windowId`, więc terminal zakładałby wtedy karty powłoki w cudzym oknie
-      // komunikacji.
+      // Okno własne, nie pierwsze z brzegu — inaczej trafiłoby do cudzego modułu.
       KOD_MODULU,
     ),
 };

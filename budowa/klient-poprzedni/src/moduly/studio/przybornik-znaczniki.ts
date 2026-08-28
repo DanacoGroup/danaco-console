@@ -5,32 +5,7 @@ import {
   type StudioMarkup,
 } from '../../../../shared/contract';
 
-/**
- * Znaczniki własne Operatora — „do sprawdzenia", „wymaga źródła", „gotowe".
- *
- * ── Czego rdzeń NIE ma i co z tego wynika ───────────────────────────────────
- * Zlecenie mówi wprost: znaczników własnych w rdzeniu **nie ma** i mają zostać
- * dobudowane wraz z nazwą, barwą i wykazem. Kontrakt niesie komentarz
- * (`studio.comment.*`), adnotację przy fragmencie różnicy
- * (`studio.annotation.*`) i zmianę śledzoną (`studio.tracking.*`) — ani jedno
- * z tych trzech nie jest znacznikiem: komentarz niesie treść wątku, adnotacja
- * wisi przy numerze fragmentu różnicy, a zmiana śledzona jest w treści.
- *
- * Dlatego znacznik żyje **przez sesję okna** i przybornik mówi to Operatorowi
- * wprost, przy każdym znaczniku. Zapisywanie znacznika jako komentarza
- * o umownej treści byłoby wpisem, którego nikt później nie odróżni od
- * komentarza prawdziwego — i takim, którego wykaz komentarzy zaśmieciłby.
- * Pozycja kontraktu potrzebna do trwałości znaczników stoi w sprawozdaniu.
- *
- * ── Barwa nazwana, nie zapisana wprost ──────────────────────────────────────
- * Znacznik nosi barwę jako **żeton motywu**, nie jako wartość szesnastkową:
- * arkusz modułu nie zna ani jednej barwy zapisanej wprost i oba motywy
- * obsługują się same. Paleta jest więc wykazem żetonów.
- *
- * Plik nie zna DOM.
- */
-
-/** Barwa znacznika wyrażona żetonem motywu. */
+/** Interfejs BarwaZnacznika opisuje jedną barwę znacznika wyrażoną żetonem motywu: kod, nazwę widoczną i nazwę żetonu tła. */
 export interface BarwaZnacznika {
   kod: string;
   nazwa: string;
@@ -54,7 +29,7 @@ export const BARWY_ZNACZNIKOW: readonly BarwaZnacznika[] = [
   { kod: 'obojetna', nazwa: 'Obojętna', zeton: '--dn-powierzchnia-3' },
 ];
 
-/** Jeden znacznik założony na fragmencie dokumentu. */
+/** Interfejs ZnacznikWlasny opisuje jeden znacznik założony na fragmencie dokumentu wraz z jego zakresem, barwą, autorem i stanem otwarcia. */
 export interface ZnacznikWlasny {
   kod: string;
   /** Nazwa znacznika — pełna, bez numeracji wymyślonej. */
@@ -72,11 +47,7 @@ export interface ZnacznikWlasny {
 }
 
 /**
- * Nazwy znaczników podpowiadane Operatorowi.
- *
- * Trzy wymienione przez Właściciela wprost. Nie są zamkniętym wykazem: pole
- * nazwy przyjmuje dowolną treść, bo znaczniki są sprawą Operatora, nie
- * wykonawcy.
+ * Stała NAZWY_ZNACZNIKOW_GOTOWE niesie nazwy znaczników podpowiadane Operatorowi; nie jest wykazem zamkniętym, bo pole nazwy przyjmuje dowolną treść wpisaną przez Operatora.
  */
 export const NAZWY_ZNACZNIKOW_GOTOWE: readonly string[] = [
   'do sprawdzenia',
@@ -84,7 +55,7 @@ export const NAZWY_ZNACZNIKOW_GOTOWE: readonly string[] = [
   'gotowe',
 ];
 
-/** Zbiór znaczników dokumentu wraz z czynnościami na nim. */
+/** Interfejs ZnacznikiWlasne udostępnia zbiór znaczników dokumentu wraz z czynnościami zakładania, przestawiania, zdejmowania i czyszczenia wykazu. */
 export interface ZnacznikiWlasne {
   /** Znaczniki dokumentu w kolejności założenia. */
   wykaz(): readonly ZnacznikWlasny[];
@@ -104,12 +75,7 @@ export interface ZnacznikiWlasne {
 }
 
 /**
- * Zakłada zbiór znaczników jednego dokumentu.
- *
- * Kod znacznika bierze się z licznika i czasu założenia, bo dwa znaczniki
- * założone w tej samej milisekundzie musiałyby się rozróżnić. Nie jest to
- * numeracja produktowa pokazywana Operatorowi — Operator widzi nazwę i barwę,
- * a kod służy wyłącznie wskazaniu wiersza w wykazie.
+ * Funkcja utworzZnacznikiWlasne zakłada zbiór znaczników jednego dokumentu; kod znacznika bierze się z licznika i czasu założenia, nie jest numeracją widoczną dla Operatora.
  */
 export function utworzZnacznikiWlasne(): ZnacznikiWlasne {
   const znaczniki: ZnacznikWlasny[] = [];
@@ -153,20 +119,20 @@ export function utworzZnacznikiWlasne(): ZnacznikiWlasne {
   };
 }
 
-/** Żeton barwy znacznika; barwa nieznana schodzi na obojętną, nie na pustkę. */
+/** Funkcja przybornikZetonBarwy zwraca żeton barwy znacznika; barwa nieznana schodzi na barwę obojętną, a nie na pustkę. */
 export function przybornikZetonBarwy(barwa: string): string {
   const pozycja = BARWY_ZNACZNIKOW.find((wpis) => wpis.kod === barwa);
   return pozycja?.zeton ?? '--dn-powierzchnia-3';
 }
 
-/** Nazwa rodzaju znakowania trwałego widoczna dla Operatora. */
+/** Stała NAZWY_RODZAJOW_ZNAKOWANIA niesie nazwę rodzaju znakowania trwałego widoczną dla Operatora w interfejsie. */
 export const NAZWY_RODZAJOW_ZNAKOWANIA: Readonly<Record<StudioMarkupKind, string>> = {
   [StudioMarkupKind.Highlight]: 'Wyróżnienie barwą',
   [StudioMarkupKind.Mark]: 'Znacznik własny',
   [StudioMarkupKind.Suggestion]: 'Propozycja zmiany na marginesie',
 };
 
-/** Nazwa stanu znakowania trwałego widoczna dla Operatora. */
+/** Stała NAZWY_STANOW_ZNAKOWANIA niesie nazwę stanu znakowania trwałego widoczną dla Operatora w interfejsie. */
 export const NAZWY_STANOW_ZNAKOWANIA: Readonly<Record<StudioMarkupState, string>> = {
   [StudioMarkupState.Open]: 'otwarte',
   [StudioMarkupState.Accepted]: 'przyjęte',
@@ -200,7 +166,7 @@ export function przybornikOpiszZnakowanieRdzenia(znakowanie: StudioMarkup): stri
   );
 }
 
-/** Zdanie o znaczniku wraz z jego zakresem i autorem. */
+/** Funkcja przybornikOpiszZnacznik zwraca zdanie o znaczniku wraz z jego zakresem, autorem, stanem otwarcia i czasem założenia. */
 export function przybornikOpiszZnacznik(znacznik: ZnacznikWlasny): string {
   const zakres =
     znacznik.zakres === null

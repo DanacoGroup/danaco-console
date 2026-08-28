@@ -16,16 +16,8 @@ import { rysujWiersze, type NastawyWidoku } from './widok-wyjscia';
 import type { ZrodloTerminala } from './zrodlo-terminala';
 
 /**
- * Output Console — okno monitorujące modułu Terminal: wynik poleceń ze
- * wszystkich otwartych kart, na żywo, z historią przewijania.
- *
- * Panel akcji niesie eksport, wyczyszczenie, przełączniki zawijania,
- * znaczników czasu i auto-przewijania, grep, odtwarzanie sesji, podział widoku
- * i ponowne uruchomienie ostatniego polecenia.
- *
- * Bufor jest jeden na całe okno, a wiersz niesie swoją kartę i swój proces.
- * Zawężenie do jednej karty jest filtrem widoku, nie osobnym buforem — inaczej
- * wynik zbiorczy rozpadłby się na tyle konsol, ile kart.
+ * Output Console — okno monitorujące modułu Terminal: wynik poleceń ze wszystkich otwartych
+ * kart, na żywo, z historią przewijania.
  */
 export interface OknoKonsoli {
   element: HTMLElement;
@@ -72,8 +64,7 @@ export function utworzOknoKonsoli(
       return;
     }
     if (wynik.element.childElementCount === 0) {
-      // Pustka po zawężeniu ma kilka możliwych przyczyn i okno nazywa tę
-      // właściwą, zamiast obwiniać zawsze wzorzec grepa.
+      // Pustka po zawężeniu ma kilka przyczyn i okno nazywa tę właściwą, nie zawsze wzorzec grepa.
       tresc.pusto(powodPustegoWidoku(kontrolki, stan, wszystkie.length));
       return;
     }
@@ -82,10 +73,7 @@ export function utworzOknoKonsoli(
     if (podzial.dataset['wlaczony'] !== 'true') {
       miejsce.append(wynik.element);
     } else {
-      // Podział pokazuje ten sam bufor w dwóch zawężeniach naraz: jedno takie,
-      // jakie ustawiły przełączniki, drugie odwrotne. Dzięki temu strumień
-      // zbiorczy i strumień jednej karty stoją obok siebie bez przełączania
-      // nastawy tam i z powrotem.
+      // Podział pokazuje ten sam bufor w dwóch zawężeniach naraz, obok siebie bez przełączania.
       const drugie = rysujWiersze(
         wszystkie,
         zawezona ? { ...nastawy, karta: undefined } : { ...nastawy, karta: idKarty },
@@ -158,10 +146,7 @@ export function utworzOknoKonsoli(
     tresc.potwierdzenie(`Zapisano ${nazwa} — ${wiersze.length} wierszy bufora widoku.`, true);
   });
   ponownie.addEventListener('click', () => powtorzOstatniePolecenieKarty(zrodlo, stan, tresc));
-  // Przekazanie fragmentu do Diagnostics Center nie odbywa się w tym oknie.
-  // Powód liczy mechanizm pokrycia z odczytu wykazu komend rdzenia, więc zdanie
-  // nadąża i za kontraktem, i za rdzeniem — a fragment tymczasem zostaje w oknie
-  // i przenieść go można eksportem.
+  // Powód fragmentu liczy pokrycie z odczytu wykazu komend rdzenia; fragment zostaje w oknie.
   doDiagnostyki.addEventListener('click', () =>
     tresc.potwierdzenie(
       pokrycie.zdanie(Command.ContextTransfer, 'Przekazanie fragmentu do Diagnostics Center'),
@@ -221,7 +206,7 @@ export function utworzOknoKonsoli(
   return { element: rama.element, odswiez: pokaz, czynnosci };
 }
 
-/** Jedna tafla podzielonego widoku wraz z podpisem, po którym poznać jej zawężenie. */
+/** Jedna tafla podzielonego widoku konsoli wraz z podpisem, po którym poznać jej zawężenie karty bieżącej. */
 function tafla(podpis: string, konsola: HTMLElement): HTMLElement {
   const blok = document.createElement('section');
   blok.className = 'dt-tafla';
@@ -234,7 +219,7 @@ function tafla(podpis: string, konsola: HTMLElement): HTMLElement {
   return blok;
 }
 
-/** Nastawy widoku odczytane wprost z kontrolek; zawężenie karty tylko przy włączonym przełączniku. */
+/** Nastawy widoku konsoli odczytane wprost z kontrolek; zawężenie karty tylko przy włączonym przełączniku. */
 function nastawyKonsoli(kontrolki: PowierzchniaKonsoli, kartaBiezaca: string): NastawyWidoku {
   return {
     wzorzec: kontrolki.wzorzec.value,
@@ -249,11 +234,8 @@ function nastawyKonsoli(kontrolki: PowierzchniaKonsoli, kartaBiezaca: string): N
 }
 
 /**
- * Powód, dla którego po zawężeniu nie został ani jeden wiersz.
- *
- * Wyciąć wszystko potrafią trzy nastawy i okno wymienia te, które są włączone:
- * wzorzec grepa, zawężenie do karty bieżącej (osobno przypadek, w którym karty
- * bieżącej nie ma wcale) oraz suwak odtwarzania sesji.
+ * Powód, dla którego po zawężeniu nie został ani jeden wiersz; wyciąć wszystko potrafią trzy
+ * nastawy, a okno wymienia te, które są włączone.
  */
 function powodPustegoWidoku(
   kontrolki: PowierzchniaKonsoli,
@@ -280,7 +262,7 @@ function powodPustegoWidoku(
   return `Z ${wszystkich} wierszy bufora nie został ani jeden. Wycina je: ${powody.join(' · ')}.`;
 }
 
-/** Uwaga o wierszach zniesionych przez bufor — konsola pokazuje wtedy sam ogon historii. */
+/** Uwaga o wierszach zniesionych przez pojemność bufora konsoli — pokazuje się wtedy sam ogon historii. */
 function uwagaOOgonieHistorii(utracone: number): HTMLElement {
   const uwaga = document.createElement('p');
   uwaga.className = 'dn-pole-opis';
@@ -288,7 +270,7 @@ function uwagaOOgonieHistorii(utracone: number): HTMLElement {
   return uwaga;
 }
 
-/** Ponowne uruchomienie ostatniego polecenia karty bieżącej; bierze źródło, stan i treść parametrem. */
+/** Ponowne uruchomienie ostatniego polecenia karty bieżącej; bierze źródło, stan i treść okna parametrem. */
 function powtorzOstatniePolecenieKarty(
   zrodlo: ZrodloTerminala,
   stan: StanTerminala,
@@ -315,7 +297,7 @@ function powtorzOstatniePolecenieKarty(
   });
 }
 
-/** Kontrolki okna Output Console wraz z odtwarzaczem sesji. */
+/** Kontrolki okna Output Console wraz z odtwarzaczem sesji przewijania historii wierszy jego treści wyjścia. */
 interface PowierzchniaKonsoli {
   wzorzec: HTMLInputElement;
   zawijanie: HTMLButtonElement;
@@ -333,12 +315,8 @@ interface PowierzchniaKonsoli {
 }
 
 /**
- * Składa kontrolki, pasek akcji, pasek narzędzi i ciało okna.
- *
- * Nie domyka się na stanie okna ani na buforze. Jedyne wiązanie z wytwórnią to
- * `przyOdtwarzaniu` — odtwarzacz musi obudzić rysowanie, a rysowanie zostaje
- * w wytwórni. Pozycja bez pokrycia w kontrakcie jest jawnie nieczynna:
- * wyjaśnienie zaznaczenia jedzie oknem rozmowy modułu.
+ * Składa kontrolki, pasek akcji, pasek narzędzi i ciało okna; nie domyka się na stanie okna
+ * ani na buforze.
  */
 function zlozPowierzchnieKonsoli(
   rama: { akcje: HTMLElement; narzedzia: HTMLElement; cialo: HTMLElement },

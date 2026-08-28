@@ -3,26 +3,11 @@ import type { Kanal } from '../protokol/kanal';
 import { niepowodzenie, potwierdzenie, type OdbiorcaKomunikatu } from './komunikat-zmiany';
 import type { StanSterowania } from './stan-sterowania';
 
-/**
- * Nadanie modelu całej karcie sesji — zdolność komendy `model.channel.set`,
- * której `window.update` nie ma.
- *
- * `window.update` nadaje kanał jednemu oknu; `model.channel.set` przyjmuje
- * `sessionId` i przestawia wszystkie okna karty naraz (`kanalKartySesji`
- * w `adapter_modul_model.go`). Karta z czterema oknami to jedno żądanie zamiast
- * czterech, a więc i jedna okazja do niepowodzenia zamiast czterech.
- *
- * Żądanie niesie `agentId` obok `modelChannelId`, bo karta ma dostać ten sam
- * wybór, który stoi w oknie: kanał surowy albo agenta nałożonego na kanał.
- * Pominięcie agenta przestawiłoby pozostałe okna na model surowy.
- *
- * Przycisk jest zawsze klikalny. Karta jednookienna nie jest powodem do
- * wyszarzenia — nadanie jednemu oknu tą drogą daje ten sam skutek co przez okno.
- */
+// Nadanie modelu całej karcie sesji: żądanie karty przestawia wszystkie okna karty jednym wywołaniem.
 
 const ETYKIETA = 'Zastosuj do całej karty sesji';
 
-/** Wybór okna przełożony na żądanie karty; kształt zgodny z `zlecenieWyboru`. */
+/** Wybór okna przełożony na żądanie karty sesji; kształt zgodny z wynikiem funkcji zlecenieWyboru modelu. */
 export interface WyborModelu {
   modelChannelId?: string;
   agentId: string;
@@ -50,13 +35,11 @@ export function utworzModelKartySesji(
     const okno = stan.migawka().okno;
     const idSesji = okno.sessionId;
     if (idSesji === '') {
-      // Okno bez karty nie jest awarią — jest stanem, w którym nie ma czego
-      // rozesłać. Mówimy to wprost zamiast wysyłać żądanie bez adresata.
+      // Okno bez karty nie jest awarią: nie ma czego rozesłać, więc mówimy to wprost.
       zglos({ tresc: 'Okno nie należy do żadnej karty sesji — nie ma na co rozesłać modelu.', udany: false });
       return;
     }
-    // Bez wcześniejszego wyboru rozsyłamy nastawę bieżącą okna, żeby model
-    // ustawiony już w oknie nie wymagał wybrania go drugi raz.
+    // Bez wcześniejszego wyboru rozsyłamy nastawę bieżącą okna, bez ponownego jej wybierania.
     const wybor: WyborModelu = ostatni ?? {
       modelChannelId: okno.modelChannelId,
       agentId: okno.agentId ?? '',
@@ -74,10 +57,7 @@ export function utworzModelKartySesji(
           zglos(niepowodzenie(ETYKIETA, wynik.blad));
           return;
         }
-        // Potwierdzenie nie podaje liczby przestawionych okien:
-        // `ModelChannelSetResponse` niesie kanał, okno i kartę, a nie wykaz
-        // okien objętych czynnością. Rdzeń rozgłasza je osobno zdarzeniem
-        // `window.changed`, a każde okno przyjmuje swoje.
+        // Potwierdzenie nie podaje liczby okien; rdzeń rozgłasza je osobno zdarzeniem zmiany okna.
         zglos(potwierdzenie(ETYKIETA));
       },
     );

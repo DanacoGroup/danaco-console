@@ -9,26 +9,12 @@ import { czyTablica, sprawdzKsztalt } from '../../protokol/ksztalt-odpowiedzi';
 import { wywolaj } from '../../protokol/wywolanie';
 import { wywolajUczciwie } from './odmowa-rdzenia';
 
-/** Kod modułu w rdzeniu — kolumna `modul.kod`, zasilana przez
- * `migracja_007_zaczyn_slownikow.sql`. */
+/** Kod modułu w rdzeniu — kolumna `modul.kod`, zasilana przez migrację `migracja_007_zaczyn_slownikow.sql`. */
 export const KOD_MODULU = 'studio';
 
 /**
- * Panel akcji modułu sterowany danymi.
- *
- * Zestaw operacji Tools Panel pochodzi z katalogu akcji rdzenia: nowa operacja
- * to nowy wiersz rejestru, nie zmiana w kliencie. Dla zasięgu modułu Studio
- * `action.list` oddaje akcje okna komunikacji — `studio.message.send`,
- * `studio.message.stop`, `studio.message.list` — a nie operacje redakcyjne.
- * Wierszy operacji kontekstowych Studia w katalogu nie ma; okno pokazuje to
- * wprost, zamiast dorabiać je po stronie klienta.
- *
- * `window.action` jest drogą generyczną dla akcji bez własnej komendy. Uchwyt
- * komendy istnieje, ale akcja spoza katalogu wraca zwykłą kopertą błędu
- * `not_found` z powodem „akcja … nie istnieje w katalogu akcji". Brakuje więc
- * wiersza katalogu, a nie uchwytu komendy — i tak ma to zobaczyć Operator. Osłona
- * `wywolajUczciwie` zostaje na wypadek koperty `window.unknown`, która nie
- * niesie pola `status` i sama by się nie skorelowała.
+ * Panel akcji modułu sterowany danymi: zestaw operacji Tools Panel pochodzi z katalogu akcji
+ * rdzenia, nie ze zmian w kliencie.
  */
 export interface ZrodloAkcjiStudio {
   /** Katalog akcji zasięgu modułu Studio. */

@@ -7,17 +7,10 @@ import type { ZmianaUstawienia } from './zmiana-ustawienia';
 
 const NAZWA = 'Model zapasowy';
 
-/** Pozycja pusta: okno bez modelu zapasowego. Brak ustawienia to nie brak działania. */
+/** Pozycja pusta: okno bez modelu zapasowego. Brak ustawienia to nie brak działania, tylko wartość domyślna. */
 const BEZ_ZAPASOWEGO: OpcjaWyboru = { wartosc: '', nazwa: 'Bez modelu zapasowego' };
 
-/**
- * Sterowanie kanałem zapasowym okna.
- *
- * Treść `window.update` nie ma pola na kanał zapasowy, więc wartość idzie
- * ustawieniem poziomu okna (`config.set`, zasięg `window`) — poziom najwęższy,
- * wygrywający z każdym szerszym. Wykaz pochodzi z tego samego rejestru
- * kanałów, co model główny.
- */
+/** Sterowanie kanałem zapasowym okna, zapisywane ustawieniem poziomu okna, z wykazem tego samego rejestru kanałów co model główny. */
 export function utworzSterowanieModeluZapasowego(
   stan: StanSterowania,
   ustawienia: ZmianaUstawienia,

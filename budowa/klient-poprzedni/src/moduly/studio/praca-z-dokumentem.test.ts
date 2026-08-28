@@ -21,25 +21,7 @@ import {
 } from './zapis-formatowany';
 import { rozdzielNaOdcinki } from './zmiany-modelu';
 
-/**
- * Sprawdziany okna pracy z dokumentem — SKUTEK scalenia, nie koperta.
- *
- * Cztery okna tekstowe zeszły się w jedno. Szkody, które ten plik ma wykluczyć:
- *
- *   1. funkcja zgubiona w scaleniu — okno pracy ma nieść wszystkie czynności
- *      Studio Editora, kanwy, Preview Window i Diff/Grep Panelu; sprawdzian
- *      pyta o nie zbudowany widok modułu, a nie o kształt plików;
- *   2. widok formatowany, z którego treść nie wraca — to, co Operator wpisze na
- *      kartce, musi dać się odczytać z powrotem tą samą składnią;
- *   3. zmiana modelu oznaczona w niewłaściwym miejscu — odcinki treści liczą się
- *      z zakresów znakowych i muszą pokrywać treść bez dziur;
- *   4. paginacja, która nie dzieli — kartka ma się kończyć, gdzie się kończy,
- *      a podział jawny ma kończyć ją niezależnie od rachunku;
- *   5. liczba w panelu Redaktora bez rachunku pod spodem.
- *
- * Rdzeń jest atrapą: pytanie dotyczy modułu, nie serwera.
- */
-
+/** Sprawdza skutek scalenia czterech okien tekstowych w jedno okno pracy z dokumentem, nie kształt plików źródłowych. */
 interface Zapis {
   komenda: string;
   zadanie: Record<string, unknown>;

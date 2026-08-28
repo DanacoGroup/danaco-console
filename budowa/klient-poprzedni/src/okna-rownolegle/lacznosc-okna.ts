@@ -1,23 +1,12 @@
 import type { StanPolaczenia } from '../polaczenie/stan-polaczenia';
 
 /**
- * Łączność widziana z wnętrza okna roboczego — model i napisy.
- *
- * Pasek górny aplikacji ma własny wskaźnik (`aplikacja/wskaznik-lacznosci.ts`),
- * ale okno rozwinięte na pełny ekran go przykrywa. Okno robocze mówi więc samo,
- * że łącze padło, zanim polecenie zostanie wysłane w próżnię.
- *
- * Ten plik niczego nie liczy i niczego nie pamięta: składa napis z odczytu
- * podanego przez `polaczenie/gniazdo.ts`. Własny licznik kolejki albo własne
- * zliczanie prób byłyby drugim źródłem prawdy o tej samej rzeczy.
- *
- * Stan łączności jest informacją, nie bramą. Pole wypowiedzi zostaje czynne
- * przy rozłączeniu, bo kolejka wychodząca jest nieograniczona
- * (`polaczenie/kolejka-wychodzaca.ts`) — plakietka mówi, że polecenie stanie
- * w kolejce, nie że wysłać się nie da.
+ * Stan łączności okna: odczyt transportu.
  */
 
-/** Odczyt transportu — tyle, ile transport wystawia dziś każdemu pytającemu. */
+/**
+ * Odczyt transportu łączności okna: tyle, ile transport wystawia dziś każdemu pytającemu okna o jego stan.
+ */
 export interface OdczytLacznosci {
   stan: StanPolaczenia;
   /** Ramki czekające w kolejce wychodzącej. */
@@ -25,12 +14,7 @@ export interface OdczytLacznosci {
 }
 
 /**
- * Dojście do przebiegu ponowienia.
- *
- * Interfejs `Transport` (`polaczenie/gniazdo.ts`) tego nie wystawia: klasa
- * `Gniazdo` trzyma `numerProby` i uchwyt `zaplanowane` jako pola prywatne.
- * Port jest więc opcjonalny — plakietka bez niego pokazuje stan i kolejkę,
- * a brak numeru próby nazywa w podpowiedzi, zamiast liczyć próby u siebie.
+ * Dojście do przebiegu ponowienia; port jest opcjonalny, bo interfejs transportu go nie wystawia wprost.
  */
 export interface PortPonawiania {
   /** Numer próby, którą transport podejmie jako następną (od 1). */
@@ -41,7 +25,9 @@ export interface PortPonawiania {
   ponowTeraz(): void;
 }
 
-/** Pełny stan łączności okna: odczyt transportu wraz z przebiegiem ponowienia. */
+/**
+ * Pełny stan łączności okna: odczyt transportu wraz z całym przebiegiem ponowienia próby połączenia z rdzeniem.
+ */
 export interface StanLacznosciOkna extends OdczytLacznosci {
   /** Numer próby; `null` znaczy „transport go nie wystawia". */
   numerProby: number | null;
@@ -49,7 +35,9 @@ export interface StanLacznosciOkna extends OdczytLacznosci {
   zaPonowieniemMs: number | null;
 }
 
-/** Nazwa stanu widoczna w interfejsie — ta sama, którą niesie pasek górny. */
+/**
+ * Nazwa stanu łączności widoczna w interfejsie okna — ta sama, którą niesie pasek górny całej aplikacji.
+ */
 const NAZWY: Readonly<Record<StanPolaczenia, string>> = {
   rozlaczony: 'Rozłączony',
   laczenie: 'Łączenie',
@@ -57,7 +45,9 @@ const NAZWY: Readonly<Record<StanPolaczenia, string>> = {
   ponawianie: 'Ponawianie',
 };
 
-/** Odmiana kropki z `komponenty/plakietka.css`; bez barw własnych. */
+/**
+ * Odmiana kropki plakietki łączności pochodząca ze wspólnego arkusza stylu aplikacji; bez barw własnych.
+ */
 const KROPKI: Readonly<Record<StanPolaczenia, string>> = {
   rozlaczony: 'dn-kropka--blad',
   laczenie: 'dn-kropka--tetno',
@@ -65,7 +55,9 @@ const KROPKI: Readonly<Record<StanPolaczenia, string>> = {
   ponawianie: 'dn-kropka--ostrzezenie',
 };
 
-/** Odmiana plakietki — stan nigdy nie idzie samą barwą. */
+/**
+ * Odmiana plakietki łączności okna — stan łączności nigdy nie idzie samą barwą bez tekstu opisowego stanu.
+ */
 const PLAKIETKI: Readonly<Record<StanPolaczenia, string>> = {
   rozlaczony: 'dn-plakietka--blad',
   laczenie: 'dn-plakietka--informacja',
@@ -73,7 +65,9 @@ const PLAKIETKI: Readonly<Record<StanPolaczenia, string>> = {
   ponawianie: 'dn-plakietka--ostrzezenie',
 };
 
-/** Stany, w których łączność jest w toku — nośnikiem jest wtedy `.dn-spinner`. */
+/**
+ * Stany łączności okna, w których połączenie jest w toku — nośnikiem stanu jest wtedy wirujący spinner.
+ */
 const W_TOKU: ReadonlySet<StanPolaczenia> = new Set<StanPolaczenia>(['laczenie', 'ponawianie']);
 
 /**
@@ -87,22 +81,30 @@ export function czyWidocznaLacznosc(stan: StanLacznosciOkna): boolean {
   return stan.stan !== 'polaczony' || stan.oczekujace > 0;
 }
 
-/** Czy stan jest w toku — spinner zastępuje wtedy kropkę, tak jak w pasku górnym. */
+/**
+ * Czy stan łączności okna jest w toku — spinner zastępuje wtedy kropkę, tak jak w pasku górnym aplikacji.
+ */
 export function czyLacznoscWToku(stan: StanPolaczenia): boolean {
   return W_TOKU.has(stan);
 }
 
-/** Klasa kropki dla stanu. */
+/**
+ * Klasa arkusza stylu dla samej kropki tego stanu łączności widocznej w nagłówku okna komunikacji rdzenia.
+ */
 export function wariantKropkiLacznosci(stan: StanPolaczenia): string {
   return KROPKI[stan];
 }
 
-/** Klasa plakietki dla stanu. */
+/**
+ * Klasa arkusza stylu dla całej plakietki tego stanu łączności widocznej w nagłówku danego okna komunikacji.
+ */
 export function wariantPlakietkiLacznosci(stan: StanPolaczenia): string {
   return PLAKIETKI[stan];
 }
 
-/** Nazwa stanu — jedno źródło napisu dla nagłówka i dla podpowiedzi. */
+/**
+ * Nazwa stanu łączności — jedno źródło napisu dla nagłówka okna oraz dla podpowiedzi tej plakietki stanu.
+ */
 export function nazwaStanuLacznosci(stan: StanPolaczenia): string {
   return NAZWY[stan];
 }
@@ -129,35 +131,25 @@ export function napisLacznosci(stan: StanLacznosciOkna): string {
   return czlony.join(' · ');
 }
 
-/** „za 4 s" — sekundy zaokrąglone w górę; poniżej sekundy próba już biegnie. */
+/**
+ * Zapis odliczania czasu w sekundach zaokrąglonych w górę; poniżej sekundy próba połączenia już biegnie.
+ */
 function sekundyDoProby(ms: number): string {
   if (ms <= 0) return 'teraz';
   return `${Math.ceil(ms / 1000)} s`;
 }
 
 /**
- * Opis polityki ponawiania dla podpowiedzi plakietki.
- *
- * Wartości pochodzą z `polaczenie/ponawianie.ts` i to tam są ustalane; ten
- * napis tylko je nazywa. Uzasadnienie doboru:
- *
- * - baza 500 ms — rdzeń wstający lokalnie wraca zwykle w pierwszej albo drugiej
- *   próbie, więc przerwa bywa niezauważalna;
- * - mnożnik dwa z pułapem 15 s — po rdzeniu, który nie wstał, klient nie dobija
- *   się co pół sekundy bez końca, a 15 s to jeszcze czekanie, po którym produkt
- *   nie wygląda na martwy;
- * - rozproszenie do 25 % — okna równoległe i karty sesji ponawiają niezależnie;
- *   bez rozproszenia trafiałyby w rdzeń równocześnie;
- * - brak górnego limitu prób — poddanie się po ustalonej liczbie prób zostawiłoby
- *   użytkownika z produktem wymagającym przeładowania strony. Przyspieszenie
- *   daje czynność „Ponów teraz"; rezygnacji nie ma.
+ * Opis polityki ponawiania dla podpowiedzi plakietki łączności; wartości pochodzą z modułu ponawiania.
  */
 export const OPIS_PONAWIANIA =
   'Ponawianie jest wykładnicze: pierwsza próba po 500 ms, każda następna dwa '
   + 'razy dalej, nie dalej niż co 15 s, z rozproszeniem losowym do 25 %. '
   + 'Liczba prób nie jest ograniczona — klient nie poddaje się sam.';
 
-/** Zdanie o kolejce — mówi, co się dzieje z poleceniem wpisanym teraz. */
+/**
+ * Zdanie o kolejce łączności okna — mówi, co się dzieje z poleceniem wpisanym w tej właśnie chwili pracy.
+ */
 export const ZDANIE_KOLEJKI =
   'Polecenie wpisane teraz nie ginie: staje w kolejce wychodzącej i pojedzie '
   + 'do rdzenia po powrocie łączności. Pole wypowiedzi zostaje czynne.';
@@ -170,7 +162,9 @@ export const ZDANIE_BRAKU_PRZEBIEGU =
   'Numeru próby ani czasu do następnej ta plakietka nie pokazuje: transport '
   + 'trzyma je prywatnie i nie wystawia.';
 
-/** Podpowiedź plakietki — pełne zdanie tam, gdzie w napisie mieści się skrót. */
+/**
+ * Podpowiedź plakietki łączności — pełne zdanie tam, gdzie w samym napisie mieści się tylko sam skrót stanu.
+ */
 export function podpowiedzLacznosci(stan: StanLacznosciOkna): string {
   const zdania = [`Łączność z rdzeniem: ${NAZWY[stan.stan]}.`];
 

@@ -1,26 +1,7 @@
 import { ClipboardEntryKind, type ClipboardEntry } from '../../../../shared/contract';
 import { schowekOpiszWpis, schowekPodglad } from './schowek-zrodlo';
 
-/**
- * Historia schowka jako wykaz do wyboru — nie samo „wklej ostatnie".
- *
- * ── Trzy wymagania Właściciela w jednym panelu ──────────────────────────────
- * Wykaz wpisów sprzed kilku ruchów, przypinanie wpisów, które mają zostać na
- * stałe, i wklejanie w dwóch postaciach: z zachowaniem postaci albo jako czysty
- * tekst. Ostatnie jest jawnym wyborem Operatora i oba warianty są równorzędne —
- * przycisk jest jeden dla każdego, a nie jeden domyślny z ukrytym drugim.
- *
- * ── Malarz formatów stoi tu, nie w schowku rdzenia ──────────────────────────
- * Malarz kopiuje POSTAĆ, nie treść, więc nie jest wpisem `clipboard.*`:
- * kontrakt schowka niesie `content` i rodzaj (tekst, obraz, ścieżka pliku),
- * a nie arkusz nastaw akapitu. Malarz trzyma więc pobraną postać w tym panelu
- * i oddaje ją oknu, które jedyne wie, czym postać akapitu jest. Gdy postać
- * dokumentu wejdzie do kontraktu (rodzina `studio.document.*` postaci —
- * odcinek 1 i 4), malarz przejdzie na komendę rdzenia i przetrwa zamknięcie
- * karty; dziś żyje przez sesję okna i panel mówi to wprost.
- */
-
-/** Czynności panelu schowka zlecane oknu. */
+/** Interfejs CzynnosciSchowka niesie czynności panelu schowka zlecane oknu: wklejenie, odłożenie, przypięcie, usunięcie i odczyt historii. */
 export interface CzynnosciSchowka {
   /** Wkleja treść wpisu w miejsce kursora z zachowaniem postaci akapitu. */
   naWklejenieZPostacia(tresc: string): void;
@@ -40,7 +21,7 @@ export interface CzynnosciSchowka {
   naNalozeniePostaci(): void;
 }
 
-/** Panel schowka wraz z jego odświeżeniem. */
+/** Interfejs PanelSchowka niesie panel schowka wraz z jego odświeżeniem: wykazem wpisów, odmową rdzenia i postacią malarza formatów. */
 export interface SchowekHistoria {
   element: HTMLElement;
   /** Pokazuje wpisy oddane przez rdzeń. */
@@ -208,7 +189,7 @@ export function utworzSchowekHistorie(czynnosci: CzynnosciSchowka): SchowekHisto
   };
 }
 
-/** Jeden wiersz historii wraz z dwiema drogami wklejenia i przypięciem. */
+/** Funkcja wierszWpisu tworzy jeden wiersz historii schowka wraz z dwiema drogami wklejenia i przypięciem wpisu. */
 function wierszWpisu(wpis: ClipboardEntry, czynnosci: CzynnosciSchowka): HTMLElement {
   const glowa = document.createElement('p');
   glowa.className = 'ms-schowek__glowa';

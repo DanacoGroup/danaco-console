@@ -27,7 +27,7 @@ function ileSesji(liczba: number): string {
 /**
  * Zdanie o tym, co rdzeń faktycznie skasował.
  *
- * Licznik bierzemy z `liczba` (pole `deletedCount` rdzenia), a nie z długości
+ * Licznik pochodzi z `liczba` (pole `deletedCount` rdzenia), a nie z długości
  * wykazu: rozbieżność obu jest wtedy widoczna, a nie zamaskowana.
  */
 export function zdanieUsunietych(

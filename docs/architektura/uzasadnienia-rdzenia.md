@@ -6927,3 +6927,18 @@ przestawia pozostałe — klient, który dostałby sam zmieniony wiersz, pokaza�
 zbiór nieprawdziwy. Zawężenie korzeni poza obszar punktu jest odmową
 merytoryczną, błędem `dane.ErrPozaKorzeniami`, nie awarią zapisu, bo nadanie
 dostępu szerszego, niż punkt obiecuje, byłoby obejściem granicy uprawnień.
+
+## budowa/server/internal/core/handlers_dostep_przeklad.go
+Punkt wychodzi kontraktem pod swoim trwałym kodem, nie pod numerem wiersza,
+bo kod jest tym, czym operator posługuje się w konfiguracji mostu i co
+przeżywa przeniesienie bazy. Nadanie wychodzi pod identyfikatorem zewnętrznym
+nadanym przez rdzeń, a gdy wiersz powstał wprost w bazie, pod numerem
+wiersza, tak samo jak przy oknach i sesjach. Identyfikatorem urządzenia
+w kontrakcie jest klucz wiersza katalogu, ten sam, który wychodzi z powrotem
+polem `AccessPoint.deviceId`. Ciche `nil` rozbiłoby się dopiero o więz
+schematu `CHECK(rodzaj <> 'localDirectory' OR urzadzenie_id IS NOT NULL)`,
+a operator dostałby awarię zapisu zamiast powodu, dlatego wartość nieliczbowa
+odmawia zapisu wprost. Brak pola to nie to samo co pole niezrozumiałe:
+pominięcie jest dopuszczone kontraktem i znaczy, że urządzenia nie wskazano,
+co dla katalogu lokalnego rozstrzyga warstwa trwałości maszyną, na której
+działa rdzeń.

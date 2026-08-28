@@ -7592,3 +7592,18 @@ Pusty wykaz ekspertów znaczy dwie różne rzeczy — jeszcze nie wiadomo albo o
 Rejestr jest sterowany danymi: nowy kanał to nowy wiersz, nie nowy typ w kodzie. Sterowania modelu głównego i zapasowego czytają wykaz stąd, zamiast prowadzić własną listę nazw. Wykaz jest katalogiem wyboru wspólnym dla całego klienta, nie ustawieniem okna — jeden egzemplarz obsługuje dowolną liczbę okien i żadne z nich nie zapisuje w nim swojego stanu. Pusty wykaz nie wyłącza sterowania: pole pokazuje wartość bieżącą okna i przyjmuje wpis operatora.
 
 Pusty wykaz kanałów znaczy dwie różne rzeczy — jeszcze nie wiadomo albo rejestr jest pusty — a widok musi je rozróżnić: pierwsza to wskaźnik ładowania, druga to stan pusty ze zdaniem o pustym rejestrze. Bez tej flagi wskaźnik ładowania nie zgasłby nigdy na rdzeniu z autentycznie pustym rejestrem.
+
+## budowa/klient-poprzedni/src/moduly/terminal/zaleznosci-zewnetrzne.ts
+Instalka Danaco Console nie niesie żadnego programu zewnętrznego: terminal
+nie ma własnego interpretera powłoki, własnego klienta SSH ani własnego
+lintera — uruchamia programy leżące na maszynie, na której stoi rdzeń
+serwera. Milczenie o tym byłoby brakiem funkcji, nie oszczędnością słowa —
+operator, który klika „Uruchom” i dostaje odmowę startu procesu bez
+wskazania programu, nie ma jak odróżnić braku narzędzia na serwerze od
+usterki platformy. Dlatego każde okno, którego czynność zależy od programu
+zewnętrznego, nazywa ten program wprost. Wykaz powłok jest odwzorowaniem
+wykazu wykonawczego rdzenia, a nie domysłem: rdzeń startuje dokładnie te
+programy z dokładnie tymi argumentami. Wykaz zależności powłoki jest
+niepełny wobec słownika powłok kontraktu i taki ma być, bo dopisanie programu
+dla powłoki, której rdzeń nie uruchamia, byłoby zależnością zmierzoną
+podaną z wyobrażenia.

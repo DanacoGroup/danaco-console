@@ -1,27 +1,12 @@
 import { TerminalShell } from '../../../../shared/contract';
 
 /**
- * Programy zewnętrzne, bez których czynności modułu Terminal nie mają czym się
- * wykonać.
- *
- * Instalka Danaco Console nie niesie ani jednego z nich. Terminal nie ma
- * własnego interpretera powłoki, własnego klienta SSH ani własnego lintera —
- * uruchamia programy leżące na maszynie, na której stoi rdzeń serwera, i to one
- * wykonują pracę. Maszyna dewelopera ma je zwykle doinstalowane ręcznie, więc
- * pomiar zdolności robiony na niej zawyża to, co dostanie odbiorca instalki.
- *
- * Milczenie o tym byłoby brakiem funkcji, nie oszczędnością słowa: Operator,
- * który klika „Uruchom" i dostaje odmowę startu procesu bez wskazania programu,
- * nie ma jak odróżnić braku narzędzia na serwerze od usterki platformy. Dlatego
- * każde okno, którego czynność zależy od programu zewnętrznego, nazywa ten
- * program wprost i mówi, co się stanie, gdy go nie będzie.
- *
- * Wykaz powłok jest odwzorowaniem wykazu wykonawczego rdzenia
- * (`adapter_modul_terminal_powloki.go` i `..._powloki_urzadzen.go`), a nie
- * domysłem: rdzeń startuje dokładnie te programy z dokładnie tymi argumentami.
+ * Programy zewnętrzne wspierające czynności modułu Terminal tej budowy.
  */
 
-/** Jeden program zewnętrzny wraz z jego rolą w module. */
+/**
+ * Jeden program zewnętrzny wraz z jego rolą oraz sposobem jego uruchomienia w module Terminal tej budowy.
+ */
 export interface ProgramZewnetrzny {
   /** Nazwa pliku wykonywalnego szukanego na ścieżce PATH serwera. */
   program: string;
@@ -32,20 +17,7 @@ export interface ProgramZewnetrzny {
 }
 
 /**
- * Program uruchamiany przez rdzeń dla rodzaju powłoki karty.
- *
- * Wykaz jest niepełny wobec słownika powłok kontraktu i taki ma być. Kontrakt
- * zna dziś dziesięć rodzajów powłoki, a wykaz wykonawczy rdzenia
- * (`adapter_modul_terminal_powloki.go`) — sześć. Dopisanie tu programu dla
- * powłoki, której rdzeń nie uruchamia, byłoby domysłem podanym Operatorowi jako
- * zależność zmierzona: nie wiadomo ani jaki program rdzeń wybierze, ani z jakimi
- * argumentami. Powłoka spoza wykazu dostaje więc zdanie o braku po stronie
- * rdzenia, a nie nazwę programu wziętą z wyobrażenia.
- *
- * Argumenty podane w opisie mają znaczenie dla Operatora: powłoka startuje bez
- * czytania profilu użytkownika, a każde polecenie jest odrębnym procesem tej
- * powłoki. Stąd wynika zachowanie, które inaczej wygląda jak usterka — `cd`
- * wydane jednym poleceniem nie przesuwa katalogu następnemu.
+ * Program uruchamiany przez rdzeń dla danego rodzaju powłoki karty terminala, gdy rdzeń go rozpoznaje.
  */
 const PROGRAM_POWLOKI: Readonly<Partial<Record<TerminalShell, ProgramZewnetrzny>>> = {
   [TerminalShell.Powershell]: {
@@ -111,28 +83,21 @@ const PROGRAM_POWLOKI: Readonly<Partial<Record<TerminalShell, ProgramZewnetrzny>
 };
 
 /**
- * Zależność powłoki albo pusto, gdy rdzeń jej nie uruchamia.
- *
- * Typ zostaje CZĘŚCIOWY (`Partial`) mimo że wykaz pokrywa dziś komplet słownika
- * kontraktu: kolejna wartość `TerminalShell` pojawi się w kontrakcie wcześniej
- * niż w wykazie wykonawczym rdzenia, a wtedy pusto ma być odpowiedzią, nie
- * wpisem zgadniętym. Nazwa programu wpisana tu bez pokrycia w rdzeniu byłaby
- * domysłem podanym Operatorowi jako zależność zmierzona.
+ * Zależność powłoki albo pusto, gdy rdzeń dla danej powłoki jeszcze programu wprost nie uruchamia sam.
  */
 export function programPowloki(powloka: TerminalShell): ProgramZewnetrzny | null {
   return PROGRAM_POWLOKI[powloka] ?? null;
 }
 
-/** Zależności powłok, które rdzeń naprawdę uruchamia — treść noty okna kart. */
+/**
+ * Zależności powłok, które rdzeń naprawdę uruchamia — treść noty widocznej w oknie kart terminala tej budowy.
+ */
 export const PROGRAMY_POWLOK: readonly ProgramZewnetrzny[] = Object.values(PROGRAM_POWLOKI).filter(
   (zaleznosc): zaleznosc is ProgramZewnetrzny => zaleznosc !== undefined,
 );
 
 /**
- * Programy zewnętrzne, po które sięgają czynności okien poza samym startem
- * powłoki. Wykaz obejmuje wyłącznie to, co moduł naprawdę wywołuje — narzędzia
- * wymienione w dokumentacji, a przez moduł niewywoływane, stoją w katalogu
- * funkcji (`katalog-funkcji.ts`), nie tutaj.
+ * Programy zewnętrzne, po które sięgają czynności okien poza samym startem powłoki karty terminala tej budowy.
  */
 export const PROGRAMY_CZYNNOSCI: readonly ProgramZewnetrzny[] = [
   {

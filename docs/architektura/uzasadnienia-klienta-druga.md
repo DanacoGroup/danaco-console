@@ -6060,3 +6060,18 @@ z zasady produktu: czynność jest odwracalna ponownym zalogowaniem, a bramka pr
 odklikiwania. Urządzenie bez ważnego tokenu nie dostaje przycisku, tylko zdanie: nie ma czego unieważnić,
 a przycisk pewnej odmowy byłby gorszy od jego braku — ten sam zamysł, co przy kotwicy bramki w sekcji
 uwierzytelniania.
+
+## budowa/klient-poprzedni/src/powloka/wpiecie-kart-sesji.ts
+Wiąże migawki źródła kart sesji z pasem i wykonuje cztery zamiary: założenie sesji, zamknięcie
+sesji, trwałe usunięcie i przeniesienie ogniska. Usunięcie nie jest zamknięciem: zamknięcie zmienia
+stan i zostawia zapis, usunięcie kasuje zapis i jest jedyną drogą utraty danych sesji. Dlatego tylko
+usunięcie przechodzi przez potwierdzenie z wykazem tego, co ginie, i tylko ono rozlicza się dwoma
+wykazami rdzenia. Droga do rdzenia udostępnia się raz, przy złożeniu aplikacji. Pas kart powstaje
+wewnątrz powłoki, która jest widokiem i nie zna ani transportu, ani kontraktu; przeciąganie kanału
+przez wszystkie jej warstwy wprowadziłoby protokół do każdego odbiorcy powłoki. Bez udostępnienia pas
+zostaje samym widokiem — tak pracuje stanowisko podglądu, w którym rdzenia nie ma. Każde naciśnięcie
+dostaje odpowiedź: odmowa rdzenia idzie na pas jego własną treścią, a skład pasa zmienia dopiero
+kolejna migawka rdzenia. Potwierdzenie usunięcia prowadzi całą czynność wraz ze stanami
+obowiązkowymi. Odmowę nazwał już modal wraz z kodem, więc pas jej nie powtarza. Rozliczenie, w którym
+nic nie zginęło, idzie na pas z wagą błędu: „nie usunąłem niczego" nie jest powodzeniem zamówionej
+czynności.

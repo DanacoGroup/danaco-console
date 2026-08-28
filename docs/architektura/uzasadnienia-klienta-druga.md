@@ -7356,3 +7356,13 @@ i Escape sam, a drugi mechanizm rozwijania byłby rozjazdem. Czynność będąca
 wielkością ciągłą zostaje w katalogu, ale jej opis mówi, że sterowanie ma
 suwakiem, nie jednym naciśnięciem, i wskazuje pływak, żeby Operator nie
 szukał jej w dwóch miejscach.
+## budowa/klient-poprzedni/src/moduly/studio/wyszukiwanie-tekstu.ts
+Czynność wyszukiwania w treści dokumentu jest bliźniacza wobec narzędzi znacznikowych: pracuje
+na buforze edytora, więc rdzenia nie potrzebuje. Komenda studio.diff.compare też umie szukać
+wzorca, ale szuka go w treści wersji zapisanej w repozytorium — a to inna rzecz niż wzorzec
+w tekście, który jest właśnie pisany i jeszcze nie zapisany. Oba wyszukiwania istnieją obok
+siebie z zamysłem i każde mówi, po czym szuka.
+
+Wzorzec niepoprawny nie jest wyciszany. Wyrażenie regularne rzuca na złej składni, a przechwycenie
+tego bez słowa zamieniłoby literówkę w ciszę wyglądającą jak brak trafień. Wynik niesie więc
+powód wprost.

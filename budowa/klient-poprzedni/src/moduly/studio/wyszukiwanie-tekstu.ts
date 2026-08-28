@@ -1,19 +1,9 @@
 /**
- * Wyszukiwanie i zamiana w treści dokumentu — rachunek na napisie, bez DOM.
- *
- * Czynność jest bliźniacza wobec narzędzi znacznikowych: pracuje na buforze
- * edytora, więc rdzenia nie potrzebuje. Komenda `studio.diff.compare` też umie
- * szukać wzorca, ale szuka go w treści WERSJI zapisanej w repozytorium — a to
- * inna rzecz niż wzorzec w tekście, który Operator właśnie pisze i którego
- * jeszcze nie zapisał. Oba wyszukiwania istnieją obok siebie z zamysłem
- * i każde mówi, po czym szuka.
- *
- * Wzorzec niepoprawny nie jest wyciszany. `RegExp` rzuca na złej składni,
- * a przechwycenie tego bez słowa zamieniłoby literówkę Operatora w ciszę
- * wyglądającą jak „brak trafień". Wynik niesie więc powód wprost.
+ * Wyszukiwanie i zamiana w treści dokumentu działa na buforze edytora, bez rdzenia; wzorzec
+ * niepoprawny nie jest wyciszany, wynik niesie powód wprost.
  */
 
-/** Jedno trafienie wzorca w treści. */
+/** Jedno trafienie wzorca w treści dokumentu wraz z jego dokładnym położeniem i dopasowanym fragmentem tekstu. */
 export interface TrafienieTekstu {
   /** Położenie początku trafienia w treści. */
   poczatek: number;
@@ -23,7 +13,7 @@ export interface TrafienieTekstu {
   tekst: string;
 }
 
-/** Nastawy wyszukiwania odpowiadające przełącznikom panelu. */
+/** Nastawy wyszukiwania odpowiadające przełącznikom panelu: wzorzec, tryb wyrażenia regularnego i wielkość liter. */
 export interface NastawyWyszukiwania {
   wzorzec: string;
   /** Czy wzorzec jest wyrażeniem regularnym; `false` znaczy frazę dosłowną. */
@@ -32,14 +22,14 @@ export interface NastawyWyszukiwania {
   wielkoscLiter: boolean;
 }
 
-/** Wynik wyszukiwania albo powód, dla którego wyszukiwania nie da się wykonać. */
+/** Wynik wyszukiwania niosący listę wszystkich trafień albo powód, dla którego wyszukiwania nie dało się wykonać. */
 export interface WynikWyszukiwania {
   trafienia: readonly TrafienieTekstu[];
   /** Powód niepowodzenia; pusty, gdy wyszukiwanie się wykonało. */
   powod: string;
 }
 
-/** Wynik zamiany wraz z liczbą podmienionych trafień. */
+/** Wynik zamiany niosący treść dokumentu po podmianie wraz z liczbą podmienionych trafień wzorca wyszukiwania. */
 export interface WynikZamiany {
   tresc: string;
   liczba: number;
@@ -64,12 +54,12 @@ function zbudujWyrazenie(nastawy: NastawyWyszukiwania): RegExp | string {
   }
 }
 
-/** Osłania znaki o znaczeniu składniowym, żeby fraza znaczyła samą siebie. */
+/** Osłania znaki o znaczeniu składniowym wyrażenia regularnego, żeby fraza dosłowna znaczyła samą siebie. */
 function oslon(fraza: string): string {
   return fraza.replace(/[.*+?^${}()|[\]\\]/gu, '\\$&');
 }
 
-/** Znajduje wszystkie trafienia wzorca w treści. */
+/** Znajduje wszystkie trafienia wzorca w treści dokumentu zgodnie z podanymi nastawami wyszukiwania panelu. */
 export function znajdzTrafienia(
   tresc: string,
   nastawy: NastawyWyszukiwania,
@@ -82,9 +72,7 @@ export function znajdzTrafienia(
   for (const dopasowanie of tresc.matchAll(wyrazenie)) {
     const poczatek = dopasowanie.index;
     if (poczatek === undefined) continue;
-    // Wzorzec dopasowujący pustkę („a*") przesunąłby pętlę o zero znaków
-    // i zapełnił wykaz trafieniami bez treści. Pomijamy je, zamiast zawieszać
-    // przeglądarkę albo oddawać tysiąc pustych wierszy.
+    // Wzorzec dopasowujący pustkę przesunąłby pętlę o zero znaków — pomijamy takie trafienia.
     if (dopasowanie[0] === '') continue;
     trafienia.push({
       poczatek,
@@ -110,8 +98,7 @@ export function zamienWszystkie(
   if (znalezione.powod !== '') return { tresc, liczba: 0, powod: znalezione.powod };
   if (znalezione.trafienia.length === 0) return { tresc, liczba: 0, powod: '' };
 
-  // Składamy od tyłu, bo podmiana od przodu przesuwałaby położenia trafień
-  // jeszcze nieprzetworzonych o różnicę długości zamiennika.
+  // Składamy od tyłu, bo podmiana od przodu przesunęłaby położenia trafień jeszcze nieprzetworzonych.
   let wynik = tresc;
   for (const trafienie of [...znalezione.trafienia].reverse()) {
     wynik = `${wynik.slice(0, trafienie.poczatek)}${zamiennik}${wynik.slice(trafienie.koniec)}`;
@@ -119,7 +106,7 @@ export function zamienWszystkie(
   return { tresc: wynik, liczba: znalezione.trafienia.length, powod: '' };
 }
 
-/** Fragment treści wokół trafienia — materiał podglądu przed zatwierdzeniem. */
+/** Fragment treści dokumentu wokół trafienia — materiał podglądu wyświetlany przed zatwierdzeniem zamiany. */
 export function otoczenieTrafienia(
   tresc: string,
   trafienie: TrafienieTekstu,

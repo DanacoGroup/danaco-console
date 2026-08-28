@@ -9,36 +9,13 @@ import {
 import { nazwaUczestnika, type StanDebaty } from './stan-debaty';
 import type { StanTresci } from './stany-okna';
 
-/**
- * Skład debaty i tura bieżąca w Moderator Panelu — rysowanie i porządek głosu.
- *
- * Funkcje tego pliku nie domykają się ani na stanie okna, ani na źródle —
- * biorą `StanDebaty` i `StanTresci` parametrem i oddają węzły DOM.
- *
- * Każdy stan uczestnika ma własne słowo, nie sam atrybut danych czy krój pisma:
- * miejsce w kolejności głosu, wyciszenie, ostatni głos w turze, milczenie
- * w turze, powtórzony kanał.
- *
- * Znacznik mówcy jest ten sam co w przebiegu debaty. `znacznikMowcy`
- * z `czytelnosc-glosow.ts` liczy go z jednego wykazu (`stan.uczestnicy()`), więc
- * „U2” w składzie i „U2” nad wypowiedzią to ten sam uczestnik; nazwa tożsamości
- * do zestawienia obu okien nie wystarcza, bo bywa pusta.
- *
- * Kontrakt nie niesie „kto mówi teraz”: ani `RoundtableParticipant`, ani
- * `RoundtableTurn`, ani `RoundtableStatement` nie mają pola o głosie trwającym
- * — i scalenie kontraktu tego nie zmieniło.
- * Mierzalne jest tylko to, kto odezwał się ostatni wśród wypowiedzi widzianych
- * przez to okno, i tak też jest nazwane — brak sygnału opisuje zdanie
- * z `powodBrakuCzynnosci`, składane z wykazu komend kontraktu.
- */
-
-/** Obsługa czynności wiersza uczestnika — wnoszona przez wytwórnię okna. */
+/** Skład debaty i tura bieżąca w Moderator Panelu: obsługa czynności wiersza uczestnika, wnoszona przez wytwórnię okna. */
 export interface ObslugaSkladu {
   przelaczWyciszenie: (uczestnik: RoundtableParticipant) => void;
   przesunKolejnosc: (idUczestnika: string, kierunek: -1 | 1) => void;
 }
 
-/** Co o uczestniku wiadomo z wypowiedzi tej tury — zmierzone, nie założone. */
+/** Co o uczestniku wiadomo z wypowiedzi tej tury — zmierzone, nie założone: ostatni mówca, mówiący i liczba znanych wypowiedzi. */
 interface GlosyTury {
   ostatni: string;
   mowiacy: Set<string>;
@@ -46,13 +23,8 @@ interface GlosyTury {
 }
 
 /**
- * Rysuje turę bieżącą i skład debaty, albo stan pusty, gdy debata nie ma
- * otwartej tury. Ten stan pusty jest poprawny — moderator jest aktywny w toku
- * całej sesji, ale kierować turą, której nie ma, nie da się.
- *
- * Nagłówek tury zostaje widoczny nawet przy pustym składzie: pusty skład przy
- * otwartej turze nie wraca do `tresc.pusto(...)`, bo to wyczyściłoby całe
- * miejsce treści razem z numerem i stanem tury.
+ * Rysuje turę bieżącą i skład debaty, albo stan pusty, gdy debata nie ma otwartej tury —
+ * stan poprawny, nie błąd.
  */
 export function rysujTuraISklad(
   stan: StanDebaty,
@@ -90,7 +62,7 @@ export function rysujTuraISklad(
   miejsce.append(sklad);
 }
 
-/** Nagłówek tury bieżącej: numer, stan i — gdy jest — zagadnienie. */
+/** Nagłówek tury bieżącej: numer, stan i — gdy jest — zagadnienie, wypisane jednym zdaniem opisowym tury. */
 function naglowekTury(tura: { index: number; status: string; topic?: string }): HTMLElement {
   const element = document.createElement('div');
   element.className = 'dr-tura';
@@ -101,11 +73,8 @@ function naglowekTury(tura: { index: number; status: string; topic?: string }): 
 }
 
 /**
- * Skład debaty w kolejności głosu. `RoundtableParticipant.order` jest w
- * kontrakcie nośnym polem kolejności — gdy rdzeń je poda, wykaz jedzie po nim,
- * nie po kolejności wstawienia do stanu. Uczestnicy bez `order` schodzą na
- * koniec, w kolejności, w jakiej stan ich niesie — `Array.prototype.sort` jest
- * stabilny, więc ich wzajemny porządek się nie miesza.
+ * Skład debaty w kolejności głosu wskazanej przez rdzeń; uczestnicy bez wskazanej kolejności
+ * schodzą na koniec.
  */
 export function uczestnicyWKolejnosci(stan: StanDebaty): RoundtableParticipant[] {
   return [...stan.uczestnicy()].sort((a, b) => {
@@ -116,7 +85,7 @@ export function uczestnicyWKolejnosci(stan: StanDebaty): RoundtableParticipant[]
   });
 }
 
-/** Głosy tej tury policzone z wypowiedzi, które okno widziało. */
+/** Głosy tej tury policzone z wypowiedzi, które okno widziało, nie z założenia o pełnym udziale składu. */
 function glosyTury(stan: StanDebaty): GlosyTury {
   const wypowiedzi = stan.wypowiedzi();
   const mowiacy = new Set(wypowiedzi.map((wypowiedz) => wypowiedz.participantId));
@@ -151,7 +120,7 @@ function notaKolejnosci(stan: StanDebaty, uczestnicy: readonly RoundtablePartici
   return nota;
 }
 
-/** Zdanie o głosie bieżącym: mierzalny jest ostatni, nie trwający. */
+/** Zdanie o głosie bieżącym: mierzalny jest ostatni zapisany, nie trwający, którego kontrakt nie niesie. */
 function notaGlosuBiezacego(glosy: GlosyTury): HTMLElement {
   const nota = document.createElement('p');
   nota.className = 'dr-sklad__nota';
@@ -166,7 +135,7 @@ function notaGlosuBiezacego(glosy: GlosyTury): HTMLElement {
   return nota;
 }
 
-/** Wiersz uczestnika: znacznik, tożsamość, stany słowem i czynności moderatora. */
+/** Wiersz uczestnika: znacznik, tożsamość, stany słowem i czynności moderatora — wyciszenie i przesunięcie kolejności. */
 function wierszUczestnika(
   uczestnik: RoundtableParticipant,
   indeks: number,
@@ -198,9 +167,7 @@ function wierszUczestnika(
   const akcje = document.createElement('div');
   akcje.className = 'dr-uczestnik__akcje';
 
-  // Strzałki stoją bez `disabled` na skrajnych wierszach: `przesunKolejnosc`
-  // i tak odrzuca ruch poza wykaz, a wygaszony przycisk bez odpowiedzi kazałby
-  // brać pierwszy wiersz za uszkodzony.
+  // Strzałki stoją bez wygaszenia na skrajnych wierszach; przesunięcie samo odrzuca ruch poza wykaz.
   const gora = przycisk('↑', 'dn-btn dn-btn--zarys');
   gora.setAttribute('aria-label', `Przesuń ${nazwa.textContent} wyżej w kolejności głosu`);
   gora.addEventListener('click', () => obsluga.przesunKolejnosc(uczestnik.id, -1));

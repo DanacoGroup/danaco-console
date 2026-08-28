@@ -13,44 +13,15 @@ import type { StanAgentow } from './stan-agentow';
 import { czyZastepuje } from './warstwy-promptu';
 
 /**
- * Formularz tożsamości eksperta — nazwa, imię własne, favikon, opis,
- * instrukcje, zasięg widoczności i poziomy pamięci.
- *
- * Zasięg i pamięć stoją tutaj, a nie w oknie osobnym, bo są komponentami
- * definicji zapisywanymi tą samą komendą co reszta tożsamości: jadą polami
- * `visibility` i `memoryLevels` żądania zakładającego i zmieniającego eksperta.
- * Osobne okno musiałoby wołać tę samą komendę drugi raz i zakładałoby drugą
- * wersję eksperta na każdą zmianę zasięgu.
- *
- * Moduł Agents jest kompozytorem: Operator nie konfiguruje tu konta ani API,
- * tylko nadaje surowemu modelowi tożsamość i zapisuje ją pod własną nazwą.
- *
- * Nazwa i imię to dwa pola. Nazwa jest nazwą bytu w bibliotece i po niej
- * ekspert odnajduje się w wykazie modułu. Imię własne jest tym, czym ekspert
- * przedstawia się w oknach roboczych całego produktu. Zlanie ich w jedno pole
- * odbierałoby Operatorowi możliwość nazwania stu agentów technicznie
- * (`referent-procesowy-v3`) i ludzko („Referent") jednocześnie.
- *
- * Odstępstwo od promptu globalnego stoi tutaj, a nie przy warstwach. Prompt
- * systemowy ustawia się globalnie w oknie konfiguracji na stronie głównej
- * i obowiązuje domyślnie; moduł Agents daje instrukcję dopisywaną do niego albo
- * jawne oznaczenie odstępstwa, po którym instrukcja eksperta staje się promptem
- * systemowym. Oznaczenie dotyczy instrukcji eksperta jako całości
- * (`Agent.mode`, jedno pole na eksperta), więc kontrolka stoi raz — przy
- * tożsamości. Warstwy (`warstwy-promptu.ts`) czytają ten stan i mówią o nim,
- * ale go nie ustawiają.
- *
- * Formularz nie buduje wybieraka emoji ani katalogu ikon: kontrakt niesie
- * `favicon` jako napis i nie ma komendy oddającej katalog znaków. Pole tekstowe
- * z podglądem obok mówi prawdę o tym, co pójdzie do rdzenia.
+ * Formularz tożsamości eksperta zbiera nazwę, imię własne, favikon, opis,
+ * instrukcje, zasięg widoczności oraz poziomy pamięci zapisywane jedną
+ * komendą kontraktu.
  */
-/** Co robią instrukcje eksperta w stanie domyślnym — pole odznaczone. */
 const SKUTEK_DOPISANIA =
   'Stan domyślny: instrukcje i warstwy tego eksperta DOPISUJĄ się do globalnego promptu ' +
   'systemowego ustawionego w oknie konfiguracji i ustawień na stronie głównej. Globalny ' +
   'obowiązuje pierwszy i zostaje w mocy.';
 
-/** Co się stanie po oznaczeniu odstępstwa — pole zaznaczone. */
 const SKUTEK_ZASTAPIENIA =
   'ODSTĘPSTWO OD USTAWIEŃ DOMYŚLNYCH: instrukcja tego eksperta STAJE SIĘ promptem ' +
   'systemowym. Globalny prompt z okna konfiguracji i ustawień przestaje obowiązywać ' +
@@ -60,19 +31,11 @@ export interface FormularzTozsamosci {
   element: HTMLElement;
   /** Nanosi eksperta czynnego na pola; `null` znaczy formularz zakładania. */
   ustaw(ekspert: Agent | null): void;
-  /**
-   * Dopisuje treść na końcu pola instrukcji, BEZ zapisu w rdzeniu.
-   *
-   * Rozdzielenie wklejenia od zapisu jest tu treścią, nie ostrożnością: rada
-   * doradcy przeniesiona do instrukcji ma najpierw stanąć Operatorowi przed
-   * oczami w polu, które sam potem zatwierdzi przyciskiem. Zapis wykonany
-   * automatycznie zmieniłby tożsamość eksperta cudzym zdaniem, którego
-   * Operator jeszcze nie przeczytał.
-   */
+  /** Dopisuje treść na końcu pola instrukcji bez zapisu — zapis zatwierdza Operator przyciskiem. */
   dopiszDoInstrukcji(tresc: string): void;
 }
 
-/** Zależności formularza. */
+/** Zależności formularza przekazywane z zewnątrz, wywoływane po zdarzeniach formularza, którymi moduł nadrzędny steruje odświeżeniem biblioteki. */
 export interface OpcjeTozsamosci {
   /** Wywoływane po udanym zapisie — moduł odświeża wtedy bibliotekę. */
   naZapisie(ekspert: Agent): void;
@@ -112,11 +75,7 @@ export function utworzFormularzTozsamosci(
   });
   czynny.kontrolka.checked = true;
 
-  // Zasięg widoczności jest listą dwóch wartości kontraktu, a nie polem
-  // logicznym: „projektowy” nie jest zaprzeczeniem „globalnego”, tylko innym
-  // zasięgiem. Ekspert projektowy nie wskazuje projektu tutaj — przynależność
-  // zapisuje przypisanie w module Workspace, a drugie miejsce zapisu byłoby
-  // drugą prawdą o tym samym.
+  // Zasięg widoczności jest listą dwóch wartości kontraktu, nie polem logicznym — to odrębne zasięgi.
   const widocznosc = poleWyboru(
     {
       etykieta: 'Zasięg widoczności',
@@ -133,18 +92,12 @@ export function utworzFormularzTozsamosci(
 
   const pamiec: PoziomyPamieci = utworzPoziomyPamieci();
 
-  // Pole logiczne, a nie lista dwóch pozycji, bo te dwie wartości `Agent.mode`
-  // nie są równorzędne: dopisanie jest stanem domyślnym całego produktu,
-  // zastąpienie — odstąpieniem od ustawień globalnych ze strony głównej. Lista
-  // postawiłaby obie na jednej półce; niezaznaczone pole mówi, że jedna z nich
-  // jest normą.
+  // Pole logiczne, nie lista pozycji, bo dopisanie jest stanem domyślnym, a zastąpienie — odstąpieniem.
   const zastepowanie = poleLogiczne({
     etykieta: 'Zastąp globalny prompt systemowy instrukcją tego eksperta',
   });
 
-  // Ostrzeżenie stoi pod polem, na stałe i w obu stanach — nie chowa się za
-  // najechaniem i nie jest zwijalne. Barwę stanu o donioślejszych skutkach
-  // niesie `modele/tozsamosc.css`.
+  // Ostrzeżenie stoi pod polem na stałe w obu stanach, bez ukrywania go za najechaniem kursora.
   const skutek = document.createElement('p');
   skutek.className = 'da-odstepstwo';
   skutek.setAttribute('role', 'note');
@@ -160,9 +113,7 @@ export function utworzFormularzTozsamosci(
   const zapisz = przycisk('Zapisz tożsamość', 'dn-btn dn-btn--sm dn-btn--atrament');
   const odpowiedz = utworzWierszOdpowiedzi();
 
-  // Podgląd jest kontrolą: favikon bywa znakiem, którego pole tekstowe pokazuje
-  // wąsko i w kroju pisma formularza, więc obok pola stoi ten sam znak
-  // w rozmiarze, w jakim widać go w wykazie.
+  // Podgląd pokazuje ten sam znak favikonu w rozmiarze widocznym w wykazie, obok pola tekstowego.
   const podglad = document.createElement('span');
   podglad.className = 'da-favikon__podglad';
   podglad.dataset['pusty'] = 'tak';
@@ -204,12 +155,7 @@ export function utworzFormularzTozsamosci(
     return widocznosc.kontrolka.value as AgentVisibility;
   }
 
-  /**
-   * Zapis rozstrzyga wybór, nie przycisk: brak eksperta czynnego znaczy
-   * założenie nowego (`agent.create`), ekspert czynny znaczy zmianę
-   * (`agent.update`). Dwóch osobnych przycisków nie ma, bo Operator nie ma
-   * powodu rozstrzygać, której komendy użyć.
-   */
+  /** Zapis rozstrzyga wybór: brak eksperta czynnego zakłada nowego, ekspert czynny zmienia istniejącego. */
   async function zapisanie(): Promise<void> {
     const wpisanaNazwa = nazwa.kontrolka.value.trim();
     if (wpisanaNazwa === '') {
@@ -271,14 +217,11 @@ export function utworzFormularzTozsamosci(
       opis.kontrolka.value = ekspert?.description ?? '';
       instrukcje.kontrolka.value = ekspert?.systemPrompt ?? '';
       czynny.kontrolka.checked = ekspert?.enabled ?? true;
-      // Ekspert bez `mode` jest ekspertem dopisującym — pominięte pole znaczy
-      // w kontrakcie `DOLACZ`, więc formularz nowego eksperta rusza odznaczony.
+      // Ekspert bez trybu jest ekspertem dopisującym — pominięte pole w kontrakcie znaczy dopisanie.
       zastepowanie.kontrolka.checked = czyZastepuje(ekspert);
       odswiezSkutek();
       widocznosc.kontrolka.value = ekspert?.visibility ?? AgentVisibility.Global;
-      // Poziomy pamięci są w kontrakcie polem wymaganym eksperta, więc przy
-      // ekspercie zapisanym idą wprost z rdzenia; `null` znaczy formularz
-      // zakładania i wtedy grupa rusza od stanu wyjściowego.
+      // Poziomy pamięci eksperta zapisanego idą z rdzenia; puste oznacza formularz zakładania nowego.
       pamiec.ustaw(ekspert === null ? null : ekspert.memoryLevels);
       zapisz.textContent = ekspert === null ? 'Załóż eksperta' : 'Zapisz tożsamość';
       odswiezPodglad();

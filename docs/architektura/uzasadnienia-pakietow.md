@@ -6322,3 +6322,15 @@ jest usługą rdzenia i bierze ścieżkę na maszynie silnika, więc transkrypcj
 a do procesu zdalnego jedzie wyłącznie tekst. Wykaz rozszerzeń nagrań jest jeden, wspólny ze słownikiem
 formatów nagrań silnika mowy — drugiej listy ten plik nie zakłada. W rdzeniu funkcję przenoszenia woła
 spoina katalogów roboczych przy zasięgu zdalnym.
+
+## budowa/server/internal/zdalne/polecenie.go
+
+Tryb wsadowy wyklucza pytania interaktywne, ponieważ zgoda jest w bazie, nie w terminalu, a proces okna
+nie ma przy sobie nikogo, kto by odpowiedział. Przyjęcie nowego klucza zapisuje klucz hosta przy
+pierwszym połączeniu i odmawia przy jego zmianie, więc podmieniona maszyna nie dostanie procesu po
+cichu. Limit czasu połączenia zamienia wieczne wiszenie na odmowę z podanym powodem.
+
+Komenda zdalna ma postać zmiany katalogu i podmiany procesu powłoki zmiennymi środowiska, programem
+i argumentami. Każdy człon jest cytowany zgodnie z regułami powłoki POSIX, więc treść polecenia nie
+może zmienić kształtu komendy. Podmiana procesu powłoki oddaje procesowi miejsce powłoki — sygnał
+zerwania połączenia trafia wprost do niego, nie do pośrednika.

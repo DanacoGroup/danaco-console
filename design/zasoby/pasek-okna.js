@@ -8,6 +8,7 @@
 
    Kontrakt znacznika:
      .dn-pasek-okna[data-modul]                  pasek okna roboczego
+     .dn-pasek-okna-zestaw[data-zestaw-modul]    zestaw narzędzi jednego modułu
      [data-pasek-modul-nazwa]                    nazwa modułu karty bieżącej
      .dn-pasek-okna-grupa > [data-narzedzie]     narzędzie modułu
      .dn-pasek-okna-nadmiar                      pojemnik pozycji zwiniętych
@@ -24,8 +25,29 @@
 
   var nadmiar = q('.dn-pasek-okna-nadmiar', pasek);
   var menuNadmiaru = nadmiar && q('[data-menu-tresc]', nadmiar);
-  var narzedzia = qq('.dn-pasek-okna-grupa > [data-narzedzie]', pasek);
-  var rozdzielacze = qq('.dn-pasek-okna-rozdzielacz', pasek);
+  var zestawy = qq('.dn-pasek-okna-zestaw', pasek);
+  var aktywny = null;
+  var narzedzia = [];
+  var rozdzielacze = [];
+
+  /* ── Zestaw właściwy modułowi ────────────────────────────────────────────
+     Pasek nosi tyle zestawów, ile modułów ma w oknie karty; widoczny jest ten,
+     którego moduł prowadzi kartę bieżącą. Bez tego karta jednego modułu
+     pokazywałaby narzędzia drugiego — nazwa zmieniałaby się, a skład nie. */
+  function wybierzZestaw(modul) {
+    var cel = null;
+    zestawy.forEach(function (z) {
+      var pasuje = z.getAttribute('data-zestaw-modul') === modul;
+      if (pasuje) { cel = z; }
+      z.hidden = !pasuje;
+    });
+    if (!cel && zestawy.length) { cel = zestawy[0]; cel.hidden = false; }
+    if (cel === aktywny) { return; }
+    aktywny = cel;
+    narzedzia = aktywny ? qq('.dn-pasek-okna-grupa > [data-narzedzie]', aktywny) : [];
+    rozdzielacze = aktywny ? qq('.dn-pasek-okna-rozdzielacz', aktywny) : [];
+    zbudujOdpowiedniki();
+  }
 
   function nazwa(b) { return b.getAttribute('data-etykietka') || b.getAttribute('aria-label') || ''; }
 
@@ -35,6 +57,7 @@
      zwinięte narzędzie działa tak samo jak rozwinięte. */
   function zbudujOdpowiedniki() {
     if (!menuNadmiaru) { return; }
+    qq('[data-lustro]', menuNadmiaru).forEach(function (l) { l.remove(); });
     narzedzia.forEach(function (b) {
       var wiersz = document.createElement('button');
       wiersz.className = 'sta-menu-poz';
@@ -91,7 +114,7 @@
     nadmiar.hidden = zwiniete.length === 0;
     if (menuNadmiaru) {
       qq('[data-lustro]', menuNadmiaru).forEach(function (l) {
-        var zrodlo = q('[data-narzedzie="' + l.getAttribute('data-lustro') + '"]', pasek);
+        var zrodlo = aktywny && q('[data-narzedzie="' + l.getAttribute('data-lustro') + '"]', aktywny);
         l.hidden = !zrodlo || zrodlo.getAttribute('data-nadmiar') !== 'tak';
       });
     }
@@ -104,13 +127,14 @@
     pasek.hidden = rodzaj === 'centrum';
     if (!pasek.hidden && modul) {
       pasek.setAttribute('data-modul', modul);
-      var nazwaModulu = q('[data-pasek-modul-nazwa]', pasek);
+      wybierzZestaw(modul);
+      var nazwaModulu = aktywny && q('[data-pasek-modul-nazwa]', aktywny);
       if (nazwaModulu) { nazwaModulu.textContent = modul; }
     }
     przelicz();
   }
 
-  qq('[data-narzedzie]', pasek).forEach(function (b) {
+  qq('.dn-pasek-okna-zestaw [data-narzedzie]', pasek).forEach(function (b) {
     b.addEventListener('click', function () {
       if (!window.dnToast) { return; }
       window.dnToast(nazwa(b), 'Narzędzie modułu ' + (pasek.getAttribute('data-modul') || '')
@@ -124,6 +148,6 @@
 
   window.addEventListener('resize', przelicz);
 
-  zbudujOdpowiedniki();
+  wybierzZestaw(pasek.getAttribute('data-modul') || '');
   przelicz();
 })();

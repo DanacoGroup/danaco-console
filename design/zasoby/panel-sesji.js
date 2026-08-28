@@ -16,7 +16,7 @@
      [data-projekty-widok="wszystkie|praca|reakcja"]          zakres drzewa
      [data-panel-strona] · [data-panel-eksport]               czynności panelu
      [data-drzewo="rozwin|zwin"]                              stan gałęzi
-     [data-poz-akcja="nazwa|przenies|archiwizuj|usun"]        czynność wiersza
+     [data-poz-akcja="nazwa|przenies|wyjmij|archiwizuj|usun"] czynność wiersza
      [data-panel-zwin] · [data-panel-przypnij]                stan panelu
    ============================================================================ */
 (function () {
@@ -39,7 +39,7 @@
      sesja przerwana czeka na rozstrzygnięcie, czyli stoi w `reakcja`. */
   var STAN_WAGA = { reakcja: 0, praca: 1, zakonczone: 2 };
   var NAZWY_SORT = {
-    czynnosc: 'ostatnio czynne',
+    czynnosc: 'ostatnia aktywność',
     najstarsze: 'najstarsze',
     nazwa: 'nazwa A–Z',
     'nazwa-odwrotnie': 'nazwa Z–A',
@@ -183,6 +183,7 @@
   var OPISY = {
     nazwa: 'Nazwa do zmiany w miejscu — automat nadał ją z pierwszego polecenia sesji.',
     przenies: 'Przeniesienie do projektu: sesja wchodzi w drzewo projektu i zostaje w wykazie sesji.',
+    wyjmij: 'Wyjęcie z projektu: sesja zostaje w historii, ale bez przypisania do projektu.',
     archiwizuj: 'Archiwizacja zdejmuje sesję z wykazu czynnego; treść zostaje dostępna z historii.',
     usun: 'Usunięcie trwałe. Zadania serwerowe tej sesji zostają zatrzymane.'
   };

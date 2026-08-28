@@ -372,10 +372,12 @@
 
 
   <!-- ══ PAS KART SESJI ══ -->
-  <div class="dn-karty-sesji" role="tablist" aria-label="Karty sesji">
-    <button class="dn-karta-sesji" role="tab" aria-selected="true" type="button"><span class="pt-tetno" aria-hidden="true"></span><span>Strona główna — wariant A</span></button>
-    <button class="dn-karta-sesji" role="tab" aria-selected="false" type="button"><span>Branding — kampania Q3</span></button>
-    <button class="dn-karta-sesji" role="tab" aria-selected="false" type="button"><span>Ikony interfejsu — Apps</span></button>
+  <div class="dn-karty-sesji">
+    <div class="dn-karty-sesji-tory" role="tablist" aria-label="Karty sesji">
+      <button class="dn-karta-sesji" role="tab" aria-selected="true" type="button"><span class="pt-tetno" aria-hidden="true"></span><span>Strona główna — wariant A</span></button>
+      <button class="dn-karta-sesji" role="tab" aria-selected="false" type="button"><span>Branding — kampania Q3</span></button>
+      <button class="dn-karta-sesji" role="tab" aria-selected="false" type="button"><span>Ikony interfejsu — Apps</span></button>
+    </div>
     <button class="dn-btn-ikona" type="button" aria-label="Nowa karta" data-komunikat="Nowa karta otwiera pusty Design Board." data-komunikat-tytul="Nowa kompozycja"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></button>
     <span data-przywroc-pas style="display:inline-flex;gap:var(--dn-od-1);align-items:center;margin-left:var(--dn-od-2)"></span>
   </div>
@@ -407,7 +409,7 @@
       </div>
       <div class="dn-szyna-modulu-lista">
         <div class="dn-etyk-mono">Kampania Q3</div>
-        <button class="pt-pozycja" type="button" aria-selected="true"><span class="pt-tetno" aria-hidden="true"></span><span class="pt-pozycja-tytul">Strona główna — wariant A</span></button>
+        <button class="pt-pozycja" type="button" aria-current="true"><span class="pt-tetno" aria-hidden="true"></span><span class="pt-pozycja-tytul">Strona główna — wariant A</span></button>
         <button class="pt-pozycja" type="button"><span class="pt-pozycja-tytul">Branding — kampania Q3</span></button>
         <button class="pt-pozycja" type="button"><span class="pt-pozycja-tytul">Tablica nastroju — granat + złoto</span></button>
         <div class="dn-etyk-mono">Apps · Frontend</div>
@@ -510,8 +512,8 @@
                   <div class="sta-popover-wiersz"><span class="sta-popover-etykieta">Zasób z Assets Panel</span></div>
                   <div class="sta-popover-wiersz"><span class="sta-popover-etykieta">Zapisz jako szablon promptu</span></div>
                   <div class="sta-popover-tytul" style="margin-top:var(--dn-od-2)">Konektory</div>
-                  <div class="sta-popover-wiersz"><span class="sta-popover-etykieta">Library — kolekcje</span><button class="dn-przelacznik" data-przelacznik aria-pressed="true" role="switch" aria-checked="true"></button></div>
-                  <div class="sta-popover-wiersz"><span class="sta-popover-etykieta">Apps · Frontend Workspace</span><button class="dn-przelacznik" data-przelacznik aria-pressed="false" role="switch" aria-checked="false"></button></div>
+                  <div class="sta-popover-wiersz"><span class="sta-popover-etykieta">Library — kolekcje</span><button class="dn-przelacznik" aria-label="Library — kolekcje" data-przelacznik role="switch" aria-checked="true"></button></div>
+                  <div class="sta-popover-wiersz"><span class="sta-popover-etykieta">Apps · Frontend Workspace</span><button class="dn-przelacznik" aria-label="Apps · Frontend Workspace" data-przelacznik role="switch" aria-checked="false"></button></div>
                   <div class="sta-popover-tytul" style="margin-top:var(--dn-od-2)">Wtyczki</div>
                   <div class="sta-popover-wiersz"><span class="sta-popover-etykieta">Danaco marketing</span></div>
                 </div>
@@ -522,7 +524,7 @@
                   <div class="sta-popover-tytul">Mikrofon</div>
                   <div class="sta-popover-wiersz"><span class="sta-popover-etykieta">Domyślny — Zestaw nagłowny</span><span class="ptaszek" style="color:var(--dn-sygnal)">✓</span></div>
                   <div class="sta-popover-wiersz"><span class="sta-popover-etykieta">Mikrofon USB</span></div>
-                  <div class="sta-popover-wiersz"><span class="sta-popover-etykieta">Przytrzymaj, aby nagrać</span><button class="dn-przelacznik" data-przelacznik aria-pressed="false" role="switch" aria-checked="false"></button></div>
+                  <div class="sta-popover-wiersz"><span class="sta-popover-etykieta">Przytrzymaj, aby nagrać</span><button class="dn-przelacznik" aria-label="Przytrzymaj, aby nagrać" data-przelacznik role="switch" aria-checked="false"></button></div>
                 </div>
               </div>
               <span class="rozciag"></span>
@@ -612,17 +614,17 @@
         <section class="sta-okno" id="panel-prompt" data-nazwa="Prompt Builder">
           <header class="sta-okno-belka"><span class="sta-okno-tytul"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 6h16M4 12h10M4 18h7"/><path d="m17 15 3 3-3 3"/></svg><b>Prompt Builder</b></span><span class="sta-okno-akcje"><span class="sta-chip">Szablony</span><button class="dn-btn-ikona" type="button" data-okno-zamknij aria-label="Zamknij"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></button></span></header>
           <div class="sta-okno-tresc dg-pola">
-            <div class="dg-pole"><label>Temat</label><input class="dn-pole-kontrolka" type="text" value="ilustracja bohatera strony"></div>
+            <div class="dg-pole"><label for="dg-temat">Temat</label><input id="dg-temat" class="dn-pole-kontrolka" type="text" value="ilustracja bohatera strony"></div>
             <div class="dg-dwa">
-              <div class="dg-pole"><label>Styl</label><select class="dn-wybor"><option>nowoczesny, płaski, geometryczny</option><option>realistyczny</option><option>liniowy</option></select></div>
-              <div class="dg-pole"><label>Paleta barw</label><select class="dn-wybor"><option>granat + złoto</option><option>monochrom</option><option>pastele</option></select></div>
+              <div class="dg-pole"><label for="dg-styl">Styl</label><select id="dg-styl" class="dn-wybor"><option>nowoczesny, płaski, geometryczny</option><option>realistyczny</option><option>liniowy</option></select></div>
+              <div class="dg-pole"><label for="dg-paleta-barw">Paleta barw</label><select id="dg-paleta-barw" class="dn-wybor"><option>granat + złoto</option><option>monochrom</option><option>pastele</option></select></div>
             </div>
             <div class="dg-dwa">
-              <div class="dg-pole"><label>Proporcje</label><select class="dn-wybor"><option>16:9</option><option>1:1</option><option>4:3</option></select></div>
-              <div class="dg-pole"><label>Warianty</label><select class="dn-wybor"><option>4</option><option>2</option><option>1</option></select></div>
+              <div class="dg-pole"><label for="dg-proporcje">Proporcje</label><select id="dg-proporcje" class="dn-wybor"><option>16:9</option><option>1:1</option><option>4:3</option></select></div>
+              <div class="dg-pole"><label for="dg-warianty">Warianty</label><select id="dg-warianty" class="dn-wybor"><option>4</option><option>2</option><option>1</option></select></div>
             </div>
-            <div class="dg-pole"><label>Wykluczenia (negative prompt)</label><input class="dn-pole-kontrolka" type="text" value="bez tekstu, bez logotypów"></div>
-            <div class="dg-pole"><label>Kreatywność / wierność — 0.7</label><input type="range" class="sta-suwak" min="0" max="10" value="7" aria-label="Kreatywność"></div>
+            <div class="dg-pole"><label for="dg-wykluczenia-negative-prompt">Wykluczenia (negative prompt)</label><input id="dg-wykluczenia-negative-prompt" class="dn-pole-kontrolka" type="text" value="bez tekstu, bez logotypów"></div>
+            <div class="dg-pole"><label for="dg-kreatywnosc-wiernosc-0-7">Kreatywność / wierność — 0.7</label><input id="dg-kreatywnosc-wiernosc-0-7" type="range" class="sta-suwak" min="0" max="10" value="7" aria-label="Kreatywność"></div>
             <div class="dn-wykaz-modulu-poz"><span class="dn-meta">≈ 148 znaków · seed 4821</span><button class="dn-btn dn-btn--sygnal dn-btn--sm" type="button" style="margin-left:auto" data-komunikat="Uruchomienie generowania — wynik trafia do Assets Panel. Przy pustym poleceniu komunikat zamiast blokady." data-komunikat-tytul="Generuj"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M13 2 3 14h7l-1 8 10-12h-7z"/></svg> Generuj</button></div>
           </div>
         </section>
@@ -651,16 +653,16 @@
           <header class="sta-okno-belka"><span class="sta-okno-tytul"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg><b>Assets Panel</b></span><span class="sta-okno-znacznik">48 zasobów</span><span class="sta-okno-akcje"><span class="sta-chip">Siatka</span><button class="dn-btn-ikona" type="button" data-okno-zamknij aria-label="Zamknij"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></button></span></header>
           <div class="sta-okno-tresc" style="min-height:0;">
             <div class="dg-narzedzia"><label class="dn-szukaj" style="flex:1"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><input type="search" placeholder="Szukaj po nazwie, tagu, poleceniu" aria-label="Szukaj zasobów"></label><span class="dn-plakietka dn-plakietka--sygnal">ilustracje</span></div>
-            <div class="dg-siatka">
-              <div class="dg-miniatura" role="button" tabindex="0" aria-selected="true">
+            <div class="dg-siatka" role="listbox" aria-label="Warianty miniatury">
+              <div class="dg-miniatura" role="option" tabindex="0" aria-selected="true">
                 <svg viewBox="0 0 100 80" aria-hidden="true"><rect width="100" height="80" fill="var(--dn-powierzchnia)"/><circle cx="50" cy="34" r="16" fill="none" stroke="var(--dn-tekst-2)" stroke-width="2"/><path d="M28 66 q22 -20 44 0" fill="none" stroke="var(--dn-tekst-2)" stroke-width="2"/><circle cx="72" cy="20" r="4" fill="var(--dn-sygnal-500)"/></svg>
                 <span class="podpis"><svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="m12 2 3 7 7 .5-5.5 4.5 2 7-6.5-4-6.5 4 2-7L2 9.5 9 9z"/></svg> bohater_v3</span>
               </div>
-              <div class="dg-miniatura" role="button" tabindex="0">
+              <div class="dg-miniatura" role="option" tabindex="0">
                 <svg viewBox="0 0 100 80" aria-hidden="true"><rect width="100" height="80" fill="var(--dn-powierzchnia)"/><path d="M30 30 h10 l14 14 -14 14 h-10 l14 -14 z" fill="var(--dn-tekst)"/><circle cx="66" cy="58" r="5" fill="var(--dn-sygnal-500)"/></svg>
                 <span class="podpis">logo_zloto <span class="dn-plakietka dn-na-koniec">branding</span></span>
               </div>
-              <div class="dg-miniatura" role="button" tabindex="0">
+              <div class="dg-miniatura" role="option" tabindex="0">
                 <span class="dn-plakietka dn-plakietka--sygnal dg-nowy">nowy</span>
                 <svg viewBox="0 0 100 80" aria-hidden="true"><rect width="100" height="80" fill="var(--dn-powierzchnia)"/><rect x="30" y="24" width="40" height="40" rx="8" fill="none" stroke="var(--dn-tekst-2)" stroke-width="2"/><path d="M42 44 h16 M50 36 v16" stroke="var(--dn-sygnal-500)" stroke-width="2"/></svg>
                 <span class="podpis">ikona_produktu <span class="dn-plakietka dn-na-koniec">UI</span></span>

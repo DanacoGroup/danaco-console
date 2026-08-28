@@ -152,6 +152,17 @@ a:hover { color: var(--dn-sygnal-mocny); text-decoration: underline; text-underl
   align-self: stretch;
   margin: 0 var(--dn-od-2);
 }
+/* Wariant na wysokość znaku — kreska między przyciskami ikonowymi w pasie
+   narzędzi. Rozciągnięcie byłoby tam za wysokie: pas ma wyściółkę, więc kreska
+   sięgałaby poza rząd ikon. Pasek stanu ma własną kreskę o stałej wysokości
+   14 px (`.dn-stan-sep` w rama.css) — trzecia postać tej samej roli, do złożenia
+   przy porządkowaniu paska stanu. */
+.dn-separator--pionowy.dn-separator--znak {
+  height: var(--dn-wym-ikona);
+  align-self: center;
+  flex: none;
+  margin: 0 var(--dn-od-1);
+}
 /* Na płótnie — kreska na powierzchni panelu, nie w zagłębionej tacy. Zmierzone:
    `--dn-obrys-subtelny` daje w motywie ciemnym 12,6 L* na tle 17,0 L*, czyli
    kreskę CIEMNIEJSZĄ od tła o 4,4 stopnia — praktycznie niewidoczną. Obrys

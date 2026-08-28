@@ -367,10 +367,12 @@
 
 
   <!-- ══ PAS KART SESJI ══ -->
-  <div class="dn-karty-sesji" role="tablist" aria-label="Karty sesji">
-    <button class="dn-karta-sesji" role="tab" aria-selected="true" type="button"><span class="pt-tetno" aria-hidden="true"></span><span>Raport tygodniowy sprzedaży</span></button>
-    <button class="dn-karta-sesji" role="tab" aria-selected="false" type="button"><span>Testy po zatwierdzeniu — repo</span></button>
-    <button class="dn-karta-sesji" role="tab" aria-selected="false" type="button"><span>Odświeżenie źródeł Research</span></button>
+  <div class="dn-karty-sesji">
+    <div class="dn-karty-sesji-tory" role="tablist" aria-label="Karty sesji">
+      <button class="dn-karta-sesji" role="tab" aria-selected="true" type="button"><span class="pt-tetno" aria-hidden="true"></span><span>Raport tygodniowy sprzedaży</span></button>
+      <button class="dn-karta-sesji" role="tab" aria-selected="false" type="button"><span>Testy po zatwierdzeniu — repo</span></button>
+      <button class="dn-karta-sesji" role="tab" aria-selected="false" type="button"><span>Odświeżenie źródeł Research</span></button>
+    </div>
     <button class="dn-btn-ikona" type="button" aria-label="Nowa karta" data-komunikat="Nowa karta otwiera Workflow Builder w trybie tworzenia automatyki." data-komunikat-tytul="Zbuduj automatykę"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></button>
     <span data-przywroc-pas style="display:inline-flex;gap:var(--dn-od-1);align-items:center;margin-left:var(--dn-od-2)"></span>
   </div>
@@ -403,7 +405,7 @@
       </div>
       <div class="dn-szyna-modulu-lista">
         <div class="dn-etyk-mono">Workspace</div>
-        <button class="pt-pozycja" type="button" aria-selected="true"><span class="pt-tetno" aria-hidden="true"></span><span class="pt-pozycja-tytul">Raport tygodniowy sprzedaży</span></button>
+        <button class="pt-pozycja" type="button" aria-current="true"><span class="pt-tetno" aria-hidden="true"></span><span class="pt-pozycja-tytul">Raport tygodniowy sprzedaży</span></button>
         <button class="pt-pozycja" type="button"><span class="pt-pozycja-tytul">Cykliczny raport projektu Q3</span></button>
         <div class="dn-etyk-mono">Developer</div>
         <button class="pt-pozycja" type="button"><span class="pt-pozycja-tytul">Testy po zatwierdzeniu — repo</span></button>
@@ -508,9 +510,9 @@
                   <div class="sta-popover-wiersz"><span class="sta-popover-etykieta">Dodaj pliki i zdjęcia</span><span class="pt-mono">Ctrl+U</span></div>
                   <div class="sta-popover-wiersz"><span class="sta-popover-etykieta">Szablony poleceń automatyk</span></div>
                   <div class="sta-popover-tytul" style="margin-top:var(--dn-od-2)">Konektory</div>
-                  <div class="sta-popover-wiersz"><span class="sta-popover-etykieta">Webhook zewnętrzny</span><button class="dn-przelacznik" data-przelacznik aria-pressed="true" role="switch" aria-checked="true"></button></div>
-                  <div class="sta-popover-wiersz"><span class="sta-popover-etykieta">Library — zmiana pliku</span><button class="dn-przelacznik" data-przelacznik aria-pressed="true" role="switch" aria-checked="true"></button></div>
-                  <div class="sta-popover-wiersz"><span class="sta-popover-etykieta">Kolejka MultitaskingAI</span><button class="dn-przelacznik" data-przelacznik aria-pressed="false" role="switch" aria-checked="false"></button></div>
+                  <div class="sta-popover-wiersz"><span class="sta-popover-etykieta">Webhook zewnętrzny</span><button class="dn-przelacznik" aria-label="Webhook zewnętrzny" data-przelacznik role="switch" aria-checked="true"></button></div>
+                  <div class="sta-popover-wiersz"><span class="sta-popover-etykieta">Library — zmiana pliku</span><button class="dn-przelacznik" aria-label="Library — zmiana pliku" data-przelacznik role="switch" aria-checked="true"></button></div>
+                  <div class="sta-popover-wiersz"><span class="sta-popover-etykieta">Kolejka MultitaskingAI</span><button class="dn-przelacznik" aria-label="Kolejka MultitaskingAI" data-przelacznik role="switch" aria-checked="false"></button></div>
                   <div class="sta-popover-tytul" style="margin-top:var(--dn-od-2)">Wtyczki</div>
                   <div class="sta-popover-wiersz"><span class="sta-popover-etykieta">Danaco inżynieria</span></div>
                   <div class="sta-popover-wiersz"><span class="sta-popover-etykieta">Danaco analiza danych</span></div>
@@ -522,7 +524,7 @@
                   <div class="sta-popover-tytul">Mikrofon</div>
                   <div class="sta-popover-wiersz"><span class="sta-popover-etykieta">Domyślny — Zestaw nagłowny</span><span class="ptaszek" style="color:var(--dn-sygnal)">✓</span></div>
                   <div class="sta-popover-wiersz"><span class="sta-popover-etykieta">Mikrofon USB</span></div>
-                  <div class="sta-popover-wiersz"><span class="sta-popover-etykieta">Przytrzymaj, aby nagrać</span><button class="dn-przelacznik" data-przelacznik aria-pressed="false" role="switch" aria-checked="false"></button></div>
+                  <div class="sta-popover-wiersz"><span class="sta-popover-etykieta">Przytrzymaj, aby nagrać</span><button class="dn-przelacznik" aria-label="Przytrzymaj, aby nagrać" data-przelacznik role="switch" aria-checked="false"></button></div>
                 </div>
               </div>
               <span class="rozciag"></span>
@@ -623,7 +625,7 @@
             <div class="pt-etykieta">Najbliższe uruchomienia</div>
             <div class="dn-wykaz-modulu-poz"><span class="dn-kropka dn-kropka--neutralna" aria-hidden="true"></span> 2026-08-17 07:00 <span class="dn-meta">za 3 dni</span></div>
             <div class="dn-wykaz-modulu-poz"><span class="dn-kropka dn-kropka--neutralna" aria-hidden="true"></span> 2026-08-24 07:00 <span class="dn-meta">za 10 dni</span></div>
-            <div class="dn-wykaz-modulu-poz"><button class="dn-btn dn-btn--zarys dn-btn--sm" type="button">+ Wyzwalacz zdarzeniowy</button> <span class="dn-przelacznik" data-przelacznik role="switch" aria-checked="true" aria-pressed="true" style="margin-left:auto"></span></div>
+            <div class="dn-wykaz-modulu-poz"><button class="dn-btn dn-btn--zarys dn-btn--sm" type="button">+ Wyzwalacz zdarzeniowy</button> <button class="dn-przelacznik dn-na-koniec" type="button" data-przelacznik role="switch" aria-checked="true" aria-label="Wyzwalacze zdarzeniowe harmonogramu"></button></div>
           </div>
         </section>
 

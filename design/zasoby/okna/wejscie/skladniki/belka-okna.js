@@ -12,18 +12,22 @@ W.skladniki = W.skladniki || {};
 
 W.skladniki.belkaOkna = function (N, w) {
   var znak = N.zeZnacznika(W.ikony.godlo);
-  znak.setAttribute('class', 'we-belka-znak');
+  znak.setAttribute('class', 'dn-okno-wejsciowe-belka-znak');
   znak.setAttribute('aria-hidden', 'true');
 
+  /* Zamkniecie niesie modyfikator: czerwien na wskazaniu jest jego wlasnym
+     stanem, nie stanem sterowania w ogole. */
   function kontrolka(ikona, etykieta) {
     var i = N.zeZnacznika(W.ikony[ikona]);
     i.setAttribute('aria-hidden', 'true');
-    return N.el('button', { klasa: 'we-belka-btn', type: 'button', 'aria-label': N.tekst(etykieta) }, [i]);
+    var klasa = 'dn-okno-wejsciowe-belka-btn';
+    if (ikona === 'zamknij') { klasa += ' dn-okno-wejsciowe-belka-btn--zamknij'; }
+    return N.el('button', { klasa: klasa, type: 'button', 'aria-label': N.tekst(etykieta) }, [i]);
   }
 
-  return N.el('div', { klasa: 'we-belka' }, [
+  return N.el('div', { klasa: 'dn-okno-wejsciowe-belka' }, [
     znak,
-    N.el('p', { klasa: 'we-belka-tytul', tekst: N.tekst(w.tytul) }),
+    N.el('p', { klasa: 'dn-okno-wejsciowe-belka-tytul dn-okno-wejsciowe-belka-uchwyt', tekst: N.tekst(w.tytul) }),
     N.el('div', { klasa: 'we-belka-sterowanie' }, [
       kontrolka('zwin', 'okno.zwin'),
       kontrolka('rozwin', 'okno.rozwin'),

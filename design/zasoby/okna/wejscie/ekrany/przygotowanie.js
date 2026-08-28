@@ -8,6 +8,15 @@
    ============================================================================ */
 (function () {
 'use strict';
+
+/* Stan kroku maluje odmiana biblioteki; „oczekuje" nie ma odmiany, bo to
+   wygląd spoczynkowy kroku. */
+function odmianaStanu(stan) {
+  if (stan === 'gotowy') { return ' dn-krok--poprawny'; }
+  if (stan === 'pracuje') { return ' dn-krok--pracuje'; }
+  if (stan === 'blad') { return ' dn-krok--wstrzymany'; }
+  return '';
+}
 var W = window.DanacoWejscie;
 W.ekrany = W.ekrany || {};
 
@@ -36,11 +45,11 @@ W.ekrany.przygotowanie = function (N) {
     } else {
       znak = document.createTextNode(String(i + 1));
     }
-    return N.el('li', { klasa: 'we-krok', dane: { stan: e.stan } }, [
-      N.el('span', { klasa: 'we-krok-znak', 'aria-hidden': 'true' }, [znak]),
+    return N.el('li', { klasa: 'dn-krok dn-krok--pole' + odmianaStanu(e.stan), dane: { stan: e.stan } }, [
+      N.el('span', { klasa: 'dn-krok-znak', 'aria-hidden': 'true' }, [znak]),
       N.el('span', { tekst: nazwa }),
       N.el('span', {
-        klasa: 'we-krok-meta',
+        klasa: 'dn-krok-meta',
         tekst: N.podstaw(N.tekst('przygotowanie.miary.' + e.miara), dane)
       })
     ]);
@@ -53,7 +62,7 @@ W.ekrany.przygotowanie = function (N) {
       lid: 'przygotowanie.lid'
     }),
     N.el('ol', {
-      klasa: 'we-kroki', 'aria-live': 'polite',
+      klasa: 'dn-kolejka dn-kolejka--pola', 'aria-live': 'polite',
       'aria-label': N.tekst('przygotowanie.obszarEtapow')
     }, kroki),
     S.pasekPostepu(N, {

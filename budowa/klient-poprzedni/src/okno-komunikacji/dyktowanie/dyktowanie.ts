@@ -34,7 +34,7 @@ export interface Dyktowanie {
   naWynik(sluchacz: (wynik: WynikDyktowania) => void): Odsubskrybuj;
   /** Podpina gest przytrzymania do przycisku paska; oddaje odpięcie. */
   podepnijPrzycisk(cel: HTMLElement): Odsubskrybuj;
-  /** Rozpoczyna nagrywanie — dla trybu zatrzaskowego, bez przytrzymania. */
+  /** Rozpoczyna nagrywanie — dla trybu przełącznika, bez przytrzymania. */
   rozpocznij(): void;
   /** Kończy nagrywanie i uruchamia transkrypcję. */
   zakoncz(): void;

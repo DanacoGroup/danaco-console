@@ -295,7 +295,7 @@ subskrypcja wykracza poza ten teren, ma powstac zgloszenie, a nie milczenie.
 `src/rama/dom-zastepczy.ts:1` — naglowek 355 znakow przy limicie 350.
 
 **Do wykonania przy nastepnej rundzie, wina prowadzenia, nie wykonawcy.**
-Nazwa wystawiona `utworzZatrzaskPrzekazania` (`src/rama/przekazanie.ts:52`) niesie
+Nazwa wystawiona `utworzPrzekazanieJednorazowe` (`src/rama/przekazanie.ts:52`) zastapila
 przenosnie, ktora wniosl do zlecenia Prowadzacy, a wykonawca ja stamtad wzial.
 Rzecz jest znacznikiem jednorazowosci: `let przekazano = false` ustawiane na `true`
 DOPIERO po powodzeniu, zeby odmowa nie zamykala drogi na kolejna zmiane stanu.

@@ -8211,3 +8211,27 @@ szukający wiersza z początku budowania ma wiedzieć, że go tu nie ma. Przebie
 w którym nikt nie uruchamiał testów, nie ma wyników, i okno pisze to wprost,
 zamiast pokazać zero na zero — zero przy zerze wygląda jak powodzenie,
 a znaczy brak pomiaru.
+
+## budowa/klient-poprzedni/src/aod/rodzaje-sugestii.ts
+Rodzaje sugestii są cztery: `doradztwo`, `konfiguracja`, `problem`, `kolejny_krok`.
+
+Ten katalog nie dokłada rodzaju do kontraktu i nie zgaduje go z treści zdania:
+struktura `AodSuggestion` kontraktu (`shared/contract.ts`) niesie `id`, `text`,
+`commandType`, `windowId` i `createdAt`, pola rodzaju nie ma. Sugestia przychodząca
+z rdzenia ma rodzaj nieznany i tak jest opisana. Rodzaj mają wyłącznie te sugestie,
+których autorem jest nakładka — decyzje rozpoznane regułą (`rozpoznanie-decyzji.ts`),
+bo tam nakładka wie, co rozpoznała.
+
+Waga sugestii jest osobną osią wobec wagi rozpoznania (`WagaDecyzji`: pewna/sporna
+z `rozpoznanie-decyzji.ts`). Waga ujawnienia mówi, jak głośno sugestia ma się
+ujawnić; `WagaDecyzji` mówi, czyja to ocena. Obie żyją obok siebie, żadna nie
+zastępuje drugiej.
+
+Katalog działań każdego rodzaju jest opisem, nie wykonaniem: mówi, jakie działania
+rodzaj niesie i co każde robi. Które z nich mają dziś za sobą komendę kontraktu,
+rozstrzyga `cztery-stery.ts` przy konkretnej decyzji — i tam, gdzie komendy nie ma,
+stoi zdanie nazywające granicę zamiast przycisku-atrapy.
+
+Wartość „waga sugestii ujawnianej samoczynnie — wysoka” jest ustawieniem
+konfiguracyjnym; do czasu, aż kontrakt poniesie ustawienia zasięgu Always On
+Display, obowiązuje wartość domyślna.

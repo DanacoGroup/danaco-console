@@ -38,11 +38,6 @@ const (
 const (
 	podkatalogPrzesiewu = "przesiew"
 	podkatalogObrazu    = "obraz"
-
-	// katalogNiewskazany jest wartością domyślną katalogu wag przesiewu i osi
-	// obrazu. Pusto znaczy „Operator nie wskazał", a wartości tej nie wolno
-	// zrównać z `KatalogModeliDomyslny`.
-	katalogNiewskazany = ""
 )
 
 // Wartości domyślne odpowiadają dokładnie kolumnie
@@ -74,6 +69,11 @@ const (
 	// powodu, dla którego wielojęzyczna jest osadzarka: wiedza Operatora jest
 	// po polsku.
 	ModelPrzesiewuDomyslny = "BAAI/bge-reranker-v2-m3"
+
+	// KatalogPrzesiewuDomyslny — katalog wag kodera rozłożonych na maszynie
+	// obok rdzenia; niepusty, bo pusty ściągnąłby wagi już obecne na dysku.
+	KatalogPrzesiewuDomyslny = "/opt/danaco-modele/reranker"
+
 	// WagaPrzesiewuMb — ile waży do dociągnięcia krzyżowy koder domyślny.
 	// Wchodzi do treści odmowy przy braku silnika.
 	WagaPrzesiewuMb = 2200
@@ -84,6 +84,12 @@ const (
 	// ModelObrazuDomyslny — model dwuwieżowy, który wiąże obraz ze zdaniem
 	// w jednej przestrzeni. Wydanie duże, nie podstawowe.
 	ModelObrazuDomyslny = "openai/clip-vit-large-patch14"
+
+	// KatalogObrazuDomyslny — katalog wag modelu osi obrazu rozłożonych na
+	// maszynie obok rdzenia; niepusty, bo pusty ściągnąłby wagi już obecne
+	// na dysku.
+	KatalogObrazuDomyslny = "/opt/danaco-modele/clip"
+
 	// WagaObrazuMb — ile waży do dociągnięcia model osi obrazu, wyrażone
 	// dokładnie liczbą megabajtów wydania.
 	WagaObrazuMb = 1600
@@ -121,9 +127,9 @@ func UstawieniaDomyslne() Ustawienia {
 		KatalogModeli:    KatalogModeliDomyslny,
 		DlugoscFragmentu: dlugoscFragmentuDomyslna,
 		ModelPrzesiewu:   ModelPrzesiewuDomyslny,
-		KatalogPrzesiewu: katalogNiewskazany,
+		KatalogPrzesiewu: KatalogPrzesiewuDomyslny,
 		ModelObrazu:      ModelObrazuDomyslny,
-		KatalogObrazu:    katalogNiewskazany,
+		KatalogObrazu:    KatalogObrazuDomyslny,
 	}
 }
 

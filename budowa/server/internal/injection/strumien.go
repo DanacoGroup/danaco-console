@@ -15,16 +15,16 @@ import (
 // bywa duża (wynik narzędzia), więc czytnik rośnie w razie potrzeby.
 const rozmiarBuforaLinii = 256 << 10
 
-// obserwacja jest tym, co kanał wyniósł z jednego przebiegu strumienia.
+// obserwacja jest tym, co kanał wyniósł z jednego przebiegu strumienia
+// wyjścia procesu programu zewnętrznego.
 type obserwacja struct {
 	// Tura jest podsumowaniem zdarzenia result; nil znaczy, że tura nie
 	// domknęła się poprawnie.
 	Tura *ZakonczenieTury
 	// Limit jest ostatnim stanem limitu tempa przekazanym przez program.
 	Limit *limitTempaCLI
-	// TekstPoszedl mówi, czy odbiorca zobaczył już jakikolwiek fragment
-	// tekstu. Po tym momencie rotacja konta nie może powtórzyć tury, bo
-	// powtórzyłaby także wypowiedź.
+	// TekstPoszedl mówi, czy odbiorca zobaczył już jakikolwiek fragment tekstu
+	// tury.
 	TekstPoszedl bool
 }
 
@@ -90,9 +90,8 @@ func przetworz(kontekst context.Context, zdarzenie zdarzenieCLI, linia string, z
 	if zdarzenie.RateLimit != nil {
 		wynik.Limit = zdarzenie.RateLimit
 	}
-	// Zdarzenie zaczepu nie jest fragmentem kontraktu — idzie haczykiem do
-	// warstwy składania (dziennik zdarzeń, diagnostyka). Brak odbiorcy nie
-	// zmienia przebiegu tury.
+	// Zdarzenie zaczepu nie jest fragmentem kontraktu, idzie haczykiem do
+	// warstwy składania.
 	if zdarzenieZaczepu(zdarzenie) {
 		if z.NaZdarzenieZaczepu != nil {
 			z.NaZdarzenieZaczepu(zaczepZeZdarzenia(zdarzenie, linia))
@@ -127,7 +126,8 @@ func przetworz(kontekst context.Context, zdarzenie zdarzenieCLI, linia string, z
 	return nil
 }
 
-// wyslij oddaje fragment odbiorcy, honorując odwołanie kontekstu.
+// wyslij oddaje fragment odbiorcy strumienia przez kanał, honorując przy
+// tym odwołanie kontekstu wywołania.
 func wyslij(kontekst context.Context, na chan<- Fragment, fragment Fragment) error {
 	select {
 	case na <- fragment:
@@ -137,7 +137,8 @@ func wyslij(kontekst context.Context, na chan<- Fragment, fragment Fragment) err
 	}
 }
 
-// wykazTypow zbiera typy zdarzeń w kolejności pierwszego wystąpienia.
+// wykazTypow zbiera typy zdarzeń strumienia w kolejności ich pierwszego
+// wystąpienia w danej turze rozmowy.
 type wykazTypow struct {
 	widziane map[string]bool
 	kolejno  []string

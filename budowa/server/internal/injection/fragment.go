@@ -1,26 +1,20 @@
-// Pakiet injection jest kanałem głównym rozmowy z modelem — powłoką nad
+// Pakiet injection jest kanałem głównym rozmowy z modelem, powłoką nad
 // programem `claude` uruchamianym w trybie strumienia JSON-lines.
-// Kanał niczego nie decyduje o treści: model, nakładka, katalogi i tryb
-// uprawnień przychodzą z konfiguracji, a każde wywołanie
-// poprzedza fragment prowenancji.
 package injection
 
 import (
 	"danacoconsole/shared"
 )
 
-// Fragment jest pozycją strumienia kanału. Niesie fragment kontraktu
-// (shared.StreamChunkEvent — ten sam kształt, który protokół pakuje w kopertę
-// stream.chunk) oraz dwa znaczniki toru, których ładunek kontraktu nie ma,
-// bo mieszkają w kopercie albo w pętli koordynator–wykonawca.
+// Fragment jest pozycją strumienia kanału, niosącą fragment kontraktu
+// shared.StreamChunkEvent oraz dwa znaczniki toru.
 type Fragment struct {
 	// Chunk jest fragmentem w kształcie kontraktu.
 	Chunk shared.StreamChunkEvent
 	// Ostatni odpowiada polu done koperty — po nim strumień się kończy.
 	Ostatni bool
-	// Tura jest wypełniona wyłącznie we fragmencie kończącym turę. To ona
-	// wybudza koordynatora w pętli koordynator–wykonawca; kanał sam nikogo
-	// nie wybudza.
+	// Tura jest wypełniona wyłącznie we fragmencie kończącym turę i wybudza
+	// koordynatora.
 	Tura *ZakonczenieTury
 }
 
@@ -33,8 +27,8 @@ const RodzajProwenancja = shared.ChunkKindProvenance
 // ostatniej linii strumienia. Zamknięcie tury wykonawcy wybudza koordynatora,
 // dlatego podsumowanie jedzie osobnym polem, a nie tekstem.
 type ZakonczenieTury struct {
-	// IdSesjiCLI jest identyfikatorem rozmowy po stronie programu `claude`.
-	// Kolejne wywołanie podaje go w --resume i rozmowa toczy się dalej.
+	// IdSesjiCLI jest identyfikatorem rozmowy po stronie programu `claude`,
+	// podawanym w --resume.
 	IdSesjiCLI string `json:"cliSessionId"`
 	// Podtyp to `success` albo `error_*` — dosłowna wartość pola subtype.
 	Podtyp string `json:"subtype"`
@@ -48,11 +42,10 @@ type ZakonczenieTury struct {
 	CzasMs int64   `json:"durationMs"`
 	// Konto, na którym tura faktycznie się wykonała (kod, nigdy sekret).
 	Konto string `json:"account"`
-	// TypyZdarzen jest wykazem typów linii przechwyconych w turze. Służy
-	// przejrzystości: odbiorca widzi, co kanał zobaczył, łącznie z liniami,
-	// których nie umiał zamienić na fragment.
+	// TypyZdarzen jest wykazem typów linii przechwyconych w turze, łącznie
+	// z liniami nierozpoznanymi.
 	TypyZdarzen []string `json:"eventTypes"`
 	// LinieNierozpoznane liczy linie wyjścia, których nie dało się odczytać
-	// jako JSON. Nie przerywają tury, ale są widoczne.
+	// jako JSON.
 	LinieNierozpoznane int `json:"unparsedLines"`
 }

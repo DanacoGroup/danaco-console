@@ -7366,3 +7366,12 @@ siebie z zamysłem i każde mówi, po czym szuka.
 Wzorzec niepoprawny nie jest wyciszany. Wyrażenie regularne rzuca na złej składni, a przechwycenie
 tego bez słowa zamieniłoby literówkę w ciszę wyglądającą jak brak trafień. Wynik niesie więc
 powód wprost.
+
+## budowa/klient-poprzedni/src/sterowanie/czynnosci-kanalow.ts
+Kontekst niesie trzy czynności panelu rejestru kanałów, każda jako funkcja nad wspólnym kontekstem, nie jako gałąź jednego domknięcia — kontekst wędruje jawnym parametrem, więc żadna z tych funkcji nie zamyka się nad stanem panelu. Odmowa idzie dwiema drogami naraz: pasek komunikatów niesie kod oraz treść rdzenia, a wykaz przechodzi w fazę błędu z rolą powiadomienia. Wiersz przy odmowie usunięcia zostaje na wykazie, bo panel nie kasuje niczego lokalnie — wykaz odrysowuje się wyłącznie z rejestru.
+
+Uzbrojenie usuwania to nie blokada: przycisk pozostaje czynny w każdej chwili, a pierwsze naciśnięcie odpowiada — nazywa wiersz i mówi, że czynność jest nieodwracalna. Blokadą byłoby wyłączenie przycisku, którego tu nie ma.
+
+Wynik komendy channel.check niczego nie warunkuje: nie wyłącza wiersza, nie wstrzymuje zapisu i nie zmienia formularza. Jest odpowiedzią na pytanie operatora, czy kanał działa, a rozstrzygnięcie, co z tą odpowiedzią zrobić, należy do niego.
+
+Po powodzeniu zapisu idzie odświeżenie rejestru: to zamówienie listy kanałów, które rejestr rozgłasza wszystkim swoim czytelnikom. Panel nie dopisuje ani nie kasuje niczego w rejestrze bezpośrednio — nie ma tam własnej drogi zapisu.

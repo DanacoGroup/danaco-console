@@ -7403,3 +7403,14 @@ powłoki okiennej — sprawne konteksty pamięci.
 Dziennik czytamy dopiero po zejściu zlecenia z toru, bo wcześniej rdzeń nie dopisał do niego ani
 jednego wpisu. Zawężenie `actionId` czyta dziennik zlecenia bez oglądania się na okno, więc przebieg
 zlecenia z nakładki Always On Display jest widoczny w Activity Feed po jego wskazaniu w monitorze.
+
+## budowa/klient-poprzedni/src/konfiguracja/stan-konfiguracji.ts
+Katalog (kategorie i definicje) oraz wpisy konfiguracji trzymane są razem, ponieważ pole formularza potrzebuje obu naraz: definicja mówi, jaką ma być kontrolką, wpisy mówią, skąd bierze się jej wartość. Dwa równoległe stany dałyby dwie prawdy o tej samej wartości. Rdzeń, który nie odda katalogu, zostawia wykazy puste; okno pokazuje wtedy komunikat i pozostaje otwarte.
+
+Bez fazy odczytu pusty katalog znaczy trzy rzeczy naraz: „jeszcze nie pytałem", „pytam" i „rdzeń nie zna ani jednej kategorii". Każdej należy się inny stan okna: nic, wskaźnik odczytu, stan pusty.
+
+Wykaz bez zapisu obsługuje jeden przepis na dwie drogi: przywrócenie własne (przycisk „Przywróć" tego okna) i przywrócenie cudze (zdarzenie `config.changed` z innego okna albo urządzenia) zdejmują zapis dokładnie tak samo. Dwa przepisy rozeszłyby się na wskaźniku pochodzenia: jeden egzemplarz stanu pokazywałby wartość przywróconą, drugi wartość zapisaną i widmowy wiersz łańcucha dziedziczenia.
+
+Rodzaj zmiany pominięty w odpowiedzi rdzenia znaczy zapis — tak wchodzi odpowiedź na własną komendę `config.set`.
+
+Zmiana punktu widzenia dociąga poziom, który do tej pory nie był czytany; bez tego wartość spod okna, sesji czy projektu nie ma pokrycia w stanie, a pochodzenie wskazuje poziom globalny. Funkcja odczytu wpisów ogłasza od razu, względem wpisów już znanych, i ponownie, gdy poziom dojedzie.

@@ -11,43 +11,9 @@ import {
 } from '../../../shared/contract';
 import type { Kanal } from '../protokol/kanal';
 
-/**
- * Przyrząd pomiarowy sprawdzianów — nie jest częścią produktu i nie ma ani
- * jednego wołacza poza plikami `*.test.ts`.
- *
- * Odwzorowuje rdzeń, żeby sprawdzian mierzył zachowanie klienta wobec tego, co
- * rdzeń robi naprawdę. Każda gałąź poniżej ma wskazane miejsce w kodzie Go,
- * które odwzorowuje.
- *
- * Odwzorowane zachowania:
- *
- *  · rozgłoszenie idzie także do nadawcy — `transport/rozgloszenie.go`:
- *    `Rozglos` woła `rozglosPoza(konto, "", k)` z pustym identyfikatorem
- *    pomijanym. Na tym stoi zbieżność równoległych egzemplarzy stanu okna.
- *
- *  · `config.set` → odpowiedź `{entry}` i zdarzenie `config.changed`
- *    o rodzaju `updated` (`core/handlers_config.go`).
- *
- *  · `config.reset` → odpowiedź `{entries}` i zdarzenie `config.changed`
- *    o rodzaju `deleted`, niosące wpis ze starą wartością
- *    (`core/handlers_config.go`; `core/adapter_ustawienia.go`, funkcja
- *    `Przywroc` — usuwa wiersz i oddaje to, co usunęła).
- *
- *  · `config.get` z poziomem → surowe wpisy tego poziomu, niezależnie od osi
- *    (`core/adapter_ustawienia.go`, gałąź `ListaPoziomu`).
- *
- *  · `config.get` bez poziomu → polityka efektywna: po jednym zwycięskim wpisie
- *    na klucz, z polem `scope` niosącym poziom, na którym wartość znaleziono
- *    (tamże, gałąź `z.Scope == nil` → `PolitykaEfektywna(kontekstZasiegu(ScopeId))`
- *    → `konfig/odwzorowanie_kontraktu.go`, `WpisKontraktu`). Kontekst tej gałęzi
- *    ma wypełnione wyłącznie okno (`kontekstZasiegu`), więc rozstrzyganie
- *    obejmuje poziom okna i poziom globalny osi platformy. Karty sesji ani osi
- *    modelu ta droga nie widzi.
- *
- *  · `window.update` → odpowiedź `{window}` i zdarzenie `window.changed`.
- */
+/** Rdzeń odwzorowany do testów klienta: naśladuje zachowanie prawdziwego rdzenia w plikach testowych. */
 
-/** Okno wyjściowe sprawdzianów; każde zbudowanie daje własny egzemplarz. */
+/** Okno wyjściowe sprawdzianów: zestaw wartości domyślnych pól okna, które wywołanie nadpisuje częściowym zestawem własnych wartości. */
 export function oknoProbne(nadpisania: Partial<Window> = {}): Window {
   return {
     id: 'okno-1',
@@ -62,14 +28,14 @@ export function oknoProbne(nadpisania: Partial<Window> = {}): Window {
   } as unknown as Window;
 }
 
-/** Adres wpisu w bazie atrapy: poziom, byt poziomu, oś, byt osi, klucz. */
+/** Adres wpisu w bazie atrapy: poziom, byt poziomu, oś, byt osi i klucz połączone jednym łańcuchem znaków rozdzielonym pionową kreską. */
 function adres(wpis: ConfigEntry): string {
   return [wpis.scope, wpis.scopeId ?? '', wpis.axis ?? '', wpis.axisId ?? '', wpis.key].join(
     '|',
   );
 }
 
-/** Rdzeń odwzorowany na potrzeby pomiaru. */
+/** Rdzeń odwzorowany na potrzeby pomiaru: udostępnia okno, zapis wpisu, licznik komend i listę wysłanych żądań dla sprawdzianów klienta. */
 export interface AtrapaRdzenia {
   kanal: Kanal;
   /** Okno tak, jak widzi je „rdzeń". */
@@ -94,8 +60,7 @@ export function utworzAtrapeRdzenia(poczatkowe: Window = oknoProbne()): AtrapaRd
   }
 
   /**
-   * Polityka efektywna: zwycięża poziom najwęższy. Kontekst gałęzi bez poziomu
-   * zna wyłącznie okno, więc wykaz adresów to okno i poziom globalny.
+   * Polityka efektywna: zwycięża poziom najwęższy w kontekście ograniczonym do okna.
    */
   function politykaEfektywna(idOkna: string): ConfigEntry[] {
     const kolejnosc = [
@@ -197,7 +162,7 @@ export function utworzAtrapeRdzenia(poczatkowe: Window = oknoProbne()): AtrapaRd
   };
 }
 
-/** Wpis konfiguracji złożony z treści komendy; człony puste są pomijane. */
+/** Buduje wpis konfiguracji na podstawie treści komendy testowej, pomijając człony puste i przyjmując dla nich wartości domyślne. */
 function wpisZadania(zadanie: Record<string, unknown>): ConfigEntry {
   const wpis: ConfigEntry = {
     key: String(zadanie['key'] ?? ''),

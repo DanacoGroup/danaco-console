@@ -6445,3 +6445,11 @@ niezałożonej jest stanem poprawnym wiki — okno pokazuje takie nazwy wprost, 
 i zostawiać operatora z martwym odnośnikiem do odkrycia po kliknięciu. Tablica wizualna stoi
 w tym samym oknie, bo niesie ten sam materiał w innej formie: scena płótna jest zapisem JSON
 i okno oddaje ją operatorowi wprost, zamiast udawać, że rysuje płótno, którego nie rysuje.
+
+## budowa/klient-poprzedni/src/okna-rownolegle/pozycja-nowego-okna.ts
+Scena zamawia okno rdzenia dopiero wtedy, gdy gniazdo wejdzie na scenę —
+okna założonego z boku nic w układzie by nie zauważyło. Sufit gniazd bywa
+węższy od maksimum sceny, bo zależy od figury modułu, więc pozycja pyta o
+niego przy każdym rysowaniu wiersza; przy suficie osiągniętym pozycja nie
+powstaje, a lista jest o jedną pozycję krótsza zamiast pokazywać wiersz
+wygaszony. Skrótu klawiszowego ta pozycja nie ma.

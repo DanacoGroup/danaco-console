@@ -6724,3 +6724,25 @@ Etykieta modułu niesie wartość bieżącą, nie napis rodzajowy: sam numer
 gniazda mówi, które to miejsce na scenie, ale nic o tym, co w nim pracuje;
 moduł jest tą samą wartością, po której scena liczy swoją figurę. Model i
 katalog roboczy w nagłówku nie stoją, bo gniazdo ich w ogóle nie zna.
+
+## budowa/klient-poprzedni/src/moduly/roundtable/strumien-wypowiedzi.ts
+Źródło strumienia debaty oddaje fragment z surowym identyfikatorem wiadomości, bo subskrypcja nie
+zna składu debaty. Przypisanie fragmentu do uczestnika wymaga wiedzy o składzie i o wypowiedziach
+tury, czyli stanu debaty, więc stoi tutaj, a nie w źródle. Rozpoznanie pyta stan, zamiast patrzeć
+na przedrostek identyfikatora. Rdzeń nadaje identyfikatory z przedrostkami, ale przedrostków tych
+nie ma w kontrakcie: ani uczestnik, ani wypowiedź, ani fragment strumienia ich nie niosą jako pola.
+Klient oparty na nich orzekałby o rdzeniu rzecz, której kontrakt nie obiecuje, i zamilkłby przy ich
+zmianie bez błędu kompilacji. Dlatego pytamy stan: identyfikator znany składowi jest uczestnikiem,
+identyfikator znany wykazowi wypowiedzi tury oddaje swojego mówcę, a identyfikator nieznany
+żadnemu z nich zostaje nieprzypisany i widoczny. W debacie identyfikator wiadomości niesie kod
+wypowiedzi, nie kod uczestnika, a mówcę klient bierze z pola uczestnika wypowiedzi. Rozpoznanie po
+składzie zostaje mimo to jako droga obronna: kosztuje jedno przeszukanie wykazu tury i odpowiada
+poprawnie także wtedy, gdy fragment przyjdzie pod kodem uczestnika. Fragmenty nieprzypisane
+czekają, zamiast być porzucane: rozpoznanie po kodzie wypowiedzi wymaga, żeby stan tę wypowiedź już
+znał, a wykaz wypowiedzi tury napełnia dopiero zdarzenie zmiany debaty — dwa strumienie idą
+osobnymi biegami, więc pierwszy fragment potrafi wyprzedzić zdarzenie, które nazywa jego
+wypowiedź. Okno otwarte w trakcie debaty nie zna też jeszcze całego składu: odczyt uczestników
+jest w kontrakcie, ale żadne okno modułu go dziś nie wywołuje. Taki fragment czeka pod własnym
+identyfikatorem i przechodzi do uczestnika w chwili, gdy stan go pozna. Moduł nie rysuje niczego
+i nie zna klas stylu. Nie utrwala też wypowiedzi — utrwala je rdzeń, a wykaz zamknięty niesie stan
+debaty.

@@ -8963,3 +8963,31 @@ identyfikatorze, więc rozstrzygnięcie synchroniczne nie miałoby czego zdjąć
 
 ## budowa/klient-poprzedni/src/moduly/apps/modul-apps.ts
 Stan produktu jest jeden na cały moduł: komponent zestawiony w Architecture Designerze pojawia się natychmiast w wykazach obu warsztatów, a wdrożenie potwierdzone przez rdzeń — w dzienniku wydań Product Buildera. Okna pokazują odpowiedź rdzenia, a odmowę merytoryczną — jako odmowę, nie jako pustkę i nie jako sukces. Na końcu układu stoi pas okien pomocniczych, ten sam, którym stoją Developer i Diagnostics. Pas dostaje okno później, niż powstaje: moduł montuje się z samym kanałem, a okno modułu poznaje dopiero z wykazu okien przy wczytaniu, więc pas stoi od początku z oknem pustym — panele mówią wtedy wprost, czego brakuje — i przyjmuje właściwe okno wywołaniem, które samo zamyka panele stojące i stawia je na nowym oknie.
+
+## budowa/klient-poprzedni/src/aplikacja/wskaznik-lacznosci.ts
+Dla łączenia z serwerem nośnikiem jest wskaźnik ładowania z etykietą obok. Spinner
+zastępuje kropkę zamiast stawać przy niej: dwa ruchy naraz w plakietce wielkości
+pigułki spierałyby się o uwagę, a znaczenie niesie i tak etykieta, nie sam znak.
+
+Jedna odpowiedzialność: przełożenie stanu transportu na plakietkę. Wskaźnik
+niczego nie wyłącza i nie blokuje — stan jest informacją, a nie bramą; treść
+wpisana przy rozłączeniu czeka w kolejce wychodzącej. Liczba ramek oczekujących
+trafia do plakietki, bo przy zerze blokad przejrzystość jest jedynym
+zabezpieczeniem.
+
+Transport ogłasza `polaczony` przed opróżnieniem kolejki, więc odczyt zrobiony
+w chwili zmiany stanu zamarłby na wartości sprzed wysłania. Po połączeniu licznik
+odświeża się cyklicznie, aż kolejka spadnie do zera — wtedy pętla gaśnie.
+W stanach innych niż połączony nic z gniazda nie schodzi, więc pętla nie jest
+potrzebna.
+
+Napis „Rozłączony” mówi, co widzi transport, i nic o powodzie. Powód zna powłoka
+natywna: to ona stawia proces rdzenia, wie, czy nasłuch odpowiada, i prowadzi
+dziennik uruchomienia. Jej zdanie (polecenie `stan_rdzenia`) dopisuje się do
+podpowiedzi plakietki, gdy łączności nie ma; poza powłoką natywną pytanie nie
+pada.
+
+Po połączeniu kolejka opróżnia się już po ogłoszeniu stanu, więc licznik odczytany
+w chwili zmiany jest nieaktualny. Dopóki zostają ramki, odczyt jest dobijany
+cyklicznie; gdy kolejka spadnie do zera, pętla się gasi. W stanach innych niż
+połączony nic z otwartego gniazda nie schodzi, więc pętla nie jest potrzebna.

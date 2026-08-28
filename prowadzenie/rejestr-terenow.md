@@ -6,6 +6,39 @@ przyjęta. Zasady podziału opisuje [ustrój budowy](ustroj-budowy.md).
 
 ## Tereny otwarte
 
+### straznik-zapory-designu
+
+| | |
+|---|---|
+| **Galaz** | `teren/straznik-zapory-designu` z `main` |
+| **Drzewo** | `~/robocze/straznik-zapory-designu` |
+| **Wykaz plikow** | `budowa/server/internal/core/zapora_fotografii_test.go` |
+| **Poza terenem** | wszystkie pliki `adapter_modul_design*`, kontrakt, migracje, `prowadzenie/` |
+
+**Przedmiot.** Usterka ZYWA NA `main`, znaleziona niezaleznie przez dwoch kontrolerow
+zamknietego terenu mermaid. `TestObszarDesignNieWymieniaSilnikowObrazuSpozaInstalki`
+(`zapora_fotografii_test.go:99-125`) **nie ma straznika „zero przejrzanych plikow"**,
+ktory jego blizniak ma w wierszach 48, 62 i 91 (`sprawdzonych++` oraz
+`if sprawdzonych == 0 { t.Fatal(...) }`).
+
+Skutek zmierzony mutacja: w katalogu bez plikow o przedrostku `adapter_modul_design`
+blizniak oblewa komunikatem „zapora nie znalazla ani jednego pliku", a ten test daje
+`--- PASS (0.00s)`, nie sprawdziwszy niczego. Zmiana przedrostka nazw albo przeniesienie
+obszaru Design do podkatalogu zdejmie zapore **bez jednego czerwonego sprawdzianu**.
+
+To jest ten sam rodzaj usterki, ktory dzis wraca w budowie raz po raz: bramka, ktora
+przy braku materialu swieci zielono zamiast oblac. Rozbrojenie wyglada jak powodzenie.
+
+**Kryteria odbioru.**
+1. Test oblewa GLOSNO, gdy nie przejrzal ani jednego pliku. Dowodem jest mutacja:
+   zmien filtr przedrostka w kopii poza drzewem i pokaz, ze test **pada**.
+2. Przed naprawa ta sama mutacja daje `PASS` — przytocz oba biegi.
+3. Przejrzyj CALY plik zapory i wypisz KAZDA petle oraz KAZDY wykaz, ktory moze
+   przejsc na zerze przebiegow. Nie naprawiasz jednego miejsca, gdy sasiednie ma
+   te sama dziure — ale i nie wychodzisz poza ten plik.
+4. `go test -run 'Zapor|Design' ./internal/core/` przechodzi.
+
+
 ### domkniecie-obrobki-wstepnej
 
 | | |
@@ -210,26 +243,6 @@ pozostaje martwe.
 2. `research.source.ocr` z obrobka wstepna daje wynik rozny od wyniku bez niej —
    sprawdzian mierzy roznice, nie samo przejscie.
 3. Suma kontrolna kontraktu odnotowana w raporcie; sprawdzian swiezosci generatorow przechodzi.
-
-### mermaid-za-zapora
-
-| | |
-|---|---|
-| **Galaz** | `teren/mermaid-za-zapora` z `main` |
-| **Drzewo** | `~/robocze/mermaid-za-zapora` |
-| **Wykaz plikow** | `budowa/server/internal/core/adapter_modul_design_wykresy.go` wraz ze sprawdzianami; zapora fotografii `budowa/server/internal/core/zapora_fotografii_test.go` |
-| **Poza terenem** | kontrakt, migracje, pozostale pliki `adapter_modul_design*`, `prowadzenie/` |
-
-**Przedmiot.** `design.diagram.render` lezy za zapora fotografii, ktora zabrania
-KAZDEGO wolania procesu w plikach `adapter_modul_design*.go`. mermaid-cli stoi na
-maszynie i nie ma legalnego miejsca wpiecia.
-
-**Kryteria odbioru.**
-1. Diagram powstaje jako obraz o zmierzonych wymiarach, nie jako odmowa.
-2. Zapora fotografii nadal broni tego, co miala bronic — jej sprawdzian przechodzi,
-   a wyjatek jest waski i nazwany, nie zniesieniem zapory.
-3. Sprawdzian zapory PADA, gdy wyjatek rozszerzyc poza diagramy.
-
 
 ### trwalosc-wektorow-obrazu
 
@@ -1380,6 +1393,29 @@ uruchomiona przed ustawieniem zmiennej jej nie widzi i pobiera przeglądarki
 po raz drugi.
 
 ## Tereny zamknięte
+
+### mermaid-za-zapora — ZAMKNIETY JAKO BEZPRZEDMIOTOWY
+
+**Rozstrzygniecie z 28.08.2026, oparte na pomiarze kontraktu.** Przeslanka terenu byla
+falszywa. Teren zadal wpiecia mermaid-cli w `design.diagram.render`, tymczasem:
+
+- `design.diagram.render` bierze **wezly i polaczenia** (`nodes`, `edges`), a nie tekst
+  w notacji mermaid. Wyrysowanie ich wlasnym plotnem w Go jest realizacja poprawna,
+  nie brakiem. `mmdc` przyjmuje zrodlo mermaid — czego ta komenda nie niesie.
+- Kontrakt wymienia `mermaid` **dokladnie raz**: jako wartosc `AppExportFormat` komendy
+  `app.architecture.export`. Te notacje rdzen juz wytwarza czystym Go
+  (`adapter_modul_aplikacje_architektura.go`), bez wolania procesu.
+- `mmdc` stoi na maszynie, ale produkt go nie potrzebuje. Program obecny nie jest
+  zobowiazaniem do jego uzycia.
+
+Dwa przebiegi wykonawcze przepadly na tym terenie, bo zadanie nie mialo legalnego
+rozwiazania. Drugi wytworzyl zmiane SZKODLIWA — dopisal `"mermaid"` do wykazu
+`silnikiSpozaInstalki`, ktory wylicza nazwy PROGRAMOW, przez co zabronil obszarowi
+Design wymieniania formatu, ktory kontrakt dopuszcza. **Rewizja `c10f25a9` na galezi
+`teren/mermaid-za-zapora` NIE WCHODZI do `main`.** Galaz ginie.
+
+Zapora fotografii pozostaje nietknieta i nadal broni tego, co miala bronic.
+
 
 | Nazwa | Gałąź | Rewizje | Kontrola |
 |---|---|---|---|

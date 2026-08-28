@@ -1,28 +1,9 @@
 /**
  * Pas zakładek okna modułu Developer — przełącznik obszarów wewnątrz jednej
- * kolumny.
- *
- * Dwa okna modułu dzielą kolumnę na obszary. Monitor łączy Build Output
- * i Run & Debug, a Dev Tools zbiera cztery integracje deweloperskie; oba
- * przełączają obszary zakładkami w nagłówku kolumny, tak jak opisuje
- * opracowanie modułu. Wygląd w całości z biblioteki
- * (`komponenty/zakladki.css`, klasy `dn-zakladki` i `dn-zakladka`); tutaj leży
- * wyłącznie zachowanie.
- *
- * Zakładka niewidoczna nie jest zakładką porzuconą: obszar zostaje w drzewie
- * i traci wyłącznie widoczność, więc treść pola zadania, zebrany log i wpisany
- * filtr przeżywają zajrzenie do sąsiedniej zakładki.
- *
- * Wędrówka strzałkami należy do wzorca zakładek: pas ma jeden przystanek
- * tabulatora (zakładka czynna), a strzałki przenoszą wybór między zakładkami.
- * Bez tego pas byłby tyloma przystankami przed treścią, ile ma pozycji.
- *
- * Bliźniaczy mechanizm stoi w modułach Diagnostics i w oknie modeli. Wspólnego
- * komponentu zakładek biblioteka `komponenty/` dziś nie ma — rozstrzygnięcie,
- * czy ma powstać, należy do właściciela projektu.
+ * kolumny, z wędrówką strzałkami między zakładkami.
  */
 
-/** Jedna zakładka okna: kod obszaru, nazwa własna i jego treść. */
+/** Jedna zakładka okna: kod obszaru, nazwa własna i jego treść, osadzana w pasie kolumny modułu Developer. */
 export interface PozycjaZakladkiOkna {
   /** Kod obszaru — nośnik wyboru i wartość `data-zakladka`, nie tekst na ekran. */
   kod: string;
@@ -139,7 +120,7 @@ export function cialoZakladki(...czesci: readonly HTMLElement[]): HTMLElement {
   return element;
 }
 
-/** Pasek czynności zakładki — przyciski i pola nad miejscem treści. */
+/** Pasek czynności zakładki — przyciski i pola nad miejscem treści, wspólny dla wszystkich obszarów okna. */
 export function pasekZakladki(...kontrolki: readonly HTMLElement[]): HTMLElement {
   const element = document.createElement('div');
   element.className = 'mdev-zakladka-pasek';
@@ -147,7 +128,7 @@ export function pasekZakladki(...kontrolki: readonly HTMLElement[]): HTMLElement
   return element;
 }
 
-/** Akapit objaśnienia zakładki: co widać i czego kontrakt nie niesie. */
+/** Akapit objaśnienia zakładki: co widać i czego kontrakt nie niesie, wyświetlany operatorowi w oknie modułu. */
 export function objasnienieZakladki(zdanie: string): HTMLElement {
   const element = document.createElement('p');
   element.className = 'dn-pole-opis mdev-zakladka-opis';

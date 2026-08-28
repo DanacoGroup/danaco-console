@@ -8404,3 +8404,14 @@ Plik nie zgaduje modułu okna, którego `window.list` nie zwróciło, i nie pods
 modułu domyślnego. Sugestia bez rozpoznanego modułu nie wpada w wyciszenie modułu —
 cisza bez podstawy jest gorsza od ujawnienia. Brak po stronie kontraktu nazywa
 `wyciszenie-braki-kontraktu.ts`.
+## budowa/klient-poprzedni/src/moduly/developer/zakladki-okna.ts
+Dwa okna modułu dzielą kolumnę na obszary: monitor łączy Build Output i Run &
+Debug, a Dev Tools zbiera cztery integracje deweloperskie; oba przełączają
+obszary zakładkami w nagłówku kolumny. Wygląd w całości pochodzi z biblioteki
+komponentów, tutaj leży wyłącznie zachowanie. Zakładka niewidoczna nie jest
+zakładką porzuconą: obszar zostaje w drzewie i traci wyłącznie widoczność,
+więc treść pola zadania, zebrany log i wpisany filtr przeżywają zajrzenie do
+sąsiedniej zakładki. Wędrówka strzałkami należy do wzorca zakładek: pas ma
+jeden przystanek tabulatora, zakładkę czynną, a strzałki przenoszą wybór
+między zakładkami — bez tego pas byłby tyloma przystankami przed treścią, ile
+ma pozycji. Bliźniaczy mechanizm stoi w module Diagnostics i w oknie modeli.

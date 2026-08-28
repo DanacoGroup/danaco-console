@@ -9,20 +9,12 @@ import { czyKomendaBadania, wykonajKomendeBadania } from './wywolania-komend';
 import type { StanOknaBadania } from './stan-okna-badania';
 import { zlecenieZWyniku, type WynikOdkrycia } from './wynik-odkrycia';
 
-/**
- * Czynności Operatora w Discovery Panel: wyszukanie i przeniesienie pozycji do
- * katalogu źródeł.
- *
- * Tryb rozstrzyga o drodze. Dwa tryby mają własną komendę kontraktu i idą nią
- * naprawdę; dwa pozostałe komendy nie mają i idą generycznym `window.action`,
- * którego odmowę okno wypisuje słowami rdzenia. Rozdział stoi tutaj, nie
- * w widoku — widok zbiera zapytanie, czynność wie, czym się ono kończy.
- */
+/** Czynności operatora w Discovery Panel: wyszukanie i przeniesienie pozycji do katalogu źródeł. */
 
-/** Tryb zapytania Discovery Panel — cztery z opracowania modułu, rozdz. 3.4. */
+/** Tryb zapytania Discovery Panel: cztery sposoby wyszukania pozycji do katalogu źródeł tego badania rdzenia. */
 export type TrybOdkrywania = 'znaczenie' | 'tresc' | 'web' | 'naukowy';
 
-/** Górna granica liczby pozycji jednego zapytania. */
+/** Górna granica liczby pozycji jednego zapytania Discovery Panel, zwracanych przez rdzeń naraz w wyniku. */
 const LIMIT_WYNIKOW = 20;
 
 export interface KontekstOdkrywania {
@@ -39,7 +31,7 @@ export interface KontekstOdkrywania {
   przejdz(kodOkna: string): void;
 }
 
-/** Rozdziela akcję panelu na drogę własną okna i drogę generyczną. */
+/** Rozdziela akcję panelu na drogę własną okna i drogę generyczną, wspólną dla całej rodziny komend odkrywania. */
 export async function wykonajAkcjeOdkrywania(
   kontekst: KontekstOdkrywania,
   akcja: AkcjaBadania,
@@ -67,7 +59,7 @@ export async function wykonajAkcjeOdkrywania(
   await przezPanelAkcji(kontekst, akcja);
 }
 
-/** Droga generyczna: `window.action` z zapytaniem i trybem w parametrach. */
+/** Droga generyczna: `window.action` z zapytaniem i trybem w parametrach żądania tego okna panelu odkrywania. */
 async function przezPanelAkcji(
   kontekst: KontekstOdkrywania,
   akcja: AkcjaBadania,
@@ -93,15 +85,8 @@ async function przezPanelAkcji(
 }
 
 /**
- * Wyszukanie w trybie bieżącym.
- *
- * Tryb semantyczny i pełnotekstowy idą komendami, których rdzeń słucha, więc
- * oddają wynik. Tryb webowy i naukowy mają w kontrakcie własną komendę —
- * `research.discovery.search`, gdzie o trybie rozstrzyga pole `mode` — ale rdzeń
- * nie ma dla niej jeszcze uchwytu, więc zapytanie idzie zgłoszeniem
- * `window.action` pod jej nazwą i wraca odmową. Okno nie podstawia pod nie
- * wyszukiwania semantycznego: dwa różne pytania oddające ten sam wynik byłyby
- * zmyśleniem zdolności, której moduł nie ma.
+ * Wyszukanie w trybie bieżącym: dwa tryby idą komendami rdzenia, dwa
+ * pozostałe zgłoszeniem window.action.
  */
 export async function wyszukaj(kontekst: KontekstOdkrywania): Promise<void> {
   const { stan, okno, odpowiedz } = kontekst;
@@ -149,12 +134,8 @@ export async function wyszukaj(kontekst: KontekstOdkrywania): Promise<void> {
 }
 
 /**
- * Przeniesienie pozycji wyniku do katalogu źródeł badania.
- *
- * To jest ta sama komenda, którą wysyła formularz Sources Manager — panel
- * odkrywania nie ma własnej drogi wstawiania i nie potrzebuje jej mieć.
- * Wiarygodność wchodzi jako „niezweryfikowane", bo pozycja wyszukiwania nie
- * niesie oceny, a wpisanie tu wartości innej niż ta byłoby oceną zmyśloną.
+ * Przeniesienie pozycji wyniku do katalogu źródeł badania — ta sama komenda,
+ * którą wysyła formularz Sources Manager.
  */
 export async function przeniesDoZrodel(
   kontekst: KontekstOdkrywania,
@@ -187,11 +168,8 @@ export async function przeniesDoZrodel(
 }
 
 /**
- * Trzy stany panelu: pytam, mam wynik, nie mam czego pokazać.
- *
- * Pustka wyniku to nie pustka badania: zapytanie bez trafień jest odpowiedzią
- * rdzenia, a nie brakiem materiału, więc zdanie mówi o zapytaniu. Zdanie
- * o samym panelu — sprzed pierwszego zapytania — stoi w `pustka-okien.ts`.
+ * Trzy stany panelu: pytam, mam wynik, nie mam czego pokazać — pustka wyniku
+ * to nie pustka badania rdzenia.
  */
 export function ustawStanOdkrywania(kontekst: KontekstOdkrywania, liczba: number): void {
   const { stan, okno } = kontekst;
@@ -211,11 +189,8 @@ export function ustawStanOdkrywania(kontekst: KontekstOdkrywania, liczba: number
 }
 
 /**
- * Tekst swobodny okna przekazywany komendom bez własnego formularza.
- *
- * Żądanie składane bez wskazania Operatora wracałoby odmową walidacji, z której
- * nic dla niego nie wynika. Ten jeden krok mówi, skąd okno bierze treść — i gdy
- * jej nie ma, `wywolania-komend.ts` nazywa brak, zamiast wysyłać puste pole.
+ * Tekst swobodny okna przekazywany komendom bez własnego formularza, bez
+ * wskazania nazywanego brakiem.
  */
 function tekstDlaKomendy(kontekst: KontekstOdkrywania): string {
   return kontekst.zapytanie.value.trim();

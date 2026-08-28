@@ -1,17 +1,6 @@
-// Odpowiedzialność pliku: wpięcie ośmiu komend obszaru `agent.*` — modułu
-// Agents wraz z jego pięcioma oknami operacyjnymi (Agent Builder, Model
-// Configuration, Skills Manager, Connectors Manager, Permissions Center).
-//
-// Cały obszar ma jedno zdarzenie. Kontrakt daje modułowi Agents wyłącznie
-// `agent.changed`, więc zmiana modelu bazowego, przypisanie umiejętności,
-// podłączenie konektora i zmiana uprawnienia rozgłaszają się tak samo jak
-// zmiana tożsamości: rodzajem `updated` wraz z ekspertem po zmianie. Okna
-// modułu odświeżają się z jednej subskrypcji, a nie z pięciu.
-//
-// Dwie komendy oddają co innego niż eksperta: `agent.connector.add` oddaje
-// konektor, `agent.permission.set` — wykaz uprawnień. Zdarzenie ma nieść
-// eksperta, więc obsługiwacz dobiera go portem `Pobierz`. Nieudany dobór nie
-// wywraca komendy — zmiana już zaszła, gaśnie wyłącznie rozgłoszenie.
+// Plik wpina osiem komend obszaru agent.* modułu Agents wraz z jego pięcioma oknami
+// operacyjnymi. Cały obszar rozgłasza jedno zdarzenie agent.changed niezależnie od rodzaju
+// zmiany.
 package core
 
 import (
@@ -20,7 +9,8 @@ import (
 	"danacoconsole/shared"
 )
 
-// Agenci jest portem biblioteki ekspertów.
+// Agenci jest portem biblioteki ekspertów, obsługującym ich tworzenie, zmianę, wykaz
+// i usuwanie danych.
 type Agenci interface {
 	Utworz(ctx context.Context, z shared.AgentCreateRequest) (shared.AgentCreateResponse, error)
 	Zmien(ctx context.Context, z shared.AgentUpdateRequest) (shared.AgentUpdateResponse, error)
@@ -30,13 +20,10 @@ type Agenci interface {
 	DodajUmiejetnosc(ctx context.Context, z shared.AgentSkillAddRequest) (shared.AgentSkillAddResponse, error)
 	DodajKonektor(ctx context.Context, z shared.AgentConnectorAddRequest) (shared.AgentConnectorAddResponse, error)
 	UstawUprawnienie(ctx context.Context, z shared.AgentPermissionSetRequest) (shared.AgentPermissionSetResponse, error)
-	// Pobierz oddaje jednego eksperta. Służy rozgłoszeniu zmiany po komendach,
-	// których wynik eksperta nie niesie.
+	// Pobierz oddaje jednego eksperta, służąc rozgłoszeniu zmiany po komendach bez wyniku
+	// eksperta.
 	Pobierz(ctx context.Context, idEksperta string) (shared.Agent, error)
-	// WarstwyEksperta dokłada tożsamość własną eksperta — warstwy promptu
-	// i wtyczki. Osobnym portem być nie może: nowy port znaczyłby nowe pole
-	// w Portach i nową linię w `kompozycja.go`, a moduł Agents wchodzi do
-	// rejestru jednym wywołaniem (`handlers_agent_warstwy.go`).
+	// WarstwyEksperta dokłada tożsamość własną eksperta — warstwy promptu i wtyczki.
 	WarstwyEksperta
 }
 
@@ -111,8 +98,7 @@ func zarejestrujAgentow(r *Rejestr, agenci Agenci, e *emiter) {
 			return w, err
 		}))
 
-	// Pięć komend tożsamości własnej eksperta idzie tym samym rejestrem
-	// i tym samym emiterem — treść w `handlers_agent_warstwy.go`.
+	// Pięć komend tożsamości własnej eksperta idzie tym samym rejestrem i emiterem co Agenci.
 	zarejestrujWarstwyAgenta(r, agenci, e)
 }
 

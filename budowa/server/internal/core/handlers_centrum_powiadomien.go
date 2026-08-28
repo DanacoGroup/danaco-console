@@ -1,14 +1,5 @@
-// Plik wpina cztery komendy rodziny `notification.*` — centrum powiadomień.
-//
-// Rodzina ma sam odczyt i zmianę stanu. Komendy zgłaszającej zdarzenie nie ma:
-// powiadomienia zgłasza platforma tam, gdzie coś zaszło (`adapter_centrum_
-// powiadomien.go` — `Zglos`), a komenda w kontrakcie pozwalałaby klientowi
-// wpisać do rejestru zdarzenie, które nigdy nie zaszło.
-//
-// Zdarzeń `notification.raised` i `notification.changed` nie rozgłasza ten plik,
-// tylko adapter — bo rozgłasza je także droga wewnętrzna, która przez rejestr
-// komend nie przechodzi. Rozgłoszenie w dwóch miejscach dałoby przy zgłoszeniu
-// dwie koperty o jednym zdarzeniu.
+// Plik rejestruje cztery komendy rodziny `notification.*`, obsługujące odczyt
+// i zmianę stanu centrum powiadomień, bez komendy zgłaszającej zdarzenie.
 package core
 
 import (

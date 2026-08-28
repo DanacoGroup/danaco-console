@@ -8,16 +8,9 @@ import (
 	"danacoconsole/shared"
 )
 
-// dziennikRozmowy prowadzi historię wiadomości okien komunikacji.
-//
-// Źródłem prawdy jest baza: każda wiadomość Operatora i każda odpowiedź modelu
-// idzie do tabeli `wiadomosc` przez utrwalacz warstwy danych, a odczyt historii
-// okna sięga po zapisane wiersze. Dzięki temu rozmowa przeżywa restart rdzenia.
-//
-// Pamięć procesu zostaje jako bufor podręczny o ograniczonej pojemności. Ma dwa
-// zadania: odpowiadać bez odpytywania bazy w trakcie trwającej tury i przejąć
-// rozmowę, gdy zapis zawiedzie. Awaria trwałości nie przerywa rozmowy — okno
-// schodzi na bufor, zdarzenie trafia do dziennika procesu, tura biegnie dalej.
+// dziennikRozmowy prowadzi historię wiadomości okien komunikacji. Źródłem prawdy jest baza:
+// każda wiadomość i każda odpowiedź modelu idzie do tabeli wiadomosc, a odczyt historii okna
+// sięga po zapisane wiersze.
 type dziennikRozmowy struct {
 	mu           sync.RWMutex
 	okna         map[string][]shared.Message
@@ -59,7 +52,8 @@ func nowyDziennikRozmowy(zycie context.Context, trwalosc utrwalaczRozmowy, dzien
 	}
 }
 
-// Dopisz dokłada wiadomość na koniec historii okna: do bazy i do bufora.
+// Dopisz dokłada nową wiadomość na koniec historii okna, zapisując ją do bazy oraz do bufora
+// podręcznego.
 func (d *dziennikRozmowy) Dopisz(w shared.Message) {
 	d.mu.Lock()
 	wykaz := append(d.okna[w.WindowId], w)
@@ -95,7 +89,8 @@ func (d *dziennikRozmowy) Zmien(w shared.Message) bool {
 	return trafiona
 }
 
-// Wiadomosc odczytuje pojedynczą wiadomość okna z zapisanej historii.
+// Wiadomosc odczytuje pojedynczą wiadomość okna z zapisanej historii po jej identyfikatorze
+// wiadomości.
 func (d *dziennikRozmowy) Wiadomosc(idOkna, idWiadomosci string) (shared.Message, bool) {
 	for _, w := range d.historia(idOkna) {
 		if w.Id == idWiadomosci {
@@ -138,7 +133,8 @@ func (d *dziennikRozmowy) historia(idOkna string) []shared.Message {
 	return d.bufor(idOkna)
 }
 
-// bufor zwraca odpis podręcznej historii okna.
+// bufor zwraca odpis podręcznej historii wiadomości okna przechowywanej w pamięci samego
+// procesu rdzenia.
 func (d *dziennikRozmowy) bufor(idOkna string) []shared.Message {
 	d.mu.RLock()
 	defer d.mu.RUnlock()
@@ -156,7 +152,8 @@ func (d *dziennikRozmowy) utrwal(idOkna, czynnosc string, praca func(context.Con
 	}
 }
 
-// czyZdegradowane mówi, czy okno pracuje już wyłącznie na buforze.
+// czyZdegradowane mówi, czy dane okno pracuje już wyłącznie na buforze podręcznym po awarii
+// trwałości zapisu.
 func (d *dziennikRozmowy) czyZdegradowane(idOkna string) bool {
 	d.mu.RLock()
 	defer d.mu.RUnlock()

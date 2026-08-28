@@ -1,10 +1,7 @@
-// Katalog okien operacyjnych modułu na potrzeby nawigacji.
-//
-// Kody okien wracają z rejestru `okno_operacyjne` + `okno_operacyjne_modul`,
-// a nie z pola modułu — moduł nie nosi listy swoich okien, bo ta sama definicja
-// okna należy do wielu modułów (Chat Window do wszystkich piętnastu,
-// Preview Window do Studio i Design). Rejestr jest wykazem informacyjnym:
-// moduł spoza niego daje wykaz pusty, nie błąd.
+// Katalog okien operacyjnych modułu dostarcza kody okien z rejestru
+// okno_operacyjne i okno_operacyjne_modul, ponieważ pojedynczy moduł nie
+// przechowuje własnej listy okien, a moduł spoza rejestru zwraca listę pustą
+// zamiast błędu.
 package core
 
 import (

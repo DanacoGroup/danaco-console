@@ -1,3 +1,6 @@
+// Plik odczytuje słowniki platformy na potrzeby nawigacji: rozpoznaje wskazanie
+// środowiska i modułu z żądania po kodzie albo po identyfikatorze wiersza oraz
+// składa moduł wraz z macierzą widoczności i katalogiem okien operacyjnych.
 package core
 
 import (
@@ -9,17 +12,8 @@ import (
 	"danacoconsole/shared"
 )
 
-// Odczyt słowników platformy na potrzeby nawigacji: rozpoznanie wskazania
-// środowiska i modułu oraz złożenie modułu wraz z macierzą widoczności
-// i katalogiem okien operacyjnych.
-//
-// Wskazanie z żądania rozpoznajemy dwojako — kodem (`talkin`, `studio`)
-// i identyfikatorem wiersza — bo kontrakt niesie jedno pole `environmentId`
-// / `moduleId`, a klient może mieć w ręku dowolne z nich. Wskazanie
-// nierozpoznane nie jest błędem: wraca fałsz, a obsługiwacz odpowiada pusto.
-
 // srodowiskoPoWskazaniu odnajduje środowisko po kodzie albo po identyfikatorze
-// wiersza.
+// wiersza, zależnie od tego, które z tych dwóch pól niesie żądanie klienta.
 func (a *adapterNawigacji) srodowiskoPoWskazaniu(ctx context.Context, wskazanie string) (dane.Srodowisko, bool, error) {
 	if wskazanie == "" {
 		return dane.Srodowisko{}, false, nil
@@ -47,7 +41,8 @@ func (a *adapterNawigacji) srodowiskoPoWskazaniu(ctx context.Context, wskazanie 
 	return dane.Srodowisko{}, false, nil
 }
 
-// modulPoWskazaniu odnajduje moduł po kodzie albo po identyfikatorze wiersza.
+// modulPoWskazaniu odnajduje moduł po kodzie albo po identyfikatorze wiersza,
+// zależnie od tego, które z tych dwóch pól niesie żądanie klienta.
 func (a *adapterNawigacji) modulPoWskazaniu(ctx context.Context, wskazanie string) (dane.Modul, bool, error) {
 	if wskazanie == "" {
 		return dane.Modul{}, false, nil
@@ -98,14 +93,12 @@ func (a *adapterNawigacji) moduly(ctx context.Context, wiersze []dane.Modul) ([]
 // jest widoczny. Moduł nieobecny w macierzy nie ma okna modułowego w żadnym
 // środowisku — jest dostępny wyłącznie ze strony głównej.
 func (a *adapterNawigacji) macierzSrodowisk(ctx context.Context) (map[int64][]string, error) {
-	// Jedno złączenie zamiast pętli N+1: całą macierz zwraca pojedyncze
-	// zapytanie, a nie wykaz środowisk plus zapytanie o moduły każdego z nich.
-	// Porządek wyniku ustala `dane/macierz.go`:
-	// ORDER BY s.kolejnosc, s.kod, sm.kolejnosc, m.kod.
+	// Zapytanie łączy dane jednym poleceniem, unikając powielonych zapytań o każdy moduł osobno.
 	return nowyAdapterMacierzy(a.zestaw.Macierz).KodySrodowisk(ctx)
 }
 
-// kodyWierszyModulow wylicza kody z wierszy słownika.
+// kodyWierszyModulow wylicza kody z wierszy słownika modułów, zachowując
+// kolejność, w jakiej wiersze przyszły z zapytania.
 func kodyWierszyModulow(moduly []dane.Modul) []string {
 	kody := make([]string, 0, len(moduly))
 	for _, modul := range moduly {
@@ -114,7 +107,8 @@ func kodyWierszyModulow(moduly []dane.Modul) []string {
 	return kody
 }
 
-// kodyModulow wylicza kody z modułów kontraktu.
+// kodyModulow wylicza kody z modułów kontraktu, zachowując kolejność, w jakiej
+// moduły trafiły do odpowiedzi.
 func kodyModulow(moduly []shared.Module) []string {
 	kody := make([]string, 0, len(moduly))
 	for _, modul := range moduly {

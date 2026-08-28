@@ -20,8 +20,8 @@ type opisMediow struct {
 }
 
 // kontenerMediow niesie pola sekcji `format`. Czas trwania i rozmiar przychodzą
-// z `ffprobe` jako tekst (sekundy z ułamkiem, bajty) i tak je bierzemy, zamiast
-// wymuszać typ, którego program nie obiecuje.
+// z `ffprobe` jako tekst (sekundy z ułamkiem, bajty) i pole zachowuje ten zapis,
+// zamiast wymuszać typ, którego program nie obiecuje.
 type kontenerMediow struct {
 	Nazwa    string `json:"format_name"`
 	Trwanie  string `json:"duration"`

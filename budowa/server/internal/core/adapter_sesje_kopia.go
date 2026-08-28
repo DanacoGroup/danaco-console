@@ -20,16 +20,8 @@ func (a *adapterSesji) ZZestawem(z *dane.Zestaw) *adapterSesji {
 	return a
 }
 
-// Kopiuj powiela sesję wraz z jej zapisem.
-//
-// Kopia jest osobnym bytem historii: ma własne identyfikatory sesji i okien,
-// własne wiersze wiadomości i własny cykl życia. Usunięcie kopii nie rusza
-// źródła, a usunięcie źródła nie rusza kopii — inaczej „kopiuj" byłoby
-// współdzieleniem pod inną nazwą.
-//
-// Okna kopii zakłada nadzorca, nie warstwa danych: cykl życia okna należy do
-// pakietu sesji. Dzięki temu kopia od razu żyje w rejestrze i daje się
-// otworzyć bez restartu rdzenia.
+// Kopiuj powiela sesję wraz z jej zapisem jako osobny byt historii z własnymi
+// identyfikatorami i cyklem życia, niezależny od usunięcia źródła.
 func (a *adapterSesji) Kopiuj(ctx context.Context,
 	z shared.SessionCopyRequest) (shared.SessionCopyResponse, error) {
 
@@ -46,10 +38,7 @@ func (a *adapterSesji) Kopiuj(ctx context.Context,
 	kopia := a.nadzorca.ZalozSesje(nazwaKopii(zrodlo.Tytul, z.Title), tekstLubPusty(zrodlo.Projekt))
 	a.utrwalZalozona(ctx, kopia)
 
-	// Okna bierzemy z rejestru żywego, nie z wierszy: wiersz trzyma moduł i kanał
-	// jako identyfikatory liczbowe, a rejestr — jako kody, którymi posługuje się
-	// nadzorca. Sesje wracają do rejestru przy starcie rdzenia, więc kopiowanie
-	// obejmuje także te sprzed restartu.
+	// Okna bierzemy z rejestru żywego, nie z wierszy, bo obejmuje to także sesje sprzed restartu rdzenia.
 	oknaZywe, err := a.nadzorca.Rejestr().OknaSesji(z.SessionId)
 	if err != nil {
 		return shared.SessionCopyResponse{}, bladSesji(err)
@@ -68,12 +57,9 @@ func (a *adapterSesji) Kopiuj(ctx context.Context,
 	}, nil
 }
 
-// zalozOknaKopii zakłada w kopii okno za każde okno źródła i zwraca odwzorowanie
-// wierszy: okno źródłowe → okno docelowe.
-//
-// Parametry wykonania są przenoszone w komplecie — kopia ma pracować tak samo
-// jak oryginał. Nie przenosi się natomiast rozmowa programu CLI: kopia zaczyna
-// własną, bo wznowienie cudzej rozmowy dołączałoby nowe tury do wątku źródła.
+// zalozOknaKopii zakłada w kopii okno za każde okno źródła i zwraca
+// odwzorowanie wierszy okna źródłowego na okno docelowe, przenosząc komplet
+// parametrów wykonania.
 func (a *adapterSesji) zalozOknaKopii(ctx context.Context, idKopii string,
 	oknaZywe []session.Okno) ([]dane.Okno, map[int64]int64, error) {
 
@@ -128,7 +114,8 @@ func nazwaKopii(zrodlo string, wskazana *string) string {
 	return zrodlo + dopisekKopii
 }
 
-// tekstLubPusty rozpakowuje wskaźnik kolumny tekstowej.
+// tekstLubPusty rozpakowuje wskaźnik kolumny tekstowej, oddając napis pusty
+// zamiast wskaźnika pustego.
 func tekstLubPusty(wartosc *string) string {
 	if wartosc == nil {
 		return ""

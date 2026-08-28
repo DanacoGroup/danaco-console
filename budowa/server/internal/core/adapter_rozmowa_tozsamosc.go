@@ -1,8 +1,6 @@
-// Doprowadzenie tożsamości modelu do zapytania kanału.
-//
-// Tutaj domyka się łańcuch katalog → składacz → zapytanie kanału → silnik
-// nakładki → przełącznik `--system-prompt` albo `--append-system-prompt`.
-// Rdzeń nie składa promptu samodzielnie — bierze wynik składacza.
+// Plik doprowadza tożsamość modelu do zapytania kanału, gdzie domyka się
+// łańcuch od katalogu przez składacz aż po przełącznik systemowego polecenia
+// procesu.
 package core
 
 import (
@@ -29,21 +27,9 @@ func (a *adapterRozmowy) ZAgentami(z ZrodloTozsamosciAgenta) *adapterRozmowy {
 	return a
 }
 
-// nakladkaOkna liczy nakładkę obowiązującą okna rozmowy. Oś modelu i oś konta
-// bierze wskazanie okna po stronie adaptera tożsamości — okno zna kanał, kanał
-// zna model i konto, więc drugiego wyliczania osi tutaj nie ma.
-//
-// Po wyliczeniu osi nakładka dostaje warstwy eksperta wskazanego przez okno.
-// To jedyne miejsce, w którym tożsamość eksperta wchodzi do promptu — dalej
-// jedzie trasą `models.Nakladka` → `nakladkaKanaluGlownego` →
-// `injection.Nakladka` → przełącznik CLI.
-//
-// Okno przychodzi w całości, nie samym identyfikatorem: kod eksperta jest
-// nastawą okna, więc pytanie o niego rejestru drugi raz byłoby powtórzeniem
-// odczytu, który wywołujący już wykonał.
-//
-// Błąd odczytu daje nakładkę pustą, nie zerwanie tury: brak zasad jest brakiem
-// treści systemowej, a nie przeszkodą w rozmowie.
+// nakladkaOkna liczy nakładkę obowiązującą okna rozmowy: oś modelu i oś konta
+// bierze wskazanie okna, a błąd odczytu daje nakładkę pustą, nie zerwanie
+// tury.
 func (a *adapterRozmowy) nakladkaOkna(ctx context.Context, okno session.Okno) models.Nakladka {
 	if a == nil || okno.Id == "" {
 		return models.Nakladka{}
@@ -60,7 +46,8 @@ func (a *adapterRozmowy) nakladkaOkna(ctx context.Context, okno session.Okno) mo
 	return nakladkaZAgentem(nakladka, a.tozsamoscAgenta(ctx, okno))
 }
 
-// tozsamoscAgenta zwraca tożsamość eksperta wskazanego przez okno.
+// tozsamoscAgenta zwraca tożsamość eksperta wskazanego przez okno rozmowy,
+// potrzebną do wyliczenia nakładki.
 func (a *adapterRozmowy) tozsamoscAgenta(ctx context.Context, okno session.Okno) TozsamoscAgenta {
 	if a == nil {
 		return TozsamoscAgenta{}
@@ -69,11 +56,8 @@ func (a *adapterRozmowy) tozsamoscAgenta(ctx context.Context, okno session.Okno)
 }
 
 // uzupelnijAgenta nakłada na zapytanie nastawy procesu wnoszone przez eksperta:
-// model, ustawienia i mosty MCP.
-//
-// Osobno od nakładki promptu, bo to inne pola zapytania — ale w tej samej
-// funkcji składającej turę i w tej samej kolejności co prowenancja, żeby
-// podgląd pokazywał wiersz, który tura naprawdę wykona.
+// model, ustawienia i mosty MCP, w tej samej funkcji i kolejności co nakładka
+// promptu.
 func (a *adapterRozmowy) uzupelnijAgenta(ctx context.Context, okno session.Okno,
 	zapytanie *models.Zapytanie) {
 
@@ -81,13 +65,8 @@ func (a *adapterRozmowy) uzupelnijAgenta(ctx context.Context, okno session.Okno,
 }
 
 // nakladkaZapytania przekłada nakładkę obowiązującą na trzy warstwy zapytania
-// kanału. Kategorie jednej krytyczności skleja spoiną warstw, żeby prompt
-// złożony tutaj był tym samym ciągiem bajtów co prompt składacza.
-//
-// Tryb pochodzi z jedynego przekładu trybu w rdzeniu — NakladkaSilnika — więc
-// rozstrzygnięcie, czy tożsamość zamienia treść systemową, czy się do niej
-// dokłada, dojeżdża do procesu modelu tą samą drogą, którą pokazuje je okno
-// konfiguracji.
+// kanału, tak aby prompt złożony tutaj był tym samym ciągiem bajtów co prompt
+// składacza.
 func nakladkaZapytania(wynik shared.IdentityEffectiveGetResponse) models.Nakladka {
 	warstwy := map[shared.IdentityLayer][]string{}
 	for _, warstwa := range wynik.Layers {

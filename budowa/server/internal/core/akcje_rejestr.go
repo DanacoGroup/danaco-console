@@ -7,13 +7,9 @@ import (
 	"danacoconsole/shared"
 )
 
-// RejestrAkcji trzyma katalog akcji budowany w czasie działania z wierszy
-// tabeli `akcja`. Ani jedna akcja nie jest wpisana w kod: dopisanie akcji to
-// dopisanie wiersza i odświeżenie rejestru. Wzorcem jest rejestr
-// kanałów modelu `models.Rejestr` — ta sama mechanika, inny byt.
-//
-// Rejestr wypełnia port Akcje, więc nie ma osobnego adaptera powtarzającego
-// jego treść: jeden byt, jeden moduł.
+// RejestrAkcji trzyma katalog akcji budowany w czasie działania z wierszy tabeli akcja.
+// Ani jedna akcja nie jest wpisana w kod: dopisanie akcji to dopisanie wiersza i odświeżenie
+// rejestru.
 type RejestrAkcji struct {
 	mu      sync.RWMutex
 	zrodlo  ZrodloAkcji
@@ -55,7 +51,8 @@ func (r *RejestrAkcji) Odswiez(ctx context.Context) error {
 	return nil
 }
 
-// Pozycje zwraca cały katalog w kolejności odczytu, także wiersze nieczynne.
+// Pozycje zwraca cały katalog akcji w kolejności odczytu z bazy danych rdzenia, wraz
+// z wierszami nieczynnymi.
 func (r *RejestrAkcji) Pozycje() []AkcjaKatalogu {
 	if r == nil {
 		return nil
@@ -65,10 +62,8 @@ func (r *RejestrAkcji) Pozycje() []AkcjaKatalogu {
 	return append([]AkcjaKatalogu(nil), r.pozycje...)
 }
 
-// Zasieg zwraca akcje jednego zasięgu. Pusty poziom zwraca katalog w całości.
-// Wskazanie bytu poziomu dokłada do jego akcji własnych akcje wspólne całemu
-// poziomowi (wiersz o pustym kluczu zasięgu) — tak samo jak przy rozstrzyganiu
-// ustawień, gdzie brak zawężenia znaczy „każdy byt".
+// Zasieg zwraca akcje jednego zasięgu. Pusty poziom zwraca katalog w całości. Wskazanie
+// bytu poziomu dokłada do jego akcji własnych akcje wspólne całemu poziomowi.
 func (r *RejestrAkcji) Zasieg(poziom shared.ConfigScope, kluczZasiegu string,
 	tylkoCzynne bool) []AkcjaKatalogu {
 
@@ -86,10 +81,8 @@ func (r *RejestrAkcji) Zasieg(poziom shared.ConfigScope, kluczZasiegu string,
 	return wybrane
 }
 
-// Wykaz wypełnia port Akcje. Katalog pusty jest poprawną odpowiedzią: brak
-// wierszy nie może zatrzymać ani panelu akcji, ani narzędzi modelu.
-// Pierwszy odczyt po nieudanym starcie odbudowuje katalog sam — niepowodzenie
-// odbudowy nie unieważnia odpowiedzi, tylko zostawia wykaz pusty.
+// Wykaz wypełnia port Akcje. Katalog pusty jest poprawną odpowiedzią: brak wierszy nie może
+// zatrzymać ani panelu akcji, ani narzędzi modelu.
 func (r *RejestrAkcji) Wykaz(ctx context.Context, z ZadanieKatalogAkcji) (WynikKatalogAkcji, error) {
 	if r == nil {
 		return WynikKatalogAkcji{Actions: []AkcjaKatalogu{}}, nil
@@ -109,7 +102,8 @@ func (r *RejestrAkcji) Wykaz(ctx context.Context, z ZadanieKatalogAkcji) (WynikK
 	return WynikKatalogAkcji{Actions: r.Zasieg(poziom, klucz, tylkoCzynne)}, nil
 }
 
-// pasujeDoZasiegu rozstrzyga przynależność pozycji do zapytanego zasięgu.
+// pasujeDoZasiegu rozstrzyga przynależność pozycji katalogu do zapytanego zasięgu oraz
+// jego klucza bytu.
 func pasujeDoZasiegu(pozycja AkcjaKatalogu, poziom shared.ConfigScope, kluczZasiegu string) bool {
 	if poziom == "" {
 		return true
@@ -123,7 +117,8 @@ func pasujeDoZasiegu(pozycja AkcjaKatalogu, poziom shared.ConfigScope, kluczZasi
 	return *pozycja.ScopeId == kluczZasiegu
 }
 
-// wczytany mówi, czy rejestr próbował już odczytać wiersze.
+// wczytany mówi, czy rejestr próbował już odczytać wiersze katalogu z bazy przy poprzednim
+// wywołaniu metody.
 func (r *RejestrAkcji) wczytany() bool {
 	r.mu.RLock()
 	defer r.mu.RUnlock()

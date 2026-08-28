@@ -6536,3 +6536,8 @@ jak i okno konfiguracji, bez drugiego opisu tego samego ustawienia.
 Katalog pusty albo niedostępny daje rejestr wbudowany rdzenia, ponieważ
 brak katalogu jest brakiem pozycji do pokazania, a nie brakiem możliwości
 rozstrzygnięcia nastawy.
+
+## budowa/server/internal/konfig/kontekst_zasiegu.go
+Porządek adresów zwracanych dla kontekstu jest dwupoziomowy: najpierw
+poziom zasięgu, a w ramach poziomu oś, w kolejności konto, model,
+platforma.

@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io"
 	"path/filepath"
+	"regexp"
 	"strings"
 
 	"danacoconsole/server/internal/mowa"
@@ -25,6 +26,10 @@ const (
 const (
 	// WarstwaObowiazkowa — pakiety dystrybucji, bez których moduły odmawiają działania na tej maszynie budującej.
 	WarstwaObowiazkowa = "obowiazkowa-apt"
+	// WarstwaObowiazkowaRecznie — ta sama obowiązkowość co WarstwaObowiazkowa, ale podpowiedź
+	// instalacyjna jest zdaniem albo poleceniem innego menedżera pakietów (pip, cargo), a nie listą
+	// nazw pakietów dystrybucji; apt nie ma czym jej skarmić, więc krok zostaje ręczny.
+	WarstwaObowiazkowaRecznie = "obowiazkowa-recznie"
 	// WarstwaWarsztatGo — programy dokładane przez go install, osobno od pakietów dystrybucji tego systemu.
 	WarstwaWarsztatGo = "warsztat-go"
 	// WarstwaWarsztatNpm — programy dokładane przez npm i -g, osobno od pakietów dystrybucji tego systemu.
@@ -58,7 +63,14 @@ func zadanoZnacznik(argumenty []string, znacznik string) bool {
 	return false
 }
 
-// WarstwaZaleznosci rozstrzyga, do której warstwy prowizjonowania należy pozycja wykazu: silnik kontenerów rozpoznaje po programie, pozostałe warstwy po treści podpowiedzi instalacyjnej.
+// wzorzecPakietowDystrybucji rozpoznaje pole Pakiet w kształcie nazw pakietów Debiana — tokeny
+// z małych liter, cyfr, kropki, plusa i minusa, rozdzielone spacją.
+var wzorzecPakietowDystrybucji = regexp.MustCompile(`^[a-z0-9][a-z0-9.+-]*( [a-z0-9][a-z0-9.+-]*)*$`)
+
+// WarstwaZaleznosci rozstrzyga warstwę pozycji wykazu: po programie dla silnika kontenerów,
+// po przedrostku albo podnapisie polecenia dla warsztatów i kroków ręcznych znanych, a resztę
+// kieruje do apt tylko wtedy, gdy pole ma kształt listy pakietów — inaczej to podpowiedź zdaniem,
+// dla której apt nie ma czym postawić.
 func WarstwaZaleznosci(pozycja ZaleznoscZewnetrzna) string {
 	program := strings.TrimSpace(pozycja.Narzedzie.Program)
 	pakiet := strings.TrimSpace(pozycja.Narzedzie.Pakiet)
@@ -67,7 +79,7 @@ func WarstwaZaleznosci(pozycja ZaleznoscZewnetrzna) string {
 		return WarstwaDecyzyjna
 	}
 	switch {
-	case strings.Contains(pakiet, "go install"):
+	case strings.HasPrefix(pakiet, "go install "):
 		return WarstwaWarsztatGo
 	case strings.HasPrefix(pakiet, "npm "):
 		return WarstwaWarsztatNpm
@@ -76,8 +88,13 @@ func WarstwaZaleznosci(pozycja ZaleznoscZewnetrzna) string {
 	case strings.Contains(pakiet, "github.com"),
 		strings.Contains(pakiet, "środowisku pythonowym"):
 		return WarstwaModelRecznie
-	default:
+	case strings.HasPrefix(pakiet, "pip install "),
+		strings.HasPrefix(pakiet, "cargo install "):
+		return WarstwaObowiazkowaRecznie
+	case wzorzecPakietowDystrybucji.MatchString(pakiet):
 		return WarstwaObowiazkowa
+	default:
+		return WarstwaObowiazkowaRecznie
 	}
 }
 

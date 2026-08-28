@@ -1,11 +1,5 @@
-// Odpowiedzialność pliku: egzekucja trzech punktów izolacji, które rozstrzygają
-// się w chwili uruchomienia procesu okna — katalogu roboczego sesji, środowiska
-// procesu i katalogu danych modelu.
-//
-// Miejsce egzekucji jest jedno: polecenie zbudowane przez warstwę kanału, zanim
-// pójdzie do uruchamiacza (uruchamiacz.go). Polecenie niosące ścieżkę
-// albo środowisko spoza obszaru okna zostaje ODRZUCONE — proces z takim
-// poleceniem nie startuje.
+// Plik egzekwuje trzy punkty izolacji rozstrzygane w chwili uruchomienia
+// procesu okna: katalog roboczy, środowisko procesu i katalog danych modelu.
 package session
 
 import (
@@ -33,13 +27,8 @@ type Obszar struct {
 	ZmienneKataloguDanych []string
 }
 
-// SprawdzPolecenie egzekwuje izolację na poleceniu uruchomienia procesu okna.
-// Zwraca polecenie dopuszczone do wykonania albo naruszenie.
-//
-// Wartość pusta, którą izolacja jednoznacznie wyznacza, zostaje uzupełniona —
-// brak wskazania nie jest naruszeniem, bo brak danych ma dawać poprawny wynik,
-// nie awarię. Wskazanie wychodzące poza obszar okna jest naruszeniem,
-// bo jest decyzją sprzeczną z ustawieniem Operatora.
+// SprawdzPolecenie egzekwuje izolację na poleceniu uruchomienia procesu okna,
+// zwracając polecenie dopuszczone do wykonania albo naruszenie.
 func SprawdzPolecenie(zasady Zasady, obszar Obszar, polecenie Polecenie) (Polecenie, error) {
 	polecenie, err := sprawdzKatalogRoboczy(zasady, obszar, polecenie)
 	if err != nil {
@@ -51,7 +40,8 @@ func SprawdzPolecenie(zasady Zasady, obszar Obszar, polecenie Polecenie) (Polece
 	return polecenie, sprawdzZmienneDanych(zasady, obszar, polecenie)
 }
 
-// sprawdzKatalogRoboczy pilnuje, żeby proces okna startował we własnym katalogu.
+// sprawdzKatalogRoboczy pilnuje, żeby dany proces tego okna zawsze startował
+// we własnym katalogu roboczym.
 func sprawdzKatalogRoboczy(zasady Zasady, obszar Obszar, polecenie Polecenie) (Polecenie, error) {
 	if !zasady.KatalogRoboczy {
 		return polecenie, nil
@@ -105,11 +95,7 @@ func sprawdzZmienneDanych(zasady Zasady, obszar Obszar, polecenie Polecenie) err
 }
 
 // SprawdzKatalogDanych egzekwuje izolację katalogu danych modelu na jednej
-// ścieżce. Wywołuje to zarówno sprawdzenie polecenia, jak i punkt, w którym
-// kanał wybiera katalog konfiguracji konta — reguła jest jedna.
-//
-// Wskazanie puste jest naruszeniem: kanał bez wskazania sięga po katalog
-// wspólny, a właśnie tego izolacja zabrania.
+// ścieżce, wywołanej z polecenia albo z wyboru kanału.
 func SprawdzKatalogDanych(zasady Zasady, obszar Obszar, sciezka string) error {
 	if !zasady.KatalogDanychModelu {
 		return nil
@@ -131,7 +117,8 @@ func SprawdzKatalogDanych(zasady Zasady, obszar Obszar, sciezka string) error {
 	return nil
 }
 
-// zmienneKataloguDanych zwraca wykaz obszaru albo wykaz domyślny.
+// zmienneKataloguDanych zwraca wykaz zmiennych obszaru albo wykaz domyślny,
+// gdy obszar go nie zastępuje.
 func zmienneKataloguDanych(obszar Obszar) []string {
 	if len(obszar.ZmienneKataloguDanych) > 0 {
 		return obszar.ZmienneKataloguDanych
@@ -139,7 +126,8 @@ func zmienneKataloguDanych(obszar Obszar) []string {
 	return zmienneKataloguDanychDomyslne
 }
 
-// zawiera odpowiada, czy wykaz niesie nazwę.
+// zawiera odpowiada, czy dany wykaz nazw niesie wskazaną nazwę, porównaniem
+// po każdej jego pozycji z osobna.
 func zawiera(wykaz []string, nazwa string) bool {
 	for _, pozycja := range wykaz {
 		if pozycja == nazwa {

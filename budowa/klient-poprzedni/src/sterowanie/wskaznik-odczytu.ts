@@ -1,14 +1,6 @@
 /**
- * Wskaźnik odczytu katalogu z rdzenia — stan ładowania kompletu sterowania
- * (`.dn-spinner` z biblioteki).
- *
- * Wskaźnik stoi obok pola, nigdy zamiast pola: podmiana kontrolki na wskaźnik
- * byłaby blokadą, a Operator ma móc wybrać wartość także wtedy, gdy katalog
- * jeszcze jedzie z rdzenia.
- *
- * Wskaźnik mówi też technologiom wspomagającym, co się dzieje: `role="status"`
- * ogłasza zmianę bez zabierania ogniska, a `aria-label` niesie nazwę katalogu,
- * którego dotyczy odczyt.
+ * Wskaźnik odczytu katalogu z rdzenia — stan ładowania widoczny obok pola tego kompletu
+ * sterowania okna.
  */
 export interface WskaznikOdczytu {
   /** Element osadzany przy etykiecie sterowania. */

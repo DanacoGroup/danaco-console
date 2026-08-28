@@ -1,11 +1,8 @@
 import type { KomunikatZmiany } from './komunikat-zmiany';
 
 /**
- * Pasek komunikatów kompletu sterowania.
- *
- * Jedyna reakcja interfejsu na niepowodzenie zmiany: informacja. Pasek nie
- * wyłącza sterowań, nie zamyka okna i nie wymusza potwierdzenia — kolejna próba
- * idzie zwyczajnie, bo błąd dotyczy wyłącznie bieżącego wywołania.
+ * Pasek komunikatów kompletu sterowania — jedyna reakcja interfejsu na niepowodzenie
+ * zmiany ustawienia.
  */
 export interface PasekKomunikatow {
   element: HTMLElement;

@@ -6,22 +6,17 @@ import (
 	"danacoconsole/server/internal/dane"
 )
 
-// CiagloscRozmowy utrwala identyfikator rozmowy nadany przez program `claude`,
-// dzięki któremu kolejna tura wznawia rozmowę zamiast zaczynać od zera.
-//
-// Port jest celowo wąski — dwie czynności na jednej kolumnie. Rozmowa należy do
-// okna, nie do sesji: dwa okna jednej sesji prowadzą dwie niezależne rozmowy
-// z modelem i muszą mieć osobne wznowienia.
+// CiagloscRozmowy utrwala identyfikator rozmowy nadany przez program claude, dzięki
+// któremu kolejna tura wznawia rozmowę zamiast zaczynać od zera.
 type CiagloscRozmowy interface {
 	// Zapamietaj utrwala identyfikator rozmowy przy oknie.
 	Zapamietaj(kontekst context.Context, idOkna, idRozmowy string) error
-	// Przypomnij zwraca identyfikator rozmowy okna albo pusty napis, gdy okno
-	// nie rozmawiało jeszcze z modelem. Pusty napis jest stanem poprawnym i
-	// znaczy „zacznij nową rozmowę".
+	// Przypomnij zwraca identyfikator rozmowy okna, a pusty napis znaczy start nowej rozmowy.
 	Przypomnij(kontekst context.Context, idOkna string) string
 }
 
-// ciagloscNadOknami realizuje port nad repozytorium okien.
+// ciagloscNadOknami realizuje port CiagloscRozmowy nad repozytorium okien, zapisując
+// i odczytując identyfikator rozmowy.
 type ciagloscNadOknami struct {
 	okna dane.RepozytoriumOkien
 }

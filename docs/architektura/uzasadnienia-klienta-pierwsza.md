@@ -7943,3 +7943,17 @@ Zero jako liczba oczekujących sugestii chowa plakietkę samo z siebie, stan „
 Przeglądarka wysyła `click` przed `dblclick`, więc bez tego odstępu każde kliknięcie
 podwójne otwierałoby najpierw dymek. Odstęp jest krótszy niż czas reakcji na otwarty
 dymek, więc pojedyncze kliknięcie nadal działa od ręki.
+## budowa/klient-poprzedni/src/moduly/design/panel-metadanych.ts
+Przekazanie do modułu docelowego idzie komendą przekazania kontekstu — jedyną zbudowaną w kontrakcie
+drogą przeniesienia kompletu kontekstu. Wykaz modułów docelowych przychodzi z rdzenia, nie z kopii
+katalogu po stronie klienta.
+
+Paczka kontekstu nie ma pola zasobu wizualnego, więc zasób jedzie polem identyfikatorów dokumentów
+wraz z poleceniem nazywającym go po imieniu — to przybliżenie kontraktu, nie jego pełne pokrycie.
+
+Potwierdzenie opisuje okno, które wróciło, a nie moduł zamówiony w polu wyboru: przekazanie nie
+sprawdza katalogu modułów — przepisuje identyfikator modułu docelowego do okna i oddaje odpowiedź
+udaną także dla kodu, którego katalog nie zna. Jedynym polem mówiącym, gdzie zasób wylądował, jest
+pole modułu w odpowiedzi okna; rozbieżność wobec zamówienia jest odmową.
+
+Etykietowanie, wgranie i usunięcie zasobu mają własne kontrolki wykonujące.

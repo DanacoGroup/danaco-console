@@ -11,28 +11,28 @@ export interface WlasciwosciBelki {
   tytul: string;
 }
 
-function kontrolka(znak: NazwaZnaku, etykieta: string): HTMLElement {
+function kontrolka(znak: NazwaZnaku, etykieta: string, odmiana?: string): HTMLElement {
   const rysunek = zeZnacznika(ikony[znak]);
   rysunek.setAttribute('aria-hidden', 'true');
-  return el(
-    'button',
-    { klasa: 'we-belka-btn', type: 'button', 'aria-label': tekst(etykieta) },
-    [rysunek],
-  );
+  const klasa = odmiana === undefined
+    ? 'dn-okno-wejsciowe-belka-btn'
+    : `dn-okno-wejsciowe-belka-btn ${odmiana}`;
+  return el('button', { klasa, type: 'button', 'aria-label': tekst(etykieta) }, [rysunek]);
 }
 
 export function belkaOkna(w: WlasciwosciBelki): HTMLElement {
   const znak = zeZnacznika(ikony.godlo);
-  znak.setAttribute('class', 'we-belka-znak');
+  znak.setAttribute('class', 'dn-okno-wejsciowe-belka-znak');
   znak.setAttribute('aria-hidden', 'true');
 
-  return el('div', { klasa: 'we-belka' }, [
+  /* Uchwyt rozpiera belkę między tytułem a sterowaniem — biblioteka nie ma
+     grupy kontrolek, bo pozycję prawą nadaje właśnie ten pusty człon. */
+  return el('div', { klasa: 'dn-okno-wejsciowe-belka' }, [
     znak,
-    el('p', { klasa: 'we-belka-tytul', tekst: tekst(w.tytul) }),
-    el('div', { klasa: 'we-belka-sterowanie' }, [
-      kontrolka('zwin', 'okno.zwin'),
-      kontrolka('rozwin', 'okno.rozwin'),
-      kontrolka('zamknij', 'okno.zamknij'),
-    ]),
+    el('p', { klasa: 'dn-okno-wejsciowe-belka-tytul', tekst: tekst(w.tytul) }),
+    el('div', { klasa: 'dn-okno-wejsciowe-belka-uchwyt' }),
+    kontrolka('zwin', 'okno.zwin'),
+    kontrolka('rozwin', 'okno.rozwin'),
+    kontrolka('zamknij', 'okno.zamknij', 'dn-okno-wejsciowe-belka-btn--zamknij'),
   ]);
 }

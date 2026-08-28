@@ -3576,3 +3576,52 @@ Usunięcie sesji stawia znacznik czasu, a czyszczenie trwałe wykonuje rdzeń pr
 
 ## budowa/server/internal/store/migracja_098_poczta.sql
 Protokoły: odbiór szyfrowany, wysyłka z podniesieniem szyfrowania, oba z biblioteki standardowej języka, która nie ma protokołu IMAP, a jego użycie wymagałoby nowej zależności. Hasło skrzynki nie leży w bazie: kolumna odwołania niesie wyłącznie odwołanie do sejfu poświadczeń, wzorem kont, i kolumny na treść sekretu w schemacie nie ma. Pole weryfikacji szyfrowania jest polem konfiguracji: stanowisko probiercze mówi prawdziwym protokołem przez prawdziwe gniazdo, lecz jego certyfikat jest samopodpisany, więc wyłączenie weryfikacji łańcucha jest jawnym zapisem w wierszu skrzynki, a domyślnie weryfikacja jest włączona. Identyfikator listu jest unikalnym identyfikatorem serwera w obrębie skrzynki, więc ten sam list odczytany w dwóch taktach obserwatora daje jeden wiersz; rdzeń nie kasuje listów z serwera, bo odbiór nie może być jedynym istnieniem listu.
+
+## budowa/server/internal/store/migracja_096_tresc_rozmowy.sql
+
+Tabela `blok_wiadomosci` przechowuje bloki wiadomości rodzaju nietekstowego:
+tok rozumowania, wywołania narzędzi z wynikami, prowenancję wywołania oraz
+metadane konta. Bez tej tabeli treści te żyłyby wyłącznie w strumieniu i
+ginęłyby z restartem rdzenia — okno po odświeżeniu pokazywałoby sam tekst,
+choć widoki transkryptu klienta ('rozumowanie', 'pelny') istnieją
+(widok-zapisu.ts). Jeden wiersz odpowiada jednemu fragmentowi strumienia,
+zapisanemu w trakcie tury przez rejestrator bloków (core/rejestrator_blokow.go).
+
+Tekstu tu nie ma i nie wolno go tu pisać. Treść tekstowa odpowiedzi mieszka
+w `wiadomosc.tresc` (domyka ją dziennik po turze) — powtórzenie jej w blokach
+byłoby drugą prawdą o tej samej wypowiedzi. Słownik `rodzaj` jest więc
+słownikiem ChunkKind pomniejszonym o 'text'.
+
+Rodzaj niesie wartość kontraktu (angielską), nie przekład. Kolumna
+`wiadomosc.rodzaj_tresci` ma polski słownik, bo kontrakt odwzorowuje jej
+siedem wartości polem `baza`; dla 'provenance' i 'account' kontrakt żadnego
+przekładu nie zapisuje, a przekład wolno trzymać wyłącznie w kontrakcie.
+Dopisanie własnego słownika tutaj byłoby drugim źródłem odwzorowania —
+zamiast tego kolumna trzyma wartość kontraktu dosłownie, a round-trip
+zapis → odczyt → klient obywa się bez tłumaczenia.
+
+`wiadomosc_kod` i `okno_kod` są identyfikatorami kontraktowymi (napisy), nie
+kluczami obcymi: rejestrator strumienia zna wyłącznie identyfikatory rdzenia,
+a sięganie po klucz wiersza w środku tury dokładałoby odczyt bazy do każdego
+fragmentu. Skutkiem braku klucza obcego kaskada usunięcia sesji bloków nie
+zabiera — sprząta je czyszczenie kosza (dane/sesje_kosz.go), ta sama droga,
+którą znika sama sesja.
+
+`ladunek` niesie surowe pole `data` fragmentu (dowód pierwotny, jak
+`dziennik_zdarzen.ladunek`); NULL znaczy fragment bez ładunku. `tresc` niesie
+pole `text` fragmentu — tak nadchodzi tok rozumowania.
+
+Indeks pełnotekstowy `wiadomosc_szukanie` (FTS5, sterownik modernc.org/sqlite:
+CREATE VIRTUAL TABLE USING fts5, MATCH, snippet() i rank) jest zewnętrzny
+(content='wiadomosc') z triggerami spójności obsługującymi wstawienie,
+aktualizację treści (droga ZapiszWynik) i usunięcie kaskadą. Będąc zewnętrzny,
+nie powiela treści — jedyną prawdą o słowie pozostaje `wiadomosc.tresc`, a
+indeks trzyma wyłącznie słownik trafień. Spójność utrzymują triggery
+towarzyszące; są częścią schematu, nie warstwy dane, bo indeks ma nadążać
+także za zapisem, który przyjdzie inną drogą niż repozytorium wiadomości.
+
+Ograniczenie zapisane jawnie: tokenizator unicode61 z remove_diacritics 2
+sprowadza ż/ź/ó/ą/ę/ć/ń/ś do liter podstawowych, ale „ł" nie jest znakiem
+składanym i pozostaje osobną literą — zapytanie „lodz" nie trafi w „łódź",
+trafi „łodz" i „łódź". Warstwa dane powtarza to ograniczenie przy
+repozytorium szukania (dane/szukanie_rozmow.go).

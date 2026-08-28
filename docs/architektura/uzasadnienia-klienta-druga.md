@@ -6905,3 +6905,26 @@ ciasnota nie odmawia otwarcia panelu, szerokość ustawia uchwyt. Moduł nie
 tworzy elementów, nie czyta wymiarów z DOM i nie wie, jakie panele są
 otwarte ani ile ich jest — dostaje dwie liczby, oddaje podział albo gotowy
 napis dla kolumn siatki.
+
+## budowa/klient-poprzedni/src/moduly/studio/pola-stanu.ts
+Pola stanu są wydzielone od wytwórni stanu, bo to dwie odpowiedzialności: tutaj kształt stanu
+i jego przejścia, tam subskrypcja rdzenia i powiadamianie widoków, a podział pozwala sprawdzić
+przejścia bez stawiania kanału komunikacji. Nastawa wyboru ręcznego zakresu jest jedna i mieszka
+w tym stanie, a zakres żądany i zakres skuteczny są z niej wyliczane, nie przechowywane osobno,
+bo trzymanie jej w wartości listy wyboru panelu narzędzi rozjeżdżałoby wyświetlaną wartość
+z wysyłaną. Odmowa i pustka propozycji to dwie różne rzeczy, choć sam brak propozycji niesie obie
+naraz — nikt jeszcze nie uruchomił operacji albo operacja wróciła odmową — dlatego odmowa
+operacji jest osobnym polem widocznym w dwóch miejscach naraz. Pole pary porównania stoi w
+stanie modułu, nie w polach Diff/Grep Panelu, bo wskazuje je inne okno: przycisk porównania przy
+wersji ma otworzyć panel z wypełnioną parą, a sięganie z repozytorium do kontrolek cudzego okna
+byłoby drugą drogą do tej samej nastawy. Zaznaczenie nowe kasuje wybór ręczny zakresu, zaznaczenie
+to samo nie, bo wybór ręczny ma pierwszeństwo do następnego innego zaznaczenia. Wybór zaznaczenia
+bez samego zaznaczenia w edytorze nie jest blokowany, tylko schodzi na cały dokument, a okna mówią
+o tym wprost. Wciągnięcie dokumentu z rdzenia czyni jego treść jednocześnie roboczą i zaakceptowaną,
+a zaznaczenie znika razem z wyborem ręcznym zakresu, bo oba dotyczyły treści poprzedniej. Okno
+pracy prowadzi dwa dokumenty naraz w zakładkach, a stan modułu ma jeden dokument czynny, bo
+pozostałe panele odczytują właśnie ten czynny, więc zakładka nieczynna trzyma swoje pola
+w migawce i wraca z nimi przy przełączeniu — migawka nie niesie okna osadzenia ani historii
+wersji, bo okno jest wspólne całemu modułowi, a historia dotyczy dokumentu i doczyta się przy
+przełączeniu. Propozycja bez treści, gdy rdzeń oddał samo odwołanie do niej, też zostaje
+przyjęta, bo decyzja operatora jest wiążąca niezależnie od tego, czy rdzeń dołączył wynik wprost.

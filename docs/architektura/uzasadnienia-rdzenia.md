@@ -6893,3 +6893,17 @@ Zapis śladu zgłoszenia pełni dwie role naraz: jest zapisem tego, kto, w któr
 oknie i o co prosił, oraz jedynym sprawdzeniem istnienia okna, bo nieznane
 okno odrzuca repozytorium samo. Nieudany zapis kończy się własną odmową, żeby
 brak okna nie zlał się w odpowiedzi z odmową wykonania akcji katalogu.
+
+## budowa/server/internal/core/handlers_dostep_ksztalt.go
+Sprawdzenie kształtu punktu jest w rdzeniu, a nie w warstwie danych, bo dotyczy
+żądania: baza pilnuje więzu, ale zgłasza go jako awarię zapisu, a operator ma
+dostać odmowę merytoryczną z powodem, nie błąd wewnętrzny rdzenia. Most MCP bez
+nazwy maszyny i bez adresu nie ma dokąd prowadzić. Katalog lokalny bez pola
+`deviceId` nie jest odrzucany: pole jest w kontrakcie opcjonalne, a jego
+pominięcie znaczy, że katalog leży na tej maszynie — katalog wskazany oknem
+powłoki leży na maszynie, na której działa rdzeń, i tę maszynę katalog urządzeń
+zna z rozpoznania startowego, kolumny `biezace`. Oba przypadki odmowy
+urządzenia są brakiem w żądaniu albo w stanie platformy, nie awarią trwałości,
+więc operator ma zobaczyć zdanie, a nie ciszę ani błąd wewnętrzny — każdy inny
+błąd idzie dalej nietknięty, bo rdzeń nie zgaduje za bazę, czy zawiódł dysk,
+czy schemat.

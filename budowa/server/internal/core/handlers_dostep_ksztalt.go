@@ -1,9 +1,5 @@
-// Odpowiedzialność pliku: kształt punktu dostępu — sprawdzenie żądania wobec
-// więzów schematu oraz rozłożenie adresu mostu na kolumny wiersza.
-//
-// Sprawdzenie jest tu, a nie w warstwie danych, bo dotyczy żądania: baza pilnuje
-// więzu, ale zgłasza go jako awarię zapisu. Operator ma dostać odmowę
-// merytoryczną z powodem, nie błąd wewnętrzny rdzenia.
+// Plik sprawdza kształt punktu dostępu, żądanie wobec więzów schematu, i
+// rozkłada adres mostu na kolumny wiersza.
 package core
 
 import (
@@ -16,14 +12,7 @@ import (
 )
 
 // sprawdzKsztaltPunktu odmawia założenia punktu, którego schemat i tak by nie
-// przyjął, i podaje Operatorowi powód.
-//
-// Most MCP bez nazwy maszyny i bez adresu nie ma dokąd prowadzić.
-//
-// Katalog lokalny bez pola `deviceId` nie jest odrzucany. Pole jest w kontrakcie
-// opcjonalne, a jego pominięcie znaczy „na tej maszynie”: katalog wskazany oknem
-// powłoki leży na maszynie, na której działa rdzeń, i tę maszynę katalog
-// urządzeń zna z rozpoznania startowego (kolumna `biezace`).
+// przyjął, i podaje operatorowi powód odmowy.
 func sprawdzKsztaltPunktu(z shared.AccessPointAddRequest) error {
 	if z.Kind == shared.AccessPointKindMcpBridge &&
 		wartoscTekstu(z.Host) == "" && wartoscTekstu(z.Endpoint) == "" {
@@ -32,16 +21,14 @@ func sprawdzKsztaltPunktu(z shared.AccessPointAddRequest) error {
 	return nil
 }
 
-// odmowaKsztaltuPunktu składa odmowę merytoryczną założenia punktu.
+// odmowaKsztaltuPunktu składa odmowę merytoryczną założenia punktu, z powodem
+// właściwym niespełnionemu więzowi schematu.
 func odmowaKsztaltuPunktu(powod string) error {
 	return protocol.JakoError(protocol.NowyBlad(shared.ErrorCodeValidationFailed, powod))
 }
 
 // odmowaUrzadzeniaPunktu przekłada rozstrzygnięcia katalogu urządzeń na odmowę
-// z powodem. Oba przypadki są brakiem w żądaniu albo w stanie platformy, nie
-// awarią trwałości, więc Operator ma zobaczyć zdanie, a nie ciszę ani błąd
-// wewnętrzny. Każdy inny błąd idzie dalej nietknięty — rdzeń nie zgaduje
-// za bazę, czy zawiódł dysk, czy schemat.
+// z powodem, nie na błąd wewnętrzny rdzenia.
 func odmowaUrzadzeniaPunktu(err error) error {
 	switch {
 	case err == nil:

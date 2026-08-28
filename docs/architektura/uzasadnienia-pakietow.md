@@ -6461,3 +6461,13 @@ Przywrócenie wersji jest zapisem dwutabelowym: metoda PrzywrocWersje czyta
 wersję docelową i nadpisuje treść dokumentu w jednej transakcji — bez niej
 odczyt wersji i zapis dokumentu mogłyby rozjechać się przy równoległym zapisie
 tego samego dokumentu z innego okna.
+
+## budowa/server/internal/injection/zaczepy.go
+Plik odbiera zdarzenia zaczepów z linii typu system strumienia programu claude
+uruchomionego z przełącznikiem --include-hook-events. Koperta startu zaczepu
+niesie pola subtype, hook_id, hook_name i hook_event; koperta odpowiedzi niesie
+dodatkowo output, stdout, stderr, exit_code i outcome. Zdarzenie zaczepu jest
+zdarzeniem wykonawczym opisującym przebieg działania zaczepu, nie treść
+wypowiedzi modelu. Warstwa składania odpowiedzi otrzymuje zdarzenie haczykiem
+NaZdarzenieZaczepu i prowadzi na jego podstawie dziennik zdarzeń oraz
+diagnostykę; brak podpiętego haczyka nie zmienia przebiegu tury.

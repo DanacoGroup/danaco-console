@@ -698,3 +698,11 @@ rozkład trzech okien modułu, pas kontekstu, siatka paneli językowych,
 zestawienie porównawcze oraz znakowanie faz stanu. Kontrolki formularza
 pochodzą z `modele/kontrolki-formularza`, dlatego moduł wciąga też arkusz
 `modele.css`, inaczej pola `dm-*` zostałyby bez oprawy.
+
+## budowa/klient-poprzedni/src/moduly/wiedza/wiedza.css
+Plik nie zapisuje wprost ani jednej barwy, ani jednego rozmiaru pisma:
+wszystko pochodzi z żetonów motywu `--dn-*` i z biblioteki `komponenty/`.
+Tutaj leży wyłącznie rozkład: co stoi obok czego i ile między elementami
+odstępu. Odróżnienie trafności jedzie plakietkami biblioteki
+`dn-plakietka--sukces` i `dn-plakietka--ostrzezenie`, więc okno nie zakłada
+własnej skali barw.

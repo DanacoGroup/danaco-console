@@ -5,6 +5,7 @@
 @import url('../../design/zasoby/css/fundament.css');
 @import url('../../design/zasoby/css/komponenty.css');
 @import url('../../design/zasoby/wejscie.css');
+@import url('../../design/zasoby/rama.css');
 
 /* ── Widoczność odsłon ────────────────────────────────────────────────────
 
@@ -24,10 +25,19 @@
 
 /* ── Wysokość sceny ───────────────────────────────────────────────────────
 
-   Scena mierzy swoją najmniejszą wysokość w procencie wysokości rodzica
-   (`.we-scena { min-height: 100% }` w `wejscie.css`), więc rodzic musi tę
-   wysokość mieć wyznaczoną — inaczej okno siada przy górnej krawędzi zamiast
-   stanąć pośrodku. W prototypie wyznacza ją scena podglądu
-   (`.pt-scena { height: 100dvh }`); w produkcie rodzicem sceny jest dokument. */
+   Scena mierzy najmniejszą wysokość w procencie rodzica (`.we-scena` w
+   `wejscie.css`) — rodzic musi tę wysokość mieć wyznaczoną, inaczej okno
+   siada przy górnej krawędzi. Sceny stoją pod `[data-wejscie]`, ten dziedziczy
+   wysokość z ciała dokumentu. */
 
 body { height: 100dvh; }
+[data-wejscie] { height: 100%; }
+
+/* ── Przekazanie sterowania ramie ─────────────────────────────────────────
+
+   `aplikacja.ts` ukrywa `[data-wejscie]` i odkrywa `[data-rama-aplikacji]`
+   atrybutem `hidden` w chwili, gdy przebieg wchodzi do środowiska. Rama
+   wyznacza własną wysokość przez `.sta-powloka { height: 100dvh }`
+   w `rama.css` — miejsce jej nie narzuca nic ponad to. */
+
+[data-rama-aplikacji][hidden] { display: none; }

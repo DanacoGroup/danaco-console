@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"io"
 	"path/filepath"
-	"regexp"
 	"strings"
 
 	"danacoconsole/server/internal/mowa"
@@ -24,12 +23,10 @@ const (
 // Nazwy warstw prowizjonowania. Warstwa mówi, CZYM postawić program — a przy
 // silniku kontenerów: że nie stawiać go bez wyraźnego żądania.
 const (
-	// WarstwaObowiazkowa — pakiety dystrybucji, bez których moduły odmawiają działania na tej maszynie budującej.
+	// WarstwaObowiazkowa — pakiety dystrybucji, bez których moduły odmawiają działania na tej maszynie
+	// budującej. Niesie też podpowiedzi zdaniem albo poleceniem pip/cargo — arsenal-serwera.sh
+	// rozpoznaje ich postać i wyprowadza z nich krok apt, pip albo krok ręczny.
 	WarstwaObowiazkowa = "obowiazkowa-apt"
-	// WarstwaObowiazkowaRecznie — ta sama obowiązkowość co WarstwaObowiazkowa, ale podpowiedź
-	// instalacyjna jest zdaniem albo poleceniem innego menedżera pakietów (pip, cargo), a nie listą
-	// nazw pakietów dystrybucji; apt nie ma czym jej skarmić, więc krok zostaje ręczny.
-	WarstwaObowiazkowaRecznie = "obowiazkowa-recznie"
 	// WarstwaWarsztatGo — programy dokładane przez go install, osobno od pakietów dystrybucji tego systemu.
 	WarstwaWarsztatGo = "warsztat-go"
 	// WarstwaWarsztatNpm — programy dokładane przez npm i -g, osobno od pakietów dystrybucji tego systemu.
@@ -63,14 +60,10 @@ func zadanoZnacznik(argumenty []string, znacznik string) bool {
 	return false
 }
 
-// wzorzecPakietowDystrybucji rozpoznaje pole Pakiet w kształcie nazw pakietów Debiana — tokeny
-// z małych liter, cyfr, kropki, plusa i minusa, rozdzielone spacją.
-var wzorzecPakietowDystrybucji = regexp.MustCompile(`^[a-z0-9][a-z0-9.+-]*( [a-z0-9][a-z0-9.+-]*)*$`)
-
-// WarstwaZaleznosci rozstrzyga warstwę pozycji wykazu: po programie dla silnika kontenerów,
-// po przedrostku albo podnapisie polecenia dla warsztatów i kroków ręcznych znanych, a resztę
-// kieruje do apt tylko wtedy, gdy pole ma kształt listy pakietów — inaczej to podpowiedź zdaniem,
-// dla której apt nie ma czym postawić.
+// WarstwaZaleznosci rozstrzyga warstwę pozycji wykazu: silnik kontenerów po programie, warsztaty
+// i kroki ręczne po przedrostku podpowiedzi, reszta do warstwy obowiązkowej. Dopasowanie warsztatu
+// Go bierze przedrostek, nie podnapis: „cargo install typos-cli" niesie „go install" wewnątrz
+// „[car]go install", a mimo to nie jest poleceniem Go.
 func WarstwaZaleznosci(pozycja ZaleznoscZewnetrzna) string {
 	program := strings.TrimSpace(pozycja.Narzedzie.Program)
 	pakiet := strings.TrimSpace(pozycja.Narzedzie.Pakiet)
@@ -88,13 +81,8 @@ func WarstwaZaleznosci(pozycja ZaleznoscZewnetrzna) string {
 	case strings.Contains(pakiet, "github.com"),
 		strings.Contains(pakiet, "środowisku pythonowym"):
 		return WarstwaModelRecznie
-	case strings.HasPrefix(pakiet, "pip install "),
-		strings.HasPrefix(pakiet, "cargo install "):
-		return WarstwaObowiazkowaRecznie
-	case wzorzecPakietowDystrybucji.MatchString(pakiet):
-		return WarstwaObowiazkowa
 	default:
-		return WarstwaObowiazkowaRecznie
+		return WarstwaObowiazkowa
 	}
 }
 

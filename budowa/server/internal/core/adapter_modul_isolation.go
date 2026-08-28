@@ -1,16 +1,6 @@
-// Rodzina `isolation.*`: adapter okna konfiguracji punktów izolacji, maszyneria
-// adresu i pięć komend macierzy przełączników (`scope.list`, `context.get/set`,
-// `technical.get/set`). Profile, warstwa i podgląd polityki leżą
-// w `adapter_modul_isolation_profile.go`.
-//
-// Jedenaście punktów izolacji to jedenaście kluczy tabeli `ustawienie` — tych
-// samych, które rozstrzyga `internal/konfig` i egzekwuje `internal/session`.
-// Rodzina jest drugim wejściem do tego samego magazynu, nie drugim magazynem:
-// wartość zapisana tutaj wraca też przez `config.get`, i odwrotnie.
-//
-// Wykaz punktów stoi w `konfig/definicje_izolacji.go` i tylko tam; ten plik
-// odwzorowuje wyliczenia kontraktu (`IsolationContextKind`,
-// `IsolationTechnicalScope`) na klucze i nie zna nazwy pojedynczego punktu.
+// Rodzina `isolation.*` obsługuje adapter okna konfiguracji punktów izolacji
+// i pięć komend macierzy przełączników: `scope.list`, `context.get/set`
+// i `technical.get/set`.
 package core
 
 import (
@@ -22,23 +12,18 @@ import (
 	"danacoconsole/shared"
 )
 
-// Wartości punktów izolacji spisane ze stałych nieeksportowanych
-// `konfig/definicje_izolacji.go` (`izolacjaOdrebna`, `izolacjaWylaczona`). Zapis
-// musi nieść dokładnie tę wartość, którą czyta egzekutor; wyprowadzenie jej
-// z wartości domyślnej rejestru odwracałoby znaczenie zapisu przy zmianie stanu
-// wyjściowego platformy. Pozostałe dwie wartości pakiet konfig wywodzi na
-// zewnątrz — `konfig.IzolacjaWspoldzielona` i `konfig.IzolacjaWlaczona`.
+// Wartości punktów izolacji spisane ze stałych nieeksportowanych rejestru
+// definicji; zapis musi nieść dokładnie tę wartość, którą czyta egzekutor.
 const (
 	wartoscKontekstOdrebny = "odrebna"
 	wartoscZakresWylaczony = "wylaczony"
 )
 
-// punktIzolacji wiąże wartość wyliczenia kontraktu z kluczem ustawienia.
+// punktIzolacji wiąże wartość wyliczenia kontraktu z kluczem ustawienia oraz
+// z rodzajem punktu, kontekstowym albo technicznym.
 type punktIzolacji struct {
 	klucz string
-	// kontekstowy odróżnia trzy wymiary kontekstu od ośmiu zakresów
-	// technicznych: pierwsze mówią „odrębny albo współdzielony", drugie
-	// „włączony albo wyłączony".
+	// kontekstowy odróżnia wymiar kontekstu od zakresu technicznego.
 	kontekstowy bool
 }
 
@@ -53,7 +38,8 @@ var punktyKontekstu = []struct {
 	{shared.IsolationContextKindContext, punktIzolacji{konfig.KluczIzolacjaKontekst, true}},
 }
 
-// punktyTechniczne wylicza osiem zakresów technicznych w kolejności kontraktu.
+// punktyTechniczne wylicza osiem zakresów technicznych izolacji w kolejności
+// kontraktu, wiążąc każdy z kluczem ustawienia właściwym temu zakresowi.
 var punktyTechniczne = []struct {
 	zakres shared.IsolationTechnicalScope
 	punkt  punktIzolacji
@@ -68,10 +54,9 @@ var punktyTechniczne = []struct {
 	{shared.IsolationTechnicalScopeExecutionServer, punktIzolacji{konfig.KluczIzolacjaSerwerWykonania, false}},
 }
 
-// adapterIzolacji wypełnia port Izolacja. Trzy zależności, każda o innej roli:
-// ustawienia trzymają wartości jedenastu punktów, repozytorium profili trzyma
-// szablony i wybór warstwy, a rozstrzygacz odpowiada na pytanie o politykę
-// obowiązującą po ośmiu poziomach zasięgu.
+// adapterIzolacji wypełnia port Izolacja trzema zależnościami: ustawienia
+// trzymają wartości punktów, profile trzymają szablony i wybór warstwy,
+// a rozstrzygacz odpowiada na pytanie o politykę obowiązującą po zasięgu.
 type adapterIzolacji struct {
 	ustawienia   dane.RepozytoriumKonfiguracjiOsi
 	profile      dane.RepozytoriumIzolacji
@@ -100,14 +85,8 @@ func (a *adapterIzolacji) ZRozgloszeniem(nadajnik Nadajnik) *adapterIzolacji {
 
 // ── isolation.scope.list ─────────────────────────────────────────────────────
 
-// PoziomyZasiegu zwraca osiem poziomów zasięgu w kolejności rozstrzygania.
-// Nazwa i kolejność pochodzą z tabeli `poziom_zasiegu`, nie z wykazu w rdzeniu.
-// Pusty wykaz znaczy bazę bez słownika poziomów — awarię podłoża, nie „brak
-// poziomów" — więc odpowiedzią jest odmowa.
-//
-// Pola `sessionId` i `windowId` żądania nie mają odpowiednika w wyniku:
-// struktura `IsolationScopeLevel` nie niesie pola na byt poziomu, więc rdzeń
-// niczym ich nie zawęża.
+// PoziomyZasiegu obsługuje `isolation.scope.list` i zwraca osiem poziomów
+// zasięgu w kolejności rozstrzygania, wziętych z tabeli `poziom_zasiegu`.
 func (a *adapterIzolacji) PoziomyZasiegu(ctx context.Context,
 	_ shared.IsolationScopeListRequest) (shared.IsolationScopeListResponse, error) {
 
@@ -131,9 +110,7 @@ func (a *adapterIzolacji) PoziomyZasiegu(ctx context.Context,
 			Scope: poziom.Poziom,
 			Label: poziom.Nazwa,
 			Order: poziom.Pierwszenstwo,
-			// Objaśnienia poziomu baza nie niesie i rdzeń go nie układa.
-			// `Narrowest` wraca także wtedy, gdy jest fałszem: „poziom nie jest
-			// najwęższy" to odpowiedź, a brak pola byłby jej brakiem.
+			// `Narrowest` wraca też wtedy, gdy jest fałszem — to jest odpowiedź.
 			Narrowest: wskaznikPrawdy(czyNajwezszy),
 		})
 	}
@@ -142,11 +119,8 @@ func (a *adapterIzolacji) PoziomyZasiegu(ctx context.Context,
 
 // ── isolation.context.get / isolation.context.set ────────────────────────────
 
-// IzolacjaKontekstu zwraca trzy przełączniki izolacji kontekstu spod adresu.
-// Wykaz jest zawsze pełny: macierz okna ma trzy wiersze niezależnie od tego, ile
-// z nich zapisano, a punkt bez zapisu na tym poziomie niesie wartość domyślną
-// z rejestru definicji. Odesłanie samych punktów zapisanych zostawiłoby oknu
-// zgadywanie, co znaczy brak wiersza.
+// IzolacjaKontekstu obsługuje `isolation.context.get` i zwraca trzy
+// przełączniki izolacji kontekstu spod adresu, zawsze w wykazie pełnym.
 func (a *adapterIzolacji) IzolacjaKontekstu(ctx context.Context,
 	z shared.IsolationContextGetRequest) (shared.IsolationContextGetResponse, error) {
 
@@ -161,10 +135,9 @@ func (a *adapterIzolacji) IzolacjaKontekstu(ctx context.Context,
 	return shared.IsolationContextGetResponse{Switches: a.przelacznikiKontekstu(zapisane)}, nil
 }
 
-// ZapiszIzolacjeKontekstu zapisuje wskazane przełączniki kontekstu pod adresem
-// i oddaje stan poziomu po zapisie — odczytany z bazy, nie odbity z żądania.
-// Żądanie bez przełączników jest odmawiane: kontrakt oznacza `switches` jako
-// pole wymagane, a pusta tablica zamieniłaby zapis w potwierdzenie bez zmiany.
+// ZapiszIzolacjeKontekstu obsługuje `isolation.context.set` i zapisuje
+// wskazane przełączniki kontekstu pod adresem, oddając stan po zapisie
+// odczytany z bazy, nie odbity z żądania.
 func (a *adapterIzolacji) ZapiszIzolacjeKontekstu(ctx context.Context,
 	z shared.IsolationContextSetRequest) (shared.IsolationContextSetResponse, error) {
 
@@ -211,7 +184,9 @@ func (a *adapterIzolacji) IzolacjaTechniczna(ctx context.Context,
 	return shared.IsolationTechnicalGetResponse{Switches: a.przelacznikiTechniczne(zapisane)}, nil
 }
 
-// ZapiszIzolacjeTechniczna zapisuje wskazane zakresy techniczne pod adresem.
+// ZapiszIzolacjeTechniczna obsługuje `isolation.technical.set` i zapisuje
+// wskazane zakresy techniczne pod adresem, na tych samych zasadach co zapis
+// kontekstu.
 func (a *adapterIzolacji) ZapiszIzolacjeTechniczna(ctx context.Context,
 	z shared.IsolationTechnicalSetRequest) (shared.IsolationTechnicalSetResponse, error) {
 
@@ -243,10 +218,8 @@ func (a *adapterIzolacji) ZapiszIzolacjeTechniczna(ctx context.Context,
 // ── adres, odczyt i zapis punktu ─────────────────────────────────────────────
 
 // adresIzolacji składa adres zapisu z pól żądania i sprawdza go w całości.
-// Byt poziomu jest wymagany poza poziomem globalnym: wiersz zapisany z pustym
-// bytem na poziomie węższym nie należy do żadnej karty, roli ani okna, więc
-// rozstrzygacz nigdy po niego nie sięgnie (`konfig.Kontekst.Adres`) — zapis
-// wyglądałby na udany, nie robiąc nic. Warstwę rozstrzyga `warstwaAdresu`.
+// Byt poziomu jest wymagany poza poziomem globalnym; warstwę rozstrzyga
+// `warstwaAdresu`.
 func (a *adapterIzolacji) adresIzolacji(poziom shared.ConfigScope, bytPoziomu *string,
 	warstwa *shared.IsolationLayer) (konfig.Adres, error) {
 
@@ -267,21 +240,9 @@ func (a *adapterIzolacji) adresIzolacji(poziom shared.ConfigScope, bytPoziomu *s
 	return konfig.Adres{Poziom: poziom, KluczZasiegu: byt, Os: konfig.OsPlatformy}, nil
 }
 
-// warstwaAdresu rozstrzyga warstwę żądania i sprawdza jej zgodność z poziomem.
-//
-// Adresem zapisu ustawienia jest czwórka (poziom zasięgu, byt poziomu, oś, byt
-// osi) i warstwy w niej nie ma — ani w schemacie, ani w rozstrzyganiu
-// (`konfig.Kontekst.Adresy`), ani w egzekutorze (`session.ZasadyZPolityki`).
-// Karta sesji jest natomiast jednym z ośmiu poziomów zasięgu, więc warstwa
-// czytana jest tak:
-//   - `default` (albo warstwa pominięta) — zapis idzie pod wskazany poziom;
-//   - `session` — zapis idzie na poziom karty sesji; warstwa sesyjna wskazana
-//     razem z innym poziomem jest sprzecznością i wraca odmową, zamiast po
-//     cichu wybrać jedno ze wskazań.
-//
-// Warstwa sesyjna nie ma osobnej przestrzeni kluczy ani kolumny: wartość
-// zapisana poza adresem rozstrzygania nie doszłaby do egzekutora, a zapis
-// zostałby potwierdzony mimo braku skutku.
+// warstwaAdresu rozstrzyga warstwę żądania — domyślną albo sesyjną — i sprawdza
+// jej zgodność z poziomem zasięgu, bo warstwa sesyjna obowiązuje wyłącznie na
+// poziomie karty sesji.
 func warstwaAdresu(poziom shared.ConfigScope, warstwa *shared.IsolationLayer) (shared.IsolationLayer, error) {
 	wybrana, err := warstwaZadania(warstwa)
 	if err != nil {
@@ -327,7 +288,8 @@ func (a *adapterIzolacji) zapisyAdresu(ctx context.Context, adres konfig.Adres) 
 	return zapisane, nil
 }
 
-// zapiszPunkt utrwala jeden punkt izolacji pod adresem i rozgłasza zmianę.
+// zapiszPunkt utrwala jeden punkt izolacji pod adresem i rozgłasza zmianę
+// zdarzeniem `config.changed`, gdy nadajnik jest podłączony.
 func (a *adapterIzolacji) zapiszPunkt(ctx context.Context, adres konfig.Adres,
 	punkt punktIzolacji, odciety bool) error {
 
@@ -364,10 +326,9 @@ func wartoscPunktu(punkt punktIzolacji, odciety bool) string {
 	return wartoscZakresWylaczony
 }
 
-// odcietyPunkt odpowiada, czy punkt jest odcięty. Reguła jest przepisana
-// z egzekutora co do znaku: wymiar kontekstu zostaje odrębny, dopóki nie zapisano
-// wprost współdzielenia, a zakres techniczny jest włączony wyłącznie wtedy, gdy
-// zapisano wprost włączenie.
+// odcietyPunkt odpowiada, czy punkt jest odcięty, regułą przepisaną
+// z egzekutora co do znaku, osobną dla wymiaru kontekstu i dla zakresu
+// technicznego.
 func odcietyPunkt(punkt punktIzolacji, wartosc string) bool {
 	if punkt.kontekstowy {
 		return wartosc != konfig.IzolacjaWspoldzielona
@@ -375,7 +336,8 @@ func odcietyPunkt(punkt punktIzolacji, wartosc string) bool {
 	return wartosc == konfig.IzolacjaWlaczona
 }
 
-// przelacznikiKontekstu składa trzy przełączniki kontekstu z zapisów adresu.
+// przelacznikiKontekstu składa trzy przełączniki kontekstu z zapisów adresu,
+// każdy wraz z objaśnieniem punktu wziętym z rejestru definicji.
 func (a *adapterIzolacji) przelacznikiKontekstu(zapisane map[string]string) []shared.IsolationSwitch {
 	przelaczniki := make([]shared.IsolationSwitch, 0, len(punktyKontekstu))
 	for _, pozycja := range punktyKontekstu {
@@ -388,7 +350,8 @@ func (a *adapterIzolacji) przelacznikiKontekstu(zapisane map[string]string) []sh
 	return przelaczniki
 }
 
-// przelacznikiTechniczne składa osiem przełączników technicznych z zapisów adresu.
+// przelacznikiTechniczne składa osiem przełączników technicznych z zapisów
+// adresu, każdy wraz z objaśnieniem punktu wziętym z rejestru definicji.
 func (a *adapterIzolacji) przelacznikiTechniczne(zapisane map[string]string) []shared.IsolationTechnicalSwitch {
 	przelaczniki := make([]shared.IsolationTechnicalSwitch, 0, len(punktyTechniczne))
 	for _, pozycja := range punktyTechniczne {
@@ -422,7 +385,8 @@ func (a *adapterIzolacji) objasnieniePunktu(punkt punktIzolacji) *string {
 	return &objasnienie
 }
 
-// punktKontekstu rozpoznaje wymiar kontekstu podany w żądaniu.
+// punktKontekstu rozpoznaje wymiar kontekstu podany w żądaniu i oddaje jego
+// punkt izolacji albo informację, że wymiar nie jest znany.
 func punktKontekstu(rodzaj shared.IsolationContextKind) (punktIzolacji, bool) {
 	for _, pozycja := range punktyKontekstu {
 		if pozycja.rodzaj == rodzaj {
@@ -432,7 +396,8 @@ func punktKontekstu(rodzaj shared.IsolationContextKind) (punktIzolacji, bool) {
 	return punktIzolacji{}, false
 }
 
-// punktTechniczny rozpoznaje zakres techniczny podany w żądaniu.
+// punktTechniczny rozpoznaje zakres techniczny podany w żądaniu i oddaje jego
+// punkt izolacji albo informację, że zakres nie jest znany.
 func punktTechniczny(zakres shared.IsolationTechnicalScope) (punktIzolacji, bool) {
 	for _, pozycja := range punktyTechniczne {
 		if pozycja.zakres == zakres {
@@ -449,7 +414,8 @@ func bladZadaniaIzolacji(powod string) error {
 		"izolacja: "+powod))
 }
 
-// bladNieznanegoPunktu odmawia zapisu punktu spoza wyliczeń kontraktu.
+// bladNieznanegoPunktu odmawia zapisu punktu izolacji spoza wyliczeń
+// kontraktu, wskazanego rodzajem albo zakresem, którego rdzeń nie zna.
 func bladNieznanegoPunktu(nazwa string) error {
 	return bladZadaniaIzolacji("punkt izolacji " + nazwa + " nie należy do kontraktu")
 }

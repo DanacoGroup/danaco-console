@@ -1,12 +1,6 @@
 // Odpowiedzialność pliku: terminologia modułu Translate —
-// `translate.glossary.list` (wykaz terminów zawężony) i `translate.term.extract`
-// (kandydaci na termin wyjęci z tekstu źródłowego okna).
-//
-// Wyjmowanie kandydatów idzie miarą częstości, nie modelem. Powód jest
-// praktyczny: kandydat ma być sprawdzalny. Operator widzi, ile razy słowo albo
-// zbitka wystąpiła w jego własnym tekście, i sam rozstrzyga, czy to termin.
-// Lista wymyślona przez model byłaby listą, której nikt nie umie odtworzyć ani
-// zakwestionować.
+// `translate.glossary.list` i `translate.term.extract`. Wyjmowanie
+// kandydatów idzie miarą częstości, nie modelem.
 package core
 
 import (
@@ -28,7 +22,8 @@ const najmniejszaDlugoscKandydata = 3
 // przejrzy nawet połowy.
 const domyslnaLiczbaKandydatow = 50
 
-// WykazTerminow obsługuje `translate.glossary.list`.
+// WykazTerminow obsługuje `translate.glossary.list` i oddaje wykaz
+// terminów zawężony wskazaniem panelu.
 func (a *adapterTlumaczenia) WykazTerminow(ctx context.Context,
 	z shared.TranslateGlossaryListRequest) (shared.TranslateGlossaryListResponse, error) {
 
@@ -78,8 +73,8 @@ func (a *adapterTlumaczenia) WyjmijTerminy(ctx context.Context,
 		pulap = domyslnaLiczbaKandydatow
 	}
 
-	// Terminy już w słowniku znakowane są jako znane. Operator, który zaznaczył
-	// `excludeKnown`, dostaje wyłącznie to, czego jeszcze nie rozstrzygnął.
+	// Terminy już w słowniku są znane; Operator z `excludeKnown` dostaje
+	// wyłącznie nierozstrzygnięte.
 	znane := map[string]struct{}{}
 	terminy, err := a.repozytorium.Terminy(ctx)
 	if err != nil {
@@ -109,8 +104,8 @@ func (a *adapterTlumaczenia) WyjmijTerminy(ctx context.Context,
 			Known:     jestZnany,
 		})
 	}
-	// Porządek: najczęstsze najpierw, a przy równej częstości alfabetycznie —
-	// wykaz ma być ten sam przy każdym wywołaniu na tym samym tekście.
+	// Porządek: najczęstsze najpierw, przy równej częstości alfabetycznie,
+	// ten sam przy każdym wywołaniu.
 	sort.Slice(kandydaci, func(i, j int) bool {
 		if kandydaci[i].Frequency != kandydaci[j].Frequency {
 			return kandydaci[i].Frequency > kandydaci[j].Frequency
@@ -123,7 +118,8 @@ func (a *adapterTlumaczenia) WyjmijTerminy(ctx context.Context,
 	return shared.TranslateTermExtractResponse{Candidates: kandydaci}, nil
 }
 
-// policzKandydatow liczy wystąpienia słów i zbitek dwuwyrazowych.
+// policzKandydatow liczy wystąpienia słów i zbitek dwuwyrazowych
+// w tekście źródłowym, do wyboru kandydatów.
 func policzKandydatow(tekst string) map[string]int {
 	slowa := strings.FieldsFunc(strings.ToLower(tekst), func(r rune) bool {
 		return !unicode.IsLetter(r) && !unicode.IsDigit(r) && r != '-'
@@ -150,9 +146,7 @@ func policzKandydatow(tekst string) map[string]int {
 }
 
 // slowaFunkcyjne to zamknięty wykaz słów, które są częste w każdym tekście
-// i nie są terminami w żadnym. Wykaz obejmuje polski i angielski, bo takie
-// materiały wchodzą do tego modułu najczęściej; słowo spoza wykazu nie jest
-// przez to terminem — jest kandydatem, o którym rozstrzyga Operator.
+// i nie są terminami w żadnym.
 var slowaFunkcyjne = map[string]struct{}{
 	"oraz": {}, "albo": {}, "lecz": {}, "jest": {}, "sie": {}, "się": {}, "nie": {},
 	"tego": {}, "tym": {}, "przez": {}, "dla": {}, "jako": {}, "przy": {}, "pod": {},
@@ -161,7 +155,8 @@ var slowaFunkcyjne = map[string]struct{}{
 	"are": {}, "was": {}, "were": {}, "have": {}, "has": {}, "not": {},
 }
 
-// slowoFunkcyjne mówi, czy słowo należy do wykazu wyżej.
+// slowoFunkcyjne mówi, czy słowo należy do wykazu `slowaFunkcyjne`
+// powyżej, zamkniętego dla polskiego i angielskiego.
 func slowoFunkcyjne(slowo string) bool {
 	_, jest := slowaFunkcyjne[slowo]
 	return jest

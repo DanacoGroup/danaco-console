@@ -1,10 +1,6 @@
 // Odpowiedzialność pliku: rozkład zapisu cron na zbiory dopuszczalnych wartości
-// pięciu pól. Rachunek terminu stoi w `..._cron.go` — tu leży wyłącznie odczyt
+// pięciu pól. Rachunek terminu stoi w ..._cron.go — tu leży wyłącznie odczyt
 // zapisu.
-//
-// Pole nieczytelne nie jest naprawiane domysłem. Zwracamy brak rozpoznania,
-// a rachunek oddaje wtedy brak terminu — okno mówi Operatorowi, że cykliczność
-// nie została zrozumiana, zamiast pokazać godzinę wziętą z niczego.
 package core
 
 import (
@@ -12,7 +8,7 @@ import (
 	"strings"
 )
 
-// polaCronZTekstu rozkłada zapis pięciopolowy na zbiory wartości.
+// polaCronZTekstu rozkłada zapis pięciopolowy cron na zbiory dopuszczalnych wartości wszystkich pięciu pól.
 func polaCronZTekstu(zapis string) (polaCron, bool) {
 	czesci := strings.Fields(strings.TrimSpace(zapis))
 	if len(czesci) != 5 {
@@ -34,7 +30,7 @@ func polaCronZTekstu(zapis string) (polaCron, bool) {
 	}, true
 }
 
-// zbiorPolaCron rozkłada jedno pole zapisu na zbiór wartości.
+// zbiorPolaCron rozkłada jedno pole zapisu cron na zbiór dopuszczalnych wartości liczbowych tego pola.
 func zbiorPolaCron(pole string, dolna, gorna int) (map[int]bool, bool) {
 	zbior := map[int]bool{}
 	for _, czlon := range strings.Split(strings.TrimSpace(pole), ",") {
@@ -48,7 +44,7 @@ func zbiorPolaCron(pole string, dolna, gorna int) (map[int]bool, bool) {
 	return zbior, true
 }
 
-// dopiszCzlonCron dokłada do zbioru wartości jednego członu pola.
+// dopiszCzlonCron dokłada do zbioru wartości jednego członu pola zapisu cron tego harmonogramu automatyki.
 func dopiszCzlonCron(zbior map[int]bool, czlon string, dolna, gorna int) bool {
 	zakres, krokTekst, maKrok := strings.Cut(strings.TrimSpace(czlon), "/")
 	krok := 1

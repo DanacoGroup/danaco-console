@@ -1,17 +1,7 @@
 // Odpowiedzialność pliku: rząd kart okna przeglądarki i jego przestrzenie
-// robocze — dziewięć komend: `browser.tab.open`, `.list`, `.update`, `.close`,
-// `browser.tab.group.set` oraz `browser.workspace.save`, `.list`, `.open`,
-// `.remove`.
-//
-// Karta otwarta z adresem naprawdę pod ten adres przechodzi. `browser.tab.open`
-// z polem `url` woła to samo pobranie strony, którym jedzie `browser.navigate`,
-// i odkłada migawkę — inaczej karta byłaby wierszem w bazie z adresem, którego
-// nikt nie odwiedził, a odpowiedź niosłaby `snapshot` wzięty znikąd.
-//
-// Przestrzeń robocza zapisuje SKŁAD, nie kopię kart. `browser.workspace.save`
-// przypisuje wskazane karty do przestrzeni, a `browser.workspace.open` odtwarza
-// z nich rząd kart okna. Kopia kart dałaby dwa byty o tym samym adresie i dwie
-// prawdy o tym, która karta jest tą otwartą.
+// robocze — dziewięć komend `browser.tab.*` i `browser.workspace.*`. Karta
+// otwarta z adresem naprawdę pod ten adres przechodzi. Przestrzeń zapisuje
+// skład kart, nie ich kopię.
 package core
 
 import (
@@ -22,7 +12,8 @@ import (
 	"danacoconsole/shared"
 )
 
-// OtworzKarte obsługuje `browser.tab.open`.
+// OtworzKarte obsługuje `browser.tab.open`: otwiera nową kartę w oknie
+// i wpisuje jej wiersz do rzędu kart przeglądarki.
 func (a *adapterPrzegladarki) OtworzKarte(ctx context.Context,
 	z shared.BrowserTabOpenRequest) (shared.BrowserTabOpenResponse, error) {
 
@@ -34,8 +25,8 @@ func (a *adapterPrzegladarki) OtworzKarte(ctx context.Context,
 		return shared.BrowserTabOpenResponse{}, bladPrzegladarki(err)
 	}
 
-	// Karta otwarta w tle nie odbiera czynności karcie bieżącej — kontrakt
-	// nazywa to polem `background` i to ono rozstrzyga, nie kolejność wywołań.
+	// Karta w tle nie odbiera czynności bieżącej — rozstrzyga pole
+	// `background`, nie kolejność wywołań.
 	wTle := z.Background != nil && *z.Background
 	stan := "active"
 	if wTle {
@@ -83,7 +74,8 @@ func (a *adapterPrzegladarki) OtworzKarte(ctx context.Context,
 	return shared.BrowserTabOpenResponse{Tab: kartaPrzegladaniaKontraktu(zapisana), Snapshot: migawka}, nil
 }
 
-// WykazKart obsługuje `browser.tab.list` — rząd kart wraz z grupami okna.
+// WykazKart obsługuje `browser.tab.list` — oddaje rząd kart okna wraz
+// z grupami, do których karty należą.
 func (a *adapterPrzegladarki) WykazKart(ctx context.Context,
 	z shared.BrowserTabListRequest) (shared.BrowserTabListResponse, error) {
 
@@ -115,12 +107,8 @@ func (a *adapterPrzegladarki) WykazKart(ctx context.Context,
 }
 
 // ZmienKarte obsługuje `browser.tab.update` — czynność, zawieszenie, przypięcie,
-// grupę i kolejność karty.
-//
-// Karta wznowiona z zawieszenia ma pokazać stronę, a nie pustkę: wznowienie
-// karty z zapamiętanym adresem przechodzi pod ten adres i oddaje migawkę.
-// Wiersz przestawiony na `active` bez odwiedzenia strony byłby kartą czynną
-// bez treści.
+// grupę i kolejność karty. Karta wznowiona z zawieszenia przechodzi pod
+// zapamiętany adres i oddaje migawkę, zamiast pokazać pustkę.
 func (a *adapterPrzegladarki) ZmienKarte(ctx context.Context,
 	z shared.BrowserTabUpdateRequest) (shared.BrowserTabUpdateResponse, error) {
 
@@ -174,7 +162,8 @@ func (a *adapterPrzegladarki) ZmienKarte(ctx context.Context,
 	return shared.BrowserTabUpdateResponse{Tab: kartaPrzegladaniaKontraktu(zapisana), Snapshot: migawka}, nil
 }
 
-// ZamknijKarte obsługuje `browser.tab.close`.
+// ZamknijKarte obsługuje `browser.tab.close`: usuwa wiersz karty z rzędu kart
+// okna przeglądarki na trwałe.
 func (a *adapterPrzegladarki) ZamknijKarte(ctx context.Context,
 	z shared.BrowserTabCloseRequest) (shared.BrowserTabCloseResponse, error) {
 
@@ -214,9 +203,8 @@ func (a *adapterPrzegladarki) UstawGrupeKart(ctx context.Context,
 		if _, err := a.repozytorium.UsunGrupeKart(ctx, kod); err != nil {
 			return shared.BrowserTabGroupSetResponse{}, bladPrzegladarki(err)
 		}
-		// Grupa zdjęta wychodzi kontraktem taka, jaka była w chwili zdjęcia,
-		// ze składem już pustym: karty zostały otwarte, tylko przestały do niej
-		// należeć.
+		// Grupa zdjęta wychodzi kontraktem taka jak przy zdjęciu, ze składem
+		// pustym: karty zostały otwarte.
 		return shared.BrowserTabGroupSetResponse{Group: grupaKartKontraktu(grupa, nil)}, nil
 	}
 
@@ -244,7 +232,8 @@ func (a *adapterPrzegladarki) UstawGrupeKart(ctx context.Context,
 	}, nil
 }
 
-// ZapiszPrzestrzen obsługuje `browser.workspace.save`.
+// ZapiszPrzestrzen obsługuje `browser.workspace.save` — przypisuje wskazane
+// karty do nazwanej przestrzeni roboczej.
 func (a *adapterPrzegladarki) ZapiszPrzestrzen(ctx context.Context,
 	z shared.BrowserWorkspaceSaveRequest) (shared.BrowserWorkspaceSaveResponse, error) {
 
@@ -264,9 +253,8 @@ func (a *adapterPrzegladarki) ZapiszPrzestrzen(ctx context.Context,
 		return shared.BrowserWorkspaceSaveResponse{}, bladPrzegladarki(err)
 	}
 
-	// Żądanie bez wykazu kart zapisuje rząd kart taki, jaki jest — „zapisz tę
-	// przestrzeń" znaczy „zapamiętaj to, co widzę", nie „zapisz przestrzeń
-	// pustą".
+	// Żądanie bez wykazu kart zapisuje rząd kart taki, jaki jest, a nie
+	// przestrzeń pustą.
 	karty := z.TabIds
 	if len(karty) == 0 {
 		wiersze, err := a.repozytorium.Karty(ctx, dane.FiltrKartPrzegladania{Okno: okno, ZZawieszonymi: true})
@@ -289,7 +277,8 @@ func (a *adapterPrzegladarki) ZapiszPrzestrzen(ctx context.Context,
 	return shared.BrowserWorkspaceSaveResponse{Workspace: przestrzen}, nil
 }
 
-// WykazPrzestrzeni obsługuje `browser.workspace.list`.
+// WykazPrzestrzeni obsługuje `browser.workspace.list` — oddaje wykaz
+// przestrzeni roboczych zapisanych w oknie.
 func (a *adapterPrzegladarki) WykazPrzestrzeni(ctx context.Context,
 	z shared.BrowserWorkspaceListRequest) (shared.BrowserWorkspaceListResponse, error) {
 
@@ -309,7 +298,7 @@ func (a *adapterPrzegladarki) WykazPrzestrzeni(ctx context.Context,
 }
 
 // OtworzPrzestrzen obsługuje `browser.workspace.open` — przywraca zapisany
-// zestaw kart w oknie.
+// zestaw kart w oknie, budząc je uśpione zamiast otwierać od razu.
 func (a *adapterPrzegladarki) OtworzPrzestrzen(ctx context.Context,
 	z shared.BrowserWorkspaceOpenRequest) (shared.BrowserWorkspaceOpenResponse, error) {
 
@@ -337,12 +326,8 @@ func (a *adapterPrzegladarki) OtworzPrzestrzen(ctx context.Context,
 		}
 	}
 
-	// Karty przestrzeni wracają otwarte, ale uśpione: przywrócenie zestawu
-	// dwudziestu kart nie ma odpalać dwudziestu przejść pod adresy. Karta budzi
-	// się `browser.tab.update` z polem `active` i wtedy dopiero idzie po stronę.
-	// Karty zamknięte też wracają: przestrzeń robocza pamięta zestaw z chwili
-	// zapisu, a nie to, co akurat zostało otwarte. Przywrócenie oddające tylko
-	// karty żywe byłoby przywróceniem zestawu okrojonego bez słowa o ubytku.
+	// Karty przestrzeni wracają otwarte, ale uśpione — budzi je
+	// `browser.tab.update` z polem `active`.
 	zapisane, err := a.repozytorium.Karty(ctx, dane.FiltrKartPrzegladania{
 		Okno:       wartoscTekstuLubPusta(wiersz.Okno),
 		Przestrzen: z.WorkspaceId, ZZawieszonymi: true, ZZamknietymi: true,
@@ -410,7 +395,8 @@ func (a *adapterPrzegladarki) przestrzenKontraktu(ctx context.Context,
 	}, nil
 }
 
-// kartaPrzegladaniaKontraktu przekłada wiersz karty na byt kontraktu.
+// kartaPrzegladaniaKontraktu przekłada wiersz karty z bazy na byt kontraktu,
+// który komendy oddają wołającemu.
 func kartaPrzegladaniaKontraktu(w dane.KartaPrzegladania) shared.BrowserTab {
 	karta := shared.BrowserTab{
 		Id:           w.Kod,
@@ -432,7 +418,8 @@ func kartaPrzegladaniaKontraktu(w dane.KartaPrzegladania) shared.BrowserTab {
 	return karta
 }
 
-// grupaKartKontraktu przekłada wiersz grupy wraz z jej składem.
+// grupaKartKontraktu przekłada wiersz grupy kart wraz z jej składem na byt
+// kontraktu oddawany wołającemu.
 func grupaKartKontraktu(w dane.GrupaKart, karty []string) shared.BrowserTabGroup {
 	grupa := shared.BrowserTabGroup{
 		Id:        w.Kod,
@@ -463,7 +450,8 @@ func kodyKartGrupy(karty []dane.KartaPrzegladania, grupa string) []string {
 	return kody
 }
 
-// bladWierszaPrzegladania odróżnia „nie ma takiego bytu" od usterki odczytu.
+// bladWierszaPrzegladania odróżnia odpowiedź „nie ma takiego bytu” od usterki
+// samego odczytu wiersza z bazy.
 func bladWierszaPrzegladania(co, wskazanie string, err error) error {
 	if err == nil {
 		return nil

@@ -1,17 +1,5 @@
-// Odpowiedzialność pliku: tryb uprawnień okna jako brama uruchomienia procesu
-// w module Terminal.
-//
-// Tryb uprawnień rozstrzyga tutaj, a nie tylko w kanale modelu. Wartości
-// PermissionMode odpowiadają przełącznikowi `--permission-mode` kanału
-// głównego i tam ograniczają model. Terminal uruchamia proces urządzenia
-// z pominięciem kanału, więc bez tej samej bramy okno w trybie `plan` („praca
-// planistyczna bez zmian w systemie") uruchamiałoby polecenia powłoki.
-//
-// Rozstrzyga inicjator, nie samo okno. Kontrakt nie ma rundy zgody dla
-// terminala: nie istnieje komenda pytająca Operatora „czy uruchomić"
-// i czekająca na odpowiedź. Dlatego w trybach wymagających zgody (`manual`,
-// `acceptEdits`) proces zlecony przez model zostaje odrzucony — zgody nie ma
-// jak uzyskać. Polecenie Operatora przechodzi, bo jego kliknięcie jest tą zgodą.
+// Odpowiedzialność pliku: tryb uprawnień okna jako brama uruchomienia procesu w module
+// Terminal, rozstrzygana po inicjatorze procesu, nie tylko po trybie kanału modelu.
 package core
 
 import (
@@ -19,7 +7,7 @@ import (
 	"danacoconsole/shared"
 )
 
-// zgodaNaProces mówi, co wolno w danym trybie uprawnień okna.
+// zgodaNaProces mówi, co wolno w danym trybie uprawnień okna, osobno dla Operatora i modelu kanału głównego.
 type zgodaNaProces struct {
 	// Operator — czy wolno uruchomić proces zlecony przez Operatora.
 	operator bool

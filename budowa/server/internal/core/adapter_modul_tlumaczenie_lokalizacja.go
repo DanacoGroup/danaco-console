@@ -1,18 +1,6 @@
 // Odpowiedzialność pliku: lokalizacja oprogramowania w module Translate —
-// `translate.resource.import`, `.export`, `.plural.apply`, `.key.context.set`
-// oraz `translate.xliff.import`.
-//
-// Formaty zasobów (JSON, YAML, properties, Android XML, iOS strings
-// i stringsdict, RESX, gettext PO) czyta i pisze ten rdzeń sam, bibliotekami
-// wkompilowanymi. Żaden z nich nie wymaga programu zewnętrznego i żaden go tu
-// nie dostaje.
-//
-// Formy mnogie idą regułami CLDR wpisanymi w `formyMnogieJezyka`. Reguła
-// mnogości jest własnością języka, nie tłumaczenia: polski ma trzy formy,
-// angielski dwie, czeski trzy, rosyjski trzy, arabski sześć. Zastosowanie form
-// (`resource.plural.apply`) zakłada klucze wariantów, których język docelowy
-// wymaga, i zdejmuje te, których nie zna — inaczej plik wyniku miałby formę
-// `few` w języku, który jej nie ma, i program lokalizowany nigdy by jej nie użył.
+// import i eksport zasobów, zastosowanie form mnogich, ustawienie kontekstu
+// klucza oraz import pliku XLIFF.
 package core
 
 import (
@@ -30,12 +18,13 @@ import (
 	"danacoconsole/shared"
 )
 
-// przedrostekZasobuLokalizacji znakuje identyfikator zasobu lokalizacyjnego.
+// przedrostekZasobuLokalizacji znakuje identyfikator zasobu lokalizacyjnego,
+// odróżniając go od identyfikatorów innych bytów okna.
 const przedrostekZasobuLokalizacji = "lok-"
 
 // formyMnogieJezyka oddaje nazwy form mnogich CLDR dla języka. Język spoza
 // wykazu dostaje parę `one`/`other` — najwęższy zestaw, który ma każdy język
-// świata; wymyślanie mu form, których reguły nie znamy, byłoby zgadywaniem
+// świata; wymyślanie mu form o nieznanych regułach byłoby zgadywaniem
 // gramatyki cudzego języka.
 func formyMnogieJezyka(jezyk string) []string {
 	kod := strings.ToLower(strings.SplitN(strings.TrimSpace(jezyk), "-", 2)[0])
@@ -50,7 +39,8 @@ func formyMnogieJezyka(jezyk string) []string {
 	return []string{"one", "other"}
 }
 
-// WczytajZasobLokalizacji obsługuje `translate.resource.import`.
+// WczytajZasobLokalizacji obsługuje komendę importu zasobu lokalizacyjnego,
+// rozbierając plik wskazanego formatu na klucze i treść.
 func (a *adapterTlumaczenia) WczytajZasobLokalizacji(ctx context.Context,
 	z shared.TranslateResourceImportRequest) (shared.TranslateResourceImportResponse, error) {
 
@@ -96,8 +86,7 @@ func (a *adapterTlumaczenia) WczytajZasobLokalizacji(ctx context.Context,
 		return shared.TranslateResourceImportResponse{}, bladTlumaczenia(err)
 	}
 
-	// Treść kluczy staje się tekstem źródłowym okna — bez tego zasób byłby
-	// wczytany, a tłumaczyć nie byłoby czego.
+	// Treść kluczy staje się tekstem źródłowym okna do tłumaczenia.
 	tresci := make([]string, 0, len(klucze))
 	for _, klucz := range klucze {
 		tresci = append(tresci, klucz.Tresc)
@@ -158,9 +147,7 @@ func (a *adapterTlumaczenia) WydajZasobLokalizacji(ctx context.Context,
 		format = *z.Format
 	}
 
-	// Przekład panelu jest ciągiem akapitów w kolejności kluczy — tak wszedł
-	// do okna przy wczytaniu zasobu. Klucz bez odpowiadającego akapitu zostaje
-	// z treścią źródłową, zamiast dostać pustkę.
+	// Klucz bez odpowiadającego akapitu przekładu zostaje z treścią źródłową.
 	akapity := rozdzielAkapity(tresc)
 	przelozone := make([]dane.KluczLokalizacji, 0, len(klucze))
 	for numer, klucz := range klucze {
@@ -180,7 +167,8 @@ func (a *adapterTlumaczenia) WydajZasobLokalizacji(ctx context.Context,
 	}, nil
 }
 
-// ZastosujFormyMnogie obsługuje `translate.resource.plural.apply`.
+// ZastosujFormyMnogie obsługuje komendę zastosowania form mnogich,
+// dopasowując warianty klucza do reguł języka docelowego.
 func (a *adapterTlumaczenia) ZastosujFormyMnogie(ctx context.Context,
 	z shared.TranslateResourcePluralApplyRequest) (shared.TranslateResourcePluralApplyResponse, error) {
 
@@ -215,10 +203,8 @@ func (a *adapterTlumaczenia) ZastosujFormyMnogie(ctx context.Context,
 				nowe[forma] = tresc
 				continue
 			}
-			// Forma, której język wymaga, a której nie było: zakładana jest
-			// z treści klucza. To jest miejsce do wypełnienia przez tłumacza,
-			// a nie gotowa odmiana — ale bez niego plik wyniku nie ma gdzie jej
-			// nawet zapisać.
+			// Brakującą formę zakłada się z treści klucza, do wypełnienia
+			// przez tłumacza.
 			nowe[forma] = klucz.Tresc
 		}
 		if len(nowe) == len(zastane) && formyRowne(nowe, zastane) {
@@ -258,7 +244,8 @@ func formyRowne(pierwszy, drugi map[string]string) bool {
 	return true
 }
 
-// UstawKontekstKlucza obsługuje `translate.resource.key.context.set`.
+// UstawKontekstKlucza obsługuje komendę zapisu kontekstu klucza zasobu,
+// pomagającego tłumaczowi rozstrzygnąć znaczenie.
 func (a *adapterTlumaczenia) UstawKontekstKlucza(ctx context.Context,
 	z shared.TranslateResourceKeyContextSetRequest) (shared.TranslateResourceKeyContextSetResponse, error) {
 
@@ -300,7 +287,8 @@ func (a *adapterTlumaczenia) zasobZKluczami(ctx context.Context,
 	return zasob, klucze, nil
 }
 
-// zlozZasobLokalizacji przekłada wiersz zasobu na byt kontraktu.
+// zlozZasobLokalizacji przekłada wiersz zasobu lokalizacyjnego na byt
+// kontraktu, niosący format i język zasobu.
 func zlozZasobLokalizacji(zasob dane.ZasobLokalizacji, kluczy int) shared.LocalizationResource {
 	return shared.LocalizationResource{
 		Id:             zasob.Kod,
@@ -313,7 +301,8 @@ func zlozZasobLokalizacji(zasob dane.ZasobLokalizacji, kluczy int) shared.Locali
 	}
 }
 
-// zlozKluczeLokalizacji przekłada wiersze kluczy na byty kontraktu.
+// zlozKluczeLokalizacji przekłada wiersze kluczy zasobu na byty kontraktu,
+// zachowując kolejność ich wystąpienia.
 func zlozKluczeLokalizacji(klucze []dane.KluczLokalizacji) []shared.LocalizationKey {
 	wykaz := make([]shared.LocalizationKey, 0, len(klucze))
 	for _, klucz := range klucze {
@@ -322,7 +311,8 @@ func zlozKluczeLokalizacji(klucze []dane.KluczLokalizacji) []shared.Localization
 	return wykaz
 }
 
-// zlozKluczLokalizacji przekłada jeden wiersz klucza na byt kontraktu.
+// zlozKluczLokalizacji przekłada jeden wiersz klucza na byt kontraktu,
+// niosący nazwę, treść i formy mnogie.
 func zlozKluczLokalizacji(klucz dane.KluczLokalizacji) shared.LocalizationKey {
 	byt := shared.LocalizationKey{
 		Key:               klucz.Klucz,
@@ -340,7 +330,8 @@ func zlozKluczLokalizacji(klucz dane.KluczLokalizacji) shared.LocalizationKey {
 	return byt
 }
 
-// formatZasobuZeSciezki rozpoznaje format zasobu po końcówce nazwy.
+// formatZasobuZeSciezki rozpoznaje format zasobu po końcówce nazwy pliku,
+// odróżniając wszystkie obsługiwane formaty.
 func formatZasobuZeSciezki(sciezka string) (shared.LocalizationResourceFormat, bool) {
 	nazwa := strings.ToLower(filepath.Base(sciezka))
 	switch {
@@ -364,7 +355,8 @@ func formatZasobuZeSciezki(sciezka string) (shared.LocalizationResourceFormat, b
 	return "", false
 }
 
-// wczytajKluczeZasobu czyta klucze z pliku wskazanego formatu.
+// wczytajKluczeZasobu czyta klucze z pliku wskazanego formatu, kierując
+// rozbiór do procedury właściwej dla tego formatu.
 func wczytajKluczeZasobu(sciezka string,
 	format shared.LocalizationResourceFormat) ([]dane.KluczLokalizacji, error) {
 
@@ -457,12 +449,14 @@ func splaszczKlucze(przedrostek string, wezel map[string]any, pary map[string]st
 	}
 }
 
-// zdejmijCudzyslowy zdejmuje cudzysłowy i odstępy wokół napisu formatu iOS.
+// zdejmijCudzyslowy zdejmuje cudzysłowy i odstępy wokół napisu formatu iOS,
+// zostawiając samą treść klucza.
 func zdejmijCudzyslowy(tekst string) string {
 	return strings.Trim(strings.TrimSpace(tekst), "\"")
 }
 
-// paryZXmlZasobu czyta pary z formatów opartych na XML.
+// paryZXmlZasobu czyta pary klucz-treść z formatów zasobu opartych na XML,
+// w tym z formatów Android i RESX.
 func paryZXmlZasobu(bajty []byte,
 	format shared.LocalizationResourceFormat) (map[string]string, error) {
 
@@ -519,7 +513,8 @@ func paryZXmlZasobu(bajty []byte,
 	return pary, nil
 }
 
-// paryZGettext czyta pary `msgid`/`msgstr` z pliku PO.
+// paryZGettext czyta pary identyfikatora i treści z pliku formatu gettext PO,
+// pomijając wpisy bez treści.
 func paryZGettext(tresc string) map[string]string {
 	pary := map[string]string{}
 	klucz := ""
@@ -545,10 +540,10 @@ func paryZGettext(tresc string) map[string]string {
 	return pary
 }
 
-// znacznikiKluczaLokalizacji wypisuje znaczniki obecne w treści klucza:
-// `{nazwa}`, `%s`, `%1$s` i `%d`. Osobna od `znacznikiPodstawienia`
-// (`*_jakosc_zrodlo.go`), która zna wyłącznie klamry: pliki zasobów niosą
-// znaczniki w postaci języka programowania, a kontrola jakości panelu — nie.
+// znacznikiKluczaLokalizacji wypisuje znaczniki obecne w treści klucza,
+// w postaci języka programowania: nazwane w klamrach i znaczniki formatu
+// wypisywania. Różni się od odpowiednika kontroli jakości panelu, który zna
+// wyłącznie klamry.
 func znacznikiKluczaLokalizacji(tresc string) []string {
 	znaczniki := []string{}
 	for i := 0; i < len(tresc); i++ {
@@ -573,7 +568,8 @@ func znacznikiKluczaLokalizacji(tresc string) []string {
 	return znaczniki
 }
 
-// zapiszKluczeZasobu wypisuje klucze do pliku wskazanego formatu.
+// zapiszKluczeZasobu wypisuje klucze do pliku wskazanego formatu, kierując
+// zapis do procedury właściwej dla tego formatu.
 func zapiszKluczeZasobu(sciezka string, format shared.LocalizationResourceFormat,
 	klucze []dane.KluczLokalizacji) error {
 

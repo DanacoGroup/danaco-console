@@ -1,18 +1,4 @@
-// Moduł Library — porównanie treści: `library.diff.compare`.
-//
-// Porównywane bywają dwie rzeczy: dwa zasoby albo dwie wersje jednego zasobu.
-// Kontrakt rozstrzyga to brakiem prawej strony — żądanie bez `rightFileId`
-// porównuje wersje zasobu lewego.
-//
-// Dokument binarny porównuje się po tekście z niego wydobytym i odpowiedź mówi
-// o tym wprost (`comparedAsText`). Operator ma wiedzieć, że nie porównano bajtów:
-// dwa dokumenty PDF o identycznej treści różnią się bajtami w każdej linii,
-// więc porównanie bajtowe oddałoby „wszystko inne" i byłoby bezużyteczne.
-//
-// Różnice liczy najdłuższy wspólny podciąg wierszy (algorytm LCS) — ten sam
-// sposób, którym idzie porównanie w module Studio. Rdzeń nie woła programu
-// `diff`: to byłaby zależność od cudzego programu w czynności, którą kod robi
-// sam.
+// Moduł Library — porównanie treści: library.diff.compare, dwóch zasobów albo dwóch wersji jednego zasobu, po tekście dla dokumentów binarnych.
 package core
 
 import (
@@ -37,13 +23,12 @@ const granicaWierszyPorownania = 5000
 // zewnętrznym i musi mieć granicę czasu.
 const granicaWydobyciaTekstu = 60 * time.Second
 
-// narzedzieTekstuBiblioteki opisuje binarium arsenału wydobywające tekst
-// z dokumentu PDF.
+// narzedzieTekstuBiblioteki opisuje binarium arsenału wydobywające tekst z dokumentu PDF programem pdftotext pakietu poppler-utils.
 var narzedzieTekstuBiblioteki = zewnetrzne.Narzedzie{
 	Nazwa: "Poppler (pdftotext)", Program: "pdftotext", Pakiet: "poppler-utils",
 }
 
-// PorownajTresci obsługuje `library.diff.compare`.
+// PorownajTresci obsługuje library.diff.compare, porównując treść dwóch zasobów albo dwóch wersji jednego zasobu.
 func (a *adapterBiblioteki) PorownajTresci(ctx context.Context,
 	z shared.LibraryDiffCompareRequest) (shared.LibraryDiffCompareResponse, error) {
 
@@ -127,29 +112,19 @@ func (a *adapterBiblioteki) stronaPorownania(ctx context.Context, zasob dane.Pli
 	return tresc, nazwa, wydobyta, nil
 }
 
-// trescPorownywalnaBiblioteki oddaje tekst do porównania i mówi, czy trzeba było
-// go wydobyć z dokumentu binarnego.
-//
-// Wydobycie tekstu z dokumentu PDF idzie programem `pdftotext`, który stoi na
-// serwerze razem z rdzeniem i jest wołany jedyną dozwoloną drogą
-// (`zewnetrzne.Wolaj`). To jest ODCZYT, nie przetwarzanie dokumentu: sam PDF
-// moduł rusza wyłącznie biblioteką wkompilowaną. Brak programu oddaje pustkę
-// wraz ze znacznikiem `comparedAsText` — Operator widzi wtedy, że porównania po
-// tekście nie było na czym oprzeć, zamiast dostać różnicę bajtów bez znaczenia.
+// trescPorownywalnaBiblioteki oddaje tekst do porównania i mówi, czy trzeba było go wydobyć z dokumentu binarnego programem pdftotext.
 func (a *adapterBiblioteki) trescPorownywalnaBiblioteki(bajty []byte, sciezka string) (string, bool) {
 	if bytes.HasPrefix(bajty, []byte("%PDF-")) {
 		return a.tekstDokumentu(sciezka), true
 	}
-	// Treść z bajtem zerowym nie jest tekstem — porównanie wiersz po wierszu
-	// nie ma na czym stanąć, więc odpowiedź mówi, że porównano wydobyty tekst
-	// (a wydobyć się nie dało: pustka).
+	// Treść z bajtem zerowym nie jest tekstem; odpowiedź mówi, że wydobyć się nie dało.
 	if bytes.IndexByte(bajty, 0) >= 0 {
 		return "", true
 	}
 	return string(bajty), false
 }
 
-// tekstDokumentu wyciąga warstwę tekstową dokumentu PDF programem `pdftotext`.
+// tekstDokumentu wyciąga warstwę tekstową dokumentu PDF programem pdftotext, jedyną dozwoloną drogą wołania programów zewnętrznych.
 func (a *adapterBiblioteki) tekstDokumentu(sciezka string) string {
 	if a.uruchamiacz == nil {
 		return ""
@@ -179,7 +154,7 @@ func (a *adapterBiblioteki) tekstDokumentu(sciezka string) string {
 	return string(wynik.Wyjscie)
 }
 
-// podzielNaWierszeBiblioteki rozbija treść na wiersze z granicą liczby.
+// podzielNaWierszeBiblioteki rozbija treść na wiersze z granicą liczby, zapobiegając nadmiernemu rozrostowi porównania.
 func podzielNaWierszeBiblioteki(tresc string) []string {
 	wiersze := strings.Split(strings.ReplaceAll(tresc, "\r\n", "\n"), "\n")
 	if len(wiersze) > granicaWierszyPorownania {
@@ -188,11 +163,7 @@ func podzielNaWierszeBiblioteki(tresc string) []string {
 	return wiersze
 }
 
-// roznicaWierszyBiblioteki składa różnice metodą najdłuższego wspólnego podciągu.
-//
-// Fragment obecny po obu stronach w innym brzmieniu wychodzi jako JEDNA różnica
-// rodzaju `changed`, a nie jako para usunięcie-dodanie: para kazałaby czytelnikowi
-// samodzielnie skojarzyć, że to ten sam fragment.
+// roznicaWierszyBiblioteki składa różnice metodą najdłuższego wspólnego podciągu wierszy, tym samym sposobem co porównanie w module Studio.
 func roznicaWierszyBiblioteki(lewe, prawe []string, otoczenie int) []shared.LibraryDiffHunk {
 	dlugosci := make([][]int, len(lewe)+1)
 	for indeks := range dlugosci {
@@ -248,7 +219,7 @@ func roznicaWierszyBiblioteki(lewe, prawe []string, otoczenie int) []shared.Libr
 	return roznice
 }
 
-// zlozRoznicaBiblioteki składa jedną różnicę wraz z wierszami otoczenia.
+// zlozRoznicaBiblioteki składa jedną różnicę wraz z wierszami otoczenia, ułatwiającymi odczytanie zmiany w kontekście.
 func zlozRoznicaBiblioteki(poczatekLewy, koniecLewy, poczatekPrawy, koniecPrawy int,
 	usuniete, dodane, lewe, prawe []string, otoczenie int) shared.LibraryDiffHunk {
 

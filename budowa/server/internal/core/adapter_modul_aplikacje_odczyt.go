@@ -1,20 +1,5 @@
-// Obszar odczytu modułu Apps: `apps.deployment.list`, `apps.architecture.get`
-// i `apps.workspace.list`. Zapis leży w `adapter_modul_aplikacje.go`
-// (architektura) i `adapter_modul_aplikacje_wdrozenie.go` (warsztat, wdrożenia)
-// — ten sam typ `adapterAplikacji`, osobne pliki wedle odpowiedzialności.
-//
-// Te trzy komendy są drogą powrotną do wierszy w bazie: po odświeżeniu okna
-// klient nie ma innego sposobu, żeby odzyskać dziennik wdrożeń, architekturę
-// i warsztat.
-//
-// Odczyt niczego nie wylicza ani nie naprawia. Wdrożenie wraca w stanie
-// zapisanym przez silnik wykonania, plik warsztatu w treści zapisanej przez
-// `apps.workspace.update`, architektura w kształcie złożonym tą samą funkcją
-// `zloz`, którą oddaje ją `apps.architecture.define`.
-//
-// Brak architektury to puste pole, nie błąd: świeże okno jeszcze niczego nie
-// zdefiniowało, więc `apps.architecture.get` oddaje wynik z pustym
-// `architecture`, a nie odmowę `not_found`.
+// Obszar odczytu modułu Apps: `apps.deployment.list`, `apps.architecture.get` i
+// `apps.workspace.list`, drogi powrotne do wierszy bazy po odświeżeniu okna klienta.
 package core
 
 import (
@@ -26,16 +11,11 @@ import (
 	"danacoconsole/shared"
 )
 
-// granicaWdrozenApp jest górną granicą strony wdrożeń, gdy żądanie nie podaje
-// własnej. Kontrakt mówi wprost „brak bierze granicę rdzenia" — bez niej okno
-// z dziennikiem liczonym w tysiącach ciągnęłoby całą historię przy każdym
-// otwarciu panelu Deployment, choć pokazuje w nim ostatnie przebiegi.
+// granicaWdrozenApp jest górną granicą strony wdrożeń, gdy żądanie nie podaje własnej wartości granicy.
 const granicaWdrozenApp = 100
 
-// WypiszWdrozenia obsługuje `apps.deployment.list`. `total` jest liczbą wdrożeń
-// spełniających warunki (okno, ewentualne środowisko), a nie długością zwróconej
-// strony — inaczej panel po ograniczeniu widoku twierdziłby, że historia jest
-// krótsza, niż jest naprawdę. Liczbę podaje warstwa danych osobnym COUNT-em.
+// WypiszWdrozenia obsługuje `apps.deployment.list`; pole całkowitej liczby jest liczbą
+// wdrożeń spełniających warunki, a nie długością zwróconej strony wyniku.
 func (a *adapterAplikacji) WypiszWdrozenia(ctx context.Context,
 	z shared.AppsDeploymentListRequest) (shared.AppsDeploymentListResponse, error) {
 
@@ -45,9 +25,7 @@ func (a *adapterAplikacji) WypiszWdrozenia(ctx context.Context,
 			"apps.deployment.list wymaga okna")
 	}
 	if z.Environment != nil {
-		// Ten sam sprawdzian, co przy zapisie — wartość spoza kontraktu nie
-		// zawęża niczego, więc bez odmowy okno dostałoby pustą listę i wzięło
-		// ją za „nic tu nie wdrożono", zamiast dowiedzieć się o literówce.
+		// Ten sam sprawdzian, co przy zapisie: wartość spoza kontraktu odmawia, zamiast dać pustą listę.
 		if err := sprawdzSrodowiskoWdrozenia(*z.Environment); err != nil {
 			return shared.AppsDeploymentListResponse{}, err
 		}
@@ -70,10 +48,8 @@ func (a *adapterAplikacji) WypiszWdrozenia(ctx context.Context,
 	return shared.AppsDeploymentListResponse{Deployments: wdrozenia, Total: razem}, nil
 }
 
-// PobierzArchitekture obsługuje `apps.architecture.get`. Okno bez ani jednej
-// architektury oddaje wynik z pustym polem — patrz nagłówek pliku. Kształt
-// odpowiedzi składa ta sama `zloz`, którą oddaje architekturę zapis, więc
-// panel dostaje po odświeżeniu dokładnie to, co widział przy definiowaniu.
+// PobierzArchitekture obsługuje `apps.architecture.get`; okno bez ani jednej architektury
+// oddaje wynik z pustym polem, nie odmowę, tym samym kształtem co zapis.
 func (a *adapterAplikacji) PobierzArchitekture(ctx context.Context,
 	z shared.AppsArchitectureGetRequest) (shared.AppsArchitectureGetResponse, error) {
 
@@ -98,11 +74,8 @@ func (a *adapterAplikacji) PobierzArchitekture(ctx context.Context,
 	return shared.AppsArchitectureGetResponse{Architecture: &architektura}, nil
 }
 
-// WypiszPlikiWarsztatu obsługuje `apps.workspace.list`. Warstwy repozytorium
-// nie rozdziela — trzyma je w jednym wykazie okna posortowanym po (warstwa,
-// ścieżka) — więc zawężenie do jednej warstwy robi się tutaj, na tym samym
-// wykazie. `total` liczy pliki po zawężeniu, bo to one spełniają warunki
-// żądania; komenda nie ma granicy strony, więc żaden plik nie wypada poza wynik.
+// WypiszPlikiWarsztatu obsługuje `apps.workspace.list`; repozytorium trzyma warstwy w jednym
+// wykazie okna, więc zawężenie do jednej warstwy robi się tutaj, na tym samym wykazie.
 func (a *adapterAplikacji) WypiszPlikiWarsztatu(ctx context.Context,
 	z shared.AppsWorkspaceListRequest) (shared.AppsWorkspaceListResponse, error) {
 
@@ -127,8 +100,7 @@ func (a *adapterAplikacji) WypiszPlikiWarsztatu(ctx context.Context,
 		if z.Layer != nil && wiersz.Warstwa != *z.Layer {
 			continue
 		}
-		// Ten sam przekład, którym `apps.workspace.update` oddaje plik po
-		// zapisie — kontrakt każe wprost, żeby odczyt niósł ten sam kształt.
+		// Ten sam przekład, którym zapis oddaje plik po zmianie.
 		pliki = append(pliki, plikWarsztatuKontraktu(wiersz))
 	}
 	return shared.AppsWorkspaceListResponse{Files: pliki, Total: len(pliki)}, nil

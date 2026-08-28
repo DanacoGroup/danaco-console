@@ -1,27 +1,5 @@
-// Odpowiedzialność pliku: rozgłoszenie zmiany podagenta — zdarzenie
-// `subagent.changed` i jedyne przejście, którym stan podagenta wchodzi do bazy.
-//
-// Panel Subagent Network nie musi odpytywać `subagent.list`, dopóki zdarzenie
-// leci przy każdej zmianie stanu, nie tylko przy tej widzianej przez uchwyt
-// komendy. Stąd `ustawStanPodagenta`: jedno przejście, przez które idą wszystkie
-// zapisy stanu, więc żaden nie wymknie się rozgłoszeniu.
-//
-// Trzy momenty, które panel musi zobaczyć:
-//   - powołanie — `created`, wprost z wierszy założonych przez `subagent.spawn`;
-//   - zmiana stanu — `updated`, przy wejściu w `running`, przy przepisaniu stanu
-//     pozycji na stan podagenta i przy niepowodzeniu pracy w tle;
-//   - zatrzymanie — `updated`, bo `subagent.stop` nie kasuje wiersza, tylko
-//     przestawia go na `stopped`; `deleted` kazałoby panelowi zdjąć podagenta
-//     z wykazu, a ma on tam zostać widoczny jako zatrzymany.
-//
-// Rozgłoszenie odczytuje wiersz po zapisie, a nie składa go z tego, co zapisał.
-// Kolumny czasu (`rozpoczeto`, `zakonczono`) i pole wyniku nadaje zapytanie
-// (COALESCE w `ustawStanPodagenta` schematu), więc struktura złożona w rdzeniu
-// rozjechałaby się z tym, co odda `subagent.list`.
-//
-// Emisja pusta znosi się sama: brak nadajnika, nieudany odczyt wiersza po
-// zapisie ani wykaz pusty nie wywracają czynności — praca podagenta już się
-// wykonała, a zdarzenie jest jej relacją, nie jej warunkiem.
+// Odpowiedzialność pliku: rozgłoszenie zmiany podagenta — zdarzenie `subagent.changed`
+// i jedyne przejście, którym stan podagenta wchodzi do bazy, dla powołania, zmiany i zatrzymania.
 package core
 
 import (
@@ -31,12 +9,8 @@ import (
 	"danacoconsole/shared"
 )
 
-// ustawStanPodagenta zapisuje stan podagenta i rozgłasza zmianę.
-//
-// Jedyne przejście do `UstawStan`: repozytorium woła się wyłącznie stąd —
-// wywołanie z pominięciem tej metody zostawiłoby panel bez zdarzenia dla tego
-// przejścia stanu. Zapis nieudany nie rozgłasza niczego: zdarzenie ma mówić
-// o zmianie, która naprawdę zaszła.
+// ustawStanPodagenta zapisuje stan podagenta i rozgłasza zmianę; jest jedynym przejściem
+// do zapisu stanu, więc żaden inny zapis nie wymknie się rozgłoszeniu.
 func (a *adapterPodagentow) ustawStanPodagenta(ctx context.Context, kod string,
 	stan string, komunikat *string) error {
 
@@ -47,8 +21,7 @@ func (a *adapterPodagentow) ustawStanPodagenta(ctx context.Context, kod string,
 	return nil
 }
 
-// rozglosPowolanie rozgłasza podagentów świeżo założonych. Wiersze idą wprost
-// z założenia — są odczytem z bazy, więc drugiego zapytania nie potrzeba.
+// rozglosPowolanie rozgłasza podagentów świeżo założonych, z wierszy odczytu bazy przy tym samym założeniu.
 func (a *adapterPodagentow) rozglosPowolanie(wiersze []dane.Podagent) {
 	if a.rozgloszenie == nil {
 		return
@@ -58,9 +31,8 @@ func (a *adapterPodagentow) rozglosPowolanie(wiersze []dane.Podagent) {
 	}
 }
 
-// rozglosPodagenta dobiera wiersz po kodzie i rozgłasza jego stan bieżący.
-// Nieudany dobór kończy wyłącznie rozgłoszenie — zapis stanu już się powiódł —
-// ale zostawia ślad w dzienniku, bo panel zostaje wtedy z obrazem sprzed zmiany.
+// rozglosPodagenta dobiera wiersz po kodzie i rozgłasza jego stan bieżący; nieudany dobór
+// kończy wyłącznie rozgłoszenie, zostawiając ślad w dzienniku.
 func (a *adapterPodagentow) rozglosPodagenta(ctx context.Context, kod string,
 	zmiana shared.ChangeKind) {
 
@@ -77,11 +49,8 @@ func (a *adapterPodagentow) rozglosPodagenta(ctx context.Context, kod string,
 	}
 }
 
-// podagent rozgłasza `subagent.changed`. Podagent wisi na oknie wykonawcy, a to
-// okno należy do karty sesji — zdarzenie idzie więc z jej wskazaniem, żeby
-// dotarło tam, gdzie panel Subagent Network jest otwarty. Podagent bez karty
-// (powołany w rozmowie spoza sesji) rozgłasza się bez niej, zamiast nie
-// rozgłaszać się wcale.
+// podagent rozgłasza `subagent.changed` ze wskazaniem karty sesji, gdy okno wykonawcy
+// do niej należy; podagent bez karty rozgłasza się bez niej, zamiast wcale.
 func (e *emiter) podagent(zmiana shared.ChangeKind, p shared.Subagent) {
 	idSesji := ""
 	if p.SessionId != nil {

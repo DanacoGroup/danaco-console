@@ -1,16 +1,7 @@
 // Odpowiedzialność pliku: kanały RSS/Atom/JSON Feed i kolejka czytania —
 // `browser.feed.subscribe`, `.list`, `.remove` oraz `browser.readlist.add`,
-// `.list`, `.remove`.
-//
-// Subskrypcja naprawdę odpytuje kanał. `browser.feed.subscribe` pobiera wskazany
-// adres, rozpoznaje postać (RSS, Atom, JSON Feed) i odkłada wpisy — wiersz
-// z samym adresem, bez ani jednego wpisu, byłby subskrypcją, o której nie
-// wiadomo nawet, czy pod tym adresem stoi kanał.
-//
-// Rozbiór idzie biblioteką standardową (`encoding/xml`, `encoding/json`), bo
-// RSS i Atom są dokumentami XML o ustalonym kształcie, a JSON Feed dokumentem
-// JSON. Zewnętrzna biblioteka kanałów nie dołożyłaby tu niczego poza kolejną
-// zależnością.
+// `.list`, `.remove`. Subskrypcja naprawdę odpytuje kanał i rozpoznaje jego
+// postać przed zapisem.
 package core
 
 import (
@@ -24,7 +15,8 @@ import (
 	"danacoconsole/shared"
 )
 
-// kanalRss jest kształtem dokumentu RSS 2.0 w zakresie, którego używamy.
+// kanalRss jest kształtem dokumentu RSS 2.0 w zakresie, który jest używany:
+// kanał, jego wpisy i pola potrzebne do listy oraz odczytu.
 type kanalRss struct {
 	Kanal struct {
 		Tytul string `xml:"title"`
@@ -38,7 +30,8 @@ type kanalRss struct {
 	} `xml:"channel"`
 }
 
-// kanalAtom jest kształtem dokumentu Atom w zakresie, którego używamy.
+// kanalAtom jest kształtem dokumentu Atom w zakresie, który jest używany:
+// kanał, jego wpisy i pola potrzebne do listy oraz odczytu.
 type kanalAtom struct {
 	Tytul string `xml:"title"`
 	Wpisy []struct {
@@ -54,7 +47,8 @@ type kanalAtom struct {
 	} `xml:"entry"`
 }
 
-// kanalJson jest kształtem dokumentu JSON Feed w zakresie, którego używamy.
+// kanalJson jest kształtem dokumentu JSON Feed w zakresie, który jest używany:
+// kanał, jego wpisy i pola potrzebne do listy oraz odczytu.
 type kanalJson struct {
 	Tytul string `json:"title"`
 	Wpisy []struct {
@@ -76,7 +70,8 @@ type wpisKanaluOdczytany struct {
 	Opublikowano *string
 }
 
-// SubskrybujKanal obsługuje `browser.feed.subscribe`.
+// SubskrybujKanal obsługuje `browser.feed.subscribe`: pobiera wskazany
+// adres, rozpoznaje postać dokumentu i odkłada wpisy.
 func (a *adapterPrzegladarki) SubskrybujKanal(ctx context.Context,
 	z shared.BrowserFeedSubscribeRequest) (shared.BrowserFeedSubscribeResponse, error) {
 
@@ -148,7 +143,8 @@ func (a *adapterPrzegladarki) SubskrybujKanal(ctx context.Context,
 	return shared.BrowserFeedSubscribeResponse{Feed: oddany}, nil
 }
 
-// WykazKanalow obsługuje `browser.feed.list`.
+// WykazKanalow obsługuje `browser.feed.list`: oddaje subskrypcje Operatora,
+// opcjonalnie z wpisami zawężonymi do nieprzeczytanych.
 func (a *adapterPrzegladarki) WykazKanalow(ctx context.Context,
 	z shared.BrowserFeedListRequest) (shared.BrowserFeedListResponse, error) {
 
@@ -188,7 +184,8 @@ func (a *adapterPrzegladarki) ZdejmijKanal(ctx context.Context,
 	return shared.BrowserFeedRemoveResponse{Removed: true}, nil
 }
 
-// OdlozDoCzytania obsługuje `browser.readlist.add`.
+// OdlozDoCzytania obsługuje `browser.readlist.add`: dokłada wskazaną stronę
+// do kolejki czytania tego okna.
 func (a *adapterPrzegladarki) OdlozDoCzytania(ctx context.Context,
 	z shared.BrowserReadlistAddRequest) (shared.BrowserReadlistAddResponse, error) {
 
@@ -213,7 +210,8 @@ func (a *adapterPrzegladarki) OdlozDoCzytania(ctx context.Context,
 	return shared.BrowserReadlistAddResponse{Item: pozycjaCzytaniaKontraktu(zapisana)}, nil
 }
 
-// WykazCzytania obsługuje `browser.readlist.list`.
+// WykazCzytania obsługuje `browser.readlist.list`: oddaje pozycje kolejki
+// czytania, opcjonalnie zawężone do nieprzeczytanych.
 func (a *adapterPrzegladarki) WykazCzytania(ctx context.Context,
 	z shared.BrowserReadlistListRequest) (shared.BrowserReadlistListResponse, error) {
 
@@ -232,8 +230,8 @@ func (a *adapterPrzegladarki) WykazCzytania(ctx context.Context,
 
 // ZdejmijZCzytania obsługuje `browser.readlist.remove` — zdjęcie pozycji albo
 // oznaczenie jej jako przeczytanej. Dwie różne czynności w jednej komendzie
-// rozstrzyga pole `markRead`: pozycja oznaczona zostaje w kolejce jako ślad, że
-// tę stronę już przeczytano.
+// rozstrzyga pole `markRead`: pozycja oznaczona zostaje w kolejce jako ślad
+// przeczytania.
 func (a *adapterPrzegladarki) ZdejmijZCzytania(ctx context.Context,
 	z shared.BrowserReadlistRemoveRequest) (shared.BrowserReadlistRemoveResponse, error) {
 
@@ -261,7 +259,8 @@ func (a *adapterPrzegladarki) ZdejmijZCzytania(ctx context.Context,
 	return shared.BrowserReadlistRemoveResponse{Removed: usunieta}, nil
 }
 
-// kanalKontraktu składa `BrowserFeed`, z wpisami albo bez nich.
+// kanalKontraktu składa `BrowserFeed`, z wpisami albo bez nich, zależnie od
+// tego, czy wywołanie ich zażądało.
 func (a *adapterPrzegladarki) kanalKontraktu(ctx context.Context, w dane.KanalPrzegladania,
 	zWpisami, tylkoNieprzeczytane bool, limit int) (shared.BrowserFeed, error) {
 
@@ -311,7 +310,8 @@ func (a *adapterPrzegladarki) kanalKontraktu(ctx context.Context, w dane.KanalPr
 	return kanal, nil
 }
 
-// pozycjaCzytaniaKontraktu przekłada wiersz kolejki czytania.
+// pozycjaCzytaniaKontraktu przekłada wiersz kolejki czytania na pozycję
+// kontraktu `BrowserReadingItem`.
 func pozycjaCzytaniaKontraktu(w dane.PozycjaCzytania) shared.BrowserReadingItem {
 	return shared.BrowserReadingItem{
 		Id:        w.Kod,
@@ -423,12 +423,14 @@ func znacznikDaty(zapis string) *string {
 	return nil
 }
 
-// errIntoKanal składa niepowodzenie rozbioru kanału.
+// errIntoKanal opakowuje podany powód niepowodzenia rozbioru kanału w błąd
+// zgodny z interfejsem error.
 func errIntoKanal(powod string) error {
 	return &bladRozbioruKanalu{powod: powod}
 }
 
-// bladRozbioruKanalu nazywa powód, dla którego dokument nie jest kanałem.
+// bladRozbioruKanalu nazywa powód, dla którego dokument nie jest kanałem
+// żadnej ze znanych postaci — RSS, Atom ani JSON Feed.
 type bladRozbioruKanalu struct{ powod string }
 
 func (b *bladRozbioruKanalu) Error() string { return b.powod }

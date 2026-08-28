@@ -1,25 +1,6 @@
-// Moduł Translate — typ adaptera, konstruktor i przedrostki identyfikatorów
-// bytów modułu (okno, panel, termin, ślady wymiany, synteza, eksport). Tu leżą
-// też trzy komendy przekładu: ustalenie tekstu źródłowego, segmentacja i próba
-// rozpoznania języka.
-//
-// Pozostałe pliki modułu dopisują metody do tego samego `*adapterTlumaczenia`;
-// port `Tlumaczenie` i `zarejestrujTlumaczenie` deklaruje
-// `adapter_modul_tlumaczenie_uchwyty.go`.
-//
-// Granice modułu:
-//  1. `source.detect` rozpoznaje język modelem. Rdzeń nie ma własnego silnika
-//     rozpoznania, ma za to most do rejestru kanałów: pyta domyślny czynny
-//     kanał, jaki to język. Bez wpiętego rejestru albo bez czynnego kanału
-//     odmawia wprost, zamiast zgadywać po znakach diakrytycznych
-//     (`RozpoznajJezyk` niżej).
-//  2. `source.set` nie wytwarza treści tłumaczenia — zapisuje sam tekst
-//     źródłowy i liczbę segmentów. Treść panelu powstaje przy `target.add`,
-//     gdzie znany jest język docelowy (`DodajPanel`,
-//     `adapter_modul_tlumaczenie_panele.go`). Bez czynnego kanału `target.add`
-//     odmawia zamiast zakładać panel pusty.
-//  3. Segmentacja (`source.segment`) idzie podziałem własnym
-//     (`podzielNaZdania`), bez biblioteki zewnętrznej.
+// Plik deklaruje typ adaptera modułu Translate, konstruktor, przedrostki
+// identyfikatorów bytów modułu oraz trzy komendy przekładu: zapis tekstu
+// źródłowego, segmentacja i rozpoznanie języka.
 package core
 
 import (
@@ -55,25 +36,13 @@ const (
 type adapterTlumaczenia struct {
 	repozytorium dane.RepozytoriumTlumaczen
 	// kanaly jest rejestrem kanałów modelu rdzenia — jedyną drogą, którą moduł
-	// woła model. Wpięty wzorem Roundtable (`ZKanalami`). Bez niego operacja
-	// modelowa odmawia wprost zamiast oddać pusty wynik udający tłumaczenie.
+	// woła model.
 	kanaly *models.Rejestr
-	// wyjscie jest szyną zdarzeń rdzenia — mostem, którym moduł rozgłasza
-	// `translate.translation.changed` po zmianie treści panelu. Wpinany przez
-	// `ZWyjsciem` (`adapter_modul_tlumaczenie_model.go`) w chwili rejestracji
-	// komend. Niepodłączony nie jest błędem.
+	// wyjscie jest szyną zdarzeń rdzenia; moduł rozgłasza nią zmianę treści
+	// panelu, gdy jest podłączona.
 	wyjscie *emiter
-	// Cztery pola niżej składają silnik syntezy mowy (`speech.synthesize`),
-	// wpinany przez `ZSynteza` (`adapter_modul_tlumaczenie_mowa_silnik.go`). Ta
-	// sama czwórka co przy rozpoznawaniu mowy: port startu procesu, dwa źródła
-	// izolacji i katalog danych rdzenia jako miejsce na nagrania. Niewpięte nie
-	// psują pozostałych komend modułu — sama synteza odmawia wtedy, nazywając
-	// brak.
-	// biblioteka i magazynWytworow składają drogę wytworu na zewnątrz modułu
-	// (`translate.artifact.publish`): magazyn odkłada bajty pod sumą kontrolną,
-	// repozytorium biblioteki zakłada wiersz pliku, po którym reszta platformy
-	// wytwór widzi. Wpina je `ZWytworami`; ich brak nie psuje pozostałych komend
-	// — samo wydanie wytworu odmawia wtedy, nazywając brak.
+	// Pola niżej składają wydanie wytworu poza moduł i syntezę mowy lokalnym
+	// silnikiem.
 	biblioteka       dane.RepozytoriumBiblioteki
 	magazynWytworow  *magazynTresciBiblioteki
 	uruchamiacz      session.Uruchamiacz
@@ -111,7 +80,8 @@ func (a *adapterTlumaczenia) ZWytworami(biblioteka dane.RepozytoriumBiblioteki,
 	return a
 }
 
-// nowyAdapterTlumaczenia wiąże adapter z repozytorium modułu.
+// nowyAdapterTlumaczenia wiąże adapter z repozytorium modułu, pozostawiając
+// pozostałe zależności do wpięcia osobno.
 func nowyAdapterTlumaczenia(repozytorium dane.RepozytoriumTlumaczen) *adapterTlumaczenia {
 	return &adapterTlumaczenia{repozytorium: repozytorium}
 }
@@ -124,18 +94,9 @@ func (a *adapterTlumaczenia) ZKanalami(kanaly *models.Rejestr) *adapterTlumaczen
 	return a
 }
 
-// zapytajModel woła wskazany kanał modelu i zbiera całą odpowiedź tekstową.
-// Jest wspólnym mostem tego modułu do modelu: przekład, kontrola jakości czy
-// tłumaczenie zwrotne wołane modelem idą tędy, a nie każde własną kopią pętli
-// strumienia. Kanał musi wskazać wywołujący — rdzeń nie zgaduje, na
-// którym kanale okno pracuje; gdy rejestr nie jest wpięty albo kanał pusty,
-// most odmawia wprost, nie oddaje pustego napisu udającego przekład.
-//
-// Kanał wskazuje wywołujący, nie ten most: kontrakt niesie pole `channelId`
-// (`target.add`, `backtranslation.run`), a przekład wskazania na kanał składa
-// `kanalZadania` (`adapter_modul_tlumaczenie_model.go`). Tutaj zostaje sama
-// zasada: pusty `kanal` to odmowa wprost, bo most nie dobiera kanału za
-// wywołującego.
+// zapytajModel woła wskazany kanał modelu i zbiera całą odpowiedź tekstową —
+// wspólny most modułu do modelu dla operacji słownych. Pusty kanał albo brak
+// rejestru kończy się odmową wprost.
 func (a *adapterTlumaczenia) zapytajModel(ctx context.Context, okno, kanal, tresc string) (string, error) {
 	if a.kanaly == nil {
 		return "", bladBrakuKanalowTlumaczenia()
@@ -170,15 +131,8 @@ func bladBrakuKanalowTlumaczenia() error {
 		"moduł Translate: rejestr kanałów modelu nie jest wpięty — tłumaczenie nie ma czym wołać modelu"))
 }
 
-// UstawZrodlo obsługuje `translate.source.set`. Zapisuje tekst źródłowy okna
-// i — gdy okno zakłada się po raz pierwszy albo Operator zażądał ponownego
-// podziału — liczbę segmentów policzoną przez `podzielNaZdania`. Nie wywołuje
-// żadnego rozpoznania języka: pole `SourceLanguage` odpowiedzi niesie to, co
-// podał Operator, albo puste, gdy nie podał.
-//
-// Panele wychodzą stąd bez treści — ich treść powstaje w `DodajPanel`
-// (`adapter_modul_tlumaczenie_panele.go`). Adapter nie zna jeszcze paneli okna
-// w chwili pierwszego zapisu źródła, więc odpowiedź niesie wtedy pustą listę.
+// UstawZrodlo obsługuje `translate.source.set`: zapisuje tekst źródłowy okna
+// i, gdy trzeba, liczbę segmentów, nie wywołując rozpoznania języka.
 func (a *adapterTlumaczenia) UstawZrodlo(ctx context.Context,
 	z shared.TranslateSourceSetRequest) (shared.TranslateSourceSetResponse, error) {
 
@@ -196,8 +150,8 @@ func (a *adapterTlumaczenia) UstawZrodlo(ctx context.Context,
 		JezykZrodlowy: z.SourceLanguage,
 	}
 
-	// Segmentacja liczy się od nowa, gdy Operator o to poprosił, albo gdy
-	// okno jeszcze nie istnieje (liczba wtedy jest niepoznana skądinąd).
+	// Segmentacja liczy się od nowa, gdy operator o to poprosił albo gdy
+	// okno jeszcze nie istnieje.
 	if z.Resegment == nil || *z.Resegment {
 		liczba := int64(len(podzielNaZdania(z.Text)))
 		okno.LiczbaSegmentow = &liczba
@@ -230,7 +184,8 @@ func jezykZrodlowyZadania(jezyk *string) string {
 	return ""
 }
 
-// liczbaSegmentowOdpowiedzi przekłada wskaźnik wiersza na wskaźnik kontraktu.
+// liczbaSegmentowOdpowiedzi przekłada wskaźnik wiersza repozytorium na
+// wskaźnik pola kontraktu, zachowując brak wartości.
 func liczbaSegmentowOdpowiedzi(liczba *int64) *int {
 	if liczba == nil {
 		return nil
@@ -239,15 +194,9 @@ func liczbaSegmentowOdpowiedzi(liczba *int64) *int {
 	return &n
 }
 
-// PodzielNaSegmenty obsługuje `translate.source.segment`. Dzieli wskazany
-// tekst — albo, gdy żądanie go nie niesie, aktualny tekst źródłowy okna —
-// na zdania metodą `podzielNaZdania`. Komenda nie zapisuje nic do bazy:
-// kontrakt oddaje z niej samą listę napisów bez identyfikatorów, a segmenty nie
-// mają własnej tabeli, więc powtórne wywołanie na tym samym tekście daje ten
-// sam wynik bez efektu ubocznego.
-//
-// Żądanie bez wskazania tekstu i bez okna, którego tekst źródłowy dałoby się
-// wziąć, jest błędem wskazania — nie ma z czego dzielić.
+// PodzielNaSegmenty obsługuje `translate.source.segment`: dzieli wskazany
+// tekst, albo tekst źródłowy okna, na zdania metodą `podzielNaZdania`, bez
+// zapisu do bazy.
 func (a *adapterTlumaczenia) PodzielNaSegmenty(ctx context.Context,
 	z shared.TranslateSourceSegmentRequest) (shared.TranslateSourceSegmentResponse, error) {
 
@@ -263,13 +212,8 @@ func (a *adapterTlumaczenia) PodzielNaSegmenty(ctx context.Context,
 	return shared.TranslateSourceSegmentResponse{Segments: podzielNaZdania(tekst)}, nil
 }
 
-// podzielNaZdania dzieli tekst na zdania po znakach końca zdania (kropka,
-// wykrzyknik, pytajnik), które są kolejno spacją albo końcem tekstu — jedyny
-// sygnał mechaniczny, jaki mamy bez wiedzy językowej o skrótach, inicjałach
-// czy cudzysłowach zagnieżdżających kropkę. Ograniczenie: skróty w rodzaju
-// „np." albo „ul." rozłamią zdanie tam, gdzie językoznawczo zdanie się nie
-// kończy — podział semantyczny wymagałby słownika skrótów albo modelu, których
-// rdzeń nie ma. Puste odcinki (wielokrotne białe znaki) są pomijane.
+// podzielNaZdania dzieli tekst na zdania po znakach końca zdania, kropce,
+// wykrzykniku albo pytajniku, po których stoi biały znak albo koniec tekstu.
 func podzielNaZdania(tekst string) []string {
 	var zdania []string
 	poczatek := 0
@@ -296,16 +240,8 @@ func podzielNaZdania(tekst string) []string {
 	return zdania
 }
 
-// RozpoznajJezyk obsługuje `translate.source.detect`. Rozpoznaje język modelem:
-// pyta domyślny czynny kanał modelu, jaki to język (`rozpoznajJezykModelem`
-// w `adapter_modul_tlumaczenie_model.go`). Gdy rejestr kanałów nie jest wpięty
-// albo nie ma czynnego kanału, komenda odmawia wprost
-// (`bladBrakuKanalowTlumaczenia`) zamiast zgadywać po znakach diakrytycznych.
-//
-// Żądanie niesie sam tekst (kontrakt nie ma pola okna), więc puste `text` jest
-// błędem wskazania — nie ma z czego rozpoznać języka. `Confidence` zostaje
-// puste: model oddaje nazwę języka, nie miarę pewności, a rdzeń nie dorabia
-// liczby, której nikt uczciwie nie wypełni.
+// RozpoznajJezyk obsługuje `translate.source.detect`: pyta domyślny czynny
+// kanał modelu, jaki to język, i odmawia wprost bez czynnego kanału.
 func (a *adapterTlumaczenia) RozpoznajJezyk(ctx context.Context,
 	z shared.TranslateSourceDetectRequest) (shared.TranslateSourceDetectResponse, error) {
 
@@ -343,17 +279,16 @@ func zlozPaneleTlumaczenia(panele []dane.PanelTlumaczenia) []shared.TranslationP
 func zlozPanelTlumaczenia(p dane.PanelTlumaczenia) shared.TranslationPanel {
 	return shared.TranslationPanel{
 		Id: p.Kod,
-		// Kod zewnętrzny okna, doczytany złączeniem w warstwie danych; numer
-		// wiersza nie zaadresowałby po stronie klienta żadnego okna.
+		// Kod zewnętrzny okna, doczytany złączeniem w warstwie danych, nie
+		// numer wiersza wewnętrznego.
 		WindowId:  p.OknoKod,
 		Language:  p.Jezyk,
 		Text:      p.Tresc,
 		Status:    shared.TranslationStatus(p.Stan),
 		Tone:      p.Ton,
 		UpdatedAt: p.Zaktualizowano,
-		// Migawka obiegu zatwierdzeń (`translate.approval.set`). Panel, którego
-		// nikt nie przeprowadził przez obieg, wychodzi z pustym etapem — nie
-		// z etapem `translation` udającym, że praca ruszyła.
+		// Migawka obiegu zatwierdzeń; panel nieprzeprowadzony przez obieg
+		// wychodzi z pustym etapem.
 		ApprovalStage: etapZatwierdzeniaPanelu(p.EtapZatwierdzenia),
 		ApprovedBy:    p.Zatwierdzil,
 		ApprovedAt:    p.Zatwierdzono,
@@ -371,9 +306,7 @@ func etapZatwierdzeniaPanelu(etap *string) *shared.ApprovalStage {
 }
 
 // bladTlumaczenia znakuje usterkę kodem kontraktu, żeby okno modułu pokazało
-// powód, a nie samo „nie udało się". Błąd, któremu kod już nadano, przechodzi
-// bez zmiany; dopiero usterka bez kodu staje się usterką wewnętrzną rdzenia.
-// Wspólny dla całego modułu.
+// powód. Błąd, któremu kod już nadano, przechodzi bez zmiany.
 func bladTlumaczenia(err error) error {
 	if err == nil {
 		return nil

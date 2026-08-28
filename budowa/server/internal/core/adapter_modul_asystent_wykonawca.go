@@ -1,21 +1,7 @@
-// Odpowiedzialność pliku: wykonawca zleceń asystenta — podjęcie zlecenia
-// w stanie `queued` i doprowadzenie go do `done`/`failed`. Typ `adapterAsystenta`
-// i przyjęcie polecenia deklaruje `adapter_modul_asystent.go`; stan i dziennik
-// prowadzi `adapter_modul_asystent_czynnosci.go`. Ten plik dokłada metody na tym
-// samym typie i zależności wykonawcy wpinane w montażu.
-//
-// Tura modelu jest tą samą turą, którą prowadzi rozmowa: treść zlecenia
-// (transkrypcja polecenia) idzie do kanału modelu okna przez ten sam rejestr
-// kanałów (`models.Rejestr.Wyslij`), którym jedzie `adapter_rozmowa` i debata.
-// Rdzeń nie ma drugiego silnika modelu — parametry tury bierze z okna
-// asystenta (kanał, katalogi, środowisko), najwęższego poziomu zasięgu.
-//
-// Kontrakt `assistant.voice.command` niesie samą transkrypcję — wolny tekst,
-// bez pola mówiącego „to jest komenda platformy X". Zgadywanie po treści, czy
-// Operator chciał uruchomić model, czy wykonać komendę rdzenia, byłoby
-// wykonaniem czynności, której nikt jednoznacznie nie zlecił. Dlatego wykonawca
-// prowadzi wyłącznie drogę modelu i nie udaje akcji platformy rozpoznaniem
-// wolnego tekstu.
+// Odpowiedzialność pliku: wykonawca zleceń asystenta — podejmuje zlecenie ze
+// stanu `queued` i prowadzi je do `done`/`failed`. Tura idzie rejestrem
+// kanałów wspólnym z rozmową; wykonawca prowadzi wyłącznie drogę modelu, nie
+// zgaduje komend z tekstu.
 package core
 
 import (
@@ -46,32 +32,27 @@ func (a *adapterAsystenta) ZSesjami(nadzorca *session.Nadzorca) *adapterAsystent
 }
 
 // ZWyjsciem wpina nadajnik zdarzeń i kontekst życia rdzenia. Nadajnik niesie
-// strumień tury (`stream.chunk`) i zdarzenie `assistant.action.changed`; kontekst
-// życia trzyma turę przy życiu mimo rozłączenia klienta. Bez nadajnika
-// wykonawca dalej domyka stan zlecenia, tylko okno nie dostaje strumienia na żywo.
+// strumień tury i zdarzenie `assistant.action.changed`; kontekst życia trzyma
+// turę przy życiu mimo rozłączenia klienta. Bez nadajnika okno nie dostaje
+// strumienia na żywo.
 func (a *adapterAsystenta) ZWyjsciem(nadajnik Nadajnik, zycie context.Context) *adapterAsystenta {
 	a.nadajnik = nadajnik
 	a.zycie = zycie
 	return a
 }
 
-// podejmij uruchamia wykonawcę zlecenia świeżo złożonego albo ponowionego —
-// czyli takiego, które stoi w stanie `queued`. Brak rejestru kanałów, nadzorcy
-// sesji albo kontekstu życia znaczy „moduł bez wykonawcy": zlecenie zostaje
-// `queued` do ręcznego sterowania, zamiast udawać wykonanie. Bieg
-// idzie gorutyną — wywołujący (przyjęcie polecenia, ponowna próba) wraca od
-// razu, a tura biegnie dalej.
+// podejmij uruchamia wykonawcę zlecenia świeżo złożonego albo ponowionego,
+// stojącego w stanie `queued`. Brak rejestru kanałów, nadzorcy sesji albo
+// kontekstu życia znaczy brak wykonawcy — zlecenie zostaje `queued`. Bieg
+// idzie gorutyną.
 func (a *adapterAsystenta) podejmij(kodZlecenia string) {
 	a.podejmijZeStanu(kodZlecenia, string(shared.AssistantActionStatusQueued))
 }
 
-// wznow podejmuje zlecenie wznowione sterowaniem `resume`.
-//
-// `resume` przestawia zlecenie na `running` (stanDlaSterowania,
-// `adapter_modul_asystent_czynnosci.go`), a wykonawca podejmuje stan `queued`,
-// więc bez tego wejścia wznowione zlecenie stałoby w toku bez końca.
-// Wznowienie wchodzi tą samą drogą co podjęcie, tylko ze stanem wejścia
-// `running` — drugiej pętli ani drugiego wykonawcy nie ma.
+// wznow podejmuje zlecenie wznowione sterowaniem `resume`. Sterowanie
+// przestawia zlecenie na `running`, a wykonawca podejmuje stan `queued`,
+// więc bez tego wejścia zlecenie stałoby bez końca. Idzie tą samą drogą co
+// podjęcie, ze stanem wejścia `running`.
 func (a *adapterAsystenta) wznow(kodZlecenia string) {
 	a.podejmijZeStanu(kodZlecenia, string(shared.AssistantActionStatusRunning))
 }
@@ -84,9 +65,8 @@ func (a *adapterAsystenta) przerwijBieg(kodZlecenia string) {
 	if a.odwolane == nil {
 		a.odwolane = map[string]bool{}
 	}
-	// Znacznik zostaje także wtedy, gdy nic jeszcze nie biegnie: wykonawca może
-	// właśnie stać między odczytem stanu a zapisem `running`, a wtedy sam zapis
-	// stanu przez sterowanie zostałby przez niego nadpisany.
+	// Znacznik zostaje, gdy nic jeszcze nie biegnie: zapis stanu przez
+	// sterowanie mógłby go nadpisać.
 	a.odwolane[kodZlecenia] = true
 	przerwij := a.biegi[kodZlecenia]
 	a.zamki.Unlock()
@@ -136,37 +116,25 @@ func (a *adapterAsystenta) podejmijZeStanu(kodZlecenia, stanWejscia string) {
 		return
 	}
 	// Świeży mandat kasuje dawne odwołanie: `retry` i `resume` są decyzją
-	// późniejszą niż `cancel`, który je poprzedził.
+	// późniejszą niż `cancel`.
 	a.zapomnijOdwolanie(kodZlecenia)
-	// Sprawcą tego biegu jest rdzeń i tak go znaczymy. Zlecenie leży już
-	// w kolejce — rękę, która je złożyła, opisało zdarzenie złożenia; tutaj
-	// zmienia je własny wykonawca rdzenia wybudzony kolejką, a nie gniazdo
-	// (kontekstem jest życie rdzenia, nie żądanie). Znak stawiamy wprost, bo
-	// brak gniazda ma więcej powodów niż jeden (`sprawca.go`).
+	// Sprawcą biegu jest rdzeń: zlecenie leży w kolejce, a tutaj zmienia je
+	// własny wykonawca, nie gniazdo.
 	go a.wykonajZlecenie(zSprawcaRdzenia(a.zycie), kodZlecenia, stanWejscia)
 }
 
 // wykonajZlecenie podejmuje jedno zlecenie z kolejki i prowadzi je do końca.
-//
-// Kolejność jest rozmyślna: sprawdzenie stanu → treść polecenia → okno → dopiero
-// wtedy przestawienie na `running`. Zlecenie w innym stanie niż `stanWejscia`
-// (podjęte inną drogą, wstrzymane, anulowane) wykonawca zostawia bez ruchu — to
-// jedyne ciche wyjście, jakie tu zostało, i jest ciche słusznie: nikt niczego
-// nie zlecił drugi raz.
-//
-// Każdy pozostały brak kończy zlecenie głośno. Brak treści polecenia i brak
-// kanału modelu zamykają zlecenie stanem `failed` z nazwanym brakiem, zamiast
-// zostawiać w Actions Monitor wiersz stojący w `queued` bez powodu. Operator ma
-// wtedy z czego zdecydować: dosłać tekst, wskazać kanał, ponowić (`retry`).
-// Zlecenie nie jest przy tym oznaczane jako wykonane — `failed` to nie `done`.
+// Kolejność jest rozmyślna: stan, treść polecenia, okno, dopiero potem
+// `running`. Brak treści albo kanału zamyka zlecenie stanem `failed` zamiast
+// wiersza w `queued` bez powodu.
 func (a *adapterAsystenta) wykonajZlecenie(ctx context.Context, kodZlecenia, stanWejscia string) {
 	zlecenie, err := a.repozytorium.Zlecenie(ctx, kodZlecenia)
 	if err != nil || zlecenie.Stan != stanWejscia {
 		return
 	}
 
-	// Okno idzie przed treścią, bo z okna bierze się identyfikator sesji, którym
-	// rozgłasza się każdą dalszą zmianę — także odmowę z braku treści.
+	// Okno idzie przed treścią: z okna bierze się identyfikator sesji
+	// rozgłaszający każdą zmianę.
 	okno, err := a.nadzorca.Rejestr().Okno(zlecenie.OknoKod)
 	if err != nil {
 		a.zerwijZlecenie(ctx, zlecenie, kodZlecenia, "",
@@ -175,9 +143,8 @@ func (a *adapterAsystenta) wykonajZlecenie(ctx context.Context, kodZlecenia, sta
 		return
 	}
 	if strings.TrimSpace(okno.KanalModelu) == "" {
-		// Okno bez kanału modelu nie ma czym poprowadzić tury. To brak do
-		// naprawienia przez Operatora — i właśnie dlatego ma zostać nazwany,
-		// a nie przemilczany wiecznym `queued`.
+		// Okno bez kanału modelu nie ma czym poprowadzić tury — brak do
+		// naprawienia przez Operatora.
 		a.zerwijZlecenie(ctx, zlecenie, kodZlecenia, okno.IdSesji,
 			"okno "+zlecenie.OknoKod+" nie ma wpiętego kanału modelu, więc tura nie ma dokąd pojechać"+
 				"; naprawa: wskazać oknu kanał modelu (channel.add + window.update) i ponowić zlecenie")
@@ -186,19 +153,16 @@ func (a *adapterAsystenta) wykonajZlecenie(ctx context.Context, kodZlecenia, sta
 
 	polecenie := a.trescPolecenia(ctx, kodZlecenia)
 	if polecenie == "" {
-		// Zlecenie ze śladem nagrania, którego nikt nie przepisał na tekst (brak
-		// wpiętego silnika mowy), nie niesie polecenia do wykonania.
+		// Zlecenie ze śladem nagrania, którego nikt nie przepisał na tekst, nie
+		// niesie polecenia do wykonania.
 		a.zerwijZlecenie(ctx, zlecenie, kodZlecenia, okno.IdSesji,
 			"zlecenie nie niesie treści polecenia — dziennik ma sam ślad nagrania, a rdzeń nie ma"+
 				" czym go przepisać; naprawa: przysłać polecenie tekstem (pole transcript)")
 		return
 	}
 
-	// Ostatnie spojrzenie przed przejęciem zlecenia. Między odczytem stanu na
-	// wejściu a tym miejscem Operator mógł zdążyć zlecenie odwołać; zapis
-	// `running` bez tego sprawdzenia kasowałby jego decyzję i tura biegłaby
-	// dalej. Znacznik odwołania jest sprawdzany zamiast samego stanu, bo wyścig
-	// rozgrywa się właśnie na stanie.
+	// Ostatnie spojrzenie przed przejęciem: Operator mógł zdążyć odwołać
+	// zlecenie przed zapisem `running`.
 	if a.odwolany(kodZlecenia) {
 		return
 	}
@@ -207,9 +171,8 @@ func (a *adapterAsystenta) wykonajZlecenie(ctx context.Context, kodZlecenia, sta
 		a.rozglosZlecenie(ctx, shared.ChangeKindUpdated, okno.IdSesji, zlozZlecenie(biezace))
 	}
 
-	// Tura dostaje własny kontekst, żeby sterowanie Operatora miało co przerwać
-	// (`przerwijBieg`). Kontekst wychodzi z kontekstu życia rdzenia, więc
-	// rozłączenie klienta dalej nie przerywa pracy.
+	// Tura dostaje kontekst, by sterowanie miało co przerwać; rozłączenie
+	// klienta nie przerywa pracy.
 	kontekstTury, przerwij := context.WithCancel(ctx)
 	a.zapiszBieg(kodZlecenia, przerwij)
 	tresc, bladTury := a.turaModelu(kontekstTury, okno, zlecenie, polecenie)
@@ -226,9 +189,8 @@ func (a *adapterAsystenta) wykonajZlecenie(ctx context.Context, kodZlecenia, sta
 }
 
 // zerwijZlecenie zamyka zlecenie stanem `failed` z nazwanym powodem. Idzie tą
-// samą drogą co domknięcie po turze (`ZakonczZlecenie` + rozgłoszenie), bo to
-// jest to samo domknięcie — różni je tylko to, że tura nie ruszyła, więc nie ma
-// treści do zapisania w dzienniku.
+// samą drogą co domknięcie po turze — różni je tylko to, że tura nie ruszyła,
+// więc nie ma treści do zapisania w dzienniku.
 func (a *adapterAsystenta) zerwijZlecenie(ctx context.Context, zlecenie dane.ZlecenieAsystenta,
 	kodZlecenia, idSesji, powod string) {
 
@@ -241,16 +203,16 @@ func (a *adapterAsystenta) zerwijZlecenie(ctx context.Context, zlecenie dane.Zle
 }
 
 // trescPolecenia wyjmuje tekst polecenia z dziennika zlecenia — wpis rodzaju
-// `command` niesie transkrypcję, którą PrzyjmijPolecenie zapisał jako pierwszą
-// linię rozmowy. Bierze wpis najstarszy z niepustą treścią: to pierwotne
-// polecenie, nie ewentualny wynik dopisany później.
+// `command` niesie transkrypcję zapisaną przez PrzyjmijPolecenie. Bierze
+// wpis najstarszy z niepustą treścią: to pierwotne polecenie, nie wynik
+// dopisany później.
 func (a *adapterAsystenta) trescPolecenia(ctx context.Context, kodZlecenia string) string {
 	wpisy, err := a.repozytorium.WpisyZlecenia(ctx, kodZlecenia)
 	if err != nil {
 		return ""
 	}
-	// WpisyZlecenia oddaje wpisy od najnowszego — polecenie jest najstarsze, więc
-	// idziemy od końca listy w stronę początku.
+	// WpisyZlecenia oddaje wpisy od najnowszego — polecenie jest najstarsze,
+	// stąd odczyt idzie od końca.
 	for i := len(wpisy) - 1; i >= 0; i-- {
 		if wpisy[i].Rodzaj == string(shared.AssistantActivityKindCommand) {
 			if tresc := strings.TrimSpace(wpisy[i].Tresc); tresc != "" {
@@ -261,11 +223,10 @@ func (a *adapterAsystenta) trescPolecenia(ctx context.Context, kodZlecenia strin
 	return ""
 }
 
-// turaModelu prowadzi jedną turę kanału modelu dla zlecenia i zwraca jej treść.
-// Strumień idzie tą samą drogą co w rozmowie i debacie: `stream.chunk` z
-// identyfikatorem zlecenia jako identyfikatorem wiadomości, dzięki czemu Actions
-// Monitor rozdziela napływ po zleceniach. Niepowodzenie kanału jedzie
-// fragmentem błędu w strumieniu i wraca w błędzie — nie wpisuje się w treść.
+// turaModelu prowadzi jedną turę kanału modelu dla zlecenia i zwraca jej
+// treść. Strumień idzie tą samą drogą co w rozmowie: `stream.chunk`
+// z identyfikatorem zlecenia jako identyfikatorem wiadomości. Niepowodzenie
+// kanału wraca w błędzie.
 func (a *adapterAsystenta) turaModelu(ctx context.Context, okno session.Okno,
 	zlecenie dane.ZlecenieAsystenta, polecenie string) (string, error) {
 
@@ -278,22 +239,18 @@ func (a *adapterAsystenta) turaModelu(ctx context.Context, okno session.Okno,
 		return strumien.Fragment(c, f)
 	})
 
-	// Sterowanie platformą dojeżdża do modelu tędy. Bez tej linii model zlecenia
-	// nie widzi ani jednego narzędzia kontraktu i może wyłącznie odpowiedzieć
-	// tekstem we własnym oknie — opis w
-	// `adapter_modul_asystent_sterowanie.go`.
+	// Sterowanie platformą dojeżdża do modelu tędy: bez tej linii model nie
+	// widzi narzędzi kontraktu.
 	zapytanie := zapytanieZlecenia(okno, zlecenie, polecenie)
 
-	// Warstwa promptu profilu wchodzi tylko tutaj: po złożeniu zapytania z okna,
-	// przed narzędziami i przed wysyłką. Profil ma prawo przykryć kanał i zasięg
-	// pracy, a narzędzia składa się dla kanału już rozstrzygniętego. Droga do
-	// promptu jest jedna (`Nakladka`).
+	// Warstwa promptu profilu wchodzi tylko tutaj: po złożeniu zapytania,
+	// przed narzędziami i wysyłką.
 	profil, jestProfil := a.profilZlecenia(ctx, zlecenie)
 	if jestProfil {
 		uzupelnijProfil(profil, &zapytanie)
 	}
-	// Brak warstwy zostaje nazwany, nie przemilczany: tura idzie dalej, ale
-	// z dziennika widać, dlaczego asystent zachował się jak czat.
+	// Brak warstwy zostaje nazwany: z dziennika widać, dlaczego asystent
+	// zachował się jak czat.
 	switch {
 	case !jestProfil:
 		a.opiszBrakWarstwy(ctx, zlecenie, "żadnego profilu nie wskazano i nie ma profilu domyślnego")
@@ -324,15 +281,10 @@ func zapytanieZlecenia(okno session.Okno, zlecenie dane.ZlecenieAsystenta, polec
 	}
 }
 
-// domknijZlecenie zapisuje odpowiedź modelu w dzienniku, przestawia zlecenie na
-// stan końcowy z wynikiem i rozgłasza zmianę.
-//
-// Wpis dziennika i domknięcie stanu idą w tej kolejności celowo: tekst, który
-// zdążył przyjść przed ewentualnym zerwaniem, jest zapisem tury tak samo jak
-// odpowiedź pełna, więc zapisujemy go, gdy jest — także przy `failed`
-// z niepustą treścią częściową. Stan i wynik idą jednym zapisem
-// (`ZakonczZlecenie`), żeby Actions Monitor nie zobaczył `done` bez wyniku ani
-// wyniku bez stanu.
+// domknijZlecenie zapisuje odpowiedź modelu w dzienniku, przestawia zlecenie
+// na stan końcowy z wynikiem i rozgłasza zmianę. Wpis dziennika i domknięcie
+// stanu idą w tej kolejności: treść przybyłą przed zerwaniem zapisuje się
+// zawsze, także przy `failed`.
 func (a *adapterAsystenta) domknijZlecenie(ctx context.Context, zlecenie dane.ZlecenieAsystenta,
 	kodZlecenia, idSesji, stan, wynik, tresc string) {
 
@@ -347,13 +299,8 @@ func (a *adapterAsystenta) domknijZlecenie(ctx context.Context, zlecenie dane.Zl
 		})
 	}
 
-	// Decyzja Operatora wygrywa z wynikiem tury. Między przestawieniem zlecenia
-	// na `running` a tym domknięciem Operator mógł je anulować albo wstrzymać
-	// (`assistant.action.status` z `control`); bez sprawdzenia stanu czynność
-	// odwołana meldowałaby się jako wykonana. Dlatego stan czytamy tuż przed
-	// zapisem i domykamy wyłącznie zlecenie, które nadal biegnie. Treść tury
-	// zostaje w dzienniku wyżej: to zapis tego, co naprawdę przyszło, także gdy
-	// wynik nie ma już prawa przestawić stanu.
+	// Decyzja Operatora wygrywa z wynikiem: sprawdzenie stanu chroni przed
+	// zameldowaniem odwołanej pracy.
 	if biezace, err := a.repozytorium.Zlecenie(ctx, kodZlecenia); err == nil &&
 		biezace.Stan != string(shared.AssistantActionStatusRunning) {
 

@@ -1,17 +1,6 @@
-// Odpowiedzialność pliku: wątek boczny, regeneracja wypowiedzi i wariant tury —
-// `roundtable.debate.followup`, `roundtable.statement.regenerate`
-// i `roundtable.debate.branch` (okno Debate Panel).
-//
-// Wszystkie trzy dotykają zapisu tury, więc wszystkie trzy odmawiają, gdy rdzeń
-// nie ma rejestru kanałów: dopisanie wypowiedzi bez wywołania modelu byłoby
-// wytworzeniem zapisu, a nie debatą.
-//
-// Trzy komendy, trzy różne skutki na zapisie:
-//
-//	followup   — nowa tura poboczna przy turze wskazanej, jeden adresat;
-//	regenerate — ta sama wypowiedź, nowa treść, numer redakcji o jeden wyżej;
-//	branch     — nowa tura o tym samym pytaniu i formacie, wskazująca turę
-//	             rozgałęzianą; obie gałęzie zostają w zapisie.
+// Odpowiedzialność pliku: wątek boczny, regeneracja wypowiedzi i wariant tury
+// okna Debate Panel. Wszystkie trzy dotykają zapisu tury i odmawiają, gdy
+// rdzeń nie ma rejestru kanałów.
 package core
 
 import (
@@ -23,15 +12,9 @@ import (
 	"danacoconsole/shared"
 )
 
-// Doprecyzuj kieruje pytanie do jednego uczestnika poza turą ogólną.
-//
-// Wątek boczny jest turą własną, wskazującą turę, przy której stoi. Dopisanie
-// wypowiedzi do tury głównej wmieszałoby pytanie skierowane do jednego
-// uczestnika w zapis tury, w której mówili wszyscy — i przekłamało transkrypt.
-//
-// Odpowiedź wraca po zamknięciu strumienia, bo kontrakt żąda w niej wypowiedzi
-// pełnej. Fragmenty jadą po drodze zdarzeniem `stream.chunk`, tak samo jak
-// w turze ogólnej.
+// Doprecyzuj kieruje pytanie do jednego uczestnika poza turą ogólną. Wątek
+// boczny jest turą własną, wskazującą turę, przy której stoi — dopisanie do
+// tury głównej przekłamałoby transkrypt zapisem jednego adresata.
 func (a *adapterDebaty) Doprecyzuj(ctx context.Context,
 	z shared.RoundtableDebateFollowupRequest) (shared.RoundtableDebateFollowupResponse, error) {
 
@@ -117,11 +100,8 @@ func (a *adapterDebaty) zamknijTureWatku(ctx context.Context, tura dane.TuraDeba
 }
 
 // Powtorz wywołuje kanał uczestnika po raz drugi i zastępuje jego wypowiedź.
-//
-// Zastąpienie, nie dopisanie: kontrakt ma numer redakcji wypowiedzi, a nie dwie
-// wypowiedzi tego samego uczestnika w tej samej chwili. Odpowiedź pusta nie
-// zastępuje niczego — kanał, który milczał, nie ma prawa skasować tego, co
-// uczestnik powiedział za pierwszym razem.
+// Odpowiedź pusta nie zastępuje niczego — kanał, który milczał, nie kasuje
+// tego, co uczestnik powiedział za pierwszym razem.
 func (a *adapterDebaty) Powtorz(ctx context.Context,
 	z shared.RoundtableStatementRegenerateRequest) (shared.RoundtableStatementRegenerateResponse, error) {
 
@@ -174,11 +154,8 @@ func (a *adapterDebaty) Powtorz(ctx context.Context,
 }
 
 // Rozgalez zakłada wariant tury: to samo pytanie i format, tura nadrzędna
-// wskazana. Obie gałęzie zostają w zapisie i dają się porównać.
-//
-// Wariant nie biegnie sam. Uruchamia go `roundtable.debate.start` na oknie po
-// rozgałęzieniu; ta komenda zakłada gałąź, żeby Operator zobaczył ją w panelu,
-// zanim zdecyduje, czym ją wypełnić.
+// wskazana, obie gałęzie zostają w zapisie. Wariant nie biegnie sam —
+// uruchamia go roundtable.debate.start na oknie po rozgałęzieniu.
 func (a *adapterDebaty) Rozgalez(ctx context.Context,
 	z shared.RoundtableDebateBranchRequest) (shared.RoundtableDebateBranchResponse, error) {
 
@@ -201,8 +178,7 @@ func (a *adapterDebaty) Rozgalez(ctx context.Context,
 			bladWskazaniaDebaty("tura " + kod + " nie należy do okna " + okno)
 	}
 
-	// Nazwa wariantu wchodzi do zagadnienia, bo kontrakt tury pola na nazwę
-	// gałęzi nie ma, a zagadnienie jest tym, co Debate Panel pokazuje w nagłówku.
+	// Nazwa wariantu wchodzi do zagadnienia, bo kontrakt tury nie ma pola na nazwę gałęzi.
 	zagadnienie := wartoscTekstu(zrodlowa.Zagadnienie)
 	if nazwa := strings.TrimSpace(wartoscTekstu(z.Label)); nazwa != "" {
 		if zagadnienie == "" {

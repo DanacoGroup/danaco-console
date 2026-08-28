@@ -1,17 +1,7 @@
-// Odpowiedzialność pliku: wymiana modułu Translate ze światem —
-// `translate.handoff.build`, `.receive`, `translate.bridge.source.receive`,
-// `translate.bridge.result.send`, `translate.artifact.publish`
-// i `translate.step.list`.
-//
-// Pakiet przekazania powstaje jako prawdziwe archiwum ZIP: XLIFF z jednostkami,
-// TMX z pamięcią, TBX z terminologią i plik instrukcji — dokładnie te
-// zawartości, o które prosi żądanie. Archiwum składa `archive/zip` biblioteki
-// Go; żadnego programu pakującego tu nie ma i mieć nie będzie.
-//
-// `artifact.publish` odkłada wytwór do magazynu treści rdzenia i zakłada wiersz
-// pliku biblioteki. To jest jedyna droga, którą wytwór Translate staje się
-// widoczny dla reszty platformy — bez wiersza plik leżałby na dysku bez
-// jednego bytu, który by o nim wiedział.
+// Wymiana modułu Translate ze światem: budowa i przyjęcie pakietu przekazania,
+// most z dokumentem zewnętrznym i wydanie wytworu do biblioteki. Pakiet
+// przekazania jest archiwum ZIP złożonym biblioteką archive/zip Go, bez
+// programu pakującego.
 package core
 
 import (
@@ -31,14 +21,16 @@ import (
 )
 
 const (
-	// przedrostekPakietuPrzekazania znakuje identyfikator pakietu.
+	// przedrostekPakietuPrzekazania znakuje identyfikator pakietu przekazania
+	// nadawany przy zapisie translate.handoff.build.
 	przedrostekPakietuPrzekazania = "prz-"
 	// przedrostekWytworuTlumaczenia znakuje identyfikator pliku biblioteki
 	// założonego przez `artifact.publish`.
 	przedrostekWytworuTlumaczenia = "wyt-"
 )
 
-// ZlozPakietPrzekazania obsługuje `translate.handoff.build`.
+// ZlozPakietPrzekazania obsługuje translate.handoff.build: składa archiwum
+// przekazania z paneli wskazanego okna i zapisuje je na dysku.
 func (a *adapterTlumaczenia) ZlozPakietPrzekazania(ctx context.Context,
 	z shared.TranslateHandoffBuildRequest) (shared.TranslateHandoffBuildResponse, error) {
 
@@ -118,7 +110,8 @@ func (a *adapterTlumaczenia) ZlozPakietPrzekazania(ctx context.Context,
 	}, nil
 }
 
-// zawartoscPakietu składa archiwum z wskazanych części.
+// zawartoscPakietu składa archiwum ZIP z wskazanych części: jednostek XLIFF,
+// pamięci TMX, terminologii TBX i pliku instrukcji.
 func (a *adapterTlumaczenia) zawartoscPakietu(ctx context.Context, okno dane.OknoTlumaczenia,
 	panele []dane.PanelTlumaczenia, segmenty []string,
 	zawartosci []shared.HandoffContent, instrukcje *string) ([]byte, error) {
@@ -178,7 +171,8 @@ func (a *adapterTlumaczenia) zawartoscPakietu(ctx context.Context, okno dane.Okn
 	return bufor.Bytes(), nil
 }
 
-// jednostkiPanelu paruje segmenty źródła z akapitami przekładu.
+// jednostkiPanelu paruje segmenty źródła z akapitami przekładu panelu,
+// tworząc jednostki gotowe do zapisu w formacie XLIFF.
 func jednostkiPanelu(segmenty []string, panel dane.PanelTlumaczenia) []jednostkaXliff {
 	przeklad := []string{}
 	if panel.Tresc != nil {
@@ -211,7 +205,8 @@ func tmxZWpisow(wpisy []dane.WpisPamieciTlumaczenPelny) []byte {
 	return []byte(b.String())
 }
 
-// tbxZTerminow składa bazę terminologiczną w standardzie TBX.
+// tbxZTerminow składa bazę terminologiczną w standardzie TBX z wykazu
+// terminów, parując źródło z przekładem w każdym wpisie.
 func tbxZTerminow(terminy []dane.TerminSlownika) []byte {
 	var b strings.Builder
 	b.WriteString(`<?xml version="1.0" encoding="UTF-8"?>` + "\n<martif type=\"TBX\"><text><body>\n")
@@ -297,8 +292,8 @@ func (a *adapterTlumaczenia) PrzyjmijPakietPrzekazania(ctx context.Context,
 		wniesione += len(odczytany.Jednostki)
 	}
 
-	// Pakiet, którego zwrot dotyczy, przechodzi w stan `returned` — inaczej nie
-	// dałoby się odpowiedzieć, czy materiał wrócił.
+	// Pakiet, którego zwrot dotyczy, przechodzi w stan `returned`, żeby
+	// wiadomo było, czy wrócił.
 	if kod := strings.TrimSpace(napisZeWskaznika(z.PackageId)); kod != "" {
 		pakiet, err := a.repozytorium.PakietPrzekazania(ctx, kod)
 		if err == nil {
@@ -333,7 +328,8 @@ func (a *adapterTlumaczenia) PrzyjmijPakietPrzekazania(ctx context.Context,
 	}, nil
 }
 
-// zlozPakietPrzekazania przekłada wiersz pakietu na byt kontraktu.
+// zlozPakietPrzekazania przekłada wiersz pakietu przekazania z bazy na byt
+// kontraktu zwracany w odpowiedzi komendy.
 func zlozPakietPrzekazania(pakiet dane.PakietPrzekazania) shared.HandoffPackage {
 	zawartosci := make([]shared.HandoffContent, 0, len(pakiet.Zawartosci))
 	for _, zawartosc := range pakiet.Zawartosci {
@@ -393,10 +389,9 @@ func (a *adapterTlumaczenia) PrzyjmijZrodloMostu(ctx context.Context,
 	}, nil
 }
 
-// OdesljWynikMostu obsługuje `translate.bridge.result.send`. Składa treść
+// OdesljWynikMostu obsługuje translate.bridge.result.send. Składa treść
 // wskazanych paneli w postaci żądanej przez tryb i odkłada ją jako wytwór
-// mostu obok dokumentu źródłowego — dokument należy do innego modułu, więc
-// Translate zostawia wynik w jego zasięgu, zamiast pisać po cudzym wierszu.
+// mostu obok dokumentu źródłowego, bo dokument należy do innego modułu.
 func (a *adapterTlumaczenia) OdesljWynikMostu(ctx context.Context,
 	z shared.TranslateBridgeResultSendRequest) (shared.TranslateBridgeResultSendResponse, error) {
 
@@ -460,7 +455,9 @@ func (a *adapterTlumaczenia) OdesljWynikMostu(ctx context.Context,
 	}, nil
 }
 
-// WydajWytwor obsługuje `translate.artifact.publish`.
+// WydajWytwor obsługuje translate.artifact.publish: odkłada wytwór do
+// magazynu treści rdzenia i zakłada wiersz pliku biblioteki — jedyną drogę,
+// którą wytwór staje się widoczny dla reszty platformy.
 func (a *adapterTlumaczenia) WydajWytwor(ctx context.Context,
 	z shared.TranslateArtifactPublishRequest) (shared.TranslateArtifactPublishResponse, error) {
 
@@ -533,7 +530,8 @@ func (a *adapterTlumaczenia) WydajWytwor(ctx context.Context,
 	return shared.TranslateArtifactPublishResponse{FileId: plik.Kod, Path: sciezka}, nil
 }
 
-// trescWytworu składa bajty wytworu wskazanego rodzaju wraz z nazwą pliku.
+// trescWytworu składa bajty wytworu wskazanego rodzaju — pliku docelowego,
+// dwujęzycznego, pamięci albo terminologii — wraz z nazwą pliku.
 func (a *adapterTlumaczenia) trescWytworu(ctx context.Context, okno dane.OknoTlumaczenia,
 	panele []dane.PanelTlumaczenia, segmenty []string,
 	rodzaj shared.TranslationArtifactKind) ([]byte, string, error) {
@@ -591,13 +589,9 @@ func (a *adapterTlumaczenia) trescWytworu(ctx context.Context, okno dane.OknoTlu
 	return nil, "", bladWskazaniaTlumaczenia("nieznany rodzaj wytworu: " + string(rodzaj))
 }
 
-// WykazKrokow obsługuje `translate.step.list`. Oddaje kroki pracy modułu wraz
-// z komendą, która krok wykonuje, i polami, które ta komenda przyjmuje.
-//
-// Wykaz stoi w kodzie, a nie w bazie, bo opisuje zdolności rdzenia, nie dane
-// Operatora: krok istnieje dokładnie wtedy, gdy istnieje obsługująca go komenda,
-// i znika razem z nią. Nazwy komend biorą się ze stałych kontraktu, więc wykaz
-// nie ma jak rozjechać się z rejestrem.
+// WykazKrokow obsługuje translate.step.list: oddaje kroki pracy modułu wraz
+// z komendą i polami, które ona przyjmuje. Wykaz stoi w kodzie, nie w bazie,
+// bo opisuje zdolności rdzenia, nie dane Operatora.
 func (a *adapterTlumaczenia) WykazKrokow(_ context.Context,
 	z shared.TranslateStepListRequest) (shared.TranslateStepListResponse, error) {
 

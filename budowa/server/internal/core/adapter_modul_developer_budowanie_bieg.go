@@ -1,15 +1,4 @@
-// Odpowiedzialność pliku: bieg przebiegu budowania od startu do domknięcia —
-// uruchomienie przez port warstwy kanału, przejęcie drzewa potomstwa, pompa logu
-// rozsyłająca wiersze zdarzeniem i zapis wyniku.
-//
-// Obserwator zakończenia pracuje poza żądaniem: rozłączenie klienta w połowie
-// kompilacji nie przerywa kompilacji, więc obserwator ma własną gorutynę
-// i własny kontekst, a nie kontekst komendy.
-//
-// Log idzie wierszami, nie blokami. Kontrakt niesie w zdarzeniu pole `logLine`
-// — jeden wiersz — więc pompa skleja odczyty w pełne wiersze zamiast rozsyłać
-// surowe porcje odczytu. Wiersz przerwany w połowie bufora trafiłby do Build
-// Output jako dwa wiersze i rozbiłby rozpoznawanie zgłoszeń kompilatora.
+// Odpowiedzialność pliku: bieg przebiegu budowania od startu do domknięcia — uruchomienie przez port kanału, przejęcie drzewa potomstwa, pompa logu i zapis wyniku.
 package core
 
 import (
@@ -35,7 +24,7 @@ const czasNaDomknieciePrzebiegu = 750 * time.Millisecond
 // postępu, który potrafi rosnąć w nieskończoność.
 const najdluzszyWierszLogu = 64 * 1024
 
-// uruchomBudowanie startuje przebieg i podpina pompy logu oraz obserwatora.
+// uruchomBudowanie startuje przebieg i podpina pompy logu oraz obserwatora zakończenia procesu budowania.
 func (a *adapterDevelopera) uruchomBudowanie(ctx context.Context, okno session.Okno,
 	polecenie session.Polecenie, zadanie string, argumenty []string) (*przebiegBudowania, error) {
 
@@ -66,8 +55,7 @@ func (a *adapterDevelopera) uruchomBudowanie(ctx context.Context, okno session.O
 	}
 	drzewo, err := session.PrzejmijDrzewo(uchwyt.Pid())
 	if err != nil {
-		// Proces już biegnie, a uchwytu drzewa nie ma — zostawienie go tak
-		// znaczyłoby sierotę poza rejestrem rdzenia.
+		// Proces już biegnie, a uchwytu drzewa nie ma — zostawienie go byłoby sierotą poza rejestrem.
 		_ = uchwyt.Ubij()
 		_ = uchwyt.Czekaj()
 		a.rejestr.Zwolnij(przebieg)
@@ -76,9 +64,7 @@ func (a *adapterDevelopera) uruchomBudowanie(ctx context.Context, okno session.O
 	przebieg.uchwyt, przebieg.drzewo = uchwyt, drzewo
 
 	a.zapiszPrzebieg(ctx, przebieg)
-	// Rozgłoszenie idzie przed pompami logu: Build Output rozpoznaje wiersze po
-	// identyfikatorze przebiegu, więc gdyby pierwszy wiersz wyprzedził zdarzenie
-	// `created`, okno odrzuciłoby początek logu jako cudzy.
+	// Rozgłoszenie idzie przed pompami logu: wiersz nie może wyprzedzić zdarzenia created.
 	a.rozglosBudowanie(shared.ChangeKindCreated, przebieg, "")
 
 	gotowe := make(chan struct{}, 2)
@@ -88,7 +74,7 @@ func (a *adapterDevelopera) uruchomBudowanie(ctx context.Context, okno session.O
 	return przebieg, nil
 }
 
-// pompujLog czyta strumień procesu wierszami i rozsyła je zdarzeniem przyrostu.
+// pompujLog czyta strumień procesu wierszami i rozsyła je zdarzeniem przyrostu logu przebiegu budowania.
 func (a *adapterDevelopera) pompujLog(przebieg *przebiegBudowania, zrodlo io.Reader,
 	gotowe chan<- struct{}) {
 
@@ -104,9 +90,7 @@ func (a *adapterDevelopera) pompujLog(przebieg *przebiegBudowania, zrodlo io.Rea
 			a.rozglosBudowanie(shared.ChangeKindUpdated, przebieg, wiersz)
 		}
 		if err != nil {
-			// Koniec potoku jest normalnym końcem odczytu, a błąd odczytu
-			// dotyczy tego jednego potoku — przebieg domknie czekający na
-			// zakończenie procesu.
+			// Koniec potoku jest normalnym końcem odczytu; przebieg domknie czekający na zakończenie procesu.
 			return
 		}
 	}
@@ -162,8 +146,7 @@ func wynikBudowania(blad error) (shared.BuildStatus, *int) {
 	if errors.As(blad, &zakonczenie) {
 		kod := zakonczenie.ExitCode()
 		if kod < 0 {
-			// Kod ujemny znaczy zakończenie sygnałem — budowanie zostało
-			// przerwane z zewnątrz, a nie zawiodło na własnym wyniku.
+			// Kod ujemny znaczy zakończenie sygnałem: budowanie przerwano z zewnątrz, nie zawiodło samo.
 			return shared.BuildStatusStopped, nil
 		}
 		return shared.BuildStatusFailed, &kod
@@ -171,7 +154,7 @@ func wynikBudowania(blad error) (shared.BuildStatus, *int) {
 	return shared.BuildStatusFailed, nil
 }
 
-// CzekajNaKoniec czeka na domknięcie przebiegu nie dłużej niż podany czas.
+// CzekajNaKoniec czeka na domknięcie przebiegu nie dłużej niż podany czas, oddając stan po jego upływie.
 func (p *przebiegBudowania) CzekajNaKoniec(najdluzej time.Duration) {
 	select {
 	case <-p.koniec:

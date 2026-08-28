@@ -1,9 +1,6 @@
-// Odczyt stanu bramki na zewnątrz: rozpoznanie sesji z powitania, odpowiedź
-// „czy bramka w ogóle jest", przekłady wierszy na kształt kontraktu i wspólna
-// postać odmowy rodziny `auth.*`.
-//
-// Wejście przez bramkę (`adapter_modul_auth.go`) stan zmienia; czynności z tego
-// pliku wyłącznie go odczytują i przekładają. Podział idzie tą granicą.
+// Odczyt stanu bramki na zewnątrz: rozpoznanie sesji z powitania,
+// odpowiedź „czy bramka w ogóle jest”, przekłady wierszy na kształt
+// kontraktu i wspólna postać odmowy rodziny `auth.*`.
 package core
 
 import (
@@ -34,10 +31,7 @@ func (a *adapterUwierzytelnienia) BramkaZalozona(ctx context.Context) (bool, err
 }
 
 // RozpoznajSesjeBramki sprawdza token z powitania i oddaje skrót sesji.
-//
-// Token nieznany, sesja unieważniona i sesja wygasła znaczą dla powitania to
-// samo: połączenie nie jest związane. Rozróżnianie ich w odpowiedzi mówiłoby
-// pytającemu, czy trafił w istniejący token.
+// Token nieznany, unieważniony i wygasły znaczą to samo.
 func (a *adapterUwierzytelnienia) RozpoznajSesjeBramki(ctx context.Context,
 	token string) (string, bool, error) {
 

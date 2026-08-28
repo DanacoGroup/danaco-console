@@ -1,20 +1,6 @@
 // Moduł Library — udostępnienia odnośnikiem i nasłuchy zewnętrzne:
-// `library.share.create`, `library.share.list`, `library.share.revoke`,
-// `library.webhook.set`, `library.webhook.list`, `library.webhook.remove`.
-//
-// Token udostępnienia powstaje z generatora losowości kryptograficznej
-// standardowej biblioteki Go (`crypto/rand`) — nie z licznika i nie z czasu.
-// Token przewidywalny byłby dostępem dla każdego, kto potrafi zgadnąć chwilę
-// wystawienia odnośnika.
-//
-// Token jest jawny, zgodnie z zasadą jawności kluczy platformy: Operator ma móc
-// odczytać wystawiony odnośnik i przekazać go powtórnie. Zawężeniem dostępu jest
-// termin i odwołanie, nie nieodczytywalność.
-//
-// Adres odnośnika składa się ze ścieżki względnej, nie z nazwy hosta: rdzeń nie
-// wie, pod jakim adresem widzi go świat — stoi za bramą, którą Operator
-// konfiguruje osobno. Adres bezwzględny zmyślony przez rdzeń byłby odnośnikiem
-// prowadzącym donikąd.
+// udostępnienie, wykaz, odwołanie oraz nasłuch webhook — ustawienie, wykaz i
+// usunięcie. Token jest jawny i losowy kryptograficznie.
 package core
 
 import (
@@ -32,7 +18,9 @@ import (
 // szesnastkowego. Tyle wystarcza, żeby zgadywanie tokenu nie było drogą wejścia.
 const dlugoscTokenuUdostepnienia = 32
 
-// WystawUdostepnienie obsługuje `library.share.create`.
+// WystawUdostepnienie obsługuje `library.share.create`: wystawia token dostępu
+// do zasobu albo kolekcji i sprawdza, że wskazany byt istnieje, zanim odnośnik
+// powstanie.
 func (a *adapterBiblioteki) WystawUdostepnienie(ctx context.Context,
 	z shared.LibraryShareCreateRequest) (shared.LibraryShareCreateResponse, error) {
 
@@ -41,8 +29,8 @@ func (a *adapterBiblioteki) WystawUdostepnienie(ctx context.Context,
 		return shared.LibraryShareCreateResponse{}, bladWskazaniaBiblioteki(
 			"udostępnienie bez wskazania zasobu albo kolekcji")
 	}
-	// Byt udostępniany jest sprawdzany wprost: odnośnik do zasobu, którego nie
-	// ma, byłby odnośnikiem wystawionym w próżnię.
+	// Byt udostępniany jest sprawdzany wprost, żeby odnośnik nie prowadził do
+	// zasobu, którego nie ma.
 	if z.Scope == shared.LibraryShareScopeCollection {
 		wykaz, _, err := a.repozytorium.KolekcjeWykaz(ctx, nil, nil, 0)
 		if err != nil {
@@ -80,7 +68,8 @@ func (a *adapterBiblioteki) WystawUdostepnienie(ctx context.Context,
 	}, nil
 }
 
-// WykazUdostepnien obsługuje `library.share.list`.
+// WykazUdostepnien obsługuje `library.share.list`, oddając udostępnienia
+// zasobu wskazanego żądaniem, opcjonalnie ograniczone do udostępnień czynnych.
 func (a *adapterBiblioteki) WykazUdostepnien(ctx context.Context,
 	z shared.LibraryShareListRequest) (shared.LibraryShareListResponse, error) {
 
@@ -96,7 +85,8 @@ func (a *adapterBiblioteki) WykazUdostepnien(ctx context.Context,
 	return shared.LibraryShareListResponse{Shares: udostepnienia, Total: len(udostepnienia)}, nil
 }
 
-// OdwolajUdostepnienie obsługuje `library.share.revoke`.
+// OdwolajUdostepnienie obsługuje `library.share.revoke`, unieważniając
+// udostępnienie wskazanego kodu i odnotowując zmianę w dzienniku audytu.
 func (a *adapterBiblioteki) OdwolajUdostepnienie(ctx context.Context,
 	z shared.LibraryShareRevokeRequest) (shared.LibraryShareRevokeResponse, error) {
 
@@ -115,7 +105,8 @@ func (a *adapterBiblioteki) OdwolajUdostepnienie(ctx context.Context,
 	return shared.LibraryShareRevokeResponse{Revoked: odwolane}, nil
 }
 
-// UstawWebhook obsługuje `library.webhook.set`.
+// UstawWebhook obsługuje `library.webhook.set`: wymaga adresu HTTP albo HTTPS
+// i co najmniej jednego zdarzenia, na które nasłuch ma reagować.
 func (a *adapterBiblioteki) UstawWebhook(ctx context.Context,
 	z shared.LibraryWebhookSetRequest) (shared.LibraryWebhookSetResponse, error) {
 
@@ -151,7 +142,8 @@ func (a *adapterBiblioteki) UstawWebhook(ctx context.Context,
 	return shared.LibraryWebhookSetResponse{Webhook: webhookKontraktuBiblioteki(zapisany)}, nil
 }
 
-// WykazWebhookow obsługuje `library.webhook.list`.
+// WykazWebhookow obsługuje `library.webhook.list`, oddając nasłuchy
+// zewnętrzne, opcjonalnie ograniczone do nasłuchów czynnych.
 func (a *adapterBiblioteki) WykazWebhookow(ctx context.Context,
 	z shared.LibraryWebhookListRequest) (shared.LibraryWebhookListResponse, error) {
 
@@ -167,7 +159,8 @@ func (a *adapterBiblioteki) WykazWebhookow(ctx context.Context,
 	return shared.LibraryWebhookListResponse{Webhooks: nasluchy, Total: len(nasluchy)}, nil
 }
 
-// UsunWebhook obsługuje `library.webhook.remove`.
+// UsunWebhook obsługuje `library.webhook.remove`, usuwając nasłuch wskazanego
+// kodu i odnotowując usunięcie w dzienniku audytu.
 func (a *adapterBiblioteki) UsunWebhook(ctx context.Context,
 	z shared.LibraryWebhookRemoveRequest) (shared.LibraryWebhookRemoveResponse, error) {
 
@@ -186,7 +179,9 @@ func (a *adapterBiblioteki) UsunWebhook(ctx context.Context,
 	return shared.LibraryWebhookRemoveResponse{Removed: usuniety}, nil
 }
 
-// tokenUdostepnieniaBiblioteki losuje token dostępu.
+// tokenUdostepnieniaBiblioteki losuje token dostępu generatorem losowości
+// kryptograficznej, zapisany szesnastkowo w liczbie znaków
+// `dlugoscTokenuUdostepnienia`.
 func tokenUdostepnieniaBiblioteki() (string, error) {
 	bajty := make([]byte, dlugoscTokenuUdostepnienia)
 	if _, err := rand.Read(bajty); err != nil {
@@ -195,12 +190,14 @@ func tokenUdostepnieniaBiblioteki() (string, error) {
 	return hex.EncodeToString(bajty), nil
 }
 
-// adresUdostepnienia składa adres, pod którym zasób jest osiągalny.
+// adresUdostepnienia składa adres, pod którym zasób jest osiągalny, jako
+// ścieżkę względną niosącą token udostępnienia.
 func adresUdostepnienia(udostepnienie dane.UdostepnienieBiblioteki) string {
 	return "/biblioteka/udostepnienie/" + udostepnienie.Token
 }
 
-// kolekcjaIstniejeBiblioteki sprawdza obecność kolekcji w wykazie.
+// kolekcjaIstniejeBiblioteki sprawdza obecność kolekcji wskazanego kodu w
+// podanym wykazie kolekcji biblioteki.
 func kolekcjaIstniejeBiblioteki(wykaz []dane.KolekcjaBiblioteki, kod string) bool {
 	for _, kolekcja := range wykaz {
 		if kolekcja.Kod == kod {
@@ -210,7 +207,8 @@ func kolekcjaIstniejeBiblioteki(wykaz []dane.KolekcjaBiblioteki, kod string) boo
 	return false
 }
 
-// udostepnienieKontraktuBiblioteki przenosi wiersz udostępnienia na kontrakt.
+// udostepnienieKontraktuBiblioteki przenosi wiersz udostępnienia na kontrakt,
+// dokładając chwilę wygaśnięcia i odwołania, gdy wiersz je niesie.
 func udostepnienieKontraktuBiblioteki(wiersz dane.UdostepnienieBiblioteki) shared.LibraryShare {
 	udostepnienie := shared.LibraryShare{
 		Id: wiersz.Kod, Scope: zasiegUdostepnieniaKontraktu(wiersz.Zasieg),
@@ -228,7 +226,9 @@ func udostepnienieKontraktuBiblioteki(wiersz dane.UdostepnienieBiblioteki) share
 	return udostepnienie
 }
 
-// webhookKontraktuBiblioteki przenosi wiersz nasłuchu na kontrakt.
+// webhookKontraktuBiblioteki przenosi wiersz nasłuchu na kontrakt, dokładając
+// zdarzenia subskrybowane i chwilę ostatniego zgłoszenia, gdy wiersz ją
+// niesie.
 func webhookKontraktuBiblioteki(wiersz dane.WebhookBiblioteki) shared.LibraryWebhook {
 	nasluch := shared.LibraryWebhook{
 		Id: wiersz.Kod, Url: wiersz.Adres, Secret: wiersz.Sekret, Enabled: wiersz.Czynny,

@@ -1,18 +1,6 @@
-// Odpowiedzialność pliku: Research Workspace — odczyt przestrzeni badania,
-// pytania badawcze i ich pokrycie, notatka robocza, świeżość badania, luki
-// badawcze, liczniki przesiewu PRISMA oraz graf dowodów (Evidence Map).
-//
-// ── Pokrycie liczy się z wiązań, nie z deklaracji ──────────────────────────
-// Pytanie badawcze jest pokryte wtedy, gdy istnieje źródło przypisane do niego
-// w katalogu (`pytanie_zrodla_badania`). Licznik pokrycia wyliczony z liczby
-// źródeł w ogóle mówiłby, że badanie posuwa się do przodu, gdy Operator dorzuca
-// materiał niezwiązany z żadnym pytaniem — a to jest dokładnie ten stan, przed
-// którym panel postępu ma ostrzegać.
-//
-// ── Świeżość jest faktem, sugestia jest progiem ────────────────────────────
-// `newestSourceAt` bierze się z bazy. `refreshSuggested` jest porównaniem tej
-// daty z progiem — i próg jest podany w odpowiedzi (`staleDays`), żeby Operator
-// wiedział, wobec czego rdzeń mierzy, a nie dostawał samego ostrzeżenia.
+// Plik obsługuje przestrzeń badania: pytania badawcze i ich pokrycie, notatkę
+// roboczą, świeżość źródeł, luki badawcze, liczniki przesiewu PRISMA oraz graf
+// dowodów łączący źródła, ustalenia i sprzeczności.
 package core
 
 import (
@@ -27,10 +15,13 @@ import (
 )
 
 // progSwiezosciBadania jest liczbą dni, po których badanie uchodzi za wymagające
-// odświeżenia źródeł.
+// odświeżenia źródeł — trzydzieści dni starcza, żeby literatura zdążyła się
+// zmienić.
 const progSwiezosciBadania = 30
 
-// PobierzPrzestrzen obsługuje `research.workspace.get`.
+// PobierzPrzestrzen obsługuje komendę research.workspace.get: zwraca zakres,
+// etapy, pytania badawcze, odbiorcę, protokół i notatkę roboczą jednej
+// przestrzeni badania.
 func (a *adapterBadan) PobierzPrzestrzen(ctx context.Context,
 	_ shared.ResearchWorkspaceGetRequest) (shared.ResearchWorkspaceGetResponse, error) {
 
@@ -56,7 +47,9 @@ func (a *adapterBadan) PobierzPrzestrzen(ctx context.Context,
 	}, nil
 }
 
-// UstawPytaniaBadania obsługuje `research.workspace.question.set`.
+// UstawPytaniaBadania obsługuje komendę research.workspace.question.set:
+// zapisuje wykaz pytań badawczych, nadając nowy identyfikator każdemu pytaniu
+// bez własnego kodu.
 func (a *adapterBadan) UstawPytaniaBadania(ctx context.Context,
 	z shared.ResearchWorkspaceQuestionSetRequest) (shared.ResearchWorkspaceQuestionSetResponse, error) {
 
@@ -87,7 +80,9 @@ func (a *adapterBadan) UstawPytaniaBadania(ctx context.Context,
 	}, nil
 }
 
-// PokryciePytan obsługuje `research.workspace.coverage`.
+// PokryciePytan obsługuje komendę research.workspace.coverage: zwraca pytania
+// badawcze wraz z kodami źródeł, które je pokrywają, oraz liczbę pytań bez ani
+// jednego źródła.
 func (a *adapterBadan) PokryciePytan(ctx context.Context,
 	z shared.ResearchWorkspaceCoverageRequest) (shared.ResearchWorkspaceCoverageResponse, error) {
 
@@ -156,7 +151,8 @@ func zlozPytaniaBadania(pytania []dane.PytanieBadania,
 	return przelozone
 }
 
-// UstawNotatkeBadania obsługuje `research.workspace.note.set`.
+// UstawNotatkeBadania obsługuje komendę research.workspace.note.set: zapisuje
+// treść notatki roboczej przestrzeni badania wraz ze znacznikiem czasu zapisu.
 func (a *adapterBadan) UstawNotatkeBadania(ctx context.Context,
 	z shared.ResearchWorkspaceNoteSetRequest) (shared.ResearchWorkspaceNoteSetResponse, error) {
 
@@ -169,7 +165,9 @@ func (a *adapterBadan) UstawNotatkeBadania(ctx context.Context,
 	}, nil
 }
 
-// SwiezoscBadania obsługuje `research.workspace.freshness`.
+// SwiezoscBadania obsługuje komendę research.workspace.freshness: porównuje
+// datę najnowszego źródła okna z progiem świeżości i zwraca obie wartości
+// wprost.
 func (a *adapterBadan) SwiezoscBadania(ctx context.Context,
 	z shared.ResearchWorkspaceFreshnessRequest) (shared.ResearchWorkspaceFreshnessResponse, error) {
 
@@ -183,8 +181,8 @@ func (a *adapterBadan) SwiezoscBadania(ctx context.Context,
 	}
 	odpowiedz := shared.ResearchWorkspaceFreshnessResponse{StaleDays: progSwiezosciBadania}
 	if len(zrodla) == 0 {
-		// Badanie bez źródeł jest badaniem nierozpoczętym, nie badaniem
-		// nieświeżym — sugestia odświeżenia byłaby tu podpowiedzią bez sensu.
+		// Badanie bez źródeł jest nierozpoczęte, nie nieświeże — sugestia
+		// odświeżenia tu nie ma sensu.
 		return odpowiedz, nil
 	}
 	najnowsze := int64(0)
@@ -258,7 +256,8 @@ func (a *adapterBadan) PrzesiewPrisma(ctx context.Context,
 }
 
 // licznikiPrismaBadania liczy przesiew: zidentyfikowane, duplikaty, przesiane,
-// wyłączone i włączone.
+// wyłączone i włączone, wraz z wykazem powodów wyłączenia posortowanym
+// alfabetycznie.
 func (a *adapterBadan) licznikiPrismaBadania(ctx context.Context,
 	okno string) (shared.ResearchPrismaCounts, error) {
 
@@ -348,10 +347,9 @@ func (a *adapterBadan) GrafDowodow(ctx context.Context,
 	return shared.ResearchEvidenceGraphResponse{Nodes: wezly, Edges: krawedzie}, nil
 }
 
-// UstawPrzestrzenPelna rozszerza `research.workspace.set` o pola, których zapis
-// zastany nie obejmował: pytania badawcze, odbiorcę, protokół i granice tematu.
-// Zapis zakresu i etapów zostaje tam, gdzie był — to jest ta sama komenda,
-// a nie druga jej odmiana.
+// UstawPrzestrzenPelna rozszerza research.workspace.set o pola, których zapis
+// zastany nie obejmował: pytania badawcze, odbiorcę, protokół i granice
+// tematu — to ta sama komenda, nie druga jej odmiana.
 func (a *adapterBadan) UstawPrzestrzenPelna(ctx context.Context,
 	z shared.ResearchWorkspaceSetRequest) (shared.ResearchWorkspaceSetResponse, error) {
 

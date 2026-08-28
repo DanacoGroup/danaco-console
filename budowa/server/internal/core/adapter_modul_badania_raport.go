@@ -1,29 +1,6 @@
-// Odpowiedzialność pliku: raport badania (Report Builder), jego eksport i
-// przestrzeń badania — metody `ZbudujRaport`, `WyeksportujRaport`,
-// `UstawPrzestrzen` na `*adapterBadan`. Źródła i ustalenia leżą w
-// `adapter_modul_badania.go` — jeden adapter, dwa pliki wedle
-// odpowiedzialności.
-//
-// Rdzeń nie prowadzi badań i nie zmyśla treści. Sekcje redagowane wprost
-// (`z.Sections`) przechodzą bez zmiany — to redakcja Operatora, bez modelu.
-// `z.FindingIds` bez sekcji własnych uruchamia redakcję modelem: most
-// `zapytajModel` streszcza zebrane ustalenia w jedną sekcję nadrzędną
-// („Streszczenie ustaleń"), po której idą sekcje szczegółowe — po jednej na
-// ustalenie, z treścią ustalenia skopiowaną dosłownie dla śladu (tytuł to kod
-// ustalenia, bo kontrakt nie daje ustaleniu własnego tytułu). Streszczenie
-// bierze domyślny czynny kanał rejestru (`domyslnyKanalBadania`), a brak
-// czynnego kanału to odmowa wprost.
-//
-// `WyeksportujRaport` zapisuje ślad eksportu w bycie trwałym
-// `eksport_raportu_badania`, bo `LibraryFileId`/`Path`/`SizeBytes` muszą
-// przeżyć wywołanie. Pliku na dysk rdzeń nie zapisuje — nie ma magazynu blobów
-// (ten sam brak, co w module Library). Odpowiedź zostawia `LibraryFileId`,
-// `Path` i `SizeBytes` puste, zamiast udawać wytworzony plik.
-//
-// `UstawPrzestrzen` operuje na przestrzeni jednowierszowej — kontrakt
-// `research.workspace.set` nie niesie identyfikatora okna ani sesji
-// (sprawdzone w `dane/badania_raport.go`), więc jedna przestrzeń na
-// instalację jest jedynym uczciwym odczytaniem.
+// Odpowiedzialność pliku: raport badania, jego eksport i przestrzeń badania —
+// metody ZbudujRaport, WyeksportujRaport, UstawPrzestrzen na adapterBadan.
+// Źródła i ustalenia leżą w adapter_modul_badania.go.
 package core
 
 import (
@@ -43,8 +20,9 @@ import (
 const tytulStreszczeniaRaportu = "Streszczenie ustaleń"
 
 // ZbudujRaport zakłada raport nowy albo rozbudowuje zastany o wskazanym
-// identyfikatorze i zwraca stan po złożeniu — patrz nagłówek pliku o źródle
-// sekcji.
+// identyfikatorze i zwraca stan po złożeniu. Sekcje redagowane wprost
+// przechodzą bez zmiany, a wskazane ustalenia bez sekcji własnych uruchamiają
+// redakcję modelem.
 func (a *adapterBadan) ZbudujRaport(ctx context.Context,
 	z shared.ResearchReportBuildRequest) (shared.ResearchReportBuildResponse, error) {
 
@@ -134,8 +112,7 @@ func (a *adapterBadan) sekcjeDoZapisu(ctx context.Context,
 		ustalenia = append(ustalenia, ustalenie)
 	}
 
-	// Redakcja modelem przed zapisem sekcji szczegółowych: brak czynnego kanału
-	// odmawia całej budowie, zamiast zapisać raport bez streszczenia.
+	// Redakcja modelem przed zapisem sekcji: brak kanału odmawia całej budowie.
 	streszczenie, err := a.sekcjaStreszczenia(ctx, z.WindowId, ustalenia)
 	if err != nil {
 		return nil, err
@@ -154,10 +131,8 @@ func (a *adapterBadan) sekcjeDoZapisu(ctx context.Context,
 }
 
 // sekcjaStreszczenia redaguje modelem sekcję nadrzędną raportu ze zebranych
-// ustaleń. Operacja wymaga modelu: bierze domyślny czynny kanał
-// rejestru, składa z treści ustaleń polecenie redakcji i zwraca sekcję z
-// odpowiedzią modelu. Brak kanału albo błąd kanału to odmowa wprost,
-// nie streszczenie zmyślone bez modelu.
+// ustaleń, biorąc domyślny czynny kanał rejestru. Brak kanału to odmowa
+// wprost, nie streszczenie zmyślone bez modelu.
 func (a *adapterBadan) sekcjaStreszczenia(ctx context.Context, okno string,
 	ustalenia []dane.UstalenieBadania) (dane.SekcjaRaportu, error) {
 
@@ -214,7 +189,7 @@ func trescUstaleniaDoPromptu(u dane.UstalenieBadania) string {
 }
 
 // przelozRaport dobudowuje sekcje do wiersza raportu i przekłada całość na
-// byt kontraktu.
+// byt kontraktu ResearchReport, gotowy do zwrotu w odpowiedzi komendy.
 func (a *adapterBadan) przelozRaport(ctx context.Context, raport dane.RaportBadania) (shared.ResearchReport, error) {
 	sekcje, err := a.repozytorium.Sekcje(ctx, raport.ID)
 	if err != nil {
@@ -234,7 +209,7 @@ func (a *adapterBadan) przelozRaport(ctx context.Context, raport dane.RaportBada
 }
 
 // UstawPrzestrzen nadpisuje jedyną przestrzeń badania instalacji i wymienia
-// jej etapy w całości.
+// jej etapy w całości, bo kontrakt nie niesie identyfikatora okna ani sesji.
 func (a *adapterBadan) UstawPrzestrzen(ctx context.Context,
 	z shared.ResearchWorkspaceSetRequest) (shared.ResearchWorkspaceSetResponse, error) {
 
@@ -248,7 +223,7 @@ func (a *adapterBadan) UstawPrzestrzen(ctx context.Context,
 	return shared.ResearchWorkspaceSetResponse{Scope: zakres, Stages: etapy}, nil
 }
 
-// bladRaportuBadania znakuje usterkę kodem kontraktu (wzór: bladBiblioteki).
+// bladRaportuBadania znakuje usterkę kodem kontraktu wewnętrznego, wzorem bladBiblioteki modułu Library.
 func bladRaportuBadania(err error) error {
 	if err == nil {
 		return nil
@@ -256,14 +231,14 @@ func bladRaportuBadania(err error) error {
 	return protocol.JakoError(protocol.BladZeZrodla(shared.ErrorCodeInternalError, err))
 }
 
-// bladNieznanegoRaportuBadania odróżnia „raportu nie ma" od „zapis się nie powiódł".
+// bladNieznanegoRaportuBadania odróżnia stan raportu nieistniejącego od stanu nieudanego zapisu wiersza.
 func bladNieznanegoRaportuBadania(kod string) error {
 	return protocol.JakoError(protocol.NowyBlad(shared.ErrorCodeNotFound,
 		"moduł Research: raport nie istnieje: "+kod))
 }
 
-// bladNieznanegoUstaleniaRaportu odróżnia „ustalenia nie ma" od usterki wewnętrznej,
-// gdy `report.build` składa sekcje z samych `FindingIds` (patrz nagłówek pliku).
+// bladNieznanegoUstaleniaRaportu odróżnia stan ustalenia nieistniejącego od usterki
+// wewnętrznej, gdy report.build składa sekcje z samych identyfikatorów ustaleń.
 func bladNieznanegoUstaleniaRaportu(kod string) error {
 	return protocol.JakoError(protocol.NowyBlad(shared.ErrorCodeNotFound,
 		"moduł Research: ustalenie nie istnieje: "+kod))

@@ -1,18 +1,6 @@
-// Odpowiedzialność pliku: port modułu Browser i wpięcie jego sześciu komend
-// do rejestru (`navigate`, `snapshot.get`, `source.add`, `note.add`,
-// `source.list`, `note.list`).
-//
-// Nawigacja rozgłasza `browser.page.changed`. Kontrakt niesie to zdarzenie
-// (`shared.EventBrowserPageChanged`), a klient je subskrybuje, więc `navigate`
-// po udanym pobraniu strony rozgłasza migawkę po zmianie — treść widoczną
-// jednocześnie Operatorowi i modelowi. Rozgłoszenie jedzie tym samym emiterem
-// rdzenia, co pozostałe zmiany obszarów (wzór: Automatyki).
-//
-// Źródło i notatka nie rozgłaszają zdarzeń. W odróżnieniu od nawigacji,
-// `browser.source.add` i `browser.note.add` odkładają wynik wprost do
-// odpowiedzi — kontrakt nie niesie dla nich żadnego zdarzenia domenowego
-// (`shared/contract.go` nie ma `browser.source.changed` ani podobnego), więc
-// port ich nie wymyśla.
+// Port modułu Browser wpina do rejestru komendy navigate, snapshot.get,
+// source.add, note.add, source.list oraz note.list. Nawigacja po udanym
+// pobraniu strony dodatkowo rozgłasza zdarzenie zmiany strony.
 package core
 
 import (
@@ -21,7 +9,8 @@ import (
 	"danacoconsole/shared"
 )
 
-// Przegladarka jest portem modułu Browser.
+// Przegladarka jest portem modułu Browser: obejmuje nawigację, karty, monitory
+// stron, kanały subskrypcji, zakładki, materiał zebrany oraz pobrania.
 type Przegladarka interface {
 	Nawiguj(ctx context.Context, z shared.BrowserNavigateRequest) (shared.BrowserNavigateResponse, error)
 	Migawka(ctx context.Context, z shared.BrowserSnapshotGetRequest) (shared.BrowserSnapshotGetResponse, error)
@@ -89,7 +78,8 @@ type Przegladarka interface {
 	OdczytajGraniceWykonawcy(ctx context.Context, z shared.BrowserExecutorLimitsGetRequest) (shared.BrowserExecutorLimitsGetResponse, error)
 }
 
-// zarejestrujPrzegladarke wpina sześć komend modułu Browser.
+// zarejestrujPrzegladarke wpina do rejestru wszystkie komendy modułu Browser
+// i spina wybrane z nich z odpowiednim rozgłoszeniem zdarzenia.
 func zarejestrujPrzegladarke(r *Rejestr, m Przegladarka, e *emiter) {
 	if r == nil || m == nil {
 		return
@@ -106,14 +96,12 @@ func zarejestrujPrzegladarke(r *Rejestr, m Przegladarka, e *emiter) {
 	r.Zarejestruj(shared.CommandBrowserSnapshotGet, obsluz(m.Migawka))
 	r.Zarejestruj(shared.CommandBrowserSourceAdd, obsluz(m.DodajZrodlo))
 	r.Zarejestruj(shared.CommandBrowserNoteAdd, obsluz(m.DodajNotatke))
-	// Dwa wykazy dopisane do tej samej funkcji, nie do własnej: rejestr ma
-	// jedno miejsce wiążące nazwy komend modułu z metodami portu.
+	// Wykazy źródeł i notatek.
 	r.Zarejestruj(shared.CommandBrowserSourceList, obsluz(m.WykazZrodel))
 	r.Zarejestruj(shared.CommandBrowserNoteList, obsluz(m.WykazNotatek))
 
-	// Rząd kart i przestrzenie robocze. Trzy z tych komend rozgłaszają
-	// `browser.tab.changed`: otwarcie, zmiana stanu i zamknięcie karty są
-	// zmianami widocznymi w oknie każdego klienta patrzącego na tę sesję.
+	// Karty i przestrzenie robocze. Otwarcie i zmiana stanu karty rozgłaszają
+	// zdarzenie zmiany karty.
 	r.Zarejestruj(shared.CommandBrowserTabOpen,
 		obsluz(func(ctx context.Context, z shared.BrowserTabOpenRequest) (shared.BrowserTabOpenResponse, error) {
 			odpowiedz, err := m.OtworzKarte(ctx, z)
@@ -138,9 +126,8 @@ func zarejestrujPrzegladarke(r *Rejestr, m Przegladarka, e *emiter) {
 	r.Zarejestruj(shared.CommandBrowserWorkspaceOpen, obsluz(m.OtworzPrzestrzen))
 	r.Zarejestruj(shared.CommandBrowserWorkspaceRemove, obsluz(m.UsunPrzestrzen))
 
-	// Monitory. Sprawdzenie, które wykryło zmianę, rozgłasza
-	// `browser.monitor.changed` — Capture & Monitor Panel dowiaduje się o niej
-	// bez odpytywania, a alert jest treścią zdarzenia, nie odpowiedzi.
+	// Monitory. Sprawdzenie, które wykryło zmianę, rozgłasza zdarzenie zmiany
+	// monitora.
 	r.Zarejestruj(shared.CommandBrowserMonitorAdd, obsluz(m.ZalozMonitor))
 	r.Zarejestruj(shared.CommandBrowserMonitorList, obsluz(m.WykazMonitorow))
 	r.Zarejestruj(shared.CommandBrowserMonitorCheck,
@@ -174,12 +161,11 @@ func zarejestrujPrzegladarke(r *Rejestr, m Przegladarka, e *emiter) {
 	r.Zarejestruj(shared.CommandBrowserNoteThreadSet, obsluz(m.UstawWatekNotatek))
 	r.Zarejestruj(shared.CommandBrowserNoteThreadList, obsluz(m.WykazWatkowNotatek))
 
-	// Narzędzia inspekcyjne. Emulacja i przewinięcie zmieniają wspólny podgląd,
-	// więc rozgłaszają `browser.page.changed` z powodem `interaction` — to nie
-	// jest przejście pod nowy adres, tylko zmiana stanu strony już otwartej.
+	// Narzędzia inspekcyjne. Emulacja i przewinięcie rozgłaszają zmianę strony
+	// z powodem interakcji.
 	r.Zarejestruj(shared.CommandBrowserDomInspect, obsluz(m.ZbadajDrzewo))
-	// Audyt dostępności zdarzenia nie rozgłasza: czyta stronę i niczego w niej
-	// nie zmienia, tak samo jak drzewo elementów, konsola i rejestr sieciowy.
+	// Odczyt drzewa, dostępności, konsoli i ruchu sieciowego nie zmienia strony
+	// i zdarzenia nie rozgłasza.
 	r.Zarejestruj(shared.CommandBrowserAccessibilityAudit, obsluz(m.ZbadajDostepnosc))
 	r.Zarejestruj(shared.CommandBrowserNetworkHar, obsluz(m.RejestrSieciowy))
 	r.Zarejestruj(shared.CommandBrowserConsoleRead, obsluz(m.OdczytajKonsole))
@@ -206,8 +192,7 @@ func zarejestrujPrzegladarke(r *Rejestr, m Przegladarka, e *emiter) {
 	r.Zarejestruj(shared.CommandBrowserArtifactAdd, obsluz(m.DodajWytwor))
 
 	// Pobrania, makra i granice Wykonawcy. Sterowanie pobraniem rozgłasza
-	// `browser.download.changed`: postęp i stan pobrania są tym, co menedżer
-	// pokazuje na żywo.
+	// zdarzenie zmiany pobrania.
 	r.Zarejestruj(shared.CommandBrowserDownloadList, obsluz(m.WykazPobran))
 	r.Zarejestruj(shared.CommandBrowserDownloadControl,
 		obsluz(func(ctx context.Context, z shared.BrowserDownloadControlRequest) (shared.BrowserDownloadControlResponse, error) {
@@ -250,7 +235,8 @@ func (e *emiter) monitorPrzegladarki(monitor shared.BrowserMonitor, roznica *sha
 	e.wyslij(shared.EventBrowserMonitorChanged, "", tresc)
 }
 
-// pobraniePrzegladarki rozgłasza `browser.download.changed`.
+// pobraniePrzegladarki rozgłasza zdarzenie zmiany pobrania wraz z jego bieżącym
+// stanem, aby menedżer pobrań pokazywał postęp bez odpytywania rejestru.
 func (e *emiter) pobraniePrzegladarki(pobranie shared.BrowserDownload) {
 	tresc := shared.BrowserDownloadChangedEvent{
 		DownloadId: pobranie.Id, WindowId: pobranie.WindowId, Download: pobranie,
@@ -263,11 +249,9 @@ func (e *emiter) pobraniePrzegladarki(pobranie shared.BrowserDownload) {
 // Kontrakt `BrowserPageChangedEvent.reason` rozróżnia te dwa źródła zmiany.
 const powodPrzejscia = "navigation"
 
-// stronaPrzegladarki rozgłasza `browser.page.changed` — migawkę strony po
-// zmianie. Metoda emitera per moduł (wzór: `przebiegAutomatyki`), zadeklarowana
-// tu, a nie w `zdarzenia.go`, bo to obszar Browser nazywa własne zdarzenie.
-// Zdarzenie niesie okno migawki i jedzie bez wskazania sesji — okno
-// przeglądarki nie jest bytem karty sesji.
+// stronaPrzegladarki rozgłasza zdarzenie zmiany strony niosące migawkę po
+// zmianie. Zdarzenie jedzie bez wskazania sesji, bo okno przeglądarki nie jest
+// bytem karty sesji.
 func (e *emiter) stronaPrzegladarki(migawka shared.BrowserSnapshot, powod string) {
 	tresc := shared.BrowserPageChangedEvent{WindowId: migawka.WindowId, Snapshot: migawka}
 	if powod != "" {

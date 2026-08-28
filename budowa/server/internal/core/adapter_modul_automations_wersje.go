@@ -1,19 +1,7 @@
-// Odpowiedzialność pliku: panel „Wersje ⋮” Workflow Buildera i to, co z niego
-// wynika — migawka definicji przy każdym zapisie, wykaz wersji, porównanie
-// strukturalne dwóch wersji, przywrócenie wcześniejszej, rozdział wersji
-// roboczej od opublikowanej, udostępnienie automatyki w organizacji, etykiety
-// oraz przebieg próbny definicji (przycisk „Test”).
-//
-// Porównanie jest strukturalne, nie tekstowe. Kontrakt oddaje `stepId` wraz
-// z rodzajem zmiany i nazwą pola, więc różnica liczy się po KROKACH: krok
-// dodany, krok usunięty, krok o zmienionym polu. Różnica tekstowa dwóch zapisów
-// strukturalnych mówiłaby o wierszach zapisu, a nie o krokach procesu.
-//
-// Symulacja nie wywołuje niczego. „Efekty uboczne kroków są wstrzymane” — tak
-// mówi kontrakt, i tak też jest: przebieg próbny czyta definicję, sprawdza
-// spójność każdego kroku i oddaje wynik kroku po kroku, nie ruszając ani
-// kolejki, ani kanału modelu, ani żadnego interfejsu zewnętrznego. Rdzeń, który
-// „na próbę" wysłałby raport pocztą, byłby rdzeniem, któremu nie wolno ufać.
+// Plik obsługuje panel wersji Workflow Buildera: migawkę definicji przy każdym
+// zapisie, wykaz wersji, porównanie strukturalne dwóch wersji, przywrócenie
+// wcześniejszej, publikację, udostępnienie w organizacji, etykiety oraz
+// przebieg próbny definicji.
 package core
 
 import (
@@ -24,7 +12,8 @@ import (
 	"danacoconsole/shared"
 )
 
-// Symulacja przeprowadza przebieg próbny definicji bez wpięcia produkcyjnego.
+// Symulacja przeprowadza przebieg próbny definicji bez wpięcia produkcyjnego,
+// sprawdzając spójność kroków, nie wywołując przy tym żadnego z ich efektów.
 func (a *adapterAutomatyk) Symulacja(ctx context.Context,
 	z shared.AutomationWorkflowSimulateRequest) (shared.AutomationWorkflowSimulateResponse, error) {
 
@@ -50,9 +39,9 @@ func (a *adapterAutomatyk) Symulacja(ctx context.Context,
 }
 
 // przebiegProbny ocenia każdy krok po kolei i zatrzymuje się na kroku
-// wskazanym. Krok bez pokrycia (brak komendy przy kroku komendy, warunek pusty
-// przy kroku warunku) kończy się stanem nieudanym i zastrzeżeniem — to jest
-// dokładnie to, co przebieg próbny ma znaleźć przed wpięciem produkcyjnym.
+// wskazanym. Krok bez pokrycia kończy się stanem nieudanym i zastrzeżeniem —
+// to jest dokładnie to, co przebieg próbny ma znaleźć przed wpięciem
+// produkcyjnym.
 func przebiegProbny(kroki []shared.AutomationStep,
 	krokStopu string) ([]shared.AutomationStepResult, []string, bool) {
 
@@ -79,8 +68,9 @@ func przebiegProbny(kroki []shared.AutomationStep,
 	return wyniki, zastrzezenia, powodzenie
 }
 
-// brakPokryciaKroku nazywa to, czego krokowi brakuje do wykonania. Pusty napis
-// znaczy krok kompletny.
+// brakPokryciaKroku nazywa to, czego krokowi brakuje do wykonania — pusty
+// napis znaczy krok kompletny, gotowy do wpięcia produkcyjnego bez dalszej
+// poprawki.
 func brakPokryciaKroku(krok shared.AutomationStep) string {
 	switch krok.Kind {
 	case shared.AutomationStepKindCommand, shared.AutomationStepKindExtension:
@@ -102,7 +92,8 @@ func brakPokryciaKroku(krok shared.AutomationStep) string {
 	return ""
 }
 
-// WykazWersji oddaje migawki definicji od najnowszej.
+// WykazWersji oddaje migawki definicji od najnowszej, w liczbie ograniczonej
+// wskazaniem żądania, wraz z autorem i chwilą zapisu każdej z nich.
 func (a *adapterAutomatyk) WykazWersji(ctx context.Context,
 	z shared.AutomationWorkflowVersionListRequest) (shared.AutomationWorkflowVersionListResponse, error) {
 
@@ -151,7 +142,8 @@ func (a *adapterAutomatyk) PrzywrocWersje(ctx context.Context,
 	return shared.AutomationWorkflowVersionRestoreResponse{Workflow: odpowiedz.Workflow}, nil
 }
 
-// PorownajWersje oddaje różnicę strukturalną dwóch migawek.
+// PorownajWersje oddaje różnicę strukturalną dwóch migawek, porządkując
+// zmiany po identyfikatorze kroku, którego dotyczą.
 func (a *adapterAutomatyk) PorownajWersje(ctx context.Context,
 	z shared.AutomationWorkflowVersionDiffRequest) (shared.AutomationWorkflowVersionDiffResponse, error) {
 
@@ -247,7 +239,8 @@ func rowneWartosci(pierwsza, druga any) bool {
 	return string(zapisWartosci(pierwsza)) == string(zapisWartosci(druga))
 }
 
-// zapisWartosci zamienia wartość pola na zapis strukturalny kontraktu.
+// zapisWartosci zamienia wartość pola na zapis strukturalny kontraktu, oddając
+// brak zamiast błędu, gdy wartość nie daje się zakodować.
 func zapisWartosci(wartosc any) json.RawMessage {
 	tresc, err := json.Marshal(wartosc)
 	if err != nil {
@@ -262,7 +255,8 @@ func zapisKroku(krok shared.AutomationStep) json.RawMessage {
 	return zapisWartosci(krok)
 }
 
-// UstawEtykiety podmienia komplet etykiet automatyki.
+// UstawEtykiety podmienia komplet etykiet automatyki na wykaz przekazany
+// w żądaniu i odnotowuje zmianę w dzienniku audytu.
 func (a *adapterAutomatyk) UstawEtykiety(ctx context.Context,
 	z shared.AutomationWorkflowTagSetRequest) (shared.AutomationWorkflowTagSetResponse, error) {
 
@@ -306,7 +300,7 @@ func (a *adapterAutomatyk) Opublikuj(ctx context.Context,
 }
 
 // Udostepnij przełącza udostępnienie automatyki jako komponentu własnego
-// w obrębie organizacji.
+// w obrębie organizacji i odnotowuje zmianę w dzienniku audytu.
 func (a *adapterAutomatyk) Udostepnij(ctx context.Context,
 	z shared.AutomationWorkflowShareRequest) (shared.AutomationWorkflowShareResponse, error) {
 
@@ -357,7 +351,8 @@ func krokiZMigawki(zapis string) []shared.AutomationStep {
 	return kroki
 }
 
-// bladNieznanejWersji odróżnia „wersji nie ma” od usterki odczytu.
+// bladNieznanejWersji odróżnia wersję definicji, której magazyn nie zna, od
+// usterki samego odczytu tej wersji.
 func bladNieznanejWersji(numer int, err error) error {
 	return bladNieznanegoBytuAutomatyki(err, "wersja definicji nie istnieje: ", numer)
 }

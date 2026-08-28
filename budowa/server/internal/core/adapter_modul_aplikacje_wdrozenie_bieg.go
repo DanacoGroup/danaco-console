@@ -1,33 +1,4 @@
-// Silnik wykonania przebiegu wdrożenia modułu Apps: przesuwa przebieg założony
-// przez `apps.deployment.run` (`adapter_modul_aplikacje_wdrozenie.go`) ze stanu
-// `pending` przez `running` do `succeeded` albo `failed` i rozgłasza każde
-// przejście zdarzeniem `apps.build.changed`.
-//
-// Silnik pracuje poza żądaniem. Komenda `apps.deployment.run` kończy się, gdy
-// przebieg ruszy, a nie gdy się skończy — rozłączenie klienta w połowie nie
-// przerywa wdrożenia. Dlatego bieg idzie własną gorutyną i własnym kontekstem
-// (`context.Background`), a nie kontekstem komendy.
-//
-// Stan końcowy wynika z wykonanej pracy. Krokiem wdrożenia jest sprawdzenie,
-// czy jest co wdrożyć:
-//   - wdrożenie w przód udaje się, gdy przestrzeń robocza okna niesie choć jeden
-//     plik; pusta przestrzeń kończy się `failed`;
-//   - cofnięcie udaje się, gdy wdrożenie docelowe kiedykolwiek weszło w
-//     `succeeded`; cofnięcie do przebiegu, który nigdy się nie powiódł, kończy
-//     się `failed`.
-//
-// Rdzeń nie hostuje produktu, więc wdrożenie w przód zostawia pole `Url` puste —
-// postawienie serwera produktu wymagałoby uruchamiacza procesu wpiętego w
-// adapter. Cofnięcie dziedziczy `Url` wprost z wdrożenia docelowego.
-//
-// PRZEBIEG ZOSTAWIA PO SOBIE ARTEFAKT I DZIENNIK. Udane wdrożenie w przód pakuje
-// przestrzeń roboczą okna w archiwum `zip` i kładzie je w magazynie treści
-// rdzenia, a wiersz `artefakt_apps` wskazuje ten plik wraz z rozmiarem i sumą
-// kontrolną — to on jest wejściem `apps.package.build` i pozycją
-// `apps.artifact.list`. Każdy krok przebiegu dopisuje wiersz do
-// `wiersz_dziennika_apps`, skąd czyta go `apps.deployment.log.read`. Bez tych
-// dwóch rzeczy trzy komendy rodziny meldowałyby pustkę przy przebiegu, który
-// naprawdę się odbył.
+// Silnik wykonania przebiegu wdrożenia modułu Apps: przesuwa przebieg założony przez apps.deployment.run ze stanu pending przez running do succeeded albo failed i rozgłasza każde przejście zdarzeniem apps.build.changed.
 package core
 
 import (
@@ -42,7 +13,7 @@ import (
 	"danacoconsole/shared"
 )
 
-// przedrostekArtefaktuApp znakuje identyfikatory artefaktów budowania.
+// przedrostekArtefaktuApp znakuje identyfikatory artefaktów budowania modułu Apps, odróżniając je od innych bytów warstwy.
 const przedrostekArtefaktuApp = "art-"
 
 // errBrakMagazynuArtefaktuApp nazywa brak katalogu danych przy składaniu
@@ -57,9 +28,7 @@ func (a *adapterAplikacji) uruchomWdrozenie(wdrozenie dane.WdrozenieApp) {
 	go a.wykonajWdrozenie(wdrozenie)
 }
 
-// wykonajWdrozenie przesuwa przebieg z `pending` przez `running` do stanu
-// końcowego i rozgłasza każde przejście. Kontekst jest własny, nie komendy —
-// wdrożenie przeżywa rozłączenie klienta (patrz nagłówek pliku).
+// wykonajWdrozenie przesuwa przebieg z `pending` przez `running` do stanu końcowego i rozgłasza każde przejście. Kontekst jest własny, nie komendy — wdrożenie przeżywa rozłączenie klienta.
 func (a *adapterAplikacji) wykonajWdrozenie(wdrozenie dane.WdrozenieApp) {
 	ctx := context.Background()
 
@@ -81,8 +50,7 @@ func (a *adapterAplikacji) wykonajWdrozenie(wdrozenie dane.WdrozenieApp) {
 	zakonczono := time.Now().UTC().Format(formatZnacznikaBazy)
 	wdrozenie.Zakonczono = &zakonczono
 
-	// Artefakt powstaje wyłącznie po udanym wdrożeniu w przód: cofnięcie
-	// przywraca wersję już zapakowaną, a przebieg nieudany nie ma czego wydać.
+	// Artefakt powstaje wyłącznie po udanym wdrożeniu w przód; przebieg nieudany nie ma czego wydać.
 	if stan == shared.AppDeployStatusSucceeded && wdrozenie.CofnieteDoKodu == nil {
 		if opis, err := a.zlozArtefaktPrzebieguApp(ctx, wdrozenie); err != nil {
 			a.dopiszDziennikApp(ctx, wdrozenie.OknoKod, &wdrozenie.Kod, nil,
@@ -102,13 +70,7 @@ func (a *adapterAplikacji) wykonajWdrozenie(wdrozenie dane.WdrozenieApp) {
 		"przebieg "+wdrozenie.Kod+" zakończony stanem "+string(stan))
 }
 
-// zlozArtefaktPrzebieguApp pakuje przestrzeń roboczą okna w archiwum i zapisuje
-// je w magazynie treści rdzenia wraz z wierszem artefaktu. Zwraca zdanie do
-// dziennika albo powód niepowodzenia.
-//
-// Brak magazynu nie przewraca przebiegu: wdrożenie już się udało, a artefakt
-// jest jego wynikiem ubocznym. Dziennik mówi wtedy wprost, czego zabrakło —
-// milczenie kazałoby szukać artefaktu, którego nikt nie miał gdzie odłożyć.
+// zlozArtefaktPrzebieguApp pakuje przestrzeń roboczą okna w archiwum i zapisuje je w magazynie treści rdzenia wraz z wierszem artefaktu. Brak magazynu nie przewraca przebiegu: dziennik mówi wtedy wprost, czego zabrakło.
 func (a *adapterAplikacji) zlozArtefaktPrzebieguApp(ctx context.Context,
 	wdrozenie dane.WdrozenieApp) (string, error) {
 
@@ -119,8 +81,7 @@ func (a *adapterAplikacji) zlozArtefaktPrzebieguApp(ctx context.Context,
 	if err != nil {
 		return "", err
 	}
-	// Nazwa wpisu niesie warstwę, bo ten sam plik może stać w obu warstwach
-	// warsztatu pod tą samą ścieżką — klucz naturalny to (okno, warstwa, ścieżka).
+	// Nazwa wpisu niesie warstwę: klucz naturalny to (okno, warstwa, ścieżka).
 	wpisy := map[string][]byte{}
 	nazwy := make([]string, 0, len(pliki))
 	for _, plik := range pliki {
@@ -190,11 +151,7 @@ func (a *adapterAplikacji) krokCofniecia(ctx context.Context,
 		return shared.AppDeployStatusFailed, nil,
 			"nie można odczytać wdrożenia docelowego cofnięcia " + kodCelu + ": " + err.Error()
 	}
-	// Powód rozróżnia dwa przypadki, bo prowadzą do różnych działań: przy
-	// przebiegu trwającym trzeba poczekać, przy padłym — wybrać inny cel.
-	// Żądanie cofnięcia do przebiegu bez werdyktu odrzuca już obsługiwacz
-	// komendy (`adapter_modul_aplikacje_wdrozenie.go`); tutaj zostaje przypadek,
-	// w którym cel zmienił stan między odczytem komendy a odczytem silnika.
+	// Powód rozróżnia dwa przypadki: przy trwającym trzeba poczekać, przy padłym wybrać inny cel.
 	if cel.Stan == shared.AppDeployStatusPending || cel.Stan == shared.AppDeployStatusRunning {
 		return shared.AppDeployStatusFailed, nil,
 			"wdrożenie docelowe cofnięcia " + kodCelu +

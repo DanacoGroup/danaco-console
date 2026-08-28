@@ -1,19 +1,4 @@
-// Odpowiedzialność pliku: obsługa `browser.source.list` i `browser.note.list` —
-// odczytowa strona szuflady źródeł i szuflady notatek. Obie komendy nie
-// dokładają nowej wiedzy — oddają to, co `browser.source.add`
-// i `browser.note.add` już zapisały w tabelach modułu.
-//
-// Okno nieznane to odmowa, okno puste to wynik. Wykaz pusty jest prawidłową
-// odpowiedzią: okno przeglądania istnieje, tylko nic w nim jeszcze nie
-// zebrano. Okno, którego moduł nigdy nie widział, dostaje `not_found` — gdyby
-// oddać na nie pustą tablicę, literówka w identyfikatorze okna wyglądałaby
-// dokładnie tak samo jak uczciwie pusta szuflada, a Operator szukałby braku
-// danych zamiast braku okna. Znaczenie „znane" rozstrzyga `dane.OknoZnane`
-// i jego nagłówek.
-//
-// Limit zerowy znaczy wykaz pełny, nie pusty. Kontrakt daje `limit` jako pole
-// nieobowiązkowe; jego brak to „nie ograniczaj", nie „oddaj nic" — przekład
-// robi `granicaWykazu` warstwy danych.
+// Odpowiedzialność pliku: obsługa browser.source.list i browser.note.list — odczytowa strona szuflad źródeł i notatek, bez dokładania nowej wiedzy.
 package core
 
 import (
@@ -50,10 +35,7 @@ func (a *adapterPrzegladarki) WykazZrodel(ctx context.Context,
 	return shared.BrowserSourceListResponse{Sources: zrodla}, nil
 }
 
-// WykazNotatek oddaje notatki okna, od najświeższej, w całości albo zawężone
-// do jednego źródła. Zawężenie do źródła, którego w oknie nie ma, daje wykaz
-// pusty, nie odmowę: notatka bez źródła jest dozwolona, a kolumna źródła nie
-// niesie więzu obcego, więc moduł nie ma czego sprawdzać poza samym oknem.
+// WykazNotatek oddaje notatki okna, od najświeższej, w całości albo zawężone do jednego źródła; źródło spoza okna daje wykaz pusty, nie odmowę.
 func (a *adapterPrzegladarki) WykazNotatek(ctx context.Context,
 	z shared.BrowserNoteListRequest) (shared.BrowserNoteListResponse, error) {
 
@@ -80,10 +62,7 @@ func (a *adapterPrzegladarki) WykazNotatek(ctx context.Context,
 	return shared.BrowserNoteListResponse{Notes: notatki}, nil
 }
 
-// upewnijSieOknoZnane przepuszcza dalej wyłącznie okno, które moduł Browser
-// naprawdę widział. Rozdziela trzy odmowy, bo to trzy różne winy: brak
-// wskazania okna jest usterką żądania (`validation_failed`), okno nieznane —
-// pomyłką Operatora (`not_found`), a niepowodzenie odczytu — usterką rdzenia.
+// upewnijSieOknoZnane przepuszcza dalej wyłącznie okno naprawdę widziane przez moduł Browser, rozdzielając trzy różne odmowy według winy.
 func (a *adapterPrzegladarki) upewnijSieOknoZnane(ctx context.Context, okno, komenda string) error {
 	if okno == "" {
 		return bladWskazaniaPrzegladarki("komenda " + komenda + " bez okna")

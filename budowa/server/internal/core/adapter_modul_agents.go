@@ -1,17 +1,6 @@
-// Odpowiedzialność pliku: wypełnienie portu Agenci biblioteką ekspertów z bazy
-// — założenie, wykaz, zmiana tożsamości i usunięcie (okno Agent Builder).
-// Model bazowy leży w `adapter_modul_agents_model.go`, umiejętności, konektory
-// i uprawnienia w `adapter_modul_agents_zasoby.go`.
-//
-// Ekspert nie ma własnego rejestru modeli. Kanał bazowy wskazuje kod wiersza
-// `kanal_modelu` — tego samego rejestru, z którego korzysta okno rozmowy.
-// Adapter sprawdza wskazanie w rejestrze kanałów rdzenia i nie przechowuje
-// własnych definicji dostawcy.
-//
-// Zmiana tożsamości jest częściowa: `agent.update` niesie same pola zmieniane,
-// a pole pominięte zostaje takie, jakie było. Bez tego okno musiałoby odesłać
-// komplet tożsamości przy każdej poprawce nazwy i skasowałoby instrukcje
-// systemowe pierwszym niepełnym żądaniem.
+// Odpowiedzialność pliku: wypełnienie portu Agenci biblioteką ekspertów
+// z bazy — założenie, wykaz, zmiana tożsamości i usunięcie. Ekspert nie ma
+// własnego rejestru modeli.
 package core
 
 import (
@@ -23,26 +12,27 @@ import (
 	"danacoconsole/shared"
 )
 
-// Zgodność adaptera z portem sprawdzana jest przy kompilacji.
+// Zgodność struktury adapterAgentow z portem Agenci jest sprawdzana już przy
+// samej kompilacji pakietu core.
 var _ Agenci = (*adapterAgentow)(nil)
 
-// adapterAgentow wypełnia port Agenci tabelami rodziny `agent*`.
+// adapterAgentow wypełnia port Agenci tabelami rodziny `agent*`, obsługując
+// bibliotekę ekspertów rdzenia.
 type adapterAgentow struct {
 	repozytorium dane.RepozytoriumAgentow
-	// kanaly jest rejestrem kanałów modelu rdzenia. Służy tylko sprawdzeniu
-	// wskazania i podpowiedzi modelu domyślnego — adapter nie zakłada kanałów.
+	// kanaly jest rejestrem kanałów modelu rdzenia, do sprawdzenia wskazania
+	// kanału.
 	kanaly *models.Rejestr
-	// punkty są katalogiem punktów dostępu. Konektor rodzaju `mcp` wskazuje
-	// most z tego katalogu, ten sam, z którego rdzeń składa `mcpServers`.
+	// punkty są katalogiem punktów dostępu; konektor `mcp` wskazuje most
+	// z tego katalogu.
 	punkty dane.RepozytoriumPunktowDostepu
-	// warstwy jest repozytorium tożsamości własnej eksperta — warstw jego
-	// promptu i jego wtyczek. Wpina je `ZWarstwami`
-	// z `adapter_modul_agents_warstwy.go`; nil znaczy „nie wpięto”, a wtedy
-	// cztery komendy warstw odmawiają, a reszta modułu pracuje bez zmiany.
+	// warstwy jest repozytorium tożsamości własnej eksperta, wpinanym metodą
+	// `ZWarstwami`.
 	warstwy dane.RepozytoriumWarstwAgenta
 }
 
-// nowyAdapterAgentow wiąże port z repozytorium biblioteki ekspertów.
+// nowyAdapterAgentow wiąże port Agenci z repozytorium biblioteki ekspertów,
+// bez wpięcia kanałów, punktów dostępu ani warstw tożsamości.
 func nowyAdapterAgentow(repozytorium dane.RepozytoriumAgentow) *adapterAgentow {
 	return &adapterAgentow{repozytorium: repozytorium}
 }
@@ -54,13 +44,15 @@ func (a *adapterAgentow) ZKanalami(kanaly *models.Rejestr) *adapterAgentow {
 	return a
 }
 
-// ZPunktamiDostepu wpina katalog mostów obsługujący konektory rodzaju `mcp`.
+// ZPunktamiDostepu wpina katalog mostów obsługujący konektory rodzaju
+// `mcp` w bibliotece ekspertów rdzenia.
 func (a *adapterAgentow) ZPunktamiDostepu(punkty dane.RepozytoriumPunktowDostepu) *adapterAgentow {
 	a.punkty = punkty
 	return a
 }
 
-// Utworz zakłada eksperta wraz z wyjściowym kompletem uprawnień.
+// Utworz zakłada eksperta wraz z wyjściowym kompletem uprawnień i
+// tożsamością zapisaną osobną czynnością.
 func (a *adapterAgentow) Utworz(ctx context.Context,
 	z shared.AgentCreateRequest) (shared.AgentCreateResponse, error) {
 
@@ -78,9 +70,8 @@ func (a *adapterAgentow) Utworz(ctx context.Context,
 	if err := sprawdzWidocznosc(z.Visibility); err != nil {
 		return shared.AgentCreateResponse{}, err
 	}
-	// Pominięte pole pamięci znaczy komplet, nie pustkę: `nil` to „Operator
-	// o pamięci nie mówił", a wtedy obowiązuje stan wyjściowy platformy — pełny.
-	// Lista pusta `[]` jest czym innym: świadomym żądaniem wyłączenia pamięci.
+	// Pominięte pole pamięci znaczy komplet: nil to brak deklaracji, lista
+	// pusta wyłącza pamięć.
 	poziomy := poziomyPamieciWyjsciowe
 	if z.MemoryLevels != nil {
 		poziomy, err = sprawdzPoziomyPamieci(z.MemoryLevels)
@@ -102,10 +93,8 @@ func (a *adapterAgentow) Utworz(ctx context.Context,
 	if err != nil {
 		return shared.AgentCreateResponse{}, err
 	}
-	// Imię własne i favikon podane przy zakładaniu idą tą samą drogą co przy
-	// zmianie — patrz `zapiszTozsamosc`. Ekspert założony bez nich nie jest
-	// ekspertem niepełnym: `nazwa` niesie tożsamość, a imię własne jest tym,
-	// jak Operator go woła.
+	// Imię własne i favikon idą tą samą drogą co przy zmianie tożsamości
+	// eksperta.
 	if err := a.zapiszTozsamosc(ctx, zapisany.Kod, z.DisplayName, z.Favicon); err != nil {
 		return shared.AgentCreateResponse{}, err
 	}
@@ -119,7 +108,8 @@ func (a *adapterAgentow) Utworz(ctx context.Context,
 	return shared.AgentCreateResponse{Agent: pelny}, nil
 }
 
-// Zmien zapisuje zmienione pola tożsamości i podnosi licznik wersji.
+// Zmien zapisuje zmienione pola tożsamości eksperta, poziomy pamięci i tryb
+// nakładki, podnosząc licznik wersji.
 func (a *adapterAgentow) Zmien(ctx context.Context,
 	z shared.AgentUpdateRequest) (shared.AgentUpdateResponse, error) {
 
@@ -157,19 +147,15 @@ func (a *adapterAgentow) Zmien(ctx context.Context,
 		return shared.AgentUpdateResponse{}, err
 	}
 	// Imię własne i favikon idą osobną drogą, bo zapytanie aktualizujące
-	// eksperta nie zna kolumn `imie_wlasne` i `favikon` — repozytorium warstw
-	// ma na to własną czynność. Bez tego wywołania formularz tożsamości
-	// przyjmowałby imię i favikon, rdzeń odpowiadałby powodzeniem, a wartość
-	// przepadałaby.
+	// eksperta nie zna tych kolumn.
 	if err := a.zapiszTozsamosc(ctx, zapisany.Kod, z.DisplayName, z.Favicon); err != nil {
 		return shared.AgentUpdateResponse{}, err
 	}
 	if err := a.zapiszTrybNakladki(ctx, zapisany.Kod, z.Mode); err != nil {
 		return shared.AgentUpdateResponse{}, err
 	}
-	// Poziomy pamięci idą osobną drogą, bo siedzą w tabeli podrzędnej. `nil`
-	// znaczy „pole pominięte" i zostawia zastane poziomy; lista pusta wyłącza
-	// pamięć — dlatego wyłączenie nie potrzebuje własnej wartości wyliczenia.
+	// Poziomy pamięci idą osobną drogą, bo siedzą w tabeli podrzędnej; nil
+	// zostawia zastane poziomy.
 	if z.MemoryLevels != nil {
 		poziomy, err := sprawdzPoziomyPamieci(z.MemoryLevels)
 		if err != nil {
@@ -194,9 +180,7 @@ func (a *adapterAgentow) Wykaz(ctx context.Context,
 	if a == nil || a.repozytorium == nil {
 		return shared.AgentListResponse{Agents: []shared.Agent{}}, nil
 	}
-	// Wskazany projekt zawęża wykaz do ekspertów w nim widocznych. Bez tego
-	// pole `visibility` byłoby etykietą: dałoby się je zapisać i odczytać, ale
-	// nic by z niego nie wynikało.
+	// Wskazany projekt zawęża wykaz do ekspertów w nim widocznych.
 	filtr := dane.FiltrAgentow{
 		Fraza:       wartoscTekstu(z.Query),
 		KodProjektu: strings.TrimSpace(wartoscTekstu(z.ProjectId)),
@@ -211,10 +195,8 @@ func (a *adapterAgentow) Wykaz(ctx context.Context,
 	if err != nil {
 		return shared.AgentListResponse{}, err
 	}
-	// Warstwy i wtyczki dochodzą dwoma zapytaniami na cały wykaz, nie dwoma na
-	// eksperta. Bez nich edytor warstw pokazywałby puste pola przy ekspercie,
-	// który warstwy ma; pytanie o nie po jednym dałoby przy stu ekspertach
-	// dwieście zapytań na jedno otwarcie biblioteki.
+	// Warstwy i wtyczki dochodzą dwoma zapytaniami na cały wykaz, nie dwoma
+	// na eksperta.
 	warstwy, wtyczki := a.tozsamosciWykazu(ctx)
 	eksperci := make([]shared.Agent, 0, len(wiersze))
 	for _, wiersz := range wiersze {
@@ -252,7 +234,8 @@ func (a *adapterAgentow) Usun(ctx context.Context,
 	return shared.AgentDeleteResponse{AgentId: z.AgentId, Deleted: usuniety}, nil
 }
 
-// Pobierz oddaje jednego eksperta rozgłoszeniu zmiany.
+// Pobierz oddaje jednego eksperta rozgłoszeniu zmiany biblioteki, w postaci
+// pełnego bytu kontraktu do wysłania.
 func (a *adapterAgentow) Pobierz(ctx context.Context, idEksperta string) (shared.Agent, error) {
 	if a == nil || a.repozytorium == nil {
 		return shared.Agent{}, bladBrakuKatalogu("ekspertów")

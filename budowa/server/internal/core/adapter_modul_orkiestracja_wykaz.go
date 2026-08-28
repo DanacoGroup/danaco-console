@@ -1,23 +1,6 @@
-// Odpowiedzialność pliku: wykaz podagentów (`subagent.list`) i zbieranie ich
-// wyników (`subagent.result.collect`) — dwa odczyty tego samego wiersza, dwa
-// różne pytania panelu.
-//
-// Wykaz pusty jest poprawną odpowiedzią, nie odmową: okno, które nikogo nie
-// powołało, dostaje wykaz pusty i pusty panel. Dlatego zawężenia są warunkami
-// zapytania, a nie warunkami wstępnymi żądania.
-//
-// Pole `waitForAll` oznacza czekanie rzeczywiste: odpowiedź pyta bazę w takcie,
-// aż wszyscy objęci zbieraniem wejdą w stan końcowy albo aż zerwie się kontekst
-// żądania. Odpowiedź natychmiastowa z `complete=false` pomijałaby to pole,
-// a górnego limitu czekania adapter nie narzuca — czekanie kończy zamknięcie
-// żądania przez klienta.
-//
-// Domyślnie rodzic zbiera po drodze. Podagenta powołuje model w trakcie tury
-// rodzica, więc odpowiedź domyślnie blokująca zatrzymywałaby turę orkiestratora
-// na cudzej pracy i unieważniała sens tła. Czekanie na wszystkich jest wyborem
-// jawnym polem `waitForAll`. Czekania na pierwszego kontrakt nie zna (nie ma
-// pola `waitForAny`) i ten adapter go nie wymyśla; rodzic osiąga to samo,
-// zbierając po drodze i czytając pole `complete` oraz stany pozycji.
+// Odpowiedzialność pliku: wykaz podagentów (subagent.list) i zbieranie ich
+// wyników (subagent.result.collect) — dwa odczyty tego samego wiersza, dwa
+// różne pytania panelu. Wykaz pusty jest poprawną odpowiedzią, nie odmową.
 package core
 
 import (
@@ -42,11 +25,9 @@ var stanyKoncowePodagenta = map[string]struct{}{
 	dane.StanPodagentaZatrzymany: {},
 }
 
-// Wykaz oddaje podagentów okna wykonawcy albo karty sesji.
-//
-// Oba wskazania idą do zapytania jednocześnie: podane naraz zawężają wykaz
-// podwójnie, co nie jest sprzecznością, tylko węższym pytaniem. Kontrakt
-// opisuje `sessionId` jako kartę sesji braną pod uwagę, gdy okna nie wskazano.
+// Wykaz oddaje podagentów okna wykonawcy albo karty sesji. Oba wskazania idą
+// do zapytania jednocześnie: podane naraz zawężają wykaz podwójnie, co nie
+// jest sprzecznością, tylko węższym pytaniem.
 func (a *adapterPodagentow) Wykaz(ctx context.Context,
 	z shared.SubagentListRequest) (shared.SubagentListResponse, error) {
 
@@ -85,11 +66,9 @@ func (a *adapterPodagentow) ZbierzWyniki(ctx context.Context,
 	}, nil
 }
 
-// objeciZbieraniem dobiera podagentów, których wyniki są zbierane.
-//
-// Pusta lista wskazań znaczy komplet — tak mówi kontrakt. Komplet zawęża się
-// wtedy oknem, jeśli okno wskazano; żądanie bez okna i bez wskazania podagentów
-// zbiera wszystkich.
+// objeciZbieraniem dobiera podagentów, których wyniki są zbierane. Pusta
+// lista wskazań znaczy komplet — tak mówi kontrakt, zawężony oknem, jeśli
+// okno wskazano.
 func (a *adapterPodagentow) objeciZbieraniem(ctx context.Context,
 	z shared.SubagentResultCollectRequest) ([]dane.Podagent, error) {
 
@@ -106,9 +85,7 @@ func (a *adapterPodagentow) objeciZbieraniem(ctx context.Context,
 	if err != nil {
 		return nil, bladPodagentow(err)
 	}
-	// Wskazanie, któremu nie odpowiada żaden wiersz, jest pomyłką co do bytu,
-	// nie pustym wynikiem: pusty wykaz czyta się jako „ci podagenci nic nie
-	// oddali", a nie jako „takich podagentów nie ma".
+	// Wskazanie bez odpowiadającego wiersza jest pomyłką co do bytu, nie pustym wynikiem.
 	if len(wiersze) == 0 {
 		return nil, bladNieznanychPodagentow(kody)
 	}
@@ -150,7 +127,7 @@ func czyKomplet(wiersze []dane.Podagent) bool {
 	return true
 }
 
-// niepusteKody odsiewa wskazania puste — puste wskazanie nie zawęża zbierania.
+// niepusteKody odsiewa wskazania puste — puste wskazanie nie zawęża zbierania wyników wielu podagentów.
 func niepusteKody(kody []string) []string {
 	wybrane := make([]string, 0, len(kody))
 	for _, kod := range kody {

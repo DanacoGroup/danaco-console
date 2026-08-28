@@ -1,23 +1,7 @@
-// Cztery komendy nakładki AOD, które nie dotyczą obserwacji procesów —
-// wiadomość, komplet kontekstu, podpowiedzi i polecenie głosowe. Typ
-// `adapterNakladkiAod`, jego wypełnianie i ustalenia wspólne żądań deklaruje
-// `adapter_modul_aod.go`.
-//
-// Nakładka niczego nie zakłada sama. Wiadomość idzie portem rozmowy — tym
-// samym, którym jedzie `message.send`, więc wchodzi do tej samej historii okna,
-// uruchamia tę samą turę modelu i tę samą telemetrię. Zlecenie idzie modułem
-// Assistant — tym samym, którym jedzie `assistant.voice.command`, więc zlecenie
-// z nakładki widać w Actions Monitor. Druga droga do wiadomości albo do
-// zlecenia byłaby drugą prawdą o tym samym bycie.
-//
-// Podpowiedzi pochodzą z katalogu akcji (tabela `akcja`) — jedynego zbioru
-// w tym rdzeniu, który wiąże byt zasięgu z komendą kontraktu do wywołania,
-// a taki właśnie kształt ma `AodSuggestion` z polem `commandType`. Podpowiedzi
-// nie są układane w kodzie: dopisanie wiersza katalogu daje nową podpowiedź bez
-// zmiany rdzenia.
-//
-// `aod.suggestion` jest odczytem, bo komenda ma żądanie i wynik; zdarzenia
-// `aod.suggestion.*` kontrakt nie zna, więc rdzeń podpowiedzi nie wypycha.
+// Cztery komendy nakładki AOD, które nie dotyczą obserwacji procesów:
+// wiadomość, komplet kontekstu, podpowiedzi i polecenie głosowe. Wiadomość
+// idzie portem rozmowy, polecenie głosowe idzie modułem Assistant, a
+// podpowiedzi pochodzą z katalogu akcji.
 package core
 
 import (
@@ -56,8 +40,7 @@ func (a *adapterNakladkiAod) WyslijZNakladki(ctx context.Context,
 	if err != nil {
 		return shared.AodChatSendResponse{}, shared.Message{}, err
 	}
-	// Okno oddajemy to, które wiadomość naprawdę przyjęła. Port rozmowy zna je
-	// z założonego wiersza; wskazanie z żądania jest tu tylko punktem wyjścia.
+	// Oddawane jest okno, które wiadomość naprawdę przyjęła.
 	idOkna := odpowiedz.Message.WindowId
 	if idOkna == "" {
 		idOkna = okno.Id
@@ -93,12 +76,7 @@ func (a *adapterNakladkiAod) KontekstNakladki(_ context.Context,
 }
 
 // KompletOkna oddaje komplet kontekstu wskazanego okna wraz z historią rozmowy
-// przyciętą do granicy żądania. Granica niedodatnia nie zawęża niczego — tak
-// samo czyta ją reszta rdzenia.
-//
-// Metoda mieszka przy nakładce, bo to nakładka jej potrzebuje: przenoszenie
-// kontekstu składa komplet po drodze do okna docelowego i nie miało dotąd
-// czytelnika pytającego o komplet okna wprost.
+// przyciętą do granicy żądania. Granica niedodatnia nie zawęża niczego.
 func (a *adapterPrzenoszenia) KompletOkna(idOkna string,
 	ograniczenieHistorii int) (shared.ContextBundle, error) {
 
@@ -112,15 +90,13 @@ func (a *adapterPrzenoszenia) KompletOkna(idOkna string,
 	}
 	komplet := uzupelnijZrodlem(a.magazyn.Odczytaj(okno.Id), okno,
 		a.projekt(okno.IdSesji), a.historiaZGranica(okno.Id, ograniczenieHistorii))
-	// Granica dotyczy kompletu, nie samego odczytu dziennika: historia bywa
-	// zapisana wprost w komplecie okna i wtedy dziennik nie ma jej czego
-	// przyciąć.
+	// Granica dotyczy kompletu, nie samego odczytu dziennika.
 	komplet.HistoryMessageIds = ogonOdwolan(komplet.HistoryMessageIds, ograniczenieHistorii)
 	return komplet, nil
 }
 
 // historiaZGranica odczytuje identyfikatory wiadomości okna, najwyżej tyle, ile
-// dopuszcza granica.
+// dopuszcza granica; granica niedodatnia nie zawęża wykazu wiadomości.
 func (a *adapterPrzenoszenia) historiaZGranica(idOkna string, granica int) []string {
 	if a.historia == nil {
 		return nil
@@ -145,9 +121,9 @@ func ogonOdwolan(odwolania []string, granica int) []string {
 
 // ── aod.suggestion ──────────────────────────────────────────────────────────
 
-// Podpowiedzi obsługuje `aod.suggestion`: oddaje podpowiedzi następnego kroku
-// w kolejności ważności — od bytu najwęższego (okno) do najszerszego (cała
-// platforma). Patrz nagłówek pliku: pozycje pochodzą z katalogu akcji.
+// Podpowiedzi obsługuje aod.suggestion: oddaje podpowiedzi następnego kroku
+// w kolejności ważności, od bytu najwęższego (okno) do najszerszego (cała
+// platforma), złożone z pozycji katalogu akcji.
 func (a *adapterNakladkiAod) Podpowiedzi(ctx context.Context,
 	z shared.AodSuggestionRequest) (shared.AodSuggestionResponse, error) {
 
@@ -204,9 +180,7 @@ func (a *adapterNakladkiAod) oknoProcesu(idProcesu string) (session.Okno, bool, 
 			continue
 		}
 		if odpis.IdOkna == "" || a.nadzorca == nil {
-			// Proces bez okna istnieje — kolejka założona przed pierwszą
-			// wiadomością nie ma jeszcze okna. Podpowiedzi zostają wtedy
-			// platformowe, bo bytu węższego nie ma.
+			// Proces bez okna istnieje; podpowiedzi zostają wtedy platformowe.
 			return session.Okno{}, false, nil
 		}
 		okno, err := a.nadzorca.Rejestr().Okno(odpis.IdOkna)
@@ -256,9 +230,8 @@ func (a *adapterNakladkiAod) pozycjeZasiegow(ctx context.Context, okno session.O
 }
 
 // pozycjeZasiegu odczytuje czynne pozycje jednego zasięgu i porządkuje je
-// kolejnością katalogu. Odczyt idzie przez port `Akcje` — tę samą drogę, którą
-// katalog czyta `action.list`, więc nakładka nie omija leniwego wczytania
-// wierszy ani reguły wyboru zasięgu.
+// kolejnością katalogu, tą samą drogą przez port Akcje, którą czyta
+// action.list.
 func (a *adapterNakladkiAod) pozycjeZasiegu(ctx context.Context, poziom shared.ConfigScope,
 	klucz string, oknoZnane bool) []AkcjaKatalogu {
 
@@ -289,13 +262,8 @@ func (a *adapterNakladkiAod) pozycjeZasiegu(ctx context.Context, poziom shared.C
 }
 
 // warunekSpelniony mówi, czy podpowiedź da się w ogóle wykonać z tego, co
-// nakładka ma w ręku.
-//
-// Kolumna `akcja.warunek_dostepnosci` nazywa byt, którego akcja wymaga
-// („okno", „sesja", „kanał", „środowisko", „kolejka"; puste znaczy: żadnego).
-// Nakładka rozstrzyga dwa z nich — okno i jego kartę sesji — bo tyle wynika
-// z żądania `aod.suggestion`. Podpowiedź wymagająca bytu, którego nakładka nie
-// zna, byłaby przyciskiem bez celu, więc do wykazu nie wchodzi.
+// nakładka ma w ręku: rozstrzyga wyłącznie warunek okna i karty sesji, resztę
+// wymaganych bytów uznaje za niespełnioną.
 func warunekSpelniony(pozycja AkcjaKatalogu, oknoZnane bool) bool {
 	warunek := wartoscTekstu(pozycja.Requires)
 	switch warunek {
@@ -308,11 +276,8 @@ func warunekSpelniony(pozycja AkcjaKatalogu, oknoZnane bool) bool {
 	}
 }
 
-// podpowiedzZAkcji składa jedną podpowiedź z pozycji katalogu akcji.
-//
-// Opisu i ikony akcji `AodSuggestion` nie niesie, więc zostają w katalogu. Czas
-// powstania jest chwilą złożenia odpowiedzi: podpowiedź powstaje z bieżącego
-// stanu okna i nie ma wiersza o własnym czasie utworzenia.
+// podpowiedzZAkcji składa jedną podpowiedź z pozycji katalogu akcji. Czas
+// powstania jest chwilą złożenia odpowiedzi.
 func podpowiedzZAkcji(pozycja AkcjaKatalogu, okno session.Okno, jest bool,
 	chwila int64) shared.AodSuggestion {
 
@@ -324,35 +289,18 @@ func podpowiedzZAkcji(pozycja AkcjaKatalogu, okno session.Okno, jest bool,
 	podpowiedz.CommandType = tekstOpcjonalny(pozycja.Command)
 	if jest {
 		podpowiedz.WindowId = tekstOpcjonalny(okno.Id)
-		// Moduł idzie wprost z okna, a nie okrężnie przez `window.list` po stronie
-		// nakładki. Bez tego pola wyciszenie bieżącego modułu nie miało po czym
-		// rozpoznać swojej sugestii, a cisza bez podstawy jest gorsza od ujawnienia.
+		// Moduł idzie wprost z okna, nie okrężnie przez window.list.
 		podpowiedz.ModuleId = tekstOpcjonalny(okno.Modul)
 	}
-	// Klasy zdarzenia podpowiedź z katalogu akcji nie niesie i nie ma nieść:
-	// pozycja katalogu jest czynnością osiągalną, a nie skutkiem zdarzenia
-	// wyzwalającego. Klasę niosą sygnały (`aod.signal.*`) — tam, gdzie zdarzenie
-	// naprawdę zaszło. Zgadnięta klasa wpuszczałaby podpowiedź w wyciszenie,
-	// którego Operator na nią nie założył.
+	// Klasy zdarzenia podpowiedź z katalogu akcji nie niesie i nie ma nieść.
 	return podpowiedz
 }
 
 // ── aod.voice.command ───────────────────────────────────────────────────────
 
-// PolecenieGlosoweNakladki obsługuje `aod.voice.command`: kieruje polecenie
-// wydane w nakładce do modułu Assistant i oddaje założone zlecenie.
-//
-// Nakładka nie rozpoznaje mowy sama: nagranie przepisuje moduł Assistant przez
-// wpięty port `Mowa` (`adapter_modul_asystent.go`). Drugi silnik po tej stronie
-// byłby drugą prawdą o tym samym bycie. Żądanie bez transkrypcji i bez nagrania
-// odmawia, bo nie ma czego wykonać; nagranie przetworzone bez mowy odmawia po
-// stronie Assistanta, a nakładka oddaje tę odmowę bez zmiany, więc wymagane
-// pole `transcript` nie wraca puste.
-//
-// Pole `speak` nie jest spełniane: syntezy mowy rdzeń nie ma, więc `speechRef`
-// zostaje pusty — pole jest opcjonalne, a brak jest odpowiedzią zgodną
-// z kontraktem. Tak samo zachowują się `assistant.voice.command`
-// i `speech.synthesize`.
+// PolecenieGlosoweNakladki obsługuje aod.voice.command: kieruje polecenie
+// wydane w nakładce do modułu Assistant i oddaje założone zlecenie. Żądanie
+// bez transkrypcji i bez nagrania odmawia, bo nie ma czego wykonać.
 func (a *adapterNakladkiAod) PolecenieGlosoweNakladki(ctx context.Context,
 	z shared.AodVoiceCommandRequest) (shared.AodVoiceCommandResponse, error) {
 

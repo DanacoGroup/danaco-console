@@ -1,14 +1,6 @@
-// Okno Scheduler: cykliczność, wyzwalacze i chwila najbliższego uruchomienia
-// automatyki.
-//
-// Harmonogram obowiązuje dopiero po powiązaniu z istniejącą automatyką, więc
-// zapis wskazujący automatykę nieznaną kończy się odmową. Rachunek najbliższego
-// uruchomienia stoi w `adapter_modul_automations_cron.go`.
-//
-// Rdzeń nie ma budzika, który sam odpali automatykę o wyliczonej godzinie —
-// kontrakt nie zna komendy ani zdarzenia, którym harmonogram zgłaszałby
-// wyzwolenie. Harmonogram jest zapisem obowiązującym i wyliczeniem terminu;
-// uruchomienie prowadzi Operator z Queue Managera albo Execution Monitora.
+// Okno Scheduler: cykliczność, wyzwalacze i chwila najbliższego
+// uruchomienia automatyki. Harmonogram obowiązuje dopiero po powiązaniu
+// z istniejącą automatyką.
 package core
 
 import (
@@ -20,7 +12,8 @@ import (
 	"danacoconsole/shared"
 )
 
-// UstawHarmonogram zapisuje cykliczność i wyzwalacze automatyki.
+// UstawHarmonogram zapisuje cykliczność i wyzwalacze automatyki, odmawiając
+// przy wskazaniu automatyki nieznanej.
 func (a *adapterAutomatyk) UstawHarmonogram(ctx context.Context,
 	z shared.AutomationScheduleSetRequest) (shared.AutomationScheduleSetResponse, error) {
 
@@ -101,8 +94,8 @@ func wierszeWyzwalaczy(wyzwalacze []shared.AutomationTrigger,
 	wiersze := make([]dane.WyzwalaczAutomatyki, 0, len(wyzwalacze))
 	for numer, wyzwalacz := range wyzwalacze {
 		if wyzwalacz.Expression == "" || wyzwalacz.Kind == "" {
-			// Wyzwalacz bez treści nie ma czego obserwować. Pomijamy go zamiast
-			// odmawiać całego zapisu — pozostałe wyzwalacze są poprawne.
+			// Wyzwalacz bez treści nie ma czego obserwować i jest pomijany
+			// zamiast odmowy całego zapisu.
 			continue
 		}
 		kod := wartoscTekstu(wyzwalacz.Id)
@@ -117,7 +110,8 @@ func wierszeWyzwalaczy(wyzwalacze []shared.AutomationTrigger,
 	return wiersze
 }
 
-// harmonogramKontraktu składa harmonogram kontraktu wraz z wyzwalaczami.
+// harmonogramKontraktu składa harmonogram kontraktu wraz z wyzwalaczami,
+// odczytanymi osobnym zapytaniem.
 func (a *adapterAutomatyk) harmonogramKontraktu(ctx context.Context, kodAutomatyki string,
 	wiersz dane.Harmonogram) (shared.AutomationSchedule, error) {
 
@@ -137,7 +131,8 @@ func (a *adapterAutomatyk) harmonogramKontraktu(ctx context.Context, kodAutomaty
 	return harmonogram, nil
 }
 
-// wyzwalaczeKontraktu przekłada wiersze wyzwalaczy na byty kontraktu.
+// wyzwalaczeKontraktu przekłada wiersze wyzwalaczy z bazy danych na byty
+// kontraktu zwracane wołającemu.
 func wyzwalaczeKontraktu(wiersze []dane.WyzwalaczAutomatyki) []shared.AutomationTrigger {
 	wyzwalacze := make([]shared.AutomationTrigger, 0, len(wiersze))
 	for _, wiersz := range wiersze {

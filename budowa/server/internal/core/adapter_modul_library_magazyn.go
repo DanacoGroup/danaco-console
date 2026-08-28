@@ -1,32 +1,6 @@
-// Moduł Library — magazyn treści: miejsce na dysku, w którym lądują bajty
-// każdego pliku wgranego do repozytorium wiedzy, przysłane w żądaniu
-// (`contentBase64`) albo wciągnięte spod wskazanej ścieżki (`sourcePath`,
-// `ZapiszZePliku`). Obie drogi kończą się blobem w magazynie, bo treść, którą
-// ktoś z zewnątrz może nadpisać, nie jest treścią wersji. Dzięki temu czytelnik
-// podglądu (`adapter_modul_library_podglad.go`) nie musi wiedzieć, którą drogą
-// plik przyszedł: zawsze czyta ścieżkę z dysku.
-//
-// Magazyn leży w katalogu danych rdzenia — tym samym, w którym leży baza
-// (`konfiguracja.Konfiguracja.SciezkaBazy`) i sejf poświadczeń
-// (`dane/sejf_poswiadczen.go`) — w podkatalogu `biblioteka/tresc`. Nie leży
-// w katalogu roboczym sesji, bo przeżywa restart rdzenia tak samo jak wiersz
-// w bazie, który go wskazuje.
-//
-// Nazwą pliku jest suma kontrolna. Adapter i tak liczy sha256 każdej przysłanej
-// treści (`trescZadania`), a nazwa z tej sumy niesie trzy własności naraz: dwa
-// wgrania tej samej treści dzielą jeden blob zamiast dwóch kopii; ponowny zapis
-// tej samej treści jest bezczynnością, a nie nadpisaniem; nazwa nie zależy od
-// nazwy pliku z żądania, więc nie da się nią wyjść z katalogu magazynu. Pierwsze
-// dwa znaki sumy tworzą podkatalog, żeby jeden katalog nie urósł do dziesiątek
-// tysięcy wpisów.
-//
-// Zapis jest niepodzielny. Plik tymczasowy powstaje w katalogu docelowym (ten
-// sam nośnik, więc `os.Rename` jest przemianowaniem, nie kopiowaniem między
-// dyskami) i dopiero przemianowanie czyni treść widoczną pod odwołaniem. Awaria
-// w połowie zostawia plik tymczasowy, nigdy pliku obciętego, który podgląd
-// pokazałby jako pełną treść. Niepowodzenie zapisu jest odmową komendy
-// u wołającego (`trescWgrania`, `adapter_modul_library_tresc.go`), nie pustym
-// odwołaniem podanym jako powodzenie.
+// Modul Library — magazyn tresci: katalog na dysku, pod ktorym rdzen zapisuje
+// bajty kazdego pliku wgranego do repozytorium wiedzy, niezaleznie od tego, czy
+// przyszly w zadaniu, czy zostaly wciagniete ze wskazanej sciezki zrodlowej.
 package core
 
 import (
@@ -41,7 +15,8 @@ import (
 )
 
 const (
-	// podkatalogBiblioteki oddziela magazyn modułu od reszty katalogu danych.
+	// podkatalogBiblioteki oddziela magazyn modulu od reszty katalogu danych
+	// rdzenia, w ktorym leza takze baza i sejf poswiadczen.
 	podkatalogBiblioteki = "biblioteka"
 	// podkatalogTresciBiblioteki mieści same bajty treści. Osobny poziom, bo
 	// moduł może kiedyś potrzebować w swoim katalogu czegoś jeszcze (miniatury,
@@ -53,12 +28,9 @@ const (
 	prawaPlikuTresci    = 0o600
 )
 
-// ErrZrodloTresciNieczytelne oddziela pomyłkę wołającego od awarii magazynu.
-// Ścieżka źródłowa przychodzi z żądania (`sourcePath`), więc literówka, plik
-// usunięty, brak praw i wskazanie katalogu są brakami po stronie wołającego —
-// żądanie nie uda się przy żadnym ponowieniu. Bez tego rozróżnienia wszystko
-// wraca jako `internal_error` z `retryable:true`, a klient z pętlą ponowień
-// powtarza żądanie bez końca.
+// ErrZrodloTresciNieczytelne oddziela pomylke wolajacego od awarii magazynu:
+// literowka, plik usuniety, brak praw i wskazanie katalogu sa brakami po stronie
+// wolajacego, wiec zadanie nie uda sie przy zadnym ponowieniu.
 var ErrZrodloTresciNieczytelne = errors.New("magazyn treści biblioteki")
 
 // magazynTresciBiblioteki jest magazynem bajtów treści pod katalogiem danych.
@@ -76,13 +48,8 @@ func nowyMagazynTresciBiblioteki(katalogDanych string) *magazynTresciBiblioteki 
 	}
 }
 
-// Zapisz utrwala bajty treści i zwraca ścieżkę, która staje się odwołaniem do
-// treści w bazie. Treść już leżąca pod tą sumą nie jest zapisywana po raz drugi:
-// nazwa jest sumą jej zawartości, więc plik o tej nazwie ma tę zawartość.
-//
-// Zapis bez sumy kontrolnej jest odmówiony, a nie zgadywany — bez nazwy nie ma
-// gdzie odłożyć bajtów, a nazwa wymyślona (losowa) rozjechałaby się z sumą, którą
-// ten sam wgrany plik niesie do bazy.
+// Zapisz utrwala bajty tresci i zwraca sciezke, ktora staje sie odwolaniem do
+// tresci w bazie; tresc juz lezaca pod dana suma nie jest zapisywana po raz drugi.
 func (m *magazynTresciBiblioteki) Zapisz(bajty []byte, sumaKontrolna string) (string, error) {
 	if m == nil || m.katalog == "" {
 		return "", fmt.Errorf("magazyn treści biblioteki nie ma wskazanego katalogu")
@@ -100,10 +67,7 @@ func (m *magazynTresciBiblioteki) Zapisz(bajty []byte, sumaKontrolna string) (st
 		return "", fmt.Errorf("magazyn treści biblioteki: katalog %s: %w", katalogBloku, err)
 	}
 
-	// Plik tymczasowy leży w katalogu docelowym — ten sam nośnik, więc
-	// przemianowanie jest niepodzielne. Plik tymczasowy w katalogu systemowym
-	// dałby przemianowanie między wolumenami, czyli kopiowanie, czyli okno,
-	// w którym pod odwołaniem leży treść obcięta.
+	// Plik tymczasowy powstaje w katalogu docelowym, zeby przemianowanie bylo niepodzielne.
 	tymczasowy, err := os.CreateTemp(katalogBloku, "tresc-*.czesciowa")
 	if err != nil {
 		return "", fmt.Errorf("magazyn treści biblioteki: plik tymczasowy w %s: %w", katalogBloku, err)
@@ -113,8 +77,7 @@ func (m *magazynTresciBiblioteki) Zapisz(bajty []byte, sumaKontrolna string) (st
 		zamknijIUsun(tymczasowy, nazwaTymczasowa)
 		return "", fmt.Errorf("magazyn treści biblioteki: zapis %s: %w", nazwaTymczasowa, err)
 	}
-	// Zrzut na nośnik przed przemianowaniem (`domknijTymczasowy`): inaczej po
-	// utracie zasilania odwołanie w bazie wskazywałoby plik pusty, a nie żaden.
+	// Zrzut na nosnik przed przemianowaniem chroni przed odwolaniem do pliku pustego po utracie zasilania.
 	if err := domknijTymczasowy(tymczasowy, nazwaTymczasowa); err != nil {
 		return "", err
 	}
@@ -125,24 +88,9 @@ func (m *magazynTresciBiblioteki) Zapisz(bajty []byte, sumaKontrolna string) (st
 	return docelowa, nil
 }
 
-// ZapiszZePliku wciąga do magazynu treść pliku leżącego już na dysku (żądanie
-// z `sourcePath`) i oddaje odwołanie, rozmiar oraz sumę kontrolną tego, co
-// zostało wciągnięte.
-//
-// Kopia powstaje mimo tego, że plik gdzieś już leży: odwołanie do cudzego pliku
-// wskazuje treść żywą, a historia wersji wymaga treści zamrożonej. Bez kopii plik
-// nadpisany na dysku po wgraniu zmieniałby treść swojej utrwalonej wersji —
-// `library.file.preview` oddawałby treść nową, a `library.version.restore` nie
-// miałby do czego wrócić. Ścieżka źródłowa jest więc źródłem bajtów, a nie
-// miejscem ich składowania.
-//
-// Suma liczy się w locie, w trakcie przepisywania: bez drugiego przebiegu po
-// pliku i bez wciągania całej treści do pamięci. Kopiowanie idzie strumieniem,
-// więc plik o dowolnym rozmiarze przechodzi tak samo.
-//
-// Nazwą bloba jest suma, znana dopiero po przeczytaniu całości, więc plik
-// tymczasowy powstaje w korzeniu magazynu i dopiero stamtąd wędruje pod swoją
-// sumę (ten sam nośnik, więc przemianowanie zostaje niepodzielne).
+// ZapiszZePliku wciaga do magazynu tresc pliku leżącego juz na dysku i oddaje
+// odwolanie, rozmiar oraz sume kontrolna tego, co zostalo wciagniete; kopia
+// chroni utrwalona wersje przed zmiana pliku zrodlowego.
 func (m *magazynTresciBiblioteki) ZapiszZePliku(sciezka string) (string, int64, string, error) {
 	if m == nil || m.katalog == "" {
 		return "", 0, "", fmt.Errorf("magazyn treści biblioteki nie ma wskazanego katalogu")
@@ -153,10 +101,7 @@ func (m *magazynTresciBiblioteki) ZapiszZePliku(sciezka string) (string, int64, 
 	}
 	defer zrodlo.Close()
 
-	// Wskazanie katalogu rozpoznawane jest przed kopiowaniem. Bez tego
-	// sprawdzenia dochodzi ono aż do `io.Copy` i wraca błędem odczytu nie do
-	// odróżnienia od usterki nośnika, czyli jako awaria rdzenia, choć jest
-	// pomyłką wołającego.
+	// Wskazanie katalogu jest rozpoznawane przed kopiowaniem, by odroznic pomylke od awarii nosnika.
 	if stan, err := zrodlo.Stat(); err == nil && stan.IsDir() {
 		return "", 0, "", fmt.Errorf("%w: %s jest katalogiem, a treść pliku bierze się z pliku",
 			ErrZrodloTresciNieczytelne, sciezka)
@@ -210,37 +155,14 @@ func (m *magazynTresciBiblioteki) podSuma(nazwaTymczasowa, suma string) (string,
 	return docelowa, nil
 }
 
-// odwolanieMagazynu przekłada ścieżkę bloba na dysku na odwołanie, które wolno
-// oddać na zewnątrz rdzenia — ścieżkę względną magazynu, liczoną od jego
-// korzenia w katalogu danych, zawsze z ukośnikiem `/`.
-//
-//	/tmp/dane-operatora/biblioteka/tresc/c4/c414cd0e…  →  biblioteka/tresc/c4/c414cd0e…
-//	C:\Users\Jan\dane\design\zasoby\c4\c414cd0e…       →  design/zasoby/c4/c414cd0e…
-//
-// Ścieżka bezwzględna w polach `preview.imageRef`, `asset.uri` i `file.path`
-// wynosiłaby układ katalogów maszyny Operatora poza rdzeń — do klienta i do
-// modelu — a klient stojący na innej maszynie i tak pod nią nie sięgnie.
-//
-// Postacią odwołania jest ścieżka względna magazynu, a nie klucz
-// nieprzezroczysty, bo klucz wymaga komendy, którą się go rozwiązuje, a takiej
-// kontrakt nie ma ani dla biblioteki, ani dla Designu. Ścieżka względna nie
-// niesie ani jednego członu maszyny Operatora, jest ta sama na każdej maszynie
-// i po przeniesieniu katalogu danych, a rdzeń rozwiązuje ją z powrotem do
-// bajtów jednym `filepath.Join` z katalogiem danych.
-//
-// Ścieżka spoza magazynu oddaje pustkę: nie da się jej wyrazić względem
-// magazynu, a pole kontraktu, będąc niewymaganym, wtedy nie wychodzi. Nazwa
-// bloba jest sumą sha256 treści, którą kontrakt i tak niesie jawnie
-// w `checksum`, więc odwołanie nie wynosi informacji, której odbiorca by nie
-// miał.
+// odwolanieMagazynu przeklada sciezke bloba na dysku na odwolanie wolne od ukladu
+// katalogow maszyny Operatora: sciezke wzgledna magazynu, liczona od jego
+// korzenia w katalogu danych, zawsze z ukosnikiem.
 func odwolanieMagazynu(sciezka, korzenWzgledny string) string {
 	if sciezka == "" || korzenWzgledny == "" {
 		return ""
 	}
-	// Szukamy korzenia magazynu wewnątrz ścieżki zamiast liczyć różnicę względem
-	// katalogu magazynu: ta funkcja nie ma dostępu do złożonego magazynu (woła ją
-	// `zasobKontraktu`, funkcja bez stanu, dzielona z arsenałem), a odcięcie po
-	// znaczniku daje ten sam wynik bez wiązania nowej zależności.
+	// Korzen magazynu jest szukany wewnatrz sciezki, bo funkcja nie ma dostepu do zlozonego magazynu.
 	zeSlashem := filepath.ToSlash(sciezka)
 	znacznik := "/" + korzenWzgledny + "/"
 	poczatek := strings.LastIndex(zeSlashem, znacznik)
@@ -260,17 +182,14 @@ func odwolanieMagazynu(sciezka, korzenWzgledny string) string {
 // jak się rozjechać.
 const korzenTresciBiblioteki = podkatalogBiblioteki + "/" + podkatalogTresciBiblioteki
 
-// odwolanieTresciBiblioteki oddaje odwołanie do treści pliku biblioteki
-// w postaci, którą wolno wypuścić z rdzenia. Pustka znaczy „nie mam odwołania,
-// które da się podać" — patrz `odwolanieMagazynu`.
+// odwolanieTresciBiblioteki oddaje odwolanie do tresci pliku biblioteki w postaci,
+// ktora wolno wypuscic z rdzenia; pustka znaczy brak odwolania mozliwego do podania.
 func odwolanieTresciBiblioteki(sciezka string) string {
 	return odwolanieMagazynu(sciezka, korzenTresciBiblioteki)
 }
 
-// domknijTymczasowy zrzuca plik tymczasowy na nośnik, zamyka go i nadaje mu
-// prawa treści. Wspólne dla obu dróg zapisu — zrzut przed przemianowaniem jest
-// tym, co odróżnia odwołanie do treści od odwołania do pliku pustego po utracie
-// zasilania, więc nie ma prawa istnieć w dwóch wersjach.
+// domknijTymczasowy zrzuca plik tymczasowy na nosnik, zamyka go i nadaje mu prawa
+// tresci; jest wspolny dla obu drog zapisu, wiec nie ma prawa istniec w dwoch wersjach.
 func domknijTymczasowy(plik *os.File, nazwa string) error {
 	if err := plik.Sync(); err != nil {
 		zamknijIUsun(plik, nazwa)

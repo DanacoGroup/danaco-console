@@ -1,13 +1,6 @@
-// Odpowiedzialność pliku: uruchomienie gita przez port warstwy kanału i złożenie
-// wyniku czynności wraz ze stanem repozytorium po niej.
-//
-// Git startuje portem session.Uruchamiacz, tak samo jak okno rozmowy i terminal.
-// Dzięki temu czynność repozytorium przechodzi przez ten sam mechanizm
-// obejmowania potomstwa, co pozostałe procesy okna.
-//
-// Konflikt scalenia, odrzucone wysłanie czy brak gałęzi są wynikami czynności,
-// nie awariami: wracają jako `GitActionResult{succeeded:false}` wraz z wyjściem
-// gita, a nie jako błąd komendy.
+// Odpowiedzialność pliku: uruchomienie gita przez port warstwy kanału
+// session.Uruchamiacz i złożenie wyniku czynności wraz ze stanem repozytorium.
+// Konflikt scalenia czy brak gałęzi są wynikami czynności, nie awariami.
 package core
 
 import (
@@ -20,10 +13,12 @@ import (
 	"danacoconsole/shared"
 )
 
-// programGita jest jedynym programem, który ten moduł uruchamia dla Git Panelu.
+// programGita jest jedynym programem, który ten moduł uruchamia dla Git
+// Panelu, portem session.Uruchamiacz.
 const programGita = "git"
 
-// wykonajGit uruchamia jedną czynność repozytorium i składa jej wynik.
+// wykonajGit uruchamia jedną czynność repozytorium i składa jej wynik
+// wraz ze stanem repozytorium po wykonaniu.
 func (a *adapterDevelopera) wykonajGit(ctx context.Context, okno session.Okno,
 	czynnosc shared.GitActionKind, argumenty []string, granica time.Duration) (shared.GitActionResult, error) {
 
@@ -38,9 +33,7 @@ func (a *adapterDevelopera) wykonajGit(ctx context.Context, okno session.Okno,
 		tresc += "\n[" + wyjscie.powod + "]"
 	}
 
-	// Stan repozytorium doczytujemy po czynności, bo tylko wtedy odzwierciedla
-	// to, co Git Panel ma pokazać. Niepowodzenie odczytu stanu nie unieważnia
-	// czynności, która już się wykonała.
+	// Stan repozytorium odczytuje się po czynności, jedyny moment zgodny z Git Panel.
 	stan := a.stanRepozytorium(ctx, okno)
 	if stan.galaz != "" {
 		wynik.Branch = &stan.galaz
@@ -57,19 +50,17 @@ func (a *adapterDevelopera) wykonajGit(ctx context.Context, okno session.Okno,
 	return wynik, nil
 }
 
-// wynikGita niesie surowy rezultat jednego uruchomienia gita.
+// wynikGita niesie surowy rezultat jednego uruchomienia gita: powodzenie,
+// treść wyjścia i powód niepowodzenia.
 type wynikGita struct {
 	udane bool
 	tresc string
 	powod string
 }
 
-// uruchomGit startuje gita, zbiera całe wyjście i czeka na zakończenie.
-//
-// Czynność repozytorium trwa sekundy i jej wynik jest odpowiedzią na komendę,
-// więc uruchomienie jest synchroniczne. Granica czasu pilnuje, żeby git
-// czekający na hasło do repozytorium zdalnego nie zatrzymał obsługiwacza
-// na zawsze.
+// uruchomGit startuje gita, zbiera całe wyjście i czeka na zakończenie,
+// synchronicznie. Granica czasu pilnuje, żeby git czekający na hasło do
+// repozytorium zdalnego nie zatrzymał obsługiwacza na zawsze.
 func (a *adapterDevelopera) uruchomGit(ctx context.Context, okno session.Okno,
 	argumenty []string, granica time.Duration) (wynikGita, error) {
 

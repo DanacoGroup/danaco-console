@@ -1,21 +1,4 @@
-// Odpowiedzialność pliku: moduł Terminal — wypełnienie portu Terminal czterema
-// komendami obszaru `terminal.*`. Powłoki leżą w
-// `adapter_modul_terminal_powloki.go`, tryb uprawnień w
-// `adapter_modul_terminal_uprawnienia.go`, ewidencja procesów w
-// `adapter_modul_terminal_rejestr.go`, strumień wyjścia w
-// `adapter_modul_terminal_strumien.go`, a uruchomienie procesu
-// w `adapter_modul_terminal_wykonanie.go`.
-//
-// Przed każdym procesem stoją trzy sprawdzenia, w tej kolejności:
-//  1. tryb uprawnień okna — czy wolno w ogóle uruchomić proces i czyim
-//     poleceniem (PermissionMode, `adapter_modul_terminal_uprawnienia.go`);
-//  2. egzekutor izolacji — czy polecenie mieści się w obszarze okna
-//     (session.SprawdzPolecenie nad zasadami z `izolacja.go`);
-//  3. uruchamiacz warstwy kanału — jedyna droga startu procesu w drzewie
-//     (port session.Uruchamiacz).
-//
-// Rdzeń nie buduje własnego `exec.Cmd` ani drugiego egzekutora — korzysta
-// wyłącznie z tych dwóch warstw.
+// Odpowiedzialność pliku: moduł Terminal — wypełnienie portu Terminal czterema komendami obszaru terminal.*, przy każdym procesie sprawdzanymi uprawnieniami, izolacją i uruchamiaczem kanału.
 package core
 
 import (
@@ -29,10 +12,10 @@ import (
 	"danacoconsole/shared"
 )
 
-// Zgodność adaptera z portem sprawdzana jest przy kompilacji.
+// Zgodność adaptera z portem Terminal sprawdzana jest przy kompilacji przez przypisanie do zmiennej typu interfejsu.
 var _ Terminal = (*adapterTerminala)(nil)
 
-// przedrostekKarty znakuje identyfikator karty powłoki nadany przez rdzeń.
+// przedrostekKarty znakuje identyfikator karty powłoki nadany przez rdzeń, odróżniając go od innych identyfikatorów sesji.
 const przedrostekKarty = "term-"
 
 // przedrostekProcesuTerminala znakuje identyfikator procesu terminala.
@@ -40,27 +23,21 @@ const przedrostekKarty = "term-"
 // proces urządzenia, i mylenie ich w Process Monitorze byłoby kosztowne.
 const przedrostekProcesuTerminala = "tproc-"
 
-// adapterTerminala wypełnia port Terminal.
+// adapterTerminala wypełnia port Terminal, trzymając rejestr okien, procesów, tuneli i obserwacji terminala.
 type adapterTerminala struct {
 	repozytorium dane.RepozytoriumTerminala
 	rejestr      *rejestrTerminala
-	// tunele i obserwacje trzymają wyposażenie DŁUGOŻYJĄCE tego biegu rdzenia.
-	// Wiersz w bazie mówi, że tunel albo obserwacja są; uchwyt tutaj jest
-	// jedynym, czym da się je zatrzymać — tak samo jak przy procesach.
+	// tunele i obserwacje trzymają wyposażenie długożyjące biegu, zatrzymywane przez ten uchwyt.
 	tunele     *rejestrTuneli
 	obserwacje *rejestrObserwacji
-	// okna daje tryb uprawnień okna i jego sesję. Bez niego moduł nie ruszy
-	// ani jednego procesu: uruchomienie bez znajomości trybu uprawnień byłoby
-	// obejściem bramy, a nie pracą w warunkach niepełnych danych.
+	// okna daje tryb uprawnień okna i jego sesję; bez tego moduł nie uruchamia żadnego procesu.
 	okna *session.Rejestr
 	// uruchamiacz jest portem warstwy kanału — jedyną drogą startu procesu.
 	uruchamiacz session.Uruchamiacz
 	// rozstrzygacz i katalog składają zasady izolacji obowiązujące w oknie.
 	rozstrzygacz *konfig.Rozstrzygacz
 	katalog      *KatalogRoboczy
-	// katalogDanych jest katalogiem danych rdzenia. Moduł kładzie w nim klucze
-	// SSH, które sam wytworzył (`adapter_modul_terminal_klucze.go`) — poza
-	// konfiguracją OpenSSH Operatora, żeby produkt nie zmieniał jej sam.
+	// katalogDanych jest katalogiem danych rdzenia; moduł kładzie w nim wytworzone klucze SSH.
 	katalogDanych string
 	// wyjscie rozsyła fragmenty strumienia do okna Output Console.
 	wyjscie *nadawcaWyjscia
@@ -68,7 +45,7 @@ type adapterTerminala struct {
 	zmiana func(shared.ChangeKind, shared.TerminalProcess)
 }
 
-// nowyAdapterTerminala wiąże port z rejestrem okien i uruchamiaczem procesów.
+// nowyAdapterTerminala wiąże port z rejestrem okien i uruchamiaczem procesów, zakładając rejestry tuneli i obserwacji.
 func nowyAdapterTerminala(okna *session.Rejestr, uruchamiacz session.Uruchamiacz) *adapterTerminala {
 	return &adapterTerminala{
 		rejestr:     nowyRejestrTerminala(),
@@ -102,18 +79,13 @@ func (a *adapterTerminala) ZKatalogiemDanych(katalog string) *adapterTerminala {
 	return a
 }
 
-// ZWyjsciem podpina nadajnik strumienia wyjścia procesów.
+// ZWyjsciem podpina nadajnik strumienia wyjścia procesów terminala do adaptera, umożliwiając rozsyłkę fragmentów.
 func (a *adapterTerminala) ZWyjsciem(nadajnik Nadajnik) *adapterTerminala {
 	a.wyjscie = nowyNadawcaWyjscia(nadajnik)
 	return a
 }
 
-// Przygotuj odtwarza karty poprzedniego biegu rdzenia i osierocą procesy, do
-// których rdzeń stracił uchwyt. Wywołuje się to raz, przy montażu.
-//
-// Bez tego kroku po restarcie serwera Operator widziałby w Process Monitorze
-// procesy oznaczone jako czynne, których nikt już nie prowadzi, a karta
-// widoczna na ekranie odpowiadałaby `not_found` na pierwsze polecenie.
+// Przygotuj odtwarza karty poprzedniego biegu rdzenia i osierocą procesy, do których rdzeń stracił uchwyt; wywołuje się raz, przy montażu.
 func (a *adapterTerminala) Przygotuj(ctx context.Context) error {
 	if a.repozytorium == nil {
 		return nil
@@ -147,9 +119,7 @@ func (a *adapterTerminala) Przygotuj(ctx context.Context) error {
 		}
 		a.rejestr.ZapiszKarte(karta)
 	}
-	// Tunele i obserwacje poprzedniego biegu nie biegną: rdzeń stracił do nich
-	// uchwyt tak samo jak do procesów. Wykazywanie ich jako czynnych byłoby
-	// nieprawdą, więc schodzą na stany końcowe wraz z powodem.
+	// Tunele i obserwacje poprzedniego biegu nie biegną: uchwyt do nich zginął tak jak do procesów.
 	if _, err := a.repozytorium.OsierocTunele(ctx); err != nil {
 		return err
 	}
@@ -159,24 +129,18 @@ func (a *adapterTerminala) Przygotuj(ctx context.Context) error {
 	return nil
 }
 
-// Zamknij kończy procesy terminala czynne w chwili zatrzymania rdzenia.
+// Zamknij kończy procesy terminala czynne w chwili zatrzymania rdzenia, wraz z tunelami i obserwacjami.
 func (a *adapterTerminala) Zamknij() {
 	if a == nil {
 		return
 	}
 	a.rejestr.Zamknij()
-	// Tunel i obserwacja przeżywają każde żądanie, więc muszą zginąć wraz
-	// z rdzeniem: proces `ssh` zostawiony bez uchwytu przenosiłby bajty, o których
-	// nikt już nie wie, a pętla przeglądu uruchamiałaby polecenia po zatrzymaniu.
+	// Tunel i obserwacja przeżywają każde żądanie, muszą więc zginąć wraz z rdzeniem.
 	a.tunele.zamknijWszystkie()
 	a.obserwacje.zatrzymajWszystkie()
 }
 
-// OtworzKarte obsługuje `terminal.session.open` — zakłada kartę powłoki.
-//
-// Karta nie startuje procesu, więc tryb uprawnień sprawdza się dopiero przy
-// poleceniu. Sprawdzamy natomiast okno: karta bez okna nie ma ani trybu
-// uprawnień, ani obszaru izolacji, a więc nie da się jej później wykonać.
+// OtworzKarte obsługuje terminal.session.open, zakładając kartę powłoki bez sprawdzenia trybu uprawnień, sprawdzanego dopiero przy poleceniu.
 func (a *adapterTerminala) OtworzKarte(ctx context.Context,
 	z shared.TerminalSessionOpenRequest) (shared.TerminalSessionOpenResponse, error) {
 

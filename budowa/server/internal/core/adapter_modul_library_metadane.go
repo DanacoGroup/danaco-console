@@ -1,19 +1,5 @@
-// Moduł Library — opis zasobu i schemat metadanych: `library.metadata.get`,
-// `library.metadata.set`, `library.schema.get`, `library.schema.set`.
-//
-// Opis stoi w tabeli towarzyszącej zasobowi (`opis_zasobu_biblioteki`, migracja
-// 180), a nie w kolumnach wykazu: piętnaście pól Dublin Core obciążałoby każdy
-// odczyt Library Explorera, który opisu nie pokazuje.
-//
-// Zapis scala domyślnie, podmienia na żądanie. Różnica jest widoczna wprost:
-// przy scalaniu pole pominięte w żądaniu zostaje takie, jakie było, a pole
-// przysłane puste jest kasowane — bo inaczej Operator nie miałby jak wyczyścić
-// raz wpisanej wartości. Przy podmianie opis staje się dokładnie tym, co przyszło.
-//
-// Pola niestandardowe są mapą kod→wartość i przechodzą przez `json.RawMessage`
-// kontraktu. Rdzeń ich nie tłumaczy na kolumny: definicja pola należy do
-// Operatora (`library.schema.set`), więc kolumna na pole znaczyłaby migrację
-// przy każdym polu.
+// Moduł Library obsługuje opis zasobu i schemat metadanych, w tym scalanie oraz podmianę
+// pól: `library.metadata.get`, `library.metadata.set`, `library.schema.get`, `library.schema.set`.
 package core
 
 import (
@@ -25,11 +11,8 @@ import (
 	"danacoconsole/shared"
 )
 
-// Opis obsługuje `library.metadata.get`.
-//
-// Metadane osadzone w pliku (EXIF, IPTC, XMP, ID3) czyta się z bajtów, więc
-// wchodzą wyłącznie na wyraźne żądanie — tak mówi kontrakt i tak działa ten
-// odczyt: bez `includeTechnical` bajty zasobu nie są w ogóle otwierane.
+// Opis obsługuje `library.metadata.get` i dokłada metadane techniczne osadzone w pliku
+// wyłącznie na wyraźne żądanie, bo ich odczyt wymaga otwarcia bajtów zasobu.
 func (a *adapterBiblioteki) Opis(ctx context.Context,
 	z shared.LibraryMetadataGetRequest) (shared.LibraryMetadataGetResponse, error) {
 
@@ -45,13 +28,12 @@ func (a *adapterBiblioteki) Opis(ctx context.Context,
 	if z.IncludeTechnical != nil && *z.IncludeTechnical {
 		opis.Technical = a.metadaneTechniczne(plik)
 	}
-	// Odczyt opisu jest dostępem do zasobu — dziennik audytu ma odpowiadać na
-	// pytanie „kto to oglądał", więc zaglądanie też zostawia ślad.
+	// Odczyt opisu jest dostępem do zasobu i zostawia ślad w dzienniku audytu.
 	a.odnotuj(ctx, shared.LibraryAuditActionAccess, &plik.Kod, "odczyt opisu zasobu")
 	return shared.LibraryMetadataGetResponse{Metadata: opis}, nil
 }
 
-// ZapiszOpis obsługuje `library.metadata.set`.
+// ZapiszOpis obsługuje `library.metadata.set` i utrwala opis zasobu w tabeli towarzyszącej, scalając albo podmieniając pola.
 func (a *adapterBiblioteki) ZapiszOpis(ctx context.Context,
 	z shared.LibraryMetadataSetRequest) (shared.LibraryMetadataSetResponse, error) {
 
@@ -95,7 +77,7 @@ func (a *adapterBiblioteki) ZapiszOpis(ctx context.Context,
 	}, nil
 }
 
-// SchematMetadanych obsługuje `library.schema.get`.
+// SchematMetadanych obsługuje `library.schema.get` i zwraca definicje pól dopasowane do rodzaju oraz kolekcji zasobu.
 func (a *adapterBiblioteki) SchematMetadanych(ctx context.Context,
 	z shared.LibrarySchemaGetRequest) (shared.LibrarySchemaGetResponse, error) {
 
@@ -110,12 +92,8 @@ func (a *adapterBiblioteki) SchematMetadanych(ctx context.Context,
 	return shared.LibrarySchemaGetResponse{Fields: definicje}, nil
 }
 
-// UstawPoleSchematu obsługuje `library.schema.set`.
-//
-// Liczba zasobów z wartością pola liczy się PRZED zdjęciem definicji: po
-// usunięciu wartości zostają przy zasobach, więc liczba mówiła­by to samo, ale
-// kolejność ma znaczenie przy zakładaniu — Operator ma zobaczyć, ile zasobów
-// pole zastanie już wypełnione.
+// UstawPoleSchematu obsługuje `library.schema.set` i liczy zasoby z wartością pola przed
+// zdjęciem jego definicji, tak by Operator widział zasięg zmiany.
 func (a *adapterBiblioteki) UstawPoleSchematu(ctx context.Context,
 	z shared.LibrarySchemaSetRequest) (shared.LibrarySchemaSetResponse, error) {
 
@@ -158,11 +136,8 @@ func (a *adapterBiblioteki) UstawPoleSchematu(ctx context.Context,
 	}, nil
 }
 
-// nadpiszOpisBiblioteki przenosi pola żądania na wiersz opisu.
-//
-// Pole przysłane puste kasuje wartość, pole pominięte przy scalaniu ją zostawia
-// — dlatego przekład idzie po wskaźnikach, a nie po wartościach: `nil` znaczy
-// „nie mówię o tym polu", pusty łańcuch znaczy „chcę je wyczyścić".
+// nadpiszOpisBiblioteki przenosi pola żądania na wiersz opisu, po wskaźnikach: puste pole
+// kasuje wartość, pole pominięte przy scalaniu ją zostawia.
 func nadpiszOpisBiblioteki(cel *dane.OpisZasobuBiblioteki, zrodlo shared.LibraryMetadata, podmien bool) {
 	przypisz := func(docelowe **string, przyslane *string) {
 		if przyslane == nil {
@@ -195,10 +170,8 @@ func nadpiszOpisBiblioteki(cel *dane.OpisZasobuBiblioteki, zrodlo shared.Library
 	przypisz(&cel.Prawa, zrodlo.Rights)
 }
 
-// polaNiestandardoweBiblioteki składa mapę pól niestandardowych po zmianie.
-//
-// Scalanie idzie po kluczach: klucz przysłany z wartością pustą znika, klucz
-// pominięty zostaje. Przy podmianie mapa staje się dokładnie tą przysłaną.
+// polaNiestandardoweBiblioteki składa mapę pól niestandardowych po zmianie, scalając po
+// kluczach: klucz z wartością pustą znika, klucz pominięty zostaje.
 func polaNiestandardoweBiblioteki(zastane *string, przyslane json.RawMessage,
 	podmien bool) (*string, error) {
 
@@ -216,8 +189,7 @@ func polaNiestandardoweBiblioteki(zastane *string, przyslane json.RawMessage,
 	wynik := map[string]string{}
 	if !podmien && zastane != nil && *zastane != "" {
 		if err := json.Unmarshal([]byte(*zastane), &wynik); err != nil {
-			// Zapis zastany nieczytelny nie może zablokować zapisu nowego:
-			// wartość uszkodzona ustępuje wartości przysłanej.
+			// Zapis zastany nieczytelny ustępuje wartości przysłanej.
 			wynik = map[string]string{}
 		}
 	}
@@ -239,7 +211,7 @@ func polaNiestandardoweBiblioteki(zastane *string, przyslane json.RawMessage,
 	return &zapis, nil
 }
 
-// opisKontraktuBiblioteki przenosi wiersz opisu na strukturę kontraktu.
+// opisKontraktuBiblioteki przenosi wiersz opisu z bazy na strukturę odpowiedzi kontraktu, dołączając pola niestandardowe.
 func opisKontraktuBiblioteki(kodPliku string, wiersz dane.OpisZasobuBiblioteki) shared.LibraryMetadata {
 	opis := shared.LibraryMetadata{
 		FileId: kodPliku, Title: wiersz.Tytul, Creator: wiersz.Tworca, Subject: wiersz.Temat,
@@ -254,7 +226,7 @@ func opisKontraktuBiblioteki(kodPliku string, wiersz dane.OpisZasobuBiblioteki) 
 	return opis
 }
 
-// definicjaPolaBiblioteki przenosi wiersz definicji pola na kontrakt.
+// definicjaPolaBiblioteki przenosi wiersz definicji pola z bazy na strukturę kontraktu, dołączając słownik dopuszczalnych wartości.
 func definicjaPolaBiblioteki(pole dane.PoleSchematuBiblioteki) shared.LibraryFieldDefinition {
 	definicja := shared.LibraryFieldDefinition{
 		Code: pole.Kod, Label: pole.Etykieta, Kind: rodzajPolaKontraktu(pole.Rodzaj),
@@ -270,11 +242,8 @@ func definicjaPolaBiblioteki(pole dane.PoleSchematuBiblioteki) shared.LibraryFie
 	return definicja
 }
 
-// opcjePolaBiblioteki sprawdza słownik wartości pola i składa go do zapisu.
-//
-// Pole rodzaju `lista` bez słownika byłoby polem bez dopuszczalnych wartości,
-// czyli polem, którego nie da się wypełnić — odmowa nazywa to wprost, zamiast
-// zakładać definicję martwą.
+// opcjePolaBiblioteki sprawdza słownik wartości pola i składa go do zapisu; pole rodzaju
+// „lista” bez słownika jest odmową, bo nie da się go wypełnić.
 func opcjePolaBiblioteki(pole shared.LibraryFieldDefinition) (*string, error) {
 	if pole.Kind != shared.LibraryFieldKindList {
 		if len(pole.Options) == 0 {
@@ -295,9 +264,8 @@ func opcjePolaBiblioteki(pole shared.LibraryFieldDefinition) (*string, error) {
 	return &zapis, nil
 }
 
-// rodzajPolaBazy i rodzajPolaKontraktu przekładają wyliczenie kontraktu na
-// wartość kolumny i z powrotem — odwzorowanie stoi w kontrakcie
-// (`LibraryFieldKind.kolumnaBazy`), a tu jest jego jedyne zastosowanie.
+// rodzajPolaBazy i rodzajPolaKontraktu przekładają wyliczenie kontraktu na wartość kolumny
+// bazy i z powrotem, w dwie strony tego samego odwzorowania.
 func rodzajPolaBazy(rodzaj shared.LibraryFieldKind) string {
 	switch rodzaj {
 	case shared.LibraryFieldKindNumber:

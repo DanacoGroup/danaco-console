@@ -1,13 +1,4 @@
-// Moduł Automations: definicja automatyki (Workflow Builder) i jej wykaz.
-// Harmonogram, układ zależności, kolejka i przebiegi mają własne pliki adaptera.
-//
-// Automations nie ma okna modułowego — jest komponentem własnym strony głównej
-// i nie pojawia się jako moduł w żadnym środowisku. Dlatego adapter nie zna ani
-// środowiska, ani karty sesji.
-//
-// Kroki automatyki wykonuje jeden silnik kolejek (`kolejka_silnik.go`) nad
-// adapterem kolejek. Ten adapter buduje definicję i zapisuje przebieg;
-// wykonania nie prowadzi.
+// Moduł Automations obsługuje definicję automatyki (Workflow Builder) i jej wykaz; harmonogram, układ zależności, kolejka i przebiegi mają własne pliki adaptera. Kroki wykonuje jeden silnik kolejek nad adapterem kolejek.
 package core
 
 import (
@@ -36,21 +27,15 @@ type adapterAutomatyk struct {
 	repozytorium dane.RepozytoriumAutomatyk
 	kolejki      *adapterKolejek
 	obserwatorzy *pamiecObserwatorowPrzebiegow
-	// uklad niesie trzy dopełnienia układu zależności i spięcie kolejek
-	// (`adapter_modul_orkiestracja_uklad.go`). Wpina je `ZUkladem`; nil znaczy
-	// „nie wpięto", a wtedy cztery komendy odmawiają, a reszta modułu pracuje.
+	// uklad niesie dopełnienia układu zależności; nil znaczy, że cztery komendy odmawiają.
 	uklad dane.RepozytoriumUkladuOrkiestracji
-	// sejf jest magazynem WARTOŚCI poświadczeń, leżącym poza bazą. Wpina go
-	// `ZSejfem`; nil znaczy „nie wpięto", a wtedy `automation.secret.set`
-	// i wymiana klucza podpisu webhooka odmawiają wprost, zamiast zapisywać
-	// referencję wskazującą na nic.
+	// sejf jest magazynem wartości poświadczeń; nil znaczy, że `automation.secret.set` odmawia.
 	sejf SejfPoswiadczenAutomatyki
-	// okna są rejestrem okien komunikacji. Służą wyłącznie przełożeniu roli
-	// środowiska MultitaskingAI na okno przy spięciu kolejek.
+	// okna służą wyłącznie przełożeniu roli środowiska MultitaskingAI na okno przy spięciu.
 	okna dane.RepozytoriumOkien
 }
 
-// nowyAdapterAutomatyk wiąże port z repozytorium modułu.
+// nowyAdapterAutomatyk wiąże port Automatyki z repozytorium modułu, oddając gotowy adapter do dalszego wpięcia zależności.
 func nowyAdapterAutomatyk(repozytorium dane.RepozytoriumAutomatyk) *adapterAutomatyk {
 	return &adapterAutomatyk{
 		repozytorium: repozytorium,
@@ -74,13 +59,7 @@ func (a *adapterAutomatyk) ZSejfem(sejf SejfPoswiadczenAutomatyki) *adapterAutom
 	return a
 }
 
-// Zapisz zapisuje definicję automatyki wraz z krokami. Brak `workflowId`
-// zakłada automatykę nową; wskazanie zmienia zastaną i podnosi numer wersji.
-//
-// Kroki podmieniają się w całości, gdy pole `steps` przyszło: Workflow Builder
-// oddaje po zmianie całą definicję, więc pole obecne znaczy „tak ma wyglądać
-// automatyka”. Pole nieobecne zostawia kroki nietknięte, żeby zapis samej nazwy
-// albo samego przełącznika „czynna” nie skasował pracy Operatora.
+// Zapisz zapisuje definicję automatyki wraz z krokami. Brak `workflowId` zakłada automatykę nową; wskazanie zmienia zastaną i podnosi numer wersji. Kroki podmieniają się w całości, gdy pole `steps` przyszło; pole nieobecne zostawia kroki nietknięte.
 func (a *adapterAutomatyk) Zapisz(ctx context.Context,
 	z shared.AutomationWorkflowSaveRequest) (shared.AutomationWorkflowSaveResponse, error) {
 
@@ -103,20 +82,14 @@ func (a *adapterAutomatyk) Zapisz(ctx context.Context,
 	if err != nil {
 		return shared.AutomationWorkflowSaveResponse{}, bladAutomatyki(err)
 	}
-	// Migawka wersji idzie PO złożeniu automatyki, bo zapisuje to, co naprawdę
-	// stoi w bazie po zapisie — a nie to, co przyszło żądaniem. Kroki zastane
-	// (żądanie bez pola `steps`) trafiają wtedy do wersji tak samo jak podmienione,
-	// więc historia nie ma dziur po zapisie samej nazwy.
+	// Migawka wersji idzie PO złożeniu automatyki, bo zapisuje stan naprawdę stojący w bazie.
 	a.odlozWersje(ctx, zapisana.ID, zapisana.Wersja, automatyka.Steps)
 	a.zapisAudytu(ctx, &zapisana.ID, "zapis definicji automatyki",
 		map[string]any{"wersja": zapisana.Wersja, "krokow": len(automatyka.Steps)})
 	return shared.AutomationWorkflowSaveResponse{Workflow: automatyka}, nil
 }
 
-// odlozWersje zapisuje migawkę definicji. Nieudany zapis migawki nie wywraca
-// zapisu definicji: definicja już stoi w bazie, a odmowa komendy mówiłaby
-// Operatorowi, że jego praca przepadła, choć nie przepadła. Usterka historii
-// jest usterką panelu „Wersje”, nie usterką zapisu.
+// odlozWersje zapisuje migawkę definicji. Nieudany zapis migawki nie wywraca zapisu definicji: definicja już stoi w bazie, a usterka historii jest usterką panelu „Wersje", nie usterką zapisu.
 func (a *adapterAutomatyk) odlozWersje(ctx context.Context, automatykaID int64, wersja int,
 	kroki []shared.AutomationStep) {
 
@@ -178,23 +151,18 @@ func (a *adapterAutomatyk) wiersz(ctx context.Context, kod string) (dane.Automat
 	return wiersz, nil
 }
 
-// zloz składa automatykę kontraktu z wiersza wraz z krokami i zależnościami.
+// zloz składa automatykę kontraktu z wiersza wraz z krokami i zależnościami odczytanymi z repozytorium.
 func (a *adapterAutomatyk) zloz(ctx context.Context, wiersz dane.Automatyka) (shared.AutomationWorkflow, error) {
 	kroki, err := a.krokiKontraktu(ctx, wiersz.ID)
 	if err != nil {
 		return shared.AutomationWorkflow{}, err
 	}
-	// Etykiety idą razem z definicją, bo wykaz Workflow Buildera filtruje po
-	// nich bez drugiej komendy. Nieudany odczyt etykiet daje wykaz pusty
-	// zamiast wywracać odczyt automatyki — brak etykiet jest stanem poprawnym.
+	// Etykiety idą razem z definicją; nieudany odczyt etykiet daje wykaz pusty, nie usterkę.
 	etykiety, err := a.repozytorium.EtykietyAutomatyki(ctx, wiersz.ID)
 	if err != nil {
 		etykiety = nil
 	}
-	// Wersja oddawana kontraktem jest wersją WYKONYWANĄ: opublikowana, gdy
-	// Operator rozdzielił roboczą od opublikowanej, a bieżąca, gdy rozdziału
-	// nie wprowadził. Inaczej okno pokazywałoby numer wersji roboczej przy
-	// automatyce, która produkcyjnie wykonuje wersję wcześniejszą.
+	// Wersja oddawana kontraktem jest wersją WYKONYWANĄ, nie roboczą.
 	wersja := wiersz.Wersja
 	if wiersz.WersjaOpublikowana != nil {
 		wersja = *wiersz.WersjaOpublikowana
@@ -221,10 +189,7 @@ func wartoscLiczby(wskazanie *int) int {
 	return *wskazanie
 }
 
-// bladAutomatyki znakuje usterkę kodem kontraktu, żeby okno modułu pokazało
-// powód, a nie samo „nie udało się”. Błąd, któremu kod już nadano — odmowa
-// wskazania, brak bytu, brak wykonawcy — przechodzi tędy bez zmiany kodu;
-// dopiero usterka bez kodu staje się usterką wewnętrzną rdzenia.
+// bladAutomatyki znakuje usterkę kodem kontraktu, żeby okno modułu pokazało powód. Błąd, któremu kod już nadano, przechodzi tędy bez zmiany; dopiero usterka bez kodu staje się usterką wewnętrzną rdzenia.
 func bladAutomatyki(err error) error {
 	if err == nil {
 		return nil

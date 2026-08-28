@@ -1,17 +1,6 @@
 // Odpowiedzialność pliku: odczyt repozytorium modułu Developer — stan, różnica,
-// historia, gałęzie i konflikty Git Panelu.
-//
-// ── Biblioteka wkompilowana, nie program `git` ──────────────────────────────
-// Wszystkie sześć czynności stoi na pakiecie `repozytorium`, który pracuje
-// biblioteką `go-git` wkompilowaną w binarium rdzenia. Nie startuje tu ani jeden
-// proces potomny: odczyt stanu repozytorium jest czynnością, od której zaczyna
-// się każda inna praca Git Panelu, więc nie może zależeć od programu, którego
-// instalka nie niesie.
-//
-// Czynności ZMIENIAJĄCE repozytorium — zatwierdzenie, pobranie, wypchnięcie —
-// idą osobną drogą (`developer.git.action`) i zostają tam, gdzie były. Tutaj
-// jest wyłącznie odczyt oraz jedno rozstrzygnięcie konfliktu, które zapisuje
-// plik katalogu roboczego.
+// historia, gałęzie i konflikty Git Panelu, biblioteką `go-git` wkompilowaną
+// w binarium rdzenia, bez uruchamiania programu `git`.
 package core
 
 import (
@@ -23,12 +12,8 @@ import (
 	"danacoconsole/shared"
 )
 
-// katalogRepozytorium oddaje pierwszy katalog roboczy okna.
-//
-// Okno bywa otwarte na kilku katalogach naraz, ale repozytorium Git Panelu jest
-// jedno: to ten katalog, w którym startują procesy okna. Wybór milczący między
-// kilkoma repozytoriami byłby dla Operatora zagadką, której odpowiedź zmienia
-// się przy każdym wywołaniu.
+// katalogRepozytorium oddaje pierwszy katalog roboczy okna — repozytorium
+// Git Panelu jest jedno, ten sam katalog, w którym startują procesy okna.
 func (a *adapterDevelopera) katalogRepozytorium(oknoKod string) (string, error) {
 	okno, err := a.oknoDevelopera(oknoKod)
 	if err != nil {
@@ -60,11 +45,8 @@ func bladRepozytorium(err error) error {
 	}
 }
 
-// StanRepozytorium oddaje stan repozytorium katalogu roboczego okna.
-//
-// Katalog bez repozytorium NIE jest odmową: odpowiedź niesie `isRepository:
-// false` i pusty wykaz zmian. Odmowa kazałaby Git Panelowi pokazać błąd tam,
-// gdzie Operator po prostu jeszcze nie założył repozytorium.
+// StanRepozytorium oddaje stan repozytorium katalogu roboczego okna. Katalog
+// bez repozytorium nie jest odmową: odpowiedź niesie `isRepository: false`.
 func (a *adapterDevelopera) StanRepozytorium(_ context.Context,
 	z shared.DeveloperGitStatusRequest) (shared.DeveloperGitStatusResponse, error) {
 
@@ -79,7 +61,8 @@ func (a *adapterDevelopera) StanRepozytorium(_ context.Context,
 	return shared.DeveloperGitStatusResponse{Status: stan}, nil
 }
 
-// RoznicaRepozytorium oddaje fragmenty różnicy wraz z wykazem plików binarnych.
+// RoznicaRepozytorium oddaje fragmenty różnicy wraz z wykazem plików
+// binarnych, których treści różnicowej nie da się pokazać tekstem.
 func (a *adapterDevelopera) RoznicaRepozytorium(_ context.Context,
 	z shared.DeveloperGitDiffRequest) (shared.DeveloperGitDiffResponse, error) {
 
@@ -108,7 +91,8 @@ func (a *adapterDevelopera) RoznicaRepozytorium(_ context.Context,
 	return shared.DeveloperGitDiffResponse{Hunks: fragmenty, BinaryPaths: binarne}, nil
 }
 
-// HistoriaRepozytorium oddaje zatwierdzenia spełniające warunki.
+// HistoriaRepozytorium oddaje zatwierdzenia spełniające warunki żądania,
+// w porządku od najświeższego zatwierdzenia repozytorium.
 func (a *adapterDevelopera) HistoriaRepozytorium(_ context.Context,
 	z shared.DeveloperGitLogRequest) (shared.DeveloperGitLogResponse, error) {
 
@@ -143,11 +127,8 @@ func (a *adapterDevelopera) HistoriaRepozytorium(_ context.Context,
 	return shared.DeveloperGitLogResponse{Commits: zatwierdzenia, Total: &wszystkich}, nil
 }
 
-// GaleziRepozytorium oddaje gałęzie wraz z rozbieżnością wobec gałęzi zdalnej.
-//
-// Rozbieżność liczy się z odwołań już pobranych, bez sięgania do sieci: odczyt
-// gałęzi ma działać bez łączności, a liczba mówi o stanie wobec ostatniego
-// pobrania — tak samo jak w narzędziu wierszowym.
+// GaleziRepozytorium oddaje gałęzie wraz z rozbieżnością wobec gałęzi zdalnej,
+// liczoną z odwołań już pobranych, bez sięgania do sieci.
 func (a *adapterDevelopera) GaleziRepozytorium(_ context.Context,
 	z shared.DeveloperGitBranchListRequest) (shared.DeveloperGitBranchListResponse, error) {
 
@@ -163,7 +144,8 @@ func (a *adapterDevelopera) GaleziRepozytorium(_ context.Context,
 	return shared.DeveloperGitBranchListResponse{Branches: galezie, Current: biezaca}, nil
 }
 
-// KonfliktRepozytorium rozkłada plik skonfliktowany na trzy wersje.
+// KonfliktRepozytorium rozkłada plik skonfliktowany na trzy wersje: bazową,
+// lokalną i zdalną, do wyboru rozstrzygnięcia w Git Panelu.
 func (a *adapterDevelopera) KonfliktRepozytorium(_ context.Context,
 	z shared.DeveloperGitConflictGetRequest) (shared.DeveloperGitConflictGetResponse, error) {
 
@@ -205,8 +187,8 @@ func (a *adapterDevelopera) RozstrzygnijKonfliktRepozytorium(_ context.Context,
 		return shared.DeveloperGitConflictResolveResponse{},
 			bladZadaniaDevelopera("czynność wymaga wskazania pliku z konfliktem")
 	}
-	// Rozstrzygnięcie ręczne bez treści skasowałoby plik do pustego: żądanie,
-	// które tego chce, ma podać pustą treść wprost, a nie pominąć pole.
+	// Rozstrzygnięcie ręczne bez treści skasowałoby plik: pustą treść trzeba
+	// podać wprost.
 	if z.Resolution == shared.ConflictResolutionKindManual && z.Content == nil {
 		return shared.DeveloperGitConflictResolveResponse{},
 			bladZadaniaDevelopera("rozstrzygnięcie ręczne wymaga treści wynikowej")

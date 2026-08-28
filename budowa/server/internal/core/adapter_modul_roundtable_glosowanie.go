@@ -1,11 +1,5 @@
-// Odpowiedzialność pliku: głosowania debaty — `roundtable.vote.start`,
-// `roundtable.vote.cast` i `roundtable.vote.get` (okno Voting & Evaluation
-// Center).
-//
-// Wariant wskazuje wypowiedź, gdy Operator podał jej kod. Głosowanie „nad
-// stanowiskami debaty" ma prowadzić od wyniku z powrotem do słów, które ten
-// wynik wywołały — wariant będący samą etykietą urywa tę drogę, więc kod
-// wypowiedzi rozpoznaje się i zapisuje, kiedy tylko padnie.
+// Odpowiedzialność pliku: głosowania debaty w oknie Voting & Evaluation Center —
+// `roundtable.vote.start`, `roundtable.vote.cast` i `roundtable.vote.get`.
 package core
 
 import (
@@ -16,14 +10,14 @@ import (
 	"danacoconsole/shared"
 )
 
-// Przedrostki bytów głosowania.
+// Przedrostki bytów głosowania, nadawane kodom otwieranych wariantów i oddawanych głosów przy zapisie do bazy danych.
 const (
 	przedrostekGlosowania = "glosow-"
 	przedrostekWariantu   = "wariant-"
 	przedrostekGlosu      = "glos-"
 )
 
-// OtworzGlosowanie otwiera głosowanie nad wskazanymi wariantami.
+// OtworzGlosowanie otwiera głosowanie nad wskazanymi wariantami wypowiedzi debaty, sprawdzając ich liczbę.
 func (a *adapterDebaty) OtworzGlosowanie(ctx context.Context,
 	z shared.RoundtableVoteStartRequest) (shared.RoundtableVoteStartResponse, error) {
 
@@ -37,8 +31,7 @@ func (a *adapterDebaty) OtworzGlosowanie(ctx context.Context,
 		return shared.RoundtableVoteStartResponse{},
 			bladWskazaniaDebaty("metoda agregacji " + metoda + " nie jest metodą znaną kontraktowi")
 	}
-	// Dwa warianty to najmniej, nad czym da się głosować. Głosowanie nad jednym
-	// wariantem ma wynik znany przed oddaniem pierwszego głosu.
+	// Dwa warianty to najmniej, nad czym da się głosować.
 	etykiety := make([]string, 0, len(z.Options))
 	for _, wariant := range z.Options {
 		if przyciety := strings.TrimSpace(wariant); przyciety != "" {
@@ -75,8 +68,7 @@ func (a *adapterDebaty) OtworzGlosowanie(ctx context.Context,
 		wariant := dane.WariantDebaty{
 			Kod: nowyIdentyfikator(przedrostekWariantu), Etykieta: etykieta,
 		}
-		// Wariant podany kodem wypowiedzi wskazuje ją wprost; etykietą zostaje
-		// wtedy treść tej wypowiedzi, żeby panel nie pokazywał samego kodu.
+		// Wariant podany kodem wypowiedzi wskazuje ją wprost.
 		if wypowiedz, err := a.repozytorium.Wypowiedz(ctx, etykieta); err == nil {
 			wariant.Wypowiedz = wypowiedz.Kod
 			if tresc := strings.TrimSpace(wypowiedz.Tresc); tresc != "" {
@@ -101,11 +93,8 @@ func (a *adapterDebaty) OtworzGlosowanie(ctx context.Context,
 	return shared.RoundtableVoteStartResponse{Vote: glosowanieKontraktu(glosowanie, zapisane)}, nil
 }
 
-// OddajGlos zapisuje głos w otwartym głosowaniu.
-//
-// Głosowanie zamknięte odmawia: głos oddany po rozstrzygnięciu przestawiłby
-// wynik, który już ogłoszono. Wyborca spoza wykazu uprawnionych odmawia
-// osobno — uprawnienie zawężone i nieegzekwowane byłoby ustawieniem bez skutku.
+// OddajGlos zapisuje głos w otwartym głosowaniu; odmawia, gdy głosowanie jest zamknięte
+// albo gdy wyborca nie należy do wykazu uprawnionych.
 func (a *adapterDebaty) OddajGlos(ctx context.Context,
 	z shared.RoundtableVoteCastRequest) (shared.RoundtableVoteCastResponse, error) {
 
@@ -171,11 +160,8 @@ func (a *adapterDebaty) OddajGlos(ctx context.Context,
 	return shared.RoundtableVoteCastResponse{Ballot: glosKontraktu(glos), Vote: &stan}, nil
 }
 
-// Glosowanie oddaje głosowanie wraz z wynikiem agregacji i oddanymi głosami.
-//
-// Wynik wychodzi dopiero wtedy, gdy padł co najmniej jeden głos. Wynik zerowy
-// przy zerowej liczbie głosów wyglądałby jak rozstrzygnięcie, którego nikt nie
-// podjął.
+// Glosowanie oddaje głosowanie wraz z wynikiem agregacji i oddanymi głosami; wynik wychodzi
+// dopiero, gdy padł co najmniej jeden głos.
 func (a *adapterDebaty) Glosowanie(ctx context.Context,
 	z shared.RoundtableVoteGetRequest) (shared.RoundtableVoteGetResponse, error) {
 
@@ -219,15 +205,14 @@ func (a *adapterDebaty) Glosowanie(ctx context.Context,
 	}
 	wynik := policzGlosowanie(glosowanie, warianty, glosy)
 	odpowiedz.Result = &wynik
-	// Remis znakuje się w stanie głosowania, bo Voting & Evaluation Center
-	// pokazuje stan przy nagłówku, zanim Operator otworzy wynik.
+	// Remis znakuje się w stanie głosowania, widocznym przy nagłówku panelu.
 	if wynik.WinnerOptionId == nil && glosowanie.Stan == shared.RoundtableVoteStatusOpen {
 		odpowiedz.Vote.Status = shared.RoundtableVoteStatusTied
 	}
 	return odpowiedz, nil
 }
 
-// glosowanieKontraktu przekłada głosowanie wraz z wariantami.
+// glosowanieKontraktu przekłada głosowanie z bazy na strukturę odpowiedzi wraz z wariantami i wynikiem.
 func glosowanieKontraktu(g dane.GlosowanieDebaty,
 	warianty []dane.WariantDebaty) shared.RoundtableVote {
 
@@ -262,7 +247,7 @@ func glosowanieKontraktu(g dane.GlosowanieDebaty,
 	return glosowanie
 }
 
-// glosKontraktu przekłada jeden oddany głos.
+// glosKontraktu przekłada jeden oddany głos z wiersza bazy danych na strukturę odpowiedzi kontraktu Roundtable.
 func glosKontraktu(g dane.GlosDebaty) shared.RoundtableBallot {
 	glos := shared.RoundtableBallot{
 		Id: g.Kod, VoteId: g.Glosowanie, VoterId: g.Wyborca,
@@ -274,7 +259,7 @@ func glosKontraktu(g dane.GlosDebaty) shared.RoundtableBallot {
 	return glos
 }
 
-// metodaGlosowaniaZnana sprawdza metodę wobec zbioru wartości kontraktu.
+// metodaGlosowaniaZnana sprawdza metodę agregacji wyniku wobec zbioru wartości znanych kontraktowi Roundtable.
 func metodaGlosowaniaZnana(metoda string) bool {
 	switch metoda {
 	case shared.RoundtableVoteMethodApproval, shared.RoundtableVoteMethodIrv,
@@ -285,7 +270,7 @@ func metodaGlosowaniaZnana(metoda string) bool {
 	return false
 }
 
-// zawiera mówi, czy wykaz niesie wskazaną wartość.
+// zawiera mówi, czy wykaz łańcuchów niesie wskazaną wartość, porównując elementy dosłownie, znak po znaku.
 func zawiera(wykaz []string, szukana string) bool {
 	for _, pozycja := range wykaz {
 		if pozycja == szukana {

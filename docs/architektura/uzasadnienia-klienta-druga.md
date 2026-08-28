@@ -6225,3 +6225,16 @@ wybraniu, zamiast wygasnąć bez powodu — wskazuje jej to zdanie jako opis
 dostępności. Wybór jest grupą pól jednokrotnego wyboru, więc odczyt
 technologiami wspomagającymi mówi wprost, że to jedna wartość z trzech, a
 nie trzy niezależne przyciski.
+
+## budowa/klient-poprzedni/src/ustawienia/sekcja-powiadomienia.ts
+Postać jest wprost z warstwy projektowej okna ustawień: przełącznik główny nad tabelą, w tabeli wiersz na
+klasę, w wierszu czynność klasy i kanały dostarczenia. Kolumny centrum nie ma jako przełącznika, bo
+centrum powiadomień jest kanałem podstawowym każdej klasy — każde zdarzenie objęte ustawieniem trafia do
+rejestru centrum niezależnie od pozostałych kanałów — więc przełącznik, który by go zdejmował,
+obiecywałby coś, czego platforma nie robi; centrum stoi w wierszu jako stan nazwany, nie jako ster.
+Przełącznik główny wygasza klasy, zachowując ich ustawienia, dlatego jest osobnym kluczem, a nie zapisem
+fałszu do siedmiu kluczy klas: tamto skasowałoby wybór operatora, a ponowne włączenie przywróciłoby stan
+domyślny zamiast poprzedniego — wygaszenie jest więc widokiem, nie zapisem. Sekcja rozstrzyga, które
+zdarzenia mają powiadamiać; samego doręczania nie ma jeszcze czym wykonać, silnik kolejki jest w rdzeniu
+zbudowany, ale nie ma wołacza, a centrum powiadomień nie ma rodziny komend w kontrakcie — sekcja mówi
+o tym wprost zdaniem pod tabelą, zamiast udawać, że przełączniki już czymś sterują.

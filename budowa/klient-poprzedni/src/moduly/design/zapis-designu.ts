@@ -11,12 +11,8 @@ import type { ZapytanieZasobow } from './zrodlo-designu';
 import type { ZrodloZaplecza } from './zrodlo-zaplecza';
 
 /**
- * Zapis modułu Design wraz z odczytami, które go wypełniają.
- *
- * Odpowiada wyłącznie za prawdę o zasobach, oknie modułu i rejestrach zaplecza;
- * powiadamianiem widoku zajmuje się `stan-designu.ts`. Odczyt z rdzenia
- * i rozgłoszenie zmiany to dwie różne czynności — tutaj widać, co i w jakiej
- * kolejności idzie do rdzenia, tam, kto się o tym dowiaduje.
+ * Zapis modułu Design wraz z odczytami, które go wypełniają. Odpowiada
+ * wyłącznie za prawdę o zasobach, oknie modułu i rejestrach zaplecza.
  */
 export type FazaZasobow = 'spoczynek' | 'odczyt' | 'gotowe' | 'blad';
 
@@ -27,13 +23,7 @@ export interface ZapisDesignu {
   cele: Module[];
   faza: FazaZasobow;
   powod: string;
-  /**
-   * Czy powód mówi o braku rozstrzygnięcia, a nie o odmowie rdzenia.
-   *
-   * Do odmowy okno dokleja zdanie o torze komendy, bo powód dotyczy wtedy
-   * żądania. Zerwanego gniazda żadne pole żądania nie tłumaczy, więc przy nim
-   * dopisek byłby wyłącznie hałasem.
-   */
+  /** Czy powód mówi o braku rozstrzygnięcia, a nie o odmowie rdzenia. */
   bezRozstrzygniecia: boolean;
   warunki: ZapytanieZasobow;
   oknoModulu: string;
@@ -49,15 +39,14 @@ export function pustyZapisDesignu(): ZapisDesignu {
     faza: 'spoczynek',
     powod: '',
     bezRozstrzygniecia: false,
-    // Granica wyjściowa chroni przed odpowiedzią, której wykaz nie uniesie;
-    // Operator zmienia ją w filtrze Assets Panel.
+    // Granica wyjściowa chroni odpowiedź przed wykazem, którego nie uniesie.
     warunki: { idOkna: '', rodzaj: '', etykiety: [], tylkoUlubione: false, granica: 60 },
     oknoModulu: '',
     zdanieOOknie: 'Okno modułu nie zostało jeszcze ustalone z rdzenia.',
   };
 }
 
-/** Wciąga zasób po własnej zmianie albo po zdarzeniu `design.asset.changed`. */
+/** Wciąga zasób po własnej zmianie albo po zdarzeniu `design.asset.changed`, aktualizując zbiór zasobów modułu. */
 export function wchlonZasob(zapis: ZapisDesignu, zasob: DesignAsset): void {
   const pozycja = zapis.zbior.findIndex((wpis) => wpis.id === zasob.id);
   if (pozycja === -1) zapis.zbior = [...zapis.zbior, zasob];
@@ -67,14 +56,8 @@ export function wchlonZasob(zapis: ZapisDesignu, zasob: DesignAsset): void {
 }
 
 /**
- * Zdejmuje zasób usunięty w rdzeniu wraz z jego wyborem.
- *
- * Odbiorca rodzaju `deleted` zdarzenia `design.asset.changed`. Nadawcą jest
- * `design.asset.remove` w `core/adapter_modul_design_uchwyty.go`, który wysyła
- * zdarzenie wyłącznie wtedy, gdy wiersz naprawdę zniknął.
- *
- * Bez tej gałęzi `deleted` trafiałby do gałęzi wciągającej i okno pokazywałoby
- * jako obecny zasób, o którym rdzeń właśnie powiedział, że go nie ma.
+ * Zdejmuje zasób usunięty w rdzeniu wraz z jego wyborem, odbierając zdarzenie
+ * rodzaju `deleted` zdarzenia `design.asset.changed`.
  */
 export function usunZasob(zapis: ZapisDesignu, idZasobu: string): void {
   zapis.zbior = zapis.zbior.filter((wpis) => wpis.id !== idZasobu);
@@ -82,15 +65,9 @@ export function usunZasob(zapis: ZapisDesignu, idZasobu: string): void {
 }
 
 /**
- * Przyjęcie odpowiedzi na `design.asset.list`.
- *
- * Odmowa zostawia zbiór nietknięty i zapisuje powód: pusty wykaz po odmowie
- * i pusty wykaz na świeżej instalacji to dwa różne stany.
- *
- * Wywołanie stoi osobno od przyjęcia, bo odpowiedź bywa, że nie przyjdzie.
- * Odczyt zlecony przed zerwaniem gniazda nie dostaje odpowiedzi nigdy, więc
- * czuwanie (`czuwanie-rdzenia.ts`) musi rozstrzygnąć stan okna samo. Dlatego
- * ta funkcja przyjmuje gotowy wynik zamiast sama go czekać.
+ * Przyjęcie odpowiedzi na `design.asset.list`. Odmowa zostawia zbiór
+ * nietknięty i zapisuje powód, odróżniając pusty wykaz po odmowie od pustego
+ * wykazu na świeżej instalacji.
  */
 export function przyjmijOdczytZasobow(
   zapis: ZapisDesignu,

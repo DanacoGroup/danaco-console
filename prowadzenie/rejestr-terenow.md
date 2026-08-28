@@ -311,6 +311,11 @@ To ten sam stan, ktory dla osadzarki naprawila migracja 401, wskazujac
 stala w `internal/wiedza/` i wiersz katalogu w migracji — rozdzielenie ich
 stworzyloby dwie prawdy.
 
+**Domkniete 28.08.** Stala w `internal/wiedza/ustawienia.go` i migracja 404 zmienily sie
+w jednej rewizji, a druga rewizja wciagnela oba klucze do petli `ustawienia()` w
+`adapter_modul_wiedza.go` — bez tego migracja byla dla dzialajacego rdzenia bezskutkowa,
+co wykazala kontrola. Sprawdzian odtwarzajacy wskazuje uszkodzony katalog wag nastawa
+i zada odmowy zamiast cichego siegniecia po wagi wbudowane.
 Po domknieciu: 5,2 GB w `~/.cache/huggingface` staje sie zbedne.
 
 ### Transkrypcja pyta siec o metadane przy kazdym przebiegu
@@ -324,6 +329,11 @@ identyczny i bezsieciowy.
 **Skutek:** maszyna bez sieci doklada opoznienie i ryzyko odmowy tam, gdzie
 wszystko lezy na dysku.
 
+**Domkniete 28.08.** `local_files_only=True` wchodzi takze do drogi transkrypcji.
+Powstal `test_silnik.py` z atrapa biblioteki: pod `pytest` przechodzi, a po usunieciu
+argumentu pada. Uwaga do drabiny weryfikacji: repozytorium nie ma skryptu drabiny, wiec
+`pytest` nie biegnie nigdzie z urzedu — sprawdzian trzeba do niej wpiac, gdy powstanie.
+
 
 ### Warstwa `obowiazkowa-apt` wykazu zaleznosci niesie proze
 
@@ -336,15 +346,23 @@ spacjach dawalo `apt-get install -y ... uruchomieniowe Javy (default-jre) ...`,
 apt padal, a `set -e` zabijal przebieg **przed** warstwami Go, npm, snap i mowy.
 Skrypt prowizjonowania serwera nie dochodzil do konca **od dawna**.
 
-Teren obszedl to rozpoznawaniem postaci pola. Wlasciwa naprawa — osobna warstwa
-w rdzeniu dla podpowiedzi zdaniem — lezy w `internal/core`.
+**Domkniete 28.08 przez prowadzenie, po dwoch zwrotach kontroli.** Rdzen dostal warstwe
+`obowiazkowa-recznie`, a rozstrzyganie idzie po ksztalcie pola: do warstwy apt wchodzi
+wylacznie pole zlozone z nazw pakietow dystrybucji oraz polecenie `pip install`, dla ktorego
+skrypt ma osobna galaz. Pole, ktorego drugim czlonem jest `install`, jest poleceniem, nie
+wykazem — to odroznia `cargo install typos-cli` od dwoch nazw pakietow.
+
+Naprawa objela TRZY miejsca naraz, bo rozdzielenie ich dawalo regresje: rdzen, obie galezie
+skryptu prowizjonowania (plan i postawienie) oraz odpis awaryjny w tym samym skrypcie, gdzie
+szesc pozycji przeklasyfikowano. Zmierzone po naprawie: wiersz `apt-get install` niesie same
+nazwy pakietow, a szesc pozycji recznych skrypt WYPISUJE — wczesniej proze gubil po cichu.
+Sprawdziany odtwarzajace obie usterki padaja bez naprawy i przechodza z nia.
 
 ### `cargo install` klasyfikowany jako warsztat Go
 
-Regula klasyfikacji pyta o podnapis `go install`, a ten stoi wewnatrz
-`cargo install typos-cli`. Pozycja wpada do warstwy `warsztat-go` i bylaby
-wykonana poleceniem `go install`. Teren obszedl to warunkiem na poczatek
-lancucha; naprawa reguly nalezy do rdzenia.
+Regula klasyfikacji pytala o podnapis `go install`, a ten stoi wewnatrz
+`cargo install typos-cli`. **Domkniete 28.08 razem z pozycja wyzej** — dopasowanie bierze
+przedrostek, a pozycja idzie do warstwy recznej, nie do apt.
 
 ### Pakiet `.deb` serwera nie niosl pomocnikow mowy
 

@@ -1,6 +1,7 @@
 /** Rozstrzygnięcie i wykonanie chwili przekazania sterowania ramie po drodze wejścia. */
 
 import type { Environment } from '../../../shared/contract.ts';
+import type { Kanal } from '../protokol/kanal.ts';
 import type { StanPrzebiegu } from '../wejscie/przebieg.ts';
 import { zamontujRame } from './montaz.ts';
 
@@ -16,6 +17,8 @@ export function gotowaDoPrzekazania(stan: StanPrzebiegu): stan is StanZeSrodowis
 export interface ZaleznosciPrzekazania {
   dokument: Document;
   zdejmijOknoWejscia: () => void;
+  /** Kanał, którym rama woła komendy rdzenia dla okna modułu; brak — rama bez okna modułu. */
+  kanal?: Kanal;
 }
 
 /**
@@ -36,6 +39,7 @@ export function wykonajPrzekazanie(stan: StanZeSrodowiskiem, zaleznosci: Zalezno
       srodowisko: stan.srodowisko,
       moduly: stan.moduly,
       sesje: stan.sesje,
+      kanal: zaleznosci.kanal,
     });
   } catch (blad) {
     console.error('[rama] przekazanie odrzucone: montaż rzucił wyjątkiem', blad);

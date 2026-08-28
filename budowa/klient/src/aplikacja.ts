@@ -23,11 +23,8 @@ function adresRdzenia(): string {
 
 const klient = tozsamoscKlienta();
 const transport = utworzTransport(adresRdzenia());
-const przebieg = utworzPrzebieg({
-  kanal: utworzKanal(transport, utworzSesje()),
-  transport,
-  klient,
-});
+const kanal = utworzKanal(transport, utworzSesje());
+const przebieg = utworzPrzebieg({ kanal, transport, klient });
 
 const oknoWejscia = zamontuj({ korzen: document, przebieg, wersjaKlienta: klient.wersja });
 
@@ -39,6 +36,7 @@ const oknoWejscia = zamontuj({ korzen: document, przebieg, wersjaKlienta: klient
 const naZmianePrzebiegu = utworzPrzekazanieJednorazowe({
   dokument: document,
   zdejmijOknoWejscia: () => oknoWejscia.zdejmij(),
+  kanal,
 });
 
 przebieg.naZmiane(naZmianePrzebiegu);

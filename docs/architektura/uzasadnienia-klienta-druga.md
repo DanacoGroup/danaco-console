@@ -7850,3 +7850,26 @@ okna. Zapis i przywrócenie rozgłaszają zdarzenie studio.document.changed.
 Osłona odmowy zostaje mimo to: funkcja wywolajUczciwie broni przed kopertą studio.unknown, która
 nie niesie pola status i nigdy by się nie skorelowała, przez co okno stałoby w ładowaniu bez
 końca. Kosztuje jedną subskrypcję.
+
+## budowa/klient-poprzedni/src/okna-rownolegle/gniazdo-okna.ts
+Gniazdo nie zna ani pary, ani liczby okien na scenie — te należą do układu.
+Zmiana roli i moduł nadany gniazdu zgłaszane są także wtedy, gdy przychodzą
+z rdzenia zdarzeniem window.changed, inaczej więź koordynator–wykonawca
+i pas relacji zostawałyby przy poprzedniej figurze. Kod okna wykonania
+przychodzi dopiero po uzgodnieniu z rdzeniem, więc gniazdo powstaje bez
+niego i dostaje go później przez ustawOknoWykonania; pusty napis do tej
+chwili nie jest awarią, tylko stanem, który panel nazywa wprost. Widok
+rozmowy wbudowany w gniazdo jest domyślnie wyłączony, bo scena sesji osadza
+właściwy widok z zewnątrz przez wiązanie gniazda; stanowisko podglądu
+układu nie ma takiego wiązania, więc włącza wbudowany widok jawnie, inaczej
+jego gniazda stałyby puste. Szerokość gniazda na kolumnę rozmowy i kolumnę
+paneli jest liczona w kodzie, nie w arkuszu stylu, bo kontrakt szerokości
+musi być tą samą liczbą, o którą opiera się uchwyt — dwa progi rozjechałyby
+się przy pierwszej poprawce. Bez wbudowanej rozmowy fasada jest jawnie
+nieczynna dla treści i stanu: operator widzi rozmowę w widoku osadzonym
+z zewnątrz, a stan łączności płynie do niego inną drogą, więc drugi zapis
+tej samej historii w gnieździe nie miałby odbiorcy. Rola widnieje
+w nagłówku okna komunikacji, więc po jej zmianie widok musi powstać na
+nowo, inaczej gniazdo pokazywałoby jedną rolę, a okno pod nim drugą; bez
+wbudowanej rozmowy nie ma czego przebudować, bo rolę widzi operator już
+w nagłówku gniazda.

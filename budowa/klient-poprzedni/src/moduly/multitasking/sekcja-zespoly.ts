@@ -11,20 +11,9 @@ import { utworzPowierzchnieSekcji, zdaniePuste } from './powierzchnia-sekcji';
 import type { ZrodloZespolow } from './zrodlo-zespolow';
 
 /**
- * Sekcja ZESPOŁY panelu orkiestracji — presety składu, którymi obsadza się role.
- *
- * Sekcja steruje zespołami zapisanymi w rdzeniu: zakładaniem, powielaniem
- * i wczytywaniem. Szablony stoją tu jako gotowe nazwy do zapisania —
- * naciśnięcie szablonu zakłada zespół komendą `team.save`.
- *
- * Preset obejmuje sam skład: `TeamSaveRequest` przyjmuje nazwę, opis
- * i `agentIds`. Ról ani kolejek kontrakt nie niesie, więc sekcja wypisuje
- * kształt brakującego pola zamiast upychać je w opisie. Nadanie ról oknom
- * robi sekcja Role komendą `role.assign`.
- *
- * Skład pokazuje się nazwami ekspertów, bo `Team.agentIds` niesie same
- * identyfikatory, a nazwy dokłada `agent.list`. Ekspert nieznany wykazowi
- * zostaje w składzie — z identyfikatorem i zdaniem, że rdzeń go nie oddał.
+ * Sekcja Zespoły steruje presetami składu zapisanymi w rdzeniu: zakładaniem,
+ * powielaniem i wczytywaniem; preset obejmuje sam skład, bo ról ani kolejek
+ * kontrakt nie niesie.
  */
 export interface SekcjaZespolow {
   element: HTMLElement;
@@ -54,7 +43,7 @@ const SZABLONY: ReadonlyArray<{ nazwa: string; opis: string }> = [
   { nazwa: 'Pętla ciągła 24/7', opis: 'Praca ciągła sterowana harmonogramem i kolejką.' },
 ];
 
-/** Kształt pola, którego `team.save` nie ma — wypisany w meldunku wprost. */
+/** Kształt pola, którego zapis zespołu nie ma — wypisany w meldunku wprost, zamiast upychany w opisie zespołu. */
 const BRAK_PRESETU =
   'team.save { …, roles?: [{ windowRole, agentId, channelId }], queueIds?: string[] } — kontrakt tych pól nie niesie.';
 
@@ -108,11 +97,7 @@ export function utworzSekcjeZespolow(opcje: OpcjeSekcjiZespolow): SekcjaZespolow
     }),
   );
 
-  /**
-   * Zapis zespołu. Pusta nazwa nie jedzie do rdzenia: `TeamSaveRequest.name`
-   * jest polem obowiązkowym, więc żądanie bez niej skończyłoby się odmową
-   * trudną do powiązania z pustym polem formularza.
-   */
+  // Zapis zespołu; pusta nazwa nie jedzie do rdzenia, bo jest polem obowiązkowym kontraktu.
   async function zapisz(mianoZespolu: string, opis: string): Promise<void> {
     if (mianoZespolu === '') {
       powierzchnia.meldunek('Zespół bez nazwy nie ma czego zapisać — nazwa jest polem obowiązkowym kontraktu.', false);
@@ -130,8 +115,7 @@ export function utworzSekcjeZespolow(opcje: OpcjeSekcjiZespolow): SekcjaZespolow
       );
       return;
     }
-    // Nazwa i identyfikator w meldunku pochodzą z zespołu oddanego przez rdzeń
-    // po zapisie, nie z treści żądania.
+    // Nazwa i identyfikator w meldunku pochodzą z zespołu oddanego przez rdzeń po zapisie.
     powierzchnia.meldunek(
       `Rdzeń założył zespół „${wynik.wynik.name}" (${wynik.wynik.id}). Preset obejmuje SAM SKŁAD — ${BRAK_PRESETU}`,
       true,
@@ -248,8 +232,7 @@ export function utworzSekcjeZespolow(opcje: OpcjeSekcjiZespolow): SekcjaZespolow
     zdaniePuste('Wczytaj zespół z wykazu wyżej — jego skład stanie tutaj.'),
   );
 
-  // Zespół zmieniony poza tym widokiem przerysowuje wykaz: `team.changed`
-  // istnieje po to, żeby drugie okno nie musiało pytać ponownie w pętli.
+  // Zespół zmieniony poza tym widokiem przerysowuje wykaz, żeby drugie okno nie pytało w pętli.
   const odsubskrybuj = zrodlo.naZespol(() => odczytaj());
 
   return {
@@ -260,7 +243,7 @@ export function utworzSekcjeZespolow(opcje: OpcjeSekcjiZespolow): SekcjaZespolow
   };
 }
 
-/** Treść odmowy wraz z kodem kontraktu — ta sama postać co w oknach ról. */
+/** Treść odmowy wraz z kodem kontraktu — ta sama postać, co w oknach ról całej obsady tego środowiska pracy. */
 function powod(zdanie: string | undefined, kod: string | undefined): string {
   return `Powód: ${zdanie ?? 'rdzeń nie podał przyczyny'} (kod ${kod ?? 'brak'}).`;
 }

@@ -7101,3 +7101,14 @@ z odmową.
 
 ## budowa/klient-poprzedni/src/moduly/automations/nawigacja-okien.ts
 Nawigacja skraca drogę już istniejącą, nie otwiera nowej: wszystkie sześć okien modułu stoi w jednej przewijanej siatce, bez niej Operator dochodzi do Execution Monitora przewijaniem, z nią jednym wskazaniem. Mechanizm jest z biblioteki: rozwijanie, wędrówkę strzałkami, ślad wyboru na gałęzi, pole szukania po progu i zdanie o pustym wykazie niesie wspólny komponent menu drzewa, więc tutaj nie ma własnej listy rozwijanej ani nakładki wyboru. Ujawnianie jest stopniowe: okno wiodące stoi na pierwszym poziomie, bo jest wejściem do modułu, a dwie rodziny ról, kreatory i pas wykonania, odsłaniają się dopiero po wskazaniu gałęzi; siatka pod menu nie zmienia się, żadne okno nie znika i żadne nie dochodzi, więc przywołanie jest skokiem, nie otwarciem. Na uchwycie stoi bieżąca wartość nastawy, nie jej nazwa rodzajowa: przed pierwszym przywołaniem żadna wartość nie jest prawdziwa, Operator niczego nie przywołał, a wszystkie okna są na ekranie, więc uchwyt mówi to wprost i żaden liść nie niesie wtedy znacznika wyboru. Kod spoza wykazu okien modułu jest pomijany przy przestawianiu wskazania: menu nie zaczyna twierdzić, że przywołało coś, czego w module nie ma.
+
+## budowa/klient-poprzedni/src/moduly/browser/stan-przegladania.ts — odmowa wykazu bez błędu okna
+Okno jest ustalone i działa, nieudany jest jeden odczyt wykazu — dlatego faza okna zostaje nietknięta. Panel sam rozstrzyga, co z tym zrobić: wykaz z pozycjami zostaje na widoku, a wykaz pusty po odmowie nie przedstawia się jako pusty.
+
+## budowa/klient-poprzedni/src/moduly/multitasking/sekcja-zespoly.ts
+Szablony stoją tu jako gotowe nazwy do zapisania: naciśnięcie szablonu
+zakłada zespół zapisem tego samego kształtu, a nadanie ról oknom robi
+osobna sekcja Role. Skład pokazuje się nazwami ekspertów, bo zespół niesie
+same identyfikatory, a nazwy dokłada osobny odczyt wykazu ekspertów; ekspert
+nieznany wykazowi zostaje w składzie z identyfikatorem i zdaniem, że rdzeń
+go nie oddał.

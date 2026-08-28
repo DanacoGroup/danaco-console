@@ -7490,3 +7490,15 @@ Kontrakt jest jedynym źródłem prawdy nazw, a `contract.ts` jego wytworem. Trz
 Nierozpoznana komenda wraca pod nazwą swojego obszaru, a nie pod nazwą połączenia — odmowa poczty przedstawia się jako sprawa poczty. Sprawdzian obszarów wypada niepomyślnie zarówno wtedy, gdy taki obszar się pojawi, jak i wtedy, gdy wiersz zostanie tu po obszarze już domkniętym.
 
 Zmiana nazwy w `contract.json` przechodzi przez kompilację obu stron i zostawia w interfejsie martwe wywołanie, które rdzeń odbije zdarzeniem `*.unknown` — dług nie rośnie i nie znika po cichu.
+
+## budowa/klient-poprzedni/src/modele/stan-tozsamosci.ts
+Trzy elementy stanu — katalog kategorii, zapisy treści i nakładka — występują razem, ponieważ edytor korzysta z wszystkich naraz: katalog wskazuje dostępne kategorie i proponowany tryb, zapisy niosą treść, a nakładka określa, co z tej treści trafia do modelu. Oś wyznacza zakres odczytu: zapisy pobierane są dla osi wskazanej, nie dla wszystkich naraz, więc kategoria bez zapisu na danej osi ma treść pustą, a obowiązuje dla niej treść z osi szerszej. Oś wymagająca bytu, dla której bytu nie ma, jest traktowana jak platforma — adresowanie takiej osi nie ma znaczenia w kontrakcie.
+
+## budowa/klient-poprzedni/src/moduly/design/wyszukiwarka-funkcji-designu.ts
+Wyszukiwarka niczego nie uruchamia i nie udaje, że uruchamia: pozycja bez drogi
+nie dostaje przycisku, który po naciśnięciu przeprosi, tylko zdanie o tym, czego
+brakuje. Szukanie idzie środkiem nazwy, opisu, grupy i okna, bo nazwy pozycji są
+w części angielskie i złożone — szukanie wyłącznie od początku nazwy nie
+znalazłoby pozycji po słowie wpisanym z pamięci. Liczba w zdaniu o zasięgu
+katalogu liczy się z wykazu przy każdym odświeżeniu, bo zapisanie jej wprost
+rozjeżdżałoby się z listą pozycji przy zmianie wykazu.

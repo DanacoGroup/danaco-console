@@ -27,7 +27,7 @@ func (a *adapterBadan) OtworzDoLektury(ctx context.Context,
 	if z.SourceId == "" {
 		return shared.ResearchReadingOpenResponse{}, bladWskazaniaBadan("reading.open bez źródła")
 	}
-	tekst, warstwa, err := a.trescDoLekturyBadania(ctx, z.SourceId, false)
+	tekst, warstwa, err := a.trescDoLekturyBadania(ctx, z.SourceId, false, nil, nil)
 	if err != nil {
 		return shared.ResearchReadingOpenResponse{}, err
 	}
@@ -67,9 +67,10 @@ func (a *adapterBadan) OtworzDoLektury(ctx context.Context,
 
 // trescDoLekturyBadania oddaje tekst źródła, wydobywając go z załącznika, gdy
 // jeszcze go nie ma. `wymusRozpoznanie` żąda rozpoznania pisma nawet wtedy, gdy
-// dokument ma warstwę tekstową — tego chce `research.source.ocr`.
+// dokument ma warstwę tekstową — tego chce `research.source.ocr`, które podaje
+// też `jezyki` i `obrobkaWstepna`; pozostali wywołujący przekazują je puste.
 func (a *adapterBadan) trescDoLekturyBadania(ctx context.Context, kodZrodla string,
-	wymusRozpoznanie bool) (string, bool, error) {
+	wymusRozpoznanie bool, jezyki []string, obrobkaWstepna *bool) (string, bool, error) {
 
 	tresc, err := a.repozytorium.TrescZrodlaBadania(ctx, kodZrodla)
 	if errors.Is(err, dane.ErrBrakWiersza) {
@@ -92,9 +93,13 @@ func (a *adapterBadan) trescDoLekturyBadania(ctx context.Context, kodZrodla stri
 				"przy składaniu rdzenia")
 	}
 	wymuszone := wymusRozpoznanie
-	wynik, err := a.dokumenty.WyciagnijTekst(ctx, shared.DocumentTextExtractRequest{
-		SourcePath: &sciezka, ForceOcr: &wymuszone,
-	})
+	zadanie := shared.DocumentTextExtractRequest{
+		SourcePath: &sciezka, ForceOcr: &wymuszone, Preprocess: obrobkaWstepna,
+	}
+	if jezyk := strings.Join(jezyki, "+"); jezyk != "" {
+		zadanie.Language = &jezyk
+	}
+	wynik, err := a.dokumenty.WyciagnijTekst(ctx, zadanie)
 	if err != nil {
 		return "", false, err
 	}
@@ -341,7 +346,7 @@ func (a *adapterBadan) StreszczZrodlo(ctx context.Context,
 	if z.SourceId == "" {
 		return shared.ResearchSourceSummarizeResponse{}, bladWskazaniaBadan("source.summarize bez źródła")
 	}
-	tekst, _, err := a.trescDoLekturyBadania(ctx, z.SourceId, false)
+	tekst, _, err := a.trescDoLekturyBadania(ctx, z.SourceId, false, nil, nil)
 	if err != nil {
 		return shared.ResearchSourceSummarizeResponse{}, err
 	}
@@ -420,7 +425,7 @@ func (a *adapterBadan) WyodrebnijTabele(ctx context.Context,
 		return shared.ResearchSourceExtractTableResponse{},
 			bladWskazaniaBadan("source.extractTable bez źródła")
 	}
-	tekst, _, err := a.trescDoLekturyBadania(ctx, z.SourceId, false)
+	tekst, _, err := a.trescDoLekturyBadania(ctx, z.SourceId, false, nil, nil)
 	if err != nil {
 		return shared.ResearchSourceExtractTableResponse{}, err
 	}
@@ -534,7 +539,7 @@ func (a *adapterBadan) WyodrebnijTwierdzenia(ctx context.Context,
 		return shared.ResearchSourceExtractClaimsResponse{},
 			bladWskazaniaBadan("source.extractClaims bez źródła")
 	}
-	tekst, _, err := a.trescDoLekturyBadania(ctx, z.SourceId, false)
+	tekst, _, err := a.trescDoLekturyBadania(ctx, z.SourceId, false, nil, nil)
 	if err != nil {
 		return shared.ResearchSourceExtractClaimsResponse{}, err
 	}
@@ -585,7 +590,8 @@ func (a *adapterBadan) RozpoznajPismoZrodla(ctx context.Context,
 	if z.SourceId == "" {
 		return shared.ResearchSourceOcrResponse{}, bladWskazaniaBadan("source.ocr bez źródła")
 	}
-	if _, _, err := a.trescDoLekturyBadania(ctx, z.SourceId, true); err != nil {
+	if _, _, err := a.trescDoLekturyBadania(ctx, z.SourceId, true,
+		z.Languages, z.Preprocess); err != nil {
 		return shared.ResearchSourceOcrResponse{}, err
 	}
 	tresc, err := a.repozytorium.TrescZrodlaBadania(ctx, z.SourceId)

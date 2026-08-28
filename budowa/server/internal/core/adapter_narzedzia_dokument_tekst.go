@@ -140,11 +140,15 @@ func (a *adapterNarzedziDokumentu) WyciagnijTekst(ctx context.Context,
 
 	jezyk := jezykRozpoznaniaDokumentu(z.Language)
 	wymuszone := z.ForceOcr != nil && *z.ForceOcr
+	obrobkaWstepna := z.Preprocess != nil && *z.Preprocess
 
 	switch {
 	case obrazyDokumentu[zrodlo.format]:
+		if err := a.zweryfikujJezykTesseracta(ctx, jezyk); err != nil {
+			return shared.DocumentTextExtractResponse{}, err
+		}
 		// Obraz ma wyłącznie piksele, więc usedOcr jest tu prawdziwe zawsze i bez wyjątku.
-		tekst, err := a.rozpoznajPismo(ctx, zrodlo.sciezka, jezyk)
+		tekst, err := a.rozpoznajPismo(ctx, zrodlo.sciezka, jezyk, obrobkaWstepna)
 		if err != nil {
 			return shared.DocumentTextExtractResponse{}, err
 		}
@@ -160,7 +164,8 @@ func (a *adapterNarzedziDokumentu) WyciagnijTekst(ctx context.Context,
 		return shared.DocumentTextExtractResponse{Text: tekst, Pages: &strony, UsedOcr: true}, nil
 
 	case zrodlo.format == "pdf":
-		return a.tekstZPdf(ctx, katalogPracy, zrodlo.sciezka, jezyk, odStrony, doStrony, wymuszone)
+		return a.tekstZPdf(ctx, katalogPracy, zrodlo.sciezka, jezyk, odStrony, doStrony,
+			wymuszone, obrobkaWstepna)
 
 	default:
 		if wymuszone {
@@ -238,7 +243,7 @@ func (a *adapterNarzedziDokumentu) tekstTika(ctx context.Context,
 // pisma stosuje dopiero po jej braku albo na wyraźne żądanie Operatora, bo
 // pikselowy odczyt bywa mniej wierny niż zapisane znaki.
 func (a *adapterNarzedziDokumentu) tekstZPdf(ctx context.Context, katalogPracy, plik, jezyk string,
-	odStrony, doStrony *int, wymuszone bool) (shared.DocumentTextExtractResponse, error) {
+	odStrony, doStrony *int, wymuszone, obrobkaWstepna bool) (shared.DocumentTextExtractResponse, error) {
 
 	warstwa, stron, bladWarstwy := a.warstwaTekstowaPdf(ctx, plik, odStrony, doStrony)
 	if bladWarstwy != nil && !wymuszone {
@@ -251,7 +256,11 @@ func (a *adapterNarzedziDokumentu) tekstZPdf(ctx context.Context, katalogPracy, 
 		}, nil
 	}
 
-	tekst, przetworzone, err := a.rozpoznajPismoWPdf(ctx, katalogPracy, plik, jezyk, odStrony, doStrony)
+	if err := a.zweryfikujJezykTesseracta(ctx, jezyk); err != nil {
+		return shared.DocumentTextExtractResponse{}, err
+	}
+	tekst, przetworzone, err := a.rozpoznajPismoWPdf(ctx, katalogPracy, plik, jezyk,
+		odStrony, doStrony, obrobkaWstepna)
 	if err != nil {
 		return shared.DocumentTextExtractResponse{}, err
 	}
@@ -295,7 +304,15 @@ func (a *adapterNarzedziDokumentu) warstwaTekstowaPdf(ctx context.Context, plik 
 // i puszcza każdy przez rozpoznanie pisma; niższa rozdzielczość gubi znaki
 // diakrytyczne polskiego materiału.
 func (a *adapterNarzedziDokumentu) rozpoznajPismoWPdf(ctx context.Context, katalogPracy, plik,
-	jezyk string, odStrony, doStrony *int) (string, int, error) {
+	jezyk string, odStrony, doStrony *int, obrobkaWstepna bool) (string, int, error) {
+
+	if obrobkaWstepna {
+		// Odmowa braku unpapera zapada PRZED rasteryzacją stron, nie po niej —
+		// inaczej Operator płaci renderem całego dokumentu, zanim ją zobaczy.
+		if err := zagwarantujCzyszczenieSkanuDostepne(); err != nil {
+			return "", 0, err
+		}
+	}
 
 	przedrostek := filepath.Join(katalogPracy, "strona")
 	argumenty := append([]string{"-r", "300", "-png"}, zakresDlaPopplera(odStrony, doStrony)...)
@@ -315,7 +332,7 @@ func (a *adapterNarzedziDokumentu) rozpoznajPismoWPdf(ctx context.Context, katal
 
 	czesci := make([]string, 0, len(obrazy))
 	for _, obraz := range obrazy {
-		tekst, err := a.rozpoznajPismo(ctx, obraz, jezyk)
+		tekst, err := a.rozpoznajPismo(ctx, obraz, jezyk, obrobkaWstepna)
 		if err != nil {
 			return "", 0, err
 		}
@@ -324,32 +341,171 @@ func (a *adapterNarzedziDokumentu) rozpoznajPismoWPdf(ctx context.Context, katal
 	return strings.Join(czesci, "\n"), len(obrazy), nil
 }
 
-// rozpoznajPismo puszcza jeden obraz przez Tesseracta i oddaje odczytany
-// tekst wprost ze standardowego wyjścia programu, więc na dysku nie zostaje
-// żaden plik poza katalogiem roboczym czynności.
-func (a *adapterNarzedziDokumentu) rozpoznajPismo(ctx context.Context, obraz, jezyk string) (string, error) {
+// rozpoznajPismo puszcza jeden obraz przez Tesseracta, poprzedzone obróbką
+// wstępną unpaperem przy zamówieniu jej polem preprocess, i oddaje odczytany
+// tekst wprost ze standardowego wyjścia programu.
+func (a *adapterNarzedziDokumentu) rozpoznajPismo(ctx context.Context, obraz, jezyk string,
+	obrobkaWstepna bool) (string, error) {
+
+	material, posprzataj, err := a.obrazPoObrobceWstepnej(ctx, obraz, obrobkaWstepna)
+	if err != nil {
+		return "", err
+	}
+	defer posprzataj()
+
 	wyjscie, err := a.wolaj(ctx, narzedzieTesseract,
-		[]string{obraz, "stdout", "-l", jezyk}, granicaRozpoznaniaDokumentu)
+		[]string{material, "stdout", "-l", jezyk}, granicaRozpoznaniaDokumentu)
 	if err != nil {
 		return "", err
 	}
 	return string(wyjscie), nil
 }
 
-// jezykRozpoznaniaDokumentu sprowadza wskazanie wołającego do nazwy języka
-// znanej Tesseractowi; nazwa nierozpoznana zostaje bez zmian, ponieważ
-// podmiana na język domyślny dałaby odczyt zmyślony.
+// obrazPoObrobceWstepnej oddaje ścieżkę obrazu bez zmiany, gdy żądanie nie
+// zamówiło obróbki wstępnej; przy zamówieniu przepuszcza obraz przez unpapera.
+func (a *adapterNarzedziDokumentu) obrazPoObrobceWstepnej(ctx context.Context, obraz string,
+	obrobkaWstepna bool) (string, func(), error) {
+
+	pusto := func() {}
+	if !obrobkaWstepna {
+		return obraz, pusto, nil
+	}
+	if err := zagwarantujCzyszczenieSkanuDostepne(); err != nil {
+		return "", pusto, err
+	}
+
+	katalog, err := os.MkdirTemp("", "danaco-dokument-obrobka-")
+	if err != nil {
+		return "", pusto, odmowaDokumentu(shared.ErrorCodeInternalError,
+			"nie można założyć katalogu roboczego obróbki wstępnej: "+err.Error())
+	}
+	posprzataj := func() { _ = os.RemoveAll(katalog) }
+
+	wejscie, err := materialWPnm(obraz, katalog)
+	if err != nil {
+		posprzataj()
+		return "", pusto, err
+	}
+	wyjscie := filepath.Join(katalog, "oczyszczony.ppm")
+	if _, err := a.wolaj(ctx, narzedzieCzyszczeniaSkanu,
+		argumentyObrobkiWstepnejDokumentu(wejscie, wyjscie), granicaRozpoznaniaDokumentu); err != nil {
+		posprzataj()
+		return "", pusto, err
+	}
+	// unpaper potrafi skończyć się powodzeniem i nie zostawić pliku wyniku.
+	if opis, err := os.Stat(wyjscie); err != nil || opis.Size() == 0 {
+		posprzataj()
+		return "", pusto, odmowaDokumentu(shared.ErrorCodeInternalError,
+			"unpaper zakończył pracę, ale obrazu po obróbce nie ma pod "+wyjscie+
+				" — materiał do rozpoznania nie powstał")
+	}
+	return wyjscie, posprzataj, nil
+}
+
+// zagwarantujCzyszczenieSkanuDostepne odmawia nazwanie braku unpapera na tej
+// maszynie, gdy żądanie zamówiło obróbkę wstępną — wołane PRZED kosztowną
+// rasteryzacją albo rozpoznaniem, tak jak Studio pyta o program przed pracą.
+func zagwarantujCzyszczenieSkanuDostepne() error {
+	if zewnetrzne.Stoi(narzedzieCzyszczeniaSkanu) {
+		return nil
+	}
+	return odmowaDokumentu(shared.ErrorCodeChannelUnavailable,
+		"żądanie zamówiło obróbkę wstępną obrazu (pole preprocess), a programu "+
+			narzedzieCzyszczeniaSkanu.Nazwa+" ("+narzedzieCzyszczeniaSkanu.Program+
+			") nie ma na tej maszynie; naprawa: zainstalować pakiet "+
+			narzedzieCzyszczeniaSkanu.Pakiet+
+			". Droga, która działa bez niego: wysłać żądanie bez pola preprocess — "+
+			"rozpoznanie pobiegnie na materiale bez obróbki")
+}
+
+// argumentyObrobkiWstepnejDokumentu składa wiersz unpapera dla pola preprocess
+// przez wspólne argumentyCzyszczenia modułu Studio — jedno źródło wiersza
+// zamiast powielonego, żeby rozejście stron przestało być możliwe po cichu.
+func argumentyObrobkiWstepnejDokumentu(wejscie, wyjscie string) []string {
+	return argumentyCzyszczenia(nastawyRozpoznania{
+		Prostowanie: true, Odszumianie: true, PrzycinanieMarginesow: true,
+	}, wejscie, wyjscie)
+}
+
+// jezykRozpoznaniaDokumentu sprowadza wskazanie do wykazu nazw, jaki oczekuje
+// przełącznik -l Tesseracta: człony rozdzielone znakiem „+" idą do sprowadzenia
+// osobno i wracają złożone tym samym znakiem, nierozpoznane bez zmian.
 func jezykRozpoznaniaDokumentu(wskazanie *string) string {
-	nazwa := strings.ToLower(strings.TrimSpace(wartoscTekstu(wskazanie)))
-	switch nazwa {
-	case "":
+	tekst := strings.TrimSpace(wartoscTekstu(wskazanie))
+	if tekst == "" {
 		return jezykRozpoznaniaDomyslny
+	}
+	czlony := strings.Split(tekst, "+")
+	znormalizowane := make([]string, 0, len(czlony))
+	for _, czlon := range czlony {
+		znormalizowane = append(znormalizowane, jezykPojedynczyDoTesseracta(czlon))
+	}
+	return strings.Join(znormalizowane, "+")
+}
+
+// jezykPojedynczyDoTesseracta sprowadza jedno wskazanie języka (bez znaku
+// „+") do nazwy trójliterowej, jaką niesie Tesseract.
+func jezykPojedynczyDoTesseracta(wskazanie string) string {
+	nazwa := strings.ToLower(strings.TrimSpace(wskazanie))
+	switch nazwa {
 	case "pl", "pol", "polski", "polish", "pl-pl", "pl_pl":
 		return jezykRozpoznaniaDomyslny
 	case "en", "eng", "angielski", "english", "en-us", "en_us", "en-gb":
 		return "eng"
 	}
 	return nazwa
+}
+
+// zweryfikujJezykTesseracta odmawia nazwanie, gdy którykolwiek człon wykazu
+// języków rozpoznania nie stoi wśród danych językowych zainstalowanych na tej
+// maszynie — cicha próba rozpoznania w języku innym niż zamówiony dałaby
+// Operatorowi odczyt zmyślony, więc Tesseract w ogóle nie rusza.
+func (a *adapterNarzedziDokumentu) zweryfikujJezykTesseracta(ctx context.Context, jezyk string) error {
+	dostepne, err := a.jezykiTesseractaDostepne(ctx)
+	if err != nil {
+		return err
+	}
+	for _, czlon := range strings.Split(jezyk, "+") {
+		if !dostepne[czlon] {
+			return odmowaDokumentu(shared.ErrorCodeValidationFailed,
+				"Tesseract na tej maszynie nie niesie danych językowych "+czlon+
+					" — wykaz zainstalowanych: "+wykazJezykowTesseracta(dostepne)+
+					"; naprawa: wskazać jeden z niesionych języków polem language "+
+					"albo doinstalować pakiet danych językowych Tesseracta dla "+czlon)
+		}
+	}
+	return nil
+}
+
+// jezykiTesseractaDostepne pyta Tesseracta wprost, jakie dane językowe niesie
+// ta maszyna (--list-langs), zamiast zakładać z góry stały wykaz — instalacja
+// pakietów językowych różni się między maszynami Operatora.
+func (a *adapterNarzedziDokumentu) jezykiTesseractaDostepne(ctx context.Context) (map[string]bool, error) {
+	wyjscie, err := a.wolaj(ctx, narzedzieTesseract, []string{"--list-langs"}, granicaRozpoznaniaDokumentu)
+	if err != nil {
+		return nil, err
+	}
+	wiersze := strings.Split(strings.TrimSpace(string(wyjscie)), "\n")
+	dostepne := make(map[string]bool, len(wiersze))
+	// Pierwszy wiersz jest nagłówkiem z katalogiem danych, nie nazwą języka.
+	for _, wiersz := range wiersze[1:] {
+		nazwa := strings.TrimSpace(wiersz)
+		if nazwa != "" {
+			dostepne[nazwa] = true
+		}
+	}
+	return dostepne, nil
+}
+
+// wykazJezykowTesseracta oddaje wykaz dostępnych języków w stałym porządku do
+// treści odmowy — mapa sama porządku nie niesie.
+func wykazJezykowTesseracta(dostepne map[string]bool) string {
+	wykaz := make([]string, 0, len(dostepne))
+	for jezyk := range dostepne {
+		wykaz = append(wykaz, jezyk)
+	}
+	sort.Strings(wykaz)
+	return strings.Join(wykaz, ", ")
 }
 
 // zakresStronDokumentu sprawdza wskazanie stron: strona zerowa albo ujemna

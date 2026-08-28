@@ -7803,3 +7803,20 @@ komplet sześciu kodów, a byt wspólny wypowiada obie strony różnicy — okna
 rejestru, których moduł nie buduje, oraz okna budowane spoza rejestru.
 Dopisanie trzech okien do rejestru rdzenia zdejmie tę drugą połowę bez
 zmiany ani jednej linii tutaj.
+## budowa/klient-poprzedni/src/moduly/studio/zrodlo-pracy-studio.ts
+Plik zrodlo-studio.ts niesie sześć komend obszaru, na których stały Studio Editor i Diff/Grep
+Panel: otwarcie, zapis, operacja, porównanie, wykaz wersji, przywrócenie. Jedno okno pracy
+potrzebuje ponad to sześciu dalszych rodzin obecnych w kontrakcie: komendy studio.tracking.*
+niosą wynik modelu w miejscu, w którym stoi treść; studio.proposal.decide to decyzja o propozycji
+po stronie rdzenia, z fragmentami wskazanymi wybiórczo polem hunkIndexes; studio.export.profile.*
+to nastawy strony, jedyne miejsce w kontrakcie z zapisem trwałym kartki, marginesów, nagłówka
+i stopki; studio.preview.render liczy paginację i typografię po stronie rdzenia; studio.template.*
+to galeria szablonów i zakładanie dokumentu z szablonu; studio.search.semantic i studio.diff.source
+to pomiary panelu Redaktora — bliskość znaczeniowa i rozbieżność wobec materiału wejściowego.
+
+Rodzina komendy design.asset.content.get nazywa się design.*, ale komenda nie należy do modułu
+Design: kontrakt mówi wprost, że dotyczy każdego zasobu magazynu, bo magazyn jest jeden dla
+rodzin design.*, document.*, media.* i archive.*. Podgląd wydania sięga nią po obrazy stron
+wyrysowane przez rdzeń — pole uri zasobu jest ścieżką w systemie plików rdzenia, więc przeglądarka
+nie wczyta spod niego niczego. Osobnej komendy pobierania zasobu Studia nie ma i nie ma jej
+w kontrakcie.

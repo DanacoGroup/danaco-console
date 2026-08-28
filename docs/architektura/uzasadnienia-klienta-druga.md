@@ -7012,3 +7012,17 @@ siebie, lecz układem książkowym, w którym strona pierwsza stoi sama po prawe
 a dalej idą pary parzysta–nieparzysta — bez tego rozróżnienia rozkładówka
 pokazywałaby parę pierwszą i drugą, której w oprawionym piśmie nigdy nie widać
 naraz.
+
+## budowa/klient-poprzedni/src/moduly/studio/przybornik-zrodlo.ts
+Kontrakt przy komendzie studio.annotation.add niesie uwagę, że czynność ta
+idzie drogą generyczną window.action i wraca odmowa not_found, ponieważ
+katalog akcji nie ma jej wiersza. Sprawdzenie potwierdziło, że okno pracy
+z dokumentem wołało adnotację właśnie tak, z identyfikatorem
+studio.diff.adnotacja, czyli nazwą, której w katalogu akcji rdzenia nie ma —
+skutkiem była odmowa not_found przy każdym naciśnięciu, mimo że własna
+komenda w kontrakcie istnieje i ma parę: studio.annotation.add oraz
+studio.annotation.list. Ten moduł woła te dwie komendy wprost. Gdy uchwyt po
+stronie rdzenia nie stoi, odpowiedź wraca z odmową nazywającą samą komendę,
+a nie odmową nazywającą brakujący wiersz katalogu akcji — ta różnica pozwala
+rozpoznać, czego rdzeniowi rzeczywiście brakuje. Źródło nie ma stanu i nie
+buduje elementu interfejsu.

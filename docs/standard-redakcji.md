@@ -16,6 +16,16 @@ wskazanie dokumentu, z którego opracowanie czerpie, jest w nim treścią, a nie
 odesłaniem zamiast treści. Zakaz odsyłania dotyczy komentarza w pliku kodu,
 ponieważ komentarz ma być samodzielnym nośnikiem informacji.
 
+## Objętość komentarza w pliku
+
+Udział komentarzy nie przekracza pięciu procent objętości pliku, a pojedynczy
+komentarz trzystu pięćdziesięciu znaków. Miarę egzekwuje walidator dyscypliny
+inżynierskiej i to on rozstrzyga; zapisy podające inną wartość są nieaktualne.
+
+Pliki wytworzone generatorem są poza zasięgiem redakcji. Ich treść powstaje
+z generatora, więc ręczna zmiana ginie przy następnym wytworzeniu, a do czasu
+tego wytworzenia zapis w repozytorium przeczy swojemu źródłu.
+
 ## Budowa komentarza
 
 Każdy plik zawiera nagłówek. Nagłówek niesie co najmniej jedno pełne zdanie

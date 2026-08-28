@@ -7000,3 +7000,15 @@ własny. Usunięcie szablonu fabrycznego jest odmawiane nazwanym powodem, tak
 samo jak usunięcie operacji fabrycznej: okno czyta pole deleted i przy
 odpowiedzi odmownej pokazuje powód, zamiast zdejmować pozycję z galerii
 i pozwolić jej wrócić przy następnym odczycie.
+
+## budowa/klient-poprzedni/src/moduly/studio/widok-ukladu-stron.ts
+Moduł oblicza układ kartek na powierzchni dokumentu — pojedynczą, wieloma obok
+siebie albo rozkładówką — przyjmując liczbę stron i nastawy, bez odwołań do
+struktury dokumentu obiektowego. Trzy pojęcia nie mogą się mylić: widok dwóch
+stron to dwie strony tego samego dokumentu obok siebie i stoi w tym module;
+dwa dokumenty obok siebie to podział powierzchni i stoi w module
+widok-podzialu-powierzchni.ts; rozkładówka nie jest parą dowolnych stron obok
+siebie, lecz układem książkowym, w którym strona pierwsza stoi sama po prawej,
+a dalej idą pary parzysta–nieparzysta — bez tego rozróżnienia rozkładówka
+pokazywałaby parę pierwszą i drugą, której w oprawionym piśmie nigdy nie widać
+naraz.

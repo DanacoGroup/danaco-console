@@ -6105,3 +6105,16 @@ bezwarunkowo przepisuje kolejność z rdzenia — przestawienie zapisane w
 miejscu żyłoby tylko do pierwszego takiego zdarzenia. Wpis, którego rdzeń
 już nie podaje, wypada z nakładki, bo nakładka nie wskrzesza sesji, których
 nie ma.
+
+## budowa/klient-poprzedni/src/moduly/workspace/pamiec-sesji.ts
+Pamięć projektu prowadzi osobny plik rodziną komend kontekstu: wpisy jednego projektu, wspólne
+wszystkim jego kartom. Ten panel prowadzi to, co widzi karta, osobną rodziną komend, w której
+zasięg jest polem żądania, a nie założeniem — dwie rodziny komend, dwa byty, dwa pliki. Panel woła
+komendy wykazu, zapisu i przełączania poziomów; odpięcie zostaje bez wołacza, bo znaczenie
+odpięcia nie jest w kontrakcie ustalone, więc kontrolka wołająca tę komendę zmieniałaby zawartość
+bazy w sposób, którego okno nie potrafi nazwać. Każde zdanie mówi to, co oddał rdzeń: poziomy po
+przestawieniu biorą się z odpowiedzi rdzenia, nie ze stanu przełączników — rdzeń, który przyjmie
+wywołanie i odda inny zestaw poziomów, nie zrobił tego, o co proszono. Poziomy zasięgu do
+przestawienia to ten sam wykaz, co w pamięci projektu i w Instructions Panel, prowadzony jednym
+źródłem nazw, żeby ta sama nastawa nie nazywała się w trzech oknach na trzy sposoby.
+Warunek wstępny zwraca prawdę i wypisuje powód, gdy karty jeszcze nie ma.

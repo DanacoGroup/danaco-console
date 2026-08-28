@@ -8991,3 +8991,35 @@ Po połączeniu kolejka opróżnia się już po ogłoszeniu stanu, więc licznik
 w chwili zmiany jest nieaktualny. Dopóki zostają ramki, odczyt jest dobijany
 cyklicznie; gdy kolejka spadnie do zera, pętla się gasi. W stanach innych niż
 połączony nic z otwartego gniazda nie schodzi, więc pętla nie jest potrzebna.
+## budowa/klient-poprzedni/src/moduly/assistant/panel-mowy.ts
+
+Bajty nagrania idą do `speech.audio.upload`, a oddany odnośnik wchodzi w pole
+ścieżki i od razu jedzie do rozpoznania. Dźwięk nie opuszcza maszyny rdzenia:
+droga prowadzi tam i z powrotem, nigdzie indziej. Granicą jest to, czym jest
+odnośnik nagrania — ścieżką pliku na maszynie silnika, a nie bajtami z karty.
+
+Brak dostępu do mikrofonu nie jest awarią rdzenia i okno tak go nazywa:
+przeglądarka bywa bez zgody, bez urządzenia albo w kontekście bez dostępu do
+urządzeń mediów, a każdy z tych powodów Operator naprawia u siebie.
+
+Panel nie stawia wskaźnika pewności rozpoznania, ponieważ kontrakt miary
+pewności nie oddaje — odpowiedź niesie długość nagrania, liczbę znaków, model
+i język. Plakietka o niskiej pewności byłaby wartością wziętą znikąd.
+
+## budowa/klient-poprzedni/src/moduly/research/czynnosci-eksportu.ts
+Niespełniony warunek wydania wraca komunikatem, a nie wygaszoną kontrolką;
+ponowne naciśnięcie w trakcie wywołania odcina logika, zbiór trwających
+wydań, a nie blokada kontrolki. Odmowę braku wykonawcy pokazuje osobna gałąź,
+słowami rdzenia. Operator mógł przestawić pola zlecenia w czasie między
+zdjęciem ich raz a nadejściem odpowiedzi, więc porównanie odpowiedzi
+z zamówieniem, którego nie wysłano, nie mówi nic prawdziwego. Wydanie ze
+wskazaną ścieżką docelową albo z zapisem do biblioteki oddaje sam format, bez
+ścieżki, identyfikatora pliku biblioteki ani rozmiaru, bo rdzeń nie ma
+magazynu plików wyjściowych i pliku nie zapisuje, zapisuje sam ślad zlecenia
+— przemilczenie tej rozbieżności zostawiłoby operatora z komunikatem
+o wydanym raporcie tam, gdzie wskazał miejsce docelowe i żadnego pliku nie
+dostał. Okno nie orzeka też braku, którego rdzeń nie pokazał: przy zleceniu
+bez ścieżki i bez repozytorium nie ma czego brakować. Żądanie składane bez
+wskazania operatora wracałoby odmową walidacji, z której nic dla niego nie
+wynika — ten jeden krok mówi, skąd okno bierze treść, a gdy jej nie ma,
+wywołanie komendy nazywa brak, zamiast wysyłać puste pole.

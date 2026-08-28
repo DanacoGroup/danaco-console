@@ -7026,3 +7026,14 @@ stronie rdzenia nie stoi, odpowiedź wraca z odmową nazywającą samą komendę
 a nie odmową nazywającą brakujący wiersz katalogu akcji — ta różnica pozwala
 rozpoznać, czego rdzeniowi rzeczywiście brakuje. Źródło nie ma stanu i nie
 buduje elementu interfejsu.
+
+## budowa/klient-poprzedni/src/moduly/studio/wiersz-cyfryzacji.ts
+Wiersz nie wywołuje niczego sam: oddaje przyciski, a czynności podpina okno,
+dzięki czemu rozmowa z rdzeniem zostaje w jednym miejscu, a wiersz odpowiada
+wyłącznie za to, co widać. Stan jest treścią, nie barwą: nazwa stanu idzie do
+atrybutu data-stan i do plakietki słownej naraz, więc pozycja odmówiona jest
+rozpoznawalna także bez odczytu barwy. Stan przychodzi z rdzenia jako
+StudioIngestState i ma pięć wartości, nie cztery — wartość ponowienia jest
+stanem osobnym, który nazywa sytuację, gdy rozpoznanie wypadło poniżej progu
+pewności i pozycja wraca do rozpoznania, czego ani stan gotowy, ani stan
+odmowy nie opisuje.

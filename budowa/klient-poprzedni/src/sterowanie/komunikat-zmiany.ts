@@ -14,7 +14,10 @@ export interface KomunikatZmiany {
   udany: boolean;
 }
 
-/** Komunikat potwierdzenia zmiany. */
+/**
+ * Komunikat potwierdzenia zmiany ustawienia sterowania, wyświetlany w pasku komunikatów
+ * tego okna aplikacji.
+ */
 export function potwierdzenie(nazwa: string): KomunikatZmiany {
   return { tresc: `${nazwa} — zapisane`, udany: true };
 }
@@ -33,5 +36,8 @@ export function niepowodzenie(nazwa: string, blad?: ErrorInfo): KomunikatZmiany 
   return { tresc: `${nazwa} — ${blad.code}: ${blad.message}${ponowienie}`, udany: false };
 }
 
-/** Odbiorca komunikatów kompletu sterowania. */
+/**
+ * Odbiorca komunikatów kompletu sterowania tego okna, wywoływany przy każdej zmianie jego
+ * ustawienia.
+ */
 export type OdbiorcaKomunikatu = (komunikat: KomunikatZmiany) => void;

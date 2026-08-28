@@ -7516,3 +7516,17 @@ cztery liczby opisują jeden prostokąt, a nie zbiór.
 
 Pole zostawione z wpisem, którego nie da się odczytać jako liczby, zostawia wymiar bez zmiany,
 zamiast zsuwać warstwę do lewego górnego rogu.
+
+## budowa/klient-poprzedni/src/moduly/design/zapis-designu.ts
+Powiadamianiem widoku zajmuje się osobny zapis stanu; odczyt z rdzenia i
+rozgłoszenie zmiany to dwie różne czynności rozdzielone między te dwa pliki.
+Nadawcą zdarzenia usunięcia zasobu jest procedura po stronie rdzenia, która
+wysyła je wyłącznie wtedy, gdy wiersz naprawdę zniknął — bez tej gałęzi zdarzenie
+trafiałoby do gałęzi wciągającej i okno pokazywałoby jako obecny zasób, o którym
+rdzeń właśnie powiedział, że go nie ma. Przyjęcie odpowiedzi stoi osobno od
+wywołania, bo odpowiedź bywa, że nie przyjdzie: odczyt zlecony przed zerwaniem
+połączenia nie dostaje odpowiedzi nigdy, więc czuwanie nad połączeniem musi
+rozstrzygnąć stan okna samo. Do odmowy okno dokleja zdanie o torze komendy, bo
+powód dotyczy wtedy żądania; zerwanego połączenia żadne pole żądania nie
+tłumaczy, więc przy nim dopisek byłby wyłącznie hałasem. Granicę wyjściową
+zmienia się w filtrze panelu zasobów.

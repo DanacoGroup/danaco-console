@@ -1,25 +1,4 @@
-/* ============================================================================
-   DANACO CONSOLE — PANEL DEBATY W STOSIE PANELI POMOCNICZYCH
-   ----------------------------------------------------------------------------
-   Podział arkuszy modułu idzie po oknach. Tutaj leży wyłącznie panel debaty
-   (`panel-debaty.ts`), czyli jedyne okno modułu, które stoi poza jego
-   złożeniem: w stosie paneli pomocniczych cudzego modułu albo w kolumnie
-   paneli sceny okien równoległych.
-
-   Osobny arkusz ma tu drugi powód, mocniejszy od długości. Panel wciąga swoje
-   arkusze sam, bo gospodarzem bywa moduł, którego arkusz o Roundtable nic nie
-   wie; wydzielenie sprawia, że gospodarz dostaje reguły panelu, a nie reguły
-   Debate Panel i Consensus Panel, których u siebie nie stawia. Obok tego pliku
-   panel wciąga `roundtable.css` i wyłącznie z niego bierze cztery reguły stanu
-   treści (`.dr-stany`, `.dr-stan`, `.dr-potwierdzenie`, `.dr-tresc`) — nośnik
-   stanu treści modułu stoi na przedrostku `dr` i drugiej kopii tych reguł tutaj
-   być nie może.
-
-   Kolumna, nie pas: wypowiedzi kilku modeli idą jedna pod drugą, a odróżnia je
-   wstęga w wariancie motywu i tożsamość w nagłówku głosu — nie druga kolumna
-   i nie własna paleta modułu. Plik nie zna ani jednej barwy i ani jednego
-   odstępu wprost: wszystko z żetonów `--dn-*`.
-   ============================================================================ */
+/* Arkusz zawiera panel debaty modułu Roundtable, jedyne okno tego modułu stojące poza jego złożeniem, w stosie paneli pomocniczych innego modułu albo w kolumnie paneli okien równoległych. */
 
 
 .dr-panel-naglowek {

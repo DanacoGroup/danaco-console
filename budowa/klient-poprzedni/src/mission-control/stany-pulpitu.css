@@ -1,15 +1,12 @@
-/* Stany puste pulpitu.
-   Jedna odpowiedzialność: szata miejsc, w których danych nie ma — sekcja bez
-   odczytu, kolumna bez sesji, miara bez źródła w kontrakcie. Treść buduje
-   `stan-pusty.ts` i widoki sekcji; tu wyłącznie wygląd. */
+/* Arkusz opisuje stany puste pulpitu: szatę miejsc, w których danych nie ma, dla sekcji bez odczytu, kolumny bez sesji i miary bez źródła. */
 
-/* Osadzenie komponentu dn-pusty-stan w sekcjach pulpitu */
+/* Osadzenie komponentu pustego stanu w sekcjach pulpitu niesie wspólny obrys kreskowany i promień zaokrąglenia dla każdego miejsca bez danych. */
 .mc-pusto {
   border: 1px dashed var(--dn-obrys-mocny);
   border-radius: var(--dn-r-md);
 }
 
-/* Sesje bez wskazania środowiska w odczycie — wiersz pod kolumnami matrycy */
+/* Sesje bez wskazania środowiska w odczycie trafiają do osobnego wiersza pod kolumnami matrycy, zamiast znikać z widoku. */
 .mc-matryca__poza-etykieta {
   margin: var(--dn-od-3) 0 var(--dn-od-1);
   font-size: var(--dn-fs-sm);
@@ -28,14 +25,14 @@
   color: var(--dn-tekst-2);
 }
 
-/* Kolumna środowiska bez sesji mówi to wprost */
+/* Kolumna środowiska bez sesji mówi to wprost jednym wierszem tekstu, zamiast pozostawiać puste miejsce bez wyjaśnienia. */
 .mc-kolumna__pusto {
   margin: 0;
   font-size: var(--dn-fs-sm);
   color: var(--dn-tekst-3);
 }
 
-/* Uwaga o miarach kanału bez źródła w kontrakcie */
+/* Uwaga o miarach kanału bez źródła w kontrakcie ostrzega, że wartość telemetrii nie nadeszła jeszcze z rdzenia. */
 .mc-kanal__uwaga {
   margin: var(--dn-od-2) 0 0;
   font-size: var(--dn-fs-sm);

@@ -1,13 +1,11 @@
-/* ============================================================================
-   SKŁADNIK — NAGŁÓWEK BLOKU
-   ----------------------------------------------------------------------------
+/* Składnik nagłówka bloku przedstawia nazwę grupy składników wewnątrz kroku instalacji, umieszczoną niżej od podtytułu całego kroku.
+
    Nazwa grupy składników wewnątrz kroku. Stoi niżej od podtytułu kroku:
    nazywa jeden blok, a nie cały krok. Poniżej pewnego stopnia rangi rozróżnia
    już nie rozmiar, tylko waga i kontrast.
 
    Właściwości:
-     klucz      klucz katalogu — treść nagłówka
-   ============================================================================ */
+     klucz      klucz katalogu — treść nagłówka */
 (function () {
 'use strict';
 var K = window.DanacoKreator, N = K.narzedzia, el = N.el, tekst = N.tekst;

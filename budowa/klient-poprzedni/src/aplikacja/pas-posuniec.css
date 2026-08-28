@@ -1,17 +1,4 @@
-/* ============================================================================
-   DANACO CONSOLE — PAS POSUNIĘĆ ASYSTENTA
-   ----------------------------------------------------------------------------
-   Jedna odpowiedzialność: wygląd paska, który mówi, że asystent pracuje, i co
-   właśnie zrobił. Zachowanie opisuje nagłówek `pas-posuniec.ts` — tu jest
-   wyłącznie wygląd.
-
-   Źródłem wartości są wyłącznie żetony motywu: ani jednej wartości
-   szesnastkowej, ani jednego odstępu spoza skali.
-
-   Ruch asystenta nie jest ani sukcesem, ani awarią, więc pas nosi barwę
-   informacyjną. Para `--dn-informacja-tekst` / `--dn-informacja-tlo` przechodzi kontrolę
-   kontrastu razem z resztą par motywu; pas nie dokłada barwy własnej.
-   ============================================================================ */
+/* Arkusz opisuje wyłącznie wygląd paska stanu asystenta widocznego u dołu okna aplikacji, budowany w całości z żetonów motywu zgodnie z zachowaniem zapisanym w pliku pas-posuniec.ts. */
 
 .dc-pas-asystenta {
   position: sticky;

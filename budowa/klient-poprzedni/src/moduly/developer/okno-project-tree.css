@@ -1,11 +1,4 @@
-/* ============================================================================
-   DANACO CONSOLE — OKNO PROJECT TREE (moduł Developer)
-   ----------------------------------------------------------------------------
-   Wyłącznie klasy, których `developer.css` nie ma: menu kontekstowe prawego
-   przycisku myszy. Reszta wyglądu okna (`mdev-*`) idzie z arkusza modułu.
-   Plik nie zna barwy dosłownej ani rozmiaru dosłownego — wyłącznie żetony
-   motywu (`--dn-*`).
-   ============================================================================ */
+/* Arkusz opisuje wyłącznie klasy, których nie ma developer.css: menu kontekstowe prawego przycisku myszy w oknie Project Tree modułu Developer. */
 
 .mpt-menu {
   position: fixed;

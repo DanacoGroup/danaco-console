@@ -1,13 +1,4 @@
-/* ══════════════════════════════════════════════════════════════════════════════
-   Panel rejestru kanałów modelu — układ własny panelu
-
-   Arkusz osobny od `sterowanie.css`: tamten opisuje komplet sterowania jednego
-   okna (siatka pól `dc-ster-*`) i jest bytem wspólnym. Panel kanałów to osobne
-   okno o innym układzie — wykaz, formularz, panel akcji — więc ma własny arkusz.
-
-   Bez barw własnych: wszystko z żetonów `motyw/` i z klas bibliotecznych
-   `dn-*`. Ten plik wnosi wyłącznie układ i odstępy.
-   ══════════════════════════════════════════════════════════════════════════════ */
+/* Arkusz panelu rejestru kanałów niesie własny układ wykazu, formularza i panelu akcji, złożony wyłącznie z żetonów motywu i klas biblioteki, bez barw własnych. */
 
 .dc-kanaly__wykaz {
   display: flex;
@@ -77,12 +68,14 @@
 }
 
 /* Przełącznik stoi w wierszu obok podpisu, a nie pod nim. */
+
 .dc-kanaly__wiersz--logiczny {
   flex-direction: row;
   align-items: center;
 }
 
 /* Zdanie o niezmienialnym rodzaju kanału. Ostrzeżenie, nie blokada. */
+
 .dc-kanaly__uwaga {
   margin: 0;
   color: var(--dn-ostrzezenie-tekst);

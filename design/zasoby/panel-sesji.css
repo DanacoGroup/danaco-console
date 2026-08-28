@@ -1,7 +1,5 @@
-/* PANEL SESJI I PROJEKTÓW
-   Zawartość panelu bocznego: płaski wykaz sesji, drzewo projektów i stopka
-   panelu. Obudowa panelu i wiersz wykazu należą do
-   `rama.css`. Mechanizm: `panel-sesji.js`.
+/* Panel sesji i projektów zawiera płaski wykaz sesji, drzewo projektów oraz stopkę panelu, a obudowę panelu i wiersz wykazu niesie plik rama.css.
+   Mechanizm zapisuje plik `panel-sesji.js`.
    Wykaz sesji jest płaski: porządek niesie sortowanie (`data-sesje-sort`),
    zakres — zawężenie (`data-sesje-widok`). Grupowanie należy do projektu,
    czyli do drzewa na drugiej karcie panelu. */
@@ -111,7 +109,7 @@
 .dn-panel-wykaz[data-sesje-widok='reakcja']    > .sta-menu:not(:has(> .dn-panel-poz[data-stan='reakcja'])),
 .dn-panel-wykaz[data-sesje-widok='zakonczone'] > .sta-menu:not(:has(> .dn-panel-poz[data-stan='zakonczone'])) { display: none; }
 
-/* Zawężenie drzewa projektów: gałąź bez sesji w danym stanie odkłada się. */
+/* Zawężenie drzewa projektów odkłada gałąź, w której żadna sesja nie ma wskazanego stanu, pozostawiając widoczne wyłącznie gałęzie z pasującą sesją. */
 .dn-panel-drzewo[data-projekty-widok='praca']   > .dn-panel-galaz:not(:has(.dn-panel-poz[data-stan='praca'])),
 .dn-panel-drzewo[data-projekty-widok='reakcja'] > .dn-panel-galaz:not(:has(.dn-panel-poz[data-stan='reakcja'])) { display: none; }
 

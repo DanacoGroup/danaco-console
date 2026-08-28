@@ -1,15 +1,4 @@
-/* ============================================================================
-   Danaco Console — warstwa rozmowy, powłoka.
-
-   Jedna odpowiedzialność: układ rozmowy, obszar historii i pole wypowiedzi.
-   Wygląd wpisu mieszka w `wpis.css`, wygląd bloków zwijanych w `blok.css`.
-
-   Wartości pochodzą wyłącznie z żetonów `motyw/` i klas `komponenty/` — nie ma
-   tu ani jednej wartości szesnastkowej i ani jednego odstępu spoza skali 4 px.
-
-   Akcent złoty pojawia się na przycisku wysyłki, na obrysie ogniska i na kresce
-   koordynatora — nigdy jako wypełnienie powierzchni.
-   ============================================================================ */
+/* Arkusz stylu warstwy rozmowy określa układ obudowy, obszaru historii i pola wypowiedzi, korzystając wyłącznie z wartości żetonów motywu i klas biblioteki komponentów. */
 
 /* Obudowa okna. Biblioteka ma `.dn-rozmowa` (komponenty/rozmowa.css), ale ta
    klasa niesie własną ramę: obrys 1 px `--dn-obrys`, `border-radius`

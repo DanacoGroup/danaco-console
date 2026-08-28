@@ -1,4 +1,4 @@
-/* ============================================================================
+/* Plik dostarcza deklaratywną warstwę interakcji wspólną klikalnym prototypom okien, sterowaną wyłącznie atrybutami data. ============================================================================
    DANACO CONSOLE — WARSTWA PROTOTYPU (zachowanie) · v2.0
    ----------------------------------------------------------------------------
    Deklaratywna warstwa interakcji wspólna wszystkim klikalnym prototypom okien.
@@ -62,7 +62,8 @@
   window.dnToast = toast;
 
   /* ── 2 · PRZEŁĄCZANIE WIDOKÓW ─────────────────────────────────────────── */
-  /* <button data-przelacz="nazwa-widoku" data-grupa="g1">  →  [data-widok="nazwa-widoku"][data-grupa-widoku="g1"] */
+
+  /* Atrybut data-przelacz wskazuje widok pokazywany w obrębie grupy data-grupa. */
 
   function przelaczWidok(nazwa, grupa) {
     var selGrupa = grupa ? '[data-grupa-widoku="' + grupa + '"]' : '[data-widok]:not([data-grupa-widoku])';
@@ -102,7 +103,8 @@
   }
 
   /* ── 4 · WYBÓR POZYCJI NA LIŚCIE ──────────────────────────────────────── */
-  /* [data-lista-wyboru] > [data-pozycja]  — wybór jednokrotny */
+
+  /* Pozycja data-pozycja wewnątrz data-lista-wyboru dopuszcza wybór jednokrotny. */
 
   function obsluzListeWyboru(lista) {
     lista.addEventListener('click', function (e) {
@@ -184,7 +186,8 @@
   });
 
   /* ── 8 · ZERO BLOKAD — komunikat zamiast bramy ────────────────────────── */
-  /* <button data-komunikat="treść" data-komunikat-rodzaj="ostrzezenie"> */
+
+  /* Atrybut data-komunikat niesie treść, a data-komunikat-rodzaj rodzaj powiadomienia. */
 
   D.addEventListener('click', function (e) {
     var el = e.target.closest('[data-komunikat]');
@@ -197,7 +200,8 @@
   });
 
   /* ── 9 · SYMULACJA PRACY (stan → stan) ────────────────────────────────── */
-  /* <button data-symuluj="#cel" data-symuluj-czas="1400" data-symuluj-stan="gotowe"> */
+
+  /* Atrybuty data-symuluj-czas i data-symuluj-stan ustalają czas i stan docelowy. */
 
   D.addEventListener('click', function (e) {
     var el = e.target.closest('[data-symuluj]');
@@ -219,7 +223,8 @@
   });
 
   /* ── 10 · POSTĘP ANIMOWANY ────────────────────────────────────────────── */
-  /* <div class="dn-postep" data-postep-do="72" data-postep-czas="1600"> */
+
+  /* Atrybuty data-postep-do i data-postep-czas ustalają wartość docelową i czas paska. */
 
   function animujPostep(el) {
     var docelowy = parseFloat(el.getAttribute('data-postep-do') || '0');

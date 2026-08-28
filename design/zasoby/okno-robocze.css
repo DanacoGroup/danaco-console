@@ -1,7 +1,6 @@
-/* OKNO ROBOCZE — MAKSYMALIZACJA
-   Ukrywa obudowę pracy (belka, szyna, panel boczny); pasmo kart zostaje, bo bez
-   niego nie ma przełączania kart ani odczytu stanów. Stan: `[data-okno-max]`
-   na `.sta-powloka`, pamięć per `[data-okno]`. Mechanizm: `okno-robocze.js`. */
+/* Okno robocze w trybie maksymalizacji ukrywa obudowę pracy — belkę, szynę i panel boczny — a pasmo kart zostaje, bo bez niego nie ma przełączania kart.
+   Stan niesie atrybut `[data-okno-max]` na `.sta-powloka`, pamięć osobno dla
+   każdego `[data-okno]`. Mechanizm zapisuje plik `okno-robocze.js`. */
 [data-okno-max='tak'] .dn-belka,
 [data-okno-max='tak'] .dn-szyna-nawigacji,
 [data-okno-max='tak'] .dn-obszar-panel--boczny { display: none; }

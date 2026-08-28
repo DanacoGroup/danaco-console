@@ -1,17 +1,4 @@
-/* ============================================================================
-   DANACO CONSOLE — PRZEPEŁNIENIE PASA POZIOMEGO
-   ----------------------------------------------------------------------------
-   Jedna odpowiedzialność: uchwyty krawędziowe i cień krawędzi pasa, który się
-   nie mieści, oraz podłoga szerokości pozycji takiego pasa.
-
-   Pas się przewija, a nie zwęża; uzasadnienie stoi w nagłówku
-   `przepelnienie-pasa.ts` — tutaj są tylko wartości.
-
-   Przedrostek `dnp` jest przedrostkiem obszaru (okna równoległe i pomocnicze),
-   nie modułu. Docelowym domem tego wzorca jest `komponenty/` — biblioteka jest
-   cudza i nietykalna, więc wniosek o przeniesienie idzie wpięciem, a nie
-   trzecim miejscem na tę samą rzecz.
-   ============================================================================ */
+/* Przepełnienie pasa poziomego opisuje uchwyty krawędziowe, cień krawędzi i podłogę szerokości pozycji pasa, który się przewija, a nie zwęża. */
 
 :root {
   /* Podłoga szerokości pozycji pasa — 160 px.

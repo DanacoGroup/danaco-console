@@ -1,11 +1,9 @@
-/* ============================================================================
-   EKRAN 3 — WERSJA PROGRAMU
-   ----------------------------------------------------------------------------
+/* Ekran trzeci kreatora instalacji umożliwia wybór wersji programu zgodnej z architekturą procesora wykrytą automatycznie przez instalator.
+
    Wykrycie procesora jest przesłanką, nie rozstrzygnięciem: instalator zaznacza
    wersję zgodną, ale zostawia wybór i ostrzega, gdy operator od wykrycia odchodzi.
    Trzy wyniki wykrycia (x64, arm, brak) niesie atrybut `data-wykryto` — ekran
-   nie ma dla nich trzech gałęzi kodu.
-   ============================================================================ */
+   nie ma dla nich trzech gałęzi kodu. */
 (function () {
 'use strict';
 var K = window.DanacoKreator, N = K.narzedzia, el = N.el, tekst = N.tekst, S = K.skladniki;

@@ -1,14 +1,4 @@
-/* ============================================================================
-   DANACO CONSOLE — APLIKACJA · GOSPODARZ, TRASY, SCENA SESJI
-   ----------------------------------------------------------------------------
-   Jedna odpowiedzialność: rozkład warstwy najwyższego rzędu — miejsca, w którym
-   router zamienia widoki, paska aplikacji nad widokami bez własnego paska oraz
-   sceny sesji osadzonej w obszarze roboczym powłoki środowiska.
-
-   Wygląd samych widoków opisują arkusze ich katalogów; ten plik ich reguł nie
-   powtarza. Barwy, stopnie pisma, odstępy, promienie i czasy pochodzą z żetonów
-   `motyw/` — bez wartości szesnastkowych — a wymiary są wielokrotnością 4 px.
-   ============================================================================ */
+/* Arkusz opisuje rozkład warstwy najwyższego rzędu aplikacji: miejsce zamiany widoków przez router, pasek aplikacji nad widokami oraz scenę sesji osadzoną w obszarze roboczym powłoki środowiska. */
 
 /* ---------------------------------------------------------------------------
    GOSPODARZ — jedno okno na wysokość ekranu, jeden widok na wierzchu
@@ -39,8 +29,7 @@
   display: none;
 }
 
-/* Widok z własnym paskiem aplikacji: pasek, pod nim treść na resztę wysokości */
-.dn-widok {
+.dn-widok { /* Widok z własnym paskiem aplikacji: pasek, pod nim treść na resztę wysokości. */
   display: grid;
   grid-template-rows: auto minmax(0, 1fr);
   min-height: 0;
@@ -236,13 +225,11 @@
 
 .dn-menu-aplikacji__nazwa { flex: 1; }
 
-/* Skrót do Okna konfiguracji — ta sama waga co przełącznik motywu obok. */
-.dn-pasek-aplikacji__ustawienia { color: var(--dn-rama-tekst-2); }
+.dn-pasek-aplikacji__ustawienia { color: var(--dn-rama-tekst-2); } /* Skrót do Okna konfiguracji — ta sama waga co przełącznik motywu obok. */
 
 .dn-pasek-aplikacji__ustawienia:hover { color: var(--dn-rama-tekst); }
 
-/* Nagłówek menu Operatora — nazwa jedyna, jaką produkt zna. */
-.dn-menu__naglowek {
+.dn-menu__naglowek { /* Nagłówek menu Operatora — nazwa jedyna, jaką produkt zna. */
   margin: 0;
   padding: var(--dn-od-2) var(--dn-od-2) var(--dn-od-1);
   font-size: var(--dn-fs-xs);
@@ -250,8 +237,7 @@
   color: var(--dn-tekst-2);
 }
 
-/* Zdanie o granicy — dlaczego nie ma tu konta ani wylogowania. */
-.dn-menu__granica {
+.dn-menu__granica { /* Zdanie o granicy — dlaczego nie ma tu konta ani wylogowania. */
   margin: 0;
   padding: var(--dn-od-2);
   border-top: 1px solid var(--dn-obrys-subtelny);

@@ -1,13 +1,4 @@
-/* ============================================================================
-   DANACO CONSOLE — SEKCJA DOSTĘPÓW · DODANIE KATALOGU Z „MÓJ KOMPUTER"
-   ----------------------------------------------------------------------------
-   Wiersz dwóch dróg wskazania katalogu: natywnego okna powłoki oraz ścieżki
-   wpisanej z ręki. Arkusz wciąga `punkty-dostepu.css`, bo dodanie katalogu
-   kończy wykaz punktów i stoi pod nim.
-
-   Barw własnych tu nie ma — wyłącznie żetony warstwy `motyw/` — ani żadnej
-   reguły wygaszającej kontrolkę.
-   ============================================================================ */
+/* Arkusz opisuje wiersz dwóch dróg wskazania katalogu w sekcji dostępów: natywnego okna powłoki oraz ścieżki wpisanej ręcznie, bez barw własnych. */
 
 /* --- Dodanie katalogu z „Mój komputer" ----------------------------------- */
 

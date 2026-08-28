@@ -1,19 +1,8 @@
-/* ============================================================================
-   DANACO CONSOLE — FUNDAMENT
-   ----------------------------------------------------------------------------
-   Warstwa zerowa nad żetonami: wyzerowanie, podłoże dokumentu, typografia
-   bazowa, fokus, zaznaczenie, paski przewijania, drobne wzorce tekstowe.
-   Wymaga wcześniejszego wczytania krojów i żetonów motywu — kolejność ustala
-   motyw.css.
-   ============================================================================ */
+/* Fundament jest warstwą zerową nad żetonami: wyzerowanie, podłoże dokumentu, typografia bazowa, fokus, zaznaczenie, paski przewijania i drobne wzorce tekstowe. */
 
 *, *::before, *::after { box-sizing: border-box; }
 
-/* Domyślny styl przeglądarki dla `[hidden]` ma tę samą wagę co reguła klasy,
-   więc komponent z własnym `display` (np. `.dn-pole` — flex) przesłania go
-   w kaskadzie i element z atrybutem `hidden` zostaje widoczny. `!important`
-   przywraca ukrycie: `hidden` jest deklaracją autora dokumentu o widoczności,
-   nie propozycją układu. */
+/* Domyślny styl przeglądarki dla atrybutu hidden ma tę samą wagę co reguła klasy, więc ważność wymusza ukrycie jako deklarację autora dokumentu, nie propozycję układu. */
 [hidden] { display: none !important; }
 
 * { margin: 0; }
@@ -41,7 +30,7 @@ input, button, textarea, select { font: inherit; color: inherit; }
 
 p, h1, h2, h3, h4 { overflow-wrap: break-word; }
 
-/* --- Nagłówki — krój nagłówkowy (Space Grotesk) --------------------------- */
+/* Nagłówki i klasa nagłówkowa dostają krój nagłówkowy Space Grotesk, wagę półgrubą, ciaśniejszy tracking i ciasną interlinię. */
 h1, h2, h3, .dn-naglowek {
   font-family: var(--dn-ff-naglowek);
   font-weight: var(--dn-fw-polgruba);
@@ -49,18 +38,18 @@ h1, h2, h3, .dn-naglowek {
   line-height: var(--dn-lh-ciasny);
 }
 
-/* --- Fokus — pierścień sygnałowy 2 px, wyłącznie nawigacja klawiaturą ----- */
+/* Fokus dostaje pierścień sygnałowy o grubości dwóch pikseli, widoczny wyłącznie przy nawigacji klawiaturą, nie przy kliknięciu myszą. */
 :focus-visible {
   outline: var(--dn-wym-fokus) solid var(--dn-fokus);
   outline-offset: var(--dn-wym-fokus-odsuniecie);
   border-radius: var(--dn-r-xs);
 }
 
-/* --- Zaznaczenie tekstu --------------------------------------------------- */
+/* Zaznaczenie tekstu bierze tło sygnału motywu, z osobnym obrysem sygnału dla zaznaczenia w motywie ciemnym. */
 ::selection { background: var(--dn-sygnal-tlo); color: var(--dn-tekst); }
 :root[data-theme='dark'] ::selection { background: var(--dn-sygnal-obrys); }
 
-/* --- Paski przewijania ---------------------------------------------------- */
+/* Paski przewijania są cienkie i barwione żetonem obrysu mocnego, spójnie w przeglądarkach opartych na silniku WebKit i pozostałych. */
 * { scrollbar-width: thin; scrollbar-color: var(--dn-obrys-mocny) transparent; }
 ::-webkit-scrollbar { width: 10px; height: 10px; }
 ::-webkit-scrollbar-thumb {
@@ -71,11 +60,11 @@ h1, h2, h3, .dn-naglowek {
 }
 ::-webkit-scrollbar-track { background: transparent; }
 
-/* --- Odnośniki ------------------------------------------------------------ */
+/* Odnośniki biorą barwę sygnału i nie mają podkreślenia w spoczynku; najechanie dodaje podkreślenie odsunięte od tekstu o dwa piksele. */
 a { color: var(--dn-sygnal); text-decoration: none; }
 a:hover { color: var(--dn-sygnal-mocny); text-decoration: underline; text-underline-offset: 2px; }
 
-/* --- Etykieta wersalikowa — podstawowy wzorzec metadanych kokpitu --------- */
+/* Etykieta wersalikowa jest podstawowym wzorcem metadanych kokpitu: krój bazowy, rozstrzelony tracking i wersaliki w barwie tekstu trzeciorzędnego. */
 .dn-etykieta-wersalikowa {
   font-family: var(--dn-ff-bazowa);
   font-size: var(--dn-fs-xs);
@@ -86,7 +75,7 @@ a:hover { color: var(--dn-sygnal-mocny); text-decoration: underline; text-underl
   color: var(--dn-tekst-3);
 }
 
-/* Wariant maszynowy — nagłówki kolumn, identyfikatory stref */
+/* Wariant maszynowy etykiety obsługuje nagłówki kolumn i identyfikatory stref, krojem o stałej szerokości znaku zamiast kroju bazowego. */
 .dn-etykieta-mono {
   font-family: var(--dn-ff-mono);
   font-size: var(--dn-fs-xs);
@@ -96,13 +85,13 @@ a:hover { color: var(--dn-sygnal-mocny); text-decoration: underline; text-underl
   color: var(--dn-tekst-3);
 }
 
-/* --- Dane liczbowe — zawsze tabelarycznie --------------------------------- */
+/* Dane liczbowe zawsze idą krojem o stałej szerokości znaku i cyframi tabelarycznymi, żeby kolumny liczb wyrównywały się do siebie. */
 .dn-dane, .dn-liczba {
   font-family: var(--dn-ff-mono);
   font-variant-numeric: tabular-nums;
 }
 
-/* --- Kod ------------------------------------------------------------------ */
+/* Kod stoi w bloku z obrysem subtelnym i tłem drugiej powierzchni, krojem o stałej szerokości znaku, z zawijaniem i przewijaniem poziomym. */
 .dn-kod {
   display: block;
   padding: var(--dn-od-3) var(--dn-od-4);
@@ -123,7 +112,7 @@ a:hover { color: var(--dn-sygnal-mocny); text-decoration: underline; text-underl
   white-space: nowrap;
 }
 
-/* --- Klawisz -------------------------------------------------------------- */
+/* Klawisz naśladuje fizyczny przycisk klawiatury: obrys mocny, grubsza dolna krawędź i tło powierzchni, krojem o stałej szerokości znaku. */
 .dn-kbd {
   display: inline-block;
   min-width: 20px;
@@ -139,7 +128,7 @@ a:hover { color: var(--dn-sygnal-mocny); text-decoration: underline; text-underl
   color: var(--dn-tekst-2);
 }
 
-/* --- Separator ------------------------------------------------------------ */
+/* Separator jest cienką kreską z żetonu obrysu subtelnego, poziomą albo pionową rozciągniętą na wysokość otoczenia. */
 .dn-separator {
   height: 1px;
   margin: var(--dn-od-4) 0;
@@ -152,7 +141,7 @@ a:hover { color: var(--dn-sygnal-mocny); text-decoration: underline; text-underl
   margin: 0 var(--dn-od-2);
 }
 
-/* --- Ukrycie dostępne ----------------------------------------------------- */
+/* Ukrycie dostępne chowa element wzrokowo, zachowując go dla czytników ekranu: wymiar jednego piksela zamiast display none. */
 .dn-sr-only {
   position: absolute;
   width: 1px; height: 1px;

@@ -1,10 +1,4 @@
-/* ============================================================================
-   Sekcja dostępów · obszar katalogu roboczego
-   ----------------------------------------------------------------------------
-   Obszar oddzielony wizualnie od dostępów, bo mówi o czym innym: gdzie model
-   zostawia swoje pliki, a nie do czego sięga. Ramę sekcji prowadzi
-   `dostepy.css`; barwy pochodzą wyłącznie z żetonów warstwy `motyw/`.
-   ============================================================================ */
+/* Arkusz opisuje obszar katalogu roboczego, oddzielony wizualnie od dostępów, ponieważ pokazuje, gdzie model zostawia pliki, a nie do czego sięga. */
 
 /* --- Obszar katalogu roboczego ------------------------------------------ */
 

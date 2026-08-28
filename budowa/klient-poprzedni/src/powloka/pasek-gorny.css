@@ -1,28 +1,11 @@
-/* ============================================================================
-   POWŁOKA — PASEK GÓRNY
-   ----------------------------------------------------------------------------
-   Jedna odpowiedzialność: cechy paska górnego, których nie niesie klasa
-   `.dn-pasek` biblioteki komponentów. Wysokość 48 px (`--dn-wym-pasek`), tło
-   ramy i barwa treści przychodzą stamtąd; tutaj zostaje tożsamość produktu,
-   kontekst, pole poleceń i licznik powiadomień.
-
-   Arkusz sięga wyłącznie po żetony `motyw/` i klasy `komponenty/`
-   (`--dn-rama-*`, `--dn-fw-polgruba`, `--dn-ls-naglowek`). Klasy, których
-   biblioteka nie niesie — kontekst pracy, rozdzielacz i uchwyt profilu —
-   stoją tutaj pod nazwą własną widoku.
-
-   Pasek jest atramentowy w OBU motywach. Każda kontrolka, która na nim staje,
-   ubiera się więc żetonami ramy, nie żetonami treści; wyjątkiem są nakładki
-   opadające POD pasek (wykaz wyników, panel menu profilu), bo te leżą już na
-   powierzchni pracy i przełączają się z motywem razem z nią.
-   ============================================================================ */
+/* Pasek górny niesie cechy, których nie daje klasa biblioteki: tożsamość produktu, kontekst pracy, pole poleceń i licznik powiadomień, żetonami ramy w obu motywach. */
 
 .dn-pasek-gorny {
   flex: none;
   z-index: var(--dn-z-pasek);
 }
 
-/* Blok tożsamości nie jest kontrolką — nie udaje jej ani kursorem, ani tłem */
+/* Blok tożsamości nie jest kontrolką — nie udaje jej ani kursorem, ani tłem przy najechaniu wskaźnikiem. */
 .dn-pasek-gorny__godlo {
   flex: none;
   cursor: default;
@@ -32,7 +15,7 @@
   background: transparent;
 }
 
-/* Nazwa produktu — jedyne miejsce kroju szeryfowego na pasku */
+/* Nazwa produktu jest jedynym miejscem kroju szeryfowego na całym pasku górnym powłoki aplikacji desktopowej. */
 .dn-pasek-gorny__produkt {
   font-family: var(--dn-ff-naglowek);
   font-size: var(--dn-fs-lg);
@@ -41,7 +24,7 @@
   white-space: nowrap;
 }
 
-/* Kontekst pracy: środowisko i moduł karty czynnej */
+/* Kontekst pracy pokazuje środowisko i moduł karty czynnej w jednym skróconym wierszu tekstu obok tożsamości. */
 .dn-pasek-gorny__kontekst {
   flex: none;
   max-width: var(--dn-wym-toast-min);
@@ -53,7 +36,7 @@
   white-space: nowrap;
 }
 
-/* Włosowa kreska oddzielająca awatar od kontrolek paska */
+/* Włosowa kreska oddziela blok tożsamości i awatar od pozostałych kontrolek paska górnego powłoki środowiska. */
 .dn-pasek-gorny__rozdzielacz {
   flex: none;
   width: 1px;
@@ -61,8 +44,7 @@
   background: var(--dn-rama-obrys);
 }
 
-/* Pole poleceń — wygląd i ognisko; wykonanie należy do centrum poleceń.
-   Pole nie jest wyłączone ani tylko do odczytu: zasada zera blokad. */
+/* Pole poleceń niesie wyłącznie wygląd i ognisko; samo wykonanie polecenia należy do centrum poleceń, nie do pola. */
 .dn-pasek-gorny__pole {
   position: relative;
   display: flex;
@@ -77,7 +59,7 @@
   padding-right: var(--dn-od-12);
 }
 
-/* Podpowiedź skrótu — nieklikalna etykieta wewnątrz pola */
+/* Podpowiedź skrótu klawiszowego jest nieklikalną etykietą osadzoną wewnątrz pola poleceń paska górnego. */
 .dn-pasek-gorny__skrot {
   position: absolute;
   right: var(--dn-od-2);
@@ -89,7 +71,7 @@
   pointer-events: none;
 }
 
-/* Powiadomienia — licznik osadzony w rogu dzwonka */
+/* Licznik powiadomień jest osadzony w rogu ikony dzwonka, nad wszystkimi pozostałymi elementami paska. */
 .dn-powiadomienia {
   position: relative;
   display: inline-flex;
@@ -107,25 +89,12 @@
   pointer-events: none;
 }
 
-/* Plakietka ma własne `display`, więc ukrycie wymaga zapisu jawnego */
+/* Plakietka licznika ma własną właściwość display, więc jej ukrycie wymaga zapisu jawnego, a nie samego atrybutu. */
 .dn-powiadomienia__licznik[hidden] {
   display: none;
 }
 
-/* ---------------------------------------------------------------------------
-   UCHWYT MENU PROFILU NA RAMIE
-
-   `menu-profilu.ts` buduje uchwyt mechanizmem `komponenty/menu-drzewo`, który
-   ubiera go żetonami treści (`--dn-hover`, `--dn-tekst`, `--dn-obrys`). Na
-   powierzchni pracy to jest właściwe, ale na atramencie ramy uchwyt był jedyną
-   rzeczą w pasku przełączającą się z motywem: w motywie jasnym stawał się
-   jasnym kafelkiem z ciemnym napisem. Tutaj dostaje żetony ramy — bez zmiany
-   mechanizmu i bez ruszania biblioteki, bo ta sama klasa obsługuje też uchwyty
-   stojące na treści.
-
-   Sam panel menu zostaje przy żetonach treści: opada pod pasek, na powierzchnię
-   pracy, i tam ma się przełączać z motywem.
-   --------------------------------------------------------------------------- */
+/* Uchwyt menu profilu na ramie dostaje żetony ramy zamiast żetonów treści, bo jest jedyną rzeczą w pasku przełączającą się z motywem; sam panel menu zostaje przy żetonach treści. */
 .dn-pasek-gorny__profil .dn-drzewo__uchwyt {
   border-color: var(--dn-rama-obrys);
   background: var(--dn-rama-hover);

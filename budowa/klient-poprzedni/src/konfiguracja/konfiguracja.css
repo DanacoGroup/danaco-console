@@ -1,21 +1,4 @@
-/* ============================================================================
-   DANACO CONSOLE — OKNO KONFIGURACJI · RAMA I TRZY OBSZARY
-   ----------------------------------------------------------------------------
-   Arkusz opisuje ramę okna oraz trzy obszary układu: pasek punktu widzenia,
-   kolumnę kategorii i kolumnę treści. Wnętrze formularza — wiersz ustawienia,
-   kontrolki, wskaźnik zasięgu i łańcuch dziedziczenia — prowadzi arkusz
-   `pola-konfiguracji.css`, wciągany na początku tego pliku.
-
-   Barw własnych nie ma — wszystko pochodzi z żetonów warstwy `motyw/`:
-   monochromatyczna precyzja, jeden błękit sygnałowy, gęstość zwarta.
-
-   Sygnał jest rzadki: błękit pojawia się w trzech miejscach i tylko w nich —
-   kategoria czynna w kolumnie, plakietka pochodzenia wartości nadpisanej oraz
-   wiersz dziedziczenia, który obowiązuje. Reszta jest atramentem i szarością.
-
-   Arkusz nie wygasza kontrolek. Pole, które nie ma zastosowania (byt poziomu
-   globalnego), znika w całości zamiast leżeć szare i nieczynne.
-   ============================================================================ */
+/* Arkusz opisuje ramę okna konfiguracji i trzy obszary układu: pasek punktu widzenia, kolumnę kategorii oraz kolumnę treści formularza. */
 
 @import './pola-konfiguracji.css';
 

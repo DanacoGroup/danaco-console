@@ -1,4 +1,4 @@
-/* ============================================================================
+/* Skrypt prowadzi mechanikę okna przepływu wejścia: ekran startowy, nawiązanie połączenia bez przycisku potwierdzenia, uwierzytelnienie oraz przejście do przygotowania środowiska pracy.
    PRZEPŁYW WEJŚCIA — mechanika okna
 
    Uruchomienie programu: po kliknięciu ikony na monitorze gra ekran startowy,
@@ -345,12 +345,12 @@ var USTERKI = {
   'hasla-rozne':  { klucz: 'haslaRozne',  pola: ['rej-haslo', 'rej-haslo-2', 'odz-haslo', 'odz-haslo-2'] }
 };
 
-/* Katalog treści okna. Ani jeden napis nie stoi w tym pliku. */
+/* Katalog treści okna wiąże napisy interfejsu z ich źródłem zewnętrznym: ani jeden napis wyświetlany operatorowi nie stoi zapisany wprost w tym pliku. */
 var N = window.DanacoNarzedzia.zwiaz((window.DanacoWejscie || {}).tresci || {});
 function tekst(sciezka) { return N.tekst(sciezka); }
 function usterkaTekst(k, co) { return tekst('usterki.' + (USTERKI[k].klucz || k) + '.' + co); }
 
-/* Pole, którego usterka dotyczy, ale tylko to obecne w tym formularzu. */
+/* Zwraca pola, których dotyczy usterka logowania, ograniczone do tych spośród nich, które rzeczywiście występują w danym formularzu okna. */
 function polaUsterki(f, k) {
   return USTERKI[k].pola.filter(function (id) { return pola(f).indexOf(id) !== -1; });
 }

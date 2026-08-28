@@ -1,11 +1,4 @@
-/* Kropka sygnału i plakietka.
-
-   Kropka oznacza pracę w tle. Tętno jest jedynym ciągłym ruchem interfejsu
-   (2,4 s). Przy `prefers-reduced-motion` tętno zamiera, a jego znaczenie
-   przejmuje pierścień statyczny.
-
-   Klatki `dn-tetno` definiuje ten arkusz; korzystają z nich także
-   `wpis.css` (wpis pracujący) oraz `drobne.css`. */
+/* Arkusz opisuje kropkę sygnału i plakietkę: kropka oznacza pracę w tle, a tętno jest jedynym ciągłym ruchem interfejsu, wyłączanym preferencją ruchu. */
 
 .dn-kropka {
   display: inline-block;
@@ -15,23 +8,23 @@
   border-radius: var(--dn-r-pill);
   background: var(--dn-kropka);
 }
-/* Tętno — jedyny ruch ciągły interfejsu (2,4 s) */
+/* Tętno jest jedynym ruchem ciągłym w całym interfejsie, trwającym dwie i cztery dziesiąte sekundy, niesionym wyłącznie kropką sygnału. */
 .dn-kropka--tetno { animation: dn-tetno var(--dn-czas-tetno) var(--dn-ease) infinite; }
 @keyframes dn-tetno {
   0%, 100% { box-shadow: 0 0 0 0 var(--dn-fokus-cien); }
   40% { box-shadow: 0 0 0 5px transparent; }
 }
-/* Przy ograniczonym ruchu tętno zamiera — kropkę wzmacnia pierścień statyczny */
+/* Przy preferencji ograniczonego ruchu tętno zamiera, a jego znaczenie przejmuje kropkę wzmacniający pierścień statyczny. */
 @media (prefers-reduced-motion: reduce) {
   .dn-kropka--tetno { box-shadow: 0 0 0 2px var(--dn-fokus-cien); }
 }
-/* Warianty stanu (zawsze obok etykiety albo ikony — nigdy same) */
+/* Warianty stanu stoją zawsze obok etykiety albo ikony tekstowej, ponieważ sama barwa nigdy nie niesie znaczenia stanu w interfejsie. */
 .dn-kropka--sukces { background: var(--dn-sukces-tekst); }
 .dn-kropka--ostrzezenie { background: var(--dn-ostrzezenie-tekst); }
 .dn-kropka--blad { background: var(--dn-blad-tekst); }
 .dn-kropka--neutralna { background: var(--dn-tekst-3); }
 
-/* --- PLAKIETKA — stany i role -------------------------------------------- */
+/* Plakietka niesie stany i role za pomocą barwy tła, obrysu i tekstu, dobieranych wyłącznie z żetonów motywu, bez wartości własnych. */
 .dn-plakietka {
   display: inline-flex;
   align-items: center;
@@ -53,7 +46,7 @@
 .dn-plakietka--informacja { background: var(--dn-informacja-tlo); border-color: var(--dn-informacja-obrys); color: var(--dn-informacja-tekst); }
 .dn-plakietka--sygnal { background: var(--dn-sygnal-tlo); border-color: var(--dn-sygnal-obrys); color: var(--dn-sygnal); }
 
-/* Plakietka roli okna — mono wersaliki (koordynator / wykonawca / walidator) */
+/* Plakietka roli okna zapisuje nazwę roli mono wersalikami, rozróżniając koordynatora, wykonawcę i walidatora w wierszu tytułu. */
 .dn-plakietka--rola {
   font-family: var(--dn-ff-mono);
   font-size: var(--dn-fs-xs);

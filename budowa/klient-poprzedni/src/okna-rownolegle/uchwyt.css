@@ -1,16 +1,4 @@
-/* ============================================================================
-   DANACO CONSOLE — UCHWYT SZEROKOŚCI
-   ----------------------------------------------------------------------------
-   Jedna odpowiedzialność: wygląd krechy rozsuwającej dwie kolumny gniazda.
-   Rachunek szerokości opisuje `szerokosci-gniazda.ts`, zachowanie —
-   `uchwyt-szerokosci.ts` (podział arkusza per komponent).
-
-   Widać krechę, chwyta się pas. Krecha ma szerokość jednej jednostki skali
-   (`--dn-od-1`), bo jest kreską między kolumnami, a nie kolumną. Gdyby pole
-   chwytu było równie wąskie, trafienie w nie wymagałoby celowania — pas
-   chwytu daje więc `::before` wyciągnięty poza obrys elementu, w obie strony.
-   Rozszerzenie samego elementu zabierałoby te piksele kolumnom.
-   ============================================================================ */
+/* Uchwyt szerokości opisuje wygląd krechy rozsuwającej dwie kolumny gniazda, szerokiej na jedną jednostkę skali, z polem chwytu wyciągniętym poza obrys. */
 
 .dn-uchwyt {
   position: relative;

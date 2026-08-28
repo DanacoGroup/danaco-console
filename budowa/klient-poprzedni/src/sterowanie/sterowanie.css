@@ -1,16 +1,4 @@
-/*
- * Komplet sterowania okna komunikacji.
- *
- * Arkusz opisuje wyłącznie komplet i nie sięga do selektorów okna, nagłówka
- * ani historii — te należą do `okno-komunikacji/okno.css`. Zmienne `--dc-*`
- * sprowadza do żetonów motywu `aplikacja/powloka.css`, i to na `:root`, więc
- * mają wartość wszędzie tam, gdzie komplet da się zamontować. Wartości
- * zastępczych przy nich nie ma: były barwami wpisanymi na stałe, a taka
- * wartość zastępcza nie ratuje wyglądu, tylko cicho przypina jeden motyw.
- *
- * W arkuszu nie ma stanu `:disabled` ani reguły wygaszającej sterowanie —
- * żaden element kompletu nie jest blokadą.
- */
+/* Arkusz opisuje wyłącznie komplet sterowania okna komunikacji, ze zmiennymi sprowadzonymi do żetonów motywu na poziomie korzenia, bez selektorów okna i bez stanu zablokowanego. */
 
 .dc-sterowanie {
   display: flex;
@@ -89,6 +77,7 @@
 }
 
 /* Zdanie pod polem — nośnik stanu pustego katalogu wyboru. */
+
 .dc-ster-pole__uwaga {
   margin: 0;
   color: var(--dc-tekst-slaby);

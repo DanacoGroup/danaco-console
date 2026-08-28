@@ -1,20 +1,4 @@
-/* ============================================================================
-   DANACO CONSOLE — MODUŁ DESIGN · UKŁAD TRZECH OKIEN OPERACYJNYCH
-   ----------------------------------------------------------------------------
-   Barwy pochodzą wyłącznie z żetonów motywu; żadna nie jest zapisana wprost.
-   Wygląd kontrolek (przycisk, pole, plakietka, karta, modal, suwak, postęp,
-   pusty stan, dymek) wnosi biblioteka `komponenty/`; tutaj leży wyłącznie to,
-   czego biblioteka nie ma: rozkład okien modułu, kanwa kompozycji, wykaz
-   zasobów i znakowanie faz stanu.
-
-   Kontrolki formularza modułu pochodzą z `modele/kontrolki-formularza`, więc
-   moduł wciąga też arkusz `modele.css` — inaczej pola `dm-*` byłyby bez oprawy.
-
-   Arkusz jest podzielony na cztery pliki wzdłuż odpowiedzialności: tutaj rama
-   modułu i okien wraz ze stanami; `kompozycja.css` — kanwa, warstwy i panele
-   boczne; `zasoby.css` — wykaz zasobów i kreator promptu; `podglad.css` —
-   płyta Preview Window i porównanie wariantów.
-   ============================================================================ */
+/* Arkusz opisuje układ trzech okien operacyjnych modułu Design: rozkład okien, kanwę kompozycji, wykaz zasobów i znakowanie faz stanu. */
 
 @import '../../modele/modele.css';
 @import './kompozycja.css';

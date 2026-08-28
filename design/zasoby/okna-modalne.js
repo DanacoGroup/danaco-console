@@ -1,4 +1,4 @@
-/* ============================================================================
+/* Plik nadaje oknu nakładkowemu przeciąganie, zmianę rozmiaru, zwinięcie do doku i rozłożenie na cały obszar przeglądarki. ============================================================================
    DANACO CONSOLE — OKNA NAKŁADKOWE (zachowanie)
    ----------------------------------------------------------------------------
    Nadaje każdemu `<dialog class="dn-modal">` zachowanie okna: przeciąganie za
@@ -200,7 +200,7 @@
     odswiez_przyciski(dlg);
   }
 
-  /* Dialog uzbrajamy przy otwarciu — showModal() jest wywoływane z rozmaitych
+  /* Dialog jest uzbrajany przy otwarciu — showModal() jest wywoływane z rozmaitych
      miejsc prototypu, więc podpinamy się pod samą metodę zamiast tropić
      wszystkie wywołania. */
   var showModal = window.HTMLDialogElement && window.HTMLDialogElement.prototype.showModal;
@@ -217,7 +217,7 @@
 
   /* ── 6a · ZAMKNIĘCIE OKNA — obsługa własna, niezależna od reszty ──────── */
 
-  /* Przycisk zamknięcia obsługuje także prototyp.js. Powielamy tu obsługę
+  /* Przycisk zamknięcia obsługuje także prototyp.js. Powiela się tu obsługę
      świadomie: gdy którykolwiek wcześniejszy skrypt prototypu przerwie się
      błędem, jego nasłuch nie powstanie i okna przestaną się zamykać, choć menu
      (obsługiwane w innym pliku) nadal będą działać — objaw myli, bo wygląda na

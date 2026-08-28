@@ -1,6 +1,5 @@
-/* ============================================================================
-   SKŁADNIK — BLOK BŁĘDU
-   ----------------------------------------------------------------------------
+/* Składnik bloku błędu przedstawia kod i okoliczność niepowodzenia instalacji wraz ze zdaniem opisującym zalecane dalsze postępowanie.
+
    Kod i okoliczność niepowodzenia oraz zdanie o tym, co z tym zrobić.
    Szczegóły idą pismem maszynowym — to jedyne miejsce w oknie, gdzie treść jest
    naprawdę danymi: kod i ścieżka mają być przepisywalne bez przekłamania.
@@ -9,8 +8,7 @@
      szczegoly  klucz katalogu — kod i okoliczność
      rada       klucz katalogu — co zrobić
      dane       atrybuty `data-*` na obu częściach
-     ukryty     true — blok czeka na swoją odsłonę
-   ============================================================================ */
+     ukryty     true — blok czeka na swoją odsłonę */
 (function () {
 'use strict';
 var K = window.DanacoKreator, N = K.narzedzia, el = N.el, tekst = N.tekst;

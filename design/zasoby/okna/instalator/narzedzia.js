@@ -1,12 +1,11 @@
-/* ============================================================================
-   KREATOR INSTALACJI — narzędzia wspólne składników
+/* Moduł narzędzi wspólnych udostępnia składnikom kreatora instalacji funkcje budowania węzłów oraz pobierania i podstawiania łańcuchów treści.
+
 
    Trzy rzeczy, których potrzebuje każdy składnik i których nie powinien
    wymyślać po raz dziesiąty: budowanie węzła, sięganie po łańcuch z katalogu
    treści i podstawianie danych w łańcuch.
 
-   Nic tu nie wie o instalatorze — to warstwa niżej niż składniki.
-   ============================================================================ */
+   Nic tu nie wie o instalatorze — to warstwa niżej niż składniki. */
 (function () {
 'use strict';
 

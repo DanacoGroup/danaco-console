@@ -1,9 +1,6 @@
-/* ============================================================================
-   SKŁADNIK — INNE METODY LOGOWANIA
-
-   Trzy drogi poboczne, każda ze stanem dostępności. Metoda nieaktywna zostaje
-   w oknie zamiast znikać: pusta lista dróg pobocznych nie mówi, że są jakieś,
-   a lista z wygaszonymi pozycjami mówi, co można włączyć w ustawieniach.
+/* Metody logowania inne niż główna tworzą wykaz trzech dróg pobocznych, z których każda niesie własny stan dostępności zamiast znikać, gdy jest wyłączona.
+   Pusta lista dróg pobocznych nie mówi, że są jakieś, a lista z wygaszonymi
+   pozycjami mówi, co można włączyć w ustawieniach.
 
    Składnik zwraca WYKAZ węzłów, nie jeden węzeł: etykieta i siatka metod są
    rodzeństwem w kolumnie panelu. Opakowanie ich w pudełko wprowadziłoby

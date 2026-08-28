@@ -1,5 +1,4 @@
-/* ============================================================================
-   NARZĘDZIA OKIEN — warstwa pod składnikami
+/* Moduł narzędzi okien udostępnia warstwę pod składnikami: budowanie węzłów, pobieranie i podstawianie łańcuchów z katalogu treści.
 
    Trzy rzeczy, których potrzebuje każde okno składane ze składników i których
    nie powinno wymyślać po raz drugi: budowanie węzła, sięganie po łańcuch
@@ -8,8 +7,7 @@
    Nic tu nie wie o żadnym oknie — to warstwa niżej niż składniki.
 
        var N = DanacoNarzedzia.zwiaz(katalogTresci);
-       N.el('p', { klasa: 'we-lid', tekst: N.tekst('krok1.lid') });
-   ============================================================================ */
+       N.el('p', { klasa: 'we-lid', tekst: N.tekst('krok1.lid') }); */
 (function () {
 'use strict';
 

@@ -1,17 +1,4 @@
-/*
- * Warstwa wizualna odcinka kontroli pracy i bezpieczeństwa: dziennik czynności,
- * zmiany modelu, kopie zapasowe, autozapis, blokady fragmentów i zajęcia
- * wykonawców.
- *
- * Arkusz wchodzi z plików `dziennik-panel.ts`, `kopie-panel.ts`
- * i `blokada-panel.ts`, a nie z `studio.css`: ten należy do innego odcinka prac
- * i dopisanie do niego wiersza `@import` byłoby zmianą w cudzym pliku.
- * Wciągnięcie arkusza przez moduł kliencki daje ten sam skutek bez tej zmiany.
- *
- * Ani jednej barwy zapisanej wprost — wszystkie wartości pochodzą z żetonów
- * motywu, więc oba motywy obsługują się same. Klasy `dn-*` wnosi biblioteka
- * komponentów.
- */
+/* Arkusz zawiera warstwę wizualną odcinka kontroli pracy i bezpieczeństwa: dziennik czynności, zmiany modelu, kopie zapasowe, autozapis, blokady fragmentów i zajęcia wykonawców. */
 
 .ms-kontrola {
   display: flex;
@@ -97,7 +84,8 @@
   background: var(--dn-powierzchnia-3);
 }
 
-/* Czynność, na której stoją późniejsze — cofnięcie jej rdzeń odmówi. */
+/* Czynność, na której stoją późniejsze —
+   cofnięcie jej rdzeń odmówi. */
 .ms-kontrola__wykaz > li [data-zaleznosc='tak'] {
   border-color: var(--dn-ostrzezenie-obrys);
 }

@@ -1,4 +1,4 @@
-/* ============================================================================
+/* Składnik biblioteki rysuje bryłę modułu: sześcian programu 3×3×3 składany z klocków warstwami od dołu, z błyskiem krawędzi przy każdym zatrzasku, pierścieniem po ukończonej warstwie i poświatą rdzenia po złożeniu.
    BRYŁA MODUŁU — składnik biblioteki
 
    Sześcian programu 3×3×3 składany z klocków warstwami od dołu. Każdy zatrzask
@@ -80,7 +80,7 @@ function zbudujPalete(host) {
   return P;
 }
 
-/* ══════════════════════════════════════════════════════════════ instancja */
+/* Instancja bryły: montaż warstw sześcianu, cykl pracy i rozkładu oraz reakcja na zmianę rozmiaru pola i widoczność w oknie przeglądarki. */
 function zaloz(host, opcje) {
   if (!host || host.bryla) return host ? host.bryla : null;
   opcje = opcje || {};
@@ -555,7 +555,7 @@ function zaloz(host, opcje) {
   return api;
 }
 
-/* Zakładanie na wszystkich polach — wspólny mechanizm z warstwy narzędzi. */
+/* Zakładanie bryły na wszystkich polach dokumentu korzysta ze wspólnego mechanizmu przeglądania pól składnika, dostarczanego przez warstwę narzędzi wspólnych dla wszystkich składników okien. */
 var zalozWszystkie = window.DanacoNarzedzia.polaSkladnika('data-bryla', zaloz);
 
 window.DanacoBryla = { zaloz: zaloz, zalozWszystkie: zalozWszystkie };

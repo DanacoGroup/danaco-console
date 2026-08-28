@@ -1,9 +1,4 @@
-/* ============================================================================
-   Danaco Console — karta, karta środowiska, kafel.
-
-   Karta środowiska w spoczynku nie nosi sygnału. Sygnał pojawia się dopiero
-   przy najechaniu albo aktywności — wstęga górna 2 px (`--dn-wym-wstega`).
-   ============================================================================ */
+/* Arkusz opisuje kartę, kartę środowiska i kafel: karta środowiska w spoczynku nie nosi sygnału, który pojawia się dopiero przy najechaniu lub aktywności. */
 
 .dn-karta {
   border: 1px solid var(--dn-obrys);
@@ -26,7 +21,7 @@
   letter-spacing: var(--dn-ls-naglowek);
 }
 
-/* Karta interaktywna */
+/* Karta interaktywna reaguje najechaniem i naciśnięciem: obrys mocnieje, cień rośnie, a karta unosi się i wraca do miejsca po zwolnieniu. */
 .dn-karta--klikalna {
   cursor: pointer;
   transition:
@@ -103,7 +98,7 @@
   max-width: 44ch;
 }
 
-/* Kafel komponentu własnego — krój bazowy */
+/* Kafel komponentu własnego niesie krój bazowy: ikonę po lewej, tekst opisu po prawej, z obrysem mocniejącym po najechaniu kursorem. */
 .dn-kafel {
   display: flex;
   align-items: center;

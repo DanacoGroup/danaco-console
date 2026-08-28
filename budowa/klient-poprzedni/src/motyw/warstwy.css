@@ -1,17 +1,4 @@
-/* ============================================================================
-   DANACO CONSOLE — ŻETONY WARSTW (z-index)
-   ----------------------------------------------------------------------------
-   Jedna odpowiedzialność: skala warstw okna, ustalona raz dla całej aplikacji.
-
-   Zasada: komponent nie wymyśla własnego z-index. Sięga po żeton z tej skali
-   albo nie ustawia warstwy wcale. Dzięki temu kolejność nakładania jest
-   czytelna z jednego pliku, a nie z rozproszonych liczb.
-
-   Skala jest pełna: wymienia wszystkie poziomy systemu wizualnego, także te,
-   po które kod jeszcze nie sięga. Poziom bez użycia trzyma swoje miejsce
-   w porządku nakładania, żeby następny komponent nie wstawiał się między
-   sąsiadów własną liczbą.
-   ============================================================================ */
+/* Żetony warstw ustalają skalę z-index okna raz dla całej aplikacji, żeby kolejność nakładania komponentów była czytelna z jednego miejsca. */
 
 :root {
   --dn-z-podloga: 0;

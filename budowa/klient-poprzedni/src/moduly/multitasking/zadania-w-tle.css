@@ -1,17 +1,4 @@
-/* ============================================================================
-   DANACO CONSOLE — MULTITASKINGAI · PANEL „ZADANIA W TLE"
-   ----------------------------------------------------------------------------
-   Warstwa wizualna panelu podagentów. Barwy i odstępy pochodzą wyłącznie
-   z żetonów motywu `--dn-*`, więc oba motywy obsługują się same.
-
-   Rodzina klas ma przedrostek `dm-` (MultitaskingAI). Plakietka stanu, tabela
-   agentów i przyciski pochodzą z biblioteki `dn-*`; tutaj leży wyłącznie to,
-   czego biblioteka nie ma: rozkład karty przepływu, wiersz etapu ze wskaźnikiem
-   kropkowym i znacznik kolumny bez pokrycia w kontrakcie.
-
-   `[data-bez-pokrycia]` wycisza kolumnę do koloru tekstu trzeciorzędnego
-   i stawia kursor pomocy; kolumna zostaje widoczna, a powód wisi w `title`.
-   ============================================================================ */
+/* Warstwa wizualna panelu zadań w tle modułu wieloagentowego korzysta wyłącznie z żetonów motywu i uzupełnia bibliotekę wspólną o kartę przepływu, wiersz etapu oraz znacznik kolumny bez pokrycia w kontrakcie. */
 
 @import '../../modele/modele.css';
 
@@ -96,7 +83,7 @@
   white-space: nowrap;
 }
 
-/* Odznaka stanu i przycisk zbierania trzymają się prawej krawędzi karty. */
+/* Odznaka stanu przepływu oraz przycisk zbierania wyników trzymają się prawej krawędzi karty niezależnie od szerokości panelu bocznego. */
 .dm-przeplyw__naglowek > [data-odznaka] {
   margin-left: auto;
   text-transform: uppercase;
@@ -161,7 +148,7 @@
   font-size: var(--dn-fs-sm);
 }
 
-/* Pole, którego kontrakt nie niesie: widoczne, wyciszone, z powodem w dymku. */
+/* Pole tabeli agentów, którego kontrakt danych nie niesie, pozostaje widoczne w kolorze wyciszonym, a powód nieobecności wartości pokazuje etykieta pomocy. */
 .dm-bez-pokrycia,
 [data-bez-pokrycia='tak'] {
   color: var(--dn-tekst-3);

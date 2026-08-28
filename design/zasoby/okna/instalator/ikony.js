@@ -1,13 +1,12 @@
-/* ============================================================================
-   KREATOR INSTALACJI — zestaw ikon
+/* Zestaw ikon kreatora instalacji udostępnia rysunki znaków wykorzystywane przez składniki okna instalacyjnego programu w jednolitej postaci.
+
 
    Rysunek znaku należy do zestawu, nie do składnika: ta sama ikona bywa
    potrzebna w kilku miejscach i musi wszędzie wyglądać tak samo. Składnik
    podaje jej klasę i rolę w dostępności, nigdy ścieżek.
 
    Brak ikony jest zgłoszeniem do Właściciela, nie powodem do narysowania
-   własnej — patrz zasada 7 w zasoby/ARCHITEKTURA.md.
-   ============================================================================ */
+   własnej — patrz zasada 7 w zasoby/ARCHITEKTURA.md. */
 (function () {
 'use strict';
 var K = (window.DanacoKreator = window.DanacoKreator || {});

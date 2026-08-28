@@ -1,13 +1,4 @@
-/* ============================================================================
-   DANACO CONSOLE — SEKCJA DOSTĘPÓW · ZBIÓR NADAŃ OKNA
-   ----------------------------------------------------------------------------
-   Wiersz jednego nadania: kolejność, oznaczenie głównego, tryb i korzenie.
-   Okno ma zbiór nadań, nie jedno — arkusz służy liście, nie pojedynczej
-   wartości. Ramę sekcji prowadzi `dostepy.css`.
-
-   Barwy wyłącznie z żetonów warstwy `motyw/`; żadna reguła nie wygasza
-   kontrolki.
-   ============================================================================ */
+/* Arkusz opisuje wiersz jednego nadania w zbiorze nadań okna: kolejność, oznaczenie głównego, tryb i korzenie, wyłącznie z żetonów motywu. */
 
 /* --- Zbiór nadań okna ---------------------------------------------------- */
 

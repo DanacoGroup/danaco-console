@@ -1,4 +1,4 @@
-/* IZOLACJA OKNA ROBOCZEGO
+/* Znacznik izolacji okna roboczego rozróżnia stan incognito oraz stan własnej gałęzi, wskazywany jednym wskaźnikiem w pasku okna.
    Izolacja jest cechą okna, nigdy pojedynczej karty. Dwa niezależne
    przełączniki: incognito izoluje wiedzę, własna gałąź izoluje pliki;
    incognito domyślnie włącza gałąź i daje się z nią rozłączyć.

@@ -1,16 +1,4 @@
-/* ============================================================================
-   DANACO CONSOLE — STRONA GŁÓWNA · UKŁAD I STREFY
-   ----------------------------------------------------------------------------
-   Rozkład ekranu strony głównej i trzy strefy o malejącej masie wizualnej.
-   Wygląd samych kart i kafli mieszka w `karty-strony-glownej.css`.
-
-   Wartości pochodzą wyłącznie z żetonów `../motyw/` i klas `../komponenty/`:
-   żadnej wartości szesnastkowej ani odstępu spoza skali 4 px.
-
-   Trzy strefy różnią się na czterech osiach jednocześnie — powierzchni,
-   promieniu, odstępie i stopniu pisma — więc kolejność wag jest czytelna,
-   zanim Operator przeczyta jakikolwiek napis.
-   ============================================================================ */
+/* Arkusz niesie rozkład ekranu strony głównej i trzy strefy o malejącej masie wizualnej, złożone wyłącznie z żetonów motywu i klas biblioteki. */
 
 .dn-strona {
   flex: 1 1 auto;
@@ -121,11 +109,13 @@
 }
 
 /* Strefa 1 — największy odstęp między kartami, bo największa masa */
+
 .dn-strona__siatka--srodowiska {
   gap: var(--dn-od-6);
 }
 
 /* Strefa 2 — odstęp o połowę mniejszy: kafle wiążą się w jeden pas */
+
 .dn-strona__siatka--komponenty {
   gap: var(--dn-od-3);
 }
@@ -318,6 +308,7 @@
 .dn-strona__zaloz-odpowiedz[data-powodzenie='false'] { color: var(--dn-blad-tekst); }
 
 /* Powód, dla którego rodzajów jest trzy, a nie cztery. */
+
 .dn-strona__zaloz-granica {
   flex-basis: 100%;
   margin: 0;

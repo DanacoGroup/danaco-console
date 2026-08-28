@@ -1,10 +1,4 @@
-/*
- * Warstwa wizualna pięciu okien operacyjnych modułu Studio.
- *
- * Wydzielone z `studio.css` wzdłuż odpowiedzialności: tam rama i stany wspólne
- * wszystkim oknom, tutaj to, czym poszczególne okna różnią się między sobą.
- * Ani jednej barwy zapisanej wprost — wyłącznie zmienne motywu.
- */
+/* Warstwa wizualna pięciu okien operacyjnych modułu studia wydzielona jest z arkusza wspólnego według odpowiedzialności: tu leży wyłącznie to, czym poszczególne okna różnią się między sobą. */
 
 /* ── Studio Editor ─────────────────────────────────────────────────────────── */
 

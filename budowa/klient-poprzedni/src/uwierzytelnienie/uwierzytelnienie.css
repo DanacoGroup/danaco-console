@@ -1,20 +1,4 @@
-/* ============================================================================
-   DANACO CONSOLE — EKRAN LOGOWANIA (bramka Operatora)
-   ----------------------------------------------------------------------------
-   Plik nie zna ani jednej barwy, ani jednego rozmiaru — wszystko z żetonów
-   motywu (`--dn-*`) i biblioteki `komponenty/`. Kartę niesie
-   `komponenty/karta.css`, pola — `komponenty/pole.css`, przyciski —
-   `komponenty/przycisk.css`, stan treści — `komponenty/stan-tresci.ts`
-   z przedrostkiem `au`; tutaj zostaje wyłącznie układ przesłony i karty.
-
-   Każdy selektor tego arkusza zaczyna się od `.au-`, żeby żaden moduł nie mógł
-   odziedziczyć wyglądu bramki ani go nadpisać.
-
-   Przesłona stoi nad wszystkim, także nad Centrum poleceń — bramka jest progiem
-   wejścia, więc nic nie ma prawa jej przykryć. Skala warstw
-   (`motyw/warstwy.css`) nie ma osobnego żetonu bramki, więc przesłona liczy
-   swoją warstwę z żetonu najwyższego zamiast wpisywać gołą liczbę.
-   ============================================================================ */
+/* Arkusz ekranu logowania niesie wyłącznie układ przesłony i karty, złożony z żetonów motywu i biblioteki komponentów, bez własnej barwy i rozmiaru. */
 
 .au-brama {
   position: fixed;

@@ -6075,3 +6075,19 @@ kolejna migawka rdzenia. Potwierdzenie usunięcia prowadzi całą czynność wra
 obowiązkowymi. Odmowę nazwał już modal wraz z kodem, więc pas jej nie powtarza. Rozliczenie, w którym
 nic nie zginęło, idzie na pas z wagą błędu: „nie usunąłem niczego" nie jest powodzeniem zamówionej
 czynności.
+
+## budowa/klient-poprzedni/src/moduly/roundtable/proby-debaty.ts
+Plik sam sprawdzianem nie jest i nie ma w nazwie oznaczenia testu: sprawdziany modułu sięgają po
+te same kształty kontraktu i te same podstawienia, a kopia zastawu w każdym z nich by się
+rozjechała. Każda wytwórnia zwraca typ kontraktu w całości, więc dopisanie pola obowiązkowego do
+kontraktu przerywa kompilację tutaj, a nie w każdym sprawdzianie z osobna.
+
+## budowa/klient-poprzedni/src/moduly/studio/okno-redakcji-dokumentu.ts
+Warsztat pracuje na dokumencie PDF z magazynu okna, a redakcja pracuje na dokumencie Studia
+wczytanym w edytorze — to dwa różne materiały, więc jeden wspólny wykaz kazałby operatorowi
+wybierać czynność, która nie ma na czym pracować, choć formularz jest tym samym mechanizmem:
+pola pochodzą z katalogu i buduje je ta sama funkcja co w warsztacie. Warsztat bez dokumentu PDF
+pokazuje stan pusty, bo bez materiału nie ma ani jednej czynności do wykonania, ale w oknie
+redakcji jest inaczej: cztery czynności — wczytanie strony, skanowanie, wsad i odwołanie do
+wersji — nie potrzebują dokumentu w edytorze, więc okno zostaje czynne, a czynności wymagające
+dokumentu mówią o tym własnym zdaniem w chwili wykonania.

@@ -8624,3 +8624,23 @@ przycisk, który nie woła niczego, jest atrapą po stronie interfejsu i wygląd
 tak samo jak przycisk działający. Rozdzielenie stanu atrapy od jej metod
 pozwala uniknąć wymieniania wielu czynności w jednym literale, co
 zmniejszałoby czytelność deklaracji.
+
+## budowa/klient-poprzedni/src/moduly/design/wgranie-zasobu.ts
+Generowanie i wgranie nie zastępują się: generowanie wytwarza treść nową i wymaga kanału
+obrazowego, wgranie wnosi treść już istniejącą i nie wymaga żadnego kanału modelu.
+
+Operator wskazuje plik polem pliku albo upuszcza go na płytę. Oba sposoby kończą się obiektem pliku
+i oba idą przez ten sam odczyt do jednego wywołania — dwie osobne drogi wysyłania rozjechałyby się
+przy pierwszej zmianie i Operator dostawałby inny zasób zależnie od sposobu wskazania.
+
+Kontrakt niesie jeden zasób na żądanie, więc pięć plików to pięć wywołań. Kontrolka wypisuje, ile
+weszło i ile odmówiono, wraz z powodem odmowy; odmowa jednego pliku nie wstrzymuje pozostałych.
+
+Nazwa jest nazwą pliku, format rozszerzeniem, a wymiary wynikiem dekodowania obrazu w przeglądarce.
+Gdy dekodowanie się nie uda, wymiarów nie ma — zera wyglądałyby jak pomiar.
+
+Etykiety idą do rdzenia od razu, polem żądania, i przechodzą przez ten sam rozbiór przecinkami co
+filtr i kontrolka etykiet — inaczej etykieta nadana przy wgraniu nie trafiałaby we własne zawężenie.
+
+Oba zdarzenia przeciągania są potrzebne: zdarzenie nad płytą bez blokady odwołuje upuszczenie,
+zanim do niego dojdzie.

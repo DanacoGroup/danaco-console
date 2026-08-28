@@ -6648,3 +6648,13 @@ Ramek nieosiągalnych repozytorium nie liczy, ponieważ osierocenie ramki jest
 wnioskiem chwilowym z odczytu grafu, a nie trwałą cechą wiersza — ramka
 osierocona dziś bywa jutro ramką początkową, więc utrwalanie tej cechy
 w kolumnie oznaczałoby przechowywanie wniosku, który starzeje się bez zapisu.
+
+## budowa/server/internal/konfiguracja/argumenty.go
+Przełącznik wymogu logowania nie mógł powstać jako flaga logiczna, ponieważ
+flag.Bool umiałby wyrazić tylko dwa stany i zamieniłby brak wskazania we
+wskazanie „nie", zdejmując wymóg logowania wystawionemu rdzeniowi przez
+samo pominięcie przełącznika w wywołaniu.
+
+Funkcja wykazPoPrzecinku odrzuca człony puste, ponieważ wzorzec pusty
+pasowałby do niczego, a w bibliotece gniazda do czegokolwiek, co byłoby
+zachowaniem sprzecznym z intencją filtra pochodzenia.

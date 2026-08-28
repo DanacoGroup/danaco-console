@@ -10,16 +10,9 @@ import { utworzEkranProcesow } from './ekran-procesow';
 import type { Kanal, Wynik } from '../protokol/kanal';
 import { utworzZrodloProcesowMobilnych } from './procesy-mobilne';
 
-/**
- * Przegląd zadań i procesów na powierzchni mobilnej.
- *
- * Sprawdzian pilnuje tego, co stanowi o odbiorze: że wykaz ma drogę z okna,
- * że filtr stanu zawęża po stronie RDZENIA, że pusty wykaz ma zdanie, i —
- * najważniejsze — że czynność NIEODWRACALNA mówi o sobie PRZED wykonaniem
- * i nie idzie do rdzenia za pierwszym dotknięciem.
- */
+// Sprawdzian pilnuje drogi z okna, filtra po stronie rdzenia i nieodwracalności czynności.
 
-/** Proces w postaci, w której rdzeń go oddaje. */
+/** Proces mobilny w postaci, w jakiej dokładnie rdzeń go oddaje odpowiedzią komendy `mobile.process.list`. */
 function proces(zmiany: Partial<MobileProcess> = {}): MobileProcess {
   return {
     id: 'proces-1',
@@ -30,7 +23,7 @@ function proces(zmiany: Partial<MobileProcess> = {}): MobileProcess {
   };
 }
 
-/** Kanał próbny: zapamiętuje żądania i oddaje odpowiedź wskazaną per komenda. */
+/** Kanał próbny do sprawdzianu: zapamiętuje wysłane żądania i oddaje odpowiedź wskazaną per komenda testu. */
 function kanalProbny(odpowiedzi: Record<string, unknown>): {
   kanal: Kanal;
   wyslane: { komenda: string; zadanie: unknown }[];
@@ -64,7 +57,7 @@ function ekran(odpowiedzi: Record<string, unknown>) {
   return { ekran: zbudowany, element: zbudowany.element, wyslane };
 }
 
-/** Przycisk czynności przy wierszu procesu. */
+/** Przycisk czynności sterowania przy wierszu procesu, znaleziony po identyfikatorze i rodzaju czynności. */
 function przyciskCzynnosci(
   element: HTMLElement,
   idProcesu: string,

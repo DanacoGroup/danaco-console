@@ -6548,3 +6548,14 @@ wyniku: kolejność zapamiętuje nakładka kolejności miejscowej, a znaczenie
 przestawienia rozstrzyga wołający. W trakcie ruchu pas pokazuje kreskę, a
 nie przestawia treści, bo przestawianie na bieżąco kazałoby celować w
 element, który sam ucieka.
+
+## budowa/klient-poprzedni/src/powloka/zrodlo-sekcji-paneli.ts
+Źródło stoi w powłoce, nie w module, bo sekcje panelu są własnością okna, a nie dziedziny modułu:
+każde okno operacyjne dzieli treść na sekcje i każde ma prawo je zwinąć, przestawić i zdjąć z widoku.
+Gdyby źródło stało w module, drugi moduł zbudowałby drugie takie samo. Powłoka niesie wzorzec okna,
+więc niesie też wzorzec jego sekcji; moduł podaje wyłącznie własne sekcje i identyfikator panelu.
+Zapis oddaje układ obowiązujący, nie żądany: komenda zapisu zwraca pole sekcji, więc widok
+przerysowuje się z odpowiedzi, a nie z własnego żądania. Sama zgoda rdzenia nie jest dowodem skutku —
+dowodem jest treść odpowiedzi. Kształt odpowiedzi jest sprawdzany tak samo jak wszędzie: rdzeń, który
+odpowie bez tablicy sekcji, nie dowiódł, że układ zna; wynik idzie wtedy jako odmowa, a nie jako
+pusty układ udający „panel bez sekcji".

@@ -6438,3 +6438,12 @@ i jego pozycje zapisują się w jednej transakcji, ponieważ liczby przyjętych
 i odrzuconych pozycji w nagłówku przebiegu są sumą wierszy pozycji: zapis
 rozdzielony na dwa osobne polecenia zostawiałby nagłówek niezgodny z jego
 własnymi pozycjami.
+
+## budowa/shared/swiezosc_generatu_test.go
+
+Plik kontraktu jest źródłem prawdy, ale w kompilacji nie bierze udziału: bierze w niej udział
+wygenerowany kod rdzenia, a w budowaniu klienta wygenerowany kod klienta. Zmiana źródła bez puszczenia
+generatora rozjeżdża je po cichu i obie strony kompilują się dalej — rdzeń zna nazwę, której klient nie
+zna, albo odwrotnie; rozjazd wychodzi dopiero na gnieździe, u operatora maszyny. Sprawdzian puszcza
+generator na kopii, a nie na katalogu źródłowym, ponieważ generator zapisuje artefakty na dysk, więc
+puszczony na miejscu nadpisałby pliki sprawdzanego drzewa.

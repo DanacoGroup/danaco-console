@@ -93,12 +93,13 @@ func TestSilnikKontenerowStoiWWarstwieDecyzyjnej(t *testing.T) {
 // w rdzeniu bez gałęzi w skrypcie zepsuła ten sprawdzian, a nie zniknęła.
 func TestKazdaPozycjaMaZnanaWarstwe(t *testing.T) {
 	znaneOdbiorcy := map[string]bool{
-		"obowiazkowa-apt": true,
-		"warsztat-go":     true,
-		"warsztat-npm":    true,
-		"snap":            true,
-		"model-recznie":   true,
-		"decyzyjna":       true,
+		"obowiazkowa-apt":     true,
+		"obowiazkowa-recznie": true,
+		"warsztat-go":         true,
+		"warsztat-npm":        true,
+		"snap":                true,
+		"model-recznie":       true,
+		"decyzyjna":           true,
 	}
 	for _, pozycja := range ZaleznosciZewnetrzne() {
 		if warstwa := WarstwaZaleznosci(pozycja); !znaneOdbiorcy[warstwa] {
@@ -131,20 +132,20 @@ func TestWarstwaRozpoznajePostaciPodpowiedzi(t *testing.T) {
 		{"środowisko pythonowe", "rembg", "rembg[cli] w osobnym środowisku pythonowym", WarstwaModelRecznie},
 		{"silnik kontenerów", "docker", "docker.io albo podman", WarstwaDecyzyjna},
 		{"silnik kontenerów pod podmanem", "podman", "podman", WarstwaDecyzyjna},
-		// Podpowiedź zapisana zdaniem albo poleceniem innego menedżera pakietów zostaje
-		// w warstwie obowiązkowej — arsenal-serwera.sh rozpoznaje jej postać i wyprowadza
-		// z niej krok apt, krok pip albo krok ręczny, tak samo, jak dla nazw pakietów.
+		// Podpowiedź zapisana zdaniem oraz polecenie menedżera spoza apt i pip idą do warstwy
+		// ręcznej: prowizjonowanie rozbija pole warstwy apt na spacjach, więc zdanie dałoby
+		// programowi apt słowa języka polskiego, a polecenie — człony `install` i nazwę narzędzia.
 		{"podpowiedź zdaniem — środowisko Javy", "java",
 			"środowisko uruchomieniowe Javy (default-jre) wraz z wydaniem Apache Tika w /opt/tika",
-			WarstwaObowiazkowa},
+			WarstwaObowiazkowaRecznie},
 		{"podpowiedź zdaniem — plik z wydania projektu", "typst",
-			"typst (jeden plik wykonywalny z wydania projektu)", WarstwaObowiazkowa},
+			"typst (jeden plik wykonywalny z wydania projektu)", WarstwaObowiazkowaRecznie},
 		{"podpowiedź zdaniem — pakiet wraz ze słownikiem", "hunspell",
-			"hunspell wraz ze słownikiem języka (hunspell-pl, hunspell-en-us)", WarstwaObowiazkowa},
+			"hunspell wraz ze słownikiem języka (hunspell-pl, hunspell-en-us)", WarstwaObowiazkowaRecznie},
 		{"polecenie pip install", "ruff", "pip install ruff", WarstwaObowiazkowa},
 		// cargo install zawiera podnapis „go install" („cargo” kończy się na „go”),
 		// a mimo to nie jest poleceniem Go.
-		{"polecenie cargo install", "typos", "cargo install typos-cli", WarstwaObowiazkowa},
+		{"polecenie cargo install", "typos", "cargo install typos-cli", WarstwaObowiazkowaRecznie},
 	}
 	for _, przypadek := range przypadki {
 		t.Run(przypadek.nazwa, func(t *testing.T) {
@@ -158,13 +159,13 @@ func TestWarstwaRozpoznajePostaciPodpowiedzi(t *testing.T) {
 	}
 }
 
-// TestWarstwaPodpowiedziZdaniemZostajeObowiazkowa pilnuje, żeby pozycja z podpowiedzią zapisaną
-// zdaniem albo poleceniem menedżera pakietów innego niż go/npm zostawała w jedynej warstwie,
-// którą skrypt prowizjonowania rozdziela dalej po kształcie pola — nie w warstwie osobnej, dla
-// której skrypt nie ma gałęzi i pozycja wpadłaby donikąd.
-func TestWarstwaPodpowiedziZdaniemZostajeObowiazkowa(t *testing.T) {
+// TestWarstwaPodpowiedziZdaniemIdzieDoRecznej pilnuje, że pozycja z podpowiedzią zapisaną zdaniem
+// albo poleceniem menedżera spoza apt i pip trafia do warstwy ręcznej, którą prowizjonowanie
+// wypisuje jako kroki do wykonania. Pozostawienie jej w warstwie apt przerywało przebieg, bo pole
+// rozbijane na spacjach dawało programowi apt nazwy, których dystrybucja nie zna.
+func TestWarstwaPodpowiedziZdaniemIdzieDoRecznej(t *testing.T) {
 	oczekiwane := map[string]bool{
-		"java": true, "hunspell": true, "vale": true, "typst": true, "ruff": true, "semgrep": true,
+		"java": true, "hunspell": true, "vale": true, "typst": true, "typos": true,
 	}
 	znalezione := map[string]bool{}
 	for _, pozycja := range ZaleznosciZewnetrzne() {
@@ -173,8 +174,8 @@ func TestWarstwaPodpowiedziZdaniemZostajeObowiazkowa(t *testing.T) {
 			continue
 		}
 		znalezione[program] = true
-		if warstwa := WarstwaZaleznosci(pozycja); warstwa != WarstwaObowiazkowa {
-			t.Errorf("pozycja %q z podpowiedzią %q trafiła do warstwy %q zamiast obowiązkowej",
+		if warstwa := WarstwaZaleznosci(pozycja); warstwa != WarstwaObowiazkowaRecznie {
+			t.Errorf("pozycja %q z podpowiedzią %q trafiła do warstwy %q zamiast ręcznej",
 				pozycja.Narzedzie.Nazwa, pozycja.Narzedzie.Pakiet, warstwa)
 		}
 	}

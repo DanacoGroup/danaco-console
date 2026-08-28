@@ -101,14 +101,15 @@ else
 	padnij "nie ma katalogu pomocników: $BUDOWA/pomocniki — bez niego pakiet nie postawi mowy"
 fi
 
-# Cztery dokumenty produktu z korzenia repozytorium trafiają do pakietu jako
-# dokumentacja instalowana wraz z usługą.
+# Cztery dokumenty produktu trafiają do pakietu jako dokumentacja instalowana
+# wraz z usługą. Stoją w docs/, bo tam prowadzona jest cała dokumentacja produktu;
+# kopia w korzeniu byłaby drugą prawdą o tym samym pliku.
 BRAK_DOKUMENTU=nie
 for dokument in README.md INSTALACJA-I-KONFIGURACJA.md INSTRUKCJA-UZYTKOWANIA.md LICENSE.md; do
-	if [ -r "$KORZEN/$dokument" ]; then
-		install -m 0644 "$KORZEN/$dokument" "$ROBOCZY/usr/share/doc/danaco-console/$dokument"
+	if [ -r "$KORZEN/docs/$dokument" ]; then
+		install -m 0644 "$KORZEN/docs/$dokument" "$ROBOCZY/usr/share/doc/danaco-console/$dokument"
 	else
-		printf 'UWAGA: brak dokumentu %s w %s\n' "$dokument" "$KORZEN" >&2
+		printf 'UWAGA: brak dokumentu %s w %s/docs\n' "$dokument" "$KORZEN" >&2
 		BRAK_DOKUMENTU=tak
 	fi
 done

@@ -7130,3 +7130,19 @@ parametr, a nie brany z globalnej przestrzeni na sztywno. Awaria magazynu,
 na przykład w trybie prywatnym albo przy osadzeniu w ramce, zostawia wartości
 domyślne i nie jest zgłaszana jako błąd, ponieważ nastawa widoku nie jest
 powodem, żeby okno nie wstało.
+
+## budowa/klient-poprzedni/src/moduly/studio/przybornik-plywak.ts
+Katalog operacji nie może zajmować stałej kolumny powierzchni. Pływak
+kontekstowy pojawia się w chwili zaznaczenia fragmentu i znika po jego
+zdjęciu; gdy operacje nie są używane, nie zajmują ani jednego punktu ekranu.
+Pływak ma trzy warstwy: czynności na wierzchu, wzięte z policzonego użycia,
+z przypięciem własnym przy każdej; uchwyt pełnego katalogu z resztą
+czynności, z grupami, opisami i szukaniem po nazwie; oraz suwaki wielkości
+ciągłych — objętość, ton, rejestr, poziom szczegółu i stopień dopracowania —
+jako sterowanie ciągłe, a nie przycisk dający skok o nieznanej wielkości.
+Pływak staje nad zaznaczeniem, a gdy nad nim nie ma miejsca, staje pod nim;
+rozstrzyga to zmierzona wysokość pływaka i odległość kursora od górnej
+krawędzi powierzchni, nie stała wpisana w kod. Stały panel boczny zostaje
+dostępny jako wybór: przełącznik trybu stoi na pływaku, bo pływak jest zawsze
+pod ręką, a nastawa trybu jest pamiętana w rdzeniu i jest jawna oraz
+odwracalna, zgodnie z zasadą ogólną zlecenia.

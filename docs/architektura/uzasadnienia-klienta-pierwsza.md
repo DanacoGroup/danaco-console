@@ -9201,3 +9201,19 @@ ustawienia — a ustawienie jest, tylko pochodzi z wartości domyślnej rdzenia.
 Wskazanie katalogu oknem powłoki jest dostępne tam, gdzie ma sens: przy
 podstawie. Wzorzec nazwy katalogu sesji nie jest ścieżką na dysku i okna
 systemowego nie potrzebuje.
+## budowa/klient-poprzedni/src/moduly/research/czynnosci-odkrywania.ts
+Tryb rozstrzyga o drodze: dwa tryby mają własną komendę kontraktu i idą nią
+naprawdę, dwa pozostałe komendy nie mają i idą generycznym zgłoszeniem okna,
+którego odmowę okno wypisuje słowami rdzenia — rozdział stoi w czynności, nie
+w widoku, bo widok zbiera zapytanie, a czynność wie, czym się ono kończy.
+Tryb semantyczny i pełnotekstowy oddają wynik, bo rdzeń ich słucha; tryb
+webowy i naukowy mają w kontrakcie własną komendę, ale rdzeń nie ma dla niej
+jeszcze uchwytu, więc zapytanie idzie zgłoszeniem generycznym pod jej nazwą
+i wraca odmową — okno nie podstawia pod nie wyszukiwania semantycznego, bo
+dwa różne pytania oddające ten sam wynik byłyby zmyśleniem zdolności, której
+moduł nie ma. Panel odkrywania nie ma własnej drogi wstawiania do katalogu
+źródeł i nie potrzebuje jej mieć. Wiarygodność przenoszonej pozycji wchodzi
+jako niezweryfikowana, bo pozycja wyszukiwania nie niesie oceny, a wpisanie
+tu wartości innej niż ta byłoby oceną zmyśloną. Pustka wyniku to nie pustka
+badania: zapytanie bez trafień jest odpowiedzią rdzenia, a nie brakiem
+materiału, więc zdanie mówi o zapytaniu, nie o samym panelu.

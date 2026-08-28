@@ -6399,3 +6399,33 @@ zapisy tego obszaru obejmują więcej niż jedno polecenie i muszą pójść jed
 transakcją: nadanie numeru wersji pozycji biblioteki wraz z wpisem tej wersji
 oraz odpięcie klucza od wpisów hostów wraz z odczytaniem, których wpisów to
 dotyczyło.
+
+## budowa/server/internal/zdalne/zdalne.go
+
+Pakiet ma dwie odpowiedzialności. Tor do hosta zdalnego przekłada polecenie procesu okna na wywołanie
+SSH, którym proces rusza na maszynie wskazanej przez operatora, oraz przenosi pliki tym samym torem.
+Dosięgnięcie operatora obejmuje kolejkę powiadomień, rejestrację urządzeń do wołania, ponowienie
+i wygaśnięcie; silnik doręcza po łączu, które operator już otworzył, i nie budzi wygaszonego telefonu,
+ponieważ wymagałoby to usługi wypychania powiadomień spoza tego systemu.
+
+SSH jest tu transportem, nie drugim wykonawcą. Pakiet nie uruchamia procesów: buduje wyłącznie wiersz
+poleceń transportu, a startuje go jedyny spawner platformy. Po stronie zdalnej proces uruchamia usługę
+SSH, którą host już wystawia, więc w drzewie nie przybywa żaden własny demon ani protokół. Strumienie
+SSH są strumieniami procesu zdalnego: wejście, wyjście, wyjście diagnostyczne i kod zakończenia
+przechodzą wprost, a zerwanie połączenia kończy proces po stronie zdalnej sygnałem zawieszenia. Rola
+agenta produktu komponuje się z tym torem bez zmian: wywołanie roli agenta przez SSH wykonuje żądania
+kontraktu na hoście zdalnym tym samym binarium.
+
+Trzy granice ograniczają ten pakiet. Identyfikator uchwytu procesu jest identyfikatorem lokalnego
+procesu transportu, nie procesu zdalnego; drzewo potomstwa obejmowane przez warstwę sesji kończy
+transport, a proces zdalny kończy się z usługą SSH po zerwaniu połączenia. Dziedziczenie środowiska
+rdzenia dotyczy maszyny rdzenia: na hoście zdalnym proces dziedziczy środowisko logowania SSH, a wpisy
+własne polecenia jadą w komendzie zdalnej. Zgoda na hosta jest wierszem tabeli hostów zdalnych,
+wydawanym przez operatora — domyślnie jej nie ma, a rdzeń nie zainicjuje połączenia, którego operator
+nie oddał.
+
+Pakiet czyta bazę rdzenia przez uchwyt podany funkcją Zasil, a każda droga wywołana przed zasileniem
+odmawia, nazywając brakujące wpięcie. Uchwyt podaje kompozycja programu głównego, więc odmowa braku
+zasilenia dotyczy wołających spoza kompozycji i sprawdzianów. Nadajnik powiadomień jest osobnym
+wpięciem: bez niego przebieg kolejki odmawia w całości i nie tyka ani jednego wiersza, a powiadomienia
+czekają z pełnym budżetem prób, zamiast po cichu wygasać.

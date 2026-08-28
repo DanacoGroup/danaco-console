@@ -144,6 +144,9 @@ func (a *adapterNarzedziDokumentu) WyciagnijTekst(ctx context.Context,
 
 	switch {
 	case obrazyDokumentu[zrodlo.format]:
+		if err := a.zweryfikujJezykTesseracta(ctx, jezyk); err != nil {
+			return shared.DocumentTextExtractResponse{}, err
+		}
 		// Obraz ma wyłącznie piksele, więc usedOcr jest tu prawdziwe zawsze i bez wyjątku.
 		tekst, err := a.rozpoznajPismo(ctx, zrodlo.sciezka, jezyk, obrobkaWstepna)
 		if err != nil {
@@ -253,6 +256,9 @@ func (a *adapterNarzedziDokumentu) tekstZPdf(ctx context.Context, katalogPracy, 
 		}, nil
 	}
 
+	if err := a.zweryfikujJezykTesseracta(ctx, jezyk); err != nil {
+		return shared.DocumentTextExtractResponse{}, err
+	}
 	tekst, przetworzone, err := a.rozpoznajPismoWPdf(ctx, katalogPracy, plik, jezyk,
 		odStrony, doStrony, obrobkaWstepna)
 	if err != nil {
@@ -423,20 +429,87 @@ func argumentyObrobkiWstepnejDokumentu(wejscie, wyjscie string) []string {
 	}, wejscie, wyjscie)
 }
 
-// jezykRozpoznaniaDokumentu sprowadza wskazanie wołającego do nazwy języka
-// znanej Tesseractowi; nazwa nierozpoznana zostaje bez zmian, ponieważ
-// podmiana na język domyślny dałaby odczyt zmyślony.
+// jezykRozpoznaniaDokumentu sprowadza wskazanie wołającego do wykazu nazw
+// języków, jaki oczekuje przełącznik -l Tesseracta: człony rozdzielone
+// znakiem „+" idą do sprowadzenia osobno i wracają złożone tym samym znakiem.
+// Człon nierozpoznany zostaje bez zmian, ponieważ podmiana na język domyślny
+// dałaby odczyt zmyślony.
 func jezykRozpoznaniaDokumentu(wskazanie *string) string {
-	nazwa := strings.ToLower(strings.TrimSpace(wartoscTekstu(wskazanie)))
-	switch nazwa {
-	case "":
+	tekst := strings.TrimSpace(wartoscTekstu(wskazanie))
+	if tekst == "" {
 		return jezykRozpoznaniaDomyslny
+	}
+	czlony := strings.Split(tekst, "+")
+	znormalizowane := make([]string, 0, len(czlony))
+	for _, czlon := range czlony {
+		znormalizowane = append(znormalizowane, jezykPojedynczyDoTesseracta(czlon))
+	}
+	return strings.Join(znormalizowane, "+")
+}
+
+// jezykPojedynczyDoTesseracta sprowadza jedno wskazanie języka (bez znaku
+// „+") do nazwy trójliterowej, jaką niesie Tesseract.
+func jezykPojedynczyDoTesseracta(wskazanie string) string {
+	nazwa := strings.ToLower(strings.TrimSpace(wskazanie))
+	switch nazwa {
 	case "pl", "pol", "polski", "polish", "pl-pl", "pl_pl":
 		return jezykRozpoznaniaDomyslny
 	case "en", "eng", "angielski", "english", "en-us", "en_us", "en-gb":
 		return "eng"
 	}
 	return nazwa
+}
+
+// zweryfikujJezykTesseracta odmawia nazwanie, gdy którykolwiek człon wykazu
+// języków rozpoznania nie stoi wśród danych językowych zainstalowanych na tej
+// maszynie — cicha próba rozpoznania w języku innym niż zamówiony dałaby
+// Operatorowi odczyt zmyślony, więc Tesseract w ogóle nie rusza.
+func (a *adapterNarzedziDokumentu) zweryfikujJezykTesseracta(ctx context.Context, jezyk string) error {
+	dostepne, err := a.jezykiTesseractaDostepne(ctx)
+	if err != nil {
+		return err
+	}
+	for _, czlon := range strings.Split(jezyk, "+") {
+		if !dostepne[czlon] {
+			return odmowaDokumentu(shared.ErrorCodeValidationFailed,
+				"Tesseract na tej maszynie nie niesie danych językowych "+czlon+
+					" — wykaz zainstalowanych: "+wykazJezykowTesseracta(dostepne)+
+					"; naprawa: wskazać jeden z niesionych języków polem language "+
+					"albo doinstalować pakiet danych językowych Tesseracta dla "+czlon)
+		}
+	}
+	return nil
+}
+
+// jezykiTesseractaDostepne pyta Tesseracta wprost, jakie dane językowe niesie
+// ta maszyna (--list-langs), zamiast zakładać z góry stały wykaz — instalacja
+// pakietów językowych różni się między maszynami Operatora.
+func (a *adapterNarzedziDokumentu) jezykiTesseractaDostepne(ctx context.Context) (map[string]bool, error) {
+	wyjscie, err := a.wolaj(ctx, narzedzieTesseract, []string{"--list-langs"}, granicaRozpoznaniaDokumentu)
+	if err != nil {
+		return nil, err
+	}
+	wiersze := strings.Split(strings.TrimSpace(string(wyjscie)), "\n")
+	dostepne := make(map[string]bool, len(wiersze))
+	// Pierwszy wiersz jest nagłówkiem z katalogiem danych, nie nazwą języka.
+	for _, wiersz := range wiersze[1:] {
+		nazwa := strings.TrimSpace(wiersz)
+		if nazwa != "" {
+			dostepne[nazwa] = true
+		}
+	}
+	return dostepne, nil
+}
+
+// wykazJezykowTesseracta oddaje wykaz dostępnych języków w stałym porządku do
+// treści odmowy — mapa sama porządku nie niesie.
+func wykazJezykowTesseracta(dostepne map[string]bool) string {
+	wykaz := make([]string, 0, len(dostepne))
+	for jezyk := range dostepne {
+		wykaz = append(wykaz, jezyk)
+	}
+	sort.Strings(wykaz)
+	return strings.Join(wykaz, ", ")
 }
 
 // zakresStronDokumentu sprawdza wskazanie stron: strona zerowa albo ujemna

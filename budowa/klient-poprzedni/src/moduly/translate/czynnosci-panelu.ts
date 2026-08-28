@@ -4,19 +4,7 @@ import { rozbieznoscOdpowiedzi } from './zgodnosc-odpowiedzi';
 import type { ZrodloPaneli } from './zrodlo-paneli';
 
 /**
- * Sześć czynności wykonywanych na jednym panelu języka — sama treść, bez
- * elementów. Pasek narzędzi wie, jak wyglądają przyciski; te funkcje wiedzą, co
- * znaczy odpowiedź rdzenia.
- *
- * Każda czynność kończy się zdaniem. Odmowa rdzenia jest tu wynikiem, nie
- * wyjątkiem: wraca sprawozdaniem o wydźwięku negatywnym, które pasek pokazuje
- * w swoim wierszu odpowiedzi.
- *
- * Status `ok` nie wystarcza za wynik. Trzy odpowiedzi bywają puste mimo
- * powodzenia i rozpoznaje się to po samej odpowiedzi, bez wiedzy o wnętrzu
- * rdzenia: pusta ścieżka w `translate.panel.export` i `translate.speech.synthesize`
- * oraz przekład zwrotny tożsamy z treścią panelu. Sprawozdanie wraca wtedy
- * negatywne i mówi, czego brakuje.
+ * Sześć czynności wykonywanych na jednym panelu języka: każda kończy się zdaniem, a odmowa rdzenia jest wynikiem, nie wyjątkiem.
  */
 export interface Sprawozdanie {
   tresc: string;
@@ -35,14 +23,7 @@ export function odmowa(
 }
 
 /**
- * `translate.backtranslation.run`.
- *
- * `trescPanelu` jest tym, co widać w polu tłumaczenia. Gdy rdzeń oddaje
- * dokładnie tę samą treść, przekładu zwrotnego nie było — sprawozdanie mówi to
- * wprost, zamiast podstawiać kopię pod nazwę czynności.
- *
- * `idKanalu` jest wskazaniem ze steru kanału; pusty znaczy „kanał czynny okna"
- * i wtedy żądanie pola `channelId` nie niesie.
+ * Przekład zwrotny wykonania translate.backtranslation.run; treść tożsama z panelem znaczy, że przekładu zwrotnego nie było.
  */
 export async function tlumaczZwrotnie(
   zrodlo: ZrodloPaneli,
@@ -78,10 +59,7 @@ export async function kontrolaJakosci(
 ): Promise<Sprawozdanie> {
   const wynik = await zrodlo.kontrolaJakosci(idPanelu);
   if (!wynik.udany || wynik.wynik === undefined) return odmowa('Kontrola jakości', wynik.blad);
-  // Wykaz pusty znaczy „rdzeń nic nie zgłosił" i jest wynikiem, nie pustką.
-  // Zdanie przypisuje ten wynik rdzeniowi, zamiast orzekać o jakości przekładu:
-  // klient nie wie, ilu rodzajów niezgodności rdzeń szuka, więc „bez zastrzeżeń"
-  // byłoby zapewnieniem szerszym niż odpowiedź.
+  // Wykaz pusty znaczy, że rdzeń nic nie zgłosił, i jest wynikiem kontroli, nie pustką odpowiedzi.
   const zastrzezenia = wynik.wynik.issues;
   return udane(
     zastrzezenia.length === 0
@@ -119,8 +97,7 @@ export async function zmienTon(
   const wynik = await zrodlo.ustawTon(idPanelu, ton);
   if (!wynik.udany || wynik.wynik === undefined) return odmowa('Zmiana tonu', wynik.blad);
   const panel = wynik.wynik.panel;
-  // Panel oddany przez rdzeń wchodzi do stanu zawsze, także przy rozbieżności:
-  // prawdą o panelu jest to, co rdzeń ma u siebie, a nie to, o co go proszono.
+  // Panel oddany przez rdzeń wchodzi do stanu zawsze, także przy rozbieżności z tym, o co proszono.
   wchlon(panel);
   const rozbiezne = rozbieznoscOdpowiedzi('Zmiana tonu', [
     { nazwa: 'ton panelu', zamowione: ton, oddane: panel.tone },
@@ -136,14 +113,7 @@ export async function odsluchaj(zrodlo: ZrodloPaneli, idPanelu: string): Promise
 }
 
 /**
- * Sprawozdanie z czynności, której wynikiem ma być plik.
- *
- * Pusta ścieżka nie jest ścieżką — gałąź negatywna wyzwala się wyłącznie pustym
- * polem `path` tej jednej odpowiedzi, więc gdy rdzeń ścieżkę odda, okno przestaje
- * meldować brak bez żadnej zmiany tutaj.
- *
- * Gałąź pozytywna potwierdza wskazanie, nie plik: klient dysku nie czyta, wie
- * tylko, że rdzeń ścieżkę podał.
+ * Sprawozdanie z czynności, której wynikiem ma być zapisany plik; pusta ścieżka wyzwala gałąź negatywną.
  */
 function zdanieOSciezce(czynnosc: string, sciezka: string): Sprawozdanie {
   if (sciezka.trim() === '') {

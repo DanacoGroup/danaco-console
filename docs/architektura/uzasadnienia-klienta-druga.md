@@ -7638,3 +7638,13 @@ Menu i suwaki pokazują ustawienia zapisane na poziomie okna jako swoje położe
 Egzemplarz stanu powstaje osobno dla każdego okna i domyka się na jego identyfikatorze. Nie ma tu ani jednej zmiennej na poziomie modułu, więc dwa okna otwarte obok siebie mają dwa niezależne stany: zmiana w jednym nie ma żadnej drogi, którą mogłaby dosięgnąć drugiego. Komunikat dotyczący innego okna jest pomijany; nie jest to brama wykonania, lecz kierowanie ruchu do właściwego adresata.
 
 Bez drogi przyjmującej zdjęcie zapisu wpis skasowany przez rdzeń wchodziłby jak świeży zapis, zamiast wracać do wartości domyślnej katalogu.
+
+## budowa/klient-poprzedni/src/moduly/translate/czynnosci-panelu.ts
+Status ok nie wystarcza za wynik: trzy odpowiedzi bywają puste mimo
+powodzenia i rozpoznaje się to po samej odpowiedzi, bez wiedzy o wnętrzu
+rdzenia — pusta ścieżka w eksporcie panelu i w syntezie mowy oraz przekład
+zwrotny tożsamy z treścią panelu. Sprawozdanie wraca wtedy negatywne i mówi,
+czego brakuje. Wskazanie kanału jest wskazaniem ze steru kanału; puste
+znaczy „kanał czynny okna” i wtedy żądanie pola kanału nie niesie. Gałąź
+pozytywna przy pliku potwierdza samo wskazanie, nie plik: klient dysku nie
+czyta, wie tylko, że rdzeń ścieżkę podał.

@@ -46,6 +46,21 @@ func katalogModeliSprawdzianu(t *testing.T, podkatalog string) string {
 	return katalog
 }
 
+// katalogWagUszkodzonych składa katalog niosący wyłącznie plik `model.safetensors`
+// bez treści czytelnej dla kodera. Sama obecność pliku wystarcza pomocnikom
+// przesiewu i osi obrazu, by uznać wagi za stojące i wyłączyć sieć — próba
+// postawienia na nich modelu odmawia od razu, bez pobrania niczego z sieci.
+func katalogWagUszkodzonych(t *testing.T) string {
+	t.Helper()
+
+	katalog := t.TempDir()
+	if err := os.WriteFile(filepath.Join(katalog, "model.safetensors"),
+		[]byte("nie wagi"), 0o600); err != nil {
+		t.Fatalf("nie można złożyć katalogu wag uszkodzonych: %v", err)
+	}
+	return katalog
+}
+
 // ustawWiedzy zapisuje nastawę zasięgu globalnego wprost w tabeli ustawień,
 // omijając komendę `config.set` i katalog ustawień, którego ten teren nie
 // zakłada.
@@ -194,6 +209,46 @@ func TestPrzesiewUkladaOdpowiedzInaczejNizPierwszyPrzebieg(t *testing.T) {
 	}
 }
 
+// TestNastawaKatalogPrzesiewuDochodziDoSilnika pilnuje, że katalog wag
+// przesiewu wskazany nastawą Operatora naprawdę trafia do silnika, a nie
+// zostaje przy katalogu wbudowanym w kod: katalog uszkodzony wskazany
+// nastawą ma odmówić przesiewu, a nie po cichu sięgnąć po wagi stojące gdzie
+// indziej.
+func TestNastawaKatalogPrzesiewuDochodziDoSilnika(t *testing.T) {
+	katalogOsadzarki := katalogModeliSprawdzianu(t, "embedder")
+
+	zmontowany, zycie, katalogDanych := zmontujDoPomiaruSkutku(t)
+	ustawWiedzy(t, katalogDanych, wiedza.KluczKatalogModeli, katalogOsadzarki)
+	ustawWiedzy(t, katalogDanych, wiedza.KluczKatalogPrzesiewu, katalogWagUszkodzonych(t))
+
+	wgrajDokument(t, zmontowany, zycie, "notatka.txt",
+		"Jak przywrócić usługę po awarii serwera? Procedura opisuje kroki naprawy.")
+
+	var wskaznikWiedzy shared.KnowledgeIndexResponse
+	wykonajZWagami(t, zmontowany, zycie, shared.CommandKnowledgeIndex,
+		shared.KnowledgeIndexRequest{Scope: wskaznik(shared.KnowledgeScope(
+			shared.KnowledgeScopeLibrary))}, &wskaznikWiedzy)
+	if wskaznikWiedzy.Indexed == 0 {
+		t.Fatalf("wskaźnik nie objął ani jednej pozycji (model: %v)", wskaznikWiedzy.Model)
+	}
+
+	odmowa := wykonajOdmowna(t, zmontowany, zycie, shared.CommandKnowledgeSearch,
+		shared.KnowledgeSearchRequest{
+			Query: "Jak przywrócić usługę po awarii serwera?", Limit: wskaznik(4),
+			Rerank: wskaznik(true), RerankCandidates: wskaznik(4),
+		})
+
+	t.Logf("odmowa: kod=%s treść=%s", odmowa.Code, odmowa.Message)
+	if odmowa.Code != shared.ErrorCodeChannelUnavailable {
+		t.Fatalf("katalog uszkodzony dostał kod %s zamiast %s", odmowa.Code,
+			shared.ErrorCodeChannelUnavailable)
+	}
+	if !strings.Contains(odmowa.Message, wiedza.KluczKatalogPrzesiewu) {
+		t.Fatalf("odmowa nie nazywa ustawienia %s — silnik nie sięgnął po katalog "+
+			"z nastawy Operatora: %s", wiedza.KluczKatalogPrzesiewu, odmowa.Message)
+	}
+}
+
 // kolejnoscZrodel składa same źródła odpowiedzi w jeden napis — to on
 // rozstrzyga, czy przesiew przestawił kolejność.
 func kolejnoscZrodel(trafienia []shared.KnowledgeHit) string {
@@ -271,6 +326,29 @@ func TestOsObrazuOddajeObrazOpisanyZdaniem(t *testing.T) {
 	}
 	if wynik.Results[0].SourceId == nil || *wynik.Results[0].SourceId == "" {
 		t.Fatal("trafienie nie niesie identyfikatora, którym da się po obraz sięgnąć")
+	}
+}
+
+// TestNastawaKatalogObrazuDochodziDoSilnika pilnuje, że katalog wag osi
+// obrazu z nastawy Operatora trafia do silnika, a nie zostaje przy katalogu
+// wbudowanym w kod: katalog uszkodzony ma odmówić osi obrazu, nie sięgnąć
+// po cichu po wagi gdzie indziej. `Gotowy` pyta o silnik przed odczytem
+// biblioteki, więc obraz wgrany nie jest potrzebny.
+func TestNastawaKatalogObrazuDochodziDoSilnika(t *testing.T) {
+	zmontowany, zycie, katalogDanych := zmontujDoPomiaruSkutku(t)
+	ustawWiedzy(t, katalogDanych, wiedza.KluczKatalogObrazu, katalogWagUszkodzonych(t))
+
+	odmowa := wykonajOdmowna(t, zmontowany, zycie, shared.CommandKnowledgeImageSearch,
+		shared.KnowledgeImageSearchRequest{Query: "a red circle on a white background"})
+
+	t.Logf("odmowa: kod=%s treść=%s", odmowa.Code, odmowa.Message)
+	if odmowa.Code != shared.ErrorCodeChannelUnavailable {
+		t.Fatalf("katalog uszkodzony dostał kod %s zamiast %s", odmowa.Code,
+			shared.ErrorCodeChannelUnavailable)
+	}
+	if !strings.Contains(odmowa.Message, wiedza.KluczKatalogObrazu) {
+		t.Fatalf("odmowa nie nazywa ustawienia %s — silnik nie sięgnął po katalog "+
+			"z nastawy Operatora: %s", wiedza.KluczKatalogObrazu, odmowa.Message)
 	}
 }
 

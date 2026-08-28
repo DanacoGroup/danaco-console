@@ -335,7 +335,9 @@ func (a *adapterWiedzy) ustawienia() wiedza.Ustawienia {
 		return komplet
 	}
 	for _, klucz := range []string{wiedza.KluczProgram, wiedza.KluczModel,
-		wiedza.KluczKatalogModeli, wiedza.KluczDlugoscFragmentu} {
+		wiedza.KluczKatalogModeli, wiedza.KluczDlugoscFragmentu,
+		wiedza.KluczModelPrzesiewu, wiedza.KluczKatalogPrzesiewu,
+		wiedza.KluczModelObrazu, wiedza.KluczKatalogObrazu} {
 
 		wynik := a.rozstrzygacz.Rozstrzygnij(konfig.Kontekst{}, klucz)
 		if wynik.Pochodzenie == konfig.PochodzenieNieznane {

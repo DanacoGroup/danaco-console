@@ -6456,3 +6456,17 @@ wygaszony. Skrótu klawiszowego ta pozycja nie ma.
 
 ## budowa/klient-poprzedni/src/powiadomienia/zrodlo-centrum.ts
 Rejestr czyta się raz, przy otwarciu kolumny, a dalej nadąża zdarzeniami: zdarzenie podniesienia dokłada pozycję i podnosi licznik, a zdarzenie zmiany przerysowuje stany; odpytywania w tle nie ma i nie jest potrzebne, bo obsługa na drugim urządzeniu dolatuje tą samą drogą, co przy urządzeniach i uwierzytelnieniu. Licznik plakietki jest osobną wartością od długości wykazu i tak ma zostać: rdzeń liczy cały rejestr, a wykaz bywa zawężony filtrem, więc plakietka pokazująca długość widoku gasłaby przy zawężeniu, jakby zdarzenia zostały obsłużone.
+
+## budowa/klient-poprzedni/src/uwierzytelnienie/rozpoznanie-bramki.ts
+Kolejność kroków stoi w osobnym pliku, bo to jedyna część bramki, w której da się popełnić błąd cichy:
+przesłona stanie tam, gdzie nie powinna, albo nie stanie tam, gdzie musi. Kolejność kroków i powód
+każdego: powitanie mówi trzy rzeczy naraz — czy wymóg logowania obowiązuje, czy bramka jest ustawiona
+i czy to połączenie jest już związane z sesją, a powitanie i tak leci przy każdym nawiązaniu, więc krok
+nie kosztuje ani jednej dodatkowej koperty; wymóg logowania wyłączony przez operatora oznacza, że
+przesłona nie staje wcale, bo wola operatora jest już wyrażona; połączenie związane przy braku zapisanej
+sesji znaczy, że rdzeń uznał to gniazdo za wejście — rdzeń mówi wprost, że klient czyta to pole i sam
+rozstrzyga, czy pokazać okno logowania; sesja zapisana pyta się rdzenia przedłużeniem, bo przedłużenie
+jako jedyne rozstrzyga o życiu sesji i jako jedyne oddaje nowy czas ważności, a powitanie tego nie
+zastąpi; który formularz rozstrzyga pole z powitania, a jego milczenie — i tylko wtedy — idzie sondą bez
+sekretu, bo milczenie nie jest zamieniane na odmowę; metody pokazują segment PIN wyłącznie wtedy, gdy PIN
+na tej maszynie naprawdę jest założony, bo metody niepewnej ekran nie proponuje.

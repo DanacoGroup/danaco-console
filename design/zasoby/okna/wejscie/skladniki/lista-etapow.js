@@ -8,6 +8,15 @@
    ============================================================================ */
 (function () {
 'use strict';
+
+/* Stan kroku maluje odmiana biblioteki; „oczekuje" nie ma odmiany, bo to
+   wygląd spoczynkowy kroku. */
+function odmianaStanu(stan) {
+  if (stan === 'gotowy') { return ' dn-krok--poprawny'; }
+  if (stan === 'pracuje') { return ' dn-krok--pracuje'; }
+  if (stan === 'blad') { return ' dn-krok--wstrzymany'; }
+  return '';
+}
 var W = window.DanacoWejscie;
 W.skladniki = W.skladniki || {};
 
@@ -24,14 +33,14 @@ function znakEtapu(N, stan, numer) {
 W.skladniki.listaEtapow = function (N, w) {
   var nazwy = N.tekst('uruchomienie.etapy');
   return N.el('ol', {
-    klasa: 'we-kroki', 'aria-live': 'polite',
+    klasa: 'dn-kolejka dn-kolejka--pola', 'aria-live': 'polite',
     'aria-label': N.tekst('uruchomienie.laczenie.tytul')
   }, nazwy.map(function (nazwa, i) {
     var stan = w.stany[i] || 'oczekuje';
-    return N.el('li', { klasa: 'we-krok', dane: { stan: stan } }, [
-      N.el('span', { klasa: 'we-krok-znak', 'aria-hidden': 'true' }, [znakEtapu(N, stan, i + 1)]),
+    return N.el('li', { klasa: 'dn-krok dn-krok--pole' + odmianaStanu(stan), dane: { stan: stan } }, [
+      N.el('span', { klasa: 'dn-krok-znak', 'aria-hidden': 'true' }, [znakEtapu(N, stan, i + 1)]),
       N.el('span', { tekst: nazwa }),
-      N.el('span', { klasa: 'we-krok-meta', tekst: N.tekst('uruchomienie.stany.' + (w.miary[i] || 'oczekuje')) })
+      N.el('span', { klasa: 'dn-krok-meta', tekst: N.tekst('uruchomienie.stany.' + (w.miary[i] || 'oczekuje')) })
     ]);
   }));
 };

@@ -256,6 +256,8 @@ mieć jedną nazwę.
 | `.cd-archiwum-tresc` | Zero wystapien w .html i .js. Blok (padding, color:var(--dn-tekst-2), fs-sm, lh-luzny, ani |
 | `.cd-karta-menu` | Zero wystapien w atrybutach class w .html. Jedyne odwolanie w calym drzewie to selektor ob |
 | ~~`.cd-listwa-menu`~~ | ZROBIONE — skreślona z centrum-dowodzenia.css i centrum-obszar.css |
+| ~~`.dn-sep-pionowy`~~ | ZROBIONE — synonim `.dn-separator--pionowy`; złożone w jedną rodzinę, wysokość znaku wyraża modyfikator `--znak`. Trzecia postać tej samej roli, `.dn-stan-sep` w `rama.css`, została przy swoich 108 użyciach — do złożenia przy porządkowaniu paska stanu |
+| ~~`.dn-panel-glowa`~~ | ZROBIONE — klasa nie występowała w żadnym znaczniku ani skrypcie; jedyne odwołanie to selektor `.dn-panel-glowa .sta-menu-tresc` w `panel-sesji.css`, który nie mógł trafić w nic. Skreślona wraz z regułą i pozycją wykazu |
 | `.cd-nadtytul` | Zero wystapien w atrybutach class w .html i zero w .js w calym /home/ubuntu/robocze/protot |
 | `.cd-naglowek-akcje` | Zero wystapien w .html i .js. Blok display:flex; align-items:center; gap:var(--dn-od-2) ni |
 | `.cd-podtytul` | Zero wystapien w .html i .js. (Blok: margin, max-width:78ch, color:var(--dn-tekst-2), fs-b |
@@ -469,18 +471,22 @@ ten sam składnik.
 
 ## Dług dokumentacji — wielkość emblematu karty środowiska
 
-Jedna rola, cztery wartości w czterech miejscach:
+Jedna rola miała cztery wartości w czterech miejscach:
 
-| źródło | wartość |
-|---|---|
-| księga znaku, rozdz. 15.1 | 24 px |
-| komentarz w `komponenty.css` przy `.dn-karta-srodowiska-godlo` | 48 px, „rozstrzygnięcie Właściciela z 2026-08-20" |
-| wariant `.dn-karta-srodowiska--akcent` — to, co się rysowało | 32 px |
-| stan po przeglądzie z 27.08.2026 (`--dn-wym-godlo-karty`) | **54 px** |
+| źródło | wartość | stan |
+|---|---|---|
+| żeton `--dn-wym-godlo-karty` w `zetony/zetony.css` | **62 px** | wiążący |
+| reguła `.dn-karta-srodowiska-godlo` | 48 px wpisane wprost | ZNIESIONE — bierze żeton |
+| wariant `.dn-karta-srodowiska--akcent` | nadpisanie żetonem | ZNIESIONE — zbędne, wymiar jest jeden |
+| księga znaku, rozdz. 15.1 | 24 px | **nieuzgodniona** |
 
-Wiążąca jest wartość ostatnia: żeton `--dn-wym-godlo-karty` w `zetony/zetony.css`.
-Trzy pozostałe zapisy pozostają nieuzgodnione — Właściciel rozstrzygnął samą
-wielkość, bez porządkowania księgi znaku. Do domknięcia przy pracy nad księgą:
+Arkusz miał dwa komentarze podające dwie różne wartości wiążące (24 i 48) przy
+deklaracji 48 px, którą i tak nadpisywał wariant. Wszystkie karty niosą wariant
+akcentu, więc rysowało się 62 px — i tylko ta wartość była prawdziwa. Reguła
+bierze teraz żeton, komentarze sprzeczne zdjęte.
+
+Zostaje jedna rozbieżność: **księga znaku podaje 24 px**. To dokument marki,
+więc jego poprawka jest decyzją marki, nie porządkiem w arkuszu. Do domknięcia przy pracy nad księgą:
 zdanie „emblemat pozostaje większy od ikony kafla strefy 2, co utrzymuje
 hierarchię stref" **przestało obowiązywać** — od 27.08.2026 oba znaki mają
 z rozstrzygnięcia Właściciela ten sam wymiar, a strefy różni masa kafla.

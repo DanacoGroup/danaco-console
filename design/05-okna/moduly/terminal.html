@@ -17,6 +17,8 @@
 
   /* Terminal Tabs — okno wiodące */
   .tt-korpus { display:grid; grid-template-rows:auto auto minmax(0,1fr) auto; min-height:0; }
+  /* Zawijak niesie rolę listy zakładek; układ pasa zostaje bez zmian. */
+  .tt-karty-tory { display:flex; align-items:center; gap:2px; min-width:0; }
   .tt-karty { display:flex; align-items:center; gap:2px; padding:var(--dn-od-1) var(--dn-od-2); border-bottom:1px solid var(--dn-obrys-subtelny); background:var(--dn-panel); overflow-x:auto; scrollbar-width:none; }
   .tt-karty::-webkit-scrollbar { display:none; }
   .tt-karta { display:inline-flex; align-items:center; gap:var(--dn-od-1); flex:none; height:26px; padding:0 var(--dn-od-2); border:1px solid transparent; border-radius:var(--dn-r-sm); background:none; color:var(--dn-tekst-2); font-size:var(--dn-fs-sm); cursor:pointer; white-space:nowrap; }
@@ -38,14 +40,20 @@
   .tt-ntool svg { width:14px; height:14px; }
   /* wiersz wpisu polecenia w konsoli */
   .tt-wiersz { display:flex; align-items:baseline; gap:var(--dn-od-1); }
-  .tt-wiersz input { flex:1; border:none; background:transparent; color:var(--dn-tekst); font-family:var(--dn-ff-mono); font-size:var(--dn-fs-sm); }
+  /* Barwa dziedziczona po konsoli, nie brana z motywu: konsola jest ciemna
+     niezależnie od motywu, więc --dn-tekst dawał w jasnym 1,11:1 — pismo
+     atramentowe na atramencie. */
+  .tt-wiersz input { flex:1; border:none; background:transparent; color:inherit; font-family:var(--dn-ff-mono); font-size:var(--dn-fs-sm); }
+  .tt-wiersz input::placeholder { color:var(--dn-szary-500); }
   .tt-wiersz input:focus { outline:none; }
 
-  .metoda { display:inline-grid; place-content:center; min-width:56px; height:18px; padding:0 6px; border-radius:var(--dn-r-xs); font-family:var(--dn-ff-mono); font-size:var(--dn-fs-xs); font-weight:var(--dn-fw-polgruba); background:var(--dn-powierzchnia-2); color:var(--dn-tekst-2); }
   .oc-wiersz { display:flex; gap:var(--dn-od-2); font-family:var(--dn-ff-mono); font-size:var(--dn-fs-xs); padding:2px var(--dn-od-2); border-left:2px solid transparent; }
   .oc-wiersz .zrodlo { color:var(--dn-sygnal); flex:none; min-width:74px; }
   .oc-wiersz .czas { color:var(--dn-tekst-3); flex:none; }
-  .oc-wiersz.blad { border-left-color:var(--dn-czerwien-400); background:var(--dn-blad-tlo); }
+  .oc-wiersz.blad { border-left-color:var(--dn-blad-obrys); background:var(--dn-blad-tlo); }
+  /* Tło stanu jest jaśniejsze od powierzchni, więc trzeci stopień pisma spada
+     pod próg (4,26:1). Na tle stanu nota bierze stopień drugi. */
+  .oc-wiersz.blad .czas { color:var(--dn-tekst-2); }
   .oc-wiersz.ostrz { border-left-color:var(--dn-bursztyn-400); }
   .oc-akcje { display:flex; gap:var(--dn-od-1); padding:2px var(--dn-od-2) var(--dn-od-1) 84px; }
   .pm-wiersz { padding:var(--dn-od-1) var(--dn-od-2); border-bottom:1px solid var(--dn-obrys-subtelny); font-size:var(--dn-fs-sm); }
@@ -371,10 +379,12 @@
 
 
   <!-- ══ PAS KART SESJI ══ -->
-  <div class="dn-karty-sesji" role="tablist" aria-label="Karty sesji">
-    <button class="dn-karta-sesji" role="tab" aria-selected="true" type="button"><span class="pt-tetno" aria-hidden="true"></span><span>danaco-console/api — powłoki</span></button>
-    <button class="dn-karta-sesji" role="tab" aria-selected="false" type="button"><span>Wdrożenie build-01 (SSH)</span></button>
-    <button class="dn-karta-sesji" role="tab" aria-selected="false" type="button"><span>Zestaw testów — regresja</span></button>
+  <div class="dn-karty-sesji">
+    <div class="dn-karty-sesji-tory" role="tablist" aria-label="Karty sesji">
+      <button class="dn-karta-sesji" role="tab" aria-selected="true" type="button"><span class="pt-tetno" aria-hidden="true"></span><span>danaco-console/api — powłoki</span></button>
+      <button class="dn-karta-sesji" role="tab" aria-selected="false" type="button"><span>Wdrożenie build-01 (SSH)</span></button>
+      <button class="dn-karta-sesji" role="tab" aria-selected="false" type="button"><span>Zestaw testów — regresja</span></button>
+    </div>
     <button class="dn-btn-ikona" type="button" aria-label="Nowa karta" data-komunikat="Nowa karta sesji otwiera wybór katalogu roboczego." data-komunikat-tytul="Nowa karta"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></button>
     <span data-przywroc-pas style="display:inline-flex;gap:var(--dn-od-1);align-items:center;margin-left:var(--dn-od-2)"></span>
   </div>
@@ -406,7 +416,7 @@
       </div>
       <div class="dn-szyna-modulu-lista">
         <div class="dn-etyk-mono">danaco-console/api</div>
-        <button class="pt-pozycja" type="button" aria-selected="true"><span class="pt-tetno" aria-hidden="true"></span><span class="pt-pozycja-tytul">Powłoki — PowerShell · Bash · Python</span></button>
+        <button class="pt-pozycja" type="button" aria-current="true"><span class="pt-tetno" aria-hidden="true"></span><span class="pt-pozycja-tytul">Powłoki — PowerShell · Bash · Python</span></button>
         <button class="pt-pozycja" type="button"><span class="pt-pozycja-tytul">Budowanie usług</span></button>
         <div class="dn-etyk-mono">Hosty zdalne</div>
         <button class="pt-pozycja" type="button"><span class="pt-pozycja-tytul">Wdrożenie build-01 (SSH)</span></button>
@@ -459,9 +469,9 @@
               <div class="sta-konfig-pole"><label>Zakres pamięci</label><span class="pt-mono">karta sesji</span></div>
             </details>
             <details class="sta-konfig-sekcja"><summary>Izolacja techniczna procesu</summary>
-              <div class="sta-konfig-pole"><label>Katalog roboczy sesji</label><button class="dn-przelacznik" data-przelacznik data-etykieta="Izolacja katalogu roboczego" aria-pressed="false" role="switch" aria-checked="false"></button></div>
-              <div class="sta-konfig-pole"><label>Dostęp sieciowy</label><button class="dn-przelacznik" data-przelacznik data-etykieta="Izolacja dostępu sieciowego" aria-pressed="false" role="switch" aria-checked="false"></button></div>
-              <div class="sta-konfig-pole"><label>Konto i token per sesja</label><button class="dn-przelacznik" data-przelacznik data-etykieta="Izolacja konta i tokenu" aria-pressed="false" role="switch" aria-checked="false"></button></div>
+              <div class="sta-konfig-pole"><label>Katalog roboczy sesji</label><button class="dn-przelacznik" aria-label="Izolacja katalogu roboczego" data-przelacznik data-etykieta="Izolacja katalogu roboczego" role="switch" aria-checked="false"></button></div>
+              <div class="sta-konfig-pole"><label>Dostęp sieciowy</label><button class="dn-przelacznik" aria-label="Izolacja dostępu sieciowego" data-przelacznik data-etykieta="Izolacja dostępu sieciowego" role="switch" aria-checked="false"></button></div>
+              <div class="sta-konfig-pole"><label>Konto i token per sesja</label><button class="dn-przelacznik" aria-label="Izolacja konta i tokenu" data-przelacznik data-etykieta="Izolacja konta i tokenu" role="switch" aria-checked="false"></button></div>
             </details>
           </div>
 
@@ -521,8 +531,8 @@
                   <div class="sta-popover-wiersz"><span class="sta-popover-etykieta">Dołącz plik logu</span><span class="pt-mono">Ctrl+U</span></div>
                   <div class="sta-popover-wiersz"><span class="sta-popover-etykieta">Polecenia ukośnikowe</span><span class="pt-mono">/</span></div>
                   <div class="sta-popover-tytul" style="margin-top:var(--dn-od-2)">Konektory</div>
-                  <div class="sta-popover-wiersz"><span class="sta-popover-etykieta">Desktop Commander</span><button class="dn-przelacznik" data-przelacznik aria-pressed="true" role="switch" aria-checked="true"></button></div>
-                  <div class="sta-popover-wiersz"><span class="sta-popover-etykieta">runpod</span><button class="dn-przelacznik" data-przelacznik aria-pressed="true" role="switch" aria-checked="true"></button></div>
+                  <div class="sta-popover-wiersz"><span class="sta-popover-etykieta">Desktop Commander</span><button class="dn-przelacznik" aria-label="Desktop Commander" data-przelacznik role="switch" aria-checked="true"></button></div>
+                  <div class="sta-popover-wiersz"><span class="sta-popover-etykieta">runpod</span><button class="dn-przelacznik" aria-label="runpod" data-przelacznik role="switch" aria-checked="true"></button></div>
                   <div class="sta-popover-tytul" style="margin-top:var(--dn-od-2)">Wtyczki</div>
                   <div class="sta-popover-wiersz"><span class="sta-popover-etykieta">Danaco inżynieria</span></div>
                 </div>
@@ -608,12 +618,14 @@
 
           <div class="sta-okno-tresc tt-korpus">
             <!-- pasek kart powłok -->
-            <div class="tt-karty" role="tablist" aria-label="Karty powłok">
-              <button class="tt-karta" role="tab" aria-selected="true" type="button" data-powloka="PS C:\danaco-console\api>"><span class="dn-kropka dn-kropka--sygnal" aria-hidden="true"></span>PowerShell<span class="x" role="button" aria-label="Zamknij kartę">×</span></button>
-              <button class="tt-karta" role="tab" aria-selected="false" type="button" data-powloka="operator@host:~/api$"><span class="pt-tetno" aria-hidden="true"></span>Bash<span class="x" role="button" aria-label="Zamknij kartę">×</span></button>
-              <button class="tt-karta" role="tab" aria-selected="false" type="button" data-powloka="C:\danaco-console\api>"><span class="dn-kropka dn-kropka--neutralna" aria-hidden="true"></span>CMD<span class="x" role="button" aria-label="Zamknij kartę">×</span></button>
-              <button class="tt-karta" role="tab" aria-selected="false" type="button" data-powloka="(.venv) $"><span class="dn-kropka dn-kropka--neutralna" aria-hidden="true"></span>Python (venv)<span class="x" role="button" aria-label="Zamknij kartę">×</span></button>
-              <button class="tt-karta" role="tab" aria-selected="false" type="button" data-powloka="operator@build-01:~$"><span class="dn-kropka dn-kropka--blad" aria-hidden="true"></span>SSH: build-01<span class="x" role="button" aria-label="Zamknij kartę">×</span></button>
+            <div class="tt-karty">
+              <div class="tt-karty-tory" role="tablist" aria-label="Karty powłok">
+                <button class="tt-karta" role="tab" aria-selected="true" type="button" data-powloka="PS C:\danaco-console\api>"><span class="dn-kropka dn-kropka--sygnal" aria-hidden="true"></span>PowerShell<span class="x" role="button" aria-label="Zamknij kartę">×</span></button>
+                <button class="tt-karta" role="tab" aria-selected="false" type="button" data-powloka="operator@host:~/api$"><span class="pt-tetno" aria-hidden="true"></span>Bash<span class="x" role="button" aria-label="Zamknij kartę">×</span></button>
+                <button class="tt-karta" role="tab" aria-selected="false" type="button" data-powloka="C:\danaco-console\api>"><span class="dn-kropka dn-kropka--neutralna" aria-hidden="true"></span>CMD<span class="x" role="button" aria-label="Zamknij kartę">×</span></button>
+                <button class="tt-karta" role="tab" aria-selected="false" type="button" data-powloka="(.venv) $"><span class="dn-kropka dn-kropka--neutralna" aria-hidden="true"></span>Python (venv)<span class="x" role="button" aria-label="Zamknij kartę">×</span></button>
+                <button class="tt-karta" role="tab" aria-selected="false" type="button" data-powloka="operator@build-01:~$"><span class="dn-kropka dn-kropka--blad" aria-hidden="true"></span>SSH: build-01<span class="x" role="button" aria-label="Zamknij kartę">×</span></button>
+              </div>
               <button class="tt-ntool" type="button" aria-label="Nowa karta powłoki" data-komunikat="Wybór powłoki: PowerShell · CMD · Bash · Node.js · Python · SSH." data-komunikat-tytul="Nowa karta"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></button>
             </div>
 

@@ -1,5 +1,17 @@
--- Migracja 291 dodaje tabele reguł wyzwalania alertów oraz rejestru ich
--- wyzwoleń wraz z wartością zmierzoną w chwili wyzwolenia.
+-- Migracja 291 — reguły wyzwalania i rejestr wyzwoleń (rodzina `alert.*`).
+--
+-- Reguła mówi, KIEDY produkt ma zawołać; wyzwolenie jest zapisem tego, że
+-- zawołał — z wartością zmierzoną w chwili wyzwolenia. Wartość obserwowana
+-- (`wartosc_obserwowana`) leży w wierszu wyzwolenia, a nie w regule, bo reguła
+-- trwa, a pomiar dotyczy jednej chwili.
+--
+-- Drogi dostarczenia (AlertChannel) idą zapisem strukturalnym w jednej kolumnie
+-- (`kanaly_json`), bo są wykazem wartości bez własnych atrybutów; ta sama forma
+-- co przy `deliveredChannels` wyzwolenia. Osobna tabela wiązania dawałaby
+-- złączenie dla listy trzech napisów.
+--
+-- Wyzwolenie zna sondę i wywołanie modelu wyłącznie kodem, bez klucza obcego:
+-- usunięcie sondy nie ma prawa wymazać śladu alertu, który realnie się odbył.
 
 CREATE TABLE regula_alertu (
     id                       INTEGER PRIMARY KEY AUTOINCREMENT,

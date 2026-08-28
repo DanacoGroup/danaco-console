@@ -1,8 +1,34 @@
--- Migracja zakłada trwałość modułu terminala: kartę powłoki odtwarzalną po restarcie
--- rdzenia oraz dziennik procesów zakończonych.
+-- Migracja 041 — trwałość modułu Terminal: karta powłoki (okno Terminal Tabs)
+-- i dziennik procesów rejestru rdzenia (okno Process Monitor).
+--
+-- Dlaczego karta ma wiersz, skoro istnieje w pamięci rdzenia. Kontrakt nie ma
+-- komendy `terminal.session.list`, więc klient po ponownym połączeniu zna
+-- identyfikatory kart wyłącznie z własnej pamięci. Gdyby karta żyła tylko
+-- w pamięci procesu rdzenia, restart serwera unieważniłby te identyfikatory
+-- i `terminal.command.exec` odpowiadałby `not_found` na kartę, którą Operator
+-- widzi na ekranie. Wiersz karty pozwala rdzeniowi ją odtworzyć.
+--
+-- Czego w karcie nie ma.
+--   * Zmienne środowiska karty nie mają kolumny. Środowisko procesu
+--     bywa nośnikiem poświadczeń, a baza nie jest sejfem; zmienne żyją wyłącznie
+--     w pamięci rdzenia i po restarcie karta wraca bez nich.
+--   * PID i kod wyjścia karty nie mają kolumny, bo karta nie jest procesem.
+--     Kartą jest profil powłoki (rodzaj, katalog, środowisko), a procesem — każde
+--     wykonane w niej polecenie; PID i kod wyjścia należą do `terminal_proces`.
+--     Pola `TerminalSession.pid` i `.exitCode` kontraktu są opcjonalne i zostają
+--     puste.
+--
+-- Dziennik procesów jest dziennikiem, nie stanem żywym. Proces czynny prowadzi
+-- rejestr w pamięci rdzenia (to on ma uchwyt do drzewa potomstwa i tylko on
+-- potrafi proces ubić). Tabela niesie ten sam wiersz po to, żeby Process Monitor
+-- pokazał także procesy zakończone — kontrakt pozwala zawęzić wykaz do stanów
+-- `finished`, `failed` i `stopped`, a stan żywy takich wierszy nie trzyma.
 
--- Kolumna kodu okna niesie identyfikator okna komunikacji w postaci kontraktu, bez klucza
--- obcego, bo okno bywa bytem samej pamięci nadzorcy.
+-- ── Karta terminala — profil powłoki jednego okna (Terminal Tabs) ─────────────
+-- Kolumna `okno_kod` niesie identyfikator okna komunikacji w postaci kontraktu,
+-- ten sam, którym posługuje się `TerminalSession.windowId`. Klucz obcy do
+-- `okno_komunikacji` nie wchodzi: okno bywa bytem pamięci nadzorcy, który nie
+-- ma jeszcze wiersza, a karta nie ma prawa nie powstać z tego powodu.
 CREATE TABLE terminal_karta (
     id              INTEGER PRIMARY KEY AUTOINCREMENT,
     kod             TEXT    NOT NULL UNIQUE,
@@ -16,8 +42,10 @@ CREATE TABLE terminal_karta (
 );
 CREATE INDEX idx_terminal_karta_okno ON terminal_karta(okno_kod, utworzono DESC);
 
--- Tabela niesie ten sam wiersz co stan żywy po to, żeby podgląd procesów pokazał
--- również procesy już zakończone.
+-- ── Dziennik procesów rejestru rdzenia (Process Monitor) ─────────────────────
+-- `inicjator` jest kolumną, a nie wnioskiem z okoliczności: trzeba odróżnić
+-- proces uruchomiony przez Operatora od uruchomionego poleceniem modelu,
+-- a po zakończeniu procesu nie ma już skąd tego odczytać.
 CREATE TABLE terminal_proces (
     id            INTEGER PRIMARY KEY AUTOINCREMENT,
     kod           TEXT    NOT NULL UNIQUE,

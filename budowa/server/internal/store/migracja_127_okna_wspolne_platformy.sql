@@ -1,4 +1,24 @@
--- Migracja 127 dopisuje do katalogu okien execution-loop-window wraz z brakującym przypięciem chat-window do modułu Library, domykając wykaz okien wspólnych platformy.
+-- Migracja 127 — okna wspólne platformy w katalogu rdzenia.
+--
+-- Dwa okna towarzyszą każdemu modułowi: Chat Window (kanał Użytkownik ↔
+-- Wykonawca) i Execution Loop Window (kanał Koordynator ↔ Wykonawca). Wszystkie
+-- opracowania modułów wymieniają je razem, na czele wykazu okien, jako kolumny
+-- stałe układu.
+--
+-- Katalog rdzenia znał do tej pory jedno z nich, i to nie dla wszystkich:
+--
+--   * `execution-loop-window` nie miał wiersza definicji w ogóle, więc żaden
+--     moduł nie mógł go wskazać, a pas uczciwości modułów meldował ten kod jako
+--     stojący poza katalogiem;
+--   * `chat-window` przypina wszystkim modułom migracja 031, ale moduł Library
+--     wszedł do rejestru po niej, więc przypięcia nie dostał. Jako jedyny
+--     z piętnastu.
+--
+-- Kolejność zero należy do obu okien wspólnych, nie do jednego. Odczyt sortuje
+-- `ORDER BY om.kolejnosc, o.kod` (`dane/okna_operacyjne.go`), więc remis przy
+-- zerze rozstrzyga kod: `chat-window` stoi przed `execution-loop-window`, czyli
+-- dokładnie tak, jak układa je każde opracowanie. Okna własne modułu zaczynają
+-- się od jedynki i nie są przestawiane.
 
 INSERT INTO okno_operacyjne (kod, nazwa, rola, kategoria, kolejnosc)
 VALUES

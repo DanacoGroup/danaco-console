@@ -1,5 +1,14 @@
--- Migracja 225 zakłada tabelę pozycji kalendarza projektu dla wydarzeń
--- wciągniętych z pliku iCal, odrębną od zadań z terminem własnym.
+-- Migracja 225 — pozycje kalendarza projektu wciągnięte z iCal.
+--
+-- Kalendarz projektu składa się z dwóch źródeł: zadań z terminem (te leżą
+-- w `zadanie_projektu` i drugiego wiersza nie potrzebują) oraz wydarzeń
+-- wciągniętych plikiem `.ics` bez zakładania zadań. Ta tabela trzyma to drugie
+-- źródło — bez niej wciągnięcie z `asTasks: false` nie miałoby gdzie osiąść
+-- i kalendarz wracałby pusty mimo udanego wciągnięcia.
+--
+-- `uid_zewnetrzny` jest identyfikatorem wydarzenia w źródle. Warunek UNIQUE
+-- na parze czyni powtórne wciągnięcie tego samego pliku aktualizacją, a nie
+-- podwojeniem kalendarza.
 
 CREATE TABLE pozycja_kalendarza_projektu (
     id                       INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -11,7 +20,6 @@ CREATE TABLE pozycja_kalendarza_projektu (
     caly_dzien               INTEGER NOT NULL DEFAULT 0,
     kamien_milowy            INTEGER NOT NULL DEFAULT 0,
     regula_powtarzalnosci    TEXT    NOT NULL DEFAULT '',
-    -- Identyfikator wydarzenia w źródle; powtórne wciągnięcie aktualizuje wiersz.
     uid_zewnetrzny           TEXT    NOT NULL DEFAULT '',
     utworzono                TEXT    NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now')),
     UNIQUE(projekt_id, uid_zewnetrzny)

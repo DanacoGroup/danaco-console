@@ -1,5 +1,21 @@
--- Migracja 268 wprowadza zlecenia kolejki jako byt odrębny od pozycji kolejki: niesie ładunek
--- strukturalny, priorytet, termin wykonania, klucz idempotencji i warunek przetworzenia.
+-- Migracja 268 — zlecenia kolejki widziane przez Queue Managera
+-- (rodzina `queue.item.*`, `queue.dead.list`, `queue.depth.get`).
+--
+-- Tabela `pozycja_kolejki` (migracja 003) zostaje nietknięta. Opisuje ona etap
+-- pętli koordynator–wykonawca: tytuł, treść zlecenia, werdykt weryfikacji,
+-- licznik obiegów. Kontraktowy `QueueItem` jest czym innym — niesie ładunek
+-- strukturalny, priorytet, termin wykonania, klucz idempotencji i warunek
+-- przetworzenia. Wtłoczenie jednego w drugie kazałoby kolumnie `tytul` nieść
+-- ładunek, a `werdykt_weryfikacji` — stan zlecenia o innym słowniku.
+--
+-- Stan idzie słownikiem bazy (kolumna `baza` wyliczenia `QueueItemStatus`),
+-- tak samo jak stan kolejki i stan pozycji.
+--
+-- Klucz idempotencji jest unikatowy W OBRĘBIE KOLEJKI, nie globalnie: ten sam
+-- klucz w dwóch kolejkach opisuje dwa różne zlecenia dwóch różnych torów.
+-- Zlecenie martwe zachowuje kolejkę źródłową — `queue.dead.list` bez wskazania
+-- kolejki oddaje zadania martwe wszystkich kolejek, więc rozdzielenie ich na
+-- osobną tabelę odebrałoby im pochodzenie.
 CREATE TABLE zlecenie_kolejki (
     id                       INTEGER PRIMARY KEY AUTOINCREMENT,
     identyfikator_zewnetrzny TEXT    NOT NULL UNIQUE,
@@ -19,15 +35,12 @@ CREATE TABLE zlecenie_kolejki (
     utworzono                TEXT    NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now')),
     zaktualizowano           TEXT    NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now'))
 );
--- Indeks porządkuje zlecenia jednej kolejki po priorytecie i kolejności zapisu, w porządku,
--- w jakim zlecenia trafiają do przetwarzania.
+-- queue.item.list czyta zlecenia kolejki w porządku przetwarzania.
 CREATE INDEX idx_zlecenie_kolejki_porzadek
     ON zlecenie_kolejki(kolejka_id, priorytet, id);
--- Indeks porządkuje zlecenia po stanie i czasie ostatniej zmiany, co pozwala odczytać zlecenia
--- trwale nieudane wszystkich kolejek naraz.
+-- queue.dead.list czyta zlecenia trwale nieudane wszystkich kolejek naraz.
 CREATE INDEX idx_zlecenie_kolejki_stan ON zlecenie_kolejki(stan, zaktualizowano DESC);
--- Indeks porządkuje zlecenia po czasie utworzenia, co pozwala policzyć zlecenia oczekujące
--- w wybranych odcinkach czasu.
+-- queue.depth.get liczy zlecenia oczekujące w odcinkach czasu.
 CREATE INDEX idx_zlecenie_kolejki_czas ON zlecenie_kolejki(utworzono);
 CREATE UNIQUE INDEX idx_zlecenie_kolejki_idempotencja
     ON zlecenie_kolejki(kolejka_id, klucz_idempotencji)

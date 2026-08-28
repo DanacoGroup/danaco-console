@@ -1,5 +1,28 @@
--- Migracja 372 wprowadza do katalogu ustawień konto nadawcze platformy
--- wraz z nastawami serwera poczty wychodzącej.
+-- Migracja 372 — konto nadawcze platformy wchodzi do katalogu ustawień.
+--
+-- Powód jest jeden i twardy: bez konta nadawczego `auth.register` odmawia
+-- (`core/adapter_modul_auth.go` — `nadajnik.Brak()`), a bez rejestracji nie ma
+-- jak wejść do produktu. Do tej migracji nastawy nadawcy wchodziły WYŁĄCZNIE
+-- zmiennymi środowiska (`DANACO_NADAWCA_*`, `konfiguracja/srodowisko.go`), więc
+-- pomyłka w adresie serwera poczty wymagała zatrzymania rdzenia i wiedzy spoza
+-- produktu. Katalog daje drugą drogę — tę wewnątrz okna Konfiguracji — i nie
+-- odbiera pierwszej: zmienne środowiska nadal zasilają start, a zapis w tabeli
+-- `ustawienie` je przesłania (`core/nastawy_nadajnika.go`).
+--
+-- Własna kategoria, nie `bezpieczenstwo`: konto nadawcze nie jest zgodą ani
+-- uwierzytelnianiem, tylko skrzynką, z której platforma pisze dwa listy
+-- systemowe — potwierdzenie adresu i drogę odzyskania konta. Wstawione pod
+-- kłódkę byłoby czwartym znaczeniem tamtej kategorii.
+--
+-- To NIE jest skrzynka Operatora. Skrzynki Operatora prowadzi moduł Poczty
+-- z własnym sejfem poświadczeń; tu stoi konto nadawcze samej platformy i pisze
+-- nim wyłącznie rdzeń.
+--
+-- Wymaga restartu: nie. Nastawy czyta adapter bramki przy każdym wysłaniu listu
+-- tym samym rozstrzygaczem, którym idzie każde inne ustawienie platformy.
+--
+-- Jeden dozwolony zasięg: wyłącznie `aplikacja`. Konto nadawcze jest jedno dla
+-- całego programu — okna ani sesji nie ma czym zawęzić.
 
 INSERT INTO kategoria_ustawien (kod, nazwa, opis, ikona, kolejnosc) VALUES
     ('nadawca', 'Konto nadawcze platformy',

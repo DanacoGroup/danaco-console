@@ -1,5 +1,19 @@
--- Migracja 336 dodaje szablony materiału marketingowego wraz z ich
--- warstwami oraz indeksami wspierającymi wykaz.
+-- Migracja 336 — szablony materiału (marketing: format społecznościowy, baner,
+-- slajd, materiał do druku, nagłówek wiadomości).
+--
+-- Szablon materiału to NIE szablon promptu (`szablon_promptu_design`,
+-- migracja 231). Tamten jest gotowym poleceniem dla silnika obrazu, ten jest
+-- gotowym UKŁADEM: rozmiarem materiału i kompletem warstw, z którego
+-- `design.template.apply` zakłada kompozycję. Wspólna tabela wymagałaby kolumn
+-- pustych po obu stronach — prompt nie ma szerokości, układ nie ma tematu.
+--
+-- Warstwy leżą osobno, tak samo jak warstwy kompozycji
+-- (`warstwa_kompozycji_design`, migracja 048): szablon bez warstw jest stanem
+-- poprawnym (sam rozmiar materiału), a zapis podmienia komplet warstw naraz.
+--
+-- `zasob_id` jest tekstem, nie więzem obcym — dokładnie z tego powodu, co
+-- w warstwie kompozycji: szablon przeżywa usunięcie zasobu z Assets Panel,
+-- a wyrys pomija warstwę bez bajtów zamiast odmawiać całości.
 
 CREATE TABLE szablon_materialu_design (
     id                       INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -30,12 +44,10 @@ CREATE TABLE warstwa_szablonu_materialu_design (
     adnotacja                TEXT
 );
 
--- Wykaz szablonów materiału marketingowego czyta się dla danego okna, od
--- ostatnio zmienianego szablonu.
+-- design.template.list czyta szablony okna, od ostatnio zmienianego.
 CREATE INDEX idx_szablon_materialu_design_okno
     ON szablon_materialu_design(okno, zaktualizowano DESC, id DESC);
 
--- Warstwy szablonu materiału czyta się zawsze kompletem jednego szablonu,
--- w zachowanej kolejności wyrysu.
+-- Warstwy czyta się zawsze kompletem jednego szablonu, w kolejności wyrysu.
 CREATE INDEX idx_warstwa_szablonu_materialu_design_szablon
     ON warstwa_szablonu_materialu_design(szablon_id, kolejnosc, id);

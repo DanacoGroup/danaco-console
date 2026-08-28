@@ -166,6 +166,24 @@
     transform var(--dn-czas-1) var(--dn-ease);
 }
 .dn-btn-ikona:hover { background: var(--dn-hover); color: var(--dn-tekst); }
+
+/* Pole dotyku — WCAG 2.5.8 wymaga 24×24 px, a przycisk ikonowy bywa mniejszy
+   tam, gdzie wiersz jest zwarty (np. `.dn-obszar-pozycja-menu` bierze wymiar
+   ze skali ikon, nie kontrolek). Nakładka powiększa pole trafienia, nie
+   zmieniając rysunku; przy przycisku 24 px i większym `max()` jest bezczynne.
+   Nakładka idzie przez `::before`, bo `::after` przycisku nosi już dymek
+   etykietki (`rama.css`) — dwie nakładki na jednym pseudoelemencie znosiłyby
+   się nawzajem. */
+.dn-btn-ikona { position: relative; }
+.dn-btn-ikona::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: max(100%, var(--dn-wym-pole-dotyku));
+  height: max(100%, var(--dn-wym-pole-dotyku));
+  transform: translate(-50%, -50%);
+}
 .dn-btn-ikona:active { transform: translateY(1px); }
 .dn-btn-ikona[aria-pressed='true'] {
   background: var(--dn-sygnal-tlo);
@@ -582,18 +600,14 @@ select.dn-pole-kontrolka { padding-right: var(--dn-od-6); cursor: pointer; }
 .dn-karta-srodowiska:hover::before,
 .dn-karta-srodowiska[aria-current='true']::before { opacity: 1; }
 .dn-karta-srodowiska-godlo {
-  /* Wielkość wiążąca: księga znaku rozdz. 15.1 — „Strona główna, karty
-     środowisk: emblemat środowiska 24 px". Odpowiada żetonowi --dn-wym-ikona-xl
-     i utrzymuje hierarchię wobec ikony kafla strefy 2. */
   /* Element liniowy nie przyjmuje szerokości — bez tej deklaracji godło
      rozciągało się na całą kartę. */
   display: grid;
   place-content: center;
-  /* 48 px — rozstrzygnięcie Właściciela z 2026-08-20. Emblemat jest elementem
-     marki, nie ikoną interfejsu, więc nie podlega skali 14/16/20/24; pozostaje
-     większy od ikony kafla strefy 2 (36 px), co utrzymuje hierarchię stref.
-     Księga znaku rozdz. 15.1 podaje w tym miejscu 24 px — do zaktualizowania. */
-  width: 48px; height: 48px;
+  /* Emblemat jest znakiem marki, nie ikoną interfejsu, więc nie bierze skali
+     ikon. Wymiar stoi w żetonie --dn-wym-godlo-karty i tylko tam. */
+  width: var(--dn-wym-godlo-karty);
+  height: var(--dn-wym-godlo-karty);
   margin-bottom: var(--dn-od-4);
   color: var(--dn-tekst);
 }
@@ -618,15 +632,12 @@ select.dn-pole-kontrolka { padding-right: var(--dn-od-6); cursor: pointer; }
   max-width: 44ch;
 }
 
-/* Karta wiodąca — środowisko podane akcentem: tytuł o stopień większy, godło
-   mniejsze (ustępuje tytułowi), bez wstęgi sygnału u góry, bo akcent niesie
-   już sama skala. Rozmieszczenie kolumnowe zostaje w oknie, bo to siatka. */
+/* Karta wiodąca — środowisko podane akcentem: tytuł o stopień większy, bez
+   wstęgi sygnału u góry, bo akcent niesie już sama skala. Rozmieszczenie
+   kolumnowe zostaje w oknie, bo to siatka. Godła wariant nie rusza: wymiar
+   emblematu jest jeden dla wszystkich kart. */
 .dn-karta-srodowiska--akcent::before { content: none; }
 .dn-karta-srodowiska--akcent .dn-karta-srodowiska-tytul { font-size: var(--dn-fs-4xl); }
-.dn-karta-srodowiska--akcent .dn-karta-srodowiska-godlo {
-  width: var(--dn-wym-godlo-karty);
-  height: var(--dn-wym-godlo-karty);
-}
 
 /* Warstwa tła karty — pole na znak przestrzenny przy prawej krawędzi. Karta
    trzyma tylko krycie i przejście; CO w tej warstwie stoi, wskazuje okno.
@@ -785,6 +796,42 @@ select.dn-pole-kontrolka { padding-right: var(--dn-od-6); cursor: pointer; }
   color: var(--dn-tekst-2);
 }
 .dn-kafel-znak > svg { width: var(--dn-wym-ikona); height: var(--dn-wym-ikona); }
+
+/* Wybór — kafel do wskazania jednej z kilku dróg: znak nad nazwą, nazwa nad
+   stanem, wszystko w osi. Rodzina stała w arkuszu okna wejściowego jako
+   `.au-metoda`; różniła się od kafla tylko układem kolumnowym i zwarciem
+   wyściółki, więc weszła tu jako odmiana, a nie jako druga rodzina.
+
+   Barwa nazwy zostaje z kafla (`--dn-tekst`). Arkusz okna gasił ją do
+   `--dn-tekst-2` razem ze stanem, przez co nazwa drogi i przypis o jej
+   dostępności ważyły tyle samo; stan ustępuje teraz nazwie o stopień. */
+.dn-kafel--wybor {
+  flex-direction: column;
+  align-items: center;
+  gap: var(--dn-od-1);
+  padding: var(--dn-od-3) var(--dn-od-2);
+  border-radius: var(--dn-r-md);
+  font-size: var(--dn-fs-xs);
+  text-align: center;
+}
+.dn-kafel--wybor > svg {
+  width: var(--dn-wym-ikona);
+  height: var(--dn-wym-ikona);
+  flex: none;
+  color: var(--dn-tekst-2);
+  transition: color var(--dn-czas-2) var(--dn-ease), transform var(--dn-czas-uwyd) var(--dn-ease);
+}
+.dn-kafel--wybor:hover > svg, .dn-kafel--wybor:focus-visible > svg {
+  color: var(--dn-sygnal);
+  transform: scale(var(--dn-skala-ikony));
+}
+/* Stan drogi — przypis pod nazwą. Krój maszynowy, bo to wartość odczytana,
+   a nie zdanie: „aktywna" / „nieaktywna" stoją zawsze w tym samym miejscu. */
+.dn-kafel-stan {
+  font-family: var(--dn-ff-mono);
+  font-size: var(--dn-fs-xs);
+  color: var(--dn-tekst-2);
+}
 
 /* ==========================================================================
    GROT WEJŚCIA — znak marki jako czynność „wejdź"
@@ -1065,7 +1112,10 @@ th.dn-tabela-liczba { text-align: right; }
 .dn-zakladki--wybor .dn-zakladka[aria-selected='true']:hover,
 .dn-zakladki--wybor .dn-zakladka[aria-checked='true']:hover {
   background: var(--dn-sygnal-wypelnienie);
-  color: var(--dn-tekst-inv);
+  /* Biel, nie --dn-tekst-inv: w motywie ciemnym odwrotność tekstu jest niemal
+     czarna i na wypełnieniu sygnałowym daje 4,14:1. Konwencja domu stoi
+     przy .dn-btn--sygnal. */
+  color: var(--dn-szary-0);
 }
 .dn-zakladki--wybor .dn-zakladka svg { width: var(--dn-wym-ikona-sm); height: var(--dn-wym-ikona-sm); flex: none; }
 
@@ -1080,6 +1130,17 @@ th.dn-tabela-liczba { text-align: right; }
   border-bottom: 1px solid var(--dn-obrys);
   overflow-x: auto;
   scrollbar-width: none;
+}
+
+/* Same zakładki, bez czynności pasa. Roli `tablist` nie wolno nałożyć na cały pas:
+   lista zakładek może zawierać wyłącznie zakładki, a w pasie stoi jeszcze przycisk
+   nowej karty i pole przywracania. Czytnik ekranu dostawał wtedy widżet zakładek
+   z dwoma elementami, które zakładkami nie są, i gubił liczbę kart. */
+.dn-karty-sesji-tory {
+  display: flex;
+  align-items: stretch;
+  gap: var(--dn-od-1);
+  min-width: 0;
 }
 .dn-karta-sesji {
   position: relative;
@@ -1497,6 +1558,7 @@ label.dn-pasek-szukaj:focus-within {
   /* Kolejka bywa listą porządkową — wcięcie i znaczniki listy należą do niej,
      nie do okna, które ją wstawia. */
   list-style: none;
+  margin: 0;
   padding: 0;
 }
 .dn-krok {
@@ -1671,7 +1733,13 @@ label.dn-pasek-szukaj:focus-within {
   white-space: nowrap;
 }
 .dn-krok--pracuje { border-left-color: var(--dn-sygnal-wypelnienie); }
-.dn-krok--pracuje .dn-krok-znak { border-color: var(--dn-sygnal-obrys); color: var(--dn-sygnal); }
+/* Wypełnienie znaku: stan pracujący był jedynym z czterech bez tła, przez co
+   w kolejce czterech kroków rzucał się w oczy słabiej niż zakończone. */
+.dn-krok--pracuje .dn-krok-znak {
+  border-color: var(--dn-sygnal-obrys);
+  background: var(--dn-sygnal-tlo);
+  color: var(--dn-sygnal);
+}
 .dn-krok--poprawny { border-left-color: var(--dn-sukces-obrys); }
 .dn-krok--poprawny .dn-krok-znak {
   background: var(--dn-sukces-tlo);
@@ -1689,6 +1757,29 @@ label.dn-pasek-szukaj:focus-within {
   background: var(--dn-blad-tlo);
   border-color: var(--dn-blad-obrys);
   color: var(--dn-blad-tekst);
+}
+
+/* Pole — krok rysowany bryłą zamiast szyną. Szyna prowadzi wzrok w dół listy
+   i nadaje się tam, gdzie kroki czyta się po kolei; bryła zamyka krok w polu
+   i nadaje się tam, gdzie ważny jest ten JEDEN, który trwa teraz — bo tylko
+   on dostaje wypełnienie, a pozostałe stoją na przezroczystym tle.
+
+   Rodzina stała w arkuszu okna wejściowego jako `.we-krok` i różniła się od
+   kroku wyłącznie tym rysunkiem; stany brała te same, tyle że przez
+   `data-stan` zamiast przez odmiany. */
+.dn-kolejka--pola { gap: var(--dn-od-1); }
+.dn-krok--pole {
+  padding: var(--dn-od-2) var(--dn-od-3);
+  border: 1px solid transparent;
+  border-radius: var(--dn-r-md);
+  font-size: var(--dn-fs-sm);
+  color: var(--dn-tekst-2);
+}
+/* Bryła nie ma szyny, więc stany malują pole, a nie jego krawędź lewą. */
+.dn-krok--pole.dn-krok--pracuje {
+  border-color: var(--dn-obrys-subtelny);
+  background: var(--dn-powierzchnia-2);
+  color: var(--dn-tekst);
 }
 
 /* ==========================================================================
@@ -1782,16 +1873,6 @@ label.dn-pasek-szukaj:focus-within {
 [data-waga='2'] .dn-sekcja-tytul::before { opacity: 0.62; }
 [data-waga='3'] .dn-sekcja-tytul::before { opacity: 0.38; }
 
-/* Kreska rozdzielająca w pasie narzędzi — pion na wysokość ikony. Rodzina
-   paska stanu ma własną (`.dn-stan-sep`) o stałej wysokości 14 px; ta idzie
-   żetonem ikony, bo stoi między przyciskami ikonowymi. */
-.dn-sep-pionowy {
-  width: 1px;
-  height: var(--dn-wym-ikona);
-  flex: none;
-  margin: 0 var(--dn-od-1);
-  background: var(--dn-obrys);
-}
 .dn-modal-stopka {
   display: flex;
   justify-content: flex-end;
@@ -1965,7 +2046,8 @@ label.dn-pasek-szukaj:focus-within {
   padding: var(--dn-od-2) 0 0 var(--dn-od-2);
   font-family: var(--dn-ff-mono);
   font-weight: var(--dn-fw-polgruba);
-  color: var(--dn-kropka);
+  /* Pismo, nie kropka — próg kontrastu 4,5:1, nie 3:1. */
+  color: var(--dn-sygnal);
   user-select: none;
 }
 .dn-prompt-obszar {
@@ -2048,12 +2130,15 @@ label.dn-pasek-szukaj:focus-within {
    oznacza się stan włączony. Ikony wszystkich wierszy zaczynają się od lewej,
    bez rezerwowanej kolumny z przodu (rozstrzygnięcie Właściciela 2026-08-20).
    Kolejność w wierszu: ikona · etykieta · skrót · znacznik. */
+/* Znacznik wyboru niesie barwę sygnału niezależnie od pojemnika: ta sama rola
+   w menu, w popoverze i w wykazie. Reguły niżej dokładają wyłącznie rozmieszczenie
+   właściwe dla menu. */
+.ptaszek { color: var(--dn-sygnal); }
 .sta-menu-poz .ptaszek {
   order: 3;
   flex: none;
   width: var(--dn-wym-ikona-sm);
   text-align: right;
-  color: var(--dn-sygnal);
 }
 /* Wiersz bez skrótu: znacznik sam dosuwa się do prawej krawędzi. */
 .sta-menu-poz:not(:has(.skrot)) .ptaszek { margin-left: auto; }
@@ -2277,7 +2362,10 @@ label.dn-pasek-szukaj:focus-within {
 .dn-karta-srodowiska:hover .dn-btn {
   border-color: var(--dn-sygnal-wypelnienie);
   background: var(--dn-sygnal-wypelnienie);
-  color: var(--dn-tekst-inv);
+  /* Biel, nie --dn-tekst-inv: w motywie ciemnym odwrotność tekstu jest niemal
+     czarna i na wypełnieniu sygnałowym daje 4,14:1. Konwencja domu stoi
+     przy .dn-btn--sygnal. */
+  color: var(--dn-szary-0);
   box-shadow: var(--dn-poswiata-sygnal);
 }
 
@@ -2498,7 +2586,9 @@ label.dn-pasek-szukaj:focus-within {
   grid-template-columns: var(--dn-okw-kolumna) minmax(0, 1fr);
   border: 1px solid var(--dn-obrys);
   border-radius: var(--dn-r-xl);
-  background: var(--dn-powierzchnia);
+  /* Strefa 3 z 3 — płótno. Trzy strefy okna przedaplikacyjnego stoją
+     w NORMA-OKNA.md i sprawdza je strefy-okna.mjs; okno ich nie ustala. */
+  background: var(--dn-okno-plotno);
   box-shadow: var(--dn-cien-3);
   overflow: hidden;
 }
@@ -2518,12 +2608,63 @@ label.dn-pasek-szukaj:focus-within {
   /* Sterowanie okna stoi na przyciskach ikonowych biblioteki, a te mają własny
      narożnik — stąd odstęp od prawej krawędzi, którego belka ramy nie ma. */
   padding: 0 var(--dn-od-2) 0 var(--dn-od-3);
-  background: var(--dn-rama);
+  /* Strefa 1 z 3 — najciemniejsza. Nie --dn-rama: rama należy do powłoki
+     aplikacji, a to okno stoi przed nią. */
+  background: var(--dn-okno-belka);
   color: var(--dn-rama-tekst);
 }
 /* Uchwyt przeciągania rozpiera belkę: tytuł zostaje przy znaku, sterowanie
    okna odchodzi do prawej krawędzi. */
-.dn-okno-wejsciowe-belka > .dn-belka-tytul { margin-right: auto; }
+.dn-okno-wejsciowe-belka-uchwyt { flex: 1 1 auto; }
+
+/* Części belki przedaplikacyjnej. Rodzina jest osobna od `.dn-belka-*` z ramy
+   i musi być samodzielna: okno przed uwierzytelnieniem nie wczytuje `rama.css`
+   — powłoka dochodzi dopiero po wydaniu dostępu. Bez tych części belka nie
+   miałaby czym się złożyć i okno dopisywałoby własne klasy. */
+.dn-okno-wejsciowe-belka-znak {
+  width: var(--dn-wym-ikona-sm);
+  height: var(--dn-wym-ikona-sm);
+  flex: none;
+  color: var(--dn-rama-tekst);
+}
+.dn-okno-wejsciowe-belka-znak .kropka { fill: var(--dn-rama-sygnal); }
+.dn-okno-wejsciowe-belka-tytul {
+  margin: 0;
+  font-size: var(--dn-fs-sm);
+  font-weight: var(--dn-fw-srednia);
+}
+/* Sterowanie oknem: szerokość wg konwencji podpisu Windows, wysokość pełna,
+   żeby cel kliknięcia sięgał krawędzi belki. */
+.dn-okno-wejsciowe-belka-btn {
+  display: grid;
+  place-content: center;
+  width: var(--dn-wym-belka-btn);
+  height: 100%;
+  flex: none;
+  padding: 0;
+  margin: 0;
+  border: 0;
+  background: transparent;
+  color: var(--dn-rama-tekst-2);
+  cursor: pointer;
+  transition: background-color var(--dn-czas-1) var(--dn-ease), color var(--dn-czas-1) var(--dn-ease);
+}
+.dn-okno-wejsciowe-belka-btn > svg {
+  width: var(--dn-wym-ikona-sm);
+  height: var(--dn-wym-ikona-sm);
+}
+.dn-okno-wejsciowe-belka-btn:hover {
+  background: var(--dn-rama-hover);
+  color: var(--dn-rama-tekst);
+}
+.dn-okno-wejsciowe-belka-btn:focus-visible {
+  outline: var(--dn-wym-fokus) solid var(--dn-fokus);
+  outline-offset: calc(-1 * var(--dn-wym-fokus));
+}
+.dn-okno-wejsciowe-belka-btn--zamknij:hover {
+  background: var(--dn-blad-tekst);
+  color: var(--dn-tekst-inv);
+}
 
 /* Kolumna stanu albo formularza — jasna powierzchnia, własny rytm bloków. */
 .dn-okno-wejsciowe-panel {
@@ -2534,10 +2675,9 @@ label.dn-pasek-szukaj:focus-within {
   min-height: 0;
   padding: var(--dn-okw-wciecie-y) var(--dn-okw-wciecie-x);
   overflow-y: auto;
-  /* Panel unosi się nad atramentową kolumną tożsamości. Rozdzielenie stref
-     idzie samą powierzchnią, bez kreski — a przy `--dn-powierzchnia` różnica
-     jasności w motywie ciemnym wynosiła 2 stopnie L* i strefy się zlewały. */
-  background: var(--dn-panel);
+  /* Strefa 3 z 3 — płótno kroku. Rozdzielenie stref idzie samą powierzchnią,
+     bez kreski; żetony stref niosą zmierzone stopnie rozdzielenia. */
+  background: var(--dn-okno-plotno);
 }
 .dn-okno-wejsciowe-panel--scentrowany { justify-content: center; }
 
@@ -2568,10 +2708,9 @@ label.dn-pasek-szukaj:focus-within {
   margin: auto calc(-1 * var(--dn-okw-wciecie-x)) calc(-1 * var(--dn-okw-wciecie-y));
   min-height: var(--dn-okw-pas-dzialan);
   padding: var(--dn-od-3) var(--dn-okw-wciecie-x);
-  /* Pas odcina się od kolumny samą powierzchnią. Żeton --dn-tlo dawał w motywie
-     jasnym 2,1 stopnia L* różnicy wobec --dn-panel — strefy się zlewały.
-     --dn-powierzchnia-2 daje 4,9 stopnia w jasnym i 6,9 w ciemnym. */
-  background: var(--dn-powierzchnia-2);
+  /* Strefa 2 z 3 — obrzeże. Norma obejmuje nim kolumnę lewą ORAZ pas działań
+     na dole, więc oba biorą ten sam żeton. */
+  background: var(--dn-okno-obrzeze);
   font-size: var(--dn-fs-sm);
   color: var(--dn-tekst-2);
 }
@@ -2591,7 +2730,8 @@ label.dn-pasek-szukaj:focus-within {
   flex-direction: column;
   gap: var(--dn-od-6);
   padding: var(--dn-okw-wciecie-y) var(--dn-okw-wciecie-x);
-  background: var(--dn-rama);
+  /* Strefa 2 z 3 — obrzeże, wspólne z pasem działań. */
+  background: var(--dn-okno-obrzeze);
   color: var(--dn-rama-tekst);
 }
 
@@ -2694,7 +2834,10 @@ label.dn-pasek-szukaj:focus-within {
   border-radius: var(--dn-r-sm);
   transition: color var(--dn-czas-2) var(--dn-ease);
 }
-.dn-link:hover { color: var(--dn-sygnal-600); }
+/* Najechanie idzie żetonem mocnego sygnału, nie prymitywem: prymityw 600 jest
+   wartością motywu jasnego i w ciemnym dawał 2,52–3,00:1, czyli po najechaniu
+   odnośnik czytał się gorzej niż przed nim. */
+.dn-link:hover { color: var(--dn-sygnal-mocny); }
 .dn-link:focus-visible {
   outline: var(--dn-wym-fokus) solid var(--dn-fokus);
   outline-offset: var(--dn-wym-fokus-odsuniecie);
@@ -3354,7 +3497,7 @@ button.dn-link {
   text-decoration: none;
   border-bottom: 1px solid transparent;
 }
-.dn-spis-tresci a:hover { color: var(--dn-sygnal-500); border-bottom-color: currentColor; }
+.dn-spis-tresci a:hover { color: var(--dn-sygnal-mocny); border-bottom-color: currentColor; }
 .dn-spis-tresci a:focus-visible {
   outline: var(--dn-wym-fokus) solid var(--dn-fokus);
   outline-offset: 2px;
@@ -3425,6 +3568,13 @@ button.dn-link {
 /* Nota kończy wiersz i sama się do niego dosuwa — dosunięcie należy do wiersza,
    przepis pisma do `.dn-meta`. */
 .dn-wykaz-modulu-poz > .dn-meta { margin-left: auto; }
+
+/* Wiersz zamykający wykaz czynnością, nie daną. Kreska oddziela go od wierszy
+   z danymi — bez niej przycisk czyta się jak kolejna pozycja wykazu. */
+.dn-wykaz-modulu-poz--dzialanie {
+  border-top: 1px solid var(--dn-obrys-subtelny);
+  padding-top: var(--dn-od-2);
+}
 
 /* Dosunięcie do końca pasa dla wszystkiego, co notą nie jest — plakietki stanu,
    żetonu, przycisku. Wcześniej te elementy nosiły klasę `meta`, przez co brały

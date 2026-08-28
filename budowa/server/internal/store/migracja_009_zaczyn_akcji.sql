@@ -1,10 +1,27 @@
--- Migracja 009 zakłada zaczyn katalogu akcji panelu, budowany z komend
--- kontraktu wskazanych jako sterowanie platformą oraz z paska narzędzi
--- promptu modułów.
+-- Migracja 009 — zaczyn katalogu akcji.
+--
+-- Źródło wierszy. `shared/contract.json` — sekcja `komendy` (nazwa komendy,
+-- opis, pola obowiązkowe żądania) oraz sekcja `narzedzia`. Zaczyn obejmuje te
+-- komendy, które kontrakt wskazuje jako sterowanie platformą; poza wykazem
+-- zostają `connection.hello` i `session.bind` — czynności warstwy połączenia
+-- klienta, nie akcje panelu. Osobno wchodzi pasek narzędzi promptu każdego
+-- modułu: każdy moduł niesie Chat Window, a jego pasek promptu niesie wysłanie
+-- polecenia, zatrzymanie odpowiedzi i historię poleceń.
+--
+-- Akcja wskazująca komendę spoza `shared/contract.json` byłaby pozycją, której
+-- nie da się wywołać, więc do zaczynu nie wchodzi. Takie akcje dochodzą
+-- wierszami, bez zmiany kodu, gdy ich komendy wejdą do kontraktu.
+--
+-- Zasięg. Poziom wyprowadzony z bytu, na którym komenda działa:
+-- `environment.enter` działa na środowisku, komendy sesji i kolejek na karcie
+-- sesji, komendy okna na oknie komunikacji, komendy wiadomości na oknie
+-- czatu modułu, reszta na całej platformie.
+--
+-- Każde wstawienie kończy się ON CONFLICT(kod) DO NOTHING — migracja przechodzi
+-- także na bazie, w której część wierszy już jest. Klauzula `WHERE true` przed
+-- ON CONFLICT jest wymogiem składni SQLite dla INSERT ... SELECT z upsertem.
 
 -- ── Akcje o zasięgu poziomu (globalny · środowisko · karta sesji · okno) ──────
--- Poziom zasięgu każdej akcji jest wyprowadzony z bytu, na którym działa jej
--- komenda.
 WITH katalog(kod, nazwa, opis, ikona, poziom, komenda, warunek, kolejnosc) AS (
     VALUES
         -- Poziom globalny — nawigacja platformy, sesje, konfiguracja, kanały.

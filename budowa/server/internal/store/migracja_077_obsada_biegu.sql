@@ -1,26 +1,55 @@
--- Migracja 077 ujednolica obsadę biegu: jeden komplet bytów obsługuje zarówno
--- automatyzacje, jak i przepływ wieloagentowy, zamiast dwóch osobnych
--- słowników ról.
+-- Migracja 077 — obsada biegu: jeden komplet bytów dla obu kombajnów wykonawczych.
+--
+-- Obsada 1-4 uczestników z rolami służy modułowi Automations (migracja 074),
+-- a MultitaskingAI potrzebuje dokładnie tego samego bytu: udział bierze od 1 do 4
+-- modeli z podziałem na role. Drugi komplet tabel dałby dwa słowniki ról, dwa
+-- sufity i dwa silniki wybudzeń — dwie prawdy o jednym mechanizmie. Przeszkodą
+-- było `obsada_automatyki.automatyka_id NOT NULL`: bieg orkiestracji sesyjnej
+-- zakłada się w oknie i nie ma wiersza w `automatyka`. Ta migracja rozluźnia
+-- nośnik: obsada wisi albo na automatyce, albo na biegu orkiestracji, nigdy na
+-- obu i nigdy na żadnym — tym samym wzorcem, którym silnik kolejek jest wspólny
+-- dla pętli sesyjnej i MultitaskingAI (`adapter_modul_automations_kolejka.go`).
+--
+-- Górna granica czterech miejsc siedzi w więzie (miejsce BETWEEN 1 AND 4):
+-- koordynator, dwaj wykonawcy i analityk. Nie jest to sprzeczne z górną granicą
+-- piętnastu podagentów (`subagent.spawn`): obsada liczy stanowiska w scenie,
+-- a podagenci pracują pod jednym wykonawcą, w tle, bez własnego gniazda — dwa
+-- różne sufity dwóch różnych bytów.
+--
+-- Ponad obsadę modułu Automations każde stanowisko niesie własny prompt, własne
+-- narzędzia i własny profil izolacji (migracja 060), inaczej „cztery modele
+-- z podziałem na role" znaczyłoby tylko cztery nazwy zamiast czterech różnie
+-- wyposażonych stanowisk. Obsada niczego nie zabrania: bieg bez obsady rusza na
+-- modelu wskazanym w kroku albo w oknie, a pusty wykaz obsady to krótsza lista,
+-- nie odmowa.
 
--- Bieg orkiestracji to nazwany bieg prowadzony w sesji, grupujący agentów pod
--- orkiestratorem; korzysta z tego samego silnika kolejki co automatyzacje,
--- zamiast osobnego mechanizmu.
+-- ── 1. Bieg orkiestracji — przepływ MultitaskingAI ──────────────────────────
+--
+-- Bieg orkiestracji to nazwany bieg prowadzony w sesji, grupujący agentów
+-- pracujących pod orkiestratorem. Ma stan, etap i kolejkę, którą jedzie — bo
+-- silnik jest jeden. Nie używa `przebieg_automatyki`, bo tamten wisi na
+-- `automatyka_id NOT NULL`, czyli na zapisanej definicji; bieg orkiestracji
+-- zakłada się w oknie i bywa jednorazowy, a zmuszanie Operatora do zapisania
+-- automatyki, żeby móc zestawić dwa modele, byłoby bramką. Stan `oczekuje` jest
+-- tu wartością pierwszej klasy: bieg zawieszony na sygnał ze świata to stan tego
+-- bytu, nie dopisek.
+
 CREATE TABLE bieg_orkiestracji (
     id                       INTEGER PRIMARY KEY AUTOINCREMENT,
     identyfikator_zewnetrzny TEXT    NOT NULL UNIQUE,
     sesja_id                 INTEGER NOT NULL REFERENCES sesja(id) ON DELETE CASCADE,
-    -- Okno prowadzące bieg; wartość pusta oznacza bieg bez koordynatora,
-    -- dopuszczalny przy jednym modelu.
+    -- Okno prowadzące bieg. Puste znaczy bieg bez koordynatora — dopuszczalne,
+    -- bo jeden model w obsadzie nie ma kogo koordynować.
     okno_koordynatora_id     INTEGER REFERENCES okno_komunikacji(id) ON DELETE SET NULL,
-    -- Kolejka niosąca pracę; wiązanie luźne, bo skasowanie kolejki nie może
-    -- skasować śladu biegu.
+    -- Kolejka niosąca pracę. Wiązanie luźne: bieg powstaje przed kolejką,
+    -- a skasowanie kolejki nie ma prawa skasować śladu biegu.
     kolejka_id               INTEGER REFERENCES kolejka(id) ON DELETE SET NULL,
     nazwa                    TEXT    NOT NULL,
     stan                     TEXT    NOT NULL DEFAULT 'pending'
                                      CHECK(stan IN ('pending','running','paused','oczekuje',
                                                     'succeeded','failed','stopped')),
-    -- Nazwa etapu widoczna w panelu; rdzeń zna etap, nie zna nazwy procesu,
-    -- dlatego jest to zwykłe pole.
+    -- Nazwa etapu widoczna w panelu („Wdrożenie"). Rdzeń zna etap, nie zna
+    -- nazwy procesu — dlatego etap jest polem, a nie wyliczeniem.
     etap                     TEXT,
     etap_biezacy             INTEGER NOT NULL DEFAULT 0,
     etapow                   INTEGER NOT NULL DEFAULT 0,
@@ -35,16 +64,29 @@ CREATE UNIQUE INDEX idx_bieg_orkiestracji_kolejka
     ON bieg_orkiestracji(kolejka_id)
     WHERE kolejka_id IS NOT NULL;
 
--- Obsada łączy dwa nośniki w jednym bycie: wiersz wisi albo na automatyce,
--- albo na biegu orkiestracji, nigdy na obu ani na żadnym, a jednoznaczność
--- miejsca pilnują dwa indeksy częściowe.
+-- ── 2. Przebudowa obsady — dwa nośniki, jeden byt ───────────────────────────
+--
+-- SQLite nie zdejmuje NOT NULL ani CHECK, więc tabela idzie przez przebudowę.
+-- Na `obsada_automatyki` nie wskazuje żaden klucz obcy, więc przebudowa obejmuje
+-- jedną tabelę i kaskada nie ma czego zabrać.
+--
+-- Więz „dokładnie jeden nośnik" jest tu sednem poprawności: wiersz bez nośnika
+-- to obsada niczyja, wiersz z dwoma — obsada dwóch biegów naraz. SQLite liczy
+-- wyrażenia logiczne jako 0/1, więc suma dwóch testów równa 1 wyraża „dokładnie
+-- jeden" bez wyzwalacza.
+--
+-- Jednoznaczność miejsca idzie dwoma indeksami częściowymi, nie jednym UNIQUE:
+-- `UNIQUE(automatyka_id, miejsce)` przepuściłoby dwa wiersze o tym samym miejscu
+-- dla różnych biegów orkiestracji, bo NULL nie równa się NULL. Dwa indeksy
+-- częściowe pilnują każdego nośnika osobno i dokładnie.
+
 CREATE TABLE obsada_biegu (
     id                 INTEGER PRIMARY KEY AUTOINCREMENT,
     automatyka_id      INTEGER REFERENCES automatyka(id) ON DELETE CASCADE,
     bieg_id            INTEGER REFERENCES bieg_orkiestracji(id) ON DELETE CASCADE,
 
-    -- Uczestnik: agent z portfolio albo goły model; agent ma pierwszeństwo,
-    -- bo niesie własne wyposażenie.
+    -- Uczestnik: agent z portfolio albo goły model. Agent ma pierwszeństwo —
+    -- niesie instrukcje systemowe, umiejętności i parametry.
     agent_id           INTEGER REFERENCES agent(id) ON DELETE SET NULL,
     model              TEXT,
     rola               TEXT    NOT NULL DEFAULT 'wykonawca'
@@ -90,19 +132,30 @@ CREATE INDEX idx_obsada_biegu_profil
     ON obsada_biegu(profil_izolacji_id)
     WHERE profil_izolacji_id IS NOT NULL;
 
--- Podagent to zadanie w tle wykonywane przez silnik kolejki; trwałą
--- tożsamością jest pozycja kolejki, a wiersz niesie to, czego sama pozycja
--- nie wie — obsadę, bieg i koszt.
+-- ── 3. Podagent — zadanie w tle pod przepływem ──────────────────────────────
+--
+-- Trwałą tożsamością podagenta jest pozycja kolejki, a proces modelu jest
+-- wyłącznie sposobem jej wykonania — kontrakt podpowiada to polem
+-- `Subagent.queueItemId` („Pozycja kolejki niosąca pracę podagenta"). Podagent
+-- nie jest oknem, bo agentów bywa więcej niż gniazd sceny; nie jest samym
+-- procesem, bo wykaz zakończonych przeżywa restart rdzenia, a proces nie; jego
+-- pracę wykonuje silnik kolejek, który już jest.
+--
+-- Ponad pozycję kolejki ten wiersz niesie to, czego pozycja nie wie: kto ją
+-- wykonuje w rozumieniu obsady, pod jakim biegiem biegnie i ile kosztowała.
+-- Żetony, narzędzia i czas są polami, bo pokazuje je panel zadań w tle;
+-- kontraktowy `Subagent` ich nie niesie, więc zapisujemy je w bazie.
+
 CREATE TABLE podagent (
     id                       INTEGER PRIMARY KEY AUTOINCREMENT,
     identyfikator_zewnetrzny TEXT    NOT NULL UNIQUE,
     -- Okno wykonawcy, które podagenta powołało. To ono jest jego orkiestratorem.
     okno_wykonawcy_id        INTEGER NOT NULL REFERENCES okno_komunikacji(id) ON DELETE CASCADE,
-    -- Bieg, w którym podagent pracuje; puste znaczy podagenta powołanego poza
-    -- biegiem orkiestracji.
+    -- Bieg, w którym podagent pracuje. Puste znaczy podagenta powołanego poza
+    -- biegiem orkiestracji — wykonawca może go uruchomić w zwykłej rozmowie.
     bieg_id                  INTEGER REFERENCES bieg_orkiestracji(id) ON DELETE SET NULL,
-    -- Pozycja kolejki niosąca pracę; pusta wyłącznie między powołaniem
-    -- a zasileniem kolejki.
+    -- Pozycja kolejki niosąca pracę. Puste wyłącznie między powołaniem
+    -- a zasileniem kolejki; potem wskazuje zawsze.
     pozycja_kolejki_id       INTEGER REFERENCES pozycja_kolejki(id) ON DELETE SET NULL,
     nazwa                    TEXT,
     zadanie                  TEXT    NOT NULL,
@@ -117,13 +170,11 @@ CREATE TABLE podagent (
     utworzono                TEXT    NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now'))
 );
 
--- Wykaz podagentów okna wykonawcy służy odpytywaniu o listę podagentów,
--- jakie to konkretne okno powołało.
+-- Wykaz podagentów okna wykonawcy — `subagent.list` pyta dokładnie o to.
 CREATE INDEX idx_podagent_okno
     ON podagent(okno_wykonawcy_id, id);
 
--- Wykaz podagentów przepływu tworzy wiersze, które pokazuje operatorowi
--- panel zadań pracujących w tle.
+-- Wykaz podagentów przepływu — wiersze panelu zadań w tle.
 CREATE INDEX idx_podagent_bieg
     ON podagent(bieg_id, id)
     WHERE bieg_id IS NOT NULL;
@@ -134,7 +185,6 @@ CREATE UNIQUE INDEX idx_podagent_pozycja
     ON podagent(pozycja_kolejki_id)
     WHERE pozycja_kolejki_id IS NOT NULL;
 
--- Zbieranie wyników korzysta z tego indeksu przy odpytywaniu o podagentów,
--- których praca się nie zakończyła.
+-- Zbieranie wyników (`subagent.result.collect`) pyta o niezakończonych.
 CREATE INDEX idx_podagent_stan
     ON podagent(stan, id);

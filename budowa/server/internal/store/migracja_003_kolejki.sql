@@ -36,7 +36,7 @@ CREATE TABLE pozycja_kolejki (
 CREATE INDEX idx_pozycja_kolejki_kolejka ON pozycja_kolejki(kolejka_id, kolejnosc, id);
 CREATE INDEX idx_pozycja_kolejki_wykonawca ON pozycja_kolejki(okno_wykonawcy_id);
 
--- Dziennik akcji kolejki: zapis przejść stanu pozycji wraz z numerem obiegu, służący do odtworzenia przebiegu naprawy po zakończeniu procesu.
+-- Dziennik akcji kolejki: zapis przejść stanu pozycji wraz z numerem obiegu.
 CREATE TABLE log_akcji_kolejki (
     id                     INTEGER PRIMARY KEY AUTOINCREMENT,
     kolejka_id             INTEGER NOT NULL REFERENCES kolejka(id) ON DELETE CASCADE,

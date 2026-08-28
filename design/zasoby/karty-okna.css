@@ -248,7 +248,7 @@
 /* Karta przenoszona jest chwilowo między grupami w trakcie przeciągania jej wskaźnikiem przez Operatora. */
 .dn-karta-widoku[draggable='true']:active { cursor: grabbing; }
 .dn-karta-widoku[data-przenoszona='tak'] { opacity: var(--dn-przygasz-rodzenstwa); }
-.dn-karty-pasmo[data-cel-upuszczenia='tak'] { box-shadow: inset 0 -2px 0 0 var(--dn-sygnal-500); }
+.dn-karty-pasmo[data-cel-upuszczenia='tak'] { box-shadow: inset 0 -2px 0 0 var(--dn-kropka); }
 
 /* ── Sterowanie pasma ───────────────────────────────────────────────────────
    Wszystkie kontrolki pasma mają wspólną bryłę; różnią się tylko zawartością

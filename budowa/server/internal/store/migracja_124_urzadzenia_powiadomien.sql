@@ -1,30 +1,77 @@
--- Migracja 124 dodaje rejestrację urządzeń do powiadomień, kolejkę powiadomień
--- oraz doręczenia; nośnik połączenia już istnieje w warstwie transportu,
--- a migracja opisuje wyłącznie to, czego mu brakuje.
+-- Migracja 124 — powiadomienia: rejestracja urządzenia, kolejka i doręczenie.
+--
+-- Nośnik doręczenia już istnieje: `transport.Serwer.Rozglos` (rozgloszenie.go)
+-- wysyła kopertę do otwartych gniazd i zwraca liczbę urządzeń, które ją przyjęły.
+-- Rejestr połączeń zna tożsamość każdego gniazda wraz z `clientId`
+-- (transport/tozsamosc.go, pole `IdKlienta`). Ta migracja nie zakłada własnego
+-- kanału — opisuje wyłącznie to, czego nośnikowi brakuje: kogo wołać, czym
+-- i czy doszło.
+--
+-- Nie ma tu drugiej tabeli urządzeń. Urządzenie opisuje tabela `urzadzenie`
+-- (`nazwa_hosta`, `biezace`); druga tabela maszyn byłaby drugą prawdą o tym, czym
+-- Operator dysponuje. `urzadzenie_powiadomien` nie opisuje maszyny — opisuje zgodę
+-- tej maszyny na wołanie i drogę, którą wołanie idzie. Jedna maszyna może mieć
+-- kilka takich dróg (pulpit i przeglądarka to dwa osobne gniazda o dwóch
+-- `clientId`), więc relacja jest jeden-do-wielu, a nie kolumną doklejoną do
+-- `urzadzenie`.
+--
+-- Słownik kanałów jest zamknięty na to, co rdzeń dziś potrafi doręczyć. `kanal`
+-- dopuszcza jedną wartość: 'polaczenie'. CHECK dopuszczający kanał usługi
+-- zewnętrznej (APNs, FCM) bez kodu, który go obsłuży, przepuściłby rejestrację,
+-- której żaden takt nie doręczy — wiersz stanąłby w kolejce na zawsze. Założenie
+-- kont i kluczy usługi zewnętrznej jest rozstrzygnięciem Właściciela; kanały
+-- wejdą osobną migracją, razem z kodem.
+--
+-- `klucz_kanalu` dla kanału 'polaczenie' jest `clientId` — tym samym napisem,
+-- który transport już dziś niesie jako `Tozsamosc.IdKlienta`. Nie zakładamy
+-- nowego identyfikatora urządzenia: byłby drugą tożsamością tego samego gniazda.
+--
+-- Kolejka zamiast wysyłki wprost. Bez tabeli powiadomienie zgłoszone przy
+-- zamkniętej aplikacji znika. Kolejka sprawia, że brak odbiorcy jest stanem,
+-- a nie ciszą: wiersz `oczekuje` z licznikiem prób mówi wprost „mieliśmy zawołać
+-- i nie było komu".
+--
+-- `wygasa` jest NOT NULL z rozmysłu. Powiadomienie bez terminu ważności wisi
+-- wiecznie i po tygodniu postoju rdzenia Operator dostaje lawinę budzików
+-- o sprawach dawno nieaktualnych. Termin wymuszony schematem znaczy, że każdy
+-- wołacz musi odpowiedzieć na pytanie „do kiedy to ma sens".
+--
+-- `byt_rodzaj` + `byt_id` to kotwica miękka, bez klucza obcego. Powiadomienie
+-- dotyczy czegoś — dziś przede wszystkim kroku wstrzymanego, czekającego na słowo
+-- Operatora (`wstrzymanie_kroku`). Klucza obcego do jednej tabeli tu nie ma, bo
+-- powiadomienie ma z założenia dotyczyć różnych bytów — kroku, zlecenia, biegu
+-- automatyki — a klucz obcy zamknąłby je na jeden byt i wymusił kolumnę na każdy
+-- następny. Ceną jest brak kaskady: powiadomienie o bycie usuniętym zostaje
+-- w kolejce i wygasa własnym terminem.
+--
+-- Doręczenie jest osobną tabelą. „Doszło" bez wskazania, do którego urządzenia,
+-- jest odpowiedzią nie do sprawdzenia: Operator ma pulpit i telefon naraz.
+-- Kolumna `dostarczono` w `powiadomienie` mówi „dotarło gdziekolwiek" i to
+-- wystarcza kolejce do zamknięcia sprawy; `powiadomienie_dostarczenie` mówi gdzie
+-- i kiedy, i to jest odpowiedź, którą można pokazać Operatorowi bez zmyślania.
 
--- Rejestracja opisuje zgodę urządzenia na wołanie i drogę, którą wołanie idzie,
--- a nie samo urządzenie; jedna maszyna może mieć kilka takich dróg, więc
--- relacja jest jeden do wielu.
+-- ── REJESTRACJA URZĄDZENIA DO POWIADOMIEŃ ───────────────────────────────────
 CREATE TABLE urzadzenie_powiadomien (
     id                     INTEGER PRIMARY KEY AUTOINCREMENT,
     urzadzenie_id          INTEGER NOT NULL
                                    REFERENCES urzadzenie(id) ON DELETE CASCADE,
 
-    -- Droga, którą wołanie idzie do urządzenia; słownik dziś dopuszcza jedynie
-    -- wartość połączenia.
+    -- Droga, którą wołanie idzie do tego urządzenia. Słownik zamknięty na to,
+    -- co rdzeń dziś naprawdę umie — uzasadnienie w nagłówku pliku.
     kanal                  TEXT    NOT NULL DEFAULT 'polaczenie'
                                    CHECK(kanal IN ('polaczenie')),
 
-    -- Adres w obrębie kanału; dla połączenia jest to tożsamość gniazda
-    -- transportu, nigdy pusty napis.
+    -- Adres w obrębie kanału. Dla 'polaczenie' jest to `clientId` gniazda,
+    -- czyli `transport.Tozsamosc.IdKlienta`. Pusty napis nie jest adresem.
     klucz_kanalu           TEXT    NOT NULL CHECK(TRIM(klucz_kanalu) <> ''),
 
-    -- Napis dla operatora; wartość pusta oznacza brak nazwania i pokazuje
-    -- wtedy nazwę urządzenia.
+    -- Napis dla Operatora („Pulpit w biurze"). NULL znaczy „nie nazwał" —
+    -- warstwa wyżej pokaże wtedy nazwę urządzenia, a nie nazwę zmyśloną.
     etykieta               TEXT,
 
-    -- Zgoda czynna; wyrejestrowanie nie kasuje wiersza, bo ślad dawnego
-    -- wołania zostaje częścią historii.
+    -- Zgoda czynna. Wyrejestrowanie nie kasuje wiersza (patrz `wyrejestrowano`),
+    -- bo ślad po tym, że urządzenie kiedyś było wołane, jest częścią
+    -- przejrzystości kanału.
     aktywne                INTEGER NOT NULL DEFAULT 1 CHECK(aktywne IN (0,1)),
 
     zarejestrowano         TEXT    NOT NULL
@@ -32,12 +79,14 @@ CREATE TABLE urzadzenie_powiadomien (
     wyrejestrowano         TEXT,
     ostatnio_dostarczono   TEXT,
 
-    -- Zgoda i data jej cofnięcia chodzą parą, więc rejestracja czynna nie może
-    -- nieść daty wyrejestrowania.
+    -- Zgoda i data jej cofnięcia chodzą parą w obie strony. Bez tego więzu dałoby
+    -- się zapisać rejestrację czynną z datą wyrejestrowania — czyli wiersz, który
+    -- twierdzi dwie rzeczy naraz.
     CHECK((aktywne = 1) = (wyrejestrowano IS NULL)),
 
-    -- Jedna droga na urządzenie i adres; powtórna rejestracja odświeża wiersz,
-    -- nie zakłada drugiego.
+    -- Jedna droga na urządzenie i adres. Rejestracja powtórzona ma odświeżyć
+    -- wiersz, a nie założyć drugi — inaczej jedno urządzenie dostawałoby
+    -- to samo powiadomienie tyle razy, ile razy się przedstawiło.
     UNIQUE(urzadzenie_id, kanal, klucz_kanalu)
 );
 
@@ -49,31 +98,32 @@ CREATE INDEX idx_urzadzenie_powiadomien_czynne
 CREATE INDEX idx_urzadzenie_powiadomien_urzadzenie
     ON urzadzenie_powiadomien(urzadzenie_id);
 
--- Kolejka zastępuje wysyłkę wprost: powiadomienie zgłoszone przy zamkniętej
--- aplikacji czeka w kolejce zamiast zniknąć, a licznik prób i termin
--- ważności rozstrzygają jego dalszy los.
+-- ── KOLEJKA POWIADOMIEŃ ─────────────────────────────────────────────────────
 CREATE TABLE powiadomienie (
     id                     INTEGER PRIMARY KEY AUTOINCREMENT,
 
     tytul                  TEXT    NOT NULL CHECK(TRIM(tytul) <> ''),
     tresc                  TEXT    NOT NULL DEFAULT '',
 
-    -- Pilne znaczy, że operator ma to zobaczyć teraz, nie że wysyłka powtarza
-    -- się dwa razy.
+    -- 'pilny' znaczy „Operator ma to zobaczyć teraz", nie „wyślij dwa razy".
+    -- Dwie wartości, bo trzeciej nie da się dziś odróżnić zachowaniem, a stopień
+    -- bez skutku byłby ozdobą.
     priorytet              TEXT    NOT NULL DEFAULT 'zwykly'
                                    CHECK(priorytet IN ('zwykly','pilny')),
 
-    -- Powód jest zdaniem dla operatora, nie kodem; powiadomienie bez powodu
-    -- jest budzikiem bez treści.
+    -- Po co dzwonimy — zdanie dla Operatora, nie kod. Powiadomienie bez powodu
+    -- jest budzikiem, którego nie da się ocenić.
     powod                  TEXT    NOT NULL DEFAULT '',
 
-    -- Wskazuje, czego powiadomienie dotyczy; kotwica jest miękka, bez klucza
-    -- obcego do jednej tabeli.
+    -- CZEGO dotyczy. Kotwica miękka, bez klucza obcego — uzasadnienie w nagłówku.
+    -- Rodzaj i klucz chodzą parą; więz stoi niżej, razem z pozostałymi, bo
+    -- SQLite nie pozwala wrócić do definicji kolumn po pierwszym więzie tabeli.
     byt_rodzaj             TEXT,
     byt_id                 TEXT,
 
-    -- Porzucone znaczy wyczerpane próby przed terminem; wygasłe znaczy
-    -- przekroczony termin ważności.
+    -- 'porzucone' to stan po wyczerpaniu prób przed terminem ważności;
+    -- 'wygasle' to stan po przekroczeniu `wygasa`. Rozróżnienie ma treść:
+    -- pierwsze mówi „wołaliśmy i nie było komu", drugie „przestało mieć sens".
     stan                   TEXT    NOT NULL DEFAULT 'oczekuje'
                                    CHECK(stan IN ('oczekuje','dostarczone','odwolane',
                                                   'wygasle','porzucone')),
@@ -82,8 +132,7 @@ CREATE TABLE powiadomienie (
     nastepna_proba         TEXT    NOT NULL
                                    DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now')),
 
-    -- Termin ważności jest obowiązkowy, żeby powiadomienie nie wisiało bez
-    -- końca po ciszy rdzenia.
+    -- NOT NULL z rozmysłu — uzasadnienie w nagłówku pliku.
     wygasa                 TEXT    NOT NULL,
 
     utworzono              TEXT    NOT NULL
@@ -93,11 +142,12 @@ CREATE TABLE powiadomienie (
     powod_odwolania        TEXT,
 
     -- Pół wskazania nie wskazuje niczego: rodzaj bez klucza i klucz bez rodzaju
-    -- są wierszami bez adresu.
+    -- są wierszami, po których nie da się nic odnaleźć ani odwołać.
     CHECK((byt_rodzaj IS NULL) = (byt_id IS NULL)),
 
-    -- Stan końcowy i jego znacznik chodzą parą; wiersz dostarczony musi nieść
-    -- chwilę doręczenia.
+    -- Stan końcowy i jego znacznik chodzą parą. Wiersz `dostarczone` bez chwili
+    -- doręczenia twierdziłby, że coś doszło, nie umiejąc powiedzieć kiedy —
+    -- czyli dokładnie to, czego wymaganie „czy doszło, kiedy doszło" zabrania.
     CHECK((stan = 'dostarczone') = (dostarczono IS NOT NULL)),
     CHECK((stan = 'odwolane')    = (odwolano    IS NOT NULL))
 );
@@ -108,32 +158,29 @@ CREATE TABLE powiadomienie (
 CREATE INDEX idx_powiadomienie_nalezne
     ON powiadomienie(nastepna_proba, id) WHERE stan = 'oczekuje';
 
--- Odwołanie działa po bycie: gdy decyzja dotycząca bytu zapada, ten indeks
--- pozwala zgasić od razu wszystkie powiadomienia, które o niego pytają.
+-- Odwołanie idzie po bycie: „ta decyzja zapadła, zgaś wszystko, co o nią pyta".
 CREATE INDEX idx_powiadomienie_byt
     ON powiadomienie(byt_rodzaj, byt_id);
 
--- Doręczenie jest osobną tabelą, bo jedno powiadomienie może dotrzeć do
--- operatora kilkoma urządzeniami naraz, a każde dotarcie ma własną chwilę
--- i własne potwierdzenie.
+-- ── DORĘCZENIE, PER URZĄDZENIE ──────────────────────────────────────────────
 CREATE TABLE powiadomienie_dostarczenie (
     id                     INTEGER PRIMARY KEY AUTOINCREMENT,
     powiadomienie_id       INTEGER NOT NULL
                                    REFERENCES powiadomienie(id) ON DELETE CASCADE,
-    -- Wskazuje na rejestrację, nie na urządzenie: ślad zostaje przy drodze,
-    -- którą doręczenie poszło.
+    -- Wskazanie na rejestrację, nie na urządzenie: doręczenie zaszło konkretną
+    -- drogą i przy zmianie drogi ślad ma zostać przy tej, którą naprawdę poszło.
     urzadzenie_powiadomien_id INTEGER NOT NULL
                                    REFERENCES urzadzenie_powiadomien(id) ON DELETE CASCADE,
 
     dostarczono            TEXT    NOT NULL
                                    DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now')),
 
-    -- Kiedy operator potwierdził odbiór; wartość pusta znaczy, że doszło,
-    -- ale nikt nie potwierdził.
+    -- Kiedy Operator potwierdził, że widział. NULL znaczy „doszło, ale nikt nie
+    -- potwierdził" — i to jest odpowiedź uczciwa, nie brak danych.
     potwierdzono           TEXT,
 
-    -- Jedno doręczenie na parę; ponowienie po powrocie urządzenia nie
-    -- dopisuje drugiego wiersza.
+    -- Jedno doręczenie na parę. Ponowienie po powrocie urządzenia nie ma
+    -- dopisywać drugiego wiersza o tym samym fakcie.
     UNIQUE(powiadomienie_id, urzadzenie_powiadomien_id)
 );
 

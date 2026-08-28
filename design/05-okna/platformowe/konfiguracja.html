@@ -68,6 +68,8 @@
   .kf-nav-poz:hover { background:var(--dn-hover); color:var(--dn-tekst); }
   .kf-nav-poz[aria-current="page"] { background:var(--dn-sygnal-tlo); color:var(--dn-sygnal-mocny); border-color:var(--dn-obrys); }
   .kf-nav-poz[aria-current="page"] svg { color:var(--dn-sygnal-mocny); }
+  /* Jak wyżej: na tle sygnałowym trzeci stopień daje 4,34:1. */
+  .kf-nav-poz[aria-current="page"] .kf-nav-nr { color:var(--dn-tekst-2); }
   .kf-nav-nr { margin-left:auto; font-family:var(--dn-ff-mono); font-size:var(--dn-fs-xs); color:var(--dn-tekst-3); }
   .kf-nav-pod { padding-left:var(--dn-od-5); display:none; }
   .kf-nav-grupa[data-rozwiniete="tak"] .kf-nav-pod { display:block; }
@@ -126,13 +128,13 @@
   }
   .kf-textarea:focus-visible { outline:2px solid var(--dn-fokus); outline-offset:2px; }
 
-  .kf-select, .kf-input {
+  .kf-select {
     min-height:var(--dn-wym-kontrolka);
     padding:0 var(--dn-od-3); border:1px solid var(--dn-obrys); border-radius:var(--dn-r-md);
     background:var(--dn-powierzchnia-2); color:var(--dn-tekst);
     font:inherit; font-size:var(--dn-fs-sm);
   }
-  .kf-select:focus-visible, .kf-input:focus-visible { outline:2px solid var(--dn-fokus); outline-offset:2px; }
+  .kf-select:focus-visible { outline:2px solid var(--dn-fokus); outline-offset:2px; }
 
   .kf-podglad {
     border:1px dashed var(--dn-obrys); border-radius:var(--dn-r-md);
@@ -556,10 +558,12 @@
 
 
 
-  <div class="dn-karty-sesji" role="tablist" aria-label="Karty sesji">
-    <button class="dn-karta-sesji" role="tab" aria-selected="true" type="button"><span class="pt-tetno" aria-hidden="true"></span><span>Konfiguracja platformy</span></button>
-    <button class="dn-karta-sesji" role="tab" aria-selected="false" type="button"><span>Sprawa X — redakcja pism</span></button>
-    <button class="dn-karta-sesji" role="tab" aria-selected="false" type="button"><span>Orkiestracja MultitaskingAI</span></button>
+  <div class="dn-karty-sesji">
+    <div class="dn-karty-sesji-tory" role="tablist" aria-label="Karty sesji">
+      <button class="dn-karta-sesji" role="tab" aria-selected="true" type="button"><span class="pt-tetno" aria-hidden="true"></span><span>Konfiguracja platformy</span></button>
+      <button class="dn-karta-sesji" role="tab" aria-selected="false" type="button"><span>Sprawa X — redakcja pism</span></button>
+      <button class="dn-karta-sesji" role="tab" aria-selected="false" type="button"><span>Orkiestracja MultitaskingAI</span></button>
+    </div>
     <button class="dn-btn-ikona" type="button" aria-label="Nowa karta"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></button>
   </div>
 
@@ -587,7 +591,7 @@
       </div>
       <div class="dn-szyna-modulu-lista">
         <div class="dn-etyk-mono">DanacoConsole</div>
-        <button class="pt-pozycja" type="button" aria-selected="true"><span class="pt-tetno" aria-hidden="true"></span><span class="pt-pozycja-tytul">Konfiguracja platformy</span></button>
+        <button class="pt-pozycja" type="button" aria-current="true"><span class="pt-tetno" aria-hidden="true"></span><span class="pt-pozycja-tytul">Konfiguracja platformy</span></button>
         <button class="pt-pozycja" type="button"><span class="pt-pozycja-tytul">Nakładka — Agent Redaktor</span></button>
         <div class="dn-etyk-mono">Kancelaria — sprawy</div>
         <button class="pt-pozycja" type="button"><span class="pt-pozycja-tytul">Sprawa X — redakcja pism</span></button>
@@ -653,8 +657,8 @@
                   <div class="sta-popover-wiersz"><span class="sta-popover-etykieta">Dodaj pliki i zdjęcia</span><span class="pt-mono">Ctrl+U</span></div>
                   <div class="sta-popover-wiersz"><span class="sta-popover-etykieta">Dodaj folder</span></div>
                   <div class="sta-popover-tytul" style="margin-top:var(--dn-od-2)">Konektory</div>
-                  <div class="sta-popover-wiersz"><span class="sta-popover-etykieta">Claude in Chrome</span><button class="dn-przelacznik" data-przelacznik aria-pressed="true" role="switch" aria-checked="true"></button></div>
-                  <div class="sta-popover-wiersz"><span class="sta-popover-etykieta">Desktop Commander</span><button class="dn-przelacznik" data-przelacznik aria-pressed="true" role="switch" aria-checked="true"></button></div>
+                  <div class="sta-popover-wiersz"><span class="sta-popover-etykieta">Claude in Chrome</span><button class="dn-przelacznik" aria-label="Claude in Chrome" data-przelacznik role="switch" aria-checked="true"></button></div>
+                  <div class="sta-popover-wiersz"><span class="sta-popover-etykieta">Desktop Commander</span><button class="dn-przelacznik" aria-label="Desktop Commander" data-przelacznik role="switch" aria-checked="true"></button></div>
                   <div class="sta-popover-tytul" style="margin-top:var(--dn-od-2)">Wtyczki</div>
                   <div class="sta-popover-wiersz"><span class="sta-popover-etykieta">Danaco inżynieria</span></div>
                   <div class="sta-popover-wiersz"><span class="sta-popover-etykieta">Danaco analiza danych</span></div>

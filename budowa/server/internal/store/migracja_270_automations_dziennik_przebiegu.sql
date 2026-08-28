@@ -1,5 +1,12 @@
--- Migracja 270 wprowadza dziennik przebiegu automatyki trwały w bazie, aby przeglądarka logów
--- pokazywała pełny zapis zdarzeń pojedynczego uruchomienia, także sprzed otwarcia okna.
+-- Migracja 270 — dziennik przebiegu automatyki (`automation.execution.log`).
+--
+-- Log przebiegu musi przeżyć restart rdzenia. Przeglądarka logów Execution
+-- Monitora pokazuje „pełny zapis zdarzeń pojedynczego uruchomienia, także
+-- sprzed otwarcia okna” — a strumień WebSocket niesie wyłącznie to, co padło
+-- przy otwartym oknie. Log trzymany w pamięci procesu byłby logiem, którego po
+-- restarcie nie ma, choć przebieg dalej widnieje w historii.
+--
+-- Poziom idzie słownikiem bazy (kolumna `baza` wyliczenia `AutomationLogLevel`).
 CREATE TABLE log_przebiegu (
     id          INTEGER PRIMARY KEY AUTOINCREMENT,
     przebieg_id INTEGER NOT NULL REFERENCES przebieg_automatyki(id) ON DELETE CASCADE,

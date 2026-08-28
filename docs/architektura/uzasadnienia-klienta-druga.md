@@ -6453,3 +6453,6 @@ węższy od maksimum sceny, bo zależy od figury modułu, więc pozycja pyta o
 niego przy każdym rysowaniu wiersza; przy suficie osiągniętym pozycja nie
 powstaje, a lista jest o jedną pozycję krótsza zamiast pokazywać wiersz
 wygaszony. Skrótu klawiszowego ta pozycja nie ma.
+
+## budowa/klient-poprzedni/src/powiadomienia/zrodlo-centrum.ts
+Rejestr czyta się raz, przy otwarciu kolumny, a dalej nadąża zdarzeniami: zdarzenie podniesienia dokłada pozycję i podnosi licznik, a zdarzenie zmiany przerysowuje stany; odpytywania w tle nie ma i nie jest potrzebne, bo obsługa na drugim urządzeniu dolatuje tą samą drogą, co przy urządzeniach i uwierzytelnieniu. Licznik plakietki jest osobną wartością od długości wykazu i tak ma zostać: rdzeń liczy cały rejestr, a wykaz bywa zawężony filtrem, więc plakietka pokazująca długość widoku gasłaby przy zawężeniu, jakby zdarzenia zostały obsłużone.

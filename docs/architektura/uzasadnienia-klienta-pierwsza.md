@@ -8336,3 +8336,16 @@ Komponent jest sterem, nie wyświetlaczem: etykieta uchwytu niesie wskazany kod,
 
 ## budowa/klient-poprzedni/src/moduly/agents/drzewo-narzedzi.ts (budowa drzewa)
 Znacznik przypisania znakuje pozycje, które ekspert już ma, i idzie zdaniem w opisie, a nie samym wskaźnikiem wyboru: wskaźnik wyboru niesie nastawę tej kontrolki, a przypisanie jest czymś innym — stanem eksperta. Zlanie obu w jeden znacznik kazałoby uchwytowi pokazywać naraz kilkanaście wartości, czyli przestać być sterem nastawy.
+
+## budowa/klient-poprzedni/src/moduly/developer/widok-przebiegu.ts
+Fragment nie zna ani źródła, ani stanu modułu: dostaje przebieg, zebrany log
+i zawężenie, oddaje element. Zawężenie jest czynnością wyłącznie kliencką nad
+materiałem, który już przyszedł — log narasta ze zdarzenia i nie ma komendy,
+którą dałoby się dopytać rdzeń o wiersze pominięte, więc szukanie odbywa się
+w tym, co okno usłyszało, a widok mówi to wprost, zamiast pozorować
+przeszukanie całości. Zgłoszenie ze ścieżką jest przejściem do pliku: nowej
+komendy to nie wymaga, bo wystarczy wskazać plik we wspólnym stanie modułu,
+a edytor kodu otworzy go sam. Numer wiersza zostaje w napisie i niczego nie
+otwiera, bo polecenie otwarcia pliku nie ma pola wiersza, a pole edycji nie ma
+numeracji — przejście otwiera plik, nie miejsce w pliku, i przycisk mówi
+dokładnie tyle.

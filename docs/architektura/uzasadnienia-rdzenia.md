@@ -6548,3 +6548,13 @@ nazwany powód.
 Pusty rejestr definicji (baza bez katalogu ustawień albo nieudany odczyt
 katalogu) znaczy „nie wiadomo, co jest znane", a nie „nic nie jest znane" —
 sprawdzenie oparte na takim rejestrze zablokowałoby całą konfigurację.
+
+## budowa/server/internal/core/wiez_klienta.go
+
+Schemat bazy nie ma kolumny dla ogniska: tabela polaczenie zna stan łącza,
+nie kartę w ognisku. Więź żyje więc w rdzeniu i kończy się wraz z jego
+procesem — sesja i jej procesy trwają dalej, a klient po restarcie rdzenia
+wskazuje kartę ponownie. Sesji, okien ani słowników ten rejestr nie
+przechowuje; mają własne repozytoria i własnego nadzorcę.
+
+Powiązanie sesji z klientem odtwarza stan, nie przestawia widoku.

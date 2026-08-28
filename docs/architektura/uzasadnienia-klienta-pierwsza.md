@@ -8110,3 +8110,30 @@ i „Odrzuć" — osobno, bo należy do nakładki, nie do rdzenia.
 
 Przy wąskiej kolumnie obszaru roboczego dymek skraca się do jednego zdania
 i działania „Rozwiń" otwierającego powierzchnię interakcji.
+## budowa/klient-poprzedni/src/moduly/developer/indeks.ts
+Moduł pracuje w oknie, nie w sesji: wszystkie komendy obszaru wymagają kodu
+okna, a umowa ogólna widoku modułu niesie identyfikator sesji, więc złożenie
+odracza montaż do chwili, gdy okno tego modułu jest znane rdzeniowi — bez tego
+kodu przejście brałoby pierwsze okno w wykazie, także cudze. Układ wynika
+z ról: w pasie górnym wiodące okno edytora kodu wraz z pomocniczym drzewem
+projektu, które wskazuje plik odczytywany przez edytor; w pasie środkowym
+zarządca repozytorium i monitor budowania; w pasie dolnym narzędzia
+deweloperskie jako kolumna czterech integracji. Okno rozmowy modułu nie należy
+do tego złożenia, bo jest bytem sesji i składa je warstwa rozmowy. Monitor jest
+jednym oknem o dwóch częściach przełączanych zakładkami w nagłówku kolumny,
+nie dwoma oknami, dlatego ma jeden kod katalogu rdzenia. Ostatni pas niesie
+okna pomocnicze zbudowane oraz spis pozycji jeszcze nieistniejących wraz
+z powodem każdej; terminal ma w tym spisie miejsce i nie jest budowany drugi
+raz, nie powiela go też zakładka integracji kontenerów. Zdarzenie zmiany
+budowania ma dwie subskrypcje, bo każda bierze co innego: stan modułu
+unieważnia po nim drzewo i edytor, bo budowanie generuje pliki, a monitor
+budowania bierze przyrost logu, którego stan nie przenosi, więc log narasta
+wyłącznie ze zdarzenia. Warsztat jest drugim źródłem, bo ma innych odbiorców:
+zakładki narzędzi deweloperskich, panel uruchamiania i debugowania, historię
+przebiegów i pasek operacji edytora kodu — jedna umowa na wszystko kazałaby
+drzewu projektu przyjmować zależność od wielu metod, z których używa niewielu.
+Kolumna zakładek integracji dev tools jest rozszerzeniem bocznym obszaru
+roboczego, nie sąsiadem zarządcy repozytorium, i potrzebuje pełnej szerokości
+na wykaz zależności zewnętrznych. Pas okien pomocniczych zamyka się pierwszy,
+bo trzyma subskrypcję strumienia, która żyje niezależnie od stanu modułu
+i po zejściu ze sceny nikt by jej nie zdjął.

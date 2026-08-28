@@ -6836,3 +6836,13 @@ Człon „bez zbudowanej obsługi" stoi osobno od „bez pokrycia w kontrakcie",
 kontraktu to dwie różne rzeczy: pierwsza mówi o pracy, której jeszcze nie wykonano, druga
 o uzgodnieniu, którego nie ma. Zlanie ich w jedną liczbę zacierałoby dokładnie tę różnicę, którą
 wykaz ma pokazać.
+
+## budowa/klient-poprzedni/src/moduly/studio/pola-roznicy.ts
+Panel odpowiada za układ i stany, a ten plik za to, jak cztery kontrolki składają się w treść
+żądania porównania, dzięki czemu kształt żądania można zmienić bez dotykania układu okna. Puste
+pole wersji porównywanej nie znaczy brak danych: kontrakt czyta jego brak jako zgodę na
+porównanie z propozycją zmiany. Wersja bieżąca wchodzi do żądania wprost, bo rdzeń jej nie
+podstawia sam — porównanie przeszukuje treść wskazanej strony, więc żądanie z samym wzorcem
+wraca puste nawet wtedy, gdy dokument ten wzorzec zawiera, dlatego dokument niesie identyfikator
+wersji, a okno podstawia go za puste pole odniesienia, a podpowiedź przy kontrolce odpowiada
+temu, co się dzieje.

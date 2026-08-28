@@ -8960,3 +8960,6 @@ dwie czynności o skutku nieodwracalnym mówią o nim, zanim go wywołają.
 Odpowiedź w kanale próbnym wraca po oddaniu identyfikatora żądania, tak jak
 w kanale prawdziwym: nasłuch odmów modułu zdejmuje żądanie z rejestru po tym
 identyfikatorze, więc rozstrzygnięcie synchroniczne nie miałoby czego zdjąć.
+
+## budowa/klient-poprzedni/src/moduly/apps/modul-apps.ts
+Stan produktu jest jeden na cały moduł: komponent zestawiony w Architecture Designerze pojawia się natychmiast w wykazach obu warsztatów, a wdrożenie potwierdzone przez rdzeń — w dzienniku wydań Product Buildera. Okna pokazują odpowiedź rdzenia, a odmowę merytoryczną — jako odmowę, nie jako pustkę i nie jako sukces. Na końcu układu stoi pas okien pomocniczych, ten sam, którym stoją Developer i Diagnostics. Pas dostaje okno później, niż powstaje: moduł montuje się z samym kanałem, a okno modułu poznaje dopiero z wykazu okien przy wczytaniu, więc pas stoi od początku z oknem pustym — panele mówią wtedy wprost, czego brakuje — i przyjmuje właściwe okno wywołaniem, które samo zamyka panele stojące i stawia je na nowym oknie.

@@ -25,42 +25,9 @@ import { utworzZrodloIzolacjiApps } from './zrodlo-izolacji-apps';
 import { KOD_MODULU } from './zrodlo-okna-modulu';
 
 /**
- * Moduł Apps — pięć okien operacyjnych osadzonych w jednym układzie.
- *
- * Układ wynika z roli okna. Product Builder jest punktem wejścia integrującym
- * pozostałe okna, więc stoi w pasie pierwszym na całą szerokość. Architecture
- * Designer poprzedza pracę w warsztatach, więc stoi nad nimi. Oba warsztaty
- * pracują równolegle, więc stoją obok siebie. Deployment Panel zamyka proces,
- * więc stoi na końcu.
- *
- * Stan produktu jest jeden na cały moduł: komponent zestawiony w Architecture
- * Designerze pojawia się natychmiast w wykazach obu warsztatów, a wdrożenie
- * potwierdzone przez rdzeń — w dzienniku wydań Product Buildera.
- *
- * Komendy obszaru mają uchwyt w rdzeniu: zapis architektury, zapis pliku
- * warsztatu i uruchomienie wdrożenia wpina `zarejestrujAplikacje`
- * (`server/internal/core/adapter_modul_aplikacje_uchwyty.go`), wołane
- * z `kompozycja.go`; port `Aplikacje` jest wypełniony w `montaz_porty.go`.
- * Wdrożenie zmienia stan (`pending` → `running` → `succeeded`/`failed`),
- * a przejścia przychodzą zdarzeniem `apps.build.changed`. Okna pokazują
- * odpowiedź rdzenia, a odmowę merytoryczną — jako odmowę, nie jako pustkę
- * i nie jako sukces.
- *
- * Na końcu układu stoi pas okien pomocniczych
- * (`okna-pomocnicze/pas-pomocniczych.ts`) — ten sam, którym stoją Developer
- * i Diagnostics. Pas składa panele z jednej wytwórni (`wytwornia-paneli.ts`)
- * po spisie modułu (`rejestr-pomocniczych.ts`), a pozycje niezbudowane wypisuje
- * wraz z powodem, więc brak zostaje widoczny. Terminal wchodzi tą samą drogą co
- * każdy inny panel — wpisem w wytwórni i pozycją w spisie modułu `apps` — a nie
- * osobnym wywołaniem w tym pliku.
- *
- * Pas dostaje okno później, niż powstaje. Developer i Diagnostics montują się
- * przez `widokZOknaSesji`, więc znają okno już przy montażu. Apps montuje się
- * z samym kanałem (`indeks.ts` → `utworzModulApps(kanal)`), a okno modułu
- * poznaje dopiero z `window.list` w `wczytaj`. Pas stoi więc od początku
- * z oknem pustym — panele mówią wtedy wprost, czego brakuje — i przyjmuje
- * właściwe okno wywołaniem `ustawOkno`, które samo zamyka panele stojące
- * i stawia je na nowym oknie.
+ * Moduł Apps zestawia pięć okien operacyjnych w jednym układzie: Product
+ * Builder jako wejście integrujące pozostałe, Architecture Designer przed
+ * warsztatami, dwa warsztaty równolegle oraz Deployment Panel na końcu.
  */
 export interface ModulApps {
   /** Element osadzany w obszarze roboczym powłoki. */
@@ -71,10 +38,10 @@ export interface ModulApps {
   rozlacz(): void;
 }
 
-/** Nazwa modułu w etykietach dostępności pasa okien pomocniczych. */
+/** Nazwa modułu używana w etykietach dostępności pasa okien pomocniczych osadzonego wewnątrz tego modułu. */
 const NAZWA_MODULU = 'Apps';
 
-/** Etapy procesu w kolejności: architektura → warsztaty → wdrożenie. */
+/** Etapy procesu w kolejności wyświetlania na osi etapów: architektura, warsztaty, a następnie wdrożenie. */
 const POZYCJE_OSI: readonly PozycjaOsi[] = [
   {
     kod: KODY_OKIEN.ArchitectureDesigner,
@@ -96,10 +63,7 @@ const POZYCJE_OSI: readonly PozycjaOsi[] = [
     tytul: NAZWY_OKIEN[KODY_OKIEN.DeploymentPanel] ?? '',
     opis: 'Uruchomienie wdrożenia i przegląd statusu publikacji',
   },
-  // Dwa etapy strony dystrybucji. Oś prowadzi do nich, bo opracowanie wymienia
-  // App Catalog i Integrations Hub wśród kafli nawigacyjnych Product Buildera,
-  // a proces produktu nie kończy się na wdrożeniu: zbudowane rozszerzenie wraca
-  // do katalogu, z którego korzystają moduły i eksperci.
+  // Dwa etapy strony dystrybucji: zbudowane rozszerzenie wraca do katalogu, z którego korzystają moduły.
   {
     kod: KODY_OKIEN.AppCatalog,
     tytul: NAZWY_OKIEN[KODY_OKIEN.AppCatalog] ?? '',
@@ -114,10 +78,7 @@ const POZYCJE_OSI: readonly PozycjaOsi[] = [
 
 export function utworzModulApps(kanal: Kanal): ModulApps {
   const stan: StanProduktu = utworzStanProduktu(kanal);
-  // Drugi stan, bo druga strona modułu stoi na innym obszarze kontraktu:
-  // produkt budowany w module jest bytem okna (`apps.*` niesie `windowId`),
-  // a katalog rozszerzeń stoi poziom wyżej i okna nie zna. Jeden stan na oba
-  // znaczyłby, że odczyt katalogu czeka na okno, którego nie potrzebuje.
+  // Drugi stan, bo druga strona modułu stoi na innym obszarze kontraktu i nie zna okna.
   const rejestr: StanRozszerzen = utworzStanRozszerzen(kanal);
   const izolacja = utworzZrodloIzolacjiApps(kanal, KOD_MODULU);
   const pokrycie: PokrycieKomend = utworzPokrycieKomend(kanal);
@@ -175,10 +136,7 @@ export function utworzModulApps(kanal: Kanal): ModulApps {
   pasWarsztatow.className = 'mp-modul__pas mp-modul__pas--warsztaty';
   pasWarsztatow.append(frontend.element, backend.element);
 
-  // Strona dystrybucji stoi w osobnym pasie, bo to inna strona cyklu życia
-  // oprogramowania: pierwsza buduje produkt, druga rozdaje i konsumuje gotowe
-  // rozszerzenia. Panele boczne (uprawnienia, konsola, wydawca) stoją obok
-  // siebie, bo każdy otwiera się na pozycji wskazanej w oknie wiodącym.
+  // Strona dystrybucji stoi w osobnym pasie: pierwsza buduje produkt, druga rozdaje gotowe rozszerzenia.
   const pasRejestru = document.createElement('div');
   pasRejestru.className = 'mp-modul__pas mp-modul__pas--rejestr';
   pasRejestru.append(katalog.element, zainstalowane.element);
@@ -209,9 +167,7 @@ export function utworzModulApps(kanal: Kanal): ModulApps {
   );
 
   const odsubskrybuj = stan.obserwuj(() => odswiezOkna());
-  // Druga subskrypcja, bo drugi stan: zmiana katalogu rozszerzeń nie dotyczy
-  // okien strony budowy i odwrotnie. Wspólne przerysowanie kosztowałoby
-  // przebieg wszystkich jedenastu okien przy każdej ramce jednego obszaru.
+  // Druga subskrypcja, bo drugi stan: zmiana katalogu rozszerzeń nie dotyczy okien strony budowy.
   const odsubskrybujRejestr = rejestr.obserwuj(() => odswiezOknaRejestru());
 
   function odswiezOknaRejestru(): void {
@@ -230,9 +186,7 @@ export function utworzModulApps(kanal: Kanal): ModulApps {
     wdrozenia.odswiez();
     // Dziennik wydań Publisher Panelu czyta wdrożenia, więc należy do tej strony.
     wydawca.odswiez();
-    // Okno modułu przychodzi z rdzenia dopiero po `window.list`, więc pas
-    // dostaje je tutaj — przy każdej zmianie stanu, bo to samo okno niczego nie
-    // przebudowuje, a na pustym panele mówią wprost, czego brakuje.
+    // Okno modułu przychodzi z rdzenia dopiero po odczycie wykazu okien, więc pas dostaje je tutaj.
     pomocnicze.ustawOkno(stan.idOkna());
     pomocnicze.odswiez();
   }
@@ -241,26 +195,16 @@ export function utworzModulApps(kanal: Kanal): ModulApps {
     element,
 
     async wczytaj(idSesji) {
-      // Katalog akcji i wykaz okien dotyczą różnych obszarów kontraktu i żaden
-      // nie warunkuje drugiego; odmowa jednego zostaje w jego miejscu.
+      // Katalog akcji i wykaz okien dotyczą różnych obszarów; odmowa jednego zostaje w jego miejscu.
       akcje.wczytaj();
-      // Wykaz komend rdzenia wypełnia powody kontrolek strony dystrybucji.
-      // Idzie raz na moduł i nie czeka na okno — powitanie dotyczy połączenia,
-      // nie sesji.
+      // Wykaz komend rdzenia idzie raz na moduł i nie czeka na okno — powitanie dotyczy połączenia.
       void pokrycie.odczytaj();
-      // Katalog rozszerzeń i punkty dostępu nie wymagają okna modułu, więc
-      // ruszają od razu, równolegle z odczytem okna. Odmowa któregokolwiek
-      // zostaje w jego oknie i nie zabiera strony budowy.
+      // Katalog rozszerzeń i punkty dostępu nie wymagają okna modułu, ruszają więc od razu.
       const rejestrGotowy = Promise.all([rejestr.odczytajKatalog(), rejestr.odczytajPunkty()]);
       await stan.odswiez(idSesji);
-      // Odczyt okna modułu nie musi zakończyć się powiadomieniem obserwatorów
-      // (odmowa `window.list` zostawia stan bez zmiany), a pas ma wtedy
-      // powiedzieć o braku okna, nie milczeć.
+      // Odczyt okna modułu nie musi zakończyć się powiadomieniem obserwatorów; pas ma powiedzieć o braku.
       pomocnicze.ustawOkno(stan.idOkna());
-      // Odczyty obszaru idą zaraz po ustaleniu okna, bo każdy wymaga
-      // `windowId` — stąd miejsce po `stan.odswiez`. Idą równolegle, bo są od
-      // siebie niezależne: odmowa jednego nie zabiera pozostałych. Wynik
-      // każdego ląduje w stanie modułu, a okna dowiadują się o nim obserwacją.
+      // Odczyty obszaru idą zaraz po ustaleniu okna, równolegle, bo są od siebie niezależne.
       await Promise.all([
         stan.odczytajWdrozenia('', 0),
         stan.odczytajArchitekture(),
@@ -273,13 +217,10 @@ export function utworzModulApps(kanal: Kanal): ModulApps {
     rozlacz() {
       odsubskrybuj();
       odsubskrybujRejestr();
-      // Wykaz pokrycia jest wspólny wszystkim modułom; odpinamy z niego
-      // kontrolki tego modułu, żeby nie przerysowywał martwych elementów.
+      // Wykaz pokrycia jest wspólny wszystkim modułom; odpinamy z niego kontrolki tego modułu.
       pokrycie.zamknij();
       rejestr.rozlacz();
-      // Pas zamyka się pierwszy: jego panele trzymają subskrypcje żyjące
-      // niezależnie od stanu modułu (podgląd w tle — `stream.chunk`, Terminal —
-      // zdarzenia karty powłoki) i po zejściu ze sceny nikt by ich nie zdjął.
+      // Pas zamyka się pierwszy: jego panele trzymają subskrypcje żyjące niezależnie od stanu modułu.
       pomocnicze.zamknij();
       stan.rozlacz();
     },

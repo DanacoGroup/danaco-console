@@ -1,3 +1,5 @@
+// Uruchamianie procesu okna komunikacji po stronie kanału, zgodnie
+// z zasięgiem wykonania wskazanym w oknie.
 package injection
 
 import (
@@ -11,42 +13,8 @@ import (
 	"danacoconsole/shared"
 )
 
-// Uruchamianie procesu okna komunikacji po stronie kanału.
-//
-// Pakiet session nie startuje procesów — zna wyłącznie port session.Uruchamiacz
-// i wypełnia go ten plik. Dzięki temu w drzewie jest jedna droga uruchomienia
-// procesu modelu (rozruch.go) i jedna droga ubijania jego drzewa potomstwa
-// (session.PrzejmijDrzewo).
-//
-// Kierunek zależności jest ten sam, który zapowiada session/przejecie.go:
-// warstwa kanału sięga po część sesyjną, nigdy odwrotnie.
-//
-// Zasięg wykonania jest czytany i ma skutek. Okno niesie wybór
-// Operatora w polu SrodowiskoWykonania i to tutaj — w jedynym spawnerze
-// platformy — ten wybór rozstrzyga, gdzie proces rusza:
-//
-//	core   — host rdzenia; proces rusza tutaj i to jest wykonanie zgodne z wyborem;
-//	remote — host zdalny; proces jedzie torem SSH pakietu internal/zdalne:
-//	         host wskazuje ustawienie `host_wykonania`, zgodę per
-//	         host trzyma tabela `host_zdalny`, a każde brakujące
-//	         ogniwo drogi jest osobną, nazwaną odmową — nie cichym startem
-//	         na maszynie rdzenia, bo to byłaby praca w innym miejscu, niż
-//	         wskazał Operator;
-//	local  — urządzenie Operatora; toru zwrotnego do urządzenia w drzewie nie ma
-//	         i nie domknie go ta warstwa: powłoka natywna wystawia interfejsowi
-//	         trzy polecenia bez uruchamiania procesów (desktop/src-tauri,
-//	         invoke_handler), a kontrakt nie ma kanału, którym rdzeń prowadziłby
-//	         strumienie procesu na kliencie — tor zwrotny wymaga nowych poleceń
-//	         powłoki i nowych komend kontraktu (contract.* poza tym pakietem).
-//	         Zasięg obsługuje więc host rdzenia i idzie o tym wpis do dziennika;
-//	         wybór jest honorowany dosłownie dopóty, dopóki rdzeń stoi na
-//	         urządzeniu Operatora — a tak stoi dziś każda instalacja lokalna.
-//
-// Wartość pusta i wartość spoza wyliczenia nie zatrzymują pracy — schodzą na
-// zachowanie dotychczasowe (host rdzenia), ale zostawiają ślad w dzienniku,
-// bo brak wskazania ma dawać pracę, nie odmowę.
-
-// uruchamiaczOkien wypełnia port session.Uruchamiacz.
+// uruchamiaczOkien wypełnia port session.Uruchamiacz, uruchamiając procesy
+// okien komunikacji platformy.
 type uruchamiaczOkien struct{}
 
 // UruchamiaczOkien zwraca uruchamiacz procesów okien dla warstwy sesji.
@@ -55,12 +23,8 @@ func UruchamiaczOkien() session.Uruchamiacz {
 	return uruchamiaczOkien{}
 }
 
-// UruchomProces startuje proces okna i oddaje jego uchwyt sesji. Proces rusza
-// jako korzeń własnego drzewa, bo zaraz po starcie obejmie go uchwyt systemowy
-// warstwy sesji; bez tego wnuki procesu przeżyłyby zamknięcie okna.
-//
-// Przed startem rozstrzygany jest zasięg wykonania okna: proces, którego nie da
-// się uruchomić tam, gdzie wskazał Operator, nie rusza tutaj po cichu.
+// UruchomProces startuje proces okna i oddaje jego uchwyt sesji, jako korzeń
+// własnego drzewa procesów.
 func (u uruchamiaczOkien) UruchomProces(o session.Okno, p session.Polecenie) (session.UchwytProcesu, error) {
 	rozruch, err := rozruchWedlugZasiegu(o, p)
 	if err != nil {
@@ -70,10 +34,7 @@ func (u uruchamiaczOkien) UruchomProces(o session.Okno, p session.Polecenie) (se
 }
 
 // rozruchWedlugZasiegu odpowiada na jedno pytanie: jaki proces uruchomić na
-// hoście rdzenia, żeby praca działa się tam, gdzie wskazał Operator. Dla
-// zasięgu `core` (i dróg schodzących na niego) jest to sam proces okna; dla
-// zasięgu `remote` — proces transportu SSH, którego strumienie są strumieniami
-// procesu na hoście zdalnym.
+// hoście rdzenia, żeby praca działa się tam, gdzie wskazał Operator.
 func rozruchWedlugZasiegu(o session.Okno, p session.Polecenie) (Rozruch, error) {
 	switch o.SrodowiskoWykonania {
 	case shared.ExecutionEnvCore:
@@ -116,11 +77,8 @@ func rozruchMiejscowy(p session.Polecenie) Rozruch {
 	}
 }
 
-// rozruchZdalny prowadzi polecenie okna torem SSH pakietu zdalne. Katalog
-// i środowisko jadą w komendzie zdalnej; proces transportu dziedziczy
-// środowisko rdzenia, bo ssh potrzebuje własnej konfiguracji (klucze, agent).
-// Odmowa toru wraca do wołającego z powodem — uruchomienie na hoście rdzenia
-// byłoby pracą w innym miejscu, niż wskazał Operator.
+// rozruchZdalny prowadzi polecenie okna torem SSH pakietu zdalne, dziedzicząc
+// środowisko rdzenia dla własnej konfiguracji.
 func rozruchZdalny(o session.Okno, p session.Polecenie) (Rozruch, error) {
 	uruchomienie, err := zdalne.Przeloz(o.Id, zdalne.Polecenie{
 		Program:    p.Program,
@@ -145,15 +103,12 @@ func rozruchZdalny(o session.Okno, p session.Polecenie) (Rozruch, error) {
 	}, nil
 }
 
-// odnotowaneZasiegi pamięta adnotacje już opisane w dzienniku. Moduł Terminal
-// startuje proces przy każdym poleceniu, więc wpis przy każdym starcie
-// utopiłby dziennik w powtórzeniach i wyszłoby z tego to samo, co z ciszy:
-// nikt by tego nie czytał. Zmiana zasięgu okna — a przy torze zdalnym także
-// zmiana wyniku (odmowa kontra tor) — daje nowy klucz, więc kolejny obrót
-// sprawy znów zostawia ślad.
+// odnotowaneZasiegi pamięta adnotacje już zapisane w dzienniku, żeby uniknąć
+// powtórzeń przy każdym starcie procesu.
 var odnotowaneZasiegi sync.Map
 
-// odnotujZasiegRaz zapisuje adnotację raz na trójkę okno–zasięg–wynik.
+// odnotujZasiegRaz zapisuje adnotację w dzienniku raz na trójkę okno, zasięg
+// i wynik samego uruchomienia.
 func odnotujZasiegRaz(o session.Okno, wynik string, wzor string, argumenty ...any) {
 	klucz := o.Id + "\x00" + string(o.SrodowiskoWykonania) + "\x00" + wynik
 	if _, byl := odnotowaneZasiegi.LoadOrStore(klucz, struct{}{}); byl {

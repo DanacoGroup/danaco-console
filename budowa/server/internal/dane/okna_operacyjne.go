@@ -29,7 +29,7 @@ type RepozytoriumOkienOperacyjnych interface {
 const (
 	poleOknaOperacyjnego = `o.id, o.kod, o.nazwa, o.rola, o.kategoria`
 
-	// Kolejność bierzemy z macierzy, bo to samo okno bywa przypięte do dwóch
+	// Kolejność pochodzi z macierzy, bo to samo okno bywa przypięte do dwóch
 	// modułów na różnych pozycjach.
 	listaOkienModulu = `SELECT ` + poleOknaOperacyjnego + `, om.kolejnosc, o.aktywne
 	                    FROM okno_operacyjne o

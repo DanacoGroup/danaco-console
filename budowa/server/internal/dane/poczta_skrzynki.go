@@ -58,8 +58,8 @@ const (
 	skrzynkaOperatoraPoKodzie = `SELECT ` + kolumnySkrzynkiOperatora + `
 	                             FROM skrzynka_pocztowa WHERE kod = ?`
 
-	// Bez wskazanej domyślnej bierzemy pierwszą z tego samego porządku, co wykaz
-	// (`LIMIT 1`). Przy jednej podpiętej skrzynce jest to ona sama, więc nie
+	// Bez wskazanej domyślnej pierwszeństwo ma pozycja z tego samego porządku, co
+	// wykaz (`LIMIT 1`). Przy jednej podpiętej skrzynce jest to ona sama, więc nie
 	// trzeba jej osobno oznaczać.
 	skrzynkaOperatoraDomyslna = `SELECT ` + kolumnySkrzynkiOperatora + `
 	                             FROM skrzynka_pocztowa ORDER BY domyslna DESC, kod LIMIT 1`
@@ -183,7 +183,7 @@ func (r *repozytoriumSkrzynek) Zapisz(ctx context.Context, s SkrzynkaOperatora) 
 	if err != nil {
 		return SkrzynkaOperatora{}, err
 	}
-	// Oddajemy wiersz odczytany, nie przysłany: klucz nadaje baza, kolumny mogły dopowiedzieć wartości.
+	// Wraca wiersz odczytany, nie przysłany: klucz nadaje baza, kolumny mogły dopowiedzieć wartości.
 	return r.Skrzynka(ctx, s.Kod)
 }
 

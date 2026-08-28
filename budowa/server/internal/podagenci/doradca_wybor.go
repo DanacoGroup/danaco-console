@@ -173,7 +173,7 @@ func silaKanalu(wykaz []models.Definicja, kod string) (int, bool) {
 	return 0, false
 }
 
-// sila czyta parametr siły wiersza; drugi wynik mówi, czy wiemy, nigdy nie
+// sila czyta parametr siły wiersza; drugi wynik mówi, czy wartość jest znana, nigdy nie
 // orzeka zero z zapisu nieczytelnego.
 func sila(d models.Definicja) (int, bool) {
 	zapis := strings.TrimSpace(d.Parametr(parametrSily))

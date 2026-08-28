@@ -1,28 +1,5 @@
-// Odpowiedzialność pliku: warstwa danych odcinka kontroli pracy modułu Studio,
-// część czwarta — dostęp Studia do HISTORII SCHOWKA platformy (tabela
-// `wpis_schowka`, migracja 292) oraz do nastaw wielu wykonawców trzymanych
-// zasięgami konfiguracji (tabela `ustawienie`).
-//
-// ── Dlaczego Studio sięga do tabeli schowka, a nie zakłada własnej ──────────
-// Zlecenie stanowi wprost: rodzina `clipboard.*` istnieje i drugiej się nie
-// zakłada — schowek ma być JEDEN, wspólny Operatorowi i wykonawcom, bo cały
-// sens historii schowka polega na tym, że wpis odłożony w jednym miejscu daje
-// się wkleić w drugim. Osobna tabela schowka Studia rozdzieliłaby jedną historię
-// na dwie i „wklej wpis sprzed kilku ruchów" przestałoby działać między oknem
-// pracy z dokumentem a resztą platformy.
-//
-// Wiersze pisze się więc DOKŁADNIE tymi samymi poleceniami, co rodzina
-// `clipboard.*` (stałe z `schowek.go`), i tym samym rachunkiem odcisku — inaczej
-// ta sama treść odłożona dwiema drogami zrobiłaby dwa wpisy, a warunek UNIQUE na
-// odcisku istnieje właśnie po to, żeby tego nie było.
-//
-// ── Dlaczego nastawy wykonawców idą tabelą `ustawienie` ─────────────────────
-// Nastawy pętli wykonawczej i pracy wielu agentów są w kontrakcie opisane jako
-// wartości zasięgów rodziny `config.*` — z poziomem, z którego przyszły, oddanym
-// w odpowiedzi. Odczyt idzie rozstrzygaczem dziewięciu poziomów (rdzeń nie zna
-// ich pierwszeństwa i o nie nie pyta), a zapis tym poleceniem: `ustawienie` jest
-// jedyną tabelą nastaw platformy i osobny magazyn nastaw Studia byłby drugim
-// miejscem, w którym trzeba by szukać wartości obowiązującej.
+// Repozytorium udostępnia Studiu dostęp do historii schowka platformy w tabeli
+// `wpis_schowka` z migracji 292 oraz do nastaw wykonawców w tabeli `ustawienie`.
 package dane
 
 import (
@@ -46,10 +23,6 @@ const (
 
 // DopiszWpisSchowkaStudia odkłada fragment dokumentu w historii schowka
 // platformy i mówi, czy treść była już odłożona.
-//
-// Odcisk liczy się z rodzaju i treści razem — tak samo jak w rodzinie
-// `clipboard.*`. Drugi rachunek odcisku rozjechałby warunek UNIQUE i ta sama
-// treść stałaby w historii dwa razy.
 func (r *repozytoriumStudia) DopiszWpisSchowkaStudia(ctx context.Context,
 	wpis WpisSchowka) (WpisSchowka, bool, error) {
 
@@ -107,7 +80,8 @@ func (r *repozytoriumStudia) DopiszWpisSchowkaStudia(ctx context.Context,
 	return zapisany, bylo, nil
 }
 
-// WpisSchowkaStudia oddaje wpis historii o wskazanym kodzie.
+// WpisSchowkaStudia oddaje wpis historii schowka platformy o wskazanym kodzie,
+// zapisany w tabeli `wpis_schowka`.
 func (r *repozytoriumStudia) WpisSchowkaStudia(ctx context.Context,
 	kod string) (WpisSchowka, error) {
 

@@ -1,14 +1,6 @@
-// Odpowiedzialność pliku: definicje nastaw poziomu `aplikacja` — tych, które
-// opisują sam program, a nie treść w nim prowadzoną.
-//
-// Nastawy wykonania (definicje_wykonania.go) i izolacji (definicje_izolacji.go)
-// rozstrzygają, jak platforma prowadzi rozmowę. Te rozstrzygają, jak stoi sam
-// rdzeń: czy nasłuch wymaga logowania. Poziom zasięgu, na którym mieszkają, jest
-// najszerszy i nie ma bytu — programu nie ma czym zawęzić.
-//
-// Klucz siedzi w tym samym rejestrze definicji, wartość w tej samej tabeli
-// `ustawienie`, a odczyt idzie tym samym rozstrzygaczem; rodzina
-// `config.get` / `config.set` / `config.reset` obsługuje go bez nowej komendy.
+// Plik definiuje nastawy poziomu aplikacja, opisujące sam program, a nie
+// prowadzoną w nim treść; klucz i wartość mieszkają w tym samym rejestrze
+// definicji i tabeli ustawienie, obsługiwane rodziną komend config.
 package konfig
 
 // KluczWymogLogowania jest kluczem nastawy „Wymóg logowania”. Nazwa klucza
@@ -23,14 +15,9 @@ const (
 	wymogLogowaniaZAdresu  = ""
 )
 
-// Klucze konta nadawczego platformy — skrzynki, z której rdzeń pisze dwa listy
-// systemowe: potwierdzenie adresu przy rejestracji i drogę odzyskania konta.
-//
-// Nastawy wchodzą także zmiennymi środowiska przy starcie
-// (`konfiguracja/srodowisko.go`); zapis w tabeli `ustawienie` je przesłania,
-// bo pomyłki w adresie serwera poczty nie da się naprawić bez zatrzymania
-// rdzenia, jeżeli jedyną drogą jest środowisko. To NIE jest skrzynka Operatora
-// — skrzynki Operatora prowadzi moduł Poczty z własnym sejfem poświadczeń.
+// Klucze konta nadawczego platformy, z którego rdzeń wysyła listy systemowe
+// potwierdzenia adresu i odzyskania konta; nie jest to skrzynka operatora,
+// prowadzona osobno przez moduł poczty.
 const (
 	KluczNadawcaHost     = "mailer.host"
 	KluczNadawcaPort     = "mailer.port"
@@ -47,22 +34,21 @@ const (
 // zestawem nazw.
 const KluczPowiadomieniaWlaczone = "powiadomienia.wlaczone"
 
-// KluczKlasyPowiadomien składa klucz czynności jednej klasy zdarzenia.
+// KluczKlasyPowiadomien składa klucz czynności jednej klasy zdarzenia, łącząc
+// prefiks sekcji powiadomień z kodem klasy z modelu danych.
 func KluczKlasyPowiadomien(klasa string) string {
 	return "powiadomienia.klasa." + klasa
 }
 
-// KluczKanalowPowiadomien składa klucz kanałów dodatkowych jednej klasy.
+// KluczKanalowPowiadomien składa klucz kanałów dodatkowych jednej klasy
+// zdarzenia, rozszerzając klucz czynności o segment kanałów.
 func KluczKanalowPowiadomien(klasa string) string {
 	return KluczKlasyPowiadomien(klasa) + ".kanaly"
 }
 
-// definicjeAplikacji zwraca nastawy poziomu `aplikacja`.
-//
-// Wartość domyślna wymogu logowania jest pusta, a nie „false”, bo nastawa ma
-// trzy stany (zob. transport/ustawienia.go): brak wskazania — rozstrzyga adres
-// nasłuchu, wskazanie „tak” i wskazanie „nie”. Domyślna `false` skasowałaby stan
-// pierwszy i zniosłaby wymóg na nasłuchu wystawionym poza pętlę zwrotną.
+// definicjeAplikacji zwraca nastawy poziomu aplikacja. Wartość domyślna
+// wymogu logowania jest pusta, nie fałsz, ponieważ nastawa niesie trzy
+// stany zależne od adresu nasłuchu.
 func definicjeAplikacji() []Definicja {
 	return []Definicja{
 		{

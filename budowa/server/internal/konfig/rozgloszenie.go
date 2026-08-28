@@ -1,35 +1,15 @@
-// Odpowiedzialność pliku: droga na żywo od zapisu nastawy do tego, kto z niej
-// korzysta. Bez tej drogi Operator zmienia nastawę i nic się nie dzieje, dopóki
-// czegoś nie przeładuje.
-//
-// Czym to nie jest.
-// To nie jest drugi mechanizm nastaw ani druga tabela. Rozgłośnia nie
-// przechowuje ani jednej wartości ustawienia z własnej woli: na każde ogłoszenie
-// pyta ten sam rozstrzygacz o rozstrzygnięcie w kontekście nasłuchującego
-// i podaje dalej to, co dostała. Jedynym stanem, jaki trzyma, jest zapis tego,
-// co już powiedziała — po to, by nie budzić nasłuchującego zmianą, której nie
-// było. Ledger „co powiedziano” nie jest źródłem wartości; jest pamięcią rozmowy.
-//
-// To nie jest własna usługa ani własny wątek.
-// Rozgłośnia nie odpala żadnej gorutyny, nie odpytuje niczego w pętli i nie ma
-// zegara. Doręczenie dzieje się w wątku tego, kto ogłosił zapis — czyli w torze
-// komendy `config.set`. Rdzeń korzysta z zasobów urządzenia i nie stawia
-// własnych usług.
-//
-// Kto ogłasza.
-// Droga zapisu: po udanym utrwaleniu wiersza tabeli `ustawienie` woła `Oglos`
-// z kluczem, który się zmienił. Ogłoszenie po zapisie, nie przed — nastawa,
-// która nie usiadła w bazie, nie jest zmianą nastawy. Punkty wywołania leżą
-// poza tym pakietem.
+// Plik prowadzi drogę na żywo od zapisu nastawy do jej odbiorców. Rozgłośnia
+// nie przechowuje wartości ustawień; przy ogłoszeniu pyta rozstrzygacz
+// o wynik dla kontekstu nasłuchu. Ogłoszenie następuje po udanym zapisie
+// w tabeli ustawienie.
 package konfig
 
 import "sync"
 
 // Zmiana to jedno doręczenie: klucz oraz jego rozstrzygnięcie w kontekście
-// nasłuchującego w chwili doręczenia. Nasłuchujący nie dostaje surowego wiersza
-// zapisu — dostaje wartość, która go obowiązuje po tym zapisie. Różnica jest
-// istotna: zapis na poziomie szerszym może nie zmienić nic, jeżeli nasłuchujący
-// ma wartość z poziomu węższego, i wtedy doręczenia nie będzie wcale.
+// nasłuchującego w chwili doręczenia. Zapis na poziomie szerszym może nie
+// zmienić wartości nasłuchującego, jeżeli ma on wartość z poziomu węższego,
+// i wtedy doręczenia nie będzie.
 type Zmiana struct {
 	Klucz string
 	Wynik Wynik
@@ -50,7 +30,8 @@ type nasluch struct {
 	ostatnie map[string]Wynik
 }
 
-// dotyczy odpowiada, czy nasłuch pytał o ten klucz.
+// dotyczy odpowiada, czy nasłuch zarejestrował zainteresowanie danym
+// kluczem wśród kluczy, na które czeka.
 func (n *nasluch) dotyczy(klucz string) bool {
 	_, jest := n.klucze[klucz]
 	return jest
@@ -82,7 +63,8 @@ type rozglosnia struct {
 	nasluchy map[uint64]*nasluch
 }
 
-// dodaj zapisuje nasłuch i zwraca jego numer.
+// dodaj zapisuje nasłuch na liście rozgłośni i zwraca jego numer, używany
+// później do jego wykreślenia.
 func (g *rozglosnia) dodaj(n *nasluch) uint64 {
 	g.zamek.Lock()
 	defer g.zamek.Unlock()
@@ -94,7 +76,8 @@ func (g *rozglosnia) dodaj(n *nasluch) uint64 {
 	return g.kolejny
 }
 
-// usun wykreśla nasłuch. Wykreślenie nieistniejącego nie jest błędem.
+// usun wykreśla nasłuch o podanym numerze z listy rozgłośni; wykreślenie
+// nasłuchu nieistniejącego nie jest błędem.
 func (g *rozglosnia) usun(numer uint64) {
 	g.zamek.Lock()
 	defer g.zamek.Unlock()
@@ -114,17 +97,10 @@ func (g *rozglosnia) wykaz() []*nasluch {
 	return migawka
 }
 
-// Sledz zapisuje nasłuchującego na wskazane klucze i doręcza mu od razu stan
-// bieżący, zanim jeszcze cokolwiek się zmieni.
-//
-// Pierwsze doręczenie jest częścią umowy, nie uprzejmością. Nasłuchujący, który
-// nie ma się przeładowywać, musi skądś wziąć punkt wyjścia; gdyby brał go
-// osobnym pytaniem, miałby dwie drogi do jednej wartości i wyścig między nimi
-// (zapis mieszczący się pomiędzy pytaniem a zapisaniem się zginąłby). Jedna
-// droga, jedno źródło.
-//
-// Zwrócona funkcja wykreśla nasłuch. Wołanie jej wielokrotnie jest bezpieczne.
-// Brak odbiorcy albo brak kluczy daje funkcję pustą — nie odmowę.
+// Sledz zapisuje nasłuchującego na wskazane klucze i doręcza mu od razu
+// stan bieżący, zanim cokolwiek się zmieni. Zwrócona funkcja wykreśla
+// nasłuch i jest bezpieczna do wielokrotnego wołania; brak odbiorcy albo
+// brak kluczy daje funkcję pustą.
 func (r *Rozstrzygacz) Sledz(kontekst Kontekst, klucze []string, odbiorca Odbiorca) func() {
 	if r == nil || odbiorca == nil {
 		return func() {}
@@ -151,7 +127,8 @@ func (r *Rozstrzygacz) Sledz(kontekst Kontekst, klucze []string, odbiorca Odbior
 	return func() { raz.Do(func() { r.rozglos.usun(numer) }) }
 }
 
-// kluczeWykazem zamienia zbiór kluczy na wykaz do doręczenia.
+// kluczeWykazem zamienia zbiór kluczy nasłuchu na wykaz kluczy przekazywany
+// dalej przy doręczeniu zmiany nasłuchującemu.
 func kluczeWykazem(zbior map[string]struct{}) []string {
 	wykaz := make([]string, 0, len(zbior))
 	for klucz := range zbior {
@@ -160,14 +137,9 @@ func kluczeWykazem(zbior map[string]struct{}) []string {
 	return wykaz
 }
 
-// Oglos zawiadamia nasłuchujących, że wskazane klucze mogły się zmienić.
-// Woła się po udanym utrwaleniu zapisu.
-//
-// „mogły się zmienić", a nie „zmieniły się" — bo ogłaszający zna adres zapisu,
-// a nie skutek dla każdego nasłuchującego z osobna. Skutek liczy rozstrzygacz,
-// osobno dla kontekstu każdego nasłuchu, i tylko prawdziwa różnica idzie dalej.
-// Dzięki temu zapis na poziomie okna nie budzi nasłuchu poziomu aplikacji,
-// a zapis na poziomie aplikacji nie budzi nikogo, kto ma wartość z węższego.
+// Oglos zawiadamia nasłuchujących, że wskazane klucze mogły się zmienić;
+// woła się po udanym utrwaleniu zapisu. Rozstrzygacz liczy skutek osobno dla
+// kontekstu każdego nasłuchu, więc dalej idzie tylko prawdziwa różnica.
 func (r *Rozstrzygacz) Oglos(klucze ...string) {
 	if r == nil || len(klucze) == 0 {
 		return
@@ -178,26 +150,17 @@ func (r *Rozstrzygacz) Oglos(klucze ...string) {
 }
 
 // Nastawa jest uchwytem na żywo do jednego klucza: trzyma rozstrzygnięcie
-// obowiązujące teraz i odświeża je samo, ogłoszeniem, bez pytania i bez
-// przeładowania.
-//
-// Po co uchwyt, skoro jest `Rozstrzygnij`. Bo korzystający siedzi na drodze
-// gorącej — straż bramki rozstrzyga przy każdym pakiecie z gniazda — a
-// `Rozstrzygnij` schodzi po wartość do warstwy trwałości. Uchwyt zdejmuje ten
-// koszt, nie zdejmując prawdy: wartość w nim nie starzeje się nigdy, bo każdy
-// zapis ją nadpisuje w tej samej chwili, w której siada w bazie.
-//
-// I dlatego nie jest to druga prawda. Druga prawda to wartość, która
-// może się rozjechać ze źródłem. Ta rozjechać się nie może — jedyną drogą jej
-// zmiany jest ogłoszenie ze źródła, a własnego zapisu uchwyt nie przyjmuje.
+// obowiązujące teraz i odświeża je samo ogłoszeniem, bez pytania i
+// przeładowania. Wartość nie starzeje się, bo każdy zapis nadpisuje ją
+// w chwili zapisania w bazie.
 type Nastawa struct {
 	zamek   sync.RWMutex
 	wynik   Wynik
 	odwolaj func()
 }
 
-// NastawaNaZywo zapisuje uchwyt na nasłuch klucza i zwraca go już wypełniony
-// wartością bieżącą.
+// NastawaNaZywo zapisuje uchwyt na nasłuch klucza w rozgłośni i zwraca go
+// już wypełniony wartością bieżącą rozstrzygnięcia.
 func (r *Rozstrzygacz) NastawaNaZywo(kontekst Kontekst, klucz string) *Nastawa {
 	n := &Nastawa{}
 	n.odwolaj = r.Sledz(kontekst, []string{klucz}, func(z Zmiana) {
@@ -219,7 +182,8 @@ func (n *Nastawa) Wynik() Wynik {
 	return n.wynik
 }
 
-// Wartosc zwraca samą wartość rozstrzygnięcia.
+// Wartosc zwraca samą wartość rozstrzygnięcia trzymanego przez uchwyt,
+// pomijając pozostałe pola struktury Wynik.
 func (n *Nastawa) Wartosc() string {
 	return n.Wynik().Wartosc
 }

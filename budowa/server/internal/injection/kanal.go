@@ -16,7 +16,8 @@ type Kanal struct {
 	pula *PulaKont
 }
 
-// NowyKanal składa kanał nad pulą kont.
+// NowyKanal składa nowy Kanal nad przekazaną pulą kont, gotowy od razu do
+// prowadzenia rozmów z modelem.
 func NowyKanal(pula *PulaKont) *Kanal {
 	if pula == nil {
 		pula = NowaPula()
@@ -24,19 +25,14 @@ func NowyKanal(pula *PulaKont) *Kanal {
 	return &Kanal{pula: pula}
 }
 
-// Pula udostępnia pulę kont — rejestr kanałów pokazuje jej stan Operatorowi.
+// Pula udostępnia pulę kont, nad którą kanał pracuje, do odczytu jej stanu
+// przez rejestr kanałów platformy.
 func (k *Kanal) Pula() *PulaKont {
 	return k.pula
 }
 
-// Rozmowa przeprowadza jedną turę i oddaje strumień fragmentów. Kanał nigdy
-// nie zwraca błędu obok strumienia: każda przeszkoda jedzie fragmentem rodzaju
-// „błąd" i domyka strumień, przez co jedna droga obsługuje i powodzenie,
-// i niepowodzenie.
-//
-// Strumień zaczyna się fragmentem prowenancji, potem idą fragmenty treści,
-// a kończy fragment ze znacznikiem ostatniego i podsumowaniem tury. To ono
-// wybudza koordynatora w pętli koordynator–wykonawca.
+// Rozmowa przeprowadza jedną turę i oddaje strumień fragmentów; kanał nigdy
+// nie zwraca błędu obok strumienia.
 func (k *Kanal) Rozmowa(kontekst context.Context, z Zapytanie) <-chan Fragment {
 	strumien := make(chan Fragment)
 	go func() {
@@ -46,10 +42,10 @@ func (k *Kanal) Rozmowa(kontekst context.Context, z Zapytanie) <-chan Fragment {
 	return strumien
 }
 
-// prowadz prowadzi turę razem z rotacją kont.
+// prowadz prowadzi jedną turę razem z rotacją kont, próbując kolejnych kont
+// puli po kolei aż do sukcesu.
 func (k *Kanal) prowadz(kontekst context.Context, z Zapytanie, na chan<- Fragment) {
-	// Konto wskazane wygrywa z rotacją i jest rozkazem tożsamości:
-	// tura jedzie dokładnie nim albo mówi wprost, dlaczego nie pojedzie.
+	// Konto wskazane wygrywa z rotacją i jest rozkazem tożsamości tury.
 	if z.Ustawienia.Konto != "" {
 		k.prowadzWskazanym(kontekst, z, na)
 		return
@@ -58,11 +54,8 @@ func (k *Kanal) prowadz(kontekst context.Context, z Zapytanie, na chan<- Fragmen
 	for proba := 1; proba <= len(k.pula.Konta())+1; proba++ {
 		konto, jest := k.pula.Biezace()
 		if !jest {
-			// Pula pusta ≠ pula wyczerpana. Brak kont znaczy, że
-			// Operator nie wskazał tożsamości — tura idzie z tożsamością
-			// otoczenia, czyli bez CLAUDE_CONFIG_DIR (proces.go pomija zmienną
-			// przy pustym katalogu). Odmowa w tym miejscu zablokowałaby pierwszą
-			// turę na świeżej instalacji.
+			// Pula pusta nie znaczy pula wyczerpana: brak kont oznacza tożsamość
+			// otoczenia, nie odmowę.
 			if !k.pula.Pusta() {
 				zakonczBledem(kontekst, na, z, shared.ErrorCodeChannelUnavailable,
 					"wszystkie konta puli mają wyczerpany limit; kolejne próby pozostają otwarte")
@@ -77,9 +70,7 @@ func (k *Kanal) prowadz(kontekst context.Context, z Zapytanie, na chan<- Fragmen
 			return
 		}
 
-		// Pułap sprawdza się przed wyczerpaniem i zatrzymuje rotację: kolejne
-		// konto puli wydałoby dokładnie tę kwotę, której Operator wydać zabronił
-		// (pulap.go).
+		// Pułap sprawdza się przed wyczerpaniem i zatrzymuje rotację kont puli.
 		if pulap, naPulapie := rozpoznajPulap(wynik.Obserwacja, wynik.Bledy); naPulapie {
 			zakonczPulapem(kontekst, na, z, pulap)
 			return
@@ -102,13 +93,8 @@ func (k *Kanal) prowadz(kontekst context.Context, z Zapytanie, na chan<- Fragmen
 		"pula kont wyczerpana w tej turze; sesja pozostaje czynna")
 }
 
-// prowadzWskazanym prowadzi turę na koncie wskazanym konfiguracją.
-//
-// Rotacji tu nie ma: wskazanie konta ustala tożsamość okna, a cicha podmiana
-// na inne konto po wyczerpaniu limitu wykonałaby turę tożsamością, której
-// Operator nie wybrał. Wyczerpanie zostaje odnotowane w puli (ślad i trwałość
-// limitu), a tura kończy się tym, co konto oddało; konto spoza puli daje
-// odmowę, nie inną tożsamość.
+// prowadzWskazanym prowadzi turę na koncie wskazanym konfiguracją, bez
+// rotacji na inne konto po wyczerpaniu limitu.
 func (k *Kanal) prowadzWskazanym(kontekst context.Context, z Zapytanie, na chan<- Fragment) {
 	konto, jest := k.pula.PoKodzie(z.Ustawienia.Konto)
 	if !jest {
@@ -126,7 +112,7 @@ func (k *Kanal) prowadzWskazanym(kontekst context.Context, z Zapytanie, na chan<
 		return
 	}
 	if wyczerpanie, wyczerpane := rozpoznajWyczerpanie(wynik.Obserwacja, wynik.Bledy); wyczerpane {
-		// Ślad wyczerpania idzie do puli, ale przełączenia nie ma — patrz nagłówek.
+		// Ślad wyczerpania idzie do puli, ale przełączenia konta tu nie ma.
 		k.pula.Wyczerpane(konto.Kod, wyczerpanie.DoChwili)
 	}
 	zakoncz(kontekst, na, z, wynik.Obserwacja.Tura, konto.Kod)

@@ -9,7 +9,8 @@ import (
 // kolumnie ustawienie.rodzaj_wartosci.
 type Rodzaj string
 
-// Wartości Rodzaj.
+// Wartości typu Rodzaj: tekst, liczba, wartość logiczna oraz JSON, zgodne
+// z rodzajami dopuszczonymi w bazie.
 const (
 	RodzajTekst    Rodzaj = "tekst"
 	RodzajLiczba   Rodzaj = "liczba"
@@ -17,7 +18,8 @@ const (
 	RodzajJSON     Rodzaj = "json"
 )
 
-// rodzajeZnane zamyka zbiór wartości dopuszczonych przez schemat bazy.
+// rodzajeZnane zamyka zbiór wartości dopuszczonych przez schemat bazy,
+// wykorzystywany przez metodę Znany.
 var rodzajeZnane = map[Rodzaj]struct{}{
 	RodzajTekst:    {},
 	RodzajLiczba:   {},
@@ -25,7 +27,8 @@ var rodzajeZnane = map[Rodzaj]struct{}{
 	RodzajJSON:     {},
 }
 
-// Znany odpowiada, czy rodzaj mieści się w zbiorze dopuszczonym przez schemat.
+// Znany odpowiada, czy rodzaj mieści się w zbiorze wartości dopuszczonych
+// przez schemat bazy, sprawdzając mapę rodzajeZnane.
 func (r Rodzaj) Znany() bool {
 	_, jest := rodzajeZnane[r]
 	return jest
@@ -42,8 +45,7 @@ func RodzajLubTekst(rodzaj Rodzaj) Rodzaj {
 
 // KodujJSON zamienia wartość zapisaną w bazie na treść pola value koperty
 // kontraktu. Liczba, wartość logiczna i JSON idą surowo, jeżeli są poprawnym
-// JSON-em; wszystko pozostałe idzie jako napis. Funkcja nigdy nie zawodzi —
-// wartość uszkodzona trafia do kontraktu jako napis, nie jako błąd.
+// JSON-em; wszystko pozostałe idzie jako napis. Funkcja nigdy nie zawodzi.
 func KodujJSON(wartosc string, rodzaj Rodzaj) json.RawMessage {
 	switch RodzajLubTekst(rodzaj) {
 	case RodzajLiczba, RodzajLogiczna, RodzajJSON:

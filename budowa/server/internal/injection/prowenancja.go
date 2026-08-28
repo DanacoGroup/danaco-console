@@ -28,9 +28,7 @@ type Prowenancja struct {
 	Wznowienie      string   `json:"resume"`
 	Konto           string   `json:"account"`
 	KatalogKonta    string   `json:"accountConfigDir"`
-	// ZrodloKonta nazywa drogę, którą tożsamość weszła do wywołania: wskazanie
-	// konfiguracji, kolejność puli, rotacja po wyczerpaniu albo tożsamość
-	// otoczenia.
+	// ZrodloKonta nazywa drogę, którą tożsamość weszła do wywołania programu.
 	ZrodloKonta string    `json:"accountOrigin,omitempty"`
 	Proba       int       `json:"attempt"`
 	PowodProby  string    `json:"attemptReason,omitempty"`
@@ -65,7 +63,8 @@ func ZlozProwenancje(u Ustawienia, n Nakladka, argv []string, konto Konto, proba
 	}
 }
 
-// zrodloKonta nazywa drogę, którą tożsamość weszła do wywołania.
+// zrodloKonta nazywa drogę, którą tożsamość weszła do wywołania programu,
+// wśród czterech możliwych źródeł.
 func zrodloKonta(u Ustawienia, konto Konto, proba int) string {
 	switch {
 	case u.Konto != "":

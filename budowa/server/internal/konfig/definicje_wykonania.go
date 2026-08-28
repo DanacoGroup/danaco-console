@@ -20,9 +20,9 @@ const (
 )
 
 // definicjeWykonania zwraca ustawienia sterujące wykonaniem okna komunikacji.
-// Wartości domyślne pochodzą ze stałych kontraktu — pakiet nie powiela literałów
-// wyliczeń. Wartość pusta znaczy „bez wskazania na tym poziomie",
-// czyli decyduje rejestr kanałów albo sam kanał; nie jest to blokada.
+// Wartości domyślne pochodzą ze stałych kontraktu. Wartość pusta znaczy brak
+// wskazania na tym poziomie i pozostawia decyzję rejestrowi kanałów albo
+// samemu kanałowi.
 func definicjeWykonania() []Definicja {
 	return []Definicja{
 		{

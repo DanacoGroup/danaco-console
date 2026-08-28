@@ -1,9 +1,5 @@
-// Odpowiedzialność pliku: zależności między zadaniami projektu (tabela
-// `zaleznosc_zadan_projektu`).
-//
-// Baza pilnuje jednoznaczności krawędzi; cyklu nie pilnuje, bo cykl rozpoznaje
-// się przejściem grafu, a nie warunkiem kolumny. Przejście robi rdzeń przed
-// zapisem — tutaj leży wyłącznie odczyt i zapis.
+// Repozytorium przechowuje zależności między zadaniami projektu w tabeli
+// `zaleznosc_zadan_projektu`, pilnując jednoznaczności każdej krawędzi.
 package dane
 
 import (
@@ -15,7 +11,8 @@ import (
 	"danacoconsole/shared"
 )
 
-// ZaleznoscWorkspace to wiersz zależności między dwoma zadaniami.
+// ZaleznoscWorkspace to wiersz tabeli `zaleznosc_zadan_projektu`, reprezentujący
+// zależność między dwoma zadaniami.
 type ZaleznoscWorkspace struct {
 	ProjektID     int64
 	Identyfikator string
@@ -75,7 +72,8 @@ func (r *repozytoriumPrzestrzeniRoboczej) ZapiszZaleznoscWorkspace(ctx context.C
 	return zapisana, nil
 }
 
-// ZaleznoscWorkspace zwraca jedną zależność po identyfikatorze.
+// ZaleznoscWorkspace zwraca z tabeli `zaleznosc_zadan_projektu` jedną
+// zależność po jej identyfikatorze.
 func (r *repozytoriumPrzestrzeniRoboczej) ZaleznoscWorkspace(ctx context.Context,
 	identyfikator string) (ZaleznoscWorkspace, error) {
 
@@ -94,7 +92,8 @@ func (r *repozytoriumPrzestrzeniRoboczej) ZaleznoscWorkspace(ctx context.Context
 	return zaleznosc, nil
 }
 
-// ZaleznosciWorkspace zwraca komplet zależności projektu.
+// ZaleznosciWorkspace zwraca z tabeli `zaleznosc_zadan_projektu` komplet
+// zależności całego projektu naraz.
 func (r *repozytoriumPrzestrzeniRoboczej) ZaleznosciWorkspace(ctx context.Context,
 	projektID int64) ([]ZaleznoscWorkspace, error) {
 
@@ -143,7 +142,8 @@ func (r *repozytoriumPrzestrzeniRoboczej) UsunZaleznoscWorkspace(ctx context.Con
 	return zmienione > 0, nil
 }
 
-// odczytajZaleznoscWorkspace składa strukturę z jednego wiersza wyniku.
+// odczytajZaleznoscWorkspace składa strukturę ZaleznoscWorkspace z jednego
+// wiersza wyniku zapytania SQL.
 func odczytajZaleznoscWorkspace(wiersz skaner) (ZaleznoscWorkspace, error) {
 	var zaleznosc ZaleznoscWorkspace
 	var rodzaj string

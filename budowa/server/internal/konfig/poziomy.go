@@ -1,10 +1,7 @@
-// Pakiet konfig rozstrzyga ustawienia platformy na dziewięciu poziomach zasięgu
-// i dla każdej wartości wskazuje, skąd pochodzi.
-//
-// Zasada nadrzędna pakietu: brak ustawienia nie jest blokadą, lecz sięgnięciem
-// po wartość szerszego poziomu, a w ostateczności po wartość domyślną z rejestru
-// definicji. Żadna ścieżka pakietu nie odmawia rozstrzygnięcia — także błąd
-// źródła danych kończy się polityką domyślną.
+// Pakiet konfig rozstrzyga ustawienia platformy na dziewięciu poziomach
+// i wskazuje, skąd pochodzi wartość. Brak ustawienia nie jest blokadą, lecz
+// sięgnięciem po wartość szerszego poziomu, a w ostateczności po wartość
+// domyślną rejestru definicji.
 package konfig
 
 import "danacoconsole/shared"
@@ -24,14 +21,10 @@ const PoziomAplikacji Poziom = shared.ConfigScopeApplication
 // żadnym poziomie i pochodzi z rejestru definicji.
 const PoziomBrak Poziom = ""
 
-// poziomyOdNajwezszego wylicza dziewięć poziomów w kolejności rozstrzygania:
-// od najwęższego (okno komunikacji) do najszerszego (aplikacja).
-// Kolejność jest odwrotnością kolumny poziom_zasiegu.pierwszenstwo.
-//
-// Aplikacja stoi na końcu, czyli przegrywa ze wszystkim. Poziom ten opisuje sam
-// program — wymóg logowania, postać nasłuchu — a nie treść w nim prowadzoną,
-// więc zapis na którymkolwiek z ośmiu poziomów treści wygrywa nad poziomem
-// aplikacji.
+// poziomyOdNajwezszego wylicza dziewięć poziomów w kolejności rozstrzygania,
+// od najwęższego okna komunikacji do najszerszej aplikacji. Poziom aplikacja
+// opisuje program, nie prowadzoną treść, więc zapis na każdym z ośmiu
+// poziomów treści wygrywa nad nim.
 var poziomyOdNajwezszego = []Poziom{
 	shared.ConfigScopeWindow,
 	shared.ConfigScopeRole,
@@ -44,12 +37,10 @@ var poziomyOdNajwezszego = []Poziom{
 	shared.ConfigScopeApplication,
 }
 
-// pierwszenstwaPoziomow służy wyłącznie za zbiór poziomów znanych (funkcja
-// Znany niżej) — wartości liczbowe nie są tu porównywane z niczym, bo kolejność
-// rozstrzygania niesie sama kolejność wykazu wyżej. Kolumna
-// poziom_zasiegu.pierwszenstwo mieszka w bazie i jest jej własną numeracją
-// (aplikacja 0, globalny 1, ..., okno 8); powielanie jej tutaj byłoby drugą
-// prawdą o tej samej kolejności.
+// pierwszenstwaPoziomow służy wyłącznie jako zbiór poziomów znanych dla
+// funkcji Znany; kolejność rozstrzygania niesie sama kolejność wykazu
+// poziomyOdNajwezszego, a wartości liczbowe nie są porównywane z niczym
+// innym.
 var pierwszenstwaPoziomow = zbudujPierwszenstwa()
 
 func zbudujPierwszenstwa() map[Poziom]int {
@@ -60,7 +51,8 @@ func zbudujPierwszenstwa() map[Poziom]int {
 	return wynik
 }
 
-// Znany odpowiada, czy poziom należy do dziewięciu poziomów kontraktu.
+// Znany odpowiada, czy poziom należy do dziewięciu poziomów kontraktu,
+// wykorzystując zbiór zbudowany z wykazu poziomów.
 func Znany(poziom Poziom) bool {
 	_, jest := pierwszenstwaPoziomow[poziom]
 	return jest

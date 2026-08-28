@@ -1,16 +1,6 @@
-// Odpowiedzialność pliku: byty wyposażenia modułu Terminal — książka hostów,
-// biblioteka skryptów, wykaz kluczy SSH, przekierowania portów i obserwacje
-// plików — wraz z ich kontraktem repozytoryjnym. Odczyt leży
-// w `terminal_wyposazenie_odczyt.go`, zapis w `terminal_wyposazenie_zapis.go`.
-//
-// Dlaczego jeden kontrakt, a nie pięć. Wszystkie te byty należą do jednego
-// modułu i jednego adaptera rdzenia; rozbicie ich na pięć interfejsów dałoby
-// pięć pól w zestawie repozytoriów i pięć podpięć w montażu, a ani jednej
-// nowej granicy. Granica jest tu modułowa — Terminal — i tak ją prowadzimy.
-//
-// Czego w tych bytach NIE MA: materiału tajnego. Wpis hosta niesie adres i
-// wskazanie klucza, wpis klucza — ścieżkę i odcisk. Hasło i klucz prywatny
-// zostają na dysku maszyny rdzenia; baza nie jest sejfem.
+// Repozytorium wystawia kontrakt trwałości bytów wyposażenia modułu Terminal:
+// książki hostów, biblioteki skryptów, wykazu kluczy SSH, przekierowań portów
+// i obserwacji plików.
 package dane
 
 import (
@@ -19,7 +9,8 @@ import (
 	"danacoconsole/shared"
 )
 
-// HostTerminala to wiersz tabeli `terminal_host` — jeden wpis książki hostów.
+// HostTerminala to wiersz tabeli `terminal_host`, reprezentujący jeden wpis
+// książki hostów modułu Terminal.
 type HostTerminala struct {
 	Kod             string
 	Nazwa           string
@@ -34,16 +25,17 @@ type HostTerminala struct {
 	Zaktualizowano  string
 }
 
-// FiltrHostowTerminala zawęża książkę hostów. Pole puste nie zawęża niczego.
+// FiltrHostowTerminala zawęża wykaz zwracanych hostów książki; pole
+// pozostawione puste nie zawęża niczego.
 type FiltrHostowTerminala struct {
 	Grupa string
-	// Fraza szukana w nazwie, adresie celu i notatce; porównanie bez
-	// rozróżniania wielkości liter leży po stronie zapytania.
+	// Fraza szukana w nazwie, adresie celu i notatce, bez rozróżniania
+	// wielkości liter.
 	Fraza string
 }
 
-// SkryptTerminala to wiersz tabeli `terminal_skrypt` — jedna pozycja biblioteki
-// w brzmieniu bieżącym.
+// SkryptTerminala to wiersz tabeli `terminal_skrypt`, jedna pozycja biblioteki
+// skryptów w brzmieniu bieżącym.
 type SkryptTerminala struct {
 	Kod            string
 	Nazwa          string
@@ -58,7 +50,8 @@ type SkryptTerminala struct {
 	Zaktualizowano string
 }
 
-// FiltrSkryptowTerminala zawęża bibliotekę skryptów.
+// FiltrSkryptowTerminala zawęża wykaz zwracanych pozycji biblioteki skryptów;
+// pole puste nie zawęża niczego.
 type FiltrSkryptowTerminala struct {
 	Rodzaj shared.TerminalScriptKind
 	// Znacznik szukany w rozdzielanym przecinkiem wykazie znaczników pozycji.
@@ -67,7 +60,8 @@ type FiltrSkryptowTerminala struct {
 	Fraza string
 }
 
-// KluczTerminala to wiersz tabeli `terminal_klucz` — jeden klucz SSH wykazu.
+// KluczTerminala to wiersz tabeli `terminal_klucz`, reprezentujący jeden
+// klucz SSH wykazu modułu Terminal.
 type KluczTerminala struct {
 	Kod        string
 	Nazwa      string
@@ -79,7 +73,8 @@ type KluczTerminala struct {
 	Utworzono  string
 }
 
-// TunelTerminala to wiersz tabeli `terminal_tunel` — jedno przekierowanie portu.
+// TunelTerminala to wiersz tabeli `terminal_tunel`, reprezentujący jedno
+// przekierowanie portu terminala.
 type TunelTerminala struct {
 	Kod          string
 	OknoKod      string
@@ -95,7 +90,8 @@ type TunelTerminala struct {
 	Zamknieto    *string
 }
 
-// FiltrTuneliTerminala zawęża wykaz przekierowań portów.
+// FiltrTuneliTerminala zawęża wykaz zwracanych przekierowań portów terminala;
+// pole puste nie zawęża niczego.
 type FiltrTuneliTerminala struct {
 	OknoKod string
 	Stan    shared.TerminalTunnelStatus
@@ -118,7 +114,8 @@ type ObserwacjaTerminala struct {
 	Zalozono      string
 }
 
-// FiltrObserwacjiTerminala zawęża wykaz obserwacji plików.
+// FiltrObserwacjiTerminala zawęża wykaz zwracanych obserwacji plików
+// terminala; pole puste nie zawęża niczego.
 type FiltrObserwacjiTerminala struct {
 	OknoKod string
 	Stan    shared.TerminalWatchStatus
@@ -133,16 +130,12 @@ type RepozytoriumWyposazeniaTerminala interface {
 	Host(ctx context.Context, kod string) (HostTerminala, error)
 	Hosty(ctx context.Context, filtr FiltrHostowTerminala) ([]HostTerminala, error)
 	UsunHosta(ctx context.Context, kod string) (bool, error)
-	// OdepnijKlucz zdejmuje wskazanie klucza z wpisów, które go używały,
-	// i oddaje ich kody. Wpisy wracają wtedy do klucza domyślnego konfiguracji
-	// maszyny rdzenia — kontrakt `terminal.key.remove` wymaga ich wymienienia.
+	// OdepnijKlucz zdejmuje wskazanie klucza z wpisów, które go używały, i oddaje
+	// ich kody.
 	OdepnijKlucz(ctx context.Context, kluczKod string) ([]string, error)
 
-	// ── Biblioteka skryptów ─────────────────────────────────────────────────
-	// ZapiszSkrypt zakłada pozycję albo dokłada jej kolejną wersję. Zwraca
-	// nadany numer wersji oraz prawdę, gdy pozycja powstała. Numeru wersji nie
-	// przyjmuje od wołającego: nadaje go rdzeń w jednej transakcji z zapisem,
-	// żeby dwa równoległe zapisy nie dostały tego samego numeru.
+	// ZapiszSkrypt zakłada pozycję biblioteki albo dokłada kolejną wersję
+	// i oddaje nadany numer.
 	ZapiszSkrypt(ctx context.Context, skrypt SkryptTerminala) (int64, bool, error)
 	Skrypt(ctx context.Context, kod string) (SkryptTerminala, error)
 	Skrypty(ctx context.Context, filtr FiltrSkryptowTerminala) ([]SkryptTerminala, error)
@@ -160,9 +153,8 @@ type RepozytoriumWyposazeniaTerminala interface {
 	Tunele(ctx context.Context, filtr FiltrTuneliTerminala) ([]TunelTerminala, error)
 	ZmienStanTunelu(ctx context.Context, kod string, stan shared.TerminalTunnelStatus,
 		powod string, zamkniety bool) error
-	// OsierocTunele przestawia tunele zostawione w stanie `active` przez
-	// poprzedni bieg rdzenia na `inactive`; po restarcie żaden z nich nie
-	// przenosi już ani jednego bajtu.
+	// OsierocTunele przestawia tunele stanu `active` z poprzedniego biegu
+	// rdzenia na `inactive`.
 	OsierocTunele(ctx context.Context) (int64, error)
 
 	// ── Obserwacje plików ───────────────────────────────────────────────────

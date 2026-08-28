@@ -14,8 +14,8 @@ type Ustawienia struct {
 	ModelZapasowy string
 	// Naklad jest nakładem rozumowania (--effort): low, medium, high, xhigh, max.
 	Naklad string
-	// TrybUprawnien jest wyliczeniem kontraktu; jego wartości odpowiadają
-	// dosłownie przełącznikowi --permission-mode.
+	// TrybUprawnien jest wyliczeniem kontraktu odpowiadającym przełącznikowi
+	// --permission-mode.
 	TrybUprawnien shared.PermissionMode
 	// Katalogi są listą katalogów roboczych okna. Każdy jedzie
 	// osobnym --add-dir.
@@ -27,25 +27,15 @@ type Ustawienia struct {
 	PlikUstawien string
 	// KonfiguracjaMCP to wykaz plików albo napisów JSON dla --mcp-config.
 	KonfiguracjaMCP []string
-	// Wznowienie jest identyfikatorem rozmowy CLI dla --resume. Bierze się
-	// z pola IdSesjiCLI poprzedniej tury.
+	// Wznowienie jest identyfikatorem rozmowy CLI dla przełącznika --resume.
 	Wznowienie string
-	// PulapKosztuUSD jest górną granicą kosztu tego wywołania, w dolarach —
-	// trafia do --max-budget-usd (klucz `pulap_kosztu_usd`).
-	//
-	// Pułap jest zapobiegawczy, a nie sprawozdawczy: pole `Koszt` fragmentu
-	// zamknięcia tury mówi, ile wydano, a to pole mówi, ile wydać wolno.
-	// Zero (i tak samo wartość ujemna, której Operator wpisać nie powinien,
-	// ale wpisać może) znaczy „przełącznika nie podajemy" — wywołanie idzie
-	// bez ograniczenia.
+	// PulapKosztuUSD jest górną granicą kosztu wywołania w dolarach; zero
+	// znaczy brak ograniczenia.
 	PulapKosztuUSD float64
 	// Srodowisko jest zestawem zmiennych dokładanych do środowiska procesu.
-	// CLAUDE_CONFIG_DIR ustawia pula kont i tutaj go nie podajemy.
 	Srodowisko map[string]string
-	// Konto jest kodem konta wskazanego dla tego wywołania: obszar
-	// account konfiguracji sesji albo wiersz rejestru kanałów. Puste znaczy
-	// rotację puli. Wskazanie jest rozkazem tożsamości:
-	// tura nie pojedzie innym kontem niż wskazane — bez cichej podmiany.
+	// Konto jest kodem konta wskazanego dla tego wywołania; puste znaczy
+	// rotację puli.
 	Konto string
 }
 
@@ -58,15 +48,11 @@ type Zapytanie struct {
 	IdWiadomosci string
 	// Tekst jest wypowiedzią użytkownika wysyłaną na stdin jako JSON-lines.
 	Tekst string
-	// NaStartProcesu zawiadamia o uruchomieniu procesu tury wraz z jego PID.
-	// Warstwa sesji obejmuje ten proces uchwytem systemowym, dzięki czemu
-	// zamknięcie okna kończy także jego potomstwo. Haczyk pusty nie zmienia
-	// przebiegu tury — znika wyłącznie sprzątanie po niej.
+	// NaStartProcesu zawiadamia o uruchomieniu procesu tury wraz z jego PID
+	// systemowym.
 	NaStartProcesu func(pid int)
-	// NaZdarzenieZaczepu oddaje zdarzenie zaczepu odczytane ze strumienia.
-	// Odbiorcą jest warstwa składania — dziennik zdarzeń i diagnostyka;
-	// kanał zdarzenia nie interpretuje. Haczyk pusty nie zmienia przebiegu
-	// tury — znika wyłącznie ślad zaczepów.
+	// NaZdarzenieZaczepu oddaje zdarzenie zaczepu odczytane ze strumienia
+	// warstwie składania.
 	NaZdarzenieZaczepu func(ZdarzenieZaczepu)
 	// Ustawienia i Nakladka opisują to wywołanie.
 	Ustawienia Ustawienia

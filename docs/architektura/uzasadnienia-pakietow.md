@@ -6119,3 +6119,59 @@ też jej nie rozróżnia, inaczej ta sama ścieżka zapisana inną wielkością
 omijałaby obszar.
 ## budowa/server/internal/dane/studio_strona_znaki.go
 Nie ma tu tablicy znaków: nazwy znaków, ich punkty kodowe i grupy są wiedzą rdzenia, tak samo jak arkusz stylów fabryczny i wykaz nośników druku, więc do bazy schodzi wyłącznie to, co Operator zmienił albo czym się posłużył. Drugi wykaz znaków w tabeli rozjechałby się z wykazem rdzenia przy pierwszym uzupełnieniu. Wykaz zasad autozamiany jest odwrotnie: stoi w bazie, także w części fabrycznej, bo migracja tak go założyła i bo Operator ma prawo zasadę fabryczną wyłączyć; powtórzenie wykazu fabrycznego w kodzie rdzenia dałoby dwie prawdy o tym, co wchodzi w miejsce skrótu. Zmiana zasady fabrycznej nie zdejmuje jej oznaczenia: Operator, który wyłączył zasadę fabryczną, nadal ma przed sobą zasadę fabryczną wyłączoną, a nie zasadę własną, którą wolno usunąć; bez tego rozróżnienia dałoby się usunąć zasadę fabryczną, wpisując ją najpierw jako własną, czyli obejściem. Nazwy pomocnicze tego pliku niosą wspólny przedrostek, bo przestrzeń nazw pakietu jest dzielona z innymi wykonawcami.
+
+## budowa/server/internal/transport/tozsamosc.go
+
+Tożsamość mieszka przy połączeniu, tam, gdzie już mieszka konto, i wchodzi do kontekstu żądania tą samą
+jedną drogą, którą wchodził identyfikator gniazda. Nie powstaje ani drugi wpis kontekstu, ani drugi
+rejestr, ani pole w kopercie kontraktu, ponieważ koperta jest zamrożona, a tożsamość i tak nie jest
+własnością komunikatu, tylko własnością łącza. Fakty biorą się z dwóch źródeł składanych w jeden skład:
+przy nawiązaniu serwer narzędzi modelu przedstawia się parametrami zapytania przy zestawianiu gniazda,
+tą samą drogą, którą urządzenie od zawsze wskazuje konto, ponieważ jest klientem wołającym komendy,
+a nie oknem interfejsu, więc powitania nie wysyła; przy powitaniu okno interfejsu niesie identyfikator
+klienta w komunikacie powitalnym, a transport odczytuje je z ładunku powitania i dokłada do tożsamości
+połączenia. Transport niczego nie rozstrzyga: nie zna pojęcia rodzaju sprawcy, nie wie, co to operator
+ani asystent, i nie ma w tym pliku ani jednej wartości wyliczenia kontraktu — niesie fakty, a
+rozstrzygnięcie, czyja to ręka, należy do rdzenia, bo tylko rdzeń zna rolę okna. To nie jest uprawnienie:
+tożsamość nie rozstrzyga ani razu, czy coś wolno, tym zajmuje się wyłącznie straż bramki i pyta
+o zupełnie co innego; parametr podany przez wołającego jest tu opisem, więc jego podrobienie niczego
+nie otwiera — gdyby cokolwiek od niego zależało, byłby bramką.
+
+Parametr klienta nazywa parametr zapytania i nagłówek, którymi klient przedstawia swój identyfikator
+już przy nawiązaniu; okno interfejsu go nie używa, jemu wystarczy powitanie, ale klient bez powitania,
+czyli serwer narzędzi modelu, innej drogi nie ma. Parametr rodzaju niesie rodzaj klienta, czym jest
+program po drugiej stronie gniazda, a wartość znaną transportowi jest jedna — rodzaj narzędzi. Parametr
+zasięgu niesie rolę okna, w którego imieniu pracuje serwer narzędzi; transport wartości tej nie zna
+i nie porównuje, przenosi napis, bo import w tę stronę odwróciłby zależność. Parametr okna niesie okno
+rozmowy serwera narzędzi — do rozstrzygnięcia sprawcy niepotrzebne, do zrozumienia dziennika konieczne.
+Stała oznaczająca rodzaj narzędzi stoi w tym pliku, a nie w pakiecie narzędzi, żeby obie strony rozmowy,
+ta, która napis wysyła, i ta, która go czyta, brały go z jednego miejsca.
+
+Rdzeń ma milczenie pola tożsamości przenieść dalej — kontrakt mówi o polu sprawcy wprost, że brak
+znaczy, iż rdzeń nie potrafił tego rozstrzygnąć; „nie wiadomo" to stan zwykły dla gniazda, które jeszcze
+się nie przedstawiło.
+
+Parametr zapytania w funkcji tozsamoscZadania stoi przed nagłówkiem, tak samo jak przy koncie, ponieważ
+klient WebSocket w przeglądarce nagłówków ustawić nie potrafi, a klient biblioteczny potrafi obu dróg.
+Brak wskazania nie odrzuca nawiązania: gniazdo bez tożsamości pracuje dalej, tyle że jego zdarzenia
+pójdą bez sprawcy.
+
+Funkcja ParametryTozsamosci stoi w tym pliku, przy odczycie, a nie po stronie klienta, ponieważ napis
+parametru ma mieć jedno źródło dla piszącego i czytającego; klient podaje wartości, nazw nie zna
+i nie powtarza. Wartości puste nie wchodzą do wyniku — parametr pusty i nieobecny mają znaczyć to samo.
+
+## budowa/server/internal/session/izolacja_polecenie.go
+Miejsce egzekucji izolacji jest jedno: polecenie zbudowane przez warstwę
+kanału, zanim pójdzie do uruchamiacza. Polecenie niosące ścieżkę albo
+środowisko spoza obszaru okna zostaje odrzucone, proces z takim poleceniem
+nie startuje.
+
+Wartość pusta, którą izolacja jednoznacznie wyznacza, zostaje uzupełniona
+w SprawdzPolecenie: brak wskazania nie jest naruszeniem, bo brak danych ma
+dawać poprawny wynik, nie awarię. Wskazanie wychodzące poza obszar okna jest
+naruszeniem, bo jest decyzją sprzeczną z ustawieniem Operatora.
+
+SprawdzKatalogDanych obsługuje zarówno sprawdzenie polecenia, jak i punkt,
+w którym kanał wybiera katalog konfiguracji konta — reguła jest jedna.
+Wskazanie puste jest naruszeniem: kanał bez wskazania sięga po katalog
+wspólny, a właśnie tego izolacja zabrania.

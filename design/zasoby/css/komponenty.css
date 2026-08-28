@@ -2502,7 +2502,9 @@ label.dn-pasek-szukaj:focus-within {
   grid-template-columns: var(--dn-okw-kolumna) minmax(0, 1fr);
   border: 1px solid var(--dn-obrys);
   border-radius: var(--dn-r-xl);
-  background: var(--dn-powierzchnia);
+  /* Strefa 3 z 3 — płótno. Trzy strefy okna przedaplikacyjnego stoją
+     w NORMA-OKNA.md i sprawdza je strefy-okna.mjs; okno ich nie ustala. */
+  background: var(--dn-okno-plotno);
   box-shadow: var(--dn-cien-3);
   overflow: hidden;
 }
@@ -2522,12 +2524,63 @@ label.dn-pasek-szukaj:focus-within {
   /* Sterowanie okna stoi na przyciskach ikonowych biblioteki, a te mają własny
      narożnik — stąd odstęp od prawej krawędzi, którego belka ramy nie ma. */
   padding: 0 var(--dn-od-2) 0 var(--dn-od-3);
-  background: var(--dn-rama);
+  /* Strefa 1 z 3 — najciemniejsza. Nie --dn-rama: rama należy do powłoki
+     aplikacji, a to okno stoi przed nią. */
+  background: var(--dn-okno-belka);
   color: var(--dn-rama-tekst);
 }
 /* Uchwyt przeciągania rozpiera belkę: tytuł zostaje przy znaku, sterowanie
    okna odchodzi do prawej krawędzi. */
-.dn-okno-wejsciowe-belka > .dn-belka-tytul { margin-right: auto; }
+.dn-okno-wejsciowe-belka-uchwyt { flex: 1 1 auto; }
+
+/* Części belki przedaplikacyjnej. Rodzina jest osobna od `.dn-belka-*` z ramy
+   i musi być samodzielna: okno przed uwierzytelnieniem nie wczytuje `rama.css`
+   — powłoka dochodzi dopiero po wydaniu dostępu. Bez tych części belka nie
+   miałaby czym się złożyć i okno dopisywałoby własne klasy. */
+.dn-okno-wejsciowe-belka-znak {
+  width: var(--dn-wym-ikona-sm);
+  height: var(--dn-wym-ikona-sm);
+  flex: none;
+  color: var(--dn-rama-tekst);
+}
+.dn-okno-wejsciowe-belka-znak .kropka { fill: var(--dn-rama-sygnal); }
+.dn-okno-wejsciowe-belka-tytul {
+  margin: 0;
+  font-size: var(--dn-fs-sm);
+  font-weight: var(--dn-fw-srednia);
+}
+/* Sterowanie oknem: szerokość wg konwencji podpisu Windows, wysokość pełna,
+   żeby cel kliknięcia sięgał krawędzi belki. */
+.dn-okno-wejsciowe-belka-btn {
+  display: grid;
+  place-content: center;
+  width: var(--dn-wym-belka-btn);
+  height: 100%;
+  flex: none;
+  padding: 0;
+  margin: 0;
+  border: 0;
+  background: transparent;
+  color: var(--dn-rama-tekst-2);
+  cursor: pointer;
+  transition: background-color var(--dn-czas-1) var(--dn-ease), color var(--dn-czas-1) var(--dn-ease);
+}
+.dn-okno-wejsciowe-belka-btn > svg {
+  width: var(--dn-wym-ikona-sm);
+  height: var(--dn-wym-ikona-sm);
+}
+.dn-okno-wejsciowe-belka-btn:hover {
+  background: var(--dn-rama-hover);
+  color: var(--dn-rama-tekst);
+}
+.dn-okno-wejsciowe-belka-btn:focus-visible {
+  outline: var(--dn-wym-fokus) solid var(--dn-fokus);
+  outline-offset: calc(-1 * var(--dn-wym-fokus));
+}
+.dn-okno-wejsciowe-belka-btn--zamknij:hover {
+  background: var(--dn-blad-tekst);
+  color: var(--dn-tekst-inv);
+}
 
 /* Kolumna stanu albo formularza — jasna powierzchnia, własny rytm bloków. */
 .dn-okno-wejsciowe-panel {
@@ -2538,10 +2591,9 @@ label.dn-pasek-szukaj:focus-within {
   min-height: 0;
   padding: var(--dn-okw-wciecie-y) var(--dn-okw-wciecie-x);
   overflow-y: auto;
-  /* Panel unosi się nad atramentową kolumną tożsamości. Rozdzielenie stref
-     idzie samą powierzchnią, bez kreski — a przy `--dn-powierzchnia` różnica
-     jasności w motywie ciemnym wynosiła 2 stopnie L* i strefy się zlewały. */
-  background: var(--dn-panel);
+  /* Strefa 3 z 3 — płótno kroku. Rozdzielenie stref idzie samą powierzchnią,
+     bez kreski; żetony stref niosą zmierzone stopnie rozdzielenia. */
+  background: var(--dn-okno-plotno);
 }
 .dn-okno-wejsciowe-panel--scentrowany { justify-content: center; }
 
@@ -2572,10 +2624,9 @@ label.dn-pasek-szukaj:focus-within {
   margin: auto calc(-1 * var(--dn-okw-wciecie-x)) calc(-1 * var(--dn-okw-wciecie-y));
   min-height: var(--dn-okw-pas-dzialan);
   padding: var(--dn-od-3) var(--dn-okw-wciecie-x);
-  /* Pas odcina się od kolumny samą powierzchnią. Żeton --dn-tlo dawał w motywie
-     jasnym 2,1 stopnia L* różnicy wobec --dn-panel — strefy się zlewały.
-     --dn-powierzchnia-2 daje 4,9 stopnia w jasnym i 6,9 w ciemnym. */
-  background: var(--dn-powierzchnia-2);
+  /* Strefa 2 z 3 — obrzeże. Norma obejmuje nim kolumnę lewą ORAZ pas działań
+     na dole, więc oba biorą ten sam żeton. */
+  background: var(--dn-okno-obrzeze);
   font-size: var(--dn-fs-sm);
   color: var(--dn-tekst-2);
 }
@@ -2595,7 +2646,8 @@ label.dn-pasek-szukaj:focus-within {
   flex-direction: column;
   gap: var(--dn-od-6);
   padding: var(--dn-okw-wciecie-y) var(--dn-okw-wciecie-x);
-  background: var(--dn-rama);
+  /* Strefa 2 z 3 — obrzeże, wspólne z pasem działań. */
+  background: var(--dn-okno-obrzeze);
   color: var(--dn-rama-tekst);
 }
 

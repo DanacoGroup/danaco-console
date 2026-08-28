@@ -102,31 +102,9 @@
    ani wstążki, ani paska stanu. Ma wyłącznie belkę okna systemowego —
    znak, tytuł, uchwyt przeciągania i zamknięcie. */
 
-.we-belka {
-  grid-column: 1 / -1;
-  display: flex;
-  align-items: center;
-  gap: var(--dn-od-3);
-  height: var(--dn-wym-belka);
-  padding: 0 0 0 var(--dn-od-3);
-  /* Strefa 1 z 3 — najciemniejsza. Patrz NORMA-OKNA.md. */
-  background: var(--dn-okno-belka);
-  color: var(--dn-rama-tekst);
-}
 /* Belka jest ciemna w obu motywach, więc kropka bierze barwę sygnału ramy,
    a nie kropki treści — ta w motywie jasnym byłaby ciemniejsza od tła. */
-.we-belka-znak .kropka { fill: var(--dn-rama-sygnal); }
 
-.we-belka-znak { width: var(--dn-wym-ikona-sm); height: var(--dn-wym-ikona-sm); flex: none; color: var(--dn-rama-tekst-2); }
-.we-belka-tytul { margin: 0; font-size: var(--dn-fs-sm); font-weight: var(--dn-fw-srednia); }
-.we-belka-uchwyt { flex: 1 1 auto; }
-.we-belka-zamknij {
-  display: grid; place-content: center;
-  width: var(--dn-wym-ikonowy); height: var(--dn-wym-belka);
-  border: 0; background: transparent; color: var(--dn-rama-tekst-2); cursor: pointer;
-}
-.we-belka-zamknij:hover { background: var(--dn-blad-tekst); color: var(--dn-tekst-inv); }
-.we-belka-zamknij svg { width: 12px; height: 12px; }
 
 /* ── 3 · KOLUMNA TOŻSAMOŚCI ─────────────────────────────────────────────── */
 
@@ -555,30 +533,13 @@
 @media (max-width: 1000px) {.we-okno { width: 100%; height: auto; min-height: 640px; grid-template-columns: minmax(0, 1fr); }.we-marka { display: none; }}
 @media (max-width: 640px) {.we-panel { padding: var(--dn-od-5) var(--dn-od-4); }.we-scena { padding: var(--dn-od-5) var(--dn-od-4); }.au-para, .au-metody { grid-template-columns: minmax(0, 1fr); }.au-kod-pole { width: 40px; height: 48px; font-size: var(--dn-fs-lg); }}
 /* Dopowiedzenie przy wartości — jeden zapis dla wszystkich wierszy: pismo
-   podstawowe, drobniejsze, przygaszone, oddzielone kropką środkową. *//* ── Sterowanie oknem w belce tytułowej ────────────────────────────────────
-   Trzy przyciski w kolejności systemowej: zwinięcie · rozwinięcie · zamknięcie.
-   Wymiar wg Windows — 46 px szerokości na pełną wysokość belki, znak 14 px.
-   Wcześniej stał jeden przycisk 34 px ze znakiem 12 px, poniżej standardu.
-   Zamknięcie ma czerwień na wskazaniu, tak jak w systemie. */.we-belka-sterowanie {
+   podstawowe, drobniejsze, przygaszone, oddzielone kropką środkową. */
+
+/* Trzy kontrolki okna stoją w rzędzie przy prawej krawędzi belki. Sam ich
+   wygląd — wymiar, barwa, stany, czerwień na zamknięciu — niesie biblioteka
+   (.dn-okno-wejsciowe-belka-btn). Tutaj zostaje wyłącznie rozmieszczenie. */
+.we-belka-sterowanie {
   display: flex;
   margin-left: auto;
   align-self: stretch;
 }
-.we-belka-btn {
-  display: grid; place-items: center; place-content: center;
-  width: var(--dn-wym-belka-btn); height: 100%;
-  padding: 0; margin: 0;
-  flex: none;
-  border: 0; background: transparent;
-  color: var(--dn-rama-tekst-2);
-  cursor: pointer;
-  transition: background-color var(--dn-czas-1) var(--dn-ease), color var(--dn-czas-1) var(--dn-ease);
-}
-/* Znaki sterowania oknem są cieńsze i mniejsze od znaku marki — pole kliknięcia
-   ma 46 px, ale sam rysunek dorównuje wadze tytułu, nie przewyższa go. */.we-belka-btn svg { width: 12px; height: 12px; display: block; stroke-width: 1.2; }
-.we-belka-btn:hover { background: var(--dn-rama-hover); color: var(--dn-rama-tekst); }
-.we-belka-btn:focus-visible {
-  outline: var(--dn-wym-fokus) solid var(--dn-fokus);
-  outline-offset: calc(-1 * var(--dn-wym-fokus));
-}
-.we-belka-btn--zamknij:hover { background: var(--dn-blad-tekst); color: var(--dn-tekst-inv); }

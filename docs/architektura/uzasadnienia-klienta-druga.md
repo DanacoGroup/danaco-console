@@ -7416,3 +7416,14 @@ treść bez dziur; paginację, która nie dzieli, skoro kartka ma się kończyć
 gdzie się kończy, a podział jawny ma kończyć ją niezależnie od rachunku;
 i liczbę w panelu redaktora bez rachunku pod spodem. Rdzeń w sprawdzianach
 jest atrapą, ponieważ pytanie dotyczy modułu, nie serwera.
+
+## budowa/klient-poprzedni/src/sterowanie/formularz-kanalu.ts
+Jeden formularz obsługuje oba żądania, bo żądanie założenia i żądanie zmiany różnią się dwoma polami: żądanie zmiany ma identyfikator kanału, a nie ma rodzaju. Nazwa, model, czynność i parametry są wspólne dla obu żądań.
+
+Rodzaj kanału jest polem wpisu, nie listą wyboru: wykaz znanych rodzajów jest listą informacyjną, nie bramą — nowy rodzaj kanału to nowy wiersz rejestru, a nie zmiana kodu. Znane rodzaje idą podpowiedzią i objaśnieniem pod polem, a wpis pozostaje otwarty.
+
+Rodzaju nie da się zmienić po założeniu kanału. Pole nie jest wyłączane; obok niego stoi zdanie ostrzegające, że wpis rodzaju nie dojdzie do rdzenia dla kanału już istniejącego.
+
+Parametry idą jako tekst JSON, bo kontrakt nie narzuca im żadnej struktury. Wpis nieczytelny kończy się odmową z komunikatem, a nie wysyłką pustych parametrów: ciche wysłanie pustego obiektu skasowałoby dotychczasowe parametry kanału.
+
+Wygląd formularza pochodzi w całości z biblioteki kontrolek i z arkusza stylu panelu.

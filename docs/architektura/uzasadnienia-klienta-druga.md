@@ -6802,3 +6802,16 @@ nie dostaje wiersza nieczynnego, tylko zdanie pod wykazem mówi, ilu pozycji
 brakuje i dlaczego, bo wiersz, w który nie da się kliknąć, byłby bramką.
 Bez kanału żadna wytwórnia nie ma czym zbudować okna, więc wykaz jest
 pusty, a menu mówi wprost, czego brakuje — to brak środka, nie odmowa.
+
+## budowa/klient-poprzedni/src/moduly/studio/pola-cyfryzacji.ts
+Nastawy rozpoznawania z kontraktu niosą silnik, zestaw języków, próg pewności, prostowanie
+skosu, odszumianie, progowanie, przycięcie marginesów, odtwarzanie układu i zakres stron —
+wszystkie dziewięć pól stoi tu jako kontrolki ze skutkiem, podczas gdy poprzednia postać tego
+pliku miała tylko pole języka i wymuszenie rozpoznania, bo tyle przyjmowała starsza droga
+wydobycia tekstu, i wypisywała obok siebie braki, które przestały być brakami. Wymuszenia
+rozpoznania mimo obecnej warstwy tekstowej tu nadal nie ma, bo rozpoznanie pozycji kolejki
+działa bezwarunkowo, więc osobny przełącznik nie miałby czego przestawiać; wybierania pliku
+okienkiem systemowym też nie ma, bo klient dysku nie czyta i nie zapisuje, tylko podaje
+wskazanie widziane przez rdzeń. Brak pola w nastawach w kształcie kontraktu znaczy, że rdzeń ma
+wziąć wartość z katalogu ustawień, a to jego rozstrzygnięcie, nie okna — pusty napis w polu
+języków byłby wskazaniem zestawu pustego i zmieniłby znaczenie żądania.

@@ -14,38 +14,20 @@ import {
 } from '../../modele/kontrolki-formularza';
 import { DROGI_CYFRYZACJI, NASTAWY_CYFRYZACJI, SKLADNIKI_PAKIETU_SERWERA } from './braki-cyfryzacji';
 
-/**
- * Kontrolki wejściowe narzędziowni cyfryzacji wraz z odczytem ich wartości.
- *
- * ── Pola odpowiadają temu, co przyjmuje rdzeń — wszystkiemu ─────────────────
- * `StudioRecognitionSettings` niesie silnik, zestaw języków, próg pewności,
- * prostowanie skosu, odszumianie, progowanie, przycięcie marginesów, odtwarzanie
- * układu i zakres stron. Wszystkie dziewięć stoi tutaj jako kontrolki
- * ze skutkiem. Poprzednia postać tego pliku miała jedno pole języka i wymuszenie
- * rozpoznania, bo tyle przyjmowała starsza droga `document.text.extract` —
- * i wypisywała obok siebie braki, które przestały być brakami.
- *
- * ── Czego tu nadal nie ma i dlaczego ────────────────────────────────────────
- * Wymuszenia rozpoznania mimo obecnej warstwy tekstowej: `ingest.recognize`
- * rozpoznaje pozycję kolejki bezwarunkowo, więc osobny przełącznik „wymuś" nie
- * miałby czego przestawiać. Wybierania pliku okienkiem systemowym: klient dysku
- * nie czyta i nie zapisuje — podaje wskazanie widziane przez rdzeń.
- */
-
-/** Dwa źródła materiału odpowiadające dwóm polom żądania kontraktu. */
+/** Kontrolki wejściowe narzędziowni cyfryzacji, odpowiadające wszystkim polom przyjmowanym przez rdzeń: dwa źródła materiału odpowiadające dwóm polom żądania kontraktu. */
 const ZRODLA_MATERIALU = [
   { wartosc: 'zasob', etykieta: 'Zasób magazynu rdzenia (assetIds)' },
   { wartosc: 'sciezka', etykieta: 'Ścieżka widziana przez rdzeń (sourcePaths)' },
 ];
 
-/** Dwa silniki rozpoznawania z kontraktu. */
+/** Dwa silniki rozpoznawania niesione przez kontrakt: lokalny na maszynie rdzenia albo chmurowy z jawnym kluczem. */
 const SILNIKI = [
   { wartosc: '', etykieta: 'silnik z katalogu ustawień' },
   { wartosc: StudioOcrEngine.Lokalny, etykieta: 'lokalny — materiał nie opuszcza maszyny rdzenia' },
   { wartosc: StudioOcrEngine.Chmurowy, etykieta: 'chmurowy — usługa zewnętrzna z jawnym kluczem' },
 ];
 
-/** Formaty dokumentu zakładanego z wyniku cyfryzacji. */
+/** Formaty dokumentu zakładanego z wyniku cyfryzacji, wybierane w polu formatu albo pozostawiane wyborowi rdzenia. */
 const FORMATY_DOKUMENTU = [
   { wartosc: '', etykieta: 'format domyślny rdzenia' },
   ...Object.values(StudioDocumentFormat).map((format) => ({
@@ -234,13 +216,7 @@ export function utworzPolaCyfryzacji(): PolaCyfryzacji {
       wskazanie.kontrolka.value = '';
     },
 
-    /**
-     * Nastawy w kształcie kontraktu — pola puste NIE wchodzą.
-     *
-     * Brak pola znaczy „weź wartość z katalogu ustawień", a to rozstrzygnięcie
-     * rdzenia, nie okna. Pusty napis w polu języków byłby wskazaniem zestawu
-     * pustego i zmieniłby znaczenie żądania.
-     */
+    /** Nastawy w kształcie kontraktu: pola puste nie wchodzą, bo brak pola to rozstrzygnięcie rdzenia. */
     ustawienia() {
       const zestaw = jezyki.kontrolka.value
         .split(',')
@@ -293,7 +269,7 @@ export function utworzPolaCyfryzacji(): PolaCyfryzacji {
   };
 }
 
-/** Pole liczbowe z etykietą — wiersz pola z kontrolką przestawioną na liczbę. */
+/** Buduje pole liczbowe z etykietą: wiersz pola tekstowego z kontrolką przestawioną na typ liczbowy przeglądarki. */
 function poleLiczbowa(
   etykieta: string,
   podpowiedz: string,
@@ -303,13 +279,13 @@ function poleLiczbowa(
   return pole;
 }
 
-/** Liczba całkowita z pola; wartość niepoprawna i pusta znaczą „bez ograniczenia". */
+/** Odczytuje liczbę całkowitą wpisaną w polu; wartość niepoprawna i pole puste oznaczają brak ograniczenia. */
 function liczba(wartosc: string): number {
   const odczytana = Number.parseInt(wartosc, 10);
   return Number.isFinite(odczytana) ? odczytana : 0;
 }
 
-/** Ułamek z pola; przecinek dziesiętny przyjmowany, bo tak pisze Operator. */
+/** Odczytuje ułamek zapisany w polu; przecinek dziesiętny jest przyjmowany, bo tak zapisuje go operator. */
 function ulamek(wartosc: string): number {
   const odczytana = Number.parseFloat(wartosc.replace(',', '.'));
   return Number.isFinite(odczytana) ? odczytana : 0;

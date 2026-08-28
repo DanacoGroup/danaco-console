@@ -6493,3 +6493,25 @@ znika po sprawdzianie sam.
 Profili kanału głównego sprawdzian też nie ma i mieć nie musi, bo
 sprawdzian zgodności z kontraktem dotyczy rejestru komend, nie plików obok
 gniazda.
+
+## budowa/server/internal/core/urzadzenia.go
+
+Rdzeń zna swoją maszynę z systemu operacyjnego, a warstwa danych zna
+katalog urządzeń — spotykają się w tym pliku i nigdzie indziej. Wymóg, że
+punkt dostępu rodzaju localDirectory musi wskazać urządzenie, jest
+warunkiem CHECK tabeli punkt_dostepu.
+
+Identyfikator znamion maszyny da się ustalić bez sięgania po dane
+sprzętowe. Zmiana nazwy hosta daje nowe urządzenie w katalogu, bo z punktu
+widzenia katalogów lokalnych jest to inna maszyna.
+
+Maszyna, na której działa rdzeń, jest zaufana z założenia, ponieważ kod
+rdzenia już się na niej wykonuje.
+
+Idempotencji zapewnienia wiersza maszyny bieżącej pilnuje warstwa danych,
+bo tylko ona widzi jednocześnie identyfikator sprzętowy i oznaczenie
+maszyny bieżącej.
+
+Rdzeń bez wiersza swojej maszyny pracuje dalej po nieudanym rozpoznaniu,
+tylko katalog lokalny nie ma na czym stanąć, dopóki urządzenie nie
+zostanie wskazane ręcznie.

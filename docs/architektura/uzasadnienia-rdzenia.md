@@ -7184,3 +7184,31 @@ dojeżdża do procesu modelu tą samą drogą, którą pokazuje okno konfiguracj
 Konfiguracja przechowuje pod kluczem kanal_modelu_zapasowy kod wiersza
 rejestru kanałów, a przełącznik --fallback-model oczekuje identyfikatora
 modelu u dostawcy, stąd potrzeba odwzorowania kodu kanału na identyfikator.
+
+## budowa/server/internal/core/adapter_rozmowa_zapas.go
+Zapas bierze się z parametru wiersza rejestru kanałów, wartości danych na
+równi z innymi parametrami wiersza. Kolejność zapasowa nie jest polityką
+kodu: kod zna wyłącznie jeden krok z kanału na jego zapas.
+
+Jawność przełączenia ma trzy nogi: fragment metadanych konta w strumieniu
+tury pokazuje przełączenie w rozmowie, wiersz w tabeli przełączeń kanału jest
+śladem trwałym, a prowenancja drugiego wywołania pokazuje, czym tura
+faktycznie pojechała. Przełączenie bez którejkolwiek nogi byłoby
+przełączeniem po cichu.
+
+Trzy warunki graniczące uczciwość zapasu: tura przerwana ręcznie nie jest
+odmową kanału; tura, której tekst już poszedł do odbiorcy, nie może pojechać
+drugi raz, bo powtórzyłaby wypowiedź — ta sama reguła co przy rotacji kont;
+tura zamknięta zdarzeniem wyniku skończyła się po stronie modelu, więc nie ma
+czego ponawiać.
+
+Krok przełączenia jest jeden z zamysłu. Łańcuch kolejnych zapasów wykonywałby
+turę kanałem odległym od pierwotnego wyboru o wiele decyzji, z których każda
+zapadłaby bez udziału tego wyboru. Jeden krok jest widoczny i odwracalny;
+łańcuch to polityka, której kod nie zna.
+
+## budowa/server/internal/core/adapter_sesje_projekt.go
+PrzypiszProjekt obsługuje jedną komendą oba warianty żądania — przeniesienie do
+istniejącego projektu oraz przeniesienie z założeniem nowego — ponieważ z punktu
+widzenia historii to ten sam gest: wskazanie, dokąd sesja ma odtąd należeć.
+Rozróżnia je wyłącznie to, czy podano istniejący kod projektu, czy nazwę nowego.

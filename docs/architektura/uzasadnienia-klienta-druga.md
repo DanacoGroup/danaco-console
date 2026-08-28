@@ -7718,3 +7718,14 @@ Adres ustawienia ma cztery człony, nie dwa: przestrzeń konfiguracji ma dwa pro
 Wpis konfiguracji innego okna, innego poziomu albo innej osi jest pomijany; to adresowanie, a nie wstrzymanie zmiany.
 
 Zdarzenie zmiany konfiguracji niesie rodzaj zmiany: utworzenie i aktualizacja nanoszą wartość, usunięcie ją zdejmuje. Rdzeń rozgłasza usunięcie z wpisem o starej wartości, więc czytanie samego wpisu bez rodzaju nanosiłoby skasowaną wartość jak świeży zapis, a powrót do wartości domyślnej nie docierałby do żadnej powierzchni.
+
+## budowa/klient-poprzedni/src/moduly/translate/formularz-terminu.ts
+Jeden formularz obsługuje definiowanie odpowiednika terminu (formularz
+pusty) i edycję glosariusza (formularz wczytany terminem z wykazu), bo
+kontrakt rozróżnia je polem identyfikatora terminu — obecne znaczy zmianę,
+nieobecne termin nowy. Po odmowie formularz zostaje wypełniony, a pola
+edytowalne, żeby operator poprawił wpisane wartości zamiast wpisywać je od
+nowa. Sprawdzane są cztery pola, bo tylko tyle niesie żądanie i tyle wraca
+w odpowiedzi rdzenia; identyfikator terminu sprawdzany jest wyłącznie przy
+edycji, bo przy terminie nowym nadaje go rdzeń i nie ma go z czym
+porównać.

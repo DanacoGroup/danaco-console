@@ -7320,3 +7320,8 @@ bieżącym czyta się dokładnie odwrotnie do tego, co wykonuje.
 
 ## budowa/klient-poprzedni/src/dostepy/zrodlo-punktow.ts
 Punkt dostępu określa, do czego model ma wgląd: do maszyny przez most MCP albo do katalogu lokalnego. Nie jest środowiskiem — środowisko pozostaje profilem widoczności modułów w bocznej nawigacji i tej sekcji nie dotyczy. Nie jest też katalogiem roboczym: ten mieszka w ustawieniu `katalog.roboczy.podstawa` i ma w tej sekcji własny obszar.
+
+## budowa/klient-poprzedni/src/ikony/ikony.ts
+Element `<svg>` bez atrybutu `width` bierze całą szerokość rodzica, a `preserveAspectRatio` wyśrodkowuje znak w pustym polu — logotyp wygląda wtedy na wielokrotnie mniejszy, niż wynika z podanej wysokości; stąd `szerokoscZnaku` wylicza szerokość jawnie.
+
+Funkcja `elementGodla` daje wyłącznie sygnet i dobiera przy tym odmianę uproszczoną poniżej 16 pikseli. Odmiany złożone, dostępne w `marka.ts`, mają inne proporcje niż kwadrat, więc `elementZnaku` idzie osobną drogą: `zbudujElement` nadaje bok kwadratowy z parametru `rozmiar` przy sygnecie, a przy odmianach złożonych `rozmiar` rozstrzyga wyłącznie wysokość, a szerokość zostaje wyliczona osobno.

@@ -32,27 +32,22 @@ export {
 };
 
 /**
- * Kanoniczne rozmiary renderowania ikony w pikselach (manifest, `zasady`).
- *
- * Wykaz nie wychodzi poza moduł: nikt na zewnątrz nie wybiera rozmiaru z listy.
- * Wewnątrz wyznacza rozmiar domyślny, więc największy rozmiar zestawu zapisany
- * jest raz, a nie dwa razy.
+ * Kanoniczne rozmiary renderowania ikony w pikselach. Wykaz nie wychodzi poza
+ * moduł — nikt na zewnątrz nie wybiera rozmiaru z listy; wewnątrz wyznacza
+ * rozmiar domyślny, więc największy rozmiar zapisany jest raz.
  */
 const ROZMIARY_IKON = [14, 16, 20, 24] as const;
 
-/** Rozmiar przyjmowany, gdy wywołanie go nie podaje — największy z zestawu. */
+/** Rozmiar przyjmowany w pikselach, gdy wywołanie ikony go nie podaje — największy rozmiar z zestawu `ROZMIARY_IKON`. */
 export const ROZMIAR_DOMYSLNY: number = ROZMIARY_IKON[ROZMIARY_IKON.length - 1];
 
-/** Klasa nadawana ikonie, gdy wywołanie nie wskazuje własnej. */
+/** Klasa CSS nadawana elementowi ikony, gdy wywołanie nie wskazuje klasy własnej w opcjach; domyślna to `dn-ikona`. */
 export const KLASA_DOMYSLNA = 'dn-ikona';
 
 export interface OpcjeIkony {
   /** Bok kwadratu ikony w pikselach. Domyślnie 24. */
   rozmiar?: number;
-  /**
-   * Nazwa czytana przez technologie wspomagające. Podana — czyni ikonę
-   * znaczącą; pominięta — ikona jest ozdobna i zostaje ukryta przed odczytem.
-   */
+  /** Nazwa czytana przez technologie wspomagające; pominięta ukrywa ikonę ozdobną przed odczytem. */
   etykieta?: string;
   /** Klasa CSS ikony. Domyślnie `dn-ikona`. */
   klasa?: string;
@@ -63,12 +58,12 @@ export interface OpcjeZnaku extends OpcjeIkony {
   podloze?: PodlozeZnaku;
 }
 
-/** Zwraca źródło SVG ikony jako tekst. */
+/** Zwraca źródło SVG ikony o podanej nazwie jako czysty tekst, bez rozbioru i bez osadzenia w dokumencie. */
 export function zrodloIkony(nazwa: NazwaIkony): string {
   return ZRODLA_IKON[nazwa];
 }
 
-/** Rozstrzyga, czy dowolny tekst jest nazwą ikony należącej do zestawu. */
+/** Rozstrzyga, czy dowolny podany tekst jest nazwą ikony należącej do zestawu, zawężając typ do `NazwaIkony`. */
 export function czyNazwaIkony(tekst: string): tekst is NazwaIkony {
   return Object.prototype.hasOwnProperty.call(ZRODLA_IKON, tekst);
 }
@@ -130,13 +125,10 @@ export function elementGodla(opcje: OpcjeZnaku = {}): SVGSVGElement {
 }
 
 /**
- * Szerokość znaku wyliczona z `viewBox` przy zadanej wysokości.
- *
- * Szerokość musi paść jawnie. `<svg>` bez atrybutu `width` bierze całą
- * szerokość rodzica, a `preserveAspectRatio` wyśrodkowuje znak w pustym polu —
- * logotyp wygląda wtedy na wielokrotnie mniejszy, niż wynika z podanej
- * wysokości. Brak `viewBox` albo jego nieczytelna postać zostawia bok
- * kwadratowy, tak samo jak `zbudujElement`, więc znak nie znika.
+ * Szerokość znaku wyliczona z `viewBox` przy zadanej wysokości. Szerokość
+ * musi paść jawnie, inaczej `<svg>` bierze całą szerokość rodzica i logotyp
+ * wygląda na mniejszy. Brak `viewBox` zostawia bok kwadratowy, jak
+ * w `zbudujElement`.
  */
 function szerokoscZnaku(element: SVGSVGElement, wysokosc: number): number {
   const pola = (element.getAttribute('viewBox') ?? '').split(/[\s,]+/).map(Number);
@@ -152,12 +144,8 @@ function szerokoscZnaku(element: SVGSVGElement, wysokosc: number): number {
 
 /**
  * Buduje element znaku marki w wybranej odmianie — sygnet, logotyp, poziomy
- * albo pionowy (`marka.ts`).
- *
- * `elementGodla` wyżej daje wyłącznie sygnet i dobiera przy tym odmianę
- * uproszczoną poniżej 16 px. Odmiany złożone mają inne proporcje niż kwadrat,
- * więc idą osobną drogą: `zbudujElement` nadaje bok kwadratowy z `rozmiar`,
- * a tutaj `rozmiar` rozstrzyga wysokość, a szerokość zostaje przy znaku.
+ * albo pionowy. Odmiany złożone mają inne proporcje niż kwadrat: tu `rozmiar`
+ * rozstrzyga wysokość, a szerokość wylicza się osobno, przy samym znaku.
  */
 export function elementZnaku(
   odmiana: OdmianaZnaku,

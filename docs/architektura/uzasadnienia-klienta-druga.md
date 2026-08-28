@@ -7975,3 +7975,22 @@ z Windows, znacznik kolejności bajtów i rozjazd między deklaracją parametró
 Sprawdzenie składni: pozostałe powłoki wykazu kontraktu nie mają przełącznika sprawdzającego albo
 jego użycie wymagałoby przeniesienia treści przez plik, którego moduł nie ma czym zapisać — okno
 mówi to wprost, zamiast pokazywać przycisk bez skutku.
+## budowa/klient-poprzedni/src/moduly/terminal/czynnosci-okna.ts
+Moduł zastępuje emulator terminala, multiplekser sesji, klienta SSH, harmonogram zadań
+i bibliotekę skryptów naraz. Gdyby każda z tych zdolności miała stale własny przycisk,
+przestrzeń pracy byłaby ścianą kontrolek, przez którą nie widać powłoki. Dlatego każdy element
+sterujący należy do jednej z czterech warstw, a moduł pokazuje naraz tylko tyle, ile potrzeba
+do bieżącego zadania.
+
+Ukrycie nie jest blokadą i nie wolno go z blokadą mylić. Element warstwy zwiniętej nie dostaje
+atrybutu disabled, nie znika z drzewa dostępności przez aria-hidden na przodku ogniskowalnym
+i nie przestaje działać — zostaje zdjęty z pola widzenia, a droga do niego prowadzi paletą
+poleceń albo skrótem klawiszowym. Każda czynność modułu jest osiągalna jednym wskazaniem
+niezależnie od nastawy widoczności.
+
+Czynność jest opisem, nie przyciskiem: paleta i skróty nie sięgają do węzłów okien, bo węzeł
+przerysowuje się przy każdej zmianie stanu i uchwyt trzymany na zewnątrz wskazywałby po chwili
+element, którego nie ma w dokumencie. Okno oddaje więc wywołanie, a nie kontrolkę.
+
+Widoczność pełna nie jest trybem administracyjnym ani ukrytym — to zwykła nastawa o jedno
+wskazanie dalej.

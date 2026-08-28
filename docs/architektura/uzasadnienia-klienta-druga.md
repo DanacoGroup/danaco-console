@@ -5847,3 +5847,39 @@ ile paneli wolno otworzyć — oddaje liczby, a decyzję podejmuje ten, kto
 pyta; gdy miejsca zabraknie, szerokość zmienia się uchwytem, panel nie
 chowa się sam. Widok pełnoekranowy jest obszarem biorącym całą scenę, bez
 sąsiada, z którym miałby się dzielić.
+
+## budowa/klient-poprzedni/src/moduly/roundtable/panel-debaty.ts
+Arkusz roundtable.css daje trzy stany obowiązkowe nośnika stany-okna, arkusz panel-debaty.css
+wygląd głosów; arkusza debata.css panel nie wciąga, bo Debate Panel i Consensus Panel u gospodarza
+nie stoją. Kształt panelu jest dokładnie ten, którego wymaga panel pomocniczy — element, odświeżenie,
+zamknięcie — i ani jedno pole ponad to. Gospodarzem bywa pas okien pomocniczych modułu albo kolumna
+paneli sceny okien równoległych; panel żadnego z nich nie zna i niczego o nich nie zakłada.
+Zamknięcie zdejmuje trzy rzeczy, nie jedną: panel zakłada subskrypcję fragmentów wypowiedzi,
+subskrypcję zmian stanu debaty oraz, przez stan debaty, nasłuch zdarzenia zmiany debaty i rejestru
+kanałów. Wszystkie schodzą przy zamknięciu; panel bez tego zostawiłby je żywe po zejściu ze sceny
+i rysowałby do elementu, którego nikt już nie ogląda. Własny stan debaty bierze się stąd, że opcje
+panelu dają wyłącznie kanał, okno, moduł i przedrostek — egzemplarza stanu debaty tą drogą podać
+się nie da, tak samo jak umowa opisu modułu nie przenosi rejestru kanałów. Drugi stan nie jest
+drugą prawdą o debacie: czyta te same zdarzenia rdzenia i nie ma ani jednej drogi zapisu — różni
+się od stanu złożenia wyłącznie chwilą otwarcia nasłuchu. Panel nie odczytuje przebiegu na żądanie,
+choć kontrakt to przewiduje: komenda odczytu debaty oddaje skład, tury i wypowiedzi jednym
+wywołaniem, ale obsługi tego odczytu jeszcze nie zbudowano — ani tutaj, ani w oknach złożenia
+modułu — więc panel pokazuje wyłącznie to, co usłyszał od swojego otwarcia. Odświeżenie odnawia
+zatem wykaz kanałów (nazwy uczestników) i przerysowuje widok, a przycisk nazywający brakującą
+obsługę stoi widoczny i klikalny zamiast zniknąć.
+
+Pierwszy rysunek idzie od razu: bez niego panel stałby pusty aż do pierwszego zdarzenia rdzenia,
+a stan pusty ma własne zdanie mówiące, dlaczego jest pusty.
+
+## budowa/klient-poprzedni/src/moduly/studio/odmowa-rdzenia.ts
+Rdzeń odmawia komendy bez uchwytu kopertą osobnego typu, która nie niesie pola stanu, a korelacja
+klienta rozstrzyga wyłącznie koperty ze stanem, więc zwykłe wywołanie na komendzie bez uchwytu
+zostałoby obietnicą nierozstrzygniętą i okno stałoby w stanie ładowania bez końca. Wywołanie
+łączy więc dwie drogi w jeden wynik: odpowiedź skorelowaną oraz zdarzenie odmowy o tym samym
+identyfikatorze żądania — odmowa wraca jako zwykłe niepowodzenie, więc okno obsługuje ją tą samą
+ścieżką co każdy inny błąd i nie buduje drugiego mechanizmu. Nazwa zdarzenia pochodzi z kontraktu:
+funkcja tnie typ komendy po separatorze obszaru i sięga do mapy zdarzeń odmowy, w której stoją
+obszary studia i okna, więc obie drogi odmowy modułu są rozpoznawalne bez literału nazwy. Kod
+odmowy jest tu adekwatny, bo brakuje uchwytu, a nie treści żądania, a znacznik niepowtarzalności
+powstrzymuje widok przed ponawianiem czegoś, czego rdzeń nie nabędzie przed wdrożeniem nowej
+wersji.

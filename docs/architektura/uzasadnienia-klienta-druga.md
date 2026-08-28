@@ -7444,3 +7444,24 @@ sprawdzian pyta o zachowanie modułu, nie serwera. Zapora rozstrzygnięcia rodzi
 komend harmonogramu pilnuje, żeby cykliczność zadań szła komendami automatyki,
 a nie osobną rodziną komend terminala — rozjazd rozstrzygnięto na korzyść
 kontraktu.
+
+## budowa/klient-poprzedni/src/sterowanie/katalogi-robocze.ts
+Katalogi są listą, nie pojedynczą wartością: dodaje się i usuwa po jednym, a każda operacja idzie komendą aktualizacji okna z pełną listą po zmianie, bo kontrakt niesie listę katalogów roboczych jako całość. Lista pokazywana operatorowi jest listą okna, nie listą wspólną: dwa okna jednej sesji mogą pracować na dwóch różnych zestawach katalogów.
+
+## budowa/klient-poprzedni/src/moduly/studio/studio.test.ts
+Sprawdziany modułu Studio pilnują czynności, nie kształtu pliku: tego, czego
+opracowanie żąda wprost, co da się wykonać bez rdzenia i co przy poprawce
+łatwo zepsuć po cichu. Kolejka cyfryzacji odbija pięć stanów rdzenia wraz
+z ponowieniem poniżej progu pewności i nie gubi bilansu, gdy jedna pozycja
+odmawia — wsad idzie dalej mimo błędu. Liczniki dokumentu liczą to, co pasek
+statusu obiecuje. Znajdź i zamień traktuje frazę dosłownie, a złą składnię
+wzorca nazywa, zamiast oddawać ją jako brak trafień. Statystyka różnicy
+liczy fragment zmieniony do obu stron. Filtr historii zawęża po polach,
+które wersja naprawdę niesie. Narzędziownia cyfryzacji prowadzi kolejkę
+rdzenia rodziną komend studio.ingest: dokłada materiał, rozpoznaje go
+z nastawami, które naprawdę jadą do rdzenia, daje poprawić rozpoznane słowo
+przed przyjęciem i kończy dokumentem wraz z pierwszą wersją — dowód, że
+droga od pliku do dokumentu jest cała. Pusty wykaz urządzeń wejściowych jest
+nazwany jako brak maszyny rdzenia, a nie jako odmowa produktu, i nazwany
+przed próbą, nie po niej. Rdzeń w sprawdzianach jest atrapą, ponieważ
+sprawdzian pyta o zachowanie modułu, nie serwera.

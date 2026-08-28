@@ -6692,3 +6692,6 @@ wygaszony byłby bramką, a wiersz czynny atrapą. Każda czynność oddaje
 zdanie i to zdanie trafia do komunikatu, bo menu zwija się w chwili
 naciśnięcia, więc bez komunikatu nie byłoby widać ani powodzenia, ani
 odmowy rdzenia.
+
+## budowa/klient-poprzedni/src/powloka/karta-sesji.ts
+Budowa węzłów karty należy do osobnego pliku części karty, a mechanika pasa — wybór, kolejność, wędrujący fokus — do pliku pasa kart. Karta niesie trzy rzeczy: wskaźnik pracy w tle, tytuł równy nazwie otwartego modułu oraz zamknięcie; wskaźnik pracy pokazuje, że proces biegnie, choć operator patrzy gdzie indziej. Nazwy stanów pochodzą z kontraktu współdzielonego — powłoka nie zakłada własnego słownika stanu procesu.

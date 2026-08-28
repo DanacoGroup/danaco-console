@@ -6749,3 +6749,17 @@ debaty.
 
 ## budowa/klient-poprzedni/src/powloka/karty-sesji.ts
 Wygląd karty należy do osobnego pliku karty sesji, klawiatura do pliku wędrówki kart, stan pusty i komunikat do postaci pasa kart, a droga do rdzenia do osobnego pliku wpięcia. Karta sesji jest sesją rdzenia: gdy aplikacja udostępniła drogę do rdzenia, pas przestaje być własnym wykazem — karty biorą się z listy i zdarzeń rdzenia, przycisk zakładania tworzy sesję, zamknięcie karty zamyka sesję, kosz usuwa ją trwale po potwierdzeniu, a wybór przenosi ognisko klienta. Zamknięcie i usunięcie to dwie czynności, nie dwie nazwy jednej: krzyżyk zamyka sesję i zostawia jej zapis w całości, kosz zdejmuje sesję z historii, a zapis rdzeń kasuje trwale po terminie kosza, z potwierdzeniem pokazującym wykaz tego, co znika — skład pasa rozstrzyga wtedy wyłącznie rdzeń, a pas nie zakłada ani jednej karty miejscowej; bez rdzenia pas jest samym widokiem. Karta sesji to nie okno komunikacji: liczbą okien na scenie rządzi osobny przełącznik układu okien równoległych, więc przycisk zakładania karty nie wprowadza okna na scenę, a zamknięcie karty nie zdejmuje okna ze sceny. Mechanika zakładek idzie wzorcem dostępności ARIA: ogniskuje się wyłącznie karta czynna, a przycisk zakładania stoi poza pasem zakładek, zakładając kartę zamiast wybierać istniejącą.
+
+## budowa/klient-poprzedni/src/okna-rownolegle/panel-w-stosie.ts
+Panel pomocniczy jest bytem otwieranym i zamykanym pojedynczo, bo nie ma
+pulpitu, którego panele byłyby częścią — otwieranie i zamykanie ma więc
+miejsce w samym panelu. Treść stoi osobnym polem, bo widok pełnoekranowy
+przenosi ją na całą scenę i oddaje z powrotem — gdyby oddawać cały element,
+na scenę pojechałby razem z nagłówkiem, a w kolumnie zostałaby dziura bez
+obudowy. Rozdział obudowy od wnętrza sprawia, że przenosiny są przenosinami,
+nie kopią, bo kopia znaczyłaby drugą subskrypcję rdzenia. Pełny ekran
+bierze ikonę linku zewnętrznego, bo zestaw marki nie ma ikony rozwinięcia,
+a ikona jest dobierana pod czynność wyniesienia treści poza jej ramy.
+Obudową nie jest rama okna: rama daje trzy pasy, a ta powierzchnia mieści
+jeden wiersz — rama zostaje wewnątrz okna podglądu w tle, które jest oknem
+operacyjnym pasa modułu.

@@ -4,34 +4,7 @@ import type { PanelPomocniczy } from '../okna-pomocnicze/panel-pomocniczy';
 import { utworzNaglowekPanelu, type PozycjaNaglowka } from './naglowek-panelu';
 
 /**
- * Obudowa jednej pozycji stosu paneli obok rozmowy: gęsty nagłówek nad treścią
- * panelu i dwie czynności przy nim.
- *
- * Panel pomocniczy jest bytem otwieranym i zamykanym pojedynczo — nie ma
- * pulpitu, którego panele byłyby częścią — więc otwieranie i zamykanie ma
- * miejsce w samym panelu.
- *
- * Treść stoi osobnym polem (`tresc`), bo widok pełnoekranowy przenosi ją na
- * całą scenę i oddaje z powrotem. Gdyby oddawać cały `element`, na scenę
- * pojechałby razem z nagłówkiem, a w kolumnie zostałaby dziura bez obudowy.
- * Rozdział obudowy od wnętrza sprawia, że przenosiny są przenosinami, a nie
- * kopią — kopia znaczyłaby drugi egzemplarz panelu, czyli drugą subskrypcję
- * rdzenia.
- *
- * Pełny ekran bierze ikonę `link-zewnetrzny`, bo zestaw marki nie ma ikony
- * „rozwiń" (`ikony/zrodla/*.ts`), a ikona jest dobierana pod czynność, nie pod
- * wygląd narzędzia: czynnością jest wyniesienie treści poza jej ramy, a
- * `link-zewnetrzny` to jedyna ikona zestawu, która niesie „na zewnątrz".
- * Zamknięcie bierze `zamknij`.
- *
- * Obudową nie jest `komponenty/rama-okna.ts`: rama daje trzy pasy (nagłówek,
- * akcje, narzędzia), a ta powierzchnia mieści jeden wiersz. Rama zostaje
- * wewnątrz `okno-podglad-bash.ts`, które jest oknem operacyjnym pasa modułu.
- *
- * Plik nie buduje panelu i nie zna wytwórni — dostaje gotowy
- * `PanelPomocniczy`. Nie decyduje też, co się dzieje po zamknięciu ani po
- * wyjściu na pełny ekran; woła `naZamkniecie` i `naPelnyEkran`, a skutek
- * należy do gospodarza stosu.
+ * Obudowa jednej pozycji stosu paneli obok rozmowy niesie gęsty nagłówek nad treścią panelu i dwie czynności przy nim, oddzielając wnętrze od obudowy, żeby przeniesienie na pełny ekran nie było kopią panelu.
  */
 export interface PanelWStosie {
   /** Kod pozycji — ten sam, którym woła się wytwórnię. */
@@ -53,15 +26,7 @@ export interface OpcjePanelaWStosie {
   naZamkniecie(): void;
   /** Operator nacisnął pełny ekran — gospodarz przenosi `tresc` na scenę. */
   naPelnyEkran(): void;
-  /**
-   * Gotowe elementy rzędu ikon — miejsce na własne menu `⋮` panelu.
-   *
-   * Obudowa pozycji takiego menu nie zna i ich nie buduje: dokłada je
-   * gospodarz gotowym elementem, a samo menu rozwijane powstaje osobno.
-   *
-   * Pominięte znaczy, że rząd niesie dwie czynności obudowy i nic więcej —
-   * jedyny zbudowany panel (`podglad-bash`) własnego menu nie ma.
-   */
+  /** Gotowe elementy rzędu ikon — miejsce na własne menu panelu, dokładane przez gospodarza. */
   dodatkiNaglowka?: readonly HTMLElement[];
 }
 
@@ -70,9 +35,7 @@ export function utworzPanelWStosie(opcje: OpcjePanelaWStosie): PanelWStosie {
   tresc.className = 'dn-okna__panel-tresc';
   tresc.append(opcje.panel.element);
 
-  // Rząd: menu własne panelu (gdy gospodarz je dał), potem dwie czynności
-  // obudowy. Trzeciej czynności obudowa nie dokłada — ikona bez czynności jest
-  // atrapą, a atrapa jest gorsza niż jej brak.
+  // Rząd mieści menu własne panelu, potem dwie czynności obudowy, bez trzeciej, by uniknąć atrapy.
   const czynnosci: readonly PozycjaNaglowka[] = [
     ...(opcje.dodatkiNaglowka ?? []),
     {
@@ -98,8 +61,7 @@ export function utworzPanelWStosie(opcje: OpcjePanelaWStosie): PanelWStosie {
     element,
     tresc,
     odswiez: () => opcje.panel.odswiez(),
-    // Zamknięcie obudowy zamyka panel, nie tylko zdejmuje element ze sceny:
-    // subskrypcja rdzenia przeżyłaby usunięcie węzła z drzewa dokumentu.
+    // Zamknięcie obudowy zamyka panel, nie tylko zdejmuje element ze sceny, bo subskrypcja by przeżyła.
     zamknij: () => opcje.panel.zamknij(),
   };
 }

@@ -8266,3 +8266,20 @@ mówiącą co innego niż rozwinięty wykaz.
 
 Rejestr bez ani jednego kanału obrazowego jest stanem, po którym generowanie odmówi — Operator
 widzi to przed naciśnięciem przycisku generowania.
+
+## budowa/klient-poprzedni/src/aod/sekcja-decyzji.ts
+Pusta kolejka jest stanem poprawnym i tak jest opisana, zamiast ostrzeżeniem.
+
+Każdy wpis mówi cztery rzeczy: co czeka (proces, stan, etap), od kiedy (z policzonym
+odstępem), czego dotyczy (okno, sesja, kolejka) i czym to wykryto — odczyt
+nadrabiający i zdarzenie na żywo mają różną świeżość. Wpis rozpoznany regułą sporną
+(`usterka`, `bez-ruchu`) jest oznaczony jako ocena nakładki: rdzeń pojęcia decyzji
+nie ma.
+
+Kolejka jest magazynem w pamięci okna, zasilanym odpowiedzią rdzenia i zdarzeniami;
+zamknięcie okna nic nie utrwala.
+
+`MonitorStatus` niesie proces, okno i sesję, ale nie nazywa kolejki. Dojście
+prowadzi więc przez `queue.list`: najpierw kolejka obsługująca to okno, potem
+kolejka tej sesji. Przy niejednoznaczności zwracane jest `undefined`, a ster
+wstrzymania powie, że kolejki nie dopasowano.

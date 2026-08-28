@@ -5807,3 +5807,19 @@ moduł pyta o okna karty i bierze to, które rdzeń przypisał jemu, bo bez nieg
 przeniesienia kontekstu odmawiają. Odczyt jest tu, a nie przy montażu, bo dopiero wczytanie widoku
 niesie kartę sesji, a powłoka woła go po odpowiedzi na wejście do przestrzeni roboczej, kiedy okno
 rozmowy jest już przestawione na ten moduł.
+
+## budowa/klient-poprzedni/src/powloka/uklad-sekcji.ts
+Rozmowę z rdzeniem prowadzi źródło sekcji paneli, kształt widoku buduje moduł części sekcji. Każda
+funkcja tutaj jest czysta — bierze układ, oddaje nowy, niczego nie modyfikuje w miejscu. Kolejność
+liczy się od jeden i jest przeliczana po każdej zmianie: układ z dziurami w numeracji rdzeń przyjmie,
+ale kolejne przestawienie policzy błędnie. Wpis rdzenia o identyfikatorze, jakiego ten panel nie
+buduje, odpada przy scalaniu układu — nie da się go narysować. Sekcje znane rdzeniowi idą w jego
+kolejności, sekcje panelu nieobecne w odpowiedzi dochodzą na koniec, bo panel urósł od czasu zapisu,
+a wpisy rdzenia bez odpowiednika w panelu odpadają, bo panel się skurczył. Numeracja wychodzi ciągła
+niezależnie od tego, który z trzech przypadków zaszedł. Ruch poza wykaz oddaje układ bez zmiany,
+a wywołujący porówna go z poprzednim i nie wyśle zapisu bez skutku. Zdjęta sekcja zostaje w układzie
+— traci widoczność, nie miejsce. Gdyby wypadała z tablicy, przywrócenie musiałoby zgadywać, gdzie
+stała.
+
+## budowa/klient-poprzedni/src/okno-komunikacji/zrodlo-zlecenia.ts
+Cztery stery paska — model, nakład rozumowania, tryb zatwierdzania i katalog roboczy — czytają jedną migawkę i piszą jedną drogą; gdyby każdy zakładał własny stan sterowania, pasek miałby cztery kopie tej samej prawdy i cztery komplety subskrypcji na okno, a rozjazd między nimi byłby kwestią czasu, nie możliwości. Drogi zapisu są dwie, bo kontrakt ma dwie: model, tryb uprawnień i katalogi robocze mają pola w treści zmiany okna, a nakład rozumowania takiego pola nie ma i idzie ustawieniem poziomu okna — port oddaje obie drogi osobno, zamiast zlewać je w jedną, bo zlanie ukryłoby przed wołającym fakt, że to dwie różne komendy o dwóch różnych potwierdzeniach. Te same nastawy stoją w kolumnie sterowania, ale reguła protokołu nie jest pisana po raz drugi: odczyt i zapis idą tymi samymi bytami, tą samą komendą i tym samym identyfikatorem okna, więc oba widoki przyjmują wyłącznie stan potwierdzony przez rdzeń, rozgłaszany do wszystkich połączeń konta — zmiana dokonana w pasku dochodzi do kolumny sterowania tą samą drogą, którą dochodzi do drugiego urządzenia konta, i odwrotnie.

@@ -7392,3 +7392,17 @@ Dwie komendy oddają co innego niż eksperta: dodanie konektora oddaje
 konektor, a ustawienie uprawnienia — wykaz uprawnień. Zdarzenie ma nieść
 eksperta, więc obsługiwacz dobiera go portem Pobierz. Nieudany dobór nie
 wywraca komendy — zmiana już zaszła, gaśnie wyłącznie rozgłoszenie.
+
+## budowa/server/internal/core/handlers_agent_warstwy.go
+Port WarstwyEksperta jest wtopiony w port Agenci, a nie podawany osobno:
+Agenci wędruje do rejestru jednym wywołaniem zarejestrujAgentow, więc port
+osobny wymagałby dodatkowego pola w Portach i dodatkowej linii w kompozycji.
+Kosztem jest interfejs Agenci szerszy o pięć czynności.
+
+Kontrakt daje modułowi Agents wyłącznie zdarzenie agent.changed, więc zapis
+warstwy i przypisanie wtyczki rozgłaszają się tak samo jak przypisanie
+umiejętności: rodzajem updated wraz z ekspertem po zmianie.
+
+Plik nie sprawdza wartości — nazwa warstwy i tryb podania są sprawdzane
+w adapterze, przy katalogu wartości kontraktu. Nie odmawia też z powodu
+niewpiętego repozytorium: odmowa jest odpowiedzią domeny, a nie dyspozycji.

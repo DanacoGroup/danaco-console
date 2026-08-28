@@ -1,21 +1,5 @@
-// Wpięcie pięciu komend tożsamości własnej eksperta — `agent.layer.set`,
-// `agent.layer.remove`, `agent.plugin.add`, `agent.plugin.remove`
-// i `agent.plugin.list` — wraz z portem WarstwyEksperta, który je wypełnia.
-//
-// Port WarstwyEksperta jest wtopiony w port Agenci, a nie podawany osobno:
-// Agenci wędruje do rejestru jednym wywołaniem `zarejestrujAgentow`
-// (`kompozycja.go`), więc port osobny wymagałby dodatkowego pola w Portach
-// i dodatkowej linii w kompozycji. Kosztem jest interfejs Agenci szerszy
-// o pięć czynności.
-//
-// Kontrakt daje modułowi Agents wyłącznie zdarzenie `agent.changed`, więc zapis
-// warstwy i przypisanie wtyczki rozgłaszają się tak samo jak przypisanie
-// umiejętności: rodzajem `updated` wraz z ekspertem po zmianie (wzorzec
-// `handlers_agenci.go`).
-//
-// Plik nie sprawdza wartości — nazwa warstwy i tryb podania są sprawdzane
-// w adapterze, przy katalogu wartości kontraktu. Nie odmawia też z powodu
-// niewpiętego repozytorium: odmowa jest odpowiedzią domeny, a nie dyspozycji.
+// Plik wpina pięć komend tożsamości własnej eksperta wraz z portem WarstwyEksperta, który
+// je wypełnia i wtapia w port Agenci zamiast podawać osobno.
 package core
 
 import (
@@ -32,13 +16,10 @@ type WarstwyEksperta interface {
 	UsunWarstwe(ctx context.Context, z shared.AgentLayerRemoveRequest) (shared.AgentLayerRemoveResponse, error)
 	DodajWtyczke(ctx context.Context, z shared.AgentPluginAddRequest) (shared.AgentPluginAddResponse, error)
 	UsunWtyczke(ctx context.Context, z shared.AgentPluginRemoveRequest) (shared.AgentPluginRemoveResponse, error)
-	// WykazWtyczek oddaje wtyczki eksperta wraz z ich definicją. Bez niej
-	// `Agent.pluginIds` niesie same identyfikatory, więc okno konektorów zna
-	// liczbę wtyczek, ale ani jednej nazwy czy wersji.
+	// WykazWtyczek oddaje wtyczki eksperta wraz z ich definicją, nie tylko identyfikatorami.
 	WykazWtyczek(ctx context.Context, z shared.AgentPluginListRequest) (shared.AgentPluginListResponse, error)
-	// EkspertPelny oddaje eksperta wraz z warstwami i wtyczkami. Służy
-	// rozgłoszeniu zmiany po `agent.plugin.add`, którego wynik niesie wtyczkę,
-	// a nie eksperta.
+	// EkspertPelny oddaje eksperta wraz z warstwami i wtyczkami, dla rozgłoszenia po dodaniu
+	// wtyczki.
 	EkspertPelny(ctx context.Context, idEksperta string) (shared.Agent, error)
 }
 
@@ -86,16 +67,12 @@ func zarejestrujWarstwyAgenta(r *Rejestr, warstwy WarstwyEksperta, e *emiter) {
 			return w, err
 		}))
 
-	// Odczyt bez zdarzenia — wykaz niczego nie zmienia, więc nie ma czego
-	// rozgłaszać. Cztery poprzednie komendy owija domknięcie z `e.agent`
-	// dlatego, że zmieniają stan.
+	// Odczyt bez zdarzenia: wykaz niczego nie zmienia, więc nie ma czego rozgłaszać.
 	r.Zarejestruj(shared.CommandAgentPluginList, obsluz(warstwy.WykazWtyczek))
 }
 
-// rozglosEkspertaPelnego dobiera eksperta wraz z warstwami i rozgłasza jego
-// zmianę. Nieudany dobór kończy wyłącznie rozgłoszenie — komenda już się
-// powiodła, więc jej wynik nie zależy od powodzenia tego odczytu. Wzorzec ten
-// sam co `rozglosEksperta`.
+// rozglosEkspertaPelnego dobiera eksperta wraz z warstwami i rozgłasza jego zmianę, wzorem
+// rozglosEksperta.
 func rozglosEkspertaPelnego(ctx context.Context, warstwy WarstwyEksperta, e *emiter, idEksperta string) {
 	ekspert, err := warstwy.EkspertPelny(ctx, idEksperta)
 	if err != nil {

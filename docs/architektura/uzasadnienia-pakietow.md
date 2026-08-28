@@ -6086,3 +6086,7 @@ policzone — powtórzenie w wykazie nie jest odmową.
 Znacznik czasu kolekcji przestawia się tylko wtedy, gdy coś się naprawdę zmieniło: wykaz
 kolekcji sortuje się po nim, a przypisanie bez skutku nie ma prawa przestawiać kolejności
 na ekranie.
+
+## budowa/server/internal/session/identyfikator.go
+Jedna sesja prowadzi wiele okien i wiele procesów biegnących równolegle,
+każde z własnym kanałem modelu i własnym katalogiem roboczym.

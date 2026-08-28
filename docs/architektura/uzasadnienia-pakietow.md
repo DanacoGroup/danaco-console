@@ -6566,3 +6566,9 @@ kolumny poziom_zasiegu.pierwszenstwo. Ta kolumna mieszka w bazie i niesie
 własną numerację poziomów, od aplikacji przez wartość 0, globalnego przez
 wartość 1, aż po okno przez wartość 8; powielanie tej numeracji w kodzie
 byłoby drugą prawdą o tej samej kolejności.
+
+## budowa/server/internal/konfig/rejestr_definicji.go
+Objaśnienie jest częścią definicji, nie dodatkiem: odpowiada kolumnie
+objasnienie ustawionej jako NOT NULL w modelu danych. Pusty zbiór
+dopuszczalnych adresów przy definicji zbudowanej w kodzie nie jest bramą
+zamykającą dostęp, tylko brakiem wskazania miejsca w oknie konfiguracji.

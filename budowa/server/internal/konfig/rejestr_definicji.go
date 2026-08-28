@@ -2,14 +2,10 @@ package konfig
 
 import "sync"
 
-// Definicja opisuje jedno ustawienie platformy: co ustawia, jaką ma wartość
-// domyślną i jak brzmi objaśnienie pokazywane Operatorowi. Objaśnienie jest
-// częścią definicji, nie dodatkiem — odpowiada kolumnie objasnienie NOT NULL
-// z modelu danych.
-// Pola opisujące miejsce pozycji w oknie konfiguracji (kategoria, nazwa,
-// kolejność) oraz jej dopuszczalne adresy (poziomy zasięgu, osie) wypełnia
-// katalog ustawień z bazy. Definicja zbudowana w kodzie zostawia je puste —
-// pusty zbiór dopuszczalnych adresów nie jest bramą, tylko brakiem wskazania.
+// Definicja opisuje jedno ustawienie: co ustawia, wartość domyślną
+// i objaśnienie pokazywane operatorowi. Miejsce pozycji w oknie konfiguracji
+// i dopuszczalne adresy wypełnia katalog ustawień z bazy; definicja
+// zbudowana w kodzie zostawia je puste.
 type Definicja struct {
 	Klucz       string // ustawienie.klucz
 	Domyslna    string // wartość obowiązująca przy braku zapisu na każdym z ośmiu poziomów
@@ -32,7 +28,8 @@ type Rejestr struct {
 	kolejnosc []string
 }
 
-// NowyRejestr buduje rejestr z podanych definicji, zachowując ich kolejność.
+// NowyRejestr buduje rejestr z podanych definicji przez wywołanie Dodaj,
+// zachowując ich kolejność dodania.
 func NowyRejestr(definicje ...Definicja) *Rejestr {
 	rejestr := &Rejestr{wgKlucza: make(map[string]Definicja, len(definicje))}
 	rejestr.Dodaj(definicje...)
@@ -62,7 +59,8 @@ func (r *Rejestr) Dodaj(definicje ...Definicja) {
 	}
 }
 
-// Definicja zwraca definicję klucza.
+// Definicja zwraca definicję zarejestrowaną pod danym kluczem oraz
+// informację, czy klucz w ogóle istnieje w rejestrze.
 func (r *Rejestr) Definicja(klucz string) (Definicja, bool) {
 	if r == nil {
 		return Definicja{}, false
@@ -73,7 +71,8 @@ func (r *Rejestr) Definicja(klucz string) (Definicja, bool) {
 	return definicja, jest
 }
 
-// Klucze zwraca klucze w kolejności dodania.
+// Klucze zwraca wszystkie klucze zarejestrowane w rejestrze, w kolejności,
+// w jakiej zostały do niego dodane.
 func (r *Rejestr) Klucze() []string {
 	if r == nil {
 		return nil
@@ -85,7 +84,8 @@ func (r *Rejestr) Klucze() []string {
 	return kopia
 }
 
-// Definicje zwraca komplet definicji w kolejności dodania.
+// Definicje zwraca komplet zarejestrowanych definicji w kolejności, w jakiej
+// zostały dodane do rejestru.
 func (r *Rejestr) Definicje() []Definicja {
 	if r == nil {
 		return nil
@@ -99,7 +99,8 @@ func (r *Rejestr) Definicje() []Definicja {
 	return komplet
 }
 
-// Liczba zwraca liczbę zdefiniowanych ustawień — do diagnostyki startu rdzenia.
+// Liczba zwraca liczbę zdefiniowanych w rejestrze ustawień, wykorzystywaną
+// przy diagnostyce startu rdzenia.
 func (r *Rejestr) Liczba() int {
 	if r == nil {
 		return 0
@@ -109,10 +110,10 @@ func (r *Rejestr) Liczba() int {
 	return len(r.kolejnosc)
 }
 
-// RejestrWbudowany zwraca komplet ustawień znanych platformie w chwili wydania:
-// parametry wykonania okna komunikacji oraz jedenaście punktów izolacji.
-// Rejestr jest zbiorem otwartym — rozszerzenie o kolejne ustawienie nie wymaga
-// zmiany rozstrzygania ani podglądu polityki.
+// RejestrWbudowany zwraca komplet ustawień znanych platformie w chwili
+// wydania: parametry wykonania okna komunikacji oraz jedenaście punktów
+// izolacji. Rejestr jest zbiorem otwartym, rozszerzenie o kolejne ustawienie
+// nie wymaga zmiany rozstrzygania.
 func RejestrWbudowany() *Rejestr {
 	rejestr := NowyRejestr(definicjeWykonania()...)
 	rejestr.Dodaj(definicjeIzolacji()...)

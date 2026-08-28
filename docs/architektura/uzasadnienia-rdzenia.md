@@ -6772,3 +6772,15 @@ uważać gniazdo za związane z sesją sprzed powitania i wyłączać ją ze zmi
 hasła — czyli oszczędzać sesję, której wołający nie przedstawił. Zerwanie nie
 jest bramką: niczego nie odrzuca i połączenia nie zamyka, tylko sprowadza stan
 do nieustalenia, kto woła.
+
+## budowa/server/internal/core/adapter_nawigacja_slowniki.go
+Wskazanie środowiska i modułu z żądania rozpoznaje się dwojako, kodem albo
+identyfikatorem wiersza, ponieważ kontrakt niesie jedno pole environmentId
+lub moduleId, a klient może mieć w ręku dowolne z nich. Wskazanie
+nierozpoznane nie jest błędem: funkcja zwraca fałsz, a obsługujący komendę
+odpowiada pusto zamiast zgłaszać usterkę.
+
+Macierz środowisk buduje jedno złączenie zamiast pętli zapytań po jednym na
+moduł. Porządek wiersza w wyniku ustala zapytanie z pliku dane/macierz.go,
+sortujące po kolejności środowiska, kodzie środowiska, kolejności modułu
+w środowisku i kodzie modułu.

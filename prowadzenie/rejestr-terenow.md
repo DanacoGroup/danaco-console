@@ -6,6 +6,85 @@ przyjęta. Zasady podziału opisuje [ustrój budowy](ustroj-budowy.md).
 
 ## Tereny otwarte
 
+### narzedzia-odblokowujace-arsenal
+
+| | |
+|---|---|
+| **Galaz** | `teren/narzedzia-odblokowujace-arsenal` z `main` |
+| **Drzewo** | `~/robocze/narzedzia-odblokowujace-arsenal` |
+| **Wykaz plikow** | `budowa/shared/contract.json`; wytwory `budowa/shared/contract.go` i `budowa/shared/contract.ts` WYLACZNIE z generatora |
+| **Poza terenem** | rdzen, klient, migracje, `design/`, `prowadzenie/` |
+
+**Podstawa: rozstrzygniecie 20, etap drugi — z kolejnoscia zmieniona pomiarem.**
+Etap drugi mial isc po wielkosci braku (Design 96 komend, Research 71, Studio 63).
+Pomiar drogi od komendy do programu zmienil te kolejnosc: obszar z 96 niewystawionymi
+komendami, ktory nie odblokowuje ZADNEGO programu, jest wart mniej niz jedna komenda
+otwierajaca modelowi rozpoznanie pisma.
+
+**Stan zmierzony 28.08.2026.** Arsenal niesie 55 programow; 50 jest osiagalnych z jakiejs
+komendy. Komenda, ktora MODEL moze wywolac, osiagalne sa **23**. Pozostale **27 lezy za
+komendami, ktorych nie ma w wykazie narzedzi modelu**. Model nie rozpozna dzis pisma,
+nie uzyje przegladarki, nie sprawdzi ani nie sformatuje kodu, nie zbada dostepnosci
+ani wydajnosci, nie sprawdzi pisowni i nie siegnie po skaner.
+
+**Zadanie.** Dopisac do `narzedzia.pozycje` w `contract.json` DOKLADNIE ponizsze 23 pozycje,
+ani jednej wiecej. Kazda odblokowuje wymienione przy niej programy:
+
+1. `apps.performance.audit` — odblokowuje: lighthouse
+2. `browser.accessibility.audit` — odblokowuje: pa11y
+3. `browser.console.read` — odblokowuje: chromium-browser
+4. `browser.device.emulate` — odblokowuje: chromium-browser
+5. `browser.dom.inspect` — odblokowuje: chromium-browser
+6. `browser.network.har` — odblokowuje: chromium-browser
+7. `browser.screenshot.capture` — odblokowuje: chromium-browser
+8. `browser.scroll` — odblokowuje: chromium-browser
+9. `developer.api.load.run` — odblokowuje: autocannon
+10. `developer.debug.session.start` — odblokowuje: dlv
+11. `developer.format.run` — odblokowuje: gofmt, goimports, prettier
+12. `developer.grep.replace` — odblokowuje: ast-grep
+13. `developer.grep.search` — odblokowuje: ast-grep
+14. `developer.lint.get` — odblokowuje: golangci-lint, ruff, stylelint
+15. `developer.refactor.apply` — odblokowuje: gopls
+16. `developer.scan.run` — odblokowuje: dupl, jscpd, semgrep, ruff
+17. `developer.symbol.navigate` — odblokowuje: gopls
+18. `developer.toolchain.check` — odblokowuje: gofmt, typos
+19. `library.metadata.get` — odblokowuje: exiftool
+20. `studio.ingest.device.list` — odblokowuje: scanimage
+21. `studio.ingest.recognize` — odblokowuje: tesseract, unpaper
+22. `terminal.script.lint` — odblokowuje: shellcheck, shfmt, pwsh, python3, ruff
+23. `translate.proofread.run` — odblokowuje: hunspell, vale
+
+Razem odblokowuje **27 programow** — wszystkie, ktore dzis stoja poza zasiegiem modelu.
+
+**Jak pisac zdanie `zastosowanie` — nauka z rundy poprzedniej.** Kontrola obalila
+32 zdania poprzedniego terenu na szesciu rzeczach i te same bledy zwroca i te prace:
+- Zdanie ma mowic KIEDY siegnac, nie CO komenda robi. Model widzi opis komendy I Twoje
+  zdanie w JEDNYM napisie — zdanie powtarzajace opis daje mu to samo dwa razy, a pole
+  przeznaczone na wyzwalacz zostaje puste co do tresci. Zobacz sam:
+  `grep -A2 'usage.summary.get' budowa/shared/contract.go`.
+- Zdanie NIE powiela ksztaltu zadania: zadnych wartosci pol ani wyliczen, bo stoja obok.
+- Zdanie NIE ZAWEZA skutku wbrew opisowi komendy. W rundzie poprzedniej zdanie mowilo
+  „cala historie NIEPRZYPIETA", a komenda kasuje takze przypiete — model uwierzylby,
+  ze wpisy przypiete sa bezpieczne.
+- Wyzwalacz ma byc SPRAWDZALNY PRZEZ MODEL. Warunek, ktorego model nie widzi, nie jest
+  wyzwalaczem.
+- Zdanie nie gubi OSTRZEZENIA stojacego w opisie komendy.
+- Pary bliskie sobie maja byc rozroznialne: `developer.lint.get` wobec `developer.scan.run`,
+  `developer.grep.search` wobec `developer.grep.replace`, `browser.dom.inspect` wobec
+  `browser.console.read`, `studio.ingest.recognize` wobec `studio.ingest.device.list`.
+
+**Kryteria odbioru.**
+1. Dopisane DOKLADNIE 23 pozycje z wykazu, ani jednej innej. Roznica zbiorow policzona
+   programem, nie okiem.
+2. Zadna nie wskazuje komendy nieistniejacej, nie powtarza komendy juz wystawionej,
+   nie ma pustego `zastosowanie`.
+3. Zdanie kazdej pozycji przechodzi szesc prob z akapitu wyzej. Kazda sprawdzona osobno.
+4. `contract.go` i `contract.ts` powstaly GENERATOREM, nie recznie.
+5. `bash narzedzia/drabina.sh szybka` przechodzi, w tym szczebel swiezosci wytworow.
+6. `go test -run Kontrakt ./internal/core/` przechodzi.
+7. Zadna inna sekcja `contract.json` nie ruszona.
+
+
 ### narzedzia-obszarow-zerowych
 
 | | |

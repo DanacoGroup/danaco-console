@@ -6868,3 +6868,17 @@ profilu, przydział serwera wykonania.
 Puste pole Wlasciciel oznacza zasób wspólny platformy: pulę kont, wspólną
 pulę procesów albo współdzielony serwer wykonania, zależnie od typu
 zasobu.
+
+## budowa/server/internal/dane/terminal_wyposazenie_odczyt.go
+Zawężenia idą parametrem, nie sklejaniem tekstu SQL, tak samo jak w dzienniku
+procesów `terminal_odczyt.go`: pusty parametr znaczy brak zawężenia, więc jedno
+przygotowane zapytanie obsługuje cały filtr, a wartości Operatora nigdy nie
+wchodzą do treści polecenia.
+
+Fraza szuka w nazwie, adresie celu i notatce. LIKE w SQLite nie rozróżnia
+wielkości liter dla znaków ASCII; dla pozostałych schodzi do porównania
+binarnego, co jest przyjętym ograniczeniem wyszukiwania.
+
+Znacznik dopasowuje się do jednej pozycji wykazu rozdzielanego przecinkiem.
+Otoczenie obu stron przecinkami sprawia, że wyszukiwana fraza „test” nie łapie
+przypadkowo znacznika „testowy”.

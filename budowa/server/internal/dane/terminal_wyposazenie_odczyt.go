@@ -1,10 +1,5 @@
-// Odpowiedzialność pliku: odczyt wyposażenia modułu Terminal — książki hostów,
-// biblioteki skryptów, wykazu kluczy, tuneli i obserwacji.
-//
-// Zawężenia idą parametrem, nie sklejaniem tekstu SQL — tak samo jak w dzienniku
-// procesów (`terminal_odczyt.go`): pusty parametr znaczy „nie zawężaj”, więc
-// jedno przygotowane zapytanie obsługuje cały filtr, a wartości Operatora nigdy
-// nie wchodzą do treści polecenia.
+// Repozytorium czyta wyposażenie modułu Terminal: książkę hostów, bibliotekę
+// skryptów, wykaz kluczy, tuneli i obserwacji, zawężane parametrem zapytania.
 package dane
 
 import (
@@ -87,7 +82,8 @@ func wzorzecFrazyTerminala(fraza string) string {
 	return "%" + fraza + "%"
 }
 
-// Host zwraca wpis książki hostów o wskazanym kodzie.
+// Host zwraca z tabeli `terminal_host` wpis książki hostów modułu Terminal,
+// wskazany parametrem kodu identyfikującego wiersz.
 func (r *repozytoriumTerminala) Host(ctx context.Context, kod string) (HostTerminala, error) {
 	polecenie, err := r.zapytania.przygotuj(ctx, pobierzHostaTerminala)
 	if err != nil {
@@ -103,7 +99,8 @@ func (r *repozytoriumTerminala) Host(ctx context.Context, kod string) (HostTermi
 	return host, nil
 }
 
-// Hosty zwraca książkę hostów zawężoną filtrem.
+// Hosty zwraca całą książkę hostów modułu Terminal z tabeli `terminal_host`,
+// zawężoną przekazanym filtrem wyszukiwania.
 func (r *repozytoriumTerminala) Hosty(ctx context.Context,
 	filtr FiltrHostowTerminala) ([]HostTerminala, error) {
 
@@ -131,7 +128,8 @@ func (r *repozytoriumTerminala) Hosty(ctx context.Context,
 	return hosty, wiersze.Err()
 }
 
-// Skrypt zwraca pozycję biblioteki o wskazanym kodzie.
+// Skrypt zwraca z tabeli `terminal_skrypt` pozycję biblioteki skryptów modułu
+// Terminal, wskazaną parametrem kodu.
 func (r *repozytoriumTerminala) Skrypt(ctx context.Context, kod string) (SkryptTerminala, error) {
 	polecenie, err := r.zapytania.przygotuj(ctx, pobierzSkryptTerminala)
 	if err != nil {
@@ -147,8 +145,8 @@ func (r *repozytoriumTerminala) Skrypt(ctx context.Context, kod string) (SkryptT
 	return skrypt, nil
 }
 
-// Skrypty zwraca bibliotekę zawężoną filtrem, w brzmieniu bieżącym każdej
-// pozycji.
+// Skrypty zwraca bibliotekę skryptów modułu Terminal zawężoną filtrem,
+// w brzmieniu bieżącym każdej pozycji.
 func (r *repozytoriumTerminala) Skrypty(ctx context.Context,
 	filtr FiltrSkryptowTerminala) ([]SkryptTerminala, error) {
 
@@ -182,7 +180,8 @@ func (r *repozytoriumTerminala) Skrypty(ctx context.Context,
 	return skrypty, wiersze.Err()
 }
 
-// Klucz zwraca wpis wykazu kluczy o wskazanym kodzie.
+// Klucz zwraca z tabeli `terminal_klucz` wpis wykazu kluczy SSH modułu
+// Terminal, wskazany parametrem kodu.
 func (r *repozytoriumTerminala) Klucz(ctx context.Context, kod string) (KluczTerminala, error) {
 	polecenie, err := r.zapytania.przygotuj(ctx, pobierzKluczTerminala)
 	if err != nil {
@@ -198,7 +197,8 @@ func (r *repozytoriumTerminala) Klucz(ctx context.Context, kod string) (KluczTer
 	return klucz, nil
 }
 
-// Klucze zwraca wykaz kluczy SSH w porządku nazwy.
+// Klucze zwraca z tabeli `terminal_klucz` cały wykaz kluczy SSH modułu
+// Terminal, uporządkowany rosnąco według nazwy.
 func (r *repozytoriumTerminala) Klucze(ctx context.Context) ([]KluczTerminala, error) {
 	polecenie, err := r.zapytania.przygotuj(ctx, pobierzKluczeTerminala)
 	if err != nil {
@@ -221,7 +221,8 @@ func (r *repozytoriumTerminala) Klucze(ctx context.Context) ([]KluczTerminala, e
 	return klucze, wiersze.Err()
 }
 
-// Tunel zwraca przekierowanie portu o wskazanym kodzie.
+// Tunel zwraca z tabeli `terminal_tunel` przekierowanie portu modułu Terminal,
+// wskazane parametrem kodu.
 func (r *repozytoriumTerminala) Tunel(ctx context.Context, kod string) (TunelTerminala, error) {
 	polecenie, err := r.zapytania.przygotuj(ctx, pobierzTunelTerminala)
 	if err != nil {
@@ -237,7 +238,8 @@ func (r *repozytoriumTerminala) Tunel(ctx context.Context, kod string) (TunelTer
 	return tunel, nil
 }
 
-// Tunele zwraca przekierowania portów zawężone filtrem, od najnowszego.
+// Tunele zwraca z tabeli `terminal_tunel` przekierowania portów modułu
+// Terminal zawężone filtrem, od najnowszego.
 func (r *repozytoriumTerminala) Tunele(ctx context.Context,
 	filtr FiltrTuneliTerminala) ([]TunelTerminala, error) {
 
@@ -263,7 +265,8 @@ func (r *repozytoriumTerminala) Tunele(ctx context.Context,
 	return tunele, wiersze.Err()
 }
 
-// Obserwacja zwraca obserwację plików o wskazanym kodzie.
+// Obserwacja zwraca obserwację plików modułu Terminal o wskazanym kodzie,
+// z tabeli `terminal_obserwacja`.
 func (r *repozytoriumTerminala) Obserwacja(ctx context.Context, kod string) (ObserwacjaTerminala, error) {
 	polecenie, err := r.zapytania.przygotuj(ctx, pobierzObserwacjeTerminala)
 	if err != nil {
@@ -279,7 +282,8 @@ func (r *repozytoriumTerminala) Obserwacja(ctx context.Context, kod string) (Obs
 	return obserwacja, nil
 }
 
-// Obserwacje zwraca obserwacje plików zawężone filtrem, od najnowszej.
+// Obserwacje zwraca z tabeli `terminal_obserwacja` obserwacje plików modułu
+// Terminal zawężone filtrem, od najnowszej.
 func (r *repozytoriumTerminala) Obserwacje(ctx context.Context,
 	filtr FiltrObserwacjiTerminala) ([]ObserwacjaTerminala, error) {
 
@@ -305,7 +309,8 @@ func (r *repozytoriumTerminala) Obserwacje(ctx context.Context,
 	return obserwacje, wiersze.Err()
 }
 
-// odczytajHostaTerminala składa wpis książki hostów z jednego wiersza wyniku.
+// odczytajHostaTerminala składa strukturę HostTerminala z jednego wiersza
+// wyniku zapytania do tabeli `terminal_host`.
 func odczytajHostaTerminala(wiersz interface{ Scan(...any) error }) (HostTerminala, error) {
 	var host HostTerminala
 	err := wiersz.Scan(&host.Kod, &host.Nazwa, &host.Cel, &host.Port, &host.Grupa,
@@ -314,7 +319,8 @@ func odczytajHostaTerminala(wiersz interface{ Scan(...any) error }) (HostTermina
 	return host, err
 }
 
-// odczytajSkryptTerminala składa pozycję biblioteki z jednego wiersza wyniku.
+// odczytajSkryptTerminala składa pozycję struktury SkryptTerminala z jednego
+// wiersza wyniku zapytania SQL.
 func odczytajSkryptTerminala(wiersz interface{ Scan(...any) error }) (SkryptTerminala, error) {
 	var skrypt SkryptTerminala
 	err := wiersz.Scan(&skrypt.Kod, &skrypt.Nazwa, &skrypt.Rodzaj, &skrypt.Powloka,
@@ -323,7 +329,8 @@ func odczytajSkryptTerminala(wiersz interface{ Scan(...any) error }) (SkryptTerm
 	return skrypt, err
 }
 
-// odczytajKluczTerminala składa wpis wykazu kluczy z jednego wiersza wyniku.
+// odczytajKluczTerminala składa strukturę KluczTerminala z jednego wiersza
+// wyniku zapytania do tabeli `terminal_klucz`.
 func odczytajKluczTerminala(wiersz interface{ Scan(...any) error }) (KluczTerminala, error) {
 	var klucz KluczTerminala
 	err := wiersz.Scan(&klucz.Kod, &klucz.Nazwa, &klucz.Rodzaj, &klucz.Odcisk,
@@ -331,7 +338,8 @@ func odczytajKluczTerminala(wiersz interface{ Scan(...any) error }) (KluczTermin
 	return klucz, err
 }
 
-// odczytajTunelTerminala składa przekierowanie portu z jednego wiersza wyniku.
+// odczytajTunelTerminala składa przekierowanie struktury TunelTerminala
+// z jednego wiersza wyniku zapytania SQL.
 func odczytajTunelTerminala(wiersz interface{ Scan(...any) error }) (TunelTerminala, error) {
 	var tunel TunelTerminala
 	err := wiersz.Scan(&tunel.Kod, &tunel.OknoKod, &tunel.Rodzaj, &tunel.HostKod,
@@ -340,7 +348,8 @@ func odczytajTunelTerminala(wiersz interface{ Scan(...any) error }) (TunelTermin
 	return tunel, err
 }
 
-// odczytajObserwacjeTerminala składa obserwację plików z jednego wiersza wyniku.
+// odczytajObserwacjeTerminala składa obserwację ObserwacjaTerminala z jednego
+// wiersza wyniku zapytania SQL.
 func odczytajObserwacjeTerminala(wiersz interface{ Scan(...any) error }) (ObserwacjaTerminala, error) {
 	var obserwacja ObserwacjaTerminala
 	err := wiersz.Scan(&obserwacja.Kod, &obserwacja.OknoKod, &obserwacja.KartaKod,

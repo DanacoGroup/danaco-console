@@ -8083,3 +8083,16 @@ dla każdej z nich uchwyt.
 Zdanie przy każdej pozycji zmieniło się samo, bez dotykania tego wykazu: pomiar czyta wykaz komend
 rdzenia i mówi teraz o braku uchwytu, a nie o braku nazwy. To są dwa różne stany i pas ich nie
 zlewa — kontrakt komendę ma, rdzeń jej jeszcze nie obsługuje.
+
+## budowa/klient-poprzedni/src/moduly/agents/biblioteka-ekspertow.ts
+Kontrakt nie ma komendy kopiującej eksperta, więc duplikat powstaje z komendy zakładającej treścią oryginału i z komendy przypisującej skill dla każdej jego umiejętności. Konektory nie idą do kopii: ich definicję odczytuje dziś komenda, dla której rdzeń nie ma jeszcze uchwytu, a przepisanie samych identyfikatorów dałoby wpisy bez treści. Widok mówi o tym wprost po każdym duplikowaniu — i o tym, że jest to stan przejściowy, nie granica projektu. Zawężanie jest podzielone między rdzeń a przeglądarkę, bo kontrakt dzieli je tak samo: frazę wyszukiwania przyjmuje komenda odczytu biblioteki, więc jedzie do rdzenia i wraca węższym wykazem. Zasięg widoczności i stan czynności są polami bytu, który już przyszedł — zawężenie po nich w przeglądarce nie pyta rdzenia po raz drugi o to, co klient trzyma w ręku.
+
+## budowa/klient-poprzedni/src/moduly/agents/biblioteka-ekspertow.ts (duplikowanie eksperta)
+Mapa pusta i mapa nieustawiona to dwie różne rzeczy: dopóki odczyt nie wrócił, karty nie pokazują plakietki wcale — zero wpisane z ciszy byłoby orzeczeniem, którego nikt nie wydał. Imię własne i favikon idą do kopii razem z resztą tożsamości: bez nich duplikat wracałby w wykazie modeli bez znaku i bez imienia, choć powielany ekspert oba miał. Odstępstwo kopii, które wróciłoby do dopisywania, pracowałoby na innym prompcie systemowym niż powielany oryginał — a widać to dopiero po treści odpowiedzi modelu. Zasięg i pamięć kopii, które wróciłyby do stanu wyjściowego, dałyby eksperta widzianego szerzej niż powielany i czytającego pamięć, której tamten nie czyta. Kopia już jest w rdzeniu, więc wykaz trzeba odświeżyć tak samo jak po duplikowaniu udanym; odmowa przypisania umiejętności idzie po odświeżeniu, żeby jej nie przykryło zdanie o powodzeniu. Pustka po zawężeniu znaczy co innego niż pusta biblioteka: Operator ma wiedzieć, że eksperci są, tylko filtr ich nie przepuścił — inaczej sięgnąłby po założenie nowego eksperta zamiast po filtr.
+
+## budowa/klient-poprzedni/src/modele/edytor-tozsamosci.ts
+Tryb bierze się kolejno z zapisu i z trybu proponowanego przez kategorię, a gdy katalog nie podaje żadnego — z wartości domyślnej klucza `tozsamosc.tryb_domyslny`. Kategoria bez zapisu na osi czynnej bierze treść z osi szerszej i edytor podaje to wprost, zamiast pokazywać puste pole bez wyjaśnienia.
+
+Zmiana kategorii albo osi znaczy inną treść w edytorze; samo przeliczenie stanu nie znaczy zmiany treści.
+
+Jedyną drogą zapisu treści demonstracyjnej pozostaje komenda `identity.document.set`, wywoływana przyciskiem „Zapisz treść kategorii".

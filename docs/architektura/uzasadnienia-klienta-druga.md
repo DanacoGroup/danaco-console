@@ -5940,3 +5940,19 @@ fabryki, a cztery gniazda tworzą cztery niezależne egzemplarze, z których
 spisu okien pomocniczych. Otwarcie panelu już otwartego nie jest błędem, a
 wartość spoza zakresu jest przycinana zamiast wstrzymywać wykonanie:
 powtórne otwarcie nic nie zmienia i nie budzi subskrybentów.
+
+## budowa/klient-poprzedni/src/moduly/roundtable/pasek-uczciwosci.ts
+Pierwsza rzecz: rozjazd katalogu okien rdzenia z oknami, które moduł buduje. Rdzeń przypisuje
+modułowi cztery okna operacyjne, a zamierzenie modułu wymienia sześć okien własnych — Argument Map
+& Analysis i Voting & Evaluation Center nie mają w katalogu rdzenia ani jednego wiersza. Moduł je
+buduje mimo to, bo bez nich okien byłoby cztery zamiast sześciu; zdanie rozjazdu liczy katalog okien
+z odczytu wykazu modułów, nie z napisu. Druga rzecz: stosunek liczby narzędzi zamierzenia do stanu
+ich wykonania. Bilans mówi, ile moduł wykonuje w całości, ile częściowo, ile ma w kontrakcie
+komendę bez zbudowanej obsługi i ile nie ma pokrycia. Rozróżnienie dwóch ostatnich liczb jest po
+scaleniu kontraktu najważniejszą treścią pasa: obszar urósł z czterech komend do czterdziestu
+sześciu, więc niemal wszystko, co moduł nazywał brakiem, jest dziś pracą do wykonania, a nie
+brakiem uzgodnienia. Trzecia rzecz: odczyt niewywoływany. Komenda odczytu debaty oddaje skład,
+tury i wypowiedzi, a komenda wykazu modeli sam skład — żadnej z nich moduł jeszcze nie wywołuje,
+więc okno otwarte w trakcie debaty zna wyłącznie to, co usłyszało od swojego otwarcia. Dotyczy to
+każdego okna modułu naraz, dlatego zdanie stoi na pasie, a nie w jednym z nich. Pas niczego nie
+blokuje i niczego nie ocenia — podaje liczby i nazywa granicę.

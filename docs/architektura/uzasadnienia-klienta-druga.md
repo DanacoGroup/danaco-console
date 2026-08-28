@@ -7240,3 +7240,13 @@ bo dotyczą Operatora, a nie jednej sesji: klucz liczników użycia niesie
 licznik i czas ostatniego użycia, klucz czynności przypiętych niesie
 czynności przypięte przez Operatora, a klucz trybu niesie wybór między
 pływakiem a stałym panelem bocznym.
+
+## budowa/klient-poprzedni/src/moduly/terminal/profil-karty.ts
+Wykaz powłok jest danymi, nie łańcuchem warunków: nowa wartość powłoki
+w kontrakcie wchodzi jedną pozycją, a wiersz polecenia dla niej dokłada
+rdzeń po swojej stronie. Nazwy pozycji są wartościami, nie podpisami nastawy:
+na uchwycie wyboru stoi wybrana wartość, na przykład „Atrament", a nie
+„Schemat: atrament", bo przedrostek rodzajowy powtarzałby na uchwycie nazwę
+nastawy. Inicjator „AI" zostaje klikalny mimo że w oknie o trybie manual
+wywołanie modelu wraca odmową permission_denied — odmowę wydaje rdzeń, a nie
+okno zgadujące z góry tryb uprawnień.

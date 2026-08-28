@@ -1,7 +1,7 @@
-/* Składnik biblioteki rysuje bryłę modułu: sześcian programu 3×3×3 składany z klocków warstwami od dołu, z błyskiem krawędzi przy każdym zatrzasku, pierścieniem po ukończonej warstwie i poświatą rdzenia po złożeniu.
+/* Składnik biblioteki rysuje bryłę modułu: sześcian programu 3×3×3 składany z klocków warstwami od dołu, z błyskiem krawędzi przy każdym złożeniu, pierścieniem po ukończonej warstwie i poświatą rdzenia po złożeniu.
    BRYŁA MODUŁU — składnik biblioteki
 
-   Sześcian programu 3×3×3 składany z klocków warstwami od dołu. Każdy zatrzask
+   Sześcian programu 3×3×3 składany z klocków warstwami od dołu. Każde złożenie
    daje błysk krawędzi, ukończona warstwa puszcza pierścień po podłożu, a wnętrze
    rozświetla się rdzeniem. Po złożeniu moduł pracuje, po chwili rozkłada się
    i cykl rusza od nowa.

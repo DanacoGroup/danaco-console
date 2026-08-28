@@ -6653,3 +6653,15 @@ mówiłoby, że nikt nic nie powiedział, zamiast że nie udało się zapytać.
 Punkt wejścia aplikacji tego pliku nie importuje — w aplikacji te same
 wywołania pochodzą od modelu przez narzędzia kontraktu i od pętli kolejek,
 nie z ręcznego pulpitu prób.
+
+## budowa/klient-poprzedni/src/moduly/studio/petla-wsad.ts
+Komenda wsadu przyjmuje wykaz dokumentów i mogłaby wykonać je wszystkie jednym wywołaniem, ale
+okno woła ją pojedynczo, jeden dokument na wywołanie, bo wymaganie mówi, że wsad ma dać się
+zatrzymać w połowie, a to, co się udało, ma zostać — jedno wywołanie na czterdzieści dokumentów
+nie miałoby gdzie się zatrzymać, wracając albo całe, albo wcale, a operator siedziałby przed
+nieruchomym oknem, nie wiedząc, na czym stoi. Rachunek jest ten sam za każdym razem, różnica
+jest w tym, że po każdym dokumencie pętla ma chwilę, w której może usłyszeć polecenie przerwania;
+zatrzymanie nie wycofuje niczego, dokumenty przetworzone zostają przetworzone, a pozostałe
+dostają stan przerwany wraz z powodem. Zbiorcza liczba przyjętych dokumentów jako cała odpowiedź
+jest tu zakazana: każdy dokument ma swój wiersz i swój stan — udana, odrzucona wraz z powodem
+albo przerwana — bo odmowa jednego nie wstrzymuje pozostałych, tak mówi kontrakt i tak to działa.

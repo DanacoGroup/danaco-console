@@ -1,31 +1,5 @@
-// Odpowiedzialność pliku: warstwa danych MALARZA FORMATÓW modułu Studio —
-// tabela `postac_malarza_studio` z migracji 368.
-//
-// ── Dlaczego malarz ma wiersz, a nie pamięć procesu ─────────────────────────
-// Migracja 368 zapisała powód wprost i ten plik go wykonuje: malarz kopiuje
-// POSTAĆ, nie treść, i nanosi ją w innym miejscu, więc między pobraniem
-// a naniesieniem stoją DWIE osobne komendy (`studio.format.painter.copy`
-// i `.apply`). Postać trzymana w pamięci procesu przepadała przy przeładowaniu
-// rdzenia — Operator pobierał postać, rdzeń wstawał od nowa, a naniesienie
-// odmawiało „takiej postaci nie znam". Przy pracy modelu przepadała jeszcze
-// łatwiej: model pobiera postać jednym narzędziem i nanosi drugim, być może po
-// kilku innych czynnościach.
-//
-// ── Dlaczego wiersz wygasa ──────────────────────────────────────────────────
-// Malarz jest narzędziem JEDNEJ czynności. Postać pobrana wczoraj i naniesiona
-// dziś byłaby zaskoczeniem, nie pomocą — stąd kolumna `wygasa` i odczyt, który
-// wpisu wygasłego nie oddaje. Wygasły wiersz nie jest przy tym kasowany
-// w odczycie: sprzątanie idzie osobnym wywołaniem, bo odczyt, który po cichu
-// usuwa wiersze, jest odczytem zmieniającym stan.
-//
-// ── Dlaczego kluczem jest OKNO, a nie dokument ──────────────────────────────
-// Malarz przenosi postać MIĘDZY dokumentami — to jest jego zwykłe użycie
-// w pakiecie biurowym. Kluczem jest więc okno, w którym Operator pracuje;
-// dokument, z którego postać zabrano, stoi obok jako wiedza, a nie jako warunek.
-//
-// ── Przedrostek nazw pomocniczych ───────────────────────────────────────────
-// Nazwy pomocnicze tego pliku niosą przedrostek `malarz` — przestrzeń nazw
-// pakietu `dane` jest dzielona z innymi wykonawcami.
+// Repozytorium przechowuje w tabeli `postac_malarza_studio` z migracji 368 postać
+// formatów skopiowaną malarzem formatów modułu Studio do naniesienia w innym miejscu.
 package dane
 
 import (
@@ -36,24 +10,21 @@ import (
 	"strings"
 )
 
-// PostacMalarzaStudia to wiersz tabeli `postac_malarza_studio` — postać zabrana
-// malarzem formatów.
+// PostacMalarzaStudia to wiersz tabeli `postac_malarza_studio`, niosący postać
+// zabraną malarzem formatów wraz z chwilą wygaśnięcia.
 type PostacMalarzaStudia struct {
 	ID          int64
 	Kod         string
 	Okno        string
 	DokumentKod *string
-	// PostacZnakuJSON i PostacAkapituJSON niosą postać kontraktu w zapisie JSON.
-	// Kolumn na pojedyncze cechy nie ma z zamysłu: postać znaku ma siedemnaście
-	// cech, a postać akapitu dwadzieścia, i rosną razem z kontraktem. Kolumna na
-	// każdą z nich znaczyłaby migrację przy każdym dołożonym polu.
+	// PostacZnakuJSON i PostacAkapituJSON niosą postać kontraktu w zapisie JSON, nie
+	// w osobnych kolumnach.
 	PostacZnakuJSON   *string
 	PostacAkapituJSON *string
 	StylNazwany       *string
 	Utworzono         string
-	// Wygasa jest chwilą, po której wpisu nie wolno nanieść. Puste znaczy „nie
-	// wygasa" — droga zostawiona świadomie, bo postać zabraną na potrzeby
-	// szablonu bywa potrzebna dłużej niż jedną czynność.
+	// Wygasa jest chwilą, po której wpisu nie wolno nanieść; wartość pusta oznacza
+	// brak wygaśnięcia.
 	Wygasa *string
 }
 
@@ -88,7 +59,8 @@ const (
 	                    AND wygasa <= strftime('%Y-%m-%dT%H:%M:%fZ','now')`
 )
 
-// MalarzFormatowStudia jest kontraktem tej warstwy.
+// MalarzFormatowStudia jest kontraktem warstwy danych, deklarującym zapis, odczyt
+// i sprzątanie postaci zabranej malarzem formatów.
 type MalarzFormatowStudia interface {
 	ZapiszPostacMalarza(ctx context.Context,
 		postac PostacMalarzaStudia) (PostacMalarzaStudia, error)
@@ -97,7 +69,8 @@ type MalarzFormatowStudia interface {
 	SprzatnijPostacieMalarza(ctx context.Context) (int, error)
 }
 
-// ZapiszPostacMalarza odkłada postać zabraną malarzem i oddaje ją zapisaną.
+// ZapiszPostacMalarza odkłada w tabeli `postac_malarza_studio` postać zabraną
+// malarzem formatów i oddaje ją zapisaną.
 func (r *repozytoriumStudia) ZapiszPostacMalarza(ctx context.Context,
 	postac PostacMalarzaStudia) (PostacMalarzaStudia, error) {
 
@@ -105,8 +78,7 @@ func (r *repozytoriumStudia) ZapiszPostacMalarza(ctx context.Context,
 	if kod == "" {
 		return PostacMalarzaStudia{}, fmt.Errorf("dane: postać malarza bez identyfikatora")
 	}
-	// Postać bez ani jednej z trzech treści nie jest postacią — naniesienie
-	// takiego wpisu nie zmieniłoby niczego i oddałoby „naniesiono".
+	// Postać bez żadnej z trzech treści nie jest postacią i nie zmienia stanu.
 	if postac.PostacZnakuJSON == nil && postac.PostacAkapituJSON == nil &&
 		postac.StylNazwany == nil {
 
@@ -152,7 +124,8 @@ func (r *repozytoriumStudia) PostacMalarza(ctx context.Context,
 	return postac, nil
 }
 
-// NajswiezszaPostacMalarza oddaje ostatnią niewygasłą postać zabraną w oknie.
+// NajswiezszaPostacMalarza oddaje ostatnią niewygasłą postać zabraną malarzem
+// formatów we wskazanym oknie.
 func (r *repozytoriumStudia) NajswiezszaPostacMalarza(ctx context.Context,
 	okno string) (PostacMalarzaStudia, error) {
 
@@ -174,7 +147,8 @@ func (r *repozytoriumStudia) NajswiezszaPostacMalarza(ctx context.Context,
 	return postac, nil
 }
 
-// SprzatnijPostacieMalarza zdejmuje wpisy wygasłe i oddaje, ile ich było.
+// SprzatnijPostacieMalarza zdejmuje z tabeli `postac_malarza_studio` wpisy
+// wygasłe i oddaje liczbę zdjętych wierszy.
 func (r *repozytoriumStudia) SprzatnijPostacieMalarza(ctx context.Context) (int, error) {
 	polecenie, err := r.zapytania.przygotuj(ctx, malarzSprzataj)
 	if err != nil {
@@ -191,7 +165,8 @@ func (r *repozytoriumStudia) SprzatnijPostacieMalarza(ctx context.Context) (int,
 	return int(zdjete), nil
 }
 
-// malarzOdczytaj składa wiersz postaci malarza.
+// malarzOdczytaj składa strukturę PostacMalarzaStudia z jednego wiersza wyniku
+// zapytania SQL do tabeli `postac_malarza_studio`.
 func malarzOdczytaj(wiersz interface{ Scan(...any) error }) (PostacMalarzaStudia, error) {
 	var postac PostacMalarzaStudia
 	var dokument, znak, akapit, styl, wygasa sql.NullString

@@ -16,35 +16,22 @@ import {
 } from './model-danych';
 import { pustyStanZrodla, type StanZrodla } from './stan-zrodla';
 
-/**
- * Złożenie kompletu `DanePulpitu` z surowych odczytów i zdarzeń rdzenia.
- *
- * Czyste przełożenie stanu zebranego przez `zrodlo-pulpitu.ts` na kształt,
- * który widok umie wyrysować. Każda wartość pochodzi z odczytu kontraktu,
- * a miara bez źródła zostaje `null` i widok pokazuje ją jako stan pusty.
- *
- * Kolumny matrycy pochodzą z rdzenia w całości — kod, nazwa, motto i kolejność
- * z odczytu `environment.list`. Przed pierwszą odpowiedzią kolumn nie ma:
- * nagłówek pulpitu mówi „oczekiwanie na rdzeń", a matryca pokazuje ten sam
- * stan zamiast zastępczego kompletu kolumn zbudowanego z kodów modułów.
- */
+// Złożenie kompletu `DanePulpitu` z surowych odczytów i zdarzeń rdzenia; funkcja czysta.
 
-/** Komplet sprzed pierwszego odczytu — stan oczekiwania, bez wartości zastępczych. */
+/** Komplet pulpitu sprzed pierwszego odczytu — stan oczekiwania na rdzeń, bez żadnych wartości zastępczych. */
 export function pustyKomplet(): DanePulpitu {
   return zlozDanePulpitu(pustyStanZrodla());
 }
 
 /**
- * Motto kolumny, gdy rdzeń go nie podał — jawna, pusta wartość.
- *
- * Pole `Environment.motto` jest w kontrakcie, więc wartość pusta znaczy „ten
- * wiersz nie ma motta", a nie brak metadanej. Pustego motta nie zastępuje się
- * tekstem ułożonym po stronie widoku; treść karty środowiska strony głównej
- * jest osobna i nie jest tu powielana.
+ * Motto kolumny, gdy rdzeń go nie podał — jawna, pusta wartość. Pole
+ * `Environment.motto` jest w kontrakcie, więc wartość pusta znaczy „ten
+ * wiersz nie ma motta", nie brak metadanej. Pustego motta nie zastępuje się
+ * tekstem ułożonym po stronie widoku.
  */
 const MOTTO_BEZ_ZRODLA = '';
 
-/** Komplet pulpitu z surowego stanu — funkcja czysta. */
+/** Komplet danych pulpitu operacyjnego złożony z surowego stanu źródła — funkcja czysta, bez efektów ubocznych. */
 export function zlozDanePulpitu(stan: StanZrodla): DanePulpitu {
   const oknaSesji = pogrupujOknaPoSesji(stan.okna);
   const { matryca, pozaSrodowiskami } = zlozMatryce(stan, oknaSesji);
@@ -87,7 +74,7 @@ export function zlozDanePulpitu(stan: StanZrodla): DanePulpitu {
   };
 }
 
-/** Okna pogrupowane po sesji nadrzędnej. */
+/** Okna komunikacji całej aplikacji pogrupowane po identyfikatorze ich sesji nadrzędnej, do której należą. */
 function pogrupujOknaPoSesji(okna: Map<string, Window>): Map<string, Window[]> {
   const grupy = new Map<string, Window[]>();
   for (const okno of okna.values()) {
@@ -98,23 +85,19 @@ function pogrupujOknaPoSesji(okna: Map<string, Window>): Map<string, Window[]> {
   return grupy;
 }
 
-/** Kolumny środowisk i wykaz sesji, których środowiska odczyt nie wskazał. */
+/** Kolumny środowisk matrycy sesji pulpitu oraz wykaz sesji, których środowiska odczyt rdzenia nie wskazał. */
 function zlozMatryce(
   stan: StanZrodla,
   oknaSesji: Map<string, Window[]>,
 ): { matryca: KolumnaSrodowiska[]; pozaSrodowiskami: SesjaMatrycy[] } {
-  // Kolejność ustawia rdzeń: `Environment.order` odpowiada kolumnie
-  // `srodowisko.kolejnosc`. Klient nie sortuje po nazwie ani po kodzie, bo
-  // porządek kart jest zapisany w bazie.
+  // Kolejność kolumn ustawia rdzeń: `Environment.order`; klient nie sortuje sam.
   const matryca: KolumnaSrodowiska[] = [...stan.srodowiska.values()]
     .sort((pierwsze, drugie) => pierwsze.order - drugie.order)
     .map((srodowisko) => ({
       id: srodowisko.code,
-      // Nazwa z rdzenia; pusta wraca do kodu, tak jak sesja bez tytułu wraca
-      // do identyfikatora — nigdy do napisu ułożonego tutaj.
+      // Nazwa z rdzenia; pusta wraca do kodu, jak sesja bez tytułu wraca do identyfikatora.
       nazwa: srodowisko.name !== '' ? srodowisko.name : srodowisko.code,
-      // Motto z rdzenia (`environment.list`, pole `motto`). Brak pola i pole
-      // puste znaczą to samo: kolumna bez motta, bez zastępnika.
+      // Motto z rdzenia; brak pola i pole puste znaczą to samo — kolumnę bez motta.
       motto: srodowisko.motto ?? MOTTO_BEZ_ZRODLA,
       sesje: [],
     }));
@@ -137,7 +120,7 @@ function zlozMatryce(
   return { matryca, pozaSrodowiskami };
 }
 
-/** Jedna sesja matrycy z odczytu sesji, jej obecności i okien. */
+/** Jedna sesja matrycy pulpitu operacyjnego złożona z odczytu sesji, jej obecności oraz przypisanych jej okien. */
 function zlozSesje(
   sesja: Session,
   obecnosc: SessionPresence | undefined,
@@ -153,7 +136,7 @@ function zlozSesje(
   };
 }
 
-/** Rola okna wiodącego: okno ogniskowane, w braku — pierwsze otwarte. */
+/** Rola okna wiodącego danej sesji matrycy: okno ogniskowane, a w braku ogniska — pierwsze okno otwarte. */
 function rolaOknaWiodacego(
   obecnosc: SessionPresence | undefined,
   okna: Window[],
@@ -164,7 +147,7 @@ function rolaOknaWiodacego(
   return otwarte?.windowRole ?? null;
 }
 
-/** Jeden proces w tle ze zdarzenia telemetrii i znanego okna. */
+/** Jeden proces biegnący w tle pulpitu, złożony ze zdarzenia telemetrii postępu oraz znanego okna sesji. */
 function zlozProces(
   proces: ProgressChangedEvent,
   okna: Map<string, Window>,
@@ -181,7 +164,7 @@ function zlozProces(
   };
 }
 
-/** Zespół agentów: otwarte okna komunikacji wraz z ich telemetrią. */
+/** Zespół agentów pulpitu operacyjnego Mission Control: otwarte okna komunikacji wraz z telemetrią procesu. */
 function zlozZespol(
   okna: Map<string, Window>,
   oknaZProcesem: Set<string>,

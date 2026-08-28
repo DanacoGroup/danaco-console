@@ -5,34 +5,7 @@ import {
   type Wydanie,
 } from './wykaz-wydan';
 
-/**
- * Wykaz wydań w oknie — chronologia z sumą kontrolną.
- *
- * Widok pokazuje tę samą chronologię co strona „Pobierz"
- * (`budowa/witryna/tresc/pobierz.mjs`), w tych samych siedmiu kolumnach:
- * Wersja · Data · System · Plik · Rozmiar · Suma SHA-256 · Co się zmieniło.
- * Oba widoki czytają jeden plik `wydania.json`; inny wykrój tych samych danych
- * po jednej ze stron dałby drugą prawdę o wydaniach.
- *
- * Zdanie o wydaniu bez sumy brzmi tak samo po obu stronach, bo mówi rzecz
- * prawdziwą u obu: most do powłoki odmawia wywołania bez sumy
- * (`most-aktualizacji.ts`, kod `wydanie-bez-sumy`), a puste pole w tabeli
- * wyglądałoby na brak danych, nie na przeszkodę.
- *
- * Każdy stan kanału ma własne zdanie. Widok pokazuje to, co oddał
- * `pobierzWykazWydan()`, i ani słowa więcej: odczyt rozróżnia brak łączności,
- * brak pliku pod adresem i pusty wykaz, więc „nie ma jeszcze żadnego wydania"
- * pada tylko wtedy, gdy kanał tak odpowiedział.
- *
- * Bez odnośników — odnośnik wyprowadziłby okno aplikacji pod obcy adres. Adres
- * jest wypisany jako tekst do skopiowania, a pobieranie zostaje pod przyciskiem
- * banera albo na witrynie.
- *
- * Widok nie montuje się sam: oddaje element, a osadza go ten, kto go przywołał —
- * przycisk „Wykaz wydań" przy banerze.
- */
-
-/** Siedem kolumn chronologii — ta sama kolejność co na stronie „Pobierz". */
+/** Siedem kolumn chronologii wydań, w tej samej kolejności co na stronie „Pobierz": wersja, data, system, plik, rozmiar, suma kontrolna i opis zmian. */
 const KOLUMNY = [
   'Wersja',
   'Data',
@@ -43,9 +16,10 @@ const KOLUMNY = [
   'Co się zmieniło',
 ] as const;
 
-/** Zdanie o wydaniu bez sumy — brzmi tak samo jak na stronie „Pobierz". */
+/** Zdanie wypisywane w miejscu sumy kontrolnej wydania bez sumy, brzmiące tak samo jak na stronie „Pobierz" w tabeli chronologii wydań. */
 const BRAK_SUMY = 'BRAK — aplikacja takiego wydania NIE ZAŁOŻY';
 
+/** Wynik budowy widoku wykazu wydań: element gotowy do osadzenia w oknie oraz metoda odświeżająca jego treść z kanału. */
 export interface WykazWydanWidok {
   /** Element do osadzenia przez przywołującego. Powstaje pusty i milczący. */
   element: HTMLElement;
@@ -53,6 +27,7 @@ export interface WykazWydanWidok {
   odswiez(): Promise<void>;
 }
 
+/** Parametry budowy widoku wykazu wydań: adres kanału, z którego czytana jest chronologia, oraz wersja aktualnie zainstalowana. */
 export interface UstawieniaWykazu {
   /** Adres kanału wydań. Domyślnie ten sam, o który pyta baner. */
   adres?: string;
@@ -116,9 +91,7 @@ export function utworzWykazWydanWidok(ustawienia: UstawieniaWykazu = {}): WykazW
     rzad.append(komorka(wydanie.data));
     rzad.append(komorka(wydanie.system ?? '—'));
 
-    // PLIK: nazwa widoczna, pełny adres w podpowiedzi. Wpis bez pliku jest
-    // pozycją historyczną — nazywamy to wprost, zamiast zostawiać puste pole,
-    // które wygląda na przeoczenie.
+    // Wpis bez pliku jest pozycją historyczną, a nie przeoczeniem — pole nazywa to wprost.
     const plik = wydanie.plik
       ? komorka(wydanie.nazwaPliku ?? wydanie.plik, 'dn-dane')
       : komorka('— wpis historyczny, bez pliku do pobrania', 'dn-dane');
@@ -127,8 +100,7 @@ export function utworzWykazWydanWidok(ustawienia: UstawieniaWykazu = {}): WykazW
 
     rzad.append(komorka(wydanie.rozmiar ?? '—', 'dn-dane'));
 
-    // SUMA: brak sumy nie jest pustym polem, tylko przeszkodą — i tak się
-    // nazywa, tym samym zdaniem co na witrynie.
+    // Brak sumy jest przeszkodą, nie pustym polem — komórka nazywa to tym samym zdaniem co witryna.
     const suma = document.createElement('td');
     suma.className = 'dn-dane';
     const zapis = document.createElement('code');
@@ -166,10 +138,7 @@ export function utworzWykazWydanWidok(ustawienia: UstawieniaWykazu = {}): WykazW
     return przewijak;
   }
 
-  /**
-   * Zamienia stan kanału na to, co widzi Operator. Każdy z sześciu stanów ma
-   * osobne zdanie; „brak wydań" pada wyłącznie dla stanu `pusty`.
-   */
+  /** Zamienia stan kanału na zdanie widoku; „brak wydań" pada wyłącznie dla stanu `pusty`. */
   function rysuj(odczyt: OdczytWykazu): void {
     czysc();
     switch (odczyt.stan) {
@@ -226,8 +195,7 @@ export function utworzWykazWydanWidok(ustawienia: UstawieniaWykazu = {}): WykazW
         );
         return;
       default: {
-        // Wyczerpanie stanów pilnowane przez kompilator: dopisanie siódmego
-        // stanu w `OdczytWykazu` zapali się tutaj, a nie u Operatora.
+        // Wyczerpanie stanów pilnuje kompilator — dopisanie siódmego stanu zapali się tutaj.
         const nieznany: never = odczyt;
         return nieznany;
       }
@@ -241,8 +209,7 @@ export function utworzWykazWydanWidok(ustawienia: UstawieniaWykazu = {}): WykazW
       czysc();
       element.append(zdanie('Pytam kanał wydań…'));
       const odczyt = await pobierzWykazWydan(adres);
-      // Odpowiedź na żądanie już nieaktualne nie ma prawa przerysować widoku:
-      // Operator zdążył przywołać wykaz ponownie i czeka na TAMTĄ odpowiedź.
+      // Odpowiedź na żądanie już nieaktualne nie przerysowuje widoku — czeka się na nowsze.
       if (moj !== obieg) return;
       rysuj(odczyt);
     },

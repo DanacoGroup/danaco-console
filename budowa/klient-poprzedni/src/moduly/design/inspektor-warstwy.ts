@@ -5,26 +5,8 @@ import { BOK_WYJSCIOWY } from './zapis-kompozycji';
 import type { StanKompozycji } from './stan-kompozycji';
 
 /**
- * Inspektor właściwości warstwy zaznaczonej — element warstwy drugiej,
- * wywoływany zaznaczeniem elementu na kanwie.
- *
- * Dwie rzeczy naraz, bo są tą samą rzeczą oglądaną z dwóch stron. Dla
- * projektanta to inspektor: cztery liczby opisujące położenie i rozmiar,
- * zmienialne wprost. Dla programisty to handoff: te same cztery liczby wydane
- * jako gotowy zapis reguł stylu, do przepisania bez mierzenia niczego na oko.
- *
- * Inspektor mówi też, czego warstwa NIE niesie. Opracowanie wymienia przy
- * inspektorze wypełnienie, obrys, efekty, więzy responsywne i auto-layout —
- * warstwa kompozycji nie ma pola na żadne z nich, więc wykaz stawia je jako
- * brak nazwany, zamiast pokazywać puste pola sugerujące, że wartość istnieje,
- * tylko jest niewypełniona.
- *
- * Zmiana liczby idzie do zapisu kompozycji, nie do rdzenia. Do rdzenia jedzie
- * dopiero cały układ, zapisem kompozycji — tak samo jak przy przeciąganiu
- * warstwy po kanwie.
- *
- * Przy zaznaczeniu wielokrotnym inspektor opisuje warstwę pierwszą z wykazu
- * i mówi o tym wprost: cztery liczby opisują jeden prostokąt, a nie zbiór.
+ * Inspektor właściwości warstwy zaznaczonej — jednocześnie edytor liczb dla projektanta i handoff,
+ * wydający te same cztery liczby jako gotowy zapis reguł stylu do przepisania bez mierzenia na oko.
  */
 export interface InspektorWarstwy {
   element: HTMLElement;
@@ -33,7 +15,7 @@ export interface InspektorWarstwy {
   ogniskujAdnotacje(): boolean;
 }
 
-/** Pola geometrii warstwy wraz z ich kluczem w kontrakcie. */
+/** Pola geometrii warstwy zaznaczonej wraz z ich kluczem identyfikującym pole w kontrakcie danych rdzenia. */
 const POLA_GEOMETRII = [
   ['x', 'Położenie poziome'],
   ['y', 'Położenie pionowe'],
@@ -43,7 +25,7 @@ const POLA_GEOMETRII = [
 
 type KluczGeometrii = (typeof POLA_GEOMETRII)[number][0];
 
-/** Właściwości wymienione w opracowaniu, których warstwa kontraktu nie niesie. */
+/** Właściwości bez pola w kontrakcie: warstwa kompozycji ich nie niesie, więc wykaz nazywa ten brak wprost. */
 const BEZ_POLA_W_KONTRAKCIE: readonly (readonly [string, string])[] = [
   ['Wypełnienie', 'Warstwa nie ma pola barwy wypełnienia — kanwa rysuje ją oprawą modułu.'],
   ['Obrys', 'Ani grubości, ani barwy obrysu warstwa nie wyraża.'],
@@ -116,13 +98,7 @@ export function utworzInspektorWarstwy(stan: StanKompozycji): InspektorWarstwy {
     return stan.warstwy().find((warstwa) => warstwa.id === zaznaczone[0]) ?? null;
   }
 
-  /**
-   * Przepisuje liczby z pól na warstwę.
-   *
-   * Wartość nieliczbowa nie jest zerem: pole zostawione z wpisem, którego nie da
-   * się odczytać jako liczby, zostawia wymiar bez zmiany, zamiast zsuwać warstwę
-   * do lewego górnego rogu.
-   */
+  /** Przepisuje liczby z pól na warstwę; wartość nieliczbowa zostawia wymiar bez zmiany. */
   function nanies(): void {
     const warstwa = wskazana();
     if (warstwa === null) return;
@@ -170,8 +146,7 @@ export function utworzInspektorWarstwy(stan: StanKompozycji): InspektorWarstwy {
   function ustawPole(klucz: KluczGeometrii, wartosc: number): void {
     const kontrolka = kontrolki.get(klucz);
     if (kontrolka === undefined) return;
-    // Liczba zaokrąglana do części setnych: przeciąganie wskaźnikiem daje
-    // ułamki o kilkunastu miejscach, których nikt nie przepisze do kodu.
+    // Liczba zaokrąglana do części setnych, bo przeciąganie wskaźnikiem daje ułamki zbyt długie dla kodu.
     kontrolka.value = String(Math.round(wartosc * 100) / 100);
   }
 

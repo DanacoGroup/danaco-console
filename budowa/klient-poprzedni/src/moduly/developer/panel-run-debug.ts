@@ -8,30 +8,8 @@ import { rysujZaleznosci, zaleznosci } from './zaleznosci-zewnetrzne';
 import type { ZrodloWarsztatu } from './zrodlo-warsztatu';
 
 /**
- * Run & Debug — druga część kolumny monitora modułu Developer.
- *
- * Opracowanie opisuje monitor jako jedno okno o dwóch częściach: Build Output
- * prowadzi budowanie i testy, Run & Debug prowadzi konfiguracje uruchomień
- * i debugger krokowy, a obie części przełącza pas zakładek w nagłówku kolumny.
- * Ta część jest ciałem drugiej zakładki.
- *
- * ── Punkt przerwania przed sesją ───────────────────────────────────────────
- * Punkt stawia się w pliku i wierszu, ZANIM cokolwiek ruszy — należy do okna,
- * a nie do sesji, i przeżywa drugi oraz trzeci bieg. Rdzeń trzyma go w bazie
- * i podaje adapterowi przy starcie; panel pokazuje komplet punktów okna, bo
- * margines edytora rysuje wszystkie naraz.
- *
- * ── Stan sesji odczytuje się po kroku, nie zgaduje ─────────────────────────
- * Zatrzymanie na punkcie zgłasza debugowany proces, a nie Operator, więc panel
- * po każdym kroku pyta rdzeń o stos wywołań: dopiero on mówi, gdzie program
- * stoi. Rysowanie stanu z samego naciśniętego przycisku pokazywałoby stan
- * życzeniowy — „wykonano krok” zamiast „program stoi w wierszu 42”.
- *
- * ── Czego panel nie udaje ──────────────────────────────────────────────────
- * Nie pokazuje przycisków kroku, dopóki sesji nie ma; wykonanie wyrażenia
- * wymaga ramki, a ramka istnieje tylko w programie zatrzymanym. Kontrakt nie
- * niesie zdarzenia zatrzymania, więc panel odczytuje stan sam — i mówi wprost,
- * że robi to na żądanie, zamiast udawać widok na żywo.
+ * Run & Debug — druga część kolumny monitora modułu Developer, dla sesji
+ * debugowania w toku i po jej zakończeniu.
  */
 export interface PanelRunDebug {
   element: HTMLElement;
@@ -39,7 +17,7 @@ export interface PanelRunDebug {
   zamknij(): void;
 }
 
-/** Buduje ciało zakładki Run & Debug kolumny monitora. */
+/** Buduje ciało zakładki Run & Debug kolumny monitora modułu Developer w oknie sesji rdzenia aplikacji. */
 export function utworzPanelRunDebug(
   zrodlo: ZrodloWarsztatu,
   stan: StanDevelopera,
@@ -151,9 +129,7 @@ export function utworzPanelRunDebug(
       tresc.potwierdzenie('Sesja debugowania zakończona.', true);
       return;
     }
-    // Stan po kroku odczytuje się z rdzenia, a nie z naciśniętego przycisku:
-    // program zatrzymuje się tam, gdzie zatrzymuje go punkt, a nie tam, gdzie
-    // spodziewa się okno.
+    // Stan po kroku odczytuje się z rdzenia, a nie z naciśniętego przycisku programu.
     await pokazZakres();
   }
 
@@ -256,8 +232,7 @@ export function utworzPanelRunDebug(
 
   return {
     element,
-    // Panel nie odpytuje rdzenia sam z siebie: sesja debugowania jest czynnością
-    // Operatora, a nie stanem, który okno ma odtwarzać przy każdym odświeżeniu.
+    // Panel nie odpytuje rdzenia sam z siebie: sesja debugowania jest czynnością operatora.
     odswiez: () => undefined,
     zamknij: () => {
       sesja = null;
@@ -265,7 +240,7 @@ export function utworzPanelRunDebug(
   };
 }
 
-/** akapitPanelu składa jeden wiersz treści panelu. */
+/** akapitPanelu składa jeden wiersz treści panelu Run & Debug kolumny monitora modułu Developer w oknie. */
 function akapitPanelu(zdanie: string): HTMLElement {
   const element = document.createElement('p');
   element.className = 'mdev-wiersz';

@@ -1,4 +1,5 @@
 // @vitest-environment jsdom
+// Środowisko jsdom jest wymagane, bo sprawdziany menu wyciszania odczytują i tworzą elementy DOM w pamięci.
 
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { utworzStanObecnosci, type StanObecnosci } from './tryb-obecnosci';
@@ -6,23 +7,10 @@ import { KlasaZdarzen, ZakresKontekstu } from './wyciszenie-aod';
 import type { KontekstWyciszenia } from './wyciszenie-kontekst';
 import { utworzMenuWyciszenia, type MenuWyciszenia } from './wyciszenie-menu';
 
-/**
- * Sprawdziany menu kebab wyciszania — czynność Operatora, nie kształt pliku.
- *
- * Menu jest tą samą powierzchnią przy awatarze i w nagłówku kolumny, więc
- * pilnowane jest to, czego zlecenie żąda od obu:
- *   1. komplet rozdz. 3.5 stoi w jednym menu — trzy czasy, moduł, karta sesji,
- *      sześć klas zdarzeń, tryb cichy;
- *   2. ŻADNA pozycja nie jest wyszarzana i ŻADNA nie pyta o potwierdzenie;
- *   3. wyciszenie i jego zniesienie idą jednym kliknięciem;
- *   4. podgląd wyciszeń czynnych mówi, CO jest wyciszone i DO KIEDY;
- *   5. pozycja, której nakładka nie ma czym wykonać, mówi czego brakuje —
- *      zamiast zniknąć albo zmilczeć.
- */
-
+/** Stała chwila czasu używana we wszystkich sprawdzianach menu kebab wyciszania, dla powtarzalności wyników. */
 const TERAZ = 1_700_000_000_000;
 
-/** Kontekst nakładki podstawiony: moduł i karta sesji znane z nazwy. */
+/** Kontekst nakładki podstawiony na potrzeby sprawdzianu: moduł i karta sesji znane tu z nazwy własnej. */
 function kontekstZnany(): KontekstWyciszenia {
   return {
     odswiez: () => Promise.resolve(),
@@ -35,7 +23,7 @@ function kontekstZnany(): KontekstWyciszenia {
   };
 }
 
-/** Kontekst nakładki bez bieżącego bytu — rdzeń nie wskazał okna. */
+/** Kontekst nakładki bez bieżącego bytu, bo rdzeń nie wskazał w swoim odczycie ani okna, ani karty modułu. */
 function kontekstNieznany(): KontekstWyciszenia {
   return {
     odswiez: () => Promise.resolve(),
@@ -62,7 +50,7 @@ function zbuduj(kontekst: KontekstWyciszenia = kontekstZnany()): {
   return { menu, stan };
 }
 
-/** Pozycja menu o treści zawierającej podany fragment. */
+/** Pozycja menu o treści zawierającej podany fragment, wyszukana wśród wszystkich przycisków elementu menu. */
 function pozycja(menu: MenuWyciszenia, fragment: string): HTMLButtonElement {
   const znaleziona = [...menu.element.querySelectorAll('button')].find((przycisk) =>
     (przycisk.textContent ?? '').includes(fragment),

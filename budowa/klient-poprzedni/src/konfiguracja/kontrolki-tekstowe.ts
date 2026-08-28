@@ -8,19 +8,9 @@ import {
   type ZaleznosciKontrolki,
 } from './kontrolka';
 
-/**
- * Kontrolki wartości tekstowych: napis, tekst wielowierszowy, ścieżka,
- * lista ścieżek, poświadczenie i wartość złożona w zapisie JSON.
- *
- * Zatwierdzenie następuje na zdarzeniu `change`, czyli po opuszczeniu pola —
- * nie po każdym znaku. Zapis co znak zasypałby rdzeń komendami `config.set`
- * i odbierał możliwość poprawienia wartości przed wysyłką.
- *
- * Wartość rodzaju `secret` nie wraca z rdzenia: pole pozostaje puste i mówi to
- * wprost. Kontrolka przyjmuje wartość nową, nie pokazuje wartości zapisanej.
- */
+/** Kontrolki wartości tekstowych: napis, tekst wielowierszowy, ścieżka, poświadczenie i zapis JSON. */
 
-/** Kontrolka jednowierszowa: napis, ścieżka, poświadczenie. */
+/** Kontrolka jednowierszowa dla wartości tekstowej: napis zwykły, ścieżka pliku albo poświadczenie ukryte w polu hasła. */
 export function utworzKontrolkeNapisu(zaleznosci: ZaleznosciKontrolki): Kontrolka {
   const { definicja, identyfikator } = zaleznosci;
   const zbiornik = utworzZbiornikZamiarow();
@@ -49,7 +39,7 @@ export function utworzKontrolkeNapisu(zaleznosci: ZaleznosciKontrolki): Kontrolk
   };
 }
 
-/** Kontrolka wielowierszowa dla tekstu swobodnego. */
+/** Kontrolka wielowierszowa dla tekstu swobodnego, oparta na wspólnym obszarze tekstu obu kontrolek wielowierszowych. */
 export function utworzKontrolkeTekstu(zaleznosci: ZaleznosciKontrolki): Kontrolka {
   const obszar = obszarTekstu(zaleznosci);
   const zbiornik = utworzZbiornikZamiarow();
@@ -65,7 +55,7 @@ export function utworzKontrolkeTekstu(zaleznosci: ZaleznosciKontrolki): Kontrolk
   };
 }
 
-/** Kontrolka listy ścieżek — jedna ścieżka w wierszu. */
+/** Kontrolka listy ścieżek — jedna ścieżka w wierszu obszaru tekstu, rozdzielona znakiem końca każdego wiersza. */
 export function utworzKontrolkeListySciezek(zaleznosci: ZaleznosciKontrolki): Kontrolka {
   const obszar = obszarTekstu(zaleznosci);
   obszar.classList.add('dk-kontrolka--mono');
@@ -136,7 +126,7 @@ export function utworzKontrolkeJson(zaleznosci: ZaleznosciKontrolki): Kontrolka 
   };
 }
 
-/** Wspólny obszar tekstu obu kontrolek wielowierszowych. */
+/** Wspólny obszar tekstu obu kontrolek wielowierszowych — tekstu swobodnego oraz listy ścieżek w wierszach. */
 function obszarTekstu(zaleznosci: ZaleznosciKontrolki): HTMLTextAreaElement {
   const obszar = document.createElement('textarea');
   obszar.id = zaleznosci.identyfikator;
@@ -146,7 +136,7 @@ function obszarTekstu(zaleznosci: ZaleznosciKontrolki): HTMLTextAreaElement {
   return obszar;
 }
 
-/** Ścieżka i lista ścieżek dostają krój o stałej szerokości znaku. */
+/** Ścieżka i lista ścieżek dostają krój pisma o stałej szerokości znaku, czytelny dla ciągów systemowych. */
 function klasaPola(definicja: SettingDefinition): string {
   const sciezkowa =
     definicja.valueType === SettingValueType.Path ||
@@ -154,12 +144,12 @@ function klasaPola(definicja: SettingDefinition): string {
   return sciezkowa ? 'dn-pole-kontrolka dk-kontrolka--mono' : 'dn-pole-kontrolka';
 }
 
-/** Podpowiedź pustego pola pochodzi z katalogu, nie z kodu klienta. */
+/** Podpowiedź pustego pola pochodzi z katalogu ustawień, nie jest wpisana wprost w kodzie warstwy klienta. */
 function podpowiedz(definicja: SettingDefinition): string {
   return definicja.placeholder ?? '';
 }
 
-/** Pokazuje albo chowa opis błędu wraz z oznaczeniem `aria-invalid`. */
+/** Pokazuje albo chowa opis błędu pola wraz z oznaczeniem dostępności `aria-invalid` na obszarze tekstu. */
 function pokazBlad(obszar: HTMLTextAreaElement, opis: HTMLElement, tresc: string): void {
   opis.textContent = tresc;
   opis.hidden = tresc === '';

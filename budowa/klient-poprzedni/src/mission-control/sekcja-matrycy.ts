@@ -6,33 +6,19 @@ import { utworzSekcje } from './naglowek-sekcji';
 import type { WejscieDoSesji } from './zdarzenia-pulpitu';
 
 /**
- * Matryca sesji.
- *
- * Jedna odpowiedzialność: środowiska rdzenia obok siebie, a pod każdym jego
- * sesje z odczytu `session.list`. Pas RELACJE dokłada `mission-control.ts`
- * pod matrycą — to osobny plik, bo niesie inną treść: powiązania, nie sesje.
- * Jednym spojrzeniem widać, że procesy w różnych środowiskach biegną razem:
- * karty strony głównej mówią, gdzie wejść, matryca — co już biegnie.
- *
- * Liczba kolumn należy do rdzenia: kolumny powstają z `environment.list`
- * (`zlozenie-danych.ts`), a nie z wykazu kodów po stronie klienta.
- *
- * Sesje poza środowiskami. Kontrakt wskazuje środowisko sesji wyłącznie
- * w `presence.environmentCode` sesji trwających — sesję bez tego odpisu
- * matryca wypisuje osobno pod kolumnami zamiast zgadywać przypisanie; wiersz
- * nie jest kontrolką wejścia, bo wejście wymaga środowiska.
- *
- * Kafel sesji jest kontrolką: naciśnięcie nadaje zamiar `session.open`.
- * Wskaźnik pracy w tle to kropka `dn-kropka--tetno` przy tytule.
+ * Matryca sesji: środowiska rdzenia obok siebie, a pod każdym jego sesje
+ * z odczytu `session.list`. Kolumny powstają z `environment.list`, nie
+ * z wykazu kodów klienta. Kafel sesji jest kontrolką: naciśnięcie nadaje
+ * zamiar `session.open`.
  */
 export interface SekcjaMatrycy {
   element: HTMLElement;
-  /** Miejsce montażu pasa RELACJE, pod kolumnami środowisk. */
+  /** Miejsce montażu pasa relacji, pod kolumnami środowisk macierzy sesji. */
   podKolumnami: HTMLElement;
   odswiez(matryca: KolumnaSrodowiska[], pozaSrodowiskami: SesjaMatrycy[]): void;
 }
 
-/** Buduje matrycę sesji wraz z miejscem na pas relacji. */
+/** Buduje matrycę sesji pulpitu operacyjnego Mission Control wraz z miejscem montażu pasa relacji sesji. */
 export function utworzSekcjeMatrycy(
   matryca: KolumnaSrodowiska[],
   pozaSrodowiskami: SesjaMatrycy[],
@@ -42,8 +28,7 @@ export function utworzSekcjeMatrycy(
     'mc-sekcja--matryca',
     {
       tytul: 'Matryca sesji',
-      // Liczby środowisk nie ma w napisie: wykaz oddaje rdzeń, więc każda liczba
-      // wpisana tu na stałe rozminęłaby się z tym, co widać w kolumnach.
+      // Liczby środowisk nie ma w napisie: wykaz oddaje rdzeń, nie wykaz kodów klienta.
       dopisek: 'Środowiska obok siebie, sesje pod każdym, powiązania pod spodem.',
       ikona: 'menu',
     },
@@ -62,9 +47,7 @@ export function utworzSekcjeMatrycy(
   cialo.append(kolumny, nieprzypisane, podKolumnami);
 
   const odswiez = (dane: KolumnaSrodowiska[], poza: SesjaMatrycy[]): void => {
-    // Brak kolumn mówi o sobie. Kolumny powstają z `environment.list`, a nie
-    // z wykazu kodów po stronie klienta — przed odpowiedzią rdzenia nie ma ich
-    // wcale i pusta przestrzeń wyglądałaby jak usterka rysowania.
+    // Brak kolumn mówi o sobie: kolumny powstają z `environment.list`, nie z wykazu kodów klienta.
     kolumny.replaceChildren(
       ...(dane.length === 0
         ? [wierszBezKolumn()]
@@ -77,7 +60,7 @@ export function utworzSekcjeMatrycy(
   return { element, podKolumnami, odswiez };
 }
 
-/** Matryca przed odczytem środowisk — nazwany brak, nie pusty prostokąt. */
+/** Matryca przed odczytem środowisk z rdzenia — nazwany brak stanu ładowania, a nie pusty prostokąt karty. */
 function wierszBezKolumn(): HTMLElement {
   const pusto = document.createElement('p');
   pusto.className = 'mc-kolumna__pusto mc-matryca__bez-kolumn';
@@ -86,16 +69,13 @@ function wierszBezKolumn(): HTMLElement {
   return pusto;
 }
 
-/** Sesje bez kolumny — wiersz informacyjny, nie kontrolka. */
+/** Sesje bez przypisanej kolumny środowiska — osobny wiersz informacyjny pod matrycą, nie kontrolka wejścia. */
 function wyrysujPozaSrodowiskami(poza: SesjaMatrycy[]): HTMLElement[] {
   if (poza.length === 0) return [];
 
   const etykieta = document.createElement('p');
   etykieta.className = 'mc-matryca__poza-etykieta';
-  // Dwie przyczyny, jeden wykaz, nazwane obie. Sesja trafia tu, gdy odczyt nie
-  // wskazał jej środowiska (kontrakt podaje je wyłącznie dla sesji trwających)
-  // albo gdy wykaz środowisk jeszcze nie przyszedł i kolumn nie ma. Napis
-  // mówiący wyłącznie o pierwszej przyczynie byłby w drugim przypadku fałszem.
+  // Sesja trafia tu, gdy odczyt nie wskazał środowiska albo wykaz środowisk jeszcze nie przyszedł.
   etykieta.textContent =
     'Sesje bez kolumny — odczyt nie wskazał ich środowiska albo wykaz środowisk jeszcze nie przyszedł:';
 
@@ -110,7 +90,7 @@ function wyrysujPozaSrodowiskami(poza: SesjaMatrycy[]): HTMLElement[] {
   return [etykieta, wykaz];
 }
 
-/** Jedna kolumna: nagłówek środowiska z mottem i wykaz sesji pod nim. */
+/** Jedna kolumna matrycy sesji pulpitu operacyjnego Mission Control: nagłówek środowiska z mottem i wykazem. */
 function wyrysujKolumne(
   kolumna: KolumnaSrodowiska,
   nadaj: (wejscie: WejscieDoSesji) => void,
@@ -136,7 +116,7 @@ function wyrysujKolumne(
 
   naglowek.append(nazwa, motto, licznik);
 
-  // Kolumna bez sesji mówi to wprost — pusta przestrzeń wygląda jak usterka.
+  // Kolumna bez sesji mówi to wprost — pusta przestrzeń wygląda jak usterka rysowania.
   const lista = document.createElement('div');
   lista.className = 'mc-kolumna__sesje';
   if (kolumna.sesje.length === 0) {
@@ -152,7 +132,7 @@ function wyrysujKolumne(
   return element;
 }
 
-/** Kafel jednej sesji — kontrolka wejścia do sesji. */
+/** Kafel jednej sesji w kolumnie środowiska matrycy pulpitu operacyjnego — kontrolka wejścia do tej sesji. */
 function kafelSesji(
   sesja: SesjaMatrycy,
   kolumna: KolumnaSrodowiska,
@@ -167,8 +147,7 @@ function kafelSesji(
   const gora = document.createElement('span');
   gora.className = 'mc-sesja__gora';
 
-  // Wskaźnik pracy w tle — kropka pulsująca przy tytule; postęp etapów
-  // mieszka w kolumnie „Procesy w tle".
+  // Wskaźnik pracy w tle — kropka pulsująca przy tytule sesji.
   const kropka = document.createElement('span');
   kropka.className = sesja.pracaWTle
     ? 'dn-kropka dn-kropka--tetno mc-sesja__kropka'
@@ -183,8 +162,7 @@ function kafelSesji(
 
   const opis = document.createElement('span');
   opis.className = 'mc-sesja__opis';
-  // Stan zawsze słowem, nigdy samą barwą kropki.
-  // Rola `null` znaczy: odczyt okien nie zna okna wiodącego — bez zgadywania.
+  // Stan zawsze słowem, nigdy samą barwą kropki; rola `null` znaczy brak okna wiodącego.
   opis.textContent = [
     ETYKIETA_STANU_SESJI[sesja.status],
     sesja.rolaOkna === null ? 'rola okna nieznana' : ETYKIETA_ROLI_OKNA[sesja.rolaOkna],
@@ -212,7 +190,7 @@ function kafelSesji(
   return kafel;
 }
 
-/** „1 okno", „3 okna", „5 okien". */
+/** Odmiana słowa „okno" dobrana do liczby okien komunikacji danej sesji: „1 okno", „3 okna", „5 okien". */
 function odmianaOkna(liczba: number): string {
   if (liczba === 1) return 'okno';
   const dziesiatki = liczba % 100;

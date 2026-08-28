@@ -244,7 +244,7 @@ export function utworzAdnotacjeKompozycji(
       odchodzi ? 'zdjęcie obecności' : 'zgłoszenie obecności',
       stan.zrodlo.zglosObecnosc({
         idKompozycji: kompozycja.idKompozycji(),
-        // Położenie bierzemy z przesunięcia kanwy, nie ze śledzenia kursora myszy w pętli.
+        // Położenie pochodzi z przesunięcia kanwy, nie ze śledzenia kursora myszy w pętli.
         x: widok.przesuniecieX,
         y: widok.przesuniecieY,
         zaznaczone: kompozycja.zaznaczone(),

@@ -25,25 +25,10 @@ import { przenies } from '../protokol/wynik-czastkowy';
 import { wywolaj } from '../protokol/wywolanie';
 
 /**
- * Źródło obrazu interwencji — jedyne miejsce warstwy mobilnej, które zna nazwy
- * komend kontraktu czytających stan pracy.
- *
- * Obraz interwencji stoi na pięciu komendach czytających stan pracy z różnych
- * stron — `monitor.status`, `queue.list`, `window.list`, `window.state.get`,
- * `role.list` — bo z nich składa się rozstrzygnięcie: gdzie stoi pętla, kto
- * jest koordynatorem i co czeka w kolejce. Rodzina `mobile.*` żadnego z tych
- * pytań nie zastępuje.
- *
- * Rodzina `mobile.*` jest już wpięta i to zostało zmierzone, nie założone:
- * `montaz_porty.go` wnosi do portu nawigacji ogniwo `ZWarstwaMobilna`, więc
- * asercja w `handlers_mobile.go` przechodzi i trzy komendy mają obsługiwaczy.
- * Wcześniejsze zdanie o `zarejestrujWarstweMobilnaNiewpieta` opisywało stan,
- * którego już nie ma. Rodziny woła osobne źródło (`procesy-mobilne.ts`), bo
- * niesie ona to, czego obraz nie ma — sterowanie procesem — a nie drugi odczyt
- * tego samego.
- *
- * Odmowa jednego odczytu nie gasi obrazu: obraz niesie wyniki osobno, każdy ze
- * swoją odmową. Ekran, któremu odmówiono ról, dalej pokazuje kolejki.
+ * Źródło obrazu interwencji — jedyne miejsce warstwy mobilnej znające komendy
+ * stanu pracy: `monitor.status`, `queue.list`, `window.list`,
+ * `window.state.get`, `role.list`. Odmowa jednego odczytu nie gasi obrazu —
+ * każdy wynik niesie odmowę osobno.
  */
 export interface ZrodloInterwencji {
   /** `monitor.status` — telemetria procesów; ta sama, z której czyta warstwa mobilna. */
@@ -66,7 +51,7 @@ export interface ZrodloInterwencji {
   naStanOkna(sluchacz: (tresc: WindowStateChangedEvent) => void): Odsubskrybuj;
 }
 
-/** Bieg naprawczy jednego koordynatora wraz z odmową, gdy odczyt nie doszedł. */
+/** Bieg naprawczy jednego koordynatora wraz z odmową odczytu, gdy stan jego okna nie doszedł od rdzenia. */
 export interface BiegKoordynatora {
   windowId: string;
   loop?: LoopState;
@@ -137,9 +122,7 @@ export function utworzZrodloInterwencji(kanal: Kanal): ZrodloInterwencji {
         zrodlo.role({}),
       ]);
 
-      // O bieg naprawczy pytamy wyłącznie okna koordynatorów — `loop` jest
-      // puste dla okna samodzielnego i wykonawczego, więc pozostałe pytania
-      // byłyby ruchem bez odbiorcy.
+      // O bieg naprawczy pytamy wyłącznie okna koordynatorów — `loop` jest puste dla pozostałych ról.
       const koordynatorzy = wskazKoordynatorow(okna, role);
       const biegi = await Promise.all(
         koordynatorzy.map(async (windowId): Promise<BiegKoordynatora> => {

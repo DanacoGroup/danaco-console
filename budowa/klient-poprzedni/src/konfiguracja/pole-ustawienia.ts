@@ -9,17 +9,9 @@ import { utworzWskaznikZasiegu } from './wskaznik-zasiegu';
 
 /**
  * Wiersz jednego ustawienia: etykieta, kontrolka, wskaźnik zasięgu, opis.
- *
- * Wiersz nie zna ani jednego klucza z osobna — wszystko, co rysuje, pochodzi
- * z pozycji katalogu przekazanej w zależnościach. Rodzaj kontrolki
- * rozstrzyga jeden moduł rozdzielający, więc nowy rodzaj wartości nie dotyka
- * tego pliku.
- *
- * Zatwierdzenie kontrolki idzie komendą `config.set` pod adres wskazany we
- * wskaźniku zasięgu — domyślnie pod punkt widzenia okna, po zmianie poziomu
- * pod poziom wybrany przez Operatora. Wynik zapisu widnieje przy polu, żeby
- * naciśnięcie zawsze dało odpowiedź: powodzenie mówi, gdzie zapisano,
- * niepowodzenie mówi, co odpowiedział rdzeń.
+ * Wszystko, co rysuje, pochodzi z pozycji katalogu przekazanej
+ * w zależnościach. Zatwierdzenie idzie komendą `config.set` pod adres
+ * wskazany we wskaźniku zasięgu.
  */
 export interface PoleUstawienia {
   /** Wiersz osadzany w panelu kategorii. */
@@ -109,7 +101,7 @@ export function utworzPoleUstawienia(zaleznosci: ZaleznosciPola): PoleUstawienia
   };
 }
 
-/** Nagłówek wiersza: etykieta, klucz, znaki katalogu, wskaźnik zasięgu. */
+/** Nagłówek wiersza ustawienia: etykieta pola, klucz, znaki katalogu oraz wskaźnik zasięgu bieżącego zapisu. */
 function naglowekPola(
   definicja: SettingDefinition,
   identyfikator: string,
@@ -138,13 +130,10 @@ function naglowekPola(
 }
 
 /**
- * Objaśnienie [?] pozycji katalogu — każdy element konfiguracji ma objaśnienie
- * kontekstowe.
- *
- * Zdania składają się z tego, co katalog o pozycji mówi, i z adnotacji o stanie
- * klucza: część kluczy zapisuje się poprawnie, ale żadna ścieżka rdzenia ich
- * nie czyta. Przemilczenie tego kazałoby Operatorowi wierzyć, że zapisana
- * wartość steruje wykonaniem.
+ * Objaśnienie [?] pozycji katalogu — każdy element konfiguracji ma
+ * objaśnienie kontekstowe. Zdania składają się z opisu katalogu i adnotacji
+ * o stanie klucza, bo część kluczy zapisuje się poprawnie, choć żadna ścieżka
+ * rdzenia ich nie czyta.
  */
 function objasnieniePozycji(definicja: SettingDefinition): string {
   return zlozObjasnienie([
@@ -158,7 +147,7 @@ function objasnieniePozycji(definicja: SettingDefinition): string {
   ]);
 }
 
-/** Plakietki wynikające z metadanych katalogu: wymagana, wymaga restartu. */
+/** Plakietki wynikające z metadanych katalogu: pole wymagane oraz zmiana wymagająca restartu aplikacji klienckiej. */
 function znakiKatalogu(definicja: SettingDefinition): HTMLElement[] {
   const znaki: HTMLElement[] = [];
   if (definicja.required) znaki.push(plakietka('wymagane', 'dn-plakietka'));
@@ -175,7 +164,7 @@ function plakietka(tresc: string, klasa: string): HTMLElement {
   return element;
 }
 
-/** Kontrolka wraz z jednostką drukowaną obok niej. */
+/** Kontrolka wartości wraz z jednostką miary drukowaną obok niej, gdy katalog ustawień ją podaje wprost. */
 function wierszKontrolki(definicja: SettingDefinition, kontrolka: Kontrolka): HTMLElement {
   const element = document.createElement('div');
   element.className = 'dk-pole__kontrolka';
@@ -191,7 +180,7 @@ function wierszKontrolki(definicja: SettingDefinition, kontrolka: Kontrolka): HT
   return element;
 }
 
-/** Opis pozycji katalogu oraz ostrzeżenie kontrolki, gdy je zgłosiła. */
+/** Opis pozycji katalogu ustawień oraz ostrzeżenie kontrolki wartości, gdy takie ostrzeżenie zostało zgłoszone. */
 function opisyPola(definicja: SettingDefinition, kontrolka: Kontrolka): HTMLElement[] {
   const opisy: HTMLElement[] = [];
 

@@ -15,32 +15,9 @@ import type { StanProduktu } from './stan-produktu';
 import type { RachunekRamek } from './zbior-budowy';
 
 /**
- * Product Builder — okno wiodące modułu Apps i punkt wejścia integrujący
- * pozostałe okna.
- *
- * Okno ma w kontrakcie wyłącznie zdarzenie `apps.build.changed` i ani jednej
- * komendy: nie ma czym wczytać etapów, kamieni milowych, metadanych ani
- * dziennika wydań. Rysuje więc to, co przyszło zdarzeniami, a przy pustce mówi
- * wprost, czego w kontrakcie brakuje.
- *
- * Śledzenie etapów stoi na dwóch zdarzeniach: `apps.build.changed` niesie etap
- * po zmianie, `progress.changed` niesie etap bieżący, ich liczbę i stopień
- * ukończenia. Odczytu początkowego nie pokrywa żadne z nich.
- *
- * Wykaz etapów bywa pusty przy niepustym dzienniku wydań i jest to stan
- * prawdziwy, nie usterka odczytu. Nagłówek wykazu zostaje, a pod nim stoi
- * zdanie mówiące, dlaczego jest pusto: cisza pod nagłówkiem czytałaby się jak
- * nieudany odczyt.
- *
- * Zdanie o powodzie powstaje z rachunku ramek, nie z napisu stałego o zachowaniu
- * rdzenia. Napis stały byłby nieprawdziwy zaraz po wejściu w moduł, zanim padnie
- * jakakolwiek ramka, i przeżyłby każdą zmianę po stronie rdzenia, bo nic by go
- * z rdzeniem nie łączyło.
- *
- * Dwa stany pustki są rozróżnione, bo znaczą co innego: „nie przyszła jeszcze
- * ani jedna ramka" to stan przed pierwszym zdarzeniem, a „ramki przyszły, ale
- * etapów w nich nie było" to stan po nim. Rozróżnia je rachunek ramek zbioru
- * budowy (`zbior-budowy.ts`), a zdanie składa się wyłącznie z jego liczb.
+ * Product Builder jest oknem wiodącym modułu Apps i punktem wejścia
+ * integrującym pozostałe okna, zasilanym wyłącznie zdarzeniami — kontrakt
+ * nie ma dla niego ani jednej komendy odczytu.
  */
 export interface OknoProductBuilder {
   element: HTMLElement;
@@ -78,8 +55,7 @@ export function utworzOknoProductBuilder(
   wydania.className = 'mp-wydania';
 
   rama.akcje.append(utworzWykazBrakow('Bez drogi w kontrakcie', BRAKI_PRODUCT_BUILDER));
-  // Przybornik stoi obok wykazu braków: tamten nazywa czynności bez drogi
-  // w kontrakcie, ten prowadzi te, które rdzeń obsługuje.
+  // Przybornik stoi obok wykazu braków: ten prowadzi czynności, które rdzeń obsługuje.
   rama.akcje.append(
     utworzPrzybornikApps('Produkt, etapy i oś czasu', narzedziaProductBuilder(stan)).element,
   );
@@ -101,9 +77,7 @@ export function utworzOknoProductBuilder(
     etapy.replaceChildren(...wykazEtapow.map(wierszEtapu));
     wydania.replaceChildren(...wykazWydan.map(wierszWydania));
     pustkaEtapow.hidden = wykazEtapow.length > 0;
-    // Zdanie składamy przy każdym odświeżeniu, a nie raz przy budowie okna:
-    // stan „jeszcze nic nie przyszło" przechodzi w „przyszło, ale etapów nie
-    // było" dokładnie wtedy, gdy padnie pierwsza ramka.
+    // Zdanie składamy przy każdym odświeżeniu, a nie raz przy budowie okna.
     if (wykazEtapow.length === 0) pustkaEtapow.textContent = zdaniePustkiEtapow(stan.ramki());
     kondycja.textContent = opisKondycji(wykazEtapow, wykazWydan);
     naniesPostep(stan.postep());
@@ -133,17 +107,9 @@ export function utworzOknoProductBuilder(
 }
 
 /**
- * Zdanie o powodzie pustego wykazu etapów — złożone z liczby ramek, które
- * naprawdę przyszły.
- *
- * Rozróżniane są trzy stany, nie jeden. Zero ramek znaczy „jeszcze nic nie
- * przyszło" i nic ponadto — o tym, czy rdzeń kiedykolwiek przyśle etap, okno
- * nie wie. Ramki bez identyfikatora etapu znaczą „przyszło, ale etapów w tym
- * nie było". Trzeci przypadek to wykaz opróżniony zdarzeniami usunięcia.
- *
- * Żadna gałąź nie orzeka o tym, czego rdzeń nie robi: zdanie mówi wyłącznie
- * o tym, co padło albo nie padło w tej sesji gniazda, więc nowy nadawca etapów
- * po stronie rdzenia zmienia je sam, bez dotykania tego pliku.
+ * Zdanie o powodzie pustego wykazu etapów, złożone wyłącznie z liczby ramek,
+ * które naprawdę przyszły w tej sesji gniazda, bez orzekania o tym, czego
+ * rdzeń nie robi.
  */
 function zdaniePustkiEtapow(ramki: RachunekRamek): string {
   if (ramki.wszystkie === 0) {
@@ -172,7 +138,7 @@ function zdaniePustkiEtapow(ramki: RachunekRamek): string {
   return `${ile} Etap z identyfikatorem niosło ${ramki.zEtapem}, a wykaz mimo to jest pusty.`;
 }
 
-/** Nagłówek części okna. */
+/** Nagłówek jednej części okna, wyświetlany nad jej treścią w spójnym układzie typograficznym całego modułu. */
 function naglowek(tresc: string): HTMLElement {
   const element = document.createElement('p');
   element.className = 'mp-czesc__tytul';
@@ -180,7 +146,7 @@ function naglowek(tresc: string): HTMLElement {
   return element;
 }
 
-/** Jeden etap przyniesiony zdarzeniem rdzenia. */
+/** Jeden etap przyniesiony zdarzeniem rdzenia, wraz z jego bieżącym stanem i stopniem ukończenia w procentach. */
 function wierszEtapu(etap: AppStage): HTMLElement {
   const nazwa = document.createElement('span');
   nazwa.className = 'mp-etapy__nazwa';
@@ -217,7 +183,7 @@ function wierszWydania(wdrozenie: AppDeployment): HTMLElement {
   return element;
 }
 
-/** Panel kondycji projektu złożony wyłącznie z tego, co przyszło z rdzenia. */
+/** Panel kondycji projektu złożony wyłącznie z tego, co przyszło z rdzenia zdarzeniami tej sesji gniazda. */
 function opisKondycji(
   etapy: readonly AppStage[],
   wdrozenia: readonly AppDeployment[],

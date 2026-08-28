@@ -8,14 +8,8 @@ import { czyKomendaBadania, wykonajKomendeBadania } from './wywolania-komend';
 import type { StanOknaBadania } from './stan-okna-badania';
 
 /**
- * Czynności okna wiodącego Research Workspace: zapis zakresu badania i rozdział
- * akcji panelu.
- *
- * Dwie akcje kończą się w tym oknie albo komendą `research.workspace.set`.
- * Pozostałe — pytania badawcze, notatka robocza, luki, świeżość, cztery
- * reprezentacje materiału i diagram przesiewu — własnej komendy nie mają
- * i idą generycznym `window.action`, którego odmowę okno wypisuje słowami
- * rdzenia.
+ * Plik niesie czynności okna wiodącego Research Workspace: zapis zakresu
+ * badania komendą research.workspace.set oraz rozdział pozostałych akcji panelu.
  */
 export interface KontekstZakresu {
   stan: StanBadania;
@@ -27,16 +21,17 @@ export interface KontekstZakresu {
   odswiez(): void;
 }
 
-/** Rozdziela akcję panelu na drogę własną okna i drogę generyczną. */
+/**
+ * Rozdziela akcję panelu zakresu na drogę własną okna, obsługiwaną komendą
+ * dedykowaną, oraz drogę generyczną przekazywaną rdzeniowi jako window.action.
+ */
 export async function wykonajAkcjeZakresu(
   kontekst: KontekstZakresu,
   akcja: AkcjaBadania,
 ): Promise<void> {
   if (akcja.kod === 'research.scope.investigate') {
     await ustawZakres(kontekst);
-    // Zbieranie materiału zaczyna się od wyszukania, nie od katalogowania:
-    // porządek pracy z opracowania (rozdz. 4.1) prowadzi Discovery Panel →
-    // Sources Manager, a nie wprost do formularza źródła.
+    // Zbieranie materiału zaczyna się od wyszukania, nie od katalogowania.
     kontekst.przejdz(KODY_OKIEN.odkrywanie);
     return;
   }
@@ -59,7 +54,10 @@ export async function wykonajAkcjeZakresu(
   await przezPanelAkcji(kontekst, akcja);
 }
 
-/** Droga generyczna: `window.action` z zakresem badania w parametrach. */
+/**
+ * Przekazuje kod akcji oraz zakres badania do rdzenia komendą window.action,
+ * bez własnej obsługi po stronie okna Research Workspace.
+ */
 async function przezPanelAkcji(kontekst: KontekstZakresu, akcja: AkcjaBadania): Promise<void> {
   const { stan, odpowiedz } = kontekst;
   if (stan.idOkna() === '') {
@@ -78,7 +76,10 @@ async function przezPanelAkcji(kontekst: KontekstZakresu, akcja: AkcjaBadania): 
   odpowiedz.pokaz(`Rdzeń oddał wynik akcji „${akcja.nazwa}".`, true);
 }
 
-/** Zapis zakresu i etapów komendą `research.workspace.set`. */
+/**
+ * Zapisuje zakres badania wraz z etapami komendą research.workspace.set,
+ * przekazując treść pobraną z pola zakresu okna wiodącego.
+ */
 export async function ustawZakres(kontekst: KontekstZakresu): Promise<void> {
   const { stan, okno, odpowiedz } = kontekst;
   const zakres = kontekst.zakres.value.trim();
@@ -109,12 +110,8 @@ export async function ustawZakres(kontekst: KontekstZakresu): Promise<void> {
 }
 
 /**
- * Skutek zapisu zakresu — porównanie zamówienia z odpowiedzią, nie samo
- * przepisanie odpowiedzi.
- *
- * Rdzeń ma prawo zapisać co innego niż przyszło (przyciąć zakres, odsiać etap),
- * a przy samym zdaniu potwierdzającym podmiana byłaby niewidoczna. Porównanie
- * kosztuje jeden przebieg po wykazie i nazywa rozbieżność wprost.
+ * Porównuje zamówiony zakres z odpowiedzią rdzenia, zamiast przepisywać samą
+ * odpowiedź, i nazywa rozbieżność wprost, gdy rdzeń zapisał co innego.
  */
 function opisZapisuZakresu(
   oddanyZakres: string,
@@ -150,11 +147,8 @@ function opisZapisuZakresu(
 }
 
 /**
- * Stany okna wiodącego: odczyt, błąd, zakres wpisany, zakres jeszcze pusty.
- *
- * Stan pusty opisuje `pustka-okien.ts` wspólnie dla okien modułu, a nie
- * `stan.powod()`, które w tej fazie niesie komunikat rdzenia o niewskazanym
- * oknie badania — zdanie techniczne w miejscu opisu pustego zakresu.
+ * Ustawia jeden z czterech stanów okna wiodącego: odczyt trwa, wystąpił błąd,
+ * zakres jest wpisany albo zakres pozostaje pusty.
  */
 export function ustawStanZakresu(kontekst: KontekstZakresu): void {
   const { stan, okno } = kontekst;
@@ -174,14 +168,10 @@ export function ustawStanZakresu(kontekst: KontekstZakresu): void {
 }
 
 /**
- * Tekst swobodny okna przekazywany komendom bez własnego formularza.
- *
- * Żądanie składane bez wskazania Operatora wracałoby odmową walidacji, z której
- * nic dla niego nie wynika. Ten jeden krok mówi, skąd okno bierze treść — i gdy
- * jej nie ma, `wywolania-komend.ts` nazywa brak, zamiast wysyłać puste pole.
+ * Podaje tekst swobodny okna przekazywany komendom, które nie mają własnego
+ * formularza; brak treści nazywa plik wywolania-komend.ts.
  */
 function tekstDlaKomendy(kontekst: KontekstZakresu): string {
-  // Pole zakresu niesie temat badania — z niego biorą treść pytania badawcze
-  // i notatka robocza, wypisywane po jednym w wierszu.
+  // Pole zakresu niesie temat badania, z którego biorą treść pytania badawcze.
   return kontekst.zakres.value.trim();
 }

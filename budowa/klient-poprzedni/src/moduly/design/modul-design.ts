@@ -23,37 +23,8 @@ import {
 } from './wyszukiwarka-funkcji-designu';
 
 /**
- * Moduł Design — pięć okien operacyjnych osadzonych w jednym układzie.
- *
- * Jedna odpowiedzialność: złożenie okien modułu i rozdanie im jednego stanu.
- *
- * Układ idzie warstwami widoczności opracowania, nie kolejnością plików.
- * W pasie pierwszym i drugim stoją okna warstwy pierwszej — te, które są
- * widoczne bez interakcji. W pasie trzecim stoją rozwinięcia warstw wyższych:
- * Tokens & System Panel (warstwa trzecia, wywoływany menu kebab), wyszukiwarka
- * funkcji i wykaz skrótów (warstwa czwarta). Zwinięte nie znaczy ukryte —
- * zapowiedź nad każdym mówi, co jest pod spodem.
- *
- * Układ wynika z roli okna. Design Board jest wiodące i stoi w pasie pierwszym
- * na całą szerokość — na nim odbywa się praca koncepcyjna. W pasie drugim stoją
- * trzy pozostałe w kolejności katalogu rdzenia: Assets Panel (zarządca) wskazuje
- * zasób, Preview Window (pomocnicze) pokazuje zasób wskazany, Prompt Builder
- * (kreator) zleca nowy. Podgląd stoi między nimi, bo patrzy i na to, co zarządca
- * wskazał, i na to, co kreator dopiero przyniósł.
- *
- * Jeden zbiór zasobów na cały moduł: wynik generowania z kreatora wchodzi do
- * wykazu zarządcy, stamtąd na kanwę wiodącego, a podgląd czyta ten sam wybór,
- * bo `stan-designu` jest jeden. Zdarzenie `design.asset.changed` wciąga zasób
- * tą samą drogą także wtedy, gdy zlecenie przyszło z obcego połączenia.
- *
- * Druga droga na kanwę prowadzi z rozmowy. Zasób zlecony spoza okien modułu
- * wchodzi zdarzeniem `design.asset.changed`: stan wciąga go do wykazu zarządcy,
- * a to złożenie kładzie go warstwą na kanwie wiodącego (`wejscie-rozmowy.ts`).
- * Wiązanie mieszka tutaj, bo wiąże dwa okna i nie jest sprawą żadnego z nich
- * z osobna.
- *
- * Moduł nie osadza się sam — oddaje element; gdzie stanie, rozstrzyga warstwa
- * składająca.
+ * Moduł Design — pięć okien operacyjnych osadzonych w jednym układzie, złożonych wedle warstwy
+ * widoczności i roli okna, z jednym wspólnym stanem zasobów.
  */
 export interface ModulDesign {
   /** Element osadzany w obszarze roboczym powłoki. */
@@ -75,9 +46,7 @@ export function utworzModulDesign(kanal: Kanal): ModulDesign {
   const kreator: OknoPromptBuilder = utworzOknoPromptBuilder(stan);
 
   const zetony: OknoTokensSystemPanel = utworzOknoTokensSystemPanel(stan);
-  // Pięć warsztatów: fotografia, wektor, druk, bazy zdjęciowe, publikacja.
-  // Komenda bez okna jest funkcją, której Operator nie ma — a te pięć okien
-  // niesie siedemdziesiąt pięć komend obszaru.
+  // Pięć warsztatów: fotografia, wektor, druk, bazy zdjęciowe, publikacja — 75 komend obszaru.
   const warsztaty: WarsztatyDesignu = utworzWarsztatyDesignu(stan, kanal);
   const wyszukiwarka: WyszukiwarkaFunkcji = utworzWyszukiwarkeFunkcji();
   const uczciwosc: PasekUczciwosci = utworzPasekUczciwosci(kanal);
@@ -86,9 +55,7 @@ export function utworzModulDesign(kanal: Kanal): ModulDesign {
   pasDrugi.className = 'md-modul__pas md-modul__pas--para';
   pasDrugi.append(zasoby.element, podglad.element, kreator.element);
 
-  // Warsztaty stoją w osobnym pasie, pod oknami warstwy pierwszej: są miejscem
-  // pracy nad materiałem, a nie nad koncepcją, więc Operator wchodzi w nie po
-  // tym, jak koncepcja stoi na kanwie.
+  // Warsztaty stoją w osobnym pasie pod oknami warstwy pierwszej: praca nad materiałem, nie koncepcją.
   const pasWarsztatow = document.createElement('div');
   pasWarsztatow.className = 'md-modul__pas md-modul__pas--warsztaty';
   pasWarsztatow.append(...warsztaty.okna.map((okno) => okno.element));
@@ -101,8 +68,7 @@ export function utworzModulDesign(kanal: Kanal): ModulDesign {
   element.className = 'md-modul';
   element.dataset['modul'] = 'design';
   element.setAttribute('aria-label', 'Moduł Design — okna operacyjne');
-  // Element modułu przyjmuje ognisko, żeby skrót klawiszowy działał także wtedy,
-  // gdy Operator jeszcze w nic w module nie kliknął.
+  // Element modułu przyjmuje ognisko, by skrót klawiszowy działał, zanim Operator w cokolwiek kliknie.
   element.tabIndex = -1;
   element.append(plansza.element, pasDrugi, pasWarsztatow, pasTrzeci, uczciwosc.element);
 
@@ -134,19 +100,15 @@ export function utworzModulDesign(kanal: Kanal): ModulDesign {
     element,
 
     async wczytaj(idSesji) {
-      // Okno modułu musi być znane przed odczytem zasobów: `design.asset.list`
-      // przyjmuje `windowId`, a bez niego odczyt dotyczyłby czegoś innego niż
-      // to okno. Zaplecze idzie równolegle — jest niezależne.
+      // Okno modułu musi być znane przed odczytem zasobów, bo odczyt dotyczyłby innego okna.
       await Promise.all([
         stan.ustalOkno(idSesji),
         stan.odswiezZaplecze(),
-        // Katalog okien i wykaz komend idą razem z resztą: pas uczciwości ma
-        // mierzyć rdzeń, a nie stać na zdaniu „odczyt w toku" do końca sesji.
+        // Katalog okien i wykaz komend idą razem z resztą: pas uczciwości ma mierzyć rdzeń, nie stać.
         uczciwosc.odczytaj(),
       ]);
       await zasoby.wczytaj();
-      // Warsztaty czytają ten sam magazyn materiału. Odczyt idzie PO ustaleniu
-      // okna modułu, bo bez niego wykaz dotyczyłby czegoś innego niż to okno.
+      // Warsztaty czytają ten sam magazyn materiału, dopiero po ustaleniu okna modułu.
       await warsztaty.wczytaj();
     },
 
@@ -155,8 +117,7 @@ export function utworzModulDesign(kanal: Kanal): ModulDesign {
       odsubskrybujPostep();
       odsubskrybujRozmowe();
       odepnijSkroty();
-      // Plansza odpina subskrypcję `design.board.presence`: kursory współpracy
-      // trafiałyby inaczej do panelu odłączonego już od dokumentu.
+      // Plansza odpina subskrypcję obecności, bo kursory trafiałyby do panelu odłączonego od dokumentu.
       plansza.rozlacz();
       zetony.zamknij();
       uczciwosc.zamknij();

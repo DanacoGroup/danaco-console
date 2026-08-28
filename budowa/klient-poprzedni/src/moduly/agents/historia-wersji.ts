@@ -8,30 +8,8 @@ import type { ZrodloWersjiEksperta } from './zrodlo-wersji-eksperta';
 import type { Kanal } from '../../protokol/kanal';
 
 /**
- * Panel „Historia wersji” Agent Buildera — przegląd i przywrócenie wersji
- * tożsamości eksperta.
- *
- * Wykaz pochodzi z rdzenia: rodzina komend historii oddaje wersje trwałe,
- * zapisane także przed uruchomieniem tego klienta i na innym urządzeniu konta.
- * Panel nie składa własnego wykazu z odpowiedzi biblioteki — wykaz zbierany
- * w toku sesji obejmowałby wyłącznie zmiany zrobione przy tym oknie i milczał
- * o całej reszcie, a Operator nie miałby jak odróżnić „nic się nie działo” od
- * „nie widzieliśmy”.
- *
- * Przywrócenie jest komendą historii, nie zapisem tożsamości: wskazana wersja
- * wraca JAKO KOLEJNA, więc historia nie zostaje skrócona i wersje pośrednie
- * zostają na miejscu. Wersję wskazuje identyfikator, nie numer — numer jest
- * porządkiem historii, a po przywróceniu ten sam numer znaczyłby co innego.
- *
- * Wiersz wykazu nie niesie migawki tożsamości: kontrakt oddaje w nim etykietę,
- * opis zmiany, sprawcę, tryb i sumę kontrolną. Treść wersji dociąga osobna
- * komenda (`agent.version.get`) i robi to NA ŻĄDANIE, przy wskazanym wierszu —
- * dociąganie migawek całej historii z góry kosztowałoby tyle odczytów, ile
- * wersji, a Operator ogląda naraz jedną.
- *
- * Podgląd jest odpowiedzią na pytanie, którego przywrócenie nie umiało zadać:
- * dotąd jedynym sposobem zobaczenia, co w wersji stało, było przywrócenie jej —
- * czyli obejrzenie historii wymagało jej zmiany.
+ * Panel „Historia wersji” Agent Buildera pokazuje przegląd wersji tożsamości
+ * eksperta zapisanych trwale w rdzeniu oraz umożliwia ich przywrócenie.
  */
 export interface PanelHistorii {
   element: HTMLElement;
@@ -39,7 +17,7 @@ export interface PanelHistorii {
   ustaw(ekspert: Agent | null): void;
 }
 
-/** Zależności panelu: po przywróceniu biblioteka musi zobaczyć nową wersję. */
+/** Zależności panelu przekazywane z zewnątrz: po przywróceniu wersji biblioteka musi zobaczyć nową wersję eksperta. */
 export interface OpcjeHistorii {
   /** Wywoływane po przywróceniu wersji — moduł odświeża wtedy bibliotekę. */
   naPrzywroceniu(ekspert: Agent): void;
@@ -82,13 +60,7 @@ export function utworzPanelHistorii(kanal: Kanal, opcje: OpcjeHistorii): PanelHi
     odpowiedz.dataset['powodzenie'] = String(powodzenie);
   }
 
-  /**
-   * Odczyt historii jednego eksperta.
-   *
-   * Odpowiedź przedawniona nie nadpisuje świeższej: między wysłaniem a powrotem
-   * Operator może wybrać innego eksperta, a wtedy panel pokazywałby cudze
-   * wersje pod nazwiskiem wybranego.
-   */
+  /** Odczyt historii jednego eksperta; odpowiedź przedawniona nie nadpisuje odpowiedzi świeższej. */
   async function wczytaj(idEksperta: string): Promise<void> {
     okno.ladowanie('Odczyt historii wersji w toku…');
     lista.replaceChildren();
@@ -137,13 +109,7 @@ export function utworzPanelHistorii(kanal: Kanal, opcje: OpcjeHistorii): PanelHi
     await wczytaj(idEksperta);
   }
 
-  /**
-   * Podgląd tożsamości utrwalonej w wersji (`agent.version.get`).
-   *
-   * Treść rozwija się W MIEJSCU, pod wierszem, i nie zastępuje wykazu: Operator
-   * porównuje wersje między sobą, więc wyjście z wykazu do osobnego widoku
-   * kosztowałoby go dokładnie to, po co przyszedł.
-   */
+  /** Podgląd tożsamości utrwalonej w wersji rozwija się w miejscu, pod wierszem, i nie zastępuje wykazu. */
   async function pokazTresc(
     idEksperta: string,
     wersja: AgentVersion,
@@ -199,11 +165,9 @@ export function utworzPanelHistorii(kanal: Kanal, opcje: OpcjeHistorii): PanelHi
 }
 
 /**
- * Jeden wiersz wykazu wersji.
- *
- * Wersja najnowsza nie dostaje przycisku przywrócenia: przywracanie jej do samej
- * siebie założyłoby wersję identyczną i wydłużyło historię o wpis bez treści.
- * Przycisk nie jest wygaszany — po prostu nie ma go tam, gdzie nie ma czynności.
+ * Jeden wiersz wykazu wersji. Wersja najnowsza nie dostaje przycisku
+ * przywrócenia, ponieważ przywrócenie jej do samej siebie wydłużyłoby
+ * historię bez treści.
  */
 function wierszWersji(
   wersja: AgentVersion,

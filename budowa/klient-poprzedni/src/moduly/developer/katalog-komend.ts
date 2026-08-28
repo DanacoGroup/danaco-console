@@ -2,36 +2,14 @@ import { Command } from '../../../../shared/contract';
 import { opisOdmowyBledu } from '../../komponenty/odmowa';
 import type { ZrodloDeveloper } from './zrodlo-developer';
 
-/**
- * Katalog komend obszaru `developer.` wzięty z rdzenia, a nie wpisany w kod.
- *
- * Zdania stanu pustego orzekają o tym, czym rdzeń rozporządza. Napis wpisany na
- * stałe byłby stanem wiedzy z chwili wpisania i nie zdjąłby się sam w dniu,
- * w którym rdzeń komendę dostanie — dlatego zdania budujemy z rejestru rdzenia.
- * Ten sam wzorzec niesie `moduly/katalog-okien.ts`.
- *
- * Źródłem jest powitanie, nie kontrakt: `shared/contract.ts` mówi, co obiecano,
- * a `connection.hello` — co rdzeń naprawdę zarejestrował. Różnica między nimi
- * to klasa usterki „martwy port”: komenda w kontrakcie i uchwyt w kodzie, ale
- * w złożonym rdzeniu żadnej rejestracji, więc wywołanie wraca odmową nieznanej
- * komendy.
- *
- * Odczyt idzie raz, przy montażu okna: rejestr komend zmienia się wraz z wersją
- * rdzenia, a nie w toku sesji.
- */
+/** Katalog komend obszaru `developer.` wzięty z rdzenia, a nie wpisany w kod na stałe. */
 
-/** Przedrostek obszaru — po nim poznajemy komendy tego modułu w wykazie rdzenia. */
+/** Przedrostek obszaru, po którym poznajemy komendy tego modułu w wykazie zwróconym przez rdzeń aplikacji. */
 const OBSZAR = 'developer.';
 
 /**
- * Komendy, na których stoją okna modułu — te i tylko te są wołane.
- *
- * Wykaz jest pisany ręcznie z rozmysłem: to jest deklaracja, CO okna modułu
- * naprawdę wołają, i porównanie jej z rejestrem rdzenia wykrywa dwie różne
- * usterki. Komenda wołana, a niezarejestrowana, to martwy port — okno odbije
- * się od nieznanej komendy. Komenda zarejestrowana, a niewołana, to funkcja
- * rdzenia, do której nie prowadzi żadna droga z okna. Wykaz wywiedziony
- * z kontraktu nie powiedziałby ani jednego, ani drugiego.
+ * Komendy, na których stoją okna modułu — te i tylko te są wołane. Wykaz jest
+ * pisany ręcznie, nie wywiedziony z kontraktu.
  */
 const KOMENDY_OKIEN: readonly string[] = [
   // Code Editor, Project Tree, Git Panel, Build Output.
@@ -94,7 +72,7 @@ const KOMENDY_OKIEN: readonly string[] = [
   Command.DeveloperScanResultList,
 ];
 
-/** Zdanie wypowiadane, dopóki rdzeń nie odpowiedział. */
+/** Zdanie wypowiadane, dopóki rdzeń nie odpowiedział na pytanie o katalog komend tego całego obszaru modułu. */
 export const KATALOG_W_ODCZYCIE = 'Katalog komend rdzenia — odczyt w toku…';
 
 export interface KatalogKomend {
@@ -120,8 +98,7 @@ export async function odczytajKatalogKomend(zrodlo: ZrodloDeveloper): Promise<Ka
   if (!wynik.udany || wynik.wynik === undefined) {
     return { odmowa: opisOdmowyBledu('Odczyt katalogu komend rdzenia', wynik.blad), ...pusty };
   }
-  // Milczenie nie jest orzeczeniem o braku: rdzeń, który nie podał wykazu, nie
-  // powiedział, że komend nie ma — i okno nie ma prawa powiedzieć tego za niego.
+  // Milczenie nie jest orzeczeniem o braku: rdzeń bez wykazu nie powiedział, że komend nie ma.
   if (wynik.wynik.commands === undefined) {
     return {
       odmowa:

@@ -1,33 +1,10 @@
 import { utworzMenuDrzewo, type PozycjaMenu } from '../../komponenty/menu-drzewo';
 
 /**
- * Obsada bibliotecznego `komponenty/menu-drzewo.ts` dla wyborów lokalnych okna.
- *
- * Rozwijanie, znacznik wyboru, opisy pozycji, wędrówka strzałkami, pole
- * szukania i zdanie o pustym wykazie należą do `komponenty/menu-drzewo.ts`.
- * Ten plik podaje mechanizmowi dane, a formy nie odtwarza.
- *
- * `okno-komunikacji/ster-nastawy.ts` tu nie wystarcza: tamta obudowa wysyła
- * klucz do rdzenia, czeka na potwierdzenie i wyróżnienie bierze z migawki
- * stanu potwierdzonego. Tutaj żaden wybór nie jedzie do rdzenia sam z siebie —
- * środowisko wdrożenia, poziom wpisu dziennika czy priorytet błędu są wejściem
- * formularza, czytanym dopiero przy naciśnięciu przycisku komendy. Nie ma więc
- * czego potwierdzać ani skąd wziąć stanu potwierdzonego, a dorabianie
- * `ster-nastawy.ts` trybu bez rdzenia dałoby dwie prawdy o tym, co ster robi
- * z kluczem.
- *
- * Menu oddaje klucz, nie `.value`, więc wybór trzyma ten plik, a nie element
- * DOM. Zachowanie odwzorowuje natywne `<select>` w dwóch rzeczach:
- *   — pusty wybór jest wartością, nie brakiem (pozycja „bez wskazania" niesie
- *     klucz pusty i tak jedzie do rdzenia — pole nieustawione),
- *   — wymiana pozycji utrzymuje wybór, o ile nadal istnieje; gdy zniknął,
- *     wybór wraca na pozycję pierwszą, tak jak robi to przeglądarka.
- *
- * Wykaz pusty nie odbiera uchwytowi klikalności — mechanizm otwiera się
- * i mówi zdaniem, że nie ma tu jeszcze czego wybrać.
+ * Obsada bibliotecznego komponentu drzewa menu dla wyborów lokalnych okna:
+ * podaje mechanizmowi dane i nie odtwarza formy wyboru.
  */
-
-/** Jedna pozycja wyboru — para klucz–nazwa wraz z opcjonalnym zdaniem opisu. */
+/** Jedna pozycja wyboru — para klucz–nazwa wraz z opcjonalnym zdaniem opisu wyjaśniającym jej znaczenie. */
 export interface PozycjaWyboruMenu {
   /** Klucz oddawany oknu; pusty jest poprawną wartością („bez wskazania"). */
   wartosc: string;
@@ -42,37 +19,23 @@ export interface WyborZMenu {
   element: HTMLElement;
   /** Klucz pozycji wybranej; pusty łańcuch, gdy wybrano pozycję o pustym kluczu. */
   wartosc(): string;
-  /**
-   * Ustawia wybór z zewnątrz — z odpowiedzi rdzenia albo z odczytu.
-   *
-   * Klucz spoza wykazu nie jest wybierany i nie trafia na uchwyt: okno nie ma
-   * prawa pokazać jako wybranej pozycji, której w wykazie nie ma. Oddaje wtedy
-   * `false`, żeby wołający mógł to powiedzieć Operatorowi zamiast przemilczeć.
-   */
+  /** Ustawia wybór z zewnątrz; klucz spoza wykazu nie jest wybierany i oddaje odmowę. */
   ustawWartosc(klucz: string): boolean;
-  /** Wymienia pozycje; wybór zostaje, o ile nadal istnieje (patrz nagłówek). */
+  /** Wymienia pozycje; wybór zostaje, o ile nadal istnieje w nowym wykazie pozycji. */
   ustawPozycje(pozycje: readonly PozycjaWyboruMenu[]): void;
-  /**
-   * Zgłasza słuchacza wyboru dokonanego przez Operatora — i wyłącznie takiego.
-   *
-   * Wymiana pozycji z kodu (`ustawPozycje`) ani ustawienie z odpowiedzi rdzenia
-   * (`ustawWartosc`) słuchacza nie wołają, tak samo jak natywny `<select>` nie
-   * wysyła `change` przy zmianie z kodu. Gdyby wołały, odświeżenie wykazu
-   * w oknie filtra zleciłoby odczyt, który sam kończy się odświeżeniem wykazu.
-   *
-   * Rejestracja jest osobną czynnością, a nie polem konstruktora, bo okna
-   * modułu Diagnostics składają powierzchnię najpierw, a podpinają obsługę
-   * dopiero wtedy, gdy zna ona całą powierzchnię.
-   */
+  /** Zgłasza słuchacza wyboru dokonanego przez Operatora — i wyłącznie takiego, nie zmiany z kodu. */
   naZmiane(sluchacz: (klucz: string) => void): void;
 }
 
-/** Napis na uchwycie, gdy wykaz jest pusty i nie ma czego pokazać. */
+/**
+ * Napis stawiany na uchwycie wyboru, gdy wykaz pozycji jest pusty i rozwinięcie
+ * menu nie miałoby czego pokazać Operatorowi.
+ */
 const UCHWYT_PUSTEGO = 'brak pozycji do wyboru';
 
 /**
- * @param nastawa rodzajowa nazwa wyboru — idzie do `aria-label`, nie na ekran.
- * @param poczatkowe wykaz startowy; pusty znaczy „wykaz wchodzi później".
+ * @param nastawa rodzajowa nazwa wyboru; wchodzi do atrybutu opisującego.
+ * @param poczatkowe wykaz startowy; pusty znaczy wykaz wchodzący później.
  */
 export function utworzWyborZMenu(
   nastawa: string,
@@ -113,8 +76,7 @@ export function utworzWyborZMenu(
 
   function ustawPozycje(nowe: readonly PozycjaWyboruMenu[]): void {
     pozycje = [...nowe];
-    // Wybór utrzymany, o ile przetrwał wymianę; inaczej pierwsza pozycja,
-    // tak jak w natywnym `<select>` po `replaceChildren`.
+    // Wybór utrzymany, o ile przetrwał wymianę wykazu.
     if (!jestWybor || !pozycje.some((pozycja) => pozycja.wartosc === wybrany)) {
       const pierwsza = pozycje[0];
       wybrany = pierwsza?.wartosc ?? '';
@@ -147,13 +109,8 @@ export function utworzWyborZMenu(
 }
 
 /**
- * Wiersz formularza: podpis nad wyborem — kształt `dn-pole` biblioteki.
- *
- * Nie jest `<label>`, bo uchwyt menu jest przyciskiem, a przycisk nie jest
- * elementem etykietowalnym: `<label>` owinięta wokół niego nie przenosi ani
- * kliknięcia, ani ogniska, więc udawałaby wiązanie, którego nie ma. Nazwę
- * nastawy niesie `aria-label` uchwytu — mechanizm stawia go sam z pola
- * `nastawa`, więc podpis jest tu dla oka, nie dla czytnika ekranu.
+ * Wiersz formularza z podpisem nad wyborem w kształcie biblioteki komponentów;
+ * nazwę nastawy niesie atrybut opisujący uchwytu, a podpis stoi dla oka.
  */
 export function wierszWyboru(etykieta: string, wybor: WyborZMenu): HTMLElement {
   const podpis = document.createElement('span');

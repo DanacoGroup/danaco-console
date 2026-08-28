@@ -10,31 +10,9 @@ import {
 } from '../../../shared/contract';
 import type { BiegKoordynatora, ObrazInterwencji } from './zrodlo-interwencji';
 
-/**
- * Skład wykazu „co czeka na twoją decyzję” — czysty rachunek na obrazie
- * interwencji, bez dokumentu i bez wywołań.
- *
- * Pozycja powstaje wyłącznie z tego, co rdzeń umie udowodnić odpowiedzią
- * komendy. Cztery dowody, cztery rodzaje pozycji:
- *
- *   `queue.list`       → kolejka w stanie `paused`      — praca stoi na kolejce
- *   `window.state.get` → `loop.stopped = true`          — pętla stoi, z powodem
- *   `monitor.status`   → proces `failed`                — krok padł
- *   `monitor.status`   → proces `paused`                — krok wstrzymany
- *
- * Kolejek eskalacji — przepływów wstrzymanych z pytaniem do człowieka — rdzeń
- * nie wystawia: nie ma na nie ani komendy odczytu, ani zdarzenia. Pulpit mówi
- * o tym wprost (`mission-control/pas-decyzji.ts`), a warstwa mobilna nie
- * zamalowuje braku pozycjami zmyślonymi. Gdy rdzeń wykaz eskalacji wystawi,
- * wejdzie on portem `port-kolejki-decyzji.ts`.
- *
- * Kontekst decyzji jest częścią pozycji: Operator otwiera telefon na minutę
- * i musi wiedzieć, na czym praca stoi, zanim cokolwiek naciśnie. Każde zdanie
- * kontekstu niesie nazwę komendy, z której przyszło, więc da się sprawdzić
- * jego źródło.
- */
+// Skład wykazu „co czeka na twoją decyzję” — czysty rachunek na obrazie interwencji, bez wywołań.
 
-/** Rodzaj pozycji — zarazem dowód, z którego powstała. */
+/** Rodzaj pozycji czekającej na decyzję Operatora — zarazem dowód komendy, z którego ta pozycja powstała. */
 export const RodzajPozycji = {
   KolejkaWstrzymana: 'kolejka-wstrzymana',
   PetlaZatrzymana: 'petla-zatrzymana',
@@ -45,7 +23,7 @@ export const RodzajPozycji = {
 } as const;
 export type RodzajPozycji = (typeof RodzajPozycji)[keyof typeof RodzajPozycji];
 
-/** Jedna rzecz czekająca na decyzję Operatora wraz z kontekstem i uchwytami. */
+/** Jedna rzecz czekająca na decyzję Operatora, wraz z pełnym kontekstem decyzji oraz uchwytami sterowania. */
 export interface PozycjaDecyzji {
   /** Klucz stały między odczytami — rodzaj i identyfikator bytu. */
   id: string;
@@ -68,7 +46,7 @@ export interface PozycjaDecyzji {
   zrodlo: string;
 }
 
-/** Nagłówek ekranu — „co się w ogóle dzieje”, zanim spojrzysz na wykaz. */
+/** Nagłówek ekranu interwencji — „co się w ogóle dzieje”, zanim Operator spojrzy na cały wykaz pozycji. */
 export interface ObrazSkrocony {
   /** Zdania stanu; każde z nazwą komendy albo z treścią odmowy. */
   zdania: readonly string[];
@@ -91,7 +69,7 @@ const POWODY_ZATRZYMANIA: Readonly<Record<string, string>> = {
   [LoopStopReason.Failure]: 'obiegu nie udało się rozpocząć',
 };
 
-/** Zdanie „stoi od…”; bez znanego czasu — bez zdania, zamiast zmyślonego. */
+/** Zdanie „stoi od…” liczone z chwili ostatniej zmiany; bez znanego czasu — bez zdania, zamiast zmyślonego. */
 export function zdanieCzasu(stoiOd: number | undefined, teraz: number): string | null {
   if (stoiOd === undefined || !Number.isFinite(stoiOd) || stoiOd <= 0) return null;
   const minut = Math.floor((teraz - stoiOd) / 60_000);
@@ -137,7 +115,7 @@ export function zlozPozycjeDecyzji(obraz: ObrazInterwencji, teraz: number): Pozy
   return pozycje;
 }
 
-/** Zdania nagłówka ekranu wraz z liczbą odmów — stan czytany, nie zgadywany. */
+/** Zdania nagłówka ekranu interwencji wraz z liczbą odmów odczytu rdzenia — stan czytany, nie zgadywany. */
 export function skrocObraz(obraz: ObrazInterwencji): ObrazSkrocony {
   const zdania: string[] = [];
   let odmowy = 0;
@@ -282,7 +260,7 @@ function pozycjaProcesu(
   };
 }
 
-/** Zdanie „na czym proces stoi” — etap, numer etapu, procent, obieg. */
+/** Zdanie „na czym proces stoi” — nazwa etapu, numer etapu, procent ukończenia i numer jego obiegu pracy. */
 function zdanieEtapu(proces: MonitorStatus): string {
   const czesci: string[] = [];
   if (proces.stage !== undefined) czesci.push(`etap „${proces.stage}”`);
@@ -299,7 +277,7 @@ function zdanieEtapu(proces: MonitorStatus): string {
   return `${czesci.join(', ')} (monitor.status).`;
 }
 
-/** Okno koordynatora dla okna pozycji — z `window.list`, a gdy brak, z `role.list`. */
+/** Okno koordynatora dla okna danej pozycji — wzięte wprost z `window.list`, a gdy go brak, z `role.list`. */
 function wskazKoordynatora(
   windowId: string | undefined,
   okna: ReadonlyMap<string, Window>,

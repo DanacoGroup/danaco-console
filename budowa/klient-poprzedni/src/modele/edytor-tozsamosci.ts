@@ -16,13 +16,9 @@ import {
 
 /**
  * Edytor jednej kategorii zasad — treść, tryb podania i ostrzeżenie o skutku.
- *
- * Przełącznik trybu rozstrzyga, czy prompt fabryczny producenta trafi do modelu,
- * więc ostrzeżenie stoi przy nim na stałe i zmienia się razem z nim.
- * Tryb bierze się kolejno z zapisu i z trybu proponowanego przez kategorię, a gdy
- * katalog nie podaje żadnego — z wartości domyślnej klucza `tozsamosc.tryb_domyslny`.
- * Kategoria bez zapisu na osi czynnej bierze treść z osi szerszej i edytor podaje
- * to wprost, zamiast pokazywać puste pole bez wyjaśnienia.
+ * Ostrzeżenie stoi przy trybie na stałe, bo tryb rozstrzyga, czy prompt
+ * fabryczny trafi do modelu. Kategoria bez zapisu bierze treść z osi
+ * szerszej.
  */
 export interface EdytorTozsamosci {
   /** Edytor osadzany w panelu tożsamości. */
@@ -81,11 +77,7 @@ export function utworzEdytorTozsamosci(stan: StanTozsamosci): EdytorTozsamosci {
     odpowiedz.element,
   );
 
-  /**
-   * Klucz wypełnienia: kategoria wraz z osią. Zmiana któregokolwiek członu
-   * znaczy inną treść w edytorze; samo przeliczenie stanu — nie znaczy, więc
-   * nie kasuje tego, co Operator właśnie pisze.
-   */
+  /** Klucz wypełnienia: kategoria wraz z osią; przeliczenie stanu nie kasuje tego, co Operator pisze. */
   let wypelniony = '';
 
   function kluczWypelnienia(kategoria: IdentityCategory | null): string {
@@ -112,9 +104,7 @@ export function utworzEdytorTozsamosci(stan: StanTozsamosci): EdytorTozsamosci {
     opis.hidden = opis.textContent === '';
 
     tryb.kontrolka.value = zapisany?.mode ?? kategoria?.defaultMode ?? IdentityMode.ZASTAP;
-    // Kategoria bez własnego zapisu na tej osi dostaje treść demonstracyjną
-    // jako zawartość pola; w bazie nie ma jej, dopóki nie padnie „Zapisz treść
-    // kategorii". Jedyną drogą zapisu pozostaje komenda `identity.document.set`.
+    // Kategoria bez własnego zapisu dostaje treść demonstracyjną; w bazie nie ma jej do „Zapisz treść".
     tresc.kontrolka.value = zapisany?.content ?? TRESC_DEMONSTRACYJNA;
     pochodzenie.textContent =
       kategoria === null
@@ -177,8 +167,7 @@ export function utworzEdytorTozsamosci(stan: StanTozsamosci): EdytorTozsamosci {
         wypelnij(kategoria);
         return;
       }
-      // Ta sama kategoria i ta sama oś: treści nie ruszamy, lecz przycisk
-      // zdjęcia zapisu musi nadążyć za tym, czy zapis nadal istnieje.
+      // Ta sama kategoria i oś: treści nie ruszamy, przycisk zdjęcia zapisu nadąża za jego istnieniem.
       zdejmij.hidden = kategoria === null || stan.dokument(kategoria.id) === null;
     },
   };

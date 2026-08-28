@@ -1,8 +1,8 @@
+/** Przywołanie okna modułu jest jednym wskazaniem zamiast wędrówki po siatce sześciu okien; plik składa z pozycji okien drzewo menu nawigacji. */
+
 import type { NazwaIkony } from '../../ikony/ikony';
 import { utworzMenuDrzewo, type PozycjaMenu } from '../../komponenty/menu-drzewo';
 import { KODY_OKIEN, KOD_WYKAZU_PETLI } from './kody-okien';
-
-/** Przywołanie okna modułu jest jednym wskazaniem zamiast wędrówki po siatce sześciu okien. */
 
 /** Jedno okno modułu widziane przez nawigację, niosące kod znacznika, nazwę i objaśnienie widoczne w pozycji menu. */
 export interface PozycjaOkna {

@@ -8,20 +8,9 @@ import {
 } from '../../../shared/contract';
 import { opisAdresu, type AdresUstawienia } from './adres-ustawienia';
 
-/**
- * Słownik obszarów konfiguracji sesji i nazewnictwo pochodzenia obszaru.
- *
- * Plik nie buduje ani jednego elementu widoku i nie woła rdzenia — tak samo jak
- * `zasiegi.ts`, którego jest odpowiednikiem dla drugiego kształtu wartości.
- * Nazwy poziomu i osi bierze z `adres-ustawienia.ts`: pochodzenie obszaru składa
- * się na `AdresUstawienia` i idzie przez `opisAdresu`, więc poziom nazywa się
- * w oknie tak samo, jak nazywa się w łańcuchu zapisów.
- *
- * Wartości wyliczeń pochodzą wyłącznie z kontraktu; literału nazwy obszaru
- * w kodzie nie ma.
- */
+// Słownik obszarów konfiguracji sesji i nazewnictwo pochodzenia obszaru, z kontraktu.
 
-/** Obszary w kolejności pól kontraktu — tej samej, w której odpowiada rdzeń. */
+/** Obszary w kolejności pól kontraktu — tej samej, w której odpowiada rdzeń, więc wykaz i odpowiedź się zgadzają. */
 export const OBSZARY_SESJI: readonly SessionConfigArea[] = [
   SessionConfigArea.Model,
   SessionConfigArea.Account,
@@ -43,7 +32,7 @@ export const OBSZARY_SESJI: readonly SessionConfigArea[] = [
   SessionConfigArea.SessionLifecycle,
 ];
 
-/** Nazwa obszaru pokazywana Operatorowi. */
+/** Nazwa obszaru konfiguracji sesji pokazywana Operatorowi w oknie ustawień sesji, zamiast kodu z kontraktu. */
 export const NAZWY_OBSZAROW: Readonly<Record<SessionConfigArea, string>> = {
   [SessionConfigArea.Model]: 'model i nakład rozumowania',
   [SessionConfigArea.Account]: 'konto i sposób jego wyboru',
@@ -65,7 +54,7 @@ export const NAZWY_OBSZAROW: Readonly<Record<SessionConfigArea, string>> = {
   [SessionConfigArea.SessionLifecycle]: 'granice biegu sesji',
 };
 
-/** Rejestr, z którego wzięta jest treść obszaru — nazwany Operatorowi. */
+/** Rejestr, z którego wzięta jest treść obszaru konfiguracji — nazwany Operatorowi zamiast pokazany jako kod. */
 export const NAZWY_ZRODEL: Readonly<Record<SessionConfigSource, string>> = {
   [SessionConfigSource.Default]: 'wartość domyślna kontraktu',
   [SessionConfigSource.SettingsCatalog]: 'katalog ustawień',
@@ -76,7 +65,7 @@ export const NAZWY_ZRODEL: Readonly<Record<SessionConfigSource, string>> = {
   [SessionConfigSource.Override]: 'zapis własny konfiguracji sesji',
 };
 
-/** Powód rozejścia katalogu roboczego nazwany Operatorowi. */
+/** Powód rozejścia katalogu roboczego nazwany Operatorowi, zamiast pokazany jako kod z kontraktu rdzenia. */
 export const NAZWY_ROZEJSCIA: Readonly<Record<WorkingDirectoryDegradation, string>> = {
   [WorkingDirectoryDegradation.None]: 'katalog ustawiony jest katalogiem używanym',
   [WorkingDirectoryDegradation.Missing]: 'katalog ustawiony nie istnieje',
@@ -88,17 +77,17 @@ export const NAZWY_ROZEJSCIA: Readonly<Record<WorkingDirectoryDegradation, strin
   [WorkingDirectoryDegradation.FallbackUsed]: 'obowiązuje katalog zastępczy',
 };
 
-/** Nazwa obszaru; obszar spoza kontraktu pokazuje własny kod. */
+/** Nazwa obszaru konfiguracji sesji; obszar spoza wykazu kontraktu pokazuje wprost swój własny kod źródłowy. */
 export function nazwaObszaru(obszar: string): string {
   return NAZWY_OBSZAROW[obszar as SessionConfigArea] ?? obszar;
 }
 
-/** Nazwa rejestru źródłowego; rejestr spoza kontraktu pokazuje własny kod. */
+/** Nazwa rejestru źródłowego wartości obszaru sesji; rejestr spoza wykazu kontraktu pokazuje własny kod. */
 export function nazwaZrodla(zrodlo: string): string {
   return NAZWY_ZRODEL[zrodlo as SessionConfigSource] ?? zrodlo;
 }
 
-/** Nazwa powodu rozejścia; powód spoza kontraktu pokazuje własny kod. */
+/** Nazwa powodu rozejścia katalogu roboczego sesji; powód spoza wykazu kontraktu pokazuje wprost własny kod. */
 export function nazwaRozejscia(powod: string): string {
   return NAZWY_ROZEJSCIA[powod as WorkingDirectoryDegradation] ?? powod;
 }
@@ -128,18 +117,16 @@ export function opisPochodzenia(pochodzenie: SessionConfigOrigin): string {
   return adres === null ? rejestr : `${rejestr} · ${opisAdresu(adres)}`;
 }
 
-/** Czy obszar jest zapisem własnym, a nie wartością odziedziczoną z rejestru. */
+/** Czy obszar konfiguracji jest zapisem własnym sesji, a nie wartością odziedziczoną z rejestru nadrzędnego. */
 export function czyZapisWlasny(pochodzenie: SessionConfigOrigin): boolean {
   return pochodzenie.source === SessionConfigSource.Override;
 }
 
 /**
- * Zdanie o katalogu roboczym.
- *
- * `checkedAt` równe zeru znaczy „nic nie było sprawdzane": odczyt konfiguracji
- * obowiązującej składa rozejście z samej konfiguracji, bez dotykania dysku
- * (`core/sesja_konfiguracja_skladanie.go`). Okno mówi to wprost, zamiast
- * podawać brak sprawdzenia za sprawdzenie pomyślne.
+ * Zdanie o katalogu roboczym. `checkedAt` równe zeru znaczy, że nic nie było
+ * sprawdzane — odczyt składa wtedy rozejście z samej konfiguracji, bez
+ * dotykania dysku. Okno mówi to wprost, zamiast podawać brak sprawdzenia za
+ * sprawdzenie pomyślne.
  */
 export function opisKatalogu(katalog: WorkingDirectoryResolution): string {
   const uzywany = katalog.effectivePath === '' ? '(nie wskazano)' : katalog.effectivePath;

@@ -711,3 +711,24 @@ własnej skali barw.
 Barwy i rozmiary czcionek pochodzą wyłącznie z żetonów motywu `--dn-*`
 i z biblioteki `komponenty/`. Arkusz obejmuje wyłącznie rozkład okien
 modułu Workspace.
+
+## budowa/klient-poprzedni/src/motyw/semantyczne-jasny.css
+Jedna odpowiedzialność: wartości żetonów semantycznych motywu jasnego,
+odcienie bieli. Motyw jasny i ciemny są równoprawne — ten plik nie jest
+podstawą, z której wywodzi się motyw ciemny, oba są definiowane osobno
+i w pełni, żeton po żetonie. Plik ma dwa bloki: wybór jawny przez atrybut
+data-theme oraz zapas na wypadek braku jawnego wyboru, sterowany
+preferencją systemu. Powielenie wartości między blokami jest świadome, to
+mechanizm kaskady, a nie drugie źródło prawdy — źródłem pozostaje
+zetony.json. Podział warstwy: stany.css niesie sukces, ostrzeżenie, błąd
+i informację; przestrzen.css niesie cienie obu motywów; rama.css niesie
+pasek górny, atramentowy w obu motywach.
+
+Obrys kontrolki: próg kontrastu WCAG 2.1 AA wynosi 4,50:1, stąd wybrano
+#616161 o współczynniku 5,63:1. Pozostałe dwa obrysy idą za obrysem
+głównym, żeby zachować trzy rozróżnialne wagi obrysu. Trzy wagi tekstu są
+dobrane tak, by każda przechodziła próg kontrastu WCAG 2.1 AA (4,50:1)
+i pozostawała rozróżnialna od dwóch pozostałych. Pierścień fokusu bierze
+ten sam błękit co tekst sygnałowy (#2457C9, współczynnik 5,82:1); poświata
+idzie za nim tą samą barwą, żeby pierścień i jego cień nie tworzyły dwóch
+różnych błękitów.

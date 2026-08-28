@@ -9309,3 +9309,17 @@ Wiersz musi dać się narysować także wtedy, gdy wykaz punktów jeszcze nie do
 — inaczej nadanie zniknęłoby z widoku, choć w rdzeniu istnieje. Ostrzeżenie
 o zapisie liczone jest wtedy z pustej nazwy maszyny, czyli nie pojawia się;
 pojawi się po dojściu wykazu.
+## budowa/klient-poprzedni/src/moduly/assistant/modul-assistant.ts
+
+Układ okien wynika z roli każdego z nich. Voice Console jest oknem wiodącym
+i punktem wejścia modułu, więc stoi w pasie pierwszym na całą szerokość. Actions
+Monitor i Activity Feed monitorują ten sam przebieg — zlecenie kończy się
+w monitorze i wchodzi do dziennika — więc stoją w pasie drugim obok siebie.
+Zarządca pamięci i kontekstów oraz zarządca narzędzi i rutyn zajmują się
+zasobem, a nie przebiegiem, i stoją w pasie trzecim, ponieważ praca w nich
+poprzedza polecenie albo je przeżywa, a nie towarzyszy mu.
+
+Okno rozmowy i okno pętli wykonawczej są oknami wspólnymi platformy i leżą poza
+tym katalogiem: pas komunikacji montuje scena sesji, ta sama we wszystkich
+modułach. Okno modułu ustala się przed odczytami, ponieważ polecenie głosowe
+wymaga wskazania okna, a odczyty zawężają się do niego, jeżeli rdzeń je zna.

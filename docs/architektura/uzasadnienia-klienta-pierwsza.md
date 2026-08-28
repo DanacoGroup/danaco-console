@@ -7342,3 +7342,14 @@ Wartość rodzaju `secret` nie wraca z rdzenia: pole pozostaje puste i mówi to 
 Plik nie buduje ani jednego elementu widoku i nie woła rdzenia — tak samo jak `zasiegi.ts`, którego jest odpowiednikiem dla drugiego kształtu wartości. Nazwy poziomu i osi bierze z `adres-ustawienia.ts`: pochodzenie obszaru składa się na `AdresUstawienia` i idzie przez `opisAdresu`, więc poziom nazywa się w oknie tak samo, jak nazywa się w łańcuchu zapisów. Wartości wyliczeń pochodzą wyłącznie z kontraktu; literału nazwy obszaru w kodzie nie ma.
 
 Rozejście katalogu roboczego z `checkedAt` równym zeru składane jest z samej konfiguracji obowiązującej, bez dotykania dysku, zgodnie z `core/sesja_konfiguracja_skladanie.go`.
+
+## budowa/klient-poprzedni/src/konfiguracja/okno-konfiguracji.ts
+Okno stoi na natywnym `<dialog>`, więc warstwę tła, stos okien i zamknięcie klawiszem Esc daje przeglądarka, a nie własna nakładka. Wygląd bierze z biblioteki `komponenty/` (`dn-modal`) — plik nie zna ani jednej barwy. Kategorie i pola przychodzą z katalogu rdzenia; plik zna wyłącznie trzy obszary układu i sposób ich związania. Przycisk odświeżenia pozwala spytać rdzeń ponownie, gdy katalog nie dotarł.
+
+Obszary sesji rozstrzyga rdzeń (`config.effective.get`, `config.session.set`), bo tylko on zszywa je z rejestrami spoza rodziny `config.*` — konta, kanały, tożsamości, dostępy. Łańcuch pojedynczych kluczy zostaje po stronie klienta (`rozstrzygniecie.ts`), bo podgląd dziedziczenia potrzebuje wszystkich zapisów, nie samego zwycięzcy.
+
+Kanały modelu (`channel.add`, `channel.update`, `channel.remove`) mają panel w oknie konfiguracji, a nie w komplecie sterowania, bo rejestr kanałów jest bytem globalnym — katalogiem wyboru, nie ustawieniem okna (`sterowanie/panel-sterowania.ts`) — a komplet sterowania jest per okno: wstawiony tam panel powstawałby raz na każde otwarte okno. Egzemplarz rejestru zakładany w oknie konfiguracji jest czytającą pamięcią podręczną nad `channel.list`, bez ani jednej drogi zapisu, więc drugi egzemplarz to drugi odczyt tej samej prawdy, nie druga prawda. Po każdym udanym zapisie panel woła `rejestr.odswiez()`, co ogłasza zmianę wszystkim czytelnikom naraz — oknu rozmowy, obu sterowaniom modelu, panelowi modeli i Roundtable.
+
+Pozycja „Izolacja" w nawigacji zakresów prowadzi do okna punktów izolacji, jednego na klienta, które pamięta swój stan — otwarcie z panelu kategorii trafia w ten sam egzemplarz, co otwarcie z listwy Ustawień, nie zakłada drugiego.
+
+Drugi selektor zasięgu byłby powieleniem, a rozjazd między nimi pokazywałby wartości z dwóch różnych zasięgów obok siebie.

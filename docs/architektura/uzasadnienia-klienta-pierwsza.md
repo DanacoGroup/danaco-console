@@ -7690,3 +7690,22 @@ obok źródeł, które stan dla nich trzyma.
 Układ arkusza jest podporządkowany kciukowi: kontekst decyzji zdaniami u góry (czyta się go raz), drogi u dołu (dotyka się ich w biegu). Arkusz wjeżdża od dołu, bo tam sięga kciuk trzymający telefon jedną ręką.
 
 Droga nieprzejezdna dostaje zdanie mówiące, czego brakuje, zamiast przycisku wyszarzonego, który obiecywałby przyszłe działanie. Przycisk przejęcia z pustym polem oddaje kwit ze zdaniem o niepodanym poleceniu, zamiast być martwą kontrolką.
+
+## budowa/klient-poprzedni/src/aktualizacja/wykaz-wydan-widok.ts
+Widok pokazuje tę samą chronologię co strona „Pobierz” (`budowa/witryna/tresc/pobierz.mjs`),
+w tych samych siedmiu kolumnach: Wersja, Data, System, Plik, Rozmiar, Suma SHA-256,
+Co się zmieniło. Oba widoki czytają jeden plik `wydania.json`; inny wykrój tych samych
+danych po jednej ze stron dałby drugą prawdę o wydaniach.
+
+Zdanie o wydaniu bez sumy brzmi tak samo po obu stronach, bo mówi rzecz prawdziwą u obu:
+most do powłoki odmawia wywołania bez sumy (`most-aktualizacji.ts`, kod `wydanie-bez-sumy`),
+a puste pole w tabeli wyglądałoby na brak danych, nie na przeszkodę.
+
+Każdy stan kanału ma własne zdanie. Widok pokazuje to, co oddał `pobierzWykazWydan()`,
+i ani słowa więcej: odczyt rozróżnia brak łączności, brak pliku pod adresem i pusty wykaz,
+więc „nie ma jeszcze żadnego wydania” pada tylko wtedy, gdy kanał tak odpowiedział.
+
+Widok nie zawiera odnośników, bo odnośnik wyprowadziłby okno aplikacji pod obcy adres.
+Adres jest wypisany jako tekst do skopiowania, a pobieranie zostaje pod przyciskiem
+banera albo na witrynie. Widok nie montuje się sam: oddaje element, a osadza go ten,
+kto go przywołał — przycisk „Wykaz wydań” przy banerze.

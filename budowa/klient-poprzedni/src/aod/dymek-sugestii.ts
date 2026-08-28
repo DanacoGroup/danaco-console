@@ -5,26 +5,7 @@ import type { WpisKolejkiDecyzji } from './kolejka-decyzji';
 import { NAZWY_POWODOW, WagaDecyzji, opiszOdstep } from './rozpoznanie-decyzji';
 import type { Queue } from '../../../shared/contract';
 
-/**
- * Dymek kontekstowy sugestii — warstwa 2 funkcji, popover przy awatarze
- * (`docs/funkcje-globalne/always-on-display.md`, rozdz. 2.1, 2.6, 4).
- *
- * Dymek przekazuje sugestię BEZ PRZERYWANIA PRACY: otwiera się po lewej stronie
- * awatara, nie przesuwa kolumn obszaru roboczego, nie przyciemnia tła i nie
- * zabiera ogniska klawiatury siłą. Zamknięcie klawiszem `Esc` ani odejście
- * ogniska nie zmieniają statusu sugestii (rozdz. 2.6 i zał. A.1).
- *
- * Treść dymka mówi cztery rzeczy: co się stało (zdanie decyzji), jakiego jest
- * rodzaju (katalog rozdz. 4), jak głośno wchodzi (waga rozdz. 4.5) i czyja to
- * ocena — rdzenia czy nakładki (`WagaDecyzji`). Pod treścią stoją działania:
- * te, za którymi stoi komenda kontraktu, przyciskiem
- * (`cztery-stery.ts`), a cykl życia sugestii — „Odłóż" i „Odrzuć" — osobno,
- * bo należy do nakładki, nie do rdzenia.
- *
- * Przy wąskiej kolumnie obszaru roboczego dymek skraca się do jednego zdania
- * i działania „Rozwiń" otwierającego powierzchnię interakcji (rozdz. 2.5).
- */
-
+/** Dymek kontekstowy sugestii, popover otwierany przy awatarze bez przerywania pracy Operatora klawiaturą. */
 export interface OpisDymkaSugestii {
   /** Wspólny opis sterów decyzji — ten sam, którym karmi się lista sugestii. */
   stery: OpisCzterechSterow;
@@ -45,7 +26,7 @@ export interface DymekSugestii {
   /** Chowa dymek. Status sugestii pozostaje bez zmiany. */
   schowaj(): void;
   czyWidoczny(): boolean;
-  /** Wąska kolumna — dymek skraca treść do jednego zdania (rozdz. 2.5). */
+  /** Wąska kolumna — dymek skraca treść do jednego zdania. */
   ustawWaski(waski: boolean): void;
   /** Przesuwa dymek o szerokość otwartej kolumny. */
   ustawOdsuniecie(pikseli: number): void;
@@ -82,13 +63,7 @@ export function utworzDymekSugestii(opis: OpisDymkaSugestii): DymekSugestii {
   /** Wpis pokazywany w tej chwili; `null`, gdy dymek jest zamknięty. */
   let biezacy: WpisKolejkiDecyzji | null = null;
 
-  /**
-   * Kolejka rdzenia dopasowana do pokazywanego wpisu.
-   *
-   * Trzymana obok wpisu, bo przerysowanie po zwężeniu kolumny nie ma jej skąd
-   * wziąć po raz drugi — a bez niej ster wstrzymania stracił by drogę wyjścia,
-   * której Operator przed chwilą używał.
-   */
+  // Kolejka trzymana obok wpisu — przerysowanie po zwężeniu kolumny nie ma jej skąd wziąć ponownie.
   let biezacaKolejka: Queue | undefined;
 
   /** Czy kolumna obszaru roboczego jest wąska — rozstrzyga długość treści. */
@@ -97,7 +72,7 @@ export function utworzDymekSugestii(opis: OpisDymkaSugestii): DymekSugestii {
   function naKlawisz(zdarzenie: KeyboardEvent): void {
     if (element.hidden) return;
     if (zdarzenie.key !== 'Escape') return;
-    // `Esc` zamyka dymek BEZ zmiany statusu sugestii (zał. A.1).
+    // `Esc` zamyka dymek bez zmiany statusu sugestii.
     opis.naZamkniecie();
   }
 
@@ -181,13 +156,7 @@ export function utworzDymekSugestii(opis: OpisDymkaSugestii): DymekSugestii {
   };
 }
 
-/**
- * Cykl życia sugestii — „Odłóż" i „Odrzuć" (rozdz. 9.4).
- *
- * Oba działania należą do nakładki, nie do rdzenia: kontrakt nie ma statusu
- * sugestii ani komendy go zmieniającej. Skutek jest miejscowy i tak jest
- * nazwany, żeby nikt nie wziął go za zapis w bazie rdzenia.
- */
+/** Cykl życia sugestii — działania „Odłóż" i „Odrzuć", należące wyłącznie do nakładki, nie do rdzenia produktu. */
 function utworzCyklZycia(wpis: WpisKolejkiDecyzji, opis: OpisDymkaSugestii): HTMLElement {
   const pas = document.createElement('div');
   pas.className = 'ao-dymek__cykl';
@@ -217,7 +186,7 @@ function utworzCyklZycia(wpis: WpisKolejkiDecyzji, opis: OpisDymkaSugestii): HTM
   return pas;
 }
 
-/** Działanie „Rozwiń" — jedyne wyjście z dymka do powierzchni interakcji. */
+/** Działanie „Rozwiń" — jedyne wyjście z dymka do pełnej powierzchni interakcji z listą wszystkich sugestii. */
 function utworzRozwin(naRozwin: () => void): HTMLElement {
   const rozwin = document.createElement('button');
   rozwin.type = 'button';

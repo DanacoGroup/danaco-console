@@ -8096,3 +8096,17 @@ Tryb bierze się kolejno z zapisu i z trybu proponowanego przez kategorię, a gd
 Zmiana kategorii albo osi znaczy inną treść w edytorze; samo przeliczenie stanu nie znaczy zmiany treści.
 
 Jedyną drogą zapisu treści demonstracyjnej pozostaje komenda `identity.document.set`, wywoływana przyciskiem „Zapisz treść kategorii".
+
+## budowa/klient-poprzedni/src/aod/dymek-sugestii.ts
+Dymek otwiera się po lewej stronie awatara, nie przesuwa kolumn obszaru roboczego,
+nie przyciemnia tła i nie zabiera ogniska klawiatury siłą. Zamknięcie klawiszem
+`Esc` ani odejście ogniska nie zmieniają statusu sugestii.
+
+Treść dymka mówi cztery rzeczy: co się stało (zdanie decyzji), jakiego jest
+rodzaju, jak głośno wchodzi (waga) i czyja to ocena — rdzenia czy nakładki
+(`WagaDecyzji`). Pod treścią stoją działania: te, za którymi stoi komenda
+kontraktu, przyciskiem (`cztery-stery.ts`), a cykl życia sugestii — „Odłóż"
+i „Odrzuć" — osobno, bo należy do nakładki, nie do rdzenia.
+
+Przy wąskiej kolumnie obszaru roboczego dymek skraca się do jednego zdania
+i działania „Rozwiń" otwierającego powierzchnię interakcji.

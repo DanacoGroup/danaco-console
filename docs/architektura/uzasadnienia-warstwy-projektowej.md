@@ -624,3 +624,8 @@ była rozpoznawalna kolorem bez czytania nagłówka.
 Wnętrza okien opisuje osobny arkusz okna-apps.css. Kontrolki formularzy
 modułu pochodzą z modele/kontrolki-formularza, więc moduł wciąga też arkusz
 modele.css, inaczej pola dm-* byłyby bez oprawy.
+
+## budowa/klient-poprzedni/src/moduly/apps/okna-apps.css
+Podział wobec pliku apps.css idzie wzdłuż odpowiedzialności: tamten arkusz
+opisuje ramę modułu i ramę okna, ten arkusz opisuje wnętrza okien. Barwy
+biorą się wyłącznie z żetonów warstwy motyw/.

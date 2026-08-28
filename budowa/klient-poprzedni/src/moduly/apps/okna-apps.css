@@ -1,12 +1,4 @@
-/*
- * Warstwa wizualna okien modułu Apps — kanwa komponentów, wykazy warstw,
- * podgląd zapisanego pliku, oś etapów i dziennik wydań.
- *
- * Podział wobec `apps.css` idzie wzdłuż odpowiedzialności: tamten arkusz
- * opisuje ramę modułu i ramę okna, ten — wnętrza okien.
- *
- * Barwy biorą się wyłącznie z żetonów `motyw/`.
- */
+/* Arkusz opisuje warstwę wizualną okien modułu Apps: kanwę komponentów, wykazy warstw, podgląd zapisanego pliku, oś etapów i dziennik wydań. */
 
 /* ── Kanwa komponentów architektury ──────────────────────────────────────── */
 

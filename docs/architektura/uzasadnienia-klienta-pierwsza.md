@@ -8684,3 +8684,27 @@ Studia). Stąd dwa zabezpieczenia: wiek — nie starszy niż pamięć odcisku �
 Jedna własna komenda rodzi dokładnie jedno rozgłoszone zdarzenie, więc odcisk
 unieważnia jedno zdarzenie i znika; drugie zdarzenie o tym samym stanie pochodzi
 z innej czynności i nie ma już czym się wylegitymować.
+## budowa/klient-poprzedni/src/moduly/diagnostics/indeks.ts
+Port diagnostyki jest w rdzeniu odbiorcą odmów wykonania komend: odmowa
+dowolnej komendy staje się wierszem błędu, w którym nazwa źródła jest nazwą
+komendy, a wystąpienia grupują się po odcisku z licznikiem. Kod odmowy nie
+stoi w treści wiersza błędu: rdzeń wkłada kod i treść do wpisu dziennika,
+a do wiersza błędu daje samą wiadomość bez kodu, osobno polem kodu błędu —
+po kodzie rozpoznaje się komendę bez obsługiwacza i odróżnia ją od odmowy
+merytorycznej, więc oba miejsca muszą być czytane wprost, a nie zakładane.
+Moduł montuje się bez okna, bo większość komend obszaru nie ma pola kodu okna
+wcale, a jedna ma je opcjonalne — czekanie na wykaz okien wzorem modułu
+Developer zostawiłoby sesję bez okien również bez dziennika, bez wykazu
+błędów i bez rekomendacji, a cena jest jedna i jawna: analiza nie zostaje
+przypisana do okna, bo kod okna idzie do rdzenia tylko wtedy, gdy okno jest
+znane. Układ wynika z ról: w pasie górnym wiodące centrum diagnostyki wraz
+z monitorem dziennika, w pasie dolnym dwa okna pomocnicze zasilające centrum
+materiałem i czytające owoc jego analizy — zależności biegną w obie strony,
+dlatego okna jadą jednym stanem wspólnym. W pasie trzecim stoją narzędzia
+obserwowalności, kontener narzędzi warstwy eksperckiej z własnym źródłem dla
+rodziny komend monitorowania. Czwarty pas niesie okna pomocnicze, w tym
+podgląd powłoki, który działa słabiej niż w module Developer i mówi to
+wprost, bo moduł montuje się bez okna. Kod modułu jest stałą, bo czyta go
+także pas okien pomocniczych — po nim idzie spis pozycji i profil rozmowy
+modułu, a dwa osobne zapisy tej samej nazwy w jednym pliku rozjechałyby się
+przy pierwszej zmianie.

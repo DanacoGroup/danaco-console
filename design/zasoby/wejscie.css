@@ -153,7 +153,7 @@
    Tętno 2,4 s jest wspólnym pulsem sygnału w całej platformie; tu ożywia okno
    wejściowe, w którym poza tym nic się nie porusza. */
 .we-marka-godlo .kropka {
-  fill: var(--dn-sygnal-500);
+  fill: var(--dn-kropka);
   transform-box: fill-box;
   transform-origin: center;
   animation: we-tetno var(--dn-czas-tetno) var(--dn-ease) infinite;
@@ -537,7 +537,7 @@
   opacity: .7;
 }
 .pg-znak { width: 88px; height: 88px; color: var(--dn-rama-tekst); }
-.pg-znak .kropka { fill: var(--dn-sygnal-500); }
+.pg-znak .kropka { fill: var(--dn-kropka); }
 .pg-warstwa-etykieta {
   position: absolute; left: var(--dn-od-3); bottom: var(--dn-od-2);
   font-family: var(--dn-ff-mono); font-size: 10px;
@@ -581,4 +581,4 @@
   outline: var(--dn-wym-fokus) solid var(--dn-fokus);
   outline-offset: calc(-1 * var(--dn-wym-fokus));
 }
-.we-belka-btn--zamknij:hover { background: var(--dn-czerwien-700); color: var(--dn-szary-0); }
+.we-belka-btn--zamknij:hover { background: var(--dn-blad-tekst); color: var(--dn-tekst-inv); }

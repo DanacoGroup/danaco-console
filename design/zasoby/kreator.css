@@ -149,7 +149,7 @@
   /* Krok bieżący niesie podświetlenie sygnałowe. `--dn-powierzchnia` zrównała się
      z barwą obrzeża w motywie ciemnym i wyróżnienie znikało zupełnie. */
   background: var(--dn-sygnal-tlo);
-  border-left-color: var(--dn-sygnal-500);
+  border-left-color: var(--dn-kropka);
   color: var(--dn-sygnal);
   /* Krok bieżący różni się od pozostałych stopniem, wagą, barwą i podłożem.
      Sama waga i barwa nie wystarczały: przy równym stopniu pozycja bieżąca
@@ -268,7 +268,7 @@
   .dn-kreator-kroki { flex-direction: row; overflow-x: auto; padding: var(--dn-od-3); }
   .dn-kreator-marka { display: none; }
   .dn-kreator-krok { border-left: 0; border-bottom: var(--dn-wym-wstega) solid transparent; white-space: nowrap; }
-  .dn-kreator-krok[data-stan='biezacy'] { border-bottom-color: var(--dn-sygnal-500); }
+  .dn-kreator-krok[data-stan='biezacy'] { border-bottom-color: var(--dn-kropka); }
 }
 
 /* Wybrany wariant instalacji — obrys sygnałowy i podniesiona powierzchnia.
@@ -320,7 +320,7 @@
   outline-offset: calc(-1 * var(--dn-wym-fokus));
 }
 
-.dn-kreator-belka-btn--zamknij:hover { background: var(--dn-czerwien-700); color: var(--dn-szary-0); }
+.dn-kreator-belka-btn--zamknij:hover { background: var(--dn-blad-tekst); color: var(--dn-tekst-inv); }
 
 /* ── Bryła warstw platformy ────────────────────────────────────────────────
    Pole sceny. Bryłę rysuje składnik biblioteki `zasoby/bryla.js` w płótnie,

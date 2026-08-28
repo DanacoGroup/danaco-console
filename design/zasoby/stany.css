@@ -15,7 +15,7 @@
               border-color var(--dn-czas-2) var(--dn-ease);
 }
 
-.dn-stan-znacznik[data-stan='praca']      { background: var(--dn-sygnal-500); border-color: var(--dn-sygnal-500); }
+.dn-stan-znacznik[data-stan='praca']      { background: var(--dn-kropka); border-color: var(--dn-kropka); }
 .dn-stan-znacznik[data-stan='reakcja']    { background: var(--dn-ostrzezenie-tekst); border-color: var(--dn-ostrzezenie-tekst); }
 .dn-stan-znacznik[data-stan='blad']       { background: var(--dn-blad-tekst); border-color: var(--dn-blad-tekst); }
 .dn-stan-znacznik[data-stan='zakonczone'] { background: transparent; border-color: var(--dn-tekst-3); }

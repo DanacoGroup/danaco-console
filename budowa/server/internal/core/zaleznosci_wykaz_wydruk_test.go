@@ -87,21 +87,21 @@ func TestSilnikKontenerowStoiWWarstwieDecyzyjnej(t *testing.T) {
 	}
 }
 
-// TestKazdaPozycjaMaZnanaWarstwe pilnuje, żeby nowe narzędzie dopisane do wykazu
-// nie wypadło z prowizjonowania. Skrypt stawia warstwami; warstwa nieznana
-// znaczy pozycję, której nikt nie postawi i nikt tego nie zauważy.
+// TestKazdaPozycjaMaZnanaWarstwe pilnuje umowy z jedynym odbiorcą wykazu:
+// arsenal-serwera.sh rozdziela pozycje po nazwach warstw wpisanych na sztywno.
+// Nazwy stoją tu literałem, nie stałą tego pliku, żeby nowa warstwa dodana
+// w rdzeniu bez gałęzi w skrypcie zepsuła ten sprawdzian, a nie zniknęła.
 func TestKazdaPozycjaMaZnanaWarstwe(t *testing.T) {
-	znane := map[string]bool{
-		WarstwaObowiazkowa:        true,
-		WarstwaObowiazkowaRecznie: true,
-		WarstwaWarsztatGo:         true,
-		WarstwaWarsztatNpm:        true,
-		WarstwaSnap:               true,
-		WarstwaModelRecznie:       true,
-		WarstwaDecyzyjna:          true,
+	znaneOdbiorcy := map[string]bool{
+		"obowiazkowa-apt": true,
+		"warsztat-go":     true,
+		"warsztat-npm":    true,
+		"snap":            true,
+		"model-recznie":   true,
+		"decyzyjna":       true,
 	}
 	for _, pozycja := range ZaleznosciZewnetrzne() {
-		if warstwa := WarstwaZaleznosci(pozycja); !znane[warstwa] {
+		if warstwa := WarstwaZaleznosci(pozycja); !znaneOdbiorcy[warstwa] {
 			t.Errorf("pozycja %q dostała warstwę %q, której skrypt prowizjonowania nie zna",
 				pozycja.Narzedzie.Nazwa, warstwa)
 		}
@@ -131,19 +131,20 @@ func TestWarstwaRozpoznajePostaciPodpowiedzi(t *testing.T) {
 		{"środowisko pythonowe", "rembg", "rembg[cli] w osobnym środowisku pythonowym", WarstwaModelRecznie},
 		{"silnik kontenerów", "docker", "docker.io albo podman", WarstwaDecyzyjna},
 		{"silnik kontenerów pod podmanem", "podman", "podman", WarstwaDecyzyjna},
-		// Podpowiedź zapisana zdaniem: rozbita na spacjach dałaby apt-get niepakietowe
-		// tokeny, a apt padłby na pierwszym z nich.
+		// Podpowiedź zapisana zdaniem albo poleceniem innego menedżera pakietów zostaje
+		// w warstwie obowiązkowej — arsenal-serwera.sh rozpoznaje jej postać i wyprowadza
+		// z niej krok apt, krok pip albo krok ręczny, tak samo, jak dla nazw pakietów.
 		{"podpowiedź zdaniem — środowisko Javy", "java",
 			"środowisko uruchomieniowe Javy (default-jre) wraz z wydaniem Apache Tika w /opt/tika",
-			WarstwaObowiazkowaRecznie},
+			WarstwaObowiazkowa},
 		{"podpowiedź zdaniem — plik z wydania projektu", "typst",
-			"typst (jeden plik wykonywalny z wydania projektu)", WarstwaObowiazkowaRecznie},
+			"typst (jeden plik wykonywalny z wydania projektu)", WarstwaObowiazkowa},
 		{"podpowiedź zdaniem — pakiet wraz ze słownikiem", "hunspell",
-			"hunspell wraz ze słownikiem języka (hunspell-pl, hunspell-en-us)", WarstwaObowiazkowaRecznie},
-		{"polecenie pip install", "ruff", "pip install ruff", WarstwaObowiazkowaRecznie},
+			"hunspell wraz ze słownikiem języka (hunspell-pl, hunspell-en-us)", WarstwaObowiazkowa},
+		{"polecenie pip install", "ruff", "pip install ruff", WarstwaObowiazkowa},
 		// cargo install zawiera podnapis „go install" („cargo” kończy się na „go”),
 		// a mimo to nie jest poleceniem Go.
-		{"polecenie cargo install", "typos", "cargo install typos-cli", WarstwaObowiazkowaRecznie},
+		{"polecenie cargo install", "typos", "cargo install typos-cli", WarstwaObowiazkowa},
 	}
 	for _, przypadek := range przypadki {
 		t.Run(przypadek.nazwa, func(t *testing.T) {
@@ -157,11 +158,11 @@ func TestWarstwaRozpoznajePostaciPodpowiedzi(t *testing.T) {
 	}
 }
 
-// TestWarstwaPodpowiedziZdaniemNieTrafiaDoApt pilnuje usterki, w której pole Pakiet zapisane zdaniem albo
-// poleceniem menedżera pakietów innego niż go/npm wpadało do warstwy obowiązkowej apt: rozbite na
-// spacjach dawało apt-get niepakietowe tokeny, apt padał na pierwszym z nich, a set -e zabijał
-// prowizjonowanie przed warstwami Go, npm, snap i mowy.
-func TestWarstwaPodpowiedziZdaniemNieTrafiaDoApt(t *testing.T) {
+// TestWarstwaPodpowiedziZdaniemZostajeObowiazkowa pilnuje, żeby pozycja z podpowiedzią zapisaną
+// zdaniem albo poleceniem menedżera pakietów innego niż go/npm zostawała w jedynej warstwie,
+// którą skrypt prowizjonowania rozdziela dalej po kształcie pola — nie w warstwie osobnej, dla
+// której skrypt nie ma gałęzi i pozycja wpadłaby donikąd.
+func TestWarstwaPodpowiedziZdaniemZostajeObowiazkowa(t *testing.T) {
 	oczekiwane := map[string]bool{
 		"java": true, "hunspell": true, "vale": true, "typst": true, "ruff": true, "semgrep": true,
 	}
@@ -172,8 +173,8 @@ func TestWarstwaPodpowiedziZdaniemNieTrafiaDoApt(t *testing.T) {
 			continue
 		}
 		znalezione[program] = true
-		if warstwa := WarstwaZaleznosci(pozycja); warstwa != WarstwaObowiazkowaRecznie {
-			t.Errorf("pozycja %q z podpowiedzią %q trafiła do warstwy %q zamiast obowiązkowej ręcznej",
+		if warstwa := WarstwaZaleznosci(pozycja); warstwa != WarstwaObowiazkowa {
+			t.Errorf("pozycja %q z podpowiedzią %q trafiła do warstwy %q zamiast obowiązkowej",
 				pozycja.Narzedzie.Nazwa, pozycja.Narzedzie.Pakiet, warstwa)
 		}
 	}

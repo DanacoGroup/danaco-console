@@ -26,7 +26,8 @@ type adapterSesji struct {
 	przerwijTure PrzerwanieTury
 }
 
-// nowyAdapterSesji wiąże port z nadzorcą.
+// nowyAdapterSesji wiąże port z nadzorcą pakietu sesji, jedynym źródłem
+// prawdy o żywym stanie sesji rdzenia.
 func nowyAdapterSesji(nadzorca *session.Nadzorca) *adapterSesji {
 	return &adapterSesji{nadzorca: nadzorca}
 }
@@ -46,7 +47,8 @@ func (a *adapterSesji) ZObecnoscia(o *rejestrObecnosci) *adapterSesji {
 	return a
 }
 
-// Utworz zakłada sesję wspólną dla plików, pamięci, projektu i agentów.
+// Utworz zakłada sesję wspólną dla plików, pamięci, projektu i agentów
+// w ramach jednego środowiska platformy.
 func (a *adapterSesji) Utworz(ctx context.Context, z shared.SessionCreateRequest) (shared.SessionCreateResponse, error) {
 	tytul, projekt := "", ""
 	if z.Title != nil {
@@ -56,13 +58,13 @@ func (a *adapterSesji) Utworz(ctx context.Context, z shared.SessionCreateRequest
 		projekt = *z.ProjectId
 	}
 	sesja := a.nadzorca.ZalozSesje(tytul, projekt)
-	// Sesja idzie do bazy od razu, nie dopiero z pierwszą wiadomością:
-	// zapis ma trwać do ręcznego usunięcia.
+	// Sesja idzie do bazy od razu, nie dopiero z pierwszą wiadomością, bo zapis ma trwać.
 	a.utrwalZalozona(ctx, sesja)
 	return shared.SessionCreateResponse{Session: sesjaKontraktu(sesja)}, nil
 }
 
-// Wykaz zwraca sesje, opcjonalnie zawężone stanem i wycinkiem.
+// Wykaz zwraca sesje konta w kolejności ich świeżości, opcjonalnie zawężone
+// stanem i wycinkiem wyniku.
 func (a *adapterSesji) Wykaz(ctx context.Context, z shared.SessionListRequest) (shared.SessionListResponse, error) {
 	wszystkie := a.nadzorca.Rejestr().Sesje()
 	wybrane := make([]shared.Session, 0, len(wszystkie))
@@ -79,7 +81,8 @@ func (a *adapterSesji) Wykaz(ctx context.Context, z shared.SessionListRequest) (
 	return wynik, nil
 }
 
-// Otworz zwraca sesję wraz z jej oknami komunikacji — relacja 1:N.
+// Otworz zwraca sesję wraz z jej oknami komunikacji, w relacji jednej sesji
+// do wielu okien tej rozmowy.
 func (a *adapterSesji) Otworz(_ context.Context, z shared.SessionOpenRequest) (shared.SessionOpenResponse, error) {
 	sesja, err := a.nadzorca.Rejestr().Sesja(z.SessionId)
 	if err != nil {
@@ -92,7 +95,8 @@ func (a *adapterSesji) Otworz(_ context.Context, z shared.SessionOpenRequest) (s
 	return shared.SessionOpenResponse{Session: sesjaKontraktu(sesja), Windows: oknaKontraktu(okna)}, nil
 }
 
-// Zamknij zamyka sesję wraz z oknami i ubija ich procesy — bez sierot.
+// Zamknij zamyka sesję wraz z jej oknami i ubija wszystkie ich procesy, nie
+// zostawiając żadnego osieroconego.
 func (a *adapterSesji) Zamknij(_ context.Context, z shared.SessionCloseRequest) (shared.SessionCloseResponse, error) {
 	zamkniete, err := a.nadzorca.ZamknijSesje(z.SessionId)
 	if err != nil {
@@ -107,10 +111,10 @@ func (a *adapterSesji) Zamknij(_ context.Context, z shared.SessionCloseRequest) 
 	return shared.SessionCloseResponse{Session: sesjaKontraktu(sesja)}, nil
 }
 
-// Usuwanie sesji mieszka w adapter_sesje_usuwanie.go — operacja nieodwracalna
-// i zbiorcza, dostała własny plik.
+// Usuwanie sesji mieszka w osobnym pliku jako operacja nieodwracalna i zbiorcza.
 
-// identyfikatoryOkienSesji wylicza identyfikatory okien zamkniętych wraz z sesją.
+// identyfikatoryOkienSesji wylicza identyfikatory okien zamkniętych wraz
+// z sesją, potrzebne do ubicia ich procesów.
 func identyfikatoryOkienSesji(okna []session.Okno) []string {
 	identyfikatory := make([]string, 0, len(okna))
 	for _, okno := range okna {

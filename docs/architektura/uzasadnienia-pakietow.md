@@ -6681,3 +6681,12 @@ przywróceniu, osobnym odczytem `WarstwyWersjiKompozycjiDesignu`.
 Wersja jest zawsze nowa. Nadpisania nie ma i nie ma być: wersja to zapis stanu
 z konkretnej chwili, a nadpisanie oznaczałoby, że stan sprzed godziny właśnie
 się zmienił.
+
+## budowa/server/internal/konfiguracja/katalog_klienta.go
+Nazwa katalogu klient jest nazwą katalogu projektu interfejsu w drzewie
+budowy, więc rdzeń uruchomiony z korzenia tego drzewa znajduje pakiet bez
+przełącznika. Ta sama nazwa wiąże wdrożenie: pakowanie wydania kładzie
+pakiet obok binarium pod tą nazwą, nie pod własną, ponieważ dwie różne
+nazwy tego samego katalogu wracałyby odmową pakietu przy pierwszym
+uruchomieniu. Katalog nieistniejący nie wstrzymuje startu, ponieważ gniazdo
+pracuje wtedy bez plików statycznych.

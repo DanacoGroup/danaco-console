@@ -1,3 +1,6 @@
+// Materializacja domyka lukę między treścią ustawień a argumentami procesu
+// programu `claude`, zapisując treść JSON do pliku tymczasowego przed
+// uruchomieniem.
 package injection
 
 import (
@@ -6,27 +9,8 @@ import (
 	"strings"
 )
 
-// Materializacja domyka lukę między treścią ustawień a argumentami procesu.
-// Przełączniki --settings i --mcp-config programu `claude` wskazują plik na
-// dysku. Warstwa sesji składa jednak wartości tych pól z obszarów konfiguracji
-// (tools, permissions, mcp) i przekazuje je jako napis JSON — treść, nie
-// ścieżkę. Gdyby taki napis trafił wprost do argv, program szukałby pliku o tej
-// nazwie, nie znalazłby go i całe przekierowanie byłoby bezczynne.
-//
-// Dlatego przed uruchomieniem procesu zapisujemy treść do pliku tymczasowego
-// i podmieniamy wartość na jego ścieżkę. Plik żyje tylko przez jeden przebieg
-// tury — sprząta go zwrócony domknięciem porządek (defer w wykonajPrzebieg).
-//
-// Rozpoznanie treści od ścieżki jest jednoznaczne: konfiguracja JSON zaczyna
-// się od `{` albo `[` (po odcięciu białych znaków), a ścieżka pliku nigdy tak
-// nie zaczyna. Wartość rozpoznaną jako ścieżkę zostawiamy nietkniętą — plik
-// zapisała już inna warstwa, a my tylko wskazujemy go procesowi.
-
 // zmaterializujUstawienia zapisuje na dysk te pola ustawień, które niosą treść
-// JSON (PlikUstawien, wpisy KonfiguracjaMCP), i podmienia je na ścieżki
-// utworzonych plików tymczasowych. Zwraca kopię ustawień gotową do złożenia
-// argumentów oraz porządek sprzątający pliki po turze. Kopia nie narusza
-// oryginału — prowenancja nadal pokazuje pierwotną treść, a argv realną ścieżkę.
+// JSON, i podmienia je na ścieżki utworzonych plików tymczasowych.
 func zmaterializujUstawienia(u Ustawienia) (Ustawienia, func(), error) {
 	var pliki []string
 	sprzataj := func() {
@@ -46,8 +30,7 @@ func zmaterializujUstawienia(u Ustawienia) (Ustawienia, func(), error) {
 	}
 
 	if len(u.KonfiguracjaMCP) > 0 {
-		// Nowa tablica, bo kopia ustawień dzieli tablicę bazową z oryginałem —
-		// podmiana w miejscu przeciekłaby do prowenancji i do wywołującego.
+		// Nowa tablica, bo kopia ustawień dzieli tablicę bazową z oryginałem.
 		zmienione := make([]string, len(u.KonfiguracjaMCP))
 		for i, wpis := range u.KonfiguracjaMCP {
 			if !jestTrescJSON(wpis) {
@@ -81,9 +64,7 @@ func jestTrescJSON(wartosc string) bool {
 }
 
 // zapiszTymczasowy zapisuje treść do świeżego pliku tymczasowego i zwraca jego
-// bezwzględną ścieżkę. Katalog tymczasowy systemu daje ścieżkę widoczną dla
-// procesu niezależnie od jego katalogu roboczego. Przy każdym potknięciu
-// sprzątamy po sobie, żeby nie zostawić pliku bez właściciela.
+// bezwzględną ścieżkę widoczną dla procesu.
 func zapiszTymczasowy(wzorzec, tresc string) (string, error) {
 	plik, err := os.CreateTemp("", wzorzec)
 	if err != nil {

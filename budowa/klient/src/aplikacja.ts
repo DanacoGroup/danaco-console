@@ -59,24 +59,7 @@ function raz(): void {
   if (gotowoscZgloszona) return;
   gotowoscZgloszona = true;
   zglosGotowosc();
-  pokazScene('dostep');
 }
-
-/*
-Wybór sceny drogi wejścia.
-
-Prototyp `przeplyw-wejscia.html` jest stroną przeglądową: stawia wszystkie trzy
-sceny jedna pod drugą, żeby dało się je ocenić naraz. W aplikacji naraz stoi
-jedna — pozostałe schodzą z widoku. Bez tego pierwsza scena zasłania resztę
-i Operator widzi puste tło.
-*/
-function pokazScene(okno: 'uruchomienie' | 'dostep' | 'przygotowanie'): void {
-  for (const scena of document.querySelectorAll<HTMLElement>('.we-scena')) {
-    scena.hidden = scena.querySelector(`[data-wejscie-okno="${okno}"]`) === null;
-  }
-}
-
-pokazScene('uruchomienie');
 
 transport.naStan(raz);
 globalThis.setTimeout(raz, 6000);

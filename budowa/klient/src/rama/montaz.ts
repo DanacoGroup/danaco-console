@@ -11,8 +11,6 @@ import type { Kanal } from '../protokol/kanal.ts';
 import { zamontujOknoStudio, type OknoStudio } from '../moduly/studio/montaz.ts';
 import { el, tekst } from './narzedzia.ts';
 import { belka } from './skladniki/belka.ts';
-import { szyna } from './skladniki/szyna.ts';
-import { pasekNarzedzi } from './skladniki/pasek-narzedzi.ts';
 import { panelSesje } from './skladniki/panel-sesje.ts';
 import { pasmoKart } from './skladniki/pasmo-kart.ts';
 import { stan as pasStanu } from './skladniki/stan.ts';
@@ -53,7 +51,7 @@ export function zamontujRame(w: NastawyRamy): void {
     'aria-label': tekst('glowna.etykieta'),
     tekst: tekst('glowna.brakModulu'),
   });
-  const { wezel: belkaWezel, tytul: tytulWezel } = belka({ srodowisko: w.srodowisko.name });
+  const { tytul: tytulWezel } = belka({ srodowisko: w.srodowisko.name });
   let stanWezel = pasStanu({
     srodowisko: w.srodowisko.name,
     liczbaSesji: w.sesje.length,
@@ -70,19 +68,28 @@ export function zamontujRame(w: NastawyRamy): void {
     glowna,
   ]);
 
-  const powloka = el('div', { klasa: 'sta-powloka' }, [
-    el('div', { klasa: 'dn-rama-korpus' }, [
-      szyna({ srodowisko: w.srodowisko, moduly: w.moduly }),
-      el('div', { klasa: 'dn-rama-prawa' }, [
-        belkaWezel,
-        pasekNarzedzi(),
-        el('div', { klasa: 'dn-obszar' }, [panelSesje({ sesje: w.sesje }), obszarGlowny]),
-      ]),
-    ]),
-    stanWezel,
-  ]);
+  /*
+  Powłoka pochodzi z biblioteki prototypu (`zasoby/powloka.js`), nie z tego
+  pliku: szynę nawigacji, belkę tytułową, pas narzędzi i pasek stanu stawia ona,
+  wypełniając gniazdo `#dn-powloka-montaz` przy wczytaniu dokumentu.
 
-  w.miejsce.replaceChildren(powloka);
+  Rama wstawia tu wyłącznie obszar modułu — w `.dn-rama-prawa`, pod pasem
+  narzędzi, dokładnie tam, gdzie treść okna stoi w źródle kształtu.
+  */
+  const ramaPrawa = w.miejsce.querySelector('.dn-rama-prawa');
+  if (ramaPrawa === null) {
+    /* Biblioteka nie zamontowała powłoki — bez niej okno nie ma w co wejść.
+       Zdanie idzie do konsoli przeglądarki, nie do Operatora: to usterka
+       wydania, nie stan, który on mógłby naprawić. */
+    console.error('powłoka nie została zamontowana: brak .dn-rama-prawa w gnieździe ramy');
+    return;
+  }
+
+  const obszar = el('div', { klasa: 'dn-obszar' }, [
+    panelSesje({ sesje: w.sesje }),
+    obszarGlowny,
+  ]);
+  ramaPrawa.append(obszar);
 
   /* Okno modułu czynne dziś wyłącznie dla Studio; zejście na inny moduł je
      zdejmuje, żeby obszar roboczy nie niósł treści modułu już opuszczonego. */

@@ -23,12 +23,28 @@ export const tresci = {
 
   narzedzia: {
     etykieta: 'Pasek narzędzi',
-    zwinPanel: 'Zwiń panel',
+    /* Nazwy wprost z prototypu (`design/05-okna/moduly/studio.html`, pas
+       `dn-narzedzia`): sześć rodzin czynności okna, po kolei od lewej. */
+    zwinPanel: 'Zwiń szynę sesji',
     wstecz: 'Wstecz',
     naprzod: 'Do przodu',
+    centrum: 'Centrum dowodzenia',
     odswiez: 'Odśwież widok',
+    zrzut: 'Zrzut ekranu',
+    schowek: 'Schowek',
+    kolejka: 'Kolejka zadań',
+    magistrala: 'Magistrala kontekstu',
+    izolacja: 'Izolacja kontekstu',
+    powiadomienia: 'Powiadomienia',
+    skupienie: 'Tryb skupienia',
+    pelnyEkran: 'Pełny ekran',
+    wiecej: 'Więcej',
+    dostosuj: 'Dostosuj wstążkę',
     szukaj: 'Szukaj',
     karty: 'Karty sesji',
+    /* Czynność, której warstwa okien jeszcze nie prowadzi. Zasada zero blokad:
+       niegotowość nazywa się zdaniem, przycisk nie znika. */
+    zapowiedziane: 'Ta czynność wejdzie w kolejnym wydaniu.',
   },
 
   panel: {

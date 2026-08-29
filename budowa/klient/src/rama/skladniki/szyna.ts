@@ -7,6 +7,10 @@
  *
  * Wybór modułu okna roboczego jest osobnym terenem, więc pozycja modułu
  * wyłącznie oznacza się jako bieżąca i zmienia tytuł w belce.
+ *
+ * Nazwa i opis pozycji stoją w panelu `.dn-szyna-etyk` z prototypu, nie
+ * w dymku `data-etykietka`: prototyp pokazuje przy pozycji dwa wiersze —
+ * nazwę i zdanie o przeznaczeniu — a oba niesie kontrakt.
  */
 
 import type { Environment, Module } from '../../../../shared/contract.ts';
@@ -62,20 +66,27 @@ function znak(nazwa: keyof typeof ikony): SVGElement {
   return rysunek;
 }
 
+/** Etykieta pozycji: nazwa i zdanie o przeznaczeniu. Opisu pustego nie zastępujemy niczym własnym — pole puste zostaje puste. */
+function etykieta(nazwa: string, opis?: string): HTMLElement {
+  return el('span', { klasa: 'dn-szyna-etyk' }, [
+    el('b', { tekst: nazwa }),
+    opis !== undefined && opis.length > 0 ? el('span', { tekst: opis }) : null,
+  ]);
+}
+
 function pozycjaModulu(modul: Module, biezacy: boolean): HTMLElement {
   const rysunek = ZNAK_MODULU[modul.code] ?? 'ukladanka';
   return el(
     'button',
     {
-      klasa: 'dn-szyna-poz dn-szyna-poz--modul dn-etykietka',
+      klasa: 'dn-szyna-poz dn-szyna-poz--modul',
       type: 'button',
       'data-modul-nazwa': modul.name,
       'data-modul-kod': modul.code,
-      'data-etykietka': modul.name,
       'aria-label': modul.name,
       'aria-current': biezacy ? 'true' : null,
     },
-    [znak(rysunek)],
+    [znak(rysunek), etykieta(modul.name, modul.description)],
   );
 }
 
@@ -94,26 +105,33 @@ export function szyna(w: WlasciwosciSzyny): HTMLElement {
     const pozycja = el(
       'button',
       {
-        klasa: 'dn-szyna-poz dn-szyna-poz--srodowisko dn-etykietka',
+        klasa: 'dn-szyna-poz dn-szyna-poz--srodowisko',
         type: 'button',
         'data-srodowisko': srodowisko.code,
         'data-biezace': biezace ? 'true' : null,
         'aria-current': biezace ? 'true' : null,
         'aria-expanded': biezace ? 'true' : 'false',
         'aria-controls': idModuly,
-        'data-etykietka': srodowisko.name,
         'aria-label': srodowisko.name,
       },
-      [znak(ZNAK_SRODOWISKA[srodowisko.code] ?? 'godlo')],
+      [znak(ZNAK_SRODOWISKA[srodowisko.code] ?? 'godlo'), etykieta(srodowisko.name, srodowisko.description)],
     );
     if (!biezace && w.wejdz !== undefined) {
       pozycja.addEventListener('click', () => w.wejdz?.(srodowisko));
     }
     pozycje.push(pozycja);
+    /* Grupa środowiska zwiniętego stoi ukryta jak w prototypie: pusta, a widoczna
+       rysowałaby kreskę środowiska bez jednej pozycji pod nią. */
     pozycje.push(
       el(
         'div',
-        { klasa: 'dn-szyna-moduly', id: idModuly, role: 'group', 'aria-label': srodowisko.name },
+        {
+          klasa: 'dn-szyna-moduly',
+          id: idModuly,
+          role: 'group',
+          'aria-label': srodowisko.name,
+          hidden: !biezace,
+        },
         biezace ? w.moduly.map((modul, indeks) => pozycjaModulu(modul, indeks === 0)) : [],
       ),
     );

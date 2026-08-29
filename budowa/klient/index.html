@@ -82,7 +82,15 @@
 </div>
 </div>
 
-<div data-rama-aplikacji hidden></div>
+<!-- Gniazdo powłoki. `zasoby/powloka.js` wypełnia je znacznikiem stałych
+     elementów okna — szyną nawigacji, belką tytułową, pasem narzędzi i paskiem
+     stanu — sklejając je wokół treści z szablonu poniżej. Rama wstawia potem
+     okno modułu w `.dn-rama-prawa`, nie buduje powłoki sama. -->
+<div data-rama-aplikacji id="dn-powloka-montaz" hidden></div>
+
+<!-- Treść okna modułu. Pusty, bo okno robocze składa rama z odpowiedzi rdzenia;
+     powłoka wkleja tu jego miejsce. -->
+<template id="dn-tresc-okna"></template>
 
 <!--
   Skrypty biblioteki, w kolejności wczytania przez źródło prawdy — osiemnaście
@@ -93,6 +101,7 @@
 <script src="./zasoby/wspolne.js"></script>
 <script src="./zasoby/narzedzia-okien.js"></script>
 <script src="./zasoby/ekran-startowy.js"></script>
+<script src="./zasoby/powloka.js"></script>
 <script src="./zasoby/prototyp.js"></script>
 <script src="./zasoby/menu.js"></script>
 <script src="./zasoby/okna-modalne.js"></script>
@@ -106,6 +115,7 @@
 <script src="./zasoby/okno-robocze.js"></script>
 <script src="./zasoby/okna/przelacznik-srodowisk.js"></script>
 <script src="./zasoby/okna/zakladki-paneli.js"></script>
+<script src="./zasoby/okna/studio.js"></script>
 <script src="./zasoby/okna/centrum-dowodzenia.js"></script>
 <script src="./zasoby/okna/centrum-obszar.js" defer></script>
 <script src="./zasoby/okna/centrum-wejscie.js" defer></script>

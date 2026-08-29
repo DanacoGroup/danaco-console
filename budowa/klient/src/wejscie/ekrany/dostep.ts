@@ -169,6 +169,10 @@ export function ekranDostepu(): HTMLElement[] {
         daneGlowy: { czas: '{odliczanie}' },
         odliczanie: ZWLOKA_Z_POMIARU,
       }),
+      /* Pola zostają na ekranie: zwłoka trwa kilka sekund, a odsłona bez
+         formularza zostawiałaby Operatora na widoku, z którego nie ma dokąd
+         przejść. Odliczanie stoi w banerze nad nimi. */
+      polaLogowania('wstrzymane', false),
       frazaNawigacyjna({
         czynnosc: 'dostep.logowanieWstrzymane.odzyskaj',
         cel: 'odzyskiwanie-adres',
@@ -390,7 +394,7 @@ export function pasyDostepu(): HTMLElement[] {
     pas('odzyskiwanie-haslo', false, 'dzialania.potwierdzHaslo', 'ustaw-nowe-haslo'),
     /* Odsłony wstrzymania nie mają czynności głównej — nie ma czego wykonać,
        póki godzina nie minie. Zostaje wyjście z programu. */
-    pasDzialan({ widok: 'logowanie-wstrzymane', czynnosci: [ZAMKNIJ] }),
+    pas('logowanie-wstrzymane', false, 'dzialania.zaloguj', 'zaloguj'),
     pasDzialan({ widok: 'odzyskiwanie-wstrzymane', czynnosci: [ZAMKNIJ] }),
   ];
 }

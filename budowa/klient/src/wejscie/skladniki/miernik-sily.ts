@@ -1,21 +1,19 @@
 /**
- * Składnik — miernik siły hasła. Cztery odcinki toru, zdanie o wyniku
- * i cztery warunki; znak warunku różni się kształtem, nie samą barwą.
+ * Składnik — miernik siły hasła. Trzy odcinki toru, zdanie o wyniku
+ * i trzy warunki; znak warunku różni się kształtem, nie samą barwą.
  */
 
 import { ikony } from '../ikony.ts';
 import { el, tekst, zeZnacznika } from '../narzedzia.ts';
 import { DLUGOSC_HASLA } from '../przebieg.ts';
 
-/** Cztery warunki, w kolejności wyświetlania, oceniane osobno przez przebieg i pokazywane tym miernikiem. */
-export const WARUNKI_HASLA = ['dlugosc', 'wielkosc', 'cyfra', 'znak'] as const;
-
 /**
- * Warunki zalecane, nie wymagane. Ich brak nie wstrzymuje rejestracji, więc
- * miernik nie zaznacza ich na czerwono — inaczej Operator szukałby usterki
- * w haśle, które program przyjmie.
+ * Trzy warunki hasła, w kolejności wyświetlania, oceniane osobno przez przebieg
+ * i pokazywane tym miernikiem. Znaku specjalnego nie ma na tym wykazie:
+ * rejestracja go nie wymaga, a warunek, którego brak niczego nie wstrzymuje,
+ * kazałby Operatorowi poprawiać hasło już przyjęte.
  */
-const WARUNKI_ZALECANE = new Set<string>(['znak']);
+export const WARUNKI_HASLA = ['dlugosc', 'wielkosc', 'cyfra'] as const;
 
 export interface WlasciwosciMiernika {
   /** Identyfikator pola hasła, które ten miernik ocenia. */
@@ -34,18 +32,8 @@ export function miernikSily(w: WlasciwosciMiernika): HTMLElement {
     ptaszek.setAttribute('aria-hidden', 'true');
     return el(
       'span',
-      {
-        klasa: 'au-sila-warunek',
-        dane: { warunek: nazwa, spelniony: 'nie', zalecany: WARUNKI_ZALECANE.has(nazwa) ? 'tak' : null },
-      },
-      [
-        kolko,
-        ptaszek,
-        tekst(`dostep.sila.warunki.${nazwa}`, { znaki: DLUGOSC_HASLA }),
-        WARUNKI_ZALECANE.has(nazwa)
-          ? el('span', { klasa: 'dn-meta', tekst: tekst('dostep.sila.zalecany') })
-          : null,
-      ],
+      { klasa: 'au-sila-warunek', dane: { warunek: nazwa, spelniony: 'nie' } },
+      [kolko, ptaszek, tekst(`dostep.sila.warunki.${nazwa}`, { znaki: DLUGOSC_HASLA })],
     );
   });
 

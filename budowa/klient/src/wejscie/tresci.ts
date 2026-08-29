@@ -199,21 +199,17 @@ export const tresci = {
     sila: {
       puste: 'Siła hasła zostanie oceniona podczas wpisywania',
       /* Bez ocen w rodzaju „dostateczne” i „dobre”: stopnie mówią, ile warunków
-         zostało do spełnienia, a nie jak program ocenia hasło. Wymagane są trzy;
-         znak specjalny jest zalecany i podnosi tor, nie rozstrzygając przyjęcia. */
+         zostało do spełnienia, a nie jak program ocenia hasło. */
       stopnie: [
         'Hasło nie spełnia żadnego z warunków',
-        'Hasło spełnia jeden warunek z trzech wymaganych',
-        'Hasło spełnia dwa warunki z trzech wymaganych',
+        'Hasło spełnia jeden warunek z trzech',
+        'Hasło spełnia dwa warunki z trzech',
         'Hasło spełnia wymagania',
-        'Hasło spełnia wymagania wraz z warunkiem zalecanym',
       ],
-      zalecany: ' (zalecane)',
       warunki: {
         dlugosc: 'co najmniej {znaki} znaków',
         wielkosc: 'wielka i mała litera',
         cyfra: 'cyfra',
-        znak: 'znak specjalny',
       },
     },
 
@@ -334,6 +330,12 @@ export const tresci = {
     brakDrogi: {
       glowa: 'Podaj kod potwierdzający z wiadomości.',
       tresc: 'Pole kodu potwierdzającego jest puste.',
+    },
+    /* Konflikt rejestracji ma jedno znaczenie: konto Operatora już stoi.
+       Rejestracja wykonuje się raz, więc zdanie prowadzi do logowania. */
+    kontoJuzIstnieje: {
+      glowa: 'Konto Operatora jest już założone.',
+      tresc: 'Zaloguj się. Jeżeli nie pamiętasz hasła, użyj odzyskiwania dostępu.',
     },
     loginZajety: {
       glowa: 'Ten login jest już zajęty.',

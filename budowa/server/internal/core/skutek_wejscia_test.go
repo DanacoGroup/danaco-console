@@ -265,38 +265,65 @@ func TestRejestracjaNieZakladaSesjiIOddajePendingVerification(t *testing.T) {
 	}
 }
 
-// TestDrugaRejestracjaOdmawiaKodemConflict pilnuje jednorazowości rejestracji:
-// powtórzone żądanie odmawia kodem `conflict` i nie zmienia konta, kotwicy ani
-// listów.
-func TestDrugaRejestracjaOdmawiaKodemConflict(t *testing.T) {
+/*
+TestRejestracjaOdmawiaTylkoPrzyKolizji pilnuje reguły z rejestru decyzji, poz. 22:
+platforma przyjmuje dowolną liczbę kont, a odmawia wyłącznie wtedy, gdy zajęty
+jest login albo adres. Tożsamość jest własnością wiersza konta, nie instalacji.
+
+Sprawdzian idzie trzema drogami, bo odmowa i przyjęcie różnią się tu jedną
+wartością: konto obce przechodzi, kolizja adresu i kolizja loginu odmawiają.
+*/
+func TestRejestracjaOdmawiaTylkoPrzyKolizji(t *testing.T) {
 	u := zmontujDrogeWejscia(t, pocztaDziala)
 	zarejestrujWlasciciela(t, u)
 
+	// Konto o wolnym loginie i wolnym adresie wchodzi — to jest sedno poz. 22.
+	var drugie shared.AuthRegisterResponse
+	wykonajUdana(t, u.rdzen, u.zycie, shared.CommandAuthRegister,
+		shared.AuthRegisterRequest{
+			Login:    "drugi",
+			Email:    "drugi@danaco.sprawdzian",
+			Password: hasloDrugie,
+		}, &drugie)
+	if !drugie.Registered {
+		t.Error("konto o wolnym loginie i adresie nie zostało założone")
+	}
+
+	// Adres zajęty odmawia: jedno konto na jeden adres.
 	blad := wykonajOdmowna(t, u.rdzen, u.zycie, shared.CommandAuthRegister,
 		shared.AuthRegisterRequest{
-			Login:    "podszywacz",
-			Email:    "podszywacz@danaco.sprawdzian",
+			Login:    "trzeci",
+			Email:    adresSprawdzianu,
 			Password: hasloDrugie,
 		})
 	if blad.Code != shared.ErrorCodeConflict {
-		t.Errorf("druga rejestracja niesie kod %q, oczekiwany %q", blad.Code, shared.ErrorCodeConflict)
+		t.Errorf("rejestracja na zajęty adres niesie kod %q, oczekiwany %q",
+			blad.Code, shared.ErrorCodeConflict)
 	}
 
+	// Login zajęty odmawia tak samo — obie wartości są jednoznaczne.
+	blad = wykonajOdmowna(t, u.rdzen, u.zycie, shared.CommandAuthRegister,
+		shared.AuthRegisterRequest{
+			Login:    loginSprawdzianu,
+			Email:    "czwarty@danaco.sprawdzian",
+			Password: hasloDrugie,
+		})
+	if blad.Code != shared.ErrorCodeConflict {
+		t.Errorf("rejestracja na zajęty login niesie kod %q, oczekiwany %q",
+			blad.Code, shared.ErrorCodeConflict)
+	}
+
+	if ile := liczbaWierszy(t, u, `SELECT COUNT(*) FROM konto_wlasciciela`); ile != 2 {
+		t.Errorf("kont w bazie: %d, oczekiwane 2 — weszły oba wolne, odpadły obie kolizje", ile)
+	}
+	// Kotwica jest jedna NA KONTO, nie jedna w tabeli: tak stanowi migracja 406.
 	if ile := liczbaWierszy(t, u,
-		`SELECT COUNT(*) FROM konto_wlasciciela WHERE login = ? AND email = ?`,
-		loginSprawdzianu, adresSprawdzianu); ile != 1 {
-		t.Errorf("konto właściciela po drugiej rejestracji nie jest tym z pierwszej (pasujących wierszy: %d)", ile)
+		`SELECT COUNT(*) FROM metoda_uwierzytelnienia WHERE kotwica = 1`); ile != 2 {
+		t.Errorf("kotwic bramki w bazie: %d, oczekiwane 2 — po jednej na konto", ile)
 	}
-	if ile := liczbaWierszy(t, u, `SELECT COUNT(*) FROM konto_wlasciciela`); ile != 1 {
-		t.Errorf("kont właściciela w bazie: %d, oczekiwane 1", ile)
-	}
-	if ile := liczbaWierszy(t, u,
-		`SELECT COUNT(*) FROM metoda_uwierzytelnienia WHERE kotwica = 1`); ile != 1 {
-		t.Errorf("kotwic bramki w bazie: %d, oczekiwana 1", ile)
-	}
-	if listy := u.poczta.Listy(); len(listy) != 1 {
-		t.Errorf("do skrzynki przyszło %d listów, oczekiwany 1 — odmówiona rejestracja"+
-			" nie ma prawa wysyłać drugiej drogi potwierdzenia", len(listy))
+	if listy := u.poczta.Listy(); len(listy) != 2 {
+		t.Errorf("do skrzynki przyszło %d listów, oczekiwane 2 — odmówiona rejestracja"+
+			" nie ma prawa wysyłać drogi potwierdzenia", len(listy))
 	}
 }
 

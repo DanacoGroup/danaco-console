@@ -7,8 +7,11 @@ import (
 	"bufio"
 	"context"
 	"encoding/json"
+	"io"
+	"mime/quotedprintable"
 	"net"
 	"path/filepath"
+	"regexp"
 	"strconv"
 	"strings"
 	"sync"
@@ -331,28 +334,41 @@ func adresZPolecenia(polecenie string) string {
 
 // ── odczyt drogi z listu ─────────────────────────────────────────────────────
 
-// naglowekDrogi jest wierszem, po którym w obu listach systemowych stoi droga
-// potwierdzenia — jeden napis dla obu celów, bo oba listy składa jedna funkcja.
-const naglowekDrogi = "Droga potwierdzenia:"
+/*
+wzorzecKodu wyjmuje kod z szyny listu. Etykieta zaczyna się od „KOD" i kończy
+dwukropkiem, a wartością jest sześć cyfr rozdzielonych spacją co trzy —
+tak stawia je każdy z szablonów.
 
-// drogaZListu wyjmuje z listu materiał do wpisania w oknie. Wyjmowanie idzie
-// po treści, a nie po wartości z bazy — sprawdzianem jest właśnie to, czy
-// droga doszła do skrzynki.
+Etykieta jest dopasowywana wzorcem, nie porównywana z napisem, bo każdy list
+nazywa kod inaczej: „KOD AKTYWACJI", „KOD LOGOWANIA", „KOD RESETU HASŁA".
+*/
+var wzorzecKodu = regexp.MustCompile(`(?m)^[ \t]*KOD[^:\n]*:[ \t]*([0-9][0-9 ]*[0-9])[ \t]*\r?$`)
+
+/*
+drogaZListu wyjmuje z listu materiał do wpisania w oknie. Wyjmowanie idzie po
+treści, a nie po wartości z bazy — sprawdzianem jest właśnie to, czy droga
+doszła do skrzynki.
+
+Dokument przechodzi wpierw przez rozkodowanie quoted-printable: część tekstowa
+listu jedzie tym kodowaniem, więc polskie znaki w etykiecie stoją w nim jako
+`=C5=81`, a wiersze dłuższe niż 76 znaków są łamane znakiem `=` na końcu.
+
+Spacje rozdzielające kod są usuwane: w liście stoją po to, żeby dało się kod
+przeczytać z ekranu, a rdzeń porównuje sam ciąg cyfr.
+*/
 func drogaZListu(t *testing.T, list listOdebrany) string {
 	t.Helper()
 
-	wiersze := strings.Split(list.Dokument, "\n")
-	for numer, wiersz := range wiersze {
-		if strings.TrimSpace(wiersz) != naglowekDrogi {
-			continue
-		}
-		for _, dalszy := range wiersze[numer+1:] {
-			if droga := strings.TrimSpace(dalszy); droga != "" {
-				return droga
-			}
-		}
+	rozkodowany, err := io.ReadAll(quotedprintable.NewReader(strings.NewReader(list.Dokument)))
+	if err != nil {
+		// Rozkodowanie jest ułatwieniem, nie warunkiem: dokument bez kodowania
+		// czyta się wprost.
+		rozkodowany = []byte(list.Dokument)
 	}
-	t.Fatalf("list nie niesie drogi potwierdzenia; dokument:\n%s", list.Dokument)
+	if trafienie := wzorzecKodu.FindSubmatch(rozkodowany); trafienie != nil {
+		return strings.ReplaceAll(string(trafienie[1]), " ", "")
+	}
+	t.Fatalf("list nie niesie kodu; dokument:\n%s", rozkodowany)
 	return ""
 }
 

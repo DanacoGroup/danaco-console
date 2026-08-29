@@ -48,6 +48,10 @@ export const tresci = {
     nowyDokument: '+ Nowy dokument',
     filtry: 'Filtr, sortowanie, grupowanie',
     brakDokumentow: 'Rdzeń nie zgłosił żadnego dokumentu w tej sesji.',
+    bezTytulu: '(dokument bez tytułu)',
+    nazwaNowego: 'Nowy dokument',
+    brakPorzadkowania: 'Rdzeń nie podaje pól, po których szyna mogłaby filtrować i sortować.',
+    odmowaBezOpisu: 'Rdzeń odmówił i nie podał powodu.',
   },
 
   czat: {

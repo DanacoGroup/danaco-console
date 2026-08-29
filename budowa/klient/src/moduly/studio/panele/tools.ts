@@ -33,6 +33,7 @@ import { el, zeZnacznika, type Dziecko } from '../narzedzia.ts';
 import { tresciNarzedzi as T } from './tools-tresci.ts';
 import type { MontazPanelu } from './umowa.ts';
 import { opisOdmowy } from '../odmowa.ts';
+import { zLiczba } from '../liczebnik.ts';
 
 type StanBiegu =
   | { rodzaj: 'spoczynek' }
@@ -120,7 +121,7 @@ export const montujPanelTools: MontazPanelu = (wezel, zaleznosci) => {
       const trescDokumentu = dokument.content ?? '';
       const znaki = trescDokumentu.length;
       const slowa = trescDokumentu.split(/\s+/).filter((czlon) => czlon.length > 0).length;
-      opis = `${T.zakres.etykietaRozmiaru} ${znaki} ${T.zakres.jednostkaZnaki} · ${slowa} ${T.zakres.jednostkaSlowa}`;
+      opis = `${T.zakres.etykietaRozmiaru} ${zLiczba(znaki, T.zakres.jednostkaZnaki)} · ${zLiczba(slowa, T.zakres.jednostkaSlowa)}`;
     }
     return el('div', { klasa: 'pt-etykieta', tekst: opis });
   }

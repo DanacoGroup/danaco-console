@@ -19,9 +19,11 @@ export const tresciPliki = {
     tytul: 'Kolejka wczytywania',
     ladowanie: 'Wczytywanie kolejki…',
     brak: 'Kolejka wczytywania jest pusta.',
-    stron: 'stron',
+    /* Trzy formy: „1 strona”, „3 strony”, „7 stron”; wybór w `liczebnik.ts`. */
+    stron: { jedna: 'strona', kilka: 'strony', wiele: 'stron' },
     pewnosc: 'pewność rozpoznania',
     zPisma: 'tekst z rozpoznania pisma',
+    odrzucona: 'Tej pozycji nie udało się wczytać. Usuń ją z kolejki i spróbuj dodać plik ponownie.',
   },
 
   stan: {

@@ -16,7 +16,8 @@ export const tresci = {
   },
 
   szyna: {
-    etykieta: 'Nawigacja środowiska',
+    /* Brzmienie z prototypu: szyna niesie i środowiska, i moduły. */
+    etykieta: 'Nawigacja środowisk i modułów',
     nowaSesja: 'Nowa sesja',
   },
 
@@ -44,7 +45,9 @@ export const tresci = {
 
   glowna: {
     etykieta: 'Obszar roboczy',
-    brakModulu: 'Wybierz moduł z szyny nawigacji po lewej.',
+    /* „Szyna nawigacji” to nasza nazwa strefy, nie Operatora — w oknie mówimy,
+       gdzie ma spojrzeć, a nie jak ta część interfejsu nazywa się w budowie. */
+    brakModulu: 'Wybierz moduł z paska po lewej stronie.',
   },
 
   stan: {
@@ -55,6 +58,8 @@ export const tresci = {
     motywJasny: 'jasny',
     motywCiemny: 'ciemny',
     operator: 'Operator',
-    brakTozsamosci: 'tożsamość nie przekazana',
+    /* „Tożsamość” jest pojęciem z warstwy nakładania profilu na model —
+       w pasku stanu Operator czyta wyłącznie, czy program zna jego konto. */
+    brakTozsamosci: 'konto nierozpoznane',
   },
 } as const;

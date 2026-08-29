@@ -13,12 +13,12 @@ export const trescPodgladu = {
 
   renderowanie: 'Przygotowywanie podglądu…',
 
+  /* Opis nie powtarza tytułu: tytuł nazywa stan, opis mówi, co go zdejmie. */
   brakStronTytul: 'Brak stron do pokazania',
-  brakStronOpis: 'Brak stron do wyświetlenia.',
+  brakStronOpis: 'Podgląd pojawi się po zapisaniu treści dokumentu.',
 
   odmowaRenderu: 'Nie udało się przygotować podglądu',
   odmowaUkladu: 'Nie udało się odczytać ustawień strony',
-  brakOpisu: 'Spróbuj ponownie. Jeżeli problem się powtarza, skontaktuj się z administratorem.',
 
   format: 'Format wydania',
   strona: 'Strona',

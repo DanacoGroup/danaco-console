@@ -111,7 +111,9 @@ export const montujPanelPlanu: MontazPanelu = (wezel, zaleznosci: ZaleznosciPane
         dzialanie: {
           rodzaj: 'odmowa',
           naglowek: planTresci.odmowa.uruchomienie,
-          opis: wynik.wynik.refusalReason ?? tekst('odmowa.brakOpisu'),
+          /* Powód odmowy zapisany przez serwer idzie do dziennika: opisuje
+             wnętrze pętli, nie czynność Operatora. */
+          opis: opisOdmowy(undefined, 'plan.uruchomienie'),
         },
       });
     }

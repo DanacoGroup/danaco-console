@@ -74,8 +74,12 @@ zglos "Złożenie instalatora NSIS"
 # konfiguracja produktu wymienia.
 ( cd "$POWLOKA" && cargo tauri bundle --target "$CEL" --bundles nsis )
 
-ZLOZONY="$(find "$POWLOKA/target/$CEL/release/bundle/nsis" -maxdepth 1 -name '*-setup.exe' -print -quit)"
-[ -n "$ZLOZONY" ] || padnij "makensis nie zgłosił błędu, ale pliku instalatora nie ma"
+# Wskazanie po numerze wersji, nie „pierwszy z brzegu”: katalog `bundle/nsis`
+# zbiera wyniki wszystkich dotychczasowych złożeń, a `-print -quit` brał z niego
+# plik najstarszy — odbiór badał wtedy instalkę sprzed tygodnia i odmawiał,
+# choć świeżo złożona była poprawna.
+ZLOZONY="$POWLOKA/target/$CEL/release/bundle/nsis/Danaco Console_${WERSJA}_x64-setup.exe"
+[ -f "$ZLOZONY" ] || padnij "makensis nie zgłosił błędu, ale pliku instalatora nie ma: $ZLOZONY"
 
 zglos "Odbiór — czego w środku być nie może"
 # Odbiór jest częścią budowy. Gdyby do konfiguracji wróciły zasoby rdzenia,

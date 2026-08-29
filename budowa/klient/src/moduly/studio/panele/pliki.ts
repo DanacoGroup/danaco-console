@@ -31,6 +31,7 @@ import { tresci } from '../tresci.ts';
 import { tresciPliki } from './pliki-tresci.ts';
 import type { MontazPanelu, ZamontowanyPanel } from './umowa.ts';
 import { opisOdmowy } from '../odmowa.ts';
+import { zLiczba } from '../liczebnik.ts';
 
 type StanUrzadzen =
   | { rodzaj: 'ladowanie' }
@@ -434,7 +435,7 @@ export const montujPliki: MontazPanelu = (wezel, { kanal, idOkna }): Zamontowany
       el('div', { klasa: 'dn-wykaz-modulu-poz' }, [
         el('b', { tekst: zrodlo }),
         el('span', { klasa: KLASA_STANU[pozycja.state], tekst: ETYKIETA_STANU[pozycja.state] }),
-        pozycja.pages !== undefined ? el('span', { klasa: 'dn-meta', tekst: `${tresciPliki.kolejka.stron} ${pozycja.pages}` }) : null,
+        pozycja.pages !== undefined ? el('span', { klasa: 'dn-meta', tekst: zLiczba(pozycja.pages, tresciPliki.kolejka.stron) }) : null,
         pozycja.confidence !== undefined
           ? el('span', { klasa: 'dn-meta', tekst: `${tresciPliki.kolejka.pewnosc} ${Math.round(pozycja.confidence * 100)}%` })
           : null,
@@ -443,7 +444,13 @@ export const montujPliki: MontazPanelu = (wezel, { kanal, idOkna }): Zamontowany
       ]),
     ];
     if (pozycja.state === StudioIngestState.Odmowa) {
-      wiersze.push(el('p', { klasa: 'dn-nota', tekst: pozycja.failureReason ?? tresci.odmowa.brakOpisu }));
+      /* Powód odmowy zapisany przez serwer idzie do dziennika, nie do widoku:
+         opisuje wnętrze wczytywania, a Operatorowi potrzebne jest zdanie
+         mówiące, co z tą pozycją zrobić. */
+      if (pozycja.failureReason !== undefined) {
+        console.warn('[studio] pozycja kolejki odrzucona', pozycja.id, pozycja.failureReason);
+      }
+      wiersze.push(el('p', { klasa: 'dn-nota', tekst: tresciPliki.kolejka.odrzucona }));
     }
     const slowa = slowaPozycji.get(pozycja.id);
     if (slowa !== undefined && slowa.length > 0) wiersze.push(blokPoprawy(pozycja, slowa));

@@ -63,25 +63,30 @@ export interface OknoStudio {
  * skrypt czyta wyłącznie pasmo poziomu aplikacji, nie zagnieżdżone pasmo
  * okna roboczego.
  */
-function wirujKarty(bryla: HTMLElement, domontuj: (kod: string) => void): void {
+function wirujKarty(bryla: HTMLElement, domontuj: (kod: string) => void): (kod: string) => void {
   const wykazKart = Array.from(bryla.querySelectorAll<HTMLElement>('.dn-karta[data-karta]'));
   const wykazPaneli = Array.from(bryla.querySelectorAll<HTMLElement>('.sta-robocza > [role="tabpanel"]'));
   const lista = bryla.querySelector('.st-karty');
 
-  lista?.addEventListener('click', (zdarzenie) => {
-    const wskazana = (zdarzenie.target as Element | null)?.closest('.dn-karta[data-karta]') as HTMLElement | null;
-    if (wskazana === null) return;
+  function pokaz(kodKarty: string): void {
     for (const inna of wykazKart) {
-      const biezaca = inna === wskazana;
+      const biezaca = inna.dataset['karta'] === kodKarty;
       inna.setAttribute('aria-selected', biezaca ? 'true' : 'false');
       inna.tabIndex = biezaca ? 0 : -1;
     }
-    const kodKarty = wskazana.dataset['karta'];
-    if (kodKarty !== undefined) domontuj(kodKarty);
+    domontuj(kodKarty);
     for (const panel of wykazPaneli) {
       panel.hidden = panel.id !== `panel-${kodKarty}`;
     }
+  }
+
+  lista?.addEventListener('click', (zdarzenie) => {
+    const wskazana = (zdarzenie.target as Element | null)?.closest('.dn-karta[data-karta]') as HTMLElement | null;
+    const kodKarty = wskazana?.dataset['karta'];
+    if (kodKarty !== undefined) pokaz(kodKarty);
   });
+
+  return pokaz;
 }
 
 export function zamontujOknoStudio(w: NastawyOknaStudio): OknoStudio {
@@ -89,6 +94,7 @@ export function zamontujOknoStudio(w: NastawyOknaStudio): OknoStudio {
   /* Panel wchodzi dopiero przy pierwszym wejściu na jego kartę. Wcześniej nie ma
      po co: okno modułu i sesja powstają wywołaniem do rdzenia już po montażu bryły,
      a panel bez `windowId` nie ma czym zawołać ani jednej komendy Studia. */
+  let pokazKarte: ((kod: string) => void) | undefined;
   const zamontowane: ZamontowanyPanel[] = [];
   const czekajace = new Map<string, HTMLElement>();
   const panele = karty
@@ -119,12 +125,14 @@ export function zamontujOknoStudio(w: NastawyOknaStudio): OknoStudio {
      `<main id="dn-obszar-glowna">` ramy, a dokument nie niesie dwóch `<main>`. */
   const bryla = el('section', { klasa: 'st-okno-robocze', 'aria-label': tekst('okno.etykieta') }, [
     pasmoKart(),
-    wstazkaOkna({ sesje: w.sesje }),
+    /* Karta wskazana z wstążki: bryła jeszcze nie stoi, więc przejście woła
+       przez uchwyt uzupełniony zaraz po jej złożeniu. */
+    wstazkaOkna({ sesje: w.sesje, naKarte: (kod) => pokazKarte?.(kod) }),
     cialo,
   ]);
 
   w.miejsce.replaceChildren(bryla);
-  wirujKarty(bryla, domontuj);
+  pokazKarte = wirujKarty(bryla, domontuj);
 
   return {
     zdejmij() {

@@ -37,6 +37,10 @@ export const tresci = {
     porownajWersje: 'Porównaj wersje',
     podgladWydruku: 'Podgląd wydruku',
     dostosuj: 'Dostosuj wstążkę okna roboczego',
+    operacjeEtykieta: 'Operacje modułu',
+    uruchomOperacje: 'Uruchom operację',
+    wyslijDoLibrary: 'Wyślij do Library',
+    brakKomendyLibrary: 'Kontrakt nie niesie komendy odkładającej dokument Studia do Library.',
   },
 
   szyna: {

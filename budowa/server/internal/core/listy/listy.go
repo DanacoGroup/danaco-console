@@ -1,5 +1,5 @@
-// Odpowiedzialność pliku: postać graficzna listów transakcyjnych — szablony
-// marki wraz ze znakiem, w które rdzeń wpisuje kod i okoliczności żądania.
+// Odpowiedzialność pliku: obie postacie listów transakcyjnych — graficzna
+// i tekstowa — składane z szablonów marki wraz ze znakami obu wariantów.
 package listy
 
 import (
@@ -11,44 +11,69 @@ import (
 )
 
 /*
-Szablony pochodzą z `design/06-poczta-transakcyjna/html/` i są kopiowane do tego
+Szablony pochodzą z `design/06-poczta-transakcyjna/` i są kopiowane do tego
 katalogu bez zmian — plik źródłowy jest opracowaniem Właściciela, a nie miejscem
-na poprawki wykonawcy. Zmienne opisuje `opracowanie-techniczne.md`, rozdz. 4.
+na poprawki wykonawcy. Zmienne opisuje `opracowanie-techniczne.md`.
 
-Szablony i znak idą w binarce, nie z dysku: rdzeń wysyła listy z maszyny
-wdrożenia, na której katalogu `design/` nie ma. Plik odczytywany w chwili
-wysyłki byłby drogą, na której brak jednego pliku zamienia list w pustą kartkę.
+Każdy list ma dwie części: `text/html` i `text/plain`. Obie stoją w szablonach,
+żadnej nie składa kod — inaczej rozeszłyby się przy pierwszej poprawce jednej
+z nich, a Operator z klientem bez grafiki czytałby co innego niż reszta.
+
+Szablony i znaki idą w binarce, nie z dysku: rdzeń wysyła listy z maszyny
+wdrożenia, na której katalogu `design/` nie ma.
 */
 
 //go:embed list-01-aktywacja-konta.html
-var szablonAktywacji string
+var szablonAktywacjiHtml string
+
+//go:embed list-01-aktywacja-konta.txt
+var szablonAktywacjiTekst string
 
 //go:embed list-02-uwierzytelnienie-logowania.html
-var szablonLogowania string
+var szablonLogowaniaHtml string
+
+//go:embed list-02-uwierzytelnienie-logowania.txt
+var szablonLogowaniaTekst string
 
 //go:embed list-03-autoresponder-brak-skrzynki.html
-var szablonAutorespondera string
+var szablonAutoresponderaHtml string
 
-// ZnakMarki niesie obraz znaku dołączany do listu jako część powiązana.
-//
-//go:embed znak-marki.png
-var ZnakMarki []byte
+//go:embed list-03-autoresponder-brak-skrzynki.txt
+var szablonAutoresponderaTekst string
 
 /*
-IdZnaku jest odwołaniem, którym szablon wskazuje znak dołączony do listu.
-Opracowanie stanowi (rozdz. 4.1), że w wysyłce produkcyjnej znak idzie przez
-`cid:`, a `data:` występuje wyłącznie w pliku podglądu — klienty pocztowe
-odrzucają albo blokują obrazy wpisane w treść, a znak dołączony częścią listu
-pokazują bez pytania.
+Znaki obu wariantów. Nagłówek listu niesie dwa znaczniki obrazu: jasny widoczny
+domyślnie, ciemny odsłaniany zapytaniem medialnym (opracowanie, rozdz. 4.3).
+Lockup jasny ma atrament `#181818` i na tle motywu ciemnego znika, więc jeden
+znak nie wystarczy.
 */
-const IdZnaku = "danaco-lockup"
+
+//go:embed znak-marki.png
+var ZnakJasny []byte
+
+//go:embed znak-marki-ciemny.png
+var ZnakCiemny []byte
+
+// Odwołania, którymi szablon wskazuje znaki dołączone do listu. Opracowanie
+// stanowi, że w wysyłce produkcyjnej znak idzie przez `cid:`, a `data:`
+// występuje wyłącznie w pliku podglądu.
+const (
+	IdZnakuJasnego  = "danaco-lockup"
+	IdZnakuCiemnego = "danaco-lockup-dark"
+)
 
 // AdresWsparcia to skrzynka obsługiwana, do której listy odsyłają Operatora.
-// Skrzynka nadawcza odpowiedzi nie przyjmuje (opracowanie, rozdz. 5.2).
+// Skrzynka nadawcza odpowiedzi nie przyjmuje.
 const AdresWsparcia = "support@danaco-group.pl"
 
-/** Ile znaków kodu rozdziela spacja — opracowanie, rozdz. 4.2: „rozdzielany spacją co trzy znaki”. */
+/** Ile znaków kodu rozdziela spacja — opracowanie: „rozdzielany spacją co trzy znaki”. */
 const grupaKodu = 3
+
+// Postacie niesie obie części jednej wiadomości.
+type Postacie struct {
+	Html  string
+	Tekst string
+}
 
 // Aktywacja niesie dane listu zakładającego konto.
 type Aktywacja struct {
@@ -77,49 +102,70 @@ type Autoresponder struct {
 	Odebrano       time.Time
 }
 
-// ZlozAktywacje składa list aktywacji konta.
-func ZlozAktywacje(a Aktywacja) string {
-	return strings.NewReplacer(
-		wspolne(a.Odbiorca, a.Zadano)...,
-	).Replace(strings.NewReplacer(
+// ZlozAktywacje składa obie postacie listu aktywacji konta.
+func ZlozAktywacje(a Aktywacja) Postacie {
+	return zloz(szablonAktywacjiHtml, szablonAktywacjiTekst, a.Odbiorca, a.Zadano, []string{
 		"{{code}}", rozdzielony(a.Kod),
 		"{{expiry_minutes}}", strconv.Itoa(a.WaznoscMinuty),
 		"{{requested_at}}", czas(a.Zadano),
-		"{{activation_url}}", html.EscapeString(a.AdresAktywacji),
-	).Replace(szablonAktywacji))
+		"{{activation_url}}", a.AdresAktywacji,
+	})
 }
 
-// ZlozLogowanie składa list z kodem logowania.
-func ZlozLogowanie(l Logowanie) string {
-	return strings.NewReplacer(
-		wspolne(l.Odbiorca, l.Zadano)...,
-	).Replace(strings.NewReplacer(
+// ZlozLogowanie składa obie postacie listu z kodem logowania.
+func ZlozLogowanie(l Logowanie) Postacie {
+	return zloz(szablonLogowaniaHtml, szablonLogowaniaTekst, l.Odbiorca, l.Zadano, []string{
 		"{{code}}", rozdzielony(l.Kod),
 		"{{expiry_minutes}}", strconv.Itoa(l.WaznoscMinuty),
 		"{{requested_at}}", czas(l.Zadano),
-		"{{ip_address}}", html.EscapeString(l.AdresZrodlowy),
-		"{{device}}", html.EscapeString(l.Urzadzenie),
-	).Replace(szablonLogowania))
+		"{{ip_address}}", l.AdresZrodlowy,
+		"{{device}}", l.Urzadzenie,
+	})
 }
 
-// ZlozAutoresponder składa odpowiedź na wiadomość nadesłaną na skrzynkę bez odbioru.
-func ZlozAutoresponder(a Autoresponder) string {
-	return strings.NewReplacer(
-		wspolne(a.Odbiorca, a.Odebrano)...,
-	).Replace(strings.NewReplacer(
+// ZlozAutoresponder składa obie postacie odpowiedzi na wiadomość nadesłaną
+// na skrzynkę bez odbioru.
+func ZlozAutoresponder(a Autoresponder) Postacie {
+	return zloz(szablonAutoresponderaHtml, szablonAutoresponderaTekst, a.Odbiorca, a.Odebrano, []string{
 		"{{original_subject}}", oczyszczonyTemat(a.TematNadeslany),
 		"{{received_at}}", czas(a.Odebrano),
-	).Replace(szablonAutorespondera))
+	})
 }
 
-// wspolne oddaje pary podstawień wspólne wszystkim trzem listom (rozdz. 4.1).
-func wspolne(odbiorca string, chwila time.Time) []string {
-	return []string{
-		"{{logo_src}}", "cid:" + IdZnaku,
+/*
+zloz podstawia wartości w obie postacie listu.
+
+Ucieczka znaczników obejmuje wyłącznie postać graficzną: w części tekstowej
+`&amp;` czytałoby się dosłownie, a nie jako znak.
+*/
+func zloz(szablonHtml, szablonTekst, odbiorca string, chwila time.Time, wlasne []string) Postacie {
+	wspolneHtml := []string{
+		"{{logo_src}}", "cid:" + IdZnakuJasnego,
+		"{{logo_src_dark}}", "cid:" + IdZnakuCiemnego,
 		"{{recipient_address}}", html.EscapeString(odbiorca),
 		"{{year}}", strconv.Itoa(chwila.Year()),
 		"{{support_address}}", AdresWsparcia,
 	}
+	wspolneTekst := []string{
+		"{{recipient_address}}", odbiorca,
+		"{{year}}", strconv.Itoa(chwila.Year()),
+		"{{support_address}}", AdresWsparcia,
+	}
+	return Postacie{
+		Html:  strings.NewReplacer(append(zUcieczka(wlasne), wspolneHtml...)...).Replace(szablonHtml),
+		Tekst: strings.NewReplacer(append(append([]string{}, wlasne...), wspolneTekst...)...).Replace(szablonTekst),
+	}
+}
+
+// zUcieczka przepuszcza wartości przez ucieczkę znaczników na potrzeby postaci
+// graficznej; nazwy zmiennych zostają bez zmian.
+func zUcieczka(pary []string) []string {
+	wynik := make([]string, len(pary))
+	for i := 0; i+1 < len(pary); i += 2 {
+		wynik[i] = pary[i]
+		wynik[i+1] = html.EscapeString(pary[i+1])
+	}
+	return wynik
 }
 
 // czas zapisuje chwilę w postaci z opracowania: `29.08.2026, 17:22 CEST`.
@@ -142,8 +188,9 @@ func rozdzielony(kod string) string {
 
 /*
 oczyszczonyTemat przygotowuje temat wiadomości nadesłanej z zewnątrz — jedyną
-zmienną spoza rdzenia. Reguła jest nienegocjowalna (opracowanie, rozdz. 4.5):
-ucieczka znaczników, obcięcie do 120 znaków i usunięcie znaków sterujących.
+zmienną spoza rdzenia. Reguła jest nienegocjowalna: obcięcie do 120 znaków
+i usunięcie znaków sterujących; ucieczkę znaczników dokłada złożenie postaci
+graficznej.
 
 Bez tego temat nadesłany przez obcego staje się drogą wstrzyknięcia znaczników
 do listu wychodzącego, a złamanie wiersza — drogą wstrzyknięcia nagłówka.
@@ -158,20 +205,21 @@ func oczyszczonyTemat(temat string) string {
 	if len(bezSterujacych) > 120 {
 		bezSterujacych = bezSterujacych[:120]
 	}
-	return html.EscapeString(bezSterujacych)
+	return bezSterujacych
 }
 
-// PodgladDanymiPrzykladowymi składa list aktywacji ze znakiem wpisanym w treść,
-// żeby dało się go obejrzeć przeglądarką bez części powiązanej listu.
-func PodgladDanymiPrzykladowymi(znakDataURI string) string {
+// PodgladDanymiPrzykladowymi składa list aktywacji ze znakami wpisanymi
+// w treść, żeby dało się go obejrzeć przeglądarką bez części powiązanych listu.
+func PodgladDanymiPrzykladowymi(jasny, ciemny string) string {
 	list := ZlozAktywacje(Aktywacja{
 		Odbiorca:       "a.kowalska@przyklad.pl",
 		Kod:            "418402",
 		WaznoscMinuty:  60,
 		Zadano:         time.Now(),
 		AdresAktywacji: "https://console.danaco-group.pl/aktywacja",
-	})
-	/* Wszystkie wystąpienia, nie pierwsze: szablon wskazuje znak w kilku
-	   miejscach — w nagłówku listu i w ukrytym wierszu podglądu. */
-	return strings.ReplaceAll(list, "cid:"+IdZnaku, znakDataURI)
+	}).Html
+	return strings.NewReplacer(
+		"cid:"+IdZnakuJasnego, jasny,
+		"cid:"+IdZnakuCiemnego, ciemny,
+	).Replace(list)
 }

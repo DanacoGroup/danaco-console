@@ -72,17 +72,27 @@ type List struct {
 	// nie pokazuje — a takich jest wiele w ustawieniach domyślnych — dostaje
 	// wtedy tekst, nie pustą kartkę z kodem, którego nie widać.
 	TrescHtml string
-	// Znak niesie obraz dołączany do listu jako część powiązana, wskazywany
-	// z treści graficznej odwołaniem `cid:`. Puste znaczy list bez obrazu.
+	// Obrazy niesione częścią listu, wskazywane z treści graficznej odwołaniem
+	// `cid:`. Pusty wykaz znaczy list bez obrazów.
 	//
 	// Obraz idzie częścią listu, nie wpisany w treść: klienty pocztowe blokują
-	// albo odrzucają obrazy `data:`, a znak dołączony pokazują bez pytania.
-	Znak []byte
-	// IdZnaku jest odwołaniem, którym treść graficzna wskazuje obraz.
-	IdZnaku string
+	// albo odrzucają obrazy `data:`, a dołączony pokazują bez pytania.
+	Obrazy []Obraz
 	// Naglowki dodatkowe listu — dla poczty transakcyjnej wymagane przez
 	// opracowanie (`design/06-poczta-transakcyjna`, rozdz. 5.3).
 	Naglowki []string
+}
+
+// Obraz jest częścią powiązaną listu — obrazem wskazywanym z treści graficznej
+// przez `cid:`, nie załącznikiem do pobrania.
+type Obraz struct {
+	// Id jest odwołaniem, którym treść graficzna wskazuje ten obraz.
+	Id string
+	// Nazwa staje w polu nazwy pliku części; klient pocztowy pokazuje ją,
+	// gdy mimo wszystko potraktuje obraz jak załącznik.
+	Nazwa string
+	// Dane niosą sam obraz w postaci PNG.
+	Dane []byte
 }
 
 // Wyslij nadaje list i oddaje chwilę nadania.
@@ -129,10 +139,10 @@ func zloz(n Nastawy, l List) []byte {
 			"Content-Transfer-Encoding: 8bit")
 		return []byte(strings.Join(naglowki, "\r\n") + "\r\n\r\n" + l.Tresc + "\r\n")
 	}
-	if len(l.Znak) == 0 {
+	if len(l.Obrazy) == 0 {
 		return zlozDwiePostacie(naglowki, l)
 	}
-	return zlozZeZnakiem(naglowki, l)
+	return zlozZObrazami(naglowki, l)
 }
 
 // nadaj prowadzi całą rozmowę SMTP: połączenie, ewentualny STARTTLS,
@@ -292,15 +302,15 @@ func lamany(zakodowany string) string {
 const granicaZnaku = "danaco-console-granica-znaku-listu"
 
 /*
-zlozZeZnakiem składa list `multipart/related`: w pierwszej części stoją obie
-postacie treści, w drugiej obraz znaku wskazywany z treści graficznej.
+zlozZObrazami składa list `multipart/related`: w pierwszej części stoją obie
+postacie treści, w kolejnych obrazy wskazywane z treści graficznej.
 
 Zagnieżdżenie jest wiążące i wynika z RFC 2387: `related` wiąże treść z jej
 częściami, a `alternative` wybiera postać. Odwrócenie tej kolejności kazałoby
 klientowi wybierać między tekstem a obrazem, zamiast między tekstem a stroną
 z obrazem.
 */
-func zlozZeZnakiem(naglowki []string, l List) []byte {
+func zlozZObrazami(naglowki []string, l List) []byte {
 	naglowki = append(naglowki,
 		`Content-Type: multipart/related; type="multipart/alternative"; boundary="`+granicaZnaku+`"`)
 
@@ -312,13 +322,15 @@ func zlozZeZnakiem(naglowki []string, l List) []byte {
 	dokument.WriteString(`Content-Type: multipart/alternative; boundary="` + granicaCzesci + "\"\r\n\r\n")
 	dokument.Write(czesciTresci(l))
 
-	dokument.WriteString("--" + granicaZnaku + "\r\n")
-	dokument.WriteString("Content-Type: image/png\r\n")
-	dokument.WriteString("Content-Transfer-Encoding: base64\r\n")
-	dokument.WriteString("Content-ID: <" + l.IdZnaku + ">\r\n")
-	dokument.WriteString(`Content-Disposition: inline; filename="danaco.png"` + "\r\n\r\n")
-	dokument.WriteString(lamany(base64.StdEncoding.EncodeToString(l.Znak)))
-	dokument.WriteString("\r\n\r\n")
+	for _, obraz := range l.Obrazy {
+		dokument.WriteString("--" + granicaZnaku + "\r\n")
+		dokument.WriteString("Content-Type: image/png\r\n")
+		dokument.WriteString("Content-Transfer-Encoding: base64\r\n")
+		dokument.WriteString("Content-ID: <" + obraz.Id + ">\r\n")
+		dokument.WriteString(`Content-Disposition: inline; filename="` + obraz.Nazwa + `"` + "\r\n\r\n")
+		dokument.WriteString(lamany(base64.StdEncoding.EncodeToString(obraz.Dane)))
+		dokument.WriteString("\r\n\r\n")
+	}
 
 	dokument.WriteString("--" + granicaZnaku + "--\r\n")
 	return []byte(dokument.String())

@@ -31,7 +31,7 @@ window.DanacoKreator.tresci = {
   "krok1": {
     "nadtytul": "Krok 1 z 6",
     "tytul": "Kreator instalacji Danaco Console",
-    "podtytul": "Przygotowanie do instalacji oprogramowania na tym urządzeniu",
+    "podtytul": "Przygotowanie do instalacji oprogramowania na tym urządzeniu.",
     "akapit1": "Instalacja programu Danaco Console przebiega w sześciu krokach i trwa około trzech minut.",
     "akapit2": "Kolejne kroki obejmują akceptację warunków licencji, wybór wersji programu zgodnej z procesorem oraz wskazanie katalogu instalacji.",
     "wymagania": {
@@ -70,7 +70,7 @@ window.DanacoKreator.tresci = {
     "podtytulBrak": "Nie udało się rozpoznać procesora tego komputera. Wybierz wersję, którą chcesz zainstalować.",
     "wskazowkaWykryta": "Jeśli nie wiesz, którą wersję wybrać, zostaw zaznaczenie bez zmian. Wersja niezgodna z procesorem nie uruchomi się po instalacji.",
     "wskazowkaBrak": "Otwórz Ustawienia > System > Informacje i sprawdź pozycję Typ systemu. Wartość „x64” oznacza pierwszą opcję, wartość „ARM64” — drugą.",
-    "wybor": { "etykieta": "Wersja programu" },
+    "wybor": { "etykieta": "Wersja dla procesora" },
     "plakietka": "ZALECANE",
     "x64": {
       "nazwa": "Intel lub AMD (x64)",
@@ -87,15 +87,15 @@ window.DanacoKreator.tresci = {
   "krok4": {
     "nadtytul": "Krok 4 z 6",
     "tytul": "Lokalizacja i skróty",
-    "podtytul": "Wskaż katalogi instalacji i określ sposób uruchamiania programu",
+    "podtytul": "Wskaż katalogi instalacji i określ sposób uruchamiania programu.",
     "katalogProgramu": {
       "etykieta": "Katalog programu",
-      "wartosc": "C:\\Users\\Operator\\AppData\\Local\\Programs\\Danaco Console",
+      "wartosc": "%LOCALAPPDATA%\\Programs\\Danaco Console",
       "opis": "Lokalizacja plików wykonywalnych. Instalacja w katalogu profilu użytkownika nie wymaga uprawnień administratora."
     },
     "katalogDanych": {
       "etykieta": "Katalog danych",
-      "wartosc": "C:\\Users\\Operator\\AppData\\Roaming\\Danaco Console",
+      "wartosc": "%APPDATA%\\Danaco Console",
       "opis": "Lokalizacja projektów, ustawień i dzienników pracy. Dane pozostają na dysku po odinstalowaniu programu."
     },
     "zmien": "Zmień…",
@@ -118,7 +118,7 @@ window.DanacoKreator.tresci = {
     "nadtytul": "Krok 5 z 6",
     "przebieg": {
       "tytul": "Instalowanie programu Danaco Console",
-      "podtytul": "Zamknięcie okna przerwie instalację i cofnie wprowadzone zmiany"
+      "podtytul": "Zamknięcie okna przerwie instalację i cofnie wprowadzone zmiany."
     },
     "wycofywanie": {
       "tytul": "Cofanie zmian",
@@ -126,8 +126,8 @@ window.DanacoKreator.tresci = {
     },
     "blad": {
       "tytul": "Nie udało się ukończyć instalacji",
-      "podtytul": "Instalacja zatrzymała się na etapie rejestrowania składników. Zmiany zostały cofnięte — w komputerze nie pozostały pliki programu.",
-      "szczegoly": "Kod błędu: 0x80070005\nOdmowa dostępu do katalogu C:\\Users\\Operator\\AppData\\Local\\Programs\\Danaco Console",
+      "podtytul": "Zmiany zostały cofnięte — w komputerze nie pozostały pliki programu.",
+      "szczegoly": "Kod błędu: 0x80070005\nOdmowa dostępu do katalogu %LOCALAPPDATA%\\Programs\\Danaco Console",
       "rada": "Zamknij inne programy i uruchom instalator ponownie jako administrator."
     },
     "postep": { "etykieta": "Postęp instalacji", "opisPaska": "Postęp instalacji" },
@@ -162,7 +162,7 @@ window.DanacoKreator.tresci = {
     "nadtytul": "Krok 6 z 6",
     "tytulGotowe": "Instalacja ukończona",
     "tytulOstrzezenia": "Instalacja ukończona z ostrzeżeniami",
-    "podtytulGotowe": "Program Danaco Console jest gotowy do pracy",
+    "podtytulGotowe": "Program Danaco Console jest gotowy do pracy.",
     "podtytulOstrzezenia": "Program jest gotowy do pracy, ale nie wszystkie czynności powiodły się.",
     "ostrzezenie": {
       "glowa": "Nie utworzono skrótu na pulpicie",
@@ -170,11 +170,11 @@ window.DanacoKreator.tresci = {
     },
     "pierwszeUruchomienie": {
       "naglowek": "Przy pierwszym uruchomieniu",
-      "tresc": "Pierwsze uruchomienie obejmuje utworzenie konta operatora, wybór modeli oraz wprowadzenie kluczy dostępu do kont usług."
+      "tresc": "Pierwsze uruchomienie obejmuje utworzenie konta Operatora, wybór modeli oraz wprowadzenie kluczy dostępu do kont usług."
     },
     "szczegoly": {
       "naglowek": "Szczegóły instalacji",
-      "lokalizacja": { "etykieta": "Lokalizacja", "wartosc": "C:\\Users\\Operator\\AppData\\Local\\Programs\\Danaco Console" },
+      "lokalizacja": { "etykieta": "Lokalizacja", "wartosc": "%LOCALAPPDATA%\\Programs\\Danaco Console" },
       "wersja": { "etykieta": "Wersja programu", "wartosc": "2.0 (kompilacja 2026.08)" },
       "procesor": { "etykieta": "Procesor" }
     },

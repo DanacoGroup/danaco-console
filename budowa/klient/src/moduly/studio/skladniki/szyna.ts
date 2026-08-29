@@ -22,6 +22,7 @@ import type { Kanal } from '../../../protokol/kanal.ts';
 import { wywolaj } from '../../../protokol/wywolanie.ts';
 import { ikony, type NazwaZnaku } from '../ikony.ts';
 import { el, tekst, zeZnacznika } from '../narzedzia.ts';
+import { opisOdmowy } from '../odmowa.ts';
 
 export interface ZaleznosciSzyny {
   /** Kanał, którym szyna woła komendy rdzenia. */
@@ -89,7 +90,7 @@ export function szynaDokumentow(zaleznosci: ZaleznosciSzyny): ZamontowanaSzyna {
   function odswiez(): void {
     if (odmowa !== undefined) {
       lista.replaceChildren(
-        el('p', { klasa: 'dn-pusty-stan dn-pusty-stan--zwarty', tekst: odmowa.message ?? tekst('szyna.odmowaBezOpisu') }),
+        el('p', { klasa: 'dn-pusty-stan dn-pusty-stan--zwarty', tekst: opisOdmowy(odmowa, 'szyna') }),
       );
       return;
     }

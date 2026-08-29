@@ -27,6 +27,7 @@ import { el, tekst, zeZnacznika } from '../narzedzia.ts';
 import { ikony } from '../ikony.ts';
 import type { MontazPanelu } from './umowa.ts';
 import { trescPodgladu } from './preview-tresci.ts';
+import { opisOdmowy } from '../odmowa.ts';
 
 type TrybWidoku = 'strona' | 'ciagly';
 
@@ -354,7 +355,7 @@ export const montujPodgladWydania: MontazPanelu = (wezel, zaleznosci) => {
       wierszProfilu.push(
         el('span', {
           klasa: 'dn-meta',
-          tekst: `${trescPodgladu.profilOdmowa}: ${profile.blad?.message ?? trescPodgladu.brakOpisu}`,
+          tekst: `${trescPodgladu.profilOdmowa}: ${opisOdmowy(profile.blad, 'preview.profile')}`,
         }),
       );
     } else if (profile.rodzaj === 'wykaz' && profile.profile.length === 0) {
@@ -410,7 +411,7 @@ export const montujPodgladWydania: MontazPanelu = (wezel, zaleznosci) => {
     return el('div', { klasa: 'dn-alert dn-alert--wstega dn-alert--blad', role: 'alert' }, [
       el('span', { klasa: 'dn-alert-tresc' }, [
         el('b', { tekst: tytul }),
-        el('span', { tekst: blad?.message ?? trescPodgladu.brakOpisu }),
+        el('span', { tekst: opisOdmowy(blad, 'preview') }),
       ]),
     ]);
   }

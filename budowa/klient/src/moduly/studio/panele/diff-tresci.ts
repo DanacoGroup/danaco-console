@@ -21,7 +21,10 @@ export const tresc = {
   },
 
   grep: {
-    zastepczaTresc: 'Wzorzec wyszukiwania (wyrażenie regularne)…',
+    /* Brzmienie z prototypu (`design/05-okna/moduly/studio.html`), co do znaku.
+       Grep jest tu nazwą własną części panelu — panel nazywa się Diff/Grep —
+       a nie opisem czynności, więc nie podlega przekładowi na polszczyznę. */
+    zastepczaTresc: 'Grep — wzorzec (regex)…',
     etykieta: 'Grep',
     regex: 'Wyrażenie regularne',
     naglowek: 'Trafienia wzorca',

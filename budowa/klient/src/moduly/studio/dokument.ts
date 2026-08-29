@@ -24,6 +24,7 @@ import {
 import type { Kanal } from '../../protokol/kanal.ts';
 import { wywolaj } from '../../protokol/wywolanie.ts';
 import { el, tekst } from './narzedzia.ts';
+import { opisOdmowy } from './odmowa.ts';
 
 export interface NastawyDokumentu {
   /** Kanał, którym panel woła komendy rdzenia. */
@@ -170,7 +171,7 @@ export function panelDokumentu(w: NastawyDokumentu): PanelDokumentu {
       el('div', { klasa: 'dn-alert dn-alert--wstega dn-alert--blad', role: 'alert' }, [
         el('span', { klasa: 'dn-alert-tresc' }, [
           el('b', { tekst: tekst(`dokumentOdmowa.${powod}`) }),
-          el('span', { tekst: blad?.message ?? tekst('odmowa.brakOpisu') }),
+          el('span', { tekst: opisOdmowy(blad, 'dokument') }),
         ]),
       ]),
     ];

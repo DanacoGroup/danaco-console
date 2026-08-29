@@ -22,6 +22,7 @@ import { wywolaj } from '../../../protokol/wywolanie.ts';
 import type { MontazPanelu, ZaleznosciPanelu, ZamontowanyPanel } from './umowa.ts';
 import { el, tekst } from '../narzedzia.ts';
 import { planTresci } from './plan-tresci.ts';
+import { opisOdmowy } from '../odmowa.ts';
 
 type Zaleznosc = 'okno' | 'sesja';
 
@@ -75,14 +76,14 @@ export const montujPanelPlanu: MontazPanelu = (wezel, zaleznosci: ZaleznosciPane
       return odswiez({
         rodzaj: 'odmowaRdzenia',
         naglowek: planTresci.odmowa.rozklad,
-        opis: wynik.blad?.message ?? tekst('odmowa.brakOpisu'),
+        opis: opisOdmowy(wynik.blad, 'plan'),
       });
     }
     if (wynik.wynik === undefined) {
       return odswiez({
         rodzaj: 'odmowaRdzenia',
         naglowek: planTresci.odmowa.brakRozkladu,
-        opis: tekst('odmowa.brakOpisu'),
+        opis: opisOdmowy(undefined, 'plan'),
       });
     }
     odswiez({ rodzaj: 'plan', plan: wynik.wynik.plan, dzialanie: { rodzaj: 'spoczynek' } });
@@ -99,7 +100,7 @@ export const montujPanelPlanu: MontazPanelu = (wezel, zaleznosci: ZaleznosciPane
         dzialanie: {
           rodzaj: 'odmowa',
           naglowek: planTresci.odmowa.uruchomienie,
-          opis: wynik.blad?.message ?? tekst('odmowa.brakOpisu'),
+          opis: opisOdmowy(wynik.blad, 'plan'),
         },
       });
     }
@@ -128,7 +129,7 @@ export const montujPanelPlanu: MontazPanelu = (wezel, zaleznosci: ZaleznosciPane
         dzialanie: {
           rodzaj: 'odmowa',
           naglowek: planTresci.odmowa.zatrzymanie,
-          opis: wynik.blad?.message ?? tekst('odmowa.brakOpisu'),
+          opis: opisOdmowy(wynik.blad, 'plan'),
         },
       });
     }

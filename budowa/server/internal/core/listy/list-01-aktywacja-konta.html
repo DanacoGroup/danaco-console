@@ -1,0 +1,166 @@
+<!doctype html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="x-apple-disable-message-reformatting">
+<meta name="color-scheme" content="light only">
+<meta name="supported-color-schemes" content="light only">
+<title>Danaco Console — kod aktywacji konta</title>
+</head>
+<!--
+  ══════════════════════════════════════════════════════════════════════════
+  DANACO CONSOLE · POCZTA TRANSAKCYJNA · LIST 1 — AKTYWACJA KONTA
+  Nadawca: noreply@danaco-group.pl
+  Temat:   Danaco Console — kod aktywacji konta: {{code}}
+  Nagłówki: Auto-Submitted: auto-generated · X-Auto-Response-Suppress: All
+
+  Zmienne: {{logo_src}} {{code}} {{expiry_minutes}} {{requested_at}}
+           {{activation_url}} {{recipient_address}} {{support_address}} {{year}}
+
+  Ograniczenia nośnika: układ na tabelach (silnik Worda w Outlooku),
+  style wyłącznie w atrybucie style (Gmail usuwa <style> z <head>),
+  kroje marki bez wgrywania — łańcuch zapasowy do krojów systemowych.
+  Opis pełny: ../opracowanie-techniczne.md
+  ══════════════════════════════════════════════════════════════════════════
+-->
+<body style="margin:0;padding:0;background-color:#F4F4F4;-webkit-text-size-adjust:100%;">
+
+<!-- Pierwszy wiersz podglądu na liście wiadomości. Ukryty w treści listu. -->
+<div style="display:none;font-size:1px;line-height:1px;max-height:0;max-width:0;opacity:0;overflow:hidden;mso-hide:all;color:#FFFFFF;">
+  Kod aktywacji konta: {{code}}. Ważny {{expiry_minutes}} minut.
+  &#8199;&#65279;&#8199;&#65279;&#8199;&#65279;&#8199;&#65279;&#8199;&#65279;&#8199;&#65279;&#8199;&#65279;&#8199;&#65279;
+</div>
+
+<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="border-collapse:collapse;background-color:#F4F4F4;">
+  <tr>
+    <td align="center" style="padding:32px 12px;">
+
+      <!-- Karta listu — szerokość 600 px, powierzchnia #FFFFFF (--dn-szary-0) -->
+      <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="600" style="border-collapse:collapse;width:100%;max-width:600px;background-color:#FFFFFF;border:1px solid #E3E3E3;">
+
+        <!-- Listwa górna. Atrament #181818 — działanie i struktura, nie sygnał. -->
+        <tr><td style="height:3px;line-height:3px;font-size:0;background-color:#181818;">&nbsp;</td></tr>
+
+        <!-- Nagłówek: lockup kompaktowy 168 × 72 px, plik 2× (336 × 145 px) -->
+        <tr>
+          <td style="padding:28px 32px 20px 32px;border-bottom:1px solid #E3E3E3;">
+            <img src="{{logo_src}}" width="168" height="72" alt="Danaco Console"
+                 style="display:block;width:168px;height:72px;border:0;outline:none;text-decoration:none;">
+          </td>
+        </tr>
+
+        <tr>
+          <td style="padding:32px 32px 0 32px;">
+
+            <!-- Nagłówek listu — krój tożsamości, 24 px / 600 -->
+            <p style="margin:0 0 16px 0;font-family:'Space Grotesk','IBM Plex Sans','Segoe UI',Helvetica,Arial,sans-serif;font-size:24px;line-height:32px;font-weight:600;letter-spacing:-0.01em;color:#181818;">
+              Kod aktywacji konta
+            </p>
+
+            <!-- Treść — krój pracy, 15 px. Głos: rzeczowy, bez powitania ozdobnego. -->
+            <p style="margin:0 0 24px 0;font-family:'IBM Plex Sans','Segoe UI',Helvetica,Arial,sans-serif;font-size:15px;line-height:24px;color:#4A4A4A;">
+              Konto Operatora zostało utworzone dla adresu
+              <span style="color:#181818;font-weight:600;">{{recipient_address}}</span>.
+              Wprowadź poniższy kod w oknie aktywacji, aby ustawić hasło i uruchomić dostęp do Danaco Console.
+            </p>
+          </td>
+        </tr>
+
+        <!-- Panel kodu. Tło #FAFAFA, obrys #E3E3E3 — neutralne, bez barwy sygnału.
+             Zasada jednego akcentu: akcentem w kadrze pozostaje kropka znaku. -->
+        <tr>
+          <td style="padding:0 32px;">
+            <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="border-collapse:collapse;background-color:#FAFAFA;border:1px solid #E3E3E3;">
+              <tr>
+                <td align="center" style="padding:24px 16px 20px 16px;">
+                  <p style="margin:0 0 12px 0;font-family:'IBM Plex Mono','SFMono-Regular',Consolas,'Courier New',monospace;font-size:11px;line-height:16px;letter-spacing:0.14em;text-transform:uppercase;color:#616161;">
+                    Kod aktywacji
+                  </p>
+                  <!-- Krój maszyny niesie wartość, nie zdanie. 32 px, odstęp 0,18 em. -->
+                  <p style="margin:0;font-family:'IBM Plex Mono','SFMono-Regular',Consolas,'Courier New',monospace;font-size:32px;line-height:40px;font-weight:600;letter-spacing:0.18em;color:#181818;">
+                    {{code}}
+                  </p>
+                </td>
+              </tr>
+            </table>
+          </td>
+        </tr>
+
+        <!-- Szyna metadanych — pary etykieta / wartość, krój maszyny -->
+        <tr>
+          <td style="padding:20px 32px 0 32px;">
+            <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="border-collapse:collapse;">
+              <tr>
+                <td width="50%" style="padding:0 12px 0 0;vertical-align:top;">
+                  <p style="margin:0 0 4px 0;font-family:'IBM Plex Mono','SFMono-Regular',Consolas,'Courier New',monospace;font-size:11px;line-height:16px;letter-spacing:0.14em;text-transform:uppercase;color:#616161;">Ważność</p>
+                  <p style="margin:0;font-family:'IBM Plex Mono','SFMono-Regular',Consolas,'Courier New',monospace;font-size:13px;line-height:20px;color:#181818;">{{expiry_minutes}} min</p>
+                </td>
+                <td width="50%" style="padding:0;vertical-align:top;">
+                  <p style="margin:0 0 4px 0;font-family:'IBM Plex Mono','SFMono-Regular',Consolas,'Courier New',monospace;font-size:11px;line-height:16px;letter-spacing:0.14em;text-transform:uppercase;color:#616161;">Utworzono</p>
+                  <p style="margin:0;font-family:'IBM Plex Mono','SFMono-Regular',Consolas,'Courier New',monospace;font-size:13px;line-height:20px;color:#181818;">{{requested_at}}</p>
+                </td>
+              </tr>
+            </table>
+          </td>
+        </tr>
+
+        <!-- Działanie główne — inwersja atramentu. Sygnał wskazuje, czerń działa. -->
+        <tr>
+          <td style="padding:24px 32px 0 32px;">
+            <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse;">
+              <tr>
+                <td style="background-color:#181818;">
+                  <a href="{{activation_url}}" style="display:inline-block;padding:13px 28px;font-family:'IBM Plex Sans','Segoe UI',Helvetica,Arial,sans-serif;font-size:14px;line-height:20px;font-weight:600;color:#FFFFFF;text-decoration:none;">
+                    Otwórz okno aktywacji
+                  </a>
+                </td>
+              </tr>
+            </table>
+            <p style="margin:12px 0 0 0;font-family:'IBM Plex Sans','Segoe UI',Helvetica,Arial,sans-serif;font-size:12px;line-height:18px;color:#616161;">
+              Jeżeli przycisk nie działa, otwórz adres:
+              <span style="font-family:'IBM Plex Mono','SFMono-Regular',Consolas,'Courier New',monospace;color:#3B6FE0;word-break:break-all;">{{activation_url}}</span>
+            </p>
+          </td>
+        </tr>
+
+        <!-- Nota bezpieczeństwa. Głos sprawczy: stan plus następny krok. -->
+        <tr>
+          <td style="padding:24px 32px 32px 32px;">
+            <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="border-collapse:collapse;border-top:1px solid #E3E3E3;">
+              <tr>
+                <td style="padding:20px 0 0 0;">
+                  <p style="margin:0;font-family:'IBM Plex Sans','Segoe UI',Helvetica,Arial,sans-serif;font-size:13px;line-height:20px;color:#4A4A4A;">
+                    Kod jest jednorazowy i wygasa po {{expiry_minutes}} minutach. Po wygaśnięciu zamów nowy
+                    w oknie aktywacji. Jeżeli konto nie było zamawiane, zignoruj wiadomość — bez podania
+                    kodu konto pozostaje nieaktywne i zostaje usunięte po 7 dniach.
+                  </p>
+                </td>
+              </tr>
+            </table>
+          </td>
+        </tr>
+
+        <!-- Stopka nadawcy -->
+        <tr>
+          <td style="padding:20px 32px 24px 32px;background-color:#FAFAFA;border-top:1px solid #E3E3E3;">
+            <p style="margin:0 0 8px 0;font-family:'IBM Plex Sans','Segoe UI',Helvetica,Arial,sans-serif;font-size:12px;line-height:18px;color:#616161;">
+              Wiadomość wysłana automatycznie z adresu
+              <span style="font-family:'IBM Plex Mono','SFMono-Regular',Consolas,'Courier New',monospace;color:#181818;">noreply@danaco-group.pl</span>.
+              Adres nie prowadzi skrzynki odbiorczej — odpowiedź nie zostanie odczytana.
+              W sprawach konta pisz na
+              <a href="mailto:{{support_address}}" style="font-family:'IBM Plex Mono','SFMono-Regular',Consolas,'Courier New',monospace;color:#3B6FE0;text-decoration:none;">{{support_address}}</a>.
+            </p>
+            <p style="margin:0;font-family:'IBM Plex Mono','SFMono-Regular',Consolas,'Courier New',monospace;font-size:11px;line-height:16px;letter-spacing:0.04em;color:#616161;">
+              Danaco Holding Group Sp. z o.o. · Danaco Console · {{year}}
+            </p>
+          </td>
+        </tr>
+
+      </table>
+    </td>
+  </tr>
+</table>
+
+</body>
+</html>

@@ -1,22 +1,18 @@
 package listy
 
 import (
+	"encoding/base64"
 	"os"
 	"testing"
 )
 
-// TestPodgladListu odkłada postać graficzną listu do pliku, żeby dało się ją
-// obejrzeć przeglądarką. Nie sprawdza niczego — jest narzędziem oglądania,
-// nie sprawdzianem.
+// TestPodgladListu odkłada postać graficzną listu aktywacji do pliku, żeby dało
+// się ją obejrzeć przeglądarką. Nie sprawdza niczego — jest narzędziem
+// oglądania, nie sprawdzianem: wysyłka dołącza znak częścią listu, a przeglądarka
+// odwołania `cid:` nie zna, więc podgląd wpisuje obraz w treść.
 func TestPodgladListu(t *testing.T) {
-	html := Zloz(TrescListu{
-		Naglowek:     "Potwierdzenie adresu e-mail",
-		Wstep:        "Konto operator zostało założone i oczekuje na potwierdzenie tego adresu.",
-		EtykietaKodu: "Kod potwierdzający",
-		Kod:          "482913",
-		Polecenie:    "Wprowadź go w oknie rejestracji, aby zakończyć zakładanie konta i wejść do platformy. Kod jest jednorazowy i zachowuje ważność przez godzinę.",
-		Nota:         "Ten adres będzie później jedyną drogą odzyskania konta.",
-	})
+	html := PodgladDanymiPrzykladowymi(
+		"data:image/png;base64," + base64.StdEncoding.EncodeToString(ZnakMarki))
 	if err := os.WriteFile("/srv/podglad/wykaz-list.html", []byte(html), 0o644); err != nil {
 		t.Log("nie odłożono podglądu:", err)
 	}

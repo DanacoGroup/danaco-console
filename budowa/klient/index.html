@@ -39,11 +39,10 @@
 </head>
 
 <!--
-  Dokument klienta: scena drogi wejścia, po niej miejsce ramy aplikacji.
+  Dokument klienta: obszary drogi wejścia, po nich gniazdo powłoki.
 
-  Niesie wyłącznie miejsca montażu i oprawę sceny. Okna drogi wejścia składa
-  `wejscie/montaz.ts`, ramę aplikacji `rama/montaz.ts` — dokument nie ma ani
-  jednego zdania widocznego dla użytkownika poza nazwą produktu w tytule karty.
+  Okna buduje biblioteka `design/zasoby/`. Dokument nie niesie ani jednego
+  zdania widocznego dla Operatora poza nazwą produktu w tytule karty.
 
   Trzy miejsca drogi wejścia stoją w dokumencie naraz, bo biblioteka buduje
   okna raz, przy starcie. Widoczny jest ten obszar, którego widok jest czynny.
@@ -55,12 +54,7 @@
 <body class="pt-pelny-ekran">
 
 <div data-wejscie>
-<!-- Znak marki kreślony światłem, zanim stanie pierwsze okno. Warstwa stoi nad
-     całą drogą wejścia, nie w jednej scenie: przebieg przechodzi między scenami
-     szybciej, niż trwa animacja, więc w scenie uruchomienia gasłaby razem z nią.
-     Nie ma własnego tła — leży na tle sceny tak, jak w produkcie leży na
-     pulpicie. `data-czekaj` zatrzymuje ją przed wygaszeniem, dopóki
-     `aplikacja.ts` nie zgłosi, że przebieg odpowiedział. -->
+<!-- Animacja uruchomienia. `data-czekaj` trzyma ją do wywołania `gotowe()`. -->
 <div class="we-uruchomienie" data-uruchomienie>
   <div class="dn-ekran-startowy" data-ekran-startowy data-czekaj
        role="img" aria-label="Uruchamianie Danaco Console"></div>

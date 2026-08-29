@@ -45,7 +45,6 @@ export function zalozDziennikNieznanych(zrodlo: ZrodloZdarzen): DziennikNieznany
     const wpis: WpisNieznanego = { typZdarzenia, ...odczytajLadunek(ladunek) };
     licznik += 1;
     ostatniWpis = wpis;
-    console.warn('[połączenie] komunikat nierozpoznany', wpis);
     wpisy.oglos(wpis);
   }
 

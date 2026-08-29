@@ -50,6 +50,11 @@ func wniesSesjeDoRejestru(kontekst context.Context, repozytoria *dane.Zestaw,
 	sesja := session.Sesja{
 		Id: *wiersz.IdentyfikatorZewnetrzny, Tytul: wiersz.Tytul,
 		IdProjektu: wartoscTekstu(wiersz.Projekt), Stan: wiersz.Stan,
+		/* Znaczniki czasu przenoszone z bazy: bez nich sesja odtworzona wchodzi
+		   do rejestru z chwilą zerową i okno pokazuje Operatorowi rok pierwszy
+		   zamiast dnia, w którym pracę zaczął. */
+		Utworzono:      chwilaZBazy(wiersz.Utworzono),
+		Zaktualizowano: chwilaZBazy(wiersz.Zaktualizowano),
 	}
 	nadzorca.Rejestr().Odtworz(sesja, oknaOdtworzone(wiersze, sesja.Id, moduly, kanaly))
 	return true
@@ -113,4 +118,22 @@ func odnotujOdtworzenie(dziennik *log.Logger, wzor string, argumenty ...any) {
 		return
 	}
 	dziennik.Printf(wzor, argumenty...)
+}
+
+/*
+chwilaZBazy odczytuje znacznik czasu zapisany w bazie napisem.
+
+Postać zapisu to RFC 3339 (`2026-08-29T20:02:04.260Z`). Napis nieczytelny daje
+chwilę zerową — tak samo, jak działo się przed przeniesieniem znaczników; lepsza
+jest jedna wartość pusta niż zatrzymanie odtworzenia całej sesji.
+*/
+func chwilaZBazy(zapis string) time.Time {
+	if zapis == "" {
+		return time.Time{}
+	}
+	chwila, err := time.Parse(time.RFC3339Nano, zapis)
+	if err != nil {
+		return time.Time{}
+	}
+	return chwila
 }

@@ -17,7 +17,16 @@ func sesjaKontraktu(s session.Sesja) shared.Session {
 		CreatedAt: s.Utworzono.UnixMilli(),
 		UpdatedAt: s.Zaktualizowano.UnixMilli(),
 	}
-	if s.Tytul != "" {
+	/*
+		Tytuł równy identyfikatorowi znaczy sesję bez nazwy.
+
+		Kolumna tytułu w magazynie nie przyjmuje pustej wartości, więc sesja bez
+		nazwy dostaje tam własny identyfikator (`dane.sesjaZOpisu`). To ograniczenie
+		magazynu, nie nazwa nadana przez Operatora — podane oknu czytałoby się jako
+		nazwa i tak właśnie stawało w szynie sesji. Okno ma własny stan pusty i to
+		on ma się pokazać.
+	*/
+	if s.Tytul != "" && s.Tytul != s.Id {
 		sesja.Title = &s.Tytul
 	}
 	if s.IdProjektu != "" {

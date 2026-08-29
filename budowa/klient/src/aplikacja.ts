@@ -1,18 +1,18 @@
 /**
- * Jedyny punkt wejścia klienta. Składa gniazdo, kanał, sesję, tożsamość
- * i przebieg drogi wejścia; gdy przebieg dochodzi do środowiska, oddaje
- * sterowanie ramie aplikacji i zdejmuje scenę drogi wejścia z ekranu.
+ * Jedyny punkt wejścia klienta: składa gniazdo, kanał, sesję i tożsamość, po
+ * czym nawiązuje rozmowę z rdzeniem.
+ *
+ * Widoku ten plik nie buduje i budować nie ma. Znacznik okien pochodzi
+ * z biblioteki prototypu — powłokę stawia `zasoby/powloka.js`, wnętrze okna
+ * wstrzykuje `vite.config.js` z `design/05-okna/`, a zachowania niosą skrypty
+ * biblioteki wczytane przed tym modułem. Warstwa własna klienta ogranicza się
+ * do tego, czego prototyp z natury nie niesie: protokołu i połączenia.
  */
 
 import { adresGniazdaRdzenia, adresRdzeniaLokalnego } from './polaczenie/adres-rdzenia.ts';
 import { utworzTransport } from './polaczenie/gniazdo.ts';
 import { utworzKanal } from './protokol/kanal.ts';
 import { utworzSesje } from './protokol/sesja.ts';
-import { tozsamoscKlienta } from './protokol/tozsamosc-klienta.ts';
-import { zalozEkranStartowy } from './wejscie/ekran-startowy.ts';
-import { zamontuj } from './wejscie/montaz.ts';
-import { utworzPrzebieg } from './wejscie/przebieg.ts';
-import { utworzPrzekazanieJednorazowe } from './rama/przekazanie.ts';
 
 /**
  * Adres gniazda rdzenia pochodzi z dokumentu wczytanego po HTTP; w pozostałych
@@ -22,35 +22,18 @@ function adresRdzenia(): string {
   return adresGniazdaRdzenia(globalThis.location.origin) ?? adresRdzeniaLokalnego();
 }
 
-const klient = tozsamoscKlienta();
 const transport = utworzTransport(adresRdzenia());
 const kanal = utworzKanal(transport, utworzSesje());
-const przebieg = utworzPrzebieg({ kanal, transport, klient });
 
-const oknoWejscia = zamontuj({ korzen: document, przebieg, wersjaKlienta: klient.wersja });
+/*
+Kanał wystawiony na obiekcie globalnym: skrypty biblioteki są funkcjami
+domkniętymi wczytywanymi przed tym modułem, nie modułami — importu z nich nie ma
+i mieć nie może. Wystawienie jest jedynym stykiem między nimi a rdzeniem.
+*/
+declare global {
+  // eslint-disable-next-line no-var
+  var DanacoKanal: typeof kanal | undefined;
+}
+globalThis.DanacoKanal = kanal;
 
-/* Scena drogi wejścia i miejsce ramy stoją w dokumencie jako dwa węzły
-   odrębne od tego, co montuje `zamontuj` wewnątrz sceny — przekazanie przełącza
-   między nimi raz, dopiero po udanym przekazaniu, więc odmowa (np. węzeł
-   montażu jeszcze nie stoi w dokumencie) nie blokuje próby przy kolejnej
-   zmianie stanu. */
-const naZmianePrzebiegu = utworzPrzekazanieJednorazowe({
-  dokument: document,
-  zdejmijOknoWejscia: () => oknoWejscia.zdejmij(),
-  kanal,
-});
-
-/* Ekran startowy gra od chwili wczytania dokumentu, a domyka się dopiero po
-   pierwszej odpowiedzi przebiegu — wtedy jest już co odsłonić. Zgłoszenie
-   gotowości idzie raz; kolejne zmiany stanu nie mają go co powtarzać. */
-const ekranStartowy = zalozEkranStartowy(document);
-let gotowoscZgloszona = false;
-
-przebieg.naZmiane((stan) => {
-  if (!gotowoscZgloszona) {
-    gotowoscZgloszona = true;
-    ekranStartowy.gotowe();
-  }
-  naZmianePrzebiegu(stan);
-});
-przebieg.polacz();
+transport.polacz();

@@ -219,7 +219,10 @@ async function wypelnijSzyne(
 function zbudujPozycje(wzor: HTMLElement, sesja: Session, biezaca: boolean): HTMLElement {
   const pozycja = wzor.cloneNode(true) as HTMLElement;
   const tytul = pozycja.querySelector('.pt-pozycja-tytul');
-  if (tytul !== null) tytul.textContent = sesja.title ?? sesja.id;
+  /* Sesja bez nadanej nazwy dostaje nazwany stan pusty, nie własny
+     identyfikator: identyfikator jest oznaczeniem magazynu, a Operator czyta
+     w szynie nazwę swojej pracy. */
+  if (tytul !== null) tytul.textContent = sesja.title ?? 'Sesja bez nazwy';
   if (biezaca) pozycja.setAttribute('aria-current', 'true');
   else {
     pozycja.removeAttribute('aria-current');

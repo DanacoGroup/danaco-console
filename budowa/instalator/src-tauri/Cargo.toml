@@ -1,6 +1,6 @@
 [package]
 name = "danaco-instalator"
-version = "1.0.0"
+version = "2.0.0"
 description = "Instalator Danaco Console — kreator sześciu kroków związany z rzeczywistym stanem maszyny"
 authors = ["Danaco Holding Group Sp. z o.o."]
 edition = "2021"

@@ -12,6 +12,7 @@ import { zamontujOknoStudio, type OknoStudio } from '../moduly/studio/montaz.ts'
 import { el, tekst } from './narzedzia.ts';
 import { belka } from './skladniki/belka.ts';
 import { panelSesje } from './skladniki/panel-sesje.ts';
+import { wypelnijPowloke } from './skladniki/wypelnienie-powloki.ts';
 import { pasmoKart } from './skladniki/pasmo-kart.ts';
 import { stan as pasStanu } from './skladniki/stan.ts';
 
@@ -90,6 +91,16 @@ export function zamontujRame(w: NastawyRamy): void {
     obszarGlowny,
   ]);
   ramaPrawa.append(obszar);
+
+  /* Powłoka przychodzi z treścią przykładową prototypu — nazwą innego okna
+     w belce i zmyślonymi miarami maszyny w pasku stanu. Wypełnienie zastępuje
+     je wartościami rdzenia, a pozycje bez źródła zdejmuje. */
+  wypelnijPowloke(w.miejsce, {
+    tytul: `${tekst('belka.tytul')} — ${w.srodowisko.name}`,
+    srodowisko: w.srodowisko.name,
+    liczbaSesji: w.sesje.length,
+    motywCiemny: motywCiemny(),
+  });
 
   /* Okno modułu czynne dziś wyłącznie dla Studio; zejście na inny moduł je
      zdejmuje, żeby obszar roboczy nie niósł treści modułu już opuszczonego. */

@@ -1,31 +1,38 @@
 /**
- * Moduł Studio — panel dokumentu. Zamyka przekrój pionowy: zakłada sesję i okno
- * modułu w rdzeniu, zakłada dokument, oddaje jego treść do edycji i odsyła ją
- * komendą zapisu, po czym czyta dokument z powrotem.
+ * Moduł Studio — kanwa dokumentu, strefa „Studio Editor" ze źródła kształtu
+ * (`design/05-okna/moduly/studio.html`).
+ *
+ * Kanwa składa treść jak dokument — tytuł, nagłówki, akapity — i wypełnia całą
+ * wysokość oraz szerokość okna: dokument czyta się kolumną, nie prostokątem
+ * pośrodku pustki. Edycja idzie wprost w tych blokach, bez pola formularza.
+ *
+ * Rdzeń dotykany czterema drogami: `studio.text.get` czyta treść,
+ * `studio.text.edit` odkłada zmieniony fragment przy odejściu od kanwy,
+ * `studio.document.save` zapisuje tytuł i zakłada wersję, a
+ * `studio.document.open` czyta dokument z powrotem — dopiero treść wrócona
+ * z rdzenia dowodzi zapisu.
  *
  * Okno modułu jest bytem rdzenia, nie widoku — bez niego żadna komenda Studia
  * dotykająca dokumentu nie ma gdzie stanąć, bo wszystkie wymagają `windowId`.
- *
- * Panel stoi jako treść pierwszej karty pasma okna roboczego — jedyna karta
- * z rzeczywistym przekrojem do rdzenia; pozostałe sześć kart tego terenu
- * niosą nazwany stan pusty, bo panele wejdą osobnym zakresem prac.
  */
-
 import {
   Command,
   ExecutionEnv,
   PermissionMode,
+  StudioDocumentFormat,
   WindowRole,
   type ErrorInfo,
   type Module,
   type Session,
   type StudioDocument,
+  type StudioDocumentSaveRequest,
 } from '../../../../shared/contract.ts';
 import type { Kanal } from '../../protokol/kanal.ts';
 import { wywolaj } from '../../protokol/wywolanie.ts';
+import { ikony } from './ikony.ts';
 import { zLiczba } from './liczebnik.ts';
-import { el, tekst } from './narzedzia.ts';
-import { opisOdmowy } from './odmowa.ts';
+import { el, tekst, zeZnacznika } from './narzedzia.ts';
+import { opisOdmowy, zaloguj } from './odmowa.ts';
 import { pasekEdytora } from './skladniki/pasek-edytora.ts';
 
 export interface NastawyDokumentu {
@@ -53,45 +60,91 @@ type StanZapisu = 'spoczynek' | 'zapisuje' | 'zapisany';
 
 type Stan =
   | { rodzaj: 'zakladanie' }
-  | { rodzaj: 'dokument'; dokument: StudioDocument; zapis: StanZapisu }
+  | { rodzaj: 'dokument'; dokument: StudioDocument; tresc: string; zapis: StanZapisu }
   | { rodzaj: 'odmowa'; powod: string; blad?: ErrorInfo };
 
-/* Katalogi robocze okna. Kontrakt wymaga pola, nie wymaga zawartości, a źródła
-   nie podają katalogu należnego oknu modułu przed wskazaniem Operatora. Wykaz
-   zostaje pusty do czasu rozstrzygnięcia: okno bez katalogu nie sięga plików,
-   a granica obszaru liczy się właśnie wobec tego wykazu. */
+/* Katalogi robocze okna. Kontrakt wymaga pola, nie zawartości, a źródła nie
+   podają katalogu należnego oknu modułu przed wskazaniem Operatora: wykaz
+   zostaje pusty, a okno bez katalogu nie sięga plików. */
 const KATALOGI_ROBOCZE: string[] = [];
+
+/* Bloki dokumentu rozdziela pusty wiersz, a nagłówki w zapisie Markdown niosą
+   znacznik kratki. Rozbiór i złożenie idą tą samą miarą, więc treść wraca do
+   rdzenia w tej postaci, w jakiej z niego przyszła. */
+const ROZDZIELNIK = '\n\n';
+const ZNACZNIK_H1 = '# ';
+const ZNACZNIK_H2 = '## ';
 
 export function panelDokumentu(w: NastawyDokumentu): PanelDokumentu {
   let zdjete = false;
   let okno = '';
   let sesjaBiezaca: string | null = null;
-
-  /* Kanwa niesie klasę `dn-kanwa` ze źródła kształtu: to ona daje treści
-     szerokość kolumny czytelnej i typografię dokumentu, nie samo pole. */
-  const tresc = el('div', { klasa: 'sta-okno-tresc dn-kanwa' });
-
-  /* Pole treści i dokument są odczytywane przez pasek narzędziowy przy każdym
-     kliknięciu, a nie kopiowane do niego: oba powstają dopiero po odpowiedzi
-     rdzenia, więc w chwili montażu paska jeszcze ich nie ma. */
-  let poleTresci: HTMLTextAreaElement | null = null;
+  let stanBiezacy: Stan = { rodzaj: 'zakladanie' };
   let dokumentBiezacy: StudioDocument | null = null;
+  /* Treść znana rdzeniowi. Zmiana idzie do rdzenia jako różnica wobec niej,
+     więc bez niej `studio.text.edit` nie miałby czym wskazać fragmentu. */
+  let trescZnana = '';
+  /* Czynności rdzenia idą jedna po drugiej: odejście od kanwy zapisuje fragment,
+     a klik w zapis wersji pada zaraz po nim — równolegle jedna z nich by przepadła. */
+  let kolejka: Promise<void> = Promise.resolve();
+
+  /* Szerokość stoi stylem, bo margines automatyczny `dn-kanwa` odbiera
+     składnikowi kolumny rozciągnięcie: kanwa kurczyła się do napisu i stawała
+     prostokątem pośrodku pustki. Miara przy 2560 px: 625 × 1097 px. */
+  const tresc = el('div', {
+    klasa: 'sta-okno-tresc dn-kanwa',
+    style: 'display: flex; flex-direction: column; width: 100%',
+  });
+
+  /* Korpus i tytuł powstają dopiero z odpowiedzią rdzenia, więc pasek
+     narzędziowy i zapis czytają je stąd przy każdym wywołaniu, a nie z kopii
+     zrobionej w chwili montażu. */
+  let korpus: HTMLElement | null = null;
+  let poleTytulu: HTMLElement | null = null;
 
   const uwaga = el('span', { klasa: 'dn-meta', role: 'status' });
+
+  /** Dokłada czynność do kolejki; odmowa jednej nie zatrzymuje następnych. */
+  function wKolejce(czynnosc: () => Promise<void>): void {
+    kolejka = kolejka.then(czynnosc).catch((powod: unknown) => {
+      console.warn('[studio] czynność kanwy przerwana', powod);
+    });
+  }
 
   const pasek = pasekEdytora({
     kanal: w.kanal,
     idDokumentu: () => dokumentBiezacy?.id ?? null,
-    zaznaczenie() {
-      if (poleTresci === null) return null;
-      const { selectionStart, selectionEnd } = poleTresci;
-      if (selectionStart === selectionEnd) return null;
-      return { poczatek: selectionStart, koniec: selectionEnd };
-    },
+    zaznaczenie,
     powiadom(zdanie) {
       uwaga.textContent = zdanie;
     },
   });
+
+  /** Przycisk znakowy belki okna: znak niesie rysunek, nazwę czynności etykieta. */
+  function przyciskBelki(rysunek: string, etykieta: string): HTMLButtonElement {
+    const rysunekWezel = zeZnacznika(rysunek);
+    rysunekWezel.setAttribute('aria-hidden', 'true');
+    return el('button', {
+      klasa: 'dn-btn-ikona',
+      type: 'button',
+      'aria-label': etykieta,
+      title: etykieta,
+    }, [rysunekWezel]) as HTMLButtonElement;
+  }
+
+  const przyciskZapisu = przyciskBelki(ikony.zapisz, tekst('dokument.zapisz'));
+  przyciskZapisu.addEventListener('click', () => wKolejce(() => zapiszDokument(true)));
+
+  /* Konfiguracja okna stoi w prototypie i nie ma pokrycia w kontrakcie: żadna
+     komenda Studia nie przyjmuje nastaw okna wiodącego. Przycisk zostaje
+     i nazywa niegotowość, zamiast zniknąć albo udać działanie. */
+  const przyciskKonfiguracji = przyciskBelki(ikony.dostosuj, tekst('dokument.konfiguracja'));
+  przyciskKonfiguracji.addEventListener('click', () => {
+    uwaga.textContent = tekst('dokument.zapowiedziane');
+  });
+
+  const znakTytulu = zeZnacznika(ikony.olowek);
+  znakTytulu.setAttribute('aria-hidden', 'true');
 
   const pasStanu = el('div', { klasa: 'st-status' });
 
@@ -100,7 +153,12 @@ export function panelDokumentu(w: NastawyDokumentu): PanelDokumentu {
     { klasa: 'sta-okno', id: 'panel-editor', role: 'tabpanel', 'aria-labelledby': 'karta-editor' },
     [
       el('header', { klasa: 'sta-okno-belka' }, [
-        el('span', { klasa: 'sta-okno-tytul' }, [el('b', { tekst: tekst('dokument.tytul') })]),
+        el('span', { klasa: 'sta-okno-tytul' }, [
+          znakTytulu,
+          el('b', { tekst: tekst('dokument.tytul') }),
+        ]),
+        el('span', { klasa: 'dn-plakietka dn-plakietka--rola', tekst: tekst('dokument.rolaOkna') }),
+        el('span', { klasa: 'sta-okno-akcje' }, [przyciskZapisu, przyciskKonfiguracji]),
       ]),
       pasek.wezel,
       tresc,
@@ -131,6 +189,9 @@ export function panelDokumentu(w: NastawyDokumentu): PanelDokumentu {
     const idSesji = await sesja();
     if (zdjete) return;
     if (idSesji === null) return odswiez({ rodzaj: 'odmowa', powod: 'sesja' });
+    /* Sesję trzymamy od razu: pozostałe panele okna biorą ją stąd, a wchodzą
+       do okna później niż odpowiedź rdzenia na ten odczyt. */
+    sesjaBiezaca = idSesji;
 
     const idKanalu = await kanalModelu();
     if (zdjete) return;
@@ -159,30 +220,234 @@ export function panelDokumentu(w: NastawyDokumentu): PanelDokumentu {
     if (!dokumentWynik.udany || dokumentWynik.wynik === undefined) {
       return odswiez({ rodzaj: 'odmowa', powod: 'dokument', blad: dokumentWynik.blad });
     }
-    odswiez({ rodzaj: 'dokument', dokument: dokumentWynik.wynik.document, zapis: 'spoczynek' });
+    await wczytaj(dokumentWynik.wynik.document.id);
   }
 
-  /* Zapis i odczyt idą parą: dopiero treść wrócona z rdzenia dowodzi, że
-     przeszła przez repozytorium, a nie została w polu edycji. */
-  async function zapisz(dokument: StudioDocument, trescNowa: string): Promise<void> {
-    odswiez({ rodzaj: 'dokument', dokument, zapis: 'zapisuje' });
-    const zapis = await wywolaj(w.kanal, Command.StudioDocumentSave, {
-      documentId: dokument.id,
-      content: trescNowa,
-      createVersion: true,
+  /**
+   * Wczytuje dokument do kanwy: `studio.document.open` oddaje sam dokument,
+   * `studio.text.get` jego treść. Gdy rdzeń treści nie odda, zostaje treść
+   * niesiona przez dokument — obie pochodzą z rdzenia, żadna stąd.
+   */
+  async function wczytaj(idDokumentu: string): Promise<void> {
+    const otwarcie = await wywolaj(w.kanal, Command.StudioDocumentOpen, {
+      windowId: okno,
+      documentId: idDokumentu,
     });
     if (zdjete) return;
-    if (!zapis.udany) return odswiez({ rodzaj: 'odmowa', powod: 'zapis', blad: zapis.blad });
+    if (!otwarcie.udany || otwarcie.wynik === undefined) {
+      return odswiez({ rodzaj: 'odmowa', powod: 'otwarcie', blad: otwarcie.blad });
+    }
+    const dokument = otwarcie.wynik.document;
 
+    const odczyt = await wywolaj(w.kanal, Command.StudioTextGet, { documentId: dokument.id });
+    if (zdjete) return;
+    if (!odczyt.udany) zaloguj(odczyt.blad, 'odczytTresci');
+    const trescRdzenia = odczyt.udany ? (odczyt.wynik?.text ?? '') : (dokument.content ?? '');
+
+    odswiez({ rodzaj: 'dokument', dokument, tresc: trescRdzenia, zapis: 'spoczynek' });
+    if (trescRdzenia === '') uwaga.textContent = tekst('dokument.pusty');
+  }
+
+  /**
+   * Odkłada w rdzeniu sam zmieniony fragment (`studio.text.edit`), a potem
+   * czyta treść z powrotem. Kanwa nie jest przerysowywana: Operator właśnie
+   * w niej pisze, a wymiana węzłów zabrałaby mu miejsce karetki.
+   */
+  async function zapiszZmiane(): Promise<void> {
+    if (dokumentBiezacy === null || korpus === null) return;
+    const biezaca = zTresci();
+    const zmiana = roznica(trescZnana, biezaca);
+    if (zmiana === null) return;
+
+    odswiezPas(biezaca, 'zapisuje');
+    const zapis = await wywolaj(w.kanal, Command.StudioTextEdit, {
+      documentId: dokumentBiezacy.id,
+      rangeStart: zmiana.poczatek,
+      rangeEnd: zmiana.koniec,
+      text: zmiana.tekst,
+      keepFormat: true,
+    });
+    if (zdjete) return;
+    if (!zapis.udany) {
+      uwaga.textContent = `${tekst('dokument.odmowaZmiany')} ${opisOdmowy(zapis.blad, 'zmianaTresci')}`;
+      return odswiezPas(biezaca, 'spoczynek');
+    }
+
+    const odczyt = await wywolaj(w.kanal, Command.StudioTextGet, { documentId: dokumentBiezacy.id });
+    if (zdjete) return;
+    if (!odczyt.udany) zaloguj(odczyt.blad, 'odczytTresci');
+    trescZnana = odczyt.udany ? (odczyt.wynik?.text ?? '') : biezaca;
+    uwaga.textContent = '';
+    odswiezPas(trescZnana, 'zapisany');
+  }
+
+  /**
+   * Zapisuje cały dokument wraz z tytułem (`studio.document.save`). Wersja
+   * zakładana jest wyłącznie na żądanie Operatora — zapis samego tytułu przy
+   * odejściu od niego nie ma po co dokładać wersji do repozytorium sesji.
+   */
+  async function zapiszDokument(zWersja: boolean): Promise<void> {
+    if (dokumentBiezacy === null || korpus === null) return;
+    const dokument = dokumentBiezacy;
+    const biezaca = zTresci();
+    const tytul = poleTytulu?.textContent?.trim() ?? '';
+    /* Odejście od tytułu bez jego zmiany nie ma czego zapisywać. */
+    if (!zWersja && tytul === (dokument.title ?? '')) return;
+
+    const zadanie: StudioDocumentSaveRequest = {
+      documentId: dokument.id,
+      content: biezaca,
+      createVersion: zWersja,
+    };
+    if (tytul !== '') zadanie.title = tytul;
+
+    przyciskZapisu.disabled = true;
+    odswiezPas(biezaca, 'zapisuje');
+    const zapis = await wywolaj(w.kanal, Command.StudioDocumentSave, zadanie);
+    przyciskZapisu.disabled = false;
+    if (zdjete) return;
+    if (!zapis.udany || zapis.wynik === undefined) {
+      uwaga.textContent = `${tekst('dokument.odmowaZapisu')} ${opisOdmowy(zapis.blad, 'zapisDokumentu')}`;
+      return odswiezPas(biezaca, 'spoczynek');
+    }
+    uwaga.textContent = '';
+
+    if (!zWersja) {
+      /* Zapis tytułu zostawia kanwę nietkniętą: Operator przeszedł z tytułu do
+         treści i pisze dalej, a przerysowanie zabrałoby mu miejsce karetki. */
+      dokumentBiezacy = zapis.wynik.document;
+      trescZnana = biezaca;
+      stanBiezacy = { rodzaj: 'dokument', dokument: zapis.wynik.document, tresc: biezaca, zapis: 'zapisany' };
+      return odswiezPas(biezaca, 'zapisany');
+    }
+
+    /* Odczyt po zapisie: dopiero treść wrócona z rdzenia dowodzi, że przeszła
+       przez repozytorium sesji, a nie została w kanwie. */
     const odczyt = await wywolaj(w.kanal, Command.StudioDocumentOpen, {
       windowId: okno,
       documentId: dokument.id,
     });
     if (zdjete) return;
     if (!odczyt.udany || odczyt.wynik === undefined) {
-      return odswiez({ rodzaj: 'odmowa', powod: 'zapis', blad: odczyt.blad });
+      uwaga.textContent = `${tekst('dokument.odmowaZapisu')} ${opisOdmowy(odczyt.blad, 'odczytPoZapisie')}`;
+      return odswiezPas(biezaca, 'spoczynek');
     }
-    odswiez({ rodzaj: 'dokument', dokument: odczyt.wynik.document, zapis: 'zapisany' });
+    const potwierdzony = odczyt.wynik.document;
+    const trescPotwierdzona = await trescZRdzenia(potwierdzony);
+    if (zdjete) return;
+    odswiez({ rodzaj: 'dokument', dokument: potwierdzony, tresc: trescPotwierdzona, zapis: 'zapisany' });
+  }
+
+  /** Treść dokumentu prosto z rdzenia; przy odmowie odczytu — treść samego dokumentu. */
+  async function trescZRdzenia(dokument: StudioDocument): Promise<string> {
+    const odczyt = await wywolaj(w.kanal, Command.StudioTextGet, { documentId: dokument.id });
+    if (!odczyt.udany) {
+      zaloguj(odczyt.blad, 'odczytTresci');
+      return dokument.content ?? '';
+    }
+    return odczyt.wynik?.text ?? '';
+  }
+
+  /** Czy dokument jest zapisany w Markdown — wtedy nagłówek niesie znacznik kratki. */
+  function czyMarkdown(): boolean {
+    return dokumentBiezacy?.format === StudioDocumentFormat.Markdown;
+  }
+
+  /** Znacznik nagłówka należny blokowi; akapit nie niesie żadnego. */
+  function znacznikBloku(blok: Node): string {
+    if (!czyMarkdown()) return '';
+    const nazwa = (blok as Element).tagName;
+    if (nazwa === 'H1') return ZNACZNIK_H1;
+    if (nazwa === 'H2') return ZNACZNIK_H2;
+    return '';
+  }
+
+  /** Treść kanwy złożona z powrotem w postać, którą rdzeń wydał. */
+  function zTresci(): string {
+    if (korpus === null) return trescZnana;
+    const kawalki: string[] = [];
+    for (const blok of Array.from(korpus.childNodes)) {
+      if (blok.nodeType === Node.TEXT_NODE) {
+        const goly = blok.textContent ?? '';
+        if (goly.trim() !== '') kawalki.push(goly);
+        continue;
+      }
+      kawalki.push(znacznikBloku(blok) + (blok.textContent ?? ''));
+    }
+    return kawalki.join(ROZDZIELNIK);
+  }
+
+  /** Bloki dokumentu: nagłówki i akapity kanwy, nie wiersze pola tekstowego. */
+  function bloki(trescDokumentu: string): HTMLElement[] {
+    const markdown = czyMarkdown();
+    return trescDokumentu.split(ROZDZIELNIK).map((kawalek) => {
+      if (markdown && kawalek.startsWith(ZNACZNIK_H2)) {
+        return el('h2', { tekst: kawalek.slice(ZNACZNIK_H2.length) });
+      }
+      if (markdown && kawalek.startsWith(ZNACZNIK_H1)) {
+        return el('h1', { tekst: kawalek.slice(ZNACZNIK_H1.length) });
+      }
+      /* Akapit pusty dostaje złamanie wiersza: bez niego nie ma wysokości,
+         więc Operator nie ma gdzie postawić karetki w dokumencie pustym. */
+      return kawalek === '' ? el('p', {}, [el('br')]) : el('p', { tekst: kawalek });
+    });
+  }
+
+  /**
+   * Przesunięcie punktu kanwy w znakach treści dokumentu. Rdzeń przyjmuje
+   * zakresy znakami całej treści, a kanwa dzieli ją na bloki — pusty wiersz
+   * między blokami i znacznik nagłówka też są jej znakami.
+   */
+  function przesuniecie(wezel: Node, wOffsecie: number): number | null {
+    if (korpus === null) return null;
+    let suma = 0;
+    for (const blok of Array.from(korpus.childNodes)) {
+      if (blok === wezel || blok.contains(wezel)) {
+        const zakres = document.createRange();
+        zakres.setStart(blok, 0);
+        zakres.setEnd(wezel, wOffsecie);
+        return suma + znacznikBloku(blok).length + zakres.toString().length;
+      }
+      suma += znacznikBloku(blok).length + (blok.textContent ?? '').length + ROZDZIELNIK.length;
+    }
+    return null;
+  }
+
+  /** Zaznaczenie w kanwie podane paskowi narzędziowemu jako zakres znaków rdzenia. */
+  function zaznaczenie(): { poczatek: number; koniec: number } | null {
+    if (korpus === null) return null;
+    const zaznaczone = window.getSelection();
+    if (zaznaczone === null || zaznaczone.rangeCount === 0 || zaznaczone.isCollapsed) return null;
+    const zakres = zaznaczone.getRangeAt(0);
+    if (!korpus.contains(zakres.commonAncestorContainer)) return null;
+    const poczatek = przesuniecie(zakres.startContainer, zakres.startOffset);
+    const koniec = przesuniecie(zakres.endContainer, zakres.endOffset);
+    if (poczatek === null || koniec === null || poczatek === koniec) return null;
+    return { poczatek, koniec };
+  }
+
+  /**
+   * Różnica dwóch postaci treści jako jeden ciągły fragment: wspólny początek
+   * i wspólny koniec odpadają, zostaje to, co Operator naprawdę zmienił.
+   * Bez tego zapis fragmentu przepisywałby cały dokument.
+   */
+  function roznica(
+    stara: string,
+    nowa: string,
+  ): { poczatek: number; koniec: number; tekst: string } | null {
+    if (stara === nowa) return null;
+    const krotsza = Math.min(stara.length, nowa.length);
+    let przod = 0;
+    while (przod < krotsza && stara[przod] === nowa[przod]) przod += 1;
+    let tyl = 0;
+    while (tyl < krotsza - przod && stara[stara.length - 1 - tyl] === nowa[nowa.length - 1 - tyl]) {
+      tyl += 1;
+    }
+    return {
+      poczatek: przod,
+      koniec: stara.length - tyl,
+      tekst: nowa.slice(przod, nowa.length - tyl),
+    };
   }
 
   function widokZakladania(): HTMLElement[] {
@@ -208,35 +473,47 @@ export function panelDokumentu(w: NastawyDokumentu): PanelDokumentu {
     ];
   }
 
-  function widokDokumentu(dokument: StudioDocument, zapis: StanZapisu): HTMLElement[] {
-    const pole = el('textarea', {
-      klasa: 'dn-pole dn-pole--wielowierszowe',
-      'aria-label': tekst('dokument.etykietaTresci'),
-      rows: 12,
-    }) as HTMLTextAreaElement;
-    pole.value = dokument.content ?? '';
-    // Pasek narzędziowy czyta z tego pola zaznaczenie; wskazanie idzie przy
-    // każdym przerysowaniu, bo pole powstaje na nowo wraz z widokiem.
-    poleTresci = pole;
-
-    const przycisk = el('button', {
-      klasa: 'dn-btn dn-btn--glowny',
-      type: 'button',
-      tekst: zapis === 'zapisuje' ? tekst('dokument.zapisywanie') : tekst('dokument.zapisz'),
-      disabled: zapis === 'zapisuje',
+  function widokDokumentu(dokument: StudioDocument, trescDokumentu: string): HTMLElement[] {
+    const tytul = el('h1', {
+      contenteditable: 'true',
+      'aria-label': tekst('dokument.etykietaTytulu'),
+      tekst: dokument.title ?? tekst('dokument.nazwaNowego'),
     });
-    przycisk.addEventListener('click', () => void zapisz(dokument, pole.value));
+    /* Tytuł jest polem rdzenia (`title` w `studio.document.save`), więc odejście
+       od niego zapisuje go od razu — Operator nie ma osobnego przycisku, którego
+       prototyp w tej strefie nie niesie. */
+    tytul.addEventListener('blur', () => wKolejce(() => zapiszDokument(false)));
+    tytul.addEventListener('keydown', (zdarzenie) => {
+      if (zdarzenie.key === 'Enter') {
+        zdarzenie.preventDefault();
+        korpus?.focus();
+      }
+    });
+    poleTytulu = tytul;
 
-    /* Wersja i stan zapisu stoją w pasie stanu, nie tutaj: prototyp trzyma je
-       w strefie `st-status`, a powtórzone dawałyby dwa źródła tej samej
-       wartości — Operator nie wie wtedy, które czyta. */
-    return [
-      el('div', { klasa: 'dn-wykaz-modulu-poz' }, [
-        el('b', { tekst: dokument.title ?? tekst('dokument.nazwaNowego') }),
-      ]),
-      pole,
-      el('div', { klasa: 'dn-pas-dzialan' }, [przycisk]),
-    ];
+    /* Korpus bierze całą wolną wysokość kanwy klasą `dn-pole--rosnace`:
+       dokument ma wypełniać okno, a nie stać prostokątem pośrodku pustki. */
+    const korpusNowy = el('div', {
+      klasa: 'dn-pole--rosnace',
+      contenteditable: 'true',
+      'aria-label': tekst('dokument.etykietaTresci'),
+    }, bloki(trescDokumentu));
+
+    korpusNowy.addEventListener('input', () => {
+      odswiezPas(zTresci(), 'spoczynek');
+    });
+    korpusNowy.addEventListener('blur', () => wKolejce(zapiszZmiane));
+    /* Wklejenie idzie samym tekstem: znaczniki z obcego źródła wniosłyby do
+       kanwy wygląd spoza arkusza kształtu, a do rdzenia — treść nie swoją. */
+    korpusNowy.addEventListener('paste', (zdarzenie) => {
+      const wklejane = zdarzenie.clipboardData?.getData('text/plain');
+      if (wklejane === undefined) return;
+      zdarzenie.preventDefault();
+      document.execCommand('insertText', false, wklejane);
+    });
+    korpus = korpusNowy;
+
+    return [tytul, korpusNowy];
   }
 
   function zawartosc(stan: Stan): HTMLElement[] {
@@ -246,7 +523,7 @@ export function panelDokumentu(w: NastawyDokumentu): PanelDokumentu {
       case 'odmowa':
         return widokOdmowy(stan.powod, stan.blad);
       case 'dokument':
-        return widokDokumentu(stan.dokument, stan.zapis);
+        return widokDokumentu(stan.dokument, stan.tresc);
     }
   }
 
@@ -256,8 +533,8 @@ export function panelDokumentu(w: NastawyDokumentu): PanelDokumentu {
   Liczenie idzie po ciągach niebiałych znaków, nie po spacjach: tekst z dwoma
   odstępami pod rząd dałby wyraz pusty, a tekst pusty dałby jeden wyraz.
   */
-  function slowa(tresc: string): number {
-    const wyrazy = tresc.trim();
+  function slowa(trescDokumentu: string): number {
+    const wyrazy = trescDokumentu.trim();
     return wyrazy === '' ? 0 : wyrazy.split(/\s+/u).length;
   }
 
@@ -287,7 +564,7 @@ export function panelDokumentu(w: NastawyDokumentu): PanelDokumentu {
         zdanieZapisu(stan.zapis),
       ]),
       el('span', {
-        tekst: zLiczba(slowa(stan.dokument.content ?? ''), {
+        tekst: zLiczba(slowa(stan.tresc), {
           jedna: tekst('stanEdytora.slowoJedna'),
           kilka: tekst('stanEdytora.slowoKilka'),
           wiele: tekst('stanEdytora.slowoWiele'),
@@ -303,8 +580,22 @@ export function panelDokumentu(w: NastawyDokumentu): PanelDokumentu {
     );
   }
 
+  /** Sam pas stanu, bez przerysowania kanwy — pisanie Operatora zostaje nietknięte. */
+  function odswiezPas(trescBiezaca: string, zapis: StanZapisu): void {
+    if (stanBiezacy.rodzaj !== 'dokument') return;
+    stanBiezacy = { rodzaj: 'dokument', dokument: stanBiezacy.dokument, tresc: trescBiezaca, zapis };
+    odswiezStan(stanBiezacy);
+  }
+
   function odswiez(stan: Stan): void {
+    stanBiezacy = stan;
     dokumentBiezacy = stan.rodzaj === 'dokument' ? stan.dokument : null;
+    trescZnana = stan.rodzaj === 'dokument' ? stan.tresc : '';
+    if (stan.rodzaj !== 'dokument') {
+      korpus = null;
+      poleTytulu = null;
+    }
+    przyciskZapisu.disabled = stan.rodzaj !== 'dokument';
     tresc.replaceChildren(...zawartosc(stan));
     odswiezStan(stan);
   }

@@ -6,6 +6,25 @@
  */
 
 export const tresciPliki = {
+  panel: {
+    tytul: 'Pliki',
+    brakOkna: 'Okno modułu jeszcze nie stanęło. Kolejka wczytywania pojawi się, gdy będzie gdzie ją osadzić.',
+  },
+
+  filtr: {
+    etykieta: 'Filtruj',
+    zacheta: 'Filtruj pliki…',
+    brakTrafien: 'Żadna pozycja kolejki nie pasuje do filtra.',
+  },
+
+  wnoszenie: {
+    tytul: 'Wnoszenie materiału',
+    /* Wskazanie pliku okienkiem systemowym nie ma pokrycia w kontrakcie:
+       komendy biorą położenie widziane przez rdzeń, a przeglądarka takiego
+       położenia nie zna. Zdanie stoi w widoku zamiast przycisku-atrapy. */
+    bezOkienka: 'Wskazanie pliku okienkiem systemowym jeszcze nie działa. Wpisz położenie pliku takie, jakie widzi je aplikacja.',
+  },
+
   urzadzenia: {
     tytul: 'Urządzenia wejściowe',
     ladowanie: 'Sprawdzanie urządzeń wejściowych…',
@@ -13,6 +32,10 @@ export const tresciPliki = {
     podajnik: 'z podajnikiem',
     skanuj: 'Skanuj',
     skanowanie: 'Skanowanie…',
+    rodzaj: {
+      skaner: 'Skaner',
+      kamera: 'Kamera',
+    },
   },
 
   kolejka: {
@@ -23,7 +46,9 @@ export const tresciPliki = {
     stron: { jedna: 'strona', kilka: 'strony', wiele: 'stron' },
     pewnosc: 'pewność rozpoznania',
     zPisma: 'tekst z rozpoznania pisma',
-    odrzucona: 'Tej pozycji nie udało się wczytać. Usuń ją z kolejki i spróbuj dodać plik ponownie.',
+    /* Usunięcia pozycji z kolejki nie ma dziś czym wykonać, więc zdanie nie
+       może o nie prosić — kieruje na jedyną drogę, która działa naprawdę. */
+    odrzucona: 'Tej pozycji nie udało się wczytać. Dodaj plik ponownie; usuwanie pozycji z kolejki jeszcze nie działa.',
   },
 
   stan: {
@@ -44,6 +69,21 @@ export const tresciPliki = {
     etykieta: 'Adres strony',
     dolacz: 'Dołącz stronę',
     dolaczanie: 'Pobieranie strony…',
+  },
+
+  wprost: {
+    etykieta: 'Położenie pliku wnoszonego do edytora',
+    plik: 'Wnieś do edytora',
+    pdf: 'Wnieś PDF',
+    wnoszenie: 'Wnoszenie…',
+    bilans: 'Wniesiono do edytora',
+    stronyZTekstem: 'stron z tekstem',
+    akapity: 'akapitów',
+    tabele: 'tabel',
+    tabeleNierozpoznane: 'układów tabelarycznych nierozpoznanych',
+    obrazy: 'obrazów',
+    obrazyPominiete: 'obrazów pominiętych',
+    bezWarstwyTekstu: 'Plik nie niesie warstwy tekstowej. Pozycja stanęła w kolejce — rozpoznaj ją, zanim przyjmiesz wynik.',
   },
 
   dzialania: {
@@ -74,5 +114,6 @@ export const tresciPliki = {
     przyjecie: 'Nie udało się przyjąć do edytora',
     adres: 'Nie udało się pobrać strony',
     skan: 'Nie udało się uruchomić skanowania',
+    wniesienie: 'Nie udało się wnieść pliku do edytora',
   },
 } as const;

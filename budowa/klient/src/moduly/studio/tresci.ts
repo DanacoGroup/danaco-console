@@ -83,16 +83,22 @@ export const tresci = {
     opis: 'W tej wersji programu ta karta nie ma czynności.',
   },
 
+  /* Kanwa dokumentu — strefa „Studio Editor" prototypu. Tytuł i treść są
+     polami rdzenia; stan pusty jest nazwany, bo dokument bez treści wygląda
+     tak samo jak dokument niewczytany. */
   dokument: {
     tytul: 'Studio Editor',
+    rolaOkna: 'okno wiodące',
     nazwaNowego: 'Dokument bez tytułu',
     zakladanie: 'Otwieranie okna roboczego…',
+    etykietaTytulu: 'Tytuł dokumentu',
     etykietaTresci: 'Treść dokumentu',
-    zapisz: 'Zapisz',
-    zapisywanie: 'Zapisywanie…',
-    zapisany: 'Zapisano',
-    wersja: 'wersja',
-    bezWersji: 'bez wersji',
+    zapisz: 'Zapisz wersję',
+    konfiguracja: 'Konfiguracja okna',
+    zapowiedziane: 'Ta czynność wejdzie w kolejnym wydaniu.',
+    pusty: 'Dokument jest pusty — zacznij pisać.',
+    odmowaZmiany: 'Zmiana nie została zapisana.',
+    odmowaZapisu: 'Dokument nie został zapisany.',
   },
 
   /* Pasek narzędziowy edytora — strefa `dn-edytor-pasek` prototypu. Etykiety
@@ -138,6 +144,7 @@ export const tresci = {
     kanal: 'Żaden model nie jest dostępny',
     okno: 'Nie udało się otworzyć okna modułu',
     dokument: 'Nie udało się założyć dokumentu',
+    otwarcie: 'Nie udało się wczytać dokumentu',
     zapis: 'Nie udało się zapisać dokumentu',
   },
 

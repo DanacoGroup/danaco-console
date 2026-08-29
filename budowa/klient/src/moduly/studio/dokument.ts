@@ -39,6 +39,11 @@ export interface PanelDokumentu {
   wezel: HTMLElement;
   /** Zdejmuje panel; wynik wywołania w locie ląduje w nicości. */
   zdejmij(): void;
+  /* Okno i sesja powstają tu, bo bez nich żadna komenda Studia nie ma gdzie stanąć.
+     Pozostałe panele czytają je stąd — odczytem, nie kopią, bo w chwili montażu
+     okna jeszcze nie ma: zakładanie jest wywołaniem do rdzenia. */
+  idOkna(): string | null;
+  idSesji(): string | null;
 }
 
 type StanZapisu = 'spoczynek' | 'zapisuje' | 'zapisany';
@@ -57,6 +62,7 @@ const KATALOGI_ROBOCZE: string[] = [];
 export function panelDokumentu(w: NastawyDokumentu): PanelDokumentu {
   let zdjete = false;
   let okno = '';
+  let sesjaBiezaca: string | null = null;
 
   const tresc = el('div', { klasa: 'sta-okno-tresc' });
   const wezel = el(
@@ -223,6 +229,8 @@ export function panelDokumentu(w: NastawyDokumentu): PanelDokumentu {
   }
 
   return {
+    idOkna: () => okno,
+    idSesji: () => sesjaBiezaca,
     wezel,
     zdejmij() {
       zdjete = true;

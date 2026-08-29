@@ -126,12 +126,12 @@ func bladNosnikaNarzedziSesji(przyczyna error) error {
 	if przyczyna == nil {
 		return protocol.JakoError(protocol.NowyBlad(shared.ErrorCodeInternalError,
 			"dołożenia sesji: trwałość dołożeń niewpięta, migracja 122 nie ma nośnika; "+
-				"Operator uruchomi rdzeń z bazą danych — dołożenie ma przeżyć rozłączenie "+
+				"Operator uruchomi serwer z bazą danych — dołożenie ma przeżyć rozłączenie "+
 				"klienta, a w pamięci gniazda by nie przeżyło"))
 	}
 	return protocol.JakoError(protocol.NowyBlad(shared.ErrorCodeInternalError,
 		"dołożenia sesji: "+przyczyna.Error()+"; Operator powtórzy czynność, a przy "+
-			"nawrocie sprawdzi dziennik rdzenia — żądanie było poprawne, zawiódł nośnik"))
+			"nawrocie sprawdzi dziennik serwera — żądanie było poprawne, zawiódł nośnik"))
 }
 
 // niedostepnaPozycja nazywa powód, dla którego wskazanej pozycji katalogu nie da się dołożyć do sesji.

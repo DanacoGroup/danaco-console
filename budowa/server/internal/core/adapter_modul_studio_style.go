@@ -605,7 +605,7 @@ func (a *adapterStudia) UsunStyl(ctx context.Context,
 	if postacStylFabryczny(stan.forma.Styles, nazwa) {
 		return shared.StudioStyleDeleteResponse{}, bladWskazaniaStudio(
 			"styl „" + nazwa + "” jest fabryczny i nie da się go usunąć — " +
-				"arkusz fabryczny jest wiedzą rdzenia, nie zapisem Operatora")
+				"arkusz fabryczny jest wiedzą serwera, nie zapisem Operatora")
 	}
 	skladnica, err := a.postacSkladnica()
 	if err != nil {

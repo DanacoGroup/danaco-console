@@ -130,8 +130,8 @@ func (a *adapterNarzedziDokumentu) wolaj(ctx context.Context, n zewnetrzne.Narze
 
 	if a.uruchamiacz == nil {
 		return nil, odmowaDokumentu(shared.ErrorCodeInternalError,
-			"rdzeń nie ma uruchamiacza procesów, więc narzędzie "+n.Nazwa+
-				" nie ma czym wystartować; naprawa: podpiąć warstwę kanału przy składaniu rdzenia")
+			"serwer nie ma uruchamiacza procesów, więc narzędzie "+n.Nazwa+
+				" nie ma czym wystartować; naprawa: podpiąć warstwę kanału przy składaniu serwera")
 	}
 	okno, zasady, obszar := a.zasiegDokumentu()
 	wynik, err := zewnetrzne.Wolaj(ctx, a.uruchamiacz, okno, zasady, obszar, n, argumenty, "", granica)
@@ -235,9 +235,9 @@ func (a *adapterNarzedziDokumentu) zrodloZZasobu(ctx context.Context, kod string
 
 	if a.zasobyDesignu == nil && a.biblioteka == nil {
 		return zrodloDokumentu{}, odmowaDokumentu(shared.ErrorCodeInternalError,
-			"wskazano assetId, a rdzeń nie ma wpiętego żadnego magazynu zasobów — "+
+			"wskazano assetId, a serwer nie ma wpiętego żadnego magazynu zasobów — "+
 				"naprawa: podpiąć repozytorium zasobów designu albo biblioteki przy "+
-				"składaniu rdzenia; do czasu naprawy materiał podaje się polem "+
+				"składaniu serwera; do czasu naprawy materiał podaje się polem "+
 				"sourcePath albo content")
 	}
 

@@ -60,7 +60,7 @@ func (a *adapterDesignu) WyrysujKompozycje(ctx context.Context,
 	if len(kafle) == 0 {
 		return shared.DesignBoardExportResponse{}, bladWskazaniaDesignu(fmt.Sprintf(
 			"kompozycja %s nie ma ani jednej warstwy z bajtami do wyrysowania "+
-				"(warstw pominiętych: %d) — rdzeń odmawia zamiast oddać pusty prostokąt",
+				"(warstw pominiętych: %d) — serwer odmawia zamiast oddać pusty prostokąt",
 			kompozycja.Kod, pominietych))
 	}
 

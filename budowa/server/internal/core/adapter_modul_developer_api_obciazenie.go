@@ -65,9 +65,9 @@ func (a *adapterDevelopera) WykonajPrzebiegObciazeniowy(ctx context.Context,
 	if a.uruchamiacz == nil {
 		return shared.DeveloperApiLoadRunResponse{}, protocol.JakoError(
 			protocol.NowyBlad(shared.ErrorCodeChannelUnavailable,
-				"moduł Developer: rdzeń nie ma uruchamiacza procesów — przebieg obciążeniowy "+
+				"moduł Developer: serwer nie ma uruchamiacza procesów — przebieg obciążeniowy "+
 					"nie ma czym wystartować; naprawa: podpiąć warstwę kanału (injection) "+
-					"przy składaniu rdzenia"))
+					"przy składaniu serwera"))
 	}
 
 	podstawienia, err := a.podstawieniaSrodowiska(ctx, okno.Id, z.EnvironmentId)
@@ -284,7 +284,7 @@ func bladProgramuDevelopera(komenda string, err error, trwanie, granica time.Dur
 	if granica > 0 && trwanie >= granica {
 		return protocol.JakoError(protocol.NowyBlad(shared.ErrorCodeChannelUnavailable,
 			"moduł Developer: komenda "+komenda+" przekroczyła granicę czasu "+granica.String()+
-				" — to jest przekroczenie granicy, nie usterka rdzenia; naprawa: skrócić czas "+
+				" — to jest przekroczenie granicy, nie usterka serwera; naprawa: skrócić czas "+
 				"trwania przebiegu polem durationSeconds. Diagnostyka warstwy: "+err.Error()))
 	}
 	return protocol.JakoError(protocol.NowyBlad(shared.ErrorCodeChannelUnavailable,

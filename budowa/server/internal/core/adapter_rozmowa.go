@@ -159,7 +159,7 @@ func (a *adapterRozmowy) prowadzTure(kontekst context.Context, okno session.Okno
 			return
 		}
 		if a != nil && a.mosty != nil && a.mosty.dziennik != nil {
-			a.mosty.dziennik.Printf("tura okna %q przerwana usterką rdzenia: %v\n%s",
+			a.mosty.dziennik.Printf("tura okna %q przerwana usterką serwera: %v\n%s",
 				okno.Id, powod, debug.Stack())
 		}
 	}()

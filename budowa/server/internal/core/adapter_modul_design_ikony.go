@@ -60,8 +60,8 @@ func (a *adapterDesignu) SzukajIkon(_ context.Context,
 		!strings.EqualFold(strings.TrimSpace(*z.Set), zestawIkonKataloguDesignu) {
 
 		return shared.DesignIconLibrarySearchResponse{}, bladWskazaniaDesignu(fmt.Sprintf(
-			"komenda design.icon.library.search z zestawem %q, którego rdzeń nie ma; zestawy "+
-				"w katalogu rdzenia: %s", *z.Set, strings.Join(zestawyIkonDesignu(), ", ")))
+			"komenda design.icon.library.search z zestawem %q, którego serwer nie ma; zestawy "+
+				"w katalogu serwera: %s", *z.Set, strings.Join(zestawyIkonDesignu(), ", ")))
 	}
 
 	fraza := ""
@@ -141,7 +141,7 @@ func (a *adapterDesignu) UstawIkone(ctx context.Context,
 		kod = strings.TrimSpace(*z.IconId)
 		if strings.HasPrefix(kod, zestawIkonKataloguDesignu+"/") {
 			return shared.DesignIconSetResponse{}, bladWskazaniaDesignu(fmt.Sprintf(
-				"ikona %s należy do katalogu WKOMPILOWANEGO w binarium rdzenia i nie daje się "+
+				"ikona %s należy do katalogu WKOMPILOWANEGO w binarium serwera i nie daje się "+
 					"nadpisać — inaczej dwie instalacje produktu miałyby dwa różne katalogi pod tą "+
 					"samą nazwą; pomiń pole iconId, żeby założyć własną ikonę z tego wzoru", kod))
 		}
@@ -278,7 +278,7 @@ func (a *adapterDesignu) GenerujIkony(ctx context.Context,
 	}
 	if len(z.Concepts) == 0 {
 		return shared.DesignIconGenerateResponse{}, bladWskazaniaDesignu(
-			"komenda design.icon.generate bez ani jednego pojęcia: rdzeń nie wymyśla, jakie ikony " +
+			"komenda design.icon.generate bez ani jednego pojęcia: serwer nie wymyśla, jakie ikony " +
 				"Operator potrzebuje")
 	}
 	siatka := siatkaIkonyKataloguDesignu
@@ -345,8 +345,8 @@ func (a *adapterDesignu) GenerujIkony(ctx context.Context,
 
 	if len(ikony) == 0 {
 		return shared.DesignIconGenerateResponse{}, bladWskazaniaDesignu(fmt.Sprintf(
-			"żadne z pojęć (%s) nie trafiło w katalog wkompilowany rdzenia, a kanał modelu nie "+
-				"był wskazany albo nie oddał dokumentu SVG — rdzeń nie zakłada ikon pustych; "+
+			"żadne z pojęć (%s) nie trafiło w katalog wkompilowany serwera, a kanał modelu nie "+
+				"był wskazany albo nie oddał dokumentu SVG — serwer nie zakłada ikon pustych; "+
 				"naprawa: użyć nazw z katalogu (design.icon.library.search) albo wskazać "+
 				"channelId kanału tekstowego", strings.Join(nieudane, ", ")))
 	}
@@ -520,7 +520,7 @@ func (a *adapterDesignu) ZbudujFavicone(ctx context.Context,
 		for _, rozmiar := range z.Sizes {
 			if rozmiar < 1 || rozmiar > 1024 {
 				return shared.DesignFaviconBuildResponse{}, bladWskazaniaDesignu(fmt.Sprintf(
-					"komenda design.favicon.build z rozmiarem %d: rdzeń wydaje ikony witryny "+
+					"komenda design.favicon.build z rozmiarem %d: serwer wydaje ikony witryny "+
 						"o boku od 1 do 1024", rozmiar))
 			}
 			rozmiary = append(rozmiary, rozmiar)
@@ -620,7 +620,7 @@ func (a *adapterDesignu) ZaproponujZestawieniaKrojow(ctx context.Context,
 	if z.Count != nil {
 		if *z.Count < 1 || *z.Count > 24 {
 			return shared.DesignFontPairSuggestResponse{}, bladWskazaniaDesignu(fmt.Sprintf(
-				"komenda design.font.pair.suggest z liczbą propozycji %d: rdzeń liczy od 1 do 24",
+				"komenda design.font.pair.suggest z liczbą propozycji %d: serwer liczy od 1 do 24",
 				*z.Count))
 		}
 		ile = *z.Count
@@ -639,11 +639,11 @@ func (a *adapterDesignu) ZaproponujZestawieniaKrojow(ctx context.Context,
 	pary := zestawieniaKrojowRdzeniaDesignu(z, ile)
 	if len(pary) == 0 {
 		return shared.DesignFontPairSuggestResponse{}, bladWskazaniaDesignu(fmt.Sprintf(
-			"rdzeń ma za mało krojów, żeby złożyć choć jedno zestawienie (krojów wkompilowanych: "+
+			"serwer ma za mało krojów, żeby złożyć choć jedno zestawienie (krojów wkompilowanych: "+
 				"%d, krojów tej maszyny: %d)",
 			len(krojeWkompilowaneDesignu), len(przegladajKrojeSerweraDesignu())))
 	}
-	return shared.DesignFontPairSuggestResponse{Pairs: pary, Source: "reguła rdzenia"}, nil
+	return shared.DesignFontPairSuggestResponse{Pairs: pary, Source: "reguła serwera"}, nil
 }
 
 // zlozPolecenieZestawienKrojowDesignu składa polecenie dla kanału modelu. Wykaz
@@ -663,7 +663,7 @@ func zlozPolecenieZestawienKrojowDesignu(z shared.DesignFontPairSuggestRequest, 
 		nazwy = nazwy[:40]
 	}
 	fmt.Fprintf(&polecenie,
-		"Wybieraj WYŁĄCZNIE z krojów, jakimi rdzeń dysponuje: %s. "+
+		"Wybieraj WYŁĄCZNIE z krojów, jakimi serwer dysponuje: %s. "+
 			"Każde zestawienie w osobnym wierszu w postaci: nagłówek | tekst | powód.",
 		strings.Join(nazwy, ", "))
 	return polecenie.String()
@@ -777,8 +777,8 @@ func zlozPowodZestawieniaDesignu(naglowek, tekst string, charakter *string) stri
 	powod := fmt.Sprintf("nagłówek %s ma większą masę niż tekst %s, więc para daje hierarchię "+
 		"bez zmiany rodziny", naglowek, tekst)
 	if charakter != nil && strings.TrimSpace(*charakter) != "" {
-		powod += fmt.Sprintf("; charakter wskazany przez Operatora (%s) rdzeń przekazuje dalej "+
-			"bez oceny — reguła rdzenia mierzy masę i szeryfy, nie nastrój",
+		powod += fmt.Sprintf("; charakter wskazany przez Operatora (%s) serwer przekazuje dalej "+
+			"bez oceny — reguła serwera mierzy masę i szeryfy, nie nastrój",
 			strings.TrimSpace(*charakter))
 	}
 	return powod
@@ -800,7 +800,7 @@ func (a *adapterDesignu) PodgladKroju(_ context.Context,
 	for _, rozmiar := range rozmiary {
 		if rozmiar <= 0 || rozmiar > 512 {
 			return shared.DesignFontPreviewResponse{}, bladWskazaniaDesignu(fmt.Sprintf(
-				"komenda design.font.preview z rozmiarem %v: rdzeń składa podgląd od 1 do 512", rozmiar))
+				"komenda design.font.preview z rozmiarem %v: serwer składa podgląd od 1 do 512", rozmiar))
 		}
 	}
 	tekst := domyslnyTekstProbnyDesignu
@@ -955,7 +955,7 @@ func (a *adapterDesignu) GlifyKroju(_ context.Context,
 	if z.Limit != nil {
 		if *z.Limit < 1 || *z.Limit > granicaGlifowOdpowiedziDesignu {
 			return shared.DesignFontGlyphsGetResponse{}, bladWskazaniaDesignu(fmt.Sprintf(
-				"komenda design.font.glyphs.get z granicą %d: rdzeń oddaje od 1 do %d glifów, "+
+				"komenda design.font.glyphs.get z granicą %d: serwer oddaje od 1 do %d glifów, "+
 					"bo każdy niesie kontur", *z.Limit, granicaGlifowOdpowiedziDesignu))
 		}
 		granica = *z.Limit
@@ -982,7 +982,7 @@ func (a *adapterDesignu) ikonaPoKodzieDesignu(ctx context.Context,
 		wzor, jest := ikonaKataloguDesignu(nazwa)
 		if !jest {
 			return shared.DesignIcon{}, bladNieznanegoBytuDesignu(
-				"wzoru ikony " + nazwa + " nie ma w katalogu wkompilowanym rdzenia")
+				"wzoru ikony " + nazwa + " nie ma w katalogu wkompilowanym serwera")
 		}
 		return ikonaKataloguKontraktuDesignu(wzor, siatkaIkonyKataloguDesignu,
 			gruboscObrysuIkonyDomyslna), nil
@@ -1013,7 +1013,7 @@ func ikonaWlasnaKontraktuDesignu(wiersz dane.IkonaDesignu) shared.DesignIcon {
 // błędu not_found, nie awarią.
 func bladNieznanejIkonyDesignu(kod string, err error) error {
 	if czyBrakZasobuDesignu(err) {
-		return bladNieznanegoBytuDesignu("ikony " + kod + " nie ma w tym rdzeniu")
+		return bladNieznanegoBytuDesignu("ikony " + kod + " nie ma w tym serwerze")
 	}
 	return bladDesignu(err)
 }

@@ -222,7 +222,7 @@ func (a *adapterDevelopera) ZapiszKolekcjeApi(ctx context.Context,
 	}
 	if a.repozytorium == nil {
 		return shared.DeveloperApiCollectionSaveResponse{}, bladZasobuDevelopera(
-			"rdzeń nie ma miejsca na kolekcje zapytań")
+			"serwer nie ma miejsca na kolekcje zapytań")
 	}
 	nazwa := strings.TrimSpace(z.Name)
 	if nazwa == "" {
@@ -273,7 +273,7 @@ func (a *adapterDevelopera) WykazKolekcjiApi(ctx context.Context,
 	}
 	if a.repozytorium == nil {
 		return shared.DeveloperApiCollectionListResponse{}, bladZasobuDevelopera(
-			"rdzeń nie ma miejsca na kolekcje zapytań")
+			"serwer nie ma miejsca na kolekcje zapytań")
 	}
 	kod := strings.TrimSpace(tekstWskazaniaDevelopera(z.CollectionId))
 	wiersze, err := a.repozytorium.KolekcjeApi(ctx, okno.Id, kod)
@@ -315,7 +315,7 @@ func (a *adapterDevelopera) ImportujOpenapi(ctx context.Context,
 	}
 	if a.repozytorium == nil {
 		return shared.DeveloperApiOpenapiImportResponse{}, bladZasobuDevelopera(
-			"rdzeń nie ma miejsca na kolekcje zapytań")
+			"serwer nie ma miejsca na kolekcje zapytań")
 	}
 
 	dokument, zrodlo, err := a.wczytajKontraktOpenapi(ctx, okno.Id, z)

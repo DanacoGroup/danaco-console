@@ -30,7 +30,7 @@ func (a *adapterMacierzy) KodySrodowisk(ctx context.Context) (map[int64][]string
 	}
 	kody, err := a.macierz.KodySrodowiskModulow(ctx)
 	if err != nil {
-		return nil, fmt.Errorf("rdzeń: nie można odczytać macierzy widoczności: %w", err)
+		return nil, fmt.Errorf("serwer: nie można odczytać macierzy widoczności: %w", err)
 	}
 	return kody, nil
 }
@@ -39,7 +39,7 @@ func (a *adapterMacierzy) KodySrodowisk(ctx context.Context) (map[int64][]string
 // macierz to nie to samo co macierz nieodczytana.
 func (a *adapterMacierzy) sprawdzKatalog() error {
 	if a.macierz == nil {
-		return fmt.Errorf("rdzeń: repozytorium macierzy widoczności nie jest wpięte")
+		return fmt.Errorf("serwer: repozytorium macierzy widoczności nie jest wpięte")
 	}
 	return nil
 }

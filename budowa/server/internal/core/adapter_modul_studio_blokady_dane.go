@@ -136,7 +136,7 @@ type KontrolaPracyStudia interface {
 // brakiem montażu rdzenia, nie brakiem funkcji produktu — i tak się nazywa.
 func (a *adapterStudia) kontrolaSkladnica() (KontrolaPracyStudia, error) {
 	if a == nil || a.repozytorium == nil {
-		return nil, kontrolaBladZaplecza("repozytorium Studia nie zostało podane przy montażu rdzenia")
+		return nil, kontrolaBladZaplecza("repozytorium Studia nie zostało podane przy montażu serwera")
 	}
 	skladnica, jest := a.repozytorium.(KontrolaPracyStudia)
 	if !jest {

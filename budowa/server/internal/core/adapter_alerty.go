@@ -321,7 +321,7 @@ func sprawdzRodzajReguly(rodzaj shared.AlertRuleKind) error {
 		return nil
 	default:
 		return bladWskazaniaAlertu("nie znam rodzaju reguły „" + string(rodzaj) +
-			"” — rdzeń zna: threshold, anomaly, newFingerprint")
+			"” — serwer zna: threshold, anomaly, newFingerprint")
 	}
 }
 
@@ -334,7 +334,7 @@ func sprawdzKanalAlertu(kanal shared.AlertChannel) error {
 		return nil
 	default:
 		return bladWskazaniaAlertu("nie znam drogi dostarczenia „" + string(kanal) +
-			"” — rdzeń zna: app, alwaysOnDisplay, mail, webhook")
+			"” — serwer zna: app, alwaysOnDisplay, mail, webhook")
 	}
 }
 
@@ -354,8 +354,8 @@ func zapisLiczbyMiary(wartosc float64) string {
 // świadczący o niepełnym złożeniu adaptera przy starcie serwera.
 func bladZapleczaAlertow() error {
 	return protocol.JakoError(protocol.NowyBlad(shared.ErrorCodeInternalError,
-		"alerty: rdzeń nie ma wpiętego magazynu reguł — naprawa: podpiąć "+
-			"repozytorium alertów przy składaniu rdzenia"))
+		"alerty: serwer nie ma wpiętego magazynu reguł — naprawa: podpiąć "+
+			"repozytorium alertów przy składaniu serwera"))
 }
 
 // bladWskazaniaAlertu nazywa niepoprawne żądanie operatora, przenosząc powód

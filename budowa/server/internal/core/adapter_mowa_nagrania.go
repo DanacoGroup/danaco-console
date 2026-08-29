@@ -51,7 +51,7 @@ func (a *adapterMowy) PrzyjmijNagranie(ctx context.Context,
 
 	if a.nagrania == nil {
 		return shared.SpeechAudioUploadResponse{}, bladZapleczaNagran(
-			"rdzeń nie ma wpiętego rejestru nagrań")
+			"serwer nie ma wpiętego rejestru nagrań")
 	}
 	if strings.TrimSpace(z.Audio) == "" {
 		return shared.SpeechAudioUploadResponse{}, bladWskazaniaNagrania(
@@ -179,7 +179,7 @@ func (a *adapterMowy) rozstrzygnijOdnosnikNagrania(ctx context.Context,
 	}
 	podstawa := strings.TrimSpace(a.katalogDanych)
 	if podstawa == "" {
-		return "", "", bladZapleczaNagran("rdzeń nie zna katalogu danych — nie ma jak " +
+		return "", "", bladZapleczaNagran("serwer nie zna katalogu danych — nie ma jak " +
 			"rozstrzygnąć, czy ten odnośnik wolno odsłuchać")
 	}
 	korzen, err := filepath.Abs(podstawa)
@@ -189,13 +189,13 @@ func (a *adapterMowy) rozstrzygnijOdnosnikNagrania(ctx context.Context,
 	wzgledna, err := filepath.Rel(korzen, sciezka)
 	if err != nil || wzgledna == ".." || strings.HasPrefix(wzgledna, ".."+string(filepath.Separator)) {
 		return "", "", protocol.JakoError(protocol.NowyBlad(shared.ErrorCodePermissionDenied,
-			"nagrania mowy: odnośnik "+odnosnik+" nie jest nagraniem rdzenia — "+
+			"nagrania mowy: odnośnik "+odnosnik+" nie jest nagraniem serwera — "+
 				"odsłuch oddaje wyłącznie nagrania przyjęte przez speech.audio.upload "+
 				"oraz wytworzone przez translate.speech.synthesize, a nie dowolny plik dysku"))
 	}
 	if !mowa.FormatPrzyjmowany(sciezka) {
 		return "", "", bladWskazaniaNagrania("plik " + odnosnik +
-			" nie ma rozszerzenia nagrania przyjmowanego przez rdzeń")
+			" nie ma rozszerzenia nagrania przyjmowanego przez serwer")
 	}
 	return sciezka, typTresciZeSciezki(sciezka), nil
 }
@@ -206,7 +206,7 @@ func (a *adapterMowy) rozstrzygnijOdnosnikNagrania(ctx context.Context,
 func (a *adapterMowy) katalogNagran() (string, error) {
 	podstawa := strings.TrimSpace(a.katalogDanych)
 	if podstawa == "" {
-		return "", bladZapleczaNagran("rdzeń nie zna katalogu danych — nie ma gdzie zapisać " +
+		return "", bladZapleczaNagran("serwer nie zna katalogu danych — nie ma gdzie zapisać " +
 			"nagrania; naprawa: wskazać katalog danych przełącznikiem -dane albo zmienną " +
 			"DANACO_KATALOG_DANYCH")
 	}
@@ -280,7 +280,7 @@ var typyTresciNagran = map[string]string{
 func rozszerzenieNagrania(typTresci string) (string, error) {
 	klucz := strings.ToLower(strings.TrimSpace(typTresci))
 	if klucz == "" {
-		return "", bladWskazaniaNagrania("żądanie bez typu treści — rdzeń nie zgaduje formatu " +
+		return "", bladWskazaniaNagrania("żądanie bez typu treści — serwer nie zgaduje formatu " +
 			"nagrania, bo od formatu zależy, czy silnik mowy plik otworzy")
 	}
 	if rozszerzenie, jest := typyTresciNagran[klucz]; jest {
@@ -292,7 +292,7 @@ func rozszerzenieNagrania(typTresci string) (string, error) {
 		}
 	}
 	return "", bladWskazaniaNagrania("nie znam typu treści „" + typTresci +
-		"” — rdzeń przyjmuje: audio/wav, audio/ogg, audio/mp4, audio/webm")
+		"” — serwer przyjmuje: audio/wav, audio/ogg, audio/mp4, audio/webm")
 }
 
 // typTresciZeSciezki odgaduje typ treści z rozszerzenia pliku. Używane wyłącznie
@@ -330,7 +330,7 @@ func bladZapleczaNagran(powod string) error {
 // wyłącznie nagranie w całości, nigdy zakresu czasowego.
 func bladWycinkaNagrania() error {
 	return protocol.JakoError(protocol.NowyBlad(shared.ErrorCodeValidationFailed,
-		"nagrania mowy: rdzeń nie wycina fragmentu nagrania — wycięcie z zapisu "+
+		"nagrania mowy: serwer nie wycina fragmentu nagrania — wycięcie z zapisu "+
 			"skompresowanego wymaga przekodowania, a przekodowany dźwięk nie jest tym "+
 			"samym, który przyszedł; przewijanie odpowiedzi robi okno na pobranym "+
 			"nagraniu, u siebie"))

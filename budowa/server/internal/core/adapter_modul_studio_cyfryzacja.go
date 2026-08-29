@@ -537,7 +537,7 @@ func materialWPnm(sciezka, katalog string) (string, error) {
 	if err != nil {
 		return "", protocol.JakoError(protocol.NowyBlad(shared.ErrorCodeValidationFailed,
 			"moduł Studio: obróbka wstępna obrazu dotyczy skanu i zdjęcia kartki, a materiału "+
-				"pozycji rdzeń nie umie odczytać jako obrazu ("+err.Error()+
+				"pozycji serwer nie umie odczytać jako obrazu ("+err.Error()+
 				"); naprawa: wyłączyć w nastawach obróbkę wstępną albo podać materiał "+
 				"w formacie obrazu (PNG, JPEG, TIFF, BMP, WEBP, GIF, PNM)"))
 	}

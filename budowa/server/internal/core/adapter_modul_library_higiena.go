@@ -63,7 +63,7 @@ func (a *adapterBiblioteki) SkanujDuplikaty(ctx context.Context,
 			grupy = append(grupy, a.grupyPrzyblizone(zasoby, prog, true)...)
 		default:
 			return shared.LibraryDuplicateScanResponse{}, bladWskazaniaBiblioteki(
-				"rodzaj rozpoznania " + string(rodzaj) + " nie ma odwzorowania w rdzeniu")
+				"rodzaj rozpoznania " + string(rodzaj) + " nie ma odwzorowania w serwerze")
 		}
 	}
 	sort.SliceStable(grupy, func(pierwsza, druga int) bool {

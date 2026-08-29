@@ -134,7 +134,7 @@ func (a *adapterDesignu) Powieksz(ctx context.Context,
 
 	if z.Factor != 2 && z.Factor != 4 && z.Factor != 8 {
 		return shared.DesignPhotoUpscaleResponse{}, bladWskazaniaDesignu(fmt.Sprintf(
-			"komenda design.photo.upscale z krotnością %d: rdzeń powiększa 2, 4 albo 8 razy — "+
+			"komenda design.photo.upscale z krotnością %d: serwer powiększa 2, 4 albo 8 razy — "+
 				"krotność pośrednia daje ten sam wynik co przeliczenie rozdzielczości "+
 				"(design.photo.resample)", z.Factor))
 	}
@@ -289,7 +289,7 @@ func (a *adapterDesignu) Wyretuszuj(ctx context.Context,
 
 	if len(z.Regions) == 0 {
 		return shared.DesignPhotoRetouchResponse{}, bladWskazaniaDesignu(
-			"komenda design.photo.retouch bez ani jednego obszaru: rdzeń nie zgaduje, co na " +
+			"komenda design.photo.retouch bez ani jednego obszaru: serwer nie zgaduje, co na " +
 				"zdjęciu jest niedoskonałością")
 	}
 	tryb := shared.DesignPhotoRetouchMode(shared.DesignPhotoRetouchModeHeal)
@@ -327,7 +327,7 @@ func (a *adapterDesignu) Domaluj(ctx context.Context,
 	maZaMaske := z.MaskAssetId != nil && strings.TrimSpace(*z.MaskAssetId) != ""
 	if !maZaMaske && len(z.Regions) == 0 {
 		return shared.DesignPhotoInpaintResponse{}, bladWskazaniaDesignu(
-			"komenda design.photo.inpaint bez maski i bez obszarów: rdzeń nie zgaduje, który " +
+			"komenda design.photo.inpaint bez maski i bez obszarów: serwer nie zgaduje, który " +
 				"fragment zdjęcia domalować")
 	}
 	if err := a.sprawdzKanalObrazowyFotografiiDesignu(z.ChannelId); err != nil {
@@ -499,7 +499,7 @@ func (a *adapterDesignu) OdetnijTlo(ctx context.Context,
 				"komenda design.photo.background.remove: kanał %s oddał obraz bez ani jednego "+
 					"punktu przezroczystego — to nie jest odcięcie tła, a odpowiedź `hasAlpha: true` "+
 					"nad takim plikiem byłaby nieprawdą; naprawa: sprawdzić, czy punkt końcowy kanału "+
-					"oddaje PNG z kanałem krycia, albo pominąć channelId i policzyć rachunkiem rdzenia",
+					"oddaje PNG z kanałem krycia, albo pominąć channelId i policzyć rachunkiem serwera",
 				strings.TrimSpace(*z.ChannelId)))
 		}
 		droga = shared.DesignPhotoComputeRouteKanalModelu
@@ -507,7 +507,7 @@ func (a *adapterDesignu) OdetnijTlo(ctx context.Context,
 		wynik, udzial = odetnijTloRachunkiemDesignu(obraz, tolerancja)
 		if udzial == 0 {
 			return shared.DesignPhotoBackgroundRemoveResponse{}, bladWskazaniaDesignu(fmt.Sprintf(
-				"przy tolerancji %.2f rdzeń nie uznał ANI JEDNEGO punktu za tło — zasób oddany "+
+				"przy tolerancji %.2f serwer nie uznał ANI JEDNEGO punktu za tło — zasób oddany "+
 					"jako „bez tła\" byłby kopią źródła; naprawa: podnieść tolerancję albo wskazać "+
 					"zdjęcie na jednolitym tle", tolerancja))
 		}

@@ -13,7 +13,7 @@ ROBOCZY="$PAKOWANIE/roboczy"
 
 # Wersji nie jest podnoszona, bo żadne wydanie nie było jeszcze w użytku; numer
 # wersji zostaje pod kontrolą operatora wydania.
-WERSJA="${DANACO_WERSJA:-1.0.0}"
+WERSJA="${DANACO_WERSJA:-2.0.0}"
 DATA="$(date +%Y-%m-%d)"
 KATALOG_WYDANIA="${DANACO_KATALOG_WYDANIA:-$BUDOWA/wydania/$WERSJA-$DATA}"
 
@@ -37,7 +37,18 @@ ARCHITEKTURA="$(dpkg --print-architecture)"
 # dla tej samej rodziny maszyn, na której stoi to drzewo.
 if [ "$BEZ_BUDOWY" = "nie" ]; then
 	zglos "budowa rdzenia i serwera narzędzi ($ARCHITEKTURA)"
-	(cd "$BUDOWA" && go build -o "$PAKOWANIE/danaco-console" ./server/cmd/danaco-console) ||
+	# Hasło skrzynki nadawczej wchodzi przy składaniu, nie ze źródła: repozytorium
+	# go nie niesie, więc kopia drzewa nie daje dostępu do poczty platformy.
+	# Pakiet złożony bez tej zmiennej działa — rdzeń bierze hasło ze środowiska
+	# maszyny wdrożenia, a bez niego wchodzi w drogę bez poczty.
+	WPIS_SEKRETU=""
+	if [ -n "${DANACO_NADAWCA_SEKRET:-}" ]; then
+		WPIS_SEKRETU="-X danacoconsole/server/internal/konfiguracja.NadawcaSekretWbudowany=$DANACO_NADAWCA_SEKRET"
+		printf '  hasło skrzynki nadawczej: wpisane w pakiet\n'
+	else
+		printf '  hasło skrzynki nadawczej: BRAK — pakiet weźmie je ze środowiska maszyny\n'
+	fi
+	(cd "$BUDOWA" && go build -ldflags "$WPIS_SEKRETU" -o "$PAKOWANIE/danaco-console" ./server/cmd/danaco-console) ||
 		padnij "rdzeń się nie zbudował"
 	(cd "$BUDOWA" && go build -o "$PAKOWANIE/danaco-narzedzia" ./server/cmd/danaco-narzedzia) ||
 		padnij "serwer narzędzi się nie zbudował"
@@ -101,14 +112,15 @@ else
 	padnij "nie ma katalogu pomocników: $BUDOWA/pomocniki — bez niego pakiet nie postawi mowy"
 fi
 
-# Cztery dokumenty produktu z korzenia repozytorium trafiają do pakietu jako
-# dokumentacja instalowana wraz z usługą.
+# Cztery dokumenty produktu trafiają do pakietu jako dokumentacja instalowana
+# wraz z usługą. Stoją w docs/, bo tam prowadzona jest cała dokumentacja produktu;
+# kopia w korzeniu byłaby drugą prawdą o tym samym pliku.
 BRAK_DOKUMENTU=nie
 for dokument in README.md INSTALACJA-I-KONFIGURACJA.md INSTRUKCJA-UZYTKOWANIA.md LICENSE.md; do
-	if [ -r "$KORZEN/$dokument" ]; then
-		install -m 0644 "$KORZEN/$dokument" "$ROBOCZY/usr/share/doc/danaco-console/$dokument"
+	if [ -r "$KORZEN/docs/$dokument" ]; then
+		install -m 0644 "$KORZEN/docs/$dokument" "$ROBOCZY/usr/share/doc/danaco-console/$dokument"
 	else
-		printf 'UWAGA: brak dokumentu %s w %s\n' "$dokument" "$KORZEN" >&2
+		printf 'UWAGA: brak dokumentu %s w %s/docs\n' "$dokument" "$KORZEN" >&2
 		BRAK_DOKUMENTU=tak
 	fi
 done

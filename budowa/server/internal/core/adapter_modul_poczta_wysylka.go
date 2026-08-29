@@ -217,7 +217,7 @@ func (a *adapterPoczty) zalacznikiZZasobow(ctx context.Context, zasoby []string)
 		}
 		if zasob.URI == nil || strings.TrimSpace(*zasob.URI) == "" {
 			return nil, protocolBladPoczty(shared.ErrorCodeConflict,
-				"zasób "+kod+" nie ma treści w magazynie rdzenia — nie ma czego dołączyć")
+				"zasób "+kod+" nie ma treści w magazynie serwera — nie ma czego dołączyć")
 		}
 		// Bajty pochodzą wprost ze ścieżki bloba `uri` zasobu, tą samą drogą,
 		// co moduł dokumentów.

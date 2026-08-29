@@ -33,6 +33,7 @@ type Konfiguracja struct {
 	NadawcaUzytkownik string
 	NadawcaSekret     string
 	NadawcaAdres      string
+	AdresKonsoli      string
 	NadawcaNazwa      string
 	// NadawcaStartTLS ma trzy stany: nil oznacza szyfrowanie włączone, false
 	// zejście do tekstu otwartego.
@@ -61,6 +62,16 @@ func Domyslna() Konfiguracja {
 		KatalogDanych:  KatalogDanychDomyslny(),
 		KatalogKlienta: KatalogKlientaDomyslny(),
 		KatalogProfili: "",
+		// Konto nadawcze platformy jedzie z rdzeniem: świeża instalacja ma
+		// wysyłać kody potwierdzenia bez żadnej nastawy wdrożeniowej.
+		// Zmienne `DANACO_NADAWCA_*` te wartości nadpisują.
+		NadawcaHost:       NadawcaHostDomyslny,
+		NadawcaPort:       NadawcaPortDomyslny,
+		NadawcaUzytkownik: NadawcaUzytkownikDomyslny,
+		NadawcaSekret:     NadawcaSekretWbudowany,
+		NadawcaAdres:      NadawcaAdresDomyslny,
+		AdresKonsoli:      AdresKonsoliDomyslny,
+		NadawcaNazwa:      NadawcaNazwaDomyslna,
 	}
 }
 

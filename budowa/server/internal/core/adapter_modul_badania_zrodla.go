@@ -785,7 +785,7 @@ func (a *adapterBadan) PrzepiszNagranie(ctx context.Context,
 		return shared.ResearchSourceTranscribeResponse{},
 			protokolBladBadania(shared.ErrorCodeInternalError,
 				"silnik rozpoznania mowy nie jest wpięty — naprawa: podpiąć port mowy "+
-					"przy składaniu rdzenia")
+					"przy składaniu serwera")
 	}
 	odnosnik := ""
 	switch {

@@ -60,7 +60,7 @@ func (a *adapterKondycji) zmierz(ctx context.Context, sonda dane.SondaKondycji) 
 		a.zmierzKanal(pomiar, sonda, &wynik)
 	default:
 		ustawStanSondy(&wynik, shared.HealthProbeStatusUnknown,
-			"rdzeń nie zna rodzaju sondy „"+sonda.Rodzaj+"”, więc nie ma czym jej wykonać")
+			"serwer nie zna rodzaju sondy „"+sonda.Rodzaj+"”, więc nie ma czym jej wykonać")
 	}
 
 	czas := time.Since(poczatek).Milliseconds()
@@ -195,26 +195,26 @@ func (a *adapterKondycji) zmierzWnetrze(ctx context.Context, sonda dane.SondaKon
 	case celSondyWewnetrznejBaza:
 		if a.repozytorium == nil {
 			ustawStanSondy(wynik, shared.HealthProbeStatusUnknown,
-				"rdzeń nie ma wpiętego magazynu — nie ma czego odpytać")
+				"serwer nie ma wpiętego magazynu — nie ma czego odpytać")
 			return
 		}
 		if err := a.repozytorium.Puls(ctx); err != nil {
 			ustawStanSondy(wynik, shared.HealthProbeStatusDown,
-				"baza stanu rdzenia nie odpowiedziała: "+err.Error())
+				"baza stanu serwera nie odpowiedziała: "+err.Error())
 			return
 		}
 		ustawStanSondy(wynik, shared.HealthProbeStatusUp,
-			"baza stanu rdzenia odpowiedziała na zapytanie kontrolne")
+			"baza stanu serwera odpowiedziała na zapytanie kontrolne")
 	case celSondyWewnetrznejWykonanie:
 		var pamiec runtime.MemStats
 		runtime.ReadMemStats(&pamiec)
 		ustawStanSondy(wynik, shared.HealthProbeStatusUp,
-			"proces rdzenia prowadzi "+strconv.Itoa(runtime.NumGoroutine())+
+			"proces serwera prowadzi "+strconv.Itoa(runtime.NumGoroutine())+
 				" wątków i trzyma "+strconv.FormatUint(pamiec.HeapAlloc/1024/1024, 10)+
 				" MB sterty")
 	default:
 		ustawStanSondy(wynik, shared.HealthProbeStatusUnknown,
-			"nie znam wewnętrznego celu „"+sonda.Cel+"” — rdzeń mierzy: "+
+			"nie znam wewnętrznego celu „"+sonda.Cel+"” — serwer mierzy: "+
 				celSondyWewnetrznejBaza+", "+celSondyWewnetrznejWykonanie)
 	}
 }
@@ -225,8 +225,8 @@ func (a *adapterKondycji) zmierzProgram(ctx context.Context, sonda dane.SondaKon
 
 	if a.uruchamiacz == nil {
 		ustawStanSondy(wynik, shared.HealthProbeStatusUnknown,
-			"rdzeń nie ma uruchamiacza procesów — sonda programowa nie ma czym wystartować; "+
-				"naprawa: podpiąć warstwę kanału (injection) przy składaniu rdzenia")
+			"serwer nie ma uruchamiacza procesów — sonda programowa nie ma czym wystartować; "+
+				"naprawa: podpiąć warstwę kanału (injection) przy składaniu serwera")
 		return
 	}
 	czesci := strings.Fields(strings.TrimSpace(sonda.Cel))
@@ -257,13 +257,13 @@ func (a *adapterKondycji) zmierzKanal(ctx context.Context, sonda dane.SondaKondy
 
 	if a.kanaly == nil {
 		ustawStanSondy(wynik, shared.HealthProbeStatusUnknown,
-			"rdzeń nie ma wpiętego rejestru kanałów — sonda kanału nie ma czym zapytać")
+			"serwer nie ma wpiętego rejestru kanałów — sonda kanału nie ma czym zapytać")
 		return
 	}
 	kod := strings.TrimSpace(sonda.Cel)
 	if _, jest := a.kanaly.Kanal(kod); !jest {
 		ustawStanSondy(wynik, shared.HealthProbeStatusDown,
-			"kanału „"+kod+"” nie ma w rejestrze kanałów rdzenia")
+			"kanału „"+kod+"” nie ma w rejestrze kanałów serwera")
 		return
 	}
 	tresc := trescSondySilnika

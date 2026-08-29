@@ -158,8 +158,8 @@ func skrotKontraktu(s dane.SkrotTekstowy) shared.TextSnippet {
 // naprawy.
 func bladZapleczaSkrotow() error {
 	return protocol.JakoError(protocol.NowyBlad(shared.ErrorCodeInternalError,
-		"skróty tekstowe: rdzeń nie ma wpiętego słownika — naprawa: podpiąć "+
-			"repozytorium skrótów przy składaniu rdzenia"))
+		"skróty tekstowe: serwer nie ma wpiętego słownika — naprawa: podpiąć "+
+			"repozytorium skrótów przy składaniu serwera"))
 }
 
 // bladWskazaniaSkrotu nazywa niepoprawne żądanie dotyczące skrótu, na przykład skrót bez frazy

@@ -135,7 +135,7 @@ func (a *adapterMowy) ZapiszNastaweWybudzania(ctx context.Context,
 
 	if a.konfiguracja == nil {
 		return shared.SpeechWakeSetResponse{}, bladZapleczaNagran(
-			"rdzeń nie ma wpiętego magazynu konfiguracji — nastawy wybudzania nie ma gdzie zapisać")
+			"serwer nie ma wpiętego magazynu konfiguracji — nastawy wybudzania nie ma gdzie zapisać")
 	}
 	poziom := shared.ConfigScopeGlobal
 	if z.Scope != nil && strings.TrimSpace(string(*z.Scope)) != "" {
@@ -192,11 +192,11 @@ func (a *adapterMowy) UruchomNasluch(ctx context.Context,
 
 	if strings.TrimSpace(z.WindowId) == "" {
 		return shared.SpeechListenStartResponse{}, bladWskazaniaNagrania(
-			"nasłuch bez wskazania okna — rdzeń nie wiedziałby, czyje odcinki rozpoznaje")
+			"nasłuch bez wskazania okna — serwer nie wiedziałby, czyje odcinki rozpoznaje")
 	}
 	if a.nasluchy == nil {
 		return shared.SpeechListenStartResponse{}, bladZapleczaNagran(
-			"rdzeń nie ma rejestru nasłuchów")
+			"serwer nie ma rejestru nasłuchów")
 	}
 
 	nastawa := a.odczytajNastaweWybudzania(nil, nil)
@@ -347,7 +347,7 @@ func sprawdzTrybNasluchu(tryb shared.ListenMode) error {
 		return nil
 	default:
 		return bladWskazaniaNagrania("nie znam trybu nasłuchu „" + string(tryb) +
-			"” — rdzeń zna: pushToTalk, wakeWord, continuous")
+			"” — serwer zna: pushToTalk, wakeWord, continuous")
 	}
 }
 

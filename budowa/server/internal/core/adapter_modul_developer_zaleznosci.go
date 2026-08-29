@@ -383,7 +383,7 @@ func (a *adapterDevelopera) UruchomSkan(ctx context.Context,
 	}
 	if a.repozytorium == nil {
 		return shared.DeveloperScanRunResponse{}, bladZasobuDevelopera(
-			"rdzeń nie ma miejsca na wyniki skanowania")
+			"serwer nie ma miejsca na wyniki skanowania")
 	}
 	korzenie := a.korzenieOkna(okno)
 	if len(korzenie) == 0 {
@@ -646,7 +646,7 @@ func (a *adapterDevelopera) WykazZnalezisk(ctx context.Context,
 
 	if a.repozytorium == nil {
 		return shared.DeveloperScanResultListResponse{}, bladZasobuDevelopera(
-			"rdzeń nie ma wyników skanowania")
+			"serwer nie ma wyników skanowania")
 	}
 	filtr := filtrZnaleziskZadania(z)
 	if filtr.SkanKod == "" && filtr.OknoKod == "" {

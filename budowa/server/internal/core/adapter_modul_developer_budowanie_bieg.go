@@ -29,7 +29,7 @@ func (a *adapterDevelopera) uruchomBudowanie(ctx context.Context, okno session.O
 	polecenie session.Polecenie, zadanie string, argumenty []string) (*przebiegBudowania, error) {
 
 	if a.uruchamiacz == nil {
-		return nil, bladWykonaniaDevelopera("rdzeń nie ma uruchamiacza procesów")
+		return nil, bladWykonaniaDevelopera("serwer nie ma uruchamiacza procesów")
 	}
 	przebieg := &przebiegBudowania{
 		kod:         nowyIdentyfikator(przedrostekBudowania),

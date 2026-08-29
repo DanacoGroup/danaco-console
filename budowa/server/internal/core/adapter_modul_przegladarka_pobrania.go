@@ -386,6 +386,6 @@ func (a *adapterPrzegladarki) odlozPobranie(ctx context.Context, okno, adres str
 	if err != nil {
 		return bladPrzegladarki(err)
 	}
-	return bladWskazaniaPrzegladarki(powod.Error() + " — rdzeń odłożył go jako pobranie " +
+	return bladWskazaniaPrzegladarki(powod.Error() + " — serwer odłożył go jako pobranie " +
 		zapisane.Kod + " (" + jakoLiczba(int(rozmiar)) + " B); wykaz: browser.download.list")
 }

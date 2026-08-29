@@ -51,7 +51,7 @@ var licznikOdczytow atomic.Uint64
 // wiadomo, nie ekspert nie ma narzędzi.
 func OdczytajEksperta(kontekst context.Context, rdzen Rdzen, kod string) (DefinicjaEksperta, error) {
 	if rdzen == nil {
-		return DefinicjaEksperta{}, fmt.Errorf("ekspert %q: rdzenia nie ma po drugiej stronie", kod)
+		return DefinicjaEksperta{}, fmt.Errorf("ekspert %q: serwera nie ma po drugiej stronie", kod)
 	}
 	if kod == "" {
 		return DefinicjaEksperta{}, fmt.Errorf("odczyt eksperta bez kodu — nie ma o kogo zapytać")
@@ -64,7 +64,7 @@ func OdczytajEksperta(kontekst context.Context, rdzen Rdzen, kod string) (Defini
 	}
 	odpowiedz, err := rdzen.Wykonaj(kontekst, zadanie)
 	if err != nil {
-		return DefinicjaEksperta{}, fmt.Errorf("ekspert %q: rdzeń nie odpowiedział na %s: %w",
+		return DefinicjaEksperta{}, fmt.Errorf("ekspert %q: serwer nie odpowiedział na %s: %w",
 			kod, shared.CommandAgentList, err)
 	}
 	wykaz, err := wykazEkspertow(kod, odpowiedz)
@@ -78,11 +78,11 @@ func OdczytajEksperta(kontekst context.Context, rdzen Rdzen, kod string) (Defini
 // ekspertów albo opis odmowy rdzenia.
 func wykazEkspertow(kod string, odpowiedz protocol.Koperta) ([]shared.Agent, error) {
 	if odpowiedz.Error != nil {
-		return nil, fmt.Errorf("ekspert %q: rdzeń odmówił na %s: %s",
+		return nil, fmt.Errorf("ekspert %q: serwer odmówił na %s: %s",
 			kod, shared.CommandAgentList, protocol.Opis(*odpowiedz.Error))
 	}
 	if odpowiedz.Status != nil && *odpowiedz.Status != shared.EnvelopeStatusOk {
-		return nil, fmt.Errorf("ekspert %q: rdzeń odpowiedział na %s stanem %s bez opisu błędu",
+		return nil, fmt.Errorf("ekspert %q: serwer odpowiedział na %s stanem %s bez opisu błędu",
 			kod, shared.CommandAgentList, *odpowiedz.Status)
 	}
 	var tresc shared.AgentListResponse
@@ -107,6 +107,6 @@ func dopasuj(kod string, wykaz []shared.Agent) (DefinicjaEksperta, error) {
 		}, nil
 	}
 	return DefinicjaEksperta{}, fmt.Errorf(
-		"ekspert %q: rdzeń go nie zna — w wykazie %s stoi %d ekspertów, żaden o tym kodzie",
+		"ekspert %q: serwer go nie zna — w wykazie %s stoi %d ekspertów, żaden o tym kodzie",
 		kod, shared.CommandAgentList, len(wykaz))
 }

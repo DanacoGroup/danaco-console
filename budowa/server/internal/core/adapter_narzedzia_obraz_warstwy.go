@@ -74,7 +74,7 @@ func (a *adapterNarzedziObrazuModelu) RozlozNaWarstwy(ctx context.Context,
 	if len(obszary) == 0 {
 		return shared.ImageLayersSplitResponse{}, bladPrzetwarzaniaModeluObrazu(
 			"silnik segmentacji nie znalazł na tym obrazie ani jednego obiektu — " +
-				"cały kadr został uznany za tło; rdzeń nie oddaje wtedy obrazu " +
+				"cały kadr został uznany za tło; serwer nie oddaje wtedy obrazu " +
 				"źródłowego jako rzekomej jednej warstwy")
 	}
 

@@ -189,7 +189,7 @@ func sprawdzRodzajWpisuSchowka(rodzaj shared.ClipboardEntryKind) error {
 		return nil
 	default:
 		return bladWskazaniaSchowka("nie znam rodzaju wpisu „" + string(rodzaj) +
-			"” — rdzeń zna: text, image, file")
+			"” — serwer zna: text, image, file")
 	}
 }
 
@@ -208,8 +208,8 @@ func wpisSchowkaKontraktu(w dane.WpisSchowka) shared.ClipboardEntry {
 // repozytorium nie zostało podpięte przy montażu.
 func bladZapleczaSchowka() error {
 	return protocol.JakoError(protocol.NowyBlad(shared.ErrorCodeInternalError,
-		"schowek: rdzeń nie ma wpiętej historii schowka — naprawa: podpiąć "+
-			"repozytorium schowka przy składaniu rdzenia"))
+		"schowek: serwer nie ma wpiętej historii schowka — naprawa: podpiąć "+
+			"repozytorium schowka przy składaniu serwera"))
 }
 
 // bladWskazaniaSchowka nazywa niepoprawne żądanie podanym powodem, jednym

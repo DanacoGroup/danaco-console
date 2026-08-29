@@ -235,7 +235,7 @@ func (a *adapterStudia) NosnikiStrony(_ context.Context,
 	}
 	if len(wybrane) == 0 {
 		return shared.StudioPagePaperListResponse{}, bladWskazaniaStudio(
-			"wykaz nośników rdzenia nie niesie ani jednej pozycji rodzaju „" +
+			"wykaz nośników serwera nie niesie ani jednej pozycji rodzaju „" +
 				string(*z.Kind) + "”. Rodzaj `custom` nie stoi w wykazie z zamysłu: " +
 				"wymiar własny podaje się polami widthMm i heightMm komendy " +
 				"studio.page.setup.set")
@@ -909,7 +909,7 @@ func (a *adapterStudia) ZapiszSekcjeDokumentu(ctx context.Context,
 				nastawy.WidthMm == nil && nastawy.HeightMm == nil {
 
 				return shared.StudioSectionSaveResponse{}, bladWskazaniaStudio(
-					"nośnika „" + strings.TrimSpace(*nastawy.PageSize) + "” rdzeń nie zna. " +
+					"nośnika „" + strings.TrimSpace(*nastawy.PageSize) + "” serwer nie zna. " +
 						"Nośniki znane: " + strings.Join(stronaNazwyNosnikow(), ", ") +
 						". Format własny podaje się polami widthMm i heightMm")
 			}

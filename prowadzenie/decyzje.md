@@ -1431,6 +1431,41 @@ Deklaracja narzędzia nie powiela kształtu żądania: wskazuje komendę i dopis
 jedno zdanie mówiące modelowi, kiedy po nie sięgnąć. Zdanie powstaje z opisu
 komendy w kontrakcie, nie z domysłu.
 
+## 21. Instalator wydaje się w motywie ciemnym
+
+**Rozstrzygnięcie Właściciela z 28.08.2026**, podjęte po pomiarze przedstawionym
+przez prowadzenie.
+
+**Stan, który do niego doprowadził.** `zetony.css` niesie trzy komplety żetonów:
+`:root` (193), `:root[data-theme='light']` (55) i `:root[data-theme='dark']` (169).
+Trzynaście żetonów bryły `--dn-bryla-*` stoi **wyłącznie w `:root`** i nie ma wariantu
+dla żadnego motywu. Ich wartości są skomponowane pod tło ciemne — blaty klocków to
+`rgba(41,66,101)`, `rgba(26,45,71)` i `rgba(17,30,48)`.
+
+Instalator wydawał się dotąd w motywie jasnym, bo `wspolne.js` ustala motyw
+z `localStorage`, a przy jego braku z `prefers-color-scheme`. Bryła stawała wtedy
+na pasie `.dn-kreator-szyna` o barwie `rgb(235,236,239)`:
+
+| | |
+|---|---|
+| kontrast blatu wobec tła | **11,8 : 1** |
+| średnia jasność bryły | **66 / 255** |
+
+Czytało się to jako czarna plama na jasnym panelu — w oknie, które Operator widzi
+jako pierwsze.
+
+**Rozstrzygnięcie.** Instalator wydaje się w motywie ciemnym, na stałe. Nie idzie za
+nastawą systemu ani za wyborem zapisanym w przeglądarce, bo jest oknem sprzed
+uruchomienia aplikacji i nie ma jeszcze Operatora, którego wybór miałby uszanować.
+
+**Czego to rozstrzygnięcie NIE zmienia.** Żetony `--dn-bryla-*` zostają nietknięte.
+Paleta bryły jest skomponowana pod ciemne tło i w motywie ciemnym działa tak, jak
+została zaprojektowana. Warstwa projektowa nie wymaga tu żadnej zmiany.
+
+**Gdzie to stoi w kodzie.** `budowa/instalator/interfejs/index.html` — wybór motywu
+zapada przed uruchomieniem `wspolne.js`, żeby ten nie nadpisał go nastawą systemu.
+Poza plikami instalatora nic się nie zmienia.
+
 ## Pozycje otwarte
 
 Pozycja otwarta czeka na rozstrzygnięcie Właściciela i blokuje wskazany etap.
@@ -1450,3 +1485,62 @@ Trzy pozycje zamknięte 27.08 wymagają roboty, nie rozstrzygnięcia, i przeszł
 wydania drogi potwierdzenia, nieaktualny opis `auth.password.reset` w kontrakcie
 oraz sześć wartości `PermissionMode` wobec czterech nazwanych w pozycji 6.
 
+## 22. Platforma prowadzi wiele kont, nie jedno
+
+**Rozstrzygnięcie Właściciela, 29 sierpnia 2026.** Aplikacja nie blokuje
+zakładania kolejnych kont — ma ich przyjmować dowolną liczbę.
+
+Rozstrzygnięcie **uchyla** model zapisany w `docs/architektura/`
+`bezpieczenstwo-i-uwierzytelnianie.md` rozdz. 3 („jedno konto, wiele urządzeń")
+oraz w `docs/interfejs-uzytkownika/elementy-okien.md` i `docs/LICENSE.md`.
+Dotychczasowa reguła stała nie w umowie kodu, lecz w schemacie bazy:
+`migracja_125_konto_wlasciciela.sql` niesie `CHECK (id = 1)`.
+
+Skutek dla budowy: rejestracja zakłada konto, gdy login i adres są wolne,
+a odmawia wyłącznie przy kolizji jednego z nich. Tożsamość przestaje być
+własnością instalacji i staje się własnością wiersza konta — metody
+uwierzytelnienia, sesje i drogi potwierdzenia wiążą się odtąd z kontem.
+
+## 23. Kod uwierzytelniający nie stoi w temacie listu
+
+**Rozstrzygnięcie Właściciela, 29 sierpnia 2026.** Temat listu transakcyjnego
+nie niesie kodu. Dotyczy listów 1, 2, 4 i 5, których dostawa
+`design/06-poczta-transakcyjna` przewidywała temat postaci
+`Danaco Console — kod resetu hasła: {{code}}`.
+
+Powód stoi w runbooku wdrożenia, rozdz. 5.3: temat zapisuje każdy element trasy
+wiadomości — filtr, brama, kopia kolejki, historia śladów. Serwer poczty
+platformy da się skontrolować, elementów trasy poza nim nie. Kod w temacie
+rozszerzałby powierzchnię wycieku poza to, czym władamy.
+
+Miejsce zmiany: mapa `subjects` w `budowa/server/internal/mail/szablon.go`.
+Kod stoi odtąd wyłącznie w treści listu, w obu postaciach.
+
+## 24. List resetu hasła bez adresu źródłowego i urządzenia
+
+**Rozstrzygnięcie Właściciela, 29 sierpnia 2026.** Szyna metadanych listu 4
+traci wiersze `ADRES ŹRÓDŁOWY` i `URZĄDZENIE`; zostają `WAŻNOŚĆ` i `ŻĄDANIE`.
+
+Powodem jest brak źródła, nie układ graficzny. Komenda `auth.recover` niesie
+jedno pole — adres — a `transport.Tozsamosc` nie ma pola adresu zdalnego;
+`deviceId` występuje wyłącznie w `auth.register`, `auth.verify` i `auth.login`.
+Wiersze wychodziłyby puste, a pusty wiersz w liście o bezpieczeństwie konta
+jest gorszy niż jego brak: Operator ma po tej szynie rozpoznać cudze żądanie.
+
+Zmiana obejmuje obie postacie listu oraz zdanie odsyłające do tych wierszy.
+Wiersze wracają, gdy rdzeń będzie miał czym je wypełnić — wtedy jako zmiana
+kontraktu `auth.recover`, nie jako uzupełnienie szablonu.
+
+## 25. Listy 5, 6 i 7 czekają na działającą aplikację
+
+**Rozstrzygnięcie Właściciela, 29 sierpnia 2026.** Przebiegów, których te listy
+wymagają, nie buduje się teraz. Pierwszeństwo ma działająca aplikacja; listy
+wchodzą jako rozbudowa po niej.
+
+Szablony obu postaci zostają w rdzeniu i w dostawie, wpięte w `mail.Load`, więc
+rozjazd między szablonem a kodem ujawnia się dalej przy budowie. Brakuje
+wyłącznie przebiegów, które by je nadały — zakres opisuje
+[plan rozbudowy poczty](plan-rozbudowy-poczty.md).
+
+Rozstrzygnięcie jest zgodne z zakresem etapu 2: poza Studiem moduły są
+zapowiedziane, a nie działające.

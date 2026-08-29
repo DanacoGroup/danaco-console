@@ -1,0 +1,29 @@
+DANACO CONSOLE
+Przebieg {{run_status}}
+
+Przebieg automatyki uruchomiony w środowisku {{environment_name}} zmienił
+stan. Szczegóły przebiegu są dostępne w oknie automatyki.
+
+  AUTOMATYKA:  {{run_name}}
+
+  Stan:          {{run_status}}
+  Krok:          {{run_step}}
+  Czas trwania:  {{run_duration}}
+  Rozpoczęto:    {{started_at}}
+  Identyfikator: {{run_id}}
+
+Okno przebiegu:
+{{run_url}}
+
+Powiadomienie dotyczy stanu przebiegu. Treść zadań, dokumenty i dane spraw
+nie są przesyłane pocztą — pozostają w aplikacji.
+
+Częstotliwość powiadomień o przebiegach ustawia się w oknie Ustawienia
+konta.
+
+--
+Wiadomość wysłana automatycznie z adresu noreply@danaco-group.pl.
+Adres nie prowadzi skrzynki odbiorczej — odpowiedź nie zostanie odczytana.
+W sprawach konta pisz na {{support_address}}.
+
+Danaco Holding Group Sp. z o.o. · Danaco Console · {{year}}

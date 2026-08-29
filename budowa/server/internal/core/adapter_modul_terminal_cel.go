@@ -41,7 +41,7 @@ func (a *adapterTerminala) celZWpisuKsiazki(ctx context.Context, karta *kartaTer
 	kodHosta string) error {
 
 	if a.repozytorium == nil {
-		return bladZadaniaTerminala("rdzeń pracuje bez dziennika, więc nie ma książki hostów; " +
+		return bladZadaniaTerminala("serwer pracuje bez dziennika, więc nie ma książki hostów; " +
 			"podaj adres celu wprost polem remoteTarget")
 	}
 	wpis, err := a.repozytorium.Host(ctx, kodHosta)

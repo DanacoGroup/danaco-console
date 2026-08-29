@@ -1,0 +1,27 @@
+DANACO CONSOLE
+Potwierdzenie nowego adresu
+
+Ten adres został wskazany jako nowy adres konta Danaco Console prowadzonego
+dotąd pod {{previous_address}}. Wprowadź kod w oknie Ustawienia konta,
+aby potwierdzić zmianę.
+
+  KOD POTWIERDZENIA:  {{code}}
+
+  Ważność:              {{expiry_minutes}} min
+  Żądanie:              {{requested_at}}
+  Adres dotychczasowy:  {{previous_address}}
+  Adres nowy:           {{new_address}}
+
+Kod jest jednorazowy i wygasa po {{expiry_minutes}} minutach. Do chwili
+potwierdzenia konto pozostaje przy adresie dotychczasowym — na ten adres
+idą też listy z kodem logowania.
+
+Jeżeli zmiana nie była zamawiana, zignoruj wiadomość. Powiadomienie
+o żądaniu zostało wysłane również na adres dotychczasowy.
+
+--
+Wiadomość wysłana automatycznie z adresu noreply@danaco-group.pl.
+Adres nie prowadzi skrzynki odbiorczej — odpowiedź nie zostanie odczytana.
+W sprawach konta pisz na {{support_address}}.
+
+Danaco Holding Group Sp. z o.o. · Danaco Console · {{year}}

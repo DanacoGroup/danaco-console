@@ -21,7 +21,7 @@ func (a *adapterNarzedziArchiwum) spisArchiwum(ctx context.Context,
 	if len(pozycje) == 0 {
 		return nil, bladWskazaniaArchiwum("nie da się odczytać spisu archiwum " +
 			nazwaBezKatalogow(sciezka) + " — archiwum jest puste, uszkodzone albo ma zaszyfrowany nagłówek; " +
-			"rdzeń nie rozpakowuje archiwum, którego zawartości nie obejrzał")
+			"serwer nie rozpakowuje archiwum, którego zawartości nie obejrzał")
 	}
 	return pozycje, nil
 }
@@ -183,7 +183,7 @@ func bladPrzekroczonejGranicyRozmiaru(zmierzono int64) error {
 		opisRozmiaru(zmierzono) + ", a granica rozpakowania wynosi " +
 		opisRozmiaru(granicaRozpakowaniaBajty) +
 		" — archiwum wielkości kilobajta potrafi rozwinąć się do gigabajtów " +
-		"i wypełnić nośnik do końca (bomba dekompresyjna), więc rdzeń rozpakowuje " +
+		"i wypełnić nośnik do końca (bomba dekompresyjna), więc serwer rozpakowuje " +
 		"wyłącznie do tej granicy; " +
 		"naprawa: rozpakować je poza produktem albo przysłać w częściach")
 }

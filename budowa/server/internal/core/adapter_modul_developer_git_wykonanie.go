@@ -65,7 +65,7 @@ func (a *adapterDevelopera) uruchomGit(ctx context.Context, okno session.Okno,
 	argumenty []string, granica time.Duration) (wynikGita, error) {
 
 	if a.uruchamiacz == nil {
-		return wynikGita{}, bladWykonaniaDevelopera("rdzeń nie ma uruchamiacza procesów")
+		return wynikGita{}, bladWykonaniaDevelopera("serwer nie ma uruchamiacza procesów")
 	}
 	polecenie, err := a.polecenieDopuszczoneDevelopera(okno, programGita, argumenty)
 	if err != nil {
@@ -103,7 +103,7 @@ func (a *adapterDevelopera) uruchomGit(ctx context.Context, okno session.Okno,
 		_ = drzewo.Ubij()
 		bladZakonczenia = <-zakonczenie
 	case <-ctx.Done():
-		powod = "żądanie przerwane przez rdzeń"
+		powod = "żądanie przerwane przez serwer"
 		_ = drzewo.Ubij()
 		bladZakonczenia = <-zakonczenie
 	}

@@ -36,7 +36,7 @@ func (a *adapterTlumaczenia) ImportujSlownik(ctx context.Context,
 
 	return shared.TranslateGlossaryImportResponse{}, protocol.JakoError(protocol.NowyBlad(
 		shared.ErrorCodeChannelUnavailable,
-		"moduł Translate: rdzeń nie czyta plików z dysku Operatora — translate.glossary.import "+
+		"moduł Translate: serwer nie czyta plików z dysku Operatora — translate.glossary.import "+
 			"nie ma czym wczytać terminów spod ścieżki "+z.Path+
 			"; kontrakt nie niesie terminów wprost w żądaniu, więc nie ma innego uczciwego źródła"))
 }

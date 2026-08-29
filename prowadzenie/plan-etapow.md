@@ -161,3 +161,7 @@ tutaj istnieje wzorzec, względem którego można sprawdzić wynik.
 Harmonogram i dokumentacja zleceń wykonawczych dla tego etapu powstają po
 zamknięciu etapu 2, na podstawie tego, co przekrój faktycznie pokazał — nie na
 podstawie zamierzeń.
+
+Jeden zakres jest już rozpoznany i czeka tu na kolejność: trzy listy poczty
+transakcyjnej, których szablony stoją w rdzeniu, a przebiegów nadających je nie
+ma — [plan rozbudowy poczty](plan-rozbudowy-poczty.md).

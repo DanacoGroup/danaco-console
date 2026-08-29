@@ -1,15 +1,15 @@
 {
   "opis": "Chronologia wydań Danaco Console — JEDYNE źródło prawdy dla strony „Pobierz” i dla banera aktualizacji w aplikacji. Pusty wykaz znaczy: nie ma jeszcze żadnego wydania. Każda pozycja MUSI nieść pole `suma` (SHA-256 pliku) — powłoka odmawia założenia pliku, którego suma się nie zgadza, a wydania bez sumy nie zakłada w ogóle.",
   "produkt": "Danaco Console",
-  "katalog_plikow": "../wydania/1.0.0-2026-08-18",
-  "numer_wersji": "Wszystkie pozycje niosą 1.0.0 i to NIE jest przeoczenie. Wydania różni DATA, nie numer: żadna wersja nie stanęła jeszcze u klienta, więc nie ma czego podnosić. Rozstrzygnięcie Właściciela — nie zmieniać bez jego słowa. Katalog wydania nazywa się `1.0.0-2026-08-18`, więc data jest w ścieżce i dwa różne dni nie nadpisują się wzajemnie.",
+  "katalog_plikow": "../wydania/2.0.0-2026-08-29",
+  "numer_wersji": "Wydanie 2.0.0 z 29 sierpnia 2026. Wcześniejsze pozycje niosły 1.0.0 i różniła je wyłącznie data; numer podniesiono na słowo Właściciela z 29.08 — produkt jest wersją 2.0. Katalog wydania nazywa się `2.0.0-2026-08-29`, więc data zostaje w ścieżce i dwa różne dni nie nadpisują się wzajemnie.",
   "kanal": {
     "wdrozony": true,
     "adres": "https://pobierz.danaco-group.pl/",
     "tymczasowy": false,
-    "czym_jest": "Kanał stoi pod wlasna nazwa pobierz.danaco-group.pl (rekord A na 51.75.62.180, IPv6 2001:41d0:601:2000::1caa), nginx z TLS na porcie 443; port 80 przekierowuje na 443. To osobny host wydan — strona wizerunkowa produktu stoi na danaco-group.pl i tylko tu odsyla.",
-    "chronione_haslem": "Pliki wydania (/wydania/…) chroni uwierzytelnienie podstawowe — plik poświadczeń /etc/nginx-danaco-wydania.htpasswd, prawa 640 root:root, hasła NIE MA w repozytorium ani na stronie. Sama witryna, w tym strona „Pobierz”, jest otwarta do czytania: przeglądarka pyta o hasło dopiero przy sięgnięciu po plik. Na czas wyłączności Właściciela — jeden użytkownik.",
-    "certyfikat": "Let's Encrypt, wystawiony na pobierz.danaco-group.pl przez certbot --nginx. Przegladarka nie pokazuje zadnego ostrzezenia. Certyfikat wlasny, ktory stal tu do chwili dopisania rekordu DNS (/etc/nginx/danaco-tls/kanal-tymczasowy.crt), jest juz nieuzywany — zostawiony na wypadek, gdyby kanal trzeba bylo postawic ponownie na samym adresie liczbowym.",
+    "czym_jest": "Kanał stoi pod własną nazwą pobierz.danaco-group.pl na maszynie 57.128.253.74 (IPv6 2001:41d0:601:1100::2485) — tej samej, na której działa rdzeń wdrożenia. Serwerem stron jest CADDY, nie nginx; TLS na 443, przekierowanie z 80 robi Caddy sam. Katalog wydawany: /opt/danaco/danaco-console/portal, pliki wydań w /opt/danaco/danaco-console/wydania/. Strona wizerunkowa produktu stoi osobno, na danaco-group.pl (maszyna 137.74.41.149, nginx).",
+    "chronione_haslem": "Pliki wydania (/wydania/*) chroni uwierzytelnienie podstawowe zapisane WPROST w /etc/caddy/Caddyfile w bloku pobierz.danaco-group.pl — dyrektywa basic_auth, użytkownik `wlasciciel`, hasło jako skrót bcrypt. Osobnego pliku poświadczeń NIE MA; wcześniejszy zapis o /etc/nginx-danaco-wydania.htpasswd opisywał serwer, którego tu nie ma. Hasła nie ma w repozytorium ani na stronie. Sama witryna, w tym strona „Pobierz”, jest otwarta do czytania.",
+    "certyfikat": "Certyfikat wystawia i odnawia Caddy samodzielnie (ACME, Let's Encrypt). Przeglądarka nie pokazuje ostrzeżenia — sprawdzone: https://pobierz.danaco-group.pl/ odpowiada 200, nagłówek `server: Caddy`, a /wydania/ zwraca 401.",
     "docelowo": "Kanal jest na swoim miejscu. Do zrobienia zostaje strona wizerunkowa produktu w portfolio grupy: danaco-group.pl/danaco-console.html — bez pobierania plikow, z jednym odnosnikiem tutaj. Material do wgrania: DanacoConsole.git/DO-WGRANIA-DANACO-GROUP/.",
     "czego_brakuje": "",
     "po_co_to_pole": "Pole rozstrzyga, czy strona „Pobierz” wystawia przycisk POBIERZ, czy tylko adres jako tekst. `wdrozony: true` znaczy: pliki naprawdę leżą pod tymi adresami i odpowiadają kodem 200 — sprawdzone poleceniem `curl -sI`. `tymczasowy: true` dokłada do tego zdanie, że kanał jest z maszyny budującej i pod certyfikatem własnym, żeby nikt nie wziął tego adresu za docelowy."
@@ -23,7 +23,46 @@
   },
   "wydania": [
     {
-      "wersja": "1.0.0",
+      "wersja": "2.0.0",
+      "data": "2026-08-28",
+      "system": "Windows",
+      "postac": "hybryda",
+      "architektura": "x64",
+      "nazwa": "Danaco Console_2.0.0_hybryda_x64-setup.exe",
+      "plik": "https://pobierz.danaco-group.pl/wydania/1.0.0-2026-08-28/Danaco%20Console_1.0.0_hybryda_x64-setup.exe",
+      "rozmiar_bajtow": 2400091,
+      "sha256": "bd50c2a945aeec97869fac898eb87d2e95f9cbc2955f6cf7848776721db3d54a",
+      "rozmiar_bajty": 2424090,
+      "suma": "9cf62e8a72759c573f0188e1db9521731cfb8c6fe23d1b0eb873d2bb7bd82203"
+    },
+    {
+      "wersja": "2.0.0",
+      "data": "2026-08-28",
+      "system": "Windows",
+      "postac": "hybryda",
+      "architektura": "ARM64",
+      "nazwa": "Danaco Console_2.0.0_hybryda_arm64-setup.exe",
+      "plik": "https://pobierz.danaco-group.pl/wydania/1.0.0-2026-08-28/Danaco%20Console_1.0.0_hybryda_arm64-setup.exe",
+      "rozmiar_bajtow": 2134570,
+      "sha256": "7b4bf9fde722d1829e5c1c3110528f4d088805ef473b5d78b53c2e2366462cd7",
+      "rozmiar_bajty": 2149829,
+      "suma": "bafe4861bc8536ec134345c7303e0c517b0ee9b1e0b28ea286be3f27ce3fdce7"
+    },
+    {
+      "wersja": "2.0.0",
+      "data": "2026-08-28",
+      "system": "Linux",
+      "postac": "serwer",
+      "architektura": "amd64",
+      "nazwa": "danaco-console_2.0.0_amd64.deb",
+      "plik": "https://pobierz.danaco-group.pl/wydania/1.0.0-2026-08-28/danaco-console_1.0.0_amd64.deb",
+      "rozmiar_bajtow": 41816458,
+      "sha256": "5da8601e37846e6defc90b0899cdd5826aaaadb27fa8ca5e255c58fbbd69b84b",
+      "rozmiar_bajty": 41850124,
+      "suma": "265657e477502400e98634598b9d68e016650aa97e48b8c837748c9d275e1ba9"
+    },
+    {
+      "wersja": "2.0.0",
       "data": "2026-08-18",
       "system": "Windows",
       "postac": "hybryda",
@@ -38,7 +77,7 @@
       "zmiany": "Pierwsze wydanie postaci hybrydowej dla Windows x64: instalka NSIS z oknem i powłoką, bez rdzenia — rdzeń stoi na serwerze."
     },
     {
-      "wersja": "1.0.0",
+      "wersja": "2.0.0",
       "data": "2026-08-18",
       "system": "Windows",
       "postac": "hybryda",
@@ -66,7 +105,8 @@
     "rozmiar": "42,6 MB",
     "rozmiarBajty": 44719274,
     "suma": "7cb532232cb93220001a707180ee42dd643389f0c26542d9a3d54b412cf0274c",
-    "zmiany": "Pierwsze wydanie pakietu serwerowego: rdzeń wraz z całym arsenałem po stronie serwera, do założenia przez apt na maszynie wdrożenia."
+    "zmiany": "Pierwsze wydanie pakietu serwerowego: rdzeń wraz z całym arsenałem po stronie serwera, do założenia przez apt na maszynie wdrożenia.",
+    "sprostowanie_28_08": "Zapis tej sekcji powstał przed wdrożeniem i opisywał nginx pod 51.75.62.180. Pomiar z 28.08.2026: kanał działa na 57.128.253.74 pod Caddy, a stary adres jest nieaktualny. Nazwy `danaco-system` i `danaco-web` nie są nazwami DNS — to etykiety wewnętrzne z migracji punktów dostępu; w DNS nie rozwiązują się."
   },
   "kolejnosc": "KOLEJNOŚĆ POZYCJI JEST ZNACZĄCA I NIE WOLNO JEJ SORTOWAĆ ALFABETYCZNIE. Czytający wykaz zatrzymuje przy RÓWNYCH wersjach PIERWSZĄ pozycję pasującą do systemu, a wszystkie pozycje niosą 1.0.0 — o tym, co baner zaproponuje, rozstrzyga WYŁĄCZNIE kolejność. Dlatego x64 stoi przed ARM64: inaczej baner podałby maszynie Intel/AMD instalkę ARM.",
   "pola": {

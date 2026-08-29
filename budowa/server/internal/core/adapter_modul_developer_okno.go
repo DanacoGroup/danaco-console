@@ -21,7 +21,7 @@ func (a *adapterDevelopera) oknoDevelopera(oknoKod string) (session.Okno, error)
 	}
 	if a.okna == nil {
 		return session.Okno{}, protocol.JakoError(protocol.NowyBlad(shared.ErrorCodeInternalError,
-			"moduł Developer: rdzeń nie ma rejestru okien, więc nie zna obszaru pracy okna"))
+			"moduł Developer: serwer nie ma rejestru okien, więc nie zna obszaru pracy okna"))
 	}
 	okno, err := a.okna.Okno(kod)
 	if err != nil {

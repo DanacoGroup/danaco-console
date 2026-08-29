@@ -263,7 +263,7 @@ func (a *adapterDesignu) ZlozSciezkiLogicznie(ctx context.Context,
 	if len(wezlyWyniku) < najmniejWezlowSciezkiDesignu {
 		// Wynik pusty jest prawdą o kształtach, nie usterką: część wspólna rozłącznych kół jest pusta.
 		return shared.DesignVectorBooleanResponse{}, bladWskazaniaDesignu(fmt.Sprintf(
-			"operacja %s na wskazanych ścieżkach dała kształt pusty — rdzeń nie zakłada ścieżki "+
+			"operacja %s na wskazanych ścieżkach dała kształt pusty — serwer nie zakłada ścieżki "+
 				"bez węzłów; sprawdź, czy kształty się w ogóle nakładają", string(z.Operation)))
 	}
 
@@ -437,7 +437,7 @@ func (a *adapterDesignu) OczyscSciezki(ctx context.Context,
 	if z.Precision != nil {
 		if *z.Precision < 0 || *z.Precision > granicaPrecyzjiSciezkiDesignu {
 			return shared.DesignVectorOptimizeResponse{}, bladWskazaniaDesignu(fmt.Sprintf(
-				"komenda design.vector.optimize z precyzją %d: rdzeń przycina do zakresu 0–%d miejsc "+
+				"komenda design.vector.optimize z precyzją %d: serwer przycina do zakresu 0–%d miejsc "+
 					"po przecinku — powyżej zapis liczby przestaje nieść informację",
 				*z.Precision, granicaPrecyzjiSciezkiDesignu))
 		}
@@ -465,7 +465,7 @@ func (a *adapterDesignu) OczyscSciezki(ctx context.Context,
 		}
 	default:
 		return shared.DesignVectorOptimizeResponse{}, bladWskazaniaDesignu(
-			"komenda design.vector.optimize bez wskazania ścieżek ani kompozycji: rdzeń nie " +
+			"komenda design.vector.optimize bez wskazania ścieżek ani kompozycji: serwer nie " +
 				"przepisuje wszystkiego, co ma w bazie, na podstawie żądania bez zakresu")
 	}
 	if len(wiersze) == 0 {
@@ -657,7 +657,7 @@ func (a *adapterDesignu) WydajWektor(ctx context.Context,
 	}
 	if len(wiersze) == 0 {
 		return shared.DesignVectorExportResponse{}, bladWskazaniaDesignu(fmt.Sprintf(
-			"kompozycja %s nie ma ani jednej ścieżki wektorowej — rdzeń odmawia zamiast oddać "+
+			"kompozycja %s nie ma ani jednej ścieżki wektorowej — serwer odmawia zamiast oddać "+
 				"pusty dokument, bo plik pusty wygląda tak samo jak plik uszkodzony", kompozycja.Kod))
 	}
 
@@ -981,21 +981,21 @@ func uporzadkujBilansDesignu(wykaz []string) []string {
 // w jego wykazie jest nieaktualne.
 func bladNieznanejSciezkiDesignu(kod string, err error) error {
 	if czyBrakZasobuDesignu(err) {
-		return bladNieznanegoBytuDesignu("ścieżki wektorowej " + kod + " nie ma w tym rdzeniu")
+		return bladNieznanegoBytuDesignu("ścieżki wektorowej " + kod + " nie ma w tym serwerze")
 	}
 	return bladDesignu(err)
 }
 
 func bladNieznanegoSymboluDesignu(kod string, err error) error {
 	if czyBrakZasobuDesignu(err) {
-		return bladNieznanegoBytuDesignu("symbolu " + kod + " nie ma w tym rdzeniu")
+		return bladNieznanegoBytuDesignu("symbolu " + kod + " nie ma w tym serwerze")
 	}
 	return bladDesignu(err)
 }
 
 func bladNieznanejRamkiDesignu(kod string, err error) error {
 	if czyBrakZasobuDesignu(err) {
-		return bladNieznanegoBytuDesignu("ramki " + kod + " nie ma w tym rdzeniu")
+		return bladNieznanegoBytuDesignu("ramki " + kod + " nie ma w tym serwerze")
 	}
 	return bladDesignu(err)
 }

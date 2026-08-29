@@ -151,8 +151,8 @@ func (a *adapterNarzedziObrazuModelu) wolajSilnik(ctx context.Context,
 
 	if a.wspolne == nil || a.wspolne.uruchamiacz == nil {
 		return bladZapleczaNiedostepnegoModeluObrazu(
-			"rdzeń nie ma uruchamiacza procesów — silniki obrazu nie mają czym wystartować; " +
-				"naprawa: podpiąć warstwę kanału (injection) przy składaniu rdzenia")
+			"serwer nie ma uruchamiacza procesów — silniki obrazu nie mają czym wystartować; " +
+				"naprawa: podpiąć warstwę kanału (injection) przy składaniu serwera")
 	}
 	okno, zasady, obszar := a.wspolne.zasiegNarzedzi()
 	_, err := zewnetrzne.Wolaj(ctx, a.wspolne.uruchamiacz, okno, zasady, obszar,
@@ -174,7 +174,7 @@ func sprawdzWagi(sciezka, nazwaModelu, waga, skad string) error {
 	return bladZapleczaNiedostepnegoModeluObrazu("nie ma wag modelu " + nazwaModelu +
 		" — mają leżeć pod " + sciezka + " i ważą około " + waga +
 		"; naprawa: pobrać je z " + skad + " i położyć pod tą ścieżką " +
-		"(rdzeń świadomie nie ściąga ich w trakcie żądania, żeby czas łącza " +
+		"(serwer świadomie nie ściąga ich w trakcie żądania, żeby czas łącza " +
 		"nie zjadał granicy czasu przetwarzania)")
 }
 

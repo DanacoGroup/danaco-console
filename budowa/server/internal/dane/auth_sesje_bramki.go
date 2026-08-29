@@ -21,15 +21,19 @@ type SesjaBramki struct {
 	Uniewazniono  *int64
 	// Trwanie to długość życia sesji w milisekundach; zero znaczy wiersz bez zapisanego trwania.
 	Trwanie int64
+	// KontoId wskazuje konto, któremu sesja została wydana. Zero znaczy wiersz
+	// zastany, sprzed migracji 406, gdy konto było jedno.
+	KontoId int64
 }
 
 const (
 	kolumnySesjiBramki = `id, token_skrot, metoda_rodzaj, urzadzenie_kod,
-	                      wygasa, utworzono, uniewazniono, trwanie`
+	                      wygasa, utworzono, uniewazniono, trwanie,
+	                      COALESCE(konto_id, 0)`
 
 	wstawSesjeBramki = `INSERT INTO sesja_bramki
-	                    (token_skrot, metoda_rodzaj, urzadzenie_kod, wygasa, utworzono, trwanie)
-	                    VALUES (?, ?, ?, ?, ?, ?)`
+	                    (token_skrot, metoda_rodzaj, urzadzenie_kod, wygasa, utworzono, trwanie, konto_id)
+	                    VALUES (?, ?, ?, ?, ?, ?, ?)`
 
 	sesjaBramkiPoSkrocie = `SELECT ` + kolumnySesjiBramki +
 		` FROM sesja_bramki WHERE token_skrot = ?`
@@ -67,7 +71,7 @@ func (r *repozytoriumUwierzytelnienia) ZalozSesjeBramki(ctx context.Context,
 	}
 	_, err = polecenie.ExecContext(ctx, sesja.SkrotTokenu,
 		tekstDoKolumny(sesja.RodzajMetody), tekstDoKolumny(sesja.UrzadzenieKod),
-		sesja.Wygasa, sesja.Utworzono, sesja.Trwanie)
+		sesja.Wygasa, sesja.Utworzono, sesja.Trwanie, sesja.KontoId)
 	if err != nil {
 		return SesjaBramki{}, fmt.Errorf("dane: nie można założyć sesji bramki: %w", err)
 	}
@@ -193,7 +197,7 @@ func odczytajSesjeBramki(wiersz skaner) (SesjaBramki, error) {
 	var rodzaj, urzadzenie sql.NullString
 	var uniewazniono sql.NullInt64
 	err := wiersz.Scan(&sesja.ID, &sesja.SkrotTokenu, &rodzaj, &urzadzenie,
-		&sesja.Wygasa, &sesja.Utworzono, &uniewazniono, &sesja.Trwanie)
+		&sesja.Wygasa, &sesja.Utworzono, &uniewazniono, &sesja.Trwanie, &sesja.KontoId)
 	if err != nil {
 		return SesjaBramki{}, err
 	}

@@ -27,9 +27,9 @@ func Uruchom(ctx context.Context, u session.Uruchamiacz, okno session.Okno,
 	p Pomocnik, argumenty []string, katalog string, limit time.Duration) (Wynik, error) {
 
 	if u == nil {
-		return Wynik{}, errors.New("silnik mowy: rdzeń nie ma uruchamiacza procesów" +
+		return Wynik{}, errors.New("silnik mowy: serwer nie ma uruchamiacza procesów" +
 			" — pomocnik transkrypcji nie ma czym wystartować;" +
-			" naprawa: podpiąć warstwę kanału (injection) przy składaniu rdzenia")
+			" naprawa: podpiąć warstwę kanału (injection) przy składaniu serwera")
 	}
 	if p.Program == "" || p.Skrypt == "" {
 		return Wynik{}, &BrakPomocnika{Powod: errors.New(
@@ -97,7 +97,7 @@ func zbierz(ctx context.Context, uchwyt session.UchwytProcesu, drzewo *session.D
 		_ = drzewo.Ubij()
 		bladZakonczenia = <-zakonczenie
 	case <-ctx.Done():
-		powod = "żądanie przerwane przez rdzeń"
+		powod = "żądanie przerwane przez serwer"
 		_ = drzewo.Ubij()
 		bladZakonczenia = <-zakonczenie
 	}

@@ -87,13 +87,13 @@ func (a *adapterPdfStudia) trescMaterialu(ctx context.Context, kod string) ([]by
 func (a *adapterPdfStudia) bajtyZasobu(ctx context.Context, kod string) ([]byte, error) {
 	if a.zasoby == nil {
 		return nil, odmowaPdf(shared.ErrorCodeInternalError,
-			"rdzeń nie ma wpiętego magazynu zasobów — naprawa: podpiąć repozytorium "+
-				"zasobów przy składaniu rdzenia")
+			"serwer nie ma wpiętego magazynu zasobów — naprawa: podpiąć repozytorium "+
+				"zasobów przy składaniu serwera")
 	}
 	wiersz, err := a.zasoby.Zasob(ctx, strings.TrimSpace(kod))
 	if err != nil {
 		return nil, odmowaPdf(shared.ErrorCodeNotFound,
-			"zasobu "+kod+" nie ma w magazynie rdzenia")
+			"zasobu "+kod+" nie ma w magazynie serwera")
 	}
 	if wiersz.URI == nil || strings.TrimSpace(*wiersz.URI) == "" {
 		return nil, odmowaPdf(shared.ErrorCodeNotFound,

@@ -24,7 +24,7 @@ K.ekrany[4] = function () {
       etykieta: 'krok4.katalogDanych.etykieta', wartosc: 'krok4.katalogDanych.wartosc',
       opis: 'krok4.katalogDanych.opis', id: 'katalog-danych', zmien: 'krok4.zmien'
     }),
-    S.wierszMiary({ wzor: 'krok4.miejsce', dane: 'krok4.miejsceDane', wytluszcz: ['wymagane', 'dostepne'] }),
+    S.wierszMiary({ wzor: 'krok4.miejsce', dane: 'krok4.miejsceDane', wytluszcz: ['wymagane'] }),
     el('div', {}, [
       S.naglowekBloku({ klucz: 'krok4.skroty.naglowek' }),
       S.poleWyboru({ etykieta: 'krok4.skroty.pulpit.etykieta', opis: 'krok4.skroty.pulpit.opis', id: 'opis-pulpit', zaznaczone: true })

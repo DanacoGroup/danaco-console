@@ -138,12 +138,35 @@ Postawione na polecenie Właściciela:
 
 | Narzędzie | Wydanie | Waga | Po co |
 |---|---|---|---|
-| rustup wraz z rustc i cargo | 1.98.0, profil minimalny | ~1,4 GB z celami | budowa powłoki Tauri |
+| rustup wraz z rustc i cargo | rustup 1.29.0, toolchain stable 1.97.1, profil minimalny | ~1,4 GB z celami | budowa powłoki Tauri |
 | cel `x86_64-pc-windows-gnu` | — | w powyższym | wariant x64 instalatora |
 | cel `aarch64-pc-windows-msvc` | — | w powyższym | wariant ARM64 instalatora |
 | `cargo-tauri` | 2.11.4 | ~40 MB | złożenie pakietu NSIS |
 | `cargo-xwin` | 0.23.1 | ~25 MB | biblioteki Windows SDK dla celu MSVC na Linuksie |
 
 Nie instalowano niczego poza tym. Vite 8.2.2, TypeScript 7.0.2, `mingw-w64`,
-`makensis` oraz llvm-mingw w `/opt/llvm-mingw` stały już na maszynie.
+`makensis` oraz llvm-mingw w `/opt/llvm-mingw` stały już na maszynie. Poprzedni
+zapis tej tabeli podawał wydanie rustup jako 1.98.0 — błędnie: ani rustup, ani
+toolchain nie noszą tego numeru; poprawiono na wynik `rustup --version` i
+`rustc --version` z 28.08.
+
+## Sprawdzenie 28.08 (druga tura): narzędzia stały, brakowało PATH w sesji
+
+Zlecenie zgłosiło `cargo`/`rustup` jako nieobecne, bo sesja wykonawcza (powłoka
+Bash nielogowana, bez `-i`) nie widziała ich na `PATH` — to samo zobaczy każda
+sesja narzędziowa uruchomiona bez logowania. Zbadanie `/opt/rust/cargo` wykazało,
+że toolchain, cele i oba dodatki (`cargo-tauri`, `cargo-xwin`) już tam stoją,
+zgodne co do wydania z tabelą wyżej. Powodem jest `/etc/profile.d/danaco-toolchain.sh`
+(ustawia `RUSTUP_HOME`, `CARGO_HOME`, dokłada `/opt/rust/cargo/bin` do `PATH`) —
+plik ten czyta `/etc/profile`, więc działa w powłoce logowanej (`bash -lc …`,
+terminal Operatora) i nie działa w powłoce nielogowanej nieinteraktywnej, którą
+uruchamia to narzędzie sesji. Nic nie postawiono ponownie. Dowód: oba skrypty,
+`budowa/scripts/instalka-hybryda-win-x64.sh` i `…-win-arm.sh`, uruchomione przez
+`bash -lc` przeszły od sprawdzenia narzędzi po odbiór bez żadnej poprawki w
+skryptach ani w toolchainie — wynik w [rejestrze decyzji](decyzje.md) nie
+wymagany, to potwierdzenie stanu, nie rozstrzygnięcie. Sesja narzędziowa, która
+sama uruchamia te skrypty (nie przez terminal Operatora), musi albo wywołać je
+przez `bash -lc`, albo jawnie ustawić `RUSTUP_HOME=/opt/rust/rustup`,
+`CARGO_HOME=/opt/rust/cargo`, `PATH=/opt/rust/cargo/bin:$PATH` — inaczej ten sam
+fałszywy brak narzędzia powtórzy się na każdej kolejnej turze.
 

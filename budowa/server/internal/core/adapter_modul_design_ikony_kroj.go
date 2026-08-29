@@ -849,7 +849,7 @@ func zapiszTabeleNameDesignu(nazwa string) []byte {
 		numer uint16
 		tresc string
 	}{
-		{0, "Krój ikonowy złożony przez rdzeń Danaco Console"},
+		{0, "Krój ikonowy złożony przez serwer Danaco Console"},
 		{1, nazwa},
 		{2, "Regular"},
 		{3, postscriptowa + "-1-0"},

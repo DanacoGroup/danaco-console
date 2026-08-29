@@ -158,8 +158,8 @@ func (a *adapterNarzedziObrazuModelu) poprawTwarze(ctx context.Context,
 
 	if a.wspolne == nil || a.wspolne.uruchamiacz == nil {
 		return nil, 0, bladZapleczaNiedostepnegoModeluObrazu(
-			"rdzeń nie ma uruchamiacza procesów — pomocnik twarzy nie ma czym wystartować; " +
-				"naprawa: podpiąć warstwę kanału (injection) przy składaniu rdzenia")
+			"serwer nie ma uruchamiacza procesów — pomocnik twarzy nie ma czym wystartować; " +
+				"naprawa: podpiąć warstwę kanału (injection) przy składaniu serwera")
 	}
 	okno, zasady, obszar := a.wspolne.zasiegNarzedzi()
 	wynik, err := zewnetrzne.Wolaj(ctx, a.wspolne.uruchamiacz, okno, zasady, obszar,

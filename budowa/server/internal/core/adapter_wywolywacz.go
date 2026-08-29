@@ -116,7 +116,7 @@ func (a *adapterWywolywacza) ZapiszSkrotWywolywacza(ctx context.Context,
 	if a.konfiguracja == nil {
 		return shared.LauncherHotkeySetResponse{}, protocol.JakoError(protocol.NowyBlad(
 			shared.ErrorCodeInternalError,
-			"wywoływacz: rdzeń nie ma wpiętego magazynu konfiguracji — nastawy skrótu "+
+			"wywoływacz: serwer nie ma wpiętego magazynu konfiguracji — nastawy skrótu "+
 				"nie ma gdzie zapisać"))
 	}
 	skrot := strings.TrimSpace(z.Hotkey)

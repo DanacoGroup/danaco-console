@@ -29,9 +29,9 @@ const (
 // przyczyny w danych.
 func bladMagazynuStudia(czynnosc string) error {
 	return protocol.JakoError(protocol.NowyBlad(shared.ErrorCodeInternalError,
-		"moduł Studio: "+czynnosc+" nie ma gdzie odłożyć wyniku — rdzeń złożony bez "+
+		"moduł Studio: "+czynnosc+" nie ma gdzie odłożyć wyniku — serwer złożony bez "+
 			"magazynu zasobów; naprawa: podpiąć repozytorium zasobów i katalog danych "+
-			"przy składaniu rdzenia"))
+			"przy składaniu serwera"))
 }
 
 // bajtyZasobuStudia oddaje treść zasobu magazynu rdzenia po jego kodzie,

@@ -18,6 +18,12 @@ pub const ZMIENNA_PORT: &str = "DANACO_PORT";
 /// wskazanie złożone w oknie; jej brak oddaje rozstrzygnięcie nastawom zapisanym.
 pub const ZMIENNA_HOST_RDZENIA: &str = "DANACO_HOST_RDZENIA";
 
+/// Serwer wdrożenia wpisany w postać instalki przy jej składaniu. Rozstrzygnięcie 8
+/// rejestru decyzji stanowi, że instalka jest osobna dla każdego wdrożenia, a żaden
+/// z kroków kreatora o adres nie pyta — musi więc pochodzić stąd. Brak wpisania
+/// zostawia powłokę bez wskazania, tak jak było przedtem.
+pub const HOST_WDROZENIA: Option<&str> = option_env!("DANACO_HOST_WDROZENIA");
+
 /// Nazwa warstwy, z której pochodzi obowiązujące wskazanie hosta rdzenia,
 /// zwracana w odpowiedzi polecenia wskazania.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -28,6 +34,9 @@ pub enum Warstwa {
     Nastawy,
     /// Wskazanie ze zmiennej środowiska procesu powłoki.
     Srodowisko,
+    /// Wskazanie wpisane w postać instalki przy jej składaniu. Stoi najniżej:
+    /// Operator zmienia je w oknie, a zmienna środowiska bije oba.
+    Wdrozenie,
 }
 
 impl Warstwa {
@@ -37,6 +46,7 @@ impl Warstwa {
             Warstwa::Brak => "brak",
             Warstwa::Nastawy => "nastawy",
             Warstwa::Srodowisko => "srodowisko",
+            Warstwa::Wdrozenie => "wdrozenie",
         }
     }
 }
@@ -88,7 +98,10 @@ impl Ustawienia {
     pub fn wskazanie(&self) -> Option<Wskazane> {
         let host = match self.host_ze_srodowiska.as_deref() {
             Some(host) => host.to_string(),
-            None => self.nastawy().host_rdzenia?,
+            None => match self.nastawy().host_rdzenia {
+                Some(host) => host,
+                None => HOST_WDROZENIA.map(str::to_string)?,
+            },
         };
         Some(Wskazane {
             host,
@@ -116,6 +129,9 @@ impl Ustawienia {
         }
         if self.nastawy().wskazanie_zlozone() {
             return Warstwa::Nastawy;
+        }
+        if HOST_WDROZENIA.is_some() {
+            return Warstwa::Wdrozenie;
         }
         Warstwa::Brak
     }

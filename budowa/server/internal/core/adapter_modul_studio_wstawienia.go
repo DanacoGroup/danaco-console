@@ -377,7 +377,7 @@ func (a *adapterStudia) UsunObiekt(ctx context.Context,
 	if obiekt.AssetId != nil && *obiekt.AssetId != "" {
 		bilans.Skipped = append(bilans.Skipped, shared.StudioSkippedItem{
 			Reason: "zasób magazynu zostaje",
-			Detail: postacWskaznikTekstu("bajty obiektu leżą w magazynie zasobów rdzenia " +
+			Detail: postacWskaznikTekstu("bajty obiektu leżą w magazynie zasobów serwera " +
 				"pod wskazaniem " + *obiekt.AssetId + " i nie zostały usunięte — ten sam " +
 				"zasób bywa wstawiony w innych dokumentach"),
 		})
@@ -420,10 +420,10 @@ func (a *adapterStudia) obiektUstalPochodzenie(ctx context.Context,
 		return nil
 	case shared.StudioObjectKindChart:
 		// Rdzeń nie ma rachunku wykresu; wykres składa się w module Design.
-		return bladWskazaniaStudio("wstawienie wykresu — rdzeń nie ma rachunku wykresu " +
+		return bladWskazaniaStudio("wstawienie wykresu — serwer nie ma rachunku wykresu " +
 			"po stronie modułu Studio. Droga, która działa: złożyć wykres w module Design " +
 			"i wstawić go jako obiekt rodzaju image ze wskazaniem zasobu (assetId) albo " +
-			"węzła Designu (designNodeId). Brak jest po stronie rdzenia, nie po stronie " +
+			"węzła Designu (designNodeId). Brak jest po stronie serwera, nie po stronie " +
 			"Operatora")
 	}
 	return a.obiektPochodzenieObrazu(ctx, z, obiekt, bilans)
@@ -453,10 +453,10 @@ func (a *adapterStudia) obiektPochodzenieObrazu(ctx context.Context,
 		kod := strings.TrimSpace(*z.DesignNodeId)
 		if a.zasoby == nil {
 			return postacBladZaplecza("wstawienie obiektu z modułu Design nie ma drogi — " +
-				"rdzeń złożony bez repozytorium Designu")
+				"serwer złożony bez repozytorium Designu")
 		}
 		if _, err := a.zasoby.SciezkaWektorowaDesignuPoKodzie(ctx, kod); err != nil {
-			return bladWskazaniaStudio("węzła modułu Design „" + kod + "” nie ma w rdzeniu; " +
+			return bladWskazaniaStudio("węzła modułu Design „" + kod + "” nie ma w serwerze; " +
 				"kształt zakłada się komendą design.vector.shape.add, a wynik wstawia się " +
 				"tutaj jego wskazaniem")
 		}
@@ -468,11 +468,11 @@ func (a *adapterStudia) obiektPochodzenieObrazu(ctx context.Context,
 		kod := strings.TrimSpace(*z.LibraryFileId)
 		if a.biblioteka == nil {
 			return postacBladZaplecza("wstawienie obiektu z Biblioteki nie ma drogi — " +
-				"rdzeń złożony bez repozytorium Biblioteki")
+				"serwer złożony bez repozytorium Biblioteki")
 		}
 		plik, err := a.biblioteka.Plik(ctx, kod)
 		if err != nil {
-			return bladWskazaniaStudio("pliku Biblioteki „" + kod + "” nie ma w rdzeniu")
+			return bladWskazaniaStudio("pliku Biblioteki „" + kod + "” nie ma w serwerze")
 		}
 		obiekt.LibraryFileId = postacWskaznikTekstu(kod)
 		obiekt.Source = obiektWskaznikZrodla(shared.StudioObjectSourceLibraryFile)
@@ -499,7 +499,7 @@ func (a *adapterStudia) obiektPochodzenieObrazu(ctx context.Context,
 		sciezka := strings.TrimSpace(*z.Path)
 		wiadomosc, err := os.Stat(sciezka)
 		if err != nil {
-			return bladWskazaniaStudio("pliku „" + sciezka + "” rdzeń nie widzi: " + err.Error())
+			return bladWskazaniaStudio("pliku „" + sciezka + "” serwer nie widzi: " + err.Error())
 		}
 		if wiadomosc.Size() > obiektGranicaBajtow {
 			return bladWskazaniaStudio("plik „" + sciezka + "” ma " +
@@ -521,14 +521,14 @@ func (a *adapterStudia) obiektPochodzenieObrazu(ctx context.Context,
 		bilans.Skipped = append(bilans.Skipped, shared.StudioSkippedItem{
 			Reason: "bajty ze sieci nie weszły tą drogą",
 			Detail: postacWskaznikTekstu("obiekt niesie zapisane pochodzenie (adres), ale " +
-				"treści rdzeń tą komendą nie pobiera; obraz ze sieci wciąga się przez " +
+				"treści serwer tą komendą nie pobiera; obraz ze sieci wciąga się przez " +
 				"studio.ingest.url, a jego zasób wstawia się tutaj polem assetId"),
 		})
 		return nil
 	}
 
 	return bladWskazaniaStudio("wstawienie " + obiektNazwaRodzaju(obiekt.Kind) +
-		" bez zapisanego pochodzenia. Wskaż jedno z: zasób magazynu rdzenia (assetId), " +
+		" bez zapisanego pochodzenia. Wskaż jedno z: zasób magazynu serwera (assetId), " +
 		"węzeł modułu Design (designNodeId), plik Biblioteki (libraryFileId), ścieżkę " +
 		"pliku (path), bajty wprost (bytesBase64) albo adres źródła (sourceUrl). " +
 		"Obiekt bez pochodzenia jest brakiem, nie skrótem: za tydzień nikt nie odtworzy, " +
@@ -544,11 +544,11 @@ func (a *adapterStudia) obiektPochodzenieKsztaltu(ctx context.Context,
 		kod := strings.TrimSpace(*z.DesignNodeId)
 		if a.zasoby == nil {
 			return postacBladZaplecza("wstawienie kształtu z modułu Design nie ma drogi — " +
-				"rdzeń złożony bez repozytorium Designu")
+				"serwer złożony bez repozytorium Designu")
 		}
 		if _, err := a.zasoby.SciezkaWektorowaDesignuPoKodzie(ctx, kod); err != nil {
 			return bladWskazaniaStudio("kształtu modułu Design „" + kod + "” nie ma " +
-				"w rdzeniu; kształt o ścieżkach edytowalnych zakłada komenda " +
+				"w serwerze; kształt o ścieżkach edytowalnych zakłada komenda " +
 				"design.vector.shape.add i dopiero jej wynik wstawia się do dokumentu")
 		}
 		obiekt.DesignNodeId = postacWskaznikTekstu(kod)
@@ -576,7 +576,7 @@ func (a *adapterStudia) obiektPochodzenieIkony(ctx context.Context,
 
 	if !obiektPodane(z.IconName) {
 		return bladWskazaniaStudio("wstawienie ikony bez wskazania jej nazwy (pole " +
-			"iconName); nazwy bierze się z katalogu ikon rdzenia " +
+			"iconName); nazwy bierze się z katalogu ikon serwera " +
 			"(design.icon.library.search)")
 	}
 	nazwa := strings.TrimSpace(*z.IconName)
@@ -585,7 +585,7 @@ func (a *adapterStudia) obiektPochodzenieIkony(ctx context.Context,
 		wzor, jest = wzorDlaPojeciaDesignu(nazwa)
 	}
 	if !jest {
-		return bladWskazaniaStudio("ikony „" + nazwa + "” nie ma w katalogu ikon rdzenia; " +
+		return bladWskazaniaStudio("ikony „" + nazwa + "” nie ma w katalogu ikon serwera; " +
 			"nazwę wybiera się z wykazu komendy design.icon.library.search, a ikonę " +
 			"nieobecną w katalogu składa design.icon.generate")
 	}
@@ -715,7 +715,7 @@ func obiektSprawdzRodzaj(rodzaj shared.StudioObjectKind) error {
 		nazwy = append(nazwy, string(znany))
 	}
 	return bladWskazaniaStudio("obiekt rodzaju „" + string(rodzaj) +
-		"”, którego rdzeń nie zna; wykaz: " + strings.Join(nazwy, ", "))
+		"”, którego serwer nie zna; wykaz: " + strings.Join(nazwy, ", "))
 }
 
 // obiektNazwaRodzaju nazywa rodzaj obiektu pełnym słowem polskim, aby komunikat
@@ -769,7 +769,7 @@ func obiektNazwaZrodla(zrodlo shared.StudioObjectSource) string {
 	case shared.StudioObjectSourceFile:
 		return "plik Operatora"
 	case shared.StudioObjectSourceCoreAsset:
-		return "magazyn zasobów rdzenia"
+		return "magazyn zasobów serwera"
 	case shared.StudioObjectSourceDesignModule:
 		return "moduł Design"
 	case shared.StudioObjectSourcePhotoBank:

@@ -1,16 +1,19 @@
-// Pakiet nadajnik wysyła listy pisane przez samą aplikację: potwierdzenie
-// adresu przy rejestracji i drogę odzyskania konta, w imieniu platformy,
-// osobnym poświadczeniem od skrzynki Operatora.
+// Pakiet nadajnik podaje serwerowi poczty wiadomości złożone przez pakiet
+// mail: potwierdzenie adresu przy rejestracji i drogę odzyskania konta,
+// w imieniu platformy, osobnym poświadczeniem od skrzynki Operatora.
 package nadajnik
 
 import (
 	"crypto/tls"
 	"fmt"
 	"net"
+	netmail "net/mail"
 	"net/smtp"
 	"strconv"
 	"strings"
 	"time"
+
+	"danacoconsole/server/internal/mail"
 )
 
 // limitRozmowy zamyka rozmowę, która utknęła. Bez niego nadanie do serwera,
@@ -55,57 +58,35 @@ func (n Nastawy) Brak() error {
 	return nil
 }
 
-// List jest jednym z dwóch listów systemowych: temat i treść tekstowa.
-//
-// Załączników nie ma i nie będzie: list systemowy niesie jedno zdanie i jedną
-// drogę, a załącznik w liście o odzyskaniu konta jest wzorcem, po którym
-// rozpoznaje się podszycie.
-type List struct {
-	Do    string
-	Temat string
-	Tresc string
+// Nadawca oddaje adres nadawcy dla koperty wiadomości składanej pakietem mail.
+// Nazwa nieustawiona zostawia sam adres — konto nadawcze bez nazwy widocznej
+// nadal nadaje.
+func (n Nastawy) Nadawca() netmail.Address {
+	return netmail.Address{
+		Name:    strings.TrimSpace(n.NazwaWyswietlana),
+		Address: n.Adres,
+	}
 }
 
-// Wyslij nadaje list i oddaje chwilę nadania.
+// Wyslij nadaje wiadomość złożoną przez pakiet mail i oddaje chwilę nadania.
 //
 // Nieudane nadanie NIE jest ciszą: wraca błędem nazywającym, na czym rozmowa
-// stanęła. Rejestracja, która obiecała list i go nie wysłała, zostawiłaby
-// Operatora przed kontem, do którego nie ma jak wejść.
-func Wyslij(n Nastawy, l List) (time.Time, error) {
+// stanęła — rejestracja bez listu zostawia Operatora przed zamkniętym kontem.
+func Wyslij(n Nastawy, wiadomosc *mail.Message) (time.Time, error) {
 	if err := n.Brak(); err != nil {
 		return time.Time{}, err
 	}
-	if strings.TrimSpace(l.Do) == "" {
+	if wiadomosc == nil || len(wiadomosc.Data) == 0 {
+		return time.Time{}, fmt.Errorf("list bez treści — nie ma czego nadać")
+	}
+	if strings.TrimSpace(wiadomosc.To) == "" {
 		return time.Time{}, fmt.Errorf("list bez odbiorcy — nie ma dokąd go nadać")
 	}
 
-	dokument := zloz(n, l)
-	if err := nadaj(n, l.Do, dokument); err != nil {
+	if err := nadaj(n, wiadomosc.To, wiadomosc.Data); err != nil {
 		return time.Time{}, err
 	}
 	return time.Now(), nil
-}
-
-// zloz składa dokument listu: nagłówki i treść rozdzielone pustą linią.
-//
-// Kodowanie jest jawne (`UTF-8`), bo temat i treść niosą polskie znaki
-// diakrytyczne, a serwer bez deklaracji przyjmie je za bajty ósemkowe
-// i Operator zobaczy krzaki zamiast zdania.
-func zloz(n Nastawy, l List) []byte {
-	nadawca := n.Adres
-	if nazwa := strings.TrimSpace(n.NazwaWyswietlana); nazwa != "" {
-		nadawca = fmt.Sprintf("%s <%s>", nazwa, n.Adres)
-	}
-	naglowki := []string{
-		"From: " + nadawca,
-		"To: " + l.Do,
-		"Subject: " + l.Temat,
-		"MIME-Version: 1.0",
-		"Content-Type: text/plain; charset=UTF-8",
-		"Content-Transfer-Encoding: 8bit",
-		"Date: " + time.Now().Format(time.RFC1123Z),
-	}
-	return []byte(strings.Join(naglowki, "\r\n") + "\r\n\r\n" + l.Tresc + "\r\n")
 }
 
 // nadaj prowadzi całą rozmowę SMTP: połączenie, ewentualny STARTTLS,

@@ -1,0 +1,86 @@
+<!doctype html>
+<!-- Strona wydaje okno instalatora Danaco Console: montuje warstwę projektową
+     bez zmian (design/zasoby/, skopiowana do warstwa/zasoby/ przy budowie —
+     patrz src-tauri/build.rs) i dowiązuje jego sześć kroków do rzeczywistego
+     stanu tej maszyny skryptem integracja.js, ładowanym na samym końcu. -->
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Danaco Console — Instalator</title>
+<link rel="icon" href="warstwa/zasoby/marka/favicon/favicon.svg" type="image/svg+xml">
+
+<link rel="stylesheet" href="warstwa/zasoby/zetony/fonty.css">
+<link rel="stylesheet" href="warstwa/zasoby/zetony/zetony.css">
+<link rel="stylesheet" href="warstwa/zasoby/css/fundament.css">
+<link rel="stylesheet" href="warstwa/zasoby/css/komponenty.css">
+<link rel="stylesheet" href="warstwa/zasoby/kreator.css">
+<link rel="stylesheet" href="warstwa/zasoby/prototyp.css">
+</head>
+
+<body class="pt-pelny-ekran">
+
+<div class="dn-scena">
+<section class="pt-okno pt-okno--plaskie" aria-label="Okno instalatora aplikacji Danaco Console">
+  <header class="pt-okno-naglowek">
+    <h1 class="pt-okno-tytul">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12"/><path d="m7 10 5 5 5-5"/><path d="M5 21h14"/></svg>
+      Instalator aplikacji
+    </h1>
+  </header>
+  <div class="pt-okno-tresc" data-kreator></div>
+</section>
+</div>
+
+<!-- Motyw ciemny zapada przed `wspolne.js`, ktore inaczej wzieloby nastawe systemu.
+       Instalator stoi przed uruchomieniem aplikacji: nie ma jeszcze Operatora, ktorego
+       wybor mialby uszanowac. Rozstrzygniecie 21 rejestru decyzji. -->
+  <script>
+    document.documentElement.dataset.theme = 'dark';
+    try { localStorage.setItem('dn-motyw', 'dark'); } catch (e) {}
+  </script>
+  <script src="warstwa/zasoby/wspolne.js"></script>
+<script src="warstwa/zasoby/prototyp.js"></script>
+<script src="warstwa/zasoby/narzedzia-okien.js"></script>
+<script src="warstwa/zasoby/bryla.js"></script>
+
+<script src="warstwa/zasoby/okna/instalator/tresci.js"></script>
+<script src="warstwa/zasoby/tresci/licencja.js"></script>
+
+<script src="warstwa/zasoby/okna/instalator/narzedzia.js"></script>
+<script src="warstwa/zasoby/okna/instalator/ikony.js"></script>
+<script src="warstwa/zasoby/okna/instalator/stany.js"></script>
+
+<script src="warstwa/zasoby/okna/instalator/skladniki/naglowek-bloku.js"></script>
+<script src="warstwa/zasoby/okna/instalator/skladniki/nawigacja-krokow.js"></script>
+<script src="warstwa/zasoby/okna/instalator/skladniki/naglowek-ekranu.js"></script>
+<script src="warstwa/zasoby/okna/instalator/skladniki/blok-danych.js"></script>
+<script src="warstwa/zasoby/okna/instalator/skladniki/pole-wyboru.js"></script>
+<script src="warstwa/zasoby/okna/instalator/skladniki/pole-sciezki.js"></script>
+<script src="warstwa/zasoby/okna/instalator/skladniki/karta-opcji.js"></script>
+<script src="warstwa/zasoby/okna/instalator/skladniki/baner.js"></script>
+<script src="warstwa/zasoby/okna/instalator/skladniki/lista-etapow.js"></script>
+<script src="warstwa/zasoby/okna/instalator/skladniki/pasek-postepu.js"></script>
+<script src="warstwa/zasoby/okna/instalator/skladniki/pasek-szczegolow.js"></script>
+<script src="warstwa/zasoby/okna/instalator/skladniki/pas-dzialan.js"></script>
+<script src="warstwa/zasoby/okna/instalator/skladniki/fraza-nawigacyjna.js"></script>
+<script src="warstwa/zasoby/okna/instalator/skladniki/tekst-ciagly.js"></script>
+<script src="warstwa/zasoby/okna/instalator/skladniki/dokument.js"></script>
+<script src="warstwa/zasoby/okna/instalator/skladniki/wiersz-miary.js"></script>
+<script src="warstwa/zasoby/okna/instalator/skladniki/blok-bledu.js"></script>
+<script src="warstwa/zasoby/okna/instalator/skladniki/odsylacz-pomocy.js"></script>
+<script src="warstwa/zasoby/okna/instalator/skladniki/okno-dialogowe.js"></script>
+
+<script src="warstwa/zasoby/okna/instalator/ekrany/1-wymagania.js"></script>
+<script src="warstwa/zasoby/okna/instalator/ekrany/2-licencja.js"></script>
+<script src="warstwa/zasoby/okna/instalator/ekrany/3-wersja.js"></script>
+<script src="warstwa/zasoby/okna/instalator/ekrany/4-lokalizacja.js"></script>
+<script src="warstwa/zasoby/okna/instalator/ekrany/5-instalacja.js"></script>
+<script src="warstwa/zasoby/okna/instalator/ekrany/6-podsumowanie.js"></script>
+
+<script src="warstwa/zasoby/okna/instalator/montaz.js"></script>
+<script src="warstwa/zasoby/okna/instalator.js"></script>
+
+<script src="integracja.js"></script>
+</body>
+</html>

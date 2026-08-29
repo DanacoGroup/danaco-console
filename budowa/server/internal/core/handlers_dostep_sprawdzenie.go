@@ -82,7 +82,7 @@ func (a *adapterPunktowDostepu) proba() ProbaPunktu {
 func probaKorzeniLokalnych(_ context.Context, punkt dane.PunktDostepu) (shared.AccessPointStatus, []string, string) {
 	if punkt.Rodzaj != shared.AccessPointKindLocalDirectory {
 		return shared.AccessPointStatusUnknown, nil,
-			"punkt mostowy sprawdza klient modelu; rdzeń nie odpytuje mostu MCP"
+			"punkt mostowy sprawdza klient modelu; serwer nie odpytuje mostu MCP"
 	}
 	potwierdzone := make([]string, 0, len(punkt.Korzenie))
 	brakujace := ""
@@ -98,7 +98,7 @@ func probaKorzeniLokalnych(_ context.Context, punkt dane.PunktDostepu) (shared.A
 	}
 	if brakujace != "" {
 		return shared.AccessPointStatusUnknown, potwierdzone,
-			"korzenia " + brakujace + " nie widać z maszyny rdzenia; katalog jest zapisany dla urządzenia"
+			"korzenia " + brakujace + " nie widać z maszyny serwera; katalog jest zapisany dla urządzenia"
 	}
 	if len(potwierdzone) == 0 {
 		return shared.AccessPointStatusUnknown, potwierdzone,

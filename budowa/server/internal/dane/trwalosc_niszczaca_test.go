@@ -48,7 +48,9 @@ func zalozDrzewo(t *testing.T, przyrostek string) *drzewoSprawdzianu {
 	if err != nil {
 		t.Fatalf("nie można odczytać środowiska: %v", err)
 	}
-	kartaID, err := zestaw.KartySesji.Zapewnij(ctx, srodowisko.ID, "karta "+przyrostek)
+	// Zero w miejscu konta znaczy kartę zastaną, sprzed rozdzielenia kont
+	// (migracja 407): przebieg nie stawia kontekstu z kontem Operatora.
+	kartaID, err := zestaw.KartySesji.Zapewnij(ctx, srodowisko.ID, 0, "karta "+przyrostek)
 	if err != nil {
 		t.Fatalf("nie można założyć karty sesji: %v", err)
 	}

@@ -88,7 +88,7 @@ func (k *kanalObrazow) sprawdzPoswiadczenie(ctx context.Context) error {
 	odwolanie := strings.TrimSpace(k.def.PoswiadczenieOdwolanie)
 	if odwolanie == "" {
 		return fmt.Errorf("models: kanał %s: brak poświadczenia kanału obrazowego — "+
-			"punkt końcowy %s nie przyjmuje żądań bez klucza, a rdzeń klucza nie zmyśli; "+
+			"punkt końcowy %s nie przyjmuje żądań bez klucza, a serwer klucza nie zmyśli; "+
 			"wskaż go parametrem credentialRef w konfiguracji kanału (channel.update): "+
 			"nazwą zmiennej środowiskowej albo referencją sejfu w postaci sejf:<byt>",
 			k.def.Kod, k.def.Parametr("base_url"))

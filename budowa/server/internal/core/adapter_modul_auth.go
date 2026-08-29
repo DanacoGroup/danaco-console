@@ -6,6 +6,7 @@ package core
 import (
 	"context"
 	"errors"
+	"strings"
 	"sync"
 	"time"
 
@@ -42,6 +43,10 @@ type adapterUwierzytelnienia struct {
 	// nadajnik to konto nadawcze platformy podane przy starcie; nastawy
 	// nakładają na nie kontoNadawcze.
 	nadajnik nadajnik.Nastawy
+
+	// adresKonsoli to publiczny adres, pod który kieruje odsyłacz z listu
+	// aktywacji. Pusty znaczy adres wbudowany w pakiet.
+	adresKonsoli string
 
 	// nastawy daje odczyt konta nadawczego z okna Konfiguracji; zerowe —
 	// obowiązuje samo konto startowe.
@@ -85,6 +90,13 @@ func (a *adapterUwierzytelnienia) ZNadajnikiem(n nadajnik.Nastawy) *adapterUwier
 	return a
 }
 
+// ZAdresemKonsoli wpina publiczny adres Konsoli. Odsyłacz z listu ma otworzyć
+// okno na maszynie Operatora, więc nie może być adresem nasłuchu rdzenia.
+func (a *adapterUwierzytelnienia) ZAdresemKonsoli(adres string) *adapterUwierzytelnienia {
+	a.adresKonsoli = adres
+	return a
+}
+
 // ZNastawamiPlatformy wpina drogę odczytu konta nadawczego zapisanego przez
 // Operatora w oknie Konfiguracji. Bez niej obowiązuje samo konto ze startu.
 func (a *adapterUwierzytelnienia) ZNastawamiPlatformy(n NastawyPlatformy) *adapterUwierzytelnienia {
@@ -118,31 +130,29 @@ func (a *adapterUwierzytelnienia) ZalozBramke(ctx context.Context,
 	}
 	if z.Password == "" {
 		return shared.AuthRegisterResponse{}, bladBramki(shared.ErrorCodeValidationFailed,
-			"rejestracja bez hasła")
+			"Podaj hasło.")
 	}
 	// Konto nadawcze nie jest warunkiem założenia bramki, tylko warunkiem
 	// wysyłki listu.
 	pocztaJest := a.kontoNadawcze(ctx).Brak() == nil
 
-	// Sprawdzenie kotwicy i jej założenie są jedną czynnością — inaczej
-	// rejestracja ominie odmowę.
+	/* Zamek obejmuje zapis konta i jego hasła: dwa równoległe żądania o tym
+	   samym loginie mają dać jedno konto i jedną odmowę, a nie dwa wiersze.
+	   Sprawdzenia „czy platforma ma już konto" tu nie ma — platforma prowadzi
+	   dowolną liczbę kont, a jednoznaczności pilnują wskaźniki na loginie
+	   i adresie (migracja 406, `decyzje.md` poz. 22). */
 	a.zamekZmiany.Lock()
 	defer a.zamekZmiany.Unlock()
-	if _, err := a.kotwica(ctx); err == nil {
-		return shared.AuthRegisterResponse{}, bladBramki(shared.ErrorCodeConflict,
-			"konto właściciela jest już założone; rejestracja wykonuje się raz — "+
-				"utracone hasło odzyskuje się komendą auth.recover")
-	} else if !errors.Is(err, dane.ErrBrakWiersza) {
-		return shared.AuthRegisterResponse{}, err
-	}
 
 	teraz := time.Now().UnixMilli()
-	if err := a.konto.ZalozKonto(ctx, dane.KontoWlasciciela{
+	kontoId, err := a.konto.ZalozKonto(ctx, dane.KontoWlasciciela{
 		Login: login, Email: email, Potwierdzone: false, Utworzono: teraz,
-	}); err != nil {
+	})
+	if err != nil {
 		if errors.Is(err, dane.ErrKolizjaWiersza) {
-			return shared.AuthRegisterResponse{}, bladBramki(shared.ErrorCodeConflict,
-				"konto właściciela jest już założone; rejestracja wykonuje się raz")
+			return shared.AuthRegisterResponse{}, bladBramkiZPowodem(shared.ErrorCodeConflict,
+				PowodKolizjaDanych,
+				"Podany login albo adres e-mail należy już do istniejącego konta.")
 		}
 		return shared.AuthRegisterResponse{}, err
 	}
@@ -151,26 +161,32 @@ func (a *adapterUwierzytelnienia) ZalozBramke(ctx context.Context,
 		Etykieta:        wskaznikTekstu("Hasło konta"),
 		NazwaUrzadzenia: niepustyTekst(z.DeviceName),
 		Kotwica:         true,
+		KontoId:         kontoId,
 		Utworzono:       teraz,
 	}, z.Password)
 	if err != nil {
-		a.cofnijRejestracje(ctx, "")
+		a.cofnijRejestracje(ctx, "", kontoId)
 		return shared.AuthRegisterResponse{}, err
 	}
 	// Bez poczty rejestracja kończy się tutaj: konto jest, hasło otwiera
 	// bramkę, adres niepotwierdzony.
 	if !pocztaJest {
 		if err := a.zapiszZnacznikBezPoczty(ctx, email); err != nil {
-			a.cofnijRejestracje(ctx, kotwica.Kod)
+			a.cofnijRejestracje(ctx, kotwica.Kod, kontoId)
 			return shared.AuthRegisterResponse{}, err
 		}
 		return shared.AuthRegisterResponse{Registered: true, PendingVerification: false}, nil
 	}
-	// Niepowodzenie wysyłki nie cofa rejestracji — czynność schodzi na drogę
-	// bez poczty.
-	if err := a.wyslijDrogePotwierdzenia(ctx, dane.CelWeryfikacja, email, login); err != nil {
+	/* Niepowodzenie wysyłki nie cofa rejestracji — czynność schodzi na drogę
+	   bez poczty. Powód idzie do dziennika: odpowiedź kontraktu niesie samo
+	   `pendingVerification: false`, więc bez tego zapisu przyczyna — brak konta
+	   nadawczego czy odmowa serwera pocztowego — przepadałaby bez śladu. */
+	if err := a.wyslijDrogePotwierdzenia(ctx, dane.CelWeryfikacja, email, kontoId); err != nil {
+		if dziennik := dziennikZKontekstu(ctx); dziennik != nil {
+			dziennik.Printf("rejestracja: list z kodem nie wyszedł na %s: %v", email, err)
+		}
 		if err := a.zapiszZnacznikBezPoczty(ctx, email); err != nil {
-			a.cofnijRejestracje(ctx, kotwica.Kod)
+			a.cofnijRejestracje(ctx, kotwica.Kod, kontoId)
 			return shared.AuthRegisterResponse{}, err
 		}
 		return shared.AuthRegisterResponse{Registered: true, PendingVerification: false}, nil
@@ -181,13 +197,13 @@ func (a *adapterUwierzytelnienia) ZalozBramke(ctx context.Context,
 // cofnijRejestracje zdejmuje to, co rejestracja zdążyła zapisać: metodę,
 // poświadczenie w sejfie, konto i znacznik bramki bez poczty; niepowodzenie
 // cofnięcia trafia do dziennika, nie do odpowiedzi.
-func (a *adapterUwierzytelnienia) cofnijRejestracje(ctx context.Context, kodKotwicy string) {
+func (a *adapterUwierzytelnienia) cofnijRejestracje(ctx context.Context, kodKotwicy string, kontoId int64) {
 	if kodKotwicy != "" {
 		_, _ = a.repozytorium.UsunMetode(ctx, kodKotwicy)
 		usunPoswiadczenie(ctx, a.sejf, przedrostekBytuSejfu+kodKotwicy)
 	}
-	if a.konto != nil {
-		_ = a.konto.UsunKonto(ctx)
+	if a.konto != nil && kontoId != 0 {
+		_ = a.konto.UsunKonto(ctx, kontoId)
 	}
 	// Znacznik bramki bez poczty odchodzi z kontem, żeby nie przeżył w sejfie
 	// usuniętej rejestracji.
@@ -205,7 +221,14 @@ func (a *adapterUwierzytelnienia) WejdzPrzezBramke(ctx context.Context,
 	if err := a.gotowa(); err != nil {
 		return shared.AuthLoginResponse{}, err
 	}
-	if err := a.kontoPotwierdzone(ctx); err != nil {
+	/* Konto wskazuje login albo adres z żądania. Przy wielu kontach hasło samo
+	   nie mówi, czyje jest — bez tego wskazania wejście otwierałoby konto
+	   najstarsze niezależnie od tego, kto się loguje. */
+	konto, err := a.kontoWejscia(ctx, z)
+	if err != nil {
+		return shared.AuthLoginResponse{}, err
+	}
+	if err := a.kontoPotwierdzone(ctx, konto); err != nil {
 		return shared.AuthLoginResponse{}, err
 	}
 	// Zwłoka nakłada się przed sprawdzeniem sekretu, żeby czas odpowiedzi nie
@@ -213,7 +236,7 @@ func (a *adapterUwierzytelnienia) WejdzPrzezBramke(ctx context.Context,
 	droga := drogaWejscia(string(z.Method), wartoscTekstu(z.DeviceId))
 	a.dlawik.Zaczekaj(ctx, droga)
 
-	metoda, err := a.metodaWejscia(ctx, z)
+	metoda, err := a.metodaWejscia(ctx, z, konto)
 	if err != nil {
 		return shared.AuthLoginResponse{}, err
 	}
@@ -232,7 +255,7 @@ func (a *adapterUwierzytelnienia) WejdzPrzezBramke(ctx context.Context,
 		// Sekret niezgodny to nieudane wejście, nie wadliwe żądanie, więc kod
 		// jest not_authenticated.
 		return shared.AuthLoginResponse{}, bladBramki(shared.ErrorCodeNotAuthenticated,
-			"sekret metody "+string(z.Method)+" nie zgadza się z zapisem bramki")
+			"Nie rozpoznano danych logowania.")
 	}
 	// Wejście udane zeruje licznik zwłoki, więc kolejne pomyłki liczą się
 	// od nowa.
@@ -246,7 +269,7 @@ func (a *adapterUwierzytelnienia) WejdzPrzezBramke(ctx context.Context,
 	if urzadzenie == nil {
 		urzadzenie = metoda.UrzadzenieKod
 	}
-	sesja, err := a.zalozSesje(ctx, metoda.Rodzaj, urzadzenie, wartoscPrawdy(z.KeepSignedIn))
+	sesja, err := a.zalozSesje(ctx, metoda.Rodzaj, urzadzenie, wartoscPrawdy(z.KeepSignedIn), konto.Id)
 	if err != nil {
 		return shared.AuthLoginResponse{}, err
 	}
@@ -260,22 +283,52 @@ func (a *adapterUwierzytelnienia) WejdzPrzezBramke(ctx context.Context,
 // metodaWejscia odnajduje metodę wejścia wskazaną przez żądanie — hasło, PIN
 // urządzenia albo odrzuconą metodę hello — i zwraca błąd kontraktu, gdy
 // metoda nie istnieje.
+/* Konto wskazane loginem albo adresem z żądania. Metody właściwe urządzeniu
+   (PIN, klucz) loginu nie niosą — dla nich konto wskazuje sama metoda, więc
+   tutaj zostaje konto najstarsze, tak jak przed dołożeniem wielu kont. */
+func (a *adapterUwierzytelnienia) kontoWejscia(ctx context.Context,
+	z shared.AuthLoginRequest) (dane.KontoWlasciciela, error) {
+
+	if a.konto == nil {
+		return dane.KontoWlasciciela{}, nil
+	}
+	wskazanie := strings.TrimSpace(wartoscTekstu(z.Login))
+	if wskazanie == "" {
+		konto, err := a.konto.Konto(ctx)
+		if errors.Is(err, dane.ErrBrakWiersza) {
+			return dane.KontoWlasciciela{}, nil
+		}
+		return konto, err
+	}
+	konto, err := a.konto.KontoPoTozsamosci(ctx, wskazanie)
+	if errors.Is(err, dane.ErrBrakWiersza) {
+		/* Tożsamość nieznana odpowiada tak samo jak hasło niezgodne — inaczej
+		   pytanie o kolejne loginy wskazywałoby, które z nich istnieją. */
+		return dane.KontoWlasciciela{}, bladBramki(shared.ErrorCodeNotAuthenticated,
+			"Nie rozpoznano danych logowania.")
+	}
+	return konto, err
+}
+
 func (a *adapterUwierzytelnienia) metodaWejscia(ctx context.Context,
-	z shared.AuthLoginRequest) (dane.MetodaUwierzytelnienia, error) {
+	z shared.AuthLoginRequest, konto dane.KontoWlasciciela) (dane.MetodaUwierzytelnienia, error) {
 
 	switch z.Method {
 	case shared.AuthMethodKindPassword:
-		metoda, err := a.kotwica(ctx)
+		metoda, err := a.repozytorium.KotwicaKonta(ctx, konto.Id)
 		if errors.Is(err, dane.ErrBrakWiersza) {
-			return metoda, bladBramki(shared.ErrorCodeNotFound,
-				"hasło bramki nie istnieje — bramki jeszcze nie ustawiono (auth.register)")
+			/* To samo zdanie co przy sekrecie niezgodnym: konto bez hasła i hasło
+			   niezgodne muszą wyglądać dla wołającego identycznie, inaczej
+			   odpowiedź zdradza, które loginy istnieją. */
+			return metoda, bladBramki(shared.ErrorCodeNotAuthenticated,
+				"Nie rozpoznano danych logowania.")
 		}
 		return metoda, err
 	case shared.AuthMethodKindPin:
 		urzadzenie := wartoscTekstu(z.DeviceId)
 		if urzadzenie == "" {
 			return dane.MetodaUwierzytelnienia{}, bladBramki(shared.ErrorCodeValidationFailed,
-				"wejście PIN-em bez wskazania urządzenia; PIN jest właściwy urządzeniu")
+				"Wskaż urządzenie — kod PIN obowiązuje na jednym urządzeniu.")
 		}
 		metoda, err := a.repozytorium.MetodaUrzadzenia(ctx, shared.AuthMethodKindPin, urzadzenie)
 		if errors.Is(err, dane.ErrBrakWiersza) {
@@ -322,11 +375,11 @@ func (a *adapterUwierzytelnienia) MetodyWejscia(ctx context.Context) ([]shared.A
 func (a *adapterUwierzytelnienia) gotowa() error {
 	if a == nil || a.repozytorium == nil {
 		return bladBramki(shared.ErrorCodeInternalError,
-			"repozytorium bramki niewpięte")
+			"Magazyn kont jest niedostępny.")
 	}
 	if a.sejf == nil {
 		return bladBramki(shared.ErrorCodeInternalError,
-			"sejfu poświadczeń nie wpięto; hasła nie ma gdzie odłożyć ani z czym porównać")
+			"Magazyn haseł jest niedostępny.")
 	}
 	return nil
 }
@@ -371,7 +424,7 @@ func kolizjaMetody(metoda dane.MetodaUwierzytelnienia, err error) error {
 	}
 	if metoda.Kotwica {
 		return bladBramki(shared.ErrorCodeConflict,
-			"sekret bramki jest już ustawiony; hasła nie ustawia się drugi raz — "+
+			"Hasło jest już ustawione. Aby je zmienić, użyj odzyskiwania dostępu. "+
 				"zmiana hasła idzie komendą auth.password.reset")
 	}
 	urzadzenie := ""
@@ -405,7 +458,7 @@ func (a *adapterUwierzytelnienia) sekretZgadzaSieZWpisem(ctx context.Context,
 // kontraktu — razem z tokenem surowym, bo to jedyna chwila, w której rdzeń go
 // zna; w bazie zostaje wyłącznie skrót.
 func (a *adapterUwierzytelnienia) zalozSesje(ctx context.Context,
-	rodzaj string, urzadzenie *string, niewylogowuj bool) (shared.AuthSession, error) {
+	rodzaj string, urzadzenie *string, niewylogowuj bool, kontoId int64) (shared.AuthSession, error) {
 
 	token, err := nowyTokenBramki()
 	if err != nil {
@@ -422,6 +475,9 @@ func (a *adapterUwierzytelnienia) zalozSesje(ctx context.Context,
 		// Trwanie idzie do wiersza, żeby przełącznik „nie wyloguj mnie”
 		// obowiązywał też po odnowieniu sesji.
 		Trwanie: trwanie.Milliseconds(),
+		// Konto, któremu sesja została wydana; bez tego wskazania sesja nie
+		// mówi, czyja jest, a przy wielu kontach to jedyne, co je rozróżnia.
+		KontoId: kontoId,
 	})
 	if err != nil {
 		return shared.AuthSession{}, err

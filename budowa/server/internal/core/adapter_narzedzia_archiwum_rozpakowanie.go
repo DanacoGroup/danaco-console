@@ -197,7 +197,7 @@ func zweryfikujKwarantanne(korzen string) ([]string, error) {
 		}
 		if !wpis.Type().IsRegular() {
 			return bladWskazaniaArchiwum("rozpakowana pozycja " + wzgledna +
-				" nie jest zwykłym plikiem — rdzeń wydaje Operatorowi wyłącznie pliki i katalogi")
+				" nie jest zwykłym plikiem — serwer wydaje Operatorowi wyłącznie pliki i katalogi")
 		}
 		opis, blad := wpis.Info()
 		if blad != nil {
@@ -209,7 +209,7 @@ func zweryfikujKwarantanne(korzen string) ([]string, error) {
 		}
 		if len(sciezki) >= granicaRozpakowaniaPozycji {
 			return bladWskazaniaArchiwum("rozpakowana treść przekroczyła granicę " +
-				"liczby pozycji — rdzeń rozpakowuje wyłącznie do tej granicy")
+				"liczby pozycji — serwer rozpakowuje wyłącznie do tej granicy")
 		}
 		sciezki = append(sciezki, wzgledna)
 		return nil

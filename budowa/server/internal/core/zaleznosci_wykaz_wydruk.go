@@ -124,7 +124,7 @@ func wykazNazwPakietow(pole string) bool {
 // WypiszWykazZaleznosci wypisuje komplet zależności zewnętrznych, po jednym wierszu na pozycję wykazu, w polach rozdzielonych znakiem tabulacji: warstwa, program, pakiet, stoi, nazwa, zakres.
 func WypiszWykazZaleznosci(wyjscie io.Writer) error {
 	if _, err := fmt.Fprintln(wyjscie,
-		"# wykaz zależności zewnętrznych rdzenia — pola: "+
+		"# wykaz zależności zewnętrznych serwera — pola: "+
 			"warstwa\tprogram\tpakiet\tstoi\tnazwa\tzakres"); err != nil {
 		return err
 	}

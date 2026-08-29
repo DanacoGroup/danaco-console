@@ -34,9 +34,13 @@ func TestBramkaZamknietaDoPotwierdzeniaAdresu(t *testing.T) {
 	}
 	// Odmowa ma prowadzić do naprawy: mówić, czego brakuje i czym to zrobić.
 
-	// „Nie wolno" bez drogi dalszej zostawia Operatora przed zamkniętą bramką.
-	if !strings.Contains(blad.Message, "auth.verify") {
-		t.Errorf("odmowa nie wskazuje drogi potwierdzenia: %q", blad.Message)
+	/* „Nie wolno" bez drogi dalszej zostawia Operatora przed zamkniętym wejściem.
+	   Drogę nazywa się czynnością, którą ma wykonać, nie nazwą komendy: nazwa
+	   komendy jest pojęciem budowy i w zdaniu dla Operatora nie stoi. */
+	for _, slowo := range []string{"kod", "wiadomoś"} {
+		if !strings.Contains(strings.ToLower(blad.Message), slowo) {
+			t.Errorf("odmowa nie wskazuje drogi potwierdzenia (brak %q): %q", slowo, blad.Message)
+		}
 	}
 
 	// Odmowa nie ma prawa niczego zakładać po drodze.

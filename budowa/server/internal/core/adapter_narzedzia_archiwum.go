@@ -94,7 +94,7 @@ func (a *adapterNarzedziArchiwum) katalogRoboczyOkna() (string, error) {
 	_, _, obszar := a.zasiegNarzedzi()
 	sciezka := strings.TrimSpace(obszar.KatalogRoboczy)
 	if sciezka == "" {
-		return "", bladZapleczaArchiwum("rdzeń nie ma ustalonego katalogu roboczego okna — " +
+		return "", bladZapleczaArchiwum("serwer nie ma ustalonego katalogu roboczego okna — " +
 			"narzędzia archiwum nie mają gdzie pisać ani względem czego rozstrzygać ścieżek")
 	}
 	return sciezka, nil
@@ -106,9 +106,9 @@ func (a *adapterNarzedziArchiwum) wolaj7z(ctx context.Context,
 	argumenty []string, katalog string) (string, error) {
 
 	if a.uruchamiacz == nil {
-		return "", bladArchiwumNiedostepnego("rdzeń nie ma uruchamiacza procesów — " +
+		return "", bladArchiwumNiedostepnego("serwer nie ma uruchamiacza procesów — " +
 			"narzędzia archiwum nie mają czym wystartować; " +
-			"naprawa: podpiąć warstwę kanału (injection) przy składaniu rdzenia")
+			"naprawa: podpiąć warstwę kanału (injection) przy składaniu serwera")
 	}
 	okno, zasady, obszar := a.zasiegNarzedzi()
 	if strings.TrimSpace(katalog) == "" {
@@ -131,7 +131,7 @@ func (a *adapterNarzedziArchiwum) zasobArchiwum(ctx context.Context,
 
 	if a.repozytorium == nil {
 		return dane.ZasobDesignu{}, "", bladZapleczaArchiwum(
-			"rdzeń nie ma magazynu zasobów — nie ma gdzie szukać wskazanego zasobu")
+			"serwer nie ma magazynu zasobów — nie ma gdzie szukać wskazanego zasobu")
 	}
 	kod = strings.TrimSpace(kod)
 	if kod == "" {
@@ -180,7 +180,7 @@ func (a *adapterNarzedziArchiwum) odlozArchiwumJakoZasob(ctx context.Context,
 	}
 	if a.repozytorium == nil {
 		return shared.DesignAsset{}, 0, bladZapleczaArchiwum(
-			"rdzeń nie ma rejestru zasobów — nie ma gdzie założyć wiersza archiwum")
+			"serwer nie ma rejestru zasobów — nie ma gdzie założyć wiersza archiwum")
 	}
 
 	odwolanie, rozmiar, _, err := a.magazyn.ZapiszZePliku(sciezka)

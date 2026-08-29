@@ -90,7 +90,7 @@ func (a *adapterBadan) trescDoLekturyBadania(ctx context.Context, kodZrodla stri
 	if a.dokumenty == nil {
 		return "", false, protokolBladBadania(shared.ErrorCodeInternalError,
 			"arsenał dokumentowy nie jest wpięty — naprawa: podpiąć port dokumentów "+
-				"przy składaniu rdzenia")
+				"przy składaniu serwera")
 	}
 	wymuszone := wymusRozpoznanie
 	zadanie := shared.DocumentTextExtractRequest{

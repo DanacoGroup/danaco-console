@@ -249,10 +249,10 @@ func sprawdzProtokol(adres string) error {
 	if schemat != "http" && schemat != "https" {
 		if schemat == "" {
 			return bladAdresuStrony{Zdanie: "adres nie mówi, jakim protokołem pobrać stronę; " +
-				"rdzeń pobiera tylko przez http i https"}
+				"serwer pobiera tylko przez http i https"}
 		}
 		return bladAdresuStrony{Zdanie: fmt.Sprintf(
-			"rdzeń pobiera strony tylko przez http i https, a ten adres wskazuje protokół %q", schemat)}
+			"serwer pobiera strony tylko przez http i https, a ten adres wskazuje protokół %q", schemat)}
 	}
 	if rozlozony.Host == "" {
 		return bladAdresuStrony{Zdanie: "adres nie wskazuje gospodarza, spod którego pobrać stronę"}
@@ -266,7 +266,7 @@ func pilnujPrzekierowan(zadanie *http.Request, przebyte []*http.Request) error {
 	if len(przebyte) > limitPrzekierowan {
 		return bladAdresuStrony{Zdanie: fmt.Sprintf(
 			"strona przekierowuje dalej niż %d razy; "+
-				"rdzeń przerywa łańcuch, zamiast krążyć w nim bez końca", limitPrzekierowan)}
+				"serwer przerywa łańcuch, zamiast krążyć w nim bez końca", limitPrzekierowan)}
 	}
 	return sprawdzProtokol(zadanie.URL.String())
 }

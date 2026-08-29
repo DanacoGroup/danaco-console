@@ -186,7 +186,7 @@ func rozbierzIdentyfikator(identyfikator string) (string, imap.UID, error) {
 	granica := strings.LastIndex(identyfikator, ":")
 	if granica <= 0 || granica == len(identyfikator)-1 {
 		return "", 0, fmt.Errorf("identyfikator wiadomości %q nie ma postaci folder:UID — "+
-			"weź go z wyniku mail.message.list, rdzeń go nie zgaduje", identyfikator)
+			"weź go z wyniku mail.message.list, serwer go nie zgaduje", identyfikator)
 	}
 	numer, err := strconv.ParseUint(identyfikator[granica+1:], 10, 32)
 	if err != nil {

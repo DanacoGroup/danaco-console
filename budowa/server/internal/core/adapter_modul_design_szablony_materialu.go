@@ -356,7 +356,7 @@ func sprawdzRodzajSzablonuMaterialu(rodzaj shared.DesignTemplateKind) error {
 // zapis wskazujący go byłby cichym założeniem nowego.
 func bladNieznanegoSzablonuMaterialu(kod string, err error) error {
 	if czyBrakZasobuDesignu(err) {
-		return bladNieznanegoBytuDesignu("szablonu materiału " + kod + " nie ma w tym rdzeniu")
+		return bladNieznanegoBytuDesignu("szablonu materiału " + kod + " nie ma w tym serwerze")
 	}
 	return bladDesignu(err)
 }

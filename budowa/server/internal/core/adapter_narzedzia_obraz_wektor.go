@@ -73,7 +73,7 @@ func (a *adapterNarzedziObrazu) Zwektoryzuj(ctx context.Context,
 	default:
 		return shared.ImageVectorizeResponse{}, bladWskazaniaObrazu(
 			"nie znam sposobu obrysu „" + string(tryb) +
-				"” — rdzeń zna: outline, centerline, posterize")
+				"” — serwer zna: outline, centerline, posterize")
 	}
 
 	if len(sciezki) == 0 {

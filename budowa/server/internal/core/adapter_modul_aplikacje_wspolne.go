@@ -96,7 +96,7 @@ func odwolanieWytworuApp(sciezka string) string {
 // to jest dokładnie ten wzorzec szkody, który w tym produkcie już wystąpił.
 func bladBrakuMagazynuApp(czynnosc string) error {
 	return protocol.JakoError(protocol.NowyBlad(shared.ErrorCodeInternalError,
-		"moduł Apps: "+czynnosc+" wymaga magazynu treści, a rdzeń zmontowano bez katalogu danych"))
+		"moduł Apps: "+czynnosc+" wymaga magazynu treści, a serwer zmontowano bez katalogu danych"))
 }
 
 // zmianaZalozenia nazywa rodzaj zmiany w rozgłoszeniu. Rozstrzyga się przed

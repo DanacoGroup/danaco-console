@@ -131,6 +131,6 @@ func zarejestrujPrzejecieSterowaniaNiewpiete(r *Rejestr, n NazwyPrzejeciaSterowa
 // bladPrzejeciaSterowaniaNiewpietego składa odmowę rdzenia, gdy port rodziny control.* nie jest wpięty.
 func bladPrzejeciaSterowaniaNiewpietego() error {
 	return protocol.JakoError(protocol.NowyBlad(shared.ErrorCodeInternalError,
-		"przejęcie sterowania: rdzeń nie niesie portu przejęcia sterowania — "+
+		"przejęcie sterowania: serwer nie niesie portu przejęcia sterowania — "+
 			"zlecenia nie ma jak przejąć ani oddać Koordynatorowi"))
 }

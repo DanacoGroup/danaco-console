@@ -25,7 +25,7 @@ func (a *adapterDevelopera) WykazWersjiPliku(ctx context.Context,
 	}
 	if a.repozytorium == nil {
 		return shared.DeveloperFileVersionListResponse{}, bladZasobuDevelopera(
-			"rdzeń nie ma miejsca na wersje plików, więc historia pliku nie istnieje")
+			"serwer nie ma miejsca na wersje plików, więc historia pliku nie istnieje")
 	}
 
 	limit := najwiecejWersjiWykazu
@@ -63,7 +63,7 @@ func (a *adapterDevelopera) PrzywrocWersjePliku(ctx context.Context,
 	}
 	if a.repozytorium == nil {
 		return shared.DeveloperFileVersionRestoreResponse{}, bladZasobuDevelopera(
-			"rdzeń nie ma miejsca na wersje plików, więc nie ma czego przywrócić")
+			"serwer nie ma miejsca na wersje plików, więc nie ma czego przywrócić")
 	}
 	kod := strings.TrimSpace(z.VersionId)
 	if kod == "" {

@@ -188,7 +188,7 @@ func odmowaTuryDebatyWBiegu(okno string) error {
 // wykonawcy nie ma prawa udawać, że uczestnicy odpowiedzieli.
 func bladBrakuKanalow() error {
 	return protocol.JakoError(protocol.NowyBlad(shared.ErrorCodeChannelUnavailable,
-		"moduł Roundtable: rdzeń nie ma rejestru kanałów modelu — uczestnicy nie mają czym odpowiedzieć"))
+		"moduł Roundtable: serwer nie ma rejestru kanałów modelu — uczestnicy nie mają czym odpowiedzieć"))
 }
 
 // bladNieznanegoKanalu odmawia dodania uczestnika na kanale spoza rejestru kanałów modelu rdzenia platformy.

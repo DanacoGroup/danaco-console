@@ -107,7 +107,7 @@ func (r *Rozdzielnia) Wywolaj(kontekst context.Context, nazwa string,
 	}
 	odpowiedz, err := r.rdzen.Wykonaj(kontekst, zadanie)
 	if err != nil {
-		return "", fmt.Errorf("narzędzie %s: rdzeń nie odpowiedział: %w", nazwa, err)
+		return "", fmt.Errorf("narzędzie %s: serwer nie odpowiedział: %w", nazwa, err)
 	}
 	return wynikKoperty(nazwa, odpowiedz)
 }
@@ -143,7 +143,7 @@ func wynikKoperty(nazwa string, odpowiedz protocol.Koperta) (string, error) {
 		return "", fmt.Errorf("narzędzie %s: %s", nazwa, protocol.Opis(*odpowiedz.Error))
 	}
 	if odpowiedz.Status != nil && *odpowiedz.Status != shared.EnvelopeStatusOk {
-		return "", fmt.Errorf("narzędzie %s: rdzeń odpowiedział stanem %s bez opisu błędu", nazwa, *odpowiedz.Status)
+		return "", fmt.Errorf("narzędzie %s: serwer odpowiedział stanem %s bez opisu błędu", nazwa, *odpowiedz.Status)
 	}
 	if len(odpowiedz.Payload) == 0 {
 		// Komenda potwierdzona bez treści właściwej; napis pusty byłby

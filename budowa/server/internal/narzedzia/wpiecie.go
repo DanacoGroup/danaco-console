@@ -76,8 +76,8 @@ type brakBinarium struct {
 // wskazując skrypt, który stawia oba binaria w jednym katalogu.
 func (b *brakBinarium) Error() string {
 	return "brak binarium serwera narzędzi " + b.Nazwa +
-		" — nie ma go obok rdzenia ani na ścieżce wyszukiwania systemu;" +
-		" powstaje z " + zrodloBinarium + " i ma stać w jednym katalogu z rdzeniem," +
+		" — nie ma go obok serwera ani na ścieżce wyszukiwania systemu;" +
+		" powstaje z " + zrodloBinarium + " i ma stać w jednym katalogu z serwerem," +
 		" co składa " + skryptPakietu
 }
 

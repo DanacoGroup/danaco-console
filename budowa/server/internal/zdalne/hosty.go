@@ -90,7 +90,7 @@ func hostZRejestru(nazwa string) (Host, error) {
 // odmowaBrakuZasilenia opisuje stan przed wpięciem kompozycji — jednym zdaniem
 // trójczęściowym, wspólnym dla wszystkich dróg pakietu.
 func odmowaBrakuZasilenia() error {
-	return fmt.Errorf("zdalne: tor do hosta zdalnego nie ma dostępu do bazy rdzenia, " +
+	return fmt.Errorf("zdalne: tor do hosta zdalnego nie ma dostępu do bazy serwera, " +
 		"bo kompozycja nie wywołała zdalne.Zasil(baza.DB) — wpięcie to jedna linia " +
 		"w server/cmd/danaco-console/main.go po kontroli spójności bazy")
 }

@@ -84,7 +84,7 @@ func (a *adapterStudia) wykazSkanerow(ctx context.Context) ([]shared.StudioInput
 // nie ma", a tu rdzeń nie ma czym szukać.
 func odmowaSkaneraNaTymSystemie() error {
 	return protocol.JakoError(protocol.NowyBlad(shared.ErrorCodeChannelUnavailable,
-		"moduł Studio: rdzeń nie ma warstwy skanera na systemie "+runtime.GOOS+
+		"moduł Studio: serwer nie ma warstwy skanera na systemie "+runtime.GOOS+
 			". Warstwy, które zna, to SANE (`scanimage`) na Linuksie i WIA przez "+
 			"PowerShell (`pwsh`) na Windowsie — na tym systemie nie ma ani jednej "+
 			"z nich. Droga, która działa: zeskanuj materiał programem systemu i "+
@@ -112,7 +112,7 @@ func odczytajUrzadzeniaWia(wyjscie string) ([]shared.StudioInputDevice, error) {
 	if err := json.Unmarshal([]byte(tresc), &zapis); err != nil {
 		return nil, protocol.JakoError(protocol.NowyBlad(shared.ErrorCodeChannelUnavailable,
 			"moduł Studio: odpowiedzi warstwy WIA nie da się odczytać jako wykazu "+
-				"urządzeń ("+err.Error()+"). Rdzeń NIE oddaje w tym miejscu pustego "+
+				"urządzeń ("+err.Error()+"). Serwer NIE oddaje w tym miejscu pustego "+
 				"wykazu, bo nie wie, czy skanera nie ma, czy tylko nie zrozumiał "+
 				"odpowiedzi. Treść odpowiedzi: "+skrocDoPodgladu(tresc)))
 	}
@@ -212,7 +212,7 @@ func (a *adapterStudia) skanujSane(ctx context.Context, katalog string,
 			return nil, protocol.JakoError(protocol.NowyBlad(shared.ErrorCodeChannelUnavailable,
 				"moduł Studio: SANE zakończył skanowanie bez ani jednego bajtu obrazu. "+
 					"Naprawa: sprawdzić `scanimage -L`, czy urządzenie odpowiada, i czy "+
-					"proces rdzenia ma prawo do jego węzła (grupa `scanner`)."))
+					"proces serwera ma prawo do jego węzła (grupa `scanner`)."))
 		}
 		sciezka, err := zapiszSkan(katalog, numer, wyjscie)
 		if err != nil {
@@ -239,10 +239,10 @@ func (a *adapterStudia) odmowaSkanuSane(ctx context.Context, pierwotna error) er
 	}
 	return protocol.JakoError(protocol.NowyBlad(shared.ErrorCodeNotFound,
 		"moduł Studio: warstwa SANE (`scanimage`) odpowiedziała i nie widzi ani jednego "+
-			"skanera. To nie jest awaria drogi ani usterka rdzenia, lecz brak urządzenia "+
+			"skanera. To nie jest awaria drogi ani usterka serwera, lecz brak urządzenia "+
 			"po stronie maszyny Operatora. Naprawa: podłączyć skaner, włączyć go i sprawdzić "+
 			"wykaz komendą `studio.ingest.device.list`; jeżeli urządzenie tam jest, procesowi "+
-			"rdzenia brakuje prawa do jego węzła (grupa `scanner`). Droga, która działa bez "+
+			"serwera brakuje prawa do jego węzła (grupa `scanner`). Droga, która działa bez "+
 			"skanera: zeskanuj materiał programem systemu i dołóż plik komendą "+
 			"`studio.ingest.queue.add`. Diagnostyka warstwy: "+pierwotna.Error()))
 }
@@ -302,7 +302,7 @@ func (a *adapterStudia) skanujWia(ctx context.Context, katalog string,
 	if len(zapis.Pliki) == 0 {
 		return nil, protocol.JakoError(protocol.NowyBlad(shared.ErrorCodeChannelUnavailable,
 			"moduł Studio: warstwa WIA zakończyła skanowanie bez ani jednego pliku "+
-				"obrazu, nie nazywając powodu. Rdzeń nie oddaje tu pustej kolejki, bo "+
+				"obrazu, nie nazywając powodu. Serwer nie oddaje tu pustej kolejki, bo "+
 				"nie wie, czy kartki nie było, czy transfer się nie udał."))
 	}
 	return zapis.Pliki, nil
@@ -400,12 +400,12 @@ func odmowaWia(rozpoznanie string) error {
 	case strings.HasPrefix(tresc, "WARSTWA-WIA-NIEDOSTEPNA"):
 		return protocol.JakoError(protocol.NowyBlad(shared.ErrorCodeChannelUnavailable,
 			"moduł Studio: na tej maszynie nie ma warstwy WIA (Windows Image Acquisition), "+
-				"którą rdzeń sięga po skaner. Naprawa: uruchomić usługę Windows Image "+
+				"którą serwer sięga po skaner. Naprawa: uruchomić usługę Windows Image "+
 				"Acquisition (stisvc) poleceniem `Start-Service stisvc`. "+
 				"Diagnostyka warstwy: "+tresc))
 	case strings.HasPrefix(tresc, "BRAK-URZADZENIA"):
 		return protocol.JakoError(protocol.NowyBlad(shared.ErrorCodeNotFound,
-			"moduł Studio: "+tresc+". Rdzeń pytał warstwę WIA i dostał odpowiedź — to "+
+			"moduł Studio: "+tresc+". Serwer pytał warstwę WIA i dostał odpowiedź — to "+
 				"nie jest awaria drogi, a brak urządzenia. Naprawa: podłączyć skaner, "+
 				"włączyć go i sprawdzić wykaz komendą `studio.ingest.device.list`."))
 	case strings.HasPrefix(tresc, "BRAK-STEROWNIKA"):
@@ -432,9 +432,9 @@ func bladWarstwySane(err error) error {
 	var brak *zewnetrzne.BrakNarzedzia
 	if errors.As(err, &brak) {
 		return protocol.JakoError(protocol.NowyBlad(shared.ErrorCodeChannelUnavailable,
-			"moduł Studio: skanowanie na Linuksie idzie warstwą SANE, a rdzeń sięga po "+
+			"moduł Studio: skanowanie na Linuksie idzie warstwą SANE, a serwer sięga po "+
 				"nią programem `scanimage` — tego programu na tej maszynie nie ma. Bez "+
-				"niego rdzeń nie ma ŻADNEJ drogi do skanera na Linuksie (WIA na tym "+
+				"niego serwer nie ma ŻADNEJ drogi do skanera na Linuksie (WIA na tym "+
 				"systemie nie istnieje). Naprawa: zainstalować "+brak.Narzedzie.Pakiet+
 				". Droga, która działa bez tego: zeskanuj materiał programem systemu "+
 				"i dołóż plik komendą `studio.ingest.queue.add`."))
@@ -449,9 +449,9 @@ func bladWarstwyWia(err error) error {
 	var brak *zewnetrzne.BrakNarzedzia
 	if errors.As(err, &brak) {
 		return protocol.JakoError(protocol.NowyBlad(shared.ErrorCodeChannelUnavailable,
-			"moduł Studio: skanowanie na Windowsie idzie warstwą WIA, a rdzeń sięga po "+
+			"moduł Studio: skanowanie na Windowsie idzie warstwą WIA, a serwer sięga po "+
 				"nią PowerShellem — programu `pwsh` na tej maszynie nie ma. Bez niego "+
-				"rdzeń nie ma ŻADNEJ drogi do skanera Windows (SANE na tym systemie nie "+
+				"serwer nie ma ŻADNEJ drogi do skanera Windows (SANE na tym systemie nie "+
 				"istnieje). Naprawa: zainstalować "+brak.Narzedzie.Pakiet+". Droga, "+
 				"która działa bez tego: zeskanuj materiał programem systemu i dołóż "+
 				"plik komendą `studio.ingest.queue.add`."))
@@ -469,9 +469,9 @@ func (a *adapterStudia) wolajUrzadzenie(ctx context.Context, n zewnetrzne.Narzed
 
 	if a.uruchamiacz == nil {
 		return nil, protocol.JakoError(protocol.NowyBlad(shared.ErrorCodeInternalError,
-			"moduł Studio: rdzeń nie ma uruchamiacza procesów, więc warstwa urządzeń ("+
+			"moduł Studio: serwer nie ma uruchamiacza procesów, więc warstwa urządzeń ("+
 				n.Nazwa+") nie ma czym wystartować; naprawa: podpiąć warstwę kanału "+
-				"przy składaniu rdzenia"))
+				"przy składaniu serwera"))
 	}
 	okno, zasady, obszar := a.zasiegStudia()
 	wynik, err := zewnetrzne.Wolaj(ctx, a.uruchamiacz, okno, zasady, obszar, n,
@@ -500,7 +500,7 @@ func (a *adapterStudia) katalogSkanow() (string, error) {
 		tymczasowy, err := os.MkdirTemp("", "danaco-skan-")
 		if err != nil {
 			return "", protocol.JakoError(protocol.NowyBlad(shared.ErrorCodeInternalError,
-				"moduł Studio: nie ma gdzie położyć pobranego skanu — rdzeń nie ma "+
+				"moduł Studio: nie ma gdzie położyć pobranego skanu — serwer nie ma "+
 					"ustalonego katalogu roboczego, a katalog tymczasowy systemu nie "+
 					"powstał: "+err.Error()))
 		}

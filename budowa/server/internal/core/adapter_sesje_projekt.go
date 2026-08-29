@@ -57,7 +57,7 @@ func (a *adapterSesji) ustalProjekt(ctx context.Context,
 
 	if a.projekty == nil {
 		return "", protocol.JakoError(protocol.NowyBlad(shared.ErrorCodeInternalError,
-			"rdzeń nie ma repozytorium projektów — przeniesienie sesji nie ma dokąd trafić"))
+			"serwer nie ma repozytorium projektów — przeniesienie sesji nie ma dokąd trafić"))
 	}
 	if z.ProjectId != nil && *z.ProjectId != "" {
 		if _, err := a.projekty.Projekt(ctx, *z.ProjectId); err != nil {

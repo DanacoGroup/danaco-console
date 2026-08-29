@@ -130,13 +130,13 @@ func krojDesignu(nazwa string) (*sfnt.Font, string, bool, error) {
 		krojWczytany, err := sfnt.Parse(bajty)
 		if err != nil {
 			return nil, "", false, fmt.Errorf(
-				"plik kroju %s leży na tej maszynie, ale nie jest krojem, który rdzeń rozkłada: %w",
+				"plik kroju %s leży na tej maszynie, ale nie jest krojem, który serwer rozkłada: %w",
 				nazwaKroju, err)
 		}
 		return krojWczytany, nazwaKroju, false, nil
 	}
 	return nil, "", false, fmt.Errorf(
-		"kroju %q rdzeń nie ma ani wkompilowanego, ani na tej maszynie — podglądu nie złoży krojem "+
+		"kroju %q serwer nie ma ani wkompilowanego, ani na tej maszynie — podglądu nie złoży krojem "+
 			"zastępczym, bo wyglądałby jak prawdziwy; kroje wkompilowane: %s",
 		nazwa, strings.Join(nazwyKrojowWkompilowanychDesignu(), ", "))
 }

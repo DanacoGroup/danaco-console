@@ -103,7 +103,7 @@ func (a *adapterTerminala) odczytZdalny(ctx context.Context, karta *kartaTermina
 
 	if a.uruchamiacz == nil {
 		return shared.TerminalFileReadResponse{}, protocol.JakoError(protocol.NowyBlad(
-			shared.ErrorCodeInternalError, "moduł Terminal: rdzeń nie ma uruchamiacza procesów"))
+			shared.ErrorCodeInternalError, "moduł Terminal: serwer nie ma uruchamiacza procesów"))
 	}
 	zdalne, err := argumentyPowlokiZdalnej(karta)
 	if err != nil {

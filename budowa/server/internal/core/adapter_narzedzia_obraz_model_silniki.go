@@ -223,7 +223,7 @@ func rozstrzygnijModelWycinania(zadany *string) (string, wagiModelu, error) {
 	opis, jest := modeleWycinaniaTla[nazwa]
 	if !jest {
 		return "", opis, bladWskazaniaModeluObrazu("nie znam modelu wycinania „" + nazwa +
-			"” — rdzeń zna: " + strings.Join(znaneModeleWycinania(), ", "))
+			"” — serwer zna: " + strings.Join(znaneModeleWycinania(), ", "))
 	}
 	return nazwa, opis, nil
 }

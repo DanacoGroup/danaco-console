@@ -68,6 +68,9 @@ export function zaloguj(blad: ErrorInfo | undefined, czynnosc: string): void {
  */
 const ROZPOZNANIE: ReadonlyArray<{ znak: RegExp; klucz: string }> = [
   { znak: /not logged in|\/login\b/i, klucz: 'czat.bladKanalu.niepolaczony' },
+  /* Brzmienia limitu wzięte z wykazu, po którym rozpoznaje je serwer
+     (`server/internal/injection/wyczerpanie.go`) — nie z domysłu. */
+  { znak: /usage limit reached|rate.?limit (exceeded|error)|quota exceeded/i, klucz: 'czat.bladKanalu.limitWyczerpany' },
 ];
 
 /**

@@ -73,6 +73,8 @@ export const tresci = {
     bladKanalu: {
       niepolaczony:
         'Kanał modelu nie jest połączony. Otwórz Ustawienia, sekcja „Konta modeli”, połącz konto tego modelu i powtórz polecenie.',
+      limitWyczerpany:
+        'Konto tego modelu wyczerpało swój limit. Odczekaj do odnowienia limitu albo przełącz konto w Ustawieniach, sekcja „Konta modeli”.',
       bezOpisu: 'Model przerwał odpowiedź i nie podał powodu. Powtórz polecenie.',
       nierozpoznany:
         'Model nie dokończył odpowiedzi. Powtórz polecenie. Jeżeli powtarza się, sprawdź połączenie modelu w Ustawieniach, sekcja „Konta modeli”.',

@@ -14,6 +14,7 @@ import type { FormyLiczebnika } from '../liczebnik.ts';
 export const trescPodgladu = {
   panel: {
     tytul: 'Preview Window',
+    zamknijKarte: 'Zamknij kartę',
   },
 
   brakOkna: 'Nie udało się otworzyć okna modułu.',

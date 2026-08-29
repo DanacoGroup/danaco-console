@@ -10,9 +10,9 @@
  * idzie tą samą drogą: `window.update` przestawia tryb uprawnień i kanał
  * modelu, `config.session.set` nakład rozumowania.
  *
- * Odmiana `sta-chip--diff` została pominięta świadomie: licznik zmian wiersza
- * kontekstu nie ma w kontrakcie żadnego źródła po stronie rozmowy, a chip
- * z wpisaną liczbą byłby treścią przykładową.
+ * Licznik `sta-chip--diff` bierze wiersze z fragmentów różnicy, które oddaje
+ * `studio.diff.compare` dla dokumentu okna. Bez otwartego dokumentu chip mówi
+ * to słowem — „+0 −0" czytałoby się jak wynik porównania, którego nie było.
  *
  * Katalog treści stoi w tym samym pliku, nie w `tresci.ts` modułu — wzorem
  * `panele/*-tresci.ts`, żeby równolegli wykonawcy nie pisali jednego pliku.
@@ -22,6 +22,7 @@ import {
   ChangeKind,
   Command,
   ConfigScope,
+  DiffHunkKind,
   EventType,
   ExecutionEnv,
   PermissionMode,
@@ -30,6 +31,7 @@ import {
   SessionConfigArea,
   WindowRole,
   type Channel,
+  type StudioDiffHunk,
   type Window,
 } from '../../../../../shared/contract.ts';
 import type { Kanal } from '../../../protokol/kanal.ts';
@@ -62,6 +64,9 @@ const tresc = {
 
   akcje: {
     etykieta: 'Zakres pracy okna',
+    roznica: 'Zmiana wobec wersji odniesienia',
+    brakDokumentu: 'bez dokumentu',
+    roznicaNieznana: 'różnica nieustalona',
   },
 
   pas: {
@@ -254,6 +259,8 @@ export function sterowanieCzatu(zaleznosci: ZaleznosciSterowania): ZamontowaneSt
   let wysilek: ReasoningEffort | null = null;
   let komunikat = '';
   let trwaStrumien = false;
+  let idDokumentu: string | null = null;
+  let roznica: { dodane: number; usuniete: number } | null = null;
   let wczytaneDlaOkna: string | null = null;
 
   /* Jeden dymek otwarty naraz: dwa nachodzące na siebie zasłaniałyby się
@@ -489,7 +496,57 @@ export function sterowanieCzatu(zaleznosci: ZaleznosciSterowania): ZamontowaneSt
       ]),
       el('span', { klasa: 'sta-chip', tekst: okno.moduleId }),
       el('span', { klasa: 'sta-chip', tekst: tresc.rolaOkna[okno.windowRole] ?? okno.windowRole }),
+      chipRoznicy(),
     );
+  }
+
+  /** Wiersze fragmentu; pusty fragment i domykający znak nowego wiersza nie liczą się jako wiersz. */
+  function liczbaWierszy(fragment?: string): number {
+    if (fragment === undefined || fragment === '') return 0;
+    return fragment.replace(/\n$/, '').split('\n').length;
+  }
+
+  /* Fragment zmieniony dokłada się do obu stron licznika, bo niesie i wiersze
+     zdjęte, i wiersze wstawione; fragment podany dla kontekstu nie zmienia nic. */
+  function policzRoznice(fragmenty: StudioDiffHunk[]): { dodane: number; usuniete: number } {
+    let dodane = 0;
+    let usuniete = 0;
+    for (const fragment of fragmenty) {
+      if (fragment.kind === DiffHunkKind.Context) continue;
+      if (fragment.kind !== DiffHunkKind.Removed) dodane += liczbaWierszy(fragment.after);
+      if (fragment.kind !== DiffHunkKind.Added) usuniete += liczbaWierszy(fragment.before);
+    }
+    return { dodane, usuniete };
+  }
+
+  /** Licznik zmian dokumentu; bez policzonej różnicy chip niesie słowo, nie liczbę. */
+  function chipRoznicy(): HTMLElement {
+    if (roznica === null) {
+      return el('span', {
+        klasa: 'sta-chip sta-chip--diff',
+        tekst: idDokumentu === null ? tresc.akcje.brakDokumentu : tresc.akcje.roznicaNieznana,
+      });
+    }
+    return el('span', { klasa: 'sta-chip sta-chip--diff', 'aria-label': tresc.akcje.roznica }, [
+      el('span', { klasa: 'plus', tekst: `+${roznica.dodane}` }),
+      ' ',
+      el('span', { klasa: 'minus', tekst: `\u2212${roznica.usuniete}` }),
+    ]);
+  }
+
+  /** Wiersze licznika liczy rdzeń fragmentami różnicy; okno samo nie porównuje treści. */
+  async function wczytajRoznice(dokument: string): Promise<void> {
+    const wynik = await wywolaj(zaleznosci.kanal, Command.StudioDiffCompare, { documentId: dokument });
+    /* Odpowiedź na poprzedni dokument przyszłaby po zmianie dokumentu jako
+       licznik nie tego pliku, więc wynik nie swojego dokumentu przepada. */
+    if (zdjete || idDokumentu !== dokument) return;
+    if (!wynik.udany || wynik.wynik === undefined) {
+      zaloguj(wynik.blad, 'sterowanie.roznica');
+      roznica = null;
+    } else {
+      roznica = policzRoznice(wynik.wynik.hunks ?? []);
+    }
+    odswiezAkcje();
   }
 
   function odswiezTryb(): void {
@@ -702,6 +759,20 @@ export function sterowanieCzatu(zaleznosci: ZaleznosciSterowania): ZamontowaneSt
     odswiez();
   });
 
+  /* Dokument okna zgłasza się zdarzeniem rdzenia — dopiero jego numer daje
+     licznikowi co porównywać, więc różnica rusza stąd, a nie z montażu pasa. */
+  const odsubskrybujDokument = zaleznosci.kanal.naZdarzenie(EventType.StudioDocumentChanged, (zdarzenie) => {
+    if (zdjete || zdarzenie.document.windowId !== zaleznosci.idOkna()) return;
+    if (zdarzenie.change === ChangeKind.Deleted) {
+      idDokumentu = null;
+      roznica = null;
+      odswiezAkcje();
+      return;
+    }
+    idDokumentu = zdarzenie.document.id;
+    void wczytajRoznice(zdarzenie.document.id);
+  });
+
   odswiez();
   odswiezMonitor();
   void wczytajKanaly();
@@ -724,6 +795,7 @@ export function sterowanieCzatu(zaleznosci: ZaleznosciSterowania): ZamontowaneSt
     zdejmij() {
       zdjete = true;
       odsubskrybujOkno();
+      odsubskrybujDokument();
       document.removeEventListener('click', naKlik);
       document.removeEventListener('keydown', naKlawisz);
     },

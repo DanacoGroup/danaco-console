@@ -136,6 +136,15 @@ export interface StanPrzebiegu {
   moduly: Module[];
   /** Karty sesji odtworzone przez rdzeń. */
   sesje: Session[];
+  /*
+  Konto, którym Operator wszedł — login albo adres, tak jak je podał.
+
+  Wskazania nie ma skąd wziąć od rdzenia: `AuthSession` niesie token, termin
+  ważności, urządzenie i metodę, a konta nie. Pasek stanu ma jednak nazwać
+  Operatorowi, czyim kontem pracuje, więc wskazanie idzie stąd — z tego, co sam
+  wpisał. Puste znaczy wejście drogą, która konta nie podaje.
+  */
+  kontoOperatora?: string;
 }
 
 /* ── Nastawy przebiegu ───────────────────────────────────────────────────── */
@@ -501,6 +510,7 @@ export function utworzPrzebieg(zaleznosci: ZaleznosciPrzebiegu): Przebieg {
       return;
     }
     przyjmijSesje(odpowiedz.session);
+    zmien({ kontoOperatora: dane.login.trim() });
     await przygotujSrodowisko();
   }
 
@@ -561,6 +571,7 @@ export function utworzPrzebieg(zaleznosci: ZaleznosciPrzebiegu): Przebieg {
     // Dwie gałęzie rejestracji rozstrzygane odpowiedzią rdzenia: z kontem nadawczym albo bez niego.
     zmien({
       adres: dane.email.trim(),
+      kontoOperatora: dane.email.trim(),
       odslona: odpowiedz.pendingVerification ? 'kod' : 'konto-bez-potwierdzenia',
       usterki: [],
     });
@@ -623,6 +634,7 @@ export function utworzPrzebieg(zaleznosci: ZaleznosciPrzebiegu): Przebieg {
     const zwlokaS = zmierzonaZwlokaS();
     zmien({
       adres: email.trim(),
+      kontoOperatora: email.trim(),
       zwlokaS,
       odslona: zwlokaS > 0 ? 'odzyskiwanie-wstrzymane' : 'odzyskiwanie-kod',
     });

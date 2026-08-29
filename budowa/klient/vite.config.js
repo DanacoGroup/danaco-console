@@ -123,14 +123,8 @@ function kopiaSkryptowBiblioteki() {
 const DATA_SKLADANIA = new Date().toISOString().slice(0, 10);
 
 
-/**
- * Wnętrze okna roboczego Studia pochodzi z prototypu, nie z kodu klienta.
- *
- * `zasoby/powloka.js` skleja powłokę wokół treści szablonu `#dn-tresc-okna`,
- * a treścią tą jest blok `main.st-okno-robocze` ze źródła kształtu. Wstrzyknięcie
- * przy budowaniu trzyma jedno źródło prawdy: zmiana prototypu wchodzi do
- * aplikacji przebudowaniem, bez przepisywania znacznika ręką.
- */
+// Wnętrze okna roboczego Studia bierze się z `design/05-okna/moduly/studio.html`.
+// `zasoby/powloka.js` skleja powłokę wokół szablonu `#dn-tresc-okna`.
 function trescOknaZPrototypu() {
   return {
     name: 'tresc-okna-z-prototypu',

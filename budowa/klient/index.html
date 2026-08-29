@@ -45,11 +45,8 @@
   `wejscie/montaz.ts`, ramę aplikacji `rama/montaz.ts` — dokument nie ma ani
   jednego zdania widocznego dla użytkownika poza nazwą produktu w tytule karty.
 
-  Trzy miejsca montażu drogi wejścia, po jednym na etap. Stoją w dokumencie
-  wszystkie naraz, bo montaż buduje okna raz, przy starcie; widoczne jest to,
-  w którym stoi czynna odsłona. Rama zaczyna ukryta — `aplikacja.ts` zdejmuje
-  scenę drogi wejścia i odkrywa ramę dokładnie wtedy, gdy przebieg wchodzi do
-  środowiska; do tej chwili miejsce ramy stoi puste.
+  Trzy miejsca drogi wejścia stoją w dokumencie naraz, bo biblioteka buduje
+  okna raz, przy starcie. Widoczny jest ten obszar, którego widok jest czynny.
 
   Motywu dokument nie narzuca: `zetony.css` daje `:root:not([data-theme])`
   motyw zgodny z ustawieniem systemu, a żadne źródło nie wskazuje motywu,

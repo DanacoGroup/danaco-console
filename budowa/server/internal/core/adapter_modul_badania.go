@@ -152,7 +152,7 @@ func (a *adapterBadan) odlozMaterialBadania(bajty []byte) (string, int64, error)
 	if a.magazyn == nil {
 		return "", 0, protokolBladBadania(shared.ErrorCodeInternalError,
 			"magazyn materiałów badania nie jest wpięty — naprawa: podać katalog danych "+
-				"przy składaniu rdzenia")
+				"przy składaniu serwera")
 	}
 	suma := sha256.Sum256(bajty)
 	sciezka, err := a.magazyn.Zapisz(bajty, hex.EncodeToString(suma[:]))
@@ -177,7 +177,7 @@ func (a *adapterBadan) zapytajModel(ctx context.Context, okno, kanal, tresc stri
 		return "", bladBrakuKanalowBadan()
 	}
 	if strings.TrimSpace(kanal) == "" {
-		return "", bladWskazaniaBadan("żądanie bez wskazania kanału modelu — rdzeń nie zgaduje kanału badania")
+		return "", bladWskazaniaBadan("żądanie bez wskazania kanału modelu — serwer nie zgaduje kanału badania")
 	}
 	var zebrane strings.Builder
 	ujscie := models.UjscieFunkcji(func(_ context.Context, f models.Fragment) error {

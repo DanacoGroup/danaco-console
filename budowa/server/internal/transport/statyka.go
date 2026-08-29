@@ -63,7 +63,7 @@ func odmowaPakietu(w http.ResponseWriter, katalog string) {
 	w.Header().Set("Content-Type", "text/plain; charset=utf-8")
 	w.WriteHeader(http.StatusNotFound)
 	_, _ = w.Write([]byte("Danaco Console: pakiet klienta niedostępny (" + opisKatalogu(katalog) + ").\n" +
-		"Rdzeń pracuje; kanał WebSocket jest czynny.\n"))
+		"Serwer pracuje; kanał WebSocket jest czynny.\n"))
 }
 
 // Funkcja opisKatalogu nazywa stan katalogu klienta na potrzeby dziennika oraz treści tej odpowiedzi HTTP.

@@ -53,7 +53,7 @@ func (a *adapterTlumaczenia) WczytajXliff(ctx context.Context,
 	uwagi := []string{}
 	if odczytany.JezykDocelowy == "" {
 		return shared.TranslateXliffImportResponse{}, bladWskazaniaTlumaczenia(
-			"plik nie wskazuje języka docelowego — rdzeń nie zgaduje, do którego panelu wnieść przekład")
+			"plik nie wskazuje języka docelowego — serwer nie zgaduje, do którego panelu wnieść przekład")
 	}
 
 	// Tekst źródłowy okna bierze się z jednostek: bez niego panel nie ma z czym zestawić przekładu.

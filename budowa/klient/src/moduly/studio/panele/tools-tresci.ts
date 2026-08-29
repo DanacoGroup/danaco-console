@@ -18,25 +18,25 @@ export const tresciNarzedzi = {
     etykietaRozmiaru: 'Zakres:',
     jednostkaZnaki: 'znaków',
     jednostkaSlowa: 'słów',
-    brakDokumentu: 'Rdzeń nie zgłosił dokumentu w tym oknie.',
-    brakZaznaczenia: 'Rdzeń nie podał zakresu zaznaczenia.',
+    brakDokumentu: 'W tym oknie nie ma dokumentu.',
+    brakZaznaczenia: 'Zakres zaznaczenia nie jest znany.',
   },
 
   operacje: {
     wlasna: 'własna',
-    brakWykazu: 'Rdzeń nie zgłosił żadnej operacji Tools Panel.',
+    brakWykazu: 'Nie ma żadnej operacji do uruchomienia.',
   },
 
   uruchom: {
     przycisk: 'Uruchom operację',
     wBiegu: 'Uruchamianie…',
-    brakWyniku: 'Rdzeń nie zwrócił treści wyniku.',
+    brakWyniku: 'Wynik nie zawiera treści.',
   },
 
   odmowa: {
-    brakOkna: 'Rdzeń nie założył okna modułu.',
-    lista: 'Rdzeń odmówił wykazu operacji',
-    uruchomienie: 'Rdzeń odmówił uruchomienia operacji',
-    brakOpisu: 'Rdzeń nie podał powodu odmowy.',
+    brakOkna: 'Nie udało się otworzyć okna modułu.',
+    lista: 'Nie udało się wczytać wykazu operacji',
+    uruchomienie: 'Nie udało się uruchomić operacji',
+    brakOpisu: 'Powód nie został podany.',
   },
 } as const;

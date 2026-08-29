@@ -41,7 +41,7 @@ func (a *adapterStudia) OperacjaKontekstowa(ctx context.Context,
 	if a.kanaly == nil || a.okna == nil {
 		return shared.StudioContextualOpResponse{}, protocol.JakoError(protocol.NowyBlad(
 			shared.ErrorCodeChannelUnavailable,
-			"moduł Studio: rdzeń złożony bez rejestru kanałów modelu — operacja "+
+			"moduł Studio: serwer złożony bez rejestru kanałów modelu — operacja "+
 				z.ActionId+" nie ma czym się wykonać"))
 	}
 	okno, err := a.okna.Okno(z.WindowId)
@@ -255,7 +255,7 @@ func trescBytuPorownania(kod string, tresc, odwolanie *string) (string, string, 
 	if odwolanie != nil && *odwolanie != "" {
 		return "", "", protocol.JakoError(protocol.NowyBlad(shared.ErrorCodeChannelUnavailable,
 			"moduł Studio: treść porównania leży poza bazą (odwołanie "+*odwolanie+
-				"), rdzeń nie ma tu mechanizmu jej odczytu"))
+				"), serwer nie ma tu mechanizmu jej odczytu"))
 	}
 	return "", kod, nil
 }

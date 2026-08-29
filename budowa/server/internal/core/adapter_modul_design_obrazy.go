@@ -51,7 +51,7 @@ func obrazZasobuDesignu(sciezka string) (image.Image, error) {
 
 	obraz, _, err := image.Decode(plik)
 	if err != nil {
-		return nil, fmt.Errorf("treść zasobu nie jest obrazem, który rdzeń potrafi rozłożyć "+
+		return nil, fmt.Errorf("treść zasobu nie jest obrazem, który serwer potrafi rozłożyć "+
 			"(rozkłada png, jpeg, gif, webp, bmp, tiff): %w", err)
 	}
 	return obraz, nil
@@ -111,7 +111,7 @@ func zakodujObrazDesignu(obraz image.Image, format string, jakosc *int) ([]byte,
 		}
 		return bajty, "application/pdf", nil
 	}
-	return nil, "", fmt.Errorf("formatu %q rdzeń nie wydaje", format)
+	return nil, "", fmt.Errorf("formatu %q serwer nie wydaje", format)
 }
 
 // jakoscWydaniaDesignu przycina jakość kompresji do zakresu kontraktu (1-100).
@@ -161,18 +161,18 @@ func odmowaFormatuWydaniaDesignu(komenda, format string) error {
 	switch nazwa {
 	case "webp":
 		return bladWskazaniaDesignu(fmt.Sprintf(
-			"komenda %s z formatem wydania webp: rdzeń CZYTA webp jako materiał, ale go nie zapisuje — "+
+			"komenda %s z formatem wydania webp: serwer CZYTA webp jako materiał, ale go nie zapisuje — "+
 				"zapis webp wymagałby programu spoza instalki, a produkt takich nie używa; "+
 				"formaty wydania: %s", komenda, formatyWydaniaDesignu))
 	case "avif":
 		return bladWskazaniaDesignu(fmt.Sprintf(
-			"komenda %s z formatem wydania avif: ani odczytu, ani zapisu avif rdzeń nie ma — "+
+			"komenda %s z formatem wydania avif: ani odczytu, ani zapisu avif serwer nie ma — "+
 				"biblioteki wkompilowanej dla tego formatu nie ma, a wydanie png pod nazwą .avif "+
 				"byłoby plikiem, który u odbiorcy się nie otworzy; formaty wydania: %s",
 			komenda, formatyWydaniaDesignu))
 	}
 	return bladWskazaniaDesignu(fmt.Sprintf(
-		"komenda %s z formatem wydania %q, którego rdzeń nie zapisuje; formaty wydania: %s",
+		"komenda %s z formatem wydania %q, którego serwer nie zapisuje; formaty wydania: %s",
 		komenda, format, formatyWydaniaDesignu))
 }
 
@@ -189,7 +189,7 @@ func sprawdzSkaleWydaniaDesignu(komenda string, skala *float64) error {
 	}
 	if *skala > granicaSkaliWydaniaDesignu {
 		return bladWskazaniaDesignu(fmt.Sprintf(
-			"komenda %s ze skalą %v: granica skali wydania to %v — powyżej niej rdzeń zamawiałby "+
+			"komenda %s ze skalą %v: granica skali wydania to %v — powyżej niej serwer zamawiałby "+
 				"pamięć, której nie dostanie", komenda, *skala, granicaSkaliWydaniaDesignu))
 	}
 	return nil

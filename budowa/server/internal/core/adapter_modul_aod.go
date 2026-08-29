@@ -262,7 +262,7 @@ func (a *adapterNakladkiAod) oknoZadania(idOkna, idSesji *string) (session.Okno,
 	if !jest {
 		return session.Okno{}, protocol.JakoError(protocol.NowyBlad(shared.ErrorCodeNotFound,
 			"nakładka AOD: żądanie nie wskazało ani okna, ani karty sesji, "+
-				"a rdzeń nie odnotował dotąd pracy w żadnym otwartym oknie"))
+				"a serwer nie odnotował dotąd pracy w żadnym otwartym oknie"))
 	}
 	return okno, nil
 }

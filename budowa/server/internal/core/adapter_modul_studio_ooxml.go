@@ -187,7 +187,7 @@ func (w *ooxmlWezel) wlaczonyPrzelacznik() bool {
 func wejscieOtworzArchiwum(bajty []byte) (map[string][]byte, error) {
 	if len(bajty) > granicaArchiwumStudia {
 		return nil, bladWskazaniaStudio("plik jest większy niż " +
-			strconv.Itoa(granicaArchiwumStudia>>20) + " MB i rdzeń go nie rozpakowuje")
+			strconv.Itoa(granicaArchiwumStudia>>20) + " MB i serwer go nie rozpakowuje")
 	}
 	archiwum, err := zip.NewReader(bytes.NewReader(bajty), int64(len(bajty)))
 	if err != nil {

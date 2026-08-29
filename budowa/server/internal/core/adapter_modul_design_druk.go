@@ -114,7 +114,7 @@ func sprawdzProfilDrukuDesignu(komenda string, profil shared.DesignPrintProfile)
 	}
 	if profil.Dpi != nil && (*profil.Dpi < 1 || *profil.Dpi > 4800) {
 		return bladWskazaniaDesignu(fmt.Sprintf(
-			"komenda %s z rozdzielczością %d dpi: rdzeń przyjmuje od 1 do 4800 — powyżej materiał "+
+			"komenda %s z rozdzielczością %d dpi: serwer przyjmuje od 1 do 4800 — powyżej materiał "+
 				"nie zmieści się w pamięci, a żadna maszyna drukarska tego nie odda",
 			komenda, *profil.Dpi))
 	}
@@ -126,7 +126,7 @@ func sprawdzProfilDrukuDesignu(komenda string, profil shared.DesignPrintProfile)
 				nazwy = append(nazwy, nosnik.Name)
 			}
 			return bladWskazaniaDesignu(fmt.Sprintf(
-				"komenda %s z nośnikiem %q, którego rdzeń nie zna; nośniki znane: %s",
+				"komenda %s z nośnikiem %q, którego serwer nie zna; nośniki znane: %s",
 				komenda, *profil.PaperSize, strings.Join(nazwy, ", ")))
 		}
 	}
@@ -280,7 +280,7 @@ func zastrzezeniaZasobuPrzeddrukoweDesignu(zasob dane.ZasobDesignu,
 		return append(zastrzezenia, shared.DesignPreflightIssue{
 			Severity: shared.DesignPreflightSeverityOstrzezenie,
 			Code:     "zasob-bez-wymiarow",
-			Message: fmt.Sprintf("rdzeń nie zmierzył wymiarów zasobu %s (format spoza png, jpeg, "+
+			Message: fmt.Sprintf("serwer nie zmierzył wymiarów zasobu %s (format spoza png, jpeg, "+
 				"gif) — rozdzielczości skutecznej nie da się policzyć", kod),
 			AssetId: &kod,
 		})
@@ -345,7 +345,7 @@ func (a *adapterDesignu) zastrzezeniaWarstwyPrzeddrukoweDesignu(ctx context.Cont
 			return []shared.DesignPreflightIssue{{
 				Severity: shared.DesignPreflightSeverityBlad,
 				Code:     "warstwa-wskazuje-zasob-usuniety",
-				Message: fmt.Sprintf("warstwa %s wskazuje zasób %s, którego nie ma w tym rdzeniu "+
+				Message: fmt.Sprintf("warstwa %s wskazuje zasób %s, którego nie ma w tym serwerze "+
 					"— w wydaniu zostanie po niej dziura", kodWarstwy, kodZasobu),
 				LayerId: &kodWarstwy, AssetId: &kodZasobu,
 			}}
@@ -483,7 +483,7 @@ func zastrzezeniaProfiluDesignu(profil shared.DesignPrintProfile) []shared.Desig
 		zastrzezenia = append(zastrzezenia, shared.DesignPreflightIssue{
 			Severity: shared.DesignPreflightSeverityInformacja,
 			Code:     "cmyk-bez-rozdzialu-icc",
-			Message: "rdzeń przelicza RGB na CMYK WPROST, bez profilu ICC — wartości są punktem " +
+			Message: "serwer przelicza RGB na CMYK WPROST, bez profilu ICC — wartości są punktem " +
 				"wyjścia dla drukarni, a nie barwą rozdzieloną pod maszynę",
 		})
 	}
@@ -491,7 +491,7 @@ func zastrzezeniaProfiluDesignu(profil shared.DesignPrintProfile) []shared.Desig
 		zastrzezenia = append(zastrzezenia, shared.DesignPreflightIssue{
 			Severity: shared.DesignPreflightSeverityInformacja,
 			Code:     "norma-bez-weryfikacji",
-			Message: fmt.Sprintf("profil żąda normy %s; rdzeń składa dokument PDF biblioteką "+
+			Message: fmt.Sprintf("profil żąda normy %s; serwer składa dokument PDF biblioteką "+
 				"wkompilowaną i NIE weryfikuje zgodności z normą — weryfikacja wymaga narzędzia "+
 				"spoza instalki", string(*profil.Standard)),
 		})
@@ -499,9 +499,9 @@ func zastrzezeniaProfiluDesignu(profil shared.DesignPrintProfile) []shared.Desig
 	if profil.OverprintBlack != nil && *profil.OverprintBlack {
 		zastrzezenia = append(zastrzezenia, shared.DesignPreflightIssue{
 			Severity: shared.DesignPreflightSeverityInformacja,
-			Code:     "nadruk-czerni-poza-rdzeniem",
+			Code:     "nadruk-czerni-poza-serwerem",
 			Message: "profil żąda nadruku czerni; ustawienie nadruku należy do rozdziału barw " +
-				"w drukarni, a rdzeń przekazuje je jako nastawę profilu, nie jako właściwość pliku",
+				"w drukarni, a serwer przekazuje je jako nastawę profilu, nie jako właściwość pliku",
 		})
 	}
 	return zastrzezenia
@@ -582,7 +582,7 @@ func (a *adapterDesignu) WydajDoDruku(ctx context.Context,
 			// Odmowa, nie wydanie z ostrzeżeniem: plik nie do druku nie wychodzi
 			// jako gotowy do druku.
 			return shared.DesignPrintExportResponse{}, bladWskazaniaDesignu(fmt.Sprintf(
-				"kontrola przeddrukowa znalazła %d wad o wadze błędu — rdzeń nie wyda pliku "+
+				"kontrola przeddrukowa znalazła %d wad o wadze błędu — serwer nie wyda pliku "+
 					"nie do druku jako gotowego do druku; pierwsza wada: %s; naprawa: usunąć wady "+
 					"albo świadomie pominąć kontrolę polem skipPreflight (pominięcie wraca "+
 					"w odpowiedzi)", bledow, pierwszyBladZastrzezenDesignu(zastrzezenia)))
@@ -701,7 +701,7 @@ func (a *adapterDesignu) zlozWydaniePublikacjiDesignu(ctx context.Context,
 	bledow, _ := zlicZastrzezeniaDesignu(zastrzezenia)
 	if !pominieta && bledow > 0 {
 		return shared.DesignPrintExportResponse{}, bladWskazaniaDesignu(fmt.Sprintf(
-			"kontrola przeddrukowa publikacji %s znalazła %d wad o wadze błędu — rdzeń nie wyda "+
+			"kontrola przeddrukowa publikacji %s znalazła %d wad o wadze błędu — serwer nie wyda "+
 				"pliku nie do druku jako gotowego do druku; pierwsza wada: %s",
 			szablon.Kod, bledow, pierwszyBladZastrzezenDesignu(zastrzezenia)))
 	}
@@ -735,7 +735,7 @@ func uszeregujStronyPublikacjiDesignu(strony []dane.StronaSzablonuMaterialuDesig
 	if oprawa == shared.DesignPrintBindingZeszytowa && len(strony)%4 != 0 {
 		return nil, bladWskazaniaDesignu(fmt.Sprintf(
 			"oprawa zeszytowa wymaga liczby stron podzielnej przez cztery (arkusz zgięty na pół "+
-				"daje cztery strony), a publikacja ma %d — rdzeń nie dokłada wakatów za Operatora, "+
+				"daje cztery strony), a publikacja ma %d — serwer nie dokłada wakatów za Operatora, "+
 				"bo strona pusta w środku książki jest rozstrzygnięciem, nie zaokrągleniem",
 			len(strony)))
 	}
@@ -757,7 +757,7 @@ func uszeregujStronyPublikacjiDesignu(strony []dane.StronaSzablonuMaterialuDesig
 		if uzyte[numer] {
 			return nil, bladWskazaniaDesignu(fmt.Sprintf(
 				"kolejność stron wskazuje numer %d dwa razy — ta sama strona dwukrotnie w wydaniu "+
-					"jest rozstrzygnięciem, którego rdzeń nie zgadnie; wskaż ją raz albo zduplikuj "+
+					"jest rozstrzygnięciem, którego serwer nie zgadnie; wskaż ją raz albo zduplikuj "+
 					"stronę w szablonie", numer))
 		}
 		uzyte[numer] = true
@@ -933,7 +933,7 @@ func zakodujWydanieDrukarskieDesignu(strony []image.Image,
 		}
 		return bajty, "application/postscript", nil
 	}
-	return nil, "", fmt.Errorf("formatu %q rdzeń nie wydaje do druku", format)
+	return nil, "", fmt.Errorf("formatu %q serwer nie wydaje do druku", format)
 }
 
 // PodzielMaterialWielkoformatowy dzieli materiał na kafle — obsługuje
@@ -1118,7 +1118,7 @@ func zakodujDokumentWielostronicowyDesignu(strony []image.Image) ([]byte, string
 // repozytorium.
 func bladNieznanegoProfiluDrukuDesignu(kod string, err error) error {
 	if czyBrakZasobuDesignu(err) {
-		return bladNieznanegoBytuDesignu("profilu druku " + kod + " nie ma w tym rdzeniu")
+		return bladNieznanegoBytuDesignu("profilu druku " + kod + " nie ma w tym serwerze")
 	}
 	return bladDesignu(err)
 }

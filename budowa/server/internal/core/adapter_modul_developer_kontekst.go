@@ -40,7 +40,7 @@ func (a *adapterDevelopera) OperacjaKontekstowa(ctx context.Context,
 	if a.kanaly == nil {
 		return shared.DeveloperContextualOpResponse{}, protocol.JakoError(protocol.NowyBlad(
 			shared.ErrorCodeChannelUnavailable,
-			"moduł Developer: rdzeń złożono bez rejestru kanałów modelu, "+
+			"moduł Developer: serwer złożono bez rejestru kanałów modelu, "+
 				"więc operacje kontekstowe nie mają dokąd pójść"))
 	}
 	if okno.KanalModelu == "" {

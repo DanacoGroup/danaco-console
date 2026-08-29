@@ -48,7 +48,7 @@ func wejscieRozpoznajZapisZnakow(bajty []byte, wskazanie *string) (string, strin
 		przeklad, _ := charset.Lookup(nazwa)
 		if przeklad == nil {
 			return "", "", bladWskazaniaStudio("zapis znaków " + nazwa +
-				" nie jest znany rdzeniowi; naprawa: podać nazwę z rejestru IANA " +
+				" nie jest znany serwerowi; naprawa: podać nazwę z rejestru IANA " +
 				"(na przykład UTF-8, windows-1250, ISO-8859-2) albo nie podawać " +
 				"jej wcale i zdać się na rozpoznanie")
 		}
@@ -880,7 +880,7 @@ func (s *wejscieStanHtml) czytajObrazHtml(wezel *html.Node) {
 		ObjectId:  wejscieWskaznikTekstu(obiekt.Id),
 	})
 	*s.pominiete = append(*s.pominiete, shared.StudioSkippedItem{
-		Reason: "obraz wszedł jako obiekt z adresem źródła; bajtów rdzeń nie pobierał",
+		Reason: "obraz wszedł jako obiekt z adresem źródła; bajtów serwer nie pobierał",
 		Detail: wejscieWskaznikTekstu(adres),
 	})
 }

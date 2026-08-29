@@ -150,7 +150,7 @@ func proporcjeKadruDesignu(zapis string) (float64, error) {
 	czesci := strings.Split(strings.TrimSpace(zapis), ":")
 	if len(czesci) != 2 {
 		return 0, fmt.Errorf(
-			"proporcji %q nie da się odczytać — rdzeń przyjmuje zapis „szerokość:wysokość\", "+
+			"proporcji %q nie da się odczytać — serwer przyjmuje zapis „szerokość:wysokość\", "+
 				"na przykład 1:1, 4:5 albo 16:9", zapis)
 	}
 	szerokosc, err := strconv.ParseFloat(strings.TrimSpace(czesci[0]), 64)
@@ -369,7 +369,7 @@ func przeliczRozdzielczoscFotografiiDesignu(obraz image.Image, szerokosc, wysoko
 	granice := obraz.Bounds()
 	if szerokosc <= 0 && wysokosc <= 0 {
 		return nil, fmt.Errorf(
-			"żądanie nie podało ani szerokości, ani wysokości docelowej — rdzeń nie zgaduje, " +
+			"żądanie nie podało ani szerokości, ani wysokości docelowej — serwer nie zgaduje, " +
 				"na jaki rozmiar przeliczyć")
 	}
 	if zachowajProporcje {
@@ -420,7 +420,7 @@ func sprawdzRozmiarFotografiiDesignu(szerokosc, wysokosc int) error {
 	}
 	if szerokosc*wysokosc > granicaPikseliFotografiiDesignu {
 		return fmt.Errorf(
-			"rozmiar %d×%d to %d punktów, a granica wyniku to %d — rdzeń nie zamawia pamięci, "+
+			"rozmiar %d×%d to %d punktów, a granica wyniku to %d — serwer nie zamawia pamięci, "+
 				"której nie dostanie", szerokosc, wysokosc, szerokosc*wysokosc,
 			granicaPikseliFotografiiDesignu)
 	}
@@ -933,7 +933,7 @@ func tabliceKrzywychDesignu(zapis []byte) (tabliceKrzywychFotografiiDesignu, err
 			tablice.niebieski = tablica
 		default:
 			return tabliceKrzywychFotografiiDesignu{}, fmt.Errorf(
-				"krzywe wskazują kanał %q, którego rdzeń nie zna; kanały: rgb, r, g, b", kanal)
+				"krzywe wskazują kanał %q, którego serwer nie zna; kanały: rgb, r, g, b", kanal)
 		}
 	}
 	return tablice, nil

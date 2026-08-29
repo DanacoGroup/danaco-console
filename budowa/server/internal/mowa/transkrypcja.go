@@ -149,7 +149,7 @@ func odczytajRozpoznanie(wynik Wynik) (Transkrypcja, error) {
 	if err := json.Unmarshal([]byte(tresc), &odpowiedz); err != nil {
 		return Transkrypcja{}, &BrakSilnika{Powod: "odpowiedź pomocnika transkrypcji" +
 			" jest nieczytelna (" + err.Error() + ")" + ogonDiagnostyki(wynik.Diagnostyka) +
-			"; naprawa: zgłosić usterkę pomocnika — rdzeń oczekuje odpowiedzi w JSON"}
+			"; naprawa: zgłosić usterkę pomocnika — serwer oczekuje odpowiedzi w JSON"}
 	}
 	if odmowa := strings.TrimSpace(odpowiedz.Blad); odmowa != "" {
 		return Transkrypcja{}, &BrakSilnika{Powod: odmowa}

@@ -126,7 +126,7 @@ func (a *adapterBezpieczenstwaStudia) ZaszyfrujPdf(ctx context.Context,
 			return shared.StudioSecurityEncryptResponse{}, odmowaBezpieczenstwa(
 				shared.ErrorCodeValidationFailed,
 				"zdjęcie szyfrowania wymaga hasła właściciela — bez niego dokumentu "+
-					"nie otwiera nikt, także rdzeń")
+					"nie otwiera nikt, także serwer")
 		}
 		if err := api.Decrypt(bytes.NewReader(bajty), &wynik, nastawy); err != nil {
 			return shared.StudioSecurityEncryptResponse{}, odmowaBezpieczenstwa(
@@ -963,8 +963,8 @@ func (a *adapterBezpieczenstwaStudia) WykryjWrazliwe(ctx context.Context,
 	if a.studio == nil {
 		return shared.StudioSecuritySensitiveDetectResponse{}, odmowaBezpieczenstwa(
 			shared.ErrorCodeInternalError,
-			"rdzeń nie ma wpiętego repozytorium Studia — naprawa: podpiąć je przy "+
-				"składaniu rdzenia")
+			"serwer nie ma wpiętego repozytorium Studia — naprawa: podpiąć je przy "+
+				"składaniu serwera")
 	}
 
 	var tresc string
@@ -972,7 +972,7 @@ func (a *adapterBezpieczenstwaStudia) WykryjWrazliwe(ctx context.Context,
 		wersja, err := a.studio.Wersja(ctx, strings.TrimSpace(*z.VersionId))
 		if err != nil {
 			return shared.StudioSecuritySensitiveDetectResponse{}, odmowaBezpieczenstwa(
-				shared.ErrorCodeNotFound, "wersji "+*z.VersionId+" nie ma w rdzeniu")
+				shared.ErrorCodeNotFound, "wersji "+*z.VersionId+" nie ma w serwerze")
 		}
 		if wersja.Tresc != nil {
 			tresc = *wersja.Tresc
@@ -981,7 +981,7 @@ func (a *adapterBezpieczenstwaStudia) WykryjWrazliwe(ctx context.Context,
 		dokument, err := a.studio.Dokument(ctx, strings.TrimSpace(z.DocumentId))
 		if err != nil {
 			return shared.StudioSecuritySensitiveDetectResponse{}, odmowaBezpieczenstwa(
-				shared.ErrorCodeNotFound, "dokumentu "+z.DocumentId+" nie ma w rdzeniu")
+				shared.ErrorCodeNotFound, "dokumentu "+z.DocumentId+" nie ma w serwerze")
 		}
 		if dokument.Tresc != nil {
 			tresc = *dokument.Tresc

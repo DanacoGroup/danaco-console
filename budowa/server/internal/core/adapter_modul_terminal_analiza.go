@@ -182,7 +182,7 @@ func (a *adapterTerminala) SprawdzSkrypt(ctx context.Context,
 		return shared.TerminalScriptLintResponse{
 			Findings:          []shared.TerminalLintFinding{},
 			AnalyzerAvailable: false,
-			Analyzer: "rdzeń nie zna programu analizy dla powłoki " + string(z.Shell) +
+			Analyzer: "serwer nie zna programu analizy dla powłoki " + string(z.Shell) +
 				"; analizę mają powłoki bash, powershell, node i python",
 		}, nil
 	}
@@ -195,7 +195,7 @@ func (a *adapterTerminala) SprawdzSkrypt(ctx context.Context,
 	}
 	if a.uruchamiacz == nil {
 		return shared.TerminalScriptLintResponse{}, bladWykonaniaTerminala(
-			"rdzeń nie ma uruchamiacza procesów, więc nie uruchomi programu analizy")
+			"serwer nie ma uruchamiacza procesów, więc nie uruchomi programu analizy")
 	}
 
 	sciezka, sprzataj, err := plikDoAnalizy(z.Content, analizator.rozszerzenie)

@@ -36,7 +36,7 @@ func (a *adapterDiagnostyki) ZapiszNiepowodzenie(ctx context.Context, n Niepowod
 	komenda := string(n.Komenda)
 	tresc := strings.TrimSpace(n.Blad.Message)
 	if tresc == "" {
-		tresc = "rdzeń odmówił wykonania bez podania przyczyny"
+		tresc = "serwer odmówił wykonania bez podania przyczyny"
 	}
 	chwila := time.Now().UnixMilli()
 

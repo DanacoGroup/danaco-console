@@ -146,7 +146,7 @@ func stronaScalNastawy(zastane *shared.StudioPageSetup,
 		nosnik, jest := stronaNosnik(*z.PaperName)
 		if !jest {
 			return shared.StudioPageSetup{}, 0, bladWskazaniaStudio(
-				"nośnika „" + strings.TrimSpace(*z.PaperName) + "” rdzeń nie zna. " +
+				"nośnika „" + strings.TrimSpace(*z.PaperName) + "” serwer nie zna. " +
 					"Nośniki znane: " + strings.Join(stronaNazwyNosnikow(), ", ") +
 					". Format własny podaje się polami widthMm i heightMm")
 		}
@@ -189,7 +189,7 @@ func stronaScalNastawy(zastane *shared.StudioPageSetup,
 		if !jest {
 			return shared.StudioPageSetup{}, 0, bladWskazaniaStudio(
 				"nastawy marginesów „" + strings.TrimSpace(*z.MarginPreset) +
-					"” rdzeń nie zna. Nastawy gotowe: wąskie, normalne, szerokie; " +
+					"” serwer nie zna. Nastawy gotowe: wąskie, normalne, szerokie; " +
 					"marginesy własne podaje się polami marginTopMm, marginBottomMm, " +
 					"marginLeftMm i marginRightMm")
 		}

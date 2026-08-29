@@ -54,7 +54,7 @@ func (a *adapterPrzestrzeniRoboczej) WydobadzTekst(ctx context.Context,
 	}
 	if a.dokumenty == nil {
 		return shared.WorkspaceLibraryTextExtractResponse{},
-			bladProjektu("wydobycie tekstu nie ma warsztatu dokumentów — rdzeń zmontowano bez tego ogniwa")
+			bladProjektu("wydobycie tekstu nie ma warsztatu dokumentów — serwer zmontowano bez tego ogniwa")
 	}
 	sposob := sposobWydobyciaWorkspace(z.Method, sciezka)
 	jezyki := z.Languages

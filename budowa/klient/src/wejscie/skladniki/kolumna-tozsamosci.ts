@@ -63,11 +63,16 @@ export function notaPasa(klucz: string): HTMLElement {
   return el('p', { klasa: 'we-marka-stopka', tekst: tekst(klucz) });
 }
 
+/* Data składania pakietu, wstrzyknięta przez `vite.config.js`. Numer wersji
+   sam wydania nie nazywa: katalog wydań stanowi, że pozycje różni data. */
+declare const __DATA_SKLADANIA__: string;
+const DATA_SKLADANIA = __DATA_SKLADANIA__;
+
 export function notaWydawcy(wersjaKlienta: string): HTMLElement {
   return el('p', { klasa: 'we-marka-stopka' }, [
     tekst('marka.wydawca'),
     el('br'),
-    tekst('marka.wydanie', { wersja: wersjaKlienta }),
+    tekst('marka.wydanie', { wersja: wersjaKlienta, data: DATA_SKLADANIA }),
     el('br'),
     tekst('marka.wsparcie'),
   ]);

@@ -60,8 +60,13 @@ export function zamontujRame(w: NastawyRamy): void {
     motywCiemny: motywCiemny(),
   });
 
+  /* Pasmo kart sesji stoi tylko wtedy, gdy obszar roboczy nie niesie okna
+     modułu. Źródło kształtu (`design/05-okna/moduly/studio.html`, w. 346) ma
+     w widoku modułu jedno pasmo — to, które okno robocze przynosi ze sobą;
+     drugie nad nim czytałoby się jak okno wstawione w okno. */
+  const pasmoSesji = pasmoKart({ sesje: w.sesje, idTresci: ID_OBSZARU_ROBOCZEGO });
   const obszarGlowny = el('section', { klasa: 'dn-obszar-panel dn-obszar-panel--glowny', 'aria-label': tekst('glowna.etykieta') }, [
-    pasmoKart({ sesje: w.sesje, idTresci: ID_OBSZARU_ROBOCZEGO }),
+    pasmoSesji,
     glowna,
   ]);
 
@@ -107,6 +112,7 @@ export function zamontujRame(w: NastawyRamy): void {
     } else {
       glowna.textContent = tekst('glowna.brakModulu');
     }
+    pasmoSesji.hidden = oknoModulu !== undefined;
   }
   w.miejsce.addEventListener('click', naKlikniecie);
 
@@ -116,6 +122,7 @@ export function zamontujRame(w: NastawyRamy): void {
   if (pierwszy?.code === KOD_MODULU_STUDIO && w.kanal !== undefined && modulStudia !== undefined) {
     oknoModulu = zamontujOknoStudio({ miejsce: glowna, kanal: w.kanal, sesje: w.sesje, modul: modulStudia });
   }
+  pasmoSesji.hidden = oknoModulu !== undefined;
 
   const zapytanieMotywu = globalThis.matchMedia?.(ZAPYTANIE_MOTYW_CIEMNY);
   function naZmianeMotywu(): void {

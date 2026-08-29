@@ -440,7 +440,7 @@ func (a *adapterStudia) sladOdlozBrakujacy(ctx context.Context, dokument dane.Do
 		return bladStudio(err)
 	}
 	opis := "zmiana treści wniesiona przez " + wykonawca.nazwaWykonawcy() +
-		" — ślad odłożony siatką rdzenia, bo czynność nie podpisała się sama"
+		" — ślad odłożony siatką serwera, bo czynność nie podpisała się sama"
 	odKopia, doKopia := od, doPrzed
 	if _, err := a.dziennikOdlozCzynnosc(ctx, dokument, wykonawca,
 		shared.StudioActionKindTextEdit, opis, &odKopia, &doKopia, nil, nil,

@@ -18,7 +18,7 @@ import (
 func (a *adapterTerminala) oknoWykonania(oknoKod string) (session.Okno, error) {
 	if a.okna == nil {
 		return session.Okno{}, protocol.JakoError(protocol.NowyBlad(shared.ErrorCodeInternalError,
-			"moduł Terminal: rdzeń nie ma rejestru okien, więc nie zna trybu uprawnień okna"))
+			"moduł Terminal: serwer nie ma rejestru okien, więc nie zna trybu uprawnień okna"))
 	}
 	okno, err := a.okna.Okno(oknoKod)
 	if err != nil {
@@ -78,7 +78,7 @@ func (a *adapterTerminala) zapiszKarte(ctx context.Context, karta *kartaTerminal
 // Nazywa byt, a nie samo „nie znaleziono”: Operator ma wiedzieć, czego brakuje.
 func bladBrakuZasobuTerminala(co string) error {
 	return protocol.JakoError(protocol.NowyBlad(shared.ErrorCodeNotFound,
-		"moduł Terminal: "+co+" nie występuje w rdzeniu"))
+		"moduł Terminal: "+co+" nie występuje w serwerze"))
 }
 
 // protocolBladTerminala składa odmowę modułu wskazanym kodem kontraktu. Jedno
@@ -98,5 +98,5 @@ func bladZadaniaTerminala(powod string) error {
 // kodem kontraktu `not_found`.
 func bladBrakuProcesu(kod string) error {
 	return protocol.JakoError(protocol.NowyBlad(shared.ErrorCodeNotFound,
-		"moduł Terminal: proces "+kod+" nie występuje ani w rejestrze rdzenia, ani w dzienniku"))
+		"moduł Terminal: proces "+kod+" nie występuje ani w rejestrze serwera, ani w dzienniku"))
 }

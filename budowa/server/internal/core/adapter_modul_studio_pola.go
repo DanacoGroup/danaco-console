@@ -260,7 +260,7 @@ func (a *adapterStudia) polePolicz(ctx context.Context, stan *stanPostaci,
 				"(studio.template.apply); odświeżenie pól nie ma jej skąd wziąć")
 	}
 	return "", poleBrak(pole, "rodzaj pola bez rachunku",
-		"rdzeń nie ma czym policzyć pola rodzaju „"+string(pole.Kind)+"”")
+		"serwer nie ma czym policzyć pola rodzaju „"+string(pole.Kind)+"”")
 }
 
 // poleAutorDokumentu oddaje autora dokumentu jako rodzaj autora ostatniej wersji, Operatora albo model, bo rdzeń nie trzyma imienia i nazwiska autora, tylko rodzaj autora wersji.
@@ -270,7 +270,7 @@ func (a *adapterStudia) poleAutorDokumentu(ctx context.Context, stan *stanPostac
 	kod := stan.dokument.WersjaBiezacaKod
 	if kod == nil || strings.TrimSpace(*kod) == "" {
 		return "", poleBrak(pole, "dokument bez wersji",
-			"rdzeń wie o autorze dokumentu tyle, ile niesie autor jego wersji; dokument "+
+			"serwer wie o autorze dokumentu tyle, ile niesie autor jego wersji; dokument "+
 				"bez ani jednej wersji nie ma czego pokazać")
 	}
 	wersja, err := a.repozytorium.Wersja(ctx, strings.TrimSpace(*kod))
@@ -335,8 +335,8 @@ func (a *adapterStudia) poleWlasciwoscDokumentu(stan *stanPostaci,
 	case "liczba obiektów", "liczbaobiektow":
 		return strconv.Itoa(len(stan.forma.Objects)), nil
 	}
-	return "", poleBrak(pole, "właściwość dokumentu nieznana rdzeniowi",
-		"właściwości „"+wartoscTekstu(pole.PropertyName)+"” rdzeń nie zna; wykaz: "+
+	return "", poleBrak(pole, "właściwość dokumentu nieznana serwerowi",
+		"właściwości „"+wartoscTekstu(pole.PropertyName)+"” serwer nie zna; wykaz: "+
 			poleWykazWlasciwosci())
 }
 
@@ -679,7 +679,7 @@ func poleSprawdzRodzaj(rodzaj shared.StudioFieldKind) error {
 		nazwy = append(nazwy, string(znany))
 	}
 	return bladWskazaniaStudio("pole rodzaju „" + string(rodzaj) +
-		"”, którego rdzeń nie zna; wykaz: " + strings.Join(nazwy, ", "))
+		"”, którego serwer nie zna; wykaz: " + strings.Join(nazwy, ", "))
 }
 
 // poleSprawdzWymagania pilnuje, żeby pole wchodziło z danymi, bez których rdzeń nie ma z czego policzyć jego wartości.

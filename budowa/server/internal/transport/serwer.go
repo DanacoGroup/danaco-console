@@ -135,7 +135,7 @@ func (s *Serwer) Zamknij() error {
 	if s.zakoncz != nil {
 		s.zakoncz()
 	}
-	s.polaczenia.zamknijWszystkie("zatrzymanie rdzenia")
+	s.polaczenia.zamknijWszystkie("zatrzymanie serwera")
 
 	var blad error
 	if s.serwerHttp != nil {

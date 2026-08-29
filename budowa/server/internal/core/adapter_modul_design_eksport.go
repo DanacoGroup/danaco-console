@@ -96,7 +96,7 @@ func (a *adapterDesignu) WydajZasobyPartia(ctx context.Context,
 		if err != nil {
 			odrzucone = append(odrzucone, shared.DesignExportRejection{
 				AssetId: kod,
-				Reason:  "zasobu nie ma w magazynie rdzenia",
+				Reason:  "zasobu nie ma w magazynie serwera",
 			})
 			continue
 		}
@@ -149,7 +149,7 @@ func wydanieZasobuDesignu(zasob dane.ZasobDesignu, format string,
 		if !czyZapisWektorowyDesignu(bajty) {
 			return shared.DesignExportFile{}, fmt.Errorf(
 				"zasób %s nie jest zapisem wektorowym, a wydanie svg przepuszcza treść bez "+
-					"przekształcenia — rdzeń nie obrysuje bitmapy ścieżkami; zamiana rastra na "+
+					"przekształcenia — serwer nie obrysuje bitmapy ścieżkami; zamiana rastra na "+
 					"ścieżki jest osobną czynnością (image.vectorize)", zasob.Kod)
 		}
 		return shared.DesignExportFile{

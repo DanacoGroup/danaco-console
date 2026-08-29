@@ -48,7 +48,7 @@ func pobierzBadania(ctx context.Context, adres string) ([]byte, string, error) {
 	rozbior, err := url.Parse(adres)
 	if err != nil || (rozbior.Scheme != "http" && rozbior.Scheme != "https") {
 		return nil, "", bladWskazaniaBadan("adres " + adres +
-			" nie jest adresem http(s) — rdzeń pobiera wyłącznie zasoby sieciowe")
+			" nie jest adresem http(s) — serwer pobiera wyłącznie zasoby sieciowe")
 	}
 
 	zadanie, err := http.NewRequestWithContext(ctx, http.MethodGet, adres, nil)

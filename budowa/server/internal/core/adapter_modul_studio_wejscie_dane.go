@@ -31,7 +31,7 @@ type WarsztatWejsciaStudia interface {
 // wprost, gdy repozytorium go nie niesie.
 func (a *adapterStudia) wejscieSkladnica() (WarsztatWejsciaStudia, error) {
 	if a == nil || a.repozytorium == nil {
-		return nil, wejscieBladZaplecza("repozytorium Studia nie zostało podane przy montażu rdzenia")
+		return nil, wejscieBladZaplecza("repozytorium Studia nie zostało podane przy montażu serwera")
 	}
 	skladnica, jest := a.repozytorium.(WarsztatWejsciaStudia)
 	if !jest {
@@ -113,8 +113,8 @@ func (a *adapterStudia) wejscieBajtyZrodla(ctx context.Context,
 
 	if kod := strings.TrimSpace(wartoscTekstu(wskazanie.PlikBiblioteki)); kod != "" {
 		if a.biblioteka == nil {
-			return nil, "", wejscieBladZaplecza(czynnosc + " z Biblioteki: rdzeń złożony bez " +
-				"repozytorium Library; naprawa: podpiąć je przy składaniu rdzenia")
+			return nil, "", wejscieBladZaplecza(czynnosc + " z Biblioteki: serwer złożony bez " +
+				"repozytorium Library; naprawa: podpiąć je przy składaniu serwera")
 		}
 		plik, err := a.biblioteka.Plik(ctx, kod)
 		if err != nil {
@@ -164,7 +164,7 @@ func wejscieRozpoznajFormat(nazwa string, bajty []byte,
 			}
 		}
 		return "", bladWskazaniaStudio("format pliku " + string(*wskazanie) +
-			" nie jest formatem, który rdzeń wnosi; rdzeń wnosi docx, dotx, odt, ott, " +
+			" nie jest formatem, który serwer wnosi; serwer wnosi docx, dotx, odt, ott, " +
 			"txt, md, rtf, html i pdf")
 	}
 
@@ -248,7 +248,7 @@ func wejscieFormatArchiwum(bajty []byte,
 	}
 	return "", bladWskazaniaStudio("plik jest archiwum ZIP, ale nie niesie ani " +
 		ooxmlSkladnikDokumentu + " (Word), ani " + odfSkladnikTresci +
-		" (OpenDocument) — rdzeń nie ma czego z niego wnieść")
+		" (OpenDocument) — serwer nie ma czego z niego wnieść")
 }
 
 // wejscieWygladaNaHtml sprawdza, czy treść zaczyna się znacznikiem dokumentu

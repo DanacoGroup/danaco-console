@@ -28,7 +28,7 @@ func (a *adapterPoczty) Podepnij(ctx context.Context,
 	adres := strings.TrimSpace(z.Address)
 	if adres == "" {
 		return shared.MailAccountAddResponse{}, bladWskazaniaPoczty(
-			"komenda mail.account.add bez adresu skrzynki — rdzeń nie zgaduje, którą pocztę podpiąć")
+			"komenda mail.account.add bez adresu skrzynki — serwer nie zgaduje, którą pocztę podpiąć")
 	}
 	host := strings.TrimSpace(wartoscLubPustka(z.IncomingHost))
 	if host == "" {
@@ -36,7 +36,7 @@ func (a *adapterPoczty) Podepnij(ctx context.Context,
 		// tylko u części dostawców.
 		return shared.MailAccountAddResponse{}, bladWskazaniaPoczty(
 			"komenda mail.account.add bez serwera poczty przychodzącej dla " + adres +
-				" — rdzeń nie zgaduje hosta dostawcy; podpowiedzi z urządzenia oddaje mail.account.discover")
+				" — serwer nie zgaduje hosta dostawcy; podpowiedzi z urządzenia oddaje mail.account.discover")
 	}
 
 	istniejace, err := a.skrzynki.Skrzynki(ctx)

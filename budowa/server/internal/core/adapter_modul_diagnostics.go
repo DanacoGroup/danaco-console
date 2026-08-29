@@ -94,7 +94,7 @@ func bladDiagnostyki(err error) error {
 // nie ma jak stwierdzić.
 func bladBrakuTrwalosci(czynnosc string) error {
 	return protocol.JakoError(protocol.NowyBlad(shared.ErrorCodeInternalError,
-		"moduł Diagnostics: "+czynnosc+" wymaga dziennika, a rdzeń nie ma podłączonego repozytorium"))
+		"moduł Diagnostics: "+czynnosc+" wymaga dziennika, a serwer nie ma podłączonego repozytorium"))
 }
 
 // bladWskazaniaDiagnostyki nazywa brak danych w żądaniu — to błąd wywołującego,

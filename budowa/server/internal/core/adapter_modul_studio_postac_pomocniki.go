@@ -341,7 +341,7 @@ func postacWskaznikLiczby64(wartosc int64) *int64 {
 // `dane.RepozytoriumPostaciStudia`, a nie przez całe repozytorium.
 func (a *adapterStudia) postacSkladnica() (dane.RepozytoriumPostaciStudia, error) {
 	if a == nil || a.repozytorium == nil {
-		return nil, postacBladZaplecza("repozytorium Studia nie zostało podane przy montażu rdzenia")
+		return nil, postacBladZaplecza("repozytorium Studia nie zostało podane przy montażu serwera")
 	}
 	return a.repozytorium, nil
 }

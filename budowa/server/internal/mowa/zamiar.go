@@ -139,7 +139,7 @@ func Rozstrzygnij(w Wypowiedz, akcje []AkcjaPlatformy) Rozstrzygniecie {
 	default:
 		return nierozstrzygniety("wskazanie zamiaru „" + strings.TrimSpace(w.Wskazanie) +
 			"” nie jest ani „" + WskazanieModelu + "”, ani „" + WskazaniePlatformy +
-			"”, więc rdzeń nie wie, czy uruchomić model, czy komendę platformy" +
+			"”, więc serwer nie wie, czy uruchomić model, czy komendę platformy" +
 			"; naprawa: przysłać jedną z dwóch wartości albo pominąć pole")
 	}
 
@@ -163,7 +163,7 @@ func Rozstrzygnij(w Wypowiedz, akcje []AkcjaPlatformy) Rozstrzygniecie {
 	if wskazanie == WskazaniePlatformy {
 		return nierozstrzygniety("Operator zadeklarował akcję platformy, ale wypowiedź „" +
 			tresc + "” nie jest żadną z " + strconv.Itoa(len(akcje)) +
-			" znanych fraz akcji, a rdzeń nie dobiera komendy za Operatora" +
+			" znanych fraz akcji, a serwer nie dobiera komendy za Operatora" +
 			"; naprawa: wydać polecenie frazą z wykazu akcji albo przysłać wskazanie „" +
 			WskazanieModelu + "”")
 	}

@@ -130,8 +130,8 @@ func (a *adapterUwierzytelnienia) ZalozBramke(ctx context.Context,
 	defer a.zamekZmiany.Unlock()
 	if _, err := a.kotwica(ctx); err == nil {
 		return shared.AuthRegisterResponse{}, bladBramki(shared.ErrorCodeConflict,
-			"konto właściciela jest już założone; rejestracja wykonuje się raz — "+
-				"utracone hasło odzyskuje się komendą auth.recover")
+			"Konto Operatora jest już założone — rejestracja wykonuje się raz. "+
+				"Utracone hasło odzyskasz przyciskiem „Odzyskaj dostęp” na karcie logowania.")
 	} else if !errors.Is(err, dane.ErrBrakWiersza) {
 		return shared.AuthRegisterResponse{}, err
 	}
@@ -142,7 +142,7 @@ func (a *adapterUwierzytelnienia) ZalozBramke(ctx context.Context,
 	}); err != nil {
 		if errors.Is(err, dane.ErrKolizjaWiersza) {
 			return shared.AuthRegisterResponse{}, bladBramki(shared.ErrorCodeConflict,
-				"konto właściciela jest już założone; rejestracja wykonuje się raz")
+				"Konto Operatora jest już założone — rejestracja wykonuje się raz.")
 		}
 		return shared.AuthRegisterResponse{}, err
 	}
@@ -232,7 +232,7 @@ func (a *adapterUwierzytelnienia) WejdzPrzezBramke(ctx context.Context,
 		// Sekret niezgodny to nieudane wejście, nie wadliwe żądanie, więc kod
 		// jest not_authenticated.
 		return shared.AuthLoginResponse{}, bladBramki(shared.ErrorCodeNotAuthenticated,
-			"sekret metody "+string(z.Method)+" nie zgadza się z zapisem bramki")
+			"Nie rozpoznano danych logowania.")
 	}
 	// Wejście udane zeruje licznik zwłoki, więc kolejne pomyłki liczą się
 	// od nowa.
@@ -268,7 +268,7 @@ func (a *adapterUwierzytelnienia) metodaWejscia(ctx context.Context,
 		metoda, err := a.kotwica(ctx)
 		if errors.Is(err, dane.ErrBrakWiersza) {
 			return metoda, bladBramki(shared.ErrorCodeNotFound,
-				"hasło bramki nie istnieje — bramki jeszcze nie ustawiono (auth.register)")
+				"Hasło dostępu nie zostało jeszcze ustawione.")
 		}
 		return metoda, err
 	case shared.AuthMethodKindPin:
@@ -371,7 +371,7 @@ func kolizjaMetody(metoda dane.MetodaUwierzytelnienia, err error) error {
 	}
 	if metoda.Kotwica {
 		return bladBramki(shared.ErrorCodeConflict,
-			"sekret bramki jest już ustawiony; hasła nie ustawia się drugi raz — "+
+			"Hasło dostępu jest już ustawione; hasła nie ustawia się drugi raz — "+
 				"zmiana hasła idzie komendą auth.password.reset")
 	}
 	urzadzenie := ""

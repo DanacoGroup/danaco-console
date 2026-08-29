@@ -36,7 +36,7 @@ type trescNieznanejKomendy = shared.UnknownCommandPayload
 
 // powodNieznanej wyjaśnia klientowi, dlaczego typ nie został rozpoznany.
 // Kontrakt zostawia pole reason wolnym opisem, więc treść należy do rdzenia.
-const powodNieznanej = "typ spoza kontraktu rdzenia"
+const powodNieznanej = "typ spoza kontraktu serwera"
 
 // zasiegZLadunku wyjmuje pola zasięgu z ładunku komendy. Ładunek bez zasięgu
 // ani ładunek innego kształtu nie są błędem — wraca zasięg pusty.
@@ -134,7 +134,7 @@ func zeStanemOdmowy(k Koperta, typZadany shared.MessageType) Koperta {
 	stan := shared.EnvelopeStatus(shared.EnvelopeStatusError)
 	k.Status = &stan
 	blad := NowyBlad(shared.ErrorCodeNotFound,
-		"rdzeń nie ma uchwytu komendy "+string(typZadany))
+		"serwer nie ma uchwytu komendy "+string(typZadany))
 	k.Error = &blad
 	return k
 }

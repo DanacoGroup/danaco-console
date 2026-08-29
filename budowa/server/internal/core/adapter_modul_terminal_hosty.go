@@ -147,7 +147,7 @@ func hostKontraktu(w dane.HostTerminala) shared.TerminalHost {
 func (a *adapterTerminala) dziennikWyposazenia() (dane.RepozytoriumTerminala, error) {
 	if a.repozytorium == nil {
 		return nil, protocol.JakoError(protocol.NowyBlad(shared.ErrorCodeInternalError,
-			"moduł Terminal: rdzeń pracuje bez dziennika, więc nie prowadzi książki hostów, "+
+			"moduł Terminal: serwer pracuje bez dziennika, więc nie prowadzi książki hostów, "+
 				"biblioteki skryptów ani wykazu kluczy"))
 	}
 	return a.repozytorium, nil

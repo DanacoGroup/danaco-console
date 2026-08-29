@@ -254,8 +254,8 @@ func (a *adapterMobilny) sterujTura(ctx context.Context, idProcesu string, proce
 	sterowanie shared.MobileProcessControl) error {
 
 	if sterowanie != shared.MobileProcessControlStop {
-		return bladWarstwyMobilnej("proces " + idProcesu + ": tura okna nie ma w rdzeniu sterowania " +
-			strconv.Quote(string(sterowanie)) + " — rdzeń zna dla niej wyłącznie zatrzymanie")
+		return bladWarstwyMobilnej("proces " + idProcesu + ": tura okna nie ma w serwerze sterowania " +
+			strconv.Quote(string(sterowanie)) + " — serwer zna dla niej wyłącznie zatrzymanie")
 	}
 	if a.rozmowa == nil {
 		return bladWarstwyMobilnej("port rozmowy nie jest wpięty — tury okna " +

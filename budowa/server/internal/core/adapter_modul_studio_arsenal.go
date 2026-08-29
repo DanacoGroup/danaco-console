@@ -33,8 +33,8 @@ func (a *adapterStudia) wolajNarzedzie(ctx context.Context, n zewnetrzne.Narzedz
 
 	if a.uruchamiacz == nil {
 		return nil, protocol.JakoError(protocol.NowyBlad(shared.ErrorCodeInternalError,
-			"moduł Studio: rdzeń nie ma uruchamiacza procesów, więc narzędzie "+n.Nazwa+
-				" nie ma czym wystartować; naprawa: podpiąć warstwę kanału przy składaniu rdzenia"))
+			"moduł Studio: serwer nie ma uruchamiacza procesów, więc narzędzie "+n.Nazwa+
+				" nie ma czym wystartować; naprawa: podpiąć warstwę kanału przy składaniu serwera"))
 	}
 	granica := granicaArsenalStudia
 	if n.Program == narzedzieRozpoznaniaStudia.Program {
@@ -124,13 +124,13 @@ func (a *adapterStudia) sciezkaZasobu(ctx context.Context, kodZasobu string) (st
 	if a.zasoby == nil {
 		return "", protocol.JakoError(protocol.NowyBlad(shared.ErrorCodeInternalError,
 			"moduł Studio: wskazanie materiału zasobem magazynu ("+kod+") nie ma drogi — "+
-				"rdzeń złożony bez repozytorium zasobów. Wskaż materiał ścieżką widzianą "+
-				"przez rdzeń; ta droga działa w całości."))
+				"serwer złożony bez repozytorium zasobów. Wskaż materiał ścieżką widzianą "+
+				"przez serwer; ta droga działa w całości."))
 	}
 	wiersz, err := a.zasoby.Zasob(ctx, kod)
 	if err != nil {
 		return "", protocol.JakoError(protocol.NowyBlad(shared.ErrorCodeNotFound,
-			"moduł Studio: zasobu "+kod+" nie ma w magazynie rdzenia"))
+			"moduł Studio: zasobu "+kod+" nie ma w magazynie serwera"))
 	}
 	if wiersz.URI == nil || strings.TrimSpace(*wiersz.URI) == "" {
 		return "", protocol.JakoError(protocol.NowyBlad(shared.ErrorCodeNotFound,

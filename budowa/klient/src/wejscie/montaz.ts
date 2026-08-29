@@ -246,14 +246,18 @@ function odswiezUsterki(korzen: ParentNode, stan: StanPrzebiegu): void {
   const obszar = obszarKomunikatow(korzen, stan.odslona);
   if (obszar === null) return;
 
-  const odmowa = stan.usterki.find((u) => u.odRdzenia !== undefined);
+  /* Odsłona nieudanego logowania niesie własny, nazwany baner — ten sam powód
+     wypisany po raz drugi treścią od serwera czyta się jak dwie różne usterki. */
+  const odmowa = stan.odslona === 'logowanie-blad'
+    ? undefined
+    : stan.usterki.find((u) => u.odRdzenia !== undefined);
   if (odmowa?.odRdzenia !== undefined) {
     // Rdzeń wie o powodzie odmowy więcej niż okno, więc treścią jest to, co powiedział rdzeń.
     const wezel = baner({
       rodzaj: 'blad',
       ikona: 'ostrzezenie',
-      glowa: 'usterki.odmowaRdzenia.glowa',
-      tresc: 'usterki.odmowaRdzenia.glowa',
+      glowa: 'usterki.odmowaSerwera.glowa',
+      tresc: 'usterki.odmowaSerwera.glowa',
     });
     const tresc = wezel.querySelector('.dn-alert-tresc');
     if (tresc?.lastChild != null) tresc.lastChild.textContent = odmowa.odRdzenia.message;

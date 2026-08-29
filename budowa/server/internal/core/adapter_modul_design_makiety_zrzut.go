@@ -115,7 +115,7 @@ func (a *adapterDesignu) GenerujMakiete(ctx context.Context,
 	}
 	if strings.TrimSpace(z.Prompt) == "" {
 		return shared.DesignMockupGenerateResponse{}, bladWskazaniaDesignu(
-			"komenda design.mockup.generate bez opisu ekranu: rdzeń nie wymyśla, co ma być na " +
+			"komenda design.mockup.generate bez opisu ekranu: serwer nie wymyśla, co ma być na " +
 				"makiecie, bo makieta wymyślona nie jest makietą Operatora")
 	}
 	kompozycja, err := a.repozytorium.Kompozycja(ctx, strings.TrimSpace(z.BoardId))
@@ -127,7 +127,7 @@ func (a *adapterDesignu) GenerujMakiete(ctx context.Context,
 			strings.TrimSpace(*z.TokenSetId)); err != nil {
 			if czyBrakZasobuDesignu(err) {
 				return shared.DesignMockupGenerateResponse{}, bladNieznanegoBytuDesignu(
-					"zestawu żetonów " + *z.TokenSetId + " nie ma w tym rdzeniu")
+					"zestawu żetonów " + *z.TokenSetId + " nie ma w tym serwerze")
 			}
 			return shared.DesignMockupGenerateResponse{}, bladDesignu(err)
 		}
@@ -139,7 +139,7 @@ func (a *adapterDesignu) GenerujMakiete(ctx context.Context,
 		nastawaSzerokosc, nastawaWysokosc, znana := nastawaUrzadzeniaDesignu(*z.DevicePreset)
 		if !znana {
 			return shared.DesignMockupGenerateResponse{}, bladWskazaniaDesignu(fmt.Sprintf(
-				"komenda design.mockup.generate z nastawą urządzenia %q, której rdzeń nie zna; "+
+				"komenda design.mockup.generate z nastawą urządzenia %q, której serwer nie zna; "+
 					"nastawy znane: %s", *z.DevicePreset,
 				strings.Join(nazwyNastawUrzadzenDesignu(), ", ")))
 		}
@@ -150,7 +150,7 @@ func (a *adapterDesignu) GenerujMakiete(ctx context.Context,
 	nazwySekcji := a.sekcjeOpisuMakietyDesignu(ctx, z)
 	if len(nazwySekcji) == 0 {
 		return shared.DesignMockupGenerateResponse{}, bladWskazaniaDesignu(fmt.Sprintf(
-			"z opisu %q rdzeń nie wyjął ani jednej sekcji ekranu — makiety z jednego słowa nie "+
+			"z opisu %q serwer nie wyjął ani jednej sekcji ekranu — makiety z jednego słowa nie "+
 				"złoży; wymień sekcje po przecinku albo w osobnych wierszach, np. „nagłówek, "+
 				"nawigacja, bohater, karty, stopka\"", strings.TrimSpace(z.Prompt)))
 	}
@@ -385,13 +385,13 @@ func (a *adapterDesignu) WczytajMakiete(ctx context.Context,
 	obraz, err := obrazZasobuDesignu(*zasob.URI)
 	if err != nil {
 		return shared.DesignMockupImportResponse{}, bladWskazaniaDesignu(fmt.Sprintf(
-			"zasób %s nie jest obrazem, który rdzeń potrafi rozłożyć: %s", zasob.Kod, err.Error()))
+			"zasób %s nie jest obrazem, który serwer potrafi rozłożyć: %s", zasob.Kod, err.Error()))
 	}
 	granice := obraz.Bounds()
 	if granice.Dx() > granicaBokuZrzutuDesignu || granice.Dy() > granicaBokuZrzutuDesignu {
 		return shared.DesignMockupImportResponse{}, bladWskazaniaDesignu(fmt.Sprintf(
 			"zrzut %d×%d przekracza granicę boku %d — rachunek obszarów idzie po całej "+
-				"powierzchni i przy takim boku zamawiałby pamięć, której rdzeń nie dostanie",
+				"powierzchni i przy takim boku zamawiałby pamięć, której serwer nie dostanie",
 			granice.Dx(), granice.Dy(), granicaBokuZrzutuDesignu))
 	}
 
@@ -404,7 +404,7 @@ func (a *adapterDesignu) WczytajMakiete(ctx context.Context,
 	if z.DevicePreset != nil && strings.TrimSpace(*z.DevicePreset) != "" {
 		if _, _, znana := nastawaUrzadzeniaDesignu(*z.DevicePreset); !znana {
 			return shared.DesignMockupImportResponse{}, bladWskazaniaDesignu(fmt.Sprintf(
-				"komenda design.mockup.import z nastawą urządzenia %q, której rdzeń nie zna; "+
+				"komenda design.mockup.import z nastawą urządzenia %q, której serwer nie zna; "+
 					"nastawy znane: %s", *z.DevicePreset,
 				strings.Join(nazwyNastawUrzadzenDesignu(), ", ")))
 		}
@@ -414,7 +414,7 @@ func (a *adapterDesignu) WczytajMakiete(ctx context.Context,
 	obszary, nierozlozonych := obszaryZrzutuDesignu(obraz)
 	if len(obszary) == 0 {
 		return shared.DesignMockupImportResponse{}, bladWskazaniaDesignu(fmt.Sprintf(
-			"ze zrzutu %s rdzeń nie wyodrębnił ani jednego obszaru — obraz jednolity nie ma "+
+			"ze zrzutu %s serwer nie wyodrębnił ani jednego obszaru — obraz jednolity nie ma "+
 				"układu do odtworzenia (obszarów odrzuconych jako zbyt drobne: %d)",
 			zasob.Kod, nierozlozonych))
 	}
@@ -547,8 +547,8 @@ func (a *adapterDesignu) odczytajPismoObszarowDesignu(ctx context.Context, obraz
 	}
 	if a.uruchamiacz == nil {
 		return nil, fmt.Errorf(
-			"rdzeń nie ma uruchamiacza procesów, więc program rozpoznający pismo nie ma czym " +
-				"wystartować; naprawa: podpiąć warstwę kanału przy składaniu rdzenia")
+			"serwer nie ma uruchamiacza procesów, więc program rozpoznający pismo nie ma czym " +
+				"wystartować; naprawa: podpiąć warstwę kanału przy składaniu serwera")
 	}
 
 	katalog, err := os.MkdirTemp("", "danaco-zrzut-pismo-")

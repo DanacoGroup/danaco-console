@@ -234,7 +234,7 @@ func tabelaWstawWiersze(tabela *shared.StudioDocumentTable, wiersz int, przed bo
 	if tabela.Rows+ile > tabelaGranicaWierszy {
 		return tabelaBladWskazania("tabela o " + strconv.Itoa(tabela.Rows+ile) +
 			" wierszach przekracza granicę " + strconv.Itoa(tabelaGranicaWierszy) +
-			" wierszy przyjętą w rdzeniu")
+			" wierszy przyjętą w serwerze")
 	}
 	miejsce := wiersz
 	if !przed {
@@ -315,7 +315,7 @@ func tabelaWstawKolumny(tabela *shared.StudioDocumentTable, kolumna int, przed b
 	if tabela.Columns+ile > tabelaGranicaKolumn {
 		return tabelaBladWskazania("tabela o " + strconv.Itoa(tabela.Columns+ile) +
 			" kolumnach przekracza granicę " + strconv.Itoa(tabelaGranicaKolumn) +
-			" kolumn przyjętą w rdzeniu")
+			" kolumn przyjętą w serwerze")
 	}
 	miejsce := kolumna
 	if !przed {

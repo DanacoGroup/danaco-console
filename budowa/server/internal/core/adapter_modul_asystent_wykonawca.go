@@ -138,7 +138,7 @@ func (a *adapterAsystenta) wykonajZlecenie(ctx context.Context, kodZlecenia, sta
 	okno, err := a.nadzorca.Rejestr().Okno(zlecenie.OknoKod)
 	if err != nil {
 		a.zerwijZlecenie(ctx, zlecenie, kodZlecenia, "",
-			"okno zlecenia "+zlecenie.OknoKod+" jest nieczytelne dla rdzenia: "+err.Error()+
+			"okno zlecenia "+zlecenie.OknoKod+" jest nieczytelne dla serwera: "+err.Error()+
 				"; naprawa: złożyć polecenie w istniejącym oknie asystenta")
 		return
 	}
@@ -156,7 +156,7 @@ func (a *adapterAsystenta) wykonajZlecenie(ctx context.Context, kodZlecenia, sta
 		// Zlecenie ze śladem nagrania, którego nikt nie przepisał na tekst, nie
 		// niesie polecenia do wykonania.
 		a.zerwijZlecenie(ctx, zlecenie, kodZlecenia, okno.IdSesji,
-			"zlecenie nie niesie treści polecenia — dziennik ma sam ślad nagrania, a rdzeń nie ma"+
+			"zlecenie nie niesie treści polecenia — dziennik ma sam ślad nagrania, a serwer nie ma"+
 				" czym go przepisać; naprawa: przysłać polecenie tekstem (pole transcript)")
 		return
 	}

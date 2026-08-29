@@ -88,7 +88,7 @@ func (r *Rdzen) WykonajSurowe(ctx context.Context, dane []byte) []byte {
 // Rdzeń bez podłączonego nasłuchu pracuje dalej — czeka na zatrzymanie zamiast
 // przerywać start.
 func (r *Rdzen) Uruchom(ctx context.Context) error {
-	r.zapisz("rdzeń gotowy: komend=%d", r.rejestr.Liczba())
+	r.zapisz("serwer gotowy: komend=%d", r.rejestr.Liczba())
 	r.zglosZaleznosci()
 	if r.nasluch == nil {
 		<-ctx.Done()
@@ -115,7 +115,7 @@ func (r *Rdzen) wykonajOdpornie(ctx context.Context, obsluga Obsluga, z protocol
 		if przyczyna := recover(); przyczyna != nil {
 			r.zapisz("obsługiwacz %s przerwał wykonanie: %v", z.Komenda, przyczyna)
 			odpowiedz = protocol.PorazkaKodem(shared.ErrorCodeInternalError,
-				fmt.Sprintf("rdzeń: obsługa %s przerwana", z.Komenda))
+				fmt.Sprintf("serwer: obsługa %s przerwana", z.Komenda))
 		}
 	}()
 	return obsluga(ctx, z)

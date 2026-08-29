@@ -72,16 +72,16 @@ func (b *BrakSilnika) opisSkutku() string {
 	switch b.Silnik {
 	case SilnikDlaPrzesiewu:
 		return "; przesiewu nie da się wykonać bez krzyżowego kodera, " +
-			"a rdzeń nie odda po cichu kolejności z pierwszego przebiegu — " +
+			"a serwer nie odda po cichu kolejności z pierwszego przebiegu — " +
 			"wołający prosił o kolejność ułożoną NA NOWO i dostałby tę samą, " +
 			"którą miał bez pytania"
 	case SilnikDlaObrazu:
 		return "; osi obrazu nie da się wykonać bez modelu wiążącego obraz ze zdaniem, " +
-			"a rdzeń nie zejdzie po cichu na dopasowanie NAZW plików — " +
+			"a serwer nie zejdzie po cichu na dopasowanie NAZW plików — " +
 			"wołający prosił o to, co na obrazie widać, a nie o to, jak plik nazwano"
 	default:
 		return "; wyszukiwania po ZNACZENIU nie da się wykonać bez silnika, " +
-			"a rdzeń nie zejdzie po cichu na wyszukiwanie po SŁOWACH — " +
+			"a serwer nie zejdzie po cichu na wyszukiwanie po SŁOWACH — " +
 			"model dostałby trafienia po literach w miejscu, w którym prosił o trafienia po sensie"
 	}
 }

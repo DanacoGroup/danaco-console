@@ -71,7 +71,7 @@ func rozpoznajBarweDesignu(zapis string) (colorful.Color, error) {
 		}
 	}
 	return colorful.Color{}, fmt.Errorf(
-		"zapisu %q nie da się odczytać jako barwy; rdzeń przyjmuje #rrggbb, rgb(), hsl(), "+
+		"zapisu %q nie da się odczytać jako barwy; serwer przyjmuje #rrggbb, rgb(), hsl(), "+
 			"lab(), cmyk() oraz próbki nazwane", zapis)
 }
 
@@ -155,7 +155,7 @@ func barwaZPrzestrzeniDesignu(przestrzen string, liczby []float64) (colorful.Col
 		}
 		return barwaZCmykDesignu(liczby[0], liczby[1], liczby[2], liczby[3]), nil
 	}
-	return colorful.Color{}, fmt.Errorf("przestrzeń %q nie jest znana rdzeniowi", przestrzen)
+	return colorful.Color{}, fmt.Errorf("przestrzeń %q nie jest znana serwerowi", przestrzen)
 }
 
 // barwaZCmykDesignu przelicza CMYK na sRGB wprost, bez profilu ICC, którego

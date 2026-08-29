@@ -39,7 +39,7 @@ export const tresci = {
     nowaSesja: 'Nowa sesja',
     filtry: 'Filtry',
     brakSesji: 'Środowisko nie niesie jeszcze żadnej karty sesji.',
-    brakProjektow: 'Rdzeń nie wystawia dziś osobnego wykazu projektów.',
+    brakProjektow: 'Osobny wykaz projektów nie jest jeszcze dostępny.',
   },
 
   glowna: {

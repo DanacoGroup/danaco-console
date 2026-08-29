@@ -29,7 +29,7 @@ func (k *Klient) Wyslij(w Wychodzacy) (string, time.Time, error) {
 	}
 	if strings.TrimSpace(k.nastawy.HostWysylki) == "" {
 		return "", time.Time{}, fmt.Errorf("skrzynka %s nie ma wskazanego serwera poczty wychodzącej — "+
-			"rdzeń nie zgaduje, przez kogo nadać list", k.nastawy.Adres)
+			"serwer nie zgaduje, przez kogo nadać list", k.nastawy.Adres)
 	}
 
 	dokument, err := zlozWychodzacy(w)

@@ -52,11 +52,11 @@ func (u *UtrwalaczRozmowy) wierszOkna(ctx context.Context, idOkna string) (int64
 // zalozOkno zapisuje wiersz okna wraz z całym łańcuchem więzów, na którym ten sam wiersz właśnie stoi.
 func (u *UtrwalaczRozmowy) zalozOkno(ctx context.Context, idOkna string) (int64, error) {
 	if u.zrodlo == nil {
-		return 0, fmt.Errorf("dane: okno %q nie ma opisu w rejestrze rdzenia", idOkna)
+		return 0, fmt.Errorf("dane: okno %q nie ma opisu w rejestrze serwera", idOkna)
 	}
 	opis, jest := u.zrodlo(idOkna)
 	if !jest {
-		return 0, fmt.Errorf("dane: okno %q nie jest znane rejestrowi rdzenia", idOkna)
+		return 0, fmt.Errorf("dane: okno %q nie jest znane rejestrowi serwera", idOkna)
 	}
 	sesjaID, err := u.wierszSesji(ctx, opis)
 	if err != nil {

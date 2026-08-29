@@ -35,7 +35,7 @@ func Przeloz(idOkna string, p Polecenie) (Uruchomienie, error) {
 	sciezkaSSH, err := exec.LookPath("ssh")
 	if err != nil {
 		return Uruchomienie{}, fmt.Errorf("zdalne: proces okna %s nie ruszył na hoście %q, "+
-			"bo maszyna rdzenia nie ma programu ssh w PATH — tor jedzie wyłącznie po SSH "+
+			"bo maszyna serwera nie ma programu ssh w PATH — tor jedzie wyłącznie po SSH "+
 			"i wymaga jego instalacji: %w", idOkna, nazwa, err)
 	}
 

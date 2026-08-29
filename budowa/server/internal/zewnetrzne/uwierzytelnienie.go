@@ -90,8 +90,8 @@ func (p Poswiadczenie) Naprawa() string {
 			"albo wskazać kanałowi inne odwołanie komendą " + WskazanieOdwolania
 	case ZrodloSrodowisko:
 		return "naprawa: ustawić ważny klucz w zmiennej środowiskowej " + p.Byt +
-			" i uruchomić rdzeń ponownie — zmienna czytana jest przy wysyłce, " +
-			"z otoczenia procesu rdzenia; trwalej: przenieść klucz do sejfu " +
+			" i uruchomić serwer ponownie — zmienna czytana jest przy wysyłce, " +
+			"z otoczenia procesu serwera; trwalej: przenieść klucz do sejfu " +
 			"(account.update, pole credential) i wskazać kanałowi odwołanie „" +
 			PrzedrostekSejfu + "<nazwa konta>” komendą " + WskazanieOdwolania
 	default:

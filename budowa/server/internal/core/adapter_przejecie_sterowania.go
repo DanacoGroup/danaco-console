@@ -235,23 +235,23 @@ func (a *adapterPrzejeciaSterowania) sprawdzZlecenie(idOkna string) error {
 	}
 	if a.petla == nil {
 		return protocol.JakoError(protocol.NowyBlad(shared.ErrorCodeInternalError,
-			"przejęcie sterowania: rdzeń nie niesie pętli koordynator–wykonawca — "+
+			"przejęcie sterowania: serwer nie niesie pętli koordynator–wykonawca — "+
 				"biegu nie ma czym zatrzymać ani wznowić"))
 	}
 	if a.repozytorium == nil {
 		return protocol.JakoError(protocol.NowyBlad(shared.ErrorCodeInternalError,
-			"przejęcie sterowania: rdzeń nie niesie dziennika akcji okna — "+
+			"przejęcie sterowania: serwer nie niesie dziennika akcji okna — "+
 				"przejęcia nie ma gdzie odnotować"))
 	}
 	if a.okna == nil {
 		return protocol.JakoError(protocol.NowyBlad(shared.ErrorCodeInternalError,
-			"przejęcie sterowania: rdzeń nie niesie rejestru okien — "+
+			"przejęcie sterowania: serwer nie niesie rejestru okien — "+
 				"nie ma jak rozstrzygnąć, czy okno prowadzi zlecenie"))
 	}
 	okno, err := a.okna.Okno(idOkna)
 	if err != nil {
 		return protocol.JakoError(protocol.NowyBlad(shared.ErrorCodeNotFound,
-			"przejęcie sterowania: okno "+idOkna+" nie żyje na tym rdzeniu"))
+			"przejęcie sterowania: okno "+idOkna+" nie żyje na tym serwerze"))
 	}
 	if !okno.CzyKoordynator() {
 		return protocol.JakoError(protocol.NowyBlad(shared.ErrorCodeValidationFailed,

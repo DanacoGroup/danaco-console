@@ -51,7 +51,7 @@ func (a *adapterZajetosciKontekstu) ZajetoscKontekstu(ctx context.Context,
 			"zajętość kontekstu: żądanie bez wskazania okna — kontekst należy do okna"))
 	}
 	if a.okna == nil || a.wiadomosci == nil {
-		return niezmierzonaZajetosc("rdzeń nie ma wpiętych magazynów okna i historii rozmowy, " +
+		return niezmierzonaZajetosc("serwer nie ma wpiętych magazynów okna i historii rozmowy, " +
 			"więc nie ma czego zmierzyć"), nil
 	}
 
@@ -73,13 +73,13 @@ func (a *adapterZajetosciKontekstu) ZajetoscKontekstu(ctx context.Context,
 	if granica <= 0 {
 		return niezmierzonaZajetosc("kanał modelu tego okna nie podaje wielkości okna kontekstu; " +
 			"naprawa: dopisać parametr " + parametrGranicyOkna + " do konfiguracji kanału " +
-			"(channel.update), bo pasek zajętości wobec granicy zgadniętej przez rdzeń " +
+			"(channel.update), bo pasek zajętości wobec granicy zgadniętej przez serwer " +
 			"pokazywałby liczbę, której nikt nie ustalił"), nil
 	}
 
 	licznik, err := tokenizator.DlaModelu(model)
 	if err != nil {
-		return niezmierzonaZajetosc("tokenizator rdzenia nie zbudował słownika dla modelu „" +
+		return niezmierzonaZajetosc("tokenizator serwera nie zbudował słownika dla modelu „" +
 			model + "”: " + err.Error()), nil
 	}
 

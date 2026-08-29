@@ -188,6 +188,18 @@ export function adresPoprawny(wartosc: string): boolean {
   return /^[^\s@]+@[^\s@.]+(\.[^\s@.]+)+$/.test(wartosc.trim());
 }
 
+/**
+ * Maszynowe rozpoznanie powodu odmowy, podane przez serwer w polu `details`.
+ * Pole niesie wartość do porównania, nie zdanie — sam kod odmowy bywa za
+ * szeroki, żeby okno umiało powiedzieć, co dokładnie zawiodło.
+ */
+function powodOdmowy(blad: ErrorInfo | undefined): string | undefined {
+  const szczegoly = blad?.details;
+  if (typeof szczegoly !== 'object' || szczegoly === null) return undefined;
+  const powod = (szczegoly as Record<string, unknown>)['powod'];
+  return typeof powod === 'string' ? powod : undefined;
+}
+
 /** Metoda wejścia, którą niesie okno bramki. Kontrakt zna trzy; PIN i klucz
  * urządzenia zakłada się dopiero w Ustawieniach, czyli za bramką. */
 const METODA_HASLEM: AuthMethodKind = 'password';
@@ -533,12 +545,12 @@ export function utworzPrzebieg(zaleznosci: ZaleznosciPrzebiegu): Przebieg {
       password: dane.haslo,
     });
     if (!wynik.udany) {
-      /* Odmowa „conflict” na rejestracji ma jedno znaczenie i warto je nazwać:
-         konto Operatora już stoi. Zdanie ogólne dobierane po samym kodzie
-         kazałoby Operatorowi odświeżać widok, choć widok jest w porządku,
-         a droga dalsza prowadzi do logowania. */
-      const kod = wynik.blad?.code;
-      zmien({ usterki: kod === ErrorCode.Conflict ? [{ klucz: 'kontoJuzIstnieje' }] : odmowa(wynik) });
+      /* Odmowa „conflict” na rejestracji znaczy zajęty login albo zajęty adres.
+         Serwer podaje w `details.powod` maszynowe rozpoznanie — nie zdanie do
+         wyświetlenia, tylko wartość, po której okno wybiera własne. */
+      zmien({ usterki: powodOdmowy(wynik.blad) === 'kolizja-danych'
+        ? [{ klucz: 'tozsamoscZajeta' }]
+        : odmowa(wynik) });
       return;
     }
     const odpowiedz = wynik.wynik;

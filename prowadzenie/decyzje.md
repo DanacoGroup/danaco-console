@@ -1485,3 +1485,18 @@ Trzy pozycje zamknięte 27.08 wymagają roboty, nie rozstrzygnięcia, i przeszł
 wydania drogi potwierdzenia, nieaktualny opis `auth.password.reset` w kontrakcie
 oraz sześć wartości `PermissionMode` wobec czterech nazwanych w pozycji 6.
 
+## 22. Platforma prowadzi wiele kont, nie jedno
+
+**Rozstrzygnięcie Właściciela, 29 sierpnia 2026.** Aplikacja nie blokuje
+zakładania kolejnych kont — ma ich przyjmować dowolną liczbę.
+
+Rozstrzygnięcie **uchyla** model zapisany w `docs/architektura/`
+`bezpieczenstwo-i-uwierzytelnianie.md` rozdz. 3 („jedno konto, wiele urządzeń")
+oraz w `docs/interfejs-uzytkownika/elementy-okien.md` i `docs/LICENSE.md`.
+Dotychczasowa reguła stała nie w umowie kodu, lecz w schemacie bazy:
+`migracja_125_konto_wlasciciela.sql` niesie `CHECK (id = 1)`.
+
+Skutek dla budowy: rejestracja zakłada konto, gdy login i adres są wolne,
+a odmawia wyłącznie przy kolizji jednego z nich. Tożsamość przestaje być
+własnością instalacji i staje się własnością wiersza konta — metody
+uwierzytelnienia, sesje i drogi potwierdzenia wiążą się odtąd z kontem.

@@ -4,6 +4,8 @@
 package core
 
 import (
+	"encoding/json"
+
 	"context"
 	"errors"
 	"time"
@@ -59,6 +61,28 @@ func (a *adapterUwierzytelnienia) RozpoznajSesjeBramki(ctx context.Context,
 // Errors Panel pokazywał, czyja to odmowa, bez zgadywania po treści.
 func bladBramki(kod protocol.KodBledu, powod string) error {
 	return protocol.JakoError(protocol.NowyBlad(kod, powod))
+}
+
+// Powody odmowy rozróżniane maszynowo. Sam kod kontraktu bywa za szeroki:
+// „conflict" na rejestracji znaczy albo że konto Operatora już stoi, albo że
+// podany login lub adres należy do konta istniejącego. Okno musi te dwa
+// przypadki nazwać inaczej, a nie ma jak ich rozpoznać po treści komunikatu,
+// bo treść od serwera do okna nie dociera.
+const (
+	// PowodKontoIstnieje oznacza, że konto Operatora zostało już założone.
+	PowodKontoIstnieje = "konto-istnieje"
+	// PowodKolizjaDanych oznacza, że podany login albo adres jest już zajęty.
+	PowodKolizjaDanych = "kolizja-danych"
+)
+
+// bladBramkiZPowodem dokłada do odmowy maszynowy powód w polu `details`.
+// Pole niesie wartość rozpoznawaną przez okno, nie zdanie do wyświetlenia.
+func bladBramkiZPowodem(kod protocol.KodBledu, rozpoznanie string, powod string) error {
+	blad := protocol.NowyBlad(kod, powod)
+	/* Kontrakt trzyma szczegóły jako surowy JSON, więc powód idzie obiektem
+	   o jednym polu — okno czyta wartość, nie rozbiera zdania. */
+	blad.Details = json.RawMessage(`{"powod":"` + rozpoznanie + `"}`)
+	return protocol.JakoError(blad)
 }
 
 // metodaBramkiKontraktu przekłada wiersz na `AuthMethod`. Odwołania do sejfu

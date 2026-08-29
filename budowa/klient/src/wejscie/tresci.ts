@@ -198,17 +198,17 @@ export const tresci = {
 
     sila: {
       puste: 'Siła hasła zostanie oceniona podczas wpisywania',
-      /* Bez ocen w rodzaju „dostateczne” i „dobre”: rejestracja przyjmuje
-         wyłącznie hasło z kompletem czterech warunków, więc pochwała przy
-         trzech zapowiadałaby powodzenie, którego nie będzie. Stopnie mówią,
-         ile warunków zostało do spełnienia. */
+      /* Bez ocen w rodzaju „dostateczne” i „dobre”: stopnie mówią, ile warunków
+         zostało do spełnienia, a nie jak program ocenia hasło. Wymagane są trzy;
+         znak specjalny jest zalecany i podnosi tor, nie rozstrzygając przyjęcia. */
       stopnie: [
-        'Hasło nie spełnia żadnego z czterech warunków',
-        'Spełniony jeden warunek z czterech',
-        'Spełnione dwa warunki z czterech',
-        'Spełnione trzy warunki z czterech',
-        'Hasło spełnia wszystkie cztery warunki',
+        'Hasło nie spełnia żadnego z warunków',
+        'Spełniony jeden warunek z trzech wymaganych',
+        'Spełnione dwa warunki z trzech wymaganych',
+        'Hasło spełnia wymagania',
+        'Hasło spełnia wymagania wraz z warunkiem zalecanym',
       ],
+      zalecany: ' (zalecane)',
       warunki: {
         dlugosc: 'co najmniej {znaki} znaków',
         wielkosc: 'wielka i mała litera',

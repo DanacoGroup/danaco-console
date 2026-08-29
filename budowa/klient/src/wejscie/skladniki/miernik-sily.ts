@@ -10,6 +10,13 @@ import { DLUGOSC_HASLA } from '../przebieg.ts';
 /** Cztery warunki, w kolejności wyświetlania, oceniane osobno przez przebieg i pokazywane tym miernikiem. */
 export const WARUNKI_HASLA = ['dlugosc', 'wielkosc', 'cyfra', 'znak'] as const;
 
+/**
+ * Warunki zalecane, nie wymagane. Ich brak nie wstrzymuje rejestracji, więc
+ * miernik nie zaznacza ich na czerwono — inaczej Operator szukałby usterki
+ * w haśle, które program przyjmie.
+ */
+const WARUNKI_ZALECANE = new Set<string>(['znak']);
+
 export interface WlasciwosciMiernika {
   /** Identyfikator pola hasła, które ten miernik ocenia. */
   dla: string;
@@ -27,8 +34,18 @@ export function miernikSily(w: WlasciwosciMiernika): HTMLElement {
     ptaszek.setAttribute('aria-hidden', 'true');
     return el(
       'span',
-      { klasa: 'au-sila-warunek', dane: { warunek: nazwa, spelniony: 'nie' } },
-      [kolko, ptaszek, tekst(`dostep.sila.warunki.${nazwa}`, { znaki: DLUGOSC_HASLA })],
+      {
+        klasa: 'au-sila-warunek',
+        dane: { warunek: nazwa, spelniony: 'nie', zalecany: WARUNKI_ZALECANE.has(nazwa) ? 'tak' : null },
+      },
+      [
+        kolko,
+        ptaszek,
+        tekst(`dostep.sila.warunki.${nazwa}`, { znaki: DLUGOSC_HASLA }),
+        WARUNKI_ZALECANE.has(nazwa)
+          ? el('span', { klasa: 'dn-meta', tekst: tekst('dostep.sila.zalecany') })
+          : null,
+      ],
     );
   });
 

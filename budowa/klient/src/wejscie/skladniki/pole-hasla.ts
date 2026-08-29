@@ -31,10 +31,10 @@ export interface WlasciwosciHasla {
  * menedżerów; `minlength` i `pattern` mówią to samo samej przeglądarce.
  */
 const WYMAGANIA_MENEDZERA =
-  'minlength: 12; required: upper; required: lower; required: digit; required: special;';
+  'minlength: 12; required: upper; required: lower; required: digit; allowed: special;';
 
-/** Cztery warunki katalogu w jednym wyrażeniu: wielka, mała, cyfra, znak spoza tych trzech. */
-const WZORZEC_HASLA = '(?=.*[a-ząćęłńóśźż])(?=.*[A-ZĄĆĘŁŃÓŚŹŻ])(?=.*\\d)(?=.*[^\\p{L}\\d]).{12,}';
+/** Trzy warunki wymagane w jednym wyrażeniu: mała, wielka, cyfra, dwanaście znaków. */
+const WZORZEC_HASLA = '(?=.*[a-ząćęłńóśźż])(?=.*[A-ZĄĆĘŁŃÓŚŹŻ])(?=.*\\d).{12,}';
 
 export function poleHasla(w: WlasciwosciHasla): HTMLElement {
   const odkryte = zeZnacznika(ikony.okoOdkryte);

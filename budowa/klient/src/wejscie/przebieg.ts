@@ -151,10 +151,19 @@ const PROG_NAZWANIA_ZWLOKI_MS = 1000;
 const NAJKROTSZE_HASLO = 12;
 
 /**
- * Cztery warunki hasła — jedna reguła dla miernika siły w oknie i dla
- * sprawdzenia przed wysłaniem. Dwie osobne rozjechałyby się przy pierwszej
- * zmianie wymagań, a Operator zobaczyłby miernik zielony przy haśle odrzuconym.
+ * Warunki hasła — jedna reguła dla miernika siły w oknie i dla sprawdzenia
+ * przed wysłaniem. Dwie osobne rozjechałyby się przy pierwszej zmianie wymagań,
+ * a Operator zobaczyłby miernik zielony przy haśle odrzuconym.
+ *
+ * Trzy pierwsze są wymagane, znak specjalny jest zalecany. Rozstrzygnięcie
+ * Właściciela z 29.08.2026: generatory haseł Google i Microsoftu układają hasło
+ * według własnej reguły — długość, wielkie i małe litery oraz cyfra — a znaku
+ * specjalnego nie dokładają zawsze. Zapisu `passwordrules`, którym można by
+ * podać im wymagania, nie czyta ani Chrome, ani Edge; czyta go tylko Safari.
+ * Wymóg znaku odrzucałby więc hasła, które menedżer sam podpowiedział.
  */
+export const WARUNKI_WYMAGANE = ['dlugosc', 'wielkosc', 'cyfra'] as const;
+
 export function ocenHaslo(wartosc: string): Record<string, boolean> {
   return {
     dlugosc: wartosc.length >= NAJKROTSZE_HASLO,
@@ -164,9 +173,10 @@ export function ocenHaslo(wartosc: string): Record<string, boolean> {
   };
 }
 
-/** Czy hasło spełnia wszystkie cztery warunki naraz — długość, wielkość liter, cyfrę oraz znak specjalny. */
+/** Czy hasło spełnia trzy warunki wymagane; znak specjalny na to nie wpływa. */
 export function hasloSpelnia(wartosc: string): boolean {
-  return Object.values(ocenHaslo(wartosc)).every(Boolean);
+  const ocena = ocenHaslo(wartosc);
+  return WARUNKI_WYMAGANE.every((warunek) => ocena[warunek] === true);
 }
 
 /**

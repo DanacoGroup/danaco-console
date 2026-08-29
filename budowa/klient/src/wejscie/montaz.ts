@@ -20,6 +20,7 @@ import {
   type Przebieg,
   type StanPrzebiegu,
   type Usterka,
+  hasloSpelnia,
 } from './przebieg.ts';
 import { baner } from './skladniki/baner.ts';
 import {
@@ -458,6 +459,9 @@ function odswiezMierniki(korzen: ParentNode): void {
       if (spelniony) stopien += 1;
     }
     miernik.dataset['stopien'] = String(stopien);
+    /* Barwa toru idzie za przyjęciem hasła, nie za liczbą warunków: znak
+       specjalny jest zalecany, więc hasło bez niego już jest przyjmowane. */
+    miernik.dataset['przyjmowane'] = hasloSpelnia(pole.value) ? 'tak' : 'nie';
     const opis = miernik.querySelector('[data-sila-opis]');
     if (opis !== null) {
       opis.textContent =

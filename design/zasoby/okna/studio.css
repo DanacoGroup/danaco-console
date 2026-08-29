@@ -48,6 +48,10 @@
   display: flex;
   flex-direction: column;
   flex: 1 1 auto;
+  /* Wysokość brana wprost od gospodarza, nie z podziału miejsca: w aplikacji
+     bryła stoi wewnątrz obszaru treści ramy, który jest blokiem — samo
+     `flex` nie miałoby tam na czym działać i okno kurczyłoby się do treści. */
+  height: 100%;
   min-width: 0;
   min-height: 0;
   /* Wcięcie z obu boków: taca obudowy zostaje widoczna dookoła bryły. */

@@ -115,7 +115,7 @@ func (u *UtrwalaczRozmowy) wierszSesji(ctx context.Context, opis OpisOkna) (int6
 	if err != nil {
 		return 0, err
 	}
-	kartaID, err := u.zestaw.KartySesji.Zapewnij(ctx, srodowisko.ID, nazwaKartyDomyslnej)
+	kartaID, err := u.zestaw.KartySesji.Zapewnij(ctx, srodowisko.ID, KontoOperatora(ctx), nazwaKartyDomyslnej)
 	if err != nil {
 		return 0, err
 	}
@@ -201,7 +201,7 @@ func (u *UtrwalaczRozmowy) ZapewnijSesje(ctx context.Context, idSesji, tytul, pr
 	if err != nil {
 		return 0, err
 	}
-	kartaID, err := u.zestaw.KartySesji.Zapewnij(ctx, srodowisko.ID, nazwaKartyDomyslnej)
+	kartaID, err := u.zestaw.KartySesji.Zapewnij(ctx, srodowisko.ID, KontoOperatora(ctx), nazwaKartyDomyslnej)
 	if err != nil {
 		return 0, err
 	}

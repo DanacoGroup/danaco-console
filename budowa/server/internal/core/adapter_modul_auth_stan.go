@@ -32,6 +32,21 @@ func (a *adapterUwierzytelnienia) BramkaZalozona(ctx context.Context) (bool, err
 	return true, nil
 }
 
+/*
+KontoSesjiBramki oddaje konto, któremu wydano sesję o podanym skrócie. Zero
+znaczy sesję nieznaną albo wiersz sprzed rozdzielenia kont — wołający czyta
+wtedy pracę konta najstarszego, tak jak stała przed migracją 407.
+*/
+func (a *adapterUwierzytelnienia) KontoSesjiBramki(ctx context.Context,
+	skrotTokenu string) (int64, error) {
+
+	sesja, err := a.repozytorium.SesjaBramkiPoSkrocie(ctx, skrotTokenu)
+	if err != nil {
+		return 0, err
+	}
+	return sesja.KontoId, nil
+}
+
 // RozpoznajSesjeBramki sprawdza token z powitania i oddaje skrót sesji.
 // Token nieznany, unieważniony i wygasły znaczą to samo.
 func (a *adapterUwierzytelnienia) RozpoznajSesjeBramki(ctx context.Context,

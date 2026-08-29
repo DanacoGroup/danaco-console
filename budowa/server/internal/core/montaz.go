@@ -120,7 +120,7 @@ func Zmontuj(kontekst context.Context, m Montaz) (*Zmontowany, error) {
 	// Straż zakresu eksperta czyta bibliotekę i katalog modułów przy nakładaniu eksperta na okno.
 	strazEkspertow := NowaStrazEksperta(repozytoria.Agenci, repozytoria.Moduly)
 
-	rdzen := Zloz(zlozPorty(skladPortow{
+	porty := zlozPorty(skladPortow{
 		zycie: kontekst, kolejki: kolejki, diagnostyka: diagnostyka,
 		montaz: m, repozytoria: repozytoria, nadzorca: nadzorca, kanaly: kanaly,
 		rozstrzygacz: rozstrzygacz, katalogRoboczy: katalogRoboczy,
@@ -136,7 +136,14 @@ func Zmontuj(kontekst context.Context, m Montaz) (*Zmontowany, error) {
 		zakresyNarzedzi: zakresyNarzedzi,
 		strazEkspertow:  strazEkspertow,
 		nadajnik:        nastawyNadajnika(m.Konfiguracja),
-	}))
+	})
+	rdzen := Zloz(porty)
+	/* Rozpoznanie konta wołającego bierze się z tego samego adaptera bramki,
+	   który wydaje sesje — inaczej rdzeń nie miałby jak powiedzieć, czyje jest
+	   żądanie, a karty sesji wróciłyby wspólne dla wszystkich kont. */
+	if rozpoznanie, umie := porty.Uwierzytelnianie.(RozpoznanieKontaSesji); umie {
+		rdzen.ZRozpoznaniemKontaSesji(rozpoznanie)
+	}
 	rdzen.ZeStrazaZakresow(zakresyNarzedzi)
 	rdzen.ZObserwatoremNiepowodzen(diagnostyka)
 	// Diagnostyka jest odbiorcą odmów — zdarzenia zaczepów mają być w Errors

@@ -44,7 +44,7 @@ func (o osadzenieZBazy) KodSrodowiska(ctx context.Context, idSesji string) strin
 		return ""
 	}
 	for _, srodowisko := range srodowiska {
-		karty, err := o.zestaw.KartySesji.Lista(ctx, srodowisko.ID)
+		karty, err := o.zestaw.KartySesji.Lista(ctx, srodowisko.ID, dane.KontoOperatora(ctx))
 		if err != nil {
 			continue
 		}

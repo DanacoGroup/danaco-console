@@ -788,6 +788,14 @@ W ramach Licencji Licencjobiorca jest uprawniony do:
 > **(d)** licencja zbiorowa z limitem — określona liczba równocześnie
 > pracujących Operatorów, weryfikowana organizacyjnie;
 > **(e)** licencja nielimitowana w obrębie organizacji Licencjobiorcy.
+>
+> **Stan techniczny wdrożenia, 29 sierpnia 2026.** Rdzeń nie ogranicza liczby
+> kont: rejestracja zakłada konto zawsze, gdy login i adres są wolne, a konta
+> nie mieszają między sobą sesji ani dokumentów (`prowadzenie/decyzje.md`,
+> poz. 22; migracje 406 i 407). Do 29 sierpnia schemat dopuszczał jedno konto
+> na Instalację, co przesądzało wybór na wariant (a) albo (b); po tej zmianie
+> żaden z pięciu wariantów nie jest już wykluczony technicznie i rozstrzygnięcie
+> pozostaje w całości decyzją Licencjodawcy.
 > Wariant (c) i (e) wymagają odrębnego rozstrzygnięcia dla topologii
 > z Rdzeniem serwerowym, w której jedna Instalacja Rdzenia obsługuje wielu
 > Operatorów. Do czasu rozstrzygnięcia obowiązuje zasada ostrożności: brak

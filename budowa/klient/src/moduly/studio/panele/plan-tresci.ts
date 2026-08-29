@@ -38,9 +38,11 @@ export const planTresci = {
 
   ladowanie: 'Wczytywanie rozkładu…',
 
+  /* Opis nie powtarza tytułu: tytuł nazywa stan, opis mówi, skąd się wziął —
+     wykaz jest pusty przez wybrany stan, nie przez brak rozkładu w ogóle. */
   pusty: {
     tytul: 'Brak zadań',
-    opis: 'Brak zadań w tym stanie.',
+    opis: 'Żadne zadanie tego zlecenia nie jest w wybranym stanie.',
   },
 
   odmowa: {

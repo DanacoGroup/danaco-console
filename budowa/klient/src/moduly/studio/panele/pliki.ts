@@ -30,6 +30,7 @@ import { ikony, type NazwaZnaku } from '../ikony.ts';
 import { tresci } from '../tresci.ts';
 import { tresciPliki } from './pliki-tresci.ts';
 import type { MontazPanelu, ZamontowanyPanel } from './umowa.ts';
+import { opisOdmowy } from '../odmowa.ts';
 
 type StanUrzadzen =
   | { rodzaj: 'ladowanie' }
@@ -78,7 +79,7 @@ function alertOdmowy(tytul: string, blad?: ErrorInfo): HTMLElement {
   return el('div', { klasa: 'dn-alert dn-alert--wstega dn-alert--blad', role: 'alert' }, [
     el('span', { klasa: 'dn-alert-tresc' }, [
       el('b', { tekst: tytul }),
-      el('span', { tekst: blad?.message ?? tresci.odmowa.brakOpisu }),
+      el('span', { tekst: opisOdmowy(blad, 'pliki') }),
     ]),
   ]);
 }

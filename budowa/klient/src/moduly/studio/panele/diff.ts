@@ -26,6 +26,7 @@ import { ikony } from '../ikony.ts';
 import { el, tekst, zeZnacznika } from '../narzedzia.ts';
 import { tresc as t } from './diff-tresci.ts';
 import type { MontazPanelu } from './umowa.ts';
+import { opisOdmowy } from '../odmowa.ts';
 
 /** Wynik porównania wersji, licząc trafienia wzorca jako część tej samej odpowiedzi. */
 type ZasobPorownania =
@@ -55,7 +56,7 @@ function alertOdmowy(tytul: string, blad?: ErrorInfo): HTMLElement {
   return el('div', { klasa: 'dn-alert dn-alert--wstega dn-alert--blad', role: 'alert' }, [
     el('span', { klasa: 'dn-alert-tresc' }, [
       el('b', { tekst: tytul }),
-      el('span', { tekst: blad?.message ?? t.odmowa.brakOpisu }),
+      el('span', { tekst: opisOdmowy(blad, 'diff') }),
     ]),
   ]);
 }

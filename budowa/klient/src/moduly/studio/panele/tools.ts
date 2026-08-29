@@ -32,6 +32,7 @@ import { ikony } from '../ikony.ts';
 import { el, zeZnacznika, type Dziecko } from '../narzedzia.ts';
 import { tresciNarzedzi as T } from './tools-tresci.ts';
 import type { MontazPanelu } from './umowa.ts';
+import { opisOdmowy } from '../odmowa.ts';
 
 type StanBiegu =
   | { rodzaj: 'spoczynek' }
@@ -55,7 +56,7 @@ function alert(etykieta: string, blad?: ErrorInfo): HTMLElement {
   return el('div', { klasa: 'dn-alert dn-alert--wstega dn-alert--blad', role: 'alert' }, [
     el('span', { klasa: 'dn-alert-tresc' }, [
       el('b', { tekst: etykieta }),
-      el('span', { tekst: blad?.message ?? T.odmowa.brakOpisu }),
+      el('span', { tekst: opisOdmowy(blad, 'tools') }),
     ]),
   ]);
 }

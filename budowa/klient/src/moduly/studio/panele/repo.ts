@@ -26,6 +26,7 @@ import { ikony, type NazwaZnaku } from '../ikony.ts';
 import { el, zeZnacznika } from '../narzedzia.ts';
 import type { MontazPanelu, ZamontowanyPanel, ZaleznosciPanelu } from './umowa.ts';
 import { komunikatEksportu, komunikatGalezi, tresciRepo, znacznikWersji } from './repo-tresci.ts';
+import { opisOdmowy, zaloguj } from '../odmowa.ts';
 
 type StanGlowny =
   | { rodzaj: 'brakOkna' }
@@ -108,7 +109,8 @@ function zamontuj(wezel: HTMLElement, zaleznosci: ZaleznosciPanelu): Zamontowany
     if (zdjete) return;
     akcjaWiersza = null;
     if (!wynik.udany) {
-      komunikat = { rodzaj: 'blad', tekst: wynik.blad?.message ?? tresciRepo.odmowa.przywroc };
+      zaloguj(wynik.blad, 'repo.przywroc');
+      komunikat = { rodzaj: 'blad', tekst: tresciRepo.odmowa.przywroc };
       odswiez();
       return;
     }
@@ -127,9 +129,10 @@ function zamontuj(wezel: HTMLElement, zaleznosci: ZaleznosciPanelu): Zamontowany
     if (zdjete) return;
     akcjaWiersza = null;
     formularz = null;
+    zaloguj(wynik.blad, 'repo.galaz');
     komunikat =
       !wynik.udany || wynik.wynik === undefined
-        ? { rodzaj: 'blad', tekst: wynik.blad?.message ?? tresciRepo.odmowa.galaz }
+        ? { rodzaj: 'blad', tekst: tresciRepo.odmowa.galaz }
         : { rodzaj: 'sukces', tekst: komunikatGalezi(wynik.wynik.branch.name) };
     odswiez();
   }
@@ -146,7 +149,8 @@ function zamontuj(wezel: HTMLElement, zaleznosci: ZaleznosciPanelu): Zamontowany
     akcjaWiersza = null;
     formularz = null;
     if (!wynik.udany || wynik.wynik === undefined) {
-      komunikat = { rodzaj: 'blad', tekst: wynik.blad?.message ?? tresciRepo.odmowa.etykieta };
+      zaloguj(wynik.blad, 'repo.etykieta');
+      komunikat = { rodzaj: 'blad', tekst: tresciRepo.odmowa.etykieta };
       odswiez();
       return;
     }
@@ -164,9 +168,10 @@ function zamontuj(wezel: HTMLElement, zaleznosci: ZaleznosciPanelu): Zamontowany
     const wynik = await wywolaj(zaleznosci.kanal, Command.StudioRepositoryExport, { documentId: dokument });
     if (zdjete) return;
     eksportTrwa = false;
+    zaloguj(wynik.blad, 'repo.eksport');
     komunikat =
       !wynik.udany || wynik.wynik === undefined
-        ? { rodzaj: 'blad', tekst: wynik.blad?.message ?? tresciRepo.odmowa.eksport }
+        ? { rodzaj: 'blad', tekst: tresciRepo.odmowa.eksport }
         : { rodzaj: 'sukces', tekst: komunikatEksportu(wynik.wynik.entries, formatBajty(wynik.wynik.sizeBytes)) };
     odswiez();
   }
@@ -181,8 +186,7 @@ function zamontuj(wezel: HTMLElement, zaleznosci: ZaleznosciPanelu): Zamontowany
   }
 
   function widokOdmowa(tytul: string, blad?: ErrorInfo): HTMLElement[] {
-    const dzieciTresci = [el('b', { tekst: tytul })];
-    if (blad !== undefined) dzieciTresci.push(el('span', { tekst: blad.message }));
+    const dzieciTresci = [el('b', { tekst: tytul }), el('span', { tekst: opisOdmowy(blad, 'repo') })];
     return [
       el('div', { klasa: 'dn-alert dn-alert--wstega dn-alert--blad', role: 'alert' }, [
         el('div', { klasa: 'dn-alert-tresc' }, dzieciTresci),

@@ -65,9 +65,11 @@ export const tresci = {
     wyslij: 'Do kolejki',
   },
 
+  /* Bez obietnicy terminu: „będzie dostępna w kolejnej wersji" mówi
+     o harmonogramie zespołu, a nie o programie, który Operator ma przed sobą. */
   panelNiegotowy: {
     tytul: 'Niedostępne w tej wersji',
-    opis: 'Ta część programu będzie dostępna w kolejnej wersji.',
+    opis: 'Ta karta nie ma w tej wersji programu żadnych czynności.',
   },
 
   dokument: {

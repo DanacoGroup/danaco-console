@@ -1,8 +1,9 @@
 /**
- * Strefa 5 — zaczep paneli: treść jednej karty jeszcze nie postawionej.
- * Sześć z siedmiu kart tego terenu (wszystkie poza Studio Editor) wchodzą
- * osobnym zakresem prac — tu stoi nazwany stan pusty, nie pusty prostokąt
- * i nie treść przykładowa przeniesiona z prototypu.
+ * Strefa 5 — zaczep panelu w paśmie kart. Powłoka wstawia go pod każdą kartą
+ * i to on niesie identyfikator, rolę i powiązanie z kartą; panel, który ma
+ * swojego wykonawcę, wchodzi w ten węzeł przy pierwszym wejściu na kartę.
+ * Karta bez wykonawcy zostaje przy tej treści: nazwany stan pusty, nie pusty
+ * prostokąt i nie treść przykładowa przeniesiona z prototypu.
  */
 
 import { ikony } from '../ikony.ts';

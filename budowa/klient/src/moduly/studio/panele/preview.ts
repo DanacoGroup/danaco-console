@@ -81,7 +81,10 @@ export const montujPodgladWydania: MontazPanelu = (wezel, zaleznosci) => {
   const tresc = el('div', { klasa: 'sta-okno-tresc' });
   const bryla = el(
     'section',
-    { klasa: 'sta-okno', id: 'panel-preview', role: 'tabpanel', 'aria-labelledby': 'karta-preview', hidden: true },
+    /* Bez `id`, `role` i `hidden`: niesie je wezel zaczepu wstawiony przez powloke.
+         Powtorzenie daloby dwa elementy o tym samym identyfikatorze i panel
+         ukryty na stale. */
+      { klasa: 'sta-okno' },
     [
       el('header', { klasa: 'sta-okno-belka' }, [
         el('span', { klasa: 'sta-okno-tytul' }, [el('b', { tekst: tekst('karty.preview') })]),

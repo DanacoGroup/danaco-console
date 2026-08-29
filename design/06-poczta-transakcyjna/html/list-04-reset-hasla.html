@@ -54,7 +54,7 @@
   Część tekstowa: ../text/list-04-reset-hasla.txt
 
   Zmienne: {{logo_src}} {{logo_src_dark}} {{code}} {{expiry_minutes}}
-           {{requested_at}} {{recipient_address}}
+           {{requested_at}} {{ip_address}} {{device}} {{recipient_address}}
            {{support_address}} {{year}}
 
   Układ wspólny z listem 2 — te same metadane żądania. Różnica w nocie:
@@ -121,13 +121,23 @@
           <td class="dn-pad" style="padding:24px 32px 0 32px;">
             <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="border-collapse:collapse;">
               <tr>
-                <td width="50%" style="padding:0 12px 0 0;vertical-align:top;">
+                <td width="50%" style="padding:0 12px 16px 0;vertical-align:top;">
                   <p class="dn-etykieta" style="margin:0 0 4px 0;font-family:'IBM Plex Mono','SFMono-Regular',Consolas,'Courier New',monospace;font-size:11px;line-height:16px;letter-spacing:0.14em;text-transform:uppercase;color:#616161;">Ważność</p>
                   <p class="dn-atrament" style="margin:0;font-family:'IBM Plex Mono','SFMono-Regular',Consolas,'Courier New',monospace;font-size:13px;line-height:20px;color:#181818;">{{expiry_minutes}} min</p>
                 </td>
-                <td width="50%" style="padding:0 0 0 0;vertical-align:top;">
+                <td width="50%" style="padding:0 0 16px 0;vertical-align:top;">
                   <p class="dn-etykieta" style="margin:0 0 4px 0;font-family:'IBM Plex Mono','SFMono-Regular',Consolas,'Courier New',monospace;font-size:11px;line-height:16px;letter-spacing:0.14em;text-transform:uppercase;color:#616161;">Żądanie</p>
                   <p class="dn-atrament" style="margin:0;font-family:'IBM Plex Mono','SFMono-Regular',Consolas,'Courier New',monospace;font-size:13px;line-height:20px;color:#181818;">{{requested_at}}</p>
+                </td>
+              </tr>
+              <tr>
+                <td width="50%" style="padding:0 12px 0 0;vertical-align:top;">
+                  <p class="dn-etykieta" style="margin:0 0 4px 0;font-family:'IBM Plex Mono','SFMono-Regular',Consolas,'Courier New',monospace;font-size:11px;line-height:16px;letter-spacing:0.14em;text-transform:uppercase;color:#616161;">Adres źródłowy</p>
+                  <p class="dn-atrament" style="margin:0;font-family:'IBM Plex Mono','SFMono-Regular',Consolas,'Courier New',monospace;font-size:13px;line-height:20px;color:#181818;">{{ip_address}}</p>
+                </td>
+                <td width="50%" style="padding:0 0 0 0;vertical-align:top;">
+                  <p class="dn-etykieta" style="margin:0 0 4px 0;font-family:'IBM Plex Mono','SFMono-Regular',Consolas,'Courier New',monospace;font-size:11px;line-height:16px;letter-spacing:0.14em;text-transform:uppercase;color:#616161;">Urządzenie</p>
+                  <p class="dn-atrament" style="margin:0;font-family:'IBM Plex Mono','SFMono-Regular',Consolas,'Courier New',monospace;font-size:13px;line-height:20px;color:#181818;">{{device}}</p>
                 </td>
               </tr>
             </table>
@@ -144,7 +154,7 @@
                     Kod jest jednorazowy i wygasa po {{expiry_minutes}} minutach. Dotychczasowe hasło pozostaje ważne do chwili ustawienia nowego.
                   </p>
                   <p class="dn-tekst" style="margin:0 0 0 0;font-family:'IBM Plex Sans','Segoe UI',Helvetica,Arial,sans-serif;font-size:13px;line-height:20px;color:#4A4A4A;">
-                    Jeżeli żądanie nie pochodzi od Ciebie, zignoruj wiadomość — hasło nie zostanie zmienione. Jeżeli takie listy przychodzą wielokrotnie, zgłoś to na <a href="mailto:{{support_address}}" class="dn-odnosnik" style="font-family:'IBM Plex Mono','SFMono-Regular',Consolas,'Courier New',monospace;color:#3B6FE0;text-decoration:none;">{{support_address}}</a>, podając czas żądania z wiersza powyżej.
+                    Jeżeli żądanie nie pochodzi od Ciebie, zignoruj wiadomość — hasło nie zostanie zmienione. Jeżeli takie listy przychodzą wielokrotnie, zgłoś to na <a href="mailto:{{support_address}}" class="dn-odnosnik" style="font-family:'IBM Plex Mono','SFMono-Regular',Consolas,'Courier New',monospace;color:#3B6FE0;text-decoration:none;">{{support_address}}</a>, podając adres źródłowy i czas żądania z wiersza powyżej.
                   </p>
                 </td>
               </tr>

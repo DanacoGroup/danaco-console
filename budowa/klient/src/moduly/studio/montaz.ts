@@ -119,7 +119,8 @@ export function zamontujOknoStudio(w: NastawyOknaStudio): OknoStudio {
   }
   const robocza = el('div', { klasa: 'sta-robocza' }, [dokument.wezel, ...panele]);
   const obszar = el('div', { klasa: 'sta-obszar', 'data-robocza': 'widoczna' }, [oknoCzatu(), robocza]);
-  const cialo = el('div', { klasa: 'sta-cialo st-cialo' }, [szynaDokumentow(), obszar]);
+  const szyna = szynaDokumentow({ kanal: w.kanal, idOkna: () => dokument.idOkna() });
+  const cialo = el('div', { klasa: 'sta-cialo st-cialo' }, [szyna.wezel, obszar]);
 
   /* `<section>`, nie `<main>` jak w prototypie: bryła wchodzi wewnątrz
      `<main id="dn-obszar-glowna">` ramy, a dokument nie niesie dwóch `<main>`. */
@@ -137,6 +138,8 @@ export function zamontujOknoStudio(w: NastawyOknaStudio): OknoStudio {
   return {
     zdejmij() {
       dokument.zdejmij();
+      szyna.zdejmij();
+      for (const panel of zamontowane) panel.zdejmij();
       if (bryla.isConnected) bryla.remove();
     },
   };

@@ -21,7 +21,7 @@ export const tresc = {
   },
 
   grep: {
-    zastepczaTresc: 'Grep — wzorzec (regex)…',
+    zastepczaTresc: 'Wzorzec wyszukiwania (wyrażenie regularne)…',
     etykieta: 'Grep',
     regex: 'Wyrażenie regularne',
     naglowek: 'Trafienia wzorca',
@@ -47,6 +47,6 @@ export const tresc = {
     zmiany: 'Nie udało się wczytać wykazu zmian',
     decyzja: 'Nie udało się zapisać decyzji o zmianie',
     adnotacja: 'Nie udało się założyć adnotacji',
-    brakOpisu: 'Powód nie został podany.',
+    brakOpisu: 'Spróbuj ponownie. Jeżeli problem się powtarza, skontaktuj się z administratorem.',
   },
 } as const;

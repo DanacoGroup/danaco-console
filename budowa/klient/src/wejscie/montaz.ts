@@ -252,16 +252,21 @@ function odswiezUsterki(korzen: ParentNode, stan: StanPrzebiegu): void {
     ? undefined
     : stan.usterki.find((u) => u.odRdzenia !== undefined);
   if (odmowa?.odRdzenia !== undefined) {
-    // Rdzeń wie o powodzie odmowy więcej niż okno, więc treścią jest to, co powiedział rdzeń.
-    const wezel = baner({
-      rodzaj: 'blad',
-      ikona: 'ostrzezenie',
-      glowa: 'usterki.odmowaSerwera.glowa',
-      tresc: 'usterki.odmowaSerwera.glowa',
-    });
-    const tresc = wezel.querySelector('.dn-alert-tresc');
-    if (tresc?.lastChild != null) tresc.lastChild.textContent = odmowa.odRdzenia.message;
-    obszar.replaceChildren(wezel);
+    /* Zdanie dla Operatora dobiera kod odmowy, nie treść od serwera: serwer
+       opisuje odmowę językiem swojego wnętrza. Opis od serwera idzie do
+       dziennika, gdzie służy rozpoznaniu usterki, nie do widoku. */
+    const kod = odmowa.odRdzenia.code;
+    const sciezka = `usterki.odmowaSerwera.wedlugKodu.${kod}`;
+    const znane = tekst(`${sciezka}.glowa`).startsWith('⟨') === false;
+    console.warn('[wejscie] odmowa serwera', kod, odmowa.odRdzenia.message);
+    obszar.replaceChildren(
+      baner({
+        rodzaj: 'blad',
+        ikona: 'ostrzezenie',
+        glowa: znane ? `${sciezka}.glowa` : 'usterki.odmowaSerwera.glowa',
+        tresc: znane ? `${sciezka}.tresc` : 'usterki.odmowaSerwera.tresc',
+      }),
+    );
     return;
   }
 

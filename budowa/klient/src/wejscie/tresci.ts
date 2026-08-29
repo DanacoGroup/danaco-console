@@ -85,7 +85,7 @@ export const tresci = {
       lid: 'Danaco Console przywraca sesje otwarte na tym koncie.',
       baner: {
         glowa: 'Rozpoznano zaufane urządzenie',
-        tresc: 'Uruchomienie bez logowania.',
+        tresc: 'Urządzenie jest zaufane — logowanie zostanie pominięte.',
       },
       fraza: 'Rejestracja i logowanie zostają pominięte, bo urządzenie jest zaufane.',
     },
@@ -103,7 +103,7 @@ export const tresci = {
        a wersja niezgodna znaczy, że dalsza rozmowa pójdzie po omacku. */
     wersja: {
       glowa: 'Wersja protokołu serwera jest inna niż wersja tego programu.',
-      tresc: 'Serwer mówi wersją {rdzen}, program wersją {klient}. Zaktualizuj program.',
+      tresc: 'Wersja serwera: {rdzen}. Wersja programu: {klient}. Zaktualizuj program.',
     },
   },
 
@@ -130,11 +130,11 @@ export const tresci = {
     logowanieBlad: {
       baner: {
         glowa: 'Nie rozpoznano danych logowania.',
-        tresc: 'Sprawdź login i hasło. Kolejna próba nie jest odmawiana — czeka tylko chwilę dłużej.',
+        tresc: 'Sprawdź login i hasło.',
       },
       capsLock: 'Sprawdź, czy nie jest włączony Caps Lock.',
       fraza:
-        'Nieudana próba nie blokuje konta. Dostęp można również odzyskać przy użyciu adresu e-mail konta.',
+        'Dostęp można również odzyskać przy użyciu adresu e-mail konta.',
     },
 
     /* Odsłona zwłoki, nie zapory. Rdzeń nie odmawia kolejnej próby — nakłada na
@@ -142,8 +142,8 @@ export const tresci = {
        logowania. Zapisu o pięciu próbach i o godzinie tu nie ma, bo takiej
        reguły nie ma w rdzeniu. */
     logowanieWstrzymane: {
-      tytul: 'Kolejna próba za chwilę',
-      lid: 'Po nieudanej próbie kolejna czeka chwilę dłużej. Konto nie zostało zablokowane.',
+      tytul: 'Kolejna próba za {czas}',
+      lid: 'Kolejna próba będzie możliwa po odczekaniu chwili.',
       baner: {
         glowa: 'Kolejna próba będzie możliwa za {czas}.',
         tresc: 'Dostęp można również odzyskać przy użyciu adresu e-mail konta.',
@@ -152,8 +152,8 @@ export const tresci = {
     },
 
     odzyskiwanieWstrzymane: {
-      tytul: 'Kolejne wysłanie za chwilę',
-      lid: 'Poprzednie wysłanie jeszcze się kończy. Wysyłanie nie zostało wstrzymane.',
+      tytul: 'Kolejne wysłanie za {czas}',
+      lid: 'Poprzednia wiadomość została wysłana przed chwilą.',
       baner: {
         glowa: 'Kolejne wysłanie będzie możliwe za {czas}.',
         tresc:
@@ -178,7 +178,7 @@ export const tresci = {
        w dniu, w którym będzie tego potrzebował. */
     kontoBezPotwierdzenia: {
       tytul: 'Konto Operatora zostało założone',
-      lid: 'Wejście do platformy działa hasłem, które przed chwilą ustawiłeś.',
+      lid: 'Do logowania służy hasło ustawione przed chwilą.',
       baner: {
         glowa: 'Adres {adres} pozostaje niepotwierdzony.',
         tresc:
@@ -220,7 +220,7 @@ export const tresci = {
       tytul: 'Potwierdź adres e-mail',
       lid: 'Na adres {adres} wysłaliśmy kod potwierdzający. Zachowuje ważność przez {minuty} minut.',
       obszar: 'Kod potwierdzający z wiadomości',
-      znak: 'Znak {numer} z {ile}',
+      znak: 'Cyfra {numer} z {ile}',
       odliczanie: 'Kod traci ważność za',
       wklej: 'Wklej ze schowka',
       ponow: 'Wyślij ponownie',
@@ -232,7 +232,7 @@ export const tresci = {
       pomocDane: { nadawca: 'noreply@danaco-core.pl' },
       ostrzezenie: {
         glowa: 'Kod potwierdzający wprowadza się wyłącznie w tym oknie.',
-        tresc: 'Danaco Console nigdy nie prosi o nią przez telefon ani w wiadomości zwrotnej.',
+        tresc: 'Danaco Console nigdy nie prosi o niego przez telefon ani w wiadomości zwrotnej.',
       },
       zmienAdres: 'Zmień adres e-mail',
     },
@@ -264,7 +264,7 @@ export const tresci = {
       'Cztery powłoki platformy Danaco Console: serwer, środowiska pracy, moduły, interfejs',
     nadtytul: 'Uruchomienie',
     tytul: 'Przygotowanie środowiska pracy',
-    lid: 'Danaco Console odtwarza stan pracy z ostatniego zamknięcia: karty sesji otwarte przy poprzednim zamknięciu.',
+    lid: 'Danaco Console odtwarza stan pracy z ostatniego zamknięcia: otwarte karty sesji i kontekst projektów.',
     obszarEtapow: 'Postęp przygotowania środowiska pracy',
     etapy: ['Uwierzytelnienie', 'Przywracanie sesji z poprzedniej pracy'],
     miary: {
@@ -339,8 +339,47 @@ export const tresci = {
     },
     /* Odmowa rdzenia niesie własny opis — rdzeń wie o powodzie więcej niż okno.
        Katalog daje jej wyłącznie głowę; treścią jest to, co powiedział rdzeń. */
+    /* Zdanie dla Operatora dobierane po kodzie odmowy. Serwer opisuje odmowę
+       językiem swojego wnętrza i tę treść okno odkłada wyłącznie do dziennika;
+       do widoku idzie zdanie stąd. Każdy kod z katalogu `ErrorCode` musi mieć
+       tu pozycję — brak pozycji zostawiłby Operatora bez wyjaśnienia. */
     odmowaSerwera: {
       glowa: 'Nie udało się wykonać czynności.',
+      tresc: 'Spróbuj ponownie. Jeżeli problem się powtarza, skontaktuj się z administratorem.',
+      wedlugKodu: {
+        validation_failed: {
+          glowa: 'Podane dane są nieprawidłowe.',
+          tresc: 'Popraw zaznaczone pola i spróbuj ponownie.',
+        },
+        not_found: {
+          glowa: 'Nie znaleziono wskazanej pozycji.',
+          tresc: 'Odśwież widok i spróbuj ponownie.',
+        },
+        not_authenticated: {
+          glowa: 'Sesja nie jest zalogowana.',
+          tresc: 'Zaloguj się ponownie.',
+        },
+        permission_denied: {
+          glowa: 'Brak uprawnień do tej czynności.',
+          tresc: 'Skontaktuj się z administratorem.',
+        },
+        conflict: {
+          glowa: 'Nie można wykonać tej czynności w obecnym stanie.',
+          tresc: 'Odśwież widok i sprawdź, czy czynność jest nadal potrzebna.',
+        },
+        channel_unavailable: {
+          glowa: 'Model jest chwilowo niedostępny.',
+          tresc: 'Spróbuj ponownie za chwilę.',
+        },
+        rate_limited: {
+          glowa: 'Za dużo żądań w krótkim czasie.',
+          tresc: 'Odczekaj chwilę i spróbuj ponownie.',
+        },
+        internal_error: {
+          glowa: 'Wystąpił błąd po stronie serwera.',
+          tresc: 'Spróbuj ponownie. Jeżeli problem się powtarza, skontaktuj się z administratorem.',
+        },
+      },
     },
     brakOdpowiedzi: {
       glowa: 'Serwer nie odpowiedział.',

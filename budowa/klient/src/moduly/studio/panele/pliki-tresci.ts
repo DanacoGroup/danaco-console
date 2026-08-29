@@ -33,8 +33,8 @@ export const tresciPliki = {
   },
 
   dodaj: {
-    etykietaSciezki: 'Ścieżka materiału na serwerze',
-    doloz: 'Dołóż plik',
+    etykietaSciezki: 'Położenie pliku',
+    doloz: 'Dodaj plik',
     dokladanie: 'Dokładanie…',
   },
 
@@ -56,7 +56,7 @@ export const tresciPliki = {
   },
 
   poprawa: {
-    tytul: 'Słowa rozpoznane — poprawa przed przyjęciem',
+    tytul: 'Rozpoznane słowa do poprawienia',
     etykietaSlowa: 'Słowo',
     zapisz: 'Zapisz',
     zapisywanie: 'Zapisywanie…',
@@ -66,10 +66,10 @@ export const tresciPliki = {
   odmowa: {
     urzadzenia: 'Nie udało się wczytać wykazu urządzeń',
     kolejka: 'Nie udało się wczytać kolejki',
-    dodanie: 'Nie udało się dołożyć materiału',
+    dodanie: 'Nie udało się dodać pliku',
     rozpoznanie: 'Nie udało się rozpoznać pisma',
     poprawka: 'Nie udało się zapisać poprawki',
-    przyjecie: 'Nie udało się wnieść do edytora',
+    przyjecie: 'Nie udało się przyjąć do edytora',
     adres: 'Nie udało się pobrać strony',
     skan: 'Nie udało się uruchomić skanowania',
   },

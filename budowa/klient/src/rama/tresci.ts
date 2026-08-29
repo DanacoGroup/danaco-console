@@ -38,8 +38,8 @@ export const tresci = {
     szukaj: 'Szukaj w panelu',
     nowaSesja: 'Nowa sesja',
     filtry: 'Filtry',
-    brakSesji: 'Środowisko nie niesie jeszcze żadnej karty sesji.',
-    brakProjektow: 'Osobny wykaz projektów nie jest jeszcze dostępny.',
+    brakSesji: 'Brak otwartych kart sesji.',
+    brakProjektow: 'Wykaz projektów nie jest dostępny w tej wersji.',
   },
 
   glowna: {

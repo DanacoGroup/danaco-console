@@ -1995,6 +1995,22 @@ ma w żadnej gałęzi. Rewizja `9ba1f90` wiąże sprawdzian ze źródłami ikon 
 klienta — `sciezkaZrodelIkon` wskazuje `../../../klient/src/ikony/zrodla`.
 Przechodzi w biegu odniesienia 2041 zdanych, zero niezdanych.
 
+### Przebieg twarzowy maluje poza wycinkiem twarzy — gotowe do otwarcia
+
+`TestPrzebiegTwarzowyZmieniaPikseleTwarzyNaPrawdziwymZdjeciu` żąda, żeby
+powiększenie z przebiegiem twarzowym zmieniło wyłącznie wycinek twarzy. Poza
+wycinkiem zmienia się **17 807 pikseli** przy progu 2 000, z największą różnicą
+składowej 172. To nie jest zmiana rozlana po całym obrazie — ta dotyka setek
+tysięcy pikseli — więc podejrzenie pada na maskę wtopienia sięgającą dalej, niż
+zakłada próg, albo na zmianę zachowania pomocnika twarzy.
+
+Usterka jest zastana. Rewizje poczty z 29.08 nie dotykają potoku obrazu:
+jedyna zmiana w tych plikach (`a7b607e0`) podmieniła napisy `rdzeń` na `serwer`,
+22 wiersze wstawione i 22 usunięte, bez zmiany zachowania.
+
+Sprawdzian trwa 216 s i jest najdłuższy w pakiecie — stąd wcześniejsze przebiegi
+z limitem 9 minut kończyły się przerwaniem, zanim do niego doszły.
+
 ### Reguła odbioru wyprowadzona z pomiarów
 
 `axe.run()` sam wywołuje dwa błędy 404 (`menu.css`, `ruch.css`), bo rozwiązuje

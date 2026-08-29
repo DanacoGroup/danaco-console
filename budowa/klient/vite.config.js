@@ -51,6 +51,8 @@ const KORZEN_ZASOBOW = new URL('../../design/zasoby/', import.meta.url);
  */
 const SKRYPTY_BIBLIOTEKI = [
   'wspolne.js',
+  'narzedzia-okien.js',
+  'ekran-startowy.js',
   'prototyp.js',
   'menu.js',
   'okna-modalne.js',

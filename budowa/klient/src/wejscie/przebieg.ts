@@ -77,7 +77,7 @@ export type StanEtapu = 'gotowy' | 'pracuje' | 'blad' | 'oczekuje';
 export interface Usterka {
   /** Klucz rozpoznania z katalogu treści; puste dla odmowy rdzenia. */
   klucz?: string;
-  /** Opis wprost od rdzenia — rdzeń wie o powodzie odmowy więcej niż okno. */
+  /** Odmowa serwera; okno dobiera z niej zdanie po kodzie, opis idzie do dziennika. */
   odRdzenia?: ErrorInfo;
 }
 

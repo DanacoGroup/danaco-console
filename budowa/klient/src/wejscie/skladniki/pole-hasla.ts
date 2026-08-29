@@ -19,7 +19,22 @@ export interface WlasciwosciHasla {
   bledne?: boolean;
   /** Identyfikator komunikatu opisującego usterkę. */
   opisuje?: string | null;
+  /** Pole zakłada nowe hasło — kontrolka ogłasza wtedy wymagania menedżerom haseł. */
+  nowe?: boolean;
 }
+
+/**
+ * Wymagania hasła ogłoszone przeglądarce i menedżerom haseł. Bez nich menedżer
+ * Google, Microsoftu czy Apple układa hasło według własnej reguły i podpowiada
+ * takie, którego rejestracja nie przyjmie — Operator dowiaduje się o tym
+ * dopiero po odmowie. Zapis `passwordrules` jest wspólną składnią dla tych
+ * menedżerów; `minlength` i `pattern` mówią to samo samej przeglądarce.
+ */
+const WYMAGANIA_MENEDZERA =
+  'minlength: 12; required: upper; required: lower; required: digit; required: special;';
+
+/** Cztery warunki katalogu w jednym wyrażeniu: wielka, mała, cyfra, znak spoza tych trzech. */
+const WZORZEC_HASLA = '(?=.*[a-ząćęłńóśźż])(?=.*[A-ZĄĆĘŁŃÓŚŹŻ])(?=.*\\d)(?=.*[^\\p{L}\\d]).{12,}';
 
 export function poleHasla(w: WlasciwosciHasla): HTMLElement {
   const odkryte = zeZnacznika(ikony.okoOdkryte);
@@ -37,6 +52,9 @@ export function poleHasla(w: WlasciwosciHasla): HTMLElement {
         type: 'password',
         id: w.id,
         autocomplete: w.uzupelnij ?? 'current-password',
+        passwordrules: w.nowe === true ? WYMAGANIA_MENEDZERA : null,
+        minlength: w.nowe === true ? '12' : null,
+        pattern: w.nowe === true ? WZORZEC_HASLA : null,
         'aria-invalid': w.bledne === true ? 'true' : null,
         'aria-describedby': w.opisuje ?? null,
       }),

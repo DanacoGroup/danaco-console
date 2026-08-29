@@ -1,7 +1,7 @@
 /**
  * Panel Plan — katalog treści własny tego panelu. Ten sam wzorzec co
  * `moduly/studio/tresci.ts`: jedyne miejsce z tekstem widocznym dla Operatora
- * w tym plik. Stoi osobno od katalogu wspólnego modułu, żeby siedmiu
+ * w tym pliku. Stoi osobno od katalogu wspólnego modułu, żeby siedmiu
  * wykonawców paneli okna roboczego nie pisało jednego pliku równolegle.
  */
 
@@ -38,11 +38,11 @@ export const planTresci = {
 
   ladowanie: 'Wczytywanie rozkładu…',
 
-  /* Opis nie powtarza tytułu: tytuł nazywa stan, opis mówi, skąd się wziął —
-     wykaz jest pusty przez wybrany stan, nie przez brak rozkładu w ogóle. */
+  /* Panel nie filtruje po stanie zadania, więc pustka znaczy dokładnie tyle,
+     że rozkład nie ma ani jednego zadania — nie że żadne nie pasuje do wyboru. */
   pusty: {
     tytul: 'Brak zadań',
-    opis: 'Żadne zadanie tego zlecenia nie jest w wybranym stanie.',
+    opis: 'Ten rozkład nie ma jeszcze żadnego zadania.',
   },
 
   odmowa: {

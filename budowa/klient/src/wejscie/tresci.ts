@@ -343,9 +343,11 @@ export const tresci = {
       glowa: 'Nieprawidłowy adres e-mail.',
       tresc: 'Sprawdź, czy adres zawiera znak @ oraz nazwę domeny, na przykład nazwa@firma.pl.',
     },
+    /* Baner nie powtarza reguły — wykaz pod polem pokazuje ją w całości i
+       zaznacza brakujące warunki na czerwono. Zdanie kieruje tam wzrok. */
     hasloSlabe: {
-      glowa: 'Hasło nie spełnia wymagań.',
-      tresc: 'Spełnij wszystkie cztery warunki podane pod polem hasła.',
+      glowa: 'Hasło nie zostało przyjęte.',
+      tresc: 'Brakujące warunki są zaznaczone na czerwono pod polem hasła.',
     },
     haslaRozne: {
       glowa: 'Hasła nie są zgodne.',

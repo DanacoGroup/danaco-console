@@ -9,6 +9,7 @@ import { utworzTransport } from './polaczenie/gniazdo.ts';
 import { utworzKanal } from './protokol/kanal.ts';
 import { utworzSesje } from './protokol/sesja.ts';
 import { tozsamoscKlienta } from './protokol/tozsamosc-klienta.ts';
+import { zalozEkranStartowy } from './wejscie/ekran-startowy.ts';
 import { zamontuj } from './wejscie/montaz.ts';
 import { utworzPrzebieg } from './wejscie/przebieg.ts';
 import { utworzPrzekazanieJednorazowe } from './rama/przekazanie.ts';
@@ -39,5 +40,17 @@ const naZmianePrzebiegu = utworzPrzekazanieJednorazowe({
   kanal,
 });
 
-przebieg.naZmiane(naZmianePrzebiegu);
+/* Ekran startowy gra od chwili wczytania dokumentu, a domyka się dopiero po
+   pierwszej odpowiedzi przebiegu — wtedy jest już co odsłonić. Zgłoszenie
+   gotowości idzie raz; kolejne zmiany stanu nie mają go co powtarzać. */
+const ekranStartowy = zalozEkranStartowy(document);
+let gotowoscZgloszona = false;
+
+przebieg.naZmiane((stan) => {
+  if (!gotowoscZgloszona) {
+    gotowoscZgloszona = true;
+    ekranStartowy.gotowe();
+  }
+  naZmianePrzebiegu(stan);
+});
 przebieg.polacz();

@@ -31,3 +31,15 @@ body { height: 100dvh; }
    w `rama.css` — miejsce jej nie narzuca nic ponad to. */
 
 [data-rama-aplikacji][hidden] { display: none; }
+
+/* ── Ekran startowy nad całą drogą wejścia ────────────────────────────────
+
+   Składnik biblioteki zakłada, że warstwa leży w jednej scenie i tam ma swój
+   układ odniesienia. Tutaj stoi nad wszystkimi scenami naraz, bo przebieg
+   przechodzi między nimi szybciej, niż trwa animacja — więc układ odniesienia
+   daje jej samo miejsce drogi wejścia, a nie scena. */
+
+[data-wejscie] { position: relative; }
+
+/* Dopóki animacja gra, żadne okno drogi wejścia nie jest widoczne. Reguła
+   biblioteki wiąże ukrycie ze sceną, więc znacznik niesie każda z nich. */

@@ -17,6 +17,7 @@
 <link rel="stylesheet" href="../../design/zasoby/css/fundament.css">
 <link rel="stylesheet" href="../../design/zasoby/css/komponenty.css">
 <link rel="stylesheet" href="../../design/zasoby/wejscie.css">
+<link rel="stylesheet" href="../../design/zasoby/ekran-startowy.css">
 <link rel="stylesheet" href="../../design/zasoby/okna/studio.css">
 <link rel="stylesheet" href="../../design/zasoby/menu.css">
 <link rel="stylesheet" href="../../design/zasoby/stany.css">
@@ -57,7 +58,18 @@
 <body>
 
 <div data-wejscie>
-<div class="we-scena">
+<!-- Znak marki kreślony światłem, zanim stanie pierwsze okno. Warstwa stoi nad
+     całą drogą wejścia, nie w jednej scenie: przebieg przechodzi między scenami
+     szybciej, niż trwa animacja, więc w scenie uruchomienia gasłaby razem z nią.
+     Nie ma własnego tła — leży na tle sceny tak, jak w produkcie leży na
+     pulpicie. `data-czekaj` zatrzymuje ją przed wygaszeniem, dopóki
+     `aplikacja.ts` nie zgłosi, że przebieg odpowiedział. -->
+<div class="we-uruchomienie" data-uruchomienie>
+  <div class="dn-ekran-startowy" data-ekran-startowy data-czekaj
+       role="img" aria-label="Uruchamianie Danaco Console"></div>
+</div>
+
+<div class="we-scena" data-uruchamianie>
   <div data-wejscie-okno="uruchomienie"></div>
 </div>
 
@@ -79,6 +91,8 @@
   i atrybuty `data-*`, nie moduły — bez `type="module"`, tak jak w źródle.
 -->
 <script src="./zasoby/wspolne.js"></script>
+<script src="./zasoby/narzedzia-okien.js"></script>
+<script src="./zasoby/ekran-startowy.js"></script>
 <script src="./zasoby/prototyp.js"></script>
 <script src="./zasoby/menu.js"></script>
 <script src="./zasoby/okna-modalne.js"></script>

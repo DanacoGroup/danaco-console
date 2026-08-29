@@ -37,7 +37,18 @@ ARCHITEKTURA="$(dpkg --print-architecture)"
 # dla tej samej rodziny maszyn, na której stoi to drzewo.
 if [ "$BEZ_BUDOWY" = "nie" ]; then
 	zglos "budowa rdzenia i serwera narzędzi ($ARCHITEKTURA)"
-	(cd "$BUDOWA" && go build -o "$PAKOWANIE/danaco-console" ./server/cmd/danaco-console) ||
+	# Hasło skrzynki nadawczej wchodzi przy składaniu, nie ze źródła: repozytorium
+	# go nie niesie, więc kopia drzewa nie daje dostępu do poczty platformy.
+	# Pakiet złożony bez tej zmiennej działa — rdzeń bierze hasło ze środowiska
+	# maszyny wdrożenia, a bez niego wchodzi w drogę bez poczty.
+	WPIS_SEKRETU=""
+	if [ -n "${DANACO_NADAWCA_SEKRET:-}" ]; then
+		WPIS_SEKRETU="-X danacoconsole/server/internal/konfiguracja.NadawcaSekretWbudowany=$DANACO_NADAWCA_SEKRET"
+		printf '  hasło skrzynki nadawczej: wpisane w pakiet\n'
+	else
+		printf '  hasło skrzynki nadawczej: BRAK — pakiet weźmie je ze środowiska maszyny\n'
+	fi
+	(cd "$BUDOWA" && go build -ldflags "$WPIS_SEKRETU" -o "$PAKOWANIE/danaco-console" ./server/cmd/danaco-console) ||
 		padnij "rdzeń się nie zbudował"
 	(cd "$BUDOWA" && go build -o "$PAKOWANIE/danaco-narzedzia" ./server/cmd/danaco-narzedzia) ||
 		padnij "serwer narzędzi się nie zbudował"

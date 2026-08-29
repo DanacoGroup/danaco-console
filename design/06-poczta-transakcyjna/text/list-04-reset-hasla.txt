@@ -1,0 +1,27 @@
+DANACO CONSOLE
+Kod resetu hasła
+
+Odnotowano żądanie zmiany hasła do konta {{recipient_address}}.
+Wprowadź kod w oknie resetu hasła, w którym trwa sesja.
+
+  KOD RESETU HASŁA:  {{code}}
+
+  Ważność:         {{expiry_minutes}} min
+  Żądanie:         {{requested_at}}
+  Adres źródłowy:  {{ip_address}}
+  Urządzenie:      {{device}}
+
+Kod jest jednorazowy i wygasa po {{expiry_minutes}} minutach. Dotychczasowe
+hasło pozostaje ważne do chwili ustawienia nowego.
+
+Jeżeli żądanie nie pochodzi od Ciebie, zignoruj wiadomość — hasło nie
+zostanie zmienione. Jeżeli takie listy przychodzą wielokrotnie, zgłoś to
+na {{support_address}}, podając adres źródłowy i czas żądania z wiersza
+powyżej.
+
+--
+Wiadomość wysłana automatycznie z adresu noreply@danaco-group.pl.
+Adres nie prowadzi skrzynki odbiorczej — odpowiedź nie zostanie odczytana.
+W sprawach konta pisz na {{support_address}}.
+
+Danaco Holding Group Sp. z o.o. · Danaco Console · {{year}}

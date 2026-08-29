@@ -26,7 +26,18 @@ SZABLONY = [
      "Danaco Console — kod logowania: 418 402"),
     ("list-03-autoresponder-brak-skrzynki", "List 3 · Autoresponder",
      "Adres noreply@danaco-group.pl nie przyjmuje korespondencji"),
+    ("list-04-reset-hasla", "List 4 · Reset hasła",
+     "Danaco Console — kod resetu hasła: 418 402"),
+    ("list-05-zmiana-adresu-potwierdzenie", "List 5 · Zmiana adresu — potwierdzenie",
+     "Danaco Console — kod potwierdzenia nowego adresu: 418 402"),
+    ("list-06-zmiana-adresu-powiadomienie", "List 6 · Zmiana adresu — powiadomienie",
+     "Danaco Console — zamówiono zmianę adresu konta"),
+    ("list-07-przebieg-zakonczony", "List 7 · Przebieg automatyki",
+     "Danaco Console — przebieg Raport tygodniowy: zatrzymany"),
 ]
+
+# Zmienne pochodzące spoza rdzenia — sanityzowane, w części HTML z ucieczką.
+NIEZAUFANE = ("original_subject", "run_name")
 
 # Dane przykładowe. Nie są danymi rzeczywistego Operatora ani rzeczywistej sprawy.
 DANE_PRZYKLADOWE = {
@@ -40,6 +51,18 @@ DANE_PRZYKLADOWE = {
     "support_address": "support@danaco-group.pl",
     "original_subject": "Prośba o zwiększenie limitu przebiegów",
     "received_at": "29.08.2026, 17:22 CEST",
+    "previous_address": "operator@przyklad.pl",
+    "new_address": "a.operator@przyklad.pl",
+    "revoke_url": "https://console.danaco-group.pl/konto/wycofaj/3f81c204",
+    "revoke_expiry_hours": "24",
+    "run_name": "Raport tygodniowy",
+    "environment_name": "WorkSpace",
+    "run_status": "zatrzymany",
+    "run_step": "3 z 5",
+    "run_duration": "00:12:04",
+    "started_at": "29.08.2026, 17:10 CEST",
+    "run_id": "run-9f2ca71b",
+    "run_url": "https://console.danaco-group.pl/automatyka/run-9f2ca71b",
     "year": "2026",
 }
 
@@ -50,7 +73,7 @@ def znak_data_uri(nazwa: str) -> str:
 
 
 def czysty_temat(wartosc: str) -> str:
-    """Sanityzacja tematu spoza rdzenia — wspólna dla obu części wiadomości."""
+    """Sanityzacja wartości spoza rdzenia — wspólna dla obu części wiadomości."""
     bez_sterujacych = re.sub(r"[\r\n\t\x00-\x1f\x7f]", " ", wartosc)
     return bez_sterujacych.strip()[:120]
 
@@ -59,8 +82,9 @@ def podstaw(zrodlo: str, wartosci: dict, ucieczka_html: bool) -> str:
     dane = dict(wartosci)
     # Część HTML wymaga ucieczki znaczników; część tekstowa nie — tam ucieczka
     # wprowadziłaby encje widoczne dla odbiorcy jako &amp; i &quot;.
-    temat = czysty_temat(dane["original_subject"])
-    dane["original_subject"] = html.escape(temat, quote=True) if ucieczka_html else temat
+    for klucz in NIEZAUFANE:
+        czysta = czysty_temat(dane[klucz])
+        dane[klucz] = html.escape(czysta, quote=True) if ucieczka_html else czysta
     for klucz, wartosc in dane.items():
         zrodlo = zrodlo.replace("{{" + klucz + "}}", wartosc)
     pozostale = set(re.findall(r"\{\{(\w+)\}\}", zrodlo))

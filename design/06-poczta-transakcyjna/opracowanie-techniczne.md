@@ -2,28 +2,56 @@
 
 | | |
 |---|---|
-| **Zakres** | trzy szablony wiadomości wychodzących z adresu `noreply@danaco-group.pl` |
+| **Zakres** | siedem szablonów wiadomości wychodzących z adresu `noreply@danaco-group.pl` |
 | **Odbiorca** | Operator Danaco Console |
 | **Źródła projektowe** | `03-marka/ksiega-znaku.md` · `03-marka/typografia-i-glos.md` · `03-marka/zastosowania-marki.md` (rozdz. 4.6) |
 | **Pliki kodu** | `html/` — część `text/html` · `text/` — część `text/plain` |
 | **Podgląd** | `podglad.html` |
 | **Wariant barwny** | jasny jako podstawa, ciemny jako zadeklarowane nadpisanie |
 | **Budowa wiadomości** | `multipart/alternative` (tekst + HTML) wewnątrz `multipart/related` (znaki `cid:`) |
+| **Składanie w rdzeniu** | pakiet `rdzen/mail` (Go) |
+| **Wdrożenie** | `runbook-wdrozenia.md` (Stalwart 0.16.x) |
 
 ---
 
-## 1. Trzy okoliczności wysyłki
+## 1. Siedem okoliczności wysyłki
 
-| Nr | Plik | Wyzwalacz w rdzeniu | Temat wiadomości |
+Rodzaje listów są stałymi pakietu `rdzen/mail` (typ `Kind`); wartość stałej
+jest wspólnym rdzeniem nazw obu plików szablonu.
+
+| Nr | Rodzaj (`Kind`) | Wyzwalacz w rdzeniu | Temat wiadomości |
 |---:|---|---|---|
-| 1 | `list-01-aktywacja-konta.html` | utworzenie konta Operatora, przed pierwszym logowaniem | `Danaco Console — kod aktywacji konta: {{code}}` |
-| 2 | `list-02-uwierzytelnienie-logowania.html` | logowanie wymagające drugiego składnika | `Danaco Console — kod logowania: {{code}}` |
-| 3 | `list-03-autoresponder-brak-skrzynki.html` | odebranie wiadomości na `noreply@danaco-group.pl` | `Adres noreply@danaco-group.pl nie przyjmuje korespondencji` |
+| 1 | `list-01-aktywacja-konta` | utworzenie konta Operatora, przed pierwszym logowaniem | `Danaco Console — kod aktywacji konta: {{code}}` |
+| 2 | `list-02-uwierzytelnienie-logowania` | logowanie wymagające drugiego składnika | `Danaco Console — kod logowania: {{code}}` |
+| 3 | `list-03-autoresponder-brak-skrzynki` | odebranie wiadomości na `noreply@danaco-group.pl` | `Adres noreply@danaco-group.pl nie przyjmuje korespondencji` |
+| 4 | `list-04-reset-hasla` | żądanie zmiany hasła | `Danaco Console — kod resetu hasła: {{code}}` |
+| 5 | `list-05-zmiana-adresu-potwierdzenie` | żądanie zmiany adresu — na **nowy** adres | `Danaco Console — kod potwierdzenia nowego adresu: {{code}}` |
+| 6 | `list-06-zmiana-adresu-powiadomienie` | żądanie zmiany adresu — na **dotychczasowy** adres | `Danaco Console — zamówiono zmianę adresu konta` |
+| 7 | `list-07-przebieg-zakonczony` | zakończenie albo zatrzymanie przebiegu automatyki | `Danaco Console — przebieg {{run_name}}: {{run_status}}` |
 
-Kod w temacie skraca ścieżkę Operatora — kod widać na liście wiadomości bez
-otwierania listu. Rozwiązanie jest przyjęte świadomie: kod jest jednorazowy,
-związany z sesją i wygasa po 60 minutach, więc jego obecność w nagłówku tematu
-nie podnosi ryzyka ponad poziom samej dostawy wiadomości.
+### 1.1 Para listów przy zmianie adresu
+
+Listy 5 i 6 wychodzą **razem, na dwa różne adresy**. Kod potwierdzający idzie
+na adres nowy, ostrzeżenie z możliwością wycofania — na dotychczasowy.
+
+Rozdzielenie jest zabezpieczeniem przed przejęciem konta: napastnik, który
+dostał się do sesji, nie ma dostępu do adresu dotychczasowego, więc
+powiadomienie o zmianie dociera do właściciela konta. List 6 podaje nowy adres
+w całości, bez maskowania — przy przejęciu konta jest to jedyna informacja
+pozwalająca wskazać, dokąd konto uciekło.
+
+### 1.2 Kod w temacie — decyzja i jej koszt
+
+Kod w temacie skraca ścieżkę Operatora: widać go na liście wiadomości bez
+otwierania listu. Kod jest jednorazowy, związany z sesją i wygasa po 60
+minutach.
+
+Koszt jest jednak realny: temat przechodzi przez każdy element trasy — filtr
+antyspamowy, bramę, kopię zapasową kolejki, dziennik serwera. Rozstrzygnięcie
+zależy więc od kontroli po stronie serwera poczty, opisanej w
+`runbook-wdrozenia.md`, rozdz. 5.3. Jeżeli któregoś z warunków tam wymienionych
+nie da się spełnić — kod z tematu należy usunąć. Zmiana dotyczy mapy
+`subjects` w `rdzen/mail/szablon.go` i jest jednowierszowa na list.
 
 ---
 
@@ -234,13 +262,13 @@ Odwrócona kolejność daje odbiorcy tekst w kliencie obsługującym HTML.
 Identyfikatory po angielsku (standard nazewnictwa Danaco), składnia `{{ }}`.
 Ten sam komplet zmiennych obsługuje część HTML i część tekstową.
 
-### 6.1 Wspólne dla wszystkich trzech listów
+### 6.1 Wspólne dla wszystkich listów
 
 | Zmienna | Typ | Przykład | Opis |
 |---|---|---|---|
 | `{{logo_src}}` | tekst | `cid:danaco-lockup` | znak, wariant jasny |
 | `{{logo_src_dark}}` | tekst | `cid:danaco-lockup-dark` | znak, wariant ciemny (rozdz. 4.3) |
-| `{{recipient_address}}` | tekst | `a.kowalska@…` | adres odbiorcy, powtórzony w stopce |
+| `{{recipient_address}}` | tekst | `a.kowalska@…` | adres odbiorcy; nieobecny w listach 5-7 |
 | `{{year}}` | liczba | `2026` | rok w nocie stopki |
 | `{{support_address}}` | tekst | `support@danaco-group.pl` | adres skrzynki obsługiwanej |
 
@@ -270,10 +298,26 @@ Ten sam komplet zmiennych obsługuje część HTML i część tekstową.
 | `{{original_subject}}` | tekst | `Prośba o zmianę limitu` | temat wiadomości odrzuconej |
 | `{{received_at}}` | tekst | `29.08.2026, 17:22 CEST` | czas odebrania wiadomości |
 
-### 6.5 Reguła sanityzacji [NIENEGOCJOWALNE]
+### 6.5 Listy 4-7
 
-`{{original_subject}}` pochodzi z wiadomości nadesłanej z zewnątrz i jest
-jedyną zmienną spoza rdzenia. Przed podstawieniem, **w obu częściach**:
+| List | Zmienne własne |
+|---|---|
+| 4 — reset hasła | `{{code}}` `{{expiry_minutes}}` `{{requested_at}}` `{{ip_address}}` `{{device}}` |
+| 5 — zmiana adresu, potwierdzenie | `{{code}}` `{{expiry_minutes}}` `{{requested_at}}` `{{previous_address}}` `{{new_address}}` |
+| 6 — zmiana adresu, powiadomienie | `{{requested_at}}` `{{ip_address}}` `{{device}}` `{{previous_address}}` `{{new_address}}` `{{revoke_url}}` `{{revoke_expiry_hours}}` |
+| 7 — przebieg automatyki | `{{run_name}}` `{{environment_name}}` `{{run_status}}` `{{run_step}}` `{{run_duration}}` `{{started_at}}` `{{run_id}}` `{{run_url}}` |
+
+Listy 4 i 5 nie mają przycisku działania: kod wprowadza się w oknie, z którego
+wyszło żądanie. List 6 ma jedno działanie — wycofanie zmiany.
+
+`{{run_status}}` przyjmuje wyłącznie wartości `zakończony` albo `zatrzymany`;
+wchodzi zarówno do nagłówka listu, jak i do szyny metadanych.
+
+### 6.6 Reguła sanityzacji [NIENEGOCJOWALNE]
+
+Spoza rdzenia pochodzą **dwie** zmienne: `{{original_subject}}` (temat
+wiadomości nadesłanej) oraz `{{run_name}}` (nazwa automatyki nadana przez
+Operatora). Przed podstawieniem, **w obu częściach**:
 
 - usunięcie znaków sterujących i złamań wiersza (ochrona przed wstrzyknięciem
   nagłówka wiadomości),
@@ -283,9 +327,16 @@ Dodatkowo **wyłącznie w części HTML**: ucieczka dla `& < > " '`. Bez niej te
 nadesłany z zewnątrz staje się wektorem wstrzyknięcia znaczników do listu
 wychodzącego.
 
+Obie wartości trafiają także do tematu wiadomości, więc usunięcie złamań
+wiersza jest zabezpieczeniem przed wstrzyknięciem nagłówka — nie tylko
+kosmetyką. Pakiet `rdzen/mail` przyjmuje te wartości osobnym polem
+(`Content.Untrusted`) i odrzuca próbę podania tej samej nazwy jako zaufanej
+i niezaufanej.
+
 Ucieczki HTML **nie stosuje się w części tekstowej** — tam zamieniłaby zwykłe
 znaki na encje widoczne dla odbiorcy jako `&amp;` i `&quot;`. Rozdzielenie obu
-reguł pokazuje `generator-podgladu.py`, funkcja `podstaw`.
+reguł realizuje `rdzen/mail/sanityzacja.go`; pilnują go testy
+`TestBuildTematNiezaufanyBezWstrzykniecia` i `TestBuildCzescTekstowaBezEncji`.
 
 ---
 
@@ -318,19 +369,23 @@ odrzucona. Ograniczenia autorespondera:
   `Auto-Submitted` inny niż `no`, `Precedence: bulk` albo pusty adres zwrotny,
 - list 3 wysyłany z nagłówkiem `Auto-Submitted: auto-replied`.
 
-### 7.3 Nagłówki wymagane w listach 1 i 2
+### 7.3 Nagłówki wymagane
 
 ```
-Auto-Submitted: auto-generated
+Auto-Submitted: auto-generated   (auto-replied w liście 3)
 X-Auto-Response-Suppress: All
-List-Unsubscribe:            (nieobecny — poczta transakcyjna nie podlega wypisaniu)
+List-Unsubscribe:                (nieobecny — poczta transakcyjna nie podlega wypisaniu)
 ```
+
+Nagłówki ustawia `rdzen/mail`; wartość `Auto-Submitted` rozstrzyga mapa
+`autoReplied`. Bez nich autoresponder odbiorcy odpisuje na list z kodem
+logowania, a nasz autoresponder odpowiada na tę odpowiedź.
 
 ---
 
 ## 8. Struktura pliku szablonu
 
-Wszystkie trzy pliki mają ten sam układ pionowy:
+Wszystkie pliki mają ten sam układ pionowy:
 
 ```
 ┌──────────────────────────────────────────────┐
@@ -344,8 +399,10 @@ Wszystkie trzy pliki mają ten sam układ pionowy:
 │ akapit wprowadzający  Plex Sans 15 px        │
 ├──────────────────────────────────────────────┤
 │ panel treści właściwej                       │
-│   list 1 i 2 → kod, Plex Mono 32 px          │
-│   list 3     → nota o braku skrzynki         │
+│   listy 1,2,4,5 → kod, Plex Mono 32 px       │
+│   list 3        → nota o braku skrzynki      │
+│   list 6        → adres wskazany jako nowy   │
+│   list 7        → nazwa automatyki           │
 ├──────────────────────────────────────────────┤
 │ szyna metadanych  Plex Mono 11 px wersaliki  │
 ├──────────────────────────────────────────────┤
@@ -375,7 +432,7 @@ nie zdanie.
 - [ ] wiadomość ma obie części: `text/plain` przed `text/html`
 - [ ] treść obu części równoważna
 - [ ] rozmiar wiadomości poniżej 102 KB
-- [ ] `Auto-Submitted` ustawione we wszystkich trzech listach
+- [ ] `Auto-Submitted` ustawione we wszystkich listach
 
 **Znak i warianty barwne**
 
@@ -388,9 +445,10 @@ nie zdanie.
 
 **Treść i bezpieczeństwo**
 
-- [ ] `{{original_subject}}` oczyszczony w obu częściach, z ucieczką HTML wyłącznie w części HTML
+- [ ] `{{original_subject}}` i `{{run_name}}` oczyszczone w obu częściach, z ucieczką HTML wyłącznie w części HTML
+- [ ] list 7 nie niesie danych z akt sprawy ani treści zadań
 - [ ] list czytelny przy zablokowanych obrazach
-- [ ] ograniczenie częstotliwości autorespondera aktywne
+- [ ] ograniczenie częstotliwości autorespondera aktywne (`runbook-wdrozenia.md`, rozdz. 3)
 - [ ] kod nieobecny w dzienniku serwera poczty
 
 **Klienty**
@@ -399,10 +457,61 @@ nie zdanie.
 
 ---
 
-## 10. Czego w opracowaniu nie ma
+## 10. Pakiet `rdzen/mail`
+
+Szablony same z siebie niczego nie wysyłają. Składanie wiadomości prowadzi
+pakiet Go w `rdzen/mail/`, przeznaczony do przeniesienia do repozytorium rdzenia.
+
+| Plik | Rola |
+|---|---|
+| `szablon.go` | rodzaje listów, wczytanie szablonów, podstawianie zmiennych |
+| `sanityzacja.go` | oczyszczanie i ucieczka wartości spoza rdzenia |
+| `wiadomosc.go` | budowa `multipart`, nagłówki, próg rozmiaru |
+| `base64.go` | łamanie wiersza base64 na 76 znaków (RFC 2045) |
+
+### 10.1 Co pakiet gwarantuje
+
+- **Komplet wartości.** `substitute` zwraca błąd, gdy któraś zmienna została
+  bez wartości — zamiast wysłać list z ciągiem `{{code}}`.
+- **Rozdział wartości zaufanych i niezaufanych.** `Content.Untrusted`
+  przechodzi sanityzację; ta sama nazwa w obu polach to błąd.
+- **Usunięcie komentarzy.** Komentarze szablonu są dokumentacją wewnętrzną
+  i nie mogą trafić do skrzynki Operatora — `Load` je wycina. Komentarz
+  warunkowy Outlooka (`<!--[if …`) zostaje.
+- **Kolejność części.** `text/plain` przed `text/html`.
+- **Kodowanie.** Quoted-printable dla treści (polskie diakrytyki, wiersze HTML
+  powyżej 998 oktetów), base64 łamany co 76 znaków dla obrazów, RFC 2047
+  dla tematu.
+- **Próg rozmiaru.** Wiadomość powyżej `MaxMessageSize` (102 KB) to błąd,
+  nie ostrzeżenie.
+- **Dziennik bez treści.** `Message.LogFields()` zwraca rodzaj listu, adres,
+  identyfikator i rozmiar. Kod, temat i treść nie występują.
+
+### 10.2 Czego pakiet nie robi
+
+Nie wysyła, nie kolejkuje, nie ponawia i nie prowadzi dziennika. Zwraca bajty
+wiadomości; resztę robi warstwa wywołująca.
+
+### 10.3 Wczytanie szablonów w rdzeniu
+
+```go
+//go:embed html/*.html text/*.txt
+var templateFiles embed.FS
+
+set, err := mail.Load(templateFiles)
+```
+
+Testy pakietu czytają szablony bezpośrednio z katalogu
+(`os.DirFS("../..")`), więc rozjazd między szablonem a kodem wychodzi
+przy `go test`, nie przy wysyłce.
+
+---
+
+## 11. Czego w opracowaniu nie ma
 
 | Poza zakresem | Uwaga |
 |---|---|
-| składanie wiadomości w rdzeniu | opracowanie opisuje szablony i budowę `multipart`, nie kod wysyłki |
+| wysyłka i kolejkowanie | pakiet `rdzen/mail` zwraca bajty wiadomości; podanie ich serwerowi, ponowienia i kolejka to warstwa wyżej |
+| zaproszenie Operatora do środowiska | odłożone — wymaga rozstrzygnięcia, co list ujawnia o środowisku odbiorcy spoza organizacji |
 | listy powiadomień roboczych | inny nośnik, inna częstotliwość, osobne opracowanie |
 | wersje językowe inne niż polska | głos marki opisany wyłącznie dla polszczyzny |

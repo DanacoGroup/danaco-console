@@ -1,0 +1,29 @@
+DANACO CONSOLE
+Zamówiono zmianę adresu konta
+
+Odnotowano żądanie zmiany adresu konta {{previous_address}}.
+Do potwierdzenia zmiany konto pozostaje przy tym adresie.
+
+  ADRES WSKAZANY JAKO NOWY:  {{new_address}}
+
+  Żądanie:           {{requested_at}}
+  Adres źródłowy:    {{ip_address}}
+  Urządzenie:        {{device}}
+  Wycofanie ważne:   {{revoke_expiry_hours}} h
+
+Wycofanie zmiany:
+{{revoke_url}}
+
+Wycofanie unieważnia kod wysłany na nowy adres i zostawia konto przy
+adresie dotychczasowym.
+
+Jeżeli zmiana nie pochodzi od Ciebie: wycofaj ją, zmień hasło w oknie
+Ustawienia konta i zgłoś zdarzenie na {{support_address}}, podając adres
+źródłowy i czas żądania.
+
+--
+Wiadomość wysłana automatycznie z adresu noreply@danaco-group.pl.
+Adres nie prowadzi skrzynki odbiorczej — odpowiedź nie zostanie odczytana.
+W sprawach konta pisz na {{support_address}}.
+
+Danaco Holding Group Sp. z o.o. · Danaco Console · {{year}}

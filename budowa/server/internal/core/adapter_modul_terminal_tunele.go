@@ -109,7 +109,7 @@ func (a *adapterTerminala) OtworzTunel(ctx context.Context,
 	}
 	if a.uruchamiacz == nil {
 		return shared.TerminalTunnelOpenResponse{}, bladWykonaniaTerminala(
-			"rdzeń nie ma uruchamiacza procesów, więc nie założy tunelu")
+			"serwer nie ma uruchamiacza procesów, więc nie założy tunelu")
 	}
 
 	cel, kodHosta, kluczSciezka, portCelu, err := a.celTunelu(ctx, z)

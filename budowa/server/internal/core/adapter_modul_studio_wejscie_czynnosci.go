@@ -430,7 +430,7 @@ func (a *adapterStudia) WniesPdfDoEdytora(ctx context.Context,
 				// Odzyskanie tekstu nie przepada — bilans mówi, że obrazy nie weszły.
 				odzyskane.Bilans.Skipped = append(odzyskane.Bilans.Skipped,
 					shared.StudioSkippedItem{
-						Reason: "obrazu nie dało się odłożyć w magazynie zasobów rdzenia",
+						Reason: "obrazu nie dało się odłożyć w magazynie zasobów serwera",
 						Detail: wejscieWskaznikTekstu(err.Error()),
 					})
 				odzyskane.Bilans.ImagesEmbedded = wejscieWskaznikCalkowity(0)
@@ -695,7 +695,7 @@ func (a *adapterStudia) wejscieObrazZeSieci(ctx context.Context, adres string) (
 	}
 	if rozbity.Scheme != "http" && rozbity.Scheme != "https" {
 		return nil, bladWskazaniaStudio("adres " + adres + " ma schemat " + rozbity.Scheme +
-			"; rdzeń sięga wyłącznie po http i https")
+			"; serwer sięga wyłącznie po http i https")
 	}
 	bajty, _, err := pobierzStroneStudia(ctx, rozbity.String())
 	if err != nil {
@@ -1094,7 +1094,7 @@ func (a *adapterStudia) WniesZeSieci(ctx context.Context,
 	if adres.Scheme != "http" && adres.Scheme != "https" {
 		return shared.StudioInsertFromWebResponse{}, bladWskazaniaStudio(
 			"adres " + z.Url + " ma schemat " + adres.Scheme +
-				"; rdzeń sięga wyłącznie po http i https")
+				"; serwer sięga wyłącznie po http i https")
 	}
 	stan, err := a.postacWczytaj(ctx, z.DocumentId)
 	if err != nil {
@@ -1173,7 +1173,7 @@ func (a *adapterStudia) WniesZeSieci(ctx context.Context,
 		tresc = strings.TrimSpace(tresc)
 		if tresc == "" {
 			return shared.StudioInsertFromWebResponse{}, wejscieBladBraku(
-				"strona " + adres.String() + " nie oddała treści tekstowej. Rdzeń pobiera " +
+				"strona " + adres.String() + " nie oddała treści tekstowej. Serwer pobiera " +
 					"stronę bez silnika przeglądarki, więc strona zbudowana wyłącznie " +
 					"skryptem jej tu nie ma; naprawa: wskazać fragment w oknie " +
 					"przeglądarki albo sięgnąć po migawkę komendą browser.snapshot.get")
@@ -1181,7 +1181,7 @@ func (a *adapterStudia) WniesZeSieci(ctx context.Context,
 		if strings.TrimSpace(wartoscTekstu(z.Selector)) != "" {
 			bilans.Skipped = append(bilans.Skipped, shared.StudioSkippedItem{
 				Reason: "wskazanie fragmentu strony nie zawęziło treści",
-				Detail: wejscieWskaznikTekstu("rdzeń pobiera stronę bez silnika " +
+				Detail: wejscieWskaznikTekstu("serwer pobiera stronę bez silnika " +
 					"przeglądarki, więc wskazania CSS nie wykonuje; weszła treść całej " +
 					"strony. Naprawa: podać fragment polem text z okna przeglądarki"),
 			})

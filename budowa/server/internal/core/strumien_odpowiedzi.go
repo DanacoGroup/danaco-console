@@ -12,7 +12,7 @@ import (
 // bladTuryPrzerwanej wyjaśnia domknięcie awaryjne. Zdanie czyta Operator
 // w oknie rozmowy, więc jest po polsku i mówi, co dalej.
 var bladTuryPrzerwanej = errors.New(
-	"tura przerwana usterką rdzenia — strumień odpowiedzi domknięto bez wyniku; " +
+	"tura przerwana usterką serwera — strumień odpowiedzi domknięto bez wyniku; " +
 		"powtórz wysłanie wiadomości, a jeśli powtórzy się to samo, zajrzyj do " +
 		"Errors Panel po zapis usterki")
 

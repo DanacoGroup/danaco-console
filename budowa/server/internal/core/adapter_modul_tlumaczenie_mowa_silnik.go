@@ -67,8 +67,8 @@ func (a *adapterTlumaczenia) zsyntezujDoPliku(ctx context.Context,
 	kodPanelu, jezyk, tekst string) (string, error) {
 
 	if a.uruchamiacz == nil {
-		return "", bladBrakuSyntezatora("rdzeń nie ma uruchamiacza procesów — nie ma czym wystartować " +
-			"syntezatora mowy; naprawa: podpiąć warstwę kanału (injection) przy składaniu rdzenia")
+		return "", bladBrakuSyntezatora("serwer nie ma uruchamiacza procesów — nie ma czym wystartować " +
+			"syntezatora mowy; naprawa: podpiąć warstwę kanału (injection) przy składaniu serwera")
 	}
 
 	wybor, err := dobierzSyntezator(jezyk)
@@ -145,7 +145,7 @@ func (w wyborSyntezatora) argumenty(sciezkaTekstu, sciezkaNagrania string) []str
 func (a *adapterTlumaczenia) katalogNagran() (string, error) {
 	podstawa := strings.TrimSpace(a.katalogDanych)
 	if podstawa == "" {
-		return "", bladBrakuSyntezatora("rdzeń nie zna katalogu danych — nie ma gdzie zapisać nagrania; " +
+		return "", bladBrakuSyntezatora("serwer nie zna katalogu danych — nie ma gdzie zapisać nagrania; " +
 			"naprawa: wskazać katalog danych przełącznikiem -dane albo zmienną DANACO_KATALOG_DANYCH")
 	}
 	katalog := filepath.Join(podstawa, katalogSyntezyMowy)

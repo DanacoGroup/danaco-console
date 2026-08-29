@@ -39,16 +39,16 @@ export const planTresci = {
   ladowanie: 'Wczytywanie rozkładu…',
 
   pusty: {
-    tytul: 'Rdzeń nie podał żadnego zadania',
+    tytul: 'Nie ma żadnego zadania',
     opis: 'Rozkład nie niesie dziś ani jednego zadania w tym stanie.',
   },
 
   odmowa: {
-    okno: 'Rdzeń nie założył okna modułu',
-    sesja: 'Rdzeń nie założył sesji',
-    rozklad: 'Rdzeń odmówił rozkładu zlecenia',
-    brakRozkladu: 'Rdzeń nie podał rozkładu',
-    uruchomienie: 'Rdzeń odmówił uruchomienia pętli',
-    zatrzymanie: 'Rdzeń odmówił zatrzymania pętli',
+    okno: 'Nie udało się otworzyć okna modułu',
+    sesja: 'Nie udało się założyć sesji',
+    rozklad: 'Nie udało się rozłożyć zlecenia',
+    brakRozkladu: 'Rozkład nie został podany',
+    uruchomienie: 'Nie udało się uruchomić pętli',
+    zatrzymanie: 'Nie udało się zatrzymać pętli',
   },
 } as const;

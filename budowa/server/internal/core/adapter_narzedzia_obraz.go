@@ -111,7 +111,7 @@ func (a *adapterNarzedziObrazu) rozwiazZrodlo(ctx context.Context,
 func (a *adapterNarzedziObrazu) zrodloZZasobu(ctx context.Context, kod string) (zrodloObrazu, error) {
 	if a.repozytorium == nil {
 		return zrodloObrazu{}, bladZapleczaObrazu(
-			"rdzeń nie ma magazynu zasobów — nie ma gdzie szukać wskazanego obrazu")
+			"serwer nie ma magazynu zasobów — nie ma gdzie szukać wskazanego obrazu")
 	}
 	if kod == "" {
 		return zrodloObrazu{}, bladWskazaniaObrazu("wskazanie zasobu jest puste")
@@ -172,9 +172,9 @@ func (a *adapterNarzedziObrazu) wolajImageMagick(ctx context.Context,
 	podpolecenie string, argumenty []string, zapasowy string) ([]byte, error) {
 
 	if a.uruchamiacz == nil {
-		return nil, bladZapleczaNiedostepnego("rdzeń nie ma uruchamiacza procesów — " +
+		return nil, bladZapleczaNiedostepnego("serwer nie ma uruchamiacza procesów — " +
 			"narzędzia obrazu nie mają czym wystartować; " +
-			"naprawa: podpiąć warstwę kanału (injection) przy składaniu rdzenia")
+			"naprawa: podpiąć warstwę kanału (injection) przy składaniu serwera")
 	}
 
 	program := a.wybierzProgram(zapasowy)

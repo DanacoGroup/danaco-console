@@ -1015,7 +1015,7 @@ func aparatSprawdzRodzaj(rodzaj shared.StudioApparatusKind) error {
 		nazwy = append(nazwy, string(znany))
 	}
 	return bladWskazaniaStudio("element aparatu rodzaju „" + string(rodzaj) +
-		"”, którego rdzeń nie zna; wykaz: " + strings.Join(nazwy, ", "))
+		"”, którego serwer nie zna; wykaz: " + strings.Join(nazwy, ", "))
 }
 
 // aparatSprawdzWymagania pilnuje, żeby element aparatu wchodził z tym, bez

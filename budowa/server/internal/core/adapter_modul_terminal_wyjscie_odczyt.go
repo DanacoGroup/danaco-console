@@ -31,7 +31,7 @@ func (a *adapterWyjsciaTerminala) OdczytajWyjscie(ctx context.Context,
 	if a == nil || a.dziennik == nil {
 		return shared.TerminalOutputReadResponse{}, protocol.JakoError(protocol.NowyBlad(
 			shared.ErrorCodeInternalError,
-			"moduł Terminal: rdzeń nie ma nadajnika wyjścia, więc nie prowadzi dziennika wyjścia "+
+			"moduł Terminal: serwer nie ma nadajnika wyjścia, więc nie prowadzi dziennika wyjścia "+
 				"procesów — wyjścia polecenia nie ma skąd wziąć"))
 	}
 	kod := strings.TrimSpace(z.ProcessId)
@@ -43,9 +43,9 @@ func (a *adapterWyjsciaTerminala) OdczytajWyjscie(ctx context.Context,
 	if !jest {
 		return shared.TerminalOutputReadResponse{}, protocol.JakoError(protocol.NowyBlad(
 			shared.ErrorCodeNotFound,
-			"moduł Terminal: proces "+kod+" nie występuje w rejestrze rdzenia — "+
+			"moduł Terminal: proces "+kod+" nie występuje w rejestrze serwera — "+
 				"albo nigdy nie ruszył, albo wypadł z historii (pojemność 500 przebiegów), "+
-				"albo rdzeń był od tego czasu uruchomiony ponownie"))
+				"albo serwer był od tego czasu uruchomiony ponownie"))
 	}
 
 	// Czekanie idzie przed odczytem, żeby wiersze dopisane w jego trakcie

@@ -1,8 +1,12 @@
 /**
- * Strefa 2 — szyna nawigacji. Pionowy pas ze środowiskiem bieżącym u góry
- * listy i modułami tego środowiska pod nim; wybór modułu okna roboczego jest
- * osobnym terenem, więc pozycja tu wyłącznie oznacza się jako bieżąca
- * i zmienia tytuł w belce.
+ * Strefa 2 — szyna nawigacji. Pionowy pas z pozycją każdego środowiska, jakie
+ * rdzeń wymienił w `environment.list`; środowisko bieżące stoi rozwinięte
+ * i niesie pod sobą swoje moduły. Rdzeń podaje moduły wyłącznie środowiska,
+ * do którego przebieg wszedł, więc pozostałe stoją zwinięte i puste — wejście
+ * w nie woła `environment.enter` i składa ramę od nowa na tym, co wróci.
+ *
+ * Wybór modułu okna roboczego jest osobnym terenem, więc pozycja modułu
+ * wyłącznie oznacza się jako bieżąca i zmienia tytuł w belce.
  */
 
 import type { Environment, Module } from '../../../../shared/contract.ts';
@@ -14,6 +18,10 @@ export interface WlasciwosciSzyny {
   srodowisko: Environment;
   /** Moduły środowiska bieżącego, w kolejności odebranej od rdzenia. */
   moduly: Module[];
+  /** Wszystkie środowiska rdzenia; pusty wykaz zostawia w szynie samo bieżące. */
+  srodowiska?: Environment[];
+  /** Wejście w środowisko inne niż bieżące; brak — pozycje pozostałych stoją nieczynne. */
+  wejdz?: (srodowisko: Environment) => void;
 }
 
 /** Rysunek środowiska po kodzie; kody spoza wykazu katalogu rdzenia dostają godło produktu. */
@@ -75,34 +83,43 @@ export function szyna(w: WlasciwosciSzyny): HTMLElement {
   const znakMarki = zeZnacznika(ikony.godlo);
   znakMarki.setAttribute('aria-hidden', 'true');
 
-  const rysunekSrodowiska = ZNAK_SRODOWISKA[w.srodowisko.code] ?? 'godlo';
-  const idModuly = 'dn-szyna-moduly';
+  /* Wykaz pusty znaczy, że rdzeń nie wymienił środowisk — zostaje samo bieżące,
+     bo do niego przebieg naprawdę wszedł. */
+  const wykaz = w.srodowiska !== undefined && w.srodowiska.length > 0 ? w.srodowiska : [w.srodowisko];
 
-  const pozycjaSrodowiska = el(
-    'button',
-    {
-      klasa: 'dn-szyna-poz dn-szyna-poz--srodowisko dn-etykietka',
-      type: 'button',
-      'data-srodowisko': w.srodowisko.code,
-      'aria-current': 'true',
-      'aria-expanded': 'true',
-      'aria-controls': idModuly,
-      'data-etykietka': w.srodowisko.name,
-      'aria-label': w.srodowisko.name,
-    },
-    [znak(rysunekSrodowiska)],
-  );
+  const pozycje: HTMLElement[] = [];
+  for (const srodowisko of [...wykaz].sort((a, b) => a.order - b.order)) {
+    const biezace = srodowisko.id === w.srodowisko.id;
+    const idModuly = `dn-szyna-moduly-${srodowisko.code}`;
+    const pozycja = el(
+      'button',
+      {
+        klasa: 'dn-szyna-poz dn-szyna-poz--srodowisko dn-etykietka',
+        type: 'button',
+        'data-srodowisko': srodowisko.code,
+        'data-biezace': biezace ? 'true' : null,
+        'aria-current': biezace ? 'true' : null,
+        'aria-expanded': biezace ? 'true' : 'false',
+        'aria-controls': idModuly,
+        'data-etykietka': srodowisko.name,
+        'aria-label': srodowisko.name,
+      },
+      [znak(ZNAK_SRODOWISKA[srodowisko.code] ?? 'godlo')],
+    );
+    if (!biezace && w.wejdz !== undefined) {
+      pozycja.addEventListener('click', () => w.wejdz?.(srodowisko));
+    }
+    pozycje.push(pozycja);
+    pozycje.push(
+      el(
+        'div',
+        { klasa: 'dn-szyna-moduly', id: idModuly, role: 'group', 'aria-label': srodowisko.name },
+        biezace ? w.moduly.map((modul, indeks) => pozycjaModulu(modul, indeks === 0)) : [],
+      ),
+    );
+  }
 
-  const moduly = el(
-    'div',
-    { klasa: 'dn-szyna-moduly', id: idModuly, role: 'group', 'aria-label': w.srodowisko.name },
-    w.moduly.map((modul, indeks) => pozycjaModulu(modul, indeks === 0)),
-  );
-
-  const lista = el('div', { klasa: 'dn-szyna-nawigacji-lista', role: 'group', 'aria-label': tekst('szyna.etykieta') }, [
-    pozycjaSrodowiska,
-    moduly,
-  ]);
+  const lista = el('div', { klasa: 'dn-szyna-nawigacji-lista', role: 'group', 'aria-label': tekst('szyna.etykieta') }, pozycje);
 
   return el('nav', { klasa: 'dn-szyna-nawigacji', 'aria-label': tekst('szyna.etykieta') }, [
     el('div', { klasa: 'dn-szyna-poz', 'aria-hidden': true }, [znakMarki]),

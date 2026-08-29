@@ -16,7 +16,7 @@ import (
 )
 
 // zrodloRdzenia znakuje wpisy pochodzące z dziennika technicznego rdzenia, odróżniając je od wpisów modułów.
-const zrodloRdzenia = "rdzeń"
+const zrodloRdzenia = "serwer"
 
 // wielkoscPartii ogranicza jedną transakcję zapisu dziennika modułu Diagnostics do bazy danych rdzenia.
 const wielkoscPartii = 64

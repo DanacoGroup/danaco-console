@@ -42,7 +42,7 @@ func OtworzNagranie(odnosnik string) (Nagranie, error) {
 	opis, err := os.Stat(sciezka)
 	if err != nil {
 		return Nagranie{}, &BrakNagrania{Sciezka: sciezka,
-			Powod: "pliku nie ma albo rdzeń nie ma do niego dostępu: " + err.Error()}
+			Powod: "pliku nie ma albo serwer nie ma do niego dostępu: " + err.Error()}
 	}
 	if opis.IsDir() {
 		return Nagranie{}, &BrakNagrania{Sciezka: sciezka,

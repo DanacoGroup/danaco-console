@@ -34,7 +34,7 @@ func (a *adapterProwenancji) PowtorzWywolanie(ctx context.Context,
 	}
 	if a.repozytorium == nil {
 		return shared.ProvenanceCallReplayResponse{},
-			odmowaSladu(shared.ErrorCodeInternalError, "rdzeń nie ma wpiętego magazynu śladu")
+			odmowaSladu(shared.ErrorCodeInternalError, "serwer nie ma wpiętego magazynu śladu")
 	}
 	pierwowzor, err := a.repozytorium.Wywolanie(ctx, kod)
 	if err != nil {
@@ -57,7 +57,7 @@ func (a *adapterProwenancji) PowtorzWywolanie(ctx context.Context,
 	}
 	if a.kanaly == nil {
 		return shared.ProvenanceCallReplayResponse{}, odmowaSladu(shared.ErrorCodeChannelUnavailable,
-			"rdzeń nie ma wpiętego rejestru kanałów — powtórzenie jest nowym wywołaniem "+
+			"serwer nie ma wpiętego rejestru kanałów — powtórzenie jest nowym wywołaniem "+
 				"kanału modelu, a nie odczytem śladu, więc bez rejestru nie ma czym go wykonać")
 	}
 
@@ -68,12 +68,12 @@ func (a *adapterProwenancji) PowtorzWywolanie(ctx context.Context,
 	if kanal == "" {
 		return shared.ProvenanceCallReplayResponse{}, odmowaSladu(shared.ErrorCodeValidationFailed,
 			"pierwowzór nie ma zapisanego kanału, a żądanie go nie wskazuje — "+
-				"rdzeń nie dobiera kanału za Operatora, bo powtórzenie na innym kanale "+
+				"serwer nie dobiera kanału za Operatora, bo powtórzenie na innym kanale "+
 				"jest innym doświadczeniem niż to, które miało zostać powtórzone")
 	}
 	if _, jest := a.kanaly.Kanal(kanal); !jest {
 		return shared.ProvenanceCallReplayResponse{}, odmowaSladu(shared.ErrorCodeChannelUnavailable,
-			"kanału „"+kanal+"” nie ma w rejestrze kanałów rdzenia albo jest wyłączony")
+			"kanału „"+kanal+"” nie ma w rejestrze kanałów serwera albo jest wyłączony")
 	}
 
 	kodPowtorzenia := nowyIdentyfikator(przedrostekPowtorzenia)

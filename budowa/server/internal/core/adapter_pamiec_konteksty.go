@@ -118,7 +118,7 @@ func (a *adapterKontekstowPamieci) UaktywnijKontekst(ctx context.Context,
 	}
 	if strings.TrimSpace(z.SessionId) == "" {
 		return shared.MemoryContextActivateResponse{}, bladWskazaniaKontekstu(
-			"aktywacja bez wskazania karty sesji — kontekst czynny należy do karty, nie do rdzenia")
+			"aktywacja bez wskazania karty sesji — kontekst czynny należy do karty, nie do serwera")
 	}
 	kontekst, err := a.repozytorium.KontekstPamieciPoKodzie(ctx, strings.TrimSpace(z.ContextId))
 	if err != nil {
@@ -308,8 +308,8 @@ func zasadaRetencjiKontraktu(z dane.ZasadaRetencjiPamieci) shared.MemoryRetentio
 // naprawę: podpięcie repozytorium kontekstów pamięci przy składaniu rdzenia.
 func bladZapleczaKontekstow() error {
 	return protocol.JakoError(protocol.NowyBlad(shared.ErrorCodeInternalError,
-		"konteksty pamięci: rdzeń nie ma wpiętego magazynu — naprawa: podpiąć "+
-			"repozytorium kontekstów pamięci przy składaniu rdzenia"))
+		"konteksty pamięci: serwer nie ma wpiętego magazynu — naprawa: podpiąć "+
+			"repozytorium kontekstów pamięci przy składaniu serwera"))
 }
 
 // bladWskazaniaKontekstu nazywa niepoprawne żądanie komendy kontekstów pamięci,

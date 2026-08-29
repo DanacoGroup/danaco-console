@@ -29,7 +29,7 @@ func (a *adapterDesignu) ZbudujKompletKampanii(ctx context.Context,
 	}
 	if len(z.Sizes) == 0 {
 		return shared.DesignCampaignSetBuildResponse{}, bladWskazaniaDesignu(
-			"komenda design.campaign.set.build bez ani jednego rozmiaru: rdzeń nie wymyśla, " +
+			"komenda design.campaign.set.build bez ani jednego rozmiaru: serwer nie wymyśla, " +
 				"w jakich formatach ma wyjść kampania")
 	}
 	format := "png"
@@ -139,7 +139,7 @@ func (a *adapterDesignu) SzukajWBazachZdjeciowych(ctx context.Context,
 	if z.Limit != nil {
 		if *z.Limit < 1 || *z.Limit > granicaWynikowDostawcyDesignu {
 			return shared.DesignStockSearchResponse{}, bladWskazaniaDesignu(fmt.Sprintf(
-				"komenda design.stock.search z granicą %d: rdzeń pyta o od 1 do %d zasobów na "+
+				"komenda design.stock.search z granicą %d: serwer pyta o od 1 do %d zasobów na "+
 					"dostawcę", *z.Limit, granicaWynikowDostawcyDesignu))
 		}
 		limit = *z.Limit
@@ -150,7 +150,7 @@ func (a *adapterDesignu) SzukajWBazachZdjeciowych(ctx context.Context,
 		dostawca, znany := dostawcaZdjecPoNazwieDesignu(*z.Provider)
 		if !znany {
 			return shared.DesignStockSearchResponse{}, bladWskazaniaDesignu(fmt.Sprintf(
-				"komenda design.stock.search z dostawcą %q, którego rdzeń nie zna; dostawcy: %s",
+				"komenda design.stock.search z dostawcą %q, którego serwer nie zna; dostawcy: %s",
 				*z.Provider, strings.Join(nazwyDostawcowZdjecDesignu(), ", ")))
 		}
 		pytani = []dostawcaZdjecDesignu{dostawca}
@@ -238,7 +238,7 @@ func (a *adapterDesignu) WciagnijZBazyZdjeciowej(ctx context.Context,
 	dostawca, znany := dostawcaZdjecPoNazwieDesignu(z.Provider)
 	if !znany {
 		return shared.DesignStockImportResponse{}, bladWskazaniaDesignu(fmt.Sprintf(
-			"komenda design.stock.import z dostawcą %q, którego rdzeń nie zna; dostawcy: %s",
+			"komenda design.stock.import z dostawcą %q, którego serwer nie zna; dostawcy: %s",
 			z.Provider, strings.Join(nazwyDostawcowZdjecDesignu(), ", ")))
 	}
 	klucz := ""
@@ -246,7 +246,7 @@ func (a *adapterDesignu) WciagnijZBazyZdjeciowej(ctx context.Context,
 		klucz = a.kluczDostawcyZdjecDesignu(ctx, dostawca.Nazwa)
 		if klucz == "" {
 			return shared.DesignStockImportResponse{}, bladWskazaniaDesignu(fmt.Sprintf(
-				"dostawca %s wymaga klucza, a w sejfie rdzenia nie ma wpisu pod bytem %s%s — "+
+				"dostawca %s wymaga klucza, a w sejfie serwera nie ma wpisu pod bytem %s%s — "+
 					"wciągnięcie pojedynczego zasobu nie ma czym zapytać; dostawcy pracujący bez "+
 					"klucza: openverse, wikimedia, met, nasa",
 				dostawca.Nazwa, przedrostekBytuSejfuZdjecDesignu, dostawca.Nazwa))
@@ -266,7 +266,7 @@ func (a *adapterDesignu) WciagnijZBazyZdjeciowej(ctx context.Context,
 	}
 	if strings.TrimSpace(opis.Licencja) == "" {
 		return shared.DesignStockImportResponse{}, bladWskazaniaDesignu(fmt.Sprintf(
-			"dostawca %s nie podał licencji zasobu %s — rdzeń nie wciąga materiału, o którym "+
+			"dostawca %s nie podał licencji zasobu %s — serwer nie wciąga materiału, o którym "+
 				"nikt później nie powie, czy wolno go było użyć",
 			dostawca.Nazwa, z.ExternalId))
 	}

@@ -126,15 +126,15 @@ type Klient struct {
 func Polacz(n Nastawy) (*Klient, error) {
 	if strings.TrimSpace(n.HostOdbioru) == "" {
 		return nil, fmt.Errorf("skrzynka %s nie ma wskazanego serwera poczty przychodzącej — "+
-			"rdzeń nie zgaduje hosta dostawcy", n.Adres)
+			"serwer nie zgaduje hosta dostawcy", n.Adres)
 	}
 	if strings.TrimSpace(n.Sekret) == "" {
-		return nil, fmt.Errorf("skrzynka %s nie ma poświadczenia w sejfie rdzenia — "+
+		return nil, fmt.Errorf("skrzynka %s nie ma poświadczenia w sejfie serwera — "+
 			"podepnij ją ponownie komendą mail.account.add, podając hasło albo token", n.Adres)
 	}
 	if protokol(n) != ProtokolImap {
-		return nil, fmt.Errorf("skrzynka %s jest opisana protokołem %q, a rdzeń mówi dziś wyłącznie IMAP-em — "+
-			"JMAP i POP3 są w kontrakcie, lecz w rdzeniu ich nie ma", n.Adres, protokol(n))
+		return nil, fmt.Errorf("skrzynka %s jest opisana protokołem %q, a serwer mówi dziś wyłącznie IMAP-em — "+
+			"JMAP i POP3 są w kontrakcie, lecz w serwerze ich nie ma", n.Adres, protokol(n))
 	}
 
 	// net.JoinHostPort, bo adres IPv6 niesie własne dwukropki.

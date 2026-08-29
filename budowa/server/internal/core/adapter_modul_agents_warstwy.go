@@ -183,7 +183,7 @@ func sprawdzWarstweEksperta(warstwa shared.IdentityLayer) error {
 // i miejsce, w którym brak repozytorium się usuwa.
 func bladBrakuWarstwEksperta(komenda shared.MessageType) error {
 	return protocol.JakoError(protocol.NowyBlad(shared.ErrorCodeInternalError,
-		"rdzeń: komenda "+string(komenda)+" odmawia wykonania, ponieważ repozytorium warstw "+
+		"serwer: komenda "+string(komenda)+" odmawia wykonania, ponieważ repozytorium warstw "+
 			"eksperta nie jest wpięte do adaptera agentów; wpięcie zakłada się w pliku "+
 			"server/internal/core/montaz_porty.go przy wywołaniu nowyAdapterAgentow(s.repozytoria.Agenci), "+
 			"dopisując ogniwo .ZWarstwami(s.repozytoria.WarstwyAgenta)"))

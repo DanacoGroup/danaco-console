@@ -50,7 +50,7 @@ func (a *adapterDesignu) GenerujPalete(_ context.Context,
 	if z.Count != nil {
 		if *z.Count < 1 || *z.Count > granicaBarwPaletyDesignu {
 			return shared.DesignColorPaletteGenerateResponse{}, bladWskazaniaDesignu(fmt.Sprintf(
-				"komenda design.color.palette.generate z liczbą barw %d: rdzeń liczy palety od 1 "+
+				"komenda design.color.palette.generate z liczbą barw %d: serwer liczy palety od 1 "+
 					"do %d barw", *z.Count, granicaBarwPaletyDesignu))
 		}
 		ile = *z.Count
@@ -427,7 +427,7 @@ func (a *adapterDesignu) ZbadajDostepnoscBarw(ctx context.Context,
 	if err != nil {
 		if czyBrakZasobuDesignu(err) {
 			return shared.DesignColorAccessibilityAuditResponse{}, bladNieznanegoBytuDesignu(
-				"zestawu żetonów " + z.TokenSetId + " nie ma w tym rdzeniu")
+				"zestawu żetonów " + z.TokenSetId + " nie ma w tym serwerze")
 		}
 		return shared.DesignColorAccessibilityAuditResponse{}, bladDesignu(err)
 	}

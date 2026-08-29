@@ -10,22 +10,22 @@ export const tresciRepo = {
   },
 
   stany: {
-    brakOkna: 'Rdzeń nie założył okna modułu.',
-    oczekiwanieDokumentu: 'Rdzeń nie przypisał jeszcze dokumentu temu oknu.',
+    brakOkna: 'Nie udało się otworzyć okna modułu.',
+    oczekiwanieDokumentu: 'To okno nie ma jeszcze przypisanego dokumentu.',
     wczytywanie: 'Wczytywanie historii wersji…',
   },
 
   odmowa: {
-    lista: 'Rdzeń odmówił historii wersji',
-    przywroc: 'Rdzeń odmówił przywrócenia wersji.',
-    galaz: 'Rdzeń odmówił założenia gałęzi.',
-    etykieta: 'Rdzeń odmówił zmiany etykiety.',
-    eksport: 'Rdzeń odmówił eksportu historii.',
-    brakOpisu: 'Rdzeń nie podał powodu odmowy.',
+    lista: 'Nie udało się wczytać historii wersji',
+    przywroc: 'Nie udało się przywrócić wersji.',
+    galaz: 'Nie udało się założyć gałęzi.',
+    etykieta: 'Nie udało się zmienić etykiety.',
+    eksport: 'Nie udało się wyeksportować historii.',
+    brakOpisu: 'Powód nie został podany.',
   },
 
   pusto: {
-    tytul: 'Rdzeń nie zgłosił żadnej wersji dokumentu',
+    tytul: 'Ten dokument nie ma jeszcze żadnej wersji',
     opis: 'Wersje pojawią się tu po pierwszym zapisie w dokumencie.',
   },
 

@@ -76,7 +76,7 @@ func ostrzezJezeliWystawiony(u Ustawienia) {
 // w pełnym znaczeniu: mówi o rdzeniu stojącym w sieci otworem.
 const ostrzezenieZniesienia = "transport: OSTRZEŻENIE — nasłuch %s wychodzi poza pętlę zwrotną, " +
 	"a wymóg logowania został ZNIESIONY wskazaniem Operatora; " +
-	"znaczy to, że rdzeń wykona komendy każdego, kto dosięgnie tego adresu w sieci, " +
+	"znaczy to, że serwer wykona komendy każdego, kto dosięgnie tego adresu w sieci, " +
 	"tak samo jak komendy Operatora — łącznie z torem zdalnym do jego maszyn (tabela host_zdalny " +
 	"wydaje zgodę HOSTOWI, nie wołającemu)."
 

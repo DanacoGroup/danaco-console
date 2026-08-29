@@ -84,14 +84,14 @@ func rozwiazZalacznik(magazyn *magazynTresciBiblioteki, odwolanie string) zalacz
 		}
 		return zalacznikTury{
 			Odwolanie: odwolanie,
-			Powod:     "ścieżka wskazana załącznikiem nie prowadzi do pliku na nośniku rdzenia",
+			Powod:     "ścieżka wskazana załącznikiem nie prowadzi do pliku na nośniku serwera",
 		}
 	}
 	// Rdzeń nie zna magazynu tłumaczącego identyfikator na treść, więc odwołanie wraca jako niedoręczone.
 	return zalacznikTury{
 		Odwolanie: odwolanie,
 		Powod: "odwołanie nie jest ani URI danych, ani ścieżką bezwzględną — " +
-			"rdzeń nie ma magazynu, który rozwiązałby je do treści",
+			"serwer nie ma magazynu, który rozwiązałby je do treści",
 	}
 }
 
@@ -101,7 +101,7 @@ func zURIDanych(magazyn *magazynTresciBiblioteki, odwolanie string) zalacznikTur
 	miejsce := strings.Index(odwolanie, znacznikBase64URI)
 	if miejsce < 0 {
 		return zalacznikTury{Odwolanie: skrot,
-			Powod: "URI danych bez ładunku base64 — rdzeń nie odkłada treści, której w odwołaniu nie ma"}
+			Powod: "URI danych bez ładunku base64 — serwer nie odkłada treści, której w odwołaniu nie ma"}
 	}
 	typNosny := odwolanie[len(przedrostekURIDanych):miejsce]
 	bajty, err := base64.StdEncoding.DecodeString(odwolanie[miejsce+len(znacznikBase64URI):])
@@ -120,7 +120,7 @@ func zURIDanych(magazyn *magazynTresciBiblioteki, odwolanie string) zalacznikTur
 	nazwa := hex.EncodeToString(suma[:]) + rozszerzenieZalacznika(typNosny)
 	sciezka, err := magazyn.Zapisz(bajty, nazwa)
 	if err != nil {
-		return zalacznikTury{Odwolanie: skrot, Powod: "zapis załącznika w magazynie rdzenia nie powiódł się: " + err.Error()}
+		return zalacznikTury{Odwolanie: skrot, Powod: "zapis załącznika w magazynie serwera nie powiódł się: " + err.Error()}
 	}
 	return zalacznikTury{Odwolanie: skrot, Sciezka: sciezka}
 }
@@ -152,7 +152,7 @@ func wplecZalaczniki(tresc string, zalaczniki []zalacznikTury) string {
 	}
 	var blok strings.Builder
 	blok.WriteString("[Załączniki wiadomości Operatora]\n")
-	blok.WriteString("Poniższe pliki leżą na nośniku tego rdzenia. Sięgnij po nie narzędziem odczytu pliku, jeżeli są potrzebne do odpowiedzi.\n")
+	blok.WriteString("Poniższe pliki leżą na nośniku tego serwera. Sięgnij po nie narzędziem odczytu pliku, jeżeli są potrzebne do odpowiedzi.\n")
 	for numer, z := range zalaczniki {
 		if z.Sciezka != "" {
 			fmt.Fprintf(&blok, "%d. %s\n", numer+1, z.Sciezka)

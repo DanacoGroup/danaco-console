@@ -36,7 +36,7 @@ func (a *adapterAsystenta) domknijZastaneZlecenia(ctx context.Context) {
 					continue
 				}
 				a.zerwijZlecenie(ctx, zlecenie, zlecenie.Kod, okno.IdSesji,
-					"rdzeń został zatrzymany w trakcie tury tego zlecenia, a tura nie przeżywa"+
+					"serwer został zatrzymany w trakcie tury tego zlecenia, a tura nie przeżywa"+
 						" zatrzymania procesu; naprawa: ponowić zlecenie (control: retry)")
 			}
 		}

@@ -53,7 +53,7 @@ func (r *repozytoriumPodagentow) OznaczProwadzenie(ctx context.Context,
 		return nil
 	}
 	if uruchomienie == "" {
-		return fmt.Errorf("dane: oznaczenie prowadzenia bez znacznika uruchomienia rdzenia")
+		return fmt.Errorf("dane: oznaczenie prowadzenia bez znacznika uruchomienia serwera")
 	}
 	return wTransakcji(ctx, r.db, func(transakcja *sql.Tx) error {
 		polecenie, err := r.zapytania.wTransakcji(ctx, transakcja, oznaczProwadzeniePodagenta)
@@ -77,7 +77,7 @@ func (r *repozytoriumPodagentow) ZamknijOsierocone(ctx context.Context,
 	uruchomienie, wyjasnienie string) ([]Podagent, error) {
 
 	if uruchomienie == "" {
-		return nil, fmt.Errorf("dane: zamykanie sierot bez znacznika uruchomienia rdzenia")
+		return nil, fmt.Errorf("dane: zamykanie sierot bez znacznika uruchomienia serwera")
 	}
 	var osieroceni []Podagent
 	err := wTransakcji(ctx, r.db, func(transakcja *sql.Tx) error {

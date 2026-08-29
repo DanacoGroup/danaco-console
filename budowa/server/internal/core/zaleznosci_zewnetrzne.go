@@ -37,7 +37,7 @@ func zaleznosciZewnetrzne() []ZaleznoscZewnetrzna {
 				"droga wraca do wersji zapasowej przez HTML i LibreOffice"},
 		// Tika i LanguageTool to programy Javy: wskazują ten sam plik wykonywalny, ale stoją w wykazie osobno.
 		{Narzedzie: narzedzieTiki,
-			Zakres: "odczyt treści pliku w formacie spoza słownika rdzenia " +
+			Zakres: "odczyt treści pliku w formacie spoza słownika serwera " +
 				"(document.text.extract) — arkusz, prezentacja, wiadomość poczty"},
 		{Narzedzie: narzedzieLanguageToola,
 			Zakres: "gramatyka, ortografia, interpunkcja, typografia i styl w korekcie " +
@@ -168,12 +168,12 @@ func zaleznosciZewnetrzne() []ZaleznoscZewnetrzna {
 				"tę samą przeglądarkę, zamiast pobierać własną"},
 		{Narzedzie: narzedziePa11y,
 			Zakres: "audyt dostępności bieżącej strony okna wobec normy WCAG " +
-				"(browser.accessibility.audit) — reguły normy są cudzą wiedzą i rdzeń " +
+				"(browser.accessibility.audit) — reguły normy są cudzą wiedzą i serwer " +
 				"ich nie przepisuje"},
 		{Narzedzie: narzedzieLighthouse,
 			Zakres: "audyt wydajności strony produktu wraz z Core Web Vitals " +
 				"(apps.performance.audit) — miary powstają w przeglądarce po wykonaniu " +
-				"skryptów, więc rdzeń nie policzy ich własnym pobraniem"},
+				"skryptów, więc serwer nie policzy ich własnym pobraniem"},
 		{Narzedzie: narzedzieAutocannon,
 			Zakres: "przebieg obciążeniowy punktu końcowego wraz z percentylami czasu " +
 				"odpowiedzi i przepustowością (developer.api.load.run) — " +

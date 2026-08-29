@@ -9,7 +9,7 @@ export const tresciPliki = {
   urzadzenia: {
     tytul: 'Urządzenia wejściowe',
     ladowanie: 'Sprawdzanie urządzeń wejściowych…',
-    brak: 'Rdzeń nie zgłosił żadnego urządzenia wejściowego.',
+    brak: 'Nie znaleziono żadnego urządzenia wejściowego.',
     podajnik: 'z podajnikiem',
     skanuj: 'Skanuj',
     skanowanie: 'Skanowanie…',
@@ -18,7 +18,7 @@ export const tresciPliki = {
   kolejka: {
     tytul: 'Kolejka wczytywania',
     ladowanie: 'Wczytywanie kolejki…',
-    brak: 'Rdzeń nie zgłosił żadnej pozycji w kolejce wczytywania.',
+    brak: 'Kolejka wczytywania jest pusta.',
     stron: 'stron',
     pewnosc: 'pewność rozpoznania',
     zPisma: 'tekst z rozpoznania pisma',
@@ -33,7 +33,7 @@ export const tresciPliki = {
   },
 
   dodaj: {
-    etykietaSciezki: 'Ścieżka materiału widziana przez rdzeń',
+    etykietaSciezki: 'Ścieżka materiału na serwerze',
     doloz: 'Dołóż plik',
     dokladanie: 'Dokładanie…',
   },
@@ -64,13 +64,13 @@ export const tresciPliki = {
   },
 
   odmowa: {
-    urzadzenia: 'Rdzeń odmówił wykazu urządzeń',
-    kolejka: 'Rdzeń odmówił wykazu kolejki',
-    dodanie: 'Rdzeń odmówił dołożenia materiału',
-    rozpoznanie: 'Rdzeń odmówił rozpoznania',
-    poprawka: 'Rdzeń odmówił zapisu poprawki',
-    przyjecie: 'Rdzeń odmówił przyjęcia do edytora',
-    adres: 'Rdzeń odmówił pobrania strony',
-    skan: 'Rdzeń odmówił skanowania',
+    urzadzenia: 'Nie udało się wczytać wykazu urządzeń',
+    kolejka: 'Nie udało się wczytać kolejki',
+    dodanie: 'Nie udało się dołożyć materiału',
+    rozpoznanie: 'Nie udało się rozpoznać pisma',
+    poprawka: 'Nie udało się zapisać poprawki',
+    przyjecie: 'Nie udało się wnieść do edytora',
+    adres: 'Nie udało się pobrać strony',
+    skan: 'Nie udało się uruchomić skanowania',
   },
 } as const;

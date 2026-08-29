@@ -30,7 +30,7 @@ func (a *adapterTerminala) ZapiszSkrypt(ctx context.Context,
 	}
 	if z.Script.Shell != "" && !CzyPowlokaZnana(z.Script.Shell) {
 		return shared.TerminalScriptSaveResponse{}, bladZadaniaTerminala(
-			"powłoka " + string(z.Script.Shell) + " nie należy do wykazu wykonawczego rdzenia")
+			"powłoka " + string(z.Script.Shell) + " nie należy do wykazu wykonawczego serwera")
 	}
 	rodzaj := z.Script.Kind
 	if rodzaj == "" {

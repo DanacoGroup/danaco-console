@@ -35,7 +35,7 @@ func (a *adapterDevelopera) WykazBudowan(ctx context.Context,
 	}
 	if a.repozytorium == nil {
 		return shared.DeveloperBuildListResponse{}, bladZasobuDevelopera(
-			"rdzeń nie ma dziennika przebiegów budowania")
+			"serwer nie ma dziennika przebiegów budowania")
 	}
 
 	stan := ""
@@ -118,7 +118,7 @@ func (a *adapterDevelopera) trescLoguPrzebiegu(ctx context.Context,
 	}
 	if a.repozytorium == nil {
 		return "", false, bladZasobuDevelopera(
-			"przebieg " + kod + " nie biegnie, a rdzeń nie ma dziennika przebiegów")
+			"przebieg " + kod + " nie biegnie, a serwer nie ma dziennika przebiegów")
 	}
 	wiersz, err := a.repozytorium.Przebieg(ctx, kod)
 	if errors.Is(err, dane.ErrBrakWiersza) {
@@ -149,7 +149,7 @@ func (a *adapterDevelopera) WynikTestow(ctx context.Context,
 	}
 	if a.repozytorium == nil {
 		return shared.DeveloperTestResultGetResponse{}, bladZasobuDevelopera(
-			"rdzeń nie ma dziennika przebiegów, więc nie ma skąd wziąć wyniku testów")
+			"serwer nie ma dziennika przebiegów, więc nie ma skąd wziąć wyniku testów")
 	}
 
 	stan := ""
@@ -218,7 +218,7 @@ func (a *adapterDevelopera) Pokrycie(ctx context.Context,
 	}
 	if a.repozytorium == nil {
 		return shared.DeveloperCoverageGetResponse{}, bladZasobuDevelopera(
-			"rdzeń nie ma dziennika przebiegów, więc nie ma skąd wziąć pokrycia")
+			"serwer nie ma dziennika przebiegów, więc nie ma skąd wziąć pokrycia")
 	}
 
 	sciezka := ""

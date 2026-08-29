@@ -172,7 +172,7 @@ func wejscieCzytajPdf(kodDokumentu string, bajty []byte, zakresStron string,
 			wynik.Bilans.Skipped = append(wynik.Bilans.Skipped, shared.StudioSkippedItem{
 				Reason: "obrazy, których nie dało się wyjąć ze stron",
 				Detail: wejscieWskaznikTekstu(strconv.Itoa(pominieteObrazy) +
-					" — zapis obrazu jest odmianą, której rdzeń nie rozpakowuje"),
+					" — zapis obrazu jest odmianą, której serwer nie rozpakowuje"),
 			})
 		}
 		wejscieDolozObrazyDoPostaci(&wynik)

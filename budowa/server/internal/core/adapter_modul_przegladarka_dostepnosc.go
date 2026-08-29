@@ -55,9 +55,9 @@ func (a *adapterPrzegladarki) ZbadajDostepnosc(ctx context.Context,
 	if a.silnik == nil || a.silnik.uruchamiacz == nil {
 		return shared.BrowserAccessibilityAuditResponse{}, protocol.JakoError(
 			protocol.NowyBlad(shared.ErrorCodeChannelUnavailable,
-				"moduł Browser: rdzeń nie ma uruchamiacza procesów — audyt dostępności nie ma "+
+				"moduł Browser: serwer nie ma uruchamiacza procesów — audyt dostępności nie ma "+
 					"czym wystartować; naprawa: podpiąć warstwę kanału (injection) przy "+
-					"składaniu rdzenia"))
+					"składaniu serwera"))
 	}
 
 	// Potwierdzenie pomiaru: pusty wykaz strony nieosiągalnej byłby brakiem

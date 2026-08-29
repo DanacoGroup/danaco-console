@@ -55,7 +55,7 @@ export const tresci = {
     },
     przygotowanie: { motto: 'AI Operating Environment' },
     wydawca: 'Danaco Holding Group Sp. z o.o.',
-    wydanie: 'wydanie {wersja}',
+    wydanie: 'wydanie {wersja} · {data}',
     wsparcie: 'support@danaco-core.pl',
   },
 
@@ -102,8 +102,8 @@ export const tresci = {
        powitanie jest jedynym miejscem, w którym klient odczytuje wersję rdzenia,
        a wersja niezgodna znaczy, że dalsza rozmowa pójdzie po omacku. */
     wersja: {
-      glowa: 'Wersja protokołu rdzenia jest inna niż wersja tego klienta.',
-      tresc: 'Rdzeń mówi wersją {rdzen}, klient wersją {klient}. Zaktualizuj program.',
+      glowa: 'Wersja protokołu serwera jest inna niż wersja tego programu.',
+      tresc: 'Serwer mówi wersją {rdzen}, program wersją {klient}. Zaktualizuj program.',
     },
   },
 
@@ -134,7 +134,7 @@ export const tresci = {
       },
       capsLock: 'Sprawdź, czy nie jest włączony Caps Lock.',
       fraza:
-        'Nieudana próba nie zamyka bramki. Dostęp możesz też odzyskać przez adres e-mail konta.',
+        'Nieudana próba nie blokuje konta. Dostęp możesz też odzyskać przez adres e-mail konta.',
     },
 
     /* Odsłona zwłoki, nie zapory. Rdzeń nie odmawia kolejnej próby — nakłada na
@@ -143,7 +143,7 @@ export const tresci = {
        reguły nie ma w rdzeniu. */
     logowanieWstrzymane: {
       tytul: 'Kolejna próba za chwilę',
-      lid: 'Po nieudanej próbie kolejna czeka chwilę dłużej. Bramka nie została zamknięta.',
+      lid: 'Po nieudanej próbie kolejna czeka chwilę dłużej. Konto nie zostało zablokowane.',
       baner: {
         glowa: 'Kolejna próba będzie możliwa za {czas}.',
         tresc: 'Dostęp możesz też odzyskać przez adres e-mail konta.',
@@ -261,7 +261,7 @@ export const tresci = {
   przygotowanie: {
     motto: 'AI Operating Environment',
     obszarPowlok:
-      'Cztery powłoki platformy Danaco Console: rdzeń, środowiska pracy, moduły, interfejs',
+      'Cztery powłoki platformy Danaco Console: serwer, środowiska pracy, moduły, interfejs',
     nadtytul: 'Uruchomienie',
     tytul: 'Przygotowanie środowiska pracy',
     lid: 'Danaco Console odtwarza stan pracy z ostatniego zamknięcia: karty sesji otwarte przy poprzednim zamknięciu.',
@@ -339,11 +339,11 @@ export const tresci = {
     },
     /* Odmowa rdzenia niesie własny opis — rdzeń wie o powodzie więcej niż okno.
        Katalog daje jej wyłącznie głowę; treścią jest to, co powiedział rdzeń. */
-    odmowaRdzenia: {
-      glowa: 'Rdzeń odmówił wykonania.',
+    odmowaSerwera: {
+      glowa: 'Nie udało się wykonać czynności.',
     },
     brakOdpowiedzi: {
-      glowa: 'Rdzeń nie odpowiedział.',
+      glowa: 'Serwer nie odpowiedział.',
       tresc: 'Połączenie zostało zerwane w trakcie wykonywania. Spróbuj ponownie.',
     },
   },

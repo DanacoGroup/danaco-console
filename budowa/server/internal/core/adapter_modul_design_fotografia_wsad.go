@@ -179,7 +179,7 @@ func (a *adapterDesignu) PuscWsadFotografii(ctx context.Context,
 	if len(czynnosci) == 0 {
 		if z.PresetId == nil || strings.TrimSpace(*z.PresetId) == "" {
 			return shared.DesignPhotoBatchApplyResponse{}, bladWskazaniaDesignu(
-				"komenda design.photo.batch.apply bez czynności i bez nastawy: rdzeń nie zgaduje, " +
+				"komenda design.photo.batch.apply bez czynności i bez nastawy: serwer nie zgaduje, " +
 					"co ma z tymi zasobami zrobić")
 		}
 		nastawa, err := a.repozytorium.NastawaFotografiiDesignuPoKodzie(ctx,
@@ -478,7 +478,7 @@ func (a *adapterDesignu) ObrysujKontury(ctx context.Context,
 	if z.Colors != nil {
 		if *z.Colors < 2 || *z.Colors > 64 {
 			return shared.DesignPhotoVectorizeResponse{}, bladWskazaniaDesignu(fmt.Sprintf(
-				"komenda design.photo.vectorize z %d barwami: rdzeń rozkłada obraz na od 2 do 64 "+
+				"komenda design.photo.vectorize z %d barwami: serwer rozkłada obraz na od 2 do 64 "+
 					"barw — jedna barwa nie daje rysunku, a powyżej sześćdziesięciu czterech "+
 					"rysunek przestaje być rysunkiem", *z.Colors))
 		}
@@ -629,7 +629,7 @@ func (a *adapterDesignu) LancuchEdycji(ctx context.Context,
 	if z.Limit != nil {
 		if *z.Limit < 1 || *z.Limit > granicaOgniwLancuchaDesignu {
 			return shared.DesignPhotoHistoryGetResponse{}, bladWskazaniaDesignu(fmt.Sprintf(
-				"komenda design.photo.history.get z granicą %d: rdzeń oddaje od 1 do %d ogniw",
+				"komenda design.photo.history.get z granicą %d: serwer oddaje od 1 do %d ogniw",
 				*z.Limit, granicaOgniwLancuchaDesignu))
 		}
 		granica = *z.Limit
@@ -885,7 +885,7 @@ func rozdzielczoscZExifDesignu(zapis []byte) (int, bool) {
 func bladNieznanejNastawyFotografiiDesignu(kod string, err error) error {
 	if czyBrakZasobuDesignu(err) {
 		return bladNieznanegoBytuDesignu("nastawy warsztatu fotografii " + kod +
-			" nie ma w tym rdzeniu")
+			" nie ma w tym serwerze")
 	}
 	return bladDesignu(err)
 }

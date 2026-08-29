@@ -62,7 +62,7 @@ func (s dopuszczenieBramki) przepusc(rdzen Rdzen, komenda shared.MessageType, uj
 // Funkcja odmowaBezBramki składa jedyną odmowę tego dopuszczenia, kodem oznaczającym brak uwierzytelnienia z kontraktu.
 func odmowaBezBramki(zadanie protocol.Request) protocol.Koperta {
 	blad := protocol.NowyBlad(shared.ErrorCodeNotAuthenticated,
-		"to połączenie nie przeszło przez bramkę — zaloguj się; "+
+		"To połączenie nie jest zalogowane — zaloguj się; "+
 			"na tym nasłuchu obowiązuje wymóg logowania, więc gniazdo wykonuje komendy dopiero po "+
 			"przedstawieniu tokenu sesji w connection.hello. Token wydaje auth.login, "+
 			"a przy pierwszym uruchomieniu auth.verify — czyli potwierdzenie adresu drogą z listu, "+

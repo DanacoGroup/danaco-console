@@ -6,19 +6,19 @@
  */
 
 export const trescPodgladu = {
-  brakOkna: 'Rdzeń nie założył okna modułu.',
+  brakOkna: 'Nie udało się otworzyć okna modułu.',
 
   brakDokumentuTytul: 'Brak dokumentu w podglądzie',
-  brakDokumentuOpis: 'Rdzeń nie otworzył jeszcze żadnego dokumentu w tym oknie.',
+  brakDokumentuOpis: 'W tym oknie nie ma jeszcze otwartego dokumentu.',
 
   renderowanie: 'Renderowanie podglądu…',
 
   brakStronTytul: 'Brak stron do pokazania',
-  brakStronOpis: 'Rdzeń nie zwrócił żadnej strony podglądu.',
+  brakStronOpis: 'Podgląd nie ma żadnej strony.',
 
-  odmowaRenderu: 'Rdzeń odmówił wygenerowania podglądu',
-  odmowaUkladu: 'Rdzeń odmówił odczytu ustawień strony',
-  brakOpisu: 'Rdzeń nie podał powodu odmowy.',
+  odmowaRenderu: 'Nie udało się przygotować podglądu',
+  odmowaUkladu: 'Nie udało się odczytać ustawień strony',
+  brakOpisu: 'Powód nie został podany.',
 
   format: 'Format wydania',
   strona: 'Strona',
@@ -30,8 +30,8 @@ export const trescPodgladu = {
   podzielEkran: 'Podziel ekran',
   eksportuj: 'Profil wydania',
   profilDomyslny: 'Bez profilu wydania',
-  profilBrak: 'Rdzeń nie zgłosił żadnego profilu wydania.',
-  profilOdmowa: 'Rdzeń odmówił wykazu profili wydania',
+  profilBrak: 'Nie ma żadnego profilu wydania.',
+  profilOdmowa: 'Nie udało się wczytać profili wydania',
   profilWczytywanie: 'Wczytywanie profili wydania…',
 
   wyslijDoLibrary: 'Wyślij do Library',

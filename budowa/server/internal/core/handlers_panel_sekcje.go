@@ -104,7 +104,7 @@ func (a *adapterSekcjiPaneli) UstawUklad(ctx context.Context,
 		return shared.PanelSectionsSetResponse{}, protocol.JakoError(protocol.NowyBlad(
 			shared.ErrorCodeInternalError, "sekcje panelu: nie można zapisać układu panelu "+panel+
 				" okna "+okno+": "+err.Error()+"; Operator powtórzy zapis, a przy nawrocie sprawdzi "+
-				"dziennik rdzenia — żądanie było poprawne, zawiódł zapis"))
+				"dziennik serwera — żądanie było poprawne, zawiódł zapis"))
 	}
 	return shared.PanelSectionsSetResponse{
 		WindowId: okno, PanelId: panel, Sections: sekcjeKontraktu(uklad),
@@ -193,7 +193,7 @@ func bladSekcjiPanelu(powod string) error {
 func bladNosnikaPaneli() error {
 	return protocol.JakoError(protocol.NowyBlad(shared.ErrorCodeInternalError,
 		"sekcje panelu: trwałość układu paneli niewpięta, migracja 105 nie ma nośnika; "+
-			"Operator uruchomi rdzeń z bazą danych — układ paneli nie żyje w pamięci"))
+			"Operator uruchomi serwer z bazą danych — układ paneli nie żyje w pamięci"))
 }
 
 // bladOdczytuPanelu niesie usterkę odczytu wraz z adresem, którego dotyczy,
@@ -201,5 +201,5 @@ func bladNosnikaPaneli() error {
 func bladOdczytuPanelu(okno, panel string, err error) error {
 	return protocol.JakoError(protocol.NowyBlad(shared.ErrorCodeInternalError,
 		"sekcje panelu: nie można odczytać układu panelu "+panel+" okna "+okno+": "+
-			err.Error()+"; Operator powtórzy odczyt, a przy nawrocie sprawdzi dziennik rdzenia"))
+			err.Error()+"; Operator powtórzy odczyt, a przy nawrocie sprawdzi dziennik serwera"))
 }

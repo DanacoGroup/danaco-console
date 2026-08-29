@@ -10,7 +10,7 @@ import (
 )
 
 // kluczSprawcyRdzenia znaczy kontekst pracy własnej rdzenia, wprowadzony do kontekstu funkcją zSprawcaRdzenia.
-const kluczSprawcyRdzenia kluczKontekstu = "danaco:sprawca-rdzenia"
+const kluczSprawcyRdzenia kluczKontekstu = "danaco:sprawca-serwera"
 
 // zSprawcaRdzenia znakuje kontekst biegu powołanego przez rdzeń, nie przez wołającego: przemiatania, harmonogramu, odtworzenia stanu po restarcie. Znak stawia się ręcznie, w miejscu, które wie, czym jest.
 func zSprawcaRdzenia(ctx context.Context) context.Context {

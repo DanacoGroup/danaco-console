@@ -72,7 +72,7 @@ func odczytajDostepnosc(wynik Wynik) (Dostepnosc, error) {
 	if err := json.Unmarshal([]byte(tresc), &odpowiedz); err != nil {
 		return Dostepnosc{}, &BrakSilnika{Powod: "odpowiedź pomocnika transkrypcji" +
 			" jest nieczytelna (" + err.Error() + ")" + ogonDiagnostyki(wynik.Diagnostyka) +
-			"; naprawa: zgłosić usterkę pomocnika — rdzeń oczekuje odpowiedzi w JSON"}
+			"; naprawa: zgłosić usterkę pomocnika — serwer oczekuje odpowiedzi w JSON"}
 	}
 
 	// Powód zastępczy mówi wprost, że pomocnik nie podał powodu odmowy.

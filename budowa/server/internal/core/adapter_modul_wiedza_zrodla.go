@@ -104,7 +104,7 @@ func (a *adapterWiedzy) dokumentyHistorii(ctx context.Context,
 	if okno == "" {
 		return nil, bladZadaniaWiedzy(
 			"zakres `history` bez wskazania okna — historia jest historią KONKRETNEJ " +
-				"rozmowy i rdzeń nie ma której przeczytać; naprawa: podać `windowId`")
+				"rozmowy i serwer nie ma której przeczytać; naprawa: podać `windowId`")
 	}
 	pozycje, err := a.historia.Pozycje(ctx, okno, 0, granicaPozycjiHistorii)
 	if err != nil {
@@ -198,6 +198,6 @@ func wskazanieOkna(idOkna *string) string {
 // czego czytać, a milczące oddanie zera dokumentów wyglądałoby jak pusta wiedza.
 func bladWiedzyBezZrodla(nazwa string) error {
 	return odmowaWiedzy(shared.ErrorCodeInternalError,
-		"rdzeń nie ma wpiętego źródła `"+nazwa+"` — wskaźnik nie ma z czego powstać; "+
-			"naprawa: podpiąć je przy składaniu rdzenia")
+		"serwer nie ma wpiętego źródła `"+nazwa+"` — wskaźnik nie ma z czego powstać; "+
+			"naprawa: podpiąć je przy składaniu serwera")
 }

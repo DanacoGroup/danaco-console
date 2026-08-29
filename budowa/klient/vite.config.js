@@ -86,8 +86,17 @@ function kopiaSkryptowBiblioteki() {
   };
 }
 
+/* Data składania pakietu. Katalog wydań stanowi, że wydania różni data, nie
+   numer — sam numer w stopce nie nazywa więc, które wydanie Operator ma przed
+   sobą. Wartość wchodzi przy budowaniu, bo w przeglądarce nie ma jej skąd wziąć. */
+const DATA_SKLADANIA = new Date().toISOString().slice(0, 10);
+
 export default {
   root: korzen,
+
+  define: {
+    __DATA_SKLADANIA__: JSON.stringify(DATA_SKLADANIA),
+  },
 
   /* Ścieżki względne, bo pakiet jest oddawany dwiema drogami: rdzeń serwuje go
      spod korzenia nasłuchu, a powłoka Tauri wczytuje z własnego protokołu.

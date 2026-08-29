@@ -84,7 +84,7 @@ func (a *adapterDesignu) NosnikiDruku(_ context.Context,
 	}
 	if rodzina != "" && len(wybrane) == 0 {
 		return shared.DesignPrintPaperListResponse{}, bladWskazaniaDesignu(fmt.Sprintf(
-			"komenda design.print.paper.list z rodziną %q, której rdzeń nie zna; rodziny znane: %s",
+			"komenda design.print.paper.list z rodziną %q, której serwer nie zna; rodziny znane: %s",
 			*z.Family, strings.Join(rodzinyNosnikow(), ", ")))
 	}
 	return shared.DesignPrintPaperListResponse{Sizes: wybrane, Total: len(wybrane)}, nil
@@ -225,7 +225,7 @@ func (a *adapterDesignu) zalozZasobZBajtowDesignu(ctx context.Context, okno, naz
 	}
 	if len(bajty) == 0 {
 		return dane.ZasobDesignu{}, bladWydaniaDesignu(
-			"rdzeń nie wytworzył ani jednego bajtu — zasób bez treści nie ma czego pokazać")
+			"serwer nie wytworzył ani jednego bajtu — zasób bez treści nie ma czego pokazać")
 	}
 	suma := sha256.Sum256(bajty)
 	odwolanie, err := a.magazyn.Zapisz(bajty, hex.EncodeToString(suma[:]))

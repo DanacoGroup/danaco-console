@@ -92,7 +92,7 @@ func (a *adapterAsystenta) opiszBrakWarstwy(ctx context.Context, zlecenie dane.Z
 		ZlecenieKod: &kod,
 		Rodzaj:      string(shared.AssistantActivityKindNote),
 		Tresc: "Asystent pracuje BEZ warstwy promptu profilu: " + powod +
-			". Zlecenie idzie dalej w zakresie, w jakim rdzeń może je wykonać.",
+			". Zlecenie idzie dalej w zakresie, w jakim serwer może je wykonać.",
 		Utworzono: time.Now().UnixMilli(),
 	})
 }

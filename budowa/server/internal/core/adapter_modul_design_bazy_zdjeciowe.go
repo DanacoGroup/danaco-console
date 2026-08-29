@@ -715,7 +715,7 @@ func szukajSmithsonianDesignu(ctx context.Context, klient *http.Client, klucz, f
 		return nil, fmt.Errorf(
 			"Smithsonian oddał %d wierszy, z których żaden nie niesie obrazu pod "+
 				"content.descriptiveNonRepeating.online_media.media — kształt odpowiedzi nie "+
-				"zgadza się z tym, czego rdzeń w niej szuka", len(odpowiedz.Response.Rows))
+				"zgadza się z tym, czego serwer w niej szuka", len(odpowiedz.Response.Rows))
 	}
 	return zasoby, nil
 }

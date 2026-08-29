@@ -121,7 +121,7 @@ func (a *adapterStudia) wejscieZapiszPostac(ctx context.Context, kodDokumentu st
 
 	if a.repozytorium == nil {
 		return shared.StudioDocumentForm{}, wejscieBladZaplecza(
-			"rdzeń złożony bez repozytorium Studia — postaci dokumentu nie ma gdzie odłożyć")
+			"serwer złożony bez repozytorium Studia — postaci dokumentu nie ma gdzie odłożyć")
 	}
 	dokument, err := a.repozytorium.Dokument(ctx, kodDokumentu)
 	if err != nil {

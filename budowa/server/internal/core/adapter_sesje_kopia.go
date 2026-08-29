@@ -27,7 +27,7 @@ func (a *adapterSesji) Kopiuj(ctx context.Context,
 
 	if a.zestaw == nil || a.trwalosc == nil {
 		return shared.SessionCopyResponse{}, protocol.JakoError(protocol.NowyBlad(
-			shared.ErrorCodeInternalError, "rdzeń bez bazy nie ma czego kopiować"))
+			shared.ErrorCodeInternalError, "serwer bez bazy nie ma czego kopiować"))
 	}
 	zrodlo, err := a.trwalosc.sesje.PoIdentyfikatorze(ctx, z.SessionId)
 	if err != nil {

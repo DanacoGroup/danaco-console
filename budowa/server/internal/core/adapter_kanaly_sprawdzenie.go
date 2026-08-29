@@ -43,14 +43,14 @@ func (a *adapterKanalow) Sprawdz(ctx context.Context,
 	}
 	chwila := time.Now()
 	if a.rejestr == nil {
-		szczegol := "rdzeń nie ma wpiętego rejestru kanałów — nie ma czym wykonać sprawdzenia"
+		szczegol := "serwer nie ma wpiętego rejestru kanałów — nie ma czym wykonać sprawdzenia"
 		return shared.ChannelCheckResponse{
 			Reachable: false, CheckedAt: chwila.UnixMilli(), Detail: &szczegol,
 		}, nil
 	}
 	if _, jest := a.rejestr.Kanal(kod); !jest {
 		// Kanał, którego nie ma w rejestrze, oddaje odpowiedź nie odpowiada, a nie odmowę sprawdzenia.
-		szczegol := "kanału nie ma w rejestrze kanałów rdzenia albo jest wyłączony"
+		szczegol := "kanału nie ma w rejestrze kanałów serwera albo jest wyłączony"
 		return shared.ChannelCheckResponse{
 			Reachable: false, CheckedAt: chwila.UnixMilli(), Detail: &szczegol,
 		}, nil
@@ -106,7 +106,7 @@ func (a *adapterKanalow) StanPoswiadczenia(ctx context.Context,
 	if a.repozytorium == nil {
 		return shared.ChannelCredentialStatusResponse{}, protocol.JakoError(protocol.NowyBlad(
 			shared.ErrorCodeInternalError,
-			"kanały: rdzeń nie ma wpiętego rejestru kanałów"))
+			"kanały: serwer nie ma wpiętego rejestru kanałów"))
 	}
 	kanal, err := a.repozytorium.PobierzPoKodzie(ctx, kod)
 	if err != nil {
@@ -165,7 +165,7 @@ func zarzadcaPoswiadczeniaKanalu(kanal dane.Kanal) string {
 	if kanal.KontoID != nil {
 		return "rejestr kont platformy"
 	}
-	return "sejf poświadczeń rdzenia"
+	return "sejf poświadczeń serwera"
 }
 
 // bladWskazaniaKanalu nazywa niepoprawne żądanie czynności rejestru kanałów —

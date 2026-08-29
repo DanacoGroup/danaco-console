@@ -415,7 +415,7 @@ func sprawdzRodzajSondy(rodzaj shared.HealthProbeKind) error {
 		return nil
 	default:
 		return bladWskazaniaKondycji("nie znam rodzaju sondy „" + string(rodzaj) +
-			"” — rdzeń zna: http, tcp, command, modelCall, internal")
+			"” — serwer zna: http, tcp, command, modelCall, internal")
 	}
 }
 
@@ -448,8 +448,8 @@ func wartoscLiczbyDlugiej(wartosc *int64) int64 {
 // repozytorium niewpięte przy montażu.
 func bladZapleczaKondycji() error {
 	return protocol.JakoError(protocol.NowyBlad(shared.ErrorCodeInternalError,
-		"kondycja: rdzeń nie ma wpiętego magazynu sond — naprawa: podpiąć "+
-			"repozytorium kondycji przy składaniu rdzenia"))
+		"kondycja: serwer nie ma wpiętego magazynu sond — naprawa: podpiąć "+
+			"repozytorium kondycji przy składaniu serwera"))
 }
 
 // bladWskazaniaKondycji nazywa niepoprawne żądanie modelu, na przykład sondę

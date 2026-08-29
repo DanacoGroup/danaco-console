@@ -6,7 +6,7 @@
  */
 
 export const tresc = {
-  brakDokumentu: 'Rdzeń nie zgłosił jeszcze dokumentu w tym oknie.',
+  brakDokumentu: 'W tym oknie nie ma jeszcze dokumentu.',
 
   porownanie: {
     etykietaBazowa: 'Wersja odniesienia',
@@ -14,7 +14,7 @@ export const tresc = {
     zastepczaWersja: 'identyfikator wersji…',
     porownaj: 'Porównaj',
     ladowanie: 'Wczytywanie porównania…',
-    brakRoznic: 'Rdzeń nie zwrócił żadnej różnicy dla wskazanych wersji.',
+    brakRoznic: 'Wskazane wersje nie różnią się.',
     dodanych: 'dodanych',
     usunietych: 'usuniętych',
     zmienionych: 'zmienionych',
@@ -25,7 +25,7 @@ export const tresc = {
     etykieta: 'Grep',
     regex: 'Wyrażenie regularne',
     naglowek: 'Trafienia wzorca',
-    brakTrafien: 'Rdzeń nie znalazł dopasowań wzorca w porównywanych wersjach.',
+    brakTrafien: 'Nie znaleziono dopasowań wzorca w porównywanych wersjach.',
   },
 
   adnotacja: {
@@ -37,16 +37,16 @@ export const tresc = {
   zmiany: {
     naglowek: 'Zmiany do decyzji',
     ladowanie: 'Wczytywanie zmian…',
-    brak: 'Rdzeń nie zgłosił żadnej zmiany oczekującej na decyzję w tym dokumencie.',
+    brak: 'W tym dokumencie nie ma zmian oczekujących na decyzję.',
     akceptuj: 'Akceptuj zmianę',
     odrzuc: 'Odrzuć',
   },
 
   odmowa: {
-    porownanie: 'Rdzeń odmówił porównania wersji',
-    zmiany: 'Rdzeń odmówił wykazu zmian',
-    decyzja: 'Rdzeń odmówił decyzji o zmianie',
-    adnotacja: 'Rdzeń odmówił założenia adnotacji',
-    brakOpisu: 'Rdzeń nie podał powodu odmowy.',
+    porownanie: 'Nie udało się porównać wersji',
+    zmiany: 'Nie udało się wczytać wykazu zmian',
+    decyzja: 'Nie udało się zapisać decyzji o zmianie',
+    adnotacja: 'Nie udało się założyć adnotacji',
+    brakOpisu: 'Powód nie został podany.',
   },
 } as const;

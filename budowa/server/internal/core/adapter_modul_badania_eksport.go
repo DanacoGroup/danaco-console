@@ -231,7 +231,7 @@ func (a *adapterBadan) bajtyPrzezArsenalBadania(ctx context.Context,
 	if a.dokumenty == nil {
 		return nil, protokolBladBadania(shared.ErrorCodeInternalError,
 			"arsenał dokumentowy nie jest wpięty — naprawa: podpiąć port dokumentów "+
-				"przy składaniu rdzenia")
+				"przy składaniu serwera")
 	}
 	zrodlowy := "markdown"
 	tresc := dokument.markdown

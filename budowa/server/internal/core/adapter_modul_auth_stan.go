@@ -58,7 +58,7 @@ func (a *adapterUwierzytelnienia) RozpoznajSesjeBramki(ctx context.Context,
 // bladBramki składa odmowę rodziny `auth.*` z jednym przedrostkiem, żeby
 // Errors Panel pokazywał, czyja to odmowa, bez zgadywania po treści.
 func bladBramki(kod protocol.KodBledu, powod string) error {
-	return protocol.JakoError(protocol.NowyBlad(kod, "bramka: "+powod))
+	return protocol.JakoError(protocol.NowyBlad(kod, powod))
 }
 
 // metodaBramkiKontraktu przekłada wiersz na `AuthMethod`. Odwołania do sejfu

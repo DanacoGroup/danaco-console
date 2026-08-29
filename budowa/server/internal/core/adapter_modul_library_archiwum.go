@@ -119,7 +119,7 @@ func (a *adapterBiblioteki) utrwalZasob(ctx context.Context, zasob dane.PlikBibl
 
 	default:
 		return shared.LibraryPreservationResult{}, bladWskazaniaBiblioteki(
-			"postać utrwalenia " + string(rodzaj) + " nie ma odwzorowania w rdzeniu")
+			"postać utrwalenia " + string(rodzaj) + " nie ma odwzorowania w serwerze")
 	}
 
 	wynik := shared.LibraryPreservationResult{
@@ -165,7 +165,7 @@ func normalizujDokumentArchiwalnie(bajty []byte, profil string) ([]byte, bool, s
 	raport := "sprawdzono: struktura dokumentu po normalizacji (pdfcpu), " +
 		"liczba stron zachowana, docelowa odmiana profilu: " + profil + ". " +
 		"NIE sprawdzono: zgodności z profilem " + profil +
-		" — rdzeń nie niesie walidatora profilu i zgodności nie orzeka"
+		" — serwer nie niesie walidatora profilu i zgodności nie orzeka"
 	if err := api.Validate(bytes.NewReader(wynik.Bytes()), nastawyPdf()); err != nil {
 		return wynik.Bytes(), false, raport + ". Walidacja struktury: niepowodzenie — " + err.Error()
 	}
@@ -629,7 +629,7 @@ func (a *adapterBiblioteki) archiwum7z(ctx context.Context,
 
 	if a.uruchamiacz == nil {
 		return nil, bladWskazaniaBiblioteki(
-			"format 7z żąda arsenału serwerowego, którego rdzeń nie ma wpiętego; " +
+			"format 7z żąda arsenału serwerowego, którego serwer nie ma wpiętego; " +
 				"paczka w postaci zip i tar.gz powstaje bez niego")
 	}
 	katalog, err := os.MkdirTemp("", "danaco-paczka-")

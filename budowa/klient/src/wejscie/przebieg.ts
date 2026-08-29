@@ -130,6 +130,8 @@ export interface StanPrzebiegu {
   przygotowanie: PostepPrzygotowania;
   /** Środowisko, do którego przebieg wszedł. */
   srodowisko?: Environment;
+  /** Wszystkie środowiska odebrane od rdzenia — szyna nawigacji stawia pozycję dla każdego. */
+  srodowiska: Environment[];
   /** Moduły środowiska; liczba zasila miarę etapu przygotowania. */
   moduly: Module[];
   /** Karty sesji odtworzone przez rdzeń. */
@@ -310,6 +312,7 @@ export function utworzPrzebieg(zaleznosci: ZaleznosciPrzebiegu): Przebieg {
       zwlokaS: 0,
       adres: '',
       moduly: [],
+      srodowiska: [],
       sesje: [],
       przygotowanie: {
         stany: nowyWykazStanow(),
@@ -455,7 +458,9 @@ export function utworzPrzebieg(zaleznosci: ZaleznosciPrzebiegu): Przebieg {
   async function zaloguj(dane: DaneLogowania): Promise<void> {
     const braki = brakiLogowania(dane);
     if (braki.length > 0) {
-      zmien({ usterki: braki });
+      /* Powrót na odsłonę zwykłą: baner poprzedniej odmowy dotyczy próby już
+         minionej i obok świeżej usterki czytałby się jak druga, osobna sprawa. */
+      zmien({ odslona: 'logowanie', usterki: braki });
       return;
     }
     const wynik = await doRdzenia(Command.AuthLogin, {
@@ -690,6 +695,7 @@ export function utworzPrzebieg(zaleznosci: ZaleznosciPrzebiegu): Przebieg {
     };
     zmien({
       srodowisko: odpowiedz.environment,
+      srodowiska: wykaz.wynik?.environments ?? [],
       moduly: odpowiedz.modules,
       sesje: odpowiedz.sessions,
       przygotowanie: { stany, miary, wartosc: postep(stany) },

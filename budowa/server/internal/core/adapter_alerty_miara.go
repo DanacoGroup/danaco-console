@@ -27,31 +27,31 @@ func (a *adapterAlertow) sprawdzMiareReguly(miara shared.AlertMetric) error {
 	switch miara {
 	case shared.AlertMetricErrorCount:
 		if a.diagnostyka == nil {
-			return bladWskazaniaAlertu("miara errorCount liczy się z dziennika błędów rdzenia, " +
-				"a rdzeń nie ma go wpiętego — naprawa: podpiąć repozytorium diagnostyki " +
-				"przy składaniu rdzenia")
+			return bladWskazaniaAlertu("miara errorCount liczy się z dziennika błędów serwera, " +
+				"a serwer nie ma go wpiętego — naprawa: podpiąć repozytorium diagnostyki " +
+				"przy składaniu serwera")
 		}
 		return nil
 	case shared.AlertMetricErrorRate, shared.AlertMetricCost, shared.AlertMetricTokens,
 		shared.AlertMetricCallLatency:
 		if a.prowenancja == nil {
 			return bladWskazaniaAlertu("miara " + string(miara) + " liczy się ze śladu wywołań " +
-				"modelu, a rdzeń nie ma go wpiętego — naprawa: podpiąć repozytorium " +
-				"prowenancji przy składaniu rdzenia")
+				"modelu, a serwer nie ma go wpiętego — naprawa: podpiąć repozytorium " +
+				"prowenancji przy składaniu serwera")
 		}
 		return nil
 	case shared.AlertMetricBudgetPercent:
 		if a.prowenancja == nil || a.rozstrzygacz == nil {
 			return bladWskazaniaAlertu("miara budgetPercent liczy koszt wobec nastawy " +
 				kluczPulapuKosztu + ", więc potrzebuje śladu wywołań i rozstrzygacza " +
-				"konfiguracji — rdzeń nie ma wpiętego przynajmniej jednego z nich")
+				"konfiguracji — serwer nie ma wpiętego przynajmniej jednego z nich")
 		}
 		return nil
 	case shared.AlertMetricProbeFailure, shared.AlertMetricProcessFailure:
 		return nil
 	default:
 		return bladWskazaniaAlertu("nie znam miary „" + string(miara) +
-			"” — rdzeń zna: errorCount, errorRate, cost, tokens, budgetPercent, " +
+			"” — serwer zna: errorCount, errorRate, cost, tokens, budgetPercent, " +
 			"callLatency, probeFailure, processFailure")
 	}
 }

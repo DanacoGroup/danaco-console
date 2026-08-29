@@ -47,17 +47,17 @@ export const tresci = {
     etykieta: 'Dokumenty sesji',
     nowyDokument: '+ Nowy dokument',
     filtry: 'Filtr, sortowanie, grupowanie',
-    brakDokumentow: 'Rdzeń nie zgłosił żadnego dokumentu w tej sesji.',
+    brakDokumentow: 'Ta sesja nie ma jeszcze żadnego dokumentu.',
     bezTytulu: '(dokument bez tytułu)',
     nazwaNowego: 'Nowy dokument',
-    brakPorzadkowania: 'Rdzeń nie podaje pól, po których szyna mogłaby filtrować i sortować.',
-    odmowaBezOpisu: 'Rdzeń odmówił i nie podał powodu.',
+    brakPorzadkowania: 'Filtrowanie i sortowanie nie jest jeszcze dostępne.',
+    odmowaBezOpisu: 'Nie udało się wykonać czynności; powód nie został podany.',
   },
 
   czat: {
     tytul: 'Chat Window',
     etykietaKontekst: 'Kontekst',
-    brakParametrow: 'Rdzeń nie podał jeszcze parametrów tej rozmowy.',
+    brakParametrow: 'Parametry tej rozmowy nie są jeszcze ustalone.',
     brakKontekstu: 'Brak przypiętego kontekstu.',
     brakWiadomosci: 'Brak wiadomości w tej rozmowie.',
     etykietaTresci: 'Pole polecenia',
@@ -73,7 +73,7 @@ export const tresci = {
   dokument: {
     tytul: 'Studio Editor',
     nazwaNowego: 'Dokument bez tytułu',
-    zakladanie: 'Zakładanie okna roboczego w rdzeniu…',
+    zakladanie: 'Otwieranie okna roboczego…',
     etykietaTresci: 'Treść dokumentu',
     zapisz: 'Zapisz',
     zapisywanie: 'Zapisywanie…',
@@ -83,14 +83,14 @@ export const tresci = {
   },
 
   dokumentOdmowa: {
-    sesja: 'Rdzeń nie założył sesji',
-    kanal: 'Rdzeń nie zgłosił żadnego kanału modelu',
-    okno: 'Rdzeń nie założył okna modułu',
-    dokument: 'Rdzeń nie założył dokumentu',
-    zapis: 'Rdzeń odmówił zapisu dokumentu',
+    sesja: 'Nie udało się założyć sesji',
+    kanal: 'Nie ma żadnego kanału modelu',
+    okno: 'Nie udało się otworzyć okna modułu',
+    dokument: 'Nie udało się założyć dokumentu',
+    zapis: 'Nie udało się zapisać dokumentu',
   },
 
   odmowa: {
-    brakOpisu: 'Rdzeń nie podał powodu odmowy.',
+    brakOpisu: 'Powód nie został podany.',
   },
 } as const;

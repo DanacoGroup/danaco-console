@@ -93,8 +93,8 @@ func (a *adapterPrzegladarki) ZSilnikiem(uruchamiacz session.Uruchamiacz,
 // Odwołanie bezwzględne wynosiłoby układ katalogów maszyny do klienta.
 func (a *adapterPrzegladarki) zapiszTresc(bajty []byte) (string, error) {
 	if a.magazyn == nil {
-		return "", bladZapleczaPrzegladarki("rdzeń nie ma magazynu treści przeglądania — " +
-			"nie ma gdzie odłożyć bajtów; naprawa: wskazać katalog danych przy składaniu rdzenia")
+		return "", bladZapleczaPrzegladarki("serwer nie ma magazynu treści przeglądania — " +
+			"nie ma gdzie odłożyć bajtów; naprawa: wskazać katalog danych przy składaniu serwera")
 	}
 	if len(bajty) == 0 {
 		return "", bladWskazaniaPrzegladarki("zapis treści bez ani jednego bajtu")
@@ -114,7 +114,7 @@ func (a *adapterPrzegladarki) zapiszTresc(bajty []byte) (string, error) {
 // zawartość dokładnie taką, jaką zapisało zapiszTresc.
 func (a *adapterPrzegladarki) odczytajTresc(odwolanie string) ([]byte, error) {
 	if a.magazyn == nil {
-		return nil, bladZapleczaPrzegladarki("rdzeń nie ma magazynu treści przeglądania")
+		return nil, bladZapleczaPrzegladarki("serwer nie ma magazynu treści przeglądania")
 	}
 	sciezka := filepath.Join(a.katalogDanych, filepath.FromSlash(odwolanie))
 	bajty, err := odczytajPlikMagazynu(sciezka)
@@ -129,8 +129,8 @@ func (a *adapterPrzegladarki) odczytajTresc(odwolanie string) ([]byte, error) {
 // łańcuchu.
 func (a *adapterPrzegladarki) upewnijSieOSilniku(komenda string) error {
 	if a.silnik == nil {
-		return bladZapleczaPrzegladarki("rdzeń nie ma silnika przeglądarki — komenda " + komenda +
-			" wymaga uruchomienia strony; naprawa: podpiąć warstwę kanału przy składaniu rdzenia")
+		return bladZapleczaPrzegladarki("serwer nie ma silnika przeglądarki — komenda " + komenda +
+			" wymaga uruchomienia strony; naprawa: podpiąć warstwę kanału przy składaniu serwera")
 	}
 	if err := a.silnik.dostepny(); err != nil {
 		return bladSilnikaPrzegladarki(komenda, err)

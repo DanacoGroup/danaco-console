@@ -140,7 +140,7 @@ func (a *adapterDesignu) trescZasobu(trescBase64, sciezkaZrodlowa *string) (stri
 	if bezWartosci(trescBase64) {
 		return "", bladWskazaniaDesignu(
 			"komenda design.asset.upload bez treści zasobu: brakuje pola contentBase64 albo sourcePath — " +
-				"wniesienie nie ma skąd wziąć bajtów; obraz wytworzony przez rdzeń zamawia się " +
+				"wniesienie nie ma skąd wziąć bajtów; obraz wytworzony przez serwer zamawia się " +
 				"komendą design.asset.generate, wskazując kanał obrazowy")
 	}
 	// Rozbiór base64 idzie tu, wyłącznie dla odmowy mówiącej o module Design.

@@ -46,19 +46,19 @@ func rozruchWedlugZasiegu(o session.Okno, p session.Polecenie) (Rozruch, error) 
 	case shared.ExecutionEnvLocal:
 		odnotujZasiegRaz(o, "", "injection: okno %s ma zasięg wykonania %q; toru zwrotnego "+
 			"do urządzenia Operatora w drzewie nie ma (powłoka nie uruchamia procesów, "+
-			"kontrakt nie niesie ich strumieni), więc proces rusza na hoście rdzenia — "+
-			"zgodnie z wyborem tylko dopóty, dopóki rdzeń stoi na urządzeniu Operatora",
+			"kontrakt nie niesie ich strumieni), więc proces rusza na hoście serwera — "+
+			"zgodnie z wyborem tylko dopóty, dopóki serwer stoi na urządzeniu Operatora",
 			o.Id, string(o.SrodowiskoWykonania))
 		return rozruchMiejscowy(p), nil
 
 	case "":
 		odnotujZasiegRaz(o, "", "injection: okno %s nie ma wskazanego zasięgu wykonania; "+
-			"proces rusza na hoście rdzenia", o.Id)
+			"proces rusza na hoście serwera", o.Id)
 		return rozruchMiejscowy(p), nil
 
 	default:
 		odnotujZasiegRaz(o, "", "injection: okno %s ma zasięg wykonania %q spoza wyliczenia "+
-			"ExecutionEnv; proces rusza na hoście rdzenia jak dla zasięgu %q",
+			"ExecutionEnv; proces rusza na hoście serwera jak dla zasięgu %q",
 			o.Id, string(o.SrodowiskoWykonania), shared.ExecutionEnvCore)
 		return rozruchMiejscowy(p), nil
 	}

@@ -31,8 +31,8 @@ func (a *adapterDesignu) TrescZasobu(ctx context.Context,
 	}
 	if zasob.URI == nil || strings.TrimSpace(*zasob.URI) == "" {
 		return shared.DesignAssetContentGetResponse{}, bladWskazaniaDesignu(fmt.Sprintf(
-			"zasób %s nie ma odwołania do treści — w magazynie rdzenia nie leżą jego bajty; "+
-				"rdzeń nie oddaje treści zastępczej", z.AssetId))
+			"zasób %s nie ma odwołania do treści — w magazynie serwera nie leżą jego bajty; "+
+				"serwer nie oddaje treści zastępczej", z.AssetId))
 	}
 
 	bajty, err := os.ReadFile(*zasob.URI)
@@ -50,7 +50,7 @@ func (a *adapterDesignu) TrescZasobu(ctx context.Context,
 	if z.MaxBytes != nil && *z.MaxBytes > 0 && len(bajty) > *z.MaxBytes {
 		return shared.DesignAssetContentGetResponse{}, bladWskazaniaDesignu(fmt.Sprintf(
 			"treść zasobu %s waży %d bajtów, a wołający przyjmuje najwyżej %d — "+
-				"rdzeń odmawia zamiast oddać treść uciętą; po samo odsyłanie sięgnij "+
+				"serwer odmawia zamiast oddać treść uciętą; po samo odsyłanie sięgnij "+
 				"postacią odpowiedzi \"reference\"", z.AssetId, len(bajty), *z.MaxBytes))
 	}
 

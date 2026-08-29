@@ -194,7 +194,7 @@ func znakiZapytania(ile int) string {
 // brakSkladnicy nazywa jedyny stan, w którym składnica nie umie nic,
 // i podaje wołającemu jednoznaczne rozpoznanie tego stanu.
 func brakSkladnicy() error {
-	return errors.New("wskaźnik znaczenia: rdzeń nie ma bazy, w której miałby leżeć " +
+	return errors.New("wskaźnik znaczenia: serwer nie ma bazy, w której miałby leżeć " +
 		"wskaźnik — wektorów nie ma gdzie zapisać ani skąd odczytać; " +
-		"naprawa: podpiąć bazę przy składaniu rdzenia")
+		"naprawa: podpiąć bazę przy składaniu serwera")
 }

@@ -53,7 +53,7 @@ func (a *adapterTerminala) WytworzKlucz(ctx context.Context,
 	}
 	if strings.TrimSpace(wartoscTekstu(z.PassphraseRef)) != "" {
 		return shared.TerminalKeyGenerateResponse{}, bladZadaniaTerminala(
-			"hasło klucza wskazuje sejf, a rdzeń nie ma jego czytnika; klucz z hasłem " +
+			"hasło klucza wskazuje sejf, a serwer nie ma jego czytnika; klucz z hasłem " +
 				"trzeba dziś wytworzyć poza produktem i wciągnąć do wykazu komendą " +
 				"terminal.key.import — wytworzenie klucza BEZ hasła w odpowiedzi na tę prośbę " +
 				"byłoby cichym obniżeniem ochrony")
@@ -106,7 +106,7 @@ func (a *adapterTerminala) WciagnijKlucz(ctx context.Context,
 	sciezka := strings.TrimSpace(z.Path)
 	if nazwa == "" || sciezka == "" {
 		return shared.TerminalKeyImportResponse{}, bladZadaniaTerminala(
-			"wciągnięcie klucza wymaga jego nazwy i ścieżki na maszynie rdzenia")
+			"wciągnięcie klucza wymaga jego nazwy i ścieżki na maszynie serwera")
 	}
 	tresc, err := os.ReadFile(sciezka)
 	if err != nil {
@@ -134,13 +134,13 @@ func (a *adapterTerminala) WciagnijKlucz(ctx context.Context,
 		}
 	case err != nil:
 		return shared.TerminalKeyImportResponse{}, bladZadaniaTerminala(
-			"plik " + sciezka + " nie jest kluczem prywatnym w postaci czytelnej dla rdzenia: " +
+			"plik " + sciezka + " nie jest kluczem prywatnym w postaci czytelnej dla serwera: " +
 				err.Error())
 	default:
 		podpisujacy, err := ssh.NewSignerFromKey(prywatny)
 		if err != nil {
 			return shared.TerminalKeyImportResponse{}, bladZadaniaTerminala(
-				"klucz " + sciezka + " ma rodzaj, którego rdzeń nie obsługuje: " + err.Error())
+				"klucz " + sciezka + " ma rodzaj, którego serwer nie obsługuje: " + err.Error())
 		}
 		publiczny := podpisujacy.PublicKey()
 		wiersz.Odcisk = ssh.FingerprintSHA256(publiczny)
@@ -269,7 +269,7 @@ func paraKluczy(rodzaj shared.TerminalKeyType) (any, ssh.PublicKey, error) {
 func (a *adapterTerminala) zapiszPlikiKlucza(kod string, prywatny, publiczny []byte) (string, error) {
 	katalog := filepath.Join(a.katalogDanych, katalogKluczy)
 	if strings.TrimSpace(a.katalogDanych) == "" {
-		return "", bladWykonaniaTerminala("rdzeń nie zna własnego katalogu danych, " +
+		return "", bladWykonaniaTerminala("serwer nie zna własnego katalogu danych, " +
 			"więc nie ma gdzie położyć wytworzonego klucza")
 	}
 	if err := os.MkdirAll(katalog, 0o700); err != nil {

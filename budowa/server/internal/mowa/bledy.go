@@ -27,7 +27,7 @@ func (b *BrakPomocnika) Error() string {
 	if len(b.Szukano) > 0 {
 		komunikat += "; szukano w: " + strings.Join(b.Szukano, ", ")
 	}
-	komunikat += "; naprawa: dołożyć katalog pomocniki/transkrypcja obok binarium rdzenia" +
+	komunikat += "; naprawa: dołożyć katalog pomocniki/transkrypcja obok binarium serwera" +
 		" i zainstalować Pythona 3 na ścieżce wyszukiwania systemu"
 	if b.Powod != nil {
 		komunikat += " (" + b.Powod.Error() + ")"

@@ -563,7 +563,7 @@ func (a *adapterStudia) UstawPunktatorListy(ctx context.Context,
 			return shared.StudioListBulletSetResponse{}, bladWskazaniaStudio(
 				"wypunktowanie ze źródła „" + string(*poziom.BulletSource) +
 					"” bez zasobu — podaj pole bulletAssetId. Ikony wystawia moduł " +
-					"Design komendą design.icon.library.search, obrazy własne magazyn zasobów rdzenia")
+					"Design komendą design.icon.library.search, obrazy własne magazyn zasobów serwera")
 		}
 	}
 	// Znak wypunktowania zdejmuje numerację tego poziomu — punkt nie ma

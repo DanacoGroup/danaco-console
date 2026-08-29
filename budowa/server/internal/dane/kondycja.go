@@ -403,7 +403,7 @@ func odczytajWynikKondycji(s skaner) (WynikSondyKondycji, error) {
 func (r *repozytoriumKondycji) Puls(ctx context.Context) error {
 	var jeden int
 	if err := r.db.QueryRowContext(ctx, "SELECT 1").Scan(&jeden); err != nil {
-		return fmt.Errorf("dane: baza rdzenia nie odpowiedziała na puls: %w", err)
+		return fmt.Errorf("dane: baza serwera nie odpowiedziała na puls: %w", err)
 	}
 	return nil
 }

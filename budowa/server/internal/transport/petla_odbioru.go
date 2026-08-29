@@ -32,7 +32,7 @@ func powodRozlaczenia(err error) string {
 		return fmt.Sprintf("kanał zamknięty przez urządzenie (kod %d)", status)
 	}
 	if errors.Is(err, context.Canceled) {
-		return "kanał zamknięty przez rdzeń (zatrzymanie)"
+		return "kanał zamknięty przez serwer (zatrzymanie)"
 	}
 	return "odczyt przerwany: " + err.Error()
 }

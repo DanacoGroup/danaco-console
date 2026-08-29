@@ -76,7 +76,7 @@ func (a *adapterUwierzytelnienia) wolnoZalozyc(ctx context.Context,
 	// bramkę bez hasła.
 	if _, err := a.kotwica(ctx); errors.Is(err, dane.ErrBrakWiersza) {
 		return bladBramki(shared.ErrorCodeConflict,
-			"bramki jeszcze nie ustawiono; PIN zakłada się po ustawieniu hasła (auth.register)")
+			"Kod PIN zakłada się dopiero po ustawieniu hasła.")
 	} else if err != nil {
 		return err
 	}
@@ -183,7 +183,7 @@ func (a *adapterUwierzytelnienia) ZmienHasloBramki(ctx context.Context,
 	kotwica, err := a.kotwica(ctx)
 	if errors.Is(err, dane.ErrBrakWiersza) {
 		return shared.AuthPasswordResetResponse{}, bladBramki(shared.ErrorCodeNotFound,
-			"hasło bramki nie istnieje — bramki jeszcze nie ustawiono (auth.register)")
+			"Hasło dostępu nie zostało jeszcze ustawione.")
 	}
 	if err != nil {
 		return shared.AuthPasswordResetResponse{}, err
@@ -194,7 +194,7 @@ func (a *adapterUwierzytelnienia) ZmienHasloBramki(ctx context.Context,
 	}
 	if !zgadza {
 		return shared.AuthPasswordResetResponse{}, bladBramki(shared.ErrorCodeValidationFailed,
-			"hasło bieżące nie zgadza się z zapisem bramki")
+			"Podane hasło bieżące jest nieprawidłowe.")
 	}
 	if err := a.podmienSekret(ctx, kotwica, z.NewPassword); err != nil {
 		return shared.AuthPasswordResetResponse{}, err
@@ -248,14 +248,14 @@ func (a *adapterUwierzytelnienia) PrzedluzSesjeBramki(ctx context.Context,
 		if skrot == "" {
 			return shared.AuthTokenRefreshResponse{}, bladBramki(shared.ErrorCodeValidationFailed,
 				"przedłużenie bez tokenu z połączenia, które nie jest związane z żadną sesją bramki; "+
-					"token wchodzi do rdzenia powitaniem connection.hello albo wejściem auth.login — "+
+					"token wchodzi do serwera powitaniem connection.hello albo wejściem auth.login — "+
 					"po jednym z nich pole tokenu wolno zostawić puste")
 		}
 	}
 	sesja, err := a.repozytorium.SesjaBramkiPoSkrocie(ctx, skrot)
 	if errors.Is(err, dane.ErrBrakWiersza) {
 		return shared.AuthTokenRefreshResponse{}, bladBramki(shared.ErrorCodeNotFound,
-			"sesja bramki wskazana tokenem nie istnieje")
+			"Ta sesja już nie istnieje — zaloguj się ponownie.")
 	}
 	if err != nil {
 		return shared.AuthTokenRefreshResponse{}, err
@@ -290,11 +290,11 @@ func trwanieSesji(sesja dane.SesjaBramki) time.Duration {
 func sesjaNadaje(sesja dane.SesjaBramki, teraz int64) error {
 	if sesja.Uniewazniono != nil {
 		return bladBramki(shared.ErrorCodeConflict,
-			"sesja bramki została unieważniona; wejście otwiera się na nowo komendą auth.login")
+			"Sesja została zakończona — zaloguj się ponownie.")
 	}
 	if sesja.Wygasa <= teraz {
 		return bladBramki(shared.ErrorCodeConflict,
-			"sesja bramki wygasła; wejście otwiera się na nowo komendą auth.login")
+			"Sesja wygasła — zaloguj się ponownie.")
 	}
 	return nil
 }

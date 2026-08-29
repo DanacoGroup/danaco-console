@@ -199,9 +199,9 @@ func (w *Wskaznik) Szukaj(ctx context.Context, pytanie string, zakresy []string,
 // trafień nieodróżnialne od „w wiedzy Operatora tego nie ma".
 func (w *Wskaznik) sprawny() error {
 	if w == nil || w.osadzarka == nil {
-		return errors.New("wskaźnik znaczenia: rdzeń nie ma czym liczyć wektorów — " +
+		return errors.New("wskaźnik znaczenia: serwer nie ma czym liczyć wektorów — " +
 			"wskaźnika nie da się ani zbudować, ani przeszukać; " +
-			"naprawa: podpiąć silnik osadzeń przy składaniu rdzenia")
+			"naprawa: podpiąć silnik osadzeń przy składaniu serwera")
 	}
 	if w.skladnica == nil {
 		return brakSkladnicy()

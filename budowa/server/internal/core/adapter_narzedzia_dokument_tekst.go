@@ -88,7 +88,7 @@ func sciezkaKlasTiki() (string, bool) {
 // maszynie Operatora.
 func odmowaBrakuTiki(format string) error {
 	return odmowaDokumentu(shared.ErrorCodeChannelUnavailable,
-		"rdzeń nie ma czym odczytać materiału "+opisFormatuMaterialu(format)+
+		"serwer nie ma czym odczytać materiału "+opisFormatuMaterialu(format)+
 			": wydania Apache Tiki nie ma w "+katalogTiki()+
 			" (szukane archiwum `tika-app-*.jar`); naprawa: rozpakować wydanie Tiki "+
 			"do tego katalogu albo wskazać jego położenie zmienną "+zmiennaTiki)
@@ -132,7 +132,7 @@ func (a *adapterNarzedziDokumentu) WyciagnijTekst(ctx context.Context,
 			return a.tekstTika(ctx, zrodlo)
 		}
 		return shared.DocumentTextExtractResponse{}, bladZadaniaDokumentu(
-			"formatu materiału nie da się rozpoznać po pliku, a rdzeń nie ma czym " +
+			"formatu materiału nie da się rozpoznać po pliku, a serwer nie ma czym " +
 				"rozpoznać go z zawartości — naprawa: wskazać plik z rozszerzeniem, " +
 				"zasób niosący format albo dołożyć środowisko Javy wraz z wydaniem " +
 				"Apache Tiki")
@@ -187,7 +187,7 @@ func (a *adapterNarzedziDokumentu) tekstZDokumentu(ctx context.Context,
 	opis, jest := formatyDokumentu[zrodlo.format]
 	if !jest || !opis.czytaPandoc {
 		return shared.DocumentTextExtractResponse{}, bladZadaniaDokumentu(
-			"rdzeń nie umie odczytać treści formatu " + zrodlo.format +
+			"serwer nie umie odczytać treści formatu " + zrodlo.format +
 				"; formaty znane: " + wykazFormatowDokumentu())
 	}
 	// Pandoc zna nazwę formatu txt wyłącznie jako zapis plain, bez czytnika o tej nazwie.
@@ -267,7 +267,7 @@ func (a *adapterNarzedziDokumentu) tekstZPdf(ctx context.Context, katalogPracy, 
 	if strings.TrimSpace(tekst) == "" {
 		return shared.DocumentTextExtractResponse{}, odmowaDokumentu(shared.ErrorCodeInternalError,
 			"dokument nie ma warstwy tekstowej, a rozpoznanie pisma (język "+jezyk+
-				") nie odczytało z jego stron ani jednego znaku — rdzeń nie umie "+
+				") nie odczytało z jego stron ani jednego znaku — serwer nie umie "+
 				"przeczytać tego materiału; naprawa: sprawdzić, czy strony nie są puste, "+
 				"albo wskazać właściwy język polem language")
 	}

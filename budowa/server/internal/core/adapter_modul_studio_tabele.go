@@ -32,7 +32,7 @@ func (a *adapterStudia) WstawTabele(ctx context.Context,
 	if z.Rows > tabelaGranicaWierszy || z.Columns > tabelaGranicaKolumn {
 		return shared.StudioTableInsertResponse{}, tabelaBladWskazania(
 			"założenie tabeli o " + strconv.Itoa(z.Rows) + " wierszach i " +
-				strconv.Itoa(z.Columns) + " kolumnach przekracza granicę rdzenia: " +
+				strconv.Itoa(z.Columns) + " kolumnach przekracza granicę serwera: " +
 				strconv.Itoa(tabelaGranicaWierszy) + " wierszy, " +
 				strconv.Itoa(tabelaGranicaKolumn) + " kolumn")
 	}
@@ -231,7 +231,7 @@ func (a *adapterStudia) ZmienBudoweTabeli(ctx context.Context,
 	default:
 		return shared.StudioTableStructureEditResponse{}, tabelaBladWskazania(
 			"czynność na budowie tabeli o nazwie „" + string(z.Operation) +
-				"”, której rdzeń nie zna; wykaz: insertRow, deleteRow, insertColumn, " +
+				"”, której serwer nie zna; wykaz: insertRow, deleteRow, insertColumn, " +
 				"deleteColumn, mergeCells, splitCell")
 	}
 	// Szerokości liczą się po każdej zmianie budowy, żeby scalenie nie zostawiło szerokości zerowych.
@@ -312,7 +312,7 @@ func (a *adapterStudia) UstawPostacTabeli(ctx context.Context,
 				Detail: postacWskaznikTekstu("podano " + strconv.Itoa(len(z.ColumnWidthsMm)) +
 					" szerokości, a tabela ma kolumn " + strconv.Itoa(tabela.Columns) +
 					"; szerokości podane zostały użyte od pierwszej kolumny, reszta " +
-					"policzona przez rdzeń"),
+					"policzona przez serwer"),
 			})
 		}
 		szerokosci := make([]float64, tabela.Columns)
@@ -534,7 +534,7 @@ func (a *adapterStudia) ZamienTabeleITekst(ctx context.Context,
 		return a.tabelaZamienTabeleNaTekst(ctx, stan, z, autor, rozdzielnik)
 	default:
 		return shared.StudioTableConvertResponse{}, tabelaBladWskazania(
-			"kierunek zamiany „" + string(z.Direction) + "”, którego rdzeń nie zna; " +
+			"kierunek zamiany „" + string(z.Direction) + "”, którego serwer nie zna; " +
 				"wykaz: textToTable, tableToText")
 	}
 }

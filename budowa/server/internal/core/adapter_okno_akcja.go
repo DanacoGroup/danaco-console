@@ -47,7 +47,7 @@ func (a *adapterPrzekazaniaOkna) WykonajAkcje(ctx context.Context,
 func (a *adapterPrzekazaniaOkna) akcjaZKatalogu(ctx context.Context, kod string) (dane.Akcja, error) {
 	if a.akcje == nil {
 		return dane.Akcja{}, protocol.JakoError(protocol.NowyBlad(shared.ErrorCodeInternalError,
-			"window.action: katalog akcji nie jest podpięty do rdzenia; "+
+			"window.action: katalog akcji nie jest podpięty do serwera; "+
 				"nie ma czym sprawdzić akcji "+kod))
 	}
 	akcja, err := a.akcje.PoKodzie(ctx, kod)
@@ -69,11 +69,11 @@ func (a *adapterPrzekazaniaOkna) akcjaZKatalogu(ctx context.Context, kod string)
 // zapisane, wykonania nie ma. Komunikat niesie kod komendy z katalogu, żeby
 // odmowa była dla Operatora drogą dalej, a nie ślepym końcem.
 func bladBrakuWykonawcyAkcji(kodAkcji string, komenda shared.MessageType) error {
-	powod := "window.action: rdzeń nie wykonuje akcji katalogu. Akcja " + kodAkcji +
+	powod := "window.action: serwer nie wykonuje akcji katalogu. Akcja " + kodAkcji +
 		" wskazuje komendę " + string(komenda) + " — wywołaj ją wprost. " +
 		"Zgłoszenie zostało zapisane w dzienniku akcji okna."
 	if komenda == "" {
-		powod = "window.action: rdzeń nie wykonuje akcji katalogu, a akcja " + kodAkcji +
+		powod = "window.action: serwer nie wykonuje akcji katalogu, a akcja " + kodAkcji +
 			" nie wskazuje żadnej komendy kontraktu. " +
 			"Zgłoszenie zostało zapisane w dzienniku akcji okna."
 	}

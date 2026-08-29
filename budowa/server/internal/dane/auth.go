@@ -11,13 +11,13 @@ import (
 
 // MetodaUwierzytelnienia to wiersz tabeli `metoda_uwierzytelnienia`; kod jest identyfikatorem trwałym, kod urządzenia niesie napis nadany przez klienta.
 type MetodaUwierzytelnienia struct {
-	ID               int64
-	Kod              string
-	Rodzaj           string
-	Etykieta         *string
-	UrzadzenieKod    *string
-	NazwaUrzadzenia  *string
-	Kotwica          bool
+	ID              int64
+	Kod             string
+	Rodzaj          string
+	Etykieta        *string
+	UrzadzenieKod   *string
+	NazwaUrzadzenia *string
+	Kotwica         bool
 	// KontoId wiąże metodę z kontem. Zero znaczy wiersz zastany, sprzed
 	// migracji 406, gdy konto było jedno i wskazania nie potrzebowało.
 	KontoId          int64

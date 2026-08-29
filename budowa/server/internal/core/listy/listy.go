@@ -218,8 +218,12 @@ func PodgladDanymiPrzykladowymi(jasny, ciemny string) string {
 		Zadano:         time.Now(),
 		AdresAktywacji: "https://console.danaco-group.pl/aktywacja",
 	}).Html
+	/* Odwołanie ciemne stoi pierwsze i musi: identyfikator jasny jest jego
+	   przedrostkiem, a podmieniacz dopasowuje wzorce w kolejności argumentów.
+	   Odwrotnie zjadłby początek odwołania ciemnego i zostawił ogon `-dark`
+	   doklejony do danych obrazu — znak w motywie ciemnym by się nie wczytał. */
 	return strings.NewReplacer(
-		"cid:"+IdZnakuJasnego, jasny,
 		"cid:"+IdZnakuCiemnego, ciemny,
+		"cid:"+IdZnakuJasnego, jasny,
 	).Replace(list)
 }

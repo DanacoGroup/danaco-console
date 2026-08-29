@@ -99,8 +99,8 @@ window.DanacoKreator.tresci = {
       "opis": "Lokalizacja projektów, ustawień i dzienników pracy. Dane pozostają na dysku po odinstalowaniu programu."
     },
     "zmien": "Zmień…",
-    "miejsce": "Wymagane {wymagane} · dostępne {dostepne} na dysku {dysk}",
-    "miejsceDane": { "wymagane": "250 MB", "dostepne": "84,2 GB", "dysk": "C:" },
+    "miejsce": "Wymagane miejsce: {wymagane}",
+    "miejsceDane": { "wymagane": "250 MB" },
     "skroty": {
       "naglowek": "Skróty",
       "pulpit": {
@@ -127,8 +127,8 @@ window.DanacoKreator.tresci = {
     "blad": {
       "tytul": "Nie udało się ukończyć instalacji",
       "podtytul": "Zmiany zostały cofnięte — w komputerze nie pozostały pliki programu.",
-      "szczegoly": "Kod błędu: 0x80070005\nOdmowa dostępu do katalogu %LOCALAPPDATA%\\Programs\\Danaco Console",
-      "rada": "Zamknij inne programy i uruchom instalator ponownie jako administrator."
+      "szczegoly": "",
+      "rada": "Uruchom instalator ponownie. Jeżeli odmowa się powtórzy, uruchom go jako administrator."
     },
     "postep": { "etykieta": "Postęp instalacji", "opisPaska": "Postęp instalacji" },
     "etapyNaglowek": "Etapy",
@@ -141,14 +141,12 @@ window.DanacoKreator.tresci = {
       {
         "nazwa": "Rozpakowywanie plików",
         "opis": "Zapis plików programu w katalogu docelowym.",
-        "licznik": { "czasownik": "Rozpakowano", "cel": "250", "jednostka": "MB" },
-        "pozostalo": "Pozostało około 2 minut"
+        "licznik": { "czasownik": "Rozpakowano", "jednostka": "MB" }
       },
       {
         "nazwa": "Rejestrowanie składników",
         "opis": "Rejestracja bibliotek i skojarzeń plików w systemie.",
-        "licznik": { "czasownik": "Zarejestrowano", "cel": "22", "rzecz": "składników" },
-        "pozostalo": "Pozostało około minuty"
+        "licznik": { "czasownik": "Zarejestrowano", "rzecz": "składników" }
       },
       {
         "nazwa": "Weryfikacja podpisu",

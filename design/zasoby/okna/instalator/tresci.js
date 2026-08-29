@@ -131,7 +131,7 @@ window.DanacoKreator.tresci = {
       "rada": "Zamknij inne programy i uruchom instalator ponownie jako administrator."
     },
     "postep": { "etykieta": "Postęp instalacji", "opisPaska": "Postęp instalacji" },
-    "etapyNaglowek": "Przebieg instalacji",
+    "etapyNaglowek": "Etapy",
     "stany": { "gotowe": "Gotowe", "wToku": "W toku", "oczekuje": "Oczekuje" },
     "etapy": [
       {

@@ -13,7 +13,7 @@ ROBOCZY="$PAKOWANIE/roboczy"
 
 # Wersji nie jest podnoszona, bo żadne wydanie nie było jeszcze w użytku; numer
 # wersji zostaje pod kontrolą operatora wydania.
-WERSJA="${DANACO_WERSJA:-1.0.0}"
+WERSJA="${DANACO_WERSJA:-2.0.0}"
 DATA="$(date +%Y-%m-%d)"
 KATALOG_WYDANIA="${DANACO_KATALOG_WYDANIA:-$BUDOWA/wydania/$WERSJA-$DATA}"
 

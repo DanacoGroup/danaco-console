@@ -120,7 +120,7 @@ odnajdzRdzen() {
 	for kandydat in \
 		"$SKRYPTY/danaco-console" \
 		"$BUDOWA/danaco-console" \
-		"$BUDOWA/wydania/1.0.0/danaco-console"; do
+		"$BUDOWA/wydania/2.0.0/danaco-console"; do
 		if [ -x "$kandydat" ]; then
 			printf '%s\n' "$kandydat"
 			return

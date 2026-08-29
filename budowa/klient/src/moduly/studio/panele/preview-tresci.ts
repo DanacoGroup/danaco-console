@@ -11,10 +11,10 @@ export const trescPodgladu = {
   brakDokumentuTytul: 'Brak dokumentu w podglądzie',
   brakDokumentuOpis: 'W tym oknie nie ma jeszcze otwartego dokumentu.',
 
-  renderowanie: 'Renderowanie podglądu…',
+  renderowanie: 'Przygotowywanie podglądu…',
 
   brakStronTytul: 'Brak stron do pokazania',
-  brakStronOpis: 'Podgląd nie ma żadnej strony.',
+  brakStronOpis: 'Brak stron do wyświetlenia.',
 
   odmowaRenderu: 'Nie udało się przygotować podglądu',
   odmowaUkladu: 'Nie udało się odczytać ustawień strony',

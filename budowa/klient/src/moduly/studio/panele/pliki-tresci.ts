@@ -9,7 +9,7 @@ export const tresciPliki = {
   urzadzenia: {
     tytul: 'Urządzenia wejściowe',
     ladowanie: 'Sprawdzanie urządzeń wejściowych…',
-    brak: 'Nie znaleziono żadnego urządzenia wejściowego.',
+    brak: 'Brak urządzeń wejściowych.',
     podajnik: 'z podajnikiem',
     skanuj: 'Skanuj',
     skanowanie: 'Skanowanie…',
@@ -35,7 +35,7 @@ export const tresciPliki = {
   dodaj: {
     etykietaSciezki: 'Położenie pliku',
     doloz: 'Dodaj plik',
-    dokladanie: 'Dokładanie…',
+    dokladanie: 'Dodawanie…',
   },
 
   adres: {

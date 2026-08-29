@@ -47,11 +47,11 @@ export const tresci = {
     etykieta: 'Dokumenty sesji',
     nowyDokument: '+ Nowy dokument',
     filtry: 'Filtr, sortowanie, grupowanie',
-    brakDokumentow: 'Ta sesja nie ma jeszcze żadnego dokumentu.',
+    brakDokumentow: 'Brak dokumentów w tej sesji.',
     bezTytulu: 'Dokument bez tytułu',
     nazwaNowego: 'Nowy dokument',
     brakPorzadkowania: 'Filtrowanie i sortowanie nie jest dostępne w tej wersji.',
-    odmowaBezOpisu: 'Nie udało się wykonać czynności. Spróbuj ponownie; jeżeli problem się powtarza, skontaktuj się z administratorem.',
+    odmowaBezOpisu: 'Nie udało się wykonać czynności. Spróbuj ponownie. Jeżeli problem się powtarza, skontaktuj się z administratorem.',
   },
 
   czat: {

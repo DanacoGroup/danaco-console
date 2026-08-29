@@ -72,6 +72,17 @@ type List struct {
 	// nie pokazuje — a takich jest wiele w ustawieniach domyślnych — dostaje
 	// wtedy tekst, nie pustą kartkę z kodem, którego nie widać.
 	TrescHtml string
+	// Znak niesie obraz dołączany do listu jako część powiązana, wskazywany
+	// z treści graficznej odwołaniem `cid:`. Puste znaczy list bez obrazu.
+	//
+	// Obraz idzie częścią listu, nie wpisany w treść: klienty pocztowe blokują
+	// albo odrzucają obrazy `data:`, a znak dołączony pokazują bez pytania.
+	Znak []byte
+	// IdZnaku jest odwołaniem, którym treść graficzna wskazuje obraz.
+	IdZnaku string
+	// Naglowki dodatkowe listu — dla poczty transakcyjnej wymagane przez
+	// opracowanie (`design/06-poczta-transakcyjna`, rozdz. 5.3).
+	Naglowki []string
 }
 
 // Wyslij nadaje list i oddaje chwilę nadania.
@@ -111,13 +122,17 @@ func zloz(n Nastawy, l List) []byte {
 		"MIME-Version: 1.0",
 		"Date: " + time.Now().Format(time.RFC1123Z),
 	}
+	naglowki = append(naglowki, l.Naglowki...)
 	if strings.TrimSpace(l.TrescHtml) == "" {
 		naglowki = append(naglowki,
 			"Content-Type: text/plain; charset=UTF-8",
 			"Content-Transfer-Encoding: 8bit")
 		return []byte(strings.Join(naglowki, "\r\n") + "\r\n\r\n" + l.Tresc + "\r\n")
 	}
-	return zlozDwiePostacie(naglowki, l)
+	if len(l.Znak) == 0 {
+		return zlozDwiePostacie(naglowki, l)
+	}
+	return zlozZeZnakiem(naglowki, l)
 }
 
 // nadaj prowadzi całą rozmowę SMTP: połączenie, ewentualny STARTTLS,
@@ -271,4 +286,61 @@ func lamany(zakodowany string) string {
 		wynik.WriteString(zakodowany[i:koniec])
 	}
 	return wynik.String()
+}
+
+// granicaZnaku rozdziela część z treścią od części z obrazem znaku.
+const granicaZnaku = "danaco-console-granica-znaku-listu"
+
+/*
+zlozZeZnakiem składa list `multipart/related`: w pierwszej części stoją obie
+postacie treści, w drugiej obraz znaku wskazywany z treści graficznej.
+
+Zagnieżdżenie jest wiążące i wynika z RFC 2387: `related` wiąże treść z jej
+częściami, a `alternative` wybiera postać. Odwrócenie tej kolejności kazałoby
+klientowi wybierać między tekstem a obrazem, zamiast między tekstem a stroną
+z obrazem.
+*/
+func zlozZeZnakiem(naglowki []string, l List) []byte {
+	naglowki = append(naglowki,
+		`Content-Type: multipart/related; type="multipart/alternative"; boundary="`+granicaZnaku+`"`)
+
+	var dokument strings.Builder
+	dokument.WriteString(strings.Join(naglowki, "\r\n"))
+	dokument.WriteString("\r\n\r\n")
+
+	dokument.WriteString("--" + granicaZnaku + "\r\n")
+	dokument.WriteString(`Content-Type: multipart/alternative; boundary="` + granicaCzesci + "\"\r\n\r\n")
+	dokument.Write(czesciTresci(l))
+
+	dokument.WriteString("--" + granicaZnaku + "\r\n")
+	dokument.WriteString("Content-Type: image/png\r\n")
+	dokument.WriteString("Content-Transfer-Encoding: base64\r\n")
+	dokument.WriteString("Content-ID: <" + l.IdZnaku + ">\r\n")
+	dokument.WriteString(`Content-Disposition: inline; filename="danaco.png"` + "\r\n\r\n")
+	dokument.WriteString(lamany(base64.StdEncoding.EncodeToString(l.Znak)))
+	dokument.WriteString("\r\n\r\n")
+
+	dokument.WriteString("--" + granicaZnaku + "--\r\n")
+	return []byte(dokument.String())
+}
+
+// czesciTresci składa obie postacie treści wraz z zamknięciem ich granicy.
+// Wspólne dla listu z obrazem i bez niego, żeby jedna kolejność części nie
+// rozeszła się z drugą.
+func czesciTresci(l List) []byte {
+	var czesci strings.Builder
+	czesci.WriteString("--" + granicaCzesci + "\r\n")
+	czesci.WriteString("Content-Type: text/plain; charset=UTF-8\r\n")
+	czesci.WriteString("Content-Transfer-Encoding: 8bit\r\n\r\n")
+	czesci.WriteString(l.Tresc)
+	czesci.WriteString("\r\n\r\n")
+
+	czesci.WriteString("--" + granicaCzesci + "\r\n")
+	czesci.WriteString("Content-Type: text/html; charset=UTF-8\r\n")
+	czesci.WriteString("Content-Transfer-Encoding: base64\r\n\r\n")
+	czesci.WriteString(lamany(base64.StdEncoding.EncodeToString([]byte(l.TrescHtml))))
+	czesci.WriteString("\r\n\r\n")
+
+	czesci.WriteString("--" + granicaCzesci + "--\r\n\r\n")
+	return []byte(czesci.String())
 }

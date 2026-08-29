@@ -1,17 +1,19 @@
-// Pakiet nadajnik wysyła listy pisane przez samą aplikację: potwierdzenie
-// adresu przy rejestracji i drogę odzyskania konta, w imieniu platformy,
-// osobnym poświadczeniem od skrzynki Operatora.
+// Pakiet nadajnik podaje serwerowi poczty wiadomości złożone przez pakiet
+// mail: potwierdzenie adresu przy rejestracji i drogę odzyskania konta,
+// w imieniu platformy, osobnym poświadczeniem od skrzynki Operatora.
 package nadajnik
 
 import (
 	"crypto/tls"
-	"encoding/base64"
 	"fmt"
 	"net"
+	netmail "net/mail"
 	"net/smtp"
 	"strconv"
 	"strings"
 	"time"
+
+	"danacoconsole/server/internal/mail"
 )
 
 // limitRozmowy zamyka rozmowę, która utknęła. Bez niego nadanie do serwera,
@@ -56,93 +58,35 @@ func (n Nastawy) Brak() error {
 	return nil
 }
 
-// List jest jednym z dwóch listów systemowych: temat i treść tekstowa.
-//
-// Załączników nie ma i nie będzie: list systemowy niesie jedno zdanie i jedną
-// drogę, a załącznik w liście o odzyskaniu konta jest wzorcem, po którym
-// rozpoznaje się podszycie.
-type List struct {
-	Do    string
-	Temat string
-	Tresc string
-	// TrescHtml jest tą samą wiadomością w postaci graficznej — z papeterią,
-	// znakiem marki i typografią produktu. Puste znaczy list wyłącznie tekstowy.
-	//
-	// Obie postacie idą razem, nigdy sama HTML: klient pocztowy, który grafiki
-	// nie pokazuje — a takich jest wiele w ustawieniach domyślnych — dostaje
-	// wtedy tekst, nie pustą kartkę z kodem, którego nie widać.
-	TrescHtml string
-	// Obrazy niesione częścią listu, wskazywane z treści graficznej odwołaniem
-	// `cid:`. Pusty wykaz znaczy list bez obrazów.
-	//
-	// Obraz idzie częścią listu, nie wpisany w treść: klienty pocztowe blokują
-	// albo odrzucają obrazy `data:`, a dołączony pokazują bez pytania.
-	Obrazy []Obraz
-	// Naglowki dodatkowe listu — dla poczty transakcyjnej wymagane przez
-	// opracowanie (`design/06-poczta-transakcyjna`, rozdz. 5.3).
-	Naglowki []string
+// Nadawca oddaje adres nadawcy dla koperty wiadomości składanej pakietem mail.
+// Nazwa nieustawiona zostawia sam adres — konto nadawcze bez nazwy widocznej
+// nadal nadaje.
+func (n Nastawy) Nadawca() netmail.Address {
+	return netmail.Address{
+		Name:    strings.TrimSpace(n.NazwaWyswietlana),
+		Address: n.Adres,
+	}
 }
 
-// Obraz jest częścią powiązaną listu — obrazem wskazywanym z treści graficznej
-// przez `cid:`, nie załącznikiem do pobrania.
-type Obraz struct {
-	// Id jest odwołaniem, którym treść graficzna wskazuje ten obraz.
-	Id string
-	// Nazwa staje w polu nazwy pliku części; klient pocztowy pokazuje ją,
-	// gdy mimo wszystko potraktuje obraz jak załącznik.
-	Nazwa string
-	// Dane niosą sam obraz w postaci PNG.
-	Dane []byte
-}
-
-// Wyslij nadaje list i oddaje chwilę nadania.
+// Wyslij nadaje wiadomość złożoną przez pakiet mail i oddaje chwilę nadania.
 //
 // Nieudane nadanie NIE jest ciszą: wraca błędem nazywającym, na czym rozmowa
-// stanęła. Rejestracja, która obiecała list i go nie wysłała, zostawiłaby
-// Operatora przed kontem, do którego nie ma jak wejść.
-func Wyslij(n Nastawy, l List) (time.Time, error) {
+// stanęła — rejestracja bez listu zostawia Operatora przed zamkniętym kontem.
+func Wyslij(n Nastawy, wiadomosc *mail.Message) (time.Time, error) {
 	if err := n.Brak(); err != nil {
 		return time.Time{}, err
 	}
-	if strings.TrimSpace(l.Do) == "" {
+	if wiadomosc == nil || len(wiadomosc.Data) == 0 {
+		return time.Time{}, fmt.Errorf("list bez treści — nie ma czego nadać")
+	}
+	if strings.TrimSpace(wiadomosc.To) == "" {
 		return time.Time{}, fmt.Errorf("list bez odbiorcy — nie ma dokąd go nadać")
 	}
 
-	dokument := zloz(n, l)
-	if err := nadaj(n, l.Do, dokument); err != nil {
+	if err := nadaj(n, wiadomosc.To, wiadomosc.Data); err != nil {
 		return time.Time{}, err
 	}
 	return time.Now(), nil
-}
-
-// zloz składa dokument listu: nagłówki i treść rozdzielone pustą linią.
-//
-// Kodowanie jest jawne (`UTF-8`), bo temat i treść niosą polskie znaki
-// diakrytyczne, a serwer bez deklaracji przyjmie je za bajty ósemkowe
-// i Operator zobaczy krzaki zamiast zdania.
-func zloz(n Nastawy, l List) []byte {
-	nadawca := n.Adres
-	if nazwa := strings.TrimSpace(n.NazwaWyswietlana); nazwa != "" {
-		nadawca = fmt.Sprintf("%s <%s>", nazwa, n.Adres)
-	}
-	naglowki := []string{
-		"From: " + nadawca,
-		"To: " + l.Do,
-		"Subject: " + l.Temat,
-		"MIME-Version: 1.0",
-		"Date: " + time.Now().Format(time.RFC1123Z),
-	}
-	naglowki = append(naglowki, l.Naglowki...)
-	if strings.TrimSpace(l.TrescHtml) == "" {
-		naglowki = append(naglowki,
-			"Content-Type: text/plain; charset=UTF-8",
-			"Content-Transfer-Encoding: 8bit")
-		return []byte(strings.Join(naglowki, "\r\n") + "\r\n\r\n" + l.Tresc + "\r\n")
-	}
-	if len(l.Obrazy) == 0 {
-		return zlozDwiePostacie(naglowki, l)
-	}
-	return zlozZObrazami(naglowki, l)
 }
 
 // nadaj prowadzi całą rozmowę SMTP: połączenie, ewentualny STARTTLS,
@@ -233,126 +177,4 @@ func sposobUwierzytelnienia(n Nastawy, mechanizmy string) smtp.Auth {
 		return smtp.CRAMMD5Auth(n.Uzytkownik, n.Sekret)
 	}
 	return nil
-}
-
-/*
-granicaCzesci rozdziela części listu wieloczęściowego. Wartość jest stała
-i nie może wystąpić w treści — obie postacie listu systemowego składa rdzeń,
-więc żadna z nich nie niesie napisu przypadkowego.
-*/
-const granicaCzesci = "danaco-console-granica-czesci-listu"
-
-/*
-zlozDwiePostacie składa list `multipart/alternative`: najpierw postać tekstowa,
-po niej graficzna.
-
-Kolejność jest wiążąca i wynika z RFC 2046: klient pocztowy pokazuje część
-OSTATNIĄ, którą umie wyświetlić. Tekst przed HTML-em znaczy więc „pokaż
-papeterię, jeżeli umiesz; jeżeli nie — pokaż tekst". Odwrócenie tej kolejności
-zostawiłoby z papeterią wyłącznie tych, którzy jej nie potrzebują.
-
-Postać graficzna idzie kodowaniem base64, bo niesie znak marki wpisany w treść
-i długie wiersze stylu; ósemkowe kodowanie łamałoby je na siedemdziesiątym
-ósmym znaku i rozbijało dokument.
-*/
-func zlozDwiePostacie(naglowki []string, l List) []byte {
-	naglowki = append(naglowki,
-		`Content-Type: multipart/alternative; boundary="`+granicaCzesci+`"`)
-
-	var dokument strings.Builder
-	dokument.WriteString(strings.Join(naglowki, "\r\n"))
-	dokument.WriteString("\r\n\r\n")
-
-	dokument.WriteString("--" + granicaCzesci + "\r\n")
-	dokument.WriteString("Content-Type: text/plain; charset=UTF-8\r\n")
-	dokument.WriteString("Content-Transfer-Encoding: 8bit\r\n\r\n")
-	dokument.WriteString(l.Tresc)
-	dokument.WriteString("\r\n\r\n")
-
-	dokument.WriteString("--" + granicaCzesci + "\r\n")
-	dokument.WriteString("Content-Type: text/html; charset=UTF-8\r\n")
-	dokument.WriteString("Content-Transfer-Encoding: base64\r\n\r\n")
-	dokument.WriteString(lamany(base64.StdEncoding.EncodeToString([]byte(l.TrescHtml))))
-	dokument.WriteString("\r\n\r\n")
-
-	dokument.WriteString("--" + granicaCzesci + "--\r\n")
-	return []byte(dokument.String())
-}
-
-// lamany łamie ciąg base64 na wiersze po 76 znaków, jak żąda RFC 2045.
-// Serwer pocztowy odrzuca wiersze dłuższe niż 998 znaków, a jedna postać
-// graficzna listu ma ich kilkadziesiąt tysięcy.
-func lamany(zakodowany string) string {
-	const dlugoscWiersza = 76
-	var wynik strings.Builder
-	for i := 0; i < len(zakodowany); i += dlugoscWiersza {
-		koniec := i + dlugoscWiersza
-		if koniec > len(zakodowany) {
-			koniec = len(zakodowany)
-		}
-		if i > 0 {
-			wynik.WriteString("\r\n")
-		}
-		wynik.WriteString(zakodowany[i:koniec])
-	}
-	return wynik.String()
-}
-
-// granicaZnaku rozdziela część z treścią od części z obrazem znaku.
-const granicaZnaku = "danaco-console-granica-znaku-listu"
-
-/*
-zlozZObrazami składa list `multipart/related`: w pierwszej części stoją obie
-postacie treści, w kolejnych obrazy wskazywane z treści graficznej.
-
-Zagnieżdżenie jest wiążące i wynika z RFC 2387: `related` wiąże treść z jej
-częściami, a `alternative` wybiera postać. Odwrócenie tej kolejności kazałoby
-klientowi wybierać między tekstem a obrazem, zamiast między tekstem a stroną
-z obrazem.
-*/
-func zlozZObrazami(naglowki []string, l List) []byte {
-	naglowki = append(naglowki,
-		`Content-Type: multipart/related; type="multipart/alternative"; boundary="`+granicaZnaku+`"`)
-
-	var dokument strings.Builder
-	dokument.WriteString(strings.Join(naglowki, "\r\n"))
-	dokument.WriteString("\r\n\r\n")
-
-	dokument.WriteString("--" + granicaZnaku + "\r\n")
-	dokument.WriteString(`Content-Type: multipart/alternative; boundary="` + granicaCzesci + "\"\r\n\r\n")
-	dokument.Write(czesciTresci(l))
-
-	for _, obraz := range l.Obrazy {
-		dokument.WriteString("--" + granicaZnaku + "\r\n")
-		dokument.WriteString("Content-Type: image/png\r\n")
-		dokument.WriteString("Content-Transfer-Encoding: base64\r\n")
-		dokument.WriteString("Content-ID: <" + obraz.Id + ">\r\n")
-		dokument.WriteString(`Content-Disposition: inline; filename="` + obraz.Nazwa + `"` + "\r\n\r\n")
-		dokument.WriteString(lamany(base64.StdEncoding.EncodeToString(obraz.Dane)))
-		dokument.WriteString("\r\n\r\n")
-	}
-
-	dokument.WriteString("--" + granicaZnaku + "--\r\n")
-	return []byte(dokument.String())
-}
-
-// czesciTresci składa obie postacie treści wraz z zamknięciem ich granicy.
-// Wspólne dla listu z obrazem i bez niego, żeby jedna kolejność części nie
-// rozeszła się z drugą.
-func czesciTresci(l List) []byte {
-	var czesci strings.Builder
-	czesci.WriteString("--" + granicaCzesci + "\r\n")
-	czesci.WriteString("Content-Type: text/plain; charset=UTF-8\r\n")
-	czesci.WriteString("Content-Transfer-Encoding: 8bit\r\n\r\n")
-	czesci.WriteString(l.Tresc)
-	czesci.WriteString("\r\n\r\n")
-
-	czesci.WriteString("--" + granicaCzesci + "\r\n")
-	czesci.WriteString("Content-Type: text/html; charset=UTF-8\r\n")
-	czesci.WriteString("Content-Transfer-Encoding: base64\r\n\r\n")
-	czesci.WriteString(lamany(base64.StdEncoding.EncodeToString([]byte(l.TrescHtml))))
-	czesci.WriteString("\r\n\r\n")
-
-	czesci.WriteString("--" + granicaCzesci + "--\r\n\r\n")
-	return []byte(czesci.String())
 }

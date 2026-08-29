@@ -44,6 +44,10 @@ type adapterUwierzytelnienia struct {
 	// nakładają na nie kontoNadawcze.
 	nadajnik nadajnik.Nastawy
 
+	// adresKonsoli to publiczny adres, pod który kieruje odsyłacz z listu
+	// aktywacji. Pusty znaczy adres wbudowany w pakiet.
+	adresKonsoli string
+
 	// nastawy daje odczyt konta nadawczego z okna Konfiguracji; zerowe —
 	// obowiązuje samo konto startowe.
 	nastawy NastawyPlatformy
@@ -83,6 +87,13 @@ func (a *adapterUwierzytelnienia) ZKontem(
 // do Operatora przy rejestracji i przy odzyskiwaniu konta.
 func (a *adapterUwierzytelnienia) ZNadajnikiem(n nadajnik.Nastawy) *adapterUwierzytelnienia {
 	a.nadajnik = n
+	return a
+}
+
+// ZAdresemKonsoli wpina publiczny adres Konsoli. Odsyłacz z listu ma otworzyć
+// okno na maszynie Operatora, więc nie może być adresem nasłuchu rdzenia.
+func (a *adapterUwierzytelnienia) ZAdresemKonsoli(adres string) *adapterUwierzytelnienia {
+	a.adresKonsoli = adres
 	return a
 }
 
@@ -170,7 +181,7 @@ func (a *adapterUwierzytelnienia) ZalozBramke(ctx context.Context,
 	   bez poczty. Powód idzie do dziennika: odpowiedź kontraktu niesie samo
 	   `pendingVerification: false`, więc bez tego zapisu przyczyna — brak konta
 	   nadawczego czy odmowa serwera pocztowego — przepadałaby bez śladu. */
-	if err := a.wyslijDrogePotwierdzenia(ctx, dane.CelWeryfikacja, email, login, kontoId); err != nil {
+	if err := a.wyslijDrogePotwierdzenia(ctx, dane.CelWeryfikacja, email, kontoId); err != nil {
 		if dziennik := dziennikZKontekstu(ctx); dziennik != nil {
 			dziennik.Printf("rejestracja: list z kodem nie wyszedł na %s: %v", email, err)
 		}

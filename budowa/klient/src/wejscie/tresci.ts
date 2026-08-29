@@ -427,11 +427,11 @@ export const tresci = {
       tresc: 'Nowy kod został wysłany na adres konta. Poprzedni przestał obowiązywać.',
     },
     schowek: {
-      /* Schowek jest dostępny — nieosiągalny bez pozwolenia jest wyłącznie
-         odczyt programem. Zdanie podaje drogę, która działa, zamiast nazywać
-         przeszkodę: kursor stoi już w pierwszym polu, więc skrót zadziała. */
-      tytul: 'Wklej kod skrótem',
-      tresc: 'Naciśnij Ctrl+V — kod wejdzie w pola. Możesz też wpisać go ręcznie.',
+      /* Zdanie pada wyłącznie wtedy, gdy Operator odmówił przeglądarce dostępu
+         do schowka — wtedy program nie ma jak go odczytać i mówi o tym krótko,
+         bez pouczania. Kursor stoi już w pierwszym polu. */
+      tytul: 'Brak dostępu do schowka',
+      tresc: 'Przeglądarka nie pozwoliła odczytać schowka.',
     },
   },
 } as const;

@@ -533,7 +533,12 @@ export function utworzPrzebieg(zaleznosci: ZaleznosciPrzebiegu): Przebieg {
       password: dane.haslo,
     });
     if (!wynik.udany) {
-      zmien({ usterki: odmowa(wynik) });
+      /* Odmowa „conflict” na rejestracji ma jedno znaczenie i warto je nazwać:
+         konto Operatora już stoi. Zdanie ogólne dobierane po samym kodzie
+         kazałoby Operatorowi odświeżać widok, choć widok jest w porządku,
+         a droga dalsza prowadzi do logowania. */
+      const kod = wynik.blad?.code;
+      zmien({ usterki: kod === ErrorCode.Conflict ? [{ klucz: 'kontoJuzIstnieje' }] : odmowa(wynik) });
       return;
     }
     const odpowiedz = wynik.wynik;

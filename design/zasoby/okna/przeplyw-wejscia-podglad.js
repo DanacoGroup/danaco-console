@@ -395,7 +395,7 @@
       if (nazwaDocelowa === 'w-blad') {
         window.dnToast('Błąd połączenia', 'Sprawdź połączenie sieciowe i spróbuj ponownie.', 'ostrzezenie');
       } else if (nazwaDocelowa === 'w-token') {
-        window.dnToast('Rozpoznano zaufane urządzenie', 'Uruchomienie bez logowania.', 'sukces');
+        window.dnToast('Rozpoznano zaufane urządzenie', 'Urządzenie jest zaufane — logowanie zostanie pominięte.', 'sukces');
       } else {
         window.dnToast('Połączono z serwerem', 'Za chwilę otworzy się okno logowania.', 'informacja');
       }

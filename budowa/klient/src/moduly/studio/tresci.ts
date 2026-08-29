@@ -28,7 +28,7 @@ export const tresci = {
 
   wstazka: {
     etykieta: 'Wstążka okna roboczego — narzędzia modułu Studio',
-    bezSesji: '(bez nazwy sesji)',
+    bezSesji: 'Sesja bez nazwy',
     ukladEtykieta: 'Układ okna roboczego',
     oknoKomunikacji: 'Okno komunikacji',
     podzialPionowy: 'Podział pionowy',
@@ -40,7 +40,7 @@ export const tresci = {
     operacjeEtykieta: 'Operacje modułu',
     uruchomOperacje: 'Uruchom operację',
     wyslijDoLibrary: 'Wyślij do Library',
-    brakKomendyLibrary: 'Kontrakt nie niesie komendy odkładającej dokument Studia do Library.',
+    brakKomendyLibrary: 'Wysyłanie dokumentu do Library nie jest dostępne w tej wersji.',
   },
 
   szyna: {
@@ -48,16 +48,16 @@ export const tresci = {
     nowyDokument: '+ Nowy dokument',
     filtry: 'Filtr, sortowanie, grupowanie',
     brakDokumentow: 'Ta sesja nie ma jeszcze żadnego dokumentu.',
-    bezTytulu: '(dokument bez tytułu)',
+    bezTytulu: 'Dokument bez tytułu',
     nazwaNowego: 'Nowy dokument',
-    brakPorzadkowania: 'Filtrowanie i sortowanie nie jest jeszcze dostępne.',
-    odmowaBezOpisu: 'Nie udało się wykonać czynności; powód nie został podany.',
+    brakPorzadkowania: 'Filtrowanie i sortowanie nie jest dostępne w tej wersji.',
+    odmowaBezOpisu: 'Nie udało się wykonać czynności. Spróbuj ponownie; jeżeli problem się powtarza, skontaktuj się z administratorem.',
   },
 
   czat: {
     tytul: 'Chat Window',
     etykietaKontekst: 'Kontekst',
-    brakParametrow: 'Parametry tej rozmowy nie są jeszcze ustalone.',
+    brakParametrow: 'Parametry tej rozmowy nie zostały ustalone.',
     brakKontekstu: 'Brak przypiętego kontekstu.',
     brakWiadomosci: 'Brak wiadomości w tej rozmowie.',
     etykietaTresci: 'Pole polecenia',
@@ -66,8 +66,8 @@ export const tresci = {
   },
 
   panelNiegotowy: {
-    tytul: 'Panel jeszcze nie powstał',
-    opis: 'Ten panel wejdzie osobnym zakresem prac.',
+    tytul: 'Niedostępne w tej wersji',
+    opis: 'Ta część programu będzie dostępna w kolejnej wersji.',
   },
 
   dokument: {
@@ -77,20 +77,20 @@ export const tresci = {
     etykietaTresci: 'Treść dokumentu',
     zapisz: 'Zapisz',
     zapisywanie: 'Zapisywanie…',
-    zapisany: 'Zapisane w repozytorium sesji',
+    zapisany: 'Zapisano',
     wersja: 'wersja',
     bezWersji: 'bez wersji',
   },
 
   dokumentOdmowa: {
     sesja: 'Nie udało się założyć sesji',
-    kanal: 'Nie ma żadnego kanału modelu',
+    kanal: 'Żaden model nie jest dostępny',
     okno: 'Nie udało się otworzyć okna modułu',
     dokument: 'Nie udało się założyć dokumentu',
     zapis: 'Nie udało się zapisać dokumentu',
   },
 
   odmowa: {
-    brakOpisu: 'Powód nie został podany.',
+    brakOpisu: 'Spróbuj ponownie. Jeżeli problem się powtarza, skontaktuj się z administratorem.',
   },
 } as const;

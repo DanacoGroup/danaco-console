@@ -19,24 +19,24 @@ export const tresciNarzedzi = {
     jednostkaZnaki: 'znaków',
     jednostkaSlowa: 'słów',
     brakDokumentu: 'W tym oknie nie ma dokumentu.',
-    brakZaznaczenia: 'Zakres zaznaczenia nie jest znany.',
+    brakZaznaczenia: 'Nie zaznaczono fragmentu dokumentu.',
   },
 
   operacje: {
     wlasna: 'własna',
-    brakWykazu: 'Nie ma żadnej operacji do uruchomienia.',
+    brakWykazu: 'Brak dostępnych operacji.',
   },
 
   uruchom: {
     przycisk: 'Uruchom operację',
     wBiegu: 'Uruchamianie…',
-    brakWyniku: 'Wynik nie zawiera treści.',
+    brakWyniku: 'Model nie zwrócił odpowiedzi.',
   },
 
   odmowa: {
     brakOkna: 'Nie udało się otworzyć okna modułu.',
     lista: 'Nie udało się wczytać wykazu operacji',
     uruchomienie: 'Nie udało się uruchomić operacji',
-    brakOpisu: 'Powód nie został podany.',
+    brakOpisu: 'Spróbuj ponownie. Jeżeli problem się powtarza, skontaktuj się z administratorem.',
   },
 } as const;

@@ -21,7 +21,7 @@ export const tresciRepo = {
     galaz: 'Nie udało się założyć gałęzi.',
     etykieta: 'Nie udało się zmienić etykiety.',
     eksport: 'Nie udało się wyeksportować historii.',
-    brakOpisu: 'Powód nie został podany.',
+    brakOpisu: 'Spróbuj ponownie. Jeżeli problem się powtarza, skontaktuj się z administratorem.',
   },
 
   pusto: {

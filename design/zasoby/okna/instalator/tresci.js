@@ -69,7 +69,7 @@ window.DanacoKreator.tresci = {
     "podtytulArm": "Ten komputer ma procesor ARM (ARM64). Zaznaczona jest wersja odpowiednia dla tego procesora.",
     "podtytulBrak": "Nie udało się rozpoznać procesora tego komputera. Wybierz wersję, którą chcesz zainstalować.",
     "wskazowkaWykryta": "Jeśli nie wiesz, którą wersję wybrać, zostaw zaznaczenie bez zmian. Wersja niezgodna z procesorem nie uruchomi się po instalacji.",
-    "wskazowkaBrak": "Otwórz Ustawienia > System > Informacje i sprawdź pozycję Typ systemu. Wartość „x64\" oznacza pierwszą opcję, wartość „ARM64\" — drugą.",
+    "wskazowkaBrak": "Otwórz Ustawienia > System > Informacje i sprawdź pozycję Typ systemu. Wartość „x64” oznacza pierwszą opcję, wartość „ARM64” — drugą.",
     "wybor": { "etykieta": "Wersja programu" },
     "plakietka": "ZALECANE",
     "x64": {
@@ -130,7 +130,7 @@ window.DanacoKreator.tresci = {
       "szczegoly": "Kod błędu: 0x80070005\nOdmowa dostępu do katalogu C:\\Users\\Operator\\AppData\\Local\\Programs\\Danaco Console",
       "rada": "Zamknij inne programy i uruchom instalator ponownie jako administrator."
     },
-    "postep": { "etykieta": "Postęp całkowity", "opisPaska": "Postęp instalacji" },
+    "postep": { "etykieta": "Postęp instalacji", "opisPaska": "Postęp instalacji" },
     "etapyNaglowek": "Przebieg instalacji",
     "stany": { "gotowe": "Gotowe", "wToku": "W toku", "oczekuje": "Oczekuje" },
     "etapy": [
@@ -223,8 +223,8 @@ window.DanacoKreator.tresci = {
         "Przejdź do sekcji System, a następnie wybierz Informacje.",
         "Odszukaj pozycję Typ systemu."
       ],
-      "x64": "Wartość „System operacyjny 64-bitowy, procesor x64\" oznacza wersję Intel lub AMD (x64).",
-      "arm": "Wartość „System operacyjny 64-bitowy, procesor ARM\" oznacza wersję ARM (ARM64).",
+      "x64": "Wartość „System operacyjny 64-bitowy, procesor x64” oznacza wersję Intel lub AMD (x64).",
+      "arm": "Wartość „System operacyjny 64-bitowy, procesor ARM” oznacza wersję ARM (ARM64).",
       "zamknij": "Zamknij"
     }
   }

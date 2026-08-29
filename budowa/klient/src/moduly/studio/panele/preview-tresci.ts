@@ -18,7 +18,7 @@ export const trescPodgladu = {
 
   odmowaRenderu: 'Nie udało się przygotować podglądu',
   odmowaUkladu: 'Nie udało się odczytać ustawień strony',
-  brakOpisu: 'Powód nie został podany.',
+  brakOpisu: 'Spróbuj ponownie. Jeżeli problem się powtarza, skontaktuj się z administratorem.',
 
   format: 'Format wydania',
   strona: 'Strona',
@@ -30,10 +30,10 @@ export const trescPodgladu = {
   podzielEkran: 'Podziel ekran',
   eksportuj: 'Profil wydania',
   profilDomyslny: 'Bez profilu wydania',
-  profilBrak: 'Nie ma żadnego profilu wydania.',
+  profilBrak: 'Brak profili wydania.',
   profilOdmowa: 'Nie udało się wczytać profili wydania',
   profilWczytywanie: 'Wczytywanie profili wydania…',
 
   wyslijDoLibrary: 'Wyślij do Library',
-  wyslijNiegotowe: 'Wejdzie osobnym zakresem prac.',
+  wyslijNiegotowe: 'Niedostępne w tej wersji.',
 } as const;

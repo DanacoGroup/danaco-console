@@ -39,15 +39,15 @@ export const planTresci = {
   ladowanie: 'Wczytywanie rozkładu…',
 
   pusty: {
-    tytul: 'Nie ma żadnego zadania',
-    opis: 'Rozkład nie niesie dziś ani jednego zadania w tym stanie.',
+    tytul: 'Brak zadań',
+    opis: 'Brak zadań w tym stanie.',
   },
 
   odmowa: {
     okno: 'Nie udało się otworzyć okna modułu',
     sesja: 'Nie udało się założyć sesji',
     rozklad: 'Nie udało się rozłożyć zlecenia',
-    brakRozkladu: 'Rozkład nie został podany',
+    brakRozkladu: 'Nie udało się rozłożyć zlecenia na zadania',
     uruchomienie: 'Nie udało się uruchomić pętli',
     zatrzymanie: 'Nie udało się zatrzymać pętli',
   },

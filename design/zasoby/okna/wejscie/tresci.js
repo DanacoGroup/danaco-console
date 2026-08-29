@@ -76,7 +76,7 @@ window.DanacoWejscie.tresci = {
       "lid": "Danaco Console przywraca sesje otwarte na tym koncie.",
       "baner": {
         "glowa": "Rozpoznano zaufane urządzenie",
-        "tresc": "Uruchomienie bez logowania."
+        "tresc": "Urządzenie jest zaufane — logowanie zostanie pominięte."
       },
       "fraza": "Rejestracja i logowanie zostają pominięte, bo urządzenie jest zaufane."
     },
@@ -231,7 +231,7 @@ window.DanacoWejscie.tresci = {
     "obszarPowlok": "Cztery powłoki platformy Danaco Console: serwer, środowiska pracy, moduły, interfejs",
     "nadtytul": "Uruchomienie",
     "tytul": "Przygotowanie środowiska pracy",
-    "lid": "Danaco Console odtwarza stan pracy z ostatniego zamknięcia: karty sesji, kontekst projektów i kanały modeli.",
+    "lid": "Danaco Console odtwarza stan pracy z ostatniego zamknięcia: otwarte karty sesji i kontekst projektów.",
     "obszarEtapow": "Postęp przygotowania środowiska pracy",
     "etapy": [
       "Uwierzytelnienie",

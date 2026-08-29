@@ -81,6 +81,33 @@ func nowyTokenBramki() (string, error) {
 	return base64.RawURLEncoding.EncodeToString(surowy), nil
 }
 
+/*
+ZNAKOW_KODU nie stoi tu przypadkiem: okno rejestracji ma sześć pól na kod
+(`wejscie/ekrany/dostep.ts`, `ZNAKOW_DROGI`), a Operator przepisuje go ręcznie
+z wiadomości. Token sesji ma 43 znaki i do tych pól nie wchodzi — dlatego kod
+potwierdzenia jest osobnym bytem, krótkim i cyfrowym.
+
+Sześć cyfr daje milion możliwości. Zgadywania pilnuje ten sam dławik, który
+opóźnia kolejne wejścia, oraz godzina ważności i zamknięcie drogi po pierwszym
+użyciu — bez nich krótki kod byłby słabością, nie ułatwieniem.
+*/
+const znakowKoduPotwierdzenia = 6
+
+// nowyKodPotwierdzenia losuje kod przepisywany przez Operatora z wiadomości.
+// Cyfry, nie litery: kod czyta się z ekranu telefonu i przepisuje na klawiaturze,
+// a litery podobne do cyfr (O i zero, l i jedynka) mnożą pomyłki.
+func nowyKodPotwierdzenia() (string, error) {
+	cyfry := make([]byte, znakowKoduPotwierdzenia)
+	surowy := make([]byte, znakowKoduPotwierdzenia)
+	if _, err := rand.Read(surowy); err != nil {
+		return "", fmt.Errorf("core: brak losowości na kod potwierdzenia: %w", err)
+	}
+	for i, bajt := range surowy {
+		cyfry[i] = '0' + bajt%10
+	}
+	return string(cyfry), nil
+}
+
 // skrotTokenu zamienia token na jego rozpoznanie w bazie; token pochodzi ze źródła
 // kryptograficznego, więc skrót bez soli i rozciągania wystarcza, inaczej niż przy haśle.
 func skrotTokenu(token string) string {

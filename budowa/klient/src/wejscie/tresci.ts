@@ -186,10 +186,14 @@ export const tresci = {
     kontoBezPotwierdzenia: {
       tytul: 'Konto Operatora zostało założone',
       lid: 'Do logowania służy hasło ustawione przed chwilą.',
+      /* Zdanie mówi skutek, nie przyczynę: rdzeń schodzi na tę drogę zarówno
+         wtedy, gdy platforma nie ma konta nadawczego, jak i wtedy, gdy list
+         nie doszedł — a odpowiedź kontraktu tych dwóch przypadków nie
+         rozróżnia. Przyczynę niesie dziennik rdzenia. */
       baner: {
         glowa: 'Adres {adres} pozostaje niepotwierdzony.',
         tresc:
-          'Platforma nie ma konta nadawczego, więc wiadomość z kodem potwierdzającym nie została wysłana. Odzyskanie konta pocztą będzie możliwe dopiero po potwierdzeniu adresu.',
+          'Wiadomość z kodem potwierdzającym nie została wysłana. Odzyskanie konta pocztą będzie możliwe dopiero po potwierdzeniu adresu.',
       },
       /* Bez wskazania okna: w tym wydaniu zbudowany jest wyłącznie moduł Studio,
          więc odesłanie do okna Konfiguracji prowadziłoby w miejsce, którego
@@ -239,7 +243,10 @@ export const tresci = {
         tresc:
           'Sprawdź folder wiadomości niechcianych. List przychodzi z adresu {nadawca} i dociera zwykle w ciągu minuty. Jeśli nie dotarł, wyślij go ponownie.',
       },
-      pomocDane: { nadawca: 'noreply@danaco-core.pl' },
+      /* Adres zgodny z kontem nadawczym wpisanym w rdzeń
+         (`konfiguracja/konto_nadawcze.go`). Rozjazd tych dwóch miejsc kazałby
+         Operatorowi szukać listu od nadawcy, który nigdy nie pisał. */
+      pomocDane: { nadawca: 'noreply@danaco-group.pl' },
       ostrzezenie: {
         glowa: 'Kod potwierdzający wprowadza się wyłącznie w tym oknie.',
         tresc: 'Danaco Console nigdy nie prosi o niego przez telefon ani w wiadomości zwrotnej.',

@@ -4,9 +4,9 @@
 package core
 
 import (
-	"strings"
 	"context"
 	"errors"
+	"strings"
 	"sync"
 	"time"
 
@@ -166,9 +166,14 @@ func (a *adapterUwierzytelnienia) ZalozBramke(ctx context.Context,
 		}
 		return shared.AuthRegisterResponse{Registered: true, PendingVerification: false}, nil
 	}
-	// Niepowodzenie wysyłki nie cofa rejestracji — czynność schodzi na drogę
-	// bez poczty.
+	/* Niepowodzenie wysyłki nie cofa rejestracji — czynność schodzi na drogę
+	   bez poczty. Powód idzie do dziennika: odpowiedź kontraktu niesie samo
+	   `pendingVerification: false`, więc bez tego zapisu przyczyna — brak konta
+	   nadawczego czy odmowa serwera pocztowego — przepadałaby bez śladu. */
 	if err := a.wyslijDrogePotwierdzenia(ctx, dane.CelWeryfikacja, email, login, kontoId); err != nil {
+		if dziennik := dziennikZKontekstu(ctx); dziennik != nil {
+			dziennik.Printf("rejestracja: list z kodem nie wyszedł na %s: %v", email, err)
+		}
 		if err := a.zapiszZnacznikBezPoczty(ctx, email); err != nil {
 			a.cofnijRejestracje(ctx, kotwica.Kod, kontoId)
 			return shared.AuthRegisterResponse{}, err

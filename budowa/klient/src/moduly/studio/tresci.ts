@@ -63,6 +63,17 @@ export const tresci = {
     etykietaTresci: 'Pole polecenia',
     zastepczaTresc: 'Opisz operację na dokumencie lub zaznaczeniu…',
     wyslij: 'Do kolejki',
+    wczytywanie: 'Wczytywanie rozmowy…',
+    odmowaWykazu: 'Nie udało się wczytać rozmowy',
+    stanBlad: 'zakończona błędem',
+    stanZatrzymana: 'zatrzymana',
+    /* Nazwa nadawcy wpisu, kluczowana rolą z kontraktu. */
+    role: {
+      user: 'Operator',
+      assistant: 'Inteligencja',
+      system: 'Platforma',
+      tool: 'Narzędzie',
+    },
   },
 
   /* Bez obietnicy terminu: „będzie dostępna w kolejnej wersji" mówi

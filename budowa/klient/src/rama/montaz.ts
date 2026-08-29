@@ -93,11 +93,22 @@ export function zamontujRame(w: NastawyRamy): void {
     return;
   }
 
-  const obszar = el('div', { klasa: 'dn-obszar' }, [
-    panelSesje({ sesje: w.sesje }),
-    obszarGlowny,
-  ]);
-  ramaPrawa.append(obszar);
+  /*
+  Okno robocze pochodzi z prototypu: `vite.config.js` wstrzykuje blok
+  `main.st-okno-robocze` ze źródła kształtu w szablon `#dn-tresc-okna`, a powłoka
+  wkleja go w tym miejscu. Rama go NIE buduje — dokłada tylko to, czego prototyp
+  z natury nie niesie, bo pochodzi z rdzenia.
+
+  Obszar własny staje wyłącznie wtedy, gdy prototypowego okna nie ma — inaczej
+  Operator zobaczyłby dwa okna robocze jedno pod drugim.
+  */
+  const oknoZPrototypu = ramaPrawa.querySelector('.st-okno-robocze');
+  if (oknoZPrototypu === null) {
+    ramaPrawa.append(el('div', { klasa: 'dn-obszar' }, [
+      panelSesje({ sesje: w.sesje }),
+      obszarGlowny,
+    ]));
+  }
 
   /* Powłoka przychodzi z treścią przykładową prototypu — nazwą innego okna
      w belce i zmyślonymi miarami maszyny w pasku stanu. Wypełnienie zastępuje

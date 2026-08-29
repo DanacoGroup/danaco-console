@@ -27,6 +27,7 @@
  *     ścieżkę już poprawną w wydanym pakiecie.
  */
 
+import { readFileSync } from 'node:fs';
 import { copyFileSync, mkdirSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -95,6 +96,35 @@ function kopiaSkryptowBiblioteki() {
    sobą. Wartość wchodzi przy budowaniu, bo w przeglądarce nie ma jej skąd wziąć. */
 const DATA_SKLADANIA = new Date().toISOString().slice(0, 10);
 
+
+/**
+ * Wnętrze okna roboczego Studia pochodzi z prototypu, nie z kodu klienta.
+ *
+ * `zasoby/powloka.js` skleja powłokę wokół treści szablonu `#dn-tresc-okna`,
+ * a treścią tą jest blok `main.st-okno-robocze` ze źródła kształtu. Wstrzyknięcie
+ * przy budowaniu trzyma jedno źródło prawdy: zmiana prototypu wchodzi do
+ * aplikacji przebudowaniem, bez przepisywania znacznika ręką.
+ */
+function trescOknaZPrototypu() {
+  return {
+    name: 'tresc-okna-z-prototypu',
+    transformIndexHtml(html) {
+      const zrodlo = new URL('../../design/05-okna/moduly/studio.html', import.meta.url);
+      const prototyp = readFileSync(zrodlo, 'utf8');
+      const poczatek = prototyp.indexOf('<main class="st-okno-robocze"');
+      const koniec = prototyp.indexOf('</main>', poczatek);
+      if (poczatek < 0 || koniec < 0) {
+        throw new Error('prototyp Studia nie niesie bloku st-okno-robocze');
+      }
+      const blok = prototyp.slice(poczatek, koniec + '</main>'.length);
+      return html.replace(
+        '<template id="dn-tresc-okna"></template>',
+        `<template id="dn-tresc-okna">${blok}</template>`,
+      );
+    },
+  };
+}
+
 export default {
   root: korzen,
 
@@ -107,7 +137,7 @@ export default {
      Ścieżka bezwzględna wiązałaby pakiet z jednym z tych dwóch miejsc. */
   base: './',
 
-  plugins: [kopiaSkryptowBiblioteki()],
+  plugins: [kopiaSkryptowBiblioteki(), trescOknaZPrototypu()],
 
   build: {
     outDir: 'dist',

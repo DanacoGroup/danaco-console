@@ -348,9 +348,13 @@
 .au-sila { display: flex; flex-direction: column; gap: var(--dn-od-2); margin-top: var(--dn-od-3); }
 .au-sila-tor { display: grid; grid-template-columns: repeat(4, 1fr); gap: 3px; }
 .au-sila-odc { height: 3px; border-radius: var(--dn-r-pill); background: var(--dn-obrys); }
+/* Zieleń wyłącznie przy komplecie czterech warunków. Rejestracja odmawia,
+   dopóki którykolwiek nie jest spełniony, więc barwa sukcesu przy trzech
+   mówiłaby, że hasło przejdzie — a nie przejdzie. Stopnie 1–3 idą barwą
+   ostrzeżenia, różni je wyłącznie długość wypełnionego toru. */
 .au-sila[data-stopien='1'] .au-sila-odc:nth-child(-n+1),
-.au-sila[data-stopien='2'] .au-sila-odc:nth-child(-n+2) { background: var(--dn-ostrzezenie-tekst); }
-.au-sila[data-stopien='3'] .au-sila-odc:nth-child(-n+3),
+.au-sila[data-stopien='2'] .au-sila-odc:nth-child(-n+2),
+.au-sila[data-stopien='3'] .au-sila-odc:nth-child(-n+3) { background: var(--dn-ostrzezenie-tekst); }
 .au-sila[data-stopien='4'] .au-sila-odc { background: var(--dn-sukces-tekst); }
 .au-sila-opis { font-size: var(--dn-fs-xs); color: var(--dn-tekst-2); }
 .au-sila-warunki { display: flex; flex-wrap: wrap; gap: var(--dn-od-1) var(--dn-od-3); font-size: var(--dn-fs-xs); color: var(--dn-tekst-2); }
@@ -363,6 +367,11 @@
 .au-sila-warunek[data-spelniony='tak'] .ik-brak { display: none; }
 .au-sila-warunek[data-spelniony='tak'] .ik-jest { display: inline; }
 .au-sila-warunek[data-spelniony='tak'] { color: var(--dn-sukces-tekst); }
+/* Warunek niespełniony jest brakiem, który wstrzymuje rejestrację, a nie
+   pozycją nieaktywną — barwa błędu mówi to samo, co kształt pustego kółka.
+   Dopóki Operator nie zaczął wpisywać hasła, żaden warunek nie jest jeszcze
+   niespełniony, więc wykaz stoi wtedy barwą spokojną. */
+.au-sila:not([data-stopien='0']) .au-sila-warunek[data-spelniony='nie'] { color: var(--dn-blad-tekst); }
 
 /* Przeglądarka dokłada polom hasła własny przycisk odsłonięcia — obok naszego
    dawał dwa oczka jedno przy drugim.

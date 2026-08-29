@@ -49,7 +49,9 @@ export const tresci = {
         },
         {
           glowa: 'Izolacja kontekstu pod kontrolą',
-          tresc: 'Punkty izolacji kontekstu ustala Operator, nie sztywna reguła systemu.',
+          /* Zdanie mówi, co program robi, i nie porównuje się z niczym innym:
+             okno programu nie jest miejscem na spór z cudzym rozwiązaniem. */
+          tresc: 'Zakres kontekstu przekazywanego modelom ustala Operator, osobno dla każdej sesji.',
         },
       ],
     },
@@ -196,12 +198,16 @@ export const tresci = {
 
     sila: {
       puste: 'Siła hasła zostanie oceniona podczas wpisywania',
+      /* Bez ocen w rodzaju „dostateczne” i „dobre”: rejestracja przyjmuje
+         wyłącznie hasło z kompletem czterech warunków, więc pochwała przy
+         trzech zapowiadałaby powodzenie, którego nie będzie. Stopnie mówią,
+         ile warunków zostało do spełnienia. */
       stopnie: [
-        'Hasło nie spełnia żadnego z warunków',
-        'Hasło słabe — spełnia jeden warunek',
-        'Hasło dostateczne — spełnia dwa warunki',
-        'Hasło dobre — spełnia trzy warunki',
-        'Hasło mocne — spełnia wszystkie cztery warunki',
+        'Hasło nie spełnia żadnego z czterech warunków',
+        'Spełniony jeden warunek z czterech',
+        'Spełnione dwa warunki z czterech',
+        'Spełnione trzy warunki z czterech',
+        'Hasło spełnia wszystkie cztery warunki',
       ],
       warunki: {
         dlugosc: 'co najmniej {znaki} znaków',

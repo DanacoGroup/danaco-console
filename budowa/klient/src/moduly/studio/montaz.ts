@@ -20,6 +20,25 @@ import { wstazkaOkna } from './skladniki/wstazka.ts';
 import { szynaDokumentow } from './skladniki/szyna.ts';
 import { oknoCzatu } from './skladniki/czat.ts';
 import { panelNiegotowy } from './skladniki/panel-niegotowy.ts';
+import type { MontazPanelu, ZamontowanyPanel } from './panele/umowa.ts';
+import { montujPanelTools } from './panele/tools.ts';
+import { panelDiff } from './panele/diff.ts';
+import { montujPanelRepo } from './panele/repo.ts';
+import { montujPodgladWydania } from './panele/preview.ts';
+import { montujPliki } from './panele/pliki.ts';
+import { montujPanelPlanu } from './panele/plan.ts';
+
+/* Wykaz montaży paneli kartą. Karta bez wpisu zostaje przy stanie „panel jeszcze
+   nie powstał" — wpis dopisany tutaj jest jedynym miejscem, w którym panel wchodzi
+   do okna, więc dołożenie kolejnego nie dotyka żadnego z pozostałych plików. */
+const montazePaneli: Record<string, MontazPanelu> = {
+  tools: montujPanelTools,
+  diff: panelDiff,
+  repo: montujPanelRepo,
+  preview: montujPodgladWydania,
+  pliki: montujPliki,
+  plan: montujPanelPlanu,
+};
 
 export interface NastawyOknaStudio {
   /** Miejsce w dokumencie, w które okno się wstawia — `main` ramy aplikacji. */
@@ -44,7 +63,7 @@ export interface OknoStudio {
  * skrypt czyta wyłącznie pasmo poziomu aplikacji, nie zagnieżdżone pasmo
  * okna roboczego.
  */
-function wirujKarty(bryla: HTMLElement): void {
+function wirujKarty(bryla: HTMLElement, domontuj: (kod: string) => void): void {
   const wykazKart = Array.from(bryla.querySelectorAll<HTMLElement>('.dn-karta[data-karta]'));
   const wykazPaneli = Array.from(bryla.querySelectorAll<HTMLElement>('.sta-robocza > [role="tabpanel"]'));
   const lista = bryla.querySelector('.st-karty');
@@ -58,6 +77,7 @@ function wirujKarty(bryla: HTMLElement): void {
       inna.tabIndex = biezaca ? 0 : -1;
     }
     const kodKarty = wskazana.dataset['karta'];
+    if (kodKarty !== undefined) domontuj(kodKarty);
     for (const panel of wykazPaneli) {
       panel.hidden = panel.id !== `panel-${kodKarty}`;
     }
@@ -66,7 +86,31 @@ function wirujKarty(bryla: HTMLElement): void {
 
 export function zamontujOknoStudio(w: NastawyOknaStudio): OknoStudio {
   const dokument = panelDokumentu({ kanal: w.kanal, sesje: w.sesje, modul: w.modul });
-  const panele = karty.filter((k) => k.kod !== KARTA_EDITOR).map(panelNiegotowy);
+  /* Panel wchodzi dopiero przy pierwszym wejściu na jego kartę. Wcześniej nie ma
+     po co: okno modułu i sesja powstają wywołaniem do rdzenia już po montażu bryły,
+     a panel bez `windowId` nie ma czym zawołać ani jednej komendy Studia. */
+  const zamontowane: ZamontowanyPanel[] = [];
+  const czekajace = new Map<string, HTMLElement>();
+  const panele = karty
+    .filter((k) => k.kod !== KARTA_EDITOR)
+    .map((k) => {
+      const wezel = panelNiegotowy(k);
+      if (montazePaneli[k.kod]) czekajace.set(k.kod, wezel);
+      return wezel;
+    });
+
+  function domontuj(kod: string): void {
+    const wezel = czekajace.get(kod);
+    const montuj = montazePaneli[kod];
+    if (wezel === undefined || montuj === undefined) return;
+    czekajace.delete(kod);
+    wezel.replaceChildren();
+    zamontowane.push(montuj(wezel, {
+      kanal: w.kanal,
+      idOkna: dokument.idOkna(),
+      idSesji: dokument.idSesji(),
+    }));
+  }
   const robocza = el('div', { klasa: 'sta-robocza' }, [dokument.wezel, ...panele]);
   const obszar = el('div', { klasa: 'sta-obszar', 'data-robocza': 'widoczna' }, [oknoCzatu(), robocza]);
   const cialo = el('div', { klasa: 'sta-cialo st-cialo' }, [szynaDokumentow(), obszar]);
@@ -80,7 +124,7 @@ export function zamontujOknoStudio(w: NastawyOknaStudio): OknoStudio {
   ]);
 
   w.miejsce.replaceChildren(bryla);
-  wirujKarty(bryla);
+  wirujKarty(bryla, domontuj);
 
   return {
     zdejmij() {

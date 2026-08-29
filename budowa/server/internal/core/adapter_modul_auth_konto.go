@@ -13,6 +13,7 @@ import (
 	"strings"
 	"sync"
 	"time"
+	"unicode"
 
 	"danacoconsole/server/internal/dane"
 	"danacoconsole/server/internal/konfiguracja"
@@ -105,7 +106,7 @@ func (a *adapterUwierzytelnienia) wyslijDrogePotwierdzenia(ctx context.Context,
 	}
 	teraz := time.Now()
 	if err := a.konto.ZalozPotwierdzenie(ctx, dane.PotwierdzenieTozsamosci{
-		Skrot:     skrotTokenu(droga),
+		Skrot:     skrotTokenu(bezOdstepow(droga)),
 		Cel:       cel,
 		Wygasa:    teraz.Add(trwanieDrogiPotwierdzenia).UnixMilli(),
 		Utworzono: teraz.UnixMilli(),
@@ -204,8 +205,28 @@ func rozdzielony(kod string) string {
 // zuzyjDroge sprawdza drogę i zamyka ją w jednej czynności. Sprawdzenie
 // i zamknięcie są niepodzielne warunkiem w bazie, więc dwa żądania z tym
 // samym materiałem nie zastają obie drogi ważnej.
+/*
+bezOdstepow zdejmuje z kodu wszystkie odstępy, nie tylko brzegowe.
+
+List pokazuje kod rozdzielony spacją co trzy znaki — `418 402` — żeby dało się
+go przeczytać z ekranu bez gubienia miejsca. Operator, który go stamtąd skopiuje
+i wklei, poda właśnie taką postać. Odstęp jest sposobem zapisu, nie częścią kodu.
+
+Sito dotyczy wyłącznie kodu potwierdzenia. Token sesji przechodzi przez ten sam
+`skrotTokenu`, ale jest nieprzezroczysty i odstępu usuwać w nim nie wolno.
+*/
+func bezOdstepow(kod string) string {
+	return strings.Map(func(znak rune) rune {
+		if unicode.IsSpace(znak) {
+			return -1
+		}
+		return znak
+	}, kod)
+}
+
 func (a *adapterUwierzytelnienia) zuzyjDroge(ctx context.Context, cel, droga string) error {
-	if strings.TrimSpace(droga) == "" {
+	droga = bezOdstepow(droga)
+	if droga == "" {
 		return bladBramki(shared.ErrorCodeValidationFailed, "Podaj kod potwierdzający.")
 	}
 	skrot := skrotTokenu(droga)

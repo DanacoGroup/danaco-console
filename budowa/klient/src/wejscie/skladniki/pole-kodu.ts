@@ -78,9 +78,15 @@ export function odczytajDroge(korzen: ParentNode, grupa: string): string {
   return [...zestaw.querySelectorAll('input')].map((pole) => pole.value).join('');
 }
 
-/** Odkłada wklejoną drogę na grupie i rozsypuje jej początek po polach, ustawiając skupienie na ostatnim wypełnionym polu. */
+/**
+ * Odkłada wklejoną drogę na grupie i rozsypuje jej początek po polach, ustawiając skupienie na ostatnim wypełnionym polu.
+ *
+ * Odstępy znikają w całości, nie tylko brzegowe: list pokazuje kod rozdzielony
+ * spacją co trzy znaki, więc skopiowany stamtąd niesie ją w środku. Zostawiona
+ * zajęłaby jedno z pól i przesunęła resztę kodu o znak.
+ */
 export function przyjmijWklejenie(zestaw: HTMLElement, wklejona: string): void {
-  const droga = wklejona.trim();
+  const droga = wklejona.replace(/\s+/gu, '');
   zestaw.dataset['kodWklejony'] = droga;
   const pola = [...zestaw.querySelectorAll('input')];
   pola.forEach((pole, i) => {

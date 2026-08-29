@@ -105,10 +105,7 @@ export const montujPliki: MontazPanelu = (wezel, { kanal, idOkna }): Zamontowany
     'section',
     {
       klasa: 'sta-okno',
-      id: 'panel-pliki',
       'data-nazwa': tresci.karty.pliki,
-      role: 'tabpanel',
-      'aria-labelledby': 'karta-pliki',
       hidden: true,
     },
     [

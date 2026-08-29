@@ -1995,7 +1995,7 @@ ma w żadnej gałęzi. Rewizja `9ba1f90` wiąże sprawdzian ze źródłami ikon 
 klienta — `sciezkaZrodelIkon` wskazuje `../../../klient/src/ikony/zrodla`.
 Przechodzi w biegu odniesienia 2041 zdanych, zero niezdanych.
 
-### Przebieg twarzowy maluje poza wycinkiem twarzy — gotowe do otwarcia
+### Przebieg twarzowy maluje poza wycinkiem twarzy — NIE POTWIERDZONE, miara naprawiona
 
 `TestPrzebiegTwarzowyZmieniaPikseleTwarzyNaPrawdziwymZdjeciu` żąda, żeby
 powiększenie z przebiegiem twarzowym zmieniło wyłącznie wycinek twarzy. Poza
@@ -2010,6 +2010,15 @@ jedyna zmiana w tych plikach (`a7b607e0`) podmieniła napisy `rdzeń` na `serwer
 
 Sprawdzian trwa 216 s i jest najdłuższy w pakiecie — stąd wcześniejsze przebiegi
 z limitem 9 minut kończyły się przerwaniem, zanim do niego doszły.
+
+**Rozstrzygnięte pomiarem 29.08: usterki nie ma.** Mapa zmian pokazała, że
+prostokąt sprawdzianu przecinał twarz pod nosem — usta, broda i żuchwa leżały
+poniżej jego dolnej krawędzi i liczyły się jako obszar poza twarzą. Zmiany nie
+wychodzą poza kolumnę twarzy; flagi po lewej przebieg nie tyka wcale.
+
+Granice pionowe wyprowadzono z pomiaru (0.08 zamiast 0.10, 0.76 zamiast 0.58);
+granice poziome zostają, więc rozlanie na tło ten sprawdzian dalej złapie.
+Przechodzi w 218 s.
 
 ### Reguła odbioru wyprowadzona z pomiarów
 

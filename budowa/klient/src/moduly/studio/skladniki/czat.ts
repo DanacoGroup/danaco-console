@@ -25,7 +25,7 @@ import type { Kanal } from '../../../protokol/kanal.ts';
 import { wywolaj } from '../../../protokol/wywolanie.ts';
 import { ikony, type NazwaZnaku } from '../ikony.ts';
 import { el, tekst, zeZnacznika, type Dziecko } from '../narzedzia.ts';
-import { opisOdmowy, zaloguj } from '../odmowa.ts';
+import { opisOdmowy, trescWpisu, zaloguj } from '../odmowa.ts';
 import { sterowanieCzatu } from './sterowanie-czatu.ts';
 
 export interface ZaleznosciCzatu {
@@ -95,7 +95,10 @@ export function oknoCzatu(zaleznosci: ZaleznosciCzatu): ZamontowaneOknoCzatu {
   ) as HTMLButtonElement;
 
   function wpis(m: Message): HTMLElement {
-    const tresc: Dziecko[] = [m.content];
+    /* Wpis o stanie błędu niesie komunikat programu zewnętrznego — po angielsku
+       i językiem wnętrza. Na ekran idzie zdanie polskie wraz z drogą naprawy;
+       treść surowa zostaje w konsoli przeglądarki. */
+    const tresc: Dziecko[] = [trescWpisu(m)];
     /* Wpis w strumieniu niesie znacznik tętna: odpowiedź jeszcze rośnie,
        a wpis bez tego znaku wyglądałby na urwany w połowie zdania. */
     if (m.status === MessageStatus.Streaming) {

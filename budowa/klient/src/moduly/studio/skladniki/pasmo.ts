@@ -9,7 +9,9 @@
  * nie prowadzi wykazu kart okna roboczego. Karta robocza zamknięcia nie ma —
  * jest jedyna w oknie. Po zamknięciu karty bieżącej pasmo klika w kartę
  * sąsiednią, bo to montaż wiąże kliknięcie z odsłonięciem panelu i z jego
- * domontowaniem przy pierwszym wejściu.
+ * domontowaniem przy pierwszym wejściu. Tę samą czynność niesie przycisk
+ * „Zamknij kartę" w belce okna pomocniczego — pasmo odnajduje kartę po
+ * identyfikatorze panelu, w którym ten przycisk stoi.
  */
 
 import { ikony, type NazwaZnaku } from '../ikony.ts';
@@ -52,6 +54,10 @@ function przyciskIkony(rysunek: NazwaZnaku, etykieta: string, atrybuty?: Record<
 
 export function pasmoKart(): HTMLElement {
   const przywroc = el('span', { klasa: 'st-pasmo-przywroc', 'data-przywroc-pas': true });
+
+  /* Karta odnajdywana po identyfikatorze swojego panelu: przycisk w belce okna
+     pomocniczego wie tylko, w którym panelu stoi. */
+  const wgPanelu = new Map<string, { wezel: HTMLElement; nazwa: string }>();
 
   function widoczneKarty(): HTMLElement[] {
     return Array.from(lista.querySelectorAll<HTMLElement>('.dn-karta[data-karta]')).filter((k) => !k.hidden);
@@ -123,6 +129,7 @@ export function pasmoKart(): HTMLElement {
       zamknij(wezel, k.nazwa);
     });
     wezel.appendChild(zamkniecie);
+    wgPanelu.set(`panel-${k.kod}`, { wezel, nazwa: k.nazwa });
 
     /* Znak zamknięcia jest wyłącznie wzrokowy (`aria-hidden`), więc bez klawisza
        Delete czynność nie byłaby osiągalna z klawiatury ani dla czytnika. */
@@ -146,9 +153,28 @@ export function pasmoKart(): HTMLElement {
     przyciskIkony('maksymalizuj', tekst('pasmo.maksymalizuj'), { 'aria-pressed': 'false' }),
   ]);
 
-  return el('div', { klasa: 'dn-karty-pasmo st-pasmo', 'data-gestosc': 'ciasna' }, [
+  const pasmo = el('div', { klasa: 'dn-karty-pasmo st-pasmo', 'data-gestosc': 'ciasna' }, [
     el('span', { klasa: 'st-pasmo-znak', 'aria-hidden': 'true' }, [znak('olowek')]),
     lista,
     sterowanie,
   ]);
+
+  /* Przycisk „Zamknij kartę" w belce okna pomocniczego zamyka tę samą kartę co
+     znak w paśmie. Nasłuch siada na bryle okna roboczego, bo panele powstają
+     poza tym składnikiem; bryła powstaje po paśmie, stąd odłożenie o obieg. */
+  queueMicrotask(() => {
+    const bryla = pasmo.closest('.st-okno-robocze');
+    bryla?.addEventListener('click', (zdarzenie) => {
+      const cel = zdarzenie.target;
+      if (!(cel instanceof Element)) return;
+      const zamkniecie = cel.closest('[data-karta-zamknij]');
+      if (zamkniecie === null || pasmo.contains(zamkniecie)) return;
+      const okno = zamkniecie.closest('.sta-okno');
+      const wpis = okno === null ? undefined : wgPanelu.get(okno.id);
+      if (wpis === undefined) return;
+      zamknij(wpis.wezel, wpis.nazwa);
+    });
+  });
+
+  return pasmo;
 }

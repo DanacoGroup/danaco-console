@@ -94,6 +94,12 @@ const FORMATY: readonly string[] = Object.values(StudioExportFormat);
    zamiast skalować węzeł — skala zostawiłaby pasek przewijania bez pokrycia. */
 const SZEROKOSC_KARTKI_CH = 60;
 
+/* Znak zamknięcia stoi tutaj, a nie w `ikony.ts`: ten plik leży poza terenem
+   zmiany. Rysunek przeniesiony z prototypu bez zmian. */
+const ZNAK_ZAMKNIECIA =
+  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" ' +
+  'stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg>';
+
 function znak(rysunek: keyof typeof ikony): SVGElement {
   const wezelZnaku = zeZnacznika(ikony[rysunek]);
   wezelZnaku.setAttribute('aria-hidden', 'true');
@@ -134,9 +140,23 @@ export const montujPodgladWydania: MontazPanelu = (wezel, zaleznosci) => {
      panel dokłada do niego belkę i treść, zamiast zakładać drugą bryłę. */
   wezel.classList.add('sta-okno');
   const tresc = el('div', { klasa: 'sta-okno-tresc' });
+  /* Przycisk zamknięcia w belce niesie ten sam znacznik co znak w paśmie kart,
+     bo to pasmo prowadzi wykaz kart i ono zamyka kartę tego okna. */
+  const zamknijKarte = el(
+    'button',
+    {
+      klasa: 'dn-btn-ikona',
+      type: 'button',
+      'data-karta-zamknij': true,
+      'aria-label': T.panel.zamknijKarte,
+    },
+    [zeZnacznika(ZNAK_ZAMKNIECIA)],
+  );
+
   wezel.append(
     el('header', { klasa: 'sta-okno-belka' }, [
       el('span', { klasa: 'sta-okno-tytul' }, [znak('oko'), el('b', { tekst: T.panel.tytul })]),
+      el('span', { klasa: 'sta-okno-akcje' }, [zamknijKarte]),
     ]),
     tresc,
   );
@@ -454,13 +474,14 @@ export const montujPodgladWydania: MontazPanelu = (wezel, zaleznosci) => {
           ? [ui.strona, ui.strona + 1]
           : [ui.strona];
 
-    const kartki = el(
-      'div',
-      { klasa: ui.tryb === 'ciagly' ? 'st-panel-lista' : 'st-panel-wiersz' },
-      indeksy.map((n) => kartka(n, wynik.pageAssetIds[n - 1])),
-    );
-
-    const dzieci: Dziecko[] = [...notaUkladu(), kartki];
+    /* Pojedynczy arkusz leży wprost w obszarze podglądu — tak stoi w prototypie.
+       Zawijarka wchodzi dopiero przy wielu arkuszach: obok siebie przy podziale
+       ekranu, jeden pod drugim w trybie ciągłym. */
+    const arkusze = indeksy.map((n) => kartka(n, wynik.pageAssetIds[n - 1]));
+    const dzieci: Dziecko[] =
+      arkusze.length === 1
+        ? [...arkusze]
+        : [el('div', { klasa: ui.tryb === 'ciagly' ? 'st-panel-lista' : 'st-panel-wiersz' }, arkusze)];
     if (ui.tryb === 'strona') dzieci.push(pasekStron(ui.strona, wynik.pages));
 
     return el('div', { klasa: 'st-podglad' }, dzieci);
@@ -495,15 +516,6 @@ export const montujPodgladWydania: MontazPanelu = (wezel, zaleznosci) => {
       alt: podstaw(T.numerStrony, { numer: String(numer) }),
       style: 'display: block; width: 100%; height: auto;',
     });
-  }
-
-  function notaUkladu(): HTMLElement[] {
-    if (uklad.rodzaj !== 'znany') return [];
-    const czesci = [uklad.pageSetup.pageSize, uklad.pageSetup.orientation].filter(
-      (x): x is string => typeof x === 'string' && x.length > 0,
-    );
-    if (czesci.length === 0) return [];
-    return [el('p', { klasa: 'dn-nota', tekst: czesci.join(' · ') })];
   }
 
   function pasekStron(strona: number, pages: number): HTMLElement {

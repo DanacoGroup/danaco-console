@@ -6,7 +6,7 @@
  */
 
 export const tresc = {
-  brakDokumentu: 'W tym oknie nie ma jeszcze dokumentu.',
+  brakDokumentu: 'Brak dokumentu w tym oknie.',
 
   porownanie: {
     etykietaBazowa: 'Wersja odniesienia',
@@ -26,12 +26,14 @@ export const tresc = {
   },
 
   grep: {
-    /* Brzmienie z prototypu (`design/05-okna/moduly/studio.html`), co do znaku.
-       Grep jest tu nazwą własną części panelu — panel nazywa się Diff/Grep —
-       a nie opisem czynności, więc nie podlega przekładowi na polszczyznę. */
-    zastepczaTresc: 'Grep — wzorzec (regex)…',
+    /* Nazwa panelu „Diff/Grep” zostaje — to nazwa własna produktu. Ale
+       podpowiedź w polu i etykieta pola wyboru mówią Operatorowi, co ma zrobić,
+       więc idą polszczyzną: „grep” jest nazwą narzędzia uniksowego, „regex”
+       skrótem technicznym. Rozstrzygnięcie Właściciela z 29.08.2026: treść
+       niepoprawna podlega poprawieniu także wtedy, gdy stoi tak w prototypie. */
+    zastepczaTresc: 'Wzorzec wyszukiwania…',
     etykieta: 'Grep',
-    regex: 'Wyrażenie regularne',
+    regex: 'Traktuj jako wyrażenie regularne',
     naglowek: 'Trafienia wzorca',
     brakTrafien: 'Nie znaleziono dopasowań wzorca w porównywanych wersjach.',
   },

@@ -70,7 +70,7 @@ window.DanacoKreator.tresci = {
     "podtytulBrak": "Nie udało się rozpoznać procesora tego komputera. Wybierz wersję, którą chcesz zainstalować.",
     "wskazowkaWykryta": "Jeśli nie wiesz, którą wersję wybrać, zostaw zaznaczenie bez zmian. Wersja niezgodna z procesorem nie uruchomi się po instalacji.",
     "wskazowkaBrak": "Otwórz Ustawienia > System > Informacje i sprawdź pozycję Typ systemu. Wartość „x64” oznacza pierwszą opcję, wartość „ARM64” — drugą.",
-    "wybor": { "etykieta": "Wersja dla procesora" },
+    "wybor": { "etykieta": "Wybór wersji" },
     "plakietka": "ZALECANE",
     "x64": {
       "nazwa": "Intel lub AMD (x64)",
@@ -128,7 +128,7 @@ window.DanacoKreator.tresci = {
       "tytul": "Nie udało się ukończyć instalacji",
       "podtytul": "Zmiany zostały cofnięte — w komputerze nie pozostały pliki programu.",
       "szczegoly": "",
-      "rada": "Uruchom instalator ponownie. Jeżeli odmowa się powtórzy, uruchom go jako administrator."
+      "rada": "Uruchom instalator ponownie. Jeżeli błąd się powtórzy, uruchom go jako administrator."
     },
     "postep": { "etykieta": "Postęp instalacji", "opisPaska": "Postęp instalacji" },
     "etapyNaglowek": "Etapy",

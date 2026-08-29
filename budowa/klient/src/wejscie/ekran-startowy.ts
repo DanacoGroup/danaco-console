@@ -23,6 +23,9 @@ interface SterowanieEkranu {
 
 type PoleEkranu = HTMLElement & { ekranStartowy?: SterowanieEkranu };
 
+/** Najdłuższe czekanie warstwy na gotowość przebiegu. Animacja trwa 3 s; ta granica daje jej zapas i zamyka drogę do zawieszenia okna. */
+const GRANICA_CZEKANIA_MS = 6000;
+
 export interface ZamontowanyEkranStartowy {
   /** Program wstał — wolno domknąć animację i odsłonić okno. */
   gotowe(): void;
@@ -67,6 +70,14 @@ export function zalozEkranStartowy(dokument: Document): ZamontowanyEkranStartowy
     }
     sterowanie.odtworz({ poKoncu: odsloniecie, czekajNaGotowosc: true });
     if (gotowoscZgloszona) sterowanie.gotowe();
+    /* Bezpiecznik: `data-czekaj` trzyma animację do zgłoszenia gotowości, więc
+       przebieg, który nie odpowie ani razu — zerwane gniazdo, odmowa pochodzenia
+       — zostawiłby Operatora przed samym znakiem marki bez żadnego wyjścia.
+       Po tym czasie warstwa ustępuje sama, a droga wejścia pokazuje swój
+       własny stan błędu, który Operator potrafi przeczytać. */
+    globalThis.setTimeout(() => {
+      if (warstwa?.isConnected === true) sterowanie?.pomin();
+    }, GRANICA_CZEKANIA_MS);
   }
 
   /* Czekamy do `complete`, nie do samego `loading`: moduł odroczony wykonuje się

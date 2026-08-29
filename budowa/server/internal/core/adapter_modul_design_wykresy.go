@@ -74,7 +74,7 @@ func (a *adapterDesignu) WyrysujWykres(ctx context.Context,
 	if len(z.Series) == 0 {
 		return shared.DesignChartRenderResponse{}, bladWskazaniaDesignu(
 			"komenda design.chart.render bez ani jednej serii danych: wykres bez liczb nie ma " +
-				"czego pokazać, a rdzeń nie wymyśla danych")
+				"czego pokazać, a serwer nie wymyśla danych")
 	}
 	punktow := 0
 	for numer, seria := range z.Series {
@@ -645,7 +645,7 @@ func (a *adapterDesignu) barwyWyrysuDanychDesignu(ctx context.Context, zestaw *s
 	if err != nil {
 		if czyBrakZasobuDesignu(err) {
 			return nil, bladNieznanegoBytuDesignu(
-				"zestawu żetonów " + *zestaw + " nie ma w tym rdzeniu")
+				"zestawu żetonów " + *zestaw + " nie ma w tym serwerze")
 		}
 		return nil, bladDesignu(err)
 	}
@@ -666,7 +666,7 @@ func (a *adapterDesignu) barwyWyrysuDanychDesignu(ctx context.Context, zestaw *s
 	if len(barwy) == 0 {
 		return nil, bladWskazaniaDesignu(fmt.Sprintf(
 			"zestaw żetonów %s nie ma ani jednego żetonu barwnego, a został wskazany jako "+
-				"narzucający barwy — rdzeń nie podstawi za niego własnych", wiersz.Kod))
+				"narzucający barwy — serwer nie podstawi za niego własnych", wiersz.Kod))
 	}
 	if len(barwy) < ile {
 		// Barw mniej niż serii: wykaz powtarza się od początku, zamiast dobierać barwy spoza zestawu.

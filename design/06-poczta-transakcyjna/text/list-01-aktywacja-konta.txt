@@ -1,0 +1,26 @@
+DANACO CONSOLE
+Kod aktywacji konta
+
+Konto Operatora zostało utworzone dla adresu {{recipient_address}}.
+Wprowadź poniższy kod w oknie aktywacji, aby ustawić hasło i uruchomić
+dostęp do Danaco Console.
+
+  KOD AKTYWACJI:  {{code}}
+
+  Ważność:    {{expiry_minutes}} min
+  Utworzono:  {{requested_at}}
+
+Okno aktywacji:
+{{activation_url}}
+
+Kod jest jednorazowy i wygasa po {{expiry_minutes}} minutach. Po wygaśnięciu
+zamów nowy w oknie aktywacji. Jeżeli konto nie było zamawiane, zignoruj
+wiadomość — bez podania kodu konto pozostaje nieaktywne i zostaje usunięte
+po 7 dniach.
+
+--
+Wiadomość wysłana automatycznie z adresu noreply@danaco-group.pl.
+Adres nie prowadzi skrzynki odbiorczej — odpowiedź nie zostanie odczytana.
+W sprawach konta pisz na {{support_address}}.
+
+Danaco Holding Group Sp. z o.o. · Danaco Console · {{year}}

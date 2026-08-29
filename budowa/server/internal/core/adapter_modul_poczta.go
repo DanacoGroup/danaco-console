@@ -163,7 +163,7 @@ func (a *adapterPoczty) wybierzSkrzynke(ctx context.Context, wskazana *string) (
 		// Pierwsza z trzech odmów nazywających brak: nie ma skrzynki.
 		return dane.SkrzynkaOperatora{}, protocol.JakoError(protocol.NowyBlad(
 			shared.ErrorCodeNotFound, "moduł poczty: Operator nie ma podpiętej ani jednej skrzynki — "+
-				"rdzeń nie stawia serwera poczty i nie zakłada kont, więc nie ma czego czytać; "+
+				"serwer nie stawia serwera poczty i nie zakłada kont, więc nie ma czego czytać; "+
 				"podepnij skrzynkę komendą mail.account.add albo poproś o podpowiedzi z urządzenia "+
 				"komendą mail.account.discover"))
 	}

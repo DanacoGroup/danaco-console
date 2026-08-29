@@ -98,4 +98,4 @@ func nosnikiDrukuJakoFormatyStudia() []shared.StudioPaperFormat {
 // zrodloWykazuNosnikowRdzenia mówi Operatorowi i prowadzącemu, skąd pozycja
 // wykazu pochodzi. Jedno źródło, bo jeden wykaz — dawne rozróżnienie „wykaz
 // rdzenia" i „uzupełnienie Studia" opisywało dwa miejsca, których już nie ma.
-const zrodloWykazuNosnikowRdzenia = "wspólny wykaz nośników druku rdzenia"
+const zrodloWykazuNosnikowRdzenia = "wspólny wykaz nośników druku serwera"

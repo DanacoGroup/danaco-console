@@ -152,7 +152,7 @@ func (a *adapterNawigacji) sesjeCzynne(ctx context.Context) ([]shared.Session, e
 // środowiska niesie wyłącznie łańcuch `srodowisko → karta_sesji → sesja`, więc
 // wykaz idzie z bazy — rejestr nadzorcy o środowiskach nie wie.
 func (a *adapterNawigacji) sesjeSrodowiska(ctx context.Context, srodowiskoID int64) ([]shared.Session, error) {
-	karty, err := a.zestaw.KartySesji.Lista(ctx, srodowiskoID)
+	karty, err := a.zestaw.KartySesji.Lista(ctx, srodowiskoID, dane.KontoOperatora(ctx))
 	if err != nil {
 		return nil, err
 	}

@@ -111,7 +111,7 @@ func (p *Polaczenie) nawiazane(kontekst context.Context) (*websocket.Conn, error
 	}
 	gniazdo, _, err := websocket.Dial(kontekst, p.adres, nil)
 	if err != nil {
-		return nil, fmt.Errorf("rdzeń pod adresem %s nie odpowiada: %w", p.adres, err)
+		return nil, fmt.Errorf("serwer pod adresem %s nie odpowiada: %w", p.adres, err)
 	}
 	gniazdo.SetReadLimit(transport.LimitOdczytu)
 	p.gniazdo = gniazdo
@@ -125,5 +125,5 @@ func (p *Polaczenie) zerwane(czynnosc string, err error) error {
 		p.gniazdo.CloseNow()
 		p.gniazdo = nil
 	}
-	return fmt.Errorf("połączenie z rdzeniem zerwane przy czynności %q: %w", czynnosc, err)
+	return fmt.Errorf("połączenie z serwerem zerwane przy czynności %q: %w", czynnosc, err)
 }

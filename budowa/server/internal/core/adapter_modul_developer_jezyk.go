@@ -934,7 +934,7 @@ func (a *adapterDevelopera) Refaktoryzuj(ctx context.Context,
 
 	if serwer, jednorazowy := serwerJezykaPliku(sciezka); !jednorazowy {
 		return shared.DeveloperRefactorApplyResponse{}, bladZasobuDevelopera(
-			"rdzeń nie ma czym przeprowadzić refaktoryzacji semantycznej pliku " +
+			"serwer nie ma czym przeprowadzić refaktoryzacji semantycznej pliku " +
 				filepath.Base(sciezka) + ": serwer języka tego pliku (" + serwer.Program +
 				") rozmawia wyłącznie sesją protokołu LSP, a warstwa językowa modułu " +
 				"pyta serwery pojedynczym wywołaniem. Droga, która działa: zmiana nazwy " +

@@ -224,7 +224,7 @@ func (a *adapterTlumaczenia) UtrzymajPamiec(ctx context.Context,
 		szukane := napisZeWskaznika(z.Search)
 		if strings.TrimSpace(szukane) == "" {
 			return shared.TranslateMemoryMaintainResponse{}, bladWskazaniaTlumaczenia(
-				"masowa podmiana bez wskazania szukanego fragmentu — rdzeń nie zgaduje, co podmienić")
+				"masowa podmiana bez wskazania szukanego fragmentu — serwer nie zgaduje, co podmienić")
 		}
 		zamiennik := napisZeWskaznika(z.Replacement)
 		dotkniete := 0

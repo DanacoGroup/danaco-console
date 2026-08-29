@@ -101,7 +101,7 @@ func (a *adapterDesignu) UstawRamke(ctx context.Context,
 		nastawaSzerokosc, nastawaWysokosc, znana := nastawaUrzadzeniaDesignu(*z.DevicePreset)
 		if !znana {
 			return shared.DesignFrameSetResponse{}, bladWskazaniaDesignu(fmt.Sprintf(
-				"komenda design.frame.set z nastawą urządzenia %q, której rdzeń nie zna; nastawy znane: %s",
+				"komenda design.frame.set z nastawą urządzenia %q, której serwer nie zna; nastawy znane: %s",
 				*z.DevicePreset, strings.Join(nazwyNastawUrzadzenDesignu(), ", ")))
 		}
 		szerokosc, wysokosc = nastawaSzerokosc, nastawaWysokosc
@@ -759,7 +759,7 @@ func (a *adapterDesignu) ZapiszKomponent(ctx context.Context,
 			strings.TrimSpace(*z.TokenSetId)); err != nil {
 			if czyBrakZasobuDesignu(err) {
 				return shared.DesignComponentSaveResponse{}, bladNieznanegoBytuDesignu(
-					"zestawu żetonów " + *z.TokenSetId + " nie ma w tym rdzeniu")
+					"zestawu żetonów " + *z.TokenSetId + " nie ma w tym serwerze")
 			}
 			return shared.DesignComponentSaveResponse{}, bladDesignu(err)
 		}
@@ -1211,21 +1211,21 @@ func zapisJsonDesignu(wartosc any) (*string, error) {
 // i bladNieznanegoPolaczeniaDesignu nazywają byt makiety, którego rdzeń nie zna.
 func bladNieznanejWarstwyDesignu(kod string, err error) error {
 	if czyBrakZasobuDesignu(err) {
-		return bladNieznanegoBytuDesignu("warstwy " + kod + " nie ma w tym rdzeniu")
+		return bladNieznanegoBytuDesignu("warstwy " + kod + " nie ma w tym serwerze")
 	}
 	return bladDesignu(err)
 }
 
 func bladNieznanegoKomponentuDesignu(kod string, err error) error {
 	if czyBrakZasobuDesignu(err) {
-		return bladNieznanegoBytuDesignu("komponentu " + kod + " nie ma w tym rdzeniu")
+		return bladNieznanegoBytuDesignu("komponentu " + kod + " nie ma w tym serwerze")
 	}
 	return bladDesignu(err)
 }
 
 func bladNieznanegoPolaczeniaDesignu(kod string, err error) error {
 	if czyBrakZasobuDesignu(err) {
-		return bladNieznanegoBytuDesignu("połączenia prototypu " + kod + " nie ma w tym rdzeniu")
+		return bladNieznanegoBytuDesignu("połączenia prototypu " + kod + " nie ma w tym serwerze")
 	}
 	return bladDesignu(err)
 }

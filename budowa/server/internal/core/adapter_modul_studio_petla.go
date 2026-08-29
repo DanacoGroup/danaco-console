@@ -786,12 +786,12 @@ func (p *adapterPetliStudia) petlaWolajRejestrem(ctx context.Context,
 	ladunek json.RawMessage) (protocol.Odpowiedz, string) {
 
 	if p.rejestr == nil {
-		return protocol.Odpowiedz{}, "rdzeń złożony bez rejestru komend — pętla nie ma " +
+		return protocol.Odpowiedz{}, "serwer złożony bez rejestru komend — pętla nie ma " +
 			"czym wykonać ani jednego zadania"
 	}
 	obsluga, jest := p.rejestr.Obsluga(komenda)
 	if !jest {
-		return protocol.Odpowiedz{}, "rdzeń nie ma obsługiwacza komendy " + string(komenda) +
+		return protocol.Odpowiedz{}, "serwer nie ma obsługiwacza komendy " + string(komenda) +
 			", więc tego zadania nie ma czym wykonać; pętla nie udaje wykonania"
 	}
 	return obsluga(p.petlaKontekstWykonawcy(ctx, rozklad), protocol.Request{
@@ -990,12 +990,12 @@ func (p *adapterPetliStudia) petlaNastawy(ctx context.Context,
 
 	if p.rejestr == nil {
 		return shared.StudioAgentSettings{}, "pętla wykonawcza jest wyłączona: " +
-			"rdzeń złożony bez rejestru komend, więc nastawy nie ma czym odczytać"
+			"serwer złożony bez rejestru komend, więc nastawy nie ma czym odczytać"
 	}
 	obsluga, jest := p.rejestr.Obsluga(shared.CommandStudioAgentsSettingsGet)
 	if !jest {
 		return shared.StudioAgentSettings{}, "pętla wykonawcza jest wyłączona: " +
-			"rdzeń nie ma jeszcze obsługiwacza komendy studio.agents.settings.get, " +
+			"serwer nie ma jeszcze obsługiwacza komendy studio.agents.settings.get, " +
 			"więc nastawy „executionLoopEnabled” nie da się ani odczytać, ani włączyć"
 	}
 	ladunek, err := json.Marshal(shared.StudioAgentsSettingsGetRequest{DocumentId: &kodDokumentu})

@@ -48,6 +48,10 @@
   display: flex;
   flex-direction: column;
   flex: 1 1 auto;
+  /* Wysokość brana wprost od gospodarza, nie z podziału miejsca: w aplikacji
+     bryła stoi wewnątrz obszaru treści ramy, który jest blokiem — samo
+     `flex` nie miałoby tam na czym działać i okno kurczyłoby się do treści. */
+  height: 100%;
   min-width: 0;
   min-height: 0;
   /* Wcięcie z obu boków: taca obudowy zostaje widoczna dookoła bryły. */
@@ -106,18 +110,18 @@
 
 /* Karta bieżąca — wstęga barwy sygnału przy górnej krawędzi. Stan wybrany
    niesie bryła i wstęga, nie sam atrybut ARIA. */
-.st-karta[aria-selected='true'] {
+.dn-karta[aria-selected='true'] {
   box-shadow: inset 0 var(--dn-wym-wstega) 0 var(--dn-kropka);
 }
 /* Karta robocza — jedna w oknie. Tętno przy krawędzi wiodącej odróżnia ją od
    kart okien pomocniczych bez czytania nazwy. */
-.st-karta--robocza { font-weight: var(--dn-fw-polgruba); }
+.dn-karta--robocza { font-weight: var(--dn-fw-polgruba); }
 
 /* Znak zamknięcia karty jest wyłącznie wzrokowy (`aria-hidden`): sterowanie
    w sterowaniu byłoby zagnieżdżeniem kontrolek. Tę samą czynność niesie
    przycisk „Zamknij kartę" w belce okna pomocniczego i klawisz Delete na
    karcie — obie drogi są dostępne z klawiatury i dla technologii wspomagającej. */
-.st-karta > .dn-karta-widoku-zamknij { cursor: pointer; }
+.dn-karta > .dn-karta-widoku-zamknij { cursor: pointer; }
 
 .st-pasmo-sterowanie {
   display: inline-flex;
@@ -289,14 +293,9 @@
   align-items: center;
   gap: var(--dn-od-2);
 }
-.st-panel-wiersz .st-meta {
+.st-panel-wiersz .dn-meta {
   margin-left: auto;
   font-family: var(--dn-ff-mono);
-  font-size: var(--dn-fs-xs);
-  color: var(--dn-tekst-2);
-}
-/* Nota pod wierszem wykazu niesie drobny tekst pomocniczy, uzupełniający opis pozycji bez odrywania uwagi od treści głównej wiersza. */
-.st-nota {
   font-size: var(--dn-fs-xs);
   color: var(--dn-tekst-2);
 }
@@ -304,60 +303,13 @@
 
 /* ══ 8 · STUDIO EDITOR — KANWA DOKUMENTU ══════════════════════════════════ */
 
-.st-edytor-pasek {
-  display: flex;
-  align-items: center;
-  gap: var(--dn-od-1);
-  flex-wrap: wrap;
-  padding: var(--dn-od-2);
-  border-bottom: 1px solid var(--dn-obrys-subtelny);
-}
-.st-edytor-grupa {
-  display: inline-flex;
-  gap: var(--dn-od-05);
-  padding-right: var(--dn-od-2);
-  border-right: 1px solid var(--dn-obrys-subtelny);
-}
 .st-edytor-odstep { flex: 1 1 auto; }
 
-.st-kanwa {
-  max-width: 78ch;
-  margin: 0 auto;
-  padding: var(--dn-od-4) var(--dn-od-6);
-  overflow: auto;
-  min-height: 0;
-  line-height: var(--dn-lh-luzny);
-  color: var(--dn-tekst);
-}
-.st-kanwa h1 { font-size: var(--dn-fs-xl); margin: 0 0 var(--dn-od-3); }
-.st-kanwa h2 { font-size: var(--dn-fs-lg); margin: var(--dn-od-4) 0 var(--dn-od-2); }
-.st-kanwa p { margin: 0 0 var(--dn-od-3); }
+.dn-kanwa h1 { font-size: var(--dn-fs-xl); margin: 0 0 var(--dn-od-3); }
+.dn-kanwa h2 { font-size: var(--dn-fs-lg); margin: var(--dn-od-4) 0 var(--dn-od-2); }
+.dn-kanwa p { margin: 0 0 var(--dn-od-3); }
 
-/* Zaznaczenie jest kontenerem odniesienia dla przybornika pływającego —
-   bez tego przybornik ląduje na treści akapitu, nie nad nią. */
-.st-zazn {
-  position: relative;
-  padding: 1px var(--dn-od-1);
-  border-radius: var(--dn-r-md);
-  background: var(--dn-sygnal-tlo);
-  box-shadow: 0 0 0 1px var(--dn-sygnal);
-}
-.st-plyw {
-  position: absolute;
-  bottom: calc(100% + var(--dn-od-1));
-  left: 0;
-  z-index: 3;
-  display: inline-flex;
-  align-items: center;
-  gap: var(--dn-od-05);
-  padding: var(--dn-od-05);
-  border: 1px solid var(--dn-obrys);
-  border-radius: var(--dn-r-md);
-  background: var(--dn-powierzchnia);
-  box-shadow: var(--dn-cien-3);
-  white-space: nowrap;
-}
-.st-plyw .dn-btn { padding: 0 var(--dn-od-2); }
+.dn-plyw .dn-btn { padding: 0 var(--dn-od-2); }
 
 .st-status {
   display: flex;
@@ -372,60 +324,15 @@
 
 /* ══ 9 · WYKAZ RÓŻNIC ═════════════════════════════════════════════════════ */
 
-.st-diff-dod {
-  padding: 1px var(--dn-od-1);
-  border-radius: var(--dn-r-md);
-  background: var(--dn-sukces-tlo);
-  color: var(--dn-tekst);
-}
-.st-diff-usu {
-  padding: 1px var(--dn-od-1);
-  border-radius: var(--dn-r-md);
-  background: var(--dn-blad-tlo);
-  text-decoration: line-through;
-}
-.st-diff-fmt {
-  padding: 1px var(--dn-od-1);
-  border-radius: var(--dn-r-md);
-  box-shadow: inset 0 0 0 1px var(--dn-ostrzezenie-tekst);
-}
 
 /* ══ 10 · REPOZYTORIUM WERSJI ═════════════════════════════════════════════ */
 
-.st-wersja {
-  display: flex;
-  flex-direction: column;
-  gap: var(--dn-od-05);
-  padding: var(--dn-od-2);
-  border-bottom: 1px solid var(--dn-obrys-subtelny);
-}
-.st-wersja-akcje {
-  display: flex;
-  gap: var(--dn-od-1);
-  margin-top: var(--dn-od-05);
-}
-.st-wersja-stopka { padding: var(--dn-od-2); }
+.dn-wersja-stopka { padding: var(--dn-od-2); }
 
 /* ══ 11 · PODGLĄD WYDRUKU ═════════════════════════════════════════════════ */
 
 .st-podglad { padding: var(--dn-od-4); overflow: auto; }
-.st-kartka {
-  max-width: 60ch;
-  margin: 0 auto;
-  padding: var(--dn-od-4);
-  border: 1px solid var(--dn-obrys);
-  border-radius: var(--dn-r-lg);
-  background: var(--dn-tlo);
-  box-shadow: var(--dn-cien-1);
-  color: var(--dn-tekst);
-}
-.st-kartka-tytul {
-  margin-bottom: var(--dn-od-3);
-  font-size: var(--dn-fs-lg);
-  font-weight: var(--dn-fw-polgruba);
-}
-.st-kartka p { font-size: var(--dn-fs-sm); }
-.st-kartka-numer { color: var(--dn-tekst-2); }
+.dn-kartka p { font-size: var(--dn-fs-sm); }
 
 /* ══ 12 · PROGI ═══════════════════════════════════════════════════════════ */
 
@@ -446,7 +353,9 @@
    ========================================================================== */
 .st-odsun-sekcja { margin-top: var(--dn-od-2); }
 .st-ptaszek-akt { color: var(--dn-sygnal); }
-.st-nota { font-size: var(--dn-fs-xs); color: var(--dn-tekst-2); margin-top: var(--dn-od-2); }
+/* Nota w wykazach Studia stoi z odstępem od wiersza powyżej; składnik biblioteki
+   niesie samą postać tekstu, bo w innych oknach nota przylega. */
+.dn-nota { margin-top: var(--dn-od-2); }
 .st-szukaj-odsun { margin-bottom: var(--dn-od-1); }
 .st-panel-lista--bez-dolu { padding-bottom: 0; }
 .st-panel-lista--bez-gory { padding-top: 0; }

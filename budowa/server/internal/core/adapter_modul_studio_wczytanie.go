@@ -114,7 +114,7 @@ func (a *adapterStudia) SkanujUrzadzenie(ctx context.Context,
 		return shared.StudioIngestDeviceScanResponse{}, protocol.JakoError(protocol.NowyBlad(
 			shared.ErrorCodeInternalError,
 			"moduł Studio: warstwa urządzeń zgłosiła udane skanowanie, ale nie wskazała "+
-				"ani jednego pliku obrazu; naprawa: to usterka rdzenia, nie nastawa "+
+				"ani jednego pliku obrazu; naprawa: to usterka serwera, nie nastawa "+
 				"Operatora — zgłosić ją wraz z dziennikiem startu"))
 	}
 

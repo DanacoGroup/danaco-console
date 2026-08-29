@@ -48,7 +48,7 @@ func odmowaSladu(kod shared.ErrorCode, powod string) error {
 func odmowaMagazynuSladu(err error) error {
 	if errors.Is(err, dane.ErrBrakWiersza) {
 		return odmowaSladu(shared.ErrorCodeNotFound,
-			"wywołania o tym identyfikatorze nie ma w śladzie rdzenia")
+			"wywołania o tym identyfikatorze nie ma w śladzie serwera")
 	}
 	return odmowaSladu(shared.ErrorCodeInternalError, err.Error())
 }
@@ -229,7 +229,7 @@ func wydajSladWPostaci(postac shared.TelemetryFormat,
 	case shared.TelemetryFormatOtlp:
 		// Rdzeń nie niesie odwzorowania na schemat OpenTelemetry: odmowa nazywa brak.
 		return "", odmowaSladu(shared.ErrorCodeNotFound,
-			"postać OTLP wymaga odwzorowania na schemat OpenTelemetry, którego rdzeń "+
+			"postać OTLP wymaga odwzorowania na schemat OpenTelemetry, którego serwer "+
 				"nie niesie; wyniesienie w postaci json, jsonl albo csv jest dostępne")
 	}
 	return "", odmowaSladu(shared.ErrorCodeValidationFailed,
@@ -367,7 +367,7 @@ func raportWPostaci(postac shared.TelemetryFormat,
 		return budowniczy.String(), zapis.Error()
 	}
 	return "", odmowaSladu(shared.ErrorCodeNotFound,
-		"postać "+string(postac)+" nie ma w rdzeniu odwzorowania dla raportu rozliczenia")
+		"postać "+string(postac)+" nie ma w serwerze odwzorowania dla raportu rozliczenia")
 }
 
 // ── Przekład wiersz ↔ kontrakt ──────────────────────────────────────────────

@@ -49,7 +49,7 @@ func (a *adapterDevelopera) UstawPolaczenieDanych(ctx context.Context,
 	}
 	if a.repozytorium == nil {
 		return shared.DeveloperDataConnectionSetResponse{}, bladZasobuDevelopera(
-			"rdzeń nie ma miejsca na opisy połączeń bazodanowych")
+			"serwer nie ma miejsca na opisy połączeń bazodanowych")
 	}
 	nazwa := strings.TrimSpace(z.Name)
 	if nazwa == "" {
@@ -120,7 +120,7 @@ func (a *adapterDevelopera) WykazPolaczenDanych(ctx context.Context,
 	}
 	if a.repozytorium == nil {
 		return shared.DeveloperDataConnectionListResponse{}, bladZasobuDevelopera(
-			"rdzeń nie ma miejsca na opisy połączeń bazodanowych")
+			"serwer nie ma miejsca na opisy połączeń bazodanowych")
 	}
 	wiersze, err := a.repozytorium.PolaczeniaDanych(ctx, okno.Id)
 	if err != nil {
@@ -486,7 +486,7 @@ func (a *adapterDevelopera) UruchomMigracjeDanych(ctx context.Context,
 	}
 	if kierunek == "down" {
 		return shared.DeveloperDataMigrationRunResponse{}, bladZadaniaDevelopera(
-			"wycofywanie migracji wymaga plików odwrotnych, których rdzeń w repozytorium " +
+			"wycofywanie migracji wymaga plików odwrotnych, których serwer w repozytorium " +
 				"nie zastał; dziś moduł prowadzi wyłącznie kierunek `up`")
 	}
 
@@ -665,7 +665,7 @@ func (a *adapterDevelopera) otworzPolaczenieDanych(ctx context.Context,
 	}
 	if a.repozytorium == nil {
 		return dane.PolaczenieDanych{}, nil, bladZasobuDevelopera(
-			"rdzeń nie ma opisów połączeń bazodanowych")
+			"serwer nie ma opisów połączeń bazodanowych")
 	}
 	polaczenie, err := a.repozytorium.PolaczenieDanychPoKodzie(ctx, wskazanie)
 	if errors.Is(err, dane.ErrBrakWiersza) {

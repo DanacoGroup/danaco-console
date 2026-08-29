@@ -22,8 +22,8 @@ func zastosujArgumenty(kon *Konfiguracja, argumenty []string) error {
 	zestaw.Usage = func() { wypiszPomoc(zestaw.Output(), zestaw) }
 
 	rola := zestaw.String("role", string(kon.Rola), "rola procesu: "+strings.Join(NazwyRol(), "|"))
-	port := zestaw.Int("port", kon.Port, "port nasłuchu rdzenia")
-	dane := zestaw.String("dane", kon.KatalogDanych, "katalog danych rdzenia")
+	port := zestaw.Int("port", kon.Port, "port nasłuchu serwera")
+	dane := zestaw.String("dane", kon.KatalogDanych, "katalog danych serwera")
 	klient := zestaw.String("klient", kon.KatalogKlienta, "katalog pakietu interfejsu")
 	profile := zestaw.String("profile", kon.KatalogProfili, "katalog profili kanału głównego")
 	adres := zestaw.String("adres", kon.Adres, "interfejs nasłuchu; puste = pętla zwrotna 127.0.0.1")
@@ -107,7 +107,7 @@ func wykazPoPrzecinku(tekst string) []string {
 // wypiszPomoc wypisuje nagłówek, katalog przełączników i nazwy zmiennych
 // środowiska na wskazane wyjście.
 func wypiszPomoc(wyjscie io.Writer, zestaw *flag.FlagSet) {
-	fmt.Fprintf(wyjscie, "%s — rdzeń Danaco Console\n\n", nazwaProgramu)
+	fmt.Fprintf(wyjscie, "%s — serwer Danaco Console\n\n", nazwaProgramu)
 	fmt.Fprintf(wyjscie, "Użycie:\n  %s [przełączniki]\n\nPrzełączniki:\n", nazwaProgramu)
 	zestaw.PrintDefaults()
 	fmt.Fprintf(wyjscie, "\nZmienne środowiska: %s\n", strings.Join(ZmienneSrodowiska(), ", "))

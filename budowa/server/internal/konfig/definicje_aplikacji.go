@@ -59,7 +59,7 @@ func definicjeAplikacji() []Definicja {
 				"cokolwiek poza connection.hello, auth.login i auth.register. " +
 				"Bez wskazania rozstrzyga adres nasłuchu: pętla zwrotna bez wymogu, " +
 				"nasłuch szerszy z wymogiem. To nie jest bramka uprawnień — po przejściu " +
-				"bramki nie ma już ani jednego pytania.",
+				"logowania nie ma już ani jednego pytania.",
 			DozwoloneZasiegi: []Poziom{PoziomAplikacji},
 		},
 		{

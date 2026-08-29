@@ -124,7 +124,7 @@ func (a *adapterDevelopera) zalozWersje(ctx context.Context, oknoKod, sciezka st
 	}
 	if a.repozytorium == nil {
 		return "", bladWykonaniaDevelopera(
-			"rdzeń nie ma dziennika wersji, więc nie założy punktu powrotu do treści sprzed zapisu")
+			"serwer nie ma dziennika wersji, więc nie założy punktu powrotu do treści sprzed zapisu")
 	}
 	poprzednia, err := os.ReadFile(sciezka)
 	if errors.Is(err, os.ErrNotExist) {

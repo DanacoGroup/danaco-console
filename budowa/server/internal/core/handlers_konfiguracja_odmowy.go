@@ -28,7 +28,7 @@ func bladWskazania(err error, byt, identyfikator string) error {
 // zapis, który nigdzie nie trafia, byłby potwierdzeniem czynności niewykonanej.
 func bladBrakuKatalogu(byt string) error {
 	return protocol.JakoError(protocol.NowyBlad(shared.ErrorCodeInternalError,
-		"rdzeń: katalog "+byt+" nie jest wpięty"))
+		"serwer: katalog "+byt+" nie jest wpięty"))
 }
 
 // brakWiersza odpowiada, czy błąd oznacza wyłącznie nieobecność wiersza.

@@ -785,7 +785,7 @@ func (a *adapterStudia) OddajSzablonDoPliku(ctx context.Context,
 			Reason: "blokady wzorcowe nie weszły do pliku — żaden format biurowy nie niesie " +
 				"blokady skierowanej przeciw modelowi",
 			Detail: wejscieWskaznikTekstu(strconv.Itoa(len(szablon.Locks)) +
-				" blokad; zostają przy szablonie w rdzeniu i przechodzą do dokumentów " +
+				" blokad; zostają przy szablonie w serwerze i przechodzą do dokumentów " +
 				"z niego zakładanych"),
 		})
 	}

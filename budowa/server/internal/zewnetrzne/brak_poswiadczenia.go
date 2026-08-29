@@ -61,7 +61,7 @@ func (b *BrakPoswiadczenia) opisBraku() string {
 	switch b.Powod {
 	case PowodSejfNiewpiety:
 		return "wiersz kanału wskazuje sejf poświadczeń (odwołanie „" + b.Poswiadczenie.Odwolanie +
-			"”), a rdzeń pracuje BEZ WPIĘTEGO SEJFU — sekretu nie ma skąd wziąć " +
+			"”), a serwer pracuje BEZ WPIĘTEGO SEJFU — sekretu nie ma skąd wziąć " +
 			"i żądanie nie zostało wysłane"
 	case PowodBrakWpisu:
 		return "w sejfie NIE MA WPISU „" + b.Poswiadczenie.Byt +
@@ -71,7 +71,7 @@ func (b *BrakPoswiadczenia) opisBraku() string {
 			"” jest PUSTY — żądanie nie zostało wysłane, bo poszłoby bez klucza"
 	case PowodPustaZmienna:
 		return "zmienna środowiskowa " + b.Poswiadczenie.Byt +
-			" jest pusta albo nieustawiona w otoczeniu procesu rdzenia — " +
+			" jest pusta albo nieustawiona w otoczeniu procesu serwera — " +
 			"żądanie nie zostało wysłane"
 	default:
 		return "nie ma czym się uwierzytelnić pod odwołaniem „" +

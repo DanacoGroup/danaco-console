@@ -23,7 +23,7 @@ func (a *adapterTerminala) uruchom(ctx context.Context, karta *kartaTerminala, o
 
 	if a.uruchamiacz == nil {
 		return nil, protocol.JakoError(protocol.NowyBlad(shared.ErrorCodeInternalError,
-			"moduł Terminal: rdzeń nie ma uruchamiacza procesów"))
+			"moduł Terminal: serwer nie ma uruchamiacza procesów"))
 	}
 	uchwyt, err := a.uruchamiacz.UruchomProces(okno, polecenie)
 	if err != nil {

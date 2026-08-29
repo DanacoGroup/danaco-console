@@ -8,12 +8,20 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	netmail "net/mail"
+	"strconv"
 	"strings"
+	"sync"
 	"time"
+	"unicode"
 
 	"danacoconsole/server/internal/dane"
+	"danacoconsole/server/internal/konfiguracja"
+	"danacoconsole/server/internal/mail"
 	"danacoconsole/server/internal/nadajnik"
 	"danacoconsole/shared"
+
+	"danacoconsole/server/internal/core/listy"
 )
 
 // trwanieDrogiPotwierdzenia — jak długo ważny jest materiał wysłany listem.
@@ -29,7 +37,7 @@ const trwanieDrogiPotwierdzenia = time.Hour
 func (a *adapterUwierzytelnienia) kontoGotowe() error {
 	if a.konto == nil {
 		return bladBramki(shared.ErrorCodeInternalError,
-			"trwałość konta właściciela nie jest wpięta — konta nie ma gdzie zapisać")
+			"Nie można zapisać konta — magazyn danych jest niedostępny.")
 	}
 	return nil
 }
@@ -37,16 +45,13 @@ func (a *adapterUwierzytelnienia) kontoGotowe() error {
 // kontoPotwierdzone zamyka bramkę przed kontem, którego adresu nikt nie
 // potwierdził. Brak trwałości konta i brak wiersza konta nie zamykają bramki,
 // bo o potwierdzeniu nie ma wtedy co rozstrzygać.
-func (a *adapterUwierzytelnienia) kontoPotwierdzone(ctx context.Context) error {
-	if a.konto == nil {
+func (a *adapterUwierzytelnienia) kontoPotwierdzone(ctx context.Context,
+	konto dane.KontoWlasciciela) error {
+
+	// Konto puste znaczy platformę bez trwałości konta albo przed rejestracją —
+	// o potwierdzeniu nie ma wtedy co rozstrzygać.
+	if a.konto == nil || konto.Id == 0 {
 		return nil
-	}
-	konto, err := a.konto.Konto(ctx)
-	if errors.Is(err, dane.ErrBrakWiersza) {
-		return nil
-	}
-	if err != nil {
-		return err
 	}
 	if konto.Potwierdzone {
 		return nil
@@ -55,10 +60,10 @@ func (a *adapterUwierzytelnienia) kontoPotwierdzone(ctx context.Context) error {
 	if _, bezPoczty := a.znacznikBezPoczty(ctx); bezPoczty {
 		return nil
 	}
-	return bladBramki(shared.ErrorCodeNotAuthenticated,
-		"konto czeka na potwierdzenie adresu "+konto.Email+
-			" — przepisz drogę potwierdzenia z listu komendą auth.verify; "+
-			"do tego czasu bramka jest zamknięta, bo adres jest jedyną drogą odzyskania konta")
+	return bladBramkiZPowodem(shared.ErrorCodeNotAuthenticated, PowodAdresNiepotwierdzony,
+		"Konto oczekuje na potwierdzenie adresu "+konto.Email+
+			". Wprowadź kod potwierdzający z wiadomości — do tego czasu wejście "+
+			"jest zamknięte, bo adresem odzyskuje się konto po utracie hasła.")
 }
 
 // daneRejestracji sprawdza login i adres podane przy rejestracji. Sprawdzenie
@@ -68,7 +73,7 @@ func daneRejestracji(z shared.AuthRegisterRequest) (string, string, error) {
 	login := strings.TrimSpace(z.Login)
 	if login == "" {
 		return "", "", bladBramki(shared.ErrorCodeValidationFailed,
-			"rejestracja bez loginu — login jest nazwą, którą Operator się loguje")
+			"Podaj login — to nazwa, pod którą będziesz się logować.")
 	}
 	email := strings.TrimSpace(z.Email)
 	malpa := strings.LastIndex(email, "@")
@@ -84,80 +89,158 @@ func daneRejestracji(z shared.AuthRegisterRequest) (string, string, error) {
 // Kolejność jest wiążąca: najpierw zapis skrótu, potem nadanie, inaczej list
 // mógłby dojść, zanim droga stałaby się ważna.
 func (a *adapterUwierzytelnienia) wyslijDrogePotwierdzenia(ctx context.Context,
-	cel, email, login string) error {
+	cel, email string, kontoId int64) error {
 
+	// Konto nadawcze czytane raz: to samo, którym list wyjdzie, nazywa nadawcę w nagłówku wiadomości.
+	nadawca := a.kontoNadawcze(ctx)
 	// Brak konta nadawczego nazywa się przed zapisaniem drogi, żeby baza nie trzymała drogi bez listu.
-	if err := a.kontoNadawcze(ctx).Brak(); err != nil {
+	if err := nadawca.Brak(); err != nil {
 		return bladBramki(shared.ErrorCodeInternalError,
 			err.Error()+"; "+dwieDrogiKontaNadawczego)
 	}
-	droga, err := nowyTokenBramki()
+	/* Kod, nie token sesji: okno przyjmuje go w sześciu polach, a Operator
+	   przepisuje go z wiadomości ręcznie. */
+	droga, err := nowyKodPotwierdzenia()
 	if err != nil {
 		return err
 	}
 	teraz := time.Now()
 	if err := a.konto.ZalozPotwierdzenie(ctx, dane.PotwierdzenieTozsamosci{
-		Skrot:     skrotTokenu(droga),
+		Skrot:     skrotTokenu(bezOdstepow(droga)),
 		Cel:       cel,
 		Wygasa:    teraz.Add(trwanieDrogiPotwierdzenia).UnixMilli(),
 		Utworzono: teraz.UnixMilli(),
+		// Konto, do którego droga prowadzi; przy dwóch kontach naraz to jedyne,
+		// co rozstrzyga, które z nich potwierdza przepisany kod.
+		KontoId: kontoId,
 	}); err != nil {
 		return err
 	}
-	if _, err := nadajnik.Wyslij(a.kontoNadawcze(ctx), listPotwierdzenia(cel, login, droga, email)); err != nil {
+	wiadomosc, err := listPotwierdzenia(nadawca, a.adresKonsoli, cel, droga, email)
+	if err != nil {
+		return bladBramki(shared.ErrorCodeInternalError,
+			fmt.Sprintf("nie udało się złożyć listu na %s: %v; %s", email, err, dwieDrogiKontaNadawczego))
+	}
+	if _, err := nadajnik.Wyslij(nadawca, wiadomosc); err != nil {
 		return bladBramki(shared.ErrorCodeInternalError,
 			fmt.Sprintf("nie udało się wysłać listu na %s: %v; %s", email, err, dwieDrogiKontaNadawczego))
 	}
 	return nil
 }
 
-// listPotwierdzenia składa treść jednego z dwóch listów systemowych. Treść
-// jest zwięzła i mówi wprost, co się stało i co zrobić, bo rozwlekły list
-// systemowy nakłania do zignorowania go.
-func listPotwierdzenia(cel, login, droga, email string) nadajnik.List {
+// adresWsparcia to skrzynka obsługiwana, do której listy odsyłają Operatora.
+// Skrzynka nadawcza odpowiedzi nie przyjmuje.
+const adresWsparcia = "support@danaco-group.pl"
+
+// grupaKodu — ile znaków kodu rozdziela spacja; opracowanie poczty:
+// „rozdzielany spacją co trzy znaki”.
+const grupaKodu = 3
+
+// postacCzasuListu zapisuje chwilę tak, jak żąda opracowanie (rozdz. 6.2):
+// `29.08.2026, 17:22 CEST`.
+const postacCzasuListu = "02.01.2006, 15:04 MST"
+
+// kompletListow wczytuje szablony raz na proces. Wczytanie przechodzi siedem
+// par plików i zdejmuje z nich komentarze wewnętrzne — powtarzanie tego przy
+// każdym liście byłoby pracą bez skutku.
+var kompletListow = sync.OnceValues(mail.WbudowanyKomplet)
+
+// listPotwierdzenia składa jeden z dwóch listów systemowych w gotowe bajty
+// wiadomości. Nagłówki, kodowanie tematu i części oraz próg przycięcia
+// rozstrzyga pakiet mail; rdzeń podaje wyłącznie wartości zmiennych.
+func listPotwierdzenia(nadawca nadajnik.Nastawy, adresKonsoli, cel, droga, email string) (*mail.Message, error) {
+	komplet, err := kompletListow()
+	if err != nil {
+		return nil, err
+	}
+	teraz := time.Now()
+	wartosci := map[string]string{
+		"recipient_address": email,
+		"support_address":   adresWsparcia,
+		"year":              strconv.Itoa(teraz.Year()),
+		"code":              rozdzielony(droga),
+		"expiry_minutes":    strconv.Itoa(int(trwanieDrogiPotwierdzenia.Minutes())),
+		"requested_at":      teraz.Format(postacCzasuListu),
+	}
+	rodzaj := mail.KindAccountActivation
 	if cel == dane.CelOdzyskanie {
-		return nadajnik.List{
-			Do:    email,
-			Temat: "Danaco Console — odzyskanie konta",
-			Tresc: "Ktoś poprosił o ustawienie nowego hasła do konta " + login + ".\n\n" +
-				"Droga potwierdzenia:\n\n    " + droga + "\n\n" +
-				"Wpisz ją w oknie odzyskiwania konta, aby ustawić nowe hasło. " +
-				"Droga jest jednorazowa i wygasa po godzinie.\n\n" +
-				"Po ustawieniu nowego hasła wszystkie urządzenia zalogują się ponownie.\n\n" +
-				"Jeżeli to nie Ty prosiłeś o zmianę — nie rób nic. " +
-				"Bez tej drogi hasło pozostaje bez zmian.\n",
+		/* Odzyskanie dostaje list resetu hasła, nie kodu logowania: to on nazywa
+		   czynność, którą Operator właśnie prowadzi, i tylko on mówi, że hasło
+		   dotychczasowe zostaje ważne do ustawienia nowego. */
+		rodzaj = mail.KindPasswordReset
+	} else {
+		// Odsyłacz do okna, w którym Operator wprowadza kod; zna go tylko ta gałąź.
+		wartosci["activation_url"] = konfiguracja.AdresAktywacji(adresKonsoli)
+	}
+
+	return komplet.Build(rodzaj, mail.Envelope{
+		From: nadawca.Nadawca(),
+		To:   netmail.Address{Address: email},
+		Date: teraz,
+	}, mail.Content{Values: wartosci}, znakiMarki())
+}
+
+// znakiMarki podaje oba warianty znaku dołączane częścią listu. Nazwy plików
+// widzi Operator wtedy, gdy jego klient pocztowy potraktuje znak jak załącznik.
+func znakiMarki() mail.Logos {
+	return mail.Logos{
+		Light: listy.ZnakJasny, LightName: "danaco.png",
+		Dark: listy.ZnakCiemny, DarkName: "danaco-ciemny.png",
+	}
+}
+
+// rozdzielony wstawia spację co trzy znaki kodu — czyta się go wtedy z ekranu
+// bez gubienia miejsca, a przepisuje bez pomyłki.
+func rozdzielony(kod string) string {
+	var wynik strings.Builder
+	for i, znak := range kod {
+		if i > 0 && i%grupaKodu == 0 {
+			wynik.WriteByte(' ')
 		}
+		wynik.WriteRune(znak)
 	}
-	return nadajnik.List{
-		Do:    email,
-		Temat: "Danaco Console — potwierdzenie adresu",
-		Tresc: "Konto " + login + " zostało założone i czeka na potwierdzenie tego adresu.\n\n" +
-			"Droga potwierdzenia:\n\n    " + droga + "\n\n" +
-			"Wpisz ją w oknie rejestracji, aby zakończyć zakładanie konta i wejść do platformy. " +
-			"Droga jest jednorazowa i wygasa po godzinie.\n\n" +
-			"Ten adres będzie później jedyną drogą odzyskania konta.\n",
-	}
+	return wynik.String()
 }
 
 // zuzyjDroge sprawdza drogę i zamyka ją w jednej czynności. Sprawdzenie
 // i zamknięcie są niepodzielne warunkiem w bazie, więc dwa żądania z tym
 // samym materiałem nie zastają obie drogi ważnej.
+/*
+bezOdstepow zdejmuje z kodu wszystkie odstępy, nie tylko brzegowe.
+
+List pokazuje kod rozdzielony spacją co trzy znaki — `418 402` — żeby dało się
+go przeczytać z ekranu bez gubienia miejsca. Operator, który go stamtąd skopiuje
+i wklei, poda właśnie taką postać. Odstęp jest sposobem zapisu, nie częścią kodu.
+
+Sito dotyczy wyłącznie kodu potwierdzenia. Token sesji przechodzi przez ten sam
+`skrotTokenu`, ale jest nieprzezroczysty i odstępu usuwać w nim nie wolno.
+*/
+func bezOdstepow(kod string) string {
+	return strings.Map(func(znak rune) rune {
+		if unicode.IsSpace(znak) {
+			return -1
+		}
+		return znak
+	}, kod)
+}
+
 func (a *adapterUwierzytelnienia) zuzyjDroge(ctx context.Context, cel, droga string) error {
-	if strings.TrimSpace(droga) == "" {
-		return bladBramki(shared.ErrorCodeValidationFailed, "droga potwierdzenia jest pusta")
+	droga = bezOdstepow(droga)
+	if droga == "" {
+		return bladBramki(shared.ErrorCodeValidationFailed, "Podaj kod potwierdzający.")
 	}
 	skrot := skrotTokenu(droga)
 	zapis, err := a.konto.PotwierdzeniePoSkrocie(ctx, skrot)
 	if errors.Is(err, dane.ErrBrakWiersza) {
 		return bladBramki(shared.ErrorCodeNotAuthenticated,
-			"droga potwierdzenia nie jest znana platformie")
+			"Ten kod potwierdzający nie jest znany.")
 	}
 	if err != nil {
 		return err
 	}
 	if zapis.Cel != cel {
 		return bladBramki(shared.ErrorCodeNotAuthenticated,
-			"droga potwierdzenia została wydana do innej czynności")
+			"Ten kod potwierdzający dotyczy innej czynności.")
 	}
 	zamknieta, err := a.konto.ZuzyjPotwierdzenie(ctx, skrot, time.Now().UnixMilli())
 	if err != nil {
@@ -165,7 +248,7 @@ func (a *adapterUwierzytelnienia) zuzyjDroge(ctx context.Context, cel, droga str
 	}
 	if !zamknieta {
 		return bladBramki(shared.ErrorCodeNotAuthenticated,
-			"droga potwierdzenia jest już zużyta albo wygasła — poproś o nową")
+			"Ten kod potwierdzający został już użyty lub wygasł. Poproś o nowy.")
 	}
 	return nil
 }
@@ -189,25 +272,25 @@ func (a *adapterUwierzytelnienia) PotwierdzAdres(ctx context.Context,
 	konto, err := a.konto.Konto(ctx)
 	if errors.Is(err, dane.ErrBrakWiersza) {
 		return shared.AuthVerifyResponse{}, bladBramki(shared.ErrorCodeConflict,
-			"konta właściciela jeszcze nie ma — najpierw rejestracja")
+			"Konto Operatora nie zostało jeszcze założone. Zarejestruj się.")
 	}
 	if err != nil {
 		return shared.AuthVerifyResponse{}, err
 	}
 	if konto.Potwierdzone {
 		return shared.AuthVerifyResponse{}, bladBramki(shared.ErrorCodeConflict,
-			"adres jest już potwierdzony — wejście idzie komendą auth.login")
+			"Adres jest już potwierdzony. Zaloguj się.")
 	}
 	if err := a.zuzyjDroge(ctx, dane.CelWeryfikacja, z.Token); err != nil {
 		return shared.AuthVerifyResponse{}, err
 	}
-	if err := a.konto.PotwierdzKonto(ctx); err != nil {
+	if err := a.konto.PotwierdzKonto(ctx, konto.Id); err != nil {
 		return shared.AuthVerifyResponse{}, err
 	}
 	// Znacznik bramki bez poczty przestał być prawdą — bramkę trzyma odtąd sam wiersz konta.
 	a.zdejmijZnacznikBezPoczty(ctx)
 	sesja, err := a.zalozSesje(ctx, shared.AuthMethodKindPassword,
-		niepustyTekst(z.DeviceId), wartoscPrawdy(z.KeepSignedIn))
+		niepustyTekst(z.DeviceId), wartoscPrawdy(z.KeepSignedIn), konto.Id)
 	if err != nil {
 		return shared.AuthVerifyResponse{}, err
 	}
@@ -228,19 +311,40 @@ func (a *adapterUwierzytelnienia) RozpocznijOdzyskanie(ctx context.Context,
 	email := strings.TrimSpace(z.Email)
 	if email == "" {
 		return shared.AuthRecoverResponse{}, bladBramki(shared.ErrorCodeValidationFailed,
-			"odzyskanie konta bez podanego adresu")
+			"Podaj adres e-mail konta.")
 	}
-	konto, err := a.konto.Konto(ctx)
+	/* Konto wskazuje podany adres, nie kolejność założenia. Odczyt „konta
+	   najstarszego” pochodził z czasu, gdy konto było jedno; przy wielu kontach
+	   odsyłał każdy adres poza pierwszym z odpowiedzią „wysłano” i nie wysyłał
+	   nic — Operator czekał na list, który nigdy nie powstał. */
+	konto, err := a.konto.KontoPoTozsamosci(ctx, email)
 	if errors.Is(err, dane.ErrBrakWiersza) {
+		/* Adres nieznany odpowiada tak samo jak znany: inaczej pytanie o kolejne
+		   adresy wskazywałoby, które z nich mają konto. */
 		return shared.AuthRecoverResponse{Sent: true}, nil
 	}
 	if err != nil {
 		return shared.AuthRecoverResponse{}, err
 	}
 	if !strings.EqualFold(konto.Email, email) {
+		// Wskazanie trafiło w login, nie w adres — droga odzyskania idzie adresem.
 		return shared.AuthRecoverResponse{Sent: true}, nil
 	}
-	if err := a.wyslijDrogePotwierdzenia(ctx, dane.CelOdzyskanie, konto.Email, konto.Login); err != nil {
+	/*
+		Konto niepotwierdzone dostaje kod aktywacji, nie kod odzyskania.
+
+		Odzyskać można dostęp do konta, które kiedyś działało; konto bez
+		potwierdzonego adresu nigdy nie zostało otwarte, a jego jedyną przeszkodą
+		jest brak aktywacji. Kod odzyskania jej nie zdejmuje — droga potwierdzenia
+		rozróżnia cele i kodu jednego celu nie przyjmuje w drugim. Bez tego Operator
+		stał przed wejściem zamkniętym, a jedyna droga, którą okno mu podawało,
+		wydawała kod nieprzydatny do niczego.
+	*/
+	cel := dane.CelOdzyskanie
+	if !konto.Potwierdzone {
+		cel = dane.CelWeryfikacja
+	}
+	if err := a.wyslijDrogePotwierdzenia(ctx, cel, konto.Email, konto.Id); err != nil {
 		return shared.AuthRecoverResponse{}, err
 	}
 	return shared.AuthRecoverResponse{Sent: true}, nil
@@ -262,7 +366,7 @@ func (a *adapterUwierzytelnienia) UstawNoweHaslo(ctx context.Context,
 	}
 	if strings.TrimSpace(z.NewPassword) == "" {
 		return shared.AuthResetResponse{}, bladBramki(shared.ErrorCodeValidationFailed,
-			"ustawienie nowego hasła bez hasła")
+			"Podaj nowe hasło.")
 	}
 	a.zamekZmiany.Lock()
 	defer a.zamekZmiany.Unlock()
@@ -270,7 +374,7 @@ func (a *adapterUwierzytelnienia) UstawNoweHaslo(ctx context.Context,
 	kotwica, err := a.kotwica(ctx)
 	if errors.Is(err, dane.ErrBrakWiersza) {
 		return shared.AuthResetResponse{}, bladBramki(shared.ErrorCodeConflict,
-			"konta właściciela jeszcze nie ma — najpierw rejestracja")
+			"Konto Operatora nie zostało jeszcze założone. Zarejestruj się.")
 	}
 	if err != nil {
 		return shared.AuthResetResponse{}, err

@@ -35,8 +35,8 @@ func odmowaUrzadzeniaPunktu(err error) error {
 		return nil
 	case errors.Is(err, dane.ErrBrakUrzadzeniaBiezacego):
 		return odmowaKsztaltuPunktu("punkt rodzaju localDirectory wymaga urządzenia, " +
-			"a rdzeń nie ma w katalogu wiersza swojej maszyny — rozpoznanie startowe " +
-			"nie przebiegło; wskaż urządzenie polem deviceId albo powtórz po starcie rdzenia")
+			"a serwer nie ma w katalogu wiersza swojej maszyny — rozpoznanie startowe " +
+			"nie przebiegło; wskaż urządzenie polem deviceId albo powtórz po starcie serwera")
 	case errors.Is(err, dane.ErrNieznaneUrzadzenie):
 		return odmowaKsztaltuPunktu("wskazanego urządzenia nie ma w katalogu urządzeń")
 	}

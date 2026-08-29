@@ -77,8 +77,8 @@ func (a *adapterAplikacji) ZmierzWydajnosc(ctx context.Context,
 	if a.uruchamiacz == nil {
 		return shared.AppsPerformanceAuditResponse{}, protocol.JakoError(
 			protocol.NowyBlad(shared.ErrorCodeChannelUnavailable,
-				"moduł Apps: rdzeń nie ma uruchamiacza procesów — audyt wydajności nie ma czym "+
-					"wystartować; naprawa: podpiąć warstwę kanału (injection) przy składaniu rdzenia"))
+				"moduł Apps: serwer nie ma uruchamiacza procesów — audyt wydajności nie ma czym "+
+					"wystartować; naprawa: podpiąć warstwę kanału (injection) przy składaniu serwera"))
 	}
 
 	granica := granicaAudytuWydajnosci
@@ -308,7 +308,7 @@ func bladProgramuAplikacji(komenda string, err error, trwanie, granica time.Dura
 	if granica > 0 && trwanie >= granica {
 		return protocol.JakoError(protocol.NowyBlad(shared.ErrorCodeChannelUnavailable,
 			"moduł Apps: komenda "+komenda+" przekroczyła granicę czasu "+granica.String()+
-				" — to jest przekroczenie granicy, nie usterka rdzenia; naprawa: podnieść "+
+				" — to jest przekroczenie granicy, nie usterka serwera; naprawa: podnieść "+
 				"granicę polem timeoutMs albo wskazać stronę, która wczytuje się szybciej. "+
 				"Diagnostyka warstwy: "+err.Error()))
 	}

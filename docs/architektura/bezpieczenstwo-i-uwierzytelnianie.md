@@ -26,7 +26,7 @@ Dokument opisuje model bezpieczeństwa platformy Danaco Console: uwierzytelniani
 - [Wprowadzenie](#wprowadzenie)
 1. [Cel i zakres dokumentu](#1-cel-i-zakres-dokumentu)
 2. [Zasada nadrzędna: uwierzytelnianie jako mechanizm kontroli dostępu do platformy](#2-zasada-nadrzędna-uwierzytelnianie-jako-mechanizm-kontroli-dostępu-do-platformy)
-3. [Model właściciela: jedno konto, wiele urządzeń](#3-model-właściciela-jedno-konto-wiele-urządzeń)
+3. [Model kont: konto na Operatora, wiele urządzeń](#3-model-kont-konto-na-operatora-wiele-urządzeń)
 4. [Rejestracja](#4-rejestracja)
 5. [Logowanie](#5-logowanie)
 6. [Metody dodatkowe uwierzytelniania](#6-metody-dodatkowe-uwierzytelniania)
@@ -110,9 +110,24 @@ Wymienione mechanizmy nie zastępują uwierzytelniania. Relację tokenu izolacji
 
 ---
 
-## 3. Model właściciela: jedno konto, wiele urządzeń
+## 3. Model kont: konto na Operatora, wiele urządzeń
 
-Dokument Architektura ustala model wdrożenia platformy w rozdziale 2: „Jeden użytkownik (Operator). Wiele urządzeń: komputery, telefony, tablety. Instalacja pakietu klienta: jednorazowa na urządzenie." Uwierzytelnianie opisane w niniejszym dokumencie realizuje ten model wprost — platforma nie jest systemem wielokontowym, a rejestracja opisana w rozdziale 4 nie jest procesem otwierania kolejnych kont, lecz jednorazowym utworzeniem jedynego konta właściciela.
+Platforma prowadzi dowolną liczbę kont — po jednym na Operatora — a każde
+z nich sięga dowolnej liczby urządzeń. Rejestracja nie jest czynnością
+jednorazową: zakłada konto zawsze, gdy podany login i adres są wolne, i odmawia
+wyłącznie wtedy, gdy jedno z nich należy już do konta istniejącego.
+
+Konta nie mieszają między sobą pracy. Karta sesji — korzeń, na którym wiszą
+sesje, a przez nie dokumenty, okna i pamięć — należy do konta i jest widoczna
+wyłącznie dla niego. Wspólne zostają cztery środowiska pracy: są własnością
+produktu, nie konta, a konto zakłada w nich własne karty.
+
+**Zapis wcześniejszy uchylony.** Do 29 sierpnia 2026 ten rozdział stanowił
+„jedno konto, wiele urządzeń" i opisywał platformę jako niewielokontową; schemat
+pilnował tego warunkiem `CHECK (id = 1)` na tabeli konta. Rozstrzygnięcie
+Właściciela z tego dnia (`prowadzenie/decyzje.md`, poz. 22) zniosło tamten model:
+zamiarem było jedno konto **na adres**, nie jedno konto na instalację. Zmianę
+niosą migracje 406 i 407.
 
 ```
                     ┌─────────────────────────────────┐

@@ -35,7 +35,7 @@ type MalarzSkladnicaStudia interface {
 func (a *adapterStudia) malarzSkladnica() (MalarzSkladnicaStudia, error) {
 	if a == nil || a.repozytorium == nil {
 		return nil, postacBladZaplecza(
-			"repozytorium Studia nie zostało podane przy montażu rdzenia")
+			"repozytorium Studia nie zostało podane przy montażu serwera")
 	}
 	skladnica, jest := a.repozytorium.(MalarzSkladnicaStudia)
 	if !jest {

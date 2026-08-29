@@ -261,6 +261,8 @@ func zlozPorty(s skladPortow) Porty {
 			ZKontem(s.repozytoria.KontoWlasciciela).
 			// Konto nadawcze platformy, nie skrzynka Operatora — nim idą listy potwierdzenia i odzyskania.
 			ZNadajnikiem(s.nadajnik).
+			// Publiczny adres Konsoli — nim list aktywacji wskazuje okno, w którym Operator wprowadza kod.
+			ZAdresemKonsoli(s.montaz.Konfiguracja.AdresKonsoli).
 			// Ten sam adapter ustawień co reszta platformy; zmiana konta nadawczego działa bez restartu rdzenia.
 			ZNastawamiPlatformy(s.ustawienia),
 		// Urządzenia stoją na repozytorium bramki: urządzeniem konta jest to, które przez nią weszło.

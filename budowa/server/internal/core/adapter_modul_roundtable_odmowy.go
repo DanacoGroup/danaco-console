@@ -184,7 +184,7 @@ func odmowaAnalizyBezWyniku(kanal string) error {
 	return protocol.JakoError(protocol.NowyBlad(shared.ErrorCodeValidationFailed,
 		"moduł Roundtable: z odpowiedzi kanału "+kanal+" nie da się odczytać ani jednego "+
 			"ustalenia analizy. Powtórz analizę albo wskaż inny kanał (channelId) — "+
-			"rdzeń nie dopisuje ustaleń, których model nie wypowiedział."))
+			"serwer nie dopisuje ustaleń, których model nie wypowiedział."))
 }
 
 // odmowaScaleniaBezGrafu odmawia scalenia powtórzeń w oknie bez grafu
@@ -315,8 +315,8 @@ func odmowaPustegoArtefaktu(rodzaj string) error {
 // miejsce naprawy.
 func odmowaBrakuMagazynuDebaty() error {
 	return protocol.JakoError(protocol.NowyBlad(shared.ErrorCodeInternalError,
-		"moduł Roundtable: rdzeń nie ma katalogu magazynu artefaktów debaty; "+
-			"naprawa: podpiąć katalog danych przy składaniu rdzenia (ZKatalogiemDanych)."))
+		"moduł Roundtable: serwer nie ma katalogu magazynu artefaktów debaty; "+
+			"naprawa: podpiąć katalog danych przy składaniu serwera (ZKatalogiemDanych)."))
 }
 
 // odmowaBrakuUruchamiacza odmawia czynności wymagającej programu serwerowego,
@@ -324,8 +324,8 @@ func odmowaBrakuMagazynuDebaty() error {
 // brakującą zależność.
 func odmowaBrakuUruchamiacza() error {
 	return protocol.JakoError(protocol.NowyBlad(shared.ErrorCodeInternalError,
-		"moduł Roundtable: rdzeń nie ma uruchamiacza procesów, więc nie ruszy programu "+
-			"serwerowego; naprawa: podpiąć warstwę kanału (injection) przy składaniu rdzenia."))
+		"moduł Roundtable: serwer nie ma uruchamiacza procesów, więc nie ruszy programu "+
+			"serwerowego; naprawa: podpiąć warstwę kanału (injection) przy składaniu serwera."))
 }
 
 // odmowaZamianyFormatu znakuje niepowodzenie zamiany transkryptu debaty na

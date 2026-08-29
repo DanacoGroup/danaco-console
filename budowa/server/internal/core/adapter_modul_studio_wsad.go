@@ -92,13 +92,13 @@ func (a *adapterStudia) OsadzZasob(ctx context.Context,
 	if a.zasoby == nil {
 		return shared.StudioAssetEmbedResponse{}, protocol.JakoError(protocol.NowyBlad(
 			shared.ErrorCodeInternalError,
-			"moduł Studio: osadzenie zasobu nie ma drogi — rdzeń złożony bez repozytorium "+
-				"zasobów; naprawa: podpiąć magazyn zasobów przy składaniu rdzenia"))
+			"moduł Studio: osadzenie zasobu nie ma drogi — serwer złożony bez repozytorium "+
+				"zasobów; naprawa: podpiąć magazyn zasobów przy składaniu serwera"))
 	}
 	zasob, err := a.zasoby.Zasob(ctx, strings.TrimSpace(z.AssetId))
 	if err != nil {
 		return shared.StudioAssetEmbedResponse{}, protocol.JakoError(protocol.NowyBlad(
-			shared.ErrorCodeNotFound, "moduł Studio: zasobu "+z.AssetId+" nie ma w magazynie rdzenia"))
+			shared.ErrorCodeNotFound, "moduł Studio: zasobu "+z.AssetId+" nie ma w magazynie serwera"))
 	}
 
 	tresc, err := a.trescZOdwolania(dokument.Tresc, dokument.TrescOdwolanie)
@@ -213,7 +213,7 @@ func (a *adapterStudia) trescMaterialuWejsciowegoStudia(ctx context.Context,
 // wychodzą kontraktem w polu `mode`.
 const (
 	drogaSemantykiModelem = "kanal-modelu"
-	drogaSemantykiMiara   = "miara-rdzenia"
+	drogaSemantykiMiara   = "miara-serwera"
 )
 
 // granicaFragmentowSemantyki chroni kanał modelu przed pytaniem o dokument,

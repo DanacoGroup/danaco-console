@@ -221,7 +221,7 @@ func (a *adapterDevelopera) UruchomDebugowanie(ctx context.Context,
 	if a.uruchamiacz == nil {
 		_ = nasluch.Close()
 		return shared.DeveloperDebugSessionStartResponse{}, bladWykonaniaDevelopera(
-			"rdzeń nie ma uruchamiacza procesów")
+			"serwer nie ma uruchamiacza procesów")
 	}
 	uchwyt, err := a.uruchamiacz.UruchomProces(okno, polecenie)
 	if err != nil {
@@ -252,7 +252,7 @@ func (a *adapterDevelopera) UruchomDebugowanie(ctx context.Context,
 		_ = drzewo.Ubij()
 		drzewo.Zwolnij()
 		return shared.DeveloperDebugSessionStartResponse{}, bladWykonaniaDevelopera(
-			"adapter debugowania Delve nie połączył się z rdzeniem: " +
+			"adapter debugowania Delve nie połączył się z serwerem: " +
 				skrocDiagnostyke(diagnostyka, err))
 	}
 
@@ -506,7 +506,7 @@ func (a *adapterDevelopera) UstawPunktPrzerwania(ctx context.Context,
 	}
 	if a.repozytorium == nil {
 		return shared.DeveloperBreakpointSetResponse{}, bladZasobuDevelopera(
-			"rdzeń nie ma miejsca na punkty przerwania")
+			"serwer nie ma miejsca na punkty przerwania")
 	}
 	if z.Line < 1 {
 		return shared.DeveloperBreakpointSetResponse{}, bladZadaniaDevelopera(

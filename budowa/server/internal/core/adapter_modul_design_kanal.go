@@ -41,7 +41,7 @@ func (a *adapterDesignu) kanalObrazowyZadania(wskazany *string,
 			return models.Definicja{}, bladOdmowyGenerowania(shared.ErrorCodeValidationFailed,
 				"wskazany kanał "+kod+" nie jest kanałem obrazowym (adapter „"+wiersz.KluczAdaptera()+
 					"”) — oddaje fragmenty TEKSTU, a fragment tekstowy nie jest obrazem "+
-					"i rdzeń nie zrobi z niego zasobu wizualnego; naprawa: wskazać kanał założony "+
+					"i serwer nie zrobi z niego zasobu wizualnego; naprawa: wskazać kanał założony "+
 					"z config.adapter=\"obrazy\" (channel.list pokazuje konfigurację wierszy)",
 				p, wariantow, "kanał obrazowy zamiast wskazanego kanału tekstowego")
 		}
@@ -82,7 +82,7 @@ func (a *adapterDesignu) pierwszyKanalObrazowy(p shared.DesignPrompt,
 		return wiersz, nil
 	}
 	return models.Definicja{}, bladOdmowyGenerowania(shared.ErrorCodeChannelUnavailable,
-		"w rejestrze nie ma czynnego kanału oddającego BAJTY OBRAZU, a rdzeń nie założy zasobu "+
+		"w rejestrze nie ma czynnego kanału oddającego BAJTY OBRAZU, a serwer nie założy zasobu "+
 			"wizualnego bez treści wizualnej i nie podstawi obrazu zastępczego; naprawa: założyć kanał "+
 			"komendą channel.add z kind=\"api\" i config.adapter=\"obrazy\", wskazując base_url punktu "+
 			"końcowego zgodnego z OpenAI Images oraz credentialRef z kluczem. Prompt strukturalny "+

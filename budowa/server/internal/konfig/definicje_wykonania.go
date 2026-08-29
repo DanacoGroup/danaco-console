@@ -38,7 +38,7 @@ func definicjeWykonania() []Definicja {
 		{
 			Klucz: kluczSrodowiskoWykonania, Domyslna: shared.ExecutionEnvLocal, Rodzaj: RodzajTekst,
 			Objasnienie: "Zasięg wykonania modelu: urządzenie użytkownika, " +
-				"host rdzenia albo host zdalny. Niezależny od umiejscowienia rdzenia.",
+				"host serwera albo host zdalny. Niezależny od umiejscowienia serwera.",
 		},
 		{
 			Klucz: kluczHostWykonania, Domyslna: "", Rodzaj: RodzajTekst,

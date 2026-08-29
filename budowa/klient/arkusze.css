@@ -1,13 +1,7 @@
-/* Arkusz wciąga warstwę projektową do pakietu przez wskazania na jedno źródło w katalogu zasobów, w kolejności żetony, fundament, biblioteka, arkusz okna. */
-
-@import url('../../design/zasoby/zetony/fonty.css');
-@import url('../../design/zasoby/zetony/zetony.css');
-@import url('../../design/zasoby/css/fundament.css');
-@import url('../../design/zasoby/css/komponenty.css');
-@import url('../../design/zasoby/wejscie.css');
-@import url('../../design/zasoby/rama.css');
-@import url('../../design/zasoby/stanowisko.css');
-@import url('../../design/zasoby/okna/studio.css');
+/* Arkusz niesie wyłącznie reguły własne klienta — widoczność odsłon drogi
+   wejścia i przekazanie sterowania ramie. Warstwę projektową (żetony,
+   fundament, biblioteka, arkusze okien) wciąga `index.html` wprost przez
+   `<link rel="stylesheet">`, w kolejności źródła prawdy. */
 
 /* ── Widoczność odsłon ────────────────────────────────────────────────────
 
@@ -37,3 +31,15 @@ body { height: 100dvh; }
    w `rama.css` — miejsce jej nie narzuca nic ponad to. */
 
 [data-rama-aplikacji][hidden] { display: none; }
+
+/* ── Ekran startowy nad całą drogą wejścia ────────────────────────────────
+
+   Składnik biblioteki zakłada, że warstwa leży w jednej scenie i tam ma swój
+   układ odniesienia. Tutaj stoi nad wszystkimi scenami naraz, bo przebieg
+   przechodzi między nimi szybciej, niż trwa animacja — więc układ odniesienia
+   daje jej samo miejsce drogi wejścia, a nie scena. */
+
+[data-wejscie] { position: relative; }
+
+/* Dopóki animacja gra, żadne okno drogi wejścia nie jest widoczne. Reguła
+   biblioteki wiąże ukrycie ze sceną, więc znacznik niesie każda z nich. */

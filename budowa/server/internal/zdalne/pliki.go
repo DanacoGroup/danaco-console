@@ -43,7 +43,7 @@ func PrzeniesPlik(kontekst context.Context, nazwaHosta, idOkna string,
 	}
 	sciezkaSCP, err := exec.LookPath("scp")
 	if err != nil {
-		return fmt.Errorf("zdalne: plik %s nie został przeniesiony, bo maszyna rdzenia "+
+		return fmt.Errorf("zdalne: plik %s nie został przeniesiony, bo maszyna serwera "+
 			"nie ma programu scp w PATH — przenosiny jadą wyłącznie po SSH i wymagają "+
 			"jego instalacji: %w", sciezkaLokalna, err)
 	}
@@ -68,7 +68,7 @@ func odmowDzwieku(sciezki ...string) error {
 			return fmt.Errorf("zdalne: plik %s nie został przeniesiony, bo jest nagraniem "+
 				"dźwięku (wykaz formatów mowa.FormatyNagran), a dźwięk nie opuszcza maszyny "+
 				"Operatora — rozstrzygnięcie Właściciela; transkrypcję wykonuje silnik mowy "+
-				"na maszynie rdzenia i do hosta zdalnego jedzie wyłącznie tekst", sciezka)
+				"na maszynie serwera i do hosta zdalnego jedzie wyłącznie tekst", sciezka)
 		}
 	}
 	return nil

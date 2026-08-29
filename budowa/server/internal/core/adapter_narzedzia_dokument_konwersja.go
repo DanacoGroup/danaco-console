@@ -34,7 +34,7 @@ func (a *adapterNarzedziDokumentu) Przeksztalc(ctx context.Context,
 	if docelowy == "" {
 		return shared.DocumentConvertResponse{}, bladZadaniaDokumentu(
 			"komenda document.convert z formatem docelowym " +
-				opisWskazaniaDokumentu(z.ToFormat) + ", którego rdzeń nie zna; " +
+				opisWskazaniaDokumentu(z.ToFormat) + ", którego serwer nie zna; " +
 				"formaty znane: " + wykazFormatowDokumentu())
 	}
 
@@ -62,7 +62,7 @@ func (a *adapterNarzedziDokumentu) Przeksztalc(ctx context.Context,
 	}
 	if zrodlo.format == "pdf" {
 		return shared.DocumentConvertResponse{}, bladZadaniaDokumentu(
-			"rdzeń nie czyta PDF-u jako dokumentu źródłowego: PDF niesie instrukcje " +
+			"serwer nie czyta PDF-u jako dokumentu źródłowego: PDF niesie instrukcje " +
 				"rysowania, a nie strukturę, z której da się złożyć inny format; " +
 				"naprawa: wyciągnąć treść komendą document.text.extract, a jej wynik " +
 				"przekonwertować dalej")
@@ -94,11 +94,11 @@ func (a *adapterNarzedziDokumentu) przeprowadzKonwersje(ctx context.Context, kat
 
 	opisZrodla, opisCelu := formatyDokumentu[zrodlo.format], formatyDokumentu[docelowy]
 	if !opisZrodla.czytaPandoc {
-		return "", bladZadaniaDokumentu("rdzeń nie umie odczytać formatu " +
+		return "", bladZadaniaDokumentu("serwer nie umie odczytać formatu " +
 			zrodlo.format + " jako dokumentu źródłowego")
 	}
 	if !opisCelu.piszePandoc {
-		return "", bladZadaniaDokumentu("rdzeń nie umie zapisać dokumentu w formacie " +
+		return "", bladZadaniaDokumentu("serwer nie umie zapisać dokumentu w formacie " +
 			docelowy + " na tej maszynie")
 	}
 	return a.pandokiem(ctx, katalogPracy, zrodlo.sciezka, opisZrodla.pandoc, opisCelu.pandoc,
@@ -114,7 +114,7 @@ func (a *adapterNarzedziDokumentu) doPdf(ctx context.Context, katalogPracy strin
 	material := zrodlo.sciezka
 	if !formatyDokumentu[zrodlo.format].strawnyDlaLibre {
 		if !formatyDokumentu[zrodlo.format].czytaPandoc {
-			return "", bladZadaniaDokumentu("rdzeń nie umie zamienić formatu " +
+			return "", bladZadaniaDokumentu("serwer nie umie zamienić formatu " +
 				zrodlo.format + " na PDF: ani LibreOffice nie otworzy go wprost, " +
 				"ani Pandoc nie złoży z niego materiału pośredniego")
 		}

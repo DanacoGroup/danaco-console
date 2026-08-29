@@ -52,7 +52,7 @@ type SymbolSkladnicaStudia interface {
 func (a *adapterStudia) symbolSkladnica() (SymbolSkladnicaStudia, error) {
 	if a == nil || a.repozytorium == nil {
 		return nil, postacBladZaplecza(
-			"repozytorium Studia nie zostało podane przy montażu rdzenia")
+			"repozytorium Studia nie zostało podane przy montażu serwera")
 	}
 	skladnica, jest := a.repozytorium.(SymbolSkladnicaStudia)
 	if !jest {
@@ -322,7 +322,7 @@ func (a *adapterStudia) TabliceZnakow(ctx context.Context,
 		}
 		if !znana {
 			return shared.StudioSymbolListResponse{}, bladWskazaniaStudio(
-				"grupy znaków „" + strings.TrimSpace(*z.Category) + "” rdzeń nie zna; grupy: " +
+				"grupy znaków „" + strings.TrimSpace(*z.Category) + "” serwer nie zna; grupy: " +
 					strings.Join(symbolGrupy(), ", "))
 		}
 	}

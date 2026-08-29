@@ -66,8 +66,8 @@ var (
 // bez magazynu treści i repozytorium biblioteki. Wytwór bez miejsca, w którym
 // leży, i bez wiersza, który o nim wie, nie jest wytworem.
 var errBrakMagazynuWytworow = errors.New(
-	"moduł Translate: rdzeń nie ma wpiętego magazynu wytworów ani repozytorium biblioteki — " +
-		"wytwór nie miałby gdzie leżeć; naprawa: podpiąć ZWytworami przy składaniu rdzenia")
+	"moduł Translate: serwer nie ma wpiętego magazynu wytworów ani repozytorium biblioteki — " +
+		"wytwór nie miałby gdzie leżeć; naprawa: podpiąć ZWytworami przy składaniu serwera")
 
 // ZWytworami wpina drogę wydania wytworu: repozytorium biblioteki i katalog
 // danych rdzenia, pod którym stoi magazyn treści.
@@ -102,7 +102,7 @@ func (a *adapterTlumaczenia) zapytajModel(ctx context.Context, okno, kanal, tres
 		return "", bladBrakuKanalowTlumaczenia()
 	}
 	if strings.TrimSpace(kanal) == "" {
-		return "", bladWskazaniaTlumaczenia("żądanie bez wskazania kanału modelu — rdzeń nie zgaduje kanału tłumaczenia")
+		return "", bladWskazaniaTlumaczenia("żądanie bez wskazania kanału modelu — serwer nie zgaduje kanału tłumaczenia")
 	}
 	var zebrane strings.Builder
 	ujscie := models.UjscieFunkcji(func(_ context.Context, f models.Fragment) error {
@@ -251,7 +251,7 @@ func (a *adapterTlumaczenia) RozpoznajJezyk(ctx context.Context,
 	}
 	if tekst == "" {
 		return shared.TranslateSourceDetectResponse{}, bladWskazaniaTlumaczenia(
-			"żądanie translate.source.detect bez tekstu — kontrakt nie niesie okna, więc rdzeń nie ma czego rozpoznać")
+			"żądanie translate.source.detect bez tekstu — kontrakt nie niesie okna, więc serwer nie ma czego rozpoznać")
 	}
 
 	jezyk, err := a.rozpoznajJezykModelem(ctx, tekst)

@@ -425,5 +425,5 @@ func bladNieznanegoPunktu(nazwa string) error {
 // odpowiedź.
 func bladPodlozaIzolacji(czego string) error {
 	return protocol.JakoError(protocol.NowyBlad(shared.ErrorCodeInternalError,
-		"izolacja: "+czego+" nie został wpięty do rdzenia"))
+		"izolacja: "+czego+" nie został wpięty do serwera"))
 }

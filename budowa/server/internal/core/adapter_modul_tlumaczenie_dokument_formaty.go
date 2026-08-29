@@ -375,8 +375,8 @@ func zapiszDokumentWyniku(sciezka string, format shared.TranslationDocumentForma
 		}
 		return zapiszPlikWyniku(sciezka, bajty)
 	}
-	return bladWskazaniaTlumaczenia("rdzeń składa wynik w formacie markdown, html albo docx; " +
-		"format " + string(format) + " wymagałby odtworzenia składu, którego rdzeń nie prowadzi")
+	return bladWskazaniaTlumaczenia("serwer składa wynik w formacie markdown, html albo docx; " +
+		"format " + string(format) + " wymagałby odtworzenia składu, którego serwer nie prowadzi")
 }
 
 // zapiszPlikWyniku odkłada bajty wyniku pod wskazaną ścieżką na dysku,

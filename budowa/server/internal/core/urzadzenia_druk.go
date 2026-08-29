@@ -141,7 +141,7 @@ func (w *WarstwaDruku) Wyslij(ctx context.Context, z ZlecenieDruku) (string, err
 // odmowaDrukuNaTymSystemie nazywa brak drogi druku na systemie, którego rdzeń nie obsługuje w warstwie druku lokalnego.
 func odmowaDrukuNaTymSystemie() error {
 	return protocol.JakoError(protocol.NowyBlad(shared.ErrorCodeChannelUnavailable,
-		"druk lokalny: rdzeń nie ma warstwy druku na systemie "+runtime.GOOS+
+		"druk lokalny: serwer nie ma warstwy druku na systemie "+runtime.GOOS+
 			". Warstwy, które zna, to CUPS (`lp`, `lpstat`) na Linuksie i PowerShell "+
 			"(`pwsh`) na Windowsie. Droga, która działa: wydać materiał plikiem przez "+
 			"`design.print.export` i wydrukować go programem systemu."))
@@ -359,17 +359,17 @@ func odmowaDrukuWindows(rozpoznanie, plik string) error {
 	case strings.HasPrefix(tresc, "BRAK-MODULU-DRUKU"):
 		return protocol.JakoError(protocol.NowyBlad(shared.ErrorCodeChannelUnavailable,
 			"druk lokalny: na tej maszynie nie ma modułu zarządzania drukiem "+
-				"(`Get-Printer` z PrintManagement), którym rdzeń pyta system o kolejki. "+
+				"(`Get-Printer` z PrintManagement), którym serwer pyta system o kolejki. "+
 				"Naprawa: włączyć składnik Windows „Zarządzanie drukowaniem”. "+
 				"Diagnostyka: "+tresc))
 	case strings.HasPrefix(tresc, "BRAK-PLIKU"):
 		return protocol.JakoError(protocol.NowyBlad(shared.ErrorCodeNotFound,
-			"druk lokalny: pliku "+plik+" nie ma na dysku maszyny rdzenia — nie ma czego "+
+			"druk lokalny: pliku "+plik+" nie ma na dysku maszyny serwera — nie ma czego "+
 				"wysłać na drukarkę. Naprawa: wydać materiał komendą `design.print.export` "+
 				"i podać ścieżkę bajtów wydanego zasobu."))
 	case strings.HasPrefix(tresc, "BRAK-DRUKARKI"):
 		return protocol.JakoError(protocol.NowyBlad(shared.ErrorCodeNotFound,
-			"druk lokalny: "+tresc+". Rdzeń NIE zeszedł na drukarkę domyślną — wydruk na "+
+			"druk lokalny: "+tresc+". Serwer NIE zeszedł na drukarkę domyślną — wydruk na "+
 				"innym urządzeniu niż wskazane jest szkodą nieodwracalną. Naprawa: "+
 				"sprawdzić nazwę w wykazie drukarek systemu."))
 	default:
@@ -389,9 +389,9 @@ func (w *WarstwaDruku) wolaj(ctx context.Context, n zewnetrzne.Narzedzie,
 
 	if w == nil || w.uruchamiacz == nil {
 		return nil, protocol.JakoError(protocol.NowyBlad(shared.ErrorCodeInternalError,
-			"druk lokalny: rdzeń nie ma uruchamiacza procesów, więc warstwa druku ("+
+			"druk lokalny: serwer nie ma uruchamiacza procesów, więc warstwa druku ("+
 				n.Nazwa+") nie ma czym wystartować; naprawa: podpiąć warstwę kanału "+
-				"przy składaniu rdzenia"))
+				"przy składaniu serwera"))
 	}
 	wynik, err := zewnetrzne.Wolaj(ctx, w.uruchamiacz, w.okno, w.zasady, w.obszar, n,
 		argumenty, "", granica)
@@ -407,7 +407,7 @@ func bladWarstwyDruku(err error) error {
 	var brak *zewnetrzne.BrakNarzedzia
 	if errors.As(err, &brak) {
 		zdanie := "druk lokalny: nie ma na tej maszynie programu " + brak.Narzedzie.Nazwa +
-			" (" + brak.Narzedzie.Program + "), a bez niego rdzeń nie ma drogi do drukarki " +
+			" (" + brak.Narzedzie.Program + "), a bez niego serwer nie ma drogi do drukarki " +
 			"systemowej — plik wydany do druku pozostanie plikiem"
 		if brak.Narzedzie.Pakiet != "" {
 			zdanie += "; naprawa: zainstalować " + brak.Narzedzie.Pakiet

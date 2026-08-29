@@ -218,7 +218,7 @@ func bladZadaniaZespolu(powod string) error {
 // udawałaby tu zapis, który nigdzie nie trafia.
 func bladBrakuZespolow(komenda shared.MessageType) error {
 	return protocol.JakoError(protocol.NowyBlad(shared.ErrorCodeInternalError,
-		"rdzeń: komenda "+string(komenda)+" odmawia wykonania, ponieważ repozytorium "+
+		"serwer: komenda "+string(komenda)+" odmawia wykonania, ponieważ repozytorium "+
 			"zespołów ekspertów nie jest wpięte do portu; wpięcie zakłada się w pliku "+
 			"server/internal/core/montaz_porty.go wierszem "+
 			"Zespoly: nowyAdapterZespolow(s.repozytoria.Zespoly).ZDziennikiem(s.montaz.Dziennik)"))

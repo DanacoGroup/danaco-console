@@ -56,7 +56,7 @@ func (a *adapterWyjsciaTerminala) StrumienWyjscia(ctx context.Context,
 	if a == nil || a.dziennik == nil {
 		return shared.TerminalOutputStreamResponse{}, protocol.JakoError(protocol.NowyBlad(
 			shared.ErrorCodeInternalError,
-			"moduł Terminal: rdzeń nie ma nadajnika wyjścia, więc nie prowadzi zbiorczego strumienia kart"))
+			"moduł Terminal: serwer nie ma nadajnika wyjścia, więc nie prowadzi zbiorczego strumienia kart"))
 	}
 
 	filtr, err := a.filtrZadania(ctx, z)
@@ -96,7 +96,7 @@ func (a *adapterWyjsciaTerminala) filtrZadania(ctx context.Context,
 	if idSesji := strings.TrimSpace(wartoscTekstu(z.SessionId)); idSesji != "" {
 		if a.okna == nil {
 			return filtrWyjscia{}, protocol.JakoError(protocol.NowyBlad(shared.ErrorCodeInternalError,
-				"moduł Terminal: rdzeń nie ma rejestru sesji, więc nie sprawdzi karty sesji "+idSesji))
+				"moduł Terminal: serwer nie ma rejestru sesji, więc nie sprawdzi karty sesji "+idSesji))
 		}
 		if _, err := a.okna.Sesja(idSesji); err != nil {
 			return filtrWyjscia{}, protocol.JakoError(protocol.NowyBlad(shared.ErrorCodeNotFound,
@@ -140,7 +140,7 @@ func (a *adapterWyjsciaTerminala) sprawdzKarte(ctx context.Context, kod string) 
 		}
 	}
 	return protocol.JakoError(protocol.NowyBlad(shared.ErrorCodeNotFound,
-		"moduł Terminal: karta "+kod+" nie występuje ani w rejestrze rdzenia, ani w dzienniku kart"))
+		"moduł Terminal: karta "+kod+" nie występuje ani w rejestrze serwera, ani w dzienniku kart"))
 }
 
 // odsiejZamknieteOkna wykreśla obserwacje okien, których rejestr już nie zna,

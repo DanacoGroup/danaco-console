@@ -125,7 +125,7 @@ func wydanieFormatDocelowy(format shared.StudioExportFormat) (shared.StudioExpor
 		}
 	}
 	return "", bladWskazaniaStudio("format wydania " + string(format) +
-		" nie jest formatem, do którego rdzeń wydaje; rdzeń wydaje txt, md, docx, odt, " +
+		" nie jest formatem, do którego serwer wydaje; serwer wydaje txt, md, docx, odt, " +
 		"pdf, html i rtf")
 }
 
@@ -274,7 +274,7 @@ func (a *adapterStudia) wydanieDokumentu(ctx context.Context, stan *stanPostaci,
 		bajty, pominiete, err = a.wydaniePdfem(ctx, stan, kodProfilu)
 	default:
 		return shared.StudioExportResult{}, bladWskazaniaStudio(
-			"format wydania " + string(format) + " nie ma rachunku w rdzeniu")
+			"format wydania " + string(format) + " nie ma rachunku w serwerze")
 	}
 	if err != nil {
 		return shared.StudioExportResult{}, err
@@ -619,7 +619,7 @@ func wydanieMarkdownem(postac *shared.StudioDocumentForm, tresc string) ([]byte,
 	if len(postac.Objects) > 0 {
 		pominiete = append(pominiete, shared.StudioSkippedItem{
 			Reason: "obrazy wyszły odsyłaczem bez adresu — bajty leżą w magazynie zasobów " +
-				"rdzenia, a plik markdown ich nie niesie",
+				"serwera, a plik markdown ich nie niesie",
 			Detail: wejscieWskaznikTekstu(strconv.Itoa(len(postac.Objects)) + " obiektów"),
 		})
 	}

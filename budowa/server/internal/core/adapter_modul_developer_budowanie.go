@@ -69,7 +69,7 @@ func (a *adapterDevelopera) ostatniPrzebiegOkna(ctx context.Context,
 
 	if a.repozytorium == nil {
 		return shared.DeveloperBuild{}, bladZasobuDevelopera(
-			"w oknie " + oknoKod + " nie biegnie żadne budowanie, a rdzeń nie ma dziennika przebiegów")
+			"w oknie " + oknoKod + " nie biegnie żadne budowanie, a serwer nie ma dziennika przebiegów")
 	}
 	wiersz, err := a.repozytorium.OstatniPrzebieg(ctx, oknoKod)
 	if errors.Is(err, dane.ErrBrakWiersza) {

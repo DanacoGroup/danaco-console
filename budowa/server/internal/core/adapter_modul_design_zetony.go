@@ -175,7 +175,7 @@ func (a *adapterDesignu) WczytajZestawZetonow(ctx context.Context,
 	}
 	if len(zetony) == 0 {
 		return shared.DesignTokensetImportResponse{}, bladWskazaniaDesignu(
-			"w zapisie nie ma ani jednej roli, którą rdzeń umiałby odczytać — zestaw pusty " +
+			"w zapisie nie ma ani jednej roli, którą serwer umiałby odczytać — zestaw pusty " +
 				"nie powstaje, bo wyglądałby na wczytany")
 	}
 
@@ -283,7 +283,7 @@ func rozlozZapisZetonowDesignu(tresc string, postac *string) ([]shared.DesignTok
 	case "css", "cssvariables":
 		return rozlozZetonyZCssDesignu(tresc), nil
 	}
-	return nil, fmt.Errorf("postaci zapisu żetonów rdzeń nie rozpoznał; rdzeń czyta zapis json " +
+	return nil, fmt.Errorf("postaci zapisu żetonów serwer nie rozpoznał; serwer czyta zapis json " +
 		"(płaski albo zagnieżdżony) oraz zmienne css — wskaż postać polem format")
 }
 

@@ -95,7 +95,7 @@ func (a *adapterStudia) PrzeniesFragmentRoznicy(ctx context.Context,
 	if z.HunkIndex == nil && (z.RangeStart == nil || z.RangeEnd == nil) {
 		return shared.StudioDiffHunkApplyResponse{}, bladWskazaniaStudio(
 			"przeniesienie fragmentu bez wskazania ani numeru fragmentu różnicy, " +
-				"ani zakresu w wersji źródłowej — bez tego rdzeń nie wie, co przenieść")
+				"ani zakresu w wersji źródłowej — bez tego serwer nie wie, co przenieść")
 	}
 	wersja, err := skladnica.WersjaSzeregu(ctx, strings.TrimSpace(z.SourceVersionId))
 	if err != nil {

@@ -71,7 +71,7 @@ func sprawdzSrodowisko(zasady Zasady, obszar Obszar, polecenie Polecenie) error 
 		return nil
 	}
 	return NoweNaruszenie(konfig.KluczIzolacjaSrodowiskoProcesu,
-		"polecenie okna "+obszar.IdOkna+" dziedziczy środowisko rdzenia, "+
+		"polecenie okna "+obszar.IdOkna+" dziedziczy środowisko serwera, "+
 			"a okno ma pracować na własnym zestawie zmiennych")
 }
 

@@ -7,6 +7,8 @@ import (
 
 	"danacoconsole/server/internal/protocol"
 	"danacoconsole/shared"
+
+	"danacoconsole/server/internal/dane"
 )
 
 // WersjaRdzenia jest wersją produktu zgłaszaną klientowi w powitaniu.
@@ -28,6 +30,22 @@ type Rdzen struct {
 	straz StrazZakresowNarzedzi
 	// wiez trzyma przypisania połączenie -> sesja bramki i nigdy nie jest zerowa po założeniu.
 	wiez *wiezBramki
+	// konta rozpoznaje, do którego konta należy sesja bramki wołającego. Zerowe
+	// znaczy rdzeń bez trwałości uwierzytelnienia — praca idzie wtedy bez podziału.
+	konta RozpoznanieKontaSesji
+}
+
+// RozpoznanieKontaSesji oddaje konto, któremu wydano sesję bramki o podanym
+// skrócie. Zero znaczy sesję nieznaną albo wiersz sprzed rozdzielenia kont.
+type RozpoznanieKontaSesji interface {
+	KontoSesjiBramki(ctx context.Context, skrotTokenu string) (int64, error)
+}
+
+// ZRozpoznaniemKontaSesji wpina rozpoznanie konta wołającego. Bez niego rdzeń
+// pracuje jak przed rozdzieleniem kont: wszystkie karty sesji są wspólne.
+func (r *Rdzen) ZRozpoznaniemKontaSesji(k RozpoznanieKontaSesji) *Rdzen {
+	r.konta = k
+	return r
 }
 
 // ZObserwatoremNiepowodzen wpina odbiorcę odmów wykonania komend, dzięki czemu odmowy stają się widoczne poza rdzeniem, w module Diagnostics.
@@ -54,6 +72,10 @@ func (r *Rdzen) Wykonaj(ctx context.Context, zadanie protocol.Koperta) protocol.
 // WykonajZadanie kieruje żądanie już rozpoznane przez warstwę niższą. Komenda bez obsługiwacza jest rozpoznawana ponownie, żeby odpowiedź „*.unknown" wróciła pod nazwą zdarzenia obszaru, a obie drogi odmowy trafiają jednakowo do Errors Panel.
 func (r *Rdzen) WykonajZadanie(ctx context.Context, z protocol.Request) protocol.Koperta {
 	ctx = zDziennikiemRdzenia(ctx, r.dziennik)
+	/* Wskazanie konta wchodzi raz, w jednym miejscu przed rozdziałem na
+	   obsługiwacze: konta nie mieszają między sobą pracy, a zapytania sięgające
+	   kart sesji leżą głęboko pod tą warstwą i argumentem by go nie dostały. */
+	ctx = r.zKontemWolajacego(ctx)
 	if !z.Znana {
 		return r.odmowaNieznanej(ctx, z)
 	}
@@ -88,7 +110,7 @@ func (r *Rdzen) WykonajSurowe(ctx context.Context, dane []byte) []byte {
 // Rdzeń bez podłączonego nasłuchu pracuje dalej — czeka na zatrzymanie zamiast
 // przerywać start.
 func (r *Rdzen) Uruchom(ctx context.Context) error {
-	r.zapisz("rdzeń gotowy: komend=%d", r.rejestr.Liczba())
+	r.zapisz("serwer gotowy: komend=%d", r.rejestr.Liczba())
 	r.zglosZaleznosci()
 	if r.nasluch == nil {
 		<-ctx.Done()
@@ -115,7 +137,7 @@ func (r *Rdzen) wykonajOdpornie(ctx context.Context, obsluga Obsluga, z protocol
 		if przyczyna := recover(); przyczyna != nil {
 			r.zapisz("obsługiwacz %s przerwał wykonanie: %v", z.Komenda, przyczyna)
 			odpowiedz = protocol.PorazkaKodem(shared.ErrorCodeInternalError,
-				fmt.Sprintf("rdzeń: obsługa %s przerwana", z.Komenda))
+				fmt.Sprintf("serwer: obsługa %s przerwana", z.Komenda))
 		}
 	}()
 	return obsluga(ctx, z)
@@ -168,4 +190,30 @@ func (r *Rdzen) odmowaZakresu(ctx context.Context, z protocol.Request) *protocol
 		return &blad
 	}
 	return nil
+}
+
+/*
+zKontemWolajacego dokłada do kontekstu konto Operatora, do którego należy
+połączenie. Rozpoznanie idzie przez sesję bramki związaną z gniazdem: token
+przedstawiono raz, w powitaniu, i od tamtej chwili to więź gniazda z sesją
+mówi, czyje jest każde kolejne żądanie.
+
+Połączenie bez sesji — przed zalogowaniem — zostaje bez wskazania. Zapytania
+czytają wtedy pracę konta najstarszego, bo tak stała praca zapisana przed
+rozdzieleniem kont; nic nowego wtedy nie powstaje, bo komendy pracy i tak
+wymagają przejścia przez bramkę.
+*/
+func (r *Rdzen) zKontemWolajacego(ctx context.Context) context.Context {
+	if r.wiez == nil || r.konta == nil {
+		return ctx
+	}
+	skrot := r.wiez.SkrotKontekstu(ctx)
+	if skrot == "" {
+		return ctx
+	}
+	kontoId, err := r.konta.KontoSesjiBramki(ctx, skrot)
+	if err != nil || kontoId == 0 {
+		return ctx
+	}
+	return dane.ZKontemOperatora(ctx, kontoId)
 }

@@ -70,7 +70,7 @@ func ZSesji(procesy *session.RejestrProcesow) OcenaProcesu {
 
 // wyjasnienieOsierocenia trafia w pole wynik sieroty, ale wyłącznie gdy jest
 // ono puste, po polsku, bo czyta je Operator.
-const wyjasnienieOsierocenia = "Praca przerwana zatrzymaniem rdzenia — " +
+const wyjasnienieOsierocenia = "Praca przerwana zatrzymaniem serwera — " +
 	"proces wykonujący zadanie nie istnieje po restarcie. Powołaj podagenta na nowo."
 
 // ZnacznikUruchomienia nadaje znacznik bieżącemu uruchomieniu rdzenia,
@@ -101,5 +101,5 @@ func ZdanieOSprzataniu(osieroceni []dane.Podagent) string {
 		return "sprzątanie po restarcie: podagentów osieroconych brak"
 	}
 	return fmt.Sprintf("sprzątanie po restarcie: zamknięto %d podagentów osieroconych "+
-		"(praca przerwana zatrzymaniem poprzedniego rdzenia)", len(osieroceni))
+		"(praca przerwana zatrzymaniem poprzedniego serwera)", len(osieroceni))
 }

@@ -129,7 +129,7 @@ func argumentyKlatkiMediow(z shared.MediaTranscodeRequest, zrodlo,
 func odmowaNieznanejCzynnosciMediow(operacja shared.MediaOperationKind) error {
 	return odmowaNarzedziMediow(shared.ErrorCodeValidationFailed,
 		"nieznany rodzaj przetworzenia \""+string(operacja)+"\" — "+
-			"rdzeń zna convert, trim, extractAudio, resize i frame")
+			"serwer zna convert, trim, extractAudio, resize i frame")
 }
 
 // sekundyMediow przekłada milisekundy kontraktu na zapis czasu, który rozumie

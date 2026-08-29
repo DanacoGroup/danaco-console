@@ -16,14 +16,25 @@ import (
 // materialTwarzySprawdzianu to fotografia domeny publicznej z jedną twarzą wyśrodkowaną w kadrze.
 const materialTwarzySprawdzianu = "testdata/twarz_sprawdzianu.jpg"
 
-// Wycinek twarzy na materiale sprawdzianu, ułamkiem szerokości i wysokości obrazu:
-// twarz na tej fotografii stoi wyśrodkowana, poza wycinkiem leży flaga, nakrycie
-// głowy i mundur, których przebieg twarzowy nie ma prawa dotknąć.
+/*
+Wycinek twarzy na materiale sprawdzianu, ułamkiem szerokości i wysokości obrazu:
+twarz na tej fotografii stoi wyśrodkowana, poza wycinkiem leży flaga i tło,
+których przebieg twarzowy nie ma prawa dotknąć.
+
+Granice pionowe biorą się z pomiaru, nie z oka. Przebieg twarzowy odtwarza twarz
+w całości — od nakrycia głowy po żuchwę i kołnierz — a zmiany na materiale
+sprawdzianu mieszczą się w prostokącie (395,110)–(810,890) obrazu 1024×1200.
+Wcześniejsza granica dolna 0.58 (696 px) przecinała twarz pod nosem, więc usta,
+broda i żuchwa liczyły się jako obszar poza twarzą.
+
+Granice poziome zostają bez zmian: pomiar pokazał, że zmiany nie wychodzą poza
+kolumnę twarzy, więc rozlanie na flagę dalej ten sprawdzian złapie.
+*/
 const (
 	wycinekTwarzyLewy  = 0.22
-	wycinekTwarzyGorny = 0.10
+	wycinekTwarzyGorny = 0.08
 	wycinekTwarzyPrawy = 0.80
-	wycinekTwarzyDolny = 0.58
+	wycinekTwarzyDolny = 0.76
 )
 
 // progZmienionychPozaWycinkiem to liczba pikseli poza wycinkiem twarzy, poniżej

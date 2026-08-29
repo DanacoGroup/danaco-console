@@ -122,8 +122,8 @@ type sesjaStrony struct {
 // dlaczego, zanim zacznie cokolwiek zapisywać.
 func (s *silnikPrzegladarki) dostepny() error {
 	if s == nil || s.uruchamiacz == nil {
-		return errors.New("rdzeń nie ma uruchamiacza procesów — silnik przeglądarki nie ma czym wystartować; " +
-			"naprawa: podpiąć warstwę kanału (injection) przy składaniu rdzenia")
+		return errors.New("serwer nie ma uruchamiacza procesów — silnik przeglądarki nie ma czym wystartować; " +
+			"naprawa: podpiąć warstwę kanału (injection) przy składaniu serwera")
 	}
 	narzedzie := narzedzieChromium()
 	if !zewnetrzne.Stoi(narzedzie) {

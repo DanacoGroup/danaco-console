@@ -16,7 +16,7 @@ import (
 // Operatora przed platformą, a odesłanie do dziennika rdzenia prowadzi tam,
 // gdzie on nie sięga.
 const dwieDrogiKontaNadawczego = "konto nadawcze ustawia się na dwa sposoby: " +
-	"zmiennymi środowiska przy starcie rdzenia (DANACO_NADAWCA_HOST, DANACO_NADAWCA_ADRES " +
+	"zmiennymi środowiska przy starcie serwera (DANACO_NADAWCA_HOST, DANACO_NADAWCA_ADRES " +
 	"i pozostałe DANACO_NADAWCA_*) albo nastawami mailer.host i mailer.address " +
 	"w oknie Konfiguracji, w kategorii „Konto nadawcze platformy”"
 

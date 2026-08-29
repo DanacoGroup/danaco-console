@@ -679,7 +679,11 @@ func TestAudytDostepnosciNazywaNaruszeniaWrazZWezlemDom(t *testing.T) {
 	if odmowa.Code != shared.ErrorCodeValidationFailed {
 		t.Fatalf("norma spoza kontraktu wróciła kodem %q", odmowa.Code)
 	}
-	if !strings.Contains(odmowa.Message, "nie należy do kontraktu") {
+	/* Odmowę wydaje brama kontraktu, zanim żądanie dojdzie do adaptera — stąd
+	   brzmienie bramy, nie adaptera. Miara trzyma się tego, co ma znaczenie:
+	   odmowa nazywa odrzuconą wartość i mówi, że stoi poza kontraktem. */
+	if !strings.Contains(odmowa.Message, string(normaSpoza)) ||
+		!strings.Contains(odmowa.Message, "nie należy do") {
 		t.Fatalf("odmowa nie nazywa normy spoza kontraktu: %q", odmowa.Message)
 	}
 }

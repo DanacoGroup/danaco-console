@@ -96,7 +96,7 @@ func odczytajObrazZlozenia(sciezka, rola string) (image.Image, error) {
 	}
 	if rozmiar > granicaPikseliZlozenia {
 		return nil, bladWskazaniaObrazu("obraz " + rola +
-			" jest za duży do złożenia w pamięci rdzenia (ponad sto milionów pikseli)")
+			" jest za duży do złożenia w pamięci serwera (ponad sto milionów pikseli)")
 	}
 	return obraz, nil
 }
@@ -195,6 +195,6 @@ func funkcjaMieszania(tryb shared.ImageBlendMode) (func(dolna, gorna float64) fl
 		}, nil
 	default:
 		return nil, bladWskazaniaObrazu("nie znam trybu mieszania „" + string(tryb) +
-			"” — rdzeń zna: normal, multiply, screen, overlay")
+			"” — serwer zna: normal, multiply, screen, overlay")
 	}
 }

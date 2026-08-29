@@ -20,7 +20,7 @@ const przedrostekArtefaktuApp = "art-"
 // artefaktu. Osobny błąd, a nie odmowa komendy: przebieg wdrożenia już się
 // zakończył i jego stanu ten brak nie zmienia.
 var errBrakMagazynuArtefaktuApp = errors.New(
-	"moduł Apps: rdzeń zmontowano bez katalogu danych, więc artefakt nie ma gdzie powstać")
+	"moduł Apps: serwer zmontowano bez katalogu danych, więc artefakt nie ma gdzie powstać")
 
 // uruchomWdrozenie oddaje przebieg silnikowi wykonania. Bieg idzie osobną
 // gorutyną: przejście przez stany dzieje się po odesłaniu odpowiedzi komendy.

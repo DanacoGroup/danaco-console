@@ -86494,6 +86494,290 @@
         "zastosowanie": "Uzyj, gdy zaczynasz badanie i trzeba ustalic jego zakres oraz etapy"
       },
       {
+        "komenda": "research.source.list",
+        "zastosowanie": "Uzyj, gdy trzeba sprawdzic, jakie zrodla juz sa w katalogu, zanim dodasz kolejne albo zaczniesz szukac nowych"
+      },
+      {
+        "komenda": "research.finding.list",
+        "zastosowanie": "Uzyj, gdy trzeba sprawdzic, jakie ustalenia juz zapisano, zanim dodasz kolejne albo zaczniesz skladac raport"
+      },
+      {
+        "komenda": "research.report.get",
+        "zastosowanie": "Uzyj, aby odczytac biezaca tresc raportu przed dalsza praca nad nim albo przed jego wydaniem"
+      },
+      {
+        "komenda": "research.workspace.get",
+        "zastosowanie": "Uzyj, gdy trzeba sie upewnic, co badanie juz obejmuje, zanim zmienisz zakres albo ruszysz dalej"
+      },
+      {
+        "komenda": "research.source.update",
+        "zastosowanie": "Uzyj, gdy trzeba poprawic dane zrodla juz skatalogowanego — tytul, wiarygodnosc, etap albo stan lektury"
+      },
+      {
+        "komenda": "research.source.remove",
+        "zastosowanie": "Uzyj, aby usunac zrodlo z katalogu razem ze wszystkimi jego powiazaniami — nie da sie usunac samego wpisu bez nich"
+      },
+      {
+        "komenda": "research.source.merge",
+        "zastosowanie": "Uzyj, gdy dwa zrodla w katalogu to ta sama pozycja — scalane zrodla znikaja z katalogu, zostaje jedno"
+      },
+      {
+        "komenda": "research.source.duplicates",
+        "zastosowanie": "Uzyj przed reczna proba czyszczenia katalogu, aby maszynowo wskazac zrodla powtorzone i niemal-powtorzone"
+      },
+      {
+        "komenda": "research.source.tag",
+        "zastosowanie": "Uzyj, gdy porzadkujesz zrodlo etykietami tematycznymi albo przypisujesz je do kolekcji"
+      },
+      {
+        "komenda": "research.source.attachment.add",
+        "zastosowanie": "Uzyj, aby dolaczyc do zrodla material, ktorego samo zrodlo nie niesie — pelny tekst, migawke, notatke albo dane"
+      },
+      {
+        "komenda": "research.source.attachment.list",
+        "zastosowanie": "Uzyj, aby sprawdzic, jakie zalaczniki ma zrodlo i czy sa kompletne, zanim po nie siegniesz"
+      },
+      {
+        "komenda": "research.source.import",
+        "zastosowanie": "Uzyj, aby zbiorczo zalozyc zrodla z pliku bibliografii wyeksportowanego z menedzera cytowan, zamiast dodawac je pojedynczo"
+      },
+      {
+        "komenda": "research.source.capture",
+        "zastosowanie": "Uzyj, aby zapisac wskazana strone jako nowe zrodlo badania, wraz z jej trescia albo migawka"
+      },
+      {
+        "komenda": "research.source.transcribe",
+        "zastosowanie": "Uzyj, gdy zrodlem jest nagranie audio albo wideo, ktore trzeba zamienic w tekst cytowalny ze znacznikami czasu"
+      },
+      {
+        "komenda": "research.source.resolve",
+        "zastosowanie": "Uzyj, gdy masz sam identyfikator pozycji — DOI, ISBN, PMID — i potrzebujesz jego pelnych metadanych przed zalozeniem zrodla"
+      },
+      {
+        "komenda": "research.discovery.search",
+        "zastosowanie": "Uzyj, aby wyszukac nowe zrodla w sieci albo w bazach publikacji — zanim cokolwiek trafi do katalogu badania"
+      },
+      {
+        "komenda": "research.discovery.assist",
+        "zastosowanie": "Uzyj, gdy pytanie badawcze trzeba dopiero przeksztalcic w zapytania wyszukiwawcze, zanim uruchomisz wyszukiwanie"
+      },
+      {
+        "komenda": "research.discovery.snowball",
+        "zastosowanie": "Uzyj, gdy masz jedna kluczowa pozycje i chcesz poszerzyc katalog o prace z nia powiazane siecia cytowan, zamiast szukac ich osobno"
+      },
+      {
+        "komenda": "research.discovery.reject",
+        "zastosowanie": "Uzyj, aby odrzucic pozycje wyniku wyszukiwania z uzasadnieniem — dla przegladu systematycznego, ktory liczy przesiew"
+      },
+      {
+        "komenda": "research.monitor.set",
+        "zastosowanie": "Uzyj, aby zalozyc albo zmienic stale sledzenie tematu lub kanalu RSS i Atom"
+      },
+      {
+        "komenda": "research.monitor.list",
+        "zastosowanie": "Uzyj, aby sprawdzic, ktore monitory sa czynne i ile nowych pozycji czeka, zanim je odswiezysz"
+      },
+      {
+        "komenda": "research.monitor.refresh",
+        "zastosowanie": "Uzyj, aby wymusic natychmiastowe sprawdzenie monitorow, zamiast czekac na ich wlasny odstep"
+      },
+      {
+        "komenda": "research.batch.import",
+        "zastosowanie": "Uzyj, gdy masz liste adresow do dopisania do katalogu w tle — bez gotowego pliku bibliografii"
+      },
+      {
+        "komenda": "research.reading.open",
+        "zastosowanie": "Uzyj, aby otworzyc tresc juz skatalogowanego zrodla do lektury — nie do jego wyszukania"
+      },
+      {
+        "komenda": "research.annotation.add",
+        "zastosowanie": "Uzyj, aby zapisac podswietlenie, notatke albo zakladke przy czytaniu zrodla, zakotwiczona w konkretnym miejscu"
+      },
+      {
+        "komenda": "research.annotation.list",
+        "zastosowanie": "Uzyj, aby przejrzec adnotacje jednego zrodla albo wszystkie adnotacje calego okna badania"
+      },
+      {
+        "komenda": "research.annotation.remove",
+        "zastosowanie": "Uzyj, aby usunac adnotacje, ktora przestala byc trafna albo powstala przez pomylke"
+      },
+      {
+        "komenda": "research.excerpt.list",
+        "zastosowanie": "Uzyj, gdy piszesz raport i potrzebujesz zebrac wypisy z kilku zrodel w jedna liste gotowa do syntezy"
+      },
+      {
+        "komenda": "research.source.summarize",
+        "zastosowanie": "Uzyj, aby zlozyc streszczenie jednego zrodla zaraz po jego wczytaniu, zanim przejdziesz do kolejnego"
+      },
+      {
+        "komenda": "research.source.extractTable",
+        "zastosowanie": "Uzyj, gdy zrodlo zawiera tabele albo dane liczbowe, ktore trzeba wydobyc do postaci ustrukturyzowanej"
+      },
+      {
+        "komenda": "research.source.extractClaims",
+        "zastosowanie": "Uzyj, aby wydobyc ze zrodla material pod ustalenia, zamiast recznie wypisywac twierdzenia i liczby z tekstu"
+      },
+      {
+        "komenda": "research.source.ocr",
+        "zastosowanie": "Uzyj, gdy zrodlo jest skanem — jego tekst nie wejdzie do wyszukiwania pelnotekstowego, dopoki nie zostanie rozpoznany"
+      },
+      {
+        "komenda": "research.corpus.ask",
+        "zastosowanie": "Uzyj, aby odpowiedziec na pytanie na podstawie tresci zrodel z cytatami, zamiast czytac je jedno po drugim"
+      },
+      {
+        "komenda": "research.finding.update",
+        "zastosowanie": "Uzyj, gdy trzeba poprawic tresc, rodzaj, wage albo oznaczenie potwierdzenia juz zapisanego ustalenia"
+      },
+      {
+        "komenda": "research.finding.remove",
+        "zastosowanie": "Uzyj, aby usunac ustalenie razem z jego powiazaniami do zrodel i sekcji raportu — nie da sie usunac samego wpisu bez nich"
+      },
+      {
+        "komenda": "research.finding.code",
+        "zastosowanie": "Uzyj, aby przypisac ustaleniu kody tematyczne kodowania jakosciowego, w razie potrzeby zakladajac nowe kody przy okazji"
+      },
+      {
+        "komenda": "research.codebook.get",
+        "zastosowanie": "Uzyj, aby zobaczyc istniejace kody badania i ich licznosc, zanim przypiszesz kolejny kod ustaleniu"
+      },
+      {
+        "komenda": "research.codebook.set",
+        "zastosowanie": "Uzyj, aby zalozyc albo przebudowac ksiazke kodow badania — nazwy, definicje i hierarchie"
+      },
+      {
+        "komenda": "research.finding.matrix",
+        "zastosowanie": "Uzyj, aby zlozyc macierz kod na zrodlo i zobaczyc, gdzie kody sie skupiaja albo gdzie brakuje pokrycia"
+      },
+      {
+        "komenda": "research.finding.contradictions",
+        "zastosowanie": "Uzyj, aby maszynowo wykryc sprzecznosci miedzy ustaleniami z roznych zrodel, zanim zaczniesz je rozstrzygac"
+      },
+      {
+        "komenda": "research.contradiction.resolve",
+        "zastosowanie": "Uzyj, aby zamknac wykryta sprzecznosc uzasadnieniem, wskazujac ustalenie rozstrzygajace, jesli takie sie znalazlo"
+      },
+      {
+        "komenda": "research.finding.factCheck",
+        "zastosowanie": "Uzyj, aby zweryfikowac twierdzenie wzgledem korpusu zrodel, a na wyrazne zadanie takze wzgledem wyszukiwania webowego"
+      },
+      {
+        "komenda": "research.finding.cluster",
+        "zastosowanie": "Uzyj, aby pogrupowac wiele ustalen w watki tematyczne przez klastrowanie, zamiast segregowac je recznie jedno po jednym"
+      },
+      {
+        "komenda": "research.finding.merge",
+        "zastosowanie": "Uzyj, gdy dwa ustalenia mowia o tym samym — scalane ustalenia znikaja, zostaje jedno z wieloma odnosnikami do zrodel"
+      },
+      {
+        "komenda": "research.finding.provenance",
+        "zastosowanie": "Uzyj, gdy trzeba sprawdzic, na czym ustalenie faktycznie stoi, zanim uzyjesz go w raporcie albo je scalisz"
+      },
+      {
+        "komenda": "research.workspace.question.set",
+        "zastosowanie": "Uzyj, aby zapisac albo zmienic pytania badawcze przestrzeni badania"
+      },
+      {
+        "komenda": "research.workspace.coverage",
+        "zastosowanie": "Uzyj, aby sprawdzic, ktore pytania badawcze maja juz zrodla i ustalenia, a ktore stoja puste"
+      },
+      {
+        "komenda": "research.workspace.note.set",
+        "zastosowanie": "Uzyj, aby zapisac hipoteze albo pytanie otwarte, ktorego nie da sie zakotwiczyc w zadnym zrodle"
+      },
+      {
+        "komenda": "research.workspace.freshness",
+        "zastosowanie": "Uzyj, aby sprawdzic, jak dawno material badania byl aktualizowany, zanim uznasz go za aktualny"
+      },
+      {
+        "komenda": "research.gap.find",
+        "zastosowanie": "Uzyj, aby wskazac obszary tematu bez zrodel i pytania bez odpowiedzi, zanim uznasz badanie za kompletne"
+      },
+      {
+        "komenda": "research.prisma.get",
+        "zastosowanie": "Uzyj, gdy raport wymaga licznikow przesiewu wedlug protokolu PRISMA dla przegladu systematycznego"
+      },
+      {
+        "komenda": "research.evidence.graph",
+        "zastosowanie": "Uzyj, aby zobaczyc powiazania miedzy zrodlami, ustaleniami i twierdzeniami jako jeden graf, nie jako osobne listy"
+      },
+      {
+        "komenda": "research.citation.render",
+        "zastosowanie": "Uzyj, aby zlozyc pojedynczy cytat w tekscie albo pozycje bibliograficzna podczas pisania fragmentu raportu"
+      },
+      {
+        "komenda": "research.citation.styles",
+        "zastosowanie": "Uzyj, aby zobaczyc dostepne style CSL i wybrac wlasciwy, zanim zlozysz cytat albo bibliografie"
+      },
+      {
+        "komenda": "research.citation.check",
+        "zastosowanie": "Uzyj przed wydaniem raportu, aby sprawdzic, czy metadane do cytowania sa kompletne i czy cytaty zgadzaja sie z bibliografia"
+      },
+      {
+        "komenda": "research.retraction.check",
+        "zastosowanie": "Uzyj przed wydaniem raportu, aby sprawdzic, czy ktores z cytowanych prac zostalo wycofane albo skorygowane"
+      },
+      {
+        "komenda": "research.report.template.list",
+        "zastosowanie": "Uzyj, aby zobaczyc dostepne wzorce struktury raportu, wlasne Operatora wlacznie, przed zalozeniem nowego raportu"
+      },
+      {
+        "komenda": "research.report.summarize",
+        "zastosowanie": "Uzyj, gdy raport jest gotowy do wydania i potrzebuje streszczenia zarzadczego na poczatku dokumentu"
+      },
+      {
+        "komenda": "research.report.bibliography",
+        "zastosowanie": "Uzyj, aby zlozyc pelna bibliografie koncowa calego raportu w wybranym stylu CSL"
+      },
+      {
+        "komenda": "research.report.footnote.set",
+        "zastosowanie": "Uzyj, aby ustawic umiejscowienie przypisow raportu i przeliczyc ich numeracje po zmianie"
+      },
+      {
+        "komenda": "research.report.insert",
+        "zastosowanie": "Uzyj, gdy sekcja raportu potrzebuje zestawienia dowodow osadzonego w tresci, a nie samego opisu slownego"
+      },
+      {
+        "komenda": "research.report.version.list",
+        "zastosowanie": "Uzyj, aby zobaczyc kolejne kompletacje raportu, zanim porownasz dwie z nich albo cofniesz sie do wczesniejszej"
+      },
+      {
+        "komenda": "research.report.diff",
+        "zastosowanie": "Uzyj, aby zobaczyc, co dokladnie zmienilo sie miedzy dwiema wersjami raportu"
+      },
+      {
+        "komenda": "research.report.comment.add",
+        "zastosowanie": "Uzyj, aby zalozyc komentarz trybu recenzji zakotwiczony we fragmencie raportu"
+      },
+      {
+        "komenda": "research.report.comment.list",
+        "zastosowanie": "Uzyj, aby przejrzec komentarze trybu recenzji raportu, w razie potrzeby tylko te nierozwiazane"
+      },
+      {
+        "komenda": "research.report.contextual.op",
+        "zastosowanie": "Uzyj, gdy zaznaczony fragment raportu trzeba przeredagowac bez recznego przepisywania — operacje wybierasz z katalogu akcji"
+      },
+      {
+        "komenda": "research.export.preview",
+        "zastosowanie": "Uzyj, aby zobaczyc podglad dokumentu w formacie docelowym przed jego faktycznym wygenerowaniem"
+      },
+      {
+        "komenda": "research.export.list",
+        "zastosowanie": "Uzyj, aby sprawdzic, kiedy i w jakim formacie raport byl juz eksportowany"
+      },
+      {
+        "komenda": "research.export.template.set",
+        "zastosowanie": "Uzyj, aby zapisac powtarzalny szablon eksportu — format, miejsce docelowe i sklad dokumentu"
+      },
+      {
+        "komenda": "research.export.template.list",
+        "zastosowanie": "Uzyj, aby zobaczyc zapisane szablony eksportu przed wybraniem jednego do uzycia"
+      },
+      {
+        "komenda": "research.export.share",
+        "zastosowanie": "Uzyj, gdy odbiorca ma dostac dostep do raportu bez pobierania pliku — zamiast eksportu do pliku na dysk"
+      },
+      {
         "komenda": "session.rename",
         "zastosowanie": "Uzyj, gdy Operator prosi o czytelna nazwe sesji w historii"
       },

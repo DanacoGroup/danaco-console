@@ -43,7 +43,7 @@ type BrakNarzedzia struct {
 
 func (b *BrakNarzedzia) Error() string {
 	zdanie := "arsenał: nie ma na tej maszynie programu " + b.Narzedzie.Nazwa +
-		" (" + b.Narzedzie.Program + "), a rdzeń tej czynności nie wykona bez niego"
+		" (" + b.Narzedzie.Program + "), a serwer tej czynności nie wykona bez niego"
 	if b.Narzedzie.Pakiet != "" {
 		zdanie += "; naprawa: zainstalować pakiet " + b.Narzedzie.Pakiet
 	}
@@ -67,9 +67,9 @@ func Wolaj(ctx context.Context, u session.Uruchamiacz, okno session.Okno,
 	n Narzedzie, argumenty []string, katalog string, limit time.Duration) (Wynik, error) {
 
 	if u == nil {
-		return Wynik{}, errors.New("arsenał: rdzeń nie ma uruchamiacza procesów — " +
+		return Wynik{}, errors.New("arsenał: serwer nie ma uruchamiacza procesów — " +
 			"narzędzia zewnętrzne nie mają czym wystartować; " +
-			"naprawa: podpiąć warstwę kanału (injection) przy składaniu rdzenia")
+			"naprawa: podpiąć warstwę kanału (injection) przy składaniu serwera")
 	}
 	sciezka, jest := Odnajdz(n)
 	if !jest {
@@ -136,7 +136,7 @@ func zbierz(ctx context.Context, n Narzedzie, uchwyt session.UchwytProcesu,
 		_ = drzewo.Ubij()
 		bladZakonczenia = <-zakonczenie
 	case <-ctx.Done():
-		powod = "żądanie przerwane przez rdzeń"
+		powod = "żądanie przerwane przez serwer"
 		_ = drzewo.Ubij()
 		bladZakonczenia = <-zakonczenie
 	}

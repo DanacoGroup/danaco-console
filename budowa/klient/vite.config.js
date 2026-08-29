@@ -1,36 +1,163 @@
-/*
- * Nastawa budowania pakietu klienta.
- *
- * Vite wchodzi jako narzędzie budowania, nie jako zależność pakietu: klient
- * nie ma i nie zyskuje tu ani jednej zależności produkcyjnej, a wytworem jest
- * dokument wraz z jednym modułem i jednym arkuszem, bez śladu narzędzia.
- * Wybór wynika z trzech rzeczy, których wytworzenie pakietu wymaga: rozwinięcia
- * `@import` w arkuszach warstwy projektowej wraz z przeniesieniem plików
- * krojów, przełożenia TypeScriptu ze specyfikatorem `.ts` na moduł
- * przeglądarki oraz wpięcia obu w dokument.
- *
- * Nastawa nie wnosi `import` z pakietu `vite` — narzędzie stoi na maszynie
- * globalnie, więc plik opisujący budowanie nie może zależeć od tego, czy
- * pakiet daje się rozwiązać z katalogu klienta.
- */
+// Nastawa budowania pakietu klienta.
+//
+// Skrypty biblioteki są funkcjami domkniętymi, nie modułami ECMAScript, więc
+// Vite ich nie pakuje. Wtyczka `kopiaSkryptowBiblioteki` przenosi je do
+// `dist/zasoby/` z zachowaniem ścieżki względnej.
 
-/** Korzeń projektu — katalog klienta, nie katalog roboczy powłoki. */
-const korzen = new URL('.', import.meta.url).pathname;
+import { readFileSync } from 'node:fs';
+import { copyFileSync, mkdirSync } from 'node:fs';
+import { dirname, join } from 'node:path';
+import { fileURLToPath } from 'node:url';
 
-/**
- * Korzeń repozytorium. Arkusze warstwy projektowej i wygenerowany kontrakt
- * leżą poza katalogiem klienta, więc serwer poglądowy musi mieć zgodę na ich
- * odczyt; budowanie czyta je bez tej zgody.
- */
-const korzenRepozytorium = new URL('../../', import.meta.url).pathname;
+const katalogKlienta = new URL('.', import.meta.url).pathname;
+
+// Arkusze i wygenerowany kontrakt leżą poza katalogiem klienta; serwer poglądowy
+// potrzebuje zgody na ich odczyt.
+const katalogRepozytorium = new URL('../../', import.meta.url).pathname;
+
+const KATALOG_ZASOBOW = new URL('../../design/zasoby/', import.meta.url);
+
+// Pliki biblioteki kopiowane do wydania; ścieżki względne wobec KATALOG_ZASOBOW.
+const PLIKI_BIBLIOTEKI = [
+  'wspolne.js',
+  'narzedzia-okien.js',
+  'ekran-startowy.js',
+  'powloka.js',
+  'prototyp.js',
+  'menu.js',
+  'okna-modalne.js',
+  'rama.js',
+  'stanowisko.js',
+  'stany.js',
+  'pasek-stanu.js',
+  'karty-okna.js',
+  'panel-sesji.js',
+  'pasek-okna.js',
+  'okno-robocze.js',
+  'okna/przelacznik-srodowisk.js',
+  'okna/zakladki-paneli.js',
+  'okna/studio.js',
+  'okna/wejscie/tresci.js',
+  'okna/wejscie/ikony.js',
+  'okna/wejscie/skladniki/belka-okna.js',
+  'okna/wejscie/skladniki/kolumna-tozsamosci.js',
+  'okna/wejscie/skladniki/naglowek-ekranu.js',
+  'okna/wejscie/skladniki/lista-etapow.js',
+  'okna/wejscie/skladniki/baner.js',
+  'okna/wejscie/skladniki/fraza-nawigacyjna.js',
+  'okna/wejscie/skladniki/pas-dzialan.js',
+  'okna/wejscie/skladniki/zakladki-pigulki.js',
+  'okna/wejscie/skladniki/pole-tekstowe.js',
+  'okna/wejscie/skladniki/pole-hasla.js',
+  'okna/wejscie/skladniki/miernik-sily.js',
+  'okna/wejscie/skladniki/pole-sesji.js',
+  'okna/wejscie/skladniki/metody-logowania.js',
+  'okna/wejscie/skladniki/pole-kodu.js',
+  'okna/wejscie/skladniki/kroki-odzyskiwania.js',
+  'okna/wejscie/skladniki/pasek-postepu.js',
+  'okna/wejscie/ekrany/uruchomienie.js',
+  'okna/wejscie/ekrany/dostep.js',
+  'okna/wejscie/ekrany/przygotowanie.js',
+  'okna/wejscie/montaz.js',
+  'powloki.js',
+  'bryla.js',
+  'okna/instalator/tresci.js',
+  'tresci/licencja.js',
+  'okna/instalator/narzedzia.js',
+  'okna/instalator/ikony.js',
+  'okna/instalator/stany.js',
+  'okna/instalator/skladniki/naglowek-bloku.js',
+  'okna/instalator/skladniki/nawigacja-krokow.js',
+  'okna/instalator/skladniki/naglowek-ekranu.js',
+  'okna/instalator/skladniki/blok-danych.js',
+  'okna/instalator/skladniki/pole-wyboru.js',
+  'okna/instalator/skladniki/pole-sciezki.js',
+  'okna/instalator/skladniki/karta-opcji.js',
+  'okna/instalator/skladniki/baner.js',
+  'okna/instalator/skladniki/lista-etapow.js',
+  'okna/instalator/skladniki/pasek-postepu.js',
+  'okna/instalator/skladniki/pasek-szczegolow.js',
+  'okna/instalator/skladniki/pas-dzialan.js',
+  'okna/instalator/skladniki/fraza-nawigacyjna.js',
+  'okna/instalator/skladniki/tekst-ciagly.js',
+  'okna/instalator/skladniki/dokument.js',
+  'okna/instalator/skladniki/wiersz-miary.js',
+  'okna/instalator/skladniki/blok-bledu.js',
+  'okna/instalator/skladniki/odsylacz-pomocy.js',
+  'okna/instalator/skladniki/okno-dialogowe.js',
+  'okna/instalator/ekrany/1-wymagania.js',
+  'okna/instalator/ekrany/2-licencja.js',
+  'okna/instalator/ekrany/3-wersja.js',
+  'okna/instalator/ekrany/4-lokalizacja.js',
+  'okna/instalator/ekrany/5-instalacja.js',
+  'okna/instalator/ekrany/6-podsumowanie.js',
+  'okna/instalator/montaz.js',
+  'okna/instalator.js',
+  'kreator.css',
+  'okna/przeplyw-wejscia.js',
+  'okna/centrum-dowodzenia.js',
+  'okna/centrum-obszar.js',
+  'okna/centrum-wejscie.js',
+  'okna/centrum-dymki.js',
+];
+
+/** Kopiuje skrypty biblioteki do `dist/zasoby/` po zamknięciu paczki, zachowując ich ścieżkę względną. */
+function kopiaSkryptowBiblioteki() {
+  return {
+    name: 'kopia-skryptow-biblioteki',
+    apply: 'build',
+    closeBundle() {
+      for (const wzgledna of PLIKI_BIBLIOTEKI) {
+        const zrodlo = fileURLToPath(new URL(wzgledna, KATALOG_ZASOBOW));
+        const cel = join(katalogKlienta, 'dist', 'zasoby', wzgledna);
+        mkdirSync(dirname(cel), { recursive: true });
+        copyFileSync(zrodlo, cel);
+      }
+    },
+  };
+}
+
+/* Data składania pakietu. Katalog wydań stanowi, że wydania różni data, nie
+   numer — sam numer w stopce nie nazywa więc, które wydanie Operator ma przed
+   sobą. Wartość wchodzi przy budowaniu, bo w przeglądarce nie ma jej skąd wziąć. */
+const DATA_SKLADANIA = new Date().toISOString().slice(0, 10);
+
+
+// Wnętrze okna roboczego Studia bierze się z `design/05-okna/moduly/studio.html`.
+// `zasoby/powloka.js` skleja powłokę wokół szablonu `#dn-tresc-okna`.
+function trescOknaZPrototypu() {
+  return {
+    name: 'tresc-okna-z-prototypu',
+    transformIndexHtml(html) {
+      const zrodlo = new URL('../../design/05-okna/moduly/studio.html', import.meta.url);
+      const prototyp = readFileSync(zrodlo, 'utf8');
+      const poczatek = prototyp.indexOf('<main class="st-okno-robocze"');
+      const koniec = prototyp.indexOf('</main>', poczatek);
+      if (poczatek < 0 || koniec < 0) {
+        throw new Error('prototyp Studia nie niesie bloku st-okno-robocze');
+      }
+      const blok = prototyp.slice(poczatek, koniec + '</main>'.length);
+      return html.replace(
+        '<template id="dn-tresc-okna"></template>',
+        `<template id="dn-tresc-okna">${blok}</template>`,
+      );
+    },
+  };
+}
 
 export default {
-  root: korzen,
+  root: katalogKlienta,
+
+  define: {
+    __DATA_SKLADANIA__: JSON.stringify(DATA_SKLADANIA),
+  },
 
   /* Ścieżki względne, bo pakiet jest oddawany dwiema drogami: rdzeń serwuje go
      spod korzenia nasłuchu, a powłoka Tauri wczytuje z własnego protokołu.
      Ścieżka bezwzględna wiązałaby pakiet z jednym z tych dwóch miejsc. */
   base: './',
+
+  plugins: [kopiaSkryptowBiblioteki(), trescOknaZPrototypu()],
 
   build: {
     outDir: 'dist',
@@ -42,6 +169,6 @@ export default {
   },
 
   server: {
-    fs: { allow: [korzenRepozytorium] },
+    fs: { allow: [katalogRepozytorium] },
   },
 };

@@ -76,7 +76,7 @@ window.DanacoWejscie.tresci = {
       "lid": "Danaco Console przywraca sesje otwarte na tym koncie.",
       "baner": {
         "glowa": "Rozpoznano zaufane urządzenie",
-        "tresc": "Uruchomienie bez logowania."
+        "tresc": "Urządzenie jest zaufane — logowanie zostanie pominięte."
       },
       "fraza": "Rejestracja i logowanie zostają pominięte, bo urządzenie jest zaufane."
     },
@@ -212,13 +212,13 @@ window.DanacoWejscie.tresci = {
         "lid": "Podaj adres e-mail konta. Zostanie na niego wysłany sześciocyfrowy kod potwierdzający.",
         "pole": "Adres e-mail",
         "ostrzezenie": {
-          "glowa": "Zmiana hasła kończy wszystkie sesje.",
-          "tresc": "Na pozostałych urządzeniach trzeba zalogować się ponownie."
+          "glowa": "Zmiana hasła zakończy wszystkie sesje.",
+          "tresc": "Na pozostałych urządzeniach będzie konieczne ponowne zalogowanie."
         }
       },
       "haslo": {
         "tytul": "Ustaw nowe hasło",
-        "lid": "Nowe hasło zacznie obowiązywać od razu. Pozostałe urządzenia zostaną wylogowane.",
+        "lid": "Nowe hasło zacznie obowiązywać natychmiast. Pozostałe urządzenia zostaną wylogowane.",
         "nowe": "Nowe hasło",
         "powtorz": "Powtórz nowe hasło"
       },
@@ -228,10 +228,10 @@ window.DanacoWejscie.tresci = {
 
   "przygotowanie": {
     "motto": "AI Operating Environment",
-    "obszarPowlok": "Cztery powłoki platformy Danaco Console: rdzeń, środowiska pracy, moduły, interfejs",
+    "obszarPowlok": "Cztery powłoki platformy Danaco Console: serwer, środowiska pracy, moduły, interfejs",
     "nadtytul": "Uruchomienie",
     "tytul": "Przygotowanie środowiska pracy",
-    "lid": "Danaco Console odtwarza stan pracy z ostatniego zamknięcia: karty sesji, kontekst projektów i kanały modeli.",
+    "lid": "Danaco Console odtwarza stan pracy z ostatniego zamknięcia: otwarte karty sesji i kontekst projektów.",
     "obszarEtapow": "Postęp przygotowania środowiska pracy",
     "etapy": [
       "Uwierzytelnienie",

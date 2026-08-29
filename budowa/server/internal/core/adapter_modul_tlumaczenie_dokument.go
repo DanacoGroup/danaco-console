@@ -127,7 +127,7 @@ func (a *adapterTlumaczenia) rozpoznajPismoDokumentu(ctx context.Context,
 
 	if a.uruchamiacz == nil {
 		return "", bladWskazaniaTlumaczenia(
-			"rozpoznanie pisma wymaga wpiętego portu uruchamiania procesów, którego rdzeń nie ma")
+			"rozpoznanie pisma wymaga wpiętego portu uruchamiania procesów, którego serwer nie ma")
 	}
 	okno, zasady, obszar := a.zasiegProgramowTlumaczenia()
 	wynik, err := zewnetrzne.Wolaj(ctx, a.uruchamiacz, okno, zasady, obszar,

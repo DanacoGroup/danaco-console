@@ -92,6 +92,7 @@ const SKRYPTY_BIBLIOTEKI = [
   'okna/wejscie/ekrany/przygotowanie.js',
   'okna/wejscie/montaz.js',
   'powloki.js',
+  'bryla.js',
   'okna/przeplyw-wejscia.js',
   'okna/centrum-dowodzenia.js',
   'okna/centrum-obszar.js',

@@ -198,10 +198,26 @@ async function powitaj(most: Kanal | undefined): Promise<void> {
   const wynik = await zadajPowitanie(most, tozsamoscKlienta(), tokenSesji || undefined);
   odslonWariant(wynik.udany ? 'w-laczenie' : 'w-blad');
   domknijEkranStartowy();
-  /* Przejście na etap uwierzytelnienia należy do wiązania, nie do biblioteki:
-     w prototypie prowadziło je rusztowanie podglądu, którego w produkcie nie ma.
-     Bez tego okno stoi na scenie łączenia i Operator nie widzi logowania. */
-  if (wynik.udany) seam().dnPrzelaczWidok?.('uwierzytelnienie', 'etap');
+  /*
+  Przejście na etap uwierzytelnienia po dobiegnięciu animacji uruchomienia.
+
+  Animacja gra na scenie łączenia i sama zgłasza koniec zdarzeniem
+  `ekran-startowy-koniec`. Przejście przed nim zostawiało ją rysującą się na
+  ekranie logowania — Operator widział znak kreślony po formularzu zamiast
+  własnej sceny uruchomienia.
+
+  Zabezpieczenie czasowe przepuszcza dalej także wtedy, gdy zdarzenie nie
+  przyjdzie: okno bez wyjścia jest gorsze niż animacja ucięta.
+  */
+  if (!wynik.udany) return;
+  let przeszedl = false;
+  const dalej = (): void => {
+    if (przeszedl) return;
+    przeszedl = true;
+    seam().dnPrzelaczWidok?.('uwierzytelnienie', 'etap');
+  };
+  document.addEventListener('ekran-startowy-koniec', dalej, { once: true });
+  globalThis.setTimeout(dalej, 4000);
 }
 
 /** Odsłona okna uruchomienia zgodna z wynikiem powitania; przebieg etapów prowadzi biblioteka. */

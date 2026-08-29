@@ -23,8 +23,10 @@ import {
 } from '../../../../shared/contract.ts';
 import type { Kanal } from '../../protokol/kanal.ts';
 import { wywolaj } from '../../protokol/wywolanie.ts';
+import { zLiczba } from './liczebnik.ts';
 import { el, tekst } from './narzedzia.ts';
 import { opisOdmowy } from './odmowa.ts';
+import { pasekEdytora } from './skladniki/pasek-edytora.ts';
 
 export interface NastawyDokumentu {
   /** Kanał, którym panel woła komendy rdzenia. */
@@ -65,7 +67,34 @@ export function panelDokumentu(w: NastawyDokumentu): PanelDokumentu {
   let okno = '';
   let sesjaBiezaca: string | null = null;
 
-  const tresc = el('div', { klasa: 'sta-okno-tresc' });
+  /* Kanwa niesie klasę `dn-kanwa` ze źródła kształtu: to ona daje treści
+     szerokość kolumny czytelnej i typografię dokumentu, nie samo pole. */
+  const tresc = el('div', { klasa: 'sta-okno-tresc dn-kanwa' });
+
+  /* Pole treści i dokument są odczytywane przez pasek narzędziowy przy każdym
+     kliknięciu, a nie kopiowane do niego: oba powstają dopiero po odpowiedzi
+     rdzenia, więc w chwili montażu paska jeszcze ich nie ma. */
+  let poleTresci: HTMLTextAreaElement | null = null;
+  let dokumentBiezacy: StudioDocument | null = null;
+
+  const uwaga = el('span', { klasa: 'dn-meta', role: 'status' });
+
+  const pasek = pasekEdytora({
+    kanal: w.kanal,
+    idDokumentu: () => dokumentBiezacy?.id ?? null,
+    zaznaczenie() {
+      if (poleTresci === null) return null;
+      const { selectionStart, selectionEnd } = poleTresci;
+      if (selectionStart === selectionEnd) return null;
+      return { poczatek: selectionStart, koniec: selectionEnd };
+    },
+    powiadom(zdanie) {
+      uwaga.textContent = zdanie;
+    },
+  });
+
+  const pasStanu = el('div', { klasa: 'st-status' });
+
   const wezel = el(
     'section',
     { klasa: 'sta-okno', id: 'panel-editor', role: 'tabpanel', 'aria-labelledby': 'karta-editor' },
@@ -73,7 +102,9 @@ export function panelDokumentu(w: NastawyDokumentu): PanelDokumentu {
       el('header', { klasa: 'sta-okno-belka' }, [
         el('span', { klasa: 'sta-okno-tytul' }, [el('b', { tekst: tekst('dokument.tytul') })]),
       ]),
+      pasek.wezel,
       tresc,
+      pasStanu,
     ],
   );
 
@@ -184,6 +215,9 @@ export function panelDokumentu(w: NastawyDokumentu): PanelDokumentu {
       rows: 12,
     }) as HTMLTextAreaElement;
     pole.value = dokument.content ?? '';
+    // Pasek narzędziowy czyta z tego pola zaznaczenie; wskazanie idzie przy
+    // każdym przerysowaniu, bo pole powstaje na nowo wraz z widokiem.
+    poleTresci = pole;
 
     const przycisk = el('button', {
       klasa: 'dn-btn dn-btn--glowny',
@@ -193,24 +227,15 @@ export function panelDokumentu(w: NastawyDokumentu): PanelDokumentu {
     });
     przycisk.addEventListener('click', () => void zapisz(dokument, pole.value));
 
-    const wersja = dokument.versionId ?? null;
+    /* Wersja i stan zapisu stoją w pasie stanu, nie tutaj: prototyp trzyma je
+       w strefie `st-status`, a powtórzone dawałyby dwa źródła tej samej
+       wartości — Operator nie wie wtedy, które czyta. */
     return [
       el('div', { klasa: 'dn-wykaz-modulu-poz' }, [
         el('b', { tekst: dokument.title ?? tekst('dokument.nazwaNowego') }),
-        el('span', {
-          klasa: 'dn-meta',
-          tekst: wersja === null
-            ? tekst('dokument.bezWersji')
-            : `${tekst('dokument.wersja')} ${wersja}`,
-        }),
       ]),
       pole,
-      el('div', { klasa: 'dn-pas-dzialan' }, [
-        przycisk,
-        zapis === 'zapisany'
-          ? el('span', { klasa: 'dn-meta', tekst: tekst('dokument.zapisany') })
-          : null,
-      ]),
+      el('div', { klasa: 'dn-pas-dzialan' }, [przycisk]),
     ];
   }
 
@@ -225,8 +250,63 @@ export function panelDokumentu(w: NastawyDokumentu): PanelDokumentu {
     }
   }
 
+  /*
+  slowa liczy wyrazy treści — miara pasa stanu.
+
+  Liczenie idzie po ciągach niebiałych znaków, nie po spacjach: tekst z dwoma
+  odstępami pod rząd dałby wyraz pusty, a tekst pusty dałby jeden wyraz.
+  */
+  function slowa(tresc: string): number {
+    const wyrazy = tresc.trim();
+    return wyrazy === '' ? 0 : wyrazy.split(/\s+/u).length;
+  }
+
+  /** Zdanie o zapisie: pas stanu mówi, czy praca Operatora jest odłożona. */
+  function zdanieZapisu(zapis: StanZapisu): string {
+    if (zapis === 'zapisuje') return tekst('stanEdytora.zapisywanie');
+    return zapis === 'zapisany' ? tekst('stanEdytora.zapisany') : tekst('stanEdytora.niezapisany');
+  }
+
+  /*
+  odswiezStan wypełnia pas stanu wartościami dokumentu.
+
+  Pas stoi poza `tresc`, więc przeżywa przerysowanie widoku — i musi, bo niesie
+  uwagę paska narzędziowego, która powstaje niezależnie od stanu dokumentu.
+  */
+  function odswiezStan(stan: Stan): void {
+    if (stan.rodzaj !== 'dokument') {
+      pasStanu.replaceChildren();
+      return;
+    }
+    const wersja = stan.dokument.versionId ?? null;
+    pasStanu.replaceChildren(
+      el('span', {}, [
+        stan.zapis === 'zapisuje'
+          ? el('span', { klasa: 'pt-tetno', 'aria-hidden': 'true' })
+          : null,
+        zdanieZapisu(stan.zapis),
+      ]),
+      el('span', {
+        tekst: zLiczba(slowa(stan.dokument.content ?? ''), {
+          jedna: tekst('stanEdytora.slowoJedna'),
+          kilka: tekst('stanEdytora.slowoKilka'),
+          wiele: tekst('stanEdytora.slowoWiele'),
+        }),
+      }),
+      el('span', {
+        tekst: wersja === null
+          ? tekst('stanEdytora.bezWersji')
+          : `${tekst('stanEdytora.wersja')} ${wersja}`,
+      }),
+      uwaga,
+      el('span', { klasa: 'st-status-prawa', tekst: tekst('stanEdytora.postac') }),
+    );
+  }
+
   function odswiez(stan: Stan): void {
+    dokumentBiezacy = stan.rodzaj === 'dokument' ? stan.dokument : null;
     tresc.replaceChildren(...zawartosc(stan));
+    odswiezStan(stan);
   }
 
   return {

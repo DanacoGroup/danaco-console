@@ -95,6 +95,44 @@ export const tresci = {
     bezWersji: 'bez wersji',
   },
 
+  /* Pasek narzędziowy edytora — strefa `dn-edytor-pasek` prototypu. Etykiety
+     nazywają czynność, bo znak sam jej nie nazywa czytnikowi ekranu. */
+  pasekEdytora: {
+    etykieta: 'Narzędzia tekstu',
+    pogrubienie: 'Pogrubienie',
+    kursywa: 'Kursywa',
+    podkreslenie: 'Podkreślenie',
+    naglowek: 'Nagłówek',
+    stylAkapitu: 'Styl akapitu',
+    lista: 'Lista punktowana',
+    tabela: 'Tabela',
+    kod: 'Blok kodu',
+    cytat: 'Cytat',
+    szukaj: 'Znajdź i zamień',
+    /* Czynność bez pokrycia w rdzeniu nazywa niegotowość, zamiast udawać
+       działanie — zasada zero blokad z `komponenty.css`. */
+    zapowiedziane: 'Ta czynność wejdzie w kolejnym wydaniu.',
+    bezZaznaczenia: 'Zaznacz fragment tekstu, żeby zmienić jego postać.',
+  },
+
+  /* Pas stanu edytora — strefa `st-status` prototypu. Wartości pochodzą
+     z dokumentu rdzenia; żadna nie jest wpisana na sztywno. */
+  stanEdytora: {
+    /* Formy odmienne: „1 słowo”, „2 słowa”, „5 słów” — liczba wybiera formę,
+       więc jeden napis nie wystarcza. */
+    slowoJedna: 'słowo',
+    slowoKilka: 'słowa',
+    slowoWiele: 'słów',
+    zapisany: 'zapisano',
+    zapisywanie: 'zapisywanie…',
+    niezapisany: 'niezapisane zmiany',
+    wersja: 'wersja',
+    bezWersji: 'bez wersji',
+    /* Postać edycji nazwana wprost: pole niesie tekst, nie widok składu.
+       „WYSIWYG” z prototypu opisuje postać, której edytor jeszcze nie ma. */
+    postac: 'Tekst',
+  },
+
   dokumentOdmowa: {
     sesja: 'Nie udało się założyć sesji',
     kanal: 'Żaden model nie jest dostępny',

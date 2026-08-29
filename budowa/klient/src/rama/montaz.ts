@@ -27,6 +27,13 @@ export interface NastawyRamy {
   sesje: Session[];
   /** Kanał, którym okno modułu woła komendy rdzenia; brak — rama montuje się bez okna modułu. */
   kanal?: Kanal;
+  /*
+  Konto, którym Operator wszedł. Wskazanie idzie z drogi wejścia, nie z rdzenia:
+  `AuthSession` niesie token, termin, urządzenie i metodę — konta nie. Puste
+  znaczy wejście drogą, która konta nie podaje; pasek stanu nazywa je wtedy
+  nierozpoznanym, zamiast zmyślać.
+  */
+  kontoOperatora?: string;
 }
 
 /** Kod modułu Studio w wykazie rdzenia — jedyny moduł z oknem roboczym dziś zmontowanym. */
@@ -100,6 +107,7 @@ export function zamontujRame(w: NastawyRamy): void {
     srodowisko: w.srodowisko.name,
     liczbaSesji: w.sesje.length,
     motywCiemny: motywCiemny(),
+    operator: w.kontoOperatora,
   });
 
   /* Okno modułu czynne dziś wyłącznie dla Studio; zejście na inny moduł je

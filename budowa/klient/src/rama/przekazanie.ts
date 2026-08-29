@@ -40,6 +40,9 @@ export function wykonajPrzekazanie(stan: StanZeSrodowiskiem, zaleznosci: Zalezno
       moduly: stan.moduly,
       sesje: stan.sesje,
       kanal: zaleznosci.kanal,
+      /* Konto, którym Operator wszedł — pasek stanu ma nazwać, czyim kontem
+         pracuje. Rdzeń tego nie oddaje, więc idzie z drogi wejścia. */
+      kontoOperatora: stan.kontoOperatora,
     });
   } catch (blad) {
     console.error('[rama] przekazanie odrzucone: montaż rzucił wyjątkiem', blad);

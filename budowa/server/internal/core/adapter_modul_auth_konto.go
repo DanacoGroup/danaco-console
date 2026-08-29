@@ -14,6 +14,8 @@ import (
 	"danacoconsole/server/internal/dane"
 	"danacoconsole/server/internal/nadajnik"
 	"danacoconsole/shared"
+
+	"danacoconsole/server/internal/core/listy"
 )
 
 // trwanieDrogiPotwierdzenia — jak długo ważny jest materiał wysłany listem.
@@ -55,7 +57,7 @@ func (a *adapterUwierzytelnienia) kontoPotwierdzone(ctx context.Context,
 	return bladBramki(shared.ErrorCodeNotAuthenticated,
 		"Konto oczekuje na potwierdzenie adresu "+konto.Email+
 			". Wprowadź kod potwierdzający z wiadomości — do tego czasu wejście "+
-			"jest zamknięte, bo adres jest jedyną drogą odzyskania konta.")
+			"jest zamknięte, bo adresem odzyskuje się konto po utracie hasła.")
 }
 
 // daneRejestracji sprawdza login i adres podane przy rejestracji. Sprawdzenie
@@ -88,7 +90,9 @@ func (a *adapterUwierzytelnienia) wyslijDrogePotwierdzenia(ctx context.Context,
 		return bladBramki(shared.ErrorCodeInternalError,
 			err.Error()+"; "+dwieDrogiKontaNadawczego)
 	}
-	droga, err := nowyTokenBramki()
+	/* Kod, nie token sesji: okno przyjmuje go w sześciu polach, a Operator
+	   przepisuje go z wiadomości ręcznie. */
+	droga, err := nowyKodPotwierdzenia()
 	if err != nil {
 		return err
 	}
@@ -118,24 +122,44 @@ func listPotwierdzenia(cel, login, droga, email string) nadajnik.List {
 	if cel == dane.CelOdzyskanie {
 		return nadajnik.List{
 			Do:    email,
-			Temat: "Danaco Console — odzyskanie konta",
-			Tresc: "Ktoś poprosił o ustawienie nowego hasła do konta " + login + ".\n\n" +
-				"Droga potwierdzenia:\n\n    " + droga + "\n\n" +
-				"Wpisz ją w oknie odzyskiwania konta, aby ustawić nowe hasło. " +
-				"Droga jest jednorazowa i wygasa po godzinie.\n\n" +
-				"Po ustawieniu nowego hasła wszystkie urządzenia zalogują się ponownie.\n\n" +
-				"Jeżeli to nie Ty prosiłeś o zmianę — nie rób nic. " +
-				"Bez tej drogi hasło pozostaje bez zmian.\n",
+			Temat: "Danaco Console — kod odzyskania konta",
+			TrescHtml: listy.Zloz(listy.TrescListu{
+				Naglowek:     "Odzyskanie dostępu do konta",
+				Wstep:        "Otrzymaliśmy prośbę o ustawienie nowego hasła do konta " + login + ".",
+				EtykietaKodu: "Kod potwierdzający",
+				Kod:          droga,
+				Polecenie: "Wprowadź go w oknie odzyskiwania dostępu, aby ustawić nowe hasło. " +
+					"Kod jest jednorazowy i zachowuje ważność przez godzinę. " +
+					"Po ustawieniu nowego hasła wszystkie urządzenia będą wymagały ponownego zalogowania.",
+				Nota: "Jeżeli prośba nie pochodzi od Ciebie, nie podejmuj żadnych czynności. " +
+					"Bez tego kodu hasło pozostaje bez zmian.",
+			}),
+			Tresc: "Otrzymaliśmy prośbę o ustawienie nowego hasła do konta " + login + ".\n\n" +
+				"Kod potwierdzający:\n\n    " + droga + "\n\n" +
+				"Wprowadź go w oknie odzyskiwania dostępu, aby ustawić nowe hasło. " +
+				"Kod jest jednorazowy i zachowuje ważność przez godzinę.\n\n" +
+				"Po ustawieniu nowego hasła wszystkie urządzenia będą wymagały ponownego zalogowania.\n\n" +
+				"Jeżeli prośba nie pochodzi od Ciebie, nie podejmuj żadnych czynności. " +
+				"Bez tego kodu hasło pozostaje bez zmian.\n",
 		}
 	}
 	return nadajnik.List{
 		Do:    email,
-		Temat: "Danaco Console — potwierdzenie adresu",
-		Tresc: "Konto " + login + " zostało założone i czeka na potwierdzenie tego adresu.\n\n" +
-			"Droga potwierdzenia:\n\n    " + droga + "\n\n" +
-			"Wpisz ją w oknie rejestracji, aby zakończyć zakładanie konta i wejść do platformy. " +
-			"Droga jest jednorazowa i wygasa po godzinie.\n\n" +
-			"Ten adres będzie później jedyną drogą odzyskania konta.\n",
+		Temat: "Danaco Console — kod potwierdzający adres",
+		TrescHtml: listy.Zloz(listy.TrescListu{
+			Naglowek:     "Potwierdzenie adresu e-mail",
+			Wstep:        "Konto " + login + " zostało założone i oczekuje na potwierdzenie tego adresu.",
+			EtykietaKodu: "Kod potwierdzający",
+			Kod:          droga,
+			Polecenie: "Wprowadź go w oknie rejestracji, aby zakończyć zakładanie konta " +
+				"i wejść do platformy. Kod jest jednorazowy i zachowuje ważność przez godzinę.",
+			Nota: "Tym adresem odzyskasz konto, jeżeli zapomnisz hasła.",
+		}),
+		Tresc: "Konto " + login + " zostało założone i oczekuje na potwierdzenie tego adresu.\n\n" +
+			"Kod potwierdzający:\n\n    " + droga + "\n\n" +
+			"Wprowadź go w oknie rejestracji, aby zakończyć zakładanie konta i wejść do platformy. " +
+			"Kod jest jednorazowy i zachowuje ważność przez godzinę.\n\n" +
+			"Tym adresem odzyskasz konto, jeżeli zapomnisz hasła.\n",
 	}
 }
 

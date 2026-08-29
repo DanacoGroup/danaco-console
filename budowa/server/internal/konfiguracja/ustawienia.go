@@ -61,6 +61,15 @@ func Domyslna() Konfiguracja {
 		KatalogDanych:  KatalogDanychDomyslny(),
 		KatalogKlienta: KatalogKlientaDomyslny(),
 		KatalogProfili: "",
+		// Konto nadawcze platformy jedzie z rdzeniem: świeża instalacja ma
+		// wysyłać kody potwierdzenia bez żadnej nastawy wdrożeniowej.
+		// Zmienne `DANACO_NADAWCA_*` te wartości nadpisują.
+		NadawcaHost:       NadawcaHostDomyslny,
+		NadawcaPort:       NadawcaPortDomyslny,
+		NadawcaUzytkownik: NadawcaUzytkownikDomyslny,
+		NadawcaSekret:     NadawcaSekretWbudowany,
+		NadawcaAdres:      NadawcaAdresDomyslny,
+		NadawcaNazwa:      NadawcaNazwaDomyslna,
 	}
 }
 

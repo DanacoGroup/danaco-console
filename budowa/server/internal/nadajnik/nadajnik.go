@@ -5,6 +5,7 @@ package nadajnik
 
 import (
 	"crypto/tls"
+	"encoding/base64"
 	"fmt"
 	"net"
 	"net/smtp"
@@ -64,6 +65,13 @@ type List struct {
 	Do    string
 	Temat string
 	Tresc string
+	// TrescHtml jest tą samą wiadomością w postaci graficznej — z papeterią,
+	// znakiem marki i typografią produktu. Puste znaczy list wyłącznie tekstowy.
+	//
+	// Obie postacie idą razem, nigdy sama HTML: klient pocztowy, który grafiki
+	// nie pokazuje — a takich jest wiele w ustawieniach domyślnych — dostaje
+	// wtedy tekst, nie pustą kartkę z kodem, którego nie widać.
+	TrescHtml string
 }
 
 // Wyslij nadaje list i oddaje chwilę nadania.
@@ -101,11 +109,15 @@ func zloz(n Nastawy, l List) []byte {
 		"To: " + l.Do,
 		"Subject: " + l.Temat,
 		"MIME-Version: 1.0",
-		"Content-Type: text/plain; charset=UTF-8",
-		"Content-Transfer-Encoding: 8bit",
 		"Date: " + time.Now().Format(time.RFC1123Z),
 	}
-	return []byte(strings.Join(naglowki, "\r\n") + "\r\n\r\n" + l.Tresc + "\r\n")
+	if strings.TrimSpace(l.TrescHtml) == "" {
+		naglowki = append(naglowki,
+			"Content-Type: text/plain; charset=UTF-8",
+			"Content-Transfer-Encoding: 8bit")
+		return []byte(strings.Join(naglowki, "\r\n") + "\r\n\r\n" + l.Tresc + "\r\n")
+	}
+	return zlozDwiePostacie(naglowki, l)
 }
 
 // nadaj prowadzi całą rozmowę SMTP: połączenie, ewentualny STARTTLS,
@@ -196,4 +208,67 @@ func sposobUwierzytelnienia(n Nastawy, mechanizmy string) smtp.Auth {
 		return smtp.CRAMMD5Auth(n.Uzytkownik, n.Sekret)
 	}
 	return nil
+}
+
+/*
+granicaCzesci rozdziela części listu wieloczęściowego. Wartość jest stała
+i nie może wystąpić w treści — obie postacie listu systemowego składa rdzeń,
+więc żadna z nich nie niesie napisu przypadkowego.
+*/
+const granicaCzesci = "danaco-console-granica-czesci-listu"
+
+/*
+zlozDwiePostacie składa list `multipart/alternative`: najpierw postać tekstowa,
+po niej graficzna.
+
+Kolejność jest wiążąca i wynika z RFC 2046: klient pocztowy pokazuje część
+OSTATNIĄ, którą umie wyświetlić. Tekst przed HTML-em znaczy więc „pokaż
+papeterię, jeżeli umiesz; jeżeli nie — pokaż tekst". Odwrócenie tej kolejności
+zostawiłoby z papeterią wyłącznie tych, którzy jej nie potrzebują.
+
+Postać graficzna idzie kodowaniem base64, bo niesie znak marki wpisany w treść
+i długie wiersze stylu; ósemkowe kodowanie łamałoby je na siedemdziesiątym
+ósmym znaku i rozbijało dokument.
+*/
+func zlozDwiePostacie(naglowki []string, l List) []byte {
+	naglowki = append(naglowki,
+		`Content-Type: multipart/alternative; boundary="`+granicaCzesci+`"`)
+
+	var dokument strings.Builder
+	dokument.WriteString(strings.Join(naglowki, "\r\n"))
+	dokument.WriteString("\r\n\r\n")
+
+	dokument.WriteString("--" + granicaCzesci + "\r\n")
+	dokument.WriteString("Content-Type: text/plain; charset=UTF-8\r\n")
+	dokument.WriteString("Content-Transfer-Encoding: 8bit\r\n\r\n")
+	dokument.WriteString(l.Tresc)
+	dokument.WriteString("\r\n\r\n")
+
+	dokument.WriteString("--" + granicaCzesci + "\r\n")
+	dokument.WriteString("Content-Type: text/html; charset=UTF-8\r\n")
+	dokument.WriteString("Content-Transfer-Encoding: base64\r\n\r\n")
+	dokument.WriteString(lamany(base64.StdEncoding.EncodeToString([]byte(l.TrescHtml))))
+	dokument.WriteString("\r\n\r\n")
+
+	dokument.WriteString("--" + granicaCzesci + "--\r\n")
+	return []byte(dokument.String())
+}
+
+// lamany łamie ciąg base64 na wiersze po 76 znaków, jak żąda RFC 2045.
+// Serwer pocztowy odrzuca wiersze dłuższe niż 998 znaków, a jedna postać
+// graficzna listu ma ich kilkadziesiąt tysięcy.
+func lamany(zakodowany string) string {
+	const dlugoscWiersza = 76
+	var wynik strings.Builder
+	for i := 0; i < len(zakodowany); i += dlugoscWiersza {
+		koniec := i + dlugoscWiersza
+		if koniec > len(zakodowany) {
+			koniec = len(zakodowany)
+		}
+		if i > 0 {
+			wynik.WriteString("\r\n")
+		}
+		wynik.WriteString(zakodowany[i:koniec])
+	}
+	return wynik.String()
 }

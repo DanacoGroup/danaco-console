@@ -160,12 +160,6 @@ export default {
   plugins: [kopiaSkryptowBiblioteki(), trescOknaZPrototypu()],
 
   build: {
-    rollupOptions: {
-      input: {
-        aplikacja: new URL('index.html', import.meta.url).pathname,
-        instalator: new URL('instalator.html', import.meta.url).pathname,
-      },
-    },
     outDir: 'dist',
     emptyOutDir: true,
     /* Kroje idą plikami, nie treścią wplecioną w arkusz: wpisany krój rośnie

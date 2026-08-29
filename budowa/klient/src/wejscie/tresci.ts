@@ -427,8 +427,11 @@ export const tresci = {
       tresc: 'Nowy kod został wysłany na adres konta. Poprzedni przestał obowiązywać.',
     },
     schowek: {
-      tytul: 'Schowek niedostępny',
-      tresc: 'Wpisz kod potwierdzający ręcznie.',
+      /* Schowek jest dostępny — nieosiągalny bez pozwolenia jest wyłącznie
+         odczyt programem. Zdanie podaje drogę, która działa, zamiast nazywać
+         przeszkodę: kursor stoi już w pierwszym polu, więc skrót zadziała. */
+      tytul: 'Wklej kod skrótem',
+      tresc: 'Naciśnij Ctrl+V — kod wejdzie w pola. Możesz też wpisać go ręcznie.',
     },
   },
 } as const;

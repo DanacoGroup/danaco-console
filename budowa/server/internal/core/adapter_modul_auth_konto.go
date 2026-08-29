@@ -119,55 +119,51 @@ func (a *adapterUwierzytelnienia) wyslijDrogePotwierdzenia(ctx context.Context,
 // jest zwięzła i mówi wprost, co się stało i co zrobić, bo rozwlekły list
 // systemowy nakłania do zignorowania go.
 func listPotwierdzenia(cel, login, droga, email string) nadajnik.List {
-	/* Nagłówki wymagane przez opracowanie poczty transakcyjnej (rozdz. 5.3):
-	   list z kodem jest wytworem programu, nie rozmową — bez tych nagłówków
-	   autorespondery po drugiej stronie odpisują na niego w kółko. */
+	/* Nagłówki wymagane przez opracowanie poczty transakcyjnej: list z kodem
+	   jest wytworem programu, nie rozmową — bez nich autorespondery po drugiej
+	   stronie odpisują na niego w kółko. */
 	naglowkiTransakcyjne := []string{
 		"Auto-Submitted: auto-generated",
 		"X-Auto-Response-Suppress: All",
+	}
+	/* Oba znaki idą częścią listu: szablon niesie dwa znaczniki obrazu, jasny
+	   widoczny domyślnie i ciemny odsłaniany zapytaniem medialnym. */
+	obrazy := []nadajnik.Obraz{
+		{Id: listy.IdZnakuJasnego, Nazwa: "danaco.png", Dane: listy.ZnakJasny},
+		{Id: listy.IdZnakuCiemnego, Nazwa: "danaco-ciemny.png", Dane: listy.ZnakCiemny},
 	}
 	teraz := time.Now()
 	minutyWaznosci := int(trwanieDrogiPotwierdzenia.Minutes())
 
 	if cel == dane.CelOdzyskanie {
-		return nadajnik.List{
-			Do:       email,
-			Temat:    "Danaco Console — kod odzyskania konta",
-			Naglowki: naglowkiTransakcyjne,
-			Znak:     listy.ZnakMarki,
-			IdZnaku:  listy.IdZnaku,
-			TrescHtml: listy.ZlozLogowanie(listy.Logowanie{
-				Odbiorca:      email,
-				Kod:           droga,
-				WaznoscMinuty: minutyWaznosci,
-				Zadano:        teraz,
-			}),
-			Tresc: "Otrzymaliśmy prośbę o ustawienie nowego hasła do konta " + login + ".\n\n" +
-				"Kod potwierdzający:\n\n    " + droga + "\n\n" +
-				"Wprowadź go w oknie odzyskiwania dostępu, aby ustawić nowe hasło. " +
-				"Kod jest jednorazowy i zachowuje ważność przez godzinę.\n\n" +
-				"Po ustawieniu nowego hasła wszystkie urządzenia będą wymagały ponownego zalogowania.\n\n" +
-				"Jeżeli prośba nie pochodzi od Ciebie, nie podejmuj żadnych czynności. " +
-				"Bez tego kodu hasło pozostaje bez zmian.\n",
-		}
-	}
-	return nadajnik.List{
-		Do:       email,
-		Temat:    "Danaco Console — kod potwierdzający adres",
-		Naglowki: naglowkiTransakcyjne,
-		Znak:     listy.ZnakMarki,
-		IdZnaku:  listy.IdZnaku,
-		TrescHtml: listy.ZlozAktywacje(listy.Aktywacja{
+		postacie := listy.ZlozLogowanie(listy.Logowanie{
 			Odbiorca:      email,
 			Kod:           droga,
 			WaznoscMinuty: minutyWaznosci,
 			Zadano:        teraz,
-		}),
-		Tresc: "Konto " + login + " zostało założone i oczekuje na potwierdzenie tego adresu.\n\n" +
-			"Kod potwierdzający:\n\n    " + droga + "\n\n" +
-			"Wprowadź go w oknie rejestracji, aby zakończyć zakładanie konta i wejść do platformy. " +
-			"Kod jest jednorazowy i zachowuje ważność przez godzinę.\n\n" +
-			"Tym adresem odzyskasz konto, jeżeli zapomnisz hasła.\n",
+		})
+		return nadajnik.List{
+			Do:        email,
+			Temat:     "Danaco Console — kod odzyskania konta",
+			Naglowki:  naglowkiTransakcyjne,
+			Obrazy:    obrazy,
+			TrescHtml: postacie.Html,
+			Tresc:     postacie.Tekst,
+		}
+	}
+	postacie := listy.ZlozAktywacje(listy.Aktywacja{
+		Odbiorca:      email,
+		Kod:           droga,
+		WaznoscMinuty: minutyWaznosci,
+		Zadano:        teraz,
+	})
+	return nadajnik.List{
+		Do:        email,
+		Temat:     "Danaco Console — kod potwierdzający adres",
+		Naglowki:  naglowkiTransakcyjne,
+		Obrazy:    obrazy,
+		TrescHtml: postacie.Html,
+		Tresc:     postacie.Tekst,
 	}
 }
 

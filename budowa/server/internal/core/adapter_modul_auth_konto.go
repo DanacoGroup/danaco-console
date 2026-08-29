@@ -37,16 +37,13 @@ func (a *adapterUwierzytelnienia) kontoGotowe() error {
 // kontoPotwierdzone zamyka bramkę przed kontem, którego adresu nikt nie
 // potwierdził. Brak trwałości konta i brak wiersza konta nie zamykają bramki,
 // bo o potwierdzeniu nie ma wtedy co rozstrzygać.
-func (a *adapterUwierzytelnienia) kontoPotwierdzone(ctx context.Context) error {
-	if a.konto == nil {
+func (a *adapterUwierzytelnienia) kontoPotwierdzone(ctx context.Context,
+	konto dane.KontoWlasciciela) error {
+
+	// Konto puste znaczy platformę bez trwałości konta albo przed rejestracją —
+	// o potwierdzeniu nie ma wtedy co rozstrzygać.
+	if a.konto == nil || konto.Id == 0 {
 		return nil
-	}
-	konto, err := a.konto.Konto(ctx)
-	if errors.Is(err, dane.ErrBrakWiersza) {
-		return nil
-	}
-	if err != nil {
-		return err
 	}
 	if konto.Potwierdzone {
 		return nil
@@ -57,8 +54,8 @@ func (a *adapterUwierzytelnienia) kontoPotwierdzone(ctx context.Context) error {
 	}
 	return bladBramki(shared.ErrorCodeNotAuthenticated,
 		"Konto oczekuje na potwierdzenie adresu "+konto.Email+
-			" — przepisz drogę potwierdzenia z listu komendą auth.verify; "+
-			"do tego czasu bramka jest zamknięta, bo adres jest jedyną drogą odzyskania konta")
+			". Wprowadź kod potwierdzający z wiadomości — do tego czasu wejście "+
+			"jest zamknięte, bo adres jest jedyną drogą odzyskania konta.")
 }
 
 // daneRejestracji sprawdza login i adres podane przy rejestracji. Sprawdzenie
@@ -201,7 +198,7 @@ func (a *adapterUwierzytelnienia) PotwierdzAdres(ctx context.Context,
 	if err := a.zuzyjDroge(ctx, dane.CelWeryfikacja, z.Token); err != nil {
 		return shared.AuthVerifyResponse{}, err
 	}
-	if err := a.konto.PotwierdzKonto(ctx); err != nil {
+	if err := a.konto.PotwierdzKonto(ctx, konto.Id); err != nil {
 		return shared.AuthVerifyResponse{}, err
 	}
 	// Znacznik bramki bez poczty przestał być prawdą — bramkę trzyma odtąd sam wiersz konta.

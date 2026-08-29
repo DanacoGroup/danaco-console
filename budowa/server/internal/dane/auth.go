@@ -18,6 +18,9 @@ type MetodaUwierzytelnienia struct {
 	UrzadzenieKod    *string
 	NazwaUrzadzenia  *string
 	Kotwica          bool
+	// KontoId wiąże metodę z kontem. Zero znaczy wiersz zastany, sprzed
+	// migracji 406, gdy konto było jedno i wskazania nie potrzebowało.
+	KontoId          int64
 	OdwolanieSekretu string
 	Utworzono        int64
 	OstatnioUzyto    *int64
@@ -33,6 +36,9 @@ type RepozytoriumUwierzytelnienia interface {
 	MetodaPoKodzie(ctx context.Context, kod string) (MetodaUwierzytelnienia, error)
 	// Kotwica zwraca hasło bramki; brak wiersza znaczy bramkę nieustawioną, stan otwierający rejestrację.
 	Kotwica(ctx context.Context) (MetodaUwierzytelnienia, error)
+	// KotwicaKonta zwraca hasło wskazanego konta. Wiersze zastane, bez wskazania
+	// konta, należą do konta najstarszego — tak stały przed migracją 406.
+	KotwicaKonta(ctx context.Context, kontoId int64) (MetodaUwierzytelnienia, error)
 	// MetodaUrzadzenia zwraca metodę danego rodzaju założoną na urządzeniu.
 	MetodaUrzadzenia(ctx context.Context, rodzaj, urzadzenieKod string) (MetodaUwierzytelnienia, error)
 	// ZalozMetode wstawia wiersz metody i oddaje go w postaci zapisanej.
@@ -71,7 +77,8 @@ type UrzadzenieKonta struct {
 const (
 	kolumnyMetodyUwierzytelnienia = `id, identyfikator_zewnetrzny, rodzaj, etykieta,
 	                                 urzadzenie_kod, nazwa_urzadzenia, kotwica,
-	                                 sekret_odwolanie, utworzono, ostatnio_uzyto`
+	                                 COALESCE(konto_id, 0), sekret_odwolanie,
+	                                 utworzono, ostatnio_uzyto`
 
 	listaMetodUwierzytelnienia = `SELECT ` + kolumnyMetodyUwierzytelnienia +
 		` FROM metoda_uwierzytelnienia ORDER BY kotwica DESC, rodzaj, utworzono, id`
@@ -82,13 +89,22 @@ const (
 	metodaUwierzytelnieniaKotwica = `SELECT ` + kolumnyMetodyUwierzytelnienia +
 		` FROM metoda_uwierzytelnienia WHERE kotwica = 1`
 
+	// Hasło wskazanego konta. Wiersz zastany, bez wskazania konta, należy do
+	// konta najstarszego — stąd druga gałąź warunku.
+	metodaUwierzytelnieniaKotwicaKonta = `SELECT ` + kolumnyMetodyUwierzytelnienia +
+		` FROM metoda_uwierzytelnienia
+		  WHERE kotwica = 1
+		    AND (konto_id = ?
+		         OR (konto_id IS NULL
+		             AND ? = (SELECT id FROM konto_wlasciciela ORDER BY id LIMIT 1)))`
+
 	metodaUwierzytelnieniaUrzadzenia = `SELECT ` + kolumnyMetodyUwierzytelnienia +
 		` FROM metoda_uwierzytelnienia WHERE rodzaj = ? AND urzadzenie_kod = ?`
 
 	wstawMetodeUwierzytelnienia = `INSERT INTO metoda_uwierzytelnienia
 	                               (identyfikator_zewnetrzny, rodzaj, etykieta, urzadzenie_kod,
-	                                nazwa_urzadzenia, kotwica, sekret_odwolanie, utworzono)
-	                               VALUES (?, ?, ?, ?, ?, ?, ?, ?)`
+	                                nazwa_urzadzenia, kotwica, konto_id, sekret_odwolanie, utworzono)
+	                               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`
 
 	zapiszOdwolanieMetody = `UPDATE metoda_uwierzytelnienia SET sekret_odwolanie = ?
 	                         WHERE identyfikator_zewnetrzny = ?`
@@ -154,6 +170,15 @@ func (r *repozytoriumUwierzytelnienia) Kotwica(ctx context.Context) (MetodaUwier
 	return r.jedna(ctx, metodaUwierzytelnieniaKotwica, "kotwica bramki")
 }
 
+// KotwicaKonta zwraca hasło wskazanego konta. Warunek obejmuje też wiersze
+// zastane (`konto_id IS NULL`) należące do konta najstarszego — inaczej
+// instalacja sprzed migracji 406 przestałaby wpuszczać własnego Operatora.
+func (r *repozytoriumUwierzytelnienia) KotwicaKonta(ctx context.Context,
+	kontoId int64) (MetodaUwierzytelnienia, error) {
+
+	return r.jedna(ctx, metodaUwierzytelnieniaKotwicaKonta, "kotwica konta", kontoId, kontoId)
+}
+
 // MetodaUrzadzenia zwraca metodę danego rodzaju założoną na wskazanym
 // urządzeniu. Para (urządzenie, rodzaj) jest w bazie jednoznaczna.
 func (r *repozytoriumUwierzytelnienia) MetodaUrzadzenia(ctx context.Context,
@@ -175,7 +200,7 @@ func (r *repozytoriumUwierzytelnienia) ZalozMetode(ctx context.Context,
 	_, err = polecenie.ExecContext(ctx, metoda.Kod, metoda.Rodzaj,
 		tekstDoKolumny(metoda.Etykieta), tekstDoKolumny(metoda.UrzadzenieKod),
 		tekstDoKolumny(metoda.NazwaUrzadzenia), liczbaLogiczna(metoda.Kotwica),
-		metoda.OdwolanieSekretu, metoda.Utworzono)
+		metoda.KontoId, metoda.OdwolanieSekretu, metoda.Utworzono)
 	if czyKolizja(err) {
 		// Kolizja z indeksem nie jest awarią zapisu: jest odpowiedzią, że taki wiersz już istnieje w bazie.
 		return MetodaUwierzytelnienia{}, fmt.Errorf(
@@ -270,8 +295,8 @@ func odczytajMetodeUwierzytelnienia(wiersz skaner) (MetodaUwierzytelnienia, erro
 	var ostatnio sql.NullInt64
 	var kotwica int
 	err := wiersz.Scan(&metoda.ID, &metoda.Kod, &metoda.Rodzaj, &etykieta,
-		&urzadzenie, &nazwaUrzadzenia, &kotwica, &metoda.OdwolanieSekretu,
-		&metoda.Utworzono, &ostatnio)
+		&urzadzenie, &nazwaUrzadzenia, &kotwica, &metoda.KontoId,
+		&metoda.OdwolanieSekretu, &metoda.Utworzono, &ostatnio)
 	if err != nil {
 		return MetodaUwierzytelnienia{}, err
 	}

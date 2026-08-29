@@ -331,11 +331,11 @@ export const tresci = {
       glowa: 'Podaj kod potwierdzający z wiadomości.',
       tresc: 'Pole kodu potwierdzającego jest puste.',
     },
-    /* Konflikt rejestracji ma jedno znaczenie: konto Operatora już stoi.
-       Rejestracja wykonuje się raz, więc zdanie prowadzi do logowania. */
-    kontoJuzIstnieje: {
-      glowa: 'Konto Operatora jest już założone.',
-      tresc: 'Zaloguj się. Jeżeli nie pamiętasz hasła, użyj odzyskiwania dostępu.',
+    /* Rejestracja odmawia wyłącznie wtedy, gdy login albo adres należy już do
+       konta istniejącego — platforma prowadzi dowolną liczbę kont. */
+    tozsamoscZajeta: {
+      glowa: 'Konto z podanym adresem e-mail lub loginem już istnieje.',
+      tresc: 'Podaj inny adres i login albo zaloguj się na istniejące konto.',
     },
     loginZajety: {
       glowa: 'Ten login jest już zajęty.',

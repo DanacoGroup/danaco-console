@@ -150,7 +150,7 @@ export const tresci = {
          a nie powtarza czasu: ten sam licznik w dwóch miejscach ekranu czyta
          się jak dwa różne terminy. */
       tytul: 'Kolejna próba za chwilę',
-      lid: 'Po nieudanej próbie kolejna czeka chwilę dłużej. Konto nie zostało zablokowane.',
+      lid: 'Kolejna próba będzie możliwa po odczekaniu chwili.',
       baner: {
         glowa: 'Kolejna próba będzie możliwa za {czas}.',
         tresc: 'Dostęp można również odzyskać przy użyciu adresu e-mail konta.',
@@ -203,8 +203,8 @@ export const tresci = {
          znak specjalny jest zalecany i podnosi tor, nie rozstrzygając przyjęcia. */
       stopnie: [
         'Hasło nie spełnia żadnego z warunków',
-        'Spełniony jeden warunek z trzech wymaganych',
-        'Spełnione dwa warunki z trzech wymaganych',
+        'Hasło spełnia jeden warunek z trzech wymaganych',
+        'Hasło spełnia dwa warunki z trzech wymaganych',
         'Hasło spełnia wymagania',
         'Hasło spełnia wymagania wraz z warunkiem zalecanym',
       ],
@@ -283,7 +283,7 @@ export const tresci = {
       /* Sama liczba, bez „z ilu”: rdzeń oddaje wyłącznie karty odtworzone i nie
          podaje, ile ich było przed zamknięciem. Zapis „N z N” udawałby miarę
          postępu, która zawsze pokazuje komplet. */
-      karty: 'karty sesji: {odtworzone}',
+      karty: 'odtworzone karty sesji: {odtworzone}',
       oczekuje: 'oczekuje',
     },
     postep: {

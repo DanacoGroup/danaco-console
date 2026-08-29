@@ -69,7 +69,7 @@ export const tresci = {
      o harmonogramie zespołu, a nie o programie, który Operator ma przed sobą. */
   panelNiegotowy: {
     tytul: 'Niedostępne w tej wersji',
-    opis: 'Ta karta nie ma w tej wersji programu żadnych czynności.',
+    opis: 'W tej wersji programu ta karta nie ma czynności.',
   },
 
   dokument: {

@@ -42,7 +42,7 @@ export const planTresci = {
      że rozkład nie ma ani jednego zadania — nie że żadne nie pasuje do wyboru. */
   pusty: {
     tytul: 'Brak zadań',
-    opis: 'Ten rozkład nie ma jeszcze żadnego zadania.',
+    opis: 'Rozkład nie zawiera zadań.',
   },
 
   odmowa: {

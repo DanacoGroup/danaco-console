@@ -3,11 +3,37 @@
  * wykaz kart `role="tablist"` i sterowanie pasma poza wykazem — rola
  * `tablist` nie przyjmuje innych dzieci. Przełączanie kart wiąże `montaz.ts`,
  * bo dotyczy też widoczności paneli w zaczepie, poza tym składnikiem.
+ *
+ * Zamknięcie karty pomocniczej i jej przywrócenie stoją tutaj, bo obie
+ * czynności dotyczą wyłącznie widoku: karta znika z wykazu i wraca, a rdzeń
+ * nie prowadzi wykazu kart okna roboczego. Karta robocza zamknięcia nie ma —
+ * jest jedyna w oknie. Po zamknięciu karty bieżącej pasmo klika w kartę
+ * sąsiednią, bo to montaż wiąże kliknięcie z odsłonięciem panelu i z jego
+ * domontowaniem przy pierwszym wejściu.
  */
 
 import { ikony, type NazwaZnaku } from '../ikony.ts';
 import { el, tekst, zeZnacznika } from '../narzedzia.ts';
 import { KARTA_EDITOR, karty, type DefinicjaKarty } from './definicje.ts';
+
+/* Napisy pasma zebrane w jednym miejscu pliku: katalog `moduly/studio/tresci.ts`
+   leży poza terenem tej zmiany, a tekst wpleciony w kod byłby nie do wydania
+   tłumaczowi. {nazwa} podstawia nazwę karty. */
+const TRESC = {
+  zamknij: 'Zamknij kartę {nazwa}',
+  przywrocPozycja: '+ {nazwa}',
+  przywrocOpis: 'Przywróć kartę {nazwa}',
+} as const;
+
+/* Znak zamknięcia stoi tutaj, a nie w `ikony.ts`: ten plik leży poza terenem
+   zmiany. Rysunek przeniesiony z prototypu bez zmian. */
+const ZNAK_ZAMKNIECIA =
+  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" ' +
+  'stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg>';
+
+function podstaw(wzor: string, nazwa: string): string {
+  return wzor.replace('{nazwa}', nazwa);
+}
 
 function znak(rysunek: NazwaZnaku, klasa?: string): SVGElement {
   const wezel = zeZnacznika(ikony[rysunek]);
@@ -24,24 +50,90 @@ function przyciskIkony(rysunek: NazwaZnaku, etykieta: string, atrybuty?: Record<
   );
 }
 
-function karta(k: DefinicjaKarty): HTMLElement {
-  const robocza = k.kod === KARTA_EDITOR;
-  return el(
-    'div',
-    {
-      klasa: robocza ? 'dn-karta-widoku dn-karta dn-karta--robocza' : 'dn-karta-widoku dn-karta',
-      role: 'tab',
-      id: `karta-${k.kod}`,
-      'aria-controls': `panel-${k.kod}`,
-      'aria-selected': robocza ? 'true' : 'false',
-      tabindex: robocza ? '0' : '-1',
-      'data-karta': k.kod,
-    },
-    [znak(k.ikona, 'dn-karta-widoku-ikona'), el('span', { klasa: 'dn-karta-widoku-nazwa', tekst: k.nazwa })],
-  );
-}
-
 export function pasmoKart(): HTMLElement {
+  const przywroc = el('span', { klasa: 'st-pasmo-przywroc', 'data-przywroc-pas': true });
+
+  function widoczneKarty(): HTMLElement[] {
+    return Array.from(lista.querySelectorAll<HTMLElement>('.dn-karta[data-karta]')).filter((k) => !k.hidden);
+  }
+
+  /* Karta odłożona nie może zostać wybrana: wykaz musi mieć dokładnie jedną
+     kartę bieżącą także wtedy, gdy zamknięto tę, która nią była. */
+  function zamknij(wezel: HTMLElement, nazwa: string): void {
+    if (wezel.hidden) return;
+    const wykaz = widoczneKarty();
+    const miejsce = wykaz.indexOf(wezel);
+    const nastepna = wykaz[miejsce + 1] ?? wykaz[miejsce - 1];
+    if (nastepna === undefined) return;
+
+    const byla = wezel.getAttribute('aria-selected') === 'true';
+    wezel.setAttribute('aria-selected', 'false');
+    wezel.tabIndex = -1;
+    wezel.hidden = true;
+    przywroc.appendChild(przyciskPrzywrocenia(wezel, nazwa));
+    if (byla) nastepna.click();
+  }
+
+  function przyciskPrzywrocenia(wezel: HTMLElement, nazwa: string): HTMLElement {
+    const przycisk = el('button', {
+      klasa: 'dn-btn dn-btn--zarys dn-btn--sm',
+      type: 'button',
+      tekst: podstaw(TRESC.przywrocPozycja, nazwa),
+      'aria-label': podstaw(TRESC.przywrocOpis, nazwa),
+    });
+    przycisk.addEventListener('click', () => {
+      wezel.hidden = false;
+      przycisk.remove();
+      wezel.click();
+    });
+    return przycisk;
+  }
+
+  function karta(k: DefinicjaKarty): HTMLElement {
+    const robocza = k.kod === KARTA_EDITOR;
+    const wezel = el(
+      'div',
+      {
+        klasa: robocza ? 'dn-karta-widoku dn-karta dn-karta--robocza' : 'dn-karta-widoku dn-karta',
+        role: 'tab',
+        id: `karta-${k.kod}`,
+        'aria-controls': `panel-${k.kod}`,
+        'aria-selected': robocza ? 'true' : 'false',
+        tabindex: robocza ? '0' : '-1',
+        'data-karta': k.kod,
+      },
+      [znak(k.ikona, 'dn-karta-widoku-ikona'), el('span', { klasa: 'dn-karta-widoku-nazwa', tekst: k.nazwa })],
+    );
+    if (robocza) return wezel;
+
+    const zamkniecie = el(
+      'span',
+      {
+        klasa: 'dn-karta-widoku-zamknij dn-etykietka',
+        'data-etykietka': podstaw(TRESC.zamknij, k.nazwa),
+        'data-karta-zamknij': true,
+        'aria-hidden': 'true',
+      },
+      [zeZnacznika(ZNAK_ZAMKNIECIA)],
+    );
+    /* Zatrzymanie wędrówki zdarzenia: bez niego ten sam klik trafiłby jeszcze
+       do montażu okna, który odsłoniłby panel karty właśnie zamykanej. */
+    zamkniecie.addEventListener('click', (zdarzenie) => {
+      zdarzenie.stopPropagation();
+      zamknij(wezel, k.nazwa);
+    });
+    wezel.appendChild(zamkniecie);
+
+    /* Znak zamknięcia jest wyłącznie wzrokowy (`aria-hidden`), więc bez klawisza
+       Delete czynność nie byłaby osiągalna z klawiatury ani dla czytnika. */
+    wezel.addEventListener('keydown', (zdarzenie) => {
+      if (zdarzenie.key !== 'Delete') return;
+      zdarzenie.preventDefault();
+      zamknij(wezel, k.nazwa);
+    });
+    return wezel;
+  }
+
   const lista = el(
     'div',
     { klasa: 'st-karty', role: 'tablist', 'aria-label': tekst('pasmo.etykietaKart') },
@@ -49,6 +141,7 @@ export function pasmoKart(): HTMLElement {
   );
 
   const sterowanie = el('span', { klasa: 'st-pasmo-sterowanie' }, [
+    przywroc,
     przyciskIkony('plus', tekst('pasmo.nowe')),
     przyciskIkony('maksymalizuj', tekst('pasmo.maksymalizuj'), { 'aria-pressed': 'false' }),
   ]);

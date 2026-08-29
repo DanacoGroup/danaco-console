@@ -16,7 +16,8 @@
  * wejścia i modułu są rozdzielone z założenia; brzmienie zdań jest wspólne.
  */
 
-import { ErrorCode, type ErrorInfo } from '../../../../shared/contract.ts';
+import { ErrorCode, MessageStatus, type ErrorInfo, type Message } from '../../../../shared/contract.ts';
+import { tekst } from './narzedzia.ts';
 
 /** Zdanie na każdy kod z katalogu kontraktu. Brak pozycji zostawiłby Operatora bez wyjaśnienia. */
 const ZDANIE: Readonly<Record<ErrorCode, string>> = {
@@ -53,4 +54,52 @@ export function opisOdmowy(blad: ErrorInfo | undefined, czynnosc: string): strin
 export function zaloguj(blad: ErrorInfo | undefined, czynnosc: string): void {
   if (blad === undefined) return;
   console.warn(`[studio] odmowa serwera (${czynnosc})`, blad.code, blad.message);
+}
+
+/* Wpis zakończony błędem niesie komunikat programu zewnętrznego, po angielsku
+   i jego słownictwem. Wypisany wprost stawia Operatora przed zdaniem, którego
+   nie ma jak wykonać, więc stan kanału rozpoznaje się po treści. */
+
+/**
+ * Znaki rozpoznawcze stanu kanału w treści od programu zewnętrznego, każdy
+ * z kluczem zdania w katalogu treści. Tylko brzmienia zmierzone na kanale;
+ * brzmienie nieznane idzie gałęzią zapasową, zamiast dostać zdanie o naprawie,
+ * która nic nie da.
+ */
+const ROZPOZNANIE: ReadonlyArray<{ znak: RegExp; klucz: string }> = [
+  { znak: /not logged in|\/login\b/i, klucz: 'czat.bladKanalu.niepolaczony' },
+];
+
+/**
+ * Zdanie dla Operatora na podstawie treści wpisu zakończonego błędem.
+ * Surowa treść idzie przy okazji do konsoli przeglądarki — tam służy
+ * rozpoznaniu usterki, na ekran nie wchodzi.
+ */
+export function opisBleduKanalu(tresc: string): string {
+  zalogujTresc(tresc, 'czat.wpisBledny');
+  const zmierzona = tresc.trim();
+  if (zmierzona === '') return tekst('czat.bladKanalu.bezOpisu');
+  for (const { znak, klucz } of ROZPOZNANIE) {
+    if (znak.test(zmierzona)) return tekst(klucz);
+  }
+  return tekst('czat.bladKanalu.nierozpoznany');
+}
+
+/**
+ * Treść wpisu do pokazania w oknie rozmowy. Punkt wpięcia dla składnika
+ * historii: wpis poprawny oddaje swoją treść bez zmiany, wpis o stanie błędu
+ * — zdanie po polsku.
+ */
+export function trescWpisu(wpis: Message): string {
+  if (wpis.status !== MessageStatus.Error) return wpis.content;
+  return opisBleduKanalu(wpis.content);
+}
+
+/**
+ * Odkłada surową treść błędu do dziennika przeglądarki. Osobno od `zaloguj`,
+ * bo tamten opisuje odmowę komendy z kodem kontraktu, a tu jest sam tekst
+ * od programu zewnętrznego, bez kodu.
+ */
+export function zalogujTresc(tresc: string, czynnosc: string): void {
+  console.warn(`[studio] błąd kanału modelu (${czynnosc})`, tresc);
 }

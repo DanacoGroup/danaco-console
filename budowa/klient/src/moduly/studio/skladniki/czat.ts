@@ -7,9 +7,9 @@
  * wysyła polecenie Operatora, a zdarzenie `message.changed` dokłada odpowiedzi
  * w miarę, jak powstają. Żaden wpis nie powstaje po stronie okna.
  *
- * Nagłówek parametrów i pas kontekstu stoją nazwanym stanem pustym: środowisko,
- * model i wysiłek rozstrzyga się dziś poza oknem komunikacji, a przypięte
- * źródła kontekstu nie mają w kontrakcie komendy, która by je oddawała.
+ * Nagłówek parametrów, pas kontekstu, monitor i pas sterowania pod polem
+ * polecenia prowadzi `sterowanie-czatu.ts`: to jedna strefa parametrów okna,
+ * karmiona `window.state.get`, `channel.list` i `config.session.get`.
  */
 
 import {
@@ -26,6 +26,7 @@ import { wywolaj } from '../../../protokol/wywolanie.ts';
 import { ikony, type NazwaZnaku } from '../ikony.ts';
 import { el, tekst, zeZnacznika, type Dziecko } from '../narzedzia.ts';
 import { opisOdmowy, zaloguj } from '../odmowa.ts';
+import { sterowanieCzatu } from './sterowanie-czatu.ts';
 
 export interface ZaleznosciCzatu {
   /** Kanał, którym okno woła komendy rdzenia. */
@@ -147,6 +148,9 @@ export function oknoCzatu(zaleznosci: ZaleznosciCzatu): ZamontowaneOknoCzatu {
       return;
     }
     historia.replaceChildren(...wpisy.map(wpis));
+    /* Monitor nad polem polecenia niesie znak trwającej odpowiedzi; wie o niej
+       tylko strumień wpisów, więc rozmowa mu o tym mówi. */
+    sterowanie.strumien(wpisy.some((m) => m.status === MessageStatus.Streaming));
     /* Nowy wpis wchodzi na dole, więc historia zjeżdża za nim — inaczej
        odpowiedź powstawałaby poza polem widzenia Operatora. */
     historia.scrollTop = historia.scrollHeight;
@@ -166,6 +170,7 @@ export function oknoCzatu(zaleznosci: ZaleznosciCzatu): ZamontowaneOknoCzatu {
     }
     if (wczytaneDlaOkna === okno) return;
     wczytaneDlaOkna = okno;
+    sterowanie.wczytaj();
     stan = 'ladowanie';
     odswiez();
     const wynik = await wywolaj(zaleznosci.kanal, Command.MessageList, { windowId: okno });
@@ -204,6 +209,12 @@ export function oknoCzatu(zaleznosci: ZaleznosciCzatu): ZamontowaneOknoCzatu {
        wcześniej zabrałoby Operatorowi tekst, którego rdzeń nie przyjął. */
     pole.value = '';
   }
+
+  const sterowanie = sterowanieCzatu({
+    kanal: zaleznosci.kanal,
+    idOkna: zaleznosci.idOkna,
+    doKolejki: () => void wyslij(),
+  });
 
   const formularz = el('form', { klasa: 'sta-prompt' }, [
     el('span', { klasa: 'sta-prompt-grot', 'aria-hidden': 'true', tekst: '»»' }),
@@ -248,14 +259,11 @@ export function oknoCzatu(zaleznosci: ZaleznosciCzatu): ZamontowaneOknoCzatu {
       el('header', { klasa: 'sta-okno-belka' }, [
         el('span', { klasa: 'sta-okno-tytul' }, [znak('dymek'), el('b', { tekst: tekst('czat.tytul') })]),
       ]),
-      el('div', { klasa: 'sta-kom-naglowek' }, [
-        el('span', { klasa: 'dn-meta', tekst: tekst('czat.brakParametrow') }),
-      ]),
-      el('div', { klasa: 'sta-kom-kontekst', 'aria-label': tekst('czat.etykietaKontekst') }, [
-        el('span', { klasa: 'dn-meta', tekst: tekst('czat.brakKontekstu') }),
-      ]),
+      sterowanie.parametry,
+      sterowanie.kontekst,
       historia,
-      el('div', { klasa: 'sta-kom-dol' }, [formularz]),
+      sterowanie.monitor,
+      el('div', { klasa: 'sta-kom-dol' }, [sterowanie.akcje, formularz, sterowanie.pas]),
     ],
   );
 
@@ -265,6 +273,7 @@ export function oknoCzatu(zaleznosci: ZaleznosciCzatu): ZamontowaneOknoCzatu {
       zdjete = true;
       odsubskrybuj();
       odsubskrybujDokument();
+      sterowanie.zdejmij();
     },
   };
 }

@@ -67,6 +67,16 @@ export const tresci = {
     odmowaWykazu: 'Nie udało się wczytać rozmowy',
     stanBlad: 'zakończona błędem',
     stanZatrzymana: 'zatrzymana',
+    /* Wpis zakończony błędem niesie komunikat programu zewnętrznego po
+       angielsku. Operator czyta zdanie po polsku wraz z drogą naprawy;
+       surowy komunikat idzie do konsoli przeglądarki. */
+    bladKanalu: {
+      niepolaczony:
+        'Kanał modelu nie jest połączony. Otwórz Ustawienia, sekcja „Konta modeli”, połącz konto tego modelu i powtórz polecenie.',
+      bezOpisu: 'Model przerwał odpowiedź i nie podał powodu. Powtórz polecenie.',
+      nierozpoznany:
+        'Model nie dokończył odpowiedzi. Powtórz polecenie. Jeżeli powtarza się, sprawdź połączenie modelu w Ustawieniach, sekcja „Konta modeli”.',
+    },
     /* Nazwa nadawcy wpisu, kluczowana rolą z kontraktu. */
     role: {
       user: 'Operator',

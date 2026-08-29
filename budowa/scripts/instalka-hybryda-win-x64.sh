@@ -8,7 +8,7 @@ KORZEN="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 POWLOKA="$KORZEN/budowa/desktop/src-tauri"
 KLIENT="$KORZEN/budowa/klient"
 CEL="x86_64-pc-windows-gnu"
-WERSJA="1.0.0"
+WERSJA="2.0.0"
 WYDANIE="$KORZEN/budowa/wydania/$WERSJA-$(date +%Y-%m-%d)"
 NAZWA_WYDANIA="Danaco Console_${WERSJA}_hybryda_x64-setup.exe"
 

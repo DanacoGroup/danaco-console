@@ -27,12 +27,12 @@ const ZDANIE: Readonly<Record<ErrorCode, string>> = {
   [ErrorCode.Conflict]: 'Nie można wykonać tej czynności w obecnym stanie. Odśwież widok i sprawdź, czy jest nadal potrzebna.',
   [ErrorCode.ChannelUnavailable]: 'Model jest chwilowo niedostępny. Spróbuj ponownie za chwilę.',
   [ErrorCode.RateLimited]: 'Za dużo żądań w krótkim czasie. Odczekaj chwilę i spróbuj ponownie.',
-  [ErrorCode.InternalError]: 'Wystąpił błąd po stronie serwera. Spróbuj ponownie; jeżeli problem się powtarza, skontaktuj się z administratorem.',
+  [ErrorCode.InternalError]: 'Wystąpił błąd po stronie serwera. Spróbuj ponownie. Jeżeli problem się powtarza, skontaktuj się z administratorem.',
 };
 
 /** Zdanie ostatniej szansy: odmowa bez kodu albo z kodem spoza katalogu kontraktu. */
 const ZDANIE_ZAPASOWE =
-  'Nie udało się wykonać czynności. Spróbuj ponownie; jeżeli problem się powtarza, skontaktuj się z administratorem.';
+  'Nie udało się wykonać czynności. Spróbuj ponownie. Jeżeli problem się powtarza, skontaktuj się z administratorem.';
 
 /**
  * Zdanie dla Operatora na podstawie odmowy. `czynnosc` nazywa miejsce wywołania

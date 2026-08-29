@@ -48,8 +48,9 @@ export const planTresci = {
   odmowa: {
     okno: 'Nie udało się otworzyć okna modułu',
     sesja: 'Nie udało się założyć sesji',
-    rozklad: 'Nie udało się rozłożyć zlecenia',
-    brakRozkladu: 'Nie udało się rozłożyć zlecenia na zadania',
+    /* Jeden nagłówek na obie drogi: odmowa wywołania i odpowiedź bez rozkładu
+       znaczą dla Operatora to samo — zlecenie nie zostało rozłożone. */
+    rozklad: 'Nie udało się rozłożyć zlecenia na zadania',
     uruchomienie: 'Nie udało się uruchomić pętli',
     zatrzymanie: 'Nie udało się zatrzymać pętli',
   },

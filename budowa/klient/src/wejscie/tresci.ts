@@ -83,11 +83,13 @@ export const tresci = {
     token: {
       tytul: 'Przywracanie sesji',
       lid: 'Danaco Console przywraca sesje otwarte na tym koncie.',
+      /* Jedno zdanie o pominiętym logowaniu, nie dwa: baner nazywa skutek,
+         a fraza pod nim mówi, co Operator ma teraz zrobić. */
       baner: {
         glowa: 'Rozpoznano zaufane urządzenie',
-        tresc: 'Urządzenie jest zaufane — logowanie zostanie pominięte.',
+        tresc: 'Logowanie zostanie pominięte.',
       },
-      fraza: 'Rejestracja i logowanie zostają pominięte, bo urządzenie jest zaufane.',
+      fraza: 'Poczekaj — okno pracy otworzy się samo.',
     },
     blad: {
       tytul: 'Błąd połączenia',
@@ -142,8 +144,11 @@ export const tresci = {
        logowania. Zapisu o pięciu próbach i o godzinie tu nie ma, bo takiej
        reguły nie ma w rdzeniu. */
     logowanieWstrzymane: {
-      tytul: 'Kolejna próba za {czas}',
-      lid: 'Kolejna próba będzie możliwa po odczekaniu chwili.',
+      /* Odliczanie stoi w jednym miejscu — w banerze. Tytuł nazywa sytuację,
+         a nie powtarza czasu: ten sam licznik w dwóch miejscach ekranu czyta
+         się jak dwa różne terminy. */
+      tytul: 'Kolejna próba za chwilę',
+      lid: 'Po nieudanej próbie kolejna czeka chwilę dłużej. Konto nie zostało zablokowane.',
       baner: {
         glowa: 'Kolejna próba będzie możliwa za {czas}.',
         tresc: 'Dostęp można również odzyskać przy użyciu adresu e-mail konta.',
@@ -152,7 +157,7 @@ export const tresci = {
     },
 
     odzyskiwanieWstrzymane: {
-      tytul: 'Kolejne wysłanie za {czas}',
+      tytul: 'Kolejne wysłanie za chwilę',
       lid: 'Poprzednia wiadomość została wysłana przed chwilą.',
       baner: {
         glowa: 'Kolejne wysłanie będzie możliwe za {czas}.',

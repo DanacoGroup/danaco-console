@@ -9,7 +9,7 @@ POWLOKA="$KORZEN/budowa/desktop/src-tauri"
 KLIENT="$KORZEN/budowa/klient"
 CEL="aarch64-pc-windows-msvc"
 LLVM_MINGW="${LLVM_MINGW:-/opt/llvm-mingw}"
-WERSJA="1.0.0"
+WERSJA="2.0.0"
 WYDANIE="$KORZEN/budowa/wydania/$WERSJA-$(date +%Y-%m-%d)"
 NAZWA_WYDANIA="Danaco Console_${WERSJA}_hybryda_arm64-setup.exe"
 

@@ -82,7 +82,7 @@ export const montujPanelPlanu: MontazPanelu = (wezel, zaleznosci: ZaleznosciPane
     if (wynik.wynik === undefined) {
       return odswiez({
         rodzaj: 'odmowaRdzenia',
-        naglowek: planTresci.odmowa.brakRozkladu,
+        naglowek: planTresci.odmowa.rozklad,
         opis: opisOdmowy(undefined, 'plan'),
       });
     }

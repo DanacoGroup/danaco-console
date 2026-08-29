@@ -60,9 +60,9 @@ export async function zwiazPowloke(
     bledy: [],
   };
 
-  const montaz = document.getElementById('dn-powloka-montaz');
+  const powloka = document.getElementById('dn-powloka-montaz');
   const kanal = kanalWskazany ?? kanalGlobalny();
-  if (montaz === null || kanal === undefined) return rozliczenie;
+  if (powloka === null || kanal === undefined) return rozliczenie;
 
   const [srodowiska, moduly, sesje] = await Promise.all([
     wywolaj(kanal, Command.EnvironmentList, { includeModules: true }),
@@ -79,9 +79,9 @@ export async function zwiazPowloke(
   const katalogModulow = new Map(wykazModulow.map((modul) => [modul.code, modul]));
 
   rozliczenie.srodowiskaRdzenia = wykazSrodowisk.length;
-  wypelnijSzyne(montaz, wykazSrodowisk, katalogModulow, rozliczenie);
+  wypelnijSzyne(powloka, wykazSrodowisk, katalogModulow, rozliczenie);
 
-  const stan = montaz.querySelector('.dn-stan');
+  const stan = powloka.querySelector('.dn-stan');
   if (stan !== null) {
     usunMiaryBezZrodla(stan);
     wpiszKonto(stan, dane.login);
@@ -90,7 +90,7 @@ export async function zwiazPowloke(
   }
 
   if (dane.nazwaOkna !== undefined && dane.nazwaOkna.length > 0) {
-    const belka = montaz.querySelector('.dn-belka-tytul');
+    const belka = powloka.querySelector('.dn-belka-tytul');
     if (belka !== null) belka.textContent = dane.nazwaOkna;
   }
 
@@ -126,12 +126,12 @@ function ukryj(element: Element, rozliczenie: RozliczeniePowloki): void {
  * rozwija grupy `zasoby/rama.js`.
  */
 function wypelnijSzyne(
-  montaz: HTMLElement,
+  powloka: HTMLElement,
   wykazSrodowisk: Environment[],
   katalogModulow: Map<string, Module>,
   rozliczenie: RozliczeniePowloki,
 ): void {
-  const pozycje = [...montaz.querySelectorAll('.dn-szyna-poz--srodowisko')];
+  const pozycje = [...powloka.querySelectorAll('.dn-szyna-poz--srodowisko')];
   rozliczenie.srodowiskaZnacznika = pozycje.length;
 
   pozycje.forEach((pozycja, numer) => {

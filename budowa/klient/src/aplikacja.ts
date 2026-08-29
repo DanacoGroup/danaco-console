@@ -1,13 +1,4 @@
-/**
- * Jedyny punkt wejścia klienta: składa gniazdo, kanał, sesję i tożsamość, po
- * czym nawiązuje rozmowę z rdzeniem.
- *
- * Widoku ten plik nie buduje i budować nie ma. Znacznik okien pochodzi
- * z biblioteki prototypu — powłokę stawia `zasoby/powloka.js`, wnętrze okna
- * wstrzykuje `vite.config.js` z `design/05-okna/`, a zachowania niosą skrypty
- * biblioteki wczytane przed tym modułem. Warstwa własna klienta ogranicza się
- * do tego, czego prototyp z natury nie niesie: protokołu i połączenia.
- */
+// Punkt wejścia klienta. Znacznik okien pochodzi z biblioteki `design/zasoby/`.
 
 import { adresGniazdaRdzenia, adresRdzeniaLokalnego } from './polaczenie/adres-rdzenia.ts';
 import { utworzTransport } from './polaczenie/gniazdo.ts';
@@ -37,17 +28,7 @@ declare global {
 }
 globalThis.DanacoKanal = kanal;
 
-/*
-Zgłoszenie gotowości ekranowi startowemu.
-
-Ekran biblioteki (`zasoby/ekran-startowy.js`) niesie atrybut `data-czekaj`
-i trzyma zasłonę, dopóki nie usłyszy `gotowe()`. Zgłasza to warstwa połączenia,
-bo tylko ona wie, kiedy rdzeń odpowiedział — bez tego zasłona nie schodzi nigdy
-i Operator widzi puste tło.
-
-Zabezpieczenie czasowe zdejmuje ją także wtedy, gdy rdzeń nie odpowiada:
-zasłona bez końca ukrywałaby przed Operatorem samą informację o usterce.
-*/
+// Ekran startowy niesie `data-czekaj` i stoi do wywołania `gotowe()`.
 function zglosGotowosc(): void {
   const pole = document.querySelector('[data-ekran-startowy]') as
     (HTMLElement & { ekranStartowy?: { gotowe?: () => void } }) | null;

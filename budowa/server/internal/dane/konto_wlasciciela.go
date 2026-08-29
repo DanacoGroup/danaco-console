@@ -36,6 +36,10 @@ type PotwierdzenieTozsamosci struct {
 	Wygasa    int64
 	Uzyte     bool
 	Utworzono int64
+	// KontoId wskazuje konto, do którego droga prowadzi. Bez tego wskazania
+	// potwierdzenie adresu przy dwóch kontach naraz otwierałoby konto najstarsze,
+	// nie to, na które poszedł list.
+	KontoId int64
 }
 
 // RepozytoriumKontaWlasciciela jest kontraktem trwałości rejestracji.
@@ -89,10 +93,11 @@ const (
 	usunKontoWlasciciela = `DELETE FROM konto_wlasciciela WHERE id = ?`
 
 	wstawPotwierdzenieTozsamosci = `INSERT INTO potwierdzenie_tozsamosci
-	                                (skrot, cel, wygasa, uzyte, utworzono)
-	                                VALUES (?, ?, ?, 0, ?)`
+	                                (skrot, cel, wygasa, uzyte, utworzono, konto_id)
+	                                VALUES (?, ?, ?, 0, ?, NULLIF(?, 0))`
 
-	potwierdzenieTozsamosciPoSkrocie = `SELECT skrot, cel, wygasa, uzyte, utworzono
+	potwierdzenieTozsamosciPoSkrocie = `SELECT skrot, cel, wygasa, uzyte, utworzono,
+	                                           COALESCE(konto_id, 0)
 	                                    FROM potwierdzenie_tozsamosci WHERE skrot = ?`
 
 	// Zamknięcie drogi jest warunkowe: `uzyte = 0` w klauzuli WHERE sprawia, że
@@ -208,7 +213,7 @@ func (r *repozytoriumKontaWlasciciela) ZalozPotwierdzenie(ctx context.Context,
 	if err != nil {
 		return err
 	}
-	if _, err := polecenie.ExecContext(ctx, p.Skrot, p.Cel, p.Wygasa, p.Utworzono); err != nil {
+	if _, err := polecenie.ExecContext(ctx, p.Skrot, p.Cel, p.Wygasa, p.Utworzono, p.KontoId); err != nil {
 		return fmt.Errorf("dane: nie można założyć drogi potwierdzenia: %w", err)
 	}
 	return nil
@@ -225,7 +230,7 @@ func (r *repozytoriumKontaWlasciciela) PotwierdzeniePoSkrocie(ctx context.Contex
 	var p PotwierdzenieTozsamosci
 	var uzyte int64
 	err = polecenie.QueryRowContext(ctx, skrot).Scan(
-		&p.Skrot, &p.Cel, &p.Wygasa, &uzyte, &p.Utworzono)
+		&p.Skrot, &p.Cel, &p.Wygasa, &uzyte, &p.Utworzono, &p.KontoId)
 	if errors.Is(err, sql.ErrNoRows) {
 		return PotwierdzenieTozsamosci{}, fmt.Errorf(
 			"dane: drogi potwierdzenia nie ma: %w", ErrBrakWiersza)

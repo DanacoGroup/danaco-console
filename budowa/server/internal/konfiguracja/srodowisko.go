@@ -35,6 +35,10 @@ const (
 	zmiennaNadawcaAdres      = "DANACO_NADAWCA_ADRES"
 	zmiennaNadawcaNazwa      = "DANACO_NADAWCA_NAZWA"
 	zmiennaNadawcaStartTLS   = "DANACO_NADAWCA_STARTTLS"
+
+	// Publiczny adres Konsoli, pod ktory kieruja odsylacze z listow.
+	// Osobny od DANACO_ADRES, ktory niesie gniazdo nasluchu rdzenia.
+	zmiennaAdresKonsoli = "DANACO_ADRES_KONSOLI"
 )
 
 // ZmienneSrodowiska zwraca nazwy zmiennych czytanych przez rdzeń
@@ -47,6 +51,7 @@ func ZmienneSrodowiska() []string {
 		zmiennaAdres, zmiennaWszystkieInterfejsy,
 		zmiennaCertyfikatTLS, zmiennaKluczTLS, zmiennaPochodzenia,
 		zmiennaWymogLogowania,
+		zmiennaAdresKonsoli,
 		zmiennaNadawcaHost, zmiennaNadawcaPort, zmiennaNadawcaUzytkownik,
 		zmiennaNadawcaSekret, zmiennaNadawcaAdres, zmiennaNadawcaNazwa,
 		zmiennaNadawcaStartTLS,
@@ -81,6 +86,9 @@ func zastosujSrodowisko(kon *Konfiguracja, odczyt func(string) string) error {
 	}
 	if adres := odczyt(zmiennaAdres); adres != "" {
 		kon.Adres = adres
+	}
+	if adres := odczyt(zmiennaAdresKonsoli); adres != "" {
+		kon.AdresKonsoli = adres
 	}
 	if host := odczyt(zmiennaNadawcaHost); host != "" {
 		kon.NadawcaHost = host

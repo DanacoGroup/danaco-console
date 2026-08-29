@@ -8,10 +8,15 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	netmail "net/mail"
+	"strconv"
 	"strings"
+	"sync"
 	"time"
 
 	"danacoconsole/server/internal/dane"
+	"danacoconsole/server/internal/konfiguracja"
+	"danacoconsole/server/internal/mail"
 	"danacoconsole/server/internal/nadajnik"
 	"danacoconsole/shared"
 
@@ -83,10 +88,12 @@ func daneRejestracji(z shared.AuthRegisterRequest) (string, string, error) {
 // Kolejność jest wiążąca: najpierw zapis skrótu, potem nadanie, inaczej list
 // mógłby dojść, zanim droga stałaby się ważna.
 func (a *adapterUwierzytelnienia) wyslijDrogePotwierdzenia(ctx context.Context,
-	cel, email, login string, kontoId int64) error {
+	cel, email string, kontoId int64) error {
 
+	// Konto nadawcze czytane raz: to samo, którym list wyjdzie, nazywa nadawcę w nagłówku wiadomości.
+	nadawca := a.kontoNadawcze(ctx)
 	// Brak konta nadawczego nazywa się przed zapisaniem drogi, żeby baza nie trzymała drogi bez listu.
-	if err := a.kontoNadawcze(ctx).Brak(); err != nil {
+	if err := nadawca.Brak(); err != nil {
 		return bladBramki(shared.ErrorCodeInternalError,
 			err.Error()+"; "+dwieDrogiKontaNadawczego)
 	}
@@ -108,63 +115,90 @@ func (a *adapterUwierzytelnienia) wyslijDrogePotwierdzenia(ctx context.Context,
 	}); err != nil {
 		return err
 	}
-	if _, err := nadajnik.Wyslij(a.kontoNadawcze(ctx), listPotwierdzenia(cel, login, droga, email)); err != nil {
+	wiadomosc, err := listPotwierdzenia(nadawca, a.adresKonsoli, cel, droga, email)
+	if err != nil {
+		return bladBramki(shared.ErrorCodeInternalError,
+			fmt.Sprintf("nie udało się złożyć listu na %s: %v; %s", email, err, dwieDrogiKontaNadawczego))
+	}
+	if _, err := nadajnik.Wyslij(nadawca, wiadomosc); err != nil {
 		return bladBramki(shared.ErrorCodeInternalError,
 			fmt.Sprintf("nie udało się wysłać listu na %s: %v; %s", email, err, dwieDrogiKontaNadawczego))
 	}
 	return nil
 }
 
-// listPotwierdzenia składa treść jednego z dwóch listów systemowych. Treść
-// jest zwięzła i mówi wprost, co się stało i co zrobić, bo rozwlekły list
-// systemowy nakłania do zignorowania go.
-func listPotwierdzenia(cel, login, droga, email string) nadajnik.List {
-	/* Nagłówki wymagane przez opracowanie poczty transakcyjnej: list z kodem
-	   jest wytworem programu, nie rozmową — bez nich autorespondery po drugiej
-	   stronie odpisują na niego w kółko. */
-	naglowkiTransakcyjne := []string{
-		"Auto-Submitted: auto-generated",
-		"X-Auto-Response-Suppress: All",
-	}
-	/* Oba znaki idą częścią listu: szablon niesie dwa znaczniki obrazu, jasny
-	   widoczny domyślnie i ciemny odsłaniany zapytaniem medialnym. */
-	obrazy := []nadajnik.Obraz{
-		{Id: listy.IdZnakuJasnego, Nazwa: "danaco.png", Dane: listy.ZnakJasny},
-		{Id: listy.IdZnakuCiemnego, Nazwa: "danaco-ciemny.png", Dane: listy.ZnakCiemny},
+// adresWsparcia to skrzynka obsługiwana, do której listy odsyłają Operatora.
+// Skrzynka nadawcza odpowiedzi nie przyjmuje.
+const adresWsparcia = "support@danaco-group.pl"
+
+// grupaKodu — ile znaków kodu rozdziela spacja; opracowanie poczty:
+// „rozdzielany spacją co trzy znaki”.
+const grupaKodu = 3
+
+// postacCzasuListu zapisuje chwilę tak, jak żąda opracowanie (rozdz. 6.2):
+// `29.08.2026, 17:22 CEST`.
+const postacCzasuListu = "02.01.2006, 15:04 MST"
+
+// kompletListow wczytuje szablony raz na proces. Wczytanie przechodzi siedem
+// par plików i zdejmuje z nich komentarze wewnętrzne — powtarzanie tego przy
+// każdym liście byłoby pracą bez skutku.
+var kompletListow = sync.OnceValues(mail.WbudowanyKomplet)
+
+// listPotwierdzenia składa jeden z dwóch listów systemowych w gotowe bajty
+// wiadomości. Nagłówki, kodowanie tematu i części oraz próg przycięcia
+// rozstrzyga pakiet mail; rdzeń podaje wyłącznie wartości zmiennych.
+func listPotwierdzenia(nadawca nadajnik.Nastawy, adresKonsoli, cel, droga, email string) (*mail.Message, error) {
+	komplet, err := kompletListow()
+	if err != nil {
+		return nil, err
 	}
 	teraz := time.Now()
-	minutyWaznosci := int(trwanieDrogiPotwierdzenia.Minutes())
-
+	wartosci := map[string]string{
+		"recipient_address": email,
+		"support_address":   adresWsparcia,
+		"year":              strconv.Itoa(teraz.Year()),
+		"code":              rozdzielony(droga),
+		"expiry_minutes":    strconv.Itoa(int(trwanieDrogiPotwierdzenia.Minutes())),
+		"requested_at":      teraz.Format(postacCzasuListu),
+	}
+	rodzaj := mail.KindAccountActivation
 	if cel == dane.CelOdzyskanie {
-		postacie := listy.ZlozLogowanie(listy.Logowanie{
-			Odbiorca:      email,
-			Kod:           droga,
-			WaznoscMinuty: minutyWaznosci,
-			Zadano:        teraz,
-		})
-		return nadajnik.List{
-			Do:        email,
-			Temat:     "Danaco Console — kod odzyskania konta",
-			Naglowki:  naglowkiTransakcyjne,
-			Obrazy:    obrazy,
-			TrescHtml: postacie.Html,
-			Tresc:     postacie.Tekst,
+		/* Odzyskanie dostaje list resetu hasła, nie kodu logowania: to on nazywa
+		   czynność, którą Operator właśnie prowadzi, i tylko on mówi, że hasło
+		   dotychczasowe zostaje ważne do ustawienia nowego. */
+		rodzaj = mail.KindPasswordReset
+	} else {
+		// Odsyłacz do okna, w którym Operator wprowadza kod; zna go tylko ta gałąź.
+		wartosci["activation_url"] = konfiguracja.AdresAktywacji(adresKonsoli)
+	}
+
+	return komplet.Build(rodzaj, mail.Envelope{
+		From: nadawca.Nadawca(),
+		To:   netmail.Address{Address: email},
+		Date: teraz,
+	}, mail.Content{Values: wartosci}, znakiMarki())
+}
+
+// znakiMarki podaje oba warianty znaku dołączane częścią listu. Nazwy plików
+// widzi Operator wtedy, gdy jego klient pocztowy potraktuje znak jak załącznik.
+func znakiMarki() mail.Logos {
+	return mail.Logos{
+		Light: listy.ZnakJasny, LightName: "danaco.png",
+		Dark: listy.ZnakCiemny, DarkName: "danaco-ciemny.png",
+	}
+}
+
+// rozdzielony wstawia spację co trzy znaki kodu — czyta się go wtedy z ekranu
+// bez gubienia miejsca, a przepisuje bez pomyłki.
+func rozdzielony(kod string) string {
+	var wynik strings.Builder
+	for i, znak := range kod {
+		if i > 0 && i%grupaKodu == 0 {
+			wynik.WriteByte(' ')
 		}
+		wynik.WriteRune(znak)
 	}
-	postacie := listy.ZlozAktywacje(listy.Aktywacja{
-		Odbiorca:      email,
-		Kod:           droga,
-		WaznoscMinuty: minutyWaznosci,
-		Zadano:        teraz,
-	})
-	return nadajnik.List{
-		Do:        email,
-		Temat:     "Danaco Console — kod potwierdzający adres",
-		Naglowki:  naglowkiTransakcyjne,
-		Obrazy:    obrazy,
-		TrescHtml: postacie.Html,
-		Tresc:     postacie.Tekst,
-	}
+	return wynik.String()
 }
 
 // zuzyjDroge sprawdza drogę i zamyka ją w jednej czynności. Sprawdzenie
@@ -268,7 +302,7 @@ func (a *adapterUwierzytelnienia) RozpocznijOdzyskanie(ctx context.Context,
 	if !strings.EqualFold(konto.Email, email) {
 		return shared.AuthRecoverResponse{Sent: true}, nil
 	}
-	if err := a.wyslijDrogePotwierdzenia(ctx, dane.CelOdzyskanie, konto.Email, konto.Login, konto.Id); err != nil {
+	if err := a.wyslijDrogePotwierdzenia(ctx, dane.CelOdzyskanie, konto.Email, konto.Id); err != nil {
 		return shared.AuthRecoverResponse{}, err
 	}
 	return shared.AuthRecoverResponse{Sent: true}, nil

@@ -168,7 +168,7 @@ func (a *adapterUwierzytelnienia) ZalozBramke(ctx context.Context,
 	}
 	// Niepowodzenie wysyłki nie cofa rejestracji — czynność schodzi na drogę
 	// bez poczty.
-	if err := a.wyslijDrogePotwierdzenia(ctx, dane.CelWeryfikacja, email, login); err != nil {
+	if err := a.wyslijDrogePotwierdzenia(ctx, dane.CelWeryfikacja, email, login, kontoId); err != nil {
 		if err := a.zapiszZnacznikBezPoczty(ctx, email); err != nil {
 			a.cofnijRejestracje(ctx, kotwica.Kod, kontoId)
 			return shared.AuthRegisterResponse{}, err

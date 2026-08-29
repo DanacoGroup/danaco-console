@@ -81,7 +81,7 @@ func daneRejestracji(z shared.AuthRegisterRequest) (string, string, error) {
 // Kolejność jest wiążąca: najpierw zapis skrótu, potem nadanie, inaczej list
 // mógłby dojść, zanim droga stałaby się ważna.
 func (a *adapterUwierzytelnienia) wyslijDrogePotwierdzenia(ctx context.Context,
-	cel, email, login string) error {
+	cel, email, login string, kontoId int64) error {
 
 	// Brak konta nadawczego nazywa się przed zapisaniem drogi, żeby baza nie trzymała drogi bez listu.
 	if err := a.kontoNadawcze(ctx).Brak(); err != nil {
@@ -98,6 +98,9 @@ func (a *adapterUwierzytelnienia) wyslijDrogePotwierdzenia(ctx context.Context,
 		Cel:       cel,
 		Wygasa:    teraz.Add(trwanieDrogiPotwierdzenia).UnixMilli(),
 		Utworzono: teraz.UnixMilli(),
+		// Konto, do którego droga prowadzi; przy dwóch kontach naraz to jedyne,
+		// co rozstrzyga, które z nich potwierdza przepisany kod.
+		KontoId: kontoId,
 	}); err != nil {
 		return err
 	}
@@ -237,7 +240,7 @@ func (a *adapterUwierzytelnienia) RozpocznijOdzyskanie(ctx context.Context,
 	if !strings.EqualFold(konto.Email, email) {
 		return shared.AuthRecoverResponse{Sent: true}, nil
 	}
-	if err := a.wyslijDrogePotwierdzenia(ctx, dane.CelOdzyskanie, konto.Email, konto.Login); err != nil {
+	if err := a.wyslijDrogePotwierdzenia(ctx, dane.CelOdzyskanie, konto.Email, konto.Login, konto.Id); err != nil {
 		return shared.AuthRecoverResponse{}, err
 	}
 	return shared.AuthRecoverResponse{Sent: true}, nil

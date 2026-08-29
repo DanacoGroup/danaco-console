@@ -191,8 +191,11 @@ export const tresci = {
         tresc:
           'Platforma nie ma konta nadawczego, więc wiadomość z kodem potwierdzającym nie została wysłana. Odzyskanie konta pocztą będzie możliwe dopiero po potwierdzeniu adresu.',
       },
+      /* Bez wskazania okna: w tym wydaniu zbudowany jest wyłącznie moduł Studio,
+         więc odesłanie do okna Konfiguracji prowadziłoby w miejsce, którego
+         Operator nie ma jak otworzyć. */
       nota:
-        'Konto nadawcze ustawia się w oknie Konfiguracji, w kategorii „Konto nadawcze platformy”.',
+        'Adres potwierdzisz, gdy platforma dostanie konto nadawcze. Do tego czasu wejście działa hasłem.',
       wejdz: 'Wejdź do platformy',
     },
 

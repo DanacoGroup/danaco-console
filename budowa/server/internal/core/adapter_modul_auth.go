@@ -118,7 +118,7 @@ func (a *adapterUwierzytelnienia) ZalozBramke(ctx context.Context,
 	}
 	if z.Password == "" {
 		return shared.AuthRegisterResponse{}, bladBramki(shared.ErrorCodeValidationFailed,
-			"rejestracja bez hasła")
+			"Podaj hasło.")
 	}
 	// Konto nadawcze nie jest warunkiem założenia bramki, tylko warunkiem
 	// wysyłki listu.
@@ -275,7 +275,7 @@ func (a *adapterUwierzytelnienia) metodaWejscia(ctx context.Context,
 		urzadzenie := wartoscTekstu(z.DeviceId)
 		if urzadzenie == "" {
 			return dane.MetodaUwierzytelnienia{}, bladBramki(shared.ErrorCodeValidationFailed,
-				"wejście PIN-em bez wskazania urządzenia; PIN jest właściwy urządzeniu")
+				"Wskaż urządzenie — kod PIN obowiązuje na jednym urządzeniu.")
 		}
 		metoda, err := a.repozytorium.MetodaUrzadzenia(ctx, shared.AuthMethodKindPin, urzadzenie)
 		if errors.Is(err, dane.ErrBrakWiersza) {
@@ -322,11 +322,11 @@ func (a *adapterUwierzytelnienia) MetodyWejscia(ctx context.Context) ([]shared.A
 func (a *adapterUwierzytelnienia) gotowa() error {
 	if a == nil || a.repozytorium == nil {
 		return bladBramki(shared.ErrorCodeInternalError,
-			"repozytorium bramki niewpięte")
+			"Magazyn kont jest niedostępny.")
 	}
 	if a.sejf == nil {
 		return bladBramki(shared.ErrorCodeInternalError,
-			"sejfu poświadczeń nie wpięto; hasła nie ma gdzie odłożyć ani z czym porównać")
+			"Magazyn haseł jest niedostępny.")
 	}
 	return nil
 }
@@ -371,7 +371,7 @@ func kolizjaMetody(metoda dane.MetodaUwierzytelnienia, err error) error {
 	}
 	if metoda.Kotwica {
 		return bladBramki(shared.ErrorCodeConflict,
-			"Hasło dostępu jest już ustawione; hasła nie ustawia się drugi raz — "+
+			"Hasło jest już ustawione. Aby je zmienić, użyj odzyskiwania dostępu. "+
 				"zmiana hasła idzie komendą auth.password.reset")
 	}
 	urzadzenie := ""

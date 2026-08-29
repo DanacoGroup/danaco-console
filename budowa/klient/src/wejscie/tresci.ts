@@ -134,7 +134,7 @@ export const tresci = {
       },
       capsLock: 'Sprawdź, czy nie jest włączony Caps Lock.',
       fraza:
-        'Nieudana próba nie blokuje konta. Dostęp możesz też odzyskać przez adres e-mail konta.',
+        'Nieudana próba nie blokuje konta. Dostęp można również odzyskać przy użyciu adresu e-mail konta.',
     },
 
     /* Odsłona zwłoki, nie zapory. Rdzeń nie odmawia kolejnej próby — nakłada na
@@ -146,7 +146,7 @@ export const tresci = {
       lid: 'Po nieudanej próbie kolejna czeka chwilę dłużej. Konto nie zostało zablokowane.',
       baner: {
         glowa: 'Kolejna próba będzie możliwa za {czas}.',
-        tresc: 'Dostęp możesz też odzyskać przez adres e-mail konta.',
+        tresc: 'Dostęp można również odzyskać przy użyciu adresu e-mail konta.',
       },
       odzyskaj: 'Odzyskaj dostęp',
     },
@@ -157,7 +157,7 @@ export const tresci = {
       baner: {
         glowa: 'Kolejne wysłanie będzie możliwe za {czas}.',
         tresc:
-          'Jeśli któraś z wysłanych dróg potwierdzenia dotarła, przepisz ją — każda zachowuje ważność przez {minuty} minut od wysłania.',
+          'Jeżeli którykolwiek z wysłanych kodów dotarł, wprowadź go — każdy zachowuje ważność przez {minuty} minut od wysłania.',
       },
     },
 
@@ -182,7 +182,7 @@ export const tresci = {
       baner: {
         glowa: 'Adres {adres} pozostaje niepotwierdzony.',
         tresc:
-          'Platforma nie ma konta nadawczego, więc listu z drogą potwierdzenia nie wysłała. Odzyskanie konta listem nie zadziała do chwili potwierdzenia adresu.',
+          'Platforma nie ma konta nadawczego, więc wiadomość z kodem potwierdzającym nie została wysłana. Odzyskanie konta pocztą będzie możliwe dopiero po potwierdzeniu adresu.',
       },
       nota:
         'Konto nadawcze ustawia się w oknie Konfiguracji, w kategorii „Konto nadawcze platformy”.',
@@ -218,10 +218,10 @@ export const tresci = {
 
     kod: {
       tytul: 'Potwierdź adres e-mail',
-      lid: 'Na adres {adres} została wysłana droga potwierdzenia. Zachowuje ważność przez {minuty} minut.',
-      obszar: 'Droga potwierdzenia z listu',
+      lid: 'Na adres {adres} wysłaliśmy kod potwierdzający. Zachowuje ważność przez {minuty} minut.',
+      obszar: 'Kod potwierdzający z wiadomości',
       znak: 'Znak {numer} z {ile}',
-      odliczanie: 'Droga potwierdzenia traci ważność za',
+      odliczanie: 'Kod traci ważność za',
       wklej: 'Wklej ze schowka',
       ponow: 'Wyślij ponownie',
       pomoc: {
@@ -231,7 +231,7 @@ export const tresci = {
       },
       pomocDane: { nadawca: 'noreply@danaco-core.pl' },
       ostrzezenie: {
-        glowa: 'Drogę potwierdzenia wprowadza się wyłącznie w tym oknie.',
+        glowa: 'Kod potwierdzający wprowadza się wyłącznie w tym oknie.',
         tresc: 'Danaco Console nigdy nie prosi o nią przez telefon ani w wiadomości zwrotnej.',
       },
       zmienAdres: 'Zmień adres e-mail',
@@ -241,16 +241,16 @@ export const tresci = {
       kroki: ['Adres e-mail', 'Potwierdzenie', 'Nowe hasło'],
       adres: {
         tytul: 'Odzyskaj dostęp do konta',
-        lid: 'Podaj adres e-mail konta. Zostanie na niego wysłana droga potwierdzenia.',
+        lid: 'Podaj adres e-mail konta. Wyślemy na niego kod potwierdzający.',
         pole: 'Adres e-mail',
         ostrzezenie: {
-          glowa: 'Zmiana hasła kończy wszystkie sesje.',
-          tresc: 'Na pozostałych urządzeniach trzeba zalogować się ponownie.',
+          glowa: 'Zmiana hasła zakończy wszystkie sesje.',
+          tresc: 'Na pozostałych urządzeniach będzie konieczne ponowne zalogowanie.',
         },
       },
       haslo: {
         tytul: 'Ustaw nowe hasło',
-        lid: 'Nowe hasło zacznie obowiązywać od razu. Pozostałe urządzenia zostaną wylogowane.',
+        lid: 'Nowe hasło zacznie obowiązywać natychmiast. Pozostałe urządzenia zostaną wylogowane.',
         nowe: 'Nowe hasło',
         powtorz: 'Powtórz nowe hasło',
       },
@@ -287,9 +287,9 @@ export const tresci = {
     zalogujPonownie: 'Zaloguj się ponownie',
     utworzKonto: 'Utwórz konto',
     potwierdzKonto: 'Potwierdź konto',
-    wyslijKod: 'Wyślij drogę potwierdzenia',
+    wyslijKod: 'Wyślij kod potwierdzający',
     potwierdzHaslo: 'Potwierdź nowe hasło',
-    potwierdzDroge: 'Potwierdź drogę',
+    potwierdzDroge: 'Potwierdź kod',
     wrocDoLogowania: 'Wróć do logowania',
     przerwijIWyloguj: 'Przerwij i wyloguj',
   },
@@ -299,7 +299,7 @@ export const tresci = {
     naglowekKonto: 'Nie można utworzyć konta.',
     naglowekHaslo: 'Nie można ustawić hasła.',
     naglowekLogowanie: 'Nie można się zalogować.',
-    naglowekKod: 'Nie można wysłać drogi potwierdzenia.',
+    naglowekKod: 'Nie można wysłać kodu potwierdzającego.',
     naglowekPotwierdzenie: 'Nie można potwierdzić adresu.',
     brakLoginu: {
       glowa: 'Podaj login albo adres e-mail.',
@@ -315,11 +315,11 @@ export const tresci = {
     },
     brakAdresu: {
       glowa: 'Podaj adres e-mail konta.',
-      tresc: 'Na ten adres zostanie wysłana droga potwierdzenia.',
+      tresc: 'Na ten adres wyślemy kod potwierdzający.',
     },
     brakDrogi: {
-      glowa: 'Podaj drogę potwierdzenia z listu.',
-      tresc: 'Pole drogi potwierdzenia jest puste.',
+      glowa: 'Podaj kod potwierdzający z wiadomości.',
+      tresc: 'Pole kodu potwierdzającego jest puste.',
     },
     loginZajety: {
       glowa: 'Ten login jest już zajęty.',
@@ -358,12 +358,12 @@ export const tresci = {
       tresc: 'Ustawienia połączenia otwierają się w oknie konfiguracji, w sekcji „Sieć i serwer”.',
     },
     kodPonowiony: {
-      tytul: 'Droga potwierdzenia wysłana ponownie',
-      tresc: 'Nowa droga wysłana na adres konta. Poprzednia przestała obowiązywać.',
+      tytul: 'Kod potwierdzający wysłany ponownie',
+      tresc: 'Nowy kod został wysłany na adres konta. Poprzedni przestał obowiązywać.',
     },
     schowek: {
       tytul: 'Schowek niedostępny',
-      tresc: 'Wpisz drogę potwierdzenia ręcznie.',
+      tresc: 'Wpisz kod potwierdzający ręcznie.',
     },
   },
 } as const;

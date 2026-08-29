@@ -29,7 +29,7 @@ const trwanieDrogiPotwierdzenia = time.Hour
 func (a *adapterUwierzytelnienia) kontoGotowe() error {
 	if a.konto == nil {
 		return bladBramki(shared.ErrorCodeInternalError,
-			"trwałość konta właściciela nie jest wpięta — konta nie ma gdzie zapisać")
+			"Nie można zapisać konta — magazyn danych jest niedostępny.")
 	}
 	return nil
 }
@@ -56,7 +56,7 @@ func (a *adapterUwierzytelnienia) kontoPotwierdzone(ctx context.Context) error {
 		return nil
 	}
 	return bladBramki(shared.ErrorCodeNotAuthenticated,
-		"konto czeka na potwierdzenie adresu "+konto.Email+
+		"Konto oczekuje na potwierdzenie adresu "+konto.Email+
 			" — przepisz drogę potwierdzenia z listu komendą auth.verify; "+
 			"do tego czasu bramka jest zamknięta, bo adres jest jedyną drogą odzyskania konta")
 }
@@ -68,7 +68,7 @@ func daneRejestracji(z shared.AuthRegisterRequest) (string, string, error) {
 	login := strings.TrimSpace(z.Login)
 	if login == "" {
 		return "", "", bladBramki(shared.ErrorCodeValidationFailed,
-			"rejestracja bez loginu — login jest nazwą, którą Operator się loguje")
+			"Podaj login — to nazwa, pod którą będziesz się logować.")
 	}
 	email := strings.TrimSpace(z.Email)
 	malpa := strings.LastIndex(email, "@")
@@ -144,20 +144,20 @@ func listPotwierdzenia(cel, login, droga, email string) nadajnik.List {
 // samym materiałem nie zastają obie drogi ważnej.
 func (a *adapterUwierzytelnienia) zuzyjDroge(ctx context.Context, cel, droga string) error {
 	if strings.TrimSpace(droga) == "" {
-		return bladBramki(shared.ErrorCodeValidationFailed, "droga potwierdzenia jest pusta")
+		return bladBramki(shared.ErrorCodeValidationFailed, "Podaj kod potwierdzający.")
 	}
 	skrot := skrotTokenu(droga)
 	zapis, err := a.konto.PotwierdzeniePoSkrocie(ctx, skrot)
 	if errors.Is(err, dane.ErrBrakWiersza) {
 		return bladBramki(shared.ErrorCodeNotAuthenticated,
-			"droga potwierdzenia nie jest znana platformie")
+			"Ten kod potwierdzający nie jest znany.")
 	}
 	if err != nil {
 		return err
 	}
 	if zapis.Cel != cel {
 		return bladBramki(shared.ErrorCodeNotAuthenticated,
-			"droga potwierdzenia została wydana do innej czynności")
+			"Ten kod potwierdzający dotyczy innej czynności.")
 	}
 	zamknieta, err := a.konto.ZuzyjPotwierdzenie(ctx, skrot, time.Now().UnixMilli())
 	if err != nil {
@@ -165,7 +165,7 @@ func (a *adapterUwierzytelnienia) zuzyjDroge(ctx context.Context, cel, droga str
 	}
 	if !zamknieta {
 		return bladBramki(shared.ErrorCodeNotAuthenticated,
-			"droga potwierdzenia jest już zużyta albo wygasła — poproś o nową")
+			"Ten kod potwierdzający został już użyty lub wygasł. Poproś o nowy.")
 	}
 	return nil
 }
@@ -189,14 +189,14 @@ func (a *adapterUwierzytelnienia) PotwierdzAdres(ctx context.Context,
 	konto, err := a.konto.Konto(ctx)
 	if errors.Is(err, dane.ErrBrakWiersza) {
 		return shared.AuthVerifyResponse{}, bladBramki(shared.ErrorCodeConflict,
-			"konta właściciela jeszcze nie ma — najpierw rejestracja")
+			"Konto Operatora nie zostało jeszcze założone. Zarejestruj się.")
 	}
 	if err != nil {
 		return shared.AuthVerifyResponse{}, err
 	}
 	if konto.Potwierdzone {
 		return shared.AuthVerifyResponse{}, bladBramki(shared.ErrorCodeConflict,
-			"adres jest już potwierdzony — wejście idzie komendą auth.login")
+			"Adres jest już potwierdzony. Zaloguj się.")
 	}
 	if err := a.zuzyjDroge(ctx, dane.CelWeryfikacja, z.Token); err != nil {
 		return shared.AuthVerifyResponse{}, err
@@ -228,7 +228,7 @@ func (a *adapterUwierzytelnienia) RozpocznijOdzyskanie(ctx context.Context,
 	email := strings.TrimSpace(z.Email)
 	if email == "" {
 		return shared.AuthRecoverResponse{}, bladBramki(shared.ErrorCodeValidationFailed,
-			"odzyskanie konta bez podanego adresu")
+			"Podaj adres e-mail konta.")
 	}
 	konto, err := a.konto.Konto(ctx)
 	if errors.Is(err, dane.ErrBrakWiersza) {
@@ -262,7 +262,7 @@ func (a *adapterUwierzytelnienia) UstawNoweHaslo(ctx context.Context,
 	}
 	if strings.TrimSpace(z.NewPassword) == "" {
 		return shared.AuthResetResponse{}, bladBramki(shared.ErrorCodeValidationFailed,
-			"ustawienie nowego hasła bez hasła")
+			"Podaj nowe hasło.")
 	}
 	a.zamekZmiany.Lock()
 	defer a.zamekZmiany.Unlock()
@@ -270,7 +270,7 @@ func (a *adapterUwierzytelnienia) UstawNoweHaslo(ctx context.Context,
 	kotwica, err := a.kotwica(ctx)
 	if errors.Is(err, dane.ErrBrakWiersza) {
 		return shared.AuthResetResponse{}, bladBramki(shared.ErrorCodeConflict,
-			"konta właściciela jeszcze nie ma — najpierw rejestracja")
+			"Konto Operatora nie zostało jeszcze założone. Zarejestruj się.")
 	}
 	if err != nil {
 		return shared.AuthResetResponse{}, err

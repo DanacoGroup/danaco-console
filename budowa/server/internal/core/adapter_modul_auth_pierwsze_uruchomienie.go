@@ -19,7 +19,7 @@ const bytZnacznikaBezPoczty = przedrostekBytuSejfu + "bramka-bez-poczty"
 func (a *adapterUwierzytelnienia) zapiszZnacznikBezPoczty(ctx context.Context, email string) error {
 	if a.sejf == nil {
 		return bladBramki(shared.ErrorCodeInternalError,
-			"sejfu poświadczeń nie wpięto; stanu bramki bez poczty nie ma gdzie zapisać")
+			"Magazyn haseł jest niedostępny.")
 	}
 	if _, err := a.sejf.Zapisz(ctx, bytZnacznikaBezPoczty, email); err != nil {
 		return err

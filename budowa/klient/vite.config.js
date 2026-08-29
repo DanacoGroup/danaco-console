@@ -1,56 +1,24 @@
-/*
- * Nastawa budowania pakietu klienta.
- *
- * Vite wchodzi jako narzędzie budowania, nie jako zależność pakietu: klient
- * nie ma i nie zyskuje tu ani jednej zależności produkcyjnej. Wytworem jest
- * dokument wraz z modułem TypeScriptu, arkuszami warstwy projektowej i
- * skryptami biblioteki ramy, bez śladu narzędzia.
- *
- * Rama wciąga bibliotekę `design/zasoby/` dwiema różnymi drogami, bo arkusze
- * i skrypty tej biblioteki mają różny kształt:
- *
- *   — Arkusze łączy `index.html` przez zwykły `<link rel="stylesheet">"
- *     wskazujący źródło w `design/zasoby/`. To zwykły arkusz CSS, więc Vite
- *     rozwija jego `@import`, przenosi kroje i obrazy wskazane przez `url()`
- *     i oddaje gotowy plik do `dist/assets/` — dokładnie tak samo, jak dla
- *     arkusza leżącego w katalogu klienta. Żadnej nastawy to nie wymaga.
- *
- *   — Skryptów Vite tą samą drogą przenieść nie może: to funkcje domknięte,
- *     nie moduły ECMAScript (żadnego `export`), więc znacznik `<script src>`
- *     bez `type="module"` Vite zostawia dosłownie, bez kopiowania pliku do
- *     `dist/` (ostrzeżenie budowania to potwierdza). Ścieżka źródłowa,
- *     zostawiona bez zmiany, po wydaniu wskazywałaby poza katalog serwowany
- *     przez rdzeń. Rozstrzygnięcie: wtyczka `closeBundle` niżej kopiuje
- *     dokładnie te skrypty biblioteki, których używa `design/05-okna/przeplyw/
- *     centrum-dowodzenia.html`, do `dist/zasoby/`, zachowując ich ścieżkę
- *     względną — `index.html` odwołuje się do nich przez `./zasoby/…`,
- *     ścieżkę już poprawną w wydanym pakiecie.
- */
+// Nastawa budowania pakietu klienta.
+//
+// Skrypty biblioteki są funkcjami domkniętymi, nie modułami ECMAScript, więc
+// Vite ich nie pakuje. Wtyczka `kopiaSkryptowBiblioteki` przenosi je do
+// `dist/zasoby/` z zachowaniem ścieżki względnej.
 
 import { readFileSync } from 'node:fs';
 import { copyFileSync, mkdirSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-/** Korzeń projektu — katalog klienta, nie katalog roboczy powłoki. */
-const korzen = new URL('.', import.meta.url).pathname;
+const katalogKlienta = new URL('.', import.meta.url).pathname;
 
-/**
- * Korzeń repozytorium. Arkusze warstwy projektowej i wygenerowany kontrakt
- * leżą poza katalogiem klienta, więc serwer poglądowy musi mieć zgodę na ich
- * odczyt; budowanie czyta je bez tej zgody.
- */
-const korzenRepozytorium = new URL('../../', import.meta.url).pathname;
+// Arkusze i wygenerowany kontrakt leżą poza katalogiem klienta; serwer poglądowy
+// potrzebuje zgody na ich odczyt.
+const katalogRepozytorium = new URL('../../', import.meta.url).pathname;
 
-/** Katalog biblioteki warstwy projektowej — jedyne źródło skryptów kopiowanych do pakietu. */
-const KORZEN_ZASOBOW = new URL('../../design/zasoby/', import.meta.url);
+const KATALOG_ZASOBOW = new URL('../../design/zasoby/', import.meta.url);
 
-/**
- * Skrypty biblioteki, w kolejności wczytania przez
- * `design/05-okna/przeplyw/centrum-dowodzenia.html` — osiemnaście plików,
- * ścieżka każdego względna wobec `KORZEN_ZASOBOW`.
- */
-const SKRYPTY_BIBLIOTEKI = [
+// Pliki biblioteki kopiowane do wydania; ścieżki względne wobec KATALOG_ZASOBOW.
+const PLIKI_BIBLIOTEKI = [
   'wspolne.js',
   'narzedzia-okien.js',
   'ekran-startowy.js',
@@ -125,6 +93,7 @@ const SKRYPTY_BIBLIOTEKI = [
   'okna/instalator/ekrany/6-podsumowanie.js',
   'okna/instalator/montaz.js',
   'okna/instalator.js',
+  'kreator.css',
   'okna/przeplyw-wejscia.js',
   'okna/centrum-dowodzenia.js',
   'okna/centrum-obszar.js',
@@ -138,9 +107,9 @@ function kopiaSkryptowBiblioteki() {
     name: 'kopia-skryptow-biblioteki',
     apply: 'build',
     closeBundle() {
-      for (const wzgledna of SKRYPTY_BIBLIOTEKI) {
-        const zrodlo = fileURLToPath(new URL(wzgledna, KORZEN_ZASOBOW));
-        const cel = join(korzen, 'dist', 'zasoby', wzgledna);
+      for (const wzgledna of PLIKI_BIBLIOTEKI) {
+        const zrodlo = fileURLToPath(new URL(wzgledna, KATALOG_ZASOBOW));
+        const cel = join(katalogKlienta, 'dist', 'zasoby', wzgledna);
         mkdirSync(dirname(cel), { recursive: true });
         copyFileSync(zrodlo, cel);
       }
@@ -183,7 +152,7 @@ function trescOknaZPrototypu() {
 }
 
 export default {
-  root: korzen,
+  root: katalogKlienta,
 
   define: {
     __DATA_SKLADANIA__: JSON.stringify(DATA_SKLADANIA),
@@ -212,6 +181,6 @@ export default {
   },
 
   server: {
-    fs: { allow: [korzenRepozytorium] },
+    fs: { allow: [katalogRepozytorium] },
   },
 };

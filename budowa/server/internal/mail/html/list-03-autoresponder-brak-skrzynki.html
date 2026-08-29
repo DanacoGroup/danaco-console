@@ -6,7 +6,7 @@
 <meta name="x-apple-disable-message-reformatting">
 <meta name="color-scheme" content="light dark">
 <meta name="supported-color-schemes" content="light dark">
-<title>Danaco Console — kod resetu hasła</title>
+<title>Adres noreply@danaco-group.pl nie przyjmuje korespondencji</title>
 <style>
 /* Podstawą jest wariant jasny zapisany w atrybutach style. Reguły poniżej
    nadpisują wyłącznie barwy i tylko w kliencie zgłaszającym tryb ciemny.
@@ -21,8 +21,6 @@
   .dn-etykieta    { color:#9E9E9E !important; }
   .dn-panel       { background-color:#181818 !important; border-color:#3A3A3A !important; }
   .dn-stopka      { background-color:#0F0F0F !important; border-color:#2A2A2A !important; }
-  .dn-dzialanie   { background-color:#F4F4F4 !important; }
-  .dn-dzialanie a { color:#131313 !important; }
   .dn-odnosnik    { color:#5C8CEC !important; }
   .dn-znak-jasny  { display:none !important; max-height:0 !important; overflow:hidden !important; }
   .dn-znak-ciemny { display:block !important; max-height:none !important; overflow:visible !important; }
@@ -47,26 +45,29 @@
 </head>
 <!--
   ══════════════════════════════════════════════════════════════════════════
-  DANACO CONSOLE · POCZTA TRANSAKCYJNA · LIST 4 — RESET HASŁA
+  DANACO CONSOLE · POCZTA TRANSAKCYJNA · LIST 3 — AUTORESPONDER
   Nadawca: noreply@danaco-group.pl
-  Temat:   Danaco Console — kod resetu hasła: {{code}}
-  Nagłówki: Auto-Submitted: auto-generated · X-Auto-Response-Suppress: All
-  Część tekstowa: ../text/list-04-reset-hasla.txt
+  Temat:   Adres noreply@danaco-group.pl nie przyjmuje korespondencji
+  Nagłówek wymagany: Auto-Submitted: auto-replied
+  Część tekstowa: ../text/list-03-autoresponder-brak-skrzynki.txt
 
-  Zmienne: {{logo_src}} {{logo_src_dark}} {{code}} {{expiry_minutes}}
-           {{requested_at}} {{recipient_address}}
-           {{support_address}} {{year}}
+  Zmienne: {{logo_src}} {{logo_src_dark}} {{original_subject}}
+           {{received_at}} {{support_address}} {{year}}
 
-  Układ wspólny z listem 2 — te same metadane żądania. Różnica w nocie:
-  samo żądanie resetu nie zmienia hasła, więc zignorowanie listu jest
-  bezpieczne i tak trzeba to napisać wprost.
+  UWAGA: {{original_subject}} pochodzi spoza rdzenia. Przed podstawieniem
+  ucieczka HTML dla & < > " ', obcięcie do 120 znaków, usunięcie znaków
+  sterujących i złamań wiersza. Bez tego temat staje się wektorem
+  wstrzyknięcia znaczników. Treść nadesłanej wiadomości nie jest cytowana.
+
+  Ograniczenie częstotliwości: jedna odpowiedź na adres na dobę; brak odpowiedzi
+  przy pustym adresie zwrotnym, Precedence: bulk oraz Auto-Submitted innym niż no.
   Opis pełny: ../opracowanie-techniczne.md
   ══════════════════════════════════════════════════════════════════════════
 -->
 <body class="dn-tlo" style="margin:0;padding:0;background-color:#F4F4F4;-webkit-text-size-adjust:100%;">
 
 <div style="display:none;font-size:1px;line-height:1px;max-height:0;max-width:0;opacity:0;overflow:hidden;mso-hide:all;color:#FFFFFF;">
-  Kod resetu hasła: {{code}}. Ważny {{expiry_minutes}} minut.
+  Skrzynka nieobsługiwana. Wiadomość nie zostanie odczytana — napisz na {{support_address}}.
   &#8199;&#65279;&#8199;&#65279;&#8199;&#65279;&#8199;&#65279;&#8199;&#65279;&#8199;&#65279;&#8199;&#65279;&#8199;&#65279;
 </div>
 
@@ -90,61 +91,81 @@
         <tr>
           <td class="dn-pad" style="padding:32px 32px 0 32px;">
             <p class="dn-atrament" style="margin:0 0 16px 0;font-family:'Space Grotesk','IBM Plex Sans','Segoe UI',Helvetica,Arial,sans-serif;font-size:24px;line-height:32px;font-weight:600;letter-spacing:-0.01em;color:#181818;">
-              Kod resetu hasła
+              Skrzynka nieobsługiwana
             </p>
+            <!-- Głos rzeczowy: stan podany wprost, bez przeprosin za zachowanie systemu. -->
             <p class="dn-tekst" style="margin:0 0 24px 0;font-family:'IBM Plex Sans','Segoe UI',Helvetica,Arial,sans-serif;font-size:15px;line-height:24px;color:#4A4A4A;">
-              Odnotowano żądanie zmiany hasła do konta <span class="dn-atrament" style="color:#181818;font-weight:600;">{{recipient_address}}</span>. Wprowadź kod w oknie resetu hasła, w którym trwa sesja.
+              Adres <span class="dn-atrament" style="font-family:'IBM Plex Mono','SFMono-Regular',Consolas,'Courier New',monospace;color:#181818;">noreply@danaco-group.pl</span>
+              służy wyłącznie do wysyłki wiadomości systemowych Danaco Console i nie prowadzi skrzynki
+              odbiorczej. Wiadomość nadesłana na ten adres nie została dostarczona do żadnego odbiorcy
+              i nie zostanie odczytana.
             </p>
           </td>
         </tr>
 
-        <!-- Panel kodu. Tło neutralne — jedynym akcentem w kadrze jest kropka znaku. -->
+        <!-- Panel wiadomości odrzuconej. Temat po sanityzacji, bez cytowania treści. -->
         <tr>
           <td class="dn-pad" style="padding:0 32px;">
             <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" class="dn-panel" style="border-collapse:collapse;background-color:#FAFAFA;border:1px solid #E3E3E3;">
               <tr>
-                <td align="center" style="padding:24px 16px 20px 16px;">
-                  <p class="dn-etykieta" style="margin:0 0 12px 0;font-family:'IBM Plex Mono','SFMono-Regular',Consolas,'Courier New',monospace;font-size:11px;line-height:16px;letter-spacing:0.14em;text-transform:uppercase;color:#616161;">
-                    Kod resetu hasła
-                  </p>
-                  <p class="dn-atrament" style="margin:0;font-family:'IBM Plex Mono','SFMono-Regular',Consolas,'Courier New',monospace;font-size:32px;line-height:40px;font-weight:600;letter-spacing:0.18em;color:#181818;">
-                    {{code}}
-                  </p>
+                <td style="padding:20px 20px 8px 20px;">
+                  <p class="dn-etykieta" style="margin:0 0 4px 0;font-family:'IBM Plex Mono','SFMono-Regular',Consolas,'Courier New',monospace;font-size:11px;line-height:16px;letter-spacing:0.14em;text-transform:uppercase;color:#616161;">Temat wiadomości</p>
+                  <p class="dn-atrament" style="margin:0;font-family:'IBM Plex Sans','Segoe UI',Helvetica,Arial,sans-serif;font-size:14px;line-height:22px;color:#181818;word-break:break-word;">{{original_subject}}</p>
+                </td>
+              </tr>
+              <tr>
+                <td style="padding:0 20px 20px 20px;">
+                  <p class="dn-etykieta" style="margin:0 0 4px 0;font-family:'IBM Plex Mono','SFMono-Regular',Consolas,'Courier New',monospace;font-size:11px;line-height:16px;letter-spacing:0.14em;text-transform:uppercase;color:#616161;">Odebrano</p>
+                  <p class="dn-atrament" style="margin:0;font-family:'IBM Plex Mono','SFMono-Regular',Consolas,'Courier New',monospace;font-size:13px;line-height:20px;color:#181818;">{{received_at}}</p>
                 </td>
               </tr>
             </table>
           </td>
         </tr>
 
-        <!-- Szyna metadanych — pary etykieta / wartość, krój maszyny -->
+        <!-- Następny krok. Zasada zero blokad: odbiorca dostaje drogę dalej. -->
         <tr>
           <td class="dn-pad" style="padding:24px 32px 0 32px;">
+            <p class="dn-atrament" style="margin:0 0 12px 0;font-family:'Space Grotesk','IBM Plex Sans','Segoe UI',Helvetica,Arial,sans-serif;font-size:16px;line-height:24px;font-weight:600;color:#181818;">
+              Gdzie skierować sprawę
+            </p>
             <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="border-collapse:collapse;">
               <tr>
-                <td width="50%" style="padding:0 12px 0 0;vertical-align:top;">
-                  <p class="dn-etykieta" style="margin:0 0 4px 0;font-family:'IBM Plex Mono','SFMono-Regular',Consolas,'Courier New',monospace;font-size:11px;line-height:16px;letter-spacing:0.14em;text-transform:uppercase;color:#616161;">Ważność</p>
-                  <p class="dn-atrament" style="margin:0;font-family:'IBM Plex Mono','SFMono-Regular',Consolas,'Courier New',monospace;font-size:13px;line-height:20px;color:#181818;">{{expiry_minutes}} min</p>
+                <td class="dn-linia" style="padding:0 0 10px 0;border-bottom:1px solid #E3E3E3;">
+                  <p class="dn-tekst" style="margin:0;font-family:'IBM Plex Sans','Segoe UI',Helvetica,Arial,sans-serif;font-size:14px;line-height:22px;color:#4A4A4A;">
+                    Konto, dostęp, kod logowania —
+                    <a href="mailto:{{support_address}}" class="dn-odnosnik" style="font-family:'IBM Plex Mono','SFMono-Regular',Consolas,'Courier New',monospace;color:#3B6FE0;text-decoration:none;">{{support_address}}</a>
+                  </p>
                 </td>
-                <td width="50%" style="padding:0 0 0 0;vertical-align:top;">
-                  <p class="dn-etykieta" style="margin:0 0 4px 0;font-family:'IBM Plex Mono','SFMono-Regular',Consolas,'Courier New',monospace;font-size:11px;line-height:16px;letter-spacing:0.14em;text-transform:uppercase;color:#616161;">Żądanie</p>
-                  <p class="dn-atrament" style="margin:0;font-family:'IBM Plex Mono','SFMono-Regular',Consolas,'Courier New',monospace;font-size:13px;line-height:20px;color:#181818;">{{requested_at}}</p>
+              </tr>
+              <tr>
+                <td class="dn-linia" style="padding:10px 0 10px 0;border-bottom:1px solid #E3E3E3;">
+                  <p class="dn-tekst" style="margin:0;font-family:'IBM Plex Sans','Segoe UI',Helvetica,Arial,sans-serif;font-size:14px;line-height:22px;color:#4A4A4A;">
+                    Usterka w działaniu aplikacji — okno Zgłoszenia w Danaco Console
+                  </p>
+                </td>
+              </tr>
+              <tr>
+                <td style="padding:10px 0 0 0;">
+                  <p class="dn-tekst" style="margin:0;font-family:'IBM Plex Sans','Segoe UI',Helvetica,Arial,sans-serif;font-size:14px;line-height:22px;color:#4A4A4A;">
+                    Sprawa prowadzona przez kancelarię — korespondencja przypisana do akt sprawy,
+                    nie poczta systemowa
+                  </p>
                 </td>
               </tr>
             </table>
           </td>
         </tr>
 
-        <!-- Nota bezpieczeństwa. Głos sprawczy: stan plus następny krok. -->
         <tr>
           <td class="dn-pad" style="padding:24px 32px 32px 32px;">
             <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" class="dn-linia" style="border-collapse:collapse;border-top:1px solid #E3E3E3;">
               <tr>
                 <td style="padding:20px 0 0 0;">
-                  <p class="dn-tekst" style="margin:0 0 12px 0;font-family:'IBM Plex Sans','Segoe UI',Helvetica,Arial,sans-serif;font-size:13px;line-height:20px;color:#4A4A4A;">
-                    Kod jest jednorazowy i wygasa po {{expiry_minutes}} minutach. Dotychczasowe hasło pozostaje ważne do chwili ustawienia nowego.
-                  </p>
-                  <p class="dn-tekst" style="margin:0 0 0 0;font-family:'IBM Plex Sans','Segoe UI',Helvetica,Arial,sans-serif;font-size:13px;line-height:20px;color:#4A4A4A;">
-                    Jeżeli żądanie nie pochodzi od Ciebie, zignoruj wiadomość — hasło nie zostanie zmienione. Jeżeli takie listy przychodzą wielokrotnie, zgłoś to na <a href="mailto:{{support_address}}" class="dn-odnosnik" style="font-family:'IBM Plex Mono','SFMono-Regular',Consolas,'Courier New',monospace;color:#3B6FE0;text-decoration:none;">{{support_address}}</a>, podając czas żądania z wiersza powyżej.
+                  <p class="dn-tekst" style="margin:0;font-family:'IBM Plex Sans','Segoe UI',Helvetica,Arial,sans-serif;font-size:13px;line-height:20px;color:#4A4A4A;">
+                    Ta odpowiedź jest wysyłana raz na dobę dla danego adresu nadawcy. Kolejne wiadomości
+                    nadesłane na adres <span class="dn-atrament" style="font-family:'IBM Plex Mono','SFMono-Regular',Consolas,'Courier New',monospace;color:#181818;">noreply@danaco-group.pl</span>
+                    zostaną odrzucone bez powiadomienia.
                   </p>
                 </td>
               </tr>
@@ -154,13 +175,6 @@
 
         <tr>
           <td class="dn-pad dn-stopka" style="padding:20px 32px 24px 32px;background-color:#FAFAFA;border-top:1px solid #E3E3E3;">
-            <p class="dn-etykieta" style="margin:0 0 8px 0;font-family:'IBM Plex Sans','Segoe UI',Helvetica,Arial,sans-serif;font-size:12px;line-height:18px;color:#616161;">
-              Wiadomość wysłana automatycznie z adresu
-              <span class="dn-atrament" style="font-family:'IBM Plex Mono','SFMono-Regular',Consolas,'Courier New',monospace;color:#181818;">noreply@danaco-group.pl</span>.
-              Adres nie prowadzi skrzynki odbiorczej — odpowiedź nie zostanie odczytana.
-              W sprawach konta pisz na
-              <a href="mailto:{{support_address}}" class="dn-odnosnik" style="font-family:'IBM Plex Mono','SFMono-Regular',Consolas,'Courier New',monospace;color:#3B6FE0;text-decoration:none;">{{support_address}}</a>.
-            </p>
             <p class="dn-etykieta" style="margin:0;font-family:'IBM Plex Mono','SFMono-Regular',Consolas,'Courier New',monospace;font-size:11px;line-height:16px;letter-spacing:0.04em;color:#616161;">
               Danaco Holding Group Sp. z o.o. · Danaco Console · {{year}}
             </p>

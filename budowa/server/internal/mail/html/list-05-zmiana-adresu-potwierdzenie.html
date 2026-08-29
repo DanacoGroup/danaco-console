@@ -6,7 +6,7 @@
 <meta name="x-apple-disable-message-reformatting">
 <meta name="color-scheme" content="light dark">
 <meta name="supported-color-schemes" content="light dark">
-<title>Danaco Console — kod resetu hasła</title>
+<title>Danaco Console — potwierdzenie nowego adresu</title>
 <style>
 /* Podstawą jest wariant jasny zapisany w atrybutach style. Reguły poniżej
    nadpisują wyłącznie barwy i tylko w kliencie zgłaszającym tryb ciemny.
@@ -47,26 +47,27 @@
 </head>
 <!--
   ══════════════════════════════════════════════════════════════════════════
-  DANACO CONSOLE · POCZTA TRANSAKCYJNA · LIST 4 — RESET HASŁA
+  DANACO CONSOLE · POCZTA TRANSAKCYJNA · LIST 5 — ZMIANA ADRESU, POTWIERDZENIE
   Nadawca: noreply@danaco-group.pl
-  Temat:   Danaco Console — kod resetu hasła: {{code}}
+  Odbiorca: NOWY adres konta
+  Temat:   Danaco Console — kod potwierdzenia nowego adresu: {{code}}
   Nagłówki: Auto-Submitted: auto-generated · X-Auto-Response-Suppress: All
-  Część tekstowa: ../text/list-04-reset-hasla.txt
+  Część tekstowa: ../text/list-05-zmiana-adresu-potwierdzenie.txt
 
   Zmienne: {{logo_src}} {{logo_src_dark}} {{code}} {{expiry_minutes}}
-           {{requested_at}} {{recipient_address}}
+           {{requested_at}} {{previous_address}} {{new_address}}
            {{support_address}} {{year}}
 
-  Układ wspólny z listem 2 — te same metadane żądania. Różnica w nocie:
-  samo żądanie resetu nie zmienia hasła, więc zignorowanie listu jest
-  bezpieczne i tak trzeba to napisać wprost.
+  Idzie w parze z listem 6 wysyłanym na adres dotychczasowy. Rozdzielenie
+  na dwa listy jest zabezpieczeniem przed przejęciem konta: potwierdzenie
+  trafia na nowy adres, ostrzeżenie na stary.
   Opis pełny: ../opracowanie-techniczne.md
   ══════════════════════════════════════════════════════════════════════════
 -->
 <body class="dn-tlo" style="margin:0;padding:0;background-color:#F4F4F4;-webkit-text-size-adjust:100%;">
 
 <div style="display:none;font-size:1px;line-height:1px;max-height:0;max-width:0;opacity:0;overflow:hidden;mso-hide:all;color:#FFFFFF;">
-  Kod resetu hasła: {{code}}. Ważny {{expiry_minutes}} minut.
+  Kod potwierdzenia nowego adresu: {{code}}. Ważny {{expiry_minutes}} minut.
   &#8199;&#65279;&#8199;&#65279;&#8199;&#65279;&#8199;&#65279;&#8199;&#65279;&#8199;&#65279;&#8199;&#65279;&#8199;&#65279;
 </div>
 
@@ -90,10 +91,10 @@
         <tr>
           <td class="dn-pad" style="padding:32px 32px 0 32px;">
             <p class="dn-atrament" style="margin:0 0 16px 0;font-family:'Space Grotesk','IBM Plex Sans','Segoe UI',Helvetica,Arial,sans-serif;font-size:24px;line-height:32px;font-weight:600;letter-spacing:-0.01em;color:#181818;">
-              Kod resetu hasła
+              Potwierdzenie nowego adresu
             </p>
             <p class="dn-tekst" style="margin:0 0 24px 0;font-family:'IBM Plex Sans','Segoe UI',Helvetica,Arial,sans-serif;font-size:15px;line-height:24px;color:#4A4A4A;">
-              Odnotowano żądanie zmiany hasła do konta <span class="dn-atrament" style="color:#181818;font-weight:600;">{{recipient_address}}</span>. Wprowadź kod w oknie resetu hasła, w którym trwa sesja.
+              Ten adres został wskazany jako nowy adres konta Danaco Console prowadzonego dotąd pod <span class="dn-atrament" style="font-family:'IBM Plex Mono','SFMono-Regular',Consolas,'Courier New',monospace;color:#181818;">{{previous_address}}</span>. Wprowadź kod w oknie Ustawienia konta, aby potwierdzić zmianę.
             </p>
           </td>
         </tr>
@@ -105,7 +106,7 @@
               <tr>
                 <td align="center" style="padding:24px 16px 20px 16px;">
                   <p class="dn-etykieta" style="margin:0 0 12px 0;font-family:'IBM Plex Mono','SFMono-Regular',Consolas,'Courier New',monospace;font-size:11px;line-height:16px;letter-spacing:0.14em;text-transform:uppercase;color:#616161;">
-                    Kod resetu hasła
+                    Kod potwierdzenia
                   </p>
                   <p class="dn-atrament" style="margin:0;font-family:'IBM Plex Mono','SFMono-Regular',Consolas,'Courier New',monospace;font-size:32px;line-height:40px;font-weight:600;letter-spacing:0.18em;color:#181818;">
                     {{code}}
@@ -121,13 +122,23 @@
           <td class="dn-pad" style="padding:24px 32px 0 32px;">
             <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="border-collapse:collapse;">
               <tr>
-                <td width="50%" style="padding:0 12px 0 0;vertical-align:top;">
+                <td width="50%" style="padding:0 12px 16px 0;vertical-align:top;">
                   <p class="dn-etykieta" style="margin:0 0 4px 0;font-family:'IBM Plex Mono','SFMono-Regular',Consolas,'Courier New',monospace;font-size:11px;line-height:16px;letter-spacing:0.14em;text-transform:uppercase;color:#616161;">Ważność</p>
                   <p class="dn-atrament" style="margin:0;font-family:'IBM Plex Mono','SFMono-Regular',Consolas,'Courier New',monospace;font-size:13px;line-height:20px;color:#181818;">{{expiry_minutes}} min</p>
                 </td>
-                <td width="50%" style="padding:0 0 0 0;vertical-align:top;">
+                <td width="50%" style="padding:0 0 16px 0;vertical-align:top;">
                   <p class="dn-etykieta" style="margin:0 0 4px 0;font-family:'IBM Plex Mono','SFMono-Regular',Consolas,'Courier New',monospace;font-size:11px;line-height:16px;letter-spacing:0.14em;text-transform:uppercase;color:#616161;">Żądanie</p>
                   <p class="dn-atrament" style="margin:0;font-family:'IBM Plex Mono','SFMono-Regular',Consolas,'Courier New',monospace;font-size:13px;line-height:20px;color:#181818;">{{requested_at}}</p>
+                </td>
+              </tr>
+              <tr>
+                <td width="50%" style="padding:0 12px 0 0;vertical-align:top;">
+                  <p class="dn-etykieta" style="margin:0 0 4px 0;font-family:'IBM Plex Mono','SFMono-Regular',Consolas,'Courier New',monospace;font-size:11px;line-height:16px;letter-spacing:0.14em;text-transform:uppercase;color:#616161;">Adres dotychczasowy</p>
+                  <p class="dn-atrament" style="margin:0;font-family:'IBM Plex Mono','SFMono-Regular',Consolas,'Courier New',monospace;font-size:13px;line-height:20px;color:#181818;">{{previous_address}}</p>
+                </td>
+                <td width="50%" style="padding:0 0 0 0;vertical-align:top;">
+                  <p class="dn-etykieta" style="margin:0 0 4px 0;font-family:'IBM Plex Mono','SFMono-Regular',Consolas,'Courier New',monospace;font-size:11px;line-height:16px;letter-spacing:0.14em;text-transform:uppercase;color:#616161;">Adres nowy</p>
+                  <p class="dn-atrament" style="margin:0;font-family:'IBM Plex Mono','SFMono-Regular',Consolas,'Courier New',monospace;font-size:13px;line-height:20px;color:#181818;">{{new_address}}</p>
                 </td>
               </tr>
             </table>
@@ -141,10 +152,10 @@
               <tr>
                 <td style="padding:20px 0 0 0;">
                   <p class="dn-tekst" style="margin:0 0 12px 0;font-family:'IBM Plex Sans','Segoe UI',Helvetica,Arial,sans-serif;font-size:13px;line-height:20px;color:#4A4A4A;">
-                    Kod jest jednorazowy i wygasa po {{expiry_minutes}} minutach. Dotychczasowe hasło pozostaje ważne do chwili ustawienia nowego.
+                    Kod jest jednorazowy i wygasa po {{expiry_minutes}} minutach. Do chwili potwierdzenia konto pozostaje przy adresie dotychczasowym — na ten adres idą też listy z kodem logowania.
                   </p>
                   <p class="dn-tekst" style="margin:0 0 0 0;font-family:'IBM Plex Sans','Segoe UI',Helvetica,Arial,sans-serif;font-size:13px;line-height:20px;color:#4A4A4A;">
-                    Jeżeli żądanie nie pochodzi od Ciebie, zignoruj wiadomość — hasło nie zostanie zmienione. Jeżeli takie listy przychodzą wielokrotnie, zgłoś to na <a href="mailto:{{support_address}}" class="dn-odnosnik" style="font-family:'IBM Plex Mono','SFMono-Regular',Consolas,'Courier New',monospace;color:#3B6FE0;text-decoration:none;">{{support_address}}</a>, podając czas żądania z wiersza powyżej.
+                    Jeżeli zmiana nie była zamawiana, zignoruj wiadomość. Powiadomienie o żądaniu zostało wysłane również na adres dotychczasowy.
                   </p>
                 </td>
               </tr>

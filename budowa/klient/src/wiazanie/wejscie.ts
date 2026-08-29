@@ -8,6 +8,8 @@
  * z natury nie ma: rozmowę z rdzeniem i skutek jej wyniku w znaczniku.
  */
 
+import { zwiazPowloke } from './powloka.ts';
+import { zwiazStudio } from './studio.ts';
 import {
   AuthMethodKind,
   Command,
@@ -72,6 +74,9 @@ let drogaOdzyskania = '';
 
 /** Token sesji wydany przez rdzeń; niesie go powitanie kolejnego połączenia. */
 let tokenSesji = '';
+
+/* Login, którym Operator wszedł — pasek stanu nie ma go skąd wziąć od rdzenia. */
+let ostatniLogin = '';
 
 export function zwiazWejscie(podany?: Kanal): void {
   oznaczSceny();
@@ -193,6 +198,10 @@ async function powitaj(most: Kanal | undefined): Promise<void> {
   const wynik = await zadajPowitanie(most, tozsamoscKlienta(), tokenSesji || undefined);
   odslonWariant(wynik.udany ? 'w-laczenie' : 'w-blad');
   domknijEkranStartowy();
+  /* Przejście na etap uwierzytelnienia należy do wiązania, nie do biblioteki:
+     w prototypie prowadziło je rusztowanie podglądu, którego w produkcie nie ma.
+     Bez tego okno stoi na scenie łączenia i Operator nie widzi logowania. */
+  if (wynik.udany) seam().dnPrzelaczWidok?.('uwierzytelnienie', 'etap');
 }
 
 /** Odsłona okna uruchomienia zgodna z wynikiem powitania; przebieg etapów prowadzi biblioteka. */
@@ -246,7 +255,7 @@ async function zaloguj(most: Kanal, panel: HTMLElement, odslona: Odslona): Promi
   const przedrostek = odslona === 'logowanie' ? 'log' : 'blad';
   const wynik = await wywolaj(most, Command.AuthLogin, {
     method: AuthMethodKind.Password,
-    login: wartosc(`${przedrostek}-login`),
+    login: (ostatniLogin = wartosc(`${przedrostek}-login`)),
     secret: wartosc(`${przedrostek}-haslo`),
     keepSignedIn: trwalaSesja(panel),
   });
@@ -339,6 +348,12 @@ async function wejdz(most: Kanal, sesja: AuthSession | undefined): Promise<void>
     wywolaj(most, Command.SessionList, {}),
   ]);
   odslonPowloke();
+  /* Powłoka i okno robocze przychodzą z prototypu wraz z jego treścią
+     przykładową — nazwiskiem z przykładu, zmyślonymi miarami maszyny, cudzym
+     dokumentem. Bez tych dwóch wywołań Operator ogląda przykład podany jako
+     jego własna praca. */
+  await zwiazPowloke({ login: ostatniLogin }, most);
+  zwiazStudio(most);
 }
 
 /** Zamiana sceny drogi wejścia na ramę aplikacji; oba węzły stoją w dokumencie od startu. */

@@ -19,7 +19,7 @@ import (
 // błędem — jest odpowiedzią „nie" i tak wychodzi do powitania.
 func (a *adapterUwierzytelnienia) BramkaZalozona(ctx context.Context) (bool, error) {
 	if a == nil || a.repozytorium == nil {
-		return false, bladBramki(shared.ErrorCodeInternalError, "repozytorium bramki niewpięte")
+		return false, bladBramki(shared.ErrorCodeInternalError, "Magazyn kont jest niedostępny.")
 	}
 	if _, err := a.kotwica(ctx); err != nil {
 		if errors.Is(err, dane.ErrBrakWiersza) {
@@ -36,7 +36,7 @@ func (a *adapterUwierzytelnienia) RozpoznajSesjeBramki(ctx context.Context,
 	token string) (string, bool, error) {
 
 	if a == nil || a.repozytorium == nil {
-		return "", false, bladBramki(shared.ErrorCodeInternalError, "repozytorium bramki niewpięte")
+		return "", false, bladBramki(shared.ErrorCodeInternalError, "Magazyn kont jest niedostępny.")
 	}
 	if token == "" {
 		return "", false, nil

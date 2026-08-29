@@ -60,17 +60,17 @@ func (a *adapterUwierzytelnienia) wolnoZalozyc(ctx context.Context,
 		return bladBramki(shared.ErrorCodeValidationFailed, odmowaHello)
 	case shared.AuthMethodKindPassword:
 		return bladBramki(shared.ErrorCodeValidationFailed,
-			"hasła ta komenda nie zakłada — kotwica bramki powstaje przy auth.register")
+			"Pierwsze hasło ustawia się podczas rejestracji.")
 	default:
 		return bladBramki(shared.ErrorCodeValidationFailed,
 			"rodzaj metody "+string(z.Kind)+" nie należy do kontraktu")
 	}
 	if z.DeviceId == "" {
 		return bladBramki(shared.ErrorCodeValidationFailed,
-			"założenie PIN-u bez wskazania urządzenia; PIN jest właściwy urządzeniu")
+			"Wskaż urządzenie — kod PIN obowiązuje na jednym urządzeniu.")
 	}
 	if z.Secret == nil || *z.Secret == "" {
-		return bladBramki(shared.ErrorCodeValidationFailed, "założenie PIN-u bez PIN-u")
+		return bladBramki(shared.ErrorCodeValidationFailed, "Podaj kod PIN.")
 	}
 	// Metoda szybkiego wejścia bez kotwicy zdjęta z urządzeniem zostawiłaby
 	// bramkę bez hasła.
@@ -105,7 +105,7 @@ func (a *adapterUwierzytelnienia) ZdejmijMetodeWejscia(ctx context.Context,
 	}
 	if z.MethodId == "" {
 		return shared.AuthMethodRemoveResponse{}, bladBramki(shared.ErrorCodeValidationFailed,
-			"zdjęcie metody wejścia bez jej wskazania")
+			"Wskaż metodę logowania, którą chcesz usunąć.")
 	}
 	metoda, err := a.repozytorium.MetodaPoKodzie(ctx, z.MethodId)
 	if errors.Is(err, dane.ErrBrakWiersza) {
@@ -178,7 +178,7 @@ func (a *adapterUwierzytelnienia) ZmienHasloBramki(ctx context.Context,
 	defer a.zamekZmiany.Unlock()
 	if z.CurrentPassword == "" || z.NewPassword == "" {
 		return shared.AuthPasswordResetResponse{}, bladBramki(shared.ErrorCodeValidationFailed,
-			"zmiana hasła wymaga hasła bieżącego i nowego")
+			"Podaj hasło bieżące oraz nowe.")
 	}
 	kotwica, err := a.kotwica(ctx)
 	if errors.Is(err, dane.ErrBrakWiersza) {
@@ -247,7 +247,7 @@ func (a *adapterUwierzytelnienia) PrzedluzSesjeBramki(ctx context.Context,
 		skrot = sesjaBiezacaZKontekstu(ctx)
 		if skrot == "" {
 			return shared.AuthTokenRefreshResponse{}, bladBramki(shared.ErrorCodeValidationFailed,
-				"przedłużenie bez tokenu z połączenia, które nie jest związane z żadną sesją bramki; "+
+				"Połączenie nie jest zalogowane. "+
 					"token wchodzi do serwera powitaniem connection.hello albo wejściem auth.login — "+
 					"po jednym z nich pole tokenu wolno zostawić puste")
 		}

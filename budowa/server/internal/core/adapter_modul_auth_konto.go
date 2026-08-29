@@ -204,7 +204,7 @@ func (a *adapterUwierzytelnienia) PotwierdzAdres(ctx context.Context,
 	// Znacznik bramki bez poczty przestał być prawdą — bramkę trzyma odtąd sam wiersz konta.
 	a.zdejmijZnacznikBezPoczty(ctx)
 	sesja, err := a.zalozSesje(ctx, shared.AuthMethodKindPassword,
-		niepustyTekst(z.DeviceId), wartoscPrawdy(z.KeepSignedIn))
+		niepustyTekst(z.DeviceId), wartoscPrawdy(z.KeepSignedIn), konto.Id)
 	if err != nil {
 		return shared.AuthVerifyResponse{}, err
 	}

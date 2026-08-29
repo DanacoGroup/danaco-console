@@ -253,7 +253,7 @@ func (a *adapterUwierzytelnienia) WejdzPrzezBramke(ctx context.Context,
 	if urzadzenie == nil {
 		urzadzenie = metoda.UrzadzenieKod
 	}
-	sesja, err := a.zalozSesje(ctx, metoda.Rodzaj, urzadzenie, wartoscPrawdy(z.KeepSignedIn))
+	sesja, err := a.zalozSesje(ctx, metoda.Rodzaj, urzadzenie, wartoscPrawdy(z.KeepSignedIn), konto.Id)
 	if err != nil {
 		return shared.AuthLoginResponse{}, err
 	}
@@ -442,7 +442,7 @@ func (a *adapterUwierzytelnienia) sekretZgadzaSieZWpisem(ctx context.Context,
 // kontraktu — razem z tokenem surowym, bo to jedyna chwila, w której rdzeń go
 // zna; w bazie zostaje wyłącznie skrót.
 func (a *adapterUwierzytelnienia) zalozSesje(ctx context.Context,
-	rodzaj string, urzadzenie *string, niewylogowuj bool) (shared.AuthSession, error) {
+	rodzaj string, urzadzenie *string, niewylogowuj bool, kontoId int64) (shared.AuthSession, error) {
 
 	token, err := nowyTokenBramki()
 	if err != nil {
@@ -459,6 +459,9 @@ func (a *adapterUwierzytelnienia) zalozSesje(ctx context.Context,
 		// Trwanie idzie do wiersza, żeby przełącznik „nie wyloguj mnie”
 		// obowiązywał też po odnowieniu sesji.
 		Trwanie: trwanie.Milliseconds(),
+		// Konto, któremu sesja została wydana; bez tego wskazania sesja nie
+		// mówi, czyja jest, a przy wielu kontach to jedyne, co je rozróżnia.
+		KontoId: kontoId,
 	})
 	if err != nil {
 		return shared.AuthSession{}, err

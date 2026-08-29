@@ -95,9 +95,9 @@ OKNA OPERACYJNE MODUŁU  (Chat Window ── ten dokument, rozdz. 3.5.1/4.5;    
 
 ### 1.1. Miejsce w przepływie i model jednego konta
 
-Danaco Console działa w modelu jednego właściciela (Operatora) i wielu urządzeń: jedno konto, dowolna liczba urządzeń połączonych (komputery, telefony, tablety), każde z własnym tokenem dostępu (Bezpieczeństwo i uwierzytelnianie, rozdz. 3). Z tego modelu wynikają dwa odrębne stany okna startowego, nigdy współwystępujące na tym samym urządzeniu w tej samej chwili:
+Danaco Console prowadzi konto na Operatora, a każde konto sięga dowolnej liczby urządzeń połączonych (komputery, telefony, tablety), każde z własnym tokenem dostępu (Bezpieczeństwo i uwierzytelnianie, rozdz. 3). Kont jest tyle, ilu Operatorów; nie mieszają one między sobą sesji ani dokumentów. Z tego modelu wynikają dwa odrębne stany okna startowego, nigdy współwystępujące na tym samym urządzeniu w tej samej chwili:
 
-**Schemat 2 — Rejestracja i logowanie wobec modelu „jedno konto, wiele urządzeń"**
+**Schemat 2 — Rejestracja i logowanie wobec modelu „konto na Operatora, wiele urządzeń"**
 
 ```
                     ┌─────────────────────────────────┐

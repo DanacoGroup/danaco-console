@@ -691,7 +691,7 @@ export function utworzPrzebieg(zaleznosci: ZaleznosciPrzebiegu): Przebieg {
     stany[1] = 'gotowy';
     miary[1] = {
       klucz: 'karty',
-      dane: { odtworzone: odpowiedz.sessions.length, wszystkie: odpowiedz.sessions.length },
+      dane: { odtworzone: odpowiedz.sessions.length },
     };
     zmien({
       srodowisko: odpowiedz.environment,

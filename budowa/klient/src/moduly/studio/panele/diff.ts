@@ -27,6 +27,7 @@ import { el, tekst, zeZnacznika } from '../narzedzia.ts';
 import { tresc as t } from './diff-tresci.ts';
 import type { MontazPanelu } from './umowa.ts';
 import { opisOdmowy } from '../odmowa.ts';
+import { zLiczba } from '../liczebnik.ts';
 
 /** Wynik porównania wersji, licząc trafienia wzorca jako część tej samej odpowiedzi. */
 type ZasobPorownania =
@@ -51,7 +52,7 @@ function ikonaDymek(): SVGElement {
   return zeZnacznika(ikony.dymek);
 }
 
-/** Znaczek odmowy jednakowy dla porównania, zmian i adnotacji — tytuł nazywa czynność, treść niesie powód rdzenia. */
+/** Znaczek odmowy jednakowy dla porównania, zmian i adnotacji: tytuł nazywa czynność, treść — zdanie dobrane po kodzie odmowy. */
 function alertOdmowy(tytul: string, blad?: ErrorInfo): HTMLElement {
   return el('div', { klasa: 'dn-alert dn-alert--wstega dn-alert--blad', role: 'alert' }, [
     el('span', { klasa: 'dn-alert-tresc' }, [
@@ -343,7 +344,11 @@ export const panelDiff: MontazPanelu = (wezel, zal) => {
     }
     return el('div', {
       klasa: 'dn-nota',
-      tekst: `${dodane} ${t.porownanie.dodanych} · ${usuniete} ${t.porownanie.usunietych} · ${zmienione} ${t.porownanie.zmienionych}`,
+      tekst:
+        `${t.porownanie.statystykaEtykieta} ` +
+        `${t.porownanie.znakDodania}${zLiczba(dodane, t.porownanie.jednostkaFragmenty)} · ` +
+        `${t.porownanie.znakUsuniecia}${zLiczba(usuniete, t.porownanie.jednostkaFragmenty)} · ` +
+        `${zLiczba(zmienione, t.porownanie.jednostkaZmian)}`,
     });
   }
 

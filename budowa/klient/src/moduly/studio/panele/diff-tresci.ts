@@ -15,9 +15,14 @@ export const tresc = {
     porownaj: 'Porównaj',
     ladowanie: 'Wczytywanie porównania…',
     brakRoznic: 'Wskazane wersje nie różnią się.',
-    dodanych: 'dodanych',
-    usunietych: 'usuniętych',
-    zmienionych: 'zmienionych',
+    /* Kształt zapisu z prototypu: „Statystyka: +12 … · −48 … · 3 …”, ze znakiem
+       kierunku przed liczbą. Jednostką są fragmenty różnicy, bo tyle podaje
+       serwer — prototyp liczył słowa, których rdzeń nie zwraca. */
+    statystykaEtykieta: 'Statystyka:',
+    znakDodania: '+',
+    znakUsuniecia: '−',
+    jednostkaFragmenty: { jedna: 'fragment', kilka: 'fragmenty', wiele: 'fragmentów' },
+    jednostkaZmian: { jedna: 'zmieniony fragment', kilka: 'zmienione fragmenty', wiele: 'zmienionych fragmentów' },
   },
 
   grep: {
@@ -50,6 +55,5 @@ export const tresc = {
     zmiany: 'Nie udało się wczytać wykazu zmian',
     decyzja: 'Nie udało się zapisać decyzji o zmianie',
     adnotacja: 'Nie udało się założyć adnotacji',
-    brakOpisu: 'Spróbuj ponownie. Jeżeli problem się powtarza, skontaktuj się z administratorem.',
   },
 } as const;

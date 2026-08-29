@@ -274,7 +274,10 @@ export const tresci = {
     etapy: ['Uwierzytelnienie', 'Przywracanie sesji z poprzedniej pracy'],
     miary: {
       rozpoznane: 'urządzenie rozpoznane',
-      karty: '{odtworzone} z {wszystkie} kart',
+      /* Sama liczba, bez „z ilu”: rdzeń oddaje wyłącznie karty odtworzone i nie
+         podaje, ile ich było przed zamknięciem. Zapis „N z N” udawałby miarę
+         postępu, która zawsze pokazuje komplet. */
+      karty: 'karty sesji: {odtworzone}',
       oczekuje: 'oczekuje',
     },
     postep: {
@@ -342,8 +345,6 @@ export const tresci = {
       glowa: 'Hasła nie są zgodne.',
       tresc: 'Wpisz to samo hasło w obu polach.',
     },
-    /* Odmowa rdzenia niesie własny opis — rdzeń wie o powodzie więcej niż okno.
-       Katalog daje jej wyłącznie głowę; treścią jest to, co powiedział rdzeń. */
     /* Zdanie dla Operatora dobierane po kodzie odmowy. Serwer opisuje odmowę
        językiem swojego wnętrza i tę treść okno odkłada wyłącznie do dziennika;
        do widoku idzie zdanie stąd. Każdy kod z katalogu `ErrorCode` musi mieć

@@ -16,8 +16,10 @@ export const tresciNarzedzi = {
     zaznaczenie: 'Zaznaczenie',
     dokument: 'Cały dokument',
     etykietaRozmiaru: 'Zakres:',
-    jednostkaZnaki: 'znaków',
-    jednostkaSlowa: 'słów',
+    /* Trzy formy każdego rzeczownika: „1 znak”, „3 znaki”, „7 znaków”.
+       Formę wybiera `liczebnik.ts`, słowa stoją tutaj — w katalogu. */
+    jednostkaZnaki: { jedna: 'znak', kilka: 'znaki', wiele: 'znaków' },
+    jednostkaSlowa: { jedna: 'słowo', kilka: 'słowa', wiele: 'słów' },
     brakDokumentu: 'W tym oknie nie ma dokumentu.',
     brakZaznaczenia: 'Nie zaznaczono fragmentu dokumentu.',
   },
@@ -37,6 +39,5 @@ export const tresciNarzedzi = {
     brakOkna: 'Nie udało się otworzyć okna modułu.',
     lista: 'Nie udało się wczytać wykazu operacji',
     uruchomienie: 'Nie udało się uruchomić operacji',
-    brakOpisu: 'Spróbuj ponownie. Jeżeli problem się powtarza, skontaktuj się z administratorem.',
   },
 } as const;

@@ -88,6 +88,11 @@ const (
 	PowodKontoIstnieje = "konto-istnieje"
 	// PowodKolizjaDanych oznacza, że podany login albo adres jest już zajęty.
 	PowodKolizjaDanych = "kolizja-danych"
+	/* PowodAdresNiepotwierdzony oznacza konto założone, którego adresu nikt nie
+	   potwierdził. Okno ma po nim rozpoznać, że hasło jest dobre, a brakuje
+	   wyłącznie kodu z listu — i zaprowadzić Operatora na odsłonę kodu zamiast
+	   mówić mu, że danych nie rozpoznano. */
+	PowodAdresNiepotwierdzony = "adres-niepotwierdzony"
 )
 
 // bladBramkiZPowodem dokłada do odmowy maszynowy powód w polu `details`.

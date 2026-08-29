@@ -48,19 +48,24 @@ export function poleKodu(w: WlasciwosciKodu): HTMLElement[] {
         `${tekst('dostep.kod.odliczanie')} `,
         el('b', { dane: { odliczanie: w.odliczanie } }),
       ]),
-      w.czynnosc === 'ponow'
+      /* Wklejenie jest wygodą, ponowienie wysyłki drogą wyjścia — Operator
+         potrzebuje obu naraz. Sam przycisk wklejenia zostawiał go bez wyjścia,
+         gdy list nie doszedł albo kod stracił ważność; zdanie obok mówiło
+         „wyślij go ponownie”, a nie było czym. */
+      w.czynnosc === 'wklej'
         ? el('button', {
-            klasa: 'au-link',
-            type: 'button',
-            tekst: tekst('dostep.kod.ponow'),
-            dane: { czynnosc: 'ponow-droge' },
-          })
-        : el('button', {
             klasa: 'dn-btn dn-btn--duch dn-btn--sm',
             type: 'button',
             tekst: tekst('dostep.kod.wklej'),
             dane: { 'wklej-kod': w.grupa },
-          }),
+          })
+        : null,
+      el('button', {
+        klasa: 'au-link',
+        type: 'button',
+        tekst: tekst('dostep.kod.ponow'),
+        dane: { czynnosc: 'ponow-droge' },
+      }),
     ]),
   ];
 }

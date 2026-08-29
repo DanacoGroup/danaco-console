@@ -11,11 +11,38 @@
  * dokument Studia do Library, a przycisk czynny bez komendy byłby atrapą.
  * Tabliczka sesji niesie tytuł sesji bieżącej, gdy rdzeń go podał;
  * w przeciwnym razie nazwany stan pusty, nie wymyślona nazwa.
+ *
+ * Miejsce stanu (`st-wstazka-stan`) po prawej stronie odstępu czyta wyłącznie
+ * kartę sesji z rdzenia: plakietka nazywa stan sesji, miara podaje godzinę
+ * ostatniej zmiany. Bez karty sesji stoi tam nazwany stan pusty.
  */
 
-import type { Session } from '../../../../../shared/contract.ts';
+import { SessionStatus, type Session } from '../../../../../shared/contract.ts';
 import { ikony, type NazwaZnaku } from '../ikony.ts';
 import { el, tekst, zeZnacznika } from '../narzedzia.ts';
+
+/* Napisy miejsca stanu zebrane w jednym miejscu pliku: katalog
+   `moduly/studio/tresci.ts` leży poza terenem tej zmiany. Nazwy stanów idą
+   za opisem `SessionStatus` w umowie z rdzeniem. */
+const TRESC_STANU = {
+  stany: {
+    [SessionStatus.Active]: 'czynna',
+    [SessionStatus.Paused]: 'wstrzymana',
+    [SessionStatus.Finished]: 'zakończona',
+    [SessionStatus.Archived]: 'zarchiwizowana',
+  },
+  zmieniono: 'zmieniono {godzina}',
+  bezStanu: 'bez karty sesji',
+} as const;
+
+/* Barwa plakietki oddaje wagę stanu: sesja czynna sygnałem, wstrzymana
+   ostrzeżeniem, zakończona sukcesem, zarchiwizowana informacją. */
+const ODMIANA_STANU = {
+  [SessionStatus.Active]: 'dn-plakietka--sygnal',
+  [SessionStatus.Paused]: 'dn-plakietka--ostrzezenie',
+  [SessionStatus.Finished]: 'dn-plakietka--sukces',
+  [SessionStatus.Archived]: 'dn-plakietka--informacja',
+} as const;
 
 export interface WlasciwosciWstazki {
   /** Karty sesji odtworzone przez rdzeń — pierwsza nazywa tabliczkę sesji. */
@@ -40,6 +67,27 @@ function przyciskIkony(rysunek: NazwaZnaku, etykieta: string, atrybuty?: Record<
 
 function grupa(etykieta: string, dzieci: HTMLElement[]): HTMLElement {
   return el('span', { klasa: 'st-wstazka-grupa', role: 'group', 'aria-label': etykieta }, dzieci);
+}
+
+function godzina(znacznikCzasu: number): string {
+  return new Date(znacznikCzasu).toLocaleTimeString('pl-PL', { hour: '2-digit', minute: '2-digit' });
+}
+
+/* Tętno tylko przy sesji czynnej: przy sesji wstrzymanej albo zamkniętej
+   pulsujący znak mówiłby o pracy, której nie ma. */
+function miejsceStanu(sesja: Session | undefined): HTMLElement {
+  if (sesja === undefined) {
+    return el('span', { klasa: 'st-wstazka-stan' }, [el('span', { klasa: 'st-miara', tekst: TRESC_STANU.bezStanu })]);
+  }
+  const plakietka = el('span', { klasa: `dn-plakietka ${ODMIANA_STANU[sesja.status]}` }, [
+    sesja.status === SessionStatus.Active ? el('span', { klasa: 'pt-tetno', 'aria-hidden': 'true' }) : null,
+    TRESC_STANU.stany[sesja.status],
+  ]);
+  const miara = el('span', {
+    klasa: 'st-miara',
+    tekst: TRESC_STANU.zmieniono.replace('{godzina}', godzina(sesja.updatedAt)),
+  });
+  return el('span', { klasa: 'st-wstazka-stan' }, [plakietka, miara]);
 }
 
 /* Przełącznik atrybutu na węźle wskazanym z wnętrza bryły: wstążka powstaje
@@ -102,6 +150,7 @@ export function wstazkaOkna(w: WlasciwosciWstazki): HTMLElement {
       [uruchomOperacje, wyslijDoLibrary],
     ),
     el('span', { klasa: 'st-wstazka-odstep' }),
+    miejsceStanu(w.sesje[0]),
     przyciskIkony('dostosuj', tekst('wstazka.dostosuj')),
   ]);
 }

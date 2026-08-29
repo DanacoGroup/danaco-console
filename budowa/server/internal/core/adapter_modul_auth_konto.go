@@ -60,7 +60,7 @@ func (a *adapterUwierzytelnienia) kontoPotwierdzone(ctx context.Context,
 	if _, bezPoczty := a.znacznikBezPoczty(ctx); bezPoczty {
 		return nil
 	}
-	return bladBramki(shared.ErrorCodeNotAuthenticated,
+	return bladBramkiZPowodem(shared.ErrorCodeNotAuthenticated, PowodAdresNiepotwierdzony,
 		"Konto oczekuje na potwierdzenie adresu "+konto.Email+
 			". Wprowadź kod potwierdzający z wiadomości — do tego czasu wejście "+
 			"jest zamknięte, bo adresem odzyskuje się konto po utracie hasła.")
@@ -313,17 +313,38 @@ func (a *adapterUwierzytelnienia) RozpocznijOdzyskanie(ctx context.Context,
 		return shared.AuthRecoverResponse{}, bladBramki(shared.ErrorCodeValidationFailed,
 			"Podaj adres e-mail konta.")
 	}
-	konto, err := a.konto.Konto(ctx)
+	/* Konto wskazuje podany adres, nie kolejność założenia. Odczyt „konta
+	   najstarszego” pochodził z czasu, gdy konto było jedno; przy wielu kontach
+	   odsyłał każdy adres poza pierwszym z odpowiedzią „wysłano” i nie wysyłał
+	   nic — Operator czekał na list, który nigdy nie powstał. */
+	konto, err := a.konto.KontoPoTozsamosci(ctx, email)
 	if errors.Is(err, dane.ErrBrakWiersza) {
+		/* Adres nieznany odpowiada tak samo jak znany: inaczej pytanie o kolejne
+		   adresy wskazywałoby, które z nich mają konto. */
 		return shared.AuthRecoverResponse{Sent: true}, nil
 	}
 	if err != nil {
 		return shared.AuthRecoverResponse{}, err
 	}
 	if !strings.EqualFold(konto.Email, email) {
+		// Wskazanie trafiło w login, nie w adres — droga odzyskania idzie adresem.
 		return shared.AuthRecoverResponse{Sent: true}, nil
 	}
-	if err := a.wyslijDrogePotwierdzenia(ctx, dane.CelOdzyskanie, konto.Email, konto.Id); err != nil {
+	/*
+		Konto niepotwierdzone dostaje kod aktywacji, nie kod odzyskania.
+
+		Odzyskać można dostęp do konta, które kiedyś działało; konto bez
+		potwierdzonego adresu nigdy nie zostało otwarte, a jego jedyną przeszkodą
+		jest brak aktywacji. Kod odzyskania jej nie zdejmuje — droga potwierdzenia
+		rozróżnia cele i kodu jednego celu nie przyjmuje w drugim. Bez tego Operator
+		stał przed wejściem zamkniętym, a jedyna droga, którą okno mu podawało,
+		wydawała kod nieprzydatny do niczego.
+	*/
+	cel := dane.CelOdzyskanie
+	if !konto.Potwierdzone {
+		cel = dane.CelWeryfikacja
+	}
+	if err := a.wyslijDrogePotwierdzenia(ctx, cel, konto.Email, konto.Id); err != nil {
 		return shared.AuthRecoverResponse{}, err
 	}
 	return shared.AuthRecoverResponse{Sent: true}, nil

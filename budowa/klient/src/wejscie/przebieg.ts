@@ -501,7 +501,7 @@ export function utworzPrzebieg(zaleznosci: ZaleznosciPrzebiegu): Przebieg {
       keepSignedIn: dane.niewylogowuj === true,
     });
     if (!wynik.udany) {
-      nazwijOdmoweLogowania(wynik);
+      nazwijOdmoweLogowania(wynik, dane.login.trim());
       return;
     }
     const odpowiedz = wynik.wynik;
@@ -525,7 +525,24 @@ export function utworzPrzebieg(zaleznosci: ZaleznosciPrzebiegu): Przebieg {
   }
 
   /** Odmowa logowania. Progu prób nie ma — okno przechodzi do zwłoki tylko, gdy da się ją nazwać. */
-  function nazwijOdmoweLogowania(wynik: Wynik<unknown>): void {
+  function nazwijOdmoweLogowania(wynik: Wynik<unknown>, wskazanie: string): void {
+    /* Konto założone, którego adresu nikt nie potwierdził, nie jest złym hasłem:
+       hasło jest dobre, brakuje kodu z listu. Zdanie „nie rozpoznano danych
+       logowania” byłoby wtedy nieprawdą, a Operator szukałby usterki w haśle.
+       Okno prowadzi go tam, gdzie kod się wpisuje. */
+    if (powodOdmowy(wynik.blad) === 'adres-niepotwierdzony') {
+      /* Adres idzie z pola logowania: odsłona kodu wpisuje go w zdanie i bierze
+         do ponowienia wysyłki. Bez niego zdanie brzmiałoby „Na adres wysłaliśmy
+         kod” bez adresu, a ponowienie nie miałoby dokąd pójść. */
+      zmien({
+        zwlokaS: 0,
+        odslona: 'kod',
+        adres: wskazanie,
+        kontoOperatora: wskazanie,
+        usterki: [{ klucz: 'adresNiepotwierdzony' }],
+      });
+      return;
+    }
     const zwlokaS = wynik.blad?.code === ErrorCode.NotAuthenticated ? zmierzonaZwlokaS() : 0;
     if (zwlokaS > 0) {
       zmien({ zwlokaS, odslona: 'logowanie-wstrzymane', usterki: [] });

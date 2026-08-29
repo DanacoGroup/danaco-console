@@ -347,6 +347,12 @@ export const tresci = {
       glowa: 'Konto z podanym adresem e-mail lub loginem już istnieje.',
       tresc: 'Podaj inny adres i login albo zaloguj się na istniejące konto.',
     },
+    /* Hasło było dobre — brakuje wyłącznie kodu z listu. Zdanie mówi to wprost,
+       żeby Operator nie szukał usterki w haśle. */
+    adresNiepotwierdzony: {
+      glowa: 'Konto czeka na potwierdzenie adresu.',
+      tresc: 'Hasło jest poprawne. Wprowadź kod z wiadomości, aby dokończyć zakładanie konta.',
+    },
     loginZajety: {
       glowa: 'Ten login jest już zajęty.',
       tresc: 'Wybierz inny login. Adres e-mail może pozostać bez zmian.',

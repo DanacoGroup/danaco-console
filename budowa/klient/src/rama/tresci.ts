@@ -9,6 +9,9 @@ export type WezelTresci = string | number | { [klucz: string]: WezelTresci };
 export const tresci = {
   belka: {
     marka: 'Danaco Console',
+    /* Nazwa okna w belce tytułowej. Biblioteka powłoki niesie w tym miejscu
+       nazwę okna rejestracji — zostaje podmieniona po zamontowaniu. */
+    tytul: 'Danaco Console',
     separator: '›',
     minimalizuj: 'Minimalizuj okno',
     maksymalizuj: 'Maksymalizuj okno',

@@ -1,21 +1,19 @@
 /**
- * Panel Tools Panel okna Studia. Operacje modelu na zaznaczeniu albo na
- * całym dokumencie okna: wykaz operacji — fabrycznych i własnych Operatora —
- * wczytany komendą `studio.operation.list`, przełącznik zasięgu i uruchomienie
- * wybranej operacji komendą `studio.contextual.op`.
+ * Panel Tools Panel okna Studia. Kształt wzięty ze źródła prawdy
+ * `design/05-okna/moduly/studio.html`, `section#panel-tools`: przełącznik
+ * zakresu, etykieta rozmiaru zakresu, wykaz operacji rozpisany kategoriami
+ * i przycisk „Uruchom operację”.
  *
- * Dokument, na którym operacje działają, panel poznaje ze zdarzenia rdzenia
+ * Wykaz operacji przychodzi komendą `studio.operation.list` — żadna pozycja
+ * nie jest wpisana w kod. Wybraną pozycję puszcza `studio.contextual.op`,
+ * własną zakłada `studio.operation.save`, a zdejmuje `studio.operation.delete`.
+ * Osobnym torem stoi `studio.search.semantic`: szuka w dokumencie fragmentów
+ * bliskich zapytaniu, gdy dosłowne dopasowanie nie wystarcza.
+ *
+ * Dokument, na którym operacje działają, panel poznaje ze zdarzenia
  * `studio.document.changed` ograniczonego do własnego okna — kontrakt nie
  * niesie komendy zwracającej wprost dokument otwarty w oknie, a to samo
- * zdarzenie dochodzi do Studio Editor przy każdym założeniu i zapisie
- * dokumentu. Zaznaczenie w edytorze jest stanem samej przeglądarki, nie bytem
- * rdzenia, więc rozmiar zakresu „Zaznaczenie” panel nazywa stanem pustym,
- * dopóki rdzeń nie zacznie go podawać osobną drogą.
- *
- * `studio.operation.save`, `studio.operation.delete` i `studio.search.semantic`
- * nie mają w źródle kształtu (`design/05-okna/moduly/studio.html`,
- * `section#panel-tools`) żadnej powierzchni sterowania — panel ich nie woła,
- * żeby nie dokładać układu, którego prototyp nie niesie.
+ * zdarzenie dochodzi do Studio Editor przy każdym założeniu i zapisie.
  */
 
 import {
@@ -26,6 +24,7 @@ import {
   type ErrorInfo,
   type StudioDocument,
   type StudioOperation,
+  type StudioSemanticMatch,
 } from '../../../../../shared/contract.ts';
 import { wywolaj } from '../../../protokol/wywolanie.ts';
 import { ikony } from '../ikony.ts';
@@ -38,8 +37,26 @@ import { zLiczba } from '../liczebnik.ts';
 type StanBiegu =
   | { rodzaj: 'spoczynek' }
   | { rodzaj: 'uruchamia' }
-  | { rodzaj: 'wynik'; tresc?: string }
+  | { rodzaj: 'wynik'; tresc?: string; propozycja?: string }
   | { rodzaj: 'odmowa'; etykieta: string; blad?: ErrorInfo };
+
+type StanUsuwania =
+  | { rodzaj: 'spoczynek' }
+  | { rodzaj: 'usuwa' }
+  | { rodzaj: 'fabryczna' }
+  | { rodzaj: 'odmowa'; blad?: ErrorInfo };
+
+type StanZapisu =
+  | { rodzaj: 'spoczynek' }
+  | { rodzaj: 'zapisuje' }
+  | { rodzaj: 'zapisana' }
+  | { rodzaj: 'odmowa'; blad?: ErrorInfo };
+
+type StanSzukania =
+  | { rodzaj: 'spoczynek' }
+  | { rodzaj: 'szuka' }
+  | { rodzaj: 'wynik'; dopasowania: StudioSemanticMatch[] }
+  | { rodzaj: 'odmowa'; blad?: ErrorInfo };
 
 type Stan =
   | { rodzaj: 'brakOkna' }
@@ -78,6 +95,21 @@ export const montujPanelTools: MontazPanelu = (wezel, zaleznosci) => {
   let zakres: StudioOperationScope = StudioOperationScope.Selection;
   let wybrana: string | null = null;
   let bieg: StanBiegu = { rodzaj: 'spoczynek' };
+  let usuwanie: StanUsuwania = { rodzaj: 'spoczynek' };
+  let zapis: StanZapisu = { rodzaj: 'spoczynek' };
+  let szukanie: StanSzukania = { rodzaj: 'spoczynek' };
+
+  /* Treść pól trzymana poza węzłami: widok przebudowuje się w całości po każdej
+     odpowiedzi, a wpis Operatora ma to przetrwać. */
+  let nazwaWlasna = '';
+  let kategoriaWlasna = '';
+  let trescWlasna = '';
+  let zapytanie = '';
+
+  /* Uchwyty do przycisków zależnych od wpisu — trzymane, żeby wpis zmieniał
+     samą ich dostępność, bez przebudowy widoku. */
+  let przyciskZapisu: HTMLButtonElement | null = null;
+  let przyciskSzukania: HTMLButtonElement | null = null;
 
   const tresc = el('div', { klasa: 'sta-okno-tresc st-panel-lista' });
   wezel.classList.add('sta-okno');
@@ -87,6 +119,10 @@ export const montujPanelTools: MontazPanelu = (wezel, zaleznosci) => {
     ]),
     tresc,
   );
+
+  function operacjaWybrana(): StudioOperation | null {
+    return operacje.find((op) => op.id === wybrana) ?? null;
+  }
 
   function przelacznikZakresu(): HTMLElement {
     function przycisk(wartosc: StudioOperationScope, etykieta: string): HTMLElement {
@@ -129,9 +165,9 @@ export const montujPanelTools: MontazPanelu = (wezel, zaleznosci) => {
   function wierszOperacji(op: StudioOperation): HTMLElement {
     const aktywna = wybrana === op.id;
     const dzieci: Dziecko[] = [
-      el('span', { klasa: `dn-kropka ${aktywna ? 'dn-kropka--sukces' : 'dn-kropka--neutralna'}`, 'aria-hidden': 'true' }),
       op.name,
       op.builtin ? null : el('span', { klasa: 'dn-meta', tekst: T.operacje.wlasna }),
+      el('span', { klasa: 'dn-meta', tekst: aktywna ? T.operacje.znakWyboru : T.operacje.znakWiersza }),
     ];
     /* `<div>`, jak w źródle kształtu — `.st-panel-wiersz` nie niesie resetu
        wyglądu natywnego przycisku, więc rolę i klawiaturę dokłada się wprost
@@ -143,6 +179,7 @@ export const montujPanelTools: MontazPanelu = (wezel, zaleznosci) => {
     );
     const przelacz = (): void => {
       wybrana = aktywna ? null : op.id;
+      usuwanie = { rodzaj: 'spoczynek' };
       odswiezGotowy();
     };
     wiersz.addEventListener('click', przelacz);
@@ -176,8 +213,15 @@ export const montujPanelTools: MontazPanelu = (wezel, zaleznosci) => {
         return [];
       case 'uruchamia':
         return [wierszPulsu(T.uruchom.wBiegu)];
-      case 'wynik':
-        return [el('div', { klasa: 'dn-nota' }, [bieg.tresc ?? T.uruchom.brakWyniku])];
+      case 'wynik': {
+        const wezly = [el('div', { klasa: 'dn-nota', tekst: bieg.tresc ?? T.uruchom.brakWyniku })];
+        /* Propozycję zmiany ogląda się w karcie Diff/Grep Panel — tutaj zostaje
+           samo zdanie o tym, że powstała, żeby wynik nie wyglądał na zgubiony. */
+        if (bieg.propozycja !== undefined) {
+          wezly.push(el('div', { klasa: 'dn-nota', tekst: T.uruchom.propozycja }));
+        }
+        return wezly;
+      }
       case 'odmowa':
         return [alert(bieg.etykieta, bieg.blad)];
     }
@@ -195,8 +239,170 @@ export const montujPanelTools: MontazPanelu = (wezel, zaleznosci) => {
     return przycisk;
   }
 
+  /* Zdejmowanie stoi osobno, nie w wierszu wykazu: przycisk w wierszu z rolą
+     przycisku dawałby dwa sterowania jedno w drugim i klawiatura gubiłaby, na
+     którym z nich stoi. */
+  function widokUsuwania(): HTMLElement[] {
+    const op = operacjaWybrana();
+    if (op === null || op.builtin) return [];
+    const przycisk = el('button', {
+      klasa: 'dn-btn dn-btn--duch dn-btn--sm',
+      type: 'button',
+      disabled: usuwanie.rodzaj === 'usuwa',
+      tekst: usuwanie.rodzaj === 'usuwa' ? T.usun.wBiegu : T.usun.przycisk,
+    });
+    przycisk.addEventListener('click', () => void usunOperacje(op.id));
+    const wezly = [przycisk];
+    if (usuwanie.rodzaj === 'fabryczna') wezly.push(el('div', { klasa: 'dn-nota', tekst: T.usun.fabryczna }));
+    if (usuwanie.rodzaj === 'odmowa') wezly.push(alert(T.odmowa.usuniecie, usuwanie.blad));
+    return wezly;
+  }
+
+  function polePisane(
+    etykieta: string,
+    zastepcza: string,
+    wartosc: string,
+    zapisz: (nowa: string) => void,
+  ): HTMLInputElement {
+    const pole = el('input', {
+      klasa: 'dn-pole-kontrolka',
+      type: 'text',
+      'aria-label': etykieta,
+      placeholder: zastepcza,
+      value: wartosc,
+    }) as HTMLInputElement;
+    pole.addEventListener('input', () => {
+      zapisz(pole.value);
+      odswiezStanPrzyciskow();
+    });
+    return pole;
+  }
+
+  function sekcjaZapisu(): HTMLElement[] {
+    const naglowek = el('div', { klasa: 'pt-etykieta st-odsun-sekcja', tekst: T.zapis.naglowek });
+    const poleNazwy = polePisane(T.zapis.etykietaNazwy, T.zapis.zastepczaNazwa, nazwaWlasna, (nowa) => {
+      nazwaWlasna = nowa;
+    });
+    const poleKategorii = polePisane(T.zapis.etykietaKategorii, T.zapis.zastepczaKategoria, kategoriaWlasna, (nowa) => {
+      kategoriaWlasna = nowa;
+    });
+    const poleTresci = polePisane(T.zapis.etykietaTresci, T.zapis.zastepczaTresc, trescWlasna, (nowa) => {
+      trescWlasna = nowa;
+    });
+    przyciskZapisu = el('button', {
+      klasa: 'dn-btn dn-btn--zarys dn-btn--sm',
+      type: 'button',
+      disabled: !zapisGotowy(),
+      tekst: zapis.rodzaj === 'zapisuje' ? T.zapis.wBiegu : T.zapis.przycisk,
+    }) as HTMLButtonElement;
+    przyciskZapisu.addEventListener('click', () => void zapiszOperacje());
+
+    const wezly = [
+      naglowek,
+      el('div', { klasa: 'st-panel-wiersz' }, [poleNazwy]),
+      el('div', { klasa: 'st-panel-wiersz' }, [poleKategorii]),
+      el('div', { klasa: 'st-panel-wiersz' }, [el('div', { klasa: 'dn-pole-zestaw' }, [poleTresci, przyciskZapisu])]),
+    ];
+    if (zapis.rodzaj === 'zapisana') wezly.push(el('div', { klasa: 'dn-nota', tekst: T.zapis.zapisana }));
+    if (zapis.rodzaj === 'odmowa') wezly.push(alert(T.odmowa.zapis, zapis.blad));
+    return wezly;
+  }
+
+  function opisDopasowania(dopasowanie: StudioSemanticMatch): string {
+    const bliskosc = `${T.szukanie.bliskosc} ${dopasowanie.score.toFixed(2)}`;
+    if (dopasowanie.line === undefined) return bliskosc;
+    return `${T.szukanie.wiersz} ${dopasowanie.line} · ${bliskosc}`;
+  }
+
+  function widokSzukania(): HTMLElement[] {
+    switch (szukanie.rodzaj) {
+      case 'spoczynek':
+        return [];
+      case 'szuka':
+        return [wierszPulsu(T.szukanie.wBiegu)];
+      case 'wynik':
+        if (szukanie.dopasowania.length === 0) {
+          return [el('p', { klasa: 'dn-pusty-stan dn-pusty-stan--zwarty', tekst: T.szukanie.brakDopasowan })];
+        }
+        return szukanie.dopasowania.map((dopasowanie) =>
+          el('div', { klasa: 'st-panel-wiersz' }, [
+            el('span', { tekst: dopasowanie.text }),
+            el('span', { klasa: 'dn-meta', tekst: opisDopasowania(dopasowanie) }),
+          ]),
+        );
+      case 'odmowa':
+        return [alert(T.odmowa.szukanie, szukanie.blad)];
+    }
+  }
+
+  function sekcjaSzukania(): HTMLElement[] {
+    const pole = el('input', {
+      type: 'search',
+      'aria-label': T.szukanie.etykieta,
+      placeholder: T.szukanie.zastepczaTresc,
+      value: zapytanie,
+      disabled: dokument === null,
+    }) as HTMLInputElement;
+    pole.addEventListener('input', () => {
+      zapytanie = pole.value;
+      odswiezStanPrzyciskow();
+    });
+    pole.addEventListener('keydown', (zdarzenie) => {
+      if (zdarzenie.key === 'Enter') void szukajZnaczeniowo();
+    });
+    przyciskSzukania = el('button', {
+      klasa: 'dn-btn dn-btn--duch dn-btn--sm',
+      type: 'button',
+      disabled: !szukanieGotowe(),
+      tekst: szukanie.rodzaj === 'szuka' ? T.szukanie.wBiegu : T.szukanie.przycisk,
+    }) as HTMLButtonElement;
+    przyciskSzukania.addEventListener('click', () => void szukajZnaczeniowo());
+
+    return [
+      el('div', { klasa: 'pt-etykieta st-odsun-sekcja', tekst: T.szukanie.naglowek }),
+      el('div', { klasa: 'st-panel-wiersz' }, [
+        el('label', { klasa: 'dn-szukaj st-szukaj-odsun' }, [znak('szukaj'), pole]),
+        przyciskSzukania,
+      ]),
+      ...widokSzukania(),
+    ];
+  }
+
+  function zapisGotowy(): boolean {
+    return (
+      zapis.rodzaj !== 'zapisuje' &&
+      nazwaWlasna.trim() !== '' &&
+      kategoriaWlasna.trim() !== '' &&
+      trescWlasna.trim() !== ''
+    );
+  }
+
+  function szukanieGotowe(): boolean {
+    return szukanie.rodzaj !== 'szuka' && dokument !== null && zapytanie.trim() !== '';
+  }
+
+  /* Przebudowa całego widoku przy każdym znaku gubiłaby ognisko pola, więc wpis
+     rusza wyłącznie dostępnością przycisków, do których się odnosi. */
+  function odswiezStanPrzyciskow(): void {
+    if (przyciskZapisu !== null) przyciskZapisu.disabled = !zapisGotowy();
+    if (przyciskSzukania !== null) przyciskSzukania.disabled = !szukanieGotowe();
+  }
+
   function widokGotowy(): HTMLElement[] {
-    return [przelacznikZakresu(), etykietaRozmiaru(), ...listaOperacji(), ...widokBiegu(), przyciskUruchom()];
+    return [
+      przelacznikZakresu(),
+      etykietaRozmiaru(),
+      ...listaOperacji(),
+      /* Prototyp pokazuje przy części operacji wybór wariantu („Zmień styl ▾”).
+         Operacje przychodzą bez opisu swoich ustawień, więc zamiast pustego
+         rozwinięcia stoi zdanie nazywające tę niegotowość. */
+      el('div', { klasa: 'dn-nota', tekst: T.operacje.warianty }),
+      ...widokBiegu(),
+      przyciskUruchom(),
+      ...widokUsuwania(),
+      ...sekcjaSzukania(),
+      ...sekcjaZapisu(),
+    ];
   }
 
   function zawartosc(s: Stan): HTMLElement[] {
@@ -214,22 +420,27 @@ export const montujPanelTools: MontazPanelu = (wezel, zaleznosci) => {
 
   function odswiez(s: Stan): void {
     stan = s;
+    przyciskZapisu = null;
+    przyciskSzukania = null;
     tresc.replaceChildren(...zawartosc(s));
   }
 
   function odswiezGotowy(): void {
     if (stan.rodzaj !== 'gotowy') return;
-    tresc.replaceChildren(...zawartosc(stan));
+    odswiez(stan);
   }
 
-  async function zaladujOperacje(): Promise<void> {
+  async function zaladujOperacje(pierwsze: boolean): Promise<void> {
     const wynik = await wywolaj(zaleznosci.kanal, Command.StudioOperationList, {});
     if (zdjete) return;
     if (!wynik.udany || wynik.wynik === undefined) {
-      odswiez({ rodzaj: 'odmowaListy', blad: wynik.blad });
+      /* Odmowa przy odświeżeniu po zapisie nie zwija całej karty — wykaz sprzed
+         wywołania zostaje, a zdanie o odmowie idzie tam, gdzie czynność stała. */
+      if (pierwsze) odswiez({ rodzaj: 'odmowaListy', blad: wynik.blad });
       return;
     }
     operacje = wynik.wynik.operations;
+    if (wybrana !== null && operacjaWybrana() === null) wybrana = null;
     odswiez({ rodzaj: 'gotowy' });
   }
 
@@ -250,8 +461,70 @@ export const montujPanelTools: MontazPanelu = (wezel, zaleznosci) => {
     });
     if (zdjete) return;
     bieg = wynik.udany
-      ? { rodzaj: 'wynik', tresc: wynik.wynik?.resultText }
+      ? { rodzaj: 'wynik', tresc: wynik.wynik?.resultText, propozycja: wynik.wynik?.proposalId }
       : { rodzaj: 'odmowa', etykieta: T.odmowa.uruchomienie, blad: wynik.blad };
+    odswiezGotowy();
+  }
+
+  async function zapiszOperacje(): Promise<void> {
+    if (!zapisGotowy()) return;
+    zapis = { rodzaj: 'zapisuje' };
+    odswiezGotowy();
+
+    const wynik = await wywolaj(zaleznosci.kanal, Command.StudioOperationSave, {
+      name: nazwaWlasna.trim(),
+      category: kategoriaWlasna.trim(),
+      prompt: trescWlasna.trim(),
+    });
+    if (zdjete) return;
+    if (!wynik.udany || wynik.wynik === undefined) {
+      zapis = { rodzaj: 'odmowa', blad: wynik.blad };
+      odswiezGotowy();
+      return;
+    }
+    nazwaWlasna = '';
+    kategoriaWlasna = '';
+    trescWlasna = '';
+    zapis = { rodzaj: 'zapisana' };
+    await zaladujOperacje(false);
+  }
+
+  async function usunOperacje(operacjaId: string): Promise<void> {
+    usuwanie = { rodzaj: 'usuwa' };
+    odswiezGotowy();
+
+    const wynik = await wywolaj(zaleznosci.kanal, Command.StudioOperationDelete, { operationId: operacjaId });
+    if (zdjete) return;
+    if (!wynik.udany || wynik.wynik === undefined) {
+      usuwanie = { rodzaj: 'odmowa', blad: wynik.blad };
+      odswiezGotowy();
+      return;
+    }
+    if (!wynik.wynik.deleted) {
+      usuwanie = { rodzaj: 'fabryczna' };
+      odswiezGotowy();
+      return;
+    }
+    usuwanie = { rodzaj: 'spoczynek' };
+    wybrana = null;
+    await zaladujOperacje(false);
+  }
+
+  async function szukajZnaczeniowo(): Promise<void> {
+    const dokumentBiezacy = dokument;
+    if (!szukanieGotowe() || dokumentBiezacy === null) return;
+    szukanie = { rodzaj: 'szuka' };
+    odswiezGotowy();
+
+    const wynik = await wywolaj(zaleznosci.kanal, Command.StudioSearchSemantic, {
+      documentId: dokumentBiezacy.id,
+      query: zapytanie.trim(),
+    });
+    if (zdjete) return;
+    szukanie =
+      wynik.udany && wynik.wynik !== undefined
+        ? { rodzaj: 'wynik', dopasowania: wynik.wynik.matches }
+        : { rodzaj: 'odmowa', blad: wynik.blad };
     odswiezGotowy();
   }
 
@@ -267,7 +540,7 @@ export const montujPanelTools: MontazPanelu = (wezel, zaleznosci) => {
     odswiezGotowy();
   });
 
-  if (zaleznosci.idOkna !== null) void zaladujOperacje();
+  if (zaleznosci.idOkna !== null) void zaladujOperacje(true);
 
   return {
     zdejmij() {

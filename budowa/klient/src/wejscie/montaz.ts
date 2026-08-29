@@ -394,10 +394,17 @@ function zwiazZdarzenia(korzen: ParentNode, przebieg: Przebieg, powiadom: Powiad
     odswiezMierniki(korzen);
   });
 
+  /*
+  Wklejenie kodu skrótem. Treść idzie w samym zdarzeniu, więc ta droga działa
+  wszędzie — także tam, gdzie przeglądarka nie daje API schowka, bo strona nie
+  stoi w kontekście bezpiecznym.
+
+  Zestaw pól wyszukuje się na ekranie, a nie pod kursorem: Operator naciska
+  Ctrl+V zaraz po przeczytaniu kodu z wiadomości, nie kliknąwszy wpierw w pole.
+  Wymóg trafienia w pole zostawiał go z niczym.
+  */
   dokument.addEventListener?.('paste', (zdarzenie: Event) => {
-    const cel = zdarzenie.target as HTMLElement | null;
-    if (cel === null || !cel.classList.contains('au-kod-pole')) return;
-    const zestaw = cel.closest('[data-kod-grupa]') as HTMLElement | null;
+    const zestaw = zestawKodu(korzen, zdarzenie.target as HTMLElement | null);
     if (zestaw === null) return;
     zdarzenie.preventDefault();
     const dane = (zdarzenie as ClipboardEvent).clipboardData?.getData('text') ?? '';
@@ -417,18 +424,50 @@ function odslonHaslo(korzen: ParentNode, kontrolka: HTMLElement): void {
   kontrolka.setAttribute('aria-label', tekst(bylo ? 'dostep.haslo.pokaz' : 'dostep.haslo.ukryj'));
 }
 
+/*
+zestawKodu wskazuje grupę pól kodu, do której trafia wklejenie.
+
+Pierwszeństwo ma grupa pod kursorem — Operator, który stoi w polu, wkleja
+właśnie tam. Bez kursora w polu bierze się jedyna grupa widoczna na ekranie;
+przy dwóch widocznych naraz wskazania nie ma i wklejenie zostaje przeglądarce,
+bo zgadywanie wstawiłoby kod nie tam, gdzie Operator patrzy.
+*/
+function zestawKodu(korzen: ParentNode, cel: HTMLElement | null): HTMLElement | null {
+  const podKursorem = (cel?.closest('[data-kod-grupa]') ?? null) as HTMLElement | null;
+  if (podKursorem !== null) return podKursorem;
+  const widoczne = [...korzen.querySelectorAll('[data-kod-grupa]')].filter(
+    (z) => (z as HTMLElement).offsetParent !== null,
+  );
+  return widoczne.length === 1 ? (widoczne[0] as HTMLElement) : null;
+}
+
+/*
+wklejDroge wkleja kod przyciskiem.
+
+Odczyt schowka programem wymaga kontekstu bezpiecznego i pozwolenia Operatora;
+gdy któregoś brak, `navigator.clipboard` nie istnieje albo odczyt odmawia.
+Wtedy przycisk nie kończy drogi komunikatem — stawia kursor w pierwszym polu
+i mówi, którym skrótem wkleić. Skrót działa zawsze, bo treść idzie w samym
+zdarzeniu wklejenia.
+*/
 async function wklejDroge(korzen: ParentNode, grupa: string, powiadom: Powiadom): Promise<void> {
   const zestaw = korzen.querySelector(`[data-kod-grupa="${grupa}"]`) as HTMLElement | null;
   if (zestaw === null) return;
+
+  function skierujNaSkrot(): void {
+    (zestaw?.querySelector('input') as HTMLInputElement | null)?.focus();
+    powiadom(tekst('komunikaty.schowek.tytul'), tekst('komunikaty.schowek.tresc'));
+  }
+
   const schowek = globalThis.navigator?.clipboard;
   if (schowek === undefined || typeof schowek.readText !== 'function') {
-    powiadom(tekst('komunikaty.schowek.tytul'), tekst('komunikaty.schowek.tresc'));
+    skierujNaSkrot();
     return;
   }
   try {
     przyjmijWklejenie(zestaw, await schowek.readText());
   } catch {
-    powiadom(tekst('komunikaty.schowek.tytul'), tekst('komunikaty.schowek.tresc'));
+    skierujNaSkrot();
   }
 }
 

@@ -368,7 +368,9 @@ async function wejdz(most: Kanal, sesja: AuthSession | undefined): Promise<void>
      przykładową — nazwiskiem z przykładu, zmyślonymi miarami maszyny, cudzym
      dokumentem. Bez tych dwóch wywołań Operator ogląda przykład podany jako
      jego własna praca. */
-  await zwiazPowloke({ login: ostatniLogin }, most);
+  /* Nazwa okna: biblioteka powłoki niesie w belce nazwę okna logowania, bo jest
+     wspólna dla wszystkich okien. Po wejściu stoi tu okno robocze. */
+  await zwiazPowloke({ login: ostatniLogin, nazwaOkna: 'Danaco Console' }, most);
   zwiazStudio(most);
 }
 

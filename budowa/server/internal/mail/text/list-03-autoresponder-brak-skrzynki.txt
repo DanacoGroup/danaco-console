@@ -1,0 +1,28 @@
+DANACO CONSOLE
+Skrzynka nieobsługiwana
+
+Adres noreply@danaco-group.pl służy wyłącznie do wysyłki wiadomości
+systemowych Danaco Console i nie prowadzi skrzynki odbiorczej. Wiadomość
+nadesłana na ten adres nie została dostarczona do żadnego odbiorcy
+i nie zostanie odczytana.
+
+  Temat wiadomości:  {{original_subject}}
+  Odebrano:          {{received_at}}
+
+GDZIE SKIEROWAĆ SPRAWĘ
+
+  Konto, dostęp, kod logowania
+    {{support_address}}
+
+  Usterka w działaniu aplikacji
+    okno Zgłoszenia w Danaco Console
+
+  Sprawa prowadzona przez kancelarię
+    korespondencja przypisana do akt sprawy, nie poczta systemowa
+
+Ta odpowiedź jest wysyłana raz na dobę dla danego adresu nadawcy. Kolejne
+wiadomości nadesłane na adres noreply@danaco-group.pl zostaną odrzucone
+bez powiadomienia.
+
+--
+Danaco Holding Group Sp. z o.o. · Danaco Console · {{year}}

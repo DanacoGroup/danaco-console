@@ -12,11 +12,21 @@ import {
 } from '../../../shared/contract.ts';
 import type { Kanal } from '../protokol/kanal.ts';
 import { wywolaj } from '../protokol/wywolanie.ts';
+import { zwiazAssistant } from './okno-assistant.ts';
+import { zwiazAutomations } from './okno-automations.ts';
+import { zwiazDesign } from './okno-design.ts';
 import { zwiazDeveloper } from './okno-developer.ts';
+import { zwiazDiagnostics } from './okno-diagnostics.ts';
 
 /** Wiązania szczegółowe modułów, po kodzie rejestru rdzenia; moduł bez wpisu dostaje samo okno rdzenia. */
 type WiazanieModulu = (kanal: Kanal, idOkna: string) => void;
-const WIAZANIA = new Map<string, WiazanieModulu>([['developer', zwiazDeveloper]]);
+const WIAZANIA = new Map<string, WiazanieModulu>([
+  ['assistant', zwiazAssistant],
+  ['automations', zwiazAutomations],
+  ['design', zwiazDesign],
+  ['developer', zwiazDeveloper],
+  ['diagnostics', zwiazDiagnostics],
+]);
 
 /**
  * Czy moduł ma wiązanie wypełniające jego wnętrze odpowiedzią rdzenia. Wnętrze

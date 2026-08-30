@@ -7,6 +7,7 @@
 import {
   ChangeKind,
   Command,
+  ReasoningEffort,
   EventType,
   ExecutionEnv,
   MessageRole,
@@ -46,8 +47,13 @@ interface WzoryWpisow {
   system: HTMLElement | null;
 }
 
-/** Wiązanie stoi raz na dokument: `studio.js` i powłoka mogą wstawić okno ponownie, a podwójny nasłuch dawałby podwójne wpisy. */
-let zwiazane = false;
+/**
+ * Węzeł historii, na którym stoi wiązanie bieżące. Powłoka wstawia wnętrze okna
+ * na nowo przy każdym wejściu w moduł, a wiązanie ma objąć znacznik świeży:
+ * znacznik ten sam znaczy wiązanie już założone, znacznik inny — okno wstawione
+ * ponownie i wiązanie do założenia od nowa.
+ */
+let zwiazanaHistoria: Element | null = null;
 
 /**
  * Wiąże okno Studia z rdzeniem. Kanał domyślnie z obiektu globalnego, bo
@@ -58,10 +64,11 @@ export function zwiazStudio(
   kanal: Kanal | undefined = globalThis.DanacoKanal,
   nazwaSrodowiska = '',
 ): boolean {
-  if (zwiazane || kanal === undefined) return false;
+  if (kanal === undefined) return false;
   const znalezione = zbierzWezly();
   if (znalezione === null) return false;
-  zwiazane = true;
+  if (znalezione.historia === zwiazanaHistoria) return false;
+  zwiazanaHistoria = znalezione.historia;
   const wezly: WezlyStudia = znalezione;
 
   const wzory = zdejmijWzoryWpisow(wezly.historia);
@@ -142,6 +149,8 @@ export function zwiazStudio(
 
   zdejmijZnacznikiBezZrodla();
   void opiszKanal(kanal, nazwaSrodowiska);
+  void opiszWyborModelu(kanal);
+  opiszWyborNakladu();
   void otworzStanowisko(kanal, wezly, wzorPozycji, wstawWpis).then((okno) => {
     idOkna = okno;
     if (okno === '') return;
@@ -155,12 +164,73 @@ export function zwiazStudio(
   return true;
 }
 
-/** Zdejmuje znaczniki kontekstu bez pokrycia w kontrakcie: nazwę gałęzi, ścieżkę repozytorium i miarę różnicy, których rdzeń nie oddaje. */
+/**
+ * Zdejmuje znaczniki bez pokrycia w kontrakcie: nazwę gałęzi, ścieżkę
+ * repozytorium i miarę różnicy w pasie czynności, wskazania źródła nad polem
+ * wpisu oraz pas czytelności, dla którego rdzeń nie ma ani jednej miary.
+ */
 function zdejmijZnacznikiBezZrodla(): void {
   for (const znacznik of document.querySelectorAll('.sta-kontekst-akcji .sta-chip')) {
     if (znacznik.classList.contains('sta-chip--srodowisko')) continue;
     znacznik.remove();
   }
+  for (const zrodlo of document.querySelectorAll('.sta-zrodlo')) zrodlo.remove();
+  document.querySelector('.sta-kom-monitor')?.remove();
+}
+
+/** Wpisuje w wybór modelu kanały rejestru rdzenia; wiersz wzorcowy powiela się na każdy kanał, a kanał czynny nazywa sam znacznik wyboru. */
+async function opiszWyborModelu(kanal: Kanal): Promise<void> {
+  const znak = document.querySelector('.sta-chip--model');
+  const spis = document.getElementById('pop-model');
+  if (znak === null || spis === null) return;
+  const wynik = await wywolaj(kanal, Command.ChannelList, { enabledOnly: true });
+  if (!wynik.udany || wynik.wynik === undefined) return;
+  const kanaly = wynik.wynik.channels;
+  const wzor = spis.querySelector('.sta-popover-wiersz');
+  if (wzor === null || kanaly.length === 0) return;
+  const czysty = wzor.cloneNode(true) as HTMLElement;
+  for (const wiersz of [...spis.querySelectorAll('.sta-popover-wiersz')]) wiersz.remove();
+  for (const [numer, kanalModelu] of kanaly.entries()) {
+    const wiersz = czysty.cloneNode(true) as HTMLElement;
+    const etykieta = wiersz.querySelector('.sta-popover-etykieta');
+    if (etykieta !== null) etykieta.textContent = kanalModelu.model ?? kanalModelu.name;
+    const kolejnosc = wiersz.querySelector('.pt-mono');
+    if (kolejnosc !== null) kolejnosc.textContent = String(numer + 1);
+    spis.appendChild(wiersz);
+  }
+  const pierwszy = kanaly[0];
+  if (pierwszy !== undefined) {
+    znak.childNodes[0]?.replaceWith(pierwszy.model ?? pierwszy.name);
+  }
+}
+
+/**
+ * Wpisuje w wybór nakładu wartości kontraktu. Prototyp niesie pięciostopniowy
+ * suwak i nazwę spoza kontraktu; rdzeń zna trzy nakłady, więc suwak dostaje
+ * granice trzech stopni, a nazwa bierze się z wybranego stopnia.
+ */
+function opiszWyborNakladu(): void {
+  const spis = document.getElementById('pop-wysilek');
+  const znak = document.querySelector('[data-popover="pop-wysilek"]');
+  if (spis === null || znak === null) return;
+  const naklady = Object.values(ReasoningEffort);
+  const suwak = spis.querySelector<HTMLInputElement>('.sta-suwak');
+  const tytul = spis.querySelector('.sta-popover-tytul');
+  const nazwij = (stopien: number): void => {
+    const naklad = naklady[stopien] ?? naklady[0];
+    if (naklad === undefined) return;
+    znak.childNodes[0]?.replaceWith(naklad);
+    if (tytul !== null) tytul.textContent = 'Wysiłek — ' + naklad;
+  };
+  if (suwak !== null) {
+    suwak.min = '0';
+    suwak.max = String(naklady.length - 1);
+    suwak.value = String(naklady.length - 1);
+    suwak.addEventListener('input', () => {
+      nazwij(Number(suwak.value));
+    });
+  }
+  nazwij(naklady.length - 1);
 }
 
 /** Wpisuje w nagłówek okna komunikacji środowisko wejścia i model kanału; pole wysiłku znika, bo kontrakt nie niesie jego wartości. */

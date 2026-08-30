@@ -95,9 +95,10 @@ const PLIKI_BIBLIOTEKI = [
   'okna/instalator.js',
   'kreator.css',
   'okna/przeplyw-wejscia.js',
+  /* `okna/centrum-wejscie.js` do wydania nie wchodzi: przenosi przeglądarkę na
+     osobny plik prototypu, a produkt zmienia wnętrze okna w miejscu. */
   'okna/centrum-dowodzenia.js',
   'okna/centrum-obszar.js',
-  'okna/centrum-wejscie.js',
   'okna/centrum-dymki.js',
 ];
 
@@ -132,6 +133,12 @@ const WNETRZA_OKIEN = [
     prototyp: '../../design/05-okna/przeplyw/centrum-dowodzenia.html',
     otwarcie: '<div class="dn-obszar">',
     zamkniecie: '<!-- /dn-obszar -->',
+  },
+  {
+    gniazdo: 'dn-tresc-przedsionek',
+    prototyp: '../../design/05-okna/srodowiska/talkin-przedsionek.html',
+    otwarcie: '<main class="pd-plotno">',
+    zamkniecie: '</main>',
   },
   {
     gniazdo: 'dn-tresc-studio',

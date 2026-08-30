@@ -44,7 +44,7 @@ func (a *adapterKanalow) Dodaj(ctx context.Context, z shared.ChannelAddRequest) 
 		Aktywny:                z.Enabled == nil || *z.Enabled,
 	}
 	if _, err := a.repozytorium.Dodaj(ctx, kanal); err != nil {
-		return shared.ChannelAddResponse{}, err
+		return shared.ChannelAddResponse{}, bladZapisuKanalu(err, z.Kind)
 	}
 	a.odswiez(ctx)
 	return shared.ChannelAddResponse{Channel: kanalKontraktu(kanal)}, nil
@@ -90,7 +90,7 @@ func (a *adapterKanalow) Usun(ctx context.Context, z shared.ChannelRemoveRequest
 		return shared.ChannelRemoveResponse{}, err
 	}
 	if err := a.repozytorium.Usun(ctx, kanal.ID); err != nil {
-		return shared.ChannelRemoveResponse{}, err
+		return shared.ChannelRemoveResponse{}, bladUsunieciaKanalu(err, z.ChannelId)
 	}
 	a.odswiez(ctx)
 	return shared.ChannelRemoveResponse{ChannelId: z.ChannelId}, nil

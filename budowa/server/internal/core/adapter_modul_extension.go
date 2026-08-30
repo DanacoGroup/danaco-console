@@ -457,8 +457,10 @@ func (a *adapterRozszerzen) sprawdzKatalog() error {
 // zamkniętego katalogu kontraktu tu nie ma i być nie może.
 func bladRozszerzenia(err error) error {
 	if errors.Is(err, dane.ErrBrakWiersza) {
+		// Treść błędu warstwy danych mówi o wierszu tabeli; wołający pyta
+		// o wpis katalogu i tylko o nim ma usłyszeć.
 		return protocol.JakoError(protocol.NowyBlad(shared.ErrorCodeNotFound,
-			"katalog rozszerzeń: "+err.Error()))
+			"katalog rozszerzeń: wskazanego wpisu nie ma w katalogu"))
 	}
 	return protocol.JakoError(protocol.NowyBlad(shared.ErrorCodeInternalError,
 		"katalog rozszerzeń: "+err.Error()))

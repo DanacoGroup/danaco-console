@@ -111,7 +111,7 @@ func (u *UtrwalaczRozmowy) wierszSesji(ctx context.Context, opis OpisOkna) (int6
 	if !errors.Is(err, ErrBrakWiersza) {
 		return 0, err
 	}
-	srodowisko, err := u.zestaw.Srodowiska.Pierwsze(ctx)
+	srodowisko, err := u.srodowiskoSesji(ctx, "")
 	if err != nil {
 		return 0, err
 	}
@@ -190,6 +190,14 @@ func (u *UtrwalaczRozmowy) wierszKanalu(ctx context.Context, wskazanie string) (
 
 // ZapewnijSesje utrwala sesję natychmiast po jej założeniu, żeby czynności na historii miały czego dotknąć bez pierwszej wiadomości.
 func (u *UtrwalaczRozmowy) ZapewnijSesje(ctx context.Context, idSesji, tytul, projekt string) (int64, error) {
+	return u.ZapewnijSesjeSrodowiska(ctx, idSesji, tytul, projekt, "")
+}
+
+// ZapewnijSesjeSrodowiska utrwala sesję w karcie środowiska, przez które
+// Operator wszedł do pracy. Środowisko nieznane albo puste odkłada sesję
+// w środowisku pierwszym rejestru — tak jak przed wprowadzeniem tego wskazania.
+func (u *UtrwalaczRozmowy) ZapewnijSesjeSrodowiska(ctx context.Context,
+	idSesji, tytul, projekt, kodSrodowiska string) (int64, error) {
 	sesja, err := u.zestaw.Sesje.PoIdentyfikatorze(ctx, idSesji)
 	if err == nil {
 		return sesja.ID, nil
@@ -197,7 +205,7 @@ func (u *UtrwalaczRozmowy) ZapewnijSesje(ctx context.Context, idSesji, tytul, pr
 	if !errors.Is(err, ErrBrakWiersza) {
 		return 0, err
 	}
-	srodowisko, err := u.zestaw.Srodowiska.Pierwsze(ctx)
+	srodowisko, err := u.srodowiskoSesji(ctx, kodSrodowiska)
 	if err != nil {
 		return 0, err
 	}
@@ -208,4 +216,19 @@ func (u *UtrwalaczRozmowy) ZapewnijSesje(ctx context.Context, idSesji, tytul, pr
 	return u.zestaw.Sesje.Utworz(ctx, sesjaZOpisu(OpisOkna{
 		IdSesji: idSesji, TytulSesji: tytul, Projekt: projekt,
 	}, kartaID))
+}
+
+// srodowiskoSesji rozpoznaje środowisko po kodzie; brak kodu albo brak wiersza
+// oddaje środowisko pierwsze rejestru.
+func (u *UtrwalaczRozmowy) srodowiskoSesji(ctx context.Context, kod string) (Srodowisko, error) {
+	if kod != "" {
+		srodowisko, err := u.zestaw.Srodowiska.PoKodzie(ctx, kod)
+		if err == nil {
+			return srodowisko, nil
+		}
+		if !errors.Is(err, ErrBrakWiersza) {
+			return Srodowisko{}, err
+		}
+	}
+	return u.zestaw.Srodowiska.Pierwsze(ctx)
 }

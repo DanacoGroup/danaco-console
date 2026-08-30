@@ -26,6 +26,8 @@ func zarejestrujSesje(r *Rejestr, sesje Sesje, e *emiter) {
 
 	r.Zarejestruj(shared.CommandSessionOpen, obsluz(sesje.Otworz))
 
+	r.Zarejestruj(shared.CommandSessionExport, obsluz(sesje.Wydaj))
+
 	r.Zarejestruj(shared.CommandSessionClose,
 		obsluz(func(ctx context.Context, z shared.SessionCloseRequest) (shared.SessionCloseResponse, error) {
 			w, err := sesje.Zamknij(ctx, z)

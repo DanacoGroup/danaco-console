@@ -9501,6 +9501,25 @@ func WartosciAppPerformanceFormFactor() []AppPerformanceFormFactor {
 	}
 }
 
+// SessionExportFormat — Postac zapisu wydanej sesji
+type SessionExportFormat string
+
+// Wartosci SessionExportFormat.
+const (
+	// Zapis maszynowy: sesja, okna i wiadomosci
+	SessionExportFormatJson = "json"
+	// Zapis do czytania: rozmowa w kolejnosci
+	SessionExportFormatMarkdown = "markdown"
+)
+
+// WartosciSessionExportFormat zwraca komplet wartosci SessionExportFormat w kolejnosci kontraktu.
+func WartosciSessionExportFormat() []SessionExportFormat {
+	return []SessionExportFormat{
+		SessionExportFormatJson,
+		SessionExportFormatMarkdown,
+	}
+}
+
 // WartosciBazySessionStatus — wartosc kontraktu SessionStatus -> wartosc kolumny sesja.stan
 var WartosciBazySessionStatus = map[SessionStatus]string{
 	SessionStatusActive:   "aktywna",
@@ -10129,6 +10148,8 @@ const (
 	CommandSessionBind MessageType = "session.bind"
 	// Otwiera sesje wraz z jej oknami
 	CommandSessionOpen MessageType = "session.open"
+	// Wydaje zapis sesji wraz z jej oknami i rozmowa. Menu okna roboczego niesie te czynnosc pod nazwa 'Eksportuj sesje'
+	CommandSessionExport MessageType = "session.export"
 	// Zamyka sesje
 	CommandSessionClose MessageType = "session.close"
 	// Usuwa trwale wskazane sesje wraz z calym ich zapisem; jedyna droga utraty danych sesji
@@ -23022,6 +23043,24 @@ type SessionOpenResponse struct {
 	Session Session `json:"session"`
 	// Okna komunikacji sesji
 	Windows []Window `json:"windows"`
+}
+
+// SessionExportRequest — Tresc zadania session.export — Wydaje zapis sesji wraz z jej oknami i rozmowa. Menu okna roboczego niesie te czynnosc pod nazwa 'Eksportuj sesje'
+type SessionExportRequest struct {
+	// Sesja do wydania
+	SessionId string `json:"sessionId"`
+	// Postac zapisu; puste znaczy json
+	Format *SessionExportFormat `json:"format,omitempty"`
+}
+
+// SessionExportResponse — Tresc wyniku session.export — Wydaje zapis sesji wraz z jej oknami i rozmowa. Menu okna roboczego niesie te czynnosc pod nazwa 'Eksportuj sesje'
+type SessionExportResponse struct {
+	// Tresc zapisu
+	Content string `json:"content"`
+	// Postac wydanego zapisu
+	Format SessionExportFormat `json:"format"`
+	// Nazwa pliku proponowana Operatorowi
+	FileName string `json:"fileName"`
 }
 
 // SessionCloseRequest — Tresc zadania session.close — Zamyka sesje
@@ -45265,6 +45304,7 @@ func WszystkieKomendy() []MessageType {
 		CommandSessionFocus,
 		CommandSessionBind,
 		CommandSessionOpen,
+		CommandSessionExport,
 		CommandSessionClose,
 		CommandSessionDelete,
 		CommandWindowCreate,
@@ -46501,6 +46541,7 @@ var zbiorKomend = map[MessageType]struct{}{
 	CommandSessionFocus:                        {},
 	CommandSessionBind:                         {},
 	CommandSessionOpen:                         {},
+	CommandSessionExport:                       {},
 	CommandSessionClose:                        {},
 	CommandSessionDelete:                       {},
 	CommandWindowCreate:                        {},

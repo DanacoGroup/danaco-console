@@ -8,7 +8,7 @@
     "adres": "https://pobierz.danaco-group.pl/",
     "tymczasowy": false,
     "czym_jest": "Kanał stoi pod własną nazwą pobierz.danaco-group.pl na maszynie 57.128.253.74 (IPv6 2001:41d0:601:1100::2485) — tej samej, na której działa rdzeń wdrożenia. Serwerem stron jest CADDY, nie nginx; TLS na 443, przekierowanie z 80 robi Caddy sam. Katalog wydawany: /opt/danaco/danaco-console/portal, pliki wydań w /opt/danaco/danaco-console/wydania/. Strona wizerunkowa produktu stoi osobno, na danaco-group.pl (maszyna 137.74.41.149, nginx).",
-    "chronione_haslem": "Pliki wydania (/wydania/*) chroni uwierzytelnienie podstawowe zapisane WPROST w /etc/caddy/Caddyfile w bloku pobierz.danaco-group.pl — dyrektywa basic_auth, użytkownik `wlasciciel`, hasło jako skrót bcrypt. Osobnego pliku poświadczeń NIE MA; wcześniejszy zapis o /etc/nginx-danaco-wydania.htpasswd opisywał serwer, którego tu nie ma. Hasła nie ma w repozytorium ani na stronie. Sama witryna, w tym strona „Pobierz”, jest otwarta do czytania.",
+    "chronione_haslem": "Pliki, po które sięga instalator, leżą pod otwartą ścieżką /pliki/ — kreator sześciu kroków nie ma pola na hasło, więc składnik chroniony uwierzytelnieniem byłby dla niego nie do pobrania. Uwierzytelnienie podstawowe (użytkownik `wlasciciel`, hasło jako skrót bcrypt w /etc/caddy/Caddyfile) zostaje na katalogu /wydania/*, gdzie leżą kopie robocze wydań. Sama witryna, w tym strona „Pobierz”, jest otwarta do czytania.",
     "certyfikat": "Certyfikat wystawia i odnawia Caddy samodzielnie (ACME, Let's Encrypt). Przeglądarka nie pokazuje ostrzeżenia — sprawdzone: https://pobierz.danaco-group.pl/ odpowiada 200, nagłówek `server: Caddy`, a /wydania/ zwraca 401.",
     "docelowo": "Kanal jest na swoim miejscu. Do zrobienia zostaje strona wizerunkowa produktu w portfolio grupy: danaco-group.pl/danaco-console.html — bez pobierania plikow, z jednym odnosnikiem tutaj. Material do wgrania: DanacoConsole.git/DO-WGRANIA-DANACO-GROUP/.",
     "czego_brakuje": "",
@@ -30,11 +30,11 @@
       "architektura": "x64",
       "nazwa": "Windows x64 — instalator",
       "coBierzesz": "Plik, który pobiera Operator. Otwiera kreator instalacji w sześciu krokach i sam ściąga z tego kanału powłokę programu. Nic obok siebie nie potrzebuje — biblioteka WebView2 jest w nim wkompilowana.",
-      "plik": "https://pobierz.danaco-group.pl/wydania/2.0.0-2026-08-30/Danaco%20Console%20%E2%80%94%20Instalator_2.0.0_x64-setup.exe",
+      "plik": "https://pobierz.danaco-group.pl/pliki/2.0.0-2026-08-30/Danaco%20Console%20%E2%80%94%20Instalator_2.0.0_x64-setup.exe",
       "nazwaPliku": "Danaco Console — Instalator_2.0.0_x64-setup.exe",
       "rozmiar": "6,3 MB",
-      "rozmiarBajty": 6569472,
-      "suma": "a127ed5fe35fe3756a073a70fb9a7b214684701285e3d5229e5414442fbc36ed",
+      "rozmiarBajty": 6569984,
+      "suma": "7fcea53cf443e22d664bc85732793cdb98a45ca4f2c87a718c251f4b48dba244",
       "zmiany": "Instalator stoi samodzielnym plikiem: pojedyncze binarium bez WebView2Loader.dll obok, okno bez ramy platformy, z własną belką kreatora."
     },
     {
@@ -45,12 +45,12 @@
       "architektura": "x64",
       "nazwa": "Windows x64 — powłoka programu",
       "coBierzesz": "Składnik, który ściąga instalator — okno aplikacji na komputer z Windows (Intel/AMD). Rdzeń zostaje na serwerze wdrożenia; ten plik go nie niesie.",
-      "plik": "https://pobierz.danaco-group.pl/wydania/2.0.0-2026-08-30/Danaco%20Console_2.0.0_hybryda_x64-setup.exe",
+      "plik": "https://pobierz.danaco-group.pl/pliki/2.0.0-2026-08-30/Danaco%20Console_2.0.0_hybryda_x64-setup.exe",
       "nazwaPliku": "Danaco Console_2.0.0_hybryda_x64-setup.exe",
       "rozmiar": "2,6 MB",
-      "rozmiarBajty": 2583755,
-      "suma": "9676e69572f6a9b342290e151e16faaaa5423c49fb3c1595549a4735a1640c6d",
-      "zmiany": "Powłoka podaje oknu adres rdzenia skryptem wstępnym, więc okno łączy się z serwerem wdrożenia od pierwszej klatki."
+      "rozmiarBajty": 2583918,
+      "suma": "d346897f5a24643d17061adfa4a32d61867361c2fb98455721e4d8885ab75e0f",
+      "zmiany": "Powłoka podaje oknu adres rdzenia skryptem wstępnym, stoi bez ramy systemu i wstaje z animacją startową."
     },
     {
       "wersja": "2.0.0",

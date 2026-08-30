@@ -59,6 +59,8 @@ func (a *adapterSesji) usunZapisSesji(ctx context.Context, identyfikator string)
 // rozmowy, tylko tej jednej gwarancji.
 type ZapewnienieSesji interface {
 	ZapewnijSesje(kontekst context.Context, idSesji, tytul, projekt string) (int64, error)
+	// ZapewnijSesjeSrodowiska odkłada sesję w karcie środowiska wejścia Operatora.
+	ZapewnijSesjeSrodowiska(kontekst context.Context, idSesji, tytul, projekt, kodSrodowiska string) (int64, error)
 }
 
 // ZZapewnieniem wpina utrwalanie sesji przy zakładaniu. Bez tego portu sesja materializuje się
@@ -75,7 +77,8 @@ func (a *adapterSesji) utrwalZalozona(kontekst context.Context, sesja session.Se
 	if a.zapewnienie == nil {
 		return
 	}
-	if _, err := a.zapewnienie.ZapewnijSesje(kontekst, sesja.Id, sesja.Tytul, sesja.IdProjektu); err != nil {
+	if _, err := a.zapewnienie.ZapewnijSesjeSrodowiska(kontekst, sesja.Id, sesja.Tytul,
+		sesja.IdProjektu, sesja.KodSrodowiska); err != nil {
 		_ = err
 	}
 }

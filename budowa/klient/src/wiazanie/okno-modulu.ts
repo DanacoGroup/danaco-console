@@ -12,10 +12,11 @@ import {
 } from '../../../shared/contract.ts';
 import type { Kanal } from '../protokol/kanal.ts';
 import { wywolaj } from '../protokol/wywolanie.ts';
+import { zwiazDeveloper } from './okno-developer.ts';
 
 /** Wiązania szczegółowe modułów, po kodzie rejestru rdzenia; moduł bez wpisu dostaje samo okno rdzenia. */
 type WiazanieModulu = (kanal: Kanal, idOkna: string) => void;
-const WIAZANIA = new Map<string, WiazanieModulu>();
+const WIAZANIA = new Map<string, WiazanieModulu>([['developer', zwiazDeveloper]]);
 
 /** Rejestruje wiązanie szczegółowe modułu. Woła to moduł wiązania przy wczytaniu, więc kolejność plików nie ma znaczenia. */
 export function zglosWiazanieModulu(kod: string, wiazanie: WiazanieModulu): void {

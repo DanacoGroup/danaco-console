@@ -4,6 +4,7 @@ package core
 import (
 	"context"
 	"encoding/json"
+	"strconv"
 	"strings"
 	"time"
 
@@ -173,4 +174,30 @@ func zarzadcaPoswiadczeniaKanalu(kanal dane.Kanal) string {
 func bladWskazaniaKanalu(powod string) error {
 	return protocol.JakoError(protocol.NowyBlad(shared.ErrorCodeValidationFailed,
 		"kanały: "+powod))
+}
+
+// bladUsunieciaKanalu odróżnia kanał zajęty od awarii. Więz klucza obcego
+// znaczy, że na kanale wiszą okna albo zlecenia — to stan niewłaściwy do
+// wykonania czynności, nie usterka rdzenia, a odmowa musi nazwać kanał kodem,
+// którym wskazał go wołający, nie numerem wiersza z warstwy danych.
+func bladUsunieciaKanalu(err error, kod string) error {
+	if err != nil && strings.Contains(err.Error(), "FOREIGN KEY") {
+		return protocol.JakoError(protocol.NowyBlad(shared.ErrorCodeConflict,
+			"kanały: kanał "+strconv.Quote(kod)+
+				" jest w użyciu — wiąże go okno albo zlecenie; zdejmij wiązania przed usunięciem"))
+	}
+	return err
+}
+
+// bladZapisuKanalu nazywa odmowę rejestru wprost. Wykaz rodzajów kanału stoi
+// w więzie kolumny `kanal_modelu.rodzaj_kanalu`, nie w kodzie — rodzaj spoza
+// wykazu wraca stamtąd surową treścią więzu, którą trzeba przełożyć na odmowę
+// żądania; inaczej wskazanie nie do przyjęcia wygląda jak awaria rdzenia.
+func bladZapisuKanalu(err error, rodzaj string) error {
+	if err != nil && strings.Contains(err.Error(), "rodzaj_kanalu") {
+		return bladWskazaniaKanalu("rodzaj kanału spoza wykazu rejestru: " +
+			strconv.Quote(rodzaj) + "; znane rodzaje: " +
+			strings.Join(shared.KnownChannelKinds(), ", "))
+	}
+	return err
 }

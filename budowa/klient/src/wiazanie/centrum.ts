@@ -11,6 +11,7 @@ import { zwiazWyborModulu } from './wybor-modulu.ts';
 import { oglos } from './ogloszenie.ts';
 import { zwiazOkno, zwiazOknoStojace } from './okno-modulu.ts';
 import {
+  nazwijKarte,
   przygotujPasmo,
   przypnijKarte,
   ustawKarty,
@@ -146,6 +147,9 @@ export function zwiazCentrum(kanal: Kanal | undefined = globalThis.DanacoKanal):
     if (modul.code === KOD_MODULU_WYDANIA) zwiazStudio(kanal, nazwaSrodowiska);
     else if (idOkna === '') zwiazOkno(kanal, modul.code, nazwaSrodowiska);
     else zwiazOknoStojace(kanal, modul.code, nazwaSrodowiska, idOkna);
+    /* Karta nazywa się pracą, którą niesie jej wnętrze — moduł stoi przy niej
+       cechą. Nazwę podaje wnętrze po zamontowaniu, więc czyta się ją po nim. */
+    nazwijKarte(modul.code, nazwaPracyKarty());
   };
 
   /* Porządek drzewa projektów; widok „reakcja" nie ma pola w kontrakcie. */
@@ -628,6 +632,12 @@ function oddajPlik(nazwa: string, tresc: string): void {
   odnosnik.download = nazwa;
   odnosnik.click();
   URL.revokeObjectURL(adres);
+}
+
+/** Nazwa pracy, którą niesie wnętrze karty; pustka znaczy wnętrze bez nazwanej pracy. */
+function nazwaPracyKarty(): string {
+  const znacznik = document.querySelector('.sta-okno-znacznik, .st-wstazka-sesja span');
+  return znacznik?.textContent?.trim() ?? '';
 }
 
 /** Wpisuje nazwę modułu w pas stanu ramy; karta główna zostawia pole puste. */

@@ -18,6 +18,15 @@ import { zwiazDeveloper } from './okno-developer.ts';
 type WiazanieModulu = (kanal: Kanal, idOkna: string) => void;
 const WIAZANIA = new Map<string, WiazanieModulu>([['developer', zwiazDeveloper]]);
 
+/**
+ * Czy moduł ma wiązanie wypełniające jego wnętrze odpowiedzią rdzenia. Wnętrze
+ * bez wiązania pokazałoby treść przykładową prototypu jako pracę Operatora,
+ * więc takiego okna wydanie nie stawia wcale.
+ */
+export function maWiazanie(kod: string): boolean {
+  return WIAZANIA.has(kod);
+}
+
 /** Rejestruje wiązanie szczegółowe modułu. Woła to moduł wiązania przy wczytaniu, więc kolejność plików nie ma znaczenia. */
 export function zglosWiazanieModulu(kod: string, wiazanie: WiazanieModulu): void {
   WIAZANIA.set(kod, wiazanie);

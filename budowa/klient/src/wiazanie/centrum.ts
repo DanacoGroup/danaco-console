@@ -149,6 +149,28 @@ export function zwiazCentrum(kanal: Kanal | undefined = globalThis.DanacoKanal):
     void wypelnijProjekty(kanal);
   }, true);
 
+  /* Wskazówka startowa Centrum: pozycja menu widoku zdejmuje ją i przywraca. */
+  document.addEventListener('click', (zdarzenie) => {
+    const cel = zdarzenie.target;
+    if (!(cel instanceof Element)) return;
+    const pozycja = cel.closest<HTMLElement>('[data-cd-wskazowka]');
+    if (pozycja === null) return;
+    zdarzenie.stopPropagation();
+    const wskazowka = document.querySelector<HTMLElement>('.cd-wskazowka, #cd-start');
+    if (wskazowka === null) return;
+    wskazowka.hidden = !wskazowka.hidden;
+    pozycja.setAttribute('aria-checked', String(!wskazowka.hidden));
+  }, true);
+
+  /* Zamknięcie wskazówki startowej znakiem przy niej samej. */
+  document.addEventListener('click', (zdarzenie) => {
+    const cel = zdarzenie.target;
+    if (!(cel instanceof Element) || cel.closest('#cd-start-zamknij') === null) return;
+    zdarzenie.stopPropagation();
+    const wskazowka = document.querySelector<HTMLElement>('.cd-wskazowka, #cd-start');
+    if (wskazowka !== null) wskazowka.hidden = true;
+  }, true);
+
   /* Przypięcie panelu bocznego trzyma go rozwiniętym przy zmianie karty. */
   document.addEventListener('click', (zdarzenie) => {
     const cel = zdarzenie.target;

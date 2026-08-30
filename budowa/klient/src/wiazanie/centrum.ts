@@ -733,6 +733,7 @@ function zbudujWiersz(wzor: HTMLElement, sesja: Session): HTMLElement {
   // Sesja bez nazwy dostaje nazwany stan pusty: identyfikator jest oznaczeniem magazynu, nie nazwą pracy Operatora.
   if (nazwa !== null) nazwa.textContent = sesja.title ?? 'Sesja bez nazwy';
   wiersz.querySelector('.dn-obszar-pozycja')?.setAttribute('data-id-sesji', sesja.id);
+  opiszStanWiersza(wiersz, sesja);
   const menu = wiersz.querySelector('[data-menu-tresc]');
   const wyzwalacz = wiersz.querySelector('[data-menu]');
   if (menu !== null && wyzwalacz !== null) {
@@ -748,6 +749,20 @@ function zbudujWiersz(wzor: HTMLElement, sesja: Session): HTMLElement {
     pozycja.dataset.idSesji = sesja.id;
   }
   return wiersz;
+}
+
+/**
+ * Nadaje wierszowi stan, którym znacznik panelu barwi sesję: praca, oczekiwanie
+ * na reakcję Operatora albo sesja zakończona. Stany są słownikiem znacznika
+ * Właściciela, a rozstrzyga o nich odpowiedź rdzenia.
+ */
+function opiszStanWiersza(wiersz: HTMLElement, sesja: Session): void {
+  const stan = sesja.status !== 'active'
+    ? 'zakonczone'
+    : (sesja.awaitingReaction === true ? 'reakcja' : 'praca');
+  for (const wezel of wiersz.querySelectorAll('[data-stan]')) {
+    wezel.setAttribute('data-stan', stan);
+  }
 }
 
 /* Czynności menu, dla których kontrakt ma komendę. Pozycje spoza tego spisu

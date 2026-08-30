@@ -48,7 +48,10 @@ let zwiazane = false;
  * skrypty biblioteki są funkcjami domkniętymi i importu z nich nie ma.
  * Zwraca prawdę, gdy znacznik okna stał i wiązanie zostało założone.
  */
-export function zwiazStudio(kanal: Kanal | undefined = globalThis.DanacoKanal): boolean {
+export function zwiazStudio(
+  kanal: Kanal | undefined = globalThis.DanacoKanal,
+  nazwaSrodowiska = '',
+): boolean {
   if (zwiazane || kanal === undefined) return false;
   const znalezione = zbierzWezly();
   if (znalezione === null) return false;
@@ -110,6 +113,7 @@ export function zwiazStudio(kanal: Kanal | undefined = globalThis.DanacoKanal): 
     if (dokument === null) return;
     void zapiszDokument(kanal, dokument.id, wezly, (zapisany) => {
       dokument = zapisany;
+      opiszDokument(zapisany);
     });
   });
 
@@ -121,6 +125,7 @@ export function zwiazStudio(kanal: Kanal | undefined = globalThis.DanacoKanal): 
     if (idOkna === '') return;
     void zalozDokument(kanal, idOkna, wezly).then((zalozony) => {
       dokument = zalozony;
+      opiszDokument(zalozony);
     });
   });
 
@@ -129,15 +134,67 @@ export function zwiazStudio(kanal: Kanal | undefined = globalThis.DanacoKanal): 
     zmienWpis(tresc.change, tresc.message);
   });
 
+  zdejmijZnacznikiBezZrodla();
+  void opiszKanal(kanal, nazwaSrodowiska);
   void otworzStanowisko(kanal, wezly, wzorPozycji, wstawWpis).then((okno) => {
     idOkna = okno;
     if (okno === '') return;
     void zalozDokument(kanal, okno, wezly).then((zalozony) => {
       dokument = zalozony;
+      opiszDokument(zalozony);
     });
   });
 
   return true;
+}
+
+/** Zdejmuje znaczniki kontekstu bez pokrycia w kontrakcie: nazwę gałęzi, ścieżkę repozytorium i miarę różnicy, których rdzeń nie oddaje. */
+function zdejmijZnacznikiBezZrodla(): void {
+  for (const znacznik of document.querySelectorAll('.sta-kontekst-akcji .sta-chip')) {
+    if (znacznik.classList.contains('sta-chip--srodowisko')) continue;
+    znacznik.remove();
+  }
+}
+
+/** Wpisuje w nagłówek okna komunikacji środowisko wejścia i model kanału; pole wysiłku znika, bo kontrakt nie niesie jego wartości. */
+async function opiszKanal(kanal: Kanal, nazwaSrodowiska: string): Promise<void> {
+  const naglowek = document.querySelector('.sta-kom-naglowek');
+  if (naglowek === null) return;
+  const pola = [...naglowek.querySelectorAll('.sta-kom-pole')];
+  wpiszPole(pola, 'Środowisko', nazwaSrodowiska);
+  const wynik = await wywolaj(kanal, Command.ChannelList, { enabledOnly: true });
+  const kanalModelu = wynik.udany ? wynik.wynik?.channels[0] : undefined;
+  wpiszPole(pola, 'Model', kanalModelu?.model ?? kanalModelu?.name ?? '');
+  wpiszPole(pola, 'Wysiłek', '');
+}
+
+/** Wpisuje wartość w pole nagłówka rozpoznane po jego podpisie; wartość pusta zdejmuje całe pole, bo pole bez wartości niczego nie mówi. */
+function wpiszPole(pola: Element[], podpis: string, wartosc: string): void {
+  const pole = pola.find((kandydat) => kandydat.textContent?.startsWith(podpis) === true);
+  if (pole === undefined) return;
+  if (wartosc === '') {
+    pole.remove();
+    return;
+  }
+  const dane = pole.querySelector('.dane');
+  if (dane !== null) dane.textContent = wartosc;
+}
+
+/** Nadaje oknu i pasowi tytuł dokumentu; dokument bez nadanej nazwy dostaje nazwany stan pusty, nie własny identyfikator. */
+function opiszDokument(dokument: StudioDocument | null): void {
+  const nazwa = dokument?.title ?? 'Dokument bez nazwy';
+  for (const wezel of document.querySelectorAll('.st-wstazka-sesja span, .sta-okno-znacznik')) {
+    wezel.textContent = nazwa;
+  }
+  wpiszWersje(dokument);
+}
+
+/** Nanosi wersję dokumentu na miarę wstążki; dokument bez wersji w repozytorium sesji nie ma czego pokazać, więc miara znika. */
+function wpiszWersje(dokument: StudioDocument | null): void {
+  for (const wezel of document.querySelectorAll('.st-wstazka-stan .st-miara')) {
+    if (dokument?.versionId === undefined) wezel.remove();
+    else wezel.textContent = `wersja ${dokument.versionId}`;
+  }
 }
 
 /** Zakłada sesję i okno komunikacji, wczytuje historię i szynę sesji; zwraca identyfikator okna albo pustkę, gdy rdzeń odmówił. */
@@ -283,6 +340,10 @@ function odswiezPasStanu(wezly: WezlyStudia, dokument: StudioDocument | null): v
   if (wersja !== undefined) {
     wersja.textContent = dokument?.versionId === undefined ? '' : `wersja ${dokument.versionId}`;
   }
+  /* Zapis idzie wyzwalaczem, nie zegarem — godzina zapisu samoczynnego nie ma
+     w kontrakcie źródła, a godzina zmyślona mówi Operatorowi nieprawdę o tym,
+     czy jego praca jest odłożona. */
+  pola.find((pole) => pole.textContent?.includes('zapisano') === true)?.remove();
 }
 
 /** Liczba słów treści — ciągi znaków rozdzielone białymi znakami. */

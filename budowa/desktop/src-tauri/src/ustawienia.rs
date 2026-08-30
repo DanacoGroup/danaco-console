@@ -24,6 +24,11 @@ pub const ZMIENNA_HOST_RDZENIA: &str = "DANACO_HOST_RDZENIA";
 /// zostawia powłokę bez wskazania, tak jak było przedtem.
 pub const HOST_WDROZENIA: Option<&str> = option_env!("DANACO_HOST_WDROZENIA");
 
+/// Port rdzenia wpisany w postać instalki przy jej składaniu, dopełnienie
+/// `HOST_WDROZENIA`: wdrożenie za zaporą wystawia rdzeń na porcie innym niż
+/// domyślny, a kreator o port nie pyta tak samo jak o adres.
+pub const PORT_WDROZENIA: Option<&str> = option_env!("DANACO_PORT_WDROZENIA");
+
 /// Nazwa warstwy, z której pochodzi obowiązujące wskazanie hosta rdzenia,
 /// zwracana w odpowiedzi polecenia wskazania.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -109,11 +114,12 @@ impl Ustawienia {
         })
     }
 
-    /// Port rdzenia obowiązujący: zmienna środowiska albo nastawy, inaczej
-    /// `PORT_DOMYSLNY`.
+    /// Port rdzenia obowiązujący: zmienna środowiska, nastawy, port wpisany
+    /// przy składaniu instalki, inaczej `PORT_DOMYSLNY`.
     pub fn port(&self) -> u16 {
         self.port_ze_srodowiska
             .or_else(|| self.nastawy().port_rdzenia)
+            .or_else(|| PORT_WDROZENIA.and_then(|port| port.parse().ok()))
             .unwrap_or(PORT_DOMYSLNY)
     }
 

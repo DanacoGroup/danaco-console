@@ -52,8 +52,6 @@ type Widok =
   | 'odzyskiwanie-kod'
   | 'odzyskiwanie-haslo';
 
-const GRANICA_EKRANU_STARTOWEGO_MS = 4000;
-
 // Kod z widoku `odzyskiwanie-kod` zużywa dopiero `auth.reset`, razem z hasłem.
 let drogaOdzyskania = '';
 
@@ -152,19 +150,9 @@ async function powitaj(most: Kanal | undefined): Promise<void> {
   const wynik = await zadajPowitanie(most, tozsamoscKlienta(), tokenSesji || undefined);
   ustawWariant(wynik.udany ? 'w-laczenie' : 'w-blad');
   domknijEkranStartowy();
-  if (wynik.udany) poAnimacji(() => styk().dnPrzelaczWidok?.('uwierzytelnienie', 'etap'));
-}
-
-// Animacja uruchomienia zgłasza koniec zdarzeniem `ekran-startowy-koniec`.
-function poAnimacji(bieg: () => void): void {
-  let wykonane = false;
-  const raz = (): void => {
-    if (wykonane) return;
-    wykonane = true;
-    bieg();
-  };
-  document.addEventListener('ekran-startowy-koniec', raz, { once: true });
-  globalThis.setTimeout(raz, GRANICA_EKRANU_STARTOWEGO_MS);
+  /* Dalej okno przechodzi samo: po animacji biblioteka odgrywa etapy łączenia
+     i przechodzi do etapu z `data-po-polaczeniu`. Przełączenie stąd wyprzedzałoby
+     ten przebieg i pomijało okno uruchomienia. */
 }
 
 function ustawWariant(widok: string): void {

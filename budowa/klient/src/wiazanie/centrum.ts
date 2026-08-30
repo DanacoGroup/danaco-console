@@ -808,14 +808,13 @@ function opiszSrodowisko(karta: HTMLElement, srodowisko: Environment): void {
 function opiszStopke(karta: HTMLElement, sesji: number): void {
   const stopka = karta.querySelector('.cd-karta-meta');
   if (stopka === null) return;
-  const miara = stopka.querySelector('.cd-metryka-czlon, span:not([data-wejdz])');
-  if (miara !== null) {
-    miara.textContent = miaraSesji(sesji);
+  /* Miara stoi w stopce węzłem tekstowym obok kropki stanu i grotu wejścia;
+     podpis dla czytnika ekranu zostaje, bo należy do znacznika Właściciela. */
+  for (const wezel of stopka.childNodes) {
+    if (wezel.nodeType !== Node.TEXT_NODE) continue;
+    if ((wezel.nodeValue ?? '').trim() === '') continue;
+    wezel.nodeValue = miaraSesji(sesji);
     return;
-  }
-  for (const wezel of [...stopka.childNodes]) {
-    if (wezel instanceof Element && wezel.closest('[data-wejdz]') !== null) continue;
-    wezel.remove();
   }
 }
 

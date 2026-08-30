@@ -15,8 +15,12 @@ pub const TYTUL: &str = "Danaco Console";
 pub fn otworz(aplikacja: &AppHandle) -> tauri::Result<WebviewWindow> {
     let okno = WebviewWindowBuilder::new(aplikacja, ETYKIETA, WebviewUrl::default())
         .title(TYTUL)
-        .inner_size(1440.0, 900.0)
-        .min_inner_size(960.0, 640.0)
+        // Okno wejścia ma stałe 1040×780 punktów i musi zmieścić się wraz
+        // z pasem działań — bez tego Operator nie ma czym zatwierdzić
+        // logowania. Minimum powłoki jest więc miarą tego okna, nie liczbą
+        // dobraną z ręki.
+        .inner_size(1600.0, 1000.0)
+        .min_inner_size(1080.0, 840.0)
         .resizable(true)
         .center()
         .visible(true)

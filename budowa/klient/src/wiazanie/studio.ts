@@ -179,6 +179,9 @@ export function zwiazStudio(
   });
 
   zdejmijZnacznikiBezZrodla();
+  /* Stan pusty dokumentu wchodzi od razu: nazwa pracy z prototypu jest treścią
+     przykładową, a okno staje, zanim powstanie sesja i dokument. */
+  opiszDokument(null);
   void opiszKanal(kanal, nazwaSrodowiska);
   void opiszWyborModelu(kanal);
   opiszWyborNakladu();

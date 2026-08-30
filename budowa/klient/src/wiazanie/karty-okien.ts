@@ -156,6 +156,21 @@ export function zwiazPasmo(
   }, true);
 }
 
+/**
+ * Nadaje karcie nazwę pracy, którą niesie jej wnętrze. Karta pasma jest jedną
+ * pracą w sesji, a nie modułem — moduł stoi przy niej cechą `data-modul`.
+ */
+export function nazwijKarte(idOkna: string, nazwa: string): void {
+  const karta = lista?.querySelector<HTMLElement>(`.dn-karta-widoku[data-karta="${idOkna}"]`);
+  if (karta === undefined || karta === null || nazwa === '') return;
+  karta.setAttribute('aria-label', nazwa);
+  karta.setAttribute('data-etykietka', nazwa);
+  const podpis = karta.querySelector('.dn-karta-widoku-nazwa');
+  if (podpis !== null) podpis.textContent = nazwa;
+  const pozycja = wykaz?.querySelector<HTMLElement>(`[data-karta-przelacz="${idOkna}"]`);
+  if (pozycja !== null && pozycja !== undefined) wpiszNazwe(pozycja, nazwa);
+}
+
 /** Przypina kartę albo zdejmuje przypięcie; przypięta zostaje przy zamykaniu pozostałych. */
 export function przypnijKarte(idOkna: string): void {
   const karta = lista?.querySelector<HTMLElement>(`.dn-karta-widoku[data-karta="${idOkna}"]`);

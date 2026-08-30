@@ -2027,6 +2027,7 @@ Przechodzi w 218 s.
 | `design/zasoby/` — skrypty okien | selektory biblioteki dopasowują moduł po nazwie (`data-modul="Studio"`), a `wiazanie/powloka.ts` wpisuje kod z kontraktu (`studio`); rozstrzygnięte: atrybut niesie kod, selektory biblioteki do doprowadzenia do kodów |
 | `server/internal/core` — `auth.reset` | sięga po `a.kotwica(ctx)` bez wskazania konta; przy dwóch kontach na instalacji hasło resetuje się na wspólnej kotwicy — wymaga rozstrzygnięcia modelu jednego Operatora na instalację |
 | `klient/wiazanie/wejscie.ts` + `okna/przeplyw-wejscia.js` | etapy łączenia biegną rytmem biblioteki (900 ms na krok), nie rzeczywistymi zdarzeniami transportu; do związania stanów kroków z powitaniem, uzgodnieniem wersji i tożsamością |
+| warstwa projektowa — okno robocze | brak wzoru stanu „rozłączono/wznawianie": przy 10 s zerwania łączności wskaźniki trzymają „pracuje" i Operator nie widzi utraty połączenia; klient niesie gotowy typ `StanPolaczenia` (`rozlaczony/laczenie/polaczony/ponawianie`) — wymaga wzoru w bibliotece, nie dopowiedzenia wykonawcy |
 
 ### Reguła odbioru wyprowadzona z pomiarów
 

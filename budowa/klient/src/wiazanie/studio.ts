@@ -121,12 +121,28 @@ export function zwiazStudio(
     wezly.formularz.requestSubmit();
   });
 
+  /* Sesja powstaje dopiero pierwszą wiadomością wysłaną do modelu — nie
+     otwarciem okna ani wejściem w moduł. Do tej chwili Operator chodzi po
+     produkcie swobodnie i żadna sesja po nim nie zostaje. */
+  const zapewnijStanowisko = async (): Promise<string> => {
+    if (idOkna !== '') return idOkna;
+    idOkna = await otworzStanowisko(kanal, wezly, wzorPozycji, wstawWpis);
+    if (idOkna === '') return '';
+    zwiazPanele(kanal, idOkna);
+    dokument = await zalozDokument(kanal, idOkna, wezly);
+    opiszDokument(dokument);
+    return idOkna;
+  };
+
   wezly.formularz.addEventListener('submit', (zdarzenie) => {
     zdarzenie.preventDefault();
     const tresc = wezly.pole.value.trim();
-    if (tresc === '' || idOkna === '') return;
+    if (tresc === '') return;
     wezly.pole.value = '';
-    void wywolaj(kanal, Command.MessageSend, { windowId: idOkna, content: tresc, stream: true });
+    void zapewnijStanowisko().then((okno) => {
+      if (okno === '') return;
+      void wywolaj(kanal, Command.MessageSend, { windowId: okno, content: tresc, stream: true });
+    });
   });
 
   // Ctrl+S zapisuje treść kanwy: pas stanu prototypu mówi o zapisie
@@ -145,11 +161,15 @@ export function zwiazStudio(
     odswiezPasStanu(wezly, dokument);
   });
 
+  /* Nowy dokument jest pracą z modelem w edytorze, więc zakłada stanowisko
+     tak samo jak pierwsza wiadomość. */
   wezly.nowyDokument?.addEventListener('click', () => {
-    if (idOkna === '') return;
-    void zalozDokument(kanal, idOkna, wezly).then((zalozony) => {
-      dokument = zalozony;
-      opiszDokument(zalozony);
+    void zapewnijStanowisko().then((okno) => {
+      if (okno === '') return;
+      void zalozDokument(kanal, okno, wezly).then((zalozony) => {
+        dokument = zalozony;
+        opiszDokument(zalozony);
+      });
     });
   });
 
@@ -162,16 +182,6 @@ export function zwiazStudio(
   void opiszKanal(kanal, nazwaSrodowiska);
   void opiszWyborModelu(kanal);
   opiszWyborNakladu();
-  void otworzStanowisko(kanal, wezly, wzorPozycji, wstawWpis).then((okno) => {
-    idOkna = okno;
-    if (okno === '') return;
-    zwiazPanele(kanal, okno);
-    void zalozDokument(kanal, okno, wezly).then((zalozony) => {
-      dokument = zalozony;
-      opiszDokument(zalozony);
-    });
-  });
-
   return true;
 }
 

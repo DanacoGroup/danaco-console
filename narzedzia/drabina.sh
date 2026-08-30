@@ -87,6 +87,14 @@ if [ -d budowa/shared/gen ]; then
 	fi
 fi
 
+szczebel "Pokrycie kontraktu przez interfejs"
+POKRYCIE="$(python3 narzedzia/pokrycie-kontraktu.py . 2>/dev/null)"
+if [ -n "$POKRYCIE" ]; then
+	printf '   interfejs woła %s komend kontraktu\n' "$POKRYCIE"
+else
+	printf '   pominięty: pomiaru nie dało się wykonać\n'
+fi
+
 if [ "$TRYB" = "pelna" ]; then
 	szczebel "Sprawdziany klienta"
 	if (cd budowa/klient && npm run testy 2>&1 | tail -3); then

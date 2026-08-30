@@ -14,6 +14,7 @@ type Sesje interface {
 	Utworz(ctx context.Context, z shared.SessionCreateRequest) (shared.SessionCreateResponse, error)
 	Wykaz(ctx context.Context, z shared.SessionListRequest) (shared.SessionListResponse, error)
 	Otworz(ctx context.Context, z shared.SessionOpenRequest) (shared.SessionOpenResponse, error)
+	Wydaj(ctx context.Context, z shared.SessionExportRequest) (shared.SessionExportResponse, error)
 	Zamknij(ctx context.Context, z shared.SessionCloseRequest) (shared.SessionCloseResponse, error)
 	Usun(ctx context.Context, z shared.SessionDeleteRequest) (shared.SessionDeleteResponse, error)
 	// Czynności Operatora na wykazie sesji; wszystkie są odwracalne poza usunięciem.

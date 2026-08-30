@@ -2,8 +2,11 @@ package core
 
 import (
 	"context"
+	"encoding/json"
+	"strings"
 
 	"danacoconsole/server/internal/dane"
+	"danacoconsole/server/internal/protocol"
 
 	"danacoconsole/server/internal/session"
 	"danacoconsole/shared"
@@ -65,6 +68,62 @@ func (a *adapterSesji) Utworz(ctx context.Context, z shared.SessionCreateRequest
 	// Sesja idzie do bazy od razu, nie dopiero z pierwszą wiadomością, bo zapis ma trwać.
 	a.utrwalZalozona(ctx, sesja)
 	return shared.SessionCreateResponse{Session: sesjaKontraktu(sesja)}, nil
+}
+
+// Wydaj oddaje zapis sesji wraz z jej oknami. Menu okna roboczego niesie tę
+// czynność pod nazwą „Eksportuj sesję"; zapis maszynowy niesie sesję i okna,
+// zapis do czytania — te same rzeczy zdaniami.
+func (a *adapterSesji) Wydaj(_ context.Context, z shared.SessionExportRequest) (shared.SessionExportResponse, error) {
+	sesja, err := a.nadzorca.Rejestr().Sesja(z.SessionId)
+	if err != nil {
+		return shared.SessionExportResponse{}, bladSesji(err)
+	}
+	okna, err := a.nadzorca.Rejestr().OknaSesji(z.SessionId)
+	if err != nil {
+		return shared.SessionExportResponse{}, bladSesji(err)
+	}
+	postac := shared.SessionExportFormat(shared.SessionExportFormatJson)
+	if z.Format != nil && *z.Format != "" {
+		postac = *z.Format
+	}
+	opis := sesjaKontraktu(sesja)
+	if postac == shared.SessionExportFormatMarkdown {
+		return shared.SessionExportResponse{
+			Content:  zapisSesjiDoCzytania(opis, oknaKontraktu(okna)),
+			Format:   postac,
+			FileName: z.SessionId + ".md",
+		}, nil
+	}
+	tresc, err := json.MarshalIndent(struct {
+		Session shared.Session  `json:"session"`
+		Windows []shared.Window `json:"windows"`
+	}{Session: opis, Windows: oknaKontraktu(okna)}, "", "  ")
+	if err != nil {
+		return shared.SessionExportResponse{}, protocol.JakoError(protocol.NowyBlad(
+			shared.ErrorCodeInternalError, "sesje: zapisu sesji nie da się złożyć: "+err.Error()))
+	}
+	return shared.SessionExportResponse{
+		Content:  string(tresc),
+		Format:   postac,
+		FileName: z.SessionId + ".json",
+	}, nil
+}
+
+// zapisSesjiDoCzytania składa zapis sesji zdaniami: nazwa, stan i wykaz okien.
+func zapisSesjiDoCzytania(sesja shared.Session, okna []shared.Window) string {
+	nazwa := sesja.Id
+	if sesja.Title != nil && *sesja.Title != "" {
+		nazwa = *sesja.Title
+	}
+	wiersze := []string{"# " + nazwa, "", "Stan: " + string(sesja.Status), ""}
+	if sesja.EnvironmentCode != nil && *sesja.EnvironmentCode != "" {
+		wiersze = append(wiersze, "Środowisko: "+*sesja.EnvironmentCode, "")
+	}
+	wiersze = append(wiersze, "## Okna")
+	for _, okno := range okna {
+		wiersze = append(wiersze, "- "+okno.Id+" — moduł "+okno.ModuleId+", stan "+string(okno.Status))
+	}
+	return strings.Join(wiersze, "\n") + "\n"
 }
 
 // Wykaz zwraca sesje konta w kolejności ich świeżości, opcjonalnie zawężone

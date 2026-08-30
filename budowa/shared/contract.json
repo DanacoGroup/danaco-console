@@ -8758,6 +8758,20 @@
           "opis": "Biurko"
         }
       ]
+    },
+    {
+      "nazwa": "SessionExportFormat",
+      "opis": "Postac zapisu wydanej sesji",
+      "wartosci": [
+        {
+          "wartosc": "json",
+          "opis": "Zapis maszynowy: sesja, okna i wiadomosci"
+        },
+        {
+          "wartosc": "markdown",
+          "opis": "Zapis do czytania: rozmowa w kolejnosci"
+        }
+      ]
     }
   ],
   "struktury": [
@@ -36765,6 +36779,44 @@
           "typ": "Window[]",
           "wymagane": true,
           "opis": "Okna komunikacji sesji"
+        }
+      ]
+    },
+    {
+      "typ": "session.export",
+      "opis": "Wydaje zapis sesji wraz z jej oknami i rozmowa. Menu okna roboczego niesie te czynnosc pod nazwa 'Eksportuj sesje'",
+      "zadanie": [
+        {
+          "nazwa": "sessionId",
+          "typ": "string",
+          "wymagane": true,
+          "opis": "Sesja do wydania"
+        },
+        {
+          "nazwa": "format",
+          "typ": "SessionExportFormat",
+          "wymagane": false,
+          "opis": "Postac zapisu; puste znaczy json"
+        }
+      ],
+      "wynik": [
+        {
+          "nazwa": "content",
+          "typ": "string",
+          "wymagane": true,
+          "opis": "Tresc zapisu"
+        },
+        {
+          "nazwa": "format",
+          "typ": "SessionExportFormat",
+          "wymagane": true,
+          "opis": "Postac wydanego zapisu"
+        },
+        {
+          "nazwa": "fileName",
+          "typ": "string",
+          "wymagane": true,
+          "opis": "Nazwa pliku proponowana Operatorowi"
         }
       ]
     },

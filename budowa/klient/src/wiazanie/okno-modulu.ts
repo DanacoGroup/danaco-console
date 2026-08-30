@@ -18,6 +18,9 @@ import { zwiazBrowser } from './okno-browser.ts';
 import { zwiazDeveloper } from './okno-developer.ts';
 import { zwiazLibrary } from './okno-library.ts';
 import { zwiazResearch } from './okno-research.ts';
+import { zwiazRoundtable } from './okno-roundtable.ts';
+import { zwiazTerminal } from './okno-terminal.ts';
+import { zwiazTranslate } from './okno-translate.ts';
 import { zwiazWorkspace } from './okno-workspace.ts';
 
 /** Wiązania szczegółowe modułów, po kodzie rejestru rdzenia; moduł bez wpisu dostaje samo okno rdzenia. */
@@ -29,6 +32,9 @@ const WIAZANIA = new Map<string, WiazanieModulu>([
   ['developer', zwiazDeveloper],
   ['library', zwiazLibrary],
   ['research', zwiazResearch],
+  ['roundtable', zwiazRoundtable],
+  ['terminal', zwiazTerminal],
+  ['translate', zwiazTranslate],
   ['workspace', zwiazWorkspace],
 ]);
 

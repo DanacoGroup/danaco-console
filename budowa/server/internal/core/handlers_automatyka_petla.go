@@ -206,6 +206,11 @@ func (s *silnikWybudzen) przerwij(ctx context.Context, o dane.OczekiwanieBiegu) 
 	return s.zamknijIZapisz(ctx, o, powodTermin, nil, func(przebieg *dane.Przebieg) {
 		przebieg.Stan = "stopped"
 		przebieg.KomunikatBledu = &powod
+		/* Bieg przerwany terminem jest biegiem zakończonym i musi nieść czas
+		   zakończenia: bez niego czasu trwania nie da się policzyć, a wiersz
+		   idzie do zapisu z wartością pustą odczytaną z bazy. */
+		zakonczono := time.Now().UTC().Format(formatZnacznikaBazy)
+		przebieg.Zakonczono = &zakonczono
 	})
 }
 

@@ -1,6 +1,10 @@
 // Punkt wejścia klienta. Znacznik okien pochodzi z biblioteki `design/zasoby/`.
 
-import { adresGniazdaRdzenia, adresRdzeniaLokalnego } from './polaczenie/adres-rdzenia.ts';
+import {
+  adresGniazdaOdPowloki,
+  adresGniazdaRdzenia,
+  adresRdzeniaLokalnego,
+} from './polaczenie/adres-rdzenia.ts';
 import { utworzTransport } from './polaczenie/gniazdo.ts';
 import { utworzKanal } from './protokol/kanal.ts';
 import { utworzSesje } from './protokol/sesja.ts';
@@ -14,7 +18,10 @@ function adresRdzenia(): string {
   return adresGniazdaRdzenia(globalThis.location.origin) ?? adresRdzeniaLokalnego();
 }
 
-const transport = utworzTransport(adresRdzenia());
+/* Powłoka desktopowa pytana jest pierwsza: jej wskazanie niesie serwer
+   wdrożenia, którego pochodzenie dokumentu w powłoce nie zdradza. Poza powłoką
+   odpowiedzi nie ma i zostaje adres wywiedziony z pochodzenia. */
+const transport = utworzTransport((await adresGniazdaOdPowloki()) ?? adresRdzenia());
 const kanal = utworzKanal(transport, utworzSesje());
 
 /*

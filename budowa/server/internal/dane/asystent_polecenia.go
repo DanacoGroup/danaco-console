@@ -62,8 +62,11 @@ func (r *repozytoriumAsystenta) PrzyjmijPolecenie(ctx context.Context, zlecenie 
 		if err != nil {
 			return err
 		}
+		// Wpis ma dziewięć kolumn: wyróżnienie i jego notatka wchodzą tak samo
+		// jak przy zapisie samodzielnym, inaczej zapytanie zostaje bez argumentu.
 		if _, err := zapisWpisu.ExecContext(ctx, wpis.Kod, zlecenie.OknoKod, kodZlecenia,
-			wpis.Rodzaj, wpis.Tresc, tekstDoKolumny(wpis.NagranieOdnosnik), utworzonoWpisu); err != nil {
+			wpis.Rodzaj, wpis.Tresc, tekstDoKolumny(wpis.NagranieOdnosnik), utworzonoWpisu,
+			liczbaLogiczna(wpis.Wazny), tekstDoKolumny(wpis.NotatkaWyroznienia)); err != nil {
 			return fmt.Errorf("dane: nie można zapisać wpisu dziennika %q polecenia asystenta %q: %w",
 				wpis.Kod, zlecenie.Kod, err)
 		}

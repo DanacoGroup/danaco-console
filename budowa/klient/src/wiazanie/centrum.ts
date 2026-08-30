@@ -118,7 +118,7 @@ export function zwiazCentrum(kanal: Kanal | undefined = globalThis.DanacoKanal):
       .nowaSesjaSrodowisko;
     if (kodNowejSesji !== undefined) {
       void zalozSesje(kanal, wezly.wykazSesji, wzorWiersza);
-      const wstawione = wstawWnetrze(wnetrze, 'dn-tresc-przedsionek');
+      const wstawione = wstawWnetrze(wnetrze, gniazdoPrzedsionka(kodNowejSesji));
       if (wstawione === null) return;
       wnetrze = wstawione;
       nazwaSrodowiska = katalogSrodowisk.get(kodNowejSesji)?.name ?? '';
@@ -140,7 +140,7 @@ export function zwiazCentrum(kanal: Kanal | undefined = globalThis.DanacoKanal):
 
     const kodSrodowiska = kodSrodowiskaWejscia(cel);
     if (kodSrodowiska !== '') {
-      const wstawione = wstawWnetrze(wnetrze, 'dn-tresc-przedsionek');
+      const wstawione = wstawWnetrze(wnetrze, gniazdoPrzedsionka(kodSrodowiska));
       if (wstawione === null) return;
       wnetrze = wstawione;
       nazwaSrodowiska = nazwaKartySrodowiska(cel);
@@ -167,6 +167,15 @@ export function zwiazCentrum(kanal: Kanal | undefined = globalThis.DanacoKanal):
   }, true);
 
   return true;
+}
+
+/**
+ * Szablon przedsionka wskazanego środowiska. Każde środowisko ma własny
+ * prototyp, bo kafle niosą znaki swoich modułów; środowisko bez prototypu
+ * wchodzi na przedsionek TalkIn, żeby droga wejścia nie urwała się wcale.
+ */
+function gniazdoPrzedsionka(kodSrodowiska: string): string {
+  return 'dn-tresc-przedsionek-' + kodSrodowiska.toLowerCase();
 }
 
 /** Kod modułu wskazanego pozycją szyny, kaflem Centrum albo kaflem przedsionka; zapis sprowadza do małych liter, bo rejestr rdzenia trzyma kody małymi. */

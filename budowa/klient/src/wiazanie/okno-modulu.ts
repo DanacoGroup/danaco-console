@@ -12,17 +12,37 @@ import {
 } from '../../../shared/contract.ts';
 import type { Kanal } from '../protokol/kanal.ts';
 import { wywolaj } from '../protokol/wywolanie.ts';
+import { zwiazAgents } from './okno-agents.ts';
+import { zwiazApps } from './okno-apps.ts';
+import { zwiazAssistant } from './okno-assistant.ts';
+import { zwiazAutomations } from './okno-automations.ts';
 import { zwiazBrowser } from './okno-browser.ts';
+import { zwiazDesign } from './okno-design.ts';
 import { zwiazDeveloper } from './okno-developer.ts';
+import { zwiazDiagnostics } from './okno-diagnostics.ts';
 import { zwiazLibrary } from './okno-library.ts';
+import { zwiazResearch } from './okno-research.ts';
+import { zwiazRoundtable } from './okno-roundtable.ts';
+import { zwiazTerminal } from './okno-terminal.ts';
+import { zwiazTranslate } from './okno-translate.ts';
 import { zwiazWorkspace } from './okno-workspace.ts';
 
 /** Wiązania szczegółowe modułów, po kodzie rejestru rdzenia; moduł bez wpisu dostaje samo okno rdzenia. */
 type WiazanieModulu = (kanal: Kanal, idOkna: string) => void;
 const WIAZANIA = new Map<string, WiazanieModulu>([
+  ['agents', zwiazAgents],
+  ['apps', zwiazApps],
+  ['assistant', zwiazAssistant],
+  ['automations', zwiazAutomations],
   ['browser', zwiazBrowser],
+  ['design', zwiazDesign],
   ['developer', zwiazDeveloper],
+  ['diagnostics', zwiazDiagnostics],
   ['library', zwiazLibrary],
+  ['research', zwiazResearch],
+  ['roundtable', zwiazRoundtable],
+  ['terminal', zwiazTerminal],
+  ['translate', zwiazTranslate],
   ['workspace', zwiazWorkspace],
 ]);
 
@@ -194,4 +214,43 @@ export function zdejmijTrescWspolna(cialo: HTMLElement): void {
   for (const znacznik of cialo.querySelectorAll('#menu-filtr .sta-menu-poz[aria-checked]')) {
     znacznik.removeAttribute('aria-checked');
   }
+}
+
+/** Miejsca węzłów zdjętych dla braku wartości; bez nich węzeł nie miałby dokąd wrócić. */
+const MIEJSCA = new WeakMap<Element, { rodzic: Element; przed: Node | null }>();
+
+/**
+ * Zdejmuje węzeł albo stawia go z powrotem na jego miejscu. Brak wartości nie
+ * jest brakiem pola: kontrakt pole niesie, więc wartość może dojść przy
+ * kolejnym odczycie i węzeł wraca tam, skąd zszedł. Węzeł, dla którego pola
+ * nie ma wcale, schodzi wprost — bez tej drogi powrotnej.
+ */
+export function zdejmijAlboPostaw(wezel: Element | null, obecny: boolean): void {
+  if (wezel === null) return;
+  if (!obecny) {
+    if (wezel.parentElement === null) return;
+    MIEJSCA.set(wezel, { rodzic: wezel.parentElement, przed: wezel.nextSibling });
+    wezel.remove();
+    return;
+  }
+  if (wezel.parentElement !== null) return;
+  const miejsce = MIEJSCA.get(wezel);
+  miejsce?.rodzic.insertBefore(wezel, miejsce.przed);
+}
+
+/** Wpisuje wartość w cały węzeł; wartość pusta zdejmuje węzeł do czasu, gdy rdzeń ją poda. */
+export function wpiszAlboZdejmij(wezel: Element | null, wartosc: string): void {
+  if (wezel === null) return;
+  if (wartosc !== '') wezel.textContent = wartosc;
+  zdejmijAlboPostaw(wezel, wartosc !== '');
+}
+
+/** Wpisuje wartość w pierwszy niepusty węzeł tekstowy, zostawiając ikonę; wartość pusta zdejmuje węzeł do czasu, gdy rdzeń ją poda. */
+export function wpiszTekstAlboZdejmij(wezel: Element | null, wartosc: string): void {
+  if (wezel === null) return;
+  if (wartosc !== '' && !wpiszTekst(wezel, wartosc)) {
+    wezel.remove();
+    return;
+  }
+  zdejmijAlboPostaw(wezel, wartosc !== '');
 }

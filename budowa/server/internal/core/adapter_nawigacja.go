@@ -108,15 +108,36 @@ func (a *adapterNawigacji) srodowiska(ctx context.Context, zModulami bool) ([]sh
 	if err != nil {
 		return nil, err
 	}
+	sesji := a.sesjeSrodowisk()
 	wykaz := make([]shared.Environment, 0, len(wiersze))
 	for pozycja, wiersz := range wiersze {
 		moduly, err := a.zestaw.Moduly.ListaSrodowiska(ctx, wiersz.ID)
 		if err != nil {
 			return nil, err
 		}
-		wykaz = append(wykaz, srodowiskoKontraktu(wiersz, pozycja+1, kodyWierszyModulow(moduly), zModulami))
+		srodowisko := srodowiskoKontraktu(wiersz, pozycja+1, kodyWierszyModulow(moduly), zModulami)
+		// Karta środowiska w Centrum niesie miarę własnych sesji czynnych.
+		liczba := sesji[srodowisko.Code]
+		srodowisko.SessionCount = &liczba
+		wykaz = append(wykaz, srodowisko)
 	}
 	return wykaz, nil
+}
+
+// sesjeSrodowisk liczy sesje czynne przypadające na środowisko wejścia.
+// Sesja bez środowiska nie wchodzi do żadnej miary.
+func (a *adapterNawigacji) sesjeSrodowisk() map[string]int {
+	miary := map[string]int{}
+	if a.nadzorca == nil {
+		return miary
+	}
+	for _, sesja := range a.nadzorca.Rejestr().Sesje() {
+		if sesja.KodSrodowiska == "" || sesja.Stan != shared.SessionStatusActive {
+			continue
+		}
+		miary[sesja.KodSrodowiska]++
+	}
+	return miary
 }
 
 // sesjeCzynne łączy sesje żywe rejestru nadzorcy z sesjami utrwalonymi w bazie;

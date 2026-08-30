@@ -42,6 +42,11 @@ func (n *Nadzorca) ZalozSesje(tytul, idProjektu string) Sesja {
 	return n.rejestr.ZalozSesje(tytul, idProjektu)
 }
 
+// ZalozSesjeSrodowiska zakłada sesję opisaną środowiskiem wejścia Operatora.
+func (n *Nadzorca) ZalozSesjeSrodowiska(tytul, idProjektu, kodSrodowiska string) Sesja {
+	return n.rejestr.ZalozSesjeSrodowiska(tytul, idProjektu, kodSrodowiska)
+}
+
 // OtworzOkno zakłada okno komunikacji w sesji i zwraca jego opis wraz
 // z identyfikatorem oraz ustawieniami.
 func (n *Nadzorca) OtworzOkno(idSesji string, u Ustawienia) (Okno, error) {

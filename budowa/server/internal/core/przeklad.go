@@ -26,6 +26,9 @@ func sesjaKontraktu(s session.Sesja) shared.Session {
 		nazwa i tak właśnie stawało w szynie sesji. Okno ma własny stan pusty i to
 		on ma się pokazać.
 	*/
+	if s.KodSrodowiska != "" {
+		sesja.EnvironmentCode = &s.KodSrodowiska
+	}
 	if s.Tytul != "" && s.Tytul != s.Id {
 		sesja.Title = &s.Tytul
 	}

@@ -42,9 +42,16 @@ export async function otworzSesje(kanal: Kanal, idSesji: string): Promise<Window
  * Karta sesji, w której ma stanąć okno: bieżąca, a gdy Operator żadnej nie
  * otworzył — założona pod nazwą wejścia, żeby wykaz nie zbierał kart bez nazwy.
  */
-export async function zapewnijSesje(kanal: Kanal, nazwa: string): Promise<string> {
+export async function zapewnijSesje(
+  kanal: Kanal,
+  nazwa: string,
+  kodSrodowiska = '',
+): Promise<string> {
   if (biezaca !== '') return biezaca;
-  const wynik = await wywolaj(kanal, Command.SessionCreate, nazwa === '' ? {} : { title: nazwa });
+  const zadanie: { title?: string; environmentCode?: string } = {};
+  if (nazwa !== '') zadanie.title = nazwa;
+  if (kodSrodowiska !== '') zadanie.environmentCode = kodSrodowiska;
+  const wynik = await wywolaj(kanal, Command.SessionCreate, zadanie);
   if (!wynik.udany || wynik.wynik === undefined) return '';
   await wskazSesje(kanal, wynik.wynik.session.id);
   return biezaca;

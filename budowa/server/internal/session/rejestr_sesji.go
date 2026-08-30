@@ -25,7 +25,14 @@ func NowyRejestr() *Rejestr {
 
 // Metoda ZalozSesje zakłada nową sesję czynną z podanym tytułem i identyfikatorem projektu i zwraca jej odpis.
 func (r *Rejestr) ZalozSesje(tytul, idProjektu string) Sesja {
+	return r.ZalozSesjeSrodowiska(tytul, idProjektu, "")
+}
+
+// Metoda ZalozSesjeSrodowiska zakłada sesję opisaną środowiskiem, przez które
+// Operator wszedł do pracy. Po tym opisie karta środowiska liczy swoje sesje.
+func (r *Rejestr) ZalozSesjeSrodowiska(tytul, idProjektu, kodSrodowiska string) Sesja {
 	s := nowaSesja(tytul, idProjektu)
+	s.KodSrodowiska = kodSrodowiska
 	r.mu.Lock()
 	defer r.mu.Unlock()
 	r.sesje[s.Id] = s

@@ -10121,6 +10121,8 @@ const (
 	CommandSessionCreate MessageType = "session.create"
 	// Zwraca liste sesji
 	CommandSessionList MessageType = "session.list"
+	// Zwraca projekty konta. Lewy panel ramy pokazuje calosc dorobku Operatora, wiec projekt bez ani jednej sesji tez musi byc widoczny
+	CommandProjectList MessageType = "project.list"
 	// Przenosi ognisko na wskazana karte sesji i opcjonalnie na okno w jej wnetrzu. Asystent przestawia ognisko OPERATOROWI polem targetClientId — inaczej jego posuniecia nie byly widoczne na ekranie
 	CommandSessionFocus MessageType = "session.focus"
 	// Wiaze biezace polaczenie z sesja trwajaca na rdzeniu; odtwarza jej okna
@@ -12642,6 +12644,8 @@ type Session struct {
 	UpdatedAt int64 `json:"updatedAt"`
 	// Dane dodatkowe
 	Metadata json.RawMessage `json:"metadata,omitempty"`
+	// Srodowisko, przez ktore Operator wszedl do pracy; puste dla sesji zalozonej poza srodowiskiem
+	EnvironmentCode *string `json:"environmentCode,omitempty"`
 }
 
 // Window — Okno komunikacji — byt posredni miedzy sesja a wiadomoscia
@@ -12798,6 +12802,8 @@ type Environment struct {
 	NavigationKind NavigationKind `json:"navigationKind"`
 	// Kody modulow widocznych w bocznej nawigacji, w kolejnosci wyswietlania; odpowiednik macierzy srodowisko_modul. Puste dla srodowiska z panelem orkiestracji
 	ModuleCodes []string `json:"moduleCodes,omitempty"`
+	// Liczba sesji czynnych w srodowisku; miara karty srodowiska w Centrum dowodzenia
+	SessionCount *int `json:"sessionCount,omitempty"`
 }
 
 // Module — Modul platformy wraz z katalogiem jego okien operacyjnych. Odpowiednik wiersza tabeli modul
@@ -22912,6 +22918,8 @@ type SessionCreateRequest struct {
 	ProjectId *string `json:"projectId,omitempty"`
 	// Dane dodatkowe
 	Metadata json.RawMessage `json:"metadata,omitempty"`
+	// Srodowisko, przez ktore Operator wszedl do pracy
+	EnvironmentCode *string `json:"environmentCode,omitempty"`
 }
 
 // SessionCreateResponse — Tresc wyniku session.create — Zaklada sesje
@@ -22940,6 +22948,20 @@ type SessionListResponse struct {
 	Total int `json:"total"`
 	// Zywy stan sesji trwajacych; wypelniane przy includePresence
 	Presence []SessionPresence `json:"presence,omitempty"`
+}
+
+// ProjectListRequest — Tresc zadania project.list — Zwraca projekty konta. Lewy panel ramy pokazuje calosc dorobku Operatora, wiec projekt bez ani jednej sesji tez musi byc widoczny
+type ProjectListRequest struct {
+	// Czy dolaczyc projekty zarchiwizowane; puste znaczy tylko czynne
+	IncludeArchived *bool `json:"includeArchived,omitempty"`
+}
+
+// ProjectListResponse — Tresc wyniku project.list — Zwraca projekty konta. Lewy panel ramy pokazuje calosc dorobku Operatora, wiec projekt bez ani jednej sesji tez musi byc widoczny
+type ProjectListResponse struct {
+	// Projekty w kolejnosci swiezosci
+	Projects []WorkspaceProject `json:"projects"`
+	// Liczba projektow
+	Total int `json:"total"`
 }
 
 // SessionFocusRequest — Tresc zadania session.focus — Przenosi ognisko na wskazana karte sesji i opcjonalnie na okno w jej wnetrzu. Asystent przestawia ognisko OPERATOROWI polem targetClientId — inaczej jego posuniecia nie byly widoczne na ekranie
@@ -45239,6 +45261,7 @@ func WszystkieKomendy() []MessageType {
 		CommandWorkspaceEnter,
 		CommandSessionCreate,
 		CommandSessionList,
+		CommandProjectList,
 		CommandSessionFocus,
 		CommandSessionBind,
 		CommandSessionOpen,
@@ -46474,6 +46497,7 @@ var zbiorKomend = map[MessageType]struct{}{
 	CommandWorkspaceEnter:                      {},
 	CommandSessionCreate:                       {},
 	CommandSessionList:                         {},
+	CommandProjectList:                         {},
 	CommandSessionFocus:                        {},
 	CommandSessionBind:                         {},
 	CommandSessionOpen:                         {},
@@ -47799,7 +47823,7 @@ func NarzedziaModelu() []ToolDeclaration {
 		{Name: "danaco_environment_enter", Command: CommandEnvironmentEnter, Description: "Wchodzi do srodowiska; zwraca jego nawigacje i karty sesji. Uzyj, gdy uzytkownik prosi o przejscie do TalkIn, WorkSpace, CodeStudio albo MultitaskingAI", Parameters: []ToolParameter{{Name: "environmentId", Type: "string", Items: "", Required: true, Description: "Srodowisko, do ktorego nastepuje wejscie"}, {Name: "clientId", Type: "string", Items: "", Required: true, Description: "Klient wchodzacy do srodowiska"}, {Name: "sessionId", Type: "string", Items: "", Required: false, Description: "Karta sesji, do ktorej nastepuje powrot; puste otwiera karte pusta"}}},
 		{Name: "danaco_module_list", Command: CommandModuleList, Description: "Zwraca moduly wraz z katalogiem ich okien operacyjnych. Uzyj, aby ustalic, ktory modul obsluguje zadana prace i jakie okna operacyjne otworzy", Parameters: []ToolParameter{{Name: "environmentId", Type: "string", Items: "", Required: false, Description: "Ograniczenie do modulow widocznych w srodowisku; puste zwraca komplet"}}},
 		{Name: "danaco_workspace_enter", Command: CommandWorkspaceEnter, Description: "Przeladowuje przestrzen robocza karty sesji na wskazany modul. Uzyj, gdy praca wymaga przelaczenia karty sesji na inny modul; okno rozmowy zostaje, zmienia sie zestaw okien", Parameters: []ToolParameter{{Name: "sessionId", Type: "string", Items: "", Required: true, Description: "Karta sesji, ktorej przestrzen robocza jest przeladowywana"}, {Name: "moduleId", Type: "string", Items: "", Required: true, Description: "Modul wybrany w bocznej nawigacji"}, {Name: "windowId", Type: "string", Items: "", Required: false, Description: "Okno komunikacji do ponownego uzycia; puste zaklada okno nowe. Okno rozmowy nie znika przy zmianie modulu, tylko rekonfiguruje kontekst"}}},
-		{Name: "danaco_session_create", Command: CommandSessionCreate, Description: "Zaklada sesje. Uzyj, gdy zaczyna sie praca nad odrebnym zagadnieniem i potrzebna jest nowa karta sesji", Parameters: []ToolParameter{{Name: "title", Type: "string", Items: "", Required: false, Description: "Nazwa sesji"}, {Name: "projectId", Type: "string", Items: "", Required: false, Description: "Projekt sesji"}, {Name: "metadata", Type: "object", Items: "", Required: false, Description: "Dane dodatkowe"}}},
+		{Name: "danaco_session_create", Command: CommandSessionCreate, Description: "Zaklada sesje. Uzyj, gdy zaczyna sie praca nad odrebnym zagadnieniem i potrzebna jest nowa karta sesji", Parameters: []ToolParameter{{Name: "title", Type: "string", Items: "", Required: false, Description: "Nazwa sesji"}, {Name: "projectId", Type: "string", Items: "", Required: false, Description: "Projekt sesji"}, {Name: "metadata", Type: "object", Items: "", Required: false, Description: "Dane dodatkowe"}, {Name: "environmentCode", Type: "string", Items: "", Required: false, Description: "Srodowisko, przez ktore Operator wszedl do pracy"}}},
 		{Name: "danaco_session_list", Command: CommandSessionList, Description: "Zwraca liste sesji. Uzyj, aby odszukac sesje wczesniejsza po tytule albo stanie, zanim zalozysz nowa", Parameters: []ToolParameter{{Name: "status", Type: "string", Items: "", Required: false, Description: "Ograniczenie do stanu", Enum: []string{"active", "paused", "finished", "archived"}}, {Name: "limit", Type: "integer", Items: "", Required: false, Description: "Liczba pozycji"}, {Name: "offset", Type: "integer", Items: "", Required: false, Description: "Przesuniecie"}, {Name: "includePresence", Type: "boolean", Items: "", Required: false, Description: "Czy dolaczyc zywy stan sesji trwajacych na rdzeniu"}}},
 		{Name: "danaco_session_focus", Command: CommandSessionFocus, Description: "Przenosi ognisko na wskazana karte sesji i opcjonalnie na okno w jej wnetrzu. Asystent przestawia ognisko OPERATOROWI polem targetClientId — inaczej jego posuniecia nie byly widoczne na ekranie. Uzyj, gdy uzytkownik chce przejsc do innej karty sesji albo do innego okna wewnatrz karty", Parameters: []ToolParameter{{Name: "sessionId", Type: "string", Items: "", Required: true, Description: "Sesja przejmujaca ognisko"}, {Name: "clientId", Type: "string", Items: "", Required: true, Description: "Klient, na ktorym nastapila zmiana ogniska; ognisko jest wlasciwoscia klienta, nie konta"}, {Name: "windowId", Type: "string", Items: "", Required: false, Description: "Okno komunikacji przejmujace ognisko wewnatrz sesji; puste zostawia okno dotychczasowe"}, {Name: "targetClientId", Type: "string", Items: "", Required: false, Description: "Klient, ktoremu ognisko ma zostac przestawione. Uzywa tego ASYSTENT dzialajacy za Operatora: bez tego pola przestawialby ognisko sobie, a ekran Operatora stalby w miejscu — czyli praca dzialaby sie \"gdzies w tle\""}}},
 		{Name: "danaco_session_open", Command: CommandSessionOpen, Description: "Otwiera sesje wraz z jej oknami. Uzyj, aby wczytac sesje wraz z jej oknami przed podjeciem pracy przerwanej wczesniej", Parameters: []ToolParameter{{Name: "sessionId", Type: "string", Items: "", Required: true, Description: "Sesja"}}},

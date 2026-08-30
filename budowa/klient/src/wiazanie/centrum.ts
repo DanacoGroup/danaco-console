@@ -592,39 +592,37 @@ async function wypelnijKomponenty(kanal: Kanal): Promise<void> {
 }
 
 /**
- * Wypełnia drzewo projektów lewego panelu. Projekt wchodzi z kart sesji, bo
- * rejestr rdzenia nie ma komendy wykazu projektów — projekt bez ani jednej
- * sesji nie ma się dziś skąd wziąć i w panelu nie stanie.
+ * Wypełnia drzewo projektów lewego panelu wykazem rdzenia wraz z sesjami
+ * każdego projektu. Projekt bez ani jednej sesji też stoi — lewy panel jest
+ * jedynym miejscem, w którym widać całość dorobku Operatora.
  */
 async function wypelnijProjekty(kanal: Kanal): Promise<void> {
   const drzewo = document.querySelector<HTMLElement>('#panel-projekty .dn-panel-drzewo');
   if (drzewo === null) return;
   const galaz = drzewo.querySelector<HTMLElement>('.dn-panel-galaz');
   const wzorGalezi = galaz === null ? null : (galaz.cloneNode(true) as HTMLElement);
-  const wynik = await wywolaj(kanal, Command.SessionList, {});
-  if (!wynik.udany || wynik.wynik === undefined || wzorGalezi === null) return;
-  const projekty = new Map<string, Session[]>();
-  for (const sesja of wynik.wynik.sessions) {
+  const wzorSesji = wzorGalezi?.querySelector<HTMLElement>('.dn-panel-wiersz') ?? null;
+  const projekty = await wywolaj(kanal, Command.ProjectList, {});
+  const sesje = await wywolaj(kanal, Command.SessionList, {});
+  if (!projekty.udany || projekty.wynik === undefined || wzorGalezi === null) return;
+  const wedlugProjektu = new Map<string, Session[]>();
+  for (const sesja of sesje.wynik?.sessions ?? []) {
     if (sesja.projectId === undefined || sesja.projectId === '') continue;
-    const zebrane = projekty.get(sesja.projectId) ?? [];
+    const zebrane = wedlugProjektu.get(sesja.projectId) ?? [];
     zebrane.push(sesja);
-    projekty.set(sesja.projectId, zebrane);
+    wedlugProjektu.set(sesja.projectId, zebrane);
   }
-  drzewo.replaceChildren();
-  const uporzadkowane = [...projekty.entries()].sort((a, b) => (
-    porzadekProjektow === 'nazwa'
-      ? a[0].localeCompare(b[0], 'pl')
-      : Math.max(...b[1].map((sesja) => sesja.updatedAt))
-        - Math.max(...a[1].map((sesja) => sesja.updatedAt))
+  const uporzadkowane = [...projekty.wynik.projects].sort((a, b) => (
+    porzadekProjektow === 'nazwa' ? a.name.localeCompare(b.name, 'pl') : b.updatedAt - a.updatedAt
   ));
-  for (const [projekt, sesje] of uporzadkowane) {
+  drzewo.replaceChildren();
+  for (const projekt of uporzadkowane) {
     const wpis = wzorGalezi.cloneNode(true) as HTMLElement;
-    wpis.dataset.projekt = projekt;
+    wpis.dataset.projekt = projekt.id;
     const nazwa = wpis.querySelector('.dn-panel-galaz-nazwa');
-    if (nazwa !== null) nazwa.textContent = projekt;
+    if (nazwa !== null) nazwa.textContent = projekt.name;
     for (const pozycja of wpis.querySelectorAll('.dn-panel-wiersz')) pozycja.remove();
-    const wzorSesji = wzorGalezi.querySelector<HTMLElement>('.dn-panel-wiersz');
-    for (const sesja of sesje) {
+    for (const sesja of wedlugProjektu.get(projekt.id) ?? []) {
       if (wzorSesji === null) break;
       const wiersz = wzorSesji.cloneNode(true) as HTMLElement;
       wiersz.dataset.idSesji = sesja.id;

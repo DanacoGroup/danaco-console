@@ -5,9 +5,10 @@
  */
 
 import { Command, type Environment, type Module, type Session } from '../../../shared/contract.ts';
-import type { Kanal } from '../protokol/kanal.ts';
+import type { Kanal, Wynik } from '../protokol/kanal.ts';
 import { wywolaj } from '../protokol/wywolanie.ts';
 import { zwiazWyborModulu } from './wybor-modulu.ts';
+import { zwiazOkno } from './okno-modulu.ts';
 import { zwiazStudio } from './studio.ts';
 
 /** Kod modułu, którego wnętrze wchodzi do wydania; pozostałe moduły stoją w szynie, lecz okna w tym wydaniu nie mają. */
@@ -51,7 +52,27 @@ export function zwiazCentrum(kanal: Kanal | undefined = globalThis.DanacoKanal):
     if (!(cel instanceof Element)) return;
     if (cel.closest('[data-okno-nowe]') !== null) {
       void zalozSesje(kanal, wezly.wykazSesji, wzorWiersza);
+      return;
     }
+  });
+
+  /* Czynności sesji słuchają na dokumencie, nie na wnętrzu okna: biblioteka
+     menu przenosi treść menu poza wiersz, więc zdarzenie nie przechodzi przez
+     panel, w którym wiersz stoi. */
+  document.addEventListener('click', (zdarzenie) => {
+    const cel = zdarzenie.target;
+    if (!(cel instanceof Element)) return;
+    const czynnosc = cel.closest<HTMLElement>('[data-poz-akcja]');
+    const wykonaj = CZYNNOSCI_SESJI[czynnosc?.dataset.pozAkcja ?? ''];
+    const idSesji = czynnosc?.dataset.idSesji;
+    if (wykonaj === undefined || idSesji === undefined) return;
+    void wykonaj(kanal, idSesji).then((wynik) => {
+      // Odmowa rdzenia wychodzi na wierzch: czynność, która milczy po
+      // niepowodzeniu, zostawia Operatora przy wykazie sprzed czynności bez
+      // słowa, dlaczego się nie zmienił.
+      if (!wynik.udany) oglos('Czynność sesji', wynik.blad?.message ?? 'Rdzeń odmówił wykonania.');
+      odswiez();
+    });
   });
 
   /* Wnętrze okna zmienia się w miejscu, więc kolejne wejście podmienia element
@@ -128,17 +149,18 @@ export function zwiazCentrum(kanal: Kanal | undefined = globalThis.DanacoKanal):
 
     const kod = kodModulu(cel);
     if (kod === '') return;
-    if (kod !== KOD_MODULU_WYDANIA) {
-      /* Moduł bez okna nie staje się modułem bieżącym: oznaczenie w szynie
+    const wstawione = wstawWnetrze(wnetrze, 'dn-tresc-' + kod);
+    if (wstawione === null) {
+      /* Moduł bez wnętrza nie staje się modułem bieżącym: oznaczenie w szynie
          mówiłoby, że Operator w nim pracuje. */
       zdarzenie.stopPropagation();
       zapowiedzModul(katalogModulow.get(kod));
       return;
     }
-    const wstawione = wstawWnetrze(wnetrze, 'dn-tresc-studio');
-    if (wstawione === null) return;
     wnetrze = wstawione;
-    zwiazStudio(kanal, nazwaSrodowiskaWejscia(cel) || nazwaSrodowiska);
+    const srodowisko = nazwaSrodowiskaWejscia(cel) || nazwaSrodowiska;
+    if (kod === KOD_MODULU_WYDANIA) zwiazStudio(kanal, srodowisko);
+    else zwiazOkno(kanal, kod, srodowisko);
   }, true);
 
   return true;
@@ -228,15 +250,62 @@ async function odswiezWykaz(
   }
 }
 
-/** Zwraca klon wzoru wiersza opisany nazwą sesji; menu czynności klonu zdejmuje się wraz z odwołaniem do nieistniejącej treści. */
+/**
+ * Zwraca klon wzoru wiersza opisany nazwą sesji. Menu czynności zostaje, bo
+ * niesie czynności o pokryciu w kontrakcie; jego odwołanie dostaje
+ * identyfikator sesji, żeby dwa wiersze nie wskazywały tego samego menu.
+ */
 function zbudujWiersz(wzor: HTMLElement, sesja: Session): HTMLElement {
   const wiersz = wzor.cloneNode(true) as HTMLElement;
+  wiersz.dataset.idSesji = sesja.id;
   const nazwa = wiersz.querySelector('.dn-obszar-pozycja-nazwa');
   // Sesja bez nazwy dostaje nazwany stan pusty: identyfikator jest oznaczeniem magazynu, nie nazwą pracy Operatora.
   if (nazwa !== null) nazwa.textContent = sesja.title ?? 'Sesja bez nazwy';
-  wiersz.querySelector('[data-menu-tresc]')?.remove();
   wiersz.querySelector('.dn-obszar-pozycja')?.setAttribute('data-id-sesji', sesja.id);
+  const menu = wiersz.querySelector('[data-menu-tresc]');
+  const wyzwalacz = wiersz.querySelector('[data-menu]');
+  if (menu !== null && wyzwalacz !== null) {
+    const oznaczenie = 'menu-sesji-' + sesja.id;
+    menu.id = oznaczenie;
+    wyzwalacz.setAttribute('data-menu', oznaczenie);
+  }
+  zdejmijCzynnosciBezZrodla(wiersz);
+  /* Identyfikator sesji siada na samej pozycji menu, nie tylko na wierszu:
+     biblioteka menu przenosi treść menu poza wiersz, więc szukanie sesji
+     w przodkach pozycji nic by nie znalazło. */
+  for (const pozycja of wiersz.querySelectorAll<HTMLElement>('[data-poz-akcja]')) {
+    pozycja.dataset.idSesji = sesja.id;
+  }
   return wiersz;
+}
+
+/* Czynności menu, dla których kontrakt ma komendę. Pozycje spoza tego spisu
+   znikają: pozycja menu, która nic nie robi, jest obietnicą bez pokrycia.
+
+   Spis trzyma wywołania, nie same nazwy komend: każda z tych komend bierze
+   wykaz sesji, a nie pojedyncze wskazanie, i tylko wywołanie zapisane przy
+   swojej komendzie daje się sprawdzić kontraktem przy budowaniu. */
+const CZYNNOSCI_SESJI: Record<string, (kanal: Kanal, idSesji: string) => Promise<Wynik<unknown>>> = {
+  archiwizuj: (kanal, idSesji) =>
+    wywolaj(kanal, Command.SessionArchive, { sessionIds: [idSesji] }),
+  // Potwierdzenie nieodwracalności niesie sama pozycja menu: nazywa usunięcie
+  // trwałym, a rejestr sesji drugiego pytania nie stawia.
+  usun: (kanal, idSesji) =>
+    wywolaj(kanal, Command.SessionDelete, { sessionIds: [idSesji], confirm: true }),
+  wyjmij: (kanal, idSesji) =>
+    wywolaj(kanal, Command.SessionProjectClear, { sessionIds: [idSesji] }),
+};
+
+/** Zdejmuje z menu wiersza pozycje bez komendy w kontrakcie wraz z rozdzielnikami, które po nich zostały. */
+function zdejmijCzynnosciBezZrodla(wiersz: HTMLElement): void {
+  for (const pozycja of wiersz.querySelectorAll('[data-menu-tresc] .sta-menu-poz')) {
+    const czynnosc = pozycja.getAttribute('data-poz-akcja') ?? '';
+    if (CZYNNOSCI_SESJI[czynnosc] === undefined) pozycja.remove();
+  }
+  for (const rozdzielnik of wiersz.querySelectorAll('[data-menu-tresc] .sta-menu-sep')) {
+    const przed = rozdzielnik.previousElementSibling;
+    if (przed === null || przed.classList.contains('sta-menu-sep')) rozdzielnik.remove();
+  }
 }
 
 /** Zakłada sesję w rdzeniu i odświeża wykaz jej odpowiedzią. */

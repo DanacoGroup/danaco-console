@@ -19,9 +19,8 @@ var ADRES = new URLSearchParams(location.search);
    pobraniem, nie w jego trakcie). Reszta bloku błędu (kod i rada) zostaje
    nadpisana później, w DOM, po zdarzeniu — tamte węzły `ustawOdslone` nie dotyka. */
 (function podmienPodtytulBledu() {
-  var powod = ADRES.get('blad_powod');
   var K = window.DanacoKreator;
-  if (!powod || !K || !K.tresci || !K.tresci.krok5 || !K.tresci.krok5.blad) return;
+  if (!K || !K.tresci || !K.tresci.krok5 || !K.tresci.krok5.blad) return;
   K.tresci.krok5.blad.podtytul =
     'Instalacja zatrzymała się, zanim ukończyła pobranie i zapis składników programu. '
     + 'Zmiany zostały cofnięte — w komputerze nie pozostały pliki programu.';
@@ -168,6 +167,78 @@ function wiazKrok5Blad() {
   if (rada) rada.textContent = 'Uzyskaj poświadczenia dostępu do kanału wydań albo skontaktuj się '
     + 'z administratorem serwera wdrożenia, a następnie uruchom instalator ponownie.';
 }
+
+
+/* ——— Krok 5: rzeczywiste pobranie składników —————
+   Kreator sam nie pobiera niczego — prototyp odgrywa przebieg czasem. Produkt
+   przejmuje go tutaj: miara idzie z bajtów odebranych przez `pobierz_skladniki`,
+   a krok 6 wchodzi dopiero po sprawdzeniu sumy pliku po stronie Rust. */
+var ZDARZENIE_POSTEPU = 'instalator:postep-pobrania';
+
+/** Katalog docelowy wskazany w kroku 4; pusty znaczy, że kroku nie wypełniono. */
+function katalogDocelowy() {
+  var pole = document.getElementById('katalog-programu');
+  var wartosc = pole ? pole.value.trim() : '';
+  return wartosc.indexOf('Odmowa:') === 0 ? '' : wartosc;
+}
+
+/* Rady dobrane do powodu odmowy. Rada prototypu mówi o zamknięciu innych
+   programów i prawach administratora — dla braku mostu ani dla braku katalogu
+   nie jest prawdą, a rada nieprawdziwa jest gorsza niż jej brak. */
+var RADY = {
+  'brak-mostu-programu': 'Uruchom pobrany plik instalacyjny Danaco Console.',
+  'brak-katalogu': 'Wróć do kroku czwartego i wskaż katalog, w którym program ma stanąć.'
+};
+
+/** Wpisuje powód odmowy wraz z radą w blok błędu kroku 5 i oddaje go odsłonie błędu. */
+function odmowaKroku5(bieg, powod, zdanie) {
+  var szczegoly = document.querySelector('[data-blad-szczegoly]');
+  if (szczegoly) szczegoly.textContent = 'Powód: ' + powod + '\n' + zdanie;
+  var rada = document.querySelector('.dn-kreator-ekran[data-ekran="5"] [data-blok="blad"] p');
+  if (rada && RADY[powod]) rada.textContent = RADY[powod];
+  bieg.odmowa();
+}
+
+function przebiegKroku5(bieg) {
+  if (!invoke) {
+    odmowaKroku5(bieg, 'brak-mostu-programu',
+      'Okno stoi poza powłoką programu, więc pobrania nie ma czym wykonać. '
+      + 'Instalację prowadzi się wyłącznie z pliku instalacyjnego.');
+    return;
+  }
+  var katalog = katalogDocelowy();
+  if (!katalog) {
+    odmowaKroku5(bieg, 'brak-katalogu',
+      'Katalog docelowy nie został ustalony w kroku czwartym, więc nie ma dokąd zapisać plików.');
+    return;
+  }
+  var odsluch = TAURI.event && TAURI.event.listen
+    ? TAURI.event.listen(ZDARZENIE_POSTEPU, function (zdarzenie) {
+        var d = zdarzenie.payload;
+        if (d && d.razem_bajtow > 0) bieg.postep(d.odebrano_bajtow / d.razem_bajtow);
+      })
+    : null;
+  function odlacz() { if (odsluch) odsluch.then(function (stop) { stop(); }); }
+
+  invoke('stan_maszyny').then(function (stan) {
+    return invoke('pobierz_skladniki', {
+      architektura: stan.procesor,
+      katalogRoboczy: katalog
+    });
+  }).then(function () {
+    odlacz();
+    bieg.postep(1);
+    bieg.koniec();
+  }).catch(function (blad) {
+    odlacz();
+    odmowaKroku5(bieg, (blad && blad.powod) || 'przebieg-przerwany',
+      (blad && blad.zdanie) || String(blad));
+  });
+}
+
+// Przejęcie kroku 5 wchodzi przed zdarzeniem gotowości: kreator czyta wpis
+// w chwili wejścia w krok, a wejść może zaraz po zmontowaniu okna.
+if (window.DanacoKreator) window.DanacoKreator.przebiegKroku5 = przebiegKroku5;
 
 document.addEventListener('kreator-gotowy', function () {
   wiazKrok5Blad();

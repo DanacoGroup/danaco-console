@@ -12,11 +12,19 @@ import {
 } from '../../../shared/contract.ts';
 import type { Kanal } from '../protokol/kanal.ts';
 import { wywolaj } from '../protokol/wywolanie.ts';
+import { zwiazBrowser } from './okno-browser.ts';
 import { zwiazDeveloper } from './okno-developer.ts';
+import { zwiazLibrary } from './okno-library.ts';
+import { zwiazWorkspace } from './okno-workspace.ts';
 
 /** Wiązania szczegółowe modułów, po kodzie rejestru rdzenia; moduł bez wpisu dostaje samo okno rdzenia. */
 type WiazanieModulu = (kanal: Kanal, idOkna: string) => void;
-const WIAZANIA = new Map<string, WiazanieModulu>([['developer', zwiazDeveloper]]);
+const WIAZANIA = new Map<string, WiazanieModulu>([
+  ['browser', zwiazBrowser],
+  ['developer', zwiazDeveloper],
+  ['library', zwiazLibrary],
+  ['workspace', zwiazWorkspace],
+]);
 
 /**
  * Czy moduł ma wiązanie wypełniające jego wnętrze odpowiedzią rdzenia. Wnętrze
@@ -107,4 +115,83 @@ export function wpiszPole(pola: Element[], podpis: string, wartosc: string): voi
      środowiska nie niesie klasy danych, a wpisać się musi tak samo. */
   const dane = pole.querySelector('.dane') ?? pole.querySelector('b');
   if (dane !== null) dane.textContent = wartosc;
+}
+
+/** Wpisuje wartość w pierwszy niepusty węzeł tekstowy, zostawiając ikonę i przyciski znacznika; fałsz znaczy węzeł bez miejsca na tekst. */
+export function wpiszTekst(wezel: Element, tekst: string): boolean {
+  for (const dziecko of wezel.childNodes) {
+    if (dziecko.nodeType !== Node.TEXT_NODE) continue;
+    if ((dziecko.nodeValue ?? '').trim() === '') continue;
+    dziecko.nodeValue = tekst;
+    return true;
+  }
+  return false;
+}
+
+/**
+ * Wpisuje wartość w węzeł tekstowy znacznika, zostawiając ikonę i przyciski.
+ * Wartość pusta zostawia węzeł pusty, nie zdejmuje go: pole, które kontrakt
+ * zna, czeka na wartość następną — a wpis pusty zachowuje węzeł tekstowy,
+ * więc wartość następna ma dokąd wejść.
+ */
+export function opiszWezel(wezel: Element | null, wartosc: string): void {
+  if (wezel === null) return;
+  const teksty = [...wezel.childNodes].filter((dziecko) => dziecko.nodeType === Node.TEXT_NODE);
+  const cel = teksty.find((dziecko) => (dziecko.nodeValue ?? '').trim() !== '')
+    ?? teksty[teksty.length - 1];
+  if (cel === undefined) return;
+  cel.nodeValue = wartosc;
+}
+
+/** Klon węzła wzorcowego, odporny na jego brak w znaczniku. */
+export function sklonuj(wezel: Element | null): HTMLElement | null {
+  return wezel instanceof HTMLElement ? (wezel.cloneNode(true) as HTMLElement) : null;
+}
+
+/** Godzina znacznika czasu rdzenia w zapisie, którego używa prototyp — godziny i minuty. */
+export function godzina(znacznik: number): string {
+  return new Date(znacznik).toLocaleTimeString('pl-PL', { hour: '2-digit', minute: '2-digit' });
+}
+
+/** Data znacznika czasu rdzenia w zapisie dziennym prototypu. */
+export function data(znacznik: number): string {
+  return new Date(znacznik).toLocaleDateString('pl-PL');
+}
+
+/** Zdejmuje sterowanie wspólne wszystkim oknom modułów: wybór modelu i nakładu, urządzenia dźwięku oraz konektory i wtyczki menu dodawania. */
+export function zdejmijSterowanieWspolne(cialo: HTMLElement): void {
+  cialo.querySelector('#pop-mik')?.closest('.sta-nrz')?.remove();
+  cialo.querySelector('#pop-model')?.closest('.sta-nrz')?.remove();
+  cialo.querySelector('#pop-wysilek')?.closest('.sta-nrz')?.remove();
+  // Podpis piątego trybu opisuje domyślność, której rejestr uprawnień nie zna.
+  cialo.querySelector('#pop-tryb-upr .sta-popover-wiersz small')?.remove();
+  const menu = cialo.querySelector('#pop-plus');
+  if (menu === null) return;
+  // Menu dodawania zostaje przy tytule i trzech pozycjach plików; konektory
+  // i wtyczki należą do rodzin spoza obszaru modułu.
+  for (const [numer, pozycja] of [...menu.children].entries()) {
+    if (numer > 3) pozycja.remove();
+  }
+}
+
+/** Ustawia znaczniki przełączników paneli tak, by zgadzały się z panelami, które w znaczniku zostały. */
+export function uzgodnijPrzelacznikiPaneli(cialo: HTMLElement, bezPokrycia: string[]): void {
+  for (const nazwa of bezPokrycia) {
+    cialo.querySelector(`#${nazwa}`)?.remove();
+    cialo.querySelector(`[data-panel-toggle="${nazwa}"]`)?.remove();
+  }
+  for (const przelacznik of cialo.querySelectorAll<HTMLElement>('[data-panel-toggle]')) {
+    const panel = cialo.querySelector(`#${przelacznik.dataset.panelToggle ?? ''}`);
+    przelacznik.setAttribute('aria-checked', String(panel?.hasAttribute('hidden') === false));
+  }
+}
+
+/** Zdejmuje z okna komunikacji treść przykładową wspólną wszystkim oknom modułów: znacznik pracy, historię rozmowy i znaczniki menu zawężania. */
+export function zdejmijTrescWspolna(cialo: HTMLElement): void {
+  cialo.querySelector('.sta-kom-naglowek .sta-kom-stan')?.remove();
+  cialo.querySelector('.sta-kom-historia')?.replaceChildren();
+  cialo.querySelector('.sta-kom-monitor')?.remove();
+  for (const znacznik of cialo.querySelectorAll('#menu-filtr .sta-menu-poz[aria-checked]')) {
+    znacznik.removeAttribute('aria-checked');
+  }
 }

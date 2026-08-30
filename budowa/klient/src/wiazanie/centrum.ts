@@ -129,6 +129,25 @@ export function zwiazCentrum(kanal: Kanal | undefined = globalThis.DanacoKanal):
     else zwiazOknoStojace(kanal, modul.code, nazwaSrodowiska, idOkna);
   };
 
+  /* Prawa strona ramy — okno boczne — stoi w stanie domyślnym z samouczkiem.
+     Znacznik niesie jej przełącznik i zwinięcie; nikt ich nie wiązał, więc
+     strona nie otwierała się wcale. */
+  document.addEventListener('click', (zdarzenie) => {
+    const cel = zdarzenie.target;
+    if (!(cel instanceof Element)) return;
+    const panel = document.getElementById('panel-samouczek');
+    if (panel === null) return;
+    if (cel.closest('[data-przelacz-samouczek]') !== null) {
+      zdarzenie.stopPropagation();
+      panel.hidden = !panel.hidden;
+      return;
+    }
+    if (cel.closest('[data-zwin-samouczek]') !== null) {
+      zdarzenie.stopPropagation();
+      panel.hidden = true;
+    }
+  }, true);
+
   /* „Zamknij kartę" z menu okna zdejmuje kartę bieżącą i wraca na Centrum —
      tak samo jak znak zamknięcia na samej karcie. */
   document.addEventListener('click', (zdarzenie) => {

@@ -229,6 +229,12 @@ async function zarejestruj(
     odmowa(panel, 'usterki.naglowekKonto', wynik.blad);
     return;
   }
+  /* `pendingVerification` fałszywe oznacza rejestrację bez listu z kodem —
+     widok kodu byłby ślepym zaułkiem, wejście idzie od razu hasłem. */
+  if (wynik.wynik?.pendingVerification !== true) {
+    idz('logowanie', grupa);
+    return;
+  }
   idz(dokad, grupa);
 }
 

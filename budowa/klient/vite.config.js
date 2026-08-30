@@ -141,10 +141,106 @@ const WNETRZA_OKIEN = [
     zamkniecie: '</main>',
   },
   {
+    gniazdo: 'dn-tresc-konfiguracja',
+    prototyp: '../../design/05-okna/platformowe/konfiguracja.html',
+    otwarcie: '<div class="sta-cialo">',
+    zamkniecie: null,
+  },
+  {
+    gniazdo: 'dn-tresc-pula-kont',
+    prototyp: '../../design/05-okna/platformowe/konfiguracja.html',
+    otwarcie: '<dialog class="dn-modal kf-modal-pula"',
+    zamkniecie: '</dialog>',
+  },
+  {
     gniazdo: 'dn-tresc-studio',
     prototyp: '../../design/05-okna/moduly/studio.html',
     otwarcie: '<main class="st-okno-robocze"',
     zamkniecie: '</main>',
+  },
+  {
+    gniazdo: 'dn-tresc-agents',
+    prototyp: '../../design/05-okna/moduly/agents.html',
+    otwarcie: '<div class="sta-cialo">',
+    zamkniecie: '<!-- /sta-cialo -->',
+  },
+  {
+    gniazdo: 'dn-tresc-apps',
+    prototyp: '../../design/05-okna/moduly/apps.html',
+    otwarcie: '<div class="sta-cialo">',
+    zamkniecie: '<!-- /sta-cialo -->',
+  },
+  {
+    gniazdo: 'dn-tresc-assistant',
+    prototyp: '../../design/05-okna/moduly/assistant.html',
+    otwarcie: '<div class="sta-cialo">',
+    zamkniecie: '<!-- /sta-cialo -->',
+  },
+  {
+    gniazdo: 'dn-tresc-automations',
+    prototyp: '../../design/05-okna/moduly/automations.html',
+    otwarcie: '<div class="sta-cialo">',
+    zamkniecie: '<!-- /sta-cialo -->',
+  },
+  {
+    gniazdo: 'dn-tresc-browser',
+    prototyp: '../../design/05-okna/moduly/browser.html',
+    otwarcie: '<div class="sta-cialo">',
+    zamkniecie: '<!-- /sta-cialo -->',
+  },
+  {
+    gniazdo: 'dn-tresc-design',
+    prototyp: '../../design/05-okna/moduly/design.html',
+    otwarcie: '<div class="sta-cialo">',
+    zamkniecie: '<!-- /sta-cialo -->',
+  },
+  {
+    gniazdo: 'dn-tresc-developer',
+    prototyp: '../../design/05-okna/moduly/developer.html',
+    otwarcie: '<div class="sta-cialo">',
+    zamkniecie: '<!-- /sta-cialo -->',
+  },
+  {
+    gniazdo: 'dn-tresc-diagnostics',
+    prototyp: '../../design/05-okna/moduly/diagnostics.html',
+    otwarcie: '<div class="sta-cialo">',
+    zamkniecie: '<!-- /sta-cialo -->',
+  },
+  {
+    gniazdo: 'dn-tresc-library',
+    prototyp: '../../design/05-okna/moduly/library.html',
+    otwarcie: '<div class="sta-cialo">',
+    zamkniecie: '<!-- /sta-cialo -->',
+  },
+  {
+    gniazdo: 'dn-tresc-research',
+    prototyp: '../../design/05-okna/moduly/research.html',
+    otwarcie: '<div class="sta-cialo">',
+    zamkniecie: '<!-- /sta-cialo -->',
+  },
+  {
+    gniazdo: 'dn-tresc-roundtable',
+    prototyp: '../../design/05-okna/moduly/roundtable.html',
+    otwarcie: '<div class="sta-cialo">',
+    zamkniecie: '<!-- /sta-cialo -->',
+  },
+  {
+    gniazdo: 'dn-tresc-terminal',
+    prototyp: '../../design/05-okna/moduly/terminal.html',
+    otwarcie: '<div class="sta-cialo">',
+    zamkniecie: '<!-- /sta-cialo -->',
+  },
+  {
+    gniazdo: 'dn-tresc-translate',
+    prototyp: '../../design/05-okna/moduly/translate.html',
+    otwarcie: '<div class="sta-cialo">',
+    zamkniecie: '<!-- /sta-cialo -->',
+  },
+  {
+    gniazdo: 'dn-tresc-workspace',
+    prototyp: '../../design/05-okna/moduly/workspace.html',
+    otwarcie: '<div class="sta-cialo">',
+    zamkniecie: '<!-- /sta-cialo -->',
   },
 ];
 
@@ -152,9 +248,35 @@ const WNETRZA_OKIEN = [
 function blokPrototypu(tresc, otwarcie, zamkniecie) {
   const poczatek = tresc.indexOf(otwarcie);
   if (poczatek < 0) return null;
+  if (zamkniecie === null) return blokZbalansowany(tresc, poczatek);
   const koniec = tresc.indexOf(zamkniecie, poczatek);
   if (koniec < 0) return null;
   return tresc.slice(poczatek, koniec + zamkniecie.length);
+}
+
+/* Bloki bez znacznika zamykającego domyka się liczeniem otwarć i zamknięć
+   elementu. Prototypy platformowe nie niosą komentarza zamykającego, a stały
+   znacznik końca ramy zabrałby ze sobą zamknięcia elementów nadrzędnych. */
+function blokZbalansowany(tresc, poczatek) {
+  const znacznik = /<(\/?)div\b[^>]*>/g;
+  znacznik.lastIndex = poczatek;
+  let glebokosc = 0;
+  let dopasowanie = znacznik.exec(tresc);
+  while (dopasowanie !== null) {
+    glebokosc += dopasowanie[1] === '/' ? -1 : 1;
+    if (glebokosc === 0) return tresc.slice(poczatek, znacznik.lastIndex);
+    dopasowanie = znacznik.exec(tresc);
+  }
+  return null;
+}
+
+/* Reguły stojące w prototypie, a nie w arkuszach warstwy projektowej. Wnętrze
+   okna bez nich składa się bez układu, więc jadą do dokumentu razem z treścią.
+   Klasy prototypów są przedrostkowane osobno dla każdego okna, więc reguły
+   zebrane z wielu plików nie nachodzą na siebie. */
+function stylWpisany(tresc) {
+  const dopasowanie = /<style[^>]*>([\s\S]*?)<\/style>/.exec(tresc);
+  return dopasowanie === null ? '' : dopasowanie[1].trim();
 }
 
 /** Wstawia wnętrza okien z prototypów w puste szablony dokumentu klienta. */
@@ -163,9 +285,11 @@ function wnetrzaOkienZPrototypow() {
     name: 'wnetrza-okien-z-prototypow',
     transformIndexHtml(html) {
       let wynik = html;
+      const reguly = new Map();
       for (const okno of WNETRZA_OKIEN) {
         const zrodlo = new URL(okno.prototyp, import.meta.url);
-        const blok = blokPrototypu(readFileSync(zrodlo, 'utf8'), okno.otwarcie, okno.zamkniecie);
+        const tresc = readFileSync(zrodlo, 'utf8');
+        const blok = blokPrototypu(tresc, okno.otwarcie, okno.zamkniecie);
         if (blok === null) {
           throw new Error(`prototyp ${okno.prototyp} nie niesie bloku ${okno.otwarcie}`);
         }
@@ -173,8 +297,13 @@ function wnetrzaOkienZPrototypow() {
           `<template id="${okno.gniazdo}"></template>`,
           `<template id="${okno.gniazdo}">${blok}</template>`,
         );
+        const styl = stylWpisany(tresc);
+        if (styl !== '') reguly.set(okno.prototyp, styl);
       }
-      return wynik;
+      const arkusz = [...reguly.values()].join('\n');
+      return arkusz === ''
+        ? wynik
+        : wynik.replace('</head>', `<style>\n${arkusz}\n</style>\n</head>`);
     },
   };
 }

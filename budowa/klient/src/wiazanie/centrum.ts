@@ -8,6 +8,7 @@ import { Command, type Environment, type Module, type Session } from '../../../s
 import type { Kanal } from '../protokol/kanal.ts';
 import { wywolaj } from '../protokol/wywolanie.ts';
 import { zwiazWyborModulu } from './wybor-modulu.ts';
+import { zwiazOkno } from './okno-modulu.ts';
 import { zwiazStudio } from './studio.ts';
 
 /** Kod modułu, którego wnętrze wchodzi do wydania; pozostałe moduły stoją w szynie, lecz okna w tym wydaniu nie mają. */
@@ -128,17 +129,18 @@ export function zwiazCentrum(kanal: Kanal | undefined = globalThis.DanacoKanal):
 
     const kod = kodModulu(cel);
     if (kod === '') return;
-    if (kod !== KOD_MODULU_WYDANIA) {
-      /* Moduł bez okna nie staje się modułem bieżącym: oznaczenie w szynie
+    const wstawione = wstawWnetrze(wnetrze, 'dn-tresc-' + kod);
+    if (wstawione === null) {
+      /* Moduł bez wnętrza nie staje się modułem bieżącym: oznaczenie w szynie
          mówiłoby, że Operator w nim pracuje. */
       zdarzenie.stopPropagation();
       zapowiedzModul(katalogModulow.get(kod));
       return;
     }
-    const wstawione = wstawWnetrze(wnetrze, 'dn-tresc-studio');
-    if (wstawione === null) return;
     wnetrze = wstawione;
-    zwiazStudio(kanal, nazwaSrodowiskaWejscia(cel) || nazwaSrodowiska);
+    const srodowisko = nazwaSrodowiskaWejscia(cel) || nazwaSrodowiska;
+    if (kod === KOD_MODULU_WYDANIA) zwiazStudio(kanal, srodowisko);
+    else zwiazOkno(kanal, kod, srodowisko);
   }, true);
 
   return true;

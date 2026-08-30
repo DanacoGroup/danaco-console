@@ -62,6 +62,7 @@ export function zwiazCentrum(kanal: Kanal | undefined = globalThis.DanacoKanal):
     void odswiezWykaz(kanal, wezly.wykazSesji, wzorWiersza);
   };
   odswiez();
+  void wypelnijProjekty(kanal);
   void wypelnijSrodowiska(kanal, wezly.obszar);
   const katalogModulow = new Map<string, Module>();
   const modulyPoId = new Map<string, Module>();
@@ -470,6 +471,45 @@ function opiszGloweKarty(wezly: WezlyCentrum, nazwaModulu: string, nazwaSesji: s
   if (nazwa !== null) nazwa.textContent = nazwaModulu;
   const meta = wezly.kartaModulu.querySelector('.cd-modul-glowa .dn-meta');
   if (meta !== null) meta.textContent = nazwaSesji === '' ? '' : 'sesja: ' + nazwaSesji;
+}
+
+/**
+ * Wypełnia drzewo projektów lewego panelu. Projekt wchodzi z kart sesji, bo
+ * rejestr rdzenia nie ma komendy wykazu projektów — projekt bez ani jednej
+ * sesji nie ma się dziś skąd wziąć i w panelu nie stanie.
+ */
+async function wypelnijProjekty(kanal: Kanal): Promise<void> {
+  const drzewo = document.querySelector<HTMLElement>('#panel-projekty .dn-panel-drzewo');
+  if (drzewo === null) return;
+  const galaz = drzewo.querySelector<HTMLElement>('.dn-panel-galaz');
+  const wzorGalezi = galaz === null ? null : (galaz.cloneNode(true) as HTMLElement);
+  const wynik = await wywolaj(kanal, Command.SessionList, {});
+  if (!wynik.udany || wynik.wynik === undefined || wzorGalezi === null) return;
+  const projekty = new Map<string, Session[]>();
+  for (const sesja of wynik.wynik.sessions) {
+    if (sesja.projectId === undefined || sesja.projectId === '') continue;
+    const zebrane = projekty.get(sesja.projectId) ?? [];
+    zebrane.push(sesja);
+    projekty.set(sesja.projectId, zebrane);
+  }
+  drzewo.replaceChildren();
+  for (const [projekt, sesje] of projekty) {
+    const wpis = wzorGalezi.cloneNode(true) as HTMLElement;
+    wpis.dataset.projekt = projekt;
+    const nazwa = wpis.querySelector('.dn-panel-galaz-nazwa');
+    if (nazwa !== null) nazwa.textContent = projekt;
+    for (const pozycja of wpis.querySelectorAll('.dn-panel-wiersz')) pozycja.remove();
+    const wzorSesji = wzorGalezi.querySelector<HTMLElement>('.dn-panel-wiersz');
+    for (const sesja of sesje) {
+      if (wzorSesji === null) break;
+      const wiersz = wzorSesji.cloneNode(true) as HTMLElement;
+      wiersz.dataset.idSesji = sesja.id;
+      const podpis = wiersz.querySelector('.dn-obszar-pozycja-nazwa') ?? wiersz;
+      podpis.textContent = sesja.title ?? 'Sesja bez nazwy';
+      wpis.appendChild(wiersz);
+    }
+    drzewo.appendChild(wpis);
+  }
 }
 
 /** Zdejmuje wzór wiersza z treści przykładowej; kształt wiersza bierze się ze znacznika, nie z kodu. */

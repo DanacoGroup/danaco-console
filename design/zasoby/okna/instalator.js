@@ -199,8 +199,19 @@ function uruchom() {
       naKoncu();
     })(performance.now());
   }
+  /* Krok 5 oddaje przebieg warstwie produktu, gdy ta go przejmie wpisem
+     `DanacoKreator.przebiegKroku5`. Prototyp odgrywa przebieg czasem, bo nie ma
+     czego pobierać; produkt prowadzi go miarą pobrania i sam mówi, kiedy koniec. */
   function uruchomZapis() {
     ustawOdslone('przebieg');
+    if (typeof K.przebiegKroku5 === 'function') {
+      K.przebiegKroku5({
+        postep: rysujPrzebieg,
+        koniec: function () { pokaz(6); },
+        odmowa: pokazBlad5
+      });
+      return;
+    }
     odegraj(PRZEBIEG_CZAS, rysujPrzebieg, function () { pokaz(6); });
   }
   function uruchomWycofywanie() {

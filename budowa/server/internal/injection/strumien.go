@@ -26,7 +26,21 @@ type obserwacja struct {
 	// TekstPoszedl mówi, czy odbiorca zobaczył już jakikolwiek fragment tekstu
 	// tury.
 	TekstPoszedl bool
+	// Domkniety mówi, że strumień dostał już fragment ostatni i podsumowania
+	// tury dopisywać nie wolno — drugi fragment ostatni zerwałby kontrakt.
+	Domkniety bool
 }
+
+// KodBrakuZalogowania jest rozpoznaniem, którym program `claude` nazywa turę
+// odrzuconą przy braku poświadczenia konta.
+const KodBrakuZalogowania = "authentication_failed"
+
+// opisBrakuZalogowania nazywa brak i drogę jego uzupełnienia. Program zwraca
+// zdanie po angielsku wskazujące własne polecenie powłoki; Operator Konsoli
+// nie ma do niej dostępu, więc zdanie idzie jego językiem i jego drogą.
+const opisBrakuZalogowania = "kanał główny nie ma poświadczenia: program modelu " +
+	"odrzucił turę jako niezalogowaną. Konto modelu dodaje się komendą `account.add`; " +
+	"poświadczenie zakłada zalogowanie programu w katalogu konfiguracji tego konta"
 
 // czytajStrumien czyta wyjście procesu linia po linii i wysyła fragmenty do
 // odbiorcy. Linia nieczytelna jako JSON nie przerywa strumienia — zostaje
@@ -100,6 +114,11 @@ func przetworz(kontekst context.Context, zdarzenie zdarzenieCLI, linia string, z
 	}
 	switch zdarzenie.Type {
 	case TypAssistant, TypUser:
+		if zdarzenie.KodBledu == KodBrakuZalogowania {
+			zakonczBledem(kontekst, na, z, shared.ErrorCodeNotAuthenticated, opisBrakuZalogowania)
+			wynik.Domkniety = true
+			return nil
+		}
 		for _, blok := range zdarzenie.Message.bloki() {
 			fragment, jest := blok.fragment(z.IdOkna, z.IdWiadomosci)
 			if !jest {

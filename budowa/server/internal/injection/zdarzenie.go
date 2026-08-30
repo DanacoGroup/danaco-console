@@ -20,11 +20,15 @@ const (
 // zdarzenieCLI jest jedną linią wyjścia programu. Odczytujemy wyłącznie pola
 // niosące treść dla kontraktu; reszta linii jedzie dalej nietknięta.
 type zdarzenieCLI struct {
-	Type      string          `json:"type"`
-	Subtype   string          `json:"subtype"`
-	SessionID string          `json:"session_id"`
-	Message   *wiadomoscCLI   `json:"message"`
-	IsError   bool            `json:"is_error"`
+	Type      string        `json:"type"`
+	Subtype   string        `json:"subtype"`
+	SessionID string        `json:"session_id"`
+	Message   *wiadomoscCLI `json:"message"`
+	IsError   bool          `json:"is_error"`
+	// KodBledu niesie rozpoznanie usterki przez program `claude` w linii
+	// wiadomości — na przykład `authentication_failed`. Jest sygnałem
+	// strukturalnym, więc rozpoznanie usterki nie wymaga czytania treści.
+	KodBledu  string          `json:"error"`
 	Result    string          `json:"result"`
 	CostUSD   float64         `json:"total_cost_usd"`
 	NumTurns  int             `json:"num_turns"`

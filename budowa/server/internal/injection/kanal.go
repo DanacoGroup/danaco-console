@@ -78,13 +78,13 @@ func (k *Kanal) prowadz(kontekst context.Context, z Zapytanie, na chan<- Fragmen
 
 		wyczerpanie, wyczerpane := rozpoznajWyczerpanie(wynik.Obserwacja, wynik.Bledy)
 		if !wyczerpane {
-			zakoncz(kontekst, na, z, wynik.Obserwacja.Tura, konto.Kod)
+			zakoncz(kontekst, na, z, wynik.Obserwacja, konto.Kod)
 			return
 		}
 
 		nastepne, dostepne := k.pula.Wyczerpane(konto.Kod, wyczerpanie.DoChwili)
 		if !dostepne || nastepne.Kod == konto.Kod || wynik.Obserwacja.TekstPoszedl {
-			zakoncz(kontekst, na, z, wynik.Obserwacja.Tura, konto.Kod)
+			zakoncz(kontekst, na, z, wynik.Obserwacja, konto.Kod)
 			return
 		}
 		powod = fmt.Sprintf("rotacja konta %s → %s (%s)", konto.Kod, nastepne.Kod, wyczerpanie.Powod)
@@ -115,12 +115,17 @@ func (k *Kanal) prowadzWskazanym(kontekst context.Context, z Zapytanie, na chan<
 		// Ślad wyczerpania idzie do puli, ale przełączenia konta tu nie ma.
 		k.pula.Wyczerpane(konto.Kod, wyczerpanie.DoChwili)
 	}
-	zakoncz(kontekst, na, z, wynik.Obserwacja.Tura, konto.Kod)
+	zakoncz(kontekst, na, z, wynik.Obserwacja, konto.Kod)
 }
 
 // zakoncz wysyła fragment kończący turę. Gdy tura nie przyniosła podsumowania,
-// zamiast niego jedzie fragment błędu — strumień zawsze ma koniec.
-func zakoncz(kontekst context.Context, na chan<- Fragment, z Zapytanie, tura *ZakonczenieTury, konto string) {
+// zamiast niego jedzie fragment błędu — strumień zawsze ma koniec. Strumień
+// domknięty wcześniej zostaje bez zmian: drugi fragment ostatni zerwałby kontrakt.
+func zakoncz(kontekst context.Context, na chan<- Fragment, z Zapytanie, obserwacja obserwacja, konto string) {
+	if obserwacja.Domkniety {
+		return
+	}
+	tura := obserwacja.Tura
 	if tura == nil {
 		zakonczBledem(kontekst, na, z, shared.ErrorCodeChannelUnavailable, "tura zakończyła się bez podsumowania")
 		return

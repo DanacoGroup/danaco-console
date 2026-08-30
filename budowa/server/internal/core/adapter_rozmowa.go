@@ -222,6 +222,12 @@ func (a *adapterRozmowy) prowadzTure(kontekst context.Context, okno session.Okno
 	}
 
 	odpowiedz.Content = tresc.String()
+	/* Tura przerwana przed pierwszym znakiem zostawiłaby wpis pusty. Powód
+	   odmowy wchodzi wtedy w treść wpisu: Operator czyta wpis rozmowy, a nie
+	   dziennik serwera, więc pusty wpis nie mówi mu nic. */
+	if err != nil && odpowiedz.Content == "" {
+		odpowiedz.Content = err.Error()
+	}
 	// Stan odpowiedzi rozstrzyga zdarzenie zamknięcia tury, nie słowo modelu.
 	odpowiedz.Status = stanOdpowiedziZeZdarzen(kontekst, err, zamkniecie)
 	if a.zdarzenia != nil {

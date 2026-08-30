@@ -318,6 +318,10 @@ export function zwiazCentrum(kanal: Kanal | undefined = globalThis.DanacoKanal):
     if (modul === undefined) return;
     zdarzenie.stopPropagation();
     nazwaSrodowiska = nazwaSrodowiskaWejscia(cel) || nazwaSrodowiska;
+    /* Pionowa szyna jest paskiem szybkiego dostępu: jedno naciśnięcie otwiera
+       OKNO ROBOCZE z wybranym modułem, z pominięciem drogi przez przedsionek.
+       Kafel Centrum i kafel przedsionka otwierają kartę w oknie stojącym. */
+    if (cel.closest('.dn-szyna-poz--modul') !== null) otworzOkno();
     otworzModul(modul, '');
   }, true);
 

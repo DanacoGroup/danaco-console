@@ -1,7 +1,7 @@
 {
   "opis": "Chronologia wydań Danaco Console — JEDYNE źródło prawdy dla strony „Pobierz” i dla banera aktualizacji w aplikacji. Pusty wykaz znaczy: nie ma jeszcze żadnego wydania. Każda pozycja MUSI nieść pole `suma` (SHA-256 pliku) — powłoka odmawia założenia pliku, którego suma się nie zgadza, a wydania bez sumy nie zakłada w ogóle.",
   "produkt": "Danaco Console",
-  "katalog_plikow": "../wydania/2.0.0-2026-08-29",
+  "katalog_plikow": "../wydania/2.0.0-2026-08-30",
   "numer_wersji": "Wydanie 2.0.0 z 29 sierpnia 2026. Wcześniejsze pozycje niosły 1.0.0 i różniła je wyłącznie data; numer podniesiono na słowo Właściciela z 29.08 — produkt jest wersją 2.0. Katalog wydania nazywa się `2.0.0-2026-08-29`, więc data zostaje w ścieżce i dwa różne dni nie nadpisują się wzajemnie.",
   "kanal": {
     "wdrozony": true,
@@ -22,6 +22,17 @@
     "wciaz_odmawiane": "Wszystko poza https: — w szczególności `http:`, `javascript:`, `data:` i `file:`. Pozycja z takim adresem nie znika ze strony: traci odnośnik i dostaje zdanie, czego jej brakuje."
   },
   "wydania": [
+    {
+      "wersja": "2.0.0",
+      "data": "2026-08-30",
+      "system": "Windows",
+      "postac": "hybryda",
+      "architektura": "x64",
+      "nazwa": "Danaco Console_2.0.0_hybryda_x64-setup.exe",
+      "plik": "https://pobierz.danaco-group.pl/wydania/2.0.0-2026-08-30/Danaco%20Console_2.0.0_hybryda_x64-setup.exe",
+      "rozmiar_bajty": 2477336,
+      "suma": "60eecd66d27b6bf40418f4c2d1bb4750b563ce899095e930c46c2d3b55bad60e"
+    },
     {
       "wersja": "2.0.0",
       "data": "2026-08-28",

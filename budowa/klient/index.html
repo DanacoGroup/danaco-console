@@ -54,13 +54,14 @@
 <body class="pt-pelny-ekran">
 
 <div data-wejscie>
-<!-- Animacja uruchomienia. `data-czekaj` trzyma ją do wywołania `gotowe()`. -->
-<div class="we-uruchomienie" data-uruchomienie>
-  <div class="dn-ekran-startowy" data-ekran-startowy data-czekaj
-       role="img" aria-label="Uruchamianie Danaco Console"></div>
-</div>
-
-<div class="we-scena" data-uruchamianie data-uruchomienie-scena>
+<!-- Animacja uruchomienia stoi wewnątrz sceny, bo `przeplyw-wejscia.js` szuka
+     warstwy `[data-uruchomienie]` w scenie i na niej wiąże koniec animacji;
+     `data-czekaj` trzyma bieg do wywołania `gotowe()`. -->
+<div class="we-scena" data-uruchomienie-scena>
+  <div class="we-uruchomienie" data-uruchomienie>
+    <div class="dn-ekran-startowy" data-ekran-startowy data-czekaj
+         role="img" aria-label="Uruchamianie Danaco Console"></div>
+  </div>
   <div data-wejscie-okno="uruchomienie"></div>
 </div>
 

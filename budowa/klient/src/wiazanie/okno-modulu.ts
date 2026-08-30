@@ -4,15 +4,9 @@
  * modułu, a treść przykładową zdejmuje, zanim Operator ją zobaczy.
  */
 
-import {
-  Command,
-  ExecutionEnv,
-  PermissionMode,
-  WindowRole,
-} from '../../../shared/contract.ts';
+import { Command } from '../../../shared/contract.ts';
 import type { Kanal } from '../protokol/kanal.ts';
 import { wywolaj } from '../protokol/wywolanie.ts';
-import { zapewnijSesje } from './sesja-biezaca.ts';
 
 /** Wiązania szczegółowe modułów, po kodzie rejestru rdzenia; moduł bez wpisu dostaje samo okno rdzenia. */
 type WiazanieModulu = (kanal: Kanal, idOkna: string) => void;
@@ -38,10 +32,7 @@ export function zglosWiazanieModulu(kod: string, wiazanie: WiazanieModulu): void
  */
 export function zwiazOkno(kanal: Kanal, kodModulu: string, nazwaSrodowiska: string): void {
   void opiszNaglowek(kanal, nazwaSrodowiska);
-  void otworzOkno(kanal, kodModulu, nazwaSesji(kodModulu, nazwaSrodowiska)).then((idOkna) => {
-    if (idOkna === '') return;
-    WIAZANIA.get(kodModulu)?.(kanal, idOkna);
-  });
+  WIAZANIA.get(kodModulu)?.(kanal, '');
 }
 
 /**
@@ -56,39 +47,6 @@ export function zwiazOknoStojace(
 ): void {
   void opiszNaglowek(kanal, nazwaSrodowiska);
   WIAZANIA.get(kodModulu)?.(kanal, idOkna);
-}
-
-/** Nazwa karty sesji zakładanej wejściem w moduł; karta bez nazwy nie mówi Operatorowi, czym była. */
-function nazwaSesji(kodModulu: string, nazwaSrodowiska: string): string {
-  return nazwaSrodowiska === '' ? kodModulu : nazwaSrodowiska + ' — ' + kodModulu;
-}
-
-/** Zakłada sesję i okno komunikacji modułu; pusty wynik znaczy, że rdzeń odmówił i wiązania szczegółowego nie ma po co wołać. */
-async function otworzOkno(kanal: Kanal, kodModulu: string, nazwaKarty: string): Promise<string> {
-  // Okno staje w karcie sesji bieżącej. Karta zakładana przy każdym wejściu
-  // zostawiałaby po Operatorze wykaz kart bez treści i bez drogi powrotu.
-  const idSesji = await zapewnijSesje(kanal, nazwaKarty);
-  if (idSesji === '') return '';
-
-  const moduly = await wywolaj(kanal, Command.ModuleList, {});
-  if (!moduly.udany || moduly.wynik === undefined) return '';
-  const modul = moduly.wynik.modules.find((pozycja) => pozycja.code === kodModulu);
-  if (modul === undefined) return '';
-
-  const kanaly = await wywolaj(kanal, Command.ChannelList, { enabledOnly: true });
-  const kanalModelu = kanaly.udany ? (kanaly.wynik?.channels[0]?.id ?? '') : '';
-  if (kanalModelu === '') return '';
-
-  const okno = await wywolaj(kanal, Command.WindowCreate, {
-    sessionId: idSesji,
-    moduleId: modul.id,
-    modelChannelId: kanalModelu,
-    workingDirs: [],
-    executionEnv: ExecutionEnv.Local,
-    permissionMode: PermissionMode.Manual,
-    windowRole: WindowRole.Standalone,
-  });
-  return okno.udany && okno.wynik !== undefined ? okno.wynik.window.id : '';
 }
 
 /**

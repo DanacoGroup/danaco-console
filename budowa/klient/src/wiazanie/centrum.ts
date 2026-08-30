@@ -9,7 +9,8 @@ import type { Kanal, Wynik } from '../protokol/kanal.ts';
 import { wywolaj } from '../protokol/wywolanie.ts';
 import { zwiazWyborModulu } from './wybor-modulu.ts';
 import { oglos } from './ogloszenie.ts';
-import { maWiazanie, zwiazOkno, zwiazOknoStojace } from './okno-modulu.ts';
+import { zwiazOkno, zwiazOknoStojace } from './okno-modulu.ts';
+import { przygotujPasmo, ustawKarty, zaznaczKarte, zdejmijKarte, zwiazPasmo } from './karty-okien.ts';
 import { otworzSesje, przejmijOgnisko, zalozSesje } from './sesja-biezaca.ts';
 import { zwiazStudio } from './studio.ts';
 
@@ -25,6 +26,12 @@ const POWROT_NA_STRONE_GLOWNA =
 interface WezlyCentrum {
   obszar: HTMLElement;
   wykazSesji: HTMLElement;
+  /** Płótno okna roboczego; widoki kart stoją w nim obok siebie. */
+  plotno: HTMLElement;
+  /** Widok karty głównej — Centrum dowodzenia. */
+  kartaGlowna: HTMLElement;
+  /** Widok karty modułu; wnętrze modułu wchodzi pod jego głowę. */
+  kartaModulu: HTMLElement;
 }
 
 /** Wiązanie stoi raz na dokument: powłoka może wstawić okno ponownie, a podwójny nasłuch dawałby podwójne sesje. */
@@ -86,49 +93,82 @@ export function zwiazCentrum(kanal: Kanal | undefined = globalThis.DanacoKanal):
      Faza przechwytywania jest konieczna: grot wejścia biblioteki zatrzymuje
      zdarzenie na sobie, więc w fazie bąbelkowania nasłuch nigdy by go nie
      zobaczył. */
-  let wnetrze: Element = wezly.obszar;
-  // Nazwa środowiska przechodzi z Centrum przez okno wyboru aż do nagłówka
-  // modułu; kafel wyboru nie stoi w szynie, więc sam jej nie niesie.
+  /* Nazwa środowiska przechodzi z Centrum przez przedsionek aż do głowy karty
+     modułu; kafel przedsionka nie stoi w szynie, więc sam jej nie niesie. */
   let nazwaSrodowiska = '';
+  /* Moduł karty modułu: po nim wiadomo, czy kolejne wejście otwiera nową kartę,
+     czy wraca do karty stojącej. */
+  let kartaBiezaca = '';
+
+  /** Otwiera moduł kartą okna roboczego: głowa, wnętrze, pasmo kart i wiązanie. */
+  const otworzModul = (modul: Module, idOkna: string): void => {
+    if (!wstawTrescModulu(wezly, 'dn-tresc-' + modul.code)) {
+      zapowiedzModul(modul);
+      return;
+    }
+    opiszGloweKarty(wezly, modul.name, nazwaSrodowiska);
+    pokazWidok(wezly, wezly.kartaModulu);
+    kartaBiezaca = modul.code;
+    ustawKarty([{ id: modul.code, nazwa: modul.name, modul: modul.name }], modul.code);
+    if (modul.code === KOD_MODULU_WYDANIA) zwiazStudio(kanal, nazwaSrodowiska);
+    else if (idOkna === '') zwiazOkno(kanal, modul.code, nazwaSrodowiska);
+    else zwiazOknoStojace(kanal, modul.code, nazwaSrodowiska, idOkna);
+  };
+
+  /** Wraca do karty głównej okna roboczego — Centrum dowodzenia. */
+  const wrocDoCentrum = (): void => {
+    pokazWidok(wezly, wezly.kartaGlowna);
+    kartaBiezaca = '';
+    zaznaczKarte('');
+    odswiez();
+  };
+
+  przygotujPasmo();
+  zwiazPasmo(
+    (kodKarty) => {
+      const modul = katalogModulow.get(kodKarty);
+      if (modul === undefined) return;
+      if (kartaBiezaca === kodKarty) {
+        pokazWidok(wezly, wezly.kartaModulu);
+        zaznaczKarte(kodKarty);
+        return;
+      }
+      otworzModul(modul, '');
+    },
+    (kodKarty) => {
+      if (kartaBiezaca === kodKarty) wrocDoCentrum();
+      zdejmijKarte(kodKarty);
+    },
+  );
+
   document.addEventListener('click', (zdarzenie) => {
     const cel = zdarzenie.target;
     if (!(cel instanceof Element)) return;
 
-    /* Powrót na stronę główną wraca tym samym elementem, który Centrum
-       opuściło: jego nasłuchy stoją nietknięte, a wykaz sesji odświeża się
-       odpowiedzią rdzenia, bo w module mogły powstać nowe. */
+    // Powrót na kartę główną okna roboczego.
     if (cel.closest(POWROT_NA_STRONE_GLOWNA) !== null) {
-      if (wnetrze === wezly.obszar) return;
-      wnetrze.replaceWith(wezly.obszar);
-      wnetrze = wezly.obszar;
-      odswiez();
+      wrocDoCentrum();
       return;
     }
 
-    /* Wykaz sesji stoi w panelu bocznym Centrum; osobnego okna rejestru sesji
-       to wydanie nie niesie, więc czynność nazywa to wprost. */
+    /* Wykaz sesji stoi w panelu bocznym okna roboczego; osobnego okna rejestru
+       sesji to wydanie nie niesie, więc czynność nazywa to wprost. */
     if (cel.closest('[data-otwarz-historie]') !== null) {
-      /* Zatrzymanie zdarzenia zdejmuje komunikat biblioteki, który zapowiada
-         otwarcie rejestru sesji. Dwa zdania naraz, z których jedno jest
-         nieprawdziwe, są gorsze niż milczenie. */
       zdarzenie.stopPropagation();
-      oglos('Historia sesji', 'Sesje konta stoją w panelu bocznym Centrum. '
+      oglos('Historia sesji', 'Sesje konta stoją w panelu bocznym okna roboczego. '
         + 'Osobne okno rejestru sesji nie wchodzi do tego wydania.');
       return;
     }
 
-    /* Wiersz wykazu sesji jest drogą powrotu do pracy: karta otwiera się wraz
-       ze swoimi oknami, a Operator wraca do okna, w którym był. Wiersz nie
+    /* Wiersz wykazu sesji jest drogą powrotu do pracy: karta sesji otwiera się
+       wraz z oknami, a Operator wraca do okna, w którym był. Wiersz nie
        przechwytuje kliknięć swojego menu — tam stoją czynności karty. */
     const wiersz = cel.closest<HTMLElement>('[data-id-sesji]');
     if (wiersz !== null && cel.closest('[data-menu]') === null
       && cel.closest('[data-poz-akcja]') === null) {
       zdarzenie.stopPropagation();
-      const idSesji = wiersz.dataset.idSesji ?? '';
-      void otworzSesje(kanal, idSesji).then((okna) => {
+      void otworzSesje(kanal, wiersz.dataset.idSesji ?? '').then((okna) => {
         const okno = okna.find((kandydat) => kandydat.status !== 'closed') ?? okna[0];
-        /* Okno wskazuje moduł kodem albo identyfikatorem, zależnie od tego,
-           czym wskazano go przy zakładaniu — rozpoznaje się po obu. */
         const modul = okno === undefined
           ? undefined
           : modulyPoId.get(okno.moduleId) ?? katalogModulow.get(okno.moduleId);
@@ -137,14 +177,7 @@ export function zwiazCentrum(kanal: Kanal | undefined = globalThis.DanacoKanal):
             + 'okna w niej jeszcze nie ma.');
           return;
         }
-        const wstawione = wstawWnetrze(wnetrze, 'dn-tresc-' + modul.code);
-        if (wstawione === null) {
-          zapowiedzModul(modul);
-          return;
-        }
-        wnetrze = wstawione;
-        if (modul.code === KOD_MODULU_WYDANIA) zwiazStudio(kanal, nazwaSrodowiska);
-        else zwiazOknoStojace(kanal, modul.code, nazwaSrodowiska, okno.id);
+        otworzModul(modul, okno.id);
       });
       return;
     }
@@ -153,9 +186,9 @@ export function zwiazCentrum(kanal: Kanal | undefined = globalThis.DanacoKanal):
       .nowaSesjaSrodowisko;
     if (kodNowejSesji !== undefined) {
       void zalozKarteSesji(kanal, wezly.wykazSesji, wzorWiersza);
-      const wstawione = wstawWnetrze(wnetrze, gniazdoPrzedsionka(kodNowejSesji));
-      if (wstawione === null) return;
-      wnetrze = wstawione;
+      const widok = widokPrzedsionka(wezly, gniazdoPrzedsionka(kodNowejSesji));
+      if (widok === null) return;
+      pokazWidok(wezly, widok);
       nazwaSrodowiska = katalogSrodowisk.get(kodNowejSesji)?.name ?? '';
       void zwiazWyborModulu(kanal, kodNowejSesji);
       return;
@@ -175,30 +208,21 @@ export function zwiazCentrum(kanal: Kanal | undefined = globalThis.DanacoKanal):
 
     const kodSrodowiska = kodSrodowiskaWejscia(cel);
     if (kodSrodowiska !== '') {
-      const wstawione = wstawWnetrze(wnetrze, gniazdoPrzedsionka(kodSrodowiska));
-      if (wstawione === null) return;
-      wnetrze = wstawione;
-      nazwaSrodowiska = nazwaKartySrodowiska(cel);
+      const widok = widokPrzedsionka(wezly, gniazdoPrzedsionka(kodSrodowiska));
+      if (widok === null) return;
+      pokazWidok(wezly, widok);
+      nazwaSrodowiska = nazwaKartySrodowiska(cel) || nazwaSrodowiska;
       void zwiazWyborModulu(kanal, kodSrodowiska);
       return;
     }
 
     const kod = kodModulu(cel);
     if (kod === '') return;
-    const wstawione = kod === KOD_MODULU_WYDANIA || maWiazanie(kod)
-      ? wstawWnetrze(wnetrze, 'dn-tresc-' + kod)
-      : null;
-    if (wstawione === null) {
-      /* Moduł bez wnętrza nie staje się modułem bieżącym: oznaczenie w szynie
-         mówiłoby, że Operator w nim pracuje. */
-      zdarzenie.stopPropagation();
-      zapowiedzModul(katalogModulow.get(kod));
-      return;
-    }
-    wnetrze = wstawione;
-    const srodowisko = nazwaSrodowiskaWejscia(cel) || nazwaSrodowiska;
-    if (kod === KOD_MODULU_WYDANIA) zwiazStudio(kanal, srodowisko);
-    else zwiazOkno(kanal, kod, srodowisko);
+    const modul = katalogModulow.get(kod);
+    if (modul === undefined) return;
+    zdarzenie.stopPropagation();
+    nazwaSrodowiska = nazwaSrodowiskaWejscia(cel) || nazwaSrodowiska;
+    otworzModul(modul, '');
   }, true);
 
   return true;
@@ -274,8 +298,68 @@ function kodSrodowiskaWejscia(cel: Element): string {
 function zbierzWezly(): WezlyCentrum | null {
   const obszar = document.querySelector<HTMLElement>('.dn-rama-prawa .dn-obszar');
   const wykazSesji = document.getElementById('wykaz-sesji');
-  if (obszar === null || wykazSesji === null) return null;
-  return { obszar, wykazSesji };
+  const plotno = document.querySelector<HTMLElement>('.cd-plotno');
+  const kartaGlowna = document.getElementById('cd-tresc');
+  const kartaModulu = document.getElementById('karta-modul');
+  if (obszar === null || wykazSesji === null || plotno === null
+    || kartaGlowna === null || kartaModulu === null) return null;
+  return { obszar, wykazSesji, plotno, kartaGlowna, kartaModulu };
+}
+
+/**
+ * Pokazuje jeden widok okna roboczego. Widoki kart stoją obok siebie w płótnie
+ * i różnią się zasłoną — okno robocze zostaje na miejscu wraz z pasmem kart,
+ * panelem bocznym i pasem stanu.
+ */
+function pokazWidok(wezly: WezlyCentrum, widok: HTMLElement): void {
+  for (const kandydat of wezly.plotno.querySelectorAll<HTMLElement>('.cd-tresc')) {
+    kandydat.hidden = kandydat !== widok;
+  }
+  widok.hidden = false;
+}
+
+/**
+ * Widok przedsionka środowiska. Stoi w płótnie obok karty głównej, wzorem
+ * karty modułu; wchodzi raz i wraca przy każdym kolejnym wejściu w środowisko.
+ */
+function widokPrzedsionka(wezly: WezlyCentrum, gniazdo: string): HTMLElement | null {
+  const szablon = document.getElementById(gniazdo);
+  if (!(szablon instanceof HTMLTemplateElement)) return null;
+  const blok = szablon.content.firstElementChild;
+  if (blok === null) return null;
+  let widok = wezly.plotno.querySelector<HTMLElement>('.cd-tresc--przedsionek');
+  if (widok === null) {
+    widok = document.createElement('div');
+    widok.className = 'cd-tresc cd-tresc--przedsionek';
+    wezly.plotno.appendChild(widok);
+  }
+  widok.replaceChildren(blok.cloneNode(true));
+  return widok;
+}
+
+/**
+ * Wnętrze modułu wchodzi pod głowę karty modułu. Odnośnik do prototypu jest
+ * rusztowaniem prototypu i nie wchodzi do produktu.
+ */
+function wstawTrescModulu(wezly: WezlyCentrum, gniazdo: string): boolean {
+  const szablon = document.getElementById(gniazdo);
+  if (!(szablon instanceof HTMLTemplateElement)) return false;
+  const blok = szablon.content.firstElementChild;
+  if (blok === null) return false;
+  wezly.kartaModulu.querySelector('.cd-modul-odnosnik')?.remove();
+  for (const stojace of [...wezly.kartaModulu.children]) {
+    if (!stojace.classList.contains('cd-modul-glowa')) stojace.remove();
+  }
+  wezly.kartaModulu.appendChild(blok.cloneNode(true));
+  return true;
+}
+
+/** Opisuje głowę karty modułu nazwą modułu i nazwą karty sesji. */
+function opiszGloweKarty(wezly: WezlyCentrum, nazwaModulu: string, nazwaSesji: string): void {
+  const nazwa = wezly.kartaModulu.querySelector('[data-karta-modul-nazwa]');
+  if (nazwa !== null) nazwa.textContent = nazwaModulu;
+  const meta = wezly.kartaModulu.querySelector('.cd-modul-glowa .dn-meta');
+  if (meta !== null) meta.textContent = nazwaSesji === '' ? '' : 'sesja: ' + nazwaSesji;
 }
 
 /** Zdejmuje wzór wiersza z treści przykładowej; kształt wiersza bierze się ze znacznika, nie z kodu. */
@@ -377,16 +461,6 @@ function nazwaSrodowiskaWejscia(cel: Element): string {
   return przelacznik?.getAttribute('aria-label') ?? '';
 }
 
-/** Podmienia wnętrze okna na blok ze wskazanego szablonu i oddaje element wstawiony; pustka znaczy, że szablonu nie ma albo jest pusty. */
-function wstawWnetrze(stojace: Element, gniazdo: string): Element | null {
-  const szablon = document.getElementById(gniazdo);
-  if (!(szablon instanceof HTMLTemplateElement)) return null;
-  const blok = szablon.content.firstElementChild;
-  if (blok === null) return null;
-  const wstawione = blok.cloneNode(true) as Element;
-  stojace.replaceWith(wstawione);
-  return wstawione;
-}
 
 /** Zdejmuje treść przykładową bez pokrycia w rdzeniu: karty okien poza główną i komponenty własne. Pusty wykaz odsłania stan pusty ze znacznika. */
 function zdejmijTresciPrzykladowe(): void {

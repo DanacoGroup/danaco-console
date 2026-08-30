@@ -20,7 +20,13 @@ import {
   zwiazPasmo,
 } from './karty-okien.ts';
 import { oknaRobocze, oknoBiezace, otworzOkno, przelaczOkno, zamknijOkno, zapiszKarte } from './okna-robocze.ts';
-import { otworzSesje, przejmijOgnisko, wskazSrodowisko, zalozSesje } from './sesja-biezaca.ts';
+import {
+  otworzSesje,
+  przejmijOgnisko,
+  sesjaBiezaca,
+  wskazSrodowisko,
+  zalozSesje,
+} from './sesja-biezaca.ts';
 import { zwiazStudio } from './studio.ts';
 
 /** Kod modułu, którego wnętrze wchodzi do wydania; pozostałe moduły stoją w szynie, lecz okna w tym wydaniu nie mają. */
@@ -147,6 +153,26 @@ export function zwiazCentrum(kanal: Kanal | undefined = globalThis.DanacoKanal):
     }
     if (porzadek !== undefined) porzadekProjektow = porzadek;
     void wypelnijProjekty(kanal);
+  }, true);
+
+  /* Wydanie zapisu sesji: czynność panelu bocznego oddaje Operatorowi plik
+     z sesją bieżącą. Bez wskazanej sesji nie ma czego wydać i mówi to wprost. */
+  document.addEventListener('click', (zdarzenie) => {
+    const cel = zdarzenie.target;
+    if (!(cel instanceof Element) || cel.closest('[data-panel-eksport]') === null) return;
+    zdarzenie.stopPropagation();
+    const idSesji = sesjaBiezaca();
+    if (idSesji === '') {
+      oglos('Wydanie sesji', 'Wskaż sesję w wykazie — wydanie obejmuje sesję bieżącą.');
+      return;
+    }
+    void wywolaj(kanal, Command.SessionExport, { sessionId: idSesji }).then((wynik) => {
+      if (!wynik.udany || wynik.wynik === undefined) {
+        oglos('Wydanie sesji', wynik.blad?.message ?? 'Rdzeń odmówił wydania zapisu.');
+        return;
+      }
+      oddajPlik(wynik.wynik.fileName, wynik.wynik.content);
+    });
   }, true);
 
   /* Wskazówka startowa Centrum: pozycja menu widoku zdejmuje ją i przywraca. */
@@ -549,6 +575,16 @@ function wstawTrescModulu(wezly: WezlyCentrum, gniazdo: string): boolean {
   }
   wezly.kartaModulu.appendChild(blok.cloneNode(true));
   return true;
+}
+
+/** Oddaje Operatorowi plik z treścią wydaną przez rdzeń. */
+function oddajPlik(nazwa: string, tresc: string): void {
+  const adres = URL.createObjectURL(new Blob([tresc], { type: 'text/plain;charset=utf-8' }));
+  const odnosnik = document.createElement('a');
+  odnosnik.href = adres;
+  odnosnik.download = nazwa;
+  odnosnik.click();
+  URL.revokeObjectURL(adres);
 }
 
 /** Wpisuje nazwę modułu w pas stanu ramy; karta główna zostawia pole puste. */

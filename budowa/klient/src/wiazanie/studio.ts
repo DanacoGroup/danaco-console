@@ -19,6 +19,7 @@ import {
 } from '../../../shared/contract.ts';
 import type { Kanal } from '../protokol/kanal.ts';
 import { wywolaj } from '../protokol/wywolanie.ts';
+import { wpiszPole } from './okno-modulu.ts';
 import { zwiazNarzedzia } from './studio-narzedzia.ts';
 import { zwiazPlan } from './studio-plan.ts';
 import { zwiazPliki } from './studio-pliki.ts';
@@ -252,18 +253,6 @@ async function opiszKanal(kanal: Kanal, nazwaSrodowiska: string): Promise<void> 
   const kanalModelu = wynik.udany ? wynik.wynik?.channels[0] : undefined;
   wpiszPole(pola, 'Model', kanalModelu?.model ?? kanalModelu?.name ?? '');
   wpiszPole(pola, 'Wysiłek', '');
-}
-
-/** Wpisuje wartość w pole nagłówka rozpoznane po jego podpisie; wartość pusta zdejmuje całe pole, bo pole bez wartości niczego nie mówi. */
-function wpiszPole(pola: Element[], podpis: string, wartosc: string): void {
-  const pole = pola.find((kandydat) => kandydat.textContent?.startsWith(podpis) === true);
-  if (pole === undefined) return;
-  if (wartosc === '') {
-    pole.remove();
-    return;
-  }
-  const dane = pole.querySelector('.dane');
-  if (dane !== null) dane.textContent = wartosc;
 }
 
 /** Nadaje oknu i pasowi tytuł dokumentu; dokument bez nadanej nazwy dostaje nazwany stan pusty, nie własny identyfikator. */

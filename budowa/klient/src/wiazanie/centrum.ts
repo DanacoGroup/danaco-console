@@ -9,7 +9,8 @@ import type { Kanal, Wynik } from '../protokol/kanal.ts';
 import { wywolaj } from '../protokol/wywolanie.ts';
 import { zwiazWyborModulu } from './wybor-modulu.ts';
 import { oglos } from './ogloszenie.ts';
-import { maWiazanie, zwiazOkno } from './okno-modulu.ts';
+import { maWiazanie, zwiazOkno, zwiazOknoStojace } from './okno-modulu.ts';
+import { otworzSesje, przejmijOgnisko, zalozSesje } from './sesja-biezaca.ts';
 import { zwiazStudio } from './studio.ts';
 
 /** Kod modułu, którego wnętrze wchodzi do wydania; pozostałe moduły stoją w szynie, lecz okna w tym wydaniu nie mają. */
@@ -44,7 +45,9 @@ export function zwiazCentrum(kanal: Kanal | undefined = globalThis.DanacoKanal):
   odswiez();
   void wypelnijSrodowiska(kanal, wezly.obszar);
   const katalogModulow = new Map<string, Module>();
-  void wczytajModuly(kanal, katalogModulow);
+  const modulyPoId = new Map<string, Module>();
+  void wczytajModuly(kanal, katalogModulow, modulyPoId);
+  void przejmijOgnisko(kanal);
   const katalogSrodowisk = new Map<string, Environment>();
   void wczytajSrodowiska(kanal, katalogSrodowisk);
 
@@ -52,7 +55,7 @@ export function zwiazCentrum(kanal: Kanal | undefined = globalThis.DanacoKanal):
     const cel = zdarzenie.target;
     if (!(cel instanceof Element)) return;
     if (cel.closest('[data-okno-nowe]') !== null) {
-      void zalozSesje(kanal, wezly.wykazSesji, wzorWiersza);
+      void zalozKarteSesji(kanal, wezly.wykazSesji, wzorWiersza);
       return;
     }
   });
@@ -114,10 +117,42 @@ export function zwiazCentrum(kanal: Kanal | undefined = globalThis.DanacoKanal):
       return;
     }
 
+    /* Wiersz wykazu sesji jest drogą powrotu do pracy: karta otwiera się wraz
+       ze swoimi oknami, a Operator wraca do okna, w którym był. Wiersz nie
+       przechwytuje kliknięć swojego menu — tam stoją czynności karty. */
+    const wiersz = cel.closest<HTMLElement>('[data-id-sesji]');
+    if (wiersz !== null && cel.closest('[data-menu]') === null
+      && cel.closest('[data-poz-akcja]') === null) {
+      zdarzenie.stopPropagation();
+      const idSesji = wiersz.dataset.idSesji ?? '';
+      void otworzSesje(kanal, idSesji).then((okna) => {
+        const okno = okna.find((kandydat) => kandydat.status !== 'closed') ?? okna[0];
+        /* Okno wskazuje moduł kodem albo identyfikatorem, zależnie od tego,
+           czym wskazano go przy zakładaniu — rozpoznaje się po obu. */
+        const modul = okno === undefined
+          ? undefined
+          : modulyPoId.get(okno.moduleId) ?? katalogModulow.get(okno.moduleId);
+        if (okno === undefined || modul === undefined) {
+          oglos('Karta sesji', 'Karta jest otwarta i przyjmie okno modułu; '
+            + 'okna w niej jeszcze nie ma.');
+          return;
+        }
+        const wstawione = wstawWnetrze(wnetrze, 'dn-tresc-' + modul.code);
+        if (wstawione === null) {
+          zapowiedzModul(modul);
+          return;
+        }
+        wnetrze = wstawione;
+        if (modul.code === KOD_MODULU_WYDANIA) zwiazStudio(kanal, nazwaSrodowiska);
+        else zwiazOknoStojace(kanal, modul.code, nazwaSrodowiska, okno.id);
+      });
+      return;
+    }
+
     const kodNowejSesji = cel.closest<HTMLElement>('[data-nowa-sesja-srodowisko]')?.dataset
       .nowaSesjaSrodowisko;
     if (kodNowejSesji !== undefined) {
-      void zalozSesje(kanal, wezly.wykazSesji, wzorWiersza);
+      void zalozKarteSesji(kanal, wezly.wykazSesji, wzorWiersza);
       const wstawione = wstawWnetrze(wnetrze, gniazdoPrzedsionka(kodNowejSesji));
       if (wstawione === null) return;
       wnetrze = wstawione;
@@ -196,10 +231,17 @@ async function wczytajSrodowiska(kanal: Kanal, spis: Map<string, Environment>): 
 }
 
 /** Wczytuje rejestr modułów do spisu po kodzie; opisy modułów są jedynym źródłem zapowiedzi okna, którego wydanie jeszcze nie niesie. */
-async function wczytajModuly(kanal: Kanal, spis: Map<string, Module>): Promise<void> {
+async function wczytajModuly(
+  kanal: Kanal,
+  spis: Map<string, Module>,
+  poId: Map<string, Module>,
+): Promise<void> {
   const wynik = await wywolaj(kanal, Command.ModuleList, {});
   if (!wynik.udany || wynik.wynik === undefined) return;
-  for (const modul of wynik.wynik.modules) spis.set(modul.code, modul);
+  for (const modul of wynik.wynik.modules) {
+    spis.set(modul.code, modul);
+    poId.set(modul.id, modul);
+  }
 }
 
 /**
@@ -315,14 +357,13 @@ function zdejmijCzynnosciBezZrodla(wiersz: HTMLElement): void {
   }
 }
 
-/** Zakłada sesję w rdzeniu i odświeża wykaz jej odpowiedzią. */
-async function zalozSesje(
+/** Zakłada kartę sesji, czyni ją bieżącą i odświeża wykaz odpowiedzią rdzenia. */
+async function zalozKarteSesji(
   kanal: Kanal,
   wykaz: HTMLElement,
   wzor: HTMLElement | null,
 ): Promise<void> {
-  const wynik = await wywolaj(kanal, Command.SessionCreate, {});
-  if (!wynik.udany) return;
+  if (await zalozSesje(kanal, '') === '') return;
   await odswiezWykaz(kanal, wykaz, wzor);
 }
 

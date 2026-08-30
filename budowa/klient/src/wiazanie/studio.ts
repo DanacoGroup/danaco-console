@@ -20,6 +20,7 @@ import {
 import type { Kanal } from '../protokol/kanal.ts';
 import { wywolaj } from '../protokol/wywolanie.ts';
 import { wpiszPole } from './okno-modulu.ts';
+import { zapewnijSesje } from './sesja-biezaca.ts';
 import { zwiazNarzedzia } from './studio-narzedzia.ts';
 import { zwiazPlan } from './studio-plan.ts';
 import { zwiazPliki } from './studio-pliki.ts';
@@ -278,9 +279,9 @@ async function otworzStanowisko(
   wzorPozycji: HTMLElement | null,
   wstawWpis: (wiadomosc: Message) => void,
 ): Promise<string> {
-  const sesja = await wywolaj(kanal, Command.SessionCreate, {});
-  if (!sesja.udany || sesja.wynik === undefined) return '';
-  const idSesji = sesja.wynik.session.id;
+  // Stanowisko staje w karcie sesji bieżącej, tak samo jak każde inne okno modułu.
+  const idSesji = await zapewnijSesje(kanal, 'Studio');
+  if (idSesji === '') return '';
 
   const modul = await wskazModulStudia(kanal);
   const kanalModelu = await wskazKanalModelu(kanal);

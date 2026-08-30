@@ -218,11 +218,7 @@ export function zwiazCentrum(kanal: Kanal | undefined = globalThis.DanacoKanal):
     const porzadek = cel.closest<HTMLElement>('[data-sesje-sort]')?.dataset.sesjeSort;
     if (widok === undefined && porzadek === undefined) return;
     zdarzenie.stopPropagation();
-    if (widok === 'reakcja' || porzadek === 'srodowisko') {
-      oglos('Wykaz sesji', 'Kontrakt nie niesie dla sesji ani oczekiwania na reakcję, '
-        + 'ani przypisania do środowiska — tego wskazania nie da się dziś spełnić.');
-      return;
-    }
+
     if (widok !== undefined) widokWykazu = widok;
     if (porzadek !== undefined) porzadekWykazu = porzadek;
     odswiez();
@@ -704,6 +700,7 @@ let porzadekProjektow = 'czynnosc';
 function przesiej(sesje: Session[]): Session[] {
   if (widokWykazu === 'czynne') return sesje.filter((sesja) => sesja.status === 'active');
   if (widokWykazu === 'zakonczone') return sesje.filter((sesja) => sesja.status !== 'active');
+  if (widokWykazu === 'reakcja') return sesje.filter((sesja) => sesja.awaitingReaction === true);
   return sesje;
 }
 
@@ -718,6 +715,9 @@ function uporzadkuj(sesje: Session[]): Session[] {
   }
   if (porzadekWykazu === 'najstarsze') return wykaz.sort((a, b) => a.createdAt - b.createdAt);
   if (porzadekWykazu === 'czynnosc') return wykaz.sort((a, b) => b.updatedAt - a.updatedAt);
+  if (porzadekWykazu === 'srodowisko') {
+    return wykaz.sort((a, b) => (a.environmentCode ?? '').localeCompare(b.environmentCode ?? '', 'pl'));
+  }
   return wykaz;
 }
 

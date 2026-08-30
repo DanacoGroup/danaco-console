@@ -27,6 +27,40 @@ type adapterSesji struct {
 	zestaw *dane.Zestaw
 	// przerwijTure przerywa ture okna — potrzebne zatrzymaniu calej sesji.
 	przerwijTure PrzerwanieTury
+	// rozmowa daje ostatnią wypowiedź okna; po niej wykaz sesji rozstrzyga,
+	// która sesja czeka na reakcję Operatora.
+	rozmowa zrodloOstatniejWypowiedzi
+}
+
+// zrodloOstatniejWypowiedzi oddaje ostatnią wypowiedź okna komunikacji.
+type zrodloOstatniejWypowiedzi interface {
+	Wykaz(idOkna string, przed *string, ograniczenie *int) ([]shared.Message, bool)
+}
+
+// ZRozmowa wpina dziennik rozmowy; bez niego wykaz sesji nie rozstrzyga
+// oczekiwania na reakcję i pole zostaje puste.
+func (a *adapterSesji) ZRozmowa(d zrodloOstatniejWypowiedzi) *adapterSesji {
+	a.rozmowa = d
+	return a
+}
+
+// czekaNaReakcje mówi, czy sesja czeka na Operatora: ostatnia wypowiedź
+// któregokolwiek z jej okien należy do modelu i jest domknięta.
+func (a *adapterSesji) czekaNaReakcje(sesja session.Sesja) bool {
+	if a.rozmowa == nil {
+		return false
+	}
+	for _, idOkna := range sesja.IdOkien {
+		wykaz, _ := a.rozmowa.Wykaz(idOkna, nil, nil)
+		if len(wykaz) == 0 {
+			continue
+		}
+		ostatnia := wykaz[len(wykaz)-1]
+		if ostatnia.Role == shared.MessageRoleAssistant && ostatnia.Status == shared.MessageStatusComplete {
+			return true
+		}
+	}
+	return false
 }
 
 // nowyAdapterSesji wiąże port z nadzorcą pakietu sesji, jedynym źródłem
@@ -135,7 +169,10 @@ func (a *adapterSesji) Wykaz(ctx context.Context, z shared.SessionListRequest) (
 		if z.Status != nil && sesja.Stan != *z.Status {
 			continue
 		}
-		wybrane = append(wybrane, sesjaKontraktu(sesja))
+		opis := sesjaKontraktu(sesja)
+		czeka := a.czekaNaReakcje(sesja)
+		opis.AwaitingReaction = &czeka
+		wybrane = append(wybrane, opis)
 	}
 	wynik := shared.SessionListResponse{Sessions: wycinek(wybrane, z.Offset, z.Limit), Total: len(wybrane)}
 	if z.IncludePresence != nil && *z.IncludePresence {

@@ -144,7 +144,7 @@ func zlozPorty(s skladPortow) Porty {
 		Sesje: nowyAdapterSesji(s.nadzorca).ZTrwaloscia(s.trwalosc).
 			ZObecnoscia(s.obecnosc).ZZapewnieniem(s.utrwalacz).
 			ZProjektami(s.repozytoria.PrzestrzenRobocza).ZZestawem(s.repozytoria).
-			ZZatrzymaniemTur(s.rozmowa.PrzerwijTure),
+			ZZatrzymaniemTur(s.rozmowa.PrzerwijTure).ZRozmowa(s.rozmowa.dziennik),
 		Okna:       okna,
 		Rozmowa:    s.telemetria.OwinRozmowe(s.rozmowa),
 		Ustawienia: s.ustawienia.ZProwenancja(s.rozmowa),

@@ -8862,6 +8862,12 @@
           "typ": "string",
           "wymagane": false,
           "opis": "Srodowisko, przez ktore Operator wszedl do pracy; puste dla sesji zalozonej poza srodowiskiem"
+        },
+        {
+          "nazwa": "awaitingReaction",
+          "typ": "bool",
+          "wymagane": false,
+          "opis": "Czy sesja czeka na reakcje Operatora: ostatnia wypowiedz nalezy do modelu i jest domknieta"
         }
       ]
     },

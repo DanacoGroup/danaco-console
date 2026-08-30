@@ -12667,6 +12667,8 @@ type Session struct {
 	Metadata json.RawMessage `json:"metadata,omitempty"`
 	// Srodowisko, przez ktore Operator wszedl do pracy; puste dla sesji zalozonej poza srodowiskiem
 	EnvironmentCode *string `json:"environmentCode,omitempty"`
+	// Czy sesja czeka na reakcje Operatora: ostatnia wypowiedz nalezy do modelu i jest domknieta
+	AwaitingReaction *bool `json:"awaitingReaction,omitempty"`
 }
 
 // Window — Okno komunikacji — byt posredni miedzy sesja a wiadomoscia

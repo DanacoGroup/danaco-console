@@ -8149,6 +8149,8 @@ export interface Session {
   metadata?: unknown;
   /** Srodowisko, przez ktore Operator wszedl do pracy; puste dla sesji zalozonej poza srodowiskiem */
   environmentCode?: string;
+  /** Czy sesja czeka na reakcje Operatora: ostatnia wypowiedz nalezy do modelu i jest domknieta */
+  awaitingReaction?: boolean;
 }
 
 /** Okno komunikacji — byt posredni miedzy sesja a wiadomoscia */

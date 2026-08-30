@@ -141,18 +141,6 @@ const WNETRZA_OKIEN = [
     zamkniecie: '</main>',
   },
   {
-    gniazdo: 'dn-tresc-konfiguracja',
-    prototyp: '../../design/05-okna/platformowe/konfiguracja.html',
-    otwarcie: '<div class="sta-cialo">',
-    zamkniecie: null,
-  },
-  {
-    gniazdo: 'dn-tresc-pula-kont',
-    prototyp: '../../design/05-okna/platformowe/konfiguracja.html',
-    otwarcie: '<dialog class="dn-modal kf-modal-pula"',
-    zamkniecie: '</dialog>',
-  },
-  {
     gniazdo: 'dn-tresc-studio',
     prototyp: '../../design/05-okna/moduly/studio.html',
     otwarcie: '<main class="st-okno-robocze"',

@@ -113,8 +113,11 @@ Razem okolo **980 MB**; caly katalog `~/.local/lib/python3*/site-packages` wazy
 1,4 GB. Zadnych wag modeli nie pobrano — przesiew i os obrazu licza na wagach
 stojacych w `/opt/danaco-modele`. Wolne miejsce po pracy: 276 GB.
 
-**Brak jedyny:** `typescript-language-server`. Rdzeń nazywa go w sondzie startowej
-wraz z drogą naprawy; warstwa językowa TypeScriptu przez to nie działa.
+**Komplet.** Sonda startowa rdzenia melduje 55 z 55 zależności zewnętrznych.
+`typescript-language-server` 6.0.0 stoi w `/usr/local/lib/node_modules`; jego
+`lib/cli.mjs` nie miał prawa wykonania, więc odsyłacz `/usr/local/bin` prowadził
+do pliku, którego uruchomić się nie dało — sonda liczyła narzędzie za brakujące.
+Prawo nadane; warstwa językowa TypeScriptu w module Developer działa.
 
 ## 5. Usługi w tle
 

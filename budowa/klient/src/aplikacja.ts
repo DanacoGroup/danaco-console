@@ -8,6 +8,7 @@ import {
 import { utworzTransport } from './polaczenie/gniazdo.ts';
 import { utworzKanal } from './protokol/kanal.ts';
 import { utworzSesje } from './protokol/sesja.ts';
+import { oglos } from './wiazanie/ogloszenie.ts';
 import { zwiazWejscie } from './wiazanie/wejscie.ts';
 
 /**
@@ -65,6 +66,22 @@ function raz(): void {
 }
 
 transport.naStan(raz);
+
+/* Stan łączności jest widoczny dla Operatora. Warstwa projektowa nie niesie dla
+   niego wzoru w oknie, więc mówi o nim komunikat biblioteki: zerwanie i powrót
+   są zdarzeniami, o których praca musi wiedzieć, a milczące ponawianie wygląda
+   jak program, który przestał odpowiadać. */
+let bylPolaczony = false;
+transport.naStan((stan) => {
+  if (stan === 'polaczony') {
+    if (bylPolaczony) oglos('Połączenie', 'Łączność z rdzeniem wróciła.');
+    bylPolaczony = true;
+    return;
+  }
+  if (!bylPolaczony) return;
+  if (stan === 'rozlaczony') oglos('Połączenie', 'Łączność z rdzeniem zerwana.', 'ostrzezenie');
+  if (stan === 'ponawianie') oglos('Połączenie', 'Wznawianie łączności z rdzeniem.', 'ostrzezenie');
+});
 globalThis.setTimeout(raz, 6000);
 
 /* Wiązanie znacznika Właściciela z komendami rdzenia: nasłuchy na jego

@@ -8,6 +8,7 @@ import { Command, type Environment, type Module, type Session } from '../../../s
 import type { Kanal, Wynik } from '../protokol/kanal.ts';
 import { wywolaj } from '../protokol/wywolanie.ts';
 import { zwiazWyborModulu } from './wybor-modulu.ts';
+import { oglos } from './ogloszenie.ts';
 import { maWiazanie, zwiazOkno } from './okno-modulu.ts';
 import { zwiazStudio } from './studio.ts';
 
@@ -205,11 +206,6 @@ function zapowiedzModul(modul: Module | undefined): void {
 }
 
 /** Powiadomienie biblioteki; jej brak zostawia czynność bez komunikatu, bo dorabianie własnego byłoby stawianiem elementu. */
-function oglos(tytul: string, tresc: string): void {
-  const most = globalThis as { dnToast?: (t: string, o: string, r: string, ms: number) => void };
-  most.dnToast?.(tytul, tresc, 'informacja', 4200);
-}
-
 /** Nazwa środowiska z karty Centrum, wpisana tam wcześniej rejestrem rdzenia. */
 function nazwaKartySrodowiska(cel: Element): string {
   const karta = cel.closest('.dn-karta-srodowiska');

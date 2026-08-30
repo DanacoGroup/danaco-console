@@ -8,13 +8,16 @@ Wprowadź kod w oknie resetu hasła, w którym trwa sesja.
 
   Ważność:         {{expiry_minutes}} min
   Żądanie:         {{requested_at}}
+  Adres źródłowy:  {{ip_address}}
+  Urządzenie:      {{device}}
 
 Kod jest jednorazowy i wygasa po {{expiry_minutes}} minutach. Dotychczasowe
 hasło pozostaje ważne do chwili ustawienia nowego.
 
 Jeżeli żądanie nie pochodzi od Ciebie, zignoruj wiadomość — hasło nie
 zostanie zmienione. Jeżeli takie listy przychodzą wielokrotnie, zgłoś to
-na {{support_address}}, podając czas żądania z wiersza powyżej.
+na {{support_address}}, podając adres źródłowy i czas żądania z wiersza
+powyżej.
 
 --
 Wiadomość wysłana automatycznie z adresu noreply@danaco-group.pl.

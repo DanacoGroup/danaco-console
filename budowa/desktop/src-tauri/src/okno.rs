@@ -1,7 +1,9 @@
 //! Moduł otwiera jedyne okno natywne powłoki, niosące wkompilowany pakiet interfejsu,
 //! bez adresu zapasowego ani rdzenia.
 
-use tauri::{AppHandle, Manager, WebviewUrl, WebviewWindow, WebviewWindowBuilder};
+use tauri::{AppHandle, Manager, State, WebviewUrl, WebviewWindow, WebviewWindowBuilder};
+
+use crate::ustawienia::Ustawienia;
 
 use crate::zamkniecie;
 
@@ -13,7 +15,18 @@ pub const TYTUL: &str = "Danaco Console";
 
 /// Otwiera okno główne powłoki z wkompilowanym pakietem interfejsu i wiąże jego zdarzenia systemowe z obsługą zamknięcia okna.
 pub fn otworz(aplikacja: &AppHandle) -> tauri::Result<WebviewWindow> {
+    /* Wskazanie rdzenia wchodzi w stronę przed jej wczytaniem. Pytanie o nie
+       komendą kazałoby stronie czekać, a okno wejścia stoi puste, dopóki nie
+       dostanie odpowiedzi — animacja startowa nie miałaby kiedy stanąć. */
+    let wskazanie = aplikacja
+        .try_state::<Ustawienia>()
+        .and_then(|u: State<'_, Ustawienia>| u.adres_rdzenia_http())
+        .unwrap_or_default();
     let okno = WebviewWindowBuilder::new(aplikacja, ETYKIETA, WebviewUrl::default())
+        .initialization_script(&format!(
+            "globalThis.DanacoAdresRdzenia = {};",
+            serde_json::to_string(&wskazanie).unwrap_or_else(|_| "\"\"".to_string())
+        ))
         .title(TYTUL)
         // Okno wejścia ma stałe 1040×780 punktów i musi zmieścić się wraz
         // z pasem działań — bez tego Operator nie ma czym zatwierdzić

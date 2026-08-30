@@ -4,7 +4,7 @@
  * rdzenia, zakłada sesje na żądanie i wprowadza w okno modułu.
  */
 
-import { Command, type Environment, type Session } from '../../../shared/contract.ts';
+import { Command, type Environment, type Module, type Session } from '../../../shared/contract.ts';
 import type { Kanal } from '../protokol/kanal.ts';
 import { wywolaj } from '../protokol/wywolanie.ts';
 import { zwiazWyborModulu } from './wybor-modulu.ts';
@@ -12,6 +12,11 @@ import { zwiazStudio } from './studio.ts';
 
 /** Kod modułu, którego wnętrze wchodzi do wydania; pozostałe moduły stoją w szynie, lecz okna w tym wydaniu nie mają. */
 const KOD_MODULU_WYDANIA = 'studio';
+
+/* Drogi powrotu na stronę główną, które niesie znacznik Właściciela: przycisk
+   pasa narzędzi, pozycja menu aplikacji i karta główna okna. */
+const POWROT_NA_STRONE_GLOWNA =
+  '[aria-label="Centrum dowodzenia"], .dn-karta-widoku--glowna, [data-wyjscie-modulu]';
 
 /** Węzły Centrum, na których wiązanie pracuje. Brak któregokolwiek znaczy, że okno Centrum nie stoi. */
 interface WezlyCentrum {
@@ -31,8 +36,13 @@ export function zwiazCentrum(kanal: Kanal | undefined = globalThis.DanacoKanal):
 
   const wzorWiersza = zdejmijWzorWiersza(wezly.wykazSesji);
   zdejmijTresciPrzykladowe();
-  void odswiezWykaz(kanal, wezly.wykazSesji, wzorWiersza);
+  const odswiez = (): void => {
+    void odswiezWykaz(kanal, wezly.wykazSesji, wzorWiersza);
+  };
+  odswiez();
   void wypelnijSrodowiska(kanal, wezly.obszar);
+  const katalogModulow = new Map<string, Module>();
+  void wczytajModuly(kanal, katalogModulow);
 
   wezly.obszar.addEventListener('click', (zdarzenie) => {
     const cel = zdarzenie.target;
@@ -50,24 +60,44 @@ export function zwiazCentrum(kanal: Kanal | undefined = globalThis.DanacoKanal):
      zdarzenie na sobie, więc w fazie bąbelkowania nasłuch nigdy by go nie
      zobaczył. */
   let wnetrze: Element = wezly.obszar;
+  // Nazwa środowiska przechodzi z Centrum przez okno wyboru aż do nagłówka
+  // modułu; kafel wyboru nie stoi w szynie, więc sam jej nie niesie.
+  let nazwaSrodowiska = '';
   document.addEventListener('click', (zdarzenie) => {
     const cel = zdarzenie.target;
     if (!(cel instanceof Element)) return;
+
+    /* Powrót na stronę główną wraca tym samym elementem, który Centrum
+       opuściło: jego nasłuchy stoją nietknięte, a wykaz sesji odświeża się
+       odpowiedzią rdzenia, bo w module mogły powstać nowe. */
+    if (cel.closest(POWROT_NA_STRONE_GLOWNA) !== null) {
+      if (wnetrze === wezly.obszar) return;
+      wnetrze.replaceWith(wezly.obszar);
+      wnetrze = wezly.obszar;
+      odswiez();
+      return;
+    }
 
     const kodSrodowiska = kodSrodowiskaWejscia(cel);
     if (kodSrodowiska !== '') {
       const wstawione = wstawWnetrze(wnetrze, 'dn-tresc-przedsionek');
       if (wstawione === null) return;
       wnetrze = wstawione;
+      nazwaSrodowiska = nazwaKartySrodowiska(cel);
       void zwiazWyborModulu(kanal, kodSrodowiska);
       return;
     }
 
-    if (kodModulu(cel) !== KOD_MODULU_WYDANIA) return;
+    const kod = kodModulu(cel);
+    if (kod === '') return;
+    if (kod !== KOD_MODULU_WYDANIA) {
+      zapowiedzModul(katalogModulow.get(kod));
+      return;
+    }
     const wstawione = wstawWnetrze(wnetrze, 'dn-tresc-studio');
     if (wstawione === null) return;
     wnetrze = wstawione;
-    zwiazStudio(kanal, nazwaSrodowiskaWejscia(cel));
+    zwiazStudio(kanal, nazwaSrodowiskaWejscia(cel) || nazwaSrodowiska);
   }, true);
 
   return true;
@@ -81,6 +111,37 @@ function kodModulu(cel: Element): string {
     cel.closest('.cd-kafel, .dn-kafel--modul')?.getAttribute('data-komponent') ??
     '';
   return wskazanie.toLowerCase();
+}
+
+/** Wczytuje rejestr modułów do spisu po kodzie; opisy modułów są jedynym źródłem zapowiedzi okna, którego wydanie jeszcze nie niesie. */
+async function wczytajModuly(kanal: Kanal, spis: Map<string, Module>): Promise<void> {
+  const wynik = await wywolaj(kanal, Command.ModuleList, {});
+  if (!wynik.udany || wynik.wynik === undefined) return;
+  for (const modul of wynik.wynik.modules) spis.set(modul.code, modul);
+}
+
+/**
+ * Zapowiada moduł, którego okna to wydanie nie niesie. Komunikat nazywa
+ * niegotowość wprost i podaje opis modułu z rejestru rdzenia; twierdzenie, że
+ * okno się otwiera, byłoby nieprawdą, a milczenie zostawiłoby pozycję martwą.
+ */
+function zapowiedzModul(modul: Module | undefined): void {
+  if (modul === undefined) return;
+  const opis = modul.description ?? '';
+  const zdanie = opis === '' ? '' : opis + ' ';
+  oglos(modul.name, zdanie + 'Okno tego modułu nie wchodzi do tego wydania.');
+}
+
+/** Powiadomienie biblioteki; jej brak zostawia czynność bez komunikatu, bo dorabianie własnego byłoby stawianiem elementu. */
+function oglos(tytul: string, tresc: string): void {
+  const most = globalThis as { dnToast?: (t: string, o: string, r: string, ms: number) => void };
+  most.dnToast?.(tytul, tresc, 'informacja', 4200);
+}
+
+/** Nazwa środowiska z karty Centrum, wpisana tam wcześniej rejestrem rdzenia. */
+function nazwaKartySrodowiska(cel: Element): string {
+  const karta = cel.closest('.dn-karta-srodowiska');
+  return karta?.querySelector('.dn-karta-srodowiska-tytul')?.textContent?.trim() ?? '';
 }
 
 /** Kod środowiska, do którego prowadzi naciśnięty grot karty Centrum; pustka znaczy, że kliknięcie karty nie dotyczyło. */

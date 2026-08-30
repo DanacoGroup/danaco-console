@@ -7,6 +7,7 @@
 import { Command, type Environment, type Session } from '../../../shared/contract.ts';
 import type { Kanal } from '../protokol/kanal.ts';
 import { wywolaj } from '../protokol/wywolanie.ts';
+import { zwiazWyborModulu } from './wybor-modulu.ts';
 import { zwiazStudio } from './studio.ts';
 
 /** Kod modułu, którego wnętrze wchodzi do wydania; pozostałe moduły stoją w szynie, lecz okna w tym wydaniu nie mają. */
@@ -41,25 +42,52 @@ export function zwiazCentrum(kanal: Kanal | undefined = globalThis.DanacoKanal):
     }
   });
 
-  // Szyna stoi poza obszarem, więc nasłuch modułu obejmuje cały dokument.
+  /* Wnętrze okna zmienia się w miejscu, więc kolejne wejście podmienia element
+     wstawiony poprzednio, nie ten zdjęty przy pierwszym. Szyna stoi poza
+     wnętrzem, więc nasłuch obejmuje cały dokument.
+
+     Faza przechwytywania jest konieczna: grot wejścia biblioteki zatrzymuje
+     zdarzenie na sobie, więc w fazie bąbelkowania nasłuch nigdy by go nie
+     zobaczył. */
+  let wnetrze: Element = wezly.obszar;
   document.addEventListener('click', (zdarzenie) => {
     const cel = zdarzenie.target;
     if (!(cel instanceof Element)) return;
+
+    const kodSrodowiska = kodSrodowiskaWejscia(cel);
+    if (kodSrodowiska !== '') {
+      const wstawione = wstawWnetrze(wnetrze, 'dn-tresc-przedsionek');
+      if (wstawione === null) return;
+      wnetrze = wstawione;
+      void zwiazWyborModulu(kanal, kodSrodowiska);
+      return;
+    }
+
     if (kodModulu(cel) !== KOD_MODULU_WYDANIA) return;
-    wejdzWModul(kanal, wezly.obszar, nazwaSrodowiskaWejscia(cel));
-  });
+    const wstawione = wstawWnetrze(wnetrze, 'dn-tresc-studio');
+    if (wstawione === null) return;
+    wnetrze = wstawione;
+    zwiazStudio(kanal, nazwaSrodowiskaWejscia(cel));
+  }, true);
 
   return true;
 }
 
-/** Kod modułu wskazanego pozycją szyny albo kaflem; oba zapisy sprowadza do małych liter, bo rejestr rdzenia trzyma kody małymi. */
+/** Kod modułu wskazanego pozycją szyny, kaflem Centrum albo kaflem przedsionka; zapis sprowadza do małych liter, bo rejestr rdzenia trzyma kody małymi. */
 function kodModulu(cel: Element): string {
-  const pozycja = cel.closest('.dn-szyna-poz--modul');
   const wskazanie =
-    pozycja !== null
-      ? (pozycja.getAttribute('data-modul') ?? '')
-      : (cel.closest('.cd-kafel, .dn-kafel--modul')?.getAttribute('data-komponent') ?? '');
+    cel.closest('.dn-szyna-poz--modul')?.getAttribute('data-modul') ??
+    cel.closest('.pd-kafel')?.getAttribute('data-modul') ??
+    cel.closest('.cd-kafel, .dn-kafel--modul')?.getAttribute('data-komponent') ??
+    '';
   return wskazanie.toLowerCase();
+}
+
+/** Kod środowiska, do którego prowadzi naciśnięty grot karty Centrum; pustka znaczy, że kliknięcie karty nie dotyczyło. */
+function kodSrodowiskaWejscia(cel: Element): string {
+  const wejscie = cel.closest('[data-wejdz]');
+  if (wejscie === null) return '';
+  return wejscie.closest<HTMLElement>('.dn-karta-srodowiska')?.dataset.srodowisko ?? '';
 }
 
 /** Zbiera węzły Centrum; brak wykazu sesji znaczy, że w ramie stoi inne okno. */
@@ -123,14 +151,15 @@ function nazwaSrodowiskaWejscia(cel: Element): string {
   return przelacznik?.getAttribute('aria-label') ?? '';
 }
 
-/** Wprowadza w okno modułu: wnętrze Centrum ustępuje wnętrzu modułu z szablonu, po czym wiązanie modułu obejmuje stojący znacznik. */
-function wejdzWModul(kanal: Kanal, obszar: HTMLElement, nazwaSrodowiska: string): void {
-  const szablon = document.getElementById('dn-tresc-studio');
-  if (!(szablon instanceof HTMLTemplateElement)) return;
-  const wnetrze = szablon.content.firstElementChild;
-  if (wnetrze === null) return;
-  obszar.replaceWith(wnetrze.cloneNode(true));
-  zwiazStudio(kanal, nazwaSrodowiska);
+/** Podmienia wnętrze okna na blok ze wskazanego szablonu i oddaje element wstawiony; pustka znaczy, że szablonu nie ma albo jest pusty. */
+function wstawWnetrze(stojace: Element, gniazdo: string): Element | null {
+  const szablon = document.getElementById(gniazdo);
+  if (!(szablon instanceof HTMLTemplateElement)) return null;
+  const blok = szablon.content.firstElementChild;
+  if (blok === null) return null;
+  const wstawione = blok.cloneNode(true) as Element;
+  stojace.replaceWith(wstawione);
+  return wstawione;
 }
 
 /** Zdejmuje treść przykładową bez pokrycia w rdzeniu: karty okien poza główną i komponenty własne. Pusty wykaz odsłania stan pusty ze znacznika. */
@@ -167,7 +196,19 @@ function opiszSrodowisko(karta: HTMLElement, srodowisko: Environment): void {
   }
   const miara = karta.querySelector('.dn-karta-srodowiska-motto .cd-metryka-czlon');
   if (miara !== null) miara.textContent = miaraModulow(srodowisko.moduleCodes?.length ?? 0);
-  karta.querySelector('.cd-karta-meta')?.remove();
+  oczyscStopke(karta);
+}
+
+/* Stopka karty niesie dwie rzeczy naraz: liczbę sesji środowiska i grot wejścia.
+   Kontrakt nie wiąże sesji ze środowiskiem, więc liczba znika, a grot zostaje —
+   zdjęcie całej stopki zabrałoby Operatorowi drogę do przedsionka. */
+function oczyscStopke(karta: HTMLElement): void {
+  const stopka = karta.querySelector('.cd-karta-meta');
+  if (stopka === null) return;
+  for (const wezel of [...stopka.childNodes]) {
+    if (wezel instanceof Element && wezel.closest('[data-wejdz]') !== null) continue;
+    wezel.remove();
+  }
 }
 
 /** Liczba modułów wraz z odmianą rzeczownika; polszczyzna rozróżnia trzy formy, a karta niesie tę miarę zdaniem, nie samą liczbą. */

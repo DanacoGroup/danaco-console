@@ -97,10 +97,14 @@ fi
 
 if [ "$TRYB" = "pelna" ]; then
 	szczebel "Sprawdziany klienta"
-	if (cd budowa/klient && npm run testy 2>&1 | tail -3); then
-		zdany "sprawdziany klienta przechodzą"
+	if grep -q '"testy"' budowa/klient/package.json; then
+		if (cd budowa/klient && npm run testy 2>&1 | tail -3); then
+			zdany "sprawdziany klienta przechodzą"
+		else
+			oblany "sprawdziany klienta nie przechodzą"
+		fi
 	else
-		oblany "sprawdziany klienta nie przechodzą"
+		printf '   pominięty: klient nie niesie sprawdzianów\n'
 	fi
 
 	szczebel "Sprawdziany rdzenia — pełny bieg pod zamkiem"

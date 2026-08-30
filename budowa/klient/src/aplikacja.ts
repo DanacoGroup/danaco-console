@@ -29,17 +29,32 @@ declare global {
 globalThis.DanacoKanal = kanal;
 
 // Ekran startowy niesie `data-czekaj` i stoi do wywołania `gotowe()`.
-function zglosGotowosc(): void {
+function zglosGotowosc(): boolean {
   const pole = document.querySelector('[data-ekran-startowy]') as
     (HTMLElement & { ekranStartowy?: { gotowe?: () => void } }) | null;
-  pole?.ekranStartowy?.gotowe?.();
+  const gotowe = pole?.ekranStartowy?.gotowe;
+  if (gotowe === undefined) return false;
+  gotowe();
+  return true;
 }
 
+/* Składnik ekranu startowego staje dopiero przy DOMContentLoaded, a pierwszy
+   stan transportu potrafi paść wcześniej. Sygnał niedoręczony jest ponawiany —
+   zgubiony zostawiałby ekran startowy czekający na `gotowe()` bez końca. */
 let gotowoscZgloszona = false;
+let ponowienie: ReturnType<typeof setTimeout> | undefined;
 function raz(): void {
   if (gotowoscZgloszona) return;
-  gotowoscZgloszona = true;
-  zglosGotowosc();
+  if (zglosGotowosc()) {
+    gotowoscZgloszona = true;
+    return;
+  }
+  if (ponowienie === undefined) {
+    ponowienie = globalThis.setTimeout(() => {
+      ponowienie = undefined;
+      raz();
+    }, 100);
+  }
 }
 
 transport.naStan(raz);

@@ -11,6 +11,14 @@ import { tozsamoscKlienta } from '../protokol/tozsamosc-klienta.ts';
 import { wywolaj } from '../protokol/wywolanie.ts';
 
 let biezaca = '';
+/* Środowisko, przez które Operator wszedł do pracy. Sesja zakładana pierwszą
+   wiadomością bierze je stąd, bo karta środowiska liczy po nim swoje sesje. */
+let srodowiskoWejscia = '';
+
+/** Zapamiętuje środowisko wejścia Operatora. */
+export function wskazSrodowisko(kod: string): void {
+  srodowiskoWejscia = kod;
+}
 
 /** Karta sesji bieżącej; pustka znaczy, że Operator żadnej jeszcze nie otworzył. */
 export function sesjaBiezaca(): string {
@@ -50,7 +58,8 @@ export async function zapewnijSesje(
   if (biezaca !== '') return biezaca;
   const zadanie: { title?: string; environmentCode?: string } = {};
   if (nazwa !== '') zadanie.title = nazwa;
-  if (kodSrodowiska !== '') zadanie.environmentCode = kodSrodowiska;
+  const srodowisko = kodSrodowiska === '' ? srodowiskoWejscia : kodSrodowiska;
+  if (srodowisko !== '') zadanie.environmentCode = srodowisko;
   const wynik = await wywolaj(kanal, Command.SessionCreate, zadanie);
   if (!wynik.udany || wynik.wynik === undefined) return '';
   await wskazSesje(kanal, wynik.wynik.session.id);

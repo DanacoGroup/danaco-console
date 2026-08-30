@@ -20,7 +20,7 @@ import {
   zwiazPasmo,
 } from './karty-okien.ts';
 import { oknaRobocze, oknoBiezace, otworzOkno, przelaczOkno, zamknijOkno, zapiszKarte } from './okna-robocze.ts';
-import { otworzSesje, przejmijOgnisko, zalozSesje } from './sesja-biezaca.ts';
+import { otworzSesje, przejmijOgnisko, wskazSrodowisko, zalozSesje } from './sesja-biezaca.ts';
 import { zwiazStudio } from './studio.ts';
 
 /** Kod modułu, którego wnętrze wchodzi do wydania; pozostałe moduły stoją w szynie, lecz okna w tym wydaniu nie mają. */
@@ -359,6 +359,7 @@ export function zwiazCentrum(kanal: Kanal | undefined = globalThis.DanacoKanal):
       if (widok === null) return;
       pokazWidok(wezly, widok);
       nazwaSrodowiska = katalogSrodowisk.get(kodNowejSesji)?.name ?? '';
+      wskazSrodowisko(kodNowejSesji);
       void zwiazWyborModulu(kanal, kodNowejSesji);
       return;
     }
@@ -381,6 +382,7 @@ export function zwiazCentrum(kanal: Kanal | undefined = globalThis.DanacoKanal):
       if (widok === null) return;
       pokazWidok(wezly, widok);
       nazwaSrodowiska = nazwaKartySrodowiska(cel) || nazwaSrodowiska;
+      wskazSrodowisko(kodSrodowiska);
       void zwiazWyborModulu(kanal, kodSrodowiska);
       return;
     }

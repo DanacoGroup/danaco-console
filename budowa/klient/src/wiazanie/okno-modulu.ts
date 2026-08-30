@@ -14,8 +14,12 @@ import type { Kanal } from '../protokol/kanal.ts';
 import { wywolaj } from '../protokol/wywolanie.ts';
 import { zwiazAgents } from './okno-agents.ts';
 import { zwiazApps } from './okno-apps.ts';
+import { zwiazAssistant } from './okno-assistant.ts';
+import { zwiazAutomations } from './okno-automations.ts';
 import { zwiazBrowser } from './okno-browser.ts';
+import { zwiazDesign } from './okno-design.ts';
 import { zwiazDeveloper } from './okno-developer.ts';
+import { zwiazDiagnostics } from './okno-diagnostics.ts';
 import { zwiazLibrary } from './okno-library.ts';
 import { zwiazResearch } from './okno-research.ts';
 import { zwiazRoundtable } from './okno-roundtable.ts';
@@ -28,8 +32,12 @@ type WiazanieModulu = (kanal: Kanal, idOkna: string) => void;
 const WIAZANIA = new Map<string, WiazanieModulu>([
   ['agents', zwiazAgents],
   ['apps', zwiazApps],
+  ['assistant', zwiazAssistant],
+  ['automations', zwiazAutomations],
   ['browser', zwiazBrowser],
+  ['design', zwiazDesign],
   ['developer', zwiazDeveloper],
+  ['diagnostics', zwiazDiagnostics],
   ['library', zwiazLibrary],
   ['research', zwiazResearch],
   ['roundtable', zwiazRoundtable],

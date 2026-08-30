@@ -22,7 +22,7 @@ function adresRdzenia(): string {
 /* Powłoka desktopowa pytana jest pierwsza: jej wskazanie niesie serwer
    wdrożenia, którego pochodzenie dokumentu w powłoce nie zdradza. Poza powłoką
    odpowiedzi nie ma i zostaje adres wywiedziony z pochodzenia. */
-const transport = utworzTransport((await adresGniazdaOdPowloki()) ?? adresRdzenia());
+const transport = utworzTransport(adresGniazdaOdPowloki() ?? adresRdzenia());
 const kanal = utworzKanal(transport, utworzSesje());
 
 /*

@@ -63,18 +63,49 @@ func (a *adapterPrzestrzeniRoboczej) Pulpit(ctx context.Context,
 	if err != nil {
 		return shared.WorkspaceDashboardGetResponse{}, err
 	}
+	zadania, err := a.repozytorium.ZadaniaWorkspace(ctx, projekt.ID)
+	if err != nil {
+		return shared.WorkspaceDashboardGetResponse{}, err
+	}
+	notatki, err := a.repozytorium.NotatkiWorkspace(ctx, projekt.ID)
+	if err != nil {
+		return shared.WorkspaceDashboardGetResponse{}, err
+	}
+	instrukcje, err := a.repozytorium.WersjeInstrukcjiWorkspace(ctx, projekt.ID)
+	if err != nil {
+		return shared.WorkspaceDashboardGetResponse{}, err
+	}
 	pliki := a.plikiProjektu(projekt.Kod, "")
 
 	ostatnia := chwilaBazy(projekt.Zaktualizowano)
 	liczbaPlikow, liczbaWpisow := len(pliki), len(wpisy)
+	liczbaZadan, liczbaNotatek := len(zadania), len(notatki)
+	liczbaInstrukcji := len(instrukcje)
+	liczbaUkonczonych := 0
+	for _, zadanie := range zadania {
+		if zadanie.Stan == shared.WorkspaceTaskStatusDone {
+			liczbaUkonczonych++
+		}
+	}
+	// Zajętość pamięci liczy się treścią wpisów: magazyn nie prowadzi dla nich
+	// osobnej miary, a pasek pojemności bez liczby nic Operatorowi nie mówi.
+	zajetoscPamieci := int64(0)
+	for _, wpis := range wpisy {
+		zajetoscPamieci += int64(len(wpis.Tresc))
+	}
 	return shared.WorkspaceDashboardGetResponse{
 		Dashboard: shared.WorkspaceDashboard{
-			Project:          projektKontraktu(projekt),
-			OpenSessionIds:   sesje,
-			AssignedAgentIds: kodyEkspertow(przypisania),
-			LibraryFileCount: &liczbaPlikow,
-			MemoryEntryCount: &liczbaWpisow,
-			LastActivityAt:   &ostatnia,
+			Project:             projektKontraktu(projekt),
+			OpenSessionIds:      sesje,
+			AssignedAgentIds:    kodyEkspertow(przypisania),
+			LibraryFileCount:    &liczbaPlikow,
+			MemoryEntryCount:    &liczbaWpisow,
+			LastActivityAt:      &ostatnia,
+			TaskCount:           &liczbaZadan,
+			TaskDoneCount:       &liczbaUkonczonych,
+			NoteCount:           &liczbaNotatek,
+			InstructionSetCount: &liczbaInstrukcji,
+			MemoryUsedBytes:     &zajetoscPamieci,
 		},
 	}, nil
 }

@@ -335,6 +335,17 @@ export function zwiazCentrum(kanal: Kanal | undefined = globalThis.DanacoKanal):
       return;
     }
 
+    /* Komponent własny otwiera się kartą modułu swojego rodzaju: komponent
+       automatyki wchodzi w Automations, ekspert w Agents. */
+    const komponent = cel.closest<HTMLElement>('[data-otworz-komponent]')?.dataset.otworzKomponent;
+    if (komponent !== undefined) {
+      const modulKomponentu = katalogModulow.get(RODZAJE_KOMPONENTOW.get(komponent) ?? '');
+      if (modulKomponentu === undefined) return;
+      zdarzenie.stopPropagation();
+      otworzModul(modulKomponentu, '');
+      return;
+    }
+
     /* Znak „+" pasma otwiera kartę modułu wskazanego pozycją menu; nazwa
        pozycji jest nazwą modułu z rejestru rdzenia. */
     const nowaKarta = cel.closest<HTMLElement>('[data-nowa-karta-modul]')?.dataset.nowaKartaModul;
@@ -506,6 +517,8 @@ function opiszGloweKarty(wezly: WezlyCentrum, nazwaModulu: string, nazwaSesji: s
  * Wypełnia wykaz komponentów własnych Centrum rejestrem rdzenia. Wzór pozycji
  * zdejmuje się z treści przykładowej, zanim wykaz zostanie wyczyszczony.
  */
+const RODZAJE_KOMPONENTOW = new Map<string, string>();
+
 async function wypelnijKomponenty(kanal: Kanal): Promise<void> {
   const wykaz = document.getElementById('cd-wlasne');
   if (wykaz === null) return;
@@ -518,6 +531,8 @@ async function wypelnijKomponenty(kanal: Kanal): Promise<void> {
     const pozycja = wzorPozycji.cloneNode(true) as HTMLElement;
     const przycisk = pozycja.querySelector<HTMLElement>('[data-otworz-komponent]');
     if (przycisk !== null) przycisk.dataset.otworzKomponent = komponent.id;
+    // Rodzaj komponentu jest kodem modułu, w którym komponent stoi.
+    RODZAJE_KOMPONENTOW.set(komponent.id, komponent.kind);
     const nazwa = pozycja.querySelector('.dn-kafel-nazwa');
     if (nazwa !== null) nazwa.textContent = komponent.name;
     const opis = pozycja.querySelector('.dn-kafel-opis');

@@ -134,9 +134,30 @@ const WNETRZA_OKIEN = [
     otwarcie: '<div class="dn-obszar">',
     zamkniecie: '<!-- /dn-obszar -->',
   },
+  /* Przedsionek ma osobny prototyp na każde środowisko, bo kafle niosą własne
+     znaki modułów. Jeden prototyp na wszystkie środowiska zostawiłby moduły
+     spoza TalkIn bez kafla — a moduł bez kafla znika Operatorowi z drogi. */
   {
-    gniazdo: 'dn-tresc-przedsionek',
+    gniazdo: 'dn-tresc-przedsionek-talkin',
     prototyp: '../../design/05-okna/srodowiska/talkin-przedsionek.html',
+    otwarcie: '<main class="pd-plotno">',
+    zamkniecie: '</main>',
+  },
+  {
+    gniazdo: 'dn-tresc-przedsionek-workspace',
+    prototyp: '../../design/05-okna/srodowiska/workspace-przedsionek.html',
+    otwarcie: '<main class="pd-plotno">',
+    zamkniecie: '</main>',
+  },
+  {
+    gniazdo: 'dn-tresc-przedsionek-codestudio',
+    prototyp: '../../design/05-okna/srodowiska/codestudio-przedsionek.html',
+    otwarcie: '<main class="pd-plotno">',
+    zamkniecie: '</main>',
+  },
+  {
+    gniazdo: 'dn-tresc-przedsionek-multitaskingai',
+    prototyp: '../../design/05-okna/srodowiska/multitaskingai-przedsionek.html',
     otwarcie: '<main class="pd-plotno">',
     zamkniecie: '</main>',
   },

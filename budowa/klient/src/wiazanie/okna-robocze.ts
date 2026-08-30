@@ -13,6 +13,8 @@ export interface OknoRobocze {
   nazwa: string;
   /** Kod modułu karty bieżącej; pustka znaczy kartę główną — Centrum. */
   kartaBiezaca: string;
+  /** Karty otwarte w oknie, w kolejności otwarcia; karta główna stoi poza wykazem. */
+  karty: string[];
 }
 
 const OKNA: OknoRobocze[] = [];
@@ -36,7 +38,9 @@ export function oknoBiezace(): OknoRobocze {
 /** Otwiera okno robocze na Centrum dowodzenia i czyni je bieżącym. */
 export function otworzOkno(): OknoRobocze {
   licznik += 1;
-  const okno: OknoRobocze = { id: 'okr-' + String(licznik), nazwa: NAZWA_POCZATKOWA, kartaBiezaca: '' };
+  const okno: OknoRobocze = {
+    id: 'okr-' + String(licznik), nazwa: NAZWA_POCZATKOWA, kartaBiezaca: '', karty: [],
+  };
   OKNA.push(okno);
   biezace = okno.id;
   return okno;
@@ -60,6 +64,7 @@ export function zamknijOkno(): OknoRobocze {
     const jedyne = OKNA[0] ?? otworzOkno();
     jedyne.nazwa = NAZWA_POCZATKOWA;
     jedyne.kartaBiezaca = '';
+    jedyne.karty = [];
     biezace = jedyne.id;
     return jedyne;
   }
@@ -74,4 +79,34 @@ export function zapiszKarte(kod: string, nazwa: string): void {
   const okno = oknoBiezace();
   okno.kartaBiezaca = kod;
   okno.nazwa = kod === '' ? NAZWA_POCZATKOWA : nazwa;
+  if (kod !== '' && !okno.karty.includes(kod)) okno.karty.push(kod);
+}
+
+/** Zdejmuje kartę z okna bieżącego; zwraca wykaz kart, które zostały. */
+export function zdejmijKarteOkna(kod: string): string[] {
+  const okno = oknoBiezace();
+  okno.karty = okno.karty.filter((karta) => karta !== kod);
+  if (okno.kartaBiezaca === kod) {
+    okno.kartaBiezaca = '';
+    okno.nazwa = NAZWA_POCZATKOWA;
+  }
+  return okno.karty;
+}
+
+/** Zostawia w oknie wyłącznie kartę wskazaną; zwraca karty zdjęte. */
+export function zostawKarte(kod: string): string[] {
+  const okno = oknoBiezace();
+  const zdjete = okno.karty.filter((karta) => karta !== kod);
+  okno.karty = okno.karty.filter((karta) => karta === kod);
+  return zdjete;
+}
+
+/** Zdejmuje karty stojące po wskazanej; zwraca karty zdjęte. */
+export function zdejmijKartyPoPrawej(kod: string): string[] {
+  const okno = oknoBiezace();
+  const numer = okno.karty.indexOf(kod);
+  if (numer < 0) return [];
+  const zdjete = okno.karty.slice(numer + 1);
+  okno.karty = okno.karty.slice(0, numer + 1);
+  return zdjete;
 }

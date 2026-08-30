@@ -156,6 +156,13 @@ export function zwiazPasmo(
   }, true);
 }
 
+/** Przypina kartę albo zdejmuje przypięcie; przypięta zostaje przy zamykaniu pozostałych. */
+export function przypnijKarte(idOkna: string): void {
+  const karta = lista?.querySelector<HTMLElement>(`.dn-karta-widoku[data-karta="${idOkna}"]`);
+  if (karta === undefined || karta === null) return;
+  karta.dataset.przypieta = karta.dataset.przypieta === 'tak' ? 'nie' : 'tak';
+}
+
 /** Zdejmuje kartę zamkniętego okna z pasma. */
 export function zdejmijKarte(idOkna: string): void {
   lista?.querySelector(`.dn-karta-widoku[data-karta="${idOkna}"]`)?.remove();

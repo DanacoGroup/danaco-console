@@ -12,6 +12,7 @@ import { oglos } from './ogloszenie.ts';
 import { zwiazOkno, zwiazOknoStojace } from './okno-modulu.ts';
 import {
   przygotujPasmo,
+  przypnijKarte,
   ustawKarty,
   ustawOknaRobocze,
   zaznaczKarte,
@@ -19,7 +20,17 @@ import {
   zwiazOknaRobocze,
   zwiazPasmo,
 } from './karty-okien.ts';
-import { oknaRobocze, oknoBiezace, otworzOkno, przelaczOkno, zamknijOkno, zapiszKarte } from './okna-robocze.ts';
+import {
+  oknaRobocze,
+  oknoBiezace,
+  otworzOkno,
+  przelaczOkno,
+  zamknijOkno,
+  zapiszKarte,
+  zdejmijKarteOkna,
+  zdejmijKartyPoPrawej,
+  zostawKarte,
+} from './okna-robocze.ts';
 import {
   otworzSesje,
   przejmijOgnisko,
@@ -131,8 +142,7 @@ export function zwiazCentrum(kanal: Kanal | undefined = globalThis.DanacoKanal):
     pokazWidok(wezly, wezly.kartaModulu);
     kartaBiezaca = modul.code;
     zapiszKarte(modul.code, modul.name);
-    ustawKarty([{ id: modul.code, nazwa: modul.name, modul: modul.name }], modul.code);
-    odswiezOknaRobocze();
+    odswiezPasmo();
     if (modul.code === KOD_MODULU_WYDANIA) zwiazStudio(kanal, nazwaSrodowiska);
     else if (idOkna === '') zwiazOkno(kanal, modul.code, nazwaSrodowiska);
     else zwiazOknoStojace(kanal, modul.code, nazwaSrodowiska, idOkna);
@@ -255,16 +265,51 @@ export function zwiazCentrum(kanal: Kanal | undefined = globalThis.DanacoKanal):
 
   /* „Zamknij kartę" z menu okna zdejmuje kartę bieżącą i wraca na Centrum —
      tak samo jak znak zamknięcia na samej karcie. */
+  /* Czynności na karcie z menu okna roboczego; rozpoznaje je podpis pozycji,
+     bo znacznik nie niesie dla nich własnego uchwytu. */
   document.addEventListener('click', (zdarzenie) => {
     const cel = zdarzenie.target;
     if (!(cel instanceof Element)) return;
     const pozycja = cel.closest('.sta-menu-poz');
-    if (pozycja === null || (pozycja.textContent ?? '').trim() !== 'Zamknij kartę') return;
-    if (kartaBiezaca === '') return;
-    zdarzenie.stopPropagation();
-    zdejmijKarte(kartaBiezaca);
-    wrocDoCentrum();
+    if (pozycja === null || kartaBiezaca === '') return;
+    const czynnosc = (pozycja.textContent ?? '').trim();
+    if (czynnosc === 'Zamknij kartę') {
+      zdarzenie.stopPropagation();
+      zdejmijKarte(kartaBiezaca);
+      zdejmijKarteOkna(kartaBiezaca);
+      wrocDoCentrum();
+      return;
+    }
+    if (czynnosc === 'Zamknij pozostałe') {
+      zdarzenie.stopPropagation();
+      for (const kod of zostawKarte(kartaBiezaca)) zdejmijKarte(kod);
+      odswiezPasmo();
+      return;
+    }
+    if (czynnosc === 'Zamknij karty po prawej') {
+      zdarzenie.stopPropagation();
+      for (const kod of zdejmijKartyPoPrawej(kartaBiezaca)) zdejmijKarte(kod);
+      odswiezPasmo();
+      return;
+    }
+    if (czynnosc === 'Przypnij kartę') {
+      zdarzenie.stopPropagation();
+      przypnijKarte(kartaBiezaca);
+    }
   }, true);
+
+  /** Przerysowuje pasmo kart z wykazu okna bieżącego. */
+  function odswiezPasmo(): void {
+    const okno = oknoBiezace();
+    ustawKarty(
+      okno.karty.map((kod) => {
+        const nazwa = katalogModulow.get(kod)?.name ?? kod;
+        return { id: kod, nazwa, modul: nazwa };
+      }),
+      okno.kartaBiezaca,
+    );
+    odswiezOknaRobocze();
+  }
 
   /** Wraca do karty głównej okna roboczego — Centrum dowodzenia. */
   const wrocDoCentrum = (): void => {
@@ -292,7 +337,7 @@ export function zwiazCentrum(kanal: Kanal | undefined = globalThis.DanacoKanal):
     if (modul === undefined) {
       pokazWidok(wezly, wezly.kartaGlowna);
       kartaBiezaca = '';
-      ustawKarty([], '');
+      odswiezPasmo();
       odswiez();
     } else {
       otworzModul(modul, '');

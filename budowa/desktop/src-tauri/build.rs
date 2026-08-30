@@ -7,9 +7,9 @@ fn main() {
     tauri_build::build();
 }
 
-/// Ogłasza cargo, że wynik budowy zależy od pakietu klienta, ponieważ frontendDist osadza client/dist w chwili budowy, a cargo śledzi wyłącznie pliki źródłowe i manifest, nie katalog zasobów.
+/// Ogłasza cargo, że wynik budowy zależy od pakietu klienta, ponieważ frontendDist osadza klient/dist w chwili budowy, a cargo śledzi wyłącznie pliki źródłowe i manifest, nie katalog zasobów.
 fn oglos_zaleznosc_od_pakietu_klienta() {
-    let pakiet = Path::new("../../client/dist");
+    let pakiet = Path::new("../../klient/dist");
     println!("cargo:rerun-if-changed={}", pakiet.display());
 
     // Katalog assets/ niesie treść pakietu — bez zejścia weń zmiana zasobów nie wznowi budowy.

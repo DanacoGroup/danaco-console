@@ -13,10 +13,18 @@ import {
 import type { Kanal } from '../protokol/kanal.ts';
 import { wywolaj } from '../protokol/wywolanie.ts';
 import { zwiazDeveloper } from './okno-developer.ts';
+import { zwiazRoundtable } from './okno-roundtable.ts';
+import { zwiazTerminal } from './okno-terminal.ts';
+import { zwiazTranslate } from './okno-translate.ts';
 
 /** Wiązania szczegółowe modułów, po kodzie rejestru rdzenia; moduł bez wpisu dostaje samo okno rdzenia. */
 type WiazanieModulu = (kanal: Kanal, idOkna: string) => void;
-const WIAZANIA = new Map<string, WiazanieModulu>([['developer', zwiazDeveloper]]);
+const WIAZANIA = new Map<string, WiazanieModulu>([
+  ['developer', zwiazDeveloper],
+  ['roundtable', zwiazRoundtable],
+  ['terminal', zwiazTerminal],
+  ['translate', zwiazTranslate],
+]);
 
 /**
  * Czy moduł ma wiązanie wypełniające jego wnętrze odpowiedzią rdzenia. Wnętrze

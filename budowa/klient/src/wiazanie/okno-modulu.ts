@@ -12,39 +12,11 @@ import {
 } from '../../../shared/contract.ts';
 import type { Kanal } from '../protokol/kanal.ts';
 import { wywolaj } from '../protokol/wywolanie.ts';
-import { zwiazAgents } from './okno-agents.ts';
-import { zwiazApps } from './okno-apps.ts';
-import { zwiazAssistant } from './okno-assistant.ts';
-import { zwiazAutomations } from './okno-automations.ts';
-import { zwiazBrowser } from './okno-browser.ts';
-import { zwiazDesign } from './okno-design.ts';
-import { zwiazDeveloper } from './okno-developer.ts';
-import { zwiazDiagnostics } from './okno-diagnostics.ts';
-import { zwiazLibrary } from './okno-library.ts';
-import { zwiazResearch } from './okno-research.ts';
-import { zwiazRoundtable } from './okno-roundtable.ts';
-import { zwiazTerminal } from './okno-terminal.ts';
-import { zwiazTranslate } from './okno-translate.ts';
-import { zwiazWorkspace } from './okno-workspace.ts';
+import { zapewnijSesje } from './sesja-biezaca.ts';
 
 /** Wiązania szczegółowe modułów, po kodzie rejestru rdzenia; moduł bez wpisu dostaje samo okno rdzenia. */
 type WiazanieModulu = (kanal: Kanal, idOkna: string) => void;
-const WIAZANIA = new Map<string, WiazanieModulu>([
-  ['agents', zwiazAgents],
-  ['apps', zwiazApps],
-  ['assistant', zwiazAssistant],
-  ['automations', zwiazAutomations],
-  ['browser', zwiazBrowser],
-  ['design', zwiazDesign],
-  ['developer', zwiazDeveloper],
-  ['diagnostics', zwiazDiagnostics],
-  ['library', zwiazLibrary],
-  ['research', zwiazResearch],
-  ['roundtable', zwiazRoundtable],
-  ['terminal', zwiazTerminal],
-  ['translate', zwiazTranslate],
-  ['workspace', zwiazWorkspace],
-]);
+const WIAZANIA = new Map<string, WiazanieModulu>();
 
 /**
  * Czy moduł ma wiązanie wypełniające jego wnętrze odpowiedzią rdzenia. Wnętrze
@@ -66,16 +38,37 @@ export function zglosWiazanieModulu(kod: string, wiazanie: WiazanieModulu): void
  */
 export function zwiazOkno(kanal: Kanal, kodModulu: string, nazwaSrodowiska: string): void {
   void opiszNaglowek(kanal, nazwaSrodowiska);
-  void otworzOkno(kanal, kodModulu).then((idOkna) => {
+  void otworzOkno(kanal, kodModulu, nazwaSesji(kodModulu, nazwaSrodowiska)).then((idOkna) => {
     if (idOkna === '') return;
     WIAZANIA.get(kodModulu)?.(kanal, idOkna);
   });
 }
 
+/**
+ * Wiąże wnętrze okna, które w rdzeniu już stoi. Powrót do karty sesji nie
+ * zakłada okna drugi raz — Operator wraca do tego, w którym pracował.
+ */
+export function zwiazOknoStojace(
+  kanal: Kanal,
+  kodModulu: string,
+  nazwaSrodowiska: string,
+  idOkna: string,
+): void {
+  void opiszNaglowek(kanal, nazwaSrodowiska);
+  WIAZANIA.get(kodModulu)?.(kanal, idOkna);
+}
+
+/** Nazwa karty sesji zakładanej wejściem w moduł; karta bez nazwy nie mówi Operatorowi, czym była. */
+function nazwaSesji(kodModulu: string, nazwaSrodowiska: string): string {
+  return nazwaSrodowiska === '' ? kodModulu : nazwaSrodowiska + ' — ' + kodModulu;
+}
+
 /** Zakłada sesję i okno komunikacji modułu; pusty wynik znaczy, że rdzeń odmówił i wiązania szczegółowego nie ma po co wołać. */
-async function otworzOkno(kanal: Kanal, kodModulu: string): Promise<string> {
-  const sesja = await wywolaj(kanal, Command.SessionCreate, {});
-  if (!sesja.udany || sesja.wynik === undefined) return '';
+async function otworzOkno(kanal: Kanal, kodModulu: string, nazwaKarty: string): Promise<string> {
+  // Okno staje w karcie sesji bieżącej. Karta zakładana przy każdym wejściu
+  // zostawiałaby po Operatorze wykaz kart bez treści i bez drogi powrotu.
+  const idSesji = await zapewnijSesje(kanal, nazwaKarty);
+  if (idSesji === '') return '';
 
   const moduly = await wywolaj(kanal, Command.ModuleList, {});
   if (!moduly.udany || moduly.wynik === undefined) return '';
@@ -87,7 +80,7 @@ async function otworzOkno(kanal: Kanal, kodModulu: string): Promise<string> {
   if (kanalModelu === '') return '';
 
   const okno = await wywolaj(kanal, Command.WindowCreate, {
-    sessionId: sesja.wynik.session.id,
+    sessionId: idSesji,
     moduleId: modul.id,
     modelChannelId: kanalModelu,
     workingDirs: [],
@@ -178,28 +171,24 @@ export function data(znacznik: number): string {
   return new Date(znacznik).toLocaleDateString('pl-PL');
 }
 
-/** Zdejmuje sterowanie wspólne wszystkim oknom modułów: wybór modelu i nakładu, urządzenia dźwięku oraz konektory i wtyczki menu dodawania. */
+/**
+ * Zdejmuje z okna komunikacji podpisy przykładowe wspólne wszystkim oknom
+ * modułów. Sterowanie zostaje: wybór modelu, nakładu i urządzenia dźwięku
+ * należy do okna Właściciela, a nie do tego, co rdzeń dziś obsługuje.
+ */
 export function zdejmijSterowanieWspolne(cialo: HTMLElement): void {
-  cialo.querySelector('#pop-mik')?.closest('.sta-nrz')?.remove();
-  cialo.querySelector('#pop-model')?.closest('.sta-nrz')?.remove();
-  cialo.querySelector('#pop-wysilek')?.closest('.sta-nrz')?.remove();
-  // Podpis piątego trybu opisuje domyślność, której rejestr uprawnień nie zna.
+  // Podpis piątego trybu opisuje domyślność, której rejestr uprawnień nie zna;
+  // to treść przykładowa, nie element sterowania.
   cialo.querySelector('#pop-tryb-upr .sta-popover-wiersz small')?.remove();
-  const menu = cialo.querySelector('#pop-plus');
-  if (menu === null) return;
-  // Menu dodawania zostaje przy tytule i trzech pozycjach plików; konektory
-  // i wtyczki należą do rodzin spoza obszaru modułu.
-  for (const [numer, pozycja] of [...menu.children].entries()) {
-    if (numer > 3) pozycja.remove();
-  }
 }
 
-/** Ustawia znaczniki przełączników paneli tak, by zgadzały się z panelami, które w znaczniku zostały. */
-export function uzgodnijPrzelacznikiPaneli(cialo: HTMLElement, bezPokrycia: string[]): void {
-  for (const nazwa of bezPokrycia) {
-    cialo.querySelector(`#${nazwa}`)?.remove();
-    cialo.querySelector(`[data-panel-toggle="${nazwa}"]`)?.remove();
-  }
+/**
+ * Uzgadnia znaczniki przełączników paneli ze stanem paneli w znaczniku.
+ * Panel, którego rdzeń jeszcze nie wypełnia, ZOSTAJE — okno jest kompozycją
+ * Właściciela, a nie wyborem tego, co dziś ma pokrycie; panel bez treści stoi
+ * pusty i tym mówi prawdę, usunięty kłamałby o układzie okna.
+ */
+export function uzgodnijPrzelacznikiPaneli(cialo: HTMLElement, _bezPokrycia: string[]): void {
   for (const przelacznik of cialo.querySelectorAll<HTMLElement>('[data-panel-toggle]')) {
     const panel = cialo.querySelector(`#${przelacznik.dataset.panelToggle ?? ''}`);
     przelacznik.setAttribute('aria-checked', String(panel?.hasAttribute('hidden') === false));
@@ -208,9 +197,9 @@ export function uzgodnijPrzelacznikiPaneli(cialo: HTMLElement, bezPokrycia: stri
 
 /** Zdejmuje z okna komunikacji treść przykładową wspólną wszystkim oknom modułów: znacznik pracy, historię rozmowy i znaczniki menu zawężania. */
 export function zdejmijTrescWspolna(cialo: HTMLElement): void {
-  cialo.querySelector('.sta-kom-naglowek .sta-kom-stan')?.remove();
+  // Wykazy tracą wiersze przykładowe; ich pojemniki, nagłówki i sterowanie zostają.
   cialo.querySelector('.sta-kom-historia')?.replaceChildren();
-  cialo.querySelector('.sta-kom-monitor')?.remove();
+  cialo.querySelector('.sta-kom-monitor .sta-kom-monitor-tresc')?.replaceChildren();
   for (const znacznik of cialo.querySelectorAll('#menu-filtr .sta-menu-poz[aria-checked]')) {
     znacznik.removeAttribute('aria-checked');
   }

@@ -14,6 +14,14 @@ export interface TozsamoscKlienta {
   wersja: string;
 }
 
+/* Tożsamość jest jedna na czas uruchomienia klienta. Rdzeń wiąże po niej
+   zdolności połączenia, obecność i ognisko karty sesji — nowa przy każdym
+   pytaniu rozwiązywałaby to, co przedstawiło powitanie. */
+const TOZSAMOSC: TozsamoscKlienta = {
+  id: nowyIdentyfikator('klient'),
+  wersja: manifest.version,
+};
+
 export function tozsamoscKlienta(): TozsamoscKlienta {
-  return { id: nowyIdentyfikator('klient'), wersja: manifest.version };
+  return TOZSAMOSC;
 }

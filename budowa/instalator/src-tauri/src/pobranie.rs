@@ -67,6 +67,7 @@ struct Kanal {
 #[derive(Deserialize, Clone)]
 pub(crate) struct PozycjaWydania {
     system: String,
+    postac: String,
     architektura: String,
     plik: String,
     #[serde(rename = "nazwaPliku")]
@@ -134,13 +135,20 @@ fn dobierz_pozycje(architektura_kreatora: &str) -> Result<PozycjaWydania, Odmowa
     wykaz
         .wydania
         .iter()
-        .find(|w| w.system == "Windows" && w.architektura == architektura_wykazu)
+        // Instalator ściąga POWŁOKĘ programu, nie siebie: wykaz niesie obie
+        // postaci pod tym samym systemem i architekturą, więc pozycję
+        // rozstrzyga `postac`, a nie kolejność w wykazie.
+        .find(|w| {
+            w.system == "Windows"
+                && w.architektura == architektura_wykazu
+                && w.postac == "hybryda"
+        })
         .cloned()
         .ok_or_else(|| {
             Odmowa::nowa(
                 "wydanie-nieopublikowane",
                 format!(
-                    "Wykaz wydań nie niesie dziś pozycji Windows/{architektura_wykazu} — \
+                    "Wykaz wydań nie niesie dziś powłoki Windows/{architektura_wykazu} — \
                      nie ma czego pobrać dla tej maszyny."
                 ),
             )

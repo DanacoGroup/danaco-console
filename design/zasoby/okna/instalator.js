@@ -407,6 +407,9 @@ function uruchom() {
     else wyjdz();
   }
   function wyjdz() {
+    /* Wyjście z okna należy do platformy, nie do kreatora: w programie okno
+       zamyka powłoka, w podglądzie z dysku wraca się tam, skąd się przyszło. */
+    if (typeof K.wyjscieOkna === 'function') { K.wyjscieOkna(); return; }
     if (window.opener && !window.opener.closed) { window.close(); return; }
     if (document.referrer && history.length > 1) { history.back(); return; }
     location.href = '../przeplyw/centrum-dowodzenia.html';

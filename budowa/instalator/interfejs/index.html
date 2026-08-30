@@ -15,22 +15,14 @@
 <link rel="stylesheet" href="warstwa/zasoby/css/fundament.css">
 <link rel="stylesheet" href="warstwa/zasoby/css/komponenty.css">
 <link rel="stylesheet" href="warstwa/zasoby/kreator.css">
-<link rel="stylesheet" href="warstwa/zasoby/prototyp.css">
 </head>
 
-<body class="pt-pelny-ekran">
+<body class="dn-kreator-osadzenie">
 
-<div class="dn-scena">
-<section class="pt-okno pt-okno--plaskie" aria-label="Okno instalatora aplikacji Danaco Console">
-  <header class="pt-okno-naglowek">
-    <h1 class="pt-okno-tytul">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12"/><path d="m7 10 5 5 5-5"/><path d="M5 21h14"/></svg>
-      Instalator aplikacji
-    </h1>
-  </header>
-  <div class="pt-okno-tresc" data-kreator></div>
-</section>
-</div>
+<!-- Okno kreatora stoi wprost w oknie platformy. Rusztowanie podglądu
+     (`dn-scena`, `pt-okno`) należy do prototypu, nie do programu: okno
+     systemowe idzie bez ramy, a belkę tytułową niesie sam kreator. -->
+<div data-kreator></div>
 
 <!-- Motyw ciemny zapada przed `wspolne.js`, ktore inaczej wzieloby nastawe systemu.
        Instalator stoi przed uruchomieniem aplikacji: nie ma jeszcze Operatora, ktorego
@@ -40,7 +32,6 @@
     try { localStorage.setItem('dn-motyw', 'dark'); } catch (e) {}
   </script>
   <script src="warstwa/zasoby/wspolne.js"></script>
-<script src="warstwa/zasoby/prototyp.js"></script>
 <script src="warstwa/zasoby/narzedzia-okien.js"></script>
 <script src="warstwa/zasoby/bryla.js"></script>
 

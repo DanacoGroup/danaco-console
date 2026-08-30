@@ -236,11 +236,46 @@ function przebiegKroku5(bieg) {
   });
 }
 
+/* ——— Belka okna ————————————————————————————————————————————————————————
+   Okno platformy stoi bez ramy, więc zwinięcie, rozwinięcie, zamknięcie
+   i przeciąganie okna wykonuje belka kreatora. Przyciski rozpoznaje się po
+   etykiecie z katalogu treści, bo kolejność w belce nie jest umową. */
+function oknoPowloki() {
+  return TAURI && TAURI.window && TAURI.window.getCurrentWindow
+    ? TAURI.window.getCurrentWindow()
+    : null;
+}
+
+function wiazBelke() {
+  var okno = oknoPowloki();
+  if (!okno) return;
+  var belka = document.querySelector('.dn-kreator-belka');
+  if (belka) belka.setAttribute('data-tauri-drag-region', '');
+  var tresci = (window.DanacoKreator && window.DanacoKreator.tresci
+    && window.DanacoKreator.tresci.okno) || {};
+  var czynnosci = [[tresci.zwin, 'minimize'], [tresci.rozwin, 'toggleMaximize']];
+  czynnosci.forEach(function (para) {
+    if (!para[0]) return;
+    var btn = document.querySelector('.dn-kreator-belka-btn[aria-label="' + para[0] + '"]');
+    if (btn) btn.addEventListener('click', function () { okno[para[1]](); });
+  });
+}
+
+/* Wyjście z okna: kreator pyta o zgodę, gdy jest o co, i dopiero wtedy woła
+   ten zamek. Zamknięcie okna kończy proces instalatora. */
+if (window.DanacoKreator) {
+  window.DanacoKreator.wyjscieOkna = function () {
+    var okno = oknoPowloki();
+    if (okno) okno.close();
+  };
+}
+
 // Przejęcie kroku 5 wchodzi przed zdarzeniem gotowości: kreator czyta wpis
 // w chwili wejścia w krok, a wejść może zaraz po zmontowaniu okna.
 if (window.DanacoKreator) window.DanacoKreator.przebiegKroku5 = przebiegKroku5;
 
 document.addEventListener('kreator-gotowy', function () {
+  wiazBelke();
   wiazKrok5Blad();
   if (!invoke) return;
   invoke('stan_maszyny').then(function (stan) {

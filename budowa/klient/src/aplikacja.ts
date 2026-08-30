@@ -9,6 +9,7 @@ import { utworzTransport } from './polaczenie/gniazdo.ts';
 import { utworzKanal } from './protokol/kanal.ts';
 import { utworzSesje } from './protokol/sesja.ts';
 import { oglos } from './wiazanie/ogloszenie.ts';
+import { pokazOknoPowloki, zwiazBelkeOkna } from './wiazanie/belka-okna.ts';
 import { zwiazWejscie } from './wiazanie/wejscie.ts';
 
 /**
@@ -87,5 +88,27 @@ globalThis.setTimeout(raz, 6000);
 /* Wiązanie znacznika Właściciela z komendami rdzenia: nasłuchy na jego
    przyciskach i polach. Nie stawia żadnego elementu. */
 zwiazWejscie(kanal);
+
+/* Belka okna zastępuje ramę systemową, więc sterowanie oknem idzie z niej. */
+zwiazBelkeOkna();
+
+/* Okno powłoki wstaje ukryte i pokazuje się dopiero wtedy, gdy ekran startowy
+   stoi zmontowany i narysowany — inaczej Operator patrzy przez kilka sekund
+   w puste pole, zanim biblioteka zdąży złożyć okno. Zapora czasu jest po to,
+   żeby usterka montażu nie zostawiła okna niewidocznym na zawsze. */
+const ZAPORA_POKAZANIA_MS = 4000;
+function ekranStartowyStoi(): boolean {
+  const pole = document.querySelector('[data-ekran-startowy]') as
+    (HTMLElement & { ekranStartowy?: unknown }) | null;
+  return pole?.ekranStartowy !== undefined;
+}
+function pokazPoZlozeniu(odKiedy: number): void {
+  if (ekranStartowyStoi() || Date.now() - odKiedy >= ZAPORA_POKAZANIA_MS) {
+    requestAnimationFrame(() => requestAnimationFrame(pokazOknoPowloki));
+    return;
+  }
+  globalThis.setTimeout(() => pokazPoZlozeniu(odKiedy), 50);
+}
+pokazPoZlozeniu(Date.now());
 
 transport.polacz();

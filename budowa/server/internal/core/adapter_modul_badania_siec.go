@@ -585,6 +585,22 @@ func wynikKanaluBadania(tytul, adres, opis, data string) shared.ResearchDiscover
 // albo XML do usunięcia z tekstu.
 var wzorzecZnacznikaBadania = regexp.MustCompile(`(?s)<[^>]*>`)
 
+// wzorceGalezBezTresciBadania zdejmują gałęzie dokumentu, których treść nie
+// należy do tekstu źródła. Każda gałąź ma własny wzorzec, bo składnia wyrażeń
+// Go nie zna odwołania wstecznego — jeden wzorzec z `\1` nie skompilowałby się,
+// a wołające go komendy przerywałyby wykonanie.
+var wzorceGalezBezTresciBadania = wzorceGalezBezTresci(
+	"script", "style", "nav", "header", "footer", "aside")
+
+// wzorceGalezBezTresci składa wzorzec pary znaczników dla każdej nazwy gałęzi.
+func wzorceGalezBezTresci(nazwy ...string) []*regexp.Regexp {
+	wzorce := make([]*regexp.Regexp, 0, len(nazwy))
+	for _, nazwa := range nazwy {
+		wzorce = append(wzorce, regexp.MustCompile(`(?is)<`+nazwa+`[^>]*>.*?</`+nazwa+`>`))
+	}
+	return wzorce
+}
+
 // wzorzecRokuBadania wyławia czterocyfrowy rok z dowolnej postaci tekstu
 // daty zwróconej przez dostawcę.
 var wzorzecRokuBadania = regexp.MustCompile(`(19|20)\d{2}`)
@@ -637,7 +653,9 @@ func tekstZDokumentuHtmlBadania(dokument string) (string, string) {
 		tytul = bezZnacznikowBadania(trafienie[1])
 	}
 	// Skrypty i style wychodzą przed zdejmowaniem znaczników, bo ich treść inaczej trafi do tekstu źródła.
-	bez := regexp.MustCompile(`(?is)<(script|style|nav|header|footer|aside)[^>]*>.*?</\1>`).
-		ReplaceAllString(dokument, " ")
+	bez := dokument
+	for _, wzorzec := range wzorceGalezBezTresciBadania {
+		bez = wzorzec.ReplaceAllString(bez, " ")
+	}
 	return tytul, bezZnacznikowBadania(bez)
 }

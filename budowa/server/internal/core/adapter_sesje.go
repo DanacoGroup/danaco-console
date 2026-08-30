@@ -57,7 +57,11 @@ func (a *adapterSesji) Utworz(ctx context.Context, z shared.SessionCreateRequest
 	if z.ProjectId != nil {
 		projekt = *z.ProjectId
 	}
-	sesja := a.nadzorca.ZalozSesje(tytul, projekt)
+	srodowisko := ""
+	if z.EnvironmentCode != nil {
+		srodowisko = *z.EnvironmentCode
+	}
+	sesja := a.nadzorca.ZalozSesjeSrodowiska(tytul, projekt, srodowisko)
 	// Sesja idzie do bazy od razu, nie dopiero z pierwszą wiadomością, bo zapis ma trwać.
 	a.utrwalZalozona(ctx, sesja)
 	return shared.SessionCreateResponse{Session: sesjaKontraktu(sesja)}, nil

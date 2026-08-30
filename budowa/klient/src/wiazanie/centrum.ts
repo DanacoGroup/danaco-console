@@ -787,7 +787,7 @@ async function wypelnijSrodowiska(kanal: Kanal, obszar: HTMLElement): Promise<vo
   }
 }
 
-/** Wpisuje w kartę nazwę, opis i liczbę modułów środowiska; stopka z liczbą sesji znika, bo kontrakt nie wiąże sesji ze środowiskiem. */
+/** Wpisuje w kartę nazwę, opis, liczbę modułów i miarę sesji czynnych środowiska. */
 function opiszSrodowisko(karta: HTMLElement, srodowisko: Environment): void {
   const tytul = karta.querySelector('.dn-karta-srodowiska-tytul');
   if (tytul !== null) tytul.textContent = srodowisko.name;
@@ -797,19 +797,33 @@ function opiszSrodowisko(karta: HTMLElement, srodowisko: Environment): void {
   }
   const miara = karta.querySelector('.dn-karta-srodowiska-motto .cd-metryka-czlon');
   if (miara !== null) miara.textContent = miaraModulow(srodowisko.moduleCodes?.length ?? 0);
-  oczyscStopke(karta);
+  opiszStopke(karta, srodowisko.sessionCount ?? 0);
 }
 
 /* Stopka karty niesie dwie rzeczy naraz: liczbę sesji środowiska i grot wejścia.
    Kontrakt nie wiąże sesji ze środowiskiem, więc liczba znika, a grot zostaje —
    zdjęcie całej stopki zabrałoby Operatorowi drogę do przedsionka. */
-function oczyscStopke(karta: HTMLElement): void {
+function opiszStopke(karta: HTMLElement, sesji: number): void {
   const stopka = karta.querySelector('.cd-karta-meta');
   if (stopka === null) return;
+  const miara = stopka.querySelector('.cd-metryka-czlon, span:not([data-wejdz])');
+  if (miara !== null) {
+    miara.textContent = miaraSesji(sesji);
+    return;
+  }
   for (const wezel of [...stopka.childNodes]) {
     if (wezel instanceof Element && wezel.closest('[data-wejdz]') !== null) continue;
     wezel.remove();
   }
+}
+
+/** Liczba sesji czynnych środowiska wraz z odmianą rzeczownika. */
+function miaraSesji(ile: number): string {
+  if (ile === 1) return '1 sesja';
+  const reszta = ile % 10;
+  const dziesiatki = ile % 100;
+  const wiele = reszta >= 2 && reszta <= 4 && (dziesiatki < 12 || dziesiatki > 14);
+  return String(ile) + (wiele ? ' sesje' : ' sesji');
 }
 
 /** Liczba modułów wraz z odmianą rzeczownika; polszczyzna rozróżnia trzy formy, a karta niesie tę miarę zdaniem, nie samą liczbą. */

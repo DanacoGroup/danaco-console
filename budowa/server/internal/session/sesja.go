@@ -16,6 +16,10 @@ type Sesja struct {
 	Tytul string
 	// IdProjektu wiąże sesję z projektem; pusty oznacza sesję bez projektu.
 	IdProjektu string
+	// KodSrodowiska nazywa środowisko, przez które Operator wszedł do pracy;
+	// pusty oznacza sesję założoną poza środowiskiem. Po nim karta środowiska
+	// w Centrum liczy swoje sesje.
+	KodSrodowiska string
 	// Stan sesji ze słownika kontraktu (shared.SessionStatus).
 	Stan shared.SessionStatus
 	// IdOkien wylicza okna sesji w kolejności otwarcia; jedna sesja ma wiele

@@ -62,6 +62,7 @@ export function zwiazCentrum(kanal: Kanal | undefined = globalThis.DanacoKanal):
     void odswiezWykaz(kanal, wezly.wykazSesji, wzorWiersza);
   };
   odswiez();
+  void wypelnijKomponenty(kanal);
   void wypelnijProjekty(kanal);
   void wypelnijSrodowiska(kanal, wezly.obszar);
   const katalogModulow = new Map<string, Module>();
@@ -502,6 +503,30 @@ function opiszGloweKarty(wezly: WezlyCentrum, nazwaModulu: string, nazwaSesji: s
 }
 
 /**
+ * Wypełnia wykaz komponentów własnych Centrum rejestrem rdzenia. Wzór pozycji
+ * zdejmuje się z treści przykładowej, zanim wykaz zostanie wyczyszczony.
+ */
+async function wypelnijKomponenty(kanal: Kanal): Promise<void> {
+  const wykaz = document.getElementById('cd-wlasne');
+  if (wykaz === null) return;
+  const wzor = wykaz.querySelector<HTMLElement>('.cd-wlasny');
+  const wzorPozycji = wzor === null ? null : (wzor.cloneNode(true) as HTMLElement);
+  const wynik = await wywolaj(kanal, Command.ComponentList, {});
+  if (!wynik.udany || wynik.wynik === undefined || wzorPozycji === null) return;
+  wykaz.replaceChildren();
+  for (const komponent of wynik.wynik.components) {
+    const pozycja = wzorPozycji.cloneNode(true) as HTMLElement;
+    const przycisk = pozycja.querySelector<HTMLElement>('[data-otworz-komponent]');
+    if (przycisk !== null) przycisk.dataset.otworzKomponent = komponent.id;
+    const nazwa = pozycja.querySelector('.dn-kafel-nazwa');
+    if (nazwa !== null) nazwa.textContent = komponent.name;
+    const opis = pozycja.querySelector('.dn-kafel-opis');
+    if (opis !== null) opis.textContent = komponent.description ?? '';
+    wykaz.appendChild(pozycja);
+  }
+}
+
+/**
  * Wypełnia drzewo projektów lewego panelu. Projekt wchodzi z kart sesji, bo
  * rejestr rdzenia nie ma komendy wykazu projektów — projekt bez ani jednej
  * sesji nie ma się dziś skąd wziąć i w panelu nie stanie.
@@ -672,7 +697,6 @@ function zdejmijTresciPrzykladowe(): void {
   if (karty !== null) {
     for (const karta of [...karty.querySelectorAll('.dn-karta-widoku')].slice(1)) karta.remove();
   }
-  document.getElementById('cd-wlasne')?.replaceChildren();
   // Odsyłacz do pliku prototypu prowadzi poza produkt i w wydaniu nie stoi.
   document.querySelector('.cd-modul-odnosnik')?.remove();
 }

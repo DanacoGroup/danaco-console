@@ -110,6 +110,24 @@ func (a *adapterPrzestrzeniRoboczej) Pulpit(ctx context.Context,
 	}, nil
 }
 
+// Projekty oddaje wykaz projektów konta. Lewy panel ramy jest jedynym miejscem,
+// w którym widać całość dorobku Operatora, więc wykaz obejmuje także projekty
+// bez ani jednej sesji.
+func (a *adapterPrzestrzeniRoboczej) Projekty(ctx context.Context,
+	z shared.ProjectListRequest) (shared.ProjectListResponse, error) {
+
+	zArchiwalnymi := z.IncludeArchived != nil && *z.IncludeArchived
+	projekty, err := a.repozytorium.Projekty(ctx, zArchiwalnymi)
+	if err != nil {
+		return shared.ProjectListResponse{}, err
+	}
+	wykaz := make([]shared.WorkspaceProject, 0, len(projekty))
+	for _, projekt := range projekty {
+		wykaz = append(wykaz, projektKontraktu(projekt))
+	}
+	return shared.ProjectListResponse{Projects: wykaz, Total: len(wykaz)}, nil
+}
+
 // Projekt oddaje projekt kontraktu — obsługiwacz potrzebuje go do rozgłoszenia
 // `workspace.project.changed` po komendach, których wynik projektu nie niesie.
 func (a *adapterPrzestrzeniRoboczej) Projekt(ctx context.Context,

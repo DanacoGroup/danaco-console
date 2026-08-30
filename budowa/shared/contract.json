@@ -8842,6 +8842,12 @@
           "typ": "json",
           "wymagane": false,
           "opis": "Dane dodatkowe"
+        },
+        {
+          "nazwa": "environmentCode",
+          "typ": "string",
+          "wymagane": false,
+          "opis": "Srodowisko, przez ktore Operator wszedl do pracy; puste dla sesji zalozonej poza srodowiskiem"
         }
       ]
     },
@@ -9268,6 +9274,12 @@
           "typ": "string[]",
           "wymagane": false,
           "opis": "Kody modulow widocznych w bocznej nawigacji, w kolejnosci wyswietlania; odpowiednik macierzy srodowisko_modul. Puste dla srodowiska z panelem orkiestracji"
+        },
+        {
+          "nazwa": "sessionCount",
+          "typ": "int",
+          "wymagane": false,
+          "opis": "Liczba sesji czynnych w srodowisku; miara karty srodowiska w Centrum dowodzenia"
         }
       ]
     },
@@ -36531,6 +36543,12 @@
           "typ": "json",
           "wymagane": false,
           "opis": "Dane dodatkowe"
+        },
+        {
+          "nazwa": "environmentCode",
+          "typ": "string",
+          "wymagane": false,
+          "opis": "Srodowisko, przez ktore Operator wszedl do pracy"
         }
       ],
       "wynik": [
@@ -36589,6 +36607,32 @@
           "typ": "SessionPresence[]",
           "wymagane": false,
           "opis": "Zywy stan sesji trwajacych; wypelniane przy includePresence"
+        }
+      ]
+    },
+    {
+      "typ": "project.list",
+      "opis": "Zwraca projekty konta. Lewy panel ramy pokazuje calosc dorobku Operatora, wiec projekt bez ani jednej sesji tez musi byc widoczny",
+      "zadanie": [
+        {
+          "nazwa": "includeArchived",
+          "typ": "bool",
+          "wymagane": false,
+          "opis": "Czy dolaczyc projekty zarchiwizowane; puste znaczy tylko czynne"
+        }
+      ],
+      "wynik": [
+        {
+          "nazwa": "projects",
+          "typ": "WorkspaceProject[]",
+          "wymagane": true,
+          "opis": "Projekty w kolejnosci swiezosci"
+        },
+        {
+          "nazwa": "total",
+          "typ": "int",
+          "wymagane": true,
+          "opis": "Liczba projektow"
         }
       ]
     },

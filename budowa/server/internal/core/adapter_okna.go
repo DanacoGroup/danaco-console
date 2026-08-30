@@ -2,6 +2,7 @@ package core
 
 import (
 	"context"
+	"strconv"
 
 	"danacoconsole/server/internal/dane"
 	"danacoconsole/server/internal/session"
@@ -120,6 +121,25 @@ func (a *adapterOkien) modulDomyslny(ctx context.Context) string {
 	return moduly[0].Kod
 }
 
+// kodModulu sprowadza wskazanie modułu do jego kodu. Klient wskazuje moduł
+// tym, co niesie `module.list` — a niesie i identyfikator, i kod; okno opisuje
+// się jednym z nich, więc wskazanie po drugim trzeba przełożyć.
+func (a *adapterOkien) kodModulu(ctx context.Context, wskazanie string) string {
+	if a.moduly == nil {
+		return wskazanie
+	}
+	moduly, err := a.moduly.Lista(ctx)
+	if err != nil {
+		return wskazanie
+	}
+	for _, modul := range moduly {
+		if modul.Kod == wskazanie || strconv.FormatInt(modul.ID, 10) == wskazanie {
+			return modul.Kod
+		}
+	}
+	return wskazanie
+}
+
 // Utworz zakłada okno komunikacji w sesji, zapisując je do bazy od razu, nie
 // dopiero z pierwszą wypowiedzią.
 func (a *adapterOkien) Utworz(ctx context.Context, z shared.WindowCreateRequest) (shared.WindowCreateResponse, error) {
@@ -129,6 +149,10 @@ func (a *adapterOkien) Utworz(ctx context.Context, z shared.WindowCreateRequest)
 	if z.ModuleId == "" {
 		z.ModuleId = a.modulDomyslny(ctx)
 	}
+	// Wskazanie modułu sprowadza się do kodu, bo kodem opisuje okno rejestr
+	// sesji i kolumna bazy. Bez tego okno założone wskazaniem po identyfikatorze
+	// wracałoby z `session.open` opisane inaczej, niż zostało założone.
+	z.ModuleId = a.kodModulu(ctx, z.ModuleId)
 	okno, err := a.nadzorca.OtworzOkno(z.SessionId, ustawieniaOkna(z))
 	if err != nil {
 		return shared.WindowCreateResponse{}, bladSesji(err)

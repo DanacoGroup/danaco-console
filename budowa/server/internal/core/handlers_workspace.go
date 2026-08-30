@@ -19,6 +19,8 @@ type PrzestrzenRobocza interface {
 	PrzypiszAgenta(ctx context.Context, z shared.WorkspaceAgentAssignRequest) (shared.WorkspaceAgentAssignResponse, error)
 	// Projekt oddaje projekt po zmianie, dla komend, których wynik projektu nie niesie.
 	Projekt(ctx context.Context, idProjektu string) (shared.WorkspaceProject, error)
+	// Projekty oddaje wykaz projektów konta dla lewego panelu ramy.
+	Projekty(ctx context.Context, z shared.ProjectListRequest) (shared.ProjectListResponse, error)
 }
 
 // zarejestrujPrzestrzenRobocza wpina sześć komend modułu Workspace w rejestrze rdzenia tej platformy konta.
@@ -26,6 +28,8 @@ func zarejestrujPrzestrzenRobocza(r *Rejestr, w PrzestrzenRobocza, e *emiter) {
 	if r == nil || w == nil {
 		return
 	}
+
+	r.Zarejestruj(shared.CommandProjectList, obsluz(w.Projekty))
 
 	r.Zarejestruj(shared.CommandWorkspaceDashboardGet,
 		obsluz(func(ctx context.Context, z shared.WorkspaceDashboardGetRequest) (shared.WorkspaceDashboardGetResponse, error) {

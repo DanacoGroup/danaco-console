@@ -28,7 +28,7 @@ export function zglosWiazanieModulu(kod: string, wiazanie: WiazanieModulu): void
  * wiązaniu szczegółowemu. Nazwa środowiska wchodzi w nagłówek okna.
  */
 export function zwiazOkno(kanal: Kanal, kodModulu: string, nazwaSrodowiska: string): void {
-  opiszNaglowek(nazwaSrodowiska);
+  void opiszNaglowek(kanal, nazwaSrodowiska);
   void otworzOkno(kanal, kodModulu).then((idOkna) => {
     if (idOkna === '') return;
     WIAZANIA.get(kodModulu)?.(kanal, idOkna);
@@ -61,16 +61,41 @@ async function otworzOkno(kanal: Kanal, kodModulu: string): Promise<string> {
   return okno.udany && okno.wynik !== undefined ? okno.wynik.window.id : '';
 }
 
-/** Wpisuje nazwę środowiska w nagłówek okna; pole bez wartości znika, bo podpis bez danych niczego nie mówi. */
-function opiszNaglowek(nazwaSrodowiska: string): void {
-  const pole = [...document.querySelectorAll('.sta-kom-naglowek .sta-kom-pole')].find(
-    (kandydat) => kandydat.textContent?.startsWith('Środowisko') === true,
-  );
+/**
+ * Opisuje nagłówek okna komunikacji środowiskiem wejścia i modelem kanału.
+ * Pozostałe podpisy prototypu — wysiłek, wykonawca, pamięć, rola, format,
+ * tura — schodzą: ich wartości niesie dopiero praca podjęta w oknie, a okno
+ * dopiero co stanęło, więc podpis pokazywałby wartość wymyśloną.
+ */
+async function opiszNaglowek(kanal: Kanal, nazwaSrodowiska: string): Promise<void> {
+  const naglowek = document.querySelector('.sta-kom-naglowek');
+  if (naglowek === null) return;
+  const wynik = await wywolaj(kanal, Command.ChannelList, { enabledOnly: true });
+  const kanalModelu = wynik.udany ? wynik.wynik?.channels[0] : undefined;
+  const wartosci: Record<string, string> = {
+    'Środowisko': nazwaSrodowiska,
+    Model: kanalModelu?.model ?? kanalModelu?.name ?? '',
+  };
+  for (const pole of [...naglowek.querySelectorAll('.sta-kom-pole')]) {
+    const podpis = Object.keys(wartosci).find(
+      (kandydat) => pole.textContent?.startsWith(kandydat) === true,
+    );
+    wpiszPole([pole], podpis ?? '', podpis === undefined ? '' : wartosci[podpis]);
+  }
+}
+
+/** Wpisuje wartość w pole nagłówka rozpoznane po jego podpisie; wartość pusta zdejmuje całe pole, bo pole bez wartości niczego nie mówi. */
+export function wpiszPole(pola: Element[], podpis: string, wartosc: string): void {
+  const pole = podpis === ''
+    ? pola[0]
+    : pola.find((kandydat) => kandydat.textContent?.startsWith(podpis) === true);
   if (pole === undefined) return;
-  if (nazwaSrodowiska === '') {
+  if (wartosc === '') {
     pole.remove();
     return;
   }
-  const dane = pole.querySelector('.dane');
-  if (dane !== null) dane.textContent = nazwaSrodowiska;
+  /* Wartość stoi w prototypie raz w `.dane`, raz w samym wyróżnieniu — pole
+     środowiska nie niesie klasy danych, a wpisać się musi tak samo. */
+  const dane = pole.querySelector('.dane') ?? pole.querySelector('b');
+  if (dane !== null) dane.textContent = wartosc;
 }

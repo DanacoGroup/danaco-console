@@ -129,6 +129,19 @@ export function zwiazCentrum(kanal: Kanal | undefined = globalThis.DanacoKanal):
     else zwiazOknoStojace(kanal, modul.code, nazwaSrodowiska, idOkna);
   };
 
+  /* „Zamknij kartę" z menu okna zdejmuje kartę bieżącą i wraca na Centrum —
+     tak samo jak znak zamknięcia na samej karcie. */
+  document.addEventListener('click', (zdarzenie) => {
+    const cel = zdarzenie.target;
+    if (!(cel instanceof Element)) return;
+    const pozycja = cel.closest('.sta-menu-poz');
+    if (pozycja === null || (pozycja.textContent ?? '').trim() !== 'Zamknij kartę') return;
+    if (kartaBiezaca === '') return;
+    zdarzenie.stopPropagation();
+    zdejmijKarte(kartaBiezaca);
+    wrocDoCentrum();
+  }, true);
+
   /** Wraca do karty głównej okna roboczego — Centrum dowodzenia. */
   const wrocDoCentrum = (): void => {
     pokazWidok(wezly, wezly.kartaGlowna);

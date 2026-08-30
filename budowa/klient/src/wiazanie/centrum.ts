@@ -120,6 +120,7 @@ export function zwiazCentrum(kanal: Kanal | undefined = globalThis.DanacoKanal):
       return;
     }
     opiszGloweKarty(wezly, modul.name, nazwaSrodowiska);
+    opiszPasekModulu(modul.name);
     pokazWidok(wezly, wezly.kartaModulu);
     kartaBiezaca = modul.code;
     zapiszKarte(modul.code, modul.name);
@@ -196,6 +197,7 @@ export function zwiazCentrum(kanal: Kanal | undefined = globalThis.DanacoKanal):
   const wrocDoCentrum = (): void => {
     pokazWidok(wezly, wezly.kartaGlowna);
     kartaBiezaca = '';
+    opiszPasekModulu('');
     zapiszKarte('', '');
     zaznaczKarte('');
     odswiezOknaRobocze();
@@ -483,6 +485,12 @@ function wstawTrescModulu(wezly: WezlyCentrum, gniazdo: string): boolean {
   }
   wezly.kartaModulu.appendChild(blok.cloneNode(true));
   return true;
+}
+
+/** Wpisuje nazwę modułu w pas stanu ramy; karta główna zostawia pole puste. */
+function opiszPasekModulu(nazwa: string): void {
+  const pole = document.querySelector('[data-pasek-modul-nazwa]');
+  if (pole !== null) pole.textContent = nazwa;
 }
 
 /** Opisuje głowę karty modułu nazwą modułu i nazwą karty sesji. */

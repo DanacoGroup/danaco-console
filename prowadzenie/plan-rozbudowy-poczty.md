@@ -75,13 +75,8 @@ dwa nie podaje żadne źródło.
 
 ---
 
-## Usterka rdzenia znaleziona przy rozpoznaniu
+## Usterka rdzenia znaleziona przy rozpoznaniu — naprawiona
 
-Niezależna od poczty i warta naprawy wcześniej. Droga przez silnik wybudzeń
-ustawia stan przebiegu na zatrzymany, ale **nie ustawia czasu zakończenia**;
-wiersz idzie do zapisu z wartością odczytaną z bazy, a zapytanie nadpisuje nią
-kolumnę. Przebieg zatrzymany terminem zostaje bez czasu zakończenia, więc czasu
-trwania nie da się na tej drodze policzyć — niezależnie od tego, czy list 7
-kiedykolwiek powstanie.
-
-Ustalenie pochodzi z odczytu kodu, nie z obserwacji na żywej bazie.
+Droga przez silnik wybudzeń ustawiała stan przebiegu na zatrzymany, nie ustawiając
+czasu zakończenia. `przerwij` w `handlers_automatyka_petla.go` stempluje go teraz
+tak samo jak droga przez kolejkę, więc czas trwania da się policzyć na obu.

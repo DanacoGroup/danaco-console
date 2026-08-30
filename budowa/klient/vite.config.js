@@ -123,24 +123,51 @@ function kopiaSkryptowBiblioteki() {
 const DATA_SKLADANIA = new Date().toISOString().slice(0, 10);
 
 
-// Wnętrze okna roboczego Studia bierze się z `design/05-okna/moduly/studio.html`.
-// `zasoby/powloka.js` skleja powłokę wokół szablonu `#dn-tresc-okna`.
-function trescOknaZPrototypu() {
+// Wnętrza okien biorą się z prototypów Właściciela w `design/05-okna/`.
+// `zasoby/powloka.js` skleja powłokę wokół szablonu `#dn-tresc-okna`; szablon
+// `#dn-tresc-studio` stoi obok i wchodzi na jego miejsce przy otwarciu modułu.
+const WNETRZA_OKIEN = [
+  {
+    gniazdo: 'dn-tresc-okna',
+    prototyp: '../../design/05-okna/przeplyw/centrum-dowodzenia.html',
+    otwarcie: '<div class="dn-obszar">',
+    zamkniecie: '<!-- /dn-obszar -->',
+  },
+  {
+    gniazdo: 'dn-tresc-studio',
+    prototyp: '../../design/05-okna/moduly/studio.html',
+    otwarcie: '<main class="st-okno-robocze"',
+    zamkniecie: '</main>',
+  },
+];
+
+/** Wycina z prototypu blok między znacznikami i oddaje go wraz z zamknięciem. */
+function blokPrototypu(tresc, otwarcie, zamkniecie) {
+  const poczatek = tresc.indexOf(otwarcie);
+  if (poczatek < 0) return null;
+  const koniec = tresc.indexOf(zamkniecie, poczatek);
+  if (koniec < 0) return null;
+  return tresc.slice(poczatek, koniec + zamkniecie.length);
+}
+
+/** Wstawia wnętrza okien z prototypów w puste szablony dokumentu klienta. */
+function wnetrzaOkienZPrototypow() {
   return {
-    name: 'tresc-okna-z-prototypu',
+    name: 'wnetrza-okien-z-prototypow',
     transformIndexHtml(html) {
-      const zrodlo = new URL('../../design/05-okna/moduly/studio.html', import.meta.url);
-      const prototyp = readFileSync(zrodlo, 'utf8');
-      const poczatek = prototyp.indexOf('<main class="st-okno-robocze"');
-      const koniec = prototyp.indexOf('</main>', poczatek);
-      if (poczatek < 0 || koniec < 0) {
-        throw new Error('prototyp Studia nie niesie bloku st-okno-robocze');
+      let wynik = html;
+      for (const okno of WNETRZA_OKIEN) {
+        const zrodlo = new URL(okno.prototyp, import.meta.url);
+        const blok = blokPrototypu(readFileSync(zrodlo, 'utf8'), okno.otwarcie, okno.zamkniecie);
+        if (blok === null) {
+          throw new Error(`prototyp ${okno.prototyp} nie niesie bloku ${okno.otwarcie}`);
+        }
+        wynik = wynik.replace(
+          `<template id="${okno.gniazdo}"></template>`,
+          `<template id="${okno.gniazdo}">${blok}</template>`,
+        );
       }
-      const blok = prototyp.slice(poczatek, koniec + '</main>'.length);
-      return html.replace(
-        '<template id="dn-tresc-okna"></template>',
-        `<template id="dn-tresc-okna">${blok}</template>`,
-      );
+      return wynik;
     },
   };
 }
@@ -157,7 +184,7 @@ export default {
      Ścieżka bezwzględna wiązałaby pakiet z jednym z tych dwóch miejsc. */
   base: './',
 
-  plugins: [kopiaSkryptowBiblioteki(), trescOknaZPrototypu()],
+  plugins: [kopiaSkryptowBiblioteki(), wnetrzaOkienZPrototypow()],
 
   build: {
     outDir: 'dist',

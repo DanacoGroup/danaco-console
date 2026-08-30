@@ -12,7 +12,7 @@ import { zadajPowitanie } from '../protokol/powitanie.ts';
 import { tozsamoscKlienta } from '../protokol/tozsamosc-klienta.ts';
 import { wywolaj } from '../protokol/wywolanie.ts';
 import { zwiazPowloke } from './powloka.ts';
-import { zwiazStudio } from './studio.ts';
+import { zwiazCentrum } from './centrum.ts';
 
 interface EkranStartowy {
   gotowe(): void;
@@ -220,8 +220,11 @@ async function zarejestruj(
   dokad: string,
   grupa: string | null,
 ): Promise<void> {
+  // Login zapamiętany przy rejestracji: droga przez kod aktywacji wchodzi do
+  // powłoki z pominięciem ekranu logowania, a pasek stanu nazywa Operatora.
+  ostatniLogin = wartosc('rej-login');
   const wynik = await wywolaj(most, Command.AuthRegister, {
-    login: wartosc('rej-login'),
+    login: ostatniLogin,
     email: wartosc('rej-email'),
     password: wartosc('rej-haslo'),
   });
@@ -293,7 +296,7 @@ async function wejdz(most: Kanal, sesja: AuthSession | undefined): Promise<void>
   ]);
   odslonPowloke();
   await zwiazPowloke({ login: ostatniLogin, nazwaOkna: 'Danaco Console' }, most);
-  zwiazStudio(most);
+  zwiazCentrum(most);
 }
 
 function odslonPowloke(): void {

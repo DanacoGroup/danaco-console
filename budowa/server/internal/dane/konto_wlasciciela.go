@@ -52,6 +52,10 @@ type RepozytoriumKontaWlasciciela interface {
 	// KontoPoTozsamosci odnajduje konto po loginie albo adresie, bez względu na
 	// wielkość liter. Brak wiersza znaczy tożsamość nieznaną, nie platformę pustą.
 	KontoPoTozsamosci(ctx context.Context, wskazanie string) (KontoWlasciciela, error)
+	// KontoPoId odnajduje konto wskazane identyfikatorem. Droga potwierdzenia
+	// niesie identyfikator konta, do którego prowadzi, i tylko po nim wolno
+	// sięgnąć po konto — inaczej list otwierałby konto najstarsze.
+	KontoPoId(ctx context.Context, kontoId int64) (KontoWlasciciela, error)
 	// ZalozKonto zapisuje konto i zwraca jego identyfikator; zajęty login albo adres daje ErrKolizjaWiersza.
 	ZalozKonto(ctx context.Context, konto KontoWlasciciela) (int64, error)
 	// PotwierdzKonto przenosi wskazane konto ze stanu niepotwierdzonego do potwierdzonego.
@@ -76,6 +80,9 @@ const (
 	// milisekundzie nie rozstrzyga.
 	kontoWlascicielaWiersz = `SELECT ` + kolumnyKontaWlasciciela +
 		` FROM konto_wlasciciela ORDER BY id LIMIT 1`
+
+	kontoWlascicielaPoId = `SELECT ` + kolumnyKontaWlasciciela +
+		` FROM konto_wlasciciela WHERE id = ?`
 
 	// Jedno zapytanie na login i na adres: okno logowania przyjmuje oba w tym
 	// samym polu i nie rozstrzyga, które podano.
@@ -155,6 +162,17 @@ func (r *repozytoriumKontaWlasciciela) KontoPoTozsamosci(ctx context.Context,
 		return KontoWlasciciela{}, err
 	}
 	return odczytajKontoWlasciciela(polecenie.QueryRowContext(ctx, wskazanie, wskazanie))
+}
+
+// KontoPoId odnajduje konto wskazane identyfikatorem drogi potwierdzenia.
+func (r *repozytoriumKontaWlasciciela) KontoPoId(ctx context.Context,
+	kontoId int64) (KontoWlasciciela, error) {
+
+	polecenie, err := r.zapytania.przygotuj(ctx, kontoWlascicielaPoId)
+	if err != nil {
+		return KontoWlasciciela{}, err
+	}
+	return odczytajKontoWlasciciela(polecenie.QueryRowContext(ctx, kontoId))
 }
 
 // ZalozKonto zapisuje konto i zwraca jego identyfikator. Kolizja znaczy zajęty

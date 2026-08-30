@@ -10,7 +10,16 @@ import { wywolaj } from '../protokol/wywolanie.ts';
 import { zwiazWyborModulu } from './wybor-modulu.ts';
 import { oglos } from './ogloszenie.ts';
 import { zwiazOkno, zwiazOknoStojace } from './okno-modulu.ts';
-import { przygotujPasmo, ustawKarty, zaznaczKarte, zdejmijKarte, zwiazPasmo } from './karty-okien.ts';
+import {
+  przygotujPasmo,
+  ustawKarty,
+  ustawOknaRobocze,
+  zaznaczKarte,
+  zdejmijKarte,
+  zwiazOknaRobocze,
+  zwiazPasmo,
+} from './karty-okien.ts';
+import { oknaRobocze, oknoBiezace, otworzOkno, przelaczOkno, zamknijOkno, zapiszKarte } from './okna-robocze.ts';
 import { otworzSesje, przejmijOgnisko, zalozSesje } from './sesja-biezaca.ts';
 import { zwiazStudio } from './studio.ts';
 
@@ -45,6 +54,9 @@ export function zwiazCentrum(kanal: Kanal | undefined = globalThis.DanacoKanal):
   zwiazane = true;
 
   const wzorWiersza = zdejmijWzorWiersza(wezly.wykazSesji);
+  /* Pasmo kart i wykaz okien roboczych biorą wzory z treści przykładowej,
+     więc przygotowanie pasma stoi przed jej zdjęciem. */
+  przygotujPasmo();
   zdejmijTresciPrzykladowe();
   const odswiez = (): void => {
     void odswiezWykaz(kanal, wezly.wykazSesji, wzorWiersza);
@@ -109,7 +121,9 @@ export function zwiazCentrum(kanal: Kanal | undefined = globalThis.DanacoKanal):
     opiszGloweKarty(wezly, modul.name, nazwaSrodowiska);
     pokazWidok(wezly, wezly.kartaModulu);
     kartaBiezaca = modul.code;
+    zapiszKarte(modul.code, modul.name);
     ustawKarty([{ id: modul.code, nazwa: modul.name, modul: modul.name }], modul.code);
+    odswiezOknaRobocze();
     if (modul.code === KOD_MODULU_WYDANIA) zwiazStudio(kanal, nazwaSrodowiska);
     else if (idOkna === '') zwiazOkno(kanal, modul.code, nazwaSrodowiska);
     else zwiazOknoStojace(kanal, modul.code, nazwaSrodowiska, idOkna);
@@ -119,11 +133,50 @@ export function zwiazCentrum(kanal: Kanal | undefined = globalThis.DanacoKanal):
   const wrocDoCentrum = (): void => {
     pokazWidok(wezly, wezly.kartaGlowna);
     kartaBiezaca = '';
+    zapiszKarte('', '');
     zaznaczKarte('');
+    odswiezOknaRobocze();
     odswiez();
   };
 
-  przygotujPasmo();
+  /** Odświeża wykaz okien roboczych w menu okna. */
+  function odswiezOknaRobocze(): void {
+    ustawOknaRobocze(
+      oknaRobocze().map((okno) => ({ id: okno.id, nazwa: okno.nazwa })),
+      oknoBiezace().id,
+    );
+  }
+
+  /** Stawia okno robocze na jego karcie bieżącej: Centrum albo moduł. */
+  const pokazOknoRobocze = (): void => {
+    const okno = oknoBiezace();
+    const modul = okno.kartaBiezaca === '' ? undefined : katalogModulow.get(okno.kartaBiezaca);
+    if (modul === undefined) {
+      pokazWidok(wezly, wezly.kartaGlowna);
+      kartaBiezaca = '';
+      ustawKarty([], '');
+      odswiez();
+    } else {
+      otworzModul(modul, '');
+    }
+    odswiezOknaRobocze();
+  };
+
+  odswiezOknaRobocze();
+  zwiazOknaRobocze(
+    (id) => {
+      if (przelaczOkno(id) === undefined) return;
+      pokazOknoRobocze();
+    },
+    () => {
+      otworzOkno();
+      pokazOknoRobocze();
+    },
+    () => {
+      zamknijOkno();
+      pokazOknoRobocze();
+    },
+  );
   zwiazPasmo(
     (kodKarty) => {
       const modul = katalogModulow.get(kodKarty);

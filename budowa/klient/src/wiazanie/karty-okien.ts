@@ -21,6 +21,8 @@ let lista: HTMLElement | null = null;
 let naglowekWykazu: HTMLElement | null = null;
 let wykaz: HTMLElement | null = null;
 let wzorPozycjiWykazu: HTMLElement | null = null;
+let wykazOkien: HTMLElement | null = null;
+let wzorPozycjiOkna: HTMLElement | null = null;
 
 /**
  * Zdejmuje z pasma karty przykładowe, zachowując kartę główną i wzór karty
@@ -45,7 +47,52 @@ export function przygotujPasmo(): boolean {
   for (const pozycja of pozycje) {
     if (pozycja.dataset.kartaPrzelacz !== 'centrum') pozycja.remove();
   }
+  /* Okna robocze stoją w menu powłok pasma, osobnym od menu otwartych kart:
+     pozycje przełączania powstają z wzoru zdjętego z pozycji przykładowej. */
+  wykazOkien = document.querySelector<HTMLElement>('#menu-powloki');
+  const przelaczniki = [...(wykazOkien?.querySelectorAll<HTMLElement>('[data-okno-akcja="przelacz"]') ?? [])];
+  wzorPozycjiOkna = przelaczniki[0]?.cloneNode(true) as HTMLElement | undefined ?? null;
+  for (const pozycja of przelaczniki) pozycja.remove();
   return true;
+}
+
+/** Wstawia w menu okna pozycje przełączania okien roboczych i zaznacza bieżące. */
+export function ustawOknaRobocze(
+  okna: { id: string; nazwa: string }[],
+  biezace: string,
+): void {
+  if (wykazOkien === null || wzorPozycjiOkna === null) return;
+  for (const pozycja of wykazOkien.querySelectorAll('[data-okno-akcja="przelacz"]')) pozycja.remove();
+  const kotwica = wykazOkien.querySelector('[data-okno-akcja="nowe"]');
+  for (const okno of okna) {
+    const pozycja = wzorPozycjiOkna.cloneNode(true) as HTMLElement;
+    pozycja.dataset.oknoRobocze = okno.id;
+    pozycja.setAttribute('aria-current', String(okno.id === biezace));
+    // Miara kart pozycji przykładowej opisuje okno, którego nie ma.
+    pozycja.querySelector('.dn-meta')?.remove();
+    pozycja.querySelector('.skrot')?.remove();
+    wpiszNazwe(pozycja, okno.nazwa);
+    kotwica?.parentElement?.insertBefore(pozycja, kotwica);
+  }
+}
+
+/** Wiąże sekcję okien roboczych: przełączenie, nowe okno i zamknięcie bieżącego. */
+export function zwiazOknaRobocze(
+  przelacz: (id: string) => void,
+  nowe: () => void,
+  zamknij: () => void,
+): void {
+  wykazOkien?.addEventListener('click', (zdarzenie) => {
+    const cel = zdarzenie.target;
+    if (!(cel instanceof Element)) return;
+    const pozycja = cel.closest<HTMLElement>('[data-okno-akcja]');
+    if (pozycja === null) return;
+    zdarzenie.stopPropagation();
+    const czynnosc = pozycja.dataset.oknoAkcja ?? '';
+    if (czynnosc === 'nowe') nowe();
+    else if (czynnosc === 'zamknij') zamknij();
+    else if (czynnosc === 'przelacz') przelacz(pozycja.dataset.oknoRobocze ?? '');
+  }, true);
 }
 
 /** Wstawia w pasmo karty wskazanych okien i zaznacza kartę bieżącą. */

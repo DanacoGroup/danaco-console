@@ -46,7 +46,7 @@ export function zwiazCentrum(kanal: Kanal | undefined = globalThis.DanacoKanal):
     const cel = zdarzenie.target;
     if (!(cel instanceof Element)) return;
     if (kodModulu(cel) !== KOD_MODULU_WYDANIA) return;
-    wejdzWModul(kanal, wezly.obszar);
+    wejdzWModul(kanal, wezly.obszar, nazwaSrodowiskaWejscia(cel));
   });
 
   return true;
@@ -113,14 +113,24 @@ async function zalozSesje(
   await odswiezWykaz(kanal, wykaz, wzor);
 }
 
+/** Nazwa środowiska, przez które Operator wszedł w moduł; pozycja szyny stoi w grupie środowiska, kafel Centrum nie należy do żadnej. */
+function nazwaSrodowiskaWejscia(cel: Element): string {
+  const grupa = cel.closest('.dn-szyna-poz--modul')?.closest('.dn-szyna-moduly');
+  if (grupa === null || grupa === undefined) return '';
+  const przelacznik = document.querySelector(
+    `.dn-szyna-poz--srodowisko[aria-controls="${grupa.id}"]`,
+  );
+  return przelacznik?.getAttribute('aria-label') ?? '';
+}
+
 /** Wprowadza w okno modułu: wnętrze Centrum ustępuje wnętrzu modułu z szablonu, po czym wiązanie modułu obejmuje stojący znacznik. */
-function wejdzWModul(kanal: Kanal, obszar: HTMLElement): void {
+function wejdzWModul(kanal: Kanal, obszar: HTMLElement, nazwaSrodowiska: string): void {
   const szablon = document.getElementById('dn-tresc-studio');
   if (!(szablon instanceof HTMLTemplateElement)) return;
   const wnetrze = szablon.content.firstElementChild;
   if (wnetrze === null) return;
   obszar.replaceWith(wnetrze.cloneNode(true));
-  zwiazStudio(kanal);
+  zwiazStudio(kanal, nazwaSrodowiska);
 }
 
 /** Zdejmuje treść przykładową bez pokrycia w rdzeniu: karty okien poza główną i komponenty własne. Pusty wykaz odsłania stan pusty ze znacznika. */

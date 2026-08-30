@@ -103,6 +103,15 @@ export function zwiazStudio(
     wypelnijWpis(stojacy, wiadomosc);
   }
 
+  /* Enter wysyła, Shift+Enter przechodzi do nowego wiersza. Pole jest obszarem
+     tekstowym, a ten sam z siebie formularza nie zamyka — bez tego jedyną drogą
+     wysłania byłby przycisk. */
+  wezly.pole.addEventListener('keydown', (zdarzenie) => {
+    if (zdarzenie.key !== 'Enter' || zdarzenie.shiftKey) return;
+    zdarzenie.preventDefault();
+    wezly.formularz.requestSubmit();
+  });
+
   wezly.formularz.addEventListener('submit', (zdarzenie) => {
     zdarzenie.preventDefault();
     const tresc = wezly.pole.value.trim();

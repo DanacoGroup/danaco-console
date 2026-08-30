@@ -20,3 +20,25 @@ export function adresGniazdaRdzenia(adresHttp: string): string | null {
     return null;
   }
 }
+
+/**
+ * Wskazanie rdzenia od powłoki desktopowej. Strona wczytana z pakietu powłoki
+ * ma pochodzenie `tauri://localhost`, z którego nie da się wywieść serwera
+ * wdrożenia — jedynym źródłem jest wtedy powłoka, która wskazanie prowadzi
+ * (wpisane przy składaniu instalki, zmienną środowiska albo w oknie).
+ * Pustka znaczy: strona stoi poza powłoką albo powłoka wskazania nie ma.
+ */
+export async function adresGniazdaOdPowloki(): Promise<string | null> {
+  const most = globalThis as {
+    __TAURI__?: { core?: { invoke?: (nazwa: string) => Promise<unknown> } };
+  };
+  const wywolaj = most.__TAURI__?.core?.invoke;
+  if (wywolaj === undefined) return null;
+  try {
+    const adres = await wywolaj('adres_rdzenia');
+    return typeof adres === 'string' ? adresGniazdaRdzenia(adres) : null;
+  } catch {
+    // Powłoka bez tej komendy nie jest błędem strony: zostaje droga zwykła.
+    return null;
+  }
+}

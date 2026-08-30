@@ -129,6 +129,16 @@ export function zwiazCentrum(kanal: Kanal | undefined = globalThis.DanacoKanal):
     else zwiazOknoStojace(kanal, modul.code, nazwaSrodowiska, idOkna);
   };
 
+  /* Odświeżenie Centrum czyta rejestr rdzenia na nowo: wykaz sesji i karty
+     środowisk. Znacznik niesie ten przycisk, nikt go nie wiązał. */
+  document.addEventListener('click', (zdarzenie) => {
+    const cel = zdarzenie.target;
+    if (!(cel instanceof Element) || cel.closest('[data-cd-odswiez]') === null) return;
+    zdarzenie.stopPropagation();
+    odswiez();
+    void wypelnijSrodowiska(kanal, wezly.obszar);
+  }, true);
+
   /* Prawa strona ramy — okno boczne — stoi w stanie domyślnym z samouczkiem.
      Znacznik niesie jej przełącznik i zwinięcie; nikt ich nie wiązał, więc
      strona nie otwierała się wcale. */

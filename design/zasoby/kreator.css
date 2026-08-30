@@ -350,3 +350,8 @@
 /* Wykaz wersji programu — kolumna kart wyboru. Czyste rozmieszczenie:
    wygląd karty niesie `.dn-wybor--pole` z biblioteki. */
 .dn-kreator-wybory { display: flex; flex-direction: column; gap: var(--dn-od-3); }
+
+/* Okno kreatora osadzone w oknie platformy: instalator niesie własną belkę,
+   więc okno systemowe stoi bez ramy, a płótno strony nie dokłada marginesu. */
+.dn-kreator-osadzenie { margin: 0; height: 100vh; overflow: hidden; background: var(--dn-okno-plotno); }
+.dn-kreator-osadzenie > [data-kreator] { display: grid; place-items: center; height: 100%; }

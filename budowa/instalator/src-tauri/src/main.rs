@@ -20,10 +20,16 @@ fn main() {
         ])
         .setup(|aplikacja| {
             let adres = zloz_adres_okna();
+            // Belkę tytułową niesie samo okno kreatora (`dn-kreator-belka`),
+            // więc okno platformy stoi bez ramy. Wymiar jest ten sam co
+            // `--dn-wym-okno-instalatora-*` w żetonach, a zarazem najmniejszy
+            // dopuszczalny: okno kreatora nie zmienia rozmiaru między krokami,
+            // więc poniżej tej miary nie ma go jak pokazać.
             WebviewWindowBuilder::new(aplikacja, "kreator", WebviewUrl::App(adres.into()))
                 .title("Danaco Console — Instalator")
-                .inner_size(1040.0, 720.0)
-                .min_inner_size(900.0, 620.0)
+                .inner_size(1020.0, 720.0)
+                .min_inner_size(1020.0, 720.0)
+                .decorations(false)
                 .center()
                 .visible(true)
                 .build()?;

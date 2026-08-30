@@ -35,8 +35,15 @@ pub fn otworz(aplikacja: &AppHandle) -> tauri::Result<WebviewWindow> {
         .inner_size(1600.0, 1000.0)
         .min_inner_size(1080.0, 840.0)
         .resizable(true)
+        // Belkę tytułową niesie samo okno aplikacji — wejściowe przed
+        // uwierzytelnieniem i powłoka Centrum po nim — więc rama systemowa
+        // stałaby nad nią drugi raz.
+        .decorations(false)
+        // Okno wstaje ukryte: silnik widoku rysuje pierwszą klatkę dopiero po
+        // wczytaniu strony, a widoczne od razu pokazywałoby do tego czasu białe
+        // pole. Strona pokazuje je sama, pierwszą klatką ekranu startowego.
+        .visible(false)
         .center()
-        .visible(true)
         .build()?;
 
     let kopia = okno.clone();

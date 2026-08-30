@@ -303,6 +303,10 @@ function zaloz(host) {
   };
   host.ekranStartowy=api;
   window.addEventListener('resize',resize);
+  /* Pole bywa zakładane, zanim arkusze nadadzą mu wymiar — wtedy pierwszy pomiar
+     daje zero, kanwa zostaje jednopikselowa i animacja jest niewidoczna.
+     Obserwator wymiaru przelicza ją, gdy pole wymiar wreszcie dostanie. */
+  if (typeof ResizeObserver === 'function') { new ResizeObserver(resize).observe(st); }
   resize();
   requestAnimationFrame(frame);
   return api;

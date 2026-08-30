@@ -28,6 +28,16 @@ func (b *Baza) Migruj() error {
 	if err != nil {
 		return err
 	}
+	// PRAGMA user_version równa zeru oznacza bazę sprzed uzgodnienia sum znormalizowanych.
+	var znacznikUzgodnienia int
+	if err := b.DB.QueryRow("PRAGMA user_version").Scan(&znacznikUzgodnienia); err != nil {
+		return fmt.Errorf("store: nie można odczytać znacznika uzgodnienia sum: %w", err)
+	}
+	if znacznikUzgodnienia == 0 {
+		if err := b.uzgodnijSumyKontrolne(kroki, zastosowane); err != nil {
+			return err
+		}
+	}
 	for _, krok := range kroki {
 		suma, jest := zastosowane[krok.Wersja]
 		if jest {
@@ -40,6 +50,34 @@ func (b *Baza) Migruj() error {
 		if err := b.zastosujMigracje(krok); err != nil {
 			return err
 		}
+	}
+	return nil
+}
+
+// Metoda uzgodnijSumyKontrolne jednorazowo przepisuje sumy kroków już zastosowanych na wartości liczone z treści znormalizowanej i stawia PRAGMA user_version na 1, dzięki czemu bazy migrowane przed normalizacją wstają bez ręcznej naprawy.
+func (b *Baza) uzgodnijSumyKontrolne(kroki []migracja, zastosowane map[int]string) error {
+	transakcja, err := b.DB.Begin()
+	if err != nil {
+		return fmt.Errorf("store: nie można otworzyć transakcji uzgodnienia sum: %w", err)
+	}
+	defer transakcja.Rollback()
+
+	for _, krok := range kroki {
+		stara, jest := zastosowane[krok.Wersja]
+		if !jest || stara == krok.SumaKontrolna {
+			continue
+		}
+		if _, err := transakcja.Exec("UPDATE migracja SET suma_kontrolna = ? WHERE wersja = ?",
+			krok.SumaKontrolna, krok.Wersja); err != nil {
+			return fmt.Errorf("store: nie można uzgodnić sumy migracji %03d: %w", krok.Wersja, err)
+		}
+		zastosowane[krok.Wersja] = krok.SumaKontrolna
+	}
+	if _, err := transakcja.Exec("PRAGMA user_version = 1"); err != nil {
+		return fmt.Errorf("store: nie można postawić znacznika uzgodnienia sum: %w", err)
+	}
+	if err := transakcja.Commit(); err != nil {
+		return fmt.Errorf("store: nie można zatwierdzić uzgodnienia sum: %w", err)
 	}
 	return nil
 }

@@ -57,7 +57,7 @@ func wczytajMigracje() ([]migracja, error) {
 }
 
 // zbudujKrok wyprowadza wersję i nazwę z nazwy pliku `migracja_NNN_nazwa.sql`
-// oraz liczy sumę kontrolną treści.
+// oraz liczy sumę kontrolną znormalizowanej treści kroku.
 func zbudujKrok(nazwaPliku string) (migracja, error) {
 	rdzen := strings.TrimSuffix(strings.TrimPrefix(nazwaPliku, przedrostekMigracji), rozszerzenieMigracji)
 	czesci := strings.SplitN(rdzen, "_", 2)
@@ -72,13 +72,60 @@ func zbudujKrok(nazwaPliku string) (migracja, error) {
 	if err != nil {
 		return migracja{}, fmt.Errorf("store: nie można odczytać %q: %w", nazwaPliku, err)
 	}
-	suma := sha256.Sum256(tresc)
+	suma := sha256.Sum256(normalizujTrescMigracji(tresc))
 	return migracja{
 		Wersja:        wersja,
 		Nazwa:         czesci[1],
 		Tresc:         string(tresc),
 		SumaKontrolna: hex.EncodeToString(suma[:]),
 	}, nil
+}
+
+// normalizujTrescMigracji sprowadza treść kroku do postaci mierzonej sumą kontrolną: poza literałami znakowymi usuwa komentarze `--`, końcowe białe znaki wiersza i wiersze puste, przez co redakcja komentarzy nie unieważnia kroków już zastosowanych.
+func normalizujTrescMigracji(tresc []byte) []byte {
+	var oczyszczona strings.Builder
+	wLiterale := false
+	for i := 0; i < len(tresc); i++ {
+		znak := tresc[i]
+		if wLiterale {
+			if znak == '\'' {
+				if i+1 < len(tresc) && tresc[i+1] == '\'' {
+					oczyszczona.WriteByte(znak)
+					oczyszczona.WriteByte(tresc[i+1])
+					i++
+					continue
+				}
+				wLiterale = false
+			}
+			oczyszczona.WriteByte(znak)
+			continue
+		}
+		if znak == '\'' {
+			wLiterale = true
+			oczyszczona.WriteByte(znak)
+			continue
+		}
+		if znak == '-' && i+1 < len(tresc) && tresc[i+1] == '-' {
+			for i < len(tresc) && tresc[i] != '\n' {
+				i++
+			}
+			if i < len(tresc) {
+				oczyszczona.WriteByte('\n')
+			}
+			continue
+		}
+		oczyszczona.WriteByte(znak)
+	}
+	wiersze := strings.Split(oczyszczona.String(), "\n")
+	zebrane := make([]string, 0, len(wiersze))
+	for _, wiersz := range wiersze {
+		wiersz = strings.TrimRight(wiersz, " \t\r")
+		if wiersz == "" {
+			continue
+		}
+		zebrane = append(zebrane, wiersz)
+	}
+	return []byte(strings.Join(zebrane, "\n"))
 }
 
 // sprawdzUnikalnoscWersji nie dopuszcza dwóch kroków o tym samym numerze —

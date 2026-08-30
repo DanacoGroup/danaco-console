@@ -43,6 +43,8 @@ export function zwiazCentrum(kanal: Kanal | undefined = globalThis.DanacoKanal):
   void wypelnijSrodowiska(kanal, wezly.obszar);
   const katalogModulow = new Map<string, Module>();
   void wczytajModuly(kanal, katalogModulow);
+  const katalogSrodowisk = new Map<string, Environment>();
+  void wczytajSrodowiska(kanal, katalogSrodowisk);
 
   wezly.obszar.addEventListener('click', (zdarzenie) => {
     const cel = zdarzenie.target;
@@ -78,6 +80,42 @@ export function zwiazCentrum(kanal: Kanal | undefined = globalThis.DanacoKanal):
       return;
     }
 
+    /* Wykaz sesji stoi w panelu bocznym Centrum; osobnego okna rejestru sesji
+       to wydanie nie niesie, więc czynność nazywa to wprost. */
+    if (cel.closest('[data-otwarz-historie]') !== null) {
+      /* Zatrzymanie zdarzenia zdejmuje komunikat biblioteki, który zapowiada
+         otwarcie rejestru sesji. Dwa zdania naraz, z których jedno jest
+         nieprawdziwe, są gorsze niż milczenie. */
+      zdarzenie.stopPropagation();
+      oglos('Historia sesji', 'Sesje konta stoją w panelu bocznym Centrum. '
+        + 'Osobne okno rejestru sesji nie wchodzi do tego wydania.');
+      return;
+    }
+
+    const kodNowejSesji = cel.closest<HTMLElement>('[data-nowa-sesja-srodowisko]')?.dataset
+      .nowaSesjaSrodowisko;
+    if (kodNowejSesji !== undefined) {
+      void zalozSesje(kanal, wezly.wykazSesji, wzorWiersza);
+      const wstawione = wstawWnetrze(wnetrze, 'dn-tresc-przedsionek');
+      if (wstawione === null) return;
+      wnetrze = wstawione;
+      nazwaSrodowiska = katalogSrodowisk.get(kodNowejSesji)?.name ?? '';
+      void zwiazWyborModulu(kanal, kodNowejSesji);
+      return;
+    }
+
+    /* Środowisko bez modułów w rejestrze nie ma czego rozwinąć. Bez tego zdania
+       pozycja szyny odsyłałaby do listy, która nigdy nie stanie. */
+    const przelacznik = cel.closest<HTMLElement>('.dn-szyna-poz--srodowisko');
+    if (przelacznik !== null) {
+      const srodowisko = katalogSrodowisk.get(przelacznik.dataset.srodowisko ?? '');
+      if (srodowisko !== undefined && (srodowisko.moduleCodes?.length ?? 0) === 0) {
+        zdarzenie.stopPropagation();
+        oglos(srodowisko.name, 'Rejestr rdzenia nie wskazuje dla tego środowiska '
+          + 'ani jednego modułu, więc lista nie ma czego rozwinąć.');
+      }
+    }
+
     const kodSrodowiska = kodSrodowiskaWejscia(cel);
     if (kodSrodowiska !== '') {
       const wstawione = wstawWnetrze(wnetrze, 'dn-tresc-przedsionek');
@@ -91,6 +129,9 @@ export function zwiazCentrum(kanal: Kanal | undefined = globalThis.DanacoKanal):
     const kod = kodModulu(cel);
     if (kod === '') return;
     if (kod !== KOD_MODULU_WYDANIA) {
+      /* Moduł bez okna nie staje się modułem bieżącym: oznaczenie w szynie
+         mówiłoby, że Operator w nim pracuje. */
+      zdarzenie.stopPropagation();
       zapowiedzModul(katalogModulow.get(kod));
       return;
     }
@@ -111,6 +152,13 @@ function kodModulu(cel: Element): string {
     cel.closest('.cd-kafel, .dn-kafel--modul')?.getAttribute('data-komponent') ??
     '';
   return wskazanie.toLowerCase();
+}
+
+/** Wczytuje rejestr środowisk do spisu po kodzie; nazwa i wykaz modułów rozstrzygają, co pozycja szyny może otworzyć. */
+async function wczytajSrodowiska(kanal: Kanal, spis: Map<string, Environment>): Promise<void> {
+  const wynik = await wywolaj(kanal, Command.EnvironmentList, { includeModules: true });
+  if (!wynik.udany || wynik.wynik === undefined) return;
+  for (const srodowisko of wynik.wynik.environments) spis.set(srodowisko.code, srodowisko);
 }
 
 /** Wczytuje rejestr modułów do spisu po kodzie; opisy modułów są jedynym źródłem zapowiedzi okna, którego wydanie jeszcze nie niesie. */
@@ -230,6 +278,8 @@ function zdejmijTresciPrzykladowe(): void {
     for (const karta of [...karty.querySelectorAll('.dn-karta-widoku')].slice(1)) karta.remove();
   }
   document.getElementById('cd-wlasne')?.replaceChildren();
+  // Odsyłacz do pliku prototypu prowadzi poza produkt i w wydaniu nie stoi.
+  document.querySelector('.cd-modul-odnosnik')?.remove();
 }
 
 /** Wypełnia karty środowisk rejestrem rdzenia; karta bez pokrycia znika, bo znacznik niesie ich cztery, a rejestr rozstrzyga, ile ich jest. */

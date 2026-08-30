@@ -132,6 +132,34 @@ export function zwiazCentrum(kanal: Kanal | undefined = globalThis.DanacoKanal):
     else zwiazOknoStojace(kanal, modul.code, nazwaSrodowiska, idOkna);
   };
 
+  /* Porządek drzewa projektów; widok „reakcja" nie ma pola w kontrakcie. */
+  document.addEventListener('click', (zdarzenie) => {
+    const cel = zdarzenie.target;
+    if (!(cel instanceof Element)) return;
+    const widok = cel.closest<HTMLElement>('[data-projekty-widok]')?.dataset.projektyWidok;
+    const porzadek = cel.closest<HTMLElement>('[data-projekty-sort]')?.dataset.projektySort;
+    if (widok === undefined && porzadek === undefined) return;
+    zdarzenie.stopPropagation();
+    if (widok === 'reakcja') {
+      oglos('Drzewo projektów', 'Kontrakt nie niesie dla projektu oczekiwania na reakcję — '
+        + 'tego wskazania nie da się dziś spełnić.');
+      return;
+    }
+    if (porzadek !== undefined) porzadekProjektow = porzadek;
+    void wypelnijProjekty(kanal);
+  }, true);
+
+  /* Przypięcie panelu bocznego trzyma go rozwiniętym przy zmianie karty. */
+  document.addEventListener('click', (zdarzenie) => {
+    const cel = zdarzenie.target;
+    if (!(cel instanceof Element)) return;
+    const przycisk = cel.closest<HTMLElement>('[data-panel-przypnij]');
+    if (przycisk === null) return;
+    zdarzenie.stopPropagation();
+    const przypiety = przycisk.getAttribute('aria-pressed') === 'true';
+    przycisk.setAttribute('aria-pressed', String(!przypiety));
+  }, true);
+
   /* Widok i porządek wykazu sesji: panel boczny jest zarządem sesji, więc oba
      wskazania działają na wykazie odpowiedzi rdzenia. Porządek po środowisku
      i widok reakcji nie mają pola w kontrakcie i mówią o tym wprost. */
@@ -561,7 +589,13 @@ async function wypelnijProjekty(kanal: Kanal): Promise<void> {
     projekty.set(sesja.projectId, zebrane);
   }
   drzewo.replaceChildren();
-  for (const [projekt, sesje] of projekty) {
+  const uporzadkowane = [...projekty.entries()].sort((a, b) => (
+    porzadekProjektow === 'nazwa'
+      ? a[0].localeCompare(b[0], 'pl')
+      : Math.max(...b[1].map((sesja) => sesja.updatedAt))
+        - Math.max(...a[1].map((sesja) => sesja.updatedAt))
+  ));
+  for (const [projekt, sesje] of uporzadkowane) {
     const wpis = wzorGalezi.cloneNode(true) as HTMLElement;
     wpis.dataset.projekt = projekt;
     const nazwa = wpis.querySelector('.dn-panel-galaz-nazwa');
@@ -605,6 +639,8 @@ async function odswiezWykaz(
 let widokWykazu = 'wszystkie';
 /** Porządek wykazu sesji wskazany w panelu bocznym. */
 let porzadekWykazu = 'czynnosc';
+/** Porządek drzewa projektów wskazany w panelu bocznym. */
+let porzadekProjektow = 'czynnosc';
 
 /** Zawęża wykaz sesji do stanu wskazanego widokiem panelu. */
 function przesiej(sesje: Session[]): Session[] {

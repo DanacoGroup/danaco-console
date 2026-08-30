@@ -161,7 +161,16 @@ func zarejestrujDesign(r *Rejestr, m Design, e *emiter) {
 	}
 
 	r.Zarejestruj(shared.CommandDesignAssetList, obsluz(m.Zasoby))
-	r.Zarejestruj(shared.CommandDesignBoardUpdate, obsluz(m.ZapiszKompozycje))
+	// Zapis układu kompozycji rozgłasza zmianę tak samo jak zastosowanie
+	// szablonu: bez tego okno, które kompozycji nie zapisywało, nie wie o niej.
+	r.Zarejestruj(shared.CommandDesignBoardUpdate,
+		obsluz(func(ctx context.Context, z shared.DesignBoardUpdateRequest) (shared.DesignBoardUpdateResponse, error) {
+			odpowiedz, err := m.ZapiszKompozycje(ctx, z)
+			if err == nil {
+				e.kompozycjaDesignu(ctx, shared.ChangeKindUpdated, odpowiedz.Board)
+			}
+			return odpowiedz, err
+		}))
 	// Odczyt kompozycji okna, bez opakowania rozgłaszającego — niczego nie zmienia, jak wykaz zasobów.
 	r.Zarejestruj(shared.CommandDesignBoardList, obsluz(m.Kompozycje))
 

@@ -67,6 +67,7 @@ export function ustawOknaRobocze(
   for (const okno of okna) {
     const pozycja = wzorPozycjiOkna.cloneNode(true) as HTMLElement;
     pozycja.dataset.oknoRobocze = okno.id;
+    pozycja.dataset.oknoNazwa = okno.nazwa;
     pozycja.setAttribute('aria-current', String(okno.id === biezace));
     // Miara kart pozycji przykładowej opisuje okno, którego nie ma.
     pozycja.querySelector('.dn-meta')?.remove();

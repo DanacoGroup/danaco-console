@@ -130,6 +130,26 @@ export function zwiazCentrum(kanal: Kanal | undefined = globalThis.DanacoKanal):
     else zwiazOknoStojace(kanal, modul.code, nazwaSrodowiska, idOkna);
   };
 
+  /* Widok i porządek wykazu sesji: panel boczny jest zarządem sesji, więc oba
+     wskazania działają na wykazie odpowiedzi rdzenia. Porządek po środowisku
+     i widok reakcji nie mają pola w kontrakcie i mówią o tym wprost. */
+  document.addEventListener('click', (zdarzenie) => {
+    const cel = zdarzenie.target;
+    if (!(cel instanceof Element)) return;
+    const widok = cel.closest<HTMLElement>('[data-sesje-widok]')?.dataset.sesjeWidok;
+    const porzadek = cel.closest<HTMLElement>('[data-sesje-sort]')?.dataset.sesjeSort;
+    if (widok === undefined && porzadek === undefined) return;
+    zdarzenie.stopPropagation();
+    if (widok === 'reakcja' || porzadek === 'srodowisko') {
+      oglos('Wykaz sesji', 'Kontrakt nie niesie dla sesji ani oczekiwania na reakcję, '
+        + 'ani przypisania do środowiska — tego wskazania nie da się dziś spełnić.');
+      return;
+    }
+    if (widok !== undefined) widokWykazu = widok;
+    if (porzadek !== undefined) porzadekWykazu = porzadek;
+    odswiez();
+  }, true);
+
   /* Odświeżenie Centrum czyta rejestr rdzenia na nowo: wykaz sesji i karty
      środowisk. Znacznik niesie ten przycisk, nikt go nie wiązał. */
   document.addEventListener('click', (zdarzenie) => {
@@ -528,9 +548,35 @@ async function odswiezWykaz(
   const wynik = await wywolaj(kanal, Command.SessionList, {});
   if (!wynik.udany || wynik.wynik === undefined) return;
   wykaz.replaceChildren();
-  for (const sesja of wynik.wynik.sessions) {
+  for (const sesja of uporzadkuj(przesiej(wynik.wynik.sessions))) {
     wykaz.appendChild(zbudujWiersz(wzor, sesja));
   }
+}
+
+/** Widok wykazu sesji wskazany w panelu bocznym; „wszystkie" nie zawęża niczego. */
+let widokWykazu = 'wszystkie';
+/** Porządek wykazu sesji wskazany w panelu bocznym. */
+let porzadekWykazu = 'czynnosc';
+
+/** Zawęża wykaz sesji do stanu wskazanego widokiem panelu. */
+function przesiej(sesje: Session[]): Session[] {
+  if (widokWykazu === 'czynne') return sesje.filter((sesja) => sesja.status === 'active');
+  if (widokWykazu === 'zakonczone') return sesje.filter((sesja) => sesja.status !== 'active');
+  return sesje;
+}
+
+/** Porządkuje wykaz sesji wskazaniem panelu; porządek nieznany zostawia kolejność rdzenia. */
+function uporzadkuj(sesje: Session[]): Session[] {
+  const wykaz = [...sesje];
+  if (porzadekWykazu === 'nazwa') {
+    return wykaz.sort((a, b) => (a.title ?? '').localeCompare(b.title ?? '', 'pl'));
+  }
+  if (porzadekWykazu === 'nazwa-odwrotnie') {
+    return wykaz.sort((a, b) => (b.title ?? '').localeCompare(a.title ?? '', 'pl'));
+  }
+  if (porzadekWykazu === 'najstarsze') return wykaz.sort((a, b) => a.createdAt - b.createdAt);
+  if (porzadekWykazu === 'czynnosc') return wykaz.sort((a, b) => b.updatedAt - a.updatedAt);
+  return wykaz;
 }
 
 /**

@@ -301,6 +301,17 @@ export function zwiazCentrum(kanal: Kanal | undefined = globalThis.DanacoKanal):
       return;
     }
 
+    /* Znak „+" pasma otwiera kartę modułu wskazanego pozycją menu; nazwa
+       pozycji jest nazwą modułu z rejestru rdzenia. */
+    const nowaKarta = cel.closest<HTMLElement>('[data-nowa-karta-modul]')?.dataset.nowaKartaModul;
+    if (nowaKarta !== undefined) {
+      const wskazany = [...katalogModulow.values()].find((modul) => modul.name === nowaKarta);
+      if (wskazany === undefined) return;
+      zdarzenie.stopPropagation();
+      otworzModul(wskazany, '');
+      return;
+    }
+
     const kod = kodModulu(cel);
     if (kod === '') return;
     const modul = katalogModulow.get(kod);

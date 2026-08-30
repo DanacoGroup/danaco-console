@@ -224,25 +224,37 @@ func bezOdstepow(kod string) string {
 	}, kod)
 }
 
-func (a *adapterUwierzytelnienia) zuzyjDroge(ctx context.Context, cel, droga string) error {
+// drogaKonta rozpoznaje drogę kodem i sprawdza jej cel, nie zamykając jej.
+// Rozpoznanie stoi osobno od zamknięcia, bo wywołujący musi znać konto, zanim
+// zdecyduje, czy drogę zużyć — kod odrzuconego żądania ma zostać ważny.
+func (a *adapterUwierzytelnienia) drogaKonta(ctx context.Context,
+	cel, droga string) (dane.PotwierdzenieTozsamosci, error) {
+
 	droga = bezOdstepow(droga)
 	if droga == "" {
-		return bladBramki(shared.ErrorCodeValidationFailed, "Podaj kod potwierdzający.")
+		return dane.PotwierdzenieTozsamosci{},
+			bladBramki(shared.ErrorCodeValidationFailed, "Podaj kod potwierdzający.")
 	}
-	skrot := skrotTokenu(droga)
-	zapis, err := a.konto.PotwierdzeniePoSkrocie(ctx, skrot)
+	zapis, err := a.konto.PotwierdzeniePoSkrocie(ctx, skrotTokenu(droga))
 	if errors.Is(err, dane.ErrBrakWiersza) {
-		return bladBramki(shared.ErrorCodeNotAuthenticated,
+		return dane.PotwierdzenieTozsamosci{}, bladBramki(shared.ErrorCodeNotAuthenticated,
 			"Ten kod potwierdzający nie jest znany.")
 	}
 	if err != nil {
-		return err
+		return dane.PotwierdzenieTozsamosci{}, err
 	}
 	if zapis.Cel != cel {
-		return bladBramki(shared.ErrorCodeNotAuthenticated,
+		return dane.PotwierdzenieTozsamosci{}, bladBramki(shared.ErrorCodeNotAuthenticated,
 			"Ten kod potwierdzający dotyczy innej czynności.")
 	}
-	zamknieta, err := a.konto.ZuzyjPotwierdzenie(ctx, skrot, time.Now().UnixMilli())
+	return zapis, nil
+}
+
+// zamknijDroge zużywa drogę rozpoznaną wcześniej przez `drogaKonta`.
+func (a *adapterUwierzytelnienia) zamknijDroge(ctx context.Context,
+	zapis dane.PotwierdzenieTozsamosci) error {
+
+	zamknieta, err := a.konto.ZuzyjPotwierdzenie(ctx, zapis.Skrot, time.Now().UnixMilli())
 	if err != nil {
 		return err
 	}
@@ -251,6 +263,14 @@ func (a *adapterUwierzytelnienia) zuzyjDroge(ctx context.Context, cel, droga str
 			"Ten kod potwierdzający został już użyty lub wygasł. Poproś o nowy.")
 	}
 	return nil
+}
+
+func (a *adapterUwierzytelnienia) zuzyjDroge(ctx context.Context, cel, droga string) error {
+	zapis, err := a.drogaKonta(ctx, cel, droga)
+	if err != nil {
+		return err
+	}
+	return a.zamknijDroge(ctx, zapis)
 }
 
 // ── auth.verify ──────────────────────────────────────────────────────────────
@@ -269,7 +289,13 @@ func (a *adapterUwierzytelnienia) PotwierdzAdres(ctx context.Context,
 	a.zamekZmiany.Lock()
 	defer a.zamekZmiany.Unlock()
 
-	konto, err := a.konto.Konto(ctx)
+	/* Konto rozstrzyga droga, nie kolejność założenia: przy dwóch rejestracjach
+	   naraz kod z listu prowadzi do konta, na które ten list poszedł. */
+	zapis, err := a.drogaKonta(ctx, dane.CelWeryfikacja, z.Token)
+	if err != nil {
+		return shared.AuthVerifyResponse{}, err
+	}
+	konto, err := a.konto.KontoPoId(ctx, zapis.KontoId)
 	if errors.Is(err, dane.ErrBrakWiersza) {
 		return shared.AuthVerifyResponse{}, bladBramki(shared.ErrorCodeConflict,
 			"Konto Operatora nie zostało jeszcze założone. Zarejestruj się.")
@@ -281,7 +307,7 @@ func (a *adapterUwierzytelnienia) PotwierdzAdres(ctx context.Context,
 		return shared.AuthVerifyResponse{}, bladBramki(shared.ErrorCodeConflict,
 			"Adres jest już potwierdzony. Zaloguj się.")
 	}
-	if err := a.zuzyjDroge(ctx, dane.CelWeryfikacja, z.Token); err != nil {
+	if err := a.zamknijDroge(ctx, zapis); err != nil {
 		return shared.AuthVerifyResponse{}, err
 	}
 	if err := a.konto.PotwierdzKonto(ctx, konto.Id); err != nil {

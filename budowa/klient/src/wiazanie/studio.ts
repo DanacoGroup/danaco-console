@@ -18,6 +18,12 @@ import {
 } from '../../../shared/contract.ts';
 import type { Kanal } from '../protokol/kanal.ts';
 import { wywolaj } from '../protokol/wywolanie.ts';
+import { zwiazNarzedzia } from './studio-narzedzia.ts';
+import { zwiazPlan } from './studio-plan.ts';
+import { zwiazPliki } from './studio-pliki.ts';
+import { zwiazPodglad } from './studio-podglad.ts';
+import { zwiazRepozytorium } from './studio-repozytorium.ts';
+import { zwiazRoznice } from './studio-roznice.ts';
 
 /** Kod modułu Studia w rejestrze rdzenia; `module.list` oddaje po nim identyfikator, którego wymaga `window.create`. */
 const KOD_MODULU_STUDIO = 'studio';
@@ -139,6 +145,7 @@ export function zwiazStudio(
   void otworzStanowisko(kanal, wezly, wzorPozycji, wstawWpis).then((okno) => {
     idOkna = okno;
     if (okno === '') return;
+    zwiazPanele(kanal, okno);
     void zalozDokument(kanal, okno, wezly).then((zalozony) => {
       dokument = zalozony;
       opiszDokument(zalozony);
@@ -183,9 +190,8 @@ function wpiszPole(pola: Element[], podpis: string, wartosc: string): void {
 /** Nadaje oknu i pasowi tytuł dokumentu; dokument bez nadanej nazwy dostaje nazwany stan pusty, nie własny identyfikator. */
 function opiszDokument(dokument: StudioDocument | null): void {
   const nazwa = dokument?.title ?? 'Dokument bez nazwy';
-  for (const wezel of document.querySelectorAll('.st-wstazka-sesja span, .sta-okno-znacznik')) {
-    wezel.textContent = nazwa;
-  }
+  const miejsca = '.st-wstazka-sesja span, .sta-okno-znacznik, .dn-karta--robocza .dn-karta-widoku-nazwa';
+  for (const wezel of document.querySelectorAll(miejsca)) wezel.textContent = nazwa;
   wpiszWersje(dokument);
 }
 
@@ -444,4 +450,16 @@ if (!zwiazStudio()) {
     if (zwiazStudio()) obserwator.disconnect();
   });
   obserwator.observe(document.documentElement, { childList: true, subtree: true });
+}
+
+/* Panele okna roboczego wiąże się dopiero po założeniu okna: każdy z nich pyta
+   rdzeń o treść tego okna, a przed jego powstaniem nie ma o co pytać. Panel,
+   którego znacznik nie stoi, zwraca fałsz i nie robi nic. */
+function zwiazPanele(kanal: Kanal, idOkna: string): void {
+  zwiazPlan(kanal, idOkna);
+  zwiazRoznice(kanal, idOkna);
+  zwiazRepozytorium(kanal, idOkna);
+  zwiazPliki(kanal, idOkna);
+  zwiazNarzedzia(kanal, idOkna);
+  zwiazPodglad(kanal, idOkna);
 }

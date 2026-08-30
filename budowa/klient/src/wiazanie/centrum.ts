@@ -270,7 +270,9 @@ export function zwiazCentrum(kanal: Kanal | undefined = globalThis.DanacoKanal):
   document.addEventListener('click', (zdarzenie) => {
     const cel = zdarzenie.target;
     if (!(cel instanceof Element)) return;
-    const pozycja = cel.closest('.sta-menu-poz');
+    /* Czynności czytamy wyłącznie z menu okna roboczego: ten sam podpis stoi
+       w innych menu powłoki i tam znaczy co innego. */
+    const pozycja = cel.closest('#menu-karty-otwarte .sta-menu-poz');
     if (pozycja === null || kartaBiezaca === '') return;
     const czynnosc = (pozycja.textContent ?? '').trim();
     if (czynnosc === 'Zamknij kartę') {

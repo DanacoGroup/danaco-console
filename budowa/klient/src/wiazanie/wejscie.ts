@@ -62,6 +62,7 @@ export function zwiazWejscie(podany?: Kanal): void {
   oznaczObszary();
   zalozPrzejscie();
   document.addEventListener('click', naKlikniecie);
+  document.addEventListener('keydown', naKlawisz);
   gotowosc(() => {
     void powitaj(kanal(podany));
   });
@@ -121,6 +122,21 @@ function naKlikniecie(zdarzenie: MouseEvent): void {
   }
   zdarzenie.preventDefault();
   void wykonaj(most, widok, dokad, grupa);
+}
+
+/* Enter w polu wchodzi tak samo jak naciśnięcie czynności głównej. Pas działań
+   domyka okno u dołu, więc w oknie niższym niż panel czynność bywa poza
+   widokiem — wpisane dane zostawałyby wtedy bez drogi zatwierdzenia. */
+function naKlawisz(zdarzenie: KeyboardEvent): void {
+  if (zdarzenie.key !== 'Enter' || zdarzenie.shiftKey) return;
+  const cel = zdarzenie.target;
+  if (!(cel instanceof HTMLInputElement)) return;
+  const czynnosc = document.querySelector<HTMLElement>(
+    '.we-pas[data-widok-aktywny="tak"] button[data-idz]',
+  );
+  if (czynnosc === null) return;
+  zdarzenie.preventDefault();
+  czynnosc.click();
 }
 
 function wolaRdzen(widok: string): widok is Widok {

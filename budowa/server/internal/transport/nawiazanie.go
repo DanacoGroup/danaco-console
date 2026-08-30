@@ -46,19 +46,20 @@ func (s *Serwer) nawiaz(w http.ResponseWriter, r *http.Request) {
 	polaczenie.petlaOdbioru(s.kontekst, s.rdzenPodlaczony, s.rejestrKomend, &s.pracaRdzenia, s.ustawienia.dopuszczenie())
 }
 
-// pochodzeniaWlasne to wzorce Origin, którymi przedstawia się własny interfejs produktu w powłoce i przeglądarce.
+// pochodzeniaWlasne to wzorce Origin, którymi przedstawia się własny interfejs
+// produktu w powłoce i przeglądarce. Biblioteka gniazda dopasowuje wyłącznie
+// GOSPODARZA nagłówka Origin — schemat zdejmuje przed dopasowaniem — więc
+// wzorzec ze schematem nie zgadza się nigdy z niczym.
 var pochodzeniaWlasne = []string{
-	"tauri://*",
-	"https://tauri.localhost",
-	"http://localhost:*",
-	"http://127.0.0.1:*",
-	"https://localhost:*",
-	"https://127.0.0.1:*",
+	// Powłoka desktopowa podaje stronę z pakietu: Windows przedstawia ją
+	// gospodarzem `tauri.localhost`, pozostałe platformy — `localhost` bez portu.
+	"tauri.localhost",
+	"localhost",
+	"127.0.0.1",
 	"localhost:*",
 	"127.0.0.1:*",
 	// Pętla zwrotna ma dwa adresy; ukośnik zdejmuje nawiasowi znaczenie klasy znaków we wzorcu.
-	`http://\[::1\]:*`,
-	`https://\[::1\]:*`,
+	`\[::1\]`,
 	`\[::1\]:*`,
 }
 

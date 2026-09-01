@@ -38864,7 +38864,7 @@
     },
     {
       "typ": "studio.document.open",
-      "opis": "Wczytuje dokument do Studio Editor z repozytorium albo z urzadzenia",
+      "opis": "Wczytuje dokument do Studio Editor po documentId; bez wskazania wraca do ostatnio zmienianego dokumentu okna, a gdy okno nie ma zadnego albo wskazano plik biblioteki - zaklada nowy",
       "zadanie": [
         {
           "nazwa": "windowId",

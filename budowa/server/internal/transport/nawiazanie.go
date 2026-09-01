@@ -16,6 +16,11 @@ import (
 // kontrakt nie przewiduje.
 const LimitOdczytu = 16 << 20
 
+// LimitOdczytuPrzedBramka ogranicza ramkę gniazda, które bramki jeszcze nie
+// przeszło: komendy wejścia mieszczą się w kilku kilobajtach, a ramka do 16 MiB
+// byłaby czytana i rozbierana przed jakimkolwiek logowaniem.
+const LimitOdczytuPrzedBramka = 64 << 10
+
 const (
 	// limitPolaczen jest górną granicą gniazd stojących naraz. Każde gniazdo to
 	// dwie gorutyny, bufor wyjściowy i ramka do 16 MiB w odczycie, więc rejestr
@@ -47,6 +52,15 @@ func (s *Serwer) nawiaz(w http.ResponseWriter, r *http.Request) {
 	if odmowa != "" {
 		s.ustawienia.Dziennik.Printf("transport: nawiązanie z %s odrzucone — %s", adresZdalny(r), odmowa)
 		http.Error(w, odmowa, http.StatusForbidden)
+		return
+	}
+	// Biblioteka gniazda przepuszcza żądanie bez nagłówka Origin, a proces
+	// spoza przeglądarki może go nie podać. Bez pochodzenia wchodzi wyłącznie
+	// gniazdo z poświadczeniem narzędzi albo sekretem nawiązania.
+	if strings.TrimSpace(r.Header.Get("Origin")) == "" && !poswiadczone &&
+		strings.TrimSpace(s.ustawienia.SekretNawiazania) == "" {
+		s.ustawienia.Dziennik.Printf("transport: nawiązanie z %s odrzucone — bez pochodzenia i bez poświadczenia", adresZdalny(r))
+		http.Error(w, "nawiązanie bez pochodzenia wymaga poświadczenia", http.StatusForbidden)
 		return
 	}
 	gniazdo, err := websocket.Accept(w, r, &websocket.AcceptOptions{
@@ -145,9 +159,9 @@ func (s *Serwer) brakMiejscaWRejestrze() (string, bool) {
 }
 
 // pochodzeniaWlasne to wzorce Origin, którymi przedstawia się własny interfejs
-// produktu w powłoce i przeglądarce. Biblioteka gniazda dopasowuje wyłącznie
-// GOSPODARZA nagłówka Origin — schemat zdejmuje przed dopasowaniem — więc
-// wzorzec ze schematem nie zgadza się nigdy z niczym.
+// produktu w powłoce i przeglądarce. Wzorzec bez schematu biblioteka gniazda
+// dopasowuje do samego gospodarza nagłówka Origin; wzorzec ze `://` — do
+// schematu i gospodarza razem.
 // Wzorców z portem dowolnym tu nie ma: pod `127.0.0.1:*` mieści się każdy
 // nasłuch tej maszyny, w tym podgląd warstwy Apps, którego stronę pisze model —
 // skrypt takiej strony otwierałby gniazdo z pełnym wykazem komend. Interfejs

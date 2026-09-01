@@ -14,14 +14,16 @@ func dokumentZTrescia(t *testing.T, zmontowany *Zmontowany, zycie context.Contex
 	okno, tresc string) shared.StudioDocument {
 	t.Helper()
 
-	var otwarty shared.StudioDocumentOpenResponse
-	wykonajUdana(t, zmontowany, zycie, shared.CommandStudioDocumentOpen,
-		shared.StudioDocumentOpenRequest{WindowId: okno}, &otwarty)
+	// Każde wywołanie ma dać osobny dokument, więc idzie przez document.create —
+	// document.open bez wskazania wraca do ostatniego dokumentu okna.
+	var zalozony shared.StudioDocumentCreateResponse
+	wykonajUdana(t, zmontowany, zycie, shared.CommandStudioDocumentCreate,
+		shared.StudioDocumentCreateRequest{WindowId: okno}, &zalozony)
 
 	var zapisany shared.StudioDocumentSaveResponse
 	wykonajUdana(t, zmontowany, zycie, shared.CommandStudioDocumentSave,
 		shared.StudioDocumentSaveRequest{
-			DocumentId: otwarty.Document.Id, Content: tresc, CreateVersion: wskaznik(true),
+			DocumentId: zalozony.Document.Id, Content: tresc, CreateVersion: wskaznik(true),
 		}, &zapisany)
 	return zapisany.Document
 }

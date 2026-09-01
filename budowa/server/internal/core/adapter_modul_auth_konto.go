@@ -242,6 +242,9 @@ func bezOdstepow(kod string) string {
 // drogaKonta rozpoznaje drogę kodem i sprawdza jej cel, nie zamykając jej.
 // Rozpoznanie stoi osobno od zamknięcia, bo wywołujący musi znać konto, zanim
 // zdecyduje, czy drogę zużyć — kod odrzuconego żądania ma zostać ważny.
+// Kod innego celu odpowiada tym samym zdaniem, co kod nieznany, a pomyłka
+// dolicza się także drogom celu trafionego — inaczej komenda jednego celu
+// byłaby wyrocznią i drogą zgadywania kodów drugiego celu poza pułapem prób.
 func (a *adapterUwierzytelnienia) drogaKonta(ctx context.Context,
 	cel, droga string) (dane.PotwierdzenieTozsamosci, error) {
 
@@ -259,10 +262,21 @@ func (a *adapterUwierzytelnienia) drogaKonta(ctx context.Context,
 		return dane.PotwierdzenieTozsamosci{}, err
 	}
 	if zapis.Cel != cel {
+		a.doliczPomylkeCelu(ctx, zapis.Cel)
 		return dane.PotwierdzenieTozsamosci{}, bladBramki(shared.ErrorCodeNotAuthenticated,
-			"Ten kod potwierdzający dotyczy innej czynności.")
+			"Ten kod potwierdzający nie jest znany.")
 	}
 	return zapis, nil
+}
+
+// doliczPomylkeCelu dolicza pomyłkę drogom celu trafionego kodem użytym w innej czynności.
+func (a *adapterUwierzytelnienia) doliczPomylkeCelu(ctx context.Context, cel string) {
+	if _, err := a.repozytorium.OdnotujPomylkeDrogi(ctx, cel, pulapProbDrogi,
+		time.Now().UnixMilli()); err != nil {
+		if dziennik := dziennikZKontekstu(ctx); dziennik != nil {
+			dziennik.Printf("bramka: nie można doliczyć pomyłki drogom celu %s: %v", cel, err)
+		}
+	}
 }
 
 // zamknijDroge zużywa drogę rozpoznaną wcześniej przez `drogaKonta`.

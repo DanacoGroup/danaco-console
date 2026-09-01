@@ -184,10 +184,12 @@ func (p *Polaczenie) ZamknijKodem(kod websocket.StatusCode, powod string) {
 	p.zamkniete = true
 	p.zamek.Unlock()
 
-	p.zakoncz()
+	// Ramka zamknięcia idzie przed zakończeniem kontekstu: anulowanie kontekstu
+	// odczytu zamyka gniazdo TCP, a urządzenie dostałoby EOF zamiast kodu.
 	if err := p.gniazdo.Close(kod, powod); err != nil {
 		_ = p.gniazdo.CloseNow()
 	}
+	p.zakoncz()
 	p.dziennik.Printf("transport: rozłączenie %s (%s)", p.id, powod)
 }
 

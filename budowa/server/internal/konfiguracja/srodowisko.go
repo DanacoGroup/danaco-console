@@ -23,6 +23,12 @@ const (
 	zmiennaKluczTLS            = "DANACO_TLS_KLUCZ"
 	zmiennaPochodzenia         = "DANACO_POCHODZENIA"
 	zmiennaWymogLogowania      = "DANACO_WYMOG_LOGOWANIA"
+	// Zniesienie bramki i sekret nawiązania czyta warstwa transportu wprost
+	// ze środowiska procesu (transport.ZmiennaZniesieniaBramki,
+	// transport.ZmiennaSekretuNawiazania); tu stoją kopie nazw na potrzeby
+	// wykazu, bo konfiguracja nie importuje transportu.
+	zmiennaZniesienieBramki = "DANACO_BRAMKA_ZNIESIONA"
+	zmiennaSekretNawiazania = "DANACO_SEKRET_NAWIAZANIA"
 	// Plik klucza sejfu poświadczeń; czyta go pakiet dane. Puste = klucz
 	// własny rdzenia w katalogu danych.
 	zmiennaKluczSejfu = "DANACO_KLUCZ_SEJFU"
@@ -53,8 +59,8 @@ func ZmienneSrodowiska() []string {
 		zmiennaKatalogKlienta, zmiennaKatalogProfili,
 		zmiennaAdres, zmiennaWszystkieInterfejsy,
 		zmiennaCertyfikatTLS, zmiennaKluczTLS, zmiennaPochodzenia,
-		zmiennaWymogLogowania, zmiennaKluczSejfu,
-		zmiennaAdresKonsoli,
+		zmiennaWymogLogowania, zmiennaZniesienieBramki, zmiennaSekretNawiazania,
+		zmiennaKluczSejfu, zmiennaAdresKonsoli,
 		zmiennaNadawcaHost, zmiennaNadawcaPort, zmiennaNadawcaUzytkownik,
 		zmiennaNadawcaSekret, zmiennaNadawcaAdres, zmiennaNadawcaNazwa,
 		zmiennaNadawcaStartTLS,

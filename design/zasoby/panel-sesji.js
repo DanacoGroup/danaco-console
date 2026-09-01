@@ -188,7 +188,13 @@
     usun: 'Usunięcie trwałe. Zadania serwerowe tej sesji zostają zatrzymane.'
   };
 
+  /* Opisy czynności są treścią prototypu. Stronę prototypu poznaje się po
+     znaczniku `[data-prototyp]` (tak jak w `prototyp.js`); wydanie go nie niesie,
+     a czynności wiersza wiąże tam `klient/src/wiazanie/centrum.ts`. */
+  var prototyp = q('[data-prototyp]') !== null;
+
   qq('[data-poz-akcja]').forEach(function (b) {
+    if (!prototyp) { return; }
     b.addEventListener('click', function () {
       var akcja = b.getAttribute('data-poz-akcja');
       var obudowa = b.closest('.sta-menu');

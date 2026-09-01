@@ -38,10 +38,24 @@ func (r *rdzenAtrapa) Obsluz(ctx context.Context, z protocol.Request, u Ujscie) 
 	return protocol.KopertaOdpowiedzi(z.Koperta(), protocol.Odpowiedz{Status: shared.EnvelopeStatusOk})
 }
 
+// kontaDoPrzypisania niesie konto, które polacz zamówił dla najbliższego gniazda;
+// kontaPrzypisane potwierdza przypisanie. Konto nadaje rdzeń po bramce, nie
+// parametr zapytania, więc sprawdzian nadaje je tą samą drogą — z Przylaczono.
+var (
+	kontaDoPrzypisania = make(chan string, 8)
+	kontaPrzypisane    = make(chan struct{}, 8)
+)
+
 func (r *rdzenAtrapa) Przylaczono(u Ujscie) {
 	r.zamek.Lock()
 	r.przylaczone = append(r.przylaczone, u.Id())
 	r.zamek.Unlock()
+	select {
+	case konto := <-kontaDoPrzypisania:
+		u.PrzypiszKonto(konto)
+		kontaPrzypisane <- struct{}{}
+	default:
+	}
 }
 
 func (r *rdzenAtrapa) Odlaczono(u Ujscie) {
@@ -80,23 +94,32 @@ func podnies(t *testing.T, rdzen Rdzen) (*Serwer, string) {
 	return serwer, "ws://" + serwer.Adres() + SciezkaGniazdaDomyslna
 }
 
-// polacz nawiązuje gniazdo klienta pod wskazanym adresem. Konto puste zostawia konto domyślne serwera.
+// polacz nawiązuje gniazdo klienta pod wskazanym adresem. Konto niepuste
+// przypisuje atrapa rdzenia w Przylaczono; puste zostawia konto domyślne serwera.
+// Origin jest pochodzeniem powłoki bez portu, bo wzorce własne nie mają portu dowolnego.
 func polacz(t *testing.T, adres, konto string) *websocket.Conn {
 	t.Helper()
 
 	if konto != "" {
-		adres += "?" + ParametrKonta + "=" + konto
+		kontaDoPrzypisania <- konto
 	}
 	ctx, przerwij := context.WithTimeout(context.Background(), 5*time.Second)
 	defer przerwij()
 
 	gniazdo, _, err := websocket.Dial(ctx, adres, &websocket.DialOptions{
-		HTTPHeader: http.Header{"Origin": []string{"http://localhost:5173"}},
+		HTTPHeader: http.Header{"Origin": []string{"http://localhost"}},
 	})
 	if err != nil {
 		t.Fatalf("nie można nawiązać gniazda: %v", err)
 	}
 	t.Cleanup(func() { _ = gniazdo.CloseNow() })
+	if konto != "" {
+		select {
+		case <-kontaPrzypisane:
+		case <-ctx.Done():
+			t.Fatalf("rdzeń nie przypisał konta %q gniazdu", konto)
+		}
+	}
 	return gniazdo
 }
 
@@ -431,15 +454,15 @@ func TestPochodzenieObceJestOdrzucane(t *testing.T) {
 	}
 }
 
-// TestPochodzeniePetliZwrotnejSzostejWersjiPrzechodzi pilnuje wzorca, którego
-// brak odcinałby przeglądarkę rozwiązującą `localhost` na adres szóstej wersji.
+// TestPochodzeniePetliZwrotnejSzostejWersjiPrzechodzi pilnuje wzorca `[::1]` bez
+// portu, którego brak odcinałby powłokę podającą stronę z adresu szóstej wersji.
 func TestPochodzeniePetliZwrotnejSzostejWersjiPrzechodzi(t *testing.T) {
 	_, adres := podnies(t, &rdzenAtrapa{})
 
 	ctx, przerwij := context.WithTimeout(context.Background(), 5*time.Second)
 	defer przerwij()
 	gniazdo, _, err := websocket.Dial(ctx, adres, &websocket.DialOptions{
-		HTTPHeader: http.Header{"Origin": []string{"http://[::1]:5173"}},
+		HTTPHeader: http.Header{"Origin": []string{"http://[::1]"}},
 	})
 	if err != nil {
 		t.Fatalf("pochodzenie pętli zwrotnej szóstej wersji zostało odrzucone: %v", err)

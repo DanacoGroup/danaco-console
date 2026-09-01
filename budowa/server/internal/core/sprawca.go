@@ -36,16 +36,18 @@ func sprawca(ctx context.Context) (*shared.ActorKind, *string) {
 		return rodzajSprawcy(shared.ActorKindCore), nil
 	}
 	tozsamosc := tozsamoscZKontekstu(ctx)
+	// Rodzaj narzędzi liczy się po sprawdzeniu poświadczenia przez transport; napis z zapytania bez poświadczenia nie wchodzi do tożsamości.
 	if tozsamosc.Narzedzia() {
 		return rodzajSprawcy(rodzajNarzedzi(tozsamosc)), klientSprawcy(tozsamosc.IdKlienta)
 	}
+	// Identyfikator klienta bez sprawdzonego poświadczenia pochodzi z powitania okna, nie z nawiązania.
 	if tozsamosc.IdKlienta != "" {
 		return rodzajSprawcy(shared.ActorKindOperator), klientSprawcy(tozsamosc.IdKlienta)
 	}
 	return nil, nil
 }
 
-// rodzajNarzedzi rozdziela dwie ręce pracujące tą samą drogą narzędzi: klawiaturę Operatora i model roboczy, według roli okna nadanej wpisowi MCP przez rdzeń, zanim proces modelu wystartował. Zasięg nieznany daje model.
+// rodzajNarzedzi rozdziela dwie ręce pracujące tą samą drogą narzędzi: klawiaturę Operatora i model roboczy, według roli okna nadanej wpisowi MCP przez rdzeń wraz z poświadczeniem, zanim proces modelu wystartował. Zasięg nieznany daje model.
 func rodzajNarzedzi(t transport.Tozsamosc) string {
 	if narzedzia.RozpoznajZasieg(t.Zasieg) == narzedzia.ZasiegKlawiatury {
 		return shared.ActorKindAssistant

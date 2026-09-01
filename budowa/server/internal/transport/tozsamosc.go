@@ -2,8 +2,11 @@
 package transport
 
 import (
+	"crypto/rand"
+	"encoding/hex"
 	"net/http"
 	"strings"
+	"sync"
 )
 
 const (
@@ -25,6 +28,10 @@ const (
 	// ParametrOkna niesie okno rozmowy serwera narzędzi. Do rozstrzygnięcia
 	// sprawcy niepotrzebne, do zrozumienia dziennika — konieczne.
 	ParametrOkna = "okno"
+	// ParametrPoswiadczenia niesie poświadczenie serwera narzędzi wydane przez
+	// rdzeń przy uruchomieniu. Bez zgodnego poświadczenia rodzaj i zasięg z
+	// zapytania nie nadają niczego — nadawałby je wtedy każdy proces maszyny.
+	ParametrPoswiadczenia = "poswiadczenie"
 	// RodzajNarzedzi oznacza gniazdo serwera narzędzi modelu. Stała stoi tutaj,
 	// a nie w pakiecie `narzedzia`, żeby obie strony rozmowy — ta, która napis
 	// wysyła, i ta, która go czyta — brały go z jednego miejsca.
@@ -44,17 +51,25 @@ type Tozsamosc struct {
 	Zasieg string
 	// IdOkna jest oknem rozmowy serwera narzędzi.
 	IdOkna string
+	// PoswiadczenieSprawdzone mówi, że transport porównał poświadczenie z
+	// nawiązania z poświadczeniem wydanym przez rdzeń. Sam napis tu nie wchodzi:
+	// tożsamość jedzie do dziennika i do zdarzeń, a sekret nie ma tam czego szukać.
+	PoswiadczenieSprawdzone bool
 }
 
-// Metoda Narzedzia mówi, czy to gniazdo należy właśnie do serwera narzędzi modelu, a nie do okna interfejsu.
+// Narzedzia mówi, czy gniazdo należy do serwera narzędzi modelu. Rodzaj bez
+// sprawdzonego poświadczenia nie liczy się — to napis z zapytania.
 func (t Tozsamosc) Narzedzia() bool {
-	return t.Rodzaj == RodzajNarzedzi
+	return t.PoswiadczenieSprawdzone && t.Rodzaj == RodzajNarzedzi
 }
 
-// Funkcja tozsamoscZadania czyta tożsamość przedstawioną przy nawiązaniu, z parametru zapytania albo nagłówka żądania.
-func tozsamoscZadania(id string, r *http.Request) Tozsamosc {
-	tozsamosc := Tozsamosc{IdPolaczenia: id}
-	if r == nil {
+// tozsamoscZadania czyta tożsamość przedstawioną przy nawiązaniu. Bez
+// sprawdzonego poświadczenia zostaje sam identyfikator gniazda: parametry
+// nawiązania przedstawiają wyłącznie serwer narzędzi, okno przedstawia się
+// powitaniem.
+func tozsamoscZadania(id string, r *http.Request, poswiadczone bool) Tozsamosc {
+	tozsamosc := Tozsamosc{IdPolaczenia: id, PoswiadczenieSprawdzone: poswiadczone}
+	if r == nil || !poswiadczone {
 		return tozsamosc
 	}
 	zapytanie := r.URL.Query()
@@ -82,4 +97,26 @@ func ParametryTozsamosci(t Tozsamosc) map[string]string {
 		}
 	}
 	return parametry
+}
+
+// Poświadczenie serwera narzędzi tego procesu: wydawane raz, przy pierwszym
+// pytaniu, i trzymane do końca procesu.
+var (
+	poswiadczenieRaz     sync.Once
+	poswiadczenieProcesu string
+)
+
+// PoswiadczenieNarzedzi oddaje poświadczenie serwera narzędzi tego procesu.
+// Rdzeń wręcza je serwerowi narzędzi w argumentach uruchomienia, a transport
+// porównuje z nim napis z nawiązania. Napis pusty znaczy brak źródła losowego:
+// nawiązanie narzędzi jest wtedy odrzucane, nie przepuszczane.
+func PoswiadczenieNarzedzi() string {
+	poswiadczenieRaz.Do(func() {
+		losowe := make([]byte, 32)
+		if _, err := rand.Read(losowe); err != nil {
+			return
+		}
+		poswiadczenieProcesu = hex.EncodeToString(losowe)
+	})
+	return poswiadczenieProcesu
 }

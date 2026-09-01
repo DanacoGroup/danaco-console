@@ -41,6 +41,14 @@ func (s *Serwer) nawiaz(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, powod, http.StatusServiceUnavailable)
 		return
 	}
+	// Poświadczenie serwera narzędzi rozstrzyga się tu, przed uaktualnieniem:
+	// rodzaj i zasięg z zapytania wchodzą do tożsamości dopiero po sprawdzeniu.
+	poswiadczone, odmowa := s.poswiadczenieNarzedziZgodne(r)
+	if odmowa != "" {
+		s.ustawienia.Dziennik.Printf("transport: nawiązanie z %s odrzucone — %s", adresZdalny(r), odmowa)
+		http.Error(w, odmowa, http.StatusForbidden)
+		return
+	}
 	gniazdo, err := websocket.Accept(w, r, &websocket.AcceptOptions{
 		OriginPatterns: s.pochodzeniaDozwolone(),
 	})
@@ -51,7 +59,8 @@ func (s *Serwer) nawiaz(w http.ResponseWriter, r *http.Request) {
 	gniazdo.SetReadLimit(LimitOdczytu)
 
 	id := s.nastepnyId()
-	polaczenie := nowePolaczenie(s.kontekst, id, kontoZadania(r), tozsamoscZadania(id, r), gniazdo, s.ustawienia.PojemnoscKolejki, s.ustawienia.Dziennik)
+	// Konto nadaje rdzeń po przejściu bramki; przy nawiązaniu każde gniazdo stoi na koncie domyślnym.
+	polaczenie := nowePolaczenie(s.kontekst, id, KontoDomyslne, tozsamoscZadania(id, r, poswiadczone), gniazdo, s.ustawienia.PojemnoscKolejki, s.ustawienia.Dziennik)
 	s.polaczenia.dodaj(polaczenie)
 	s.zawiadomPrzylaczono(polaczenie)
 	// Tożsamość jest w linii dziennika, bo od niej zależy sprawca zdarzeń widoczny w interfejsie.
@@ -85,6 +94,26 @@ func (s *Serwer) sekretZgodny(r *http.Request) bool {
 		podany = r.Header.Get(NaglowekSekretu)
 	}
 	return subtle.ConstantTimeCompare([]byte(podany), []byte(oczekiwany)) == 1
+}
+
+// poswiadczenieNarzedziZgodne sprawdza poświadczenie gniazda, które przedstawia
+// się rodzajem albo poświadczeniem. Klient bez jednego i drugiego nie jest
+// serwerem narzędzi i przechodzi bez sprawdzenia, ale i bez rodzaju. Porównanie
+// idzie czasem stałym z tego samego powodu co przy sekrecie nawiązania.
+func (s *Serwer) poswiadczenieNarzedziZgodne(r *http.Request) (sprawdzone bool, odmowa string) {
+	zapytanie := r.URL.Query()
+	podane := zapytanie.Get(ParametrPoswiadczenia)
+	if podane == "" && strings.TrimSpace(zapytanie.Get(ParametrRodzaju)) == "" {
+		return false, ""
+	}
+	oczekiwane := s.ustawienia.PoswiadczenieNarzedzi
+	if oczekiwane == "" {
+		return false, "poświadczenie serwera narzędzi niewydane"
+	}
+	if subtle.ConstantTimeCompare([]byte(podane), []byte(oczekiwane)) != 1 {
+		return false, "poświadczenie serwera narzędzi niezgodne"
+	}
+	return true, ""
 }
 
 // brakMiejscaWRejestrze nazywa granicę, o którą opiera się nawiązanie, albo
@@ -153,18 +182,6 @@ func adresZdalny(r *http.Request) string {
 		return "nieustalony"
 	}
 	return r.RemoteAddr
-}
-
-// kontoZadania odczytuje konto urządzenia z parametru zapytania albo nagłówka.
-// Brak wskazania daje konto domyślne — połączenie nie jest odrzucane.
-func kontoZadania(r *http.Request) string {
-	if konto := r.URL.Query().Get(ParametrKonta); konto != "" {
-		return konto
-	}
-	if konto := r.Header.Get(NaglowekKonta); konto != "" {
-		return konto
-	}
-	return KontoDomyslne
 }
 
 // Metoda nastepnyId nadaje unikalny identyfikator tekstowy kolejnemu nawiązywanemu połączeniu gniazda WebSocket.

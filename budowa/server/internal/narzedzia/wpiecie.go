@@ -1,5 +1,6 @@
-// Plik niesie dane wpisu danaco w konfiguracji MCP okna rozmowy; okno wchodzi
-// argumentem uruchomienia, adres rdzenia wchodzi zmienną środowiska.
+// Plik niesie dane wpisu danaco w konfiguracji MCP okna rozmowy; okno
+// i poświadczenie wchodzą argumentami uruchomienia, adres rdzenia wchodzi
+// zmienną środowiska.
 package narzedzia
 
 import (
@@ -7,6 +8,8 @@ import (
 	"os/exec"
 	"path/filepath"
 	"runtime"
+
+	"danacoconsole/server/internal/transport"
 )
 
 const (
@@ -19,6 +22,9 @@ const (
 	// PrzelacznikRdzenia jest nazwą przełącznika uruchomieniowego niosącego
 	// adres gniazda WebSocket rdzenia.
 	PrzelacznikRdzenia = "rdzen"
+	// PrzelacznikPoswiadczenia niesie poświadczenie wydane przez rdzeń; bez
+	// niego rdzeń nie uznaje gniazda za serwer narzędzi.
+	PrzelacznikPoswiadczenia = "poswiadczenie"
 	// NazwaBinarium jest nazwą binarium serwera narzędzi, bez rozszerzenia
 	// właściwego systemowi operacyjnemu.
 	NazwaBinarium = "danaco-narzedzia"
@@ -32,17 +38,25 @@ const (
 	skryptPakietu = "scripts/pakiet-serwera.sh"
 )
 
-// Wpis zwraca polecenie i argumenty wpisu danaco dla wskazanego okna; okno
-// puste daje fałsz, wpisu wtedy nie dokłada się wcale.
+// Wpis zwraca polecenie i argumenty wpisu danaco dla wskazanego okna: okno
+// i poświadczenie procesu rdzenia. Okno puste albo poświadczenie niewydane
+// daje fałsz, wpisu wtedy nie dokłada się wcale.
 func Wpis(idOkna string) (polecenie string, argumenty []string, powod string, jest bool) {
 	if idOkna == "" {
 		return "", nil, "okno rozmowy bez identyfikatora — wpis nie miałby zasięgu", false
+	}
+	poswiadczenie := transport.PoswiadczenieNarzedzi()
+	if poswiadczenie == "" {
+		return "", nil, "poświadczenie serwera narzędzi niewydane — brak źródła losowego procesu", false
 	}
 	sciezka, err := sciezkaProgramu()
 	if err != nil {
 		return "", nil, err.Error(), false
 	}
-	return sciezka, []string{"--" + PrzelacznikOkna, idOkna}, "", true
+	return sciezka, []string{
+		"--" + PrzelacznikOkna, idOkna,
+		"--" + PrzelacznikPoswiadczenia, poswiadczenie,
+	}, "", true
 }
 
 // sciezkaProgramu wskazuje binarium serwera narzędzi albo mówi, czemu go nie

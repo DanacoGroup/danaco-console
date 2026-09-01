@@ -10,7 +10,8 @@ import (
 )
 
 // wykonajBezpiecznie oddaje żądanie rdzeniowi w sposób odporny na awarię pojedynczego wywołania, zwracając zdarzenie nieznanej komendy przy braku rdzenia i odpowiedź błędu wewnętrznego przy załamaniu obsługi.
-func wykonajBezpiecznie(kontekst context.Context, rdzen Rdzen, zadanie protocol.Request, ujscie Ujscie, dopuszczenie dopuszczenieBramki, dziennik *log.Logger) (odpowiedz protocol.Koperta) {
+// Bramkę rozstrzyga dopuscZadanie przed powołaniem biegu, więc tutaj żądanie jest już dopuszczone; parametr dopuszczenia zostaje do czasu zdjęcia go z wywołania w petla_odbioru.go.
+func wykonajBezpiecznie(kontekst context.Context, rdzen Rdzen, zadanie protocol.Request, ujscie Ujscie, _ dopuszczenieBramki, dziennik *log.Logger) (odpowiedz protocol.Koperta) {
 	defer func() {
 		if przyczyna := recover(); przyczyna != nil {
 			dziennik.Printf("transport: obsługa %s załamana: %v", zadanie.Komenda, przyczyna)
@@ -20,11 +21,6 @@ func wykonajBezpiecznie(kontekst context.Context, rdzen Rdzen, zadanie protocol.
 	}()
 	if rdzen == nil {
 		return protocol.OdpowiedzNieznanej(zadanie)
-	}
-	// Sprawdzenie stoi tutaj, bo to jedyne miejsce, przez które żądanie z gniazda przechodzi do rdzenia.
-	if !dopuszczenie.przepusc(rdzen, zadanie.Komenda, ujscie) {
-		dziennik.Printf("transport: komenda %s bez przejścia przez bramkę — odmowa", zadanie.Komenda)
-		return odmowaBezBramki(zadanie)
 	}
 	return rdzen.Obsluz(kontekst, zadanie, ujscie)
 }

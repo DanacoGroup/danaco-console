@@ -12,7 +12,9 @@
  * przez `panel.sections.set`.
  */
 import {
+  ChangeKind,
   Command,
+  EventType,
   WindowStatus,
   type PanelSection,
   type Session,
@@ -22,6 +24,7 @@ import {
 import type { Kanal } from '../protokol/kanal.ts';
 import { wywolaj } from '../protokol/wywolanie.ts';
 import { oglos } from './ogloszenie.ts';
+import { zglosUchwyt } from './zdarzenia.ts';
 
 /** Karta okna roboczego: jedna praca Operatora wraz z jej oknem w rdzeniu. */
 export interface KartaRobocza {
@@ -157,6 +160,61 @@ export function przypiszOknoKomunikacji(kodModulu: string, idOknaKomunikacji: st
 /** Opis karty po identyfikatorze; brak znaczy kartę już zdjętą. */
 export function kartaOkna(idKarty: string): KartaRobocza | undefined {
   return KARTY.get(idKarty);
+}
+
+/**
+ * Czyni wskazaną kartę bieżącą w oknie bieżącym i zwraca jej opis. Brak znaczy
+ * kartę zdjętą albo stojącą w innym oknie roboczym — takiej nie wolno postawić
+ * w tym oknie, bo pasmo pokazuje karty jednego okna.
+ */
+export function wskazKarte(idKarty: string): KartaRobocza | undefined {
+  const okno = oknoBiezace();
+  const karta = KARTY.get(idKarty);
+  if (karta === undefined || !okno.karty.includes(idKarty)) return undefined;
+  okno.kartaBiezaca = karta.id;
+  okno.nazwa = karta.nazwa;
+  return karta;
+}
+
+/**
+ * Nanosi zmianę okna komunikacji zgłoszoną przez rdzeń na karty okien roboczych.
+ * Okno zamknięte poza tym klientem zdejmuje swoją kartę bez wołania `window.close`
+ * — okno już nie stoi; zmiana nazwy przechodzi na kartę. Zwraca identyfikatory
+ * kart zdjętych.
+ */
+export function zastosujZmianeOkna(zmiana: ChangeKind, okno: Window): string[] {
+  const zdjete: string[] = [];
+  for (const karta of KARTY.values()) {
+    if (karta.idOknaKomunikacji !== okno.id) continue;
+    if (zmiana === ChangeKind.Deleted || okno.status === WindowStatus.Closed) {
+      zdjete.push(karta.id);
+      continue;
+    }
+    if (okno.title !== undefined && okno.title !== '') karta.nazwa = okno.title;
+  }
+  for (const idKarty of zdjete) {
+    KARTY.delete(idKarty);
+    for (const robocze of OKNA) {
+      if (!robocze.karty.includes(idKarty)) continue;
+      robocze.karty = robocze.karty.filter((id) => id !== idKarty);
+      if (robocze.kartaBiezaca === idKarty) {
+        robocze.kartaBiezaca = '';
+        robocze.nazwa = NAZWA_POCZATKOWA;
+      }
+    }
+  }
+  return zdjete;
+}
+
+/**
+ * Zgłasza uchwyt `window.changed`: zmiana okna komunikacji w rdzeniu wchodzi na
+ * karty okien roboczych, a wołający dostaje identyfikatory kart zdjętych, żeby
+ * zdjąć je z pasma i z płótna.
+ */
+export function zwiazZdarzeniaOkien(naZmiane: (zdjete: string[]) => void): void {
+  zglosUchwyt(EventType.WindowChanged, (tresc) => {
+    naZmiane(zastosujZmianeOkna(tresc.change, tresc.window));
+  });
 }
 
 /** Karty wskazanego okna roboczego w kolejności otwarcia. */

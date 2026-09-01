@@ -5,8 +5,11 @@
  */
 
 import {
+  ChangeKind,
   Command,
   ErrorCode,
+  EventType,
+  ProgressStatus,
   type Component,
   type Environment,
   type Module,
@@ -29,15 +32,20 @@ import {
   zwiazPasmo,
 } from './karty-okien.ts';
 import {
+  kartaOkna,
+  kartyOkna,
   oknaRobocze,
   oknoBiezace,
   otworzOkno,
   przelaczOkno,
+  wskazKarte,
   zamknijOkno,
   zapiszKarte,
   zdejmijKarteOkna,
   zdejmijKartyPoPrawej,
   zostawKarte,
+  zwiazZdarzeniaOkien,
+  type KartaRobocza,
 } from './okna-robocze.ts';
 import {
   otworzSesje,
@@ -45,7 +53,8 @@ import {
   sesjaBiezaca,
   wskazSrodowisko,
 } from './sesja-biezaca.ts';
-import { zwiazStudio } from './studio.ts';
+import { zwiazStudio, zwolnijStudio } from './studio.ts';
+import { zglosUchwyt } from './zdarzenia.ts';
 
 /** Kod modułu, którego wnętrze wchodzi do wydania; pozostałe moduły stoją w szynie, lecz okna w tym wydaniu nie mają. */
 const KOD_MODULU_WYDANIA = 'studio';
@@ -63,7 +72,7 @@ interface WezlyCentrum {
   plotno: HTMLElement;
   /** Widok karty głównej — Centrum dowodzenia. */
   kartaGlowna: HTMLElement;
-  /** Widok karty modułu; wnętrze modułu wchodzi pod jego głowę. */
+  /** Karta modułu ze znacznika; stoi zasłonięta jako wzór, z którego powstaje wnętrze każdej karty. */
   kartaModulu: HTMLElement;
 }
 
@@ -93,7 +102,12 @@ export function zwiazCentrum(kanal: Kanal | undefined = globalThis.DanacoKanal):
   const katalogModulow = new Map<string, Module>();
   const modulyPoId = new Map<string, Module>();
   void wczytajModuly(kanal, katalogModulow, modulyPoId);
-  void przejmijOgnisko(kanal);
+  /* Okna robocze odtwarzają się z odpowiedzi rdzenia, więc przełącznik okien
+     i pasmo kart przerysowują się po niej, nie przed nią. */
+  void przejmijOgnisko(kanal).then(() => {
+    odswiezOknaRobocze();
+    odswiezPasmo();
+  });
   const katalogSrodowisk = new Map<string, Environment>();
   void wczytajSrodowiska(kanal, katalogSrodowisk);
 
@@ -115,8 +129,9 @@ export function zwiazCentrum(kanal: Kanal | undefined = globalThis.DanacoKanal):
 
   /* „Nowa sesja" otwiera okno robocze na karcie Centrum. Sesja powstaje przy
      pierwszej wiadomości, więc naciśnięcie przycisku nie ma czego założyć
-     w rejestrze rdzenia. */
-  wezly.obszar.addEventListener('click', (zdarzenie) => {
+     w rejestrze rdzenia. Nasłuch na dokumencie: menu i szyna stoją poza
+     obszarem okna. */
+  document.addEventListener('click', (zdarzenie) => {
     const cel = zdarzenie.target;
     if (!(cel instanceof Element)) return;
     /* Przycisk panelu bocznego niesie cechę bez wartości; wartość niosą pozycje
@@ -186,28 +201,60 @@ export function zwiazCentrum(kanal: Kanal | undefined = globalThis.DanacoKanal):
   /* Nazwa środowiska przechodzi z Centrum przez przedsionek aż do głowy karty
      modułu; kafel przedsionka nie stoi w szynie, więc sam jej nie niesie. */
   let nazwaSrodowiska = '';
-  /* Moduł karty modułu: po nim wiadomo, czy kolejne wejście otwiera nową kartę,
-     czy wraca do karty stojącej. */
+  /* Identyfikator karty pokazywanej w płótnie; pustka znaczy kartę główną. */
   let kartaBiezaca = '';
 
-  /** Otwiera moduł kartą okna roboczego: głowa, wnętrze, pasmo kart i wiązanie. */
-  const otworzModul = (modul: Module, idOkna: string): void => {
-    if (!wstawTrescModulu(wezly, 'dn-tresc-' + modul.code)) {
+  /**
+   * Stawia kartę okna roboczego: wnętrze, głowa, pasmo i — gdy wnętrze dopiero
+   * stanęło — wiązanie z rdzeniem. Wnętrze stojące wraca bez wiązania: jego
+   * nasłuchy już stoją, a drugie wiązanie dawałoby podwójne wysyłki.
+   */
+  const postawKarte = (karta: KartaRobocza, modul: Module): void => {
+    const wnetrze = wnetrzeKarty(wezly, karta.id, 'dn-tresc-' + modul.code);
+    if (wnetrze === null) {
       zapowiedzModul(modul);
       return;
     }
-    opiszGloweKarty(wezly, modul.name, nazwaSrodowiska);
+    opiszGloweKarty(wnetrze.wezel, modul.name, nazwaSrodowiska);
     opiszPasekModulu(modul.name);
-    pokazWidok(wezly, wezly.kartaModulu);
-    kartaBiezaca = modul.code;
-    zapiszKarte(modul.code, modul.name);
+    pokazWidok(wezly, wnetrze.wezel);
+    kartaBiezaca = karta.id;
     odswiezPasmo();
-    if (modul.code === KOD_MODULU_WYDANIA) zwiazStudio(kanal, nazwaSrodowiska, idOkna);
-    else if (idOkna === '') zwiazOkno(kanal, modul.code, nazwaSrodowiska);
-    else zwiazOknoStojace(kanal, modul.code, nazwaSrodowiska, idOkna);
+    if (wnetrze.nowe) {
+      const idOkna = karta.idOknaKomunikacji;
+      if (modul.code === KOD_MODULU_WYDANIA) {
+        zwiazStudio(kanal, nazwaSrodowiska, idOkna, wnetrze.wezel);
+      } else if (idOkna === '') {
+        zwiazOkno(kanal, modul.code, nazwaSrodowiska, wnetrze.wezel);
+      } else {
+        zwiazOknoStojace(kanal, modul.code, nazwaSrodowiska, idOkna, wnetrze.wezel);
+      }
+    }
     /* Karta nazywa się pracą, którą niesie jej wnętrze — moduł stoi przy niej
        cechą. Nazwę podaje wnętrze po zamontowaniu, więc czyta się ją po nim. */
-    nazwijKarte(modul.code, nazwaPracyKarty());
+    const nazwaPracy = nazwaPracyKarty(wnetrze.wezel);
+    if (nazwaPracy !== '') {
+      karta.nazwa = nazwaPracy;
+      nazwijKarte(karta.id, nazwaPracy);
+    }
+  };
+
+  /** Otwiera moduł kartą okna roboczego: stojącą dla wskazanego okna komunikacji albo nową. */
+  const otworzModul = (modul: Module, idOkna: string): void => {
+    if (szablonModulu('dn-tresc-' + modul.code) === null) {
+      zapowiedzModul(modul);
+      return;
+    }
+    const karta = kartaOkna(zapiszKarte(modul.code, modul.name, idOkna));
+    if (karta !== undefined) postawKarte(karta, modul);
+  };
+
+  /** Wraca na kartę stojącą w oknie bieżącym; karta modułu spoza rejestru nie ma czego postawić. */
+  const pokazKarte = (idKarty: string): void => {
+    const karta = wskazKarte(idKarty);
+    const modul = karta === undefined ? undefined : katalogModulow.get(karta.kodModulu);
+    if (karta === undefined || modul === undefined) return;
+    postawKarte(karta, modul);
   };
 
   /* Porządek drzewa projektów; widok „reakcja" nie ma pola w kontrakcie. */
@@ -337,20 +384,20 @@ export function zwiazCentrum(kanal: Kanal | undefined = globalThis.DanacoKanal):
     const czynnosc = (pozycja.textContent ?? '').trim();
     if (czynnosc === 'Zamknij kartę') {
       zdarzenie.stopPropagation();
-      zdejmijKarte(kartaBiezaca);
-      zdejmijKarteOkna(kartaBiezaca);
-      wrocDoCentrum();
+      zamknijKarte(kartaBiezaca);
       return;
     }
     if (czynnosc === 'Zamknij pozostałe') {
       zdarzenie.stopPropagation();
-      for (const kod of zostawKarte(kartaBiezaca)) zdejmijKarte(kod);
+      for (const idKarty of zostawKarte(kartaBiezaca)) zdejmijKarte(idKarty);
+      uprzatnijWnetrza();
       odswiezPasmo();
       return;
     }
     if (czynnosc === 'Zamknij karty po prawej') {
       zdarzenie.stopPropagation();
-      for (const kod of zdejmijKartyPoPrawej(kartaBiezaca)) zdejmijKarte(kod);
+      for (const idKarty of zdejmijKartyPoPrawej(kartaBiezaca)) zdejmijKarte(idKarty);
+      uprzatnijWnetrza();
       odswiezPasmo();
       return;
     }
@@ -360,18 +407,41 @@ export function zwiazCentrum(kanal: Kanal | undefined = globalThis.DanacoKanal):
     }
   }, true);
 
-  /** Przerysowuje pasmo kart z wykazu okna bieżącego. */
+  /** Przerysowuje pasmo kart z rejestru okna bieżącego; zaznaczona jest karta pokazywana w płótnie. */
   function odswiezPasmo(): void {
-    const okno = oknoBiezace();
     ustawKarty(
-      okno.karty.map((kod) => {
-        const nazwa = katalogModulow.get(kod)?.name ?? kod;
-        return { id: kod, nazwa, modul: nazwa };
-      }),
-      okno.kartaBiezaca,
+      kartyOkna().map((karta) => ({
+        id: karta.id,
+        nazwa: karta.nazwa,
+        kodModulu: karta.kodModulu,
+        idOknaKomunikacji: karta.idOknaKomunikacji,
+      })),
+      kartaBiezaca,
     );
     odswiezOknaRobocze();
   }
+
+  /** Zdejmuje z płótna wnętrza kart, których rejestr okien roboczych już nie zna, wraz z ich wiązaniem: uchwytami zdarzeń i nasłuchami. */
+  const uprzatnijWnetrza = (): void => {
+    for (const wnetrze of wezly.plotno.querySelectorAll<HTMLElement>('.cd-tresc--modul[data-karta]')) {
+      const idKarty = wnetrze.dataset.karta ?? '';
+      if (kartaOkna(idKarty) !== undefined) continue;
+      zwolnijStudio(idKarty);
+      wnetrze.remove();
+    }
+  };
+
+  /**
+   * Zamyka kartę: zdejmuje ją z okna roboczego — tam idzie `window.close` —
+   * a potem z pasma i z płótna. Karta bieżąca wraca najpierw na Centrum.
+   */
+  const zamknijKarte = (idKarty: string): void => {
+    if (kartaBiezaca === idKarty) wrocDoCentrum();
+    zdejmijKarteOkna(idKarty);
+    zdejmijKarte(idKarty);
+    uprzatnijWnetrza();
+    odswiezPasmo();
+  };
 
   /** Wraca do karty głównej okna roboczego — Centrum dowodzenia. */
   const wrocDoCentrum = (): void => {
@@ -392,17 +462,18 @@ export function zwiazCentrum(kanal: Kanal | undefined = globalThis.DanacoKanal):
     );
   }
 
-  /** Stawia okno robocze na jego karcie bieżącej: Centrum albo moduł. */
+  /** Stawia okno robocze na jego karcie bieżącej: Centrum albo karta modułu. */
   const pokazOknoRobocze = (): void => {
+    uprzatnijWnetrza();
     const okno = oknoBiezace();
-    const modul = okno.kartaBiezaca === '' ? undefined : katalogModulow.get(okno.kartaBiezaca);
-    if (modul === undefined) {
+    if (kartaOkna(okno.kartaBiezaca) === undefined) {
       pokazWidok(wezly, wezly.kartaGlowna);
       kartaBiezaca = '';
+      opiszPasekModulu('');
       odswiezPasmo();
       odswiez();
     } else {
-      otworzModul(modul, '');
+      pokazKarte(okno.kartaBiezaca);
     }
     odswiezOknaRobocze();
   };
@@ -423,25 +494,83 @@ export function zwiazCentrum(kanal: Kanal | undefined = globalThis.DanacoKanal):
     },
   );
   zwiazPasmo(
-    (kodKarty) => {
-      const modul = katalogModulow.get(kodKarty);
-      if (modul === undefined) return;
-      if (kartaBiezaca === kodKarty) {
-        pokazWidok(wezly, wezly.kartaModulu);
-        zaznaczKarte(kodKarty);
-        return;
-      }
-      otworzModul(modul, '');
-    },
-    /* Znak zamknięcia zdejmuje kartę i z pasma, i z wykazu okna roboczego:
+    (idKarty) => pokazKarte(idKarty),
+    /* Znak zamknięcia zdejmuje kartę z okna roboczego, z pasma i z płótna:
        karta zdjęta z samego pasma wracała przy najbliższym przełączeniu okna. */
-    (kodKarty) => {
-      if (kartaBiezaca === kodKarty) wrocDoCentrum();
-      zdejmijKarteOkna(kodKarty);
-      zdejmijKarte(kodKarty);
-      odswiezPasmo();
-    },
+    (idKarty) => zamknijKarte(idKarty),
   );
+
+  /* Zdarzenia rdzenia warstwy wspólnej: zmiana zrobiona w innym oknie albo przez
+     proces w tle dochodzi do Centrum wyłącznie nimi. */
+  zglosUchwyt(EventType.SessionChanged, (tresc) => {
+    odswiez();
+    void wypelnijProjekty(kanal);
+    // Miara sesji na karcie środowiska liczy sesje, nie ich zmiany.
+    if (tresc.change !== ChangeKind.Updated) void wypelnijSrodowiska(kanal, wezly.obszar);
+  });
+  zwiazZdarzeniaOkien((zdjete) => {
+    if (zdjete.includes(kartaBiezaca)) wrocDoCentrum();
+    for (const idKarty of zdjete) zdejmijKarte(idKarty);
+    uprzatnijWnetrza();
+    odswiezPasmo();
+  });
+  zglosUchwyt(EventType.WindowStateChanged, (tresc) => {
+    if (kartyOkna().some((karta) => karta.idOknaKomunikacji === tresc.windowId)) odswiezPasmo();
+  });
+  zglosUchwyt(EventType.ConfigChanged, () => {
+    void wczytajSrodowiska(kanal, katalogSrodowisk);
+    void wczytajModuly(kanal, katalogModulow, modulyPoId);
+    void wypelnijSrodowiska(kanal, wezly.obszar);
+  });
+  zglosUchwyt(EventType.QueueChanged, () => {
+    odswiez();
+  });
+  zglosUchwyt(EventType.ProgressChanged, (tresc) => {
+    // Postęp w biegu nie zmienia wykazu sesji; zmienia go domknięcie procesu.
+    if (tresc.status === ProgressStatus.Running || tresc.status === ProgressStatus.Pending) return;
+    odswiez();
+  });
+  zglosUchwyt(EventType.DeviceChanged, (tresc) => {
+    const wlasne = tresc.devices.find((urzadzenie) => urzadzenie.current);
+    if (wlasne !== undefined && !wlasne.hasToken) {
+      oglos('Urządzenie', 'Dostęp tego urządzenia do konta został unieważniony.', 'ostrzezenie');
+    }
+  });
+
+  /* Czynności projektu z menu gałęzi drzewa. Nasłuch na dokumencie, bo
+     biblioteka menu wynosi treść menu poza panel. */
+  document.addEventListener('click', (zdarzenie) => {
+    const cel = zdarzenie.target;
+    if (!(cel instanceof Element)) return;
+    const pozycja = cel.closest<HTMLElement>('[data-projekt-akcja]');
+    const idProjektu = pozycja?.dataset.idProjektu;
+    if (pozycja === null || idProjektu === undefined) return;
+    void wykonajCzynnoscProjektu(kanal, pozycja.dataset.projektAkcja ?? '', idProjektu)
+      .then((wynik) => {
+        if (wynik === null) return;
+        if (!wynik.udany) {
+          oglos('Czynność projektu', wynik.blad?.message ?? 'Rdzeń odmówił wykonania.', 'blad');
+        }
+        void wypelnijProjekty(kanal);
+        // Usunięcie projektu zdejmuje przypisanie z jego sesji.
+        odswiez();
+      });
+  });
+
+  /* „Nowy projekt" z menu szyny: nazwę Operator wpisuje w gałęzi drzewa
+     projektów, bo okna zakładania projektu to wydanie nie niesie. Środowisko
+     z pozycji menu nie ma pola w `project.create` i nie wchodzi w zadanie. */
+  document.addEventListener('click', (zdarzenie) => {
+    const cel = zdarzenie.target;
+    if (!(cel instanceof Element) || cel.closest('[data-nowy-projekt-srodowisko]') === null) return;
+    void zalozProjekt(kanal).then((wynik) => {
+      if (wynik === null) return;
+      if (!wynik.udany) {
+        oglos('Nowy projekt', wynik.blad?.message ?? 'Rdzeń odmówił założenia projektu.', 'blad');
+      }
+      void wypelnijProjekty(kanal);
+    });
+  });
 
   /** Wprowadza w przedsionek środowiska; środowisko bez modułów w rejestrze nie ma czego pokazać i mówi to wprost. */
   const wejdzWPrzedsionek = (kodSrodowiska: string, nazwaZKarty: string): void => {
@@ -726,21 +855,43 @@ function widokPrzedsionka(wezly: WezlyCentrum, gniazdo: string): HTMLElement | n
   return widok;
 }
 
-/**
- * Wnętrze modułu wchodzi pod głowę karty modułu. Odnośnik do prototypu jest
- * rusztowaniem prototypu i nie wchodzi do produktu.
- */
-function wstawTrescModulu(wezly: WezlyCentrum, gniazdo: string): boolean {
+/** Blok wnętrza modułu z szablonu; brak znaczy moduł, którego okna to wydanie nie niesie. */
+function szablonModulu(gniazdo: string): Element | null {
   const szablon = document.getElementById(gniazdo);
-  if (!(szablon instanceof HTMLTemplateElement)) return false;
-  const blok = szablon.content.firstElementChild;
-  if (blok === null) return false;
-  wezly.kartaModulu.querySelector('.cd-modul-odnosnik')?.remove();
-  for (const stojace of [...wezly.kartaModulu.children]) {
-    if (!stojace.classList.contains('cd-modul-glowa')) stojace.remove();
+  if (!(szablon instanceof HTMLTemplateElement)) return null;
+  return szablon.content.firstElementChild;
+}
+
+/** Wnętrze karty stojące w płótnie; brak znaczy kartę jeszcze niepostawioną. */
+function wnetrzeStojace(wezly: WezlyCentrum, idKarty: string): HTMLElement | null {
+  return wezly.plotno.querySelector<HTMLElement>(`.cd-tresc--modul[data-karta="${idKarty}"]`);
+}
+
+/**
+ * Wnętrze karty w płótnie: stojące wraca, brakujące powstaje z klonu karty
+ * modułu ze znacznika i bloku szablonu. Każda karta ma własny węzeł — dwie
+ * karty tego samego modułu nie dzielą wnętrza, więc przełączenie nie czyści
+ * rozmowy. Wnętrze nowe staje na czele płótna, bo wiązanie Studia bierze
+ * pierwszy węzeł okna w dokumencie.
+ */
+function wnetrzeKarty(
+  wezly: WezlyCentrum,
+  idKarty: string,
+  gniazdo: string,
+): { wezel: HTMLElement; nowe: boolean } | null {
+  const stojace = wnetrzeStojace(wezly, idKarty);
+  if (stojace !== null) return { wezel: stojace, nowe: false };
+  const blok = szablonModulu(gniazdo);
+  if (blok === null) return null;
+  const wezel = wezly.kartaModulu.cloneNode(true) as HTMLElement;
+  wezel.removeAttribute('id');
+  wezel.dataset.karta = idKarty;
+  for (const dziecko of [...wezel.children]) {
+    if (!dziecko.classList.contains('cd-modul-glowa')) dziecko.remove();
   }
-  wezly.kartaModulu.appendChild(blok.cloneNode(true));
-  return true;
+  wezel.appendChild(blok.cloneNode(true));
+  wezly.plotno.prepend(wezel);
+  return { wezel, nowe: true };
 }
 
 /** Oddaje Operatorowi plik z treścią wydaną przez rdzeń. */
@@ -754,8 +905,8 @@ function oddajPlik(nazwa: string, tresc: string): void {
 }
 
 /** Nazwa pracy, którą niesie wnętrze karty; pustka znaczy wnętrze bez nazwanej pracy. */
-function nazwaPracyKarty(): string {
-  const znacznik = document.querySelector('.sta-okno-znacznik, .st-wstazka-sesja span');
+function nazwaPracyKarty(wnetrze: Element): string {
+  const znacznik = wnetrze.querySelector('.sta-okno-znacznik, .st-wstazka-sesja span');
   return znacznik?.textContent?.trim() ?? '';
 }
 
@@ -765,11 +916,11 @@ function opiszPasekModulu(nazwa: string): void {
   if (pole !== null) pole.textContent = nazwa;
 }
 
-/** Opisuje głowę karty modułu nazwą modułu i nazwą karty sesji. */
-function opiszGloweKarty(wezly: WezlyCentrum, nazwaModulu: string, nazwaSesji: string): void {
-  const nazwa = wezly.kartaModulu.querySelector('[data-karta-modul-nazwa]');
+/** Opisuje głowę wnętrza karty nazwą modułu i nazwą karty sesji. */
+function opiszGloweKarty(wnetrze: HTMLElement, nazwaModulu: string, nazwaSesji: string): void {
+  const nazwa = wnetrze.querySelector('[data-karta-modul-nazwa]');
   if (nazwa !== null) nazwa.textContent = nazwaModulu;
-  const meta = wezly.kartaModulu.querySelector('.cd-modul-glowa .dn-meta');
+  const meta = wnetrze.querySelector('.cd-modul-glowa .dn-meta');
   if (meta !== null) meta.textContent = nazwaSesji === '' ? '' : 'sesja: ' + nazwaSesji;
 }
 
@@ -929,15 +1080,113 @@ async function wypelnijProjekty(kanal: Kanal): Promise<void> {
     const nazwa = wpis.querySelector('.dn-panel-galaz-nazwa');
     if (nazwa !== null) nazwa.textContent = projekt.name;
     for (const pozycja of wpis.querySelectorAll('.dn-panel-wiersz')) pozycja.remove();
+    opiszMenuProjektu(wpis, projekt.id);
+    /* Wiersz sesji w drzewie ma ten sam kształt co w wykazie sesji, z menu
+       czynności włącznie; przedrostek odwołania menu jest inny, bo ta sama
+       sesja stoi w obu wykazach i dwa menu nie mogą dzielić jednego `id`. */
     for (const sesja of wedlugProjektu.get(projekt.id) ?? []) {
       if (wzorSesji === null) break;
-      const wiersz = wzorSesji.cloneNode(true) as HTMLElement;
-      wiersz.dataset.idSesji = sesja.id;
-      const podpis = wiersz.querySelector('.dn-obszar-pozycja-nazwa') ?? wiersz;
-      podpis.textContent = sesja.title ?? 'Sesja bez nazwy';
-      wpis.appendChild(wiersz);
+      wpis.appendChild(zbudujWiersz(wzorSesji, sesja, 'menu-sesji-projektu-'));
     }
     drzewo.appendChild(wpis);
+  }
+}
+
+/* Czynności menu gałęzi projektu z pokryciem w kontrakcie, po podpisie pozycji
+   prototypu: znacznik nie niesie dla nich własnego uchwytu. Pozostałe pozycje
+   schodzą — pozycja bez komendy jest obietnicą bez pokrycia. */
+const CZYNNOSCI_PROJEKTU: Record<string, string> = {
+  'Zmień nazwę': 'nazwa',
+  'Usuń trwale': 'usun',
+};
+
+/**
+ * Wiąże menu gałęzi z projektem: własne odwołanie menu, czynności z pokryciem
+ * i identyfikator projektu przy każdej pozycji, bo biblioteka menu wynosi
+ * treść menu poza gałąź. Menu gałęzi stoi wprost pod nią, obok wierszy sesji.
+ */
+function opiszMenuProjektu(wpis: HTMLElement, idProjektu: string): void {
+  const menu = wpis.querySelector(':scope > [data-menu-tresc]');
+  const wyzwalacz = wpis.querySelector(':scope > summary [data-menu]');
+  if (menu !== null && wyzwalacz !== null) {
+    const oznaczenie = 'menu-projektu-' + idProjektu;
+    menu.id = oznaczenie;
+    wyzwalacz.setAttribute('data-menu', oznaczenie);
+  }
+  for (const pozycja of wpis.querySelectorAll<HTMLElement>(':scope > [data-menu-tresc] .sta-menu-poz')) {
+    const czynnosc = CZYNNOSCI_PROJEKTU[(pozycja.textContent ?? '').trim()];
+    if (czynnosc === undefined) {
+      pozycja.remove();
+      continue;
+    }
+    pozycja.dataset.projektAkcja = czynnosc;
+    pozycja.dataset.idProjektu = idProjektu;
+  }
+  zdejmijRozdzielnikiSieroce(wpis);
+}
+
+/** Wykonuje czynność projektu komendą kontraktu; `null` znaczy czynność porzuconą przez Operatora. */
+async function wykonajCzynnoscProjektu(
+  kanal: Kanal,
+  czynnosc: string,
+  idProjektu: string,
+): Promise<Wynik<unknown> | null> {
+  // Potwierdzenie nieodwracalności niesie sama pozycja menu: nazywa usunięcie trwałym.
+  if (czynnosc === 'usun') return wywolaj(kanal, Command.ProjectDelete, { projectId: idProjektu });
+  if (czynnosc !== 'nazwa') return null;
+  const wezel = wezelNazwyProjektu(idProjektu);
+  const nazwa = wezel === null ? null : await zapytajWWezle(wezel, null);
+  if (nazwa === null || nazwa === '') return null;
+  return wywolaj(kanal, Command.ProjectRename, { projectId: idProjektu, name: nazwa });
+}
+
+/** Węzeł nazwy w gałęzi wskazanego projektu; gałąź szuka się w drzewie, nie w przodkach pozycji menu. */
+function wezelNazwyProjektu(idProjektu: string): HTMLElement | null {
+  for (const galaz of document.querySelectorAll<HTMLElement>('#panel-projekty .dn-panel-galaz')) {
+    if (galaz.dataset.projekt === idProjektu) {
+      return galaz.querySelector<HTMLElement>('.dn-panel-galaz-nazwa');
+    }
+  }
+  return null;
+}
+
+/**
+ * Zakłada projekt pod nazwą wpisaną w nowej gałęzi drzewa. Gałąź wpisu jest
+ * klonem wzoru bez sesji i menu; schodzi po wpisie, bo drzewo wraca
+ * odpowiedzią rdzenia. Wpis pusty i porzucenie zostawiają drzewo bez zmiany.
+ */
+async function zalozProjekt(kanal: Kanal): Promise<Wynik<unknown> | null> {
+  const drzewo = document.querySelector<HTMLElement>('#panel-projekty .dn-panel-drzewo');
+  if (drzewo === null || wzorGalezi === null) return null;
+  const galaz = wzorGalezi.cloneNode(true) as HTMLElement;
+  galaz.removeAttribute('data-projekt');
+  for (const zbedne of galaz.querySelectorAll('.dn-panel-wiersz, .dn-obszar-pozycja-menu, [data-menu-tresc]')) {
+    zbedne.remove();
+  }
+  const nazwa = galaz.querySelector<HTMLElement>('.dn-panel-galaz-nazwa');
+  if (nazwa === null) return null;
+  /* Wpis zaczyna się po domknięciu menu przez bibliotekę: jej powrót ogniska
+     na wyzwalacz zabrałby ognisko polu wpisu i porzucił wpis. */
+  await new Promise((gotowe) => setTimeout(gotowe, 0));
+  pokazPanelProjektow();
+  drzewo.prepend(galaz);
+  const wpis = await zapytajWWezle(nazwa, '');
+  galaz.remove();
+  if (wpis === null || wpis === '') return null;
+  return wywolaj(kanal, Command.ProjectCreate, { name: wpis });
+}
+
+/** Odsłania zakładkę projektów panelu bocznego; pole wpisu nazwy przyjmuje ognisko tylko widoczne. */
+function pokazPanelProjektow(): void {
+  const zakladka = document.querySelector<HTMLElement>('[role="tab"][aria-controls="panel-projekty"]');
+  if (zakladka === null || zakladka.getAttribute('aria-selected') === 'true') return;
+  zakladka.click();
+  if (document.getElementById('panel-projekty')?.hidden !== true) return;
+  // Biblioteka nie przełączyła zakładki, więc panele przełącza wiązanie.
+  for (const inna of zakladka.parentElement?.querySelectorAll<HTMLElement>('[role="tab"]') ?? []) {
+    inna.setAttribute('aria-selected', String(inna === zakladka));
+    const panel = document.getElementById(inna.getAttribute('aria-controls') ?? '');
+    if (panel !== null) panel.hidden = inna !== zakladka;
   }
 }
 
@@ -1005,8 +1254,9 @@ function uporzadkuj(sesje: Session[]): Session[] {
  * Zwraca klon wzoru wiersza opisany nazwą sesji. Menu czynności zostaje, bo
  * niesie czynności o pokryciu w kontrakcie; jego odwołanie dostaje
  * identyfikator sesji, żeby dwa wiersze nie wskazywały tego samego menu.
+ * Przedrostek odwołania rozróżnia wykazy, w których stoi ta sama sesja.
  */
-function zbudujWiersz(wzor: HTMLElement, sesja: Session): HTMLElement {
+function zbudujWiersz(wzor: HTMLElement, sesja: Session, przedrostek = 'menu-sesji-'): HTMLElement {
   const wiersz = wzor.cloneNode(true) as HTMLElement;
   wiersz.dataset.idSesji = sesja.id;
   const nazwa = wiersz.querySelector('.dn-obszar-pozycja-nazwa');
@@ -1017,7 +1267,7 @@ function zbudujWiersz(wzor: HTMLElement, sesja: Session): HTMLElement {
   const menu = wiersz.querySelector('[data-menu-tresc]');
   const wyzwalacz = wiersz.querySelector('[data-menu]');
   if (menu !== null && wyzwalacz !== null) {
-    const oznaczenie = 'menu-sesji-' + sesja.id;
+    const oznaczenie = przedrostek + sesja.id;
     menu.id = oznaczenie;
     wyzwalacz.setAttribute('data-menu', oznaczenie);
   }
@@ -1102,7 +1352,11 @@ async function przeniesSesjeDoProjektu(
  */
 function zapytajWWierszu(idSesji: string, wartosc: string | null): Promise<string | null> {
   const wezel = wezelNazwySesji(idSesji);
-  if (wezel === null) return Promise.resolve(null);
+  return wezel === null ? Promise.resolve(null) : zapytajWWezle(wezel, wartosc);
+}
+
+/** Pyta o tekst we wskazanym węźle nazwy; zasady wpisu jak przy wierszu sesji. */
+function zapytajWWezle(wezel: HTMLElement, wartosc: string | null): Promise<string | null> {
   const przed = wezel.textContent ?? '';
   return new Promise((rozstrzygnij) => {
     let domkniete = false;
@@ -1134,16 +1388,18 @@ function zapytajWWierszu(idSesji: string, wartosc: string | null): Promise<strin
   });
 }
 
-/** Węzeł nazwy w wierszu wskazanej sesji; biblioteka menu wynosi treść menu poza wiersz, więc wiersz szuka się w wykazie, nie w przodkach pozycji menu. */
+/**
+ * Węzeł nazwy w wierszu wskazanej sesji; biblioteka menu wynosi treść menu poza
+ * wiersz, więc wiersz szuka się w wykazach, nie w przodkach pozycji menu.
+ * Sesja stoi w wykazie sesji i w drzewie projektów naraz; pierwszeństwo ma
+ * wiersz widoczny, bo pole wpisu w panelu zasłoniętym nie przyjmie ogniska.
+ */
 function wezelNazwySesji(idSesji: string): HTMLElement | null {
-  const wykaz = document.getElementById('wykaz-sesji');
-  if (wykaz === null) return null;
-  for (const wiersz of wykaz.querySelectorAll<HTMLElement>('.dn-panel-wiersz')) {
-    if (wiersz.dataset.idSesji === idSesji) {
-      return wiersz.querySelector<HTMLElement>('.dn-obszar-pozycja-nazwa');
-    }
-  }
-  return null;
+  const wiersze = [...document.querySelectorAll<HTMLElement>(
+    '#wykaz-sesji .dn-panel-wiersz, #panel-projekty .dn-panel-wiersz',
+  )].filter((wiersz) => wiersz.dataset.idSesji === idSesji);
+  const wiersz = wiersze.find((kandydat) => kandydat.offsetParent !== null) ?? wiersze[0];
+  return wiersz?.querySelector<HTMLElement>('.dn-obszar-pozycja-nazwa') ?? null;
 }
 
 /** Zaznacza całą treść węzła, żeby wpis ją zastąpił, a nie dopisał się do niej. */
@@ -1237,11 +1493,6 @@ const OKNA_PLATFORMOWE: readonly DrogaPlatformowa[] = [
     wybor: '[data-otwarz-historie]',
     nazwa: 'Historia sesji',
     zamiast: 'Sesje konta stoją w panelu bocznym okna roboczego.',
-  },
-  {
-    wybor: '[data-okno-nowe="Nowy projekt"], [data-nowy-projekt-srodowisko]',
-    nazwa: 'Nowy projekt',
-    zamiast: 'Projekt zakłada przeniesienie sesji do projektu z menu wiersza sesji.',
   },
   { wybor: '[data-skrot-komponent="Mobile"]', nazwa: 'Mobile', zamiast: '' },
   { wybor: '[data-skrot-komponent="Always on Display"]', nazwa: 'Always On Display', zamiast: '' },

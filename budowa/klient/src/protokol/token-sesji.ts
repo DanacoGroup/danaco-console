@@ -1,4 +1,4 @@
-import { Command, EnvelopeStatus } from '../../../shared/contract.ts';
+import { Command, EnvelopeStatus, type AuthSession } from '../../../shared/contract.ts';
 import type { Kanal } from './kanal.ts';
 
 /**
@@ -10,6 +10,9 @@ import type { Kanal } from './kanal.ts';
  * byłby niedostępny warstwie, która to powitanie ponawia.
  */
 let token = '';
+/* Urządzenie, na którym sesja trwa; `auth.changed` o unieważnieniu sesji
+   wskazuje urządzenie, więc po nim klient poznaje, czy to jego token. */
+let urzadzenie = '';
 
 /*
 Komendy, których odpowiedź niesie sesję bramki. Token bierze się z odpowiedzi
@@ -28,9 +31,15 @@ export function tokenSesji(): string {
   return token;
 }
 
+/** Urządzenie sesji bieżącej według rdzenia; pustka, gdy rdzeń go nie nazwał. */
+export function urzadzenieSesji(): string {
+  return urzadzenie;
+}
+
 /** Zapomina token; rdzeń unieważnia go przy zmianie hasła i przy odzyskaniu konta. */
 export function zapomnijTokenSesji(): void {
   token = '';
+  urzadzenie = '';
 }
 
 /** Zapamiętuje token z każdej odpowiedzi rdzenia, która sesję bramki wydaje albo przedłuża. */
@@ -38,16 +47,19 @@ export function pilnujTokenu(kanal: Kanal): void {
   kanal.naDowolny((koperta) => {
     if (koperta.status !== EnvelopeStatus.Ok) return;
     if (!KOMENDY_SESJI.includes(koperta.type)) return;
-    const wydany = tokenZTresci(koperta.payload);
-    if (wydany !== '') token = wydany;
+    const wydana = sesjaZTresci(koperta.payload);
+    if (wydana === null) return;
+    token = wydana.token;
+    urzadzenie = wydana.deviceId ?? '';
   });
 }
 
-/** Token z treści odpowiedzi niosącej sesję bramki; pusty łańcuch, gdy odpowiedź go nie ma. */
-function tokenZTresci(tresc: unknown): string {
-  if (typeof tresc !== 'object' || tresc === null) return '';
+/** Sesja bramki z treści odpowiedzi; pustka, gdy odpowiedź jej nie niesie. */
+function sesjaZTresci(tresc: unknown): AuthSession | null {
+  if (typeof tresc !== 'object' || tresc === null) return null;
   const sesja = (tresc as { session?: unknown }).session;
-  if (typeof sesja !== 'object' || sesja === null) return '';
+  if (typeof sesja !== 'object' || sesja === null) return null;
   const wydany = (sesja as { token?: unknown }).token;
-  return typeof wydany === 'string' ? wydany : '';
+  if (typeof wydany !== 'string' || wydany === '') return null;
+  return sesja as AuthSession;
 }

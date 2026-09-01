@@ -3,6 +3,7 @@ import {
   adresGniazdaOdPowloki,
   adresGniazdaRdzenia,
   adresRdzeniaLokalnego,
+  czyPochodzeniePowloki,
 } from './polaczenie/adres-rdzenia.ts';
 import { utworzTransport } from './polaczenie/gniazdo.ts';
 import { utworzKanal } from './protokol/kanal.ts';
@@ -16,17 +17,22 @@ import { zwiazWejscie } from './wiazanie/wejscie.ts';
 import { zwiazZdarzenia } from './wiazanie/zdarzenia.ts';
 
 /**
- * Adres gniazda rdzenia pochodzi z dokumentu wczytanego po HTTP; w pozostałych
- * przypadkach zostaje pętla zwrotna z portem domyślnym.
+ * Adres gniazda rdzenia z dokumentu wczytanego po HTTP; poza tym pętla zwrotna
+ * z portem domyślnym. Pochodzenie powłoki desktopowej do pętli zwrotnej nie
+ * cofa — rdzeń stoi na serwerze wdrożenia, który podaje wskazanie powłoki.
+ * Pustka znaczy powłokę bez wskazania: transport nie łączy, okno wejścia
+ * pokazuje błąd.
  */
-function adresRdzenia(): string {
-  return adresGniazdaRdzenia(globalThis.location.origin) ?? adresRdzeniaLokalnego();
+function adresRdzenia(): string | null {
+  const pochodzenie = globalThis.location.origin;
+  if (czyPochodzeniePowloki(pochodzenie)) return null;
+  return adresGniazdaRdzenia(pochodzenie) ?? adresRdzeniaLokalnego();
 }
 
 /* Powłoka desktopowa pytana jest pierwsza: jej wskazanie niesie serwer
    wdrożenia, którego pochodzenie dokumentu w powłoce nie zdradza. Poza powłoką
    odpowiedzi nie ma i zostaje adres wywiedziony z pochodzenia. */
-const transport = utworzTransport(adresGniazdaOdPowloki() ?? adresRdzenia());
+const transport = utworzTransport(adresGniazdaOdPowloki() ?? adresRdzenia() ?? '');
 const kanal = utworzKanal(transport, sesjaKlienta());
 
 /*
@@ -93,9 +99,9 @@ globalThis.setTimeout(raz, 6000);
 pilnujTokenu(kanal);
 
 /*
-Powitanie idzie na każdym gnieździe od nowa: rdzeń wiąże z połączeniem sesję
-bramki właśnie w powitaniu, więc po uśpieniu maszyny, restarcie rdzenia albo
-mignięciu sieci komenda wysłana bez ponowienia wraca odmową `not_authenticated`.
+Powitanie idzie na każdym gnieździe od nowa: rdzeń wiąże sesję bramki
+z połączeniem w powitaniu, więc po uśpieniu maszyny, restarcie rdzenia albo
+mignięciu sieci komenda bez ponowienia wraca odmową `not_authenticated`.
 Do powrotu odpowiedzi kolejka wychodząca stoi wstrzymana — inaczej komendy
 odłożone na czas zerwania wyszłyby przed uwierzytelnieniem.
 */

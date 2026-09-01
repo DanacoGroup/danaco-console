@@ -8,5 +8,8 @@
     "kontrakt": "node ../shared/gen/generate.mjs",
     "budowanie": "vite build",
     "typy": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@tauri-apps/api": "^2.11.1"
   }
 }

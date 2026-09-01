@@ -31,7 +31,7 @@ pliki terenów roboczych (`emptyOutDir`).
 | stan sprzed napraw | rewizja `2881c425` na `teren/centrum-poprawki` |
 | `main` | drzewo robocze `~/robocze/prowadzenie/main-roboczy`, scalone do rewizji `ed7be7c0` |
 | audyt pierwszy | `~/robocze/audyt-danaco-console-2026-09-01.md`, wystawiony pod `http://51.75.62.180/wykaz-audyt.html` |
-| skrypt audytu powtórnego | `/tmp/claude-1000/-home-ubuntu/80e91b12-.../scratchpad/audyt-powtorny.js` — katalog tymczasowy sesji znika, skrypt trzeba odtworzyć albo napisać na nowo |
+| materiał przekazania | `~/robocze/przekazanie-2026-09-01/` — audyt, sprawozdania terenów, trzy skrypty przebiegów |
 
 Audyt pierwszy jest podstawą całej dalszej pracy: niesie 189 ustaleń z plikiem i wierszem,
 recepty naprawcze, plan siedmiu etapów z miarami odbioru oraz wykaz dwunastu rozstrzygnięć
@@ -98,11 +98,71 @@ jako `danaco-console.bak-2026-08-30`.
 189 ustaleń, 18 krytycznych (5 obalonych przez weryfikację).
 
 **Naprawy.** Czternaście terenów o rozłącznych wykazach plików, praca równoległa.
-Zapis roboczy: rewizja `955c03e0` — 94 pliki, +6490/−1423, drabina zdana.
-Po niej idzie scalenie (jeden agent na całym drzewie domykający zgłoszenia „poza terenem")
-i pięciu kontrolerów odbioru.
+Zapis: rewizja `955c03e0` — 94 pliki, +6490/−1423, drabina zdana. **Scalenia ani kontroli
+odbioru ta sesja nie wykonała** — rozdział 5 mówi, jak je przeprowadzić.
 
-## 5. Co zostało
+## 5. Praca w biegu — czym zaczyna następna sesja
+
+Naprawy z audytu wykonało czternaście terenów pracujących równolegle na rozłącznych wykazach
+plików. Ich wynik jest zapisany rewizją `955c03e0`. **Scalenia i kontroli odbioru ta sesja
+nie wykonała** — to pierwsza rzecz do zrobienia, i dopiero po niej wolno cokolwiek scalać do `main`.
+
+Materiał leży w `~/robocze/przekazanie-2026-09-01/`:
+
+| plik | co niesie |
+|---|---|
+| `audyt-pierwszy.md` | audyt z 1 września: 189 ustaleń, recepty, plan siedmiu etapów |
+| `sprawozdania-terenow.md` | co zrobił każdy teren, co pominął i czego nie mógł tknąć |
+| `sprawozdania-terenow.json` | to samo w postaci do przetworzenia |
+| `workflow-audyt-pierwszy.js` | przebieg audytu — do powtórzenia bez pisania od nowa |
+| `workflow-naprawy.js` | przebieg napraw wraz z wykazami plików czternastu terenów |
+| `workflow-audyt-powtorny.js` | przebieg audytu powtórnego, napisany i nieuruchomiony |
+
+Bilans terenów: **132 naprawy wykonane, 37 pozycji pominiętych** (czekają na rozstrzygnięcia
+Właściciela albo na pracę projektową) i **80 zgłoszeń „poza terenem"**.
+
+### 5.1 Scalenie
+
+Osiemdziesiąt zgłoszeń „poza terenem" to miejsca, których teren nie mógł tknąć, bo plik należał
+do sąsiada pracującego w tej samej chwili. Teraz nikt nie pracuje równolegle, więc wolno tknąć
+każdy plik. Wykaz stoi w `sprawozdania-terenow.md`, w blokach „Do domknięcia poza terenem".
+
+Kolejność: najpierw doprowadzić drzewo do budowy, potem domknąć zgłoszenia, potem znów zbudować.
+
+```bash
+cd ~/budowa/budowa && go build ./... && go vet ./server/... && gofmt -l server
+cd ~/budowa/budowa/klient && npx tsc --noEmit && npx vite build
+cd ~/budowa/budowa/desktop/src-tauri && PATH=$HOME/.local/bin:$PATH cargo check --target x86_64-pc-windows-gnu
+cd ~/budowa/budowa/instalator/src-tauri && PATH=$HOME/.local/bin:$PATH cargo check --target x86_64-pc-windows-gnu
+cd ~/budowa/budowa && go test ./server/internal/dane/... ./server/internal/store/... ./server/internal/transport/...
+```
+
+Pakiet `server/internal/core` pomiń — ma sprawdzian sięgający po silniki zewnętrzne,
+który nie kończy się w dziesięć minut. To osobne ustalenie audytu.
+
+### 5.2 Kontrola odbioru
+
+Sprawozdaniom terenów nie wolno wierzyć. Kontrola ma czytać kod po naprawie i mierzyć,
+z założeniem, że naprawa jest pozorna, dopóki pomiar nie pokaże inaczej. Pięć zakresów:
+
+1. **granica konta** — K1, W4, W5, W7: czy konto B nie sięga po dane i hasło konta A
+2. **kanał i bramka** — W3, W6, W10, W26: czy bramki nie da się zdjąć z gniazda, czy unieważniona
+   sesja traci dostęp natychmiast, czy rozgłoszenie trafia wyłącznie do konta wołającego
+3. **model okna** — K2, W11–W15: czy sesja wraca z historią, czy dwie karty Studia żyją obok siebie
+4. **Studio i atrapy** — K3, W1, W17, W18, W21, W22: czy strumień dochodzi, czy turę da się zatrzymać,
+   czy w wydaniu nie została ani jedna atrapa
+5. **instalator i wydanie** — K5, K6, K7, W24, W27: czy instalator naprawdę zakłada program
+
+### 5.3 Audyt powtórny
+
+Dopiero po kontroli. Skrypt jest napisany (`workflow-audyt-powtorny.js`) i ma cztery fazy:
+odbiór wszystkich ustaleń pierwszego audytu jedno po drugim, trzynaście kategorii na nowo
+z osobnym oznaczaniem **regresji**, weryfikacja adwersaryjna, synteza z bilansem.
+
+Bilans ma odpowiedzieć na jedno pytanie: ile ustaleń pierwszego audytu naprawdę zniknęło,
+a ile tylko przemalowano.
+
+## 6. Co zostało
 
 Plan siedmiu etapów stoi w audycie, rozdział 4, każdy z wykazem czynności plik po pliku,
 miarą odbioru i kosztem. Kolejność wynika z zależności, nie z wagi:
@@ -121,7 +181,7 @@ Etap 7 nie ma sensu przed 1, 2 i 6.
 Po naprawach z tej sesji część czynności etapów 1, 2, 4, 5 i 7 jest wykonana; **stan każdego
 ustalenia ma rozstrzygnąć audyt powtórny**, nie sprawozdania terenów.
 
-## 6. Czego nie wolno
+## 7. Czego nie wolno
 
 - **Nie edytować migracji 226, 269 i 378.** Niosą wadę (kaskadowe kasowanie przy przebudowie
   tabeli), ale strażnik sumy kontrolnej wywróci start każdej istniejącej bazy. Naprawa idzie
@@ -139,7 +199,7 @@ ustalenia ma rozstrzygnąć audyt powtórny**, nie sprawozdania terenów.
 - **Nie wystawiać niczego jako gotowego bez pokazania wyniku.** Zrzut z maszyny Windows
   z pliku pobranego z serwera, a nie z dysku maszyny budującej.
 
-## 7. Rozstrzygnięcia czekające na Właściciela
+## 8. Rozstrzygnięcia czekające na Właściciela
 
 Pełny wykaz stoi w audycie, rozdział 5. Trzy blokują wydanie:
 
@@ -155,7 +215,7 @@ Dalej m.in.: kształt rodziny `project.*`, reguła wykazu narzędzi modelu (603 
 wykazem bez podanej racji), wydanie ARM64, domyślna wartość bramki na pętli zwrotnej,
 czym szyfrować sejf poświadczeń, los siedmiu okien platformowych.
 
-## 8. Jak sprawdzić, że wszystko stoi
+## 9. Jak sprawdzić, że wszystko stoi
 
 ```bash
 cd ~/budowa/budowa && go build ./... && go vet ./server/... && gofmt -l server
@@ -169,7 +229,7 @@ curl -s -o /dev/null -w '%{http_code}\n' https://console.danaco-group.pl/
 Dziennik startu rdzenia ma mówić `komend=1086`, `zależności zewnętrzne: 55 z 55 obecnych`
 i `klient=klient/dist`.
 
-## 9. Pułapki tej maszyny
+## 10. Pułapki tej maszyny
 
 - Cel `x86_64-pc-windows-msvc` buduje się przez `cargo xwin`, a `cc-rs` szuka `llvm-lib`
   bez przyrostka wersji. W `~/.local/bin` stoją dowiązania `llvm-lib`, `llvm-rc`, `llvm-ar`,

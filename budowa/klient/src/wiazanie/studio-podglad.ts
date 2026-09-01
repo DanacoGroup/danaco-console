@@ -46,9 +46,9 @@ interface StanPodgladu {
 }
 
 /**
- * Wzór kartki zdjęty przy pierwszym montażu okna. Powłoka wstawia wnętrze okna
- * na nowo przy każdym wejściu, a drugie zdjęcie zastałoby obszar stron już
- * opróżniony, więc wzoru nie da się z niego wziąć po raz drugi.
+ * Wzór kartki zdjęty przy pierwszym montażu karty. Każda karta niesie ten sam
+ * znacznik, a obszar stron opróżniony wzoru już nie oddaje, więc zdjęcie stoi
+ * raz dla wszystkich kart.
  */
 let wzorKartki: HTMLElement | null = null;
 
@@ -57,13 +57,13 @@ let wzorKartki: HTMLElement | null = null;
  * Woła się przy montażu okna, przed powstaniem stanowiska: kartka prototypu
  * niesie cudzy dokument. Zwraca prawdę, gdy panel stał w dokumencie.
  */
-export function zdejmijTrescPrzykladowaPodgladu(): boolean {
-  return przygotujPanel() !== null;
+export function zdejmijTrescPrzykladowaPodgladu(korzen: ParentNode): boolean {
+  return przygotujPanel(korzen) !== null;
 }
 
-/** Zbiera węzły panelu i opróżnia obszar stron z kartki przykładowej; pustka znaczy panel poza dokumentem albo znacznik bez kartki wzorcowej. */
-function przygotujPanel(): { wezly: WezlyPodgladu; wzorStrony: HTMLElement } | null {
-  const znalezione = zbierzWezly();
+/** Zbiera węzły panelu i opróżnia obszar stron z kartki przykładowej; pustka znaczy panel poza kartą albo znacznik bez kartki wzorcowej. */
+function przygotujPanel(korzen: ParentNode): { wezly: WezlyPodgladu; wzorStrony: HTMLElement } | null {
+  const znalezione = zbierzWezly(korzen);
   if (znalezione === null) return null;
   wzorKartki ??= zdejmijWzorStrony(znalezione.podglad);
   if (wzorKartki === null) return null;
@@ -72,11 +72,12 @@ function przygotujPanel(): { wezly: WezlyPodgladu; wzorStrony: HTMLElement } | n
 }
 
 /**
- * Wiąże panel podglądu okna Studia z rdzeniem. Zwraca prawdę, gdy znacznik
- * panelu stał i wiązanie zostało założone.
+ * Wiąże panel podglądu karty Studia z rdzeniem; węzły idą od korzenia karty.
+ * Zwraca prawdę, gdy znacznik panelu stał i wiązanie zostało założone. Panel
+ * nie zgłasza nasłuchów kanału, więc nie ma czego odłączać.
  */
-export function zwiazPodglad(kanal: Kanal, idOkna: string): boolean {
-  const przygotowany = przygotujPanel();
+export function zwiazPodglad(kanal: Kanal, idOkna: string, korzen: ParentNode): boolean {
+  const przygotowany = przygotujPanel(korzen);
   if (przygotowany === null) return false;
   const wezly: WezlyPodgladu = przygotowany.wezly;
   const wzorStrony: HTMLElement = przygotowany.wzorStrony;
@@ -316,9 +317,9 @@ function zdejmijWzorStrony(podglad: HTMLElement): HTMLElement | null {
   return kartka.cloneNode(true) as HTMLElement;
 }
 
-/** Wskazuje węzły panelu podglądu; pustka znaczy, że panel nie stoi w dokumencie. */
-function zbierzWezly(): WezlyPodgladu | null {
-  const panel = document.querySelector('#panel-preview');
+/** Wskazuje węzły panelu podglądu od korzenia karty; pustka znaczy, że panel nie stoi w karcie. */
+function zbierzWezly(korzen: ParentNode): WezlyPodgladu | null {
+  const panel = korzen.querySelector('#panel-preview');
   if (panel === null) return null;
   const podglad = panel.querySelector('.st-podglad');
   if (!(podglad instanceof HTMLElement)) return null;

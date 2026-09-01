@@ -1,15 +1,11 @@
 /**
  * Okna robocze aplikacji wraz z kartami, które w nich stoją. Okno robocze jest
  * kontenerem jednego działania Operatora: otwiera się na Centrum dowodzenia,
- * trzyma własne karty i własny widok bieżący. Karta jest jedną pracą, nie
- * modułem — niesie kod modułu i okno komunikacji rdzenia jako osobne pola,
- * więc w jednym oknie roboczym stoi obok siebie wiele kart tego samego modułu.
- *
- * Kontrakt nie ma pola na wykaz okien roboczych, więc wykaz nie jest zapisywany
- * ani odczytywany wprost: odtwarza się przy starcie z sesji czynnych konta
- * (`home.enter`) i okien komunikacji, które w nich stoją (`window.list`).
- * Układ sekcji paneli karty ma w kontrakcie własne miejsce i idzie do rdzenia
- * przez `panel.sections.set`.
+ * niesie najwyżej jedną sesję rdzenia i trzyma własne karty. Karta jest jedną
+ * pracą, nie modułem — niesie kod modułu i okno komunikacji rdzenia osobno,
+ * więc w oknie stoi obok siebie wiele kart tego samego modułu. Kontrakt nie ma
+ * pola na wykaz okien roboczych: odtwarza się przy starcie z `home.enter`
+ * i `window.list`.
  */
 import {
   ChangeKind,
@@ -38,12 +34,14 @@ export interface KartaRobocza {
   nazwa: string;
 }
 
-/** Okno robocze widziane przez wiązanie: nazwa dla przełącznika i karta bieżąca. */
+/** Okno robocze widziane przez wiązanie: nazwa dla przełącznika, sesja i karta bieżąca. */
 export interface OknoRobocze {
   /** Oznaczenie okna nadane przy otwarciu; nie wychodzi poza klienta. */
   id: string;
   /** Nazwa pokazywana w przełączniku; okno bez pracy nazywa się Centrum dowodzenia. */
   nazwa: string;
+  /** Sesja rdzenia niesiona przez okno; pustka znaczy sesję jeszcze niezałożoną — powstaje pierwszą wiadomością. */
+  idSesji: string;
   /** Identyfikator karty bieżącej; pustka znaczy kartę główną — Centrum. */
   kartaBiezaca: string;
   /** Identyfikatory kart otwartych w oknie, w kolejności otwarcia; karta główna stoi poza wykazem. */
@@ -58,16 +56,58 @@ const KARTY = new Map<string, KartaRobocza>();
 let biezace = '';
 let licznik = 0;
 let licznikKart = 0;
-/* Kanał zapamiętany przy odtwarzaniu wykazu. Zamknięcie karty i okna sięga
-   rdzenia, a woła je czynność okna, która kanału nie niesie. */
+/* Kanał wpięty przy wiązaniu Centrum. Zamknięcie karty i okna sięga rdzenia,
+   a woła je czynność okna, która kanału nie niesie. */
 let kanalRdzenia: Kanal | null = null;
 
 /** Nazwa okna roboczego bez podjętej pracy. */
 const NAZWA_POCZATKOWA = 'Centrum dowodzenia';
 
+/** Wpina kanał rdzenia, którym okna robocze zamykają okna komunikacji swoich kart. */
+export function wskazKanalRdzenia(kanal: Kanal): void {
+  kanalRdzenia = kanal;
+}
+
 /** Wykaz okien roboczych w kolejności otwarcia. */
 export function oknaRobocze(): OknoRobocze[] {
   return OKNA;
+}
+
+/** Okno robocze, w którym stoi wskazana karta; brak znaczy kartę zdjętą. */
+export function oknoKarty(idKarty: string): OknoRobocze | undefined {
+  return OKNA.find((okno) => okno.karty.includes(idKarty));
+}
+
+/** Okno robocze niosące wskazaną sesję; brak znaczy sesję bez okna w tym kliencie. */
+export function oknoSesji(idSesji: string): OknoRobocze | undefined {
+  if (idSesji === '') return undefined;
+  return OKNA.find((okno) => okno.idSesji === idSesji);
+}
+
+/**
+ * Zapisuje na oknie roboczym sesję, którą rdzeń dla niego założył albo
+ * otworzył. Okno niesie najwyżej jedną sesję, więc wpis stoi raz — kolejny
+ * na oknie z sesją wraca fałszem i nic nie zmienia.
+ */
+export function przypiszSesjeOkna(idOkna: string, idSesji: string, nazwa = ''): boolean {
+  const okno = OKNA.find((kandydat) => kandydat.id === idOkna);
+  if (okno === undefined || idSesji === '' || (okno.idSesji !== '' && okno.idSesji !== idSesji)) {
+    return false;
+  }
+  okno.idSesji = idSesji;
+  if (nazwa !== '' && okno.kartaBiezaca === '') okno.nazwa = nazwa;
+  return true;
+}
+
+/** Zdejmuje sesję usuniętą w rdzeniu z okien, które ją niosły; zwraca identyfikatory tych okien. */
+export function zdejmijSesjeOkien(idSesji: string): string[] {
+  const dotkniete: string[] = [];
+  for (const okno of OKNA) {
+    if (okno.idSesji !== idSesji || idSesji === '') continue;
+    okno.idSesji = '';
+    dotkniete.push(okno.id);
+  }
+  return dotkniete;
 }
 
 /** Okno robocze bieżące; przy pierwszym pytaniu otwiera pierwsze okno. */
@@ -80,7 +120,7 @@ export function oknoBiezace(): OknoRobocze {
 export function otworzOkno(): OknoRobocze {
   licznik += 1;
   const okno: OknoRobocze = {
-    id: 'okr-' + String(licznik), nazwa: NAZWA_POCZATKOWA, kartaBiezaca: '', karty: [],
+    id: 'okr-' + String(licznik), nazwa: NAZWA_POCZATKOWA, idSesji: '', kartaBiezaca: '', karty: [],
   };
   OKNA.push(okno);
   biezace = okno.id;
@@ -106,6 +146,7 @@ export function zamknijOkno(): OknoRobocze {
     const jedyne = OKNA[0] ?? otworzOkno();
     for (const idKarty of jedyne.karty) zwolnijKarte(idKarty);
     jedyne.nazwa = NAZWA_POCZATKOWA;
+    jedyne.idSesji = '';
     jedyne.kartaBiezaca = '';
     jedyne.karty = [];
     biezace = jedyne.id;
@@ -144,15 +185,28 @@ export function zapiszKarte(kodModulu: string, nazwa: string, idOknaKomunikacji 
 }
 
 /**
- * Wiąże kartę bieżącą z oknem komunikacji, które stanęło w rdzeniu. Fałsz
- * znaczy kartę bieżącą niosącą inny moduł albo wskazanie puste: okna nie wolno
- * przypisać do cudzej pracy, bo po tym przypisaniu idzie zamknięcie okna
- * w rdzeniu, a wiązania raz zawiązanego nie zdejmuje wskazanie puste — zdejmuje
- * je dopiero zamknięcie karty.
+ * Otwiera w oknie bieżącym nową kartę modułu i czyni ją bieżącą — zawsze nową,
+ * także gdy karta tego modułu już stoi: znak „+" pasma zakłada drugą pracę
+ * obok pierwszej. Okno komunikacji podaje się przy wznowieniu sesji; pustka
+ * znaczy okno zakładane pierwszą wiadomością. Zwraca identyfikator karty.
  */
-export function przypiszOknoKomunikacji(kodModulu: string, idOknaKomunikacji: string): boolean {
-  const karta = KARTY.get(oknoBiezace().kartaBiezaca);
-  if (karta === undefined || karta.kodModulu !== kodModulu || idOknaKomunikacji === '') return false;
+export function otworzKarte(kodModulu: string, nazwa: string, idOknaKomunikacji = ''): string {
+  const okno = oknoBiezace();
+  const karta = zalozKarte(okno, kodModulu, idOknaKomunikacji, nazwa);
+  okno.kartaBiezaca = karta.id;
+  okno.nazwa = nazwa;
+  return karta.id;
+}
+
+/**
+ * Wiąże wskazaną kartę z oknem komunikacji, które stanęło w rdzeniu. Fałsz
+ * znaczy kartę już zdjętą albo wskazanie puste: po tym przypisaniu idzie
+ * zamknięcie okna w rdzeniu, a wiązania raz zawiązanego nie zdejmuje wskazanie
+ * puste — zdejmuje je dopiero zamknięcie karty.
+ */
+export function przypiszOknoKomunikacji(idKarty: string, idOknaKomunikacji: string): boolean {
+  const karta = KARTY.get(idKarty);
+  if (karta === undefined || idOknaKomunikacji === '') return false;
   karta.idOknaKomunikacji = idOknaKomunikacji;
   return true;
 }
@@ -264,23 +318,6 @@ export function zdejmijKartyPoPrawej(idKarty: string): string[] {
 }
 
 /**
- * Okno komunikacji stojące w sesji dla wskazanego modułu; pustka znaczy sesję
- * bez takiego okna, a `null` — odmowę rdzenia. Bez tego pytania każde wejście
- * w moduł zakładałoby okno kolejne, a `session.open` zwracałby okna osierocone.
- */
-export async function oknoStojaceSesji(
-  kanal: Kanal,
-  idSesji: string,
-  idModulu: string,
-): Promise<string | null> {
-  const wynik = await wywolaj(kanal, Command.WindowList, {
-    sessionId: idSesji, status: WindowStatus.Open,
-  });
-  if (!wynik.udany || wynik.wynik === undefined) return null;
-  return wynik.wynik.windows.find((okno) => okno.moduleId === idModulu)?.id ?? '';
-}
-
-/**
  * Układ sekcji panelu karty zapisany w rdzeniu; `null` znaczy odmowę rdzenia
  * albo kartę bez okna komunikacji, dla której układu nie ma gdzie szukać.
  */
@@ -315,13 +352,11 @@ export async function zapiszUkladPaneli(
 }
 
 /**
- * Odtwarza wykaz okien roboczych ze stanu rdzenia: jedna sesja czynna konta
- * daje jedno okno robocze, a każde jej otwarte okno komunikacji — jedną kartę.
- * Karta ogniskowana ostatnio w sesji staje się kartą bieżącą okna, a sesja
- * ogniskowana — oknem bieżącym.
- *
- * Fałsz znaczy odmowę rdzenia: wykaz zostaje wtedy pusty i wołający ma to
- * nazwać, zamiast pokazywać przełącznik udający, że pracy nie było.
+ * Odtwarza wykaz okien roboczych ze stanu rdzenia: sesja czynna konta daje
+ * okno robocze niosące tę sesję, a każde jej otwarte okno komunikacji — kartę.
+ * Karta ogniskowana ostatnio staje się bieżącą, sesja ogniskowana — oknem
+ * bieżącym. Fałsz znaczy odmowę rdzenia: wykaz zostaje pusty i wołający ma to
+ * nazwać.
  */
 export async function odtworzOknaRobocze(
   kanal: Kanal,
@@ -329,7 +364,6 @@ export async function odtworzOknaRobocze(
   obecnosc: SessionPresence[],
   ogniskowana: string,
 ): Promise<boolean> {
-  kanalRdzenia = kanal;
   // Wykaz niosący pracę nie jest nadpisywany: odtworzenie należy do startu.
   if (KARTY.size > 0) return true;
   const okna = await wywolaj(kanal, Command.WindowList, { status: WindowStatus.Open });
@@ -351,6 +385,7 @@ export async function odtworzOknaRobocze(
     const wykaz = oknaSesji.get(sesja.id) ?? [];
     if (wykaz.length === 0) continue;
     const okno = otworzOkno();
+    okno.idSesji = sesja.id;
     okno.nazwa = sesja.title ?? NAZWA_POCZATKOWA;
     const ogniskowaneOkno = obecnosc.find((odpis) => odpis.sessionId === sesja.id)?.focusedWindowId;
     for (const okienko of wykaz) {

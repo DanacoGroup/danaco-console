@@ -26,19 +26,19 @@ export function zwiazOkno(
 }
 
 /**
- * Wiąże wnętrze okna, które w rdzeniu już stoi: karta bieżąca dostaje jego
- * identyfikator, więc powrót do karty sesji nie zakłada okna drugi raz,
+ * Wiąże wnętrze okna, które w rdzeniu już stoi: wskazana karta dostaje jego
+ * identyfikator, więc powrót do sesji nie zakłada okna drugi raz,
  * a zamknięcie karty zamyka okno także w rdzeniu.
  */
 export function zwiazOknoStojace(
   kanal: Kanal,
-  kodModulu: string,
+  idKarty: string,
   nazwaSrodowiska: string,
   idOkna: string,
   korzen: ParentNode,
 ): void {
-  if (!przypiszOknoKomunikacji(kodModulu, idOkna)) {
-    oglos('Okno modułu', 'Karta bieżąca niesie inny moduł niż okno wskazane przez rdzeń — '
+  if (!przypiszOknoKomunikacji(idKarty, idOkna)) {
+    oglos('Okno modułu', 'Karta zeszła z pasma, zanim okno rdzenia do niej doszło — '
       + 'zamknięcie karty nie zamknie tego okna.', 'ostrzezenie');
   }
   void opiszNaglowek(kanal, nazwaSrodowiska, korzen);

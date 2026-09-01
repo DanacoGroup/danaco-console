@@ -11,6 +11,7 @@ import {
   type StudioDocumentTask,
   type StudioTaskPlan,
 } from '../../../shared/contract.ts';
+import type { Odsubskrybuj } from '../polaczenie/magistrala-zdarzen.ts';
 import type { Kanal } from '../protokol/kanal.ts';
 import { wywolaj } from '../protokol/wywolanie.ts';
 
@@ -36,9 +37,9 @@ interface PanelPlanu {
 }
 
 /**
- * Wzory i stały początek etykiety zdjęte przy pierwszym montażu okna. Powłoka
- * wstawia wnętrze okna na nowo przy każdym wejściu, a drugie zdjęcie zastałoby
- * panel już opróżniony, więc wzoru nie da się z niego wziąć po raz drugi.
+ * Wzory i stały początek etykiety zdjęte przy pierwszym montażu karty. Każda
+ * karta niesie ten sam znacznik, a panel opróżniony z treści przykładowej
+ * wzoru już nie oddaje, więc zdjęcie stoi raz dla wszystkich kart.
  */
 let zdjete: { wzory: WzoryWierszy; przedrostek: string } | null = null;
 
@@ -48,13 +49,13 @@ let zdjete: { wzory: WzoryWierszy; przedrostek: string } | null = null;
  * powstaniem stanowiska: rozkład z prototypu jest cudzą pracą i Operator nie
  * ma prawa wziąć go za swoją. Zwraca prawdę, gdy panel stał w dokumencie.
  */
-export function zdejmijTrescPrzykladowaPlanu(): boolean {
-  return przygotujPanel() !== null;
+export function zdejmijTrescPrzykladowaPlanu(korzen: ParentNode): boolean {
+  return przygotujPanel(korzen) !== null;
 }
 
-/** Zbiera węzły panelu i opróżnia je z treści przykładowej; pustka znaczy panel poza dokumentem. */
-function przygotujPanel(): PanelPlanu | null {
-  const wezly = zbierzWezly();
+/** Zbiera węzły panelu i opróżnia je z treści przykładowej; pustka znaczy panel poza kartą. */
+function przygotujPanel(korzen: ParentNode): PanelPlanu | null {
+  const wezly = zbierzWezly(korzen);
   if (wezly === null) return null;
   zdjete ??= {
     wzory: zdejmijWzoryWierszy(wezly.lista),
@@ -67,12 +68,12 @@ function przygotujPanel(): PanelPlanu | null {
 }
 
 /**
- * Wiąże panel planu z rdzeniem. Zwraca prawdę, gdy węzły panelu stały i
- * wiązanie zostało założone; fałsz, gdy panelu w dokumencie nie ma.
+ * Wiąże panel planu karty z rdzeniem; węzły idą od korzenia karty. Zwraca
+ * odłączenie nasłuchu, a pustkę, gdy panelu w karcie nie ma.
  */
-export function zwiazPlan(kanal: Kanal, idOkna: string): boolean {
-  const przygotowany = przygotujPanel();
-  if (przygotowany === null) return false;
+export function zwiazPlan(kanal: Kanal, idOkna: string, korzen: ParentNode): Odsubskrybuj | null {
+  const przygotowany = przygotujPanel(korzen);
+  if (przygotowany === null) return null;
   const wezly: WezlyPlanu = przygotowany.wezly;
   const wzory: WzoryWierszy = przygotowany.wzory;
   const przedrostek: string = przygotowany.przedrostek;
@@ -102,7 +103,7 @@ export function zwiazPlan(kanal: Kanal, idOkna: string): boolean {
   /* Rozkład nie ma własnego zdarzenia kanału. Zmiana dokumentu tego okna jest
      jedyną chwilą, o której rdzeń zawiadamia, więc po niej panel pyta o rozkład
      ponownie. */
-  kanal.naZdarzenie(EventType.StudioDocumentChanged, (tresc) => {
+  const odlacz = kanal.naZdarzenie(EventType.StudioDocumentChanged, (tresc) => {
     if (tresc.document.windowId !== idOkna) return;
     void wczytajRozklad(kanal, tresc.document.id).then(pokaz);
   });
@@ -114,7 +115,7 @@ export function zwiazPlan(kanal: Kanal, idOkna: string): boolean {
     }
     void wczytajRozklad(kanal, wskazany).then(pokaz);
   });
-  return true;
+  return odlacz;
 }
 
 /** Pyta rdzeń o rozkład wskazanego dokumentu; odmowa rdzenia oddaje pustkę. */
@@ -131,9 +132,9 @@ async function wskazDokument(kanal: Kanal, idOkna: string): Promise<string> {
   return wynik.wynik.document.id;
 }
 
-/** Wskazuje węzły panelu planu; pustka znaczy, że panel nie stoi w dokumencie. */
-function zbierzWezly(): WezlyPlanu | null {
-  const panel = document.querySelector('#panel-plan');
+/** Wskazuje węzły panelu planu od korzenia karty; pustka znaczy, że panel nie stoi w karcie. */
+function zbierzWezly(korzen: ParentNode): WezlyPlanu | null {
+  const panel = korzen.querySelector('#panel-plan');
   const znacznik = panel?.querySelector('.sta-okno-znacznik');
   const etykieta = panel?.querySelector('.pt-etykieta');
   const lista = panel?.querySelector('.sta-okno-tresc.st-panel-lista');

@@ -157,23 +157,6 @@ func TestBezPocztyPotwierdzenieAdresuCzekaNaDrogeZListu(t *testing.T) {
 			powtorka.Code, shared.ErrorCodeConflict)
 	}
 
-	// Odzyskanie konta list wysyła, ale droga z niego jest wydana do ustawienia
-	// hasła, nie potwierdzenia.
-	var odzyskanie shared.AuthRecoverResponse
-	wykonajUdana(t, u.rdzen, u.zycie, shared.CommandAuthRecover,
-		shared.AuthRecoverRequest{Email: adresSprawdzianu}, &odzyskanie)
-	droga := drogaZListu(t, odbiornik.Ostatni(t))
-
-	odmowa := wykonajOdmowna(t, u.rdzen, u.zycie, shared.CommandAuthVerify,
-		shared.AuthVerifyRequest{Token: droga})
-	if odmowa.Code != shared.ErrorCodeNotAuthenticated {
-		t.Errorf("potwierdzenie drogą z odzyskania niesie kod %q, oczekiwany %q",
-			odmowa.Code, shared.ErrorCodeNotAuthenticated)
-	}
-	if !strings.Contains(odmowa.Message, "innej czynności") {
-		t.Errorf("odmowa nie mówi, że droga wydana jest do innej czynności: %q", odmowa.Message)
-	}
-
 	if ile := liczbaWierszy(t, u,
 		`SELECT COUNT(*) FROM konto_wlasciciela WHERE potwierdzone = 0`); ile != 1 {
 		t.Errorf("po ustawieniu nadajnika kont niepotwierdzonych: %d, oczekiwane 1", ile)
@@ -192,6 +175,39 @@ func TestBezPocztyPotwierdzenieAdresuCzekaNaDrogeZListu(t *testing.T) {
 	}, &wejscie)
 	if strings.TrimSpace(wejscie.Session.Token) == "" {
 		t.Error("po ustawieniu nadajnika wejście hasłem oddało sesję bez tokenu")
+	}
+
+	// Konto niepotwierdzone dostaje z `auth.recover` drogę weryfikacji, bo
+	// jedyną jego przeszkodą jest brak aktywacji. Sam list adresu nie potwierdza —
+	// potwierdza dopiero droga z niego podana do `auth.verify`.
+	var odzyskanie shared.AuthRecoverResponse
+	wykonajUdana(t, u.rdzen, u.zycie, shared.CommandAuthRecover,
+		shared.AuthRecoverRequest{Email: adresSprawdzianu}, &odzyskanie)
+	droga := drogaZListu(t, odbiornik.Ostatni(t))
+	if ile := liczbaWierszy(t, u,
+		`SELECT COUNT(*) FROM konto_wlasciciela WHERE potwierdzone = 0`); ile != 1 {
+		t.Errorf("po wysłaniu listu kont niepotwierdzonych: %d, oczekiwane 1 —"+
+			" list wysłany nie jest listem przeczytanym", ile)
+	}
+	if ile := liczbaWierszy(t, u,
+		`SELECT COUNT(*) FROM potwierdzenie_tozsamosci WHERE cel = ?`, dane.CelWeryfikacja); ile != 1 {
+		t.Errorf("dróg weryfikacji w bazie: %d, oczekiwana 1 — konto niepotwierdzone"+
+			" ma dostać drogę aktywacji, nie odzyskania", ile)
+	}
+
+	var potwierdzenie shared.AuthVerifyResponse
+	wykonajUdana(t, u.rdzen, u.zycie, shared.CommandAuthVerify,
+		shared.AuthVerifyRequest{Token: droga}, &potwierdzenie)
+	if !potwierdzenie.Verified {
+		t.Fatal("potwierdzenie drogą z listu oddało stan udany i verified=false naraz")
+	}
+	if ile := liczbaWierszy(t, u,
+		`SELECT COUNT(*) FROM konto_wlasciciela WHERE potwierdzone = 1`); ile != 1 {
+		t.Errorf("po drodze z listu kont potwierdzonych: %d, oczekiwane 1", ile)
+	}
+	if _, jest := znacznikWSejfie(t, u); jest {
+		t.Error("znacznik bramki bez poczty stoi po potwierdzeniu adresu —" +
+			" bramkę trzyma odtąd wiersz konta, nie znacznik")
 	}
 }
 
@@ -405,11 +421,35 @@ func TestPotwierdzenieDrogaZListuWydajeSesjeAPowtorzenieOdmawia(t *testing.T) {
 
 // TestDrogaWydanaDoOdzyskaniaNieDzialaJakoDrogaWeryfikacji pilnuje pola `cel`:
 // droga wydana do odzyskania nie potwierdza adresu, a droga weryfikacji nie
-// ustawia hasła.
+// ustawia hasła. Drogę odzyskania wydaje dopiero konto potwierdzone — konto
+// niepotwierdzone dostaje z `auth.recover` drogę weryfikacji.
 func TestDrogaWydanaDoOdzyskaniaNieDzialaJakoDrogaWeryfikacji(t *testing.T) {
 	u := zmontujDrogeWejscia(t, pocztaDziala)
 	drogaWeryfikacji := zarejestrujWlasciciela(t, u)
 
+	// Droga weryfikacji podana do ustawienia hasła.
+	blad := wykonajOdmowna(t, u.rdzen, u.zycie, shared.CommandAuthReset,
+		shared.AuthResetRequest{Token: drogaWeryfikacji, NewPassword: hasloDrugie})
+	if blad.Code != shared.ErrorCodeNotAuthenticated {
+		t.Errorf("odmowa niesie kod %q, oczekiwany %q", blad.Code, shared.ErrorCodeNotAuthenticated)
+	}
+	if ile := liczbaWierszy(t, u,
+		`SELECT COUNT(*) FROM potwierdzenie_tozsamosci WHERE uzyte = 1`); ile != 0 {
+		t.Errorf("odrzucone użycie zamknęło %d dróg — droga odmówiona i zarazem spalona"+
+			" zabiera Operatorowi jedyny materiał, jaki dostał listem", ile)
+	}
+
+	// Droga weryfikacji ma dalej działać w swojej czynności.
+	var potwierdzenie shared.AuthVerifyResponse
+	wykonajUdana(t, u.rdzen, u.zycie, shared.CommandAuthVerify,
+		shared.AuthVerifyRequest{Token: drogaWeryfikacji}, &potwierdzenie)
+	if !potwierdzenie.Verified {
+		t.Fatal("droga weryfikacji przestała działać po odrzuconym użyciu w innej czynności")
+	}
+
+	// Konto potwierdzone: odzyskanie wydaje drogę odzyskania. Cel odzyskania
+	// nie miał wcześniejszej drogi, więc odstęp między listami nie blokuje.
+	u.poczta.Wyczysc()
 	var odzyskanie shared.AuthRecoverResponse
 	wykonajUdana(t, u.rdzen, u.zycie, shared.CommandAuthRecover,
 		shared.AuthRecoverRequest{Email: adresSprawdzianu}, &odzyskanie)
@@ -419,12 +459,9 @@ func TestDrogaWydanaDoOdzyskaniaNieDzialaJakoDrogaWeryfikacji(t *testing.T) {
 		t.Fatal("obie drogi są tym samym materiałem — jedna droga na dwie czynności" +
 			" znosi rozdział celów niezależnie od pola w bazie")
 	}
-
-	// Droga weryfikacji podana do ustawienia hasła.
-	blad := wykonajOdmowna(t, u.rdzen, u.zycie, shared.CommandAuthReset,
-		shared.AuthResetRequest{Token: drogaWeryfikacji, NewPassword: hasloDrugie})
-	if blad.Code != shared.ErrorCodeNotAuthenticated {
-		t.Errorf("odmowa niesie kod %q, oczekiwany %q", blad.Code, shared.ErrorCodeNotAuthenticated)
+	if ile := liczbaWierszy(t, u,
+		`SELECT COUNT(*) FROM potwierdzenie_tozsamosci WHERE cel = ?`, dane.CelOdzyskanie); ile != 1 {
+		t.Errorf("dróg odzyskania w bazie: %d, oczekiwana 1", ile)
 	}
 
 	// Droga odzyskania podana do potwierdzenia adresu.
@@ -433,21 +470,16 @@ func TestDrogaWydanaDoOdzyskaniaNieDzialaJakoDrogaWeryfikacji(t *testing.T) {
 	if blad.Code != shared.ErrorCodeNotAuthenticated {
 		t.Errorf("odmowa niesie kod %q, oczekiwany %q", blad.Code, shared.ErrorCodeNotAuthenticated)
 	}
-
+	if !strings.Contains(blad.Message, "innej czynności") {
+		t.Errorf("odmowa nie mówi, że droga wydana jest do innej czynności: %q", blad.Message)
+	}
 	if ile := liczbaWierszy(t, u,
-		`SELECT COUNT(*) FROM potwierdzenie_tozsamosci WHERE uzyte = 1`); ile != 0 {
-		t.Errorf("odrzucone użycie zamknęło %d dróg — droga odmówiona i zarazem spalona"+
-			" zabiera Operatorowi jedyny materiał, jaki dostał listem", ile)
+		`SELECT COUNT(*) FROM potwierdzenie_tozsamosci WHERE uzyte = 1 AND cel = ?`,
+		dane.CelOdzyskanie); ile != 0 {
+		t.Errorf("odrzucone użycie zamknęło %d dróg odzyskania", ile)
 	}
 
-	// Obie drogi mają dalej działać w swoich czynnościach.
-	var potwierdzenie shared.AuthVerifyResponse
-	wykonajUdana(t, u.rdzen, u.zycie, shared.CommandAuthVerify,
-		shared.AuthVerifyRequest{Token: drogaWeryfikacji}, &potwierdzenie)
-	if !potwierdzenie.Verified {
-		t.Error("droga weryfikacji przestała działać po odrzuconym użyciu w innej czynności")
-	}
-
+	// Droga odzyskania ma dalej działać w swojej czynności.
 	var zmiana shared.AuthResetResponse
 	wykonajUdana(t, u.rdzen, u.zycie, shared.CommandAuthReset,
 		shared.AuthResetRequest{Token: drogaOdzyskania, NewPassword: hasloDrugie}, &zmiana)
@@ -460,10 +492,18 @@ func TestDrogaWydanaDoOdzyskaniaNieDzialaJakoDrogaWeryfikacji(t *testing.T) {
 
 // TestOdzyskanieDlaAdresuObcegoOdpowiadaTakSamoINieWysylaListu pilnuje, że
 // `auth.recover` odpowiada identycznie dla adresu własnego i obcego oraz nie
-// wysyła listu do adresu obcego.
+// wysyła listu do adresu obcego. Konto jest potwierdzone drogą z listu
+// rejestracyjnego, więc odzyskanie wydaje drogę odzyskania, a odstęp między
+// listami nie blokuje — cel odzyskania nie miał wcześniejszej drogi.
 func TestOdzyskanieDlaAdresuObcegoOdpowiadaTakSamoINieWysylaListu(t *testing.T) {
 	u := zmontujDrogeWejscia(t, pocztaDziala)
-	zarejestrujWlasciciela(t, u)
+	drogaWeryfikacji := zarejestrujWlasciciela(t, u)
+	var potwierdzenie shared.AuthVerifyResponse
+	wykonajUdana(t, u.rdzen, u.zycie, shared.CommandAuthVerify,
+		shared.AuthVerifyRequest{Token: drogaWeryfikacji}, &potwierdzenie)
+	if !potwierdzenie.Verified {
+		t.Fatal("potwierdzenie adresu oddało stan udany i verified=false naraz")
+	}
 	u.poczta.Wyczysc()
 
 	odpowiedzWlasna := wykonajKomende(t, u.rdzen, u.zycie, shared.CommandAuthRecover,

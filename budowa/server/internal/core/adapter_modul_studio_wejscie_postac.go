@@ -96,12 +96,14 @@ func wejscieWskaznikLogiczny(wartosc bool) *bool {
 // wejsciePostacDokumentu czyta postać dokumentu. Dokument bez zapisanej postaci
 // nie jest usterką — oddaje postać pustą o właściwym identyfikatorze, żeby
 // wołający miał na czym pracować, zamiast rozstrzygać brak drugi raz u siebie.
+// Brak repozytorium jest odmową: postać pusta udawałaby wtedy odczyt.
 func (a *adapterStudia) wejsciePostacDokumentu(ctx context.Context,
 	kodDokumentu string) (shared.StudioDocumentForm, error) {
 
 	pusta := shared.StudioDocumentForm{DocumentId: kodDokumentu}
 	if a.repozytorium == nil {
-		return pusta, nil
+		return shared.StudioDocumentForm{}, wejscieBladZaplecza(
+			"serwer złożony bez repozytorium Studia — postaci dokumentu nie ma skąd odczytać")
 	}
 	stan, err := a.postacWczytaj(ctx, kodDokumentu)
 	if err != nil {

@@ -1,0 +1,16 @@
+-- Klucz publiczny hosta zdalnego dla toru SSH (pakiet zdalne).
+--
+-- Tor jedzie ze StrictHostKeyChecking=yes i własnym plikiem known_hosts
+-- składanym z tej kolumny. Bez klucza tor odmawia połączenia zamiast
+-- przyjąć klucz podstawiony w locie — pusta wartość znaczy: klucza nie wpisano.
+--
+-- Wartość to jeden wiersz known_hosts bez pola hosta: `<typ> <klucz base64>`,
+-- na przykład `ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAA…`. Operator bierze ją
+-- z ssh-keyscan uruchomionego na maszynie rdzenia:
+--
+--   ssh-keyscan -t ed25519 -p 22 danaco-system.example
+--
+-- i zapisuje bez pierwszego pola (adresu) instrukcją Danaco:
+--
+--   UPDATE host_zdalny SET klucz_hosta = 'ssh-ed25519 AAAAC3…' WHERE nazwa = '…';
+ALTER TABLE host_zdalny ADD COLUMN klucz_hosta TEXT NOT NULL DEFAULT '';

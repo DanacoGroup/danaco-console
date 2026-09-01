@@ -25,7 +25,7 @@ func NoweZrodloTozsamosci(repozytorium dane.RepozytoriumTozsamosci) KatalogTozsa
 // Kategorie zwraca katalog kategorii przełożony na struktury kontraktu, w kolejności zwróconej przez repozytorium.
 func (z *zrodloTozsamosci) Kategorie(ctx context.Context, tylkoAktywne bool) ([]shared.IdentityCategory, error) {
 	if z == nil || z.repozytorium == nil {
-		return []shared.IdentityCategory{}, nil
+		return nil, bladBrakuKatalogu("tożsamości modelu")
 	}
 	wiersze, err := z.repozytorium.Kategorie(ctx, tylkoAktywne)
 	if err != nil {
@@ -44,7 +44,7 @@ func (z *zrodloTozsamosci) Dokumenty(ctx context.Context, os shared.ConfigAxis,
 	bytOsi string) ([]shared.IdentityDocument, error) {
 
 	if z == nil || z.repozytorium == nil {
-		return []shared.IdentityDocument{}, nil
+		return nil, bladBrakuKatalogu("tożsamości modelu")
 	}
 	wiersze, err := z.repozytorium.Dokumenty(ctx, dane.FiltrTozsamosci{
 		Os: os, OsByt: bytOsi, TylkoAktywne: true,

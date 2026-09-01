@@ -116,12 +116,13 @@ func (a *adapterZespolow) Wczytaj(ctx context.Context,
 }
 
 // Wykaz zwraca zespoły Operatora. Brak zespołów nie jest odmową — okno pokazuje
-// wtedy stan pusty i zachętę do zapisania pierwszego składu.
+// wtedy stan pusty i zachętę do zapisania pierwszego składu; odmową jest brak
+// wpiętego repozytorium, bo wykaz pusty udawałby wtedy stan zespołów.
 func (a *adapterZespolow) Wykaz(ctx context.Context,
 	z shared.TeamListRequest) (shared.TeamListResponse, error) {
 
 	if a == nil || a.repozytorium == nil {
-		return shared.TeamListResponse{Teams: []shared.Team{}}, nil
+		return shared.TeamListResponse{}, bladBrakuZespolow(shared.CommandTeamList)
 	}
 	filtr := dane.FiltrZespolow{Fraza: wartoscTekstu(z.Query)}
 	if z.Limit != nil {

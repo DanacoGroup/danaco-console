@@ -17,12 +17,12 @@ type ProbaPunktu func(ctx context.Context, punkt dane.PunktDostepu) (shared.Acce
 
 // Usun kasuje punkt wraz z nadaniami, które się na niego powoływały — kasuje je
 // więz klucza obcego, nie kod rdzenia. Punkt nieznany nie jest błędem: wynik
-// mówi wtedy, że nic nie usunięto.
+// mówi wtedy, że nic nie usunięto. Brak wpiętego katalogu jest odmową.
 func (a *adapterPunktowDostepu) Usun(ctx context.Context,
 	z shared.AccessPointRemoveRequest) (shared.AccessPointRemoveResponse, error) {
 
 	if a == nil || a.repozytorium == nil {
-		return shared.AccessPointRemoveResponse{Removed: false}, nil
+		return shared.AccessPointRemoveResponse{}, bladBrakuKatalogu("punktów dostępu")
 	}
 	punkt, err := a.repozytorium.PoKodzie(ctx, z.AccessPointId)
 	if brakWiersza(err) {

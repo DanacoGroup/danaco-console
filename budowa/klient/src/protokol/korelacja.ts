@@ -15,10 +15,8 @@ export type OdbiorcaOdpowiedzi = (odpowiedz: Envelope) => void;
 
 /*
 Termin, po którym żądanie bez odpowiedzi zostaje rozstrzygnięte odmową.
-Kontrakt nie zapowiada rdzeniowi żadnego czasu odpowiedzi, a wywołanie
-zgubione w locie — na zerwanym gnieździe albo na ramce porzuconej przez
-przeciwciśnienie — zostawiłoby wywołującemu obietnicę, która nie rozstrzygnie
-się nigdy, i okno czekające bez komunikatu.
+Kontrakt nie zapowiada czasu odpowiedzi, a wywołanie zgubione w locie
+zostawiłoby wołającemu obietnicę bez rozstrzygnięcia i okno czekające bez komunikatu.
 */
 export const TERMIN_ODPOWIEDZI_MS = 30_000;
 
@@ -31,6 +29,8 @@ export interface Korelacja {
   odmow(idZadania: string, blad: ErrorInfo): boolean;
   /** Rozstrzyga odmową wszystkie żądania oczekujące. */
   uniewaznijWszystkie(blad: ErrorInfo): void;
+  /** Czy odpowiedź o tym identyfikatorze przyszła po terminie; wpis jest zdejmowany, bo odpowiedź jest jedna. */
+  czySpozniona(idZadania: string): boolean;
   /** Liczba żądań oczekujących na odpowiedź. */
   oczekujace(): number;
 }
@@ -44,6 +44,9 @@ interface Wpis {
 
 export function utworzKorelacje(): Korelacja {
   const oczekujacy = new Map<string, Wpis>();
+  /* Żądania rozstrzygnięte terminem, pamiętane przez jeszcze jeden termin:
+     odpowiedź po nich jest spóźniona, nie obca, i kanał odrzuca ją bez doręczania. */
+  const poTerminie = new Map<string, ReturnType<typeof setTimeout>>();
 
   /** Zdejmuje wpis wraz z jego terminem; zwraca go wołającemu albo pustkę, gdy już nie oczekiwał. */
   function zdejmij(idZadania: string): Wpis | undefined {
@@ -54,10 +57,18 @@ export function utworzKorelacje(): Korelacja {
     return wpis;
   }
 
+  function zapamietajTermin(idZadania: string): void {
+    poTerminie.set(
+      idZadania,
+      setTimeout(() => poTerminie.delete(idZadania), TERMIN_ODPOWIEDZI_MS),
+    );
+  }
+
   const korelacja: Korelacja = {
     zarejestruj(idZadania, typ, odbiorca) {
       if (idZadania.length === 0) return;
       const termin = setTimeout(() => {
+        zapamietajTermin(idZadania);
         korelacja.odmow(idZadania, bladTerminu());
       }, TERMIN_ODPOWIEDZI_MS);
       oczekujacy.set(idZadania, { typ, odbiorca, termin });
@@ -81,6 +92,14 @@ export function utworzKorelacje(): Korelacja {
       for (const idZadania of [...oczekujacy.keys()]) {
         korelacja.odmow(idZadania, blad);
       }
+    },
+
+    czySpozniona(idZadania) {
+      const zapomnienie = poTerminie.get(idZadania);
+      if (zapomnienie === undefined) return false;
+      clearTimeout(zapomnienie);
+      poTerminie.delete(idZadania);
+      return true;
     },
 
     oczekujace: () => oczekujacy.size,

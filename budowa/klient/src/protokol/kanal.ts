@@ -67,7 +67,16 @@ export function utworzKanal(transport: Transport, sesja: Sesja): Kanal {
 
   transport.naRamke((ramka) => {
     const koperta = odczytajRamke(ramka);
-    if (czyOdpowiedz(koperta)) korelacja.rozstrzygnij(koperta);
+    if (czyOdpowiedz(koperta)) {
+      korelacja.rozstrzygnij(koperta);
+      /* Odpowiedź po terminie nie ma już wołającego — jego obietnica padła
+         odmową terminu — więc nie idzie dalej: ani token, ani stan z niej nie
+         wynikają. Zostaje wpis w dzienniku. */
+      if (korelacja.czySpozniona(koperta.id)) {
+        dziennik.odnotujSpozniona(koperta);
+        return;
+      }
+    }
     przychodzace.oglos(koperta);
   });
 
@@ -152,14 +161,18 @@ function bladKomendyNieznanej(komenda: string): ErrorInfo {
   };
 }
 
+/** Treść odmowy dla każdego powodu porzucenia; brak wpisu dla nowego powodu zatrzymuje kompilację. */
+const TRESC_PORZUCENIA: Readonly<Record<PowodPorzucenia, string>> = {
+  'zapora-czasu': 'Żądanie czekało na łączność dłużej, niż wolno — nie zostało wysłane',
+  zerwanie: 'Łączność zerwana, zanim żądanie wyszło do rdzenia',
+  przepelnienie: 'Kolejka wychodząca pełna — żądanie ustąpiło miejsca nowszemu',
+};
+
 /** Odmowa żądania porzuconego w kolejce wychodzącej, nazywająca powód porzucenia. */
 function bladPorzucenia(powod: PowodPorzucenia): ErrorInfo {
   return {
     code: ErrorCode.ChannelUnavailable,
-    message:
-      powod === 'zapora-czasu'
-        ? 'Żądanie czekało na łączność dłużej, niż wolno — nie zostało wysłane'
-        : 'Łączność zerwana, zanim żądanie wyszło do rdzenia',
+    message: TRESC_PORZUCENIA[powod],
     retryable: true,
   };
 }

@@ -1,6 +1,8 @@
 package core
 
 import (
+	"context"
+
 	"danacoconsole/server/internal/protocol"
 	"danacoconsole/shared"
 )
@@ -22,9 +24,19 @@ func (t *telemetriaPostepu) OwinNadajnik(nadajnik Nadajnik) Nadajnik {
 
 // Rozglos przepuszcza komunikat i dopiero potem go odczytuje. Kolejność jest
 // celowa: telemetria nie ma prawa opóźnić ani zablokować komunikatu właściwego.
-func (n nadajnikZTelemetria) Rozglos(k protocol.Koperta) {
-	n.nadajnik.Rozglos(k)
+func (n nadajnikZTelemetria) Rozglos(konto string, k protocol.Koperta) {
+	n.nadajnik.Rozglos(konto, k)
 	n.odnotuj(k)
+}
+
+// RozlaczPoUniewaznieniu przepuszcza zrywanie gniazd do nadajnika opakowanego;
+// nadajnik bez tej zdolności oddaje zero.
+func (n nadajnikZTelemetria) RozlaczPoUniewaznieniu(ctx context.Context, konto, powod string) int {
+	rozlaczanie, umie := n.nadajnik.(RozlaczanieSesji)
+	if !umie {
+		return 0
+	}
+	return rozlaczanie.RozlaczPoUniewaznieniu(ctx, konto, powod)
 }
 
 // odnotuj zgłasza telemetrii punkt pracy wyczytany z komunikatu. Komunikat

@@ -94,5 +94,5 @@ func (n *nadawcaStrumienia) wyslijZawieszony(ostatni bool) {
 	if err != nil {
 		return
 	}
-	n.nadajnik.Rozglos(k)
+	n.nadajnik.Rozglos("", k)
 }

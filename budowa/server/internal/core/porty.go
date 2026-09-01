@@ -85,9 +85,14 @@ type Przenoszenie interface {
 	Przenies(ctx context.Context, z shared.ContextTransferRequest) (shared.ContextTransferResponse, error)
 }
 
-// Nadajnik oddaje warstwie transportu komunikat wychodzący spoza pary żądanie–odpowiedź: zdarzenie zmiany rozgłaszane do połączeń konta oraz fragment strumienia odpowiedzi modelu.
+// Nadajnik oddaje warstwie transportu komunikat wychodzący spoza pary żądanie–odpowiedź: zdarzenie zmiany rozgłaszane do połączeń konta oraz fragment strumienia odpowiedzi modelu. Konto puste znaczy wszystkie połączenia rdzenia.
 type Nadajnik interface {
-	Rozglos(k protocol.Koperta)
+	Rozglos(konto string, k protocol.Koperta)
+}
+
+// RozlaczanieSesji zrywa gniazda, których sesja bramki przestała nadawać, od razu po unieważnieniu — bez niego gniazdo z unieważnioną sesją żyje do swojej następnej komendy. Konto puste znaczy wszystkie konta; gniazdo wołającego zostaje, bo odpowiedź na komendę ma do niego dojść.
+type RozlaczanieSesji interface {
+	RozlaczPoUniewaznieniu(ctx context.Context, konto, powod string) int
 }
 
 // Nasluch jest warstwą transportu widzianą przez rdzeń. Sluchaj pracuje do

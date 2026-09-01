@@ -64,7 +64,7 @@ func (n *nadawcaWyjscia) Fragment(proces *procesTerminala, rodzaj shared.ChunkKi
 	if err != nil {
 		return
 	}
-	n.nadajnik.Rozglos(koperta)
+	n.nadajnik.Rozglos("", koperta)
 }
 
 // Domknij wysyła fragment zamykający strumień procesu wraz z podsumowaniem

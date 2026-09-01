@@ -79,7 +79,7 @@ func Zmontuj(kontekst context.Context, m Montaz) (*Zmontowany, error) {
 	przemiecRetencjeHistorii(kontekst, repozytoria, m.Dziennik)
 	odtworzStanZBazy(kontekst, repozytoria, nadzorca, m.Dziennik)
 	serwer := transport.Nowy(ustawieniaTransportu(m, rozstrzygacz))
-	nasluch := nasluchTransportu{serwer: serwer}
+	nasluch := nowyNasluchTransportu(serwer)
 	utrwalacz := utrwalaczRozmow(repozytoria, nadzorca)
 	dziennikRozmow := nowyDziennikRozmowy(kontekst, utrwalacz, m.Dziennik)
 
@@ -144,12 +144,21 @@ func Zmontuj(kontekst context.Context, m Montaz) (*Zmontowany, error) {
 	if rozpoznanie, umie := porty.Uwierzytelnianie.(RozpoznanieKontaSesji); umie {
 		rdzen.ZRozpoznaniemKontaSesji(rozpoznanie)
 	}
+	// Zrywanie gniazd po unieważnieniu sesji czyta więź rdzenia i wiersz sesji
+	// z tego samego adaptera bramki; oba powstają dopiero tutaj.
+	waznosc, _ := porty.Uwierzytelnianie.(RozpoznanieWaznosciSesji)
+	nasluch.sesje.uzupelnij(rdzen.wiez, waznosc)
+	if urzadzenia, umie := porty.Urzadzenia.(zRozlaczaniem); umie {
+		urzadzenia.przyjmijRozlaczanie(nasluch)
+	}
+	// Tor strumieni wiąże turę z gniazdem zamawiającym; wpis robi adapter rozmowy przy otwarciu tury.
+	rozmowa.ZTorem(nasluch.tor)
 	rdzen.ZeStrazaZakresow(zakresyNarzedzi)
 	rdzen.ZObserwatoremNiepowodzen(diagnostyka)
 	// Diagnostyka jest odbiorcą odmów — zdarzenia zaczepów mają być w Errors
 	// Panel faktami, nie ciszą.
 	zdarzeniaWykonawcze.PodepnijDiagnostyke(diagnostyka)
-	serwer.PodlaczRdzen(wejscieTransportu{rdzen: rdzen})
+	serwer.PodlaczRdzen(wejscieTransportu{rdzen: rdzen, tor: nasluch.tor})
 
 	// Budzik harmonogramu odpala automatyki po terminie i żyje aż do zamknięcia kontekstu życia.
 	nowyBudzikHarmonogramu(moduly.automatyki, m.Dziennik).Uruchom(kontekst)

@@ -51,7 +51,7 @@ func zarejestrujUrzadzenia(r *Rejestr, u Urzadzenia, e *emiter, wiez *wiezBramki
 			// Wykaz do zdarzenia bierze się z tego samego źródła co odpowiedź wykazu urządzeń.
 			wykaz, bladWykazu := u.WykazUrzadzen(ctx, shared.DeviceListRequest{})
 			if bladWykazu == nil {
-				e.wyslij(shared.EventDeviceChanged, "", shared.DeviceChangedEvent{
+				e.wyslijDoKonta(ctx, shared.EventDeviceChanged, "", shared.DeviceChangedEvent{
 					Devices:  wykaz.Devices,
 					DeviceId: &z.DeviceId,
 				})

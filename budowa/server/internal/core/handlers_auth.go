@@ -4,6 +4,7 @@ package core
 import (
 	"context"
 
+	"danacoconsole/server/internal/dane"
 	"danacoconsole/shared"
 )
 
@@ -80,14 +81,17 @@ func zarejestrujUwierzytelnianie(r *Rejestr, u Uwierzytelnianie, e *emiter, wiez
 			return u.RozpocznijOdzyskanie(ctx, z)
 		}))
 
-	// Odzyskanie unieważnia tokeny wydane wcześniej, więc rozgłasza zmianę pozostałym urządzeniom.
+	// Odzyskanie unieważnia tokeny wydane wcześniej: rozgłasza zmianę urządzeniom konta i zrywa ich gniazda.
 	r.Zarejestruj(shared.CommandAuthReset,
 		obsluz(func(ctx context.Context, z shared.AuthResetRequest) (shared.AuthResetResponse, error) {
-			odpowiedz, err := u.UstawNoweHaslo(ctx, z)
+			odpowiedz, kontoId, err := ustawNoweHaslo(ctx, u, z)
 			if err == nil {
-				e.wyslij(shared.EventAuthChanged, "", shared.AuthChangedEvent{
+				// Żądanie idzie z urządzenia bez sesji, więc konto adresata wchodzi z drogi odzyskania, nie z gniazda.
+				ctx = zKontemOdzyskania(ctx, kontoId)
+				e.wyslijDoKonta(ctx, shared.EventAuthChanged, "", shared.AuthChangedEvent{
 					Reason: shared.AuthChangeReasonPasswordReset,
 				})
+				rozlaczPoUniewaznieniu(ctx, e, "sesja bramki unieważniona po ustawieniu nowego hasła")
 			}
 			return odpowiedz, err
 		}))
@@ -107,7 +111,7 @@ func zarejestrujUwierzytelnianie(r *Rejestr, u Uwierzytelnianie, e *emiter, wiez
 		obsluz(func(ctx context.Context, z shared.AuthMethodAddRequest) (shared.AuthMethodAddResponse, error) {
 			odpowiedz, err := u.ZalozMetodeWejscia(ctx, z)
 			if err == nil {
-				rozglosZmianeBramki(e, shared.AuthChangeReasonMethodAdded,
+				rozglosZmianeBramki(ctx, e, shared.AuthChangeReasonMethodAdded,
 					odpowiedz.Methods, &z.DeviceId)
 			}
 			return odpowiedz, err
@@ -118,7 +122,7 @@ func zarejestrujUwierzytelnianie(r *Rejestr, u Uwierzytelnianie, e *emiter, wiez
 			odpowiedz, err := u.ZdejmijMetodeWejscia(ctx, z)
 			// Bez zdjęcia nie ma zmiany, więc nie ma czego rozgłaszać.
 			if err == nil && odpowiedz.Removed {
-				rozglosZmianeBramki(e, shared.AuthChangeReasonMethodRemoved,
+				rozglosZmianeBramki(ctx, e, shared.AuthChangeReasonMethodRemoved,
 					odpowiedz.Methods, z.DeviceId)
 			}
 			return odpowiedz, err
@@ -131,7 +135,8 @@ func zarejestrujUwierzytelnianie(r *Rejestr, u Uwierzytelnianie, e *emiter, wiez
 			if err == nil && odpowiedz.Changed {
 				// Wykaz metod jest brany osobno — odpowiedź tej komendy go nie niesie, hasło już jest zmienione.
 				metody, _ := u.MetodyWejscia(ctx)
-				rozglosZmianeBramki(e, shared.AuthChangeReasonPasswordChanged, metody, nil)
+				rozglosZmianeBramki(ctx, e, shared.AuthChangeReasonPasswordChanged, metody, nil)
+				rozlaczPoUniewaznieniu(ctx, e, "sesja bramki unieważniona po zmianie hasła")
 			}
 			return odpowiedz, err
 		}))
@@ -143,18 +148,56 @@ func zarejestrujUwierzytelnianie(r *Rejestr, u Uwierzytelnianie, e *emiter, wiez
 		}))
 }
 
-// rozglosZmianeBramki wysyła `auth.changed`. Zdarzenie idzie bez sesji
-// komunikatu: bramka nie należy do żadnej karty sesji — to stan platformy,
-// a nie stan pracy. Nadajnik niepodłączony nie jest błędem.
-func rozglosZmianeBramki(e *emiter, powod shared.AuthChangeReason,
+// rozglosZmianeBramki wysyła `auth.changed` do urządzeń konta wołającego.
+// Zdarzenie idzie bez sesji komunikatu: bramka nie należy do żadnej karty
+// sesji — to stan platformy, a nie stan pracy. Nadajnik niepodłączony nie
+// jest błędem.
+func rozglosZmianeBramki(ctx context.Context, e *emiter, powod shared.AuthChangeReason,
 	metody []shared.AuthMethod, urzadzenie *string) {
 
 	if e == nil {
 		return
 	}
-	e.wyslij(shared.EventAuthChanged, "", shared.AuthChangedEvent{
+	e.wyslijDoKonta(ctx, shared.EventAuthChanged, "", shared.AuthChangedEvent{
 		Reason:   powod,
 		Methods:  metody,
 		DeviceId: niepustyTekst(urzadzenie),
 	})
+}
+
+// odzyskanieZKontem jest rozszerzeniem nieobowiązkowym portu: oddaje konto,
+// którego drogą odzyskania ustawiono hasło. Odpowiedź kontraktu konta nie
+// niesie, a rozgłoszenie i zerwanie gniazd potrzebują adresata.
+type odzyskanieZKontem interface {
+	ustawNoweHasloKonta(ctx context.Context, z shared.AuthResetRequest) (shared.AuthResetResponse, int64, error)
+}
+
+// ustawNoweHaslo wykonuje `auth.reset` i oddaje konto drogi, gdy adapter je zna; zero znaczy konto nieznane.
+func ustawNoweHaslo(ctx context.Context, u Uwierzytelnianie,
+	z shared.AuthResetRequest) (shared.AuthResetResponse, int64, error) {
+
+	if adapter, umie := u.(odzyskanieZKontem); umie {
+		return adapter.ustawNoweHasloKonta(ctx, z)
+	}
+	odpowiedz, err := u.UstawNoweHaslo(ctx, z)
+	return odpowiedz, 0, err
+}
+
+// zKontemOdzyskania wpisuje do kontekstu konto z drogi odzyskania; konto nieznane zostawia kontekst bez zmiany.
+func zKontemOdzyskania(ctx context.Context, kontoId int64) context.Context {
+	if kontoId == 0 {
+		return ctx
+	}
+	return dane.ZKontemOperatora(ctx, kontoId)
+}
+
+// rozlaczPoUniewaznieniu zrywa gniazda konta wołającego, których sesja bramki
+// przestała nadawać. Idzie po rozgłoszeniu, żeby zdarzenie doszło przed
+// zerwaniem. Nadajnik bez zrywania — sprawdzian — nie jest błędem.
+func rozlaczPoUniewaznieniu(ctx context.Context, e *emiter, powod string) {
+	rozlaczanie := e.rozlaczanie()
+	if rozlaczanie == nil {
+		return
+	}
+	rozlaczanie.RozlaczPoUniewaznieniu(ctx, kontoAdresata(ctx), powod)
 }

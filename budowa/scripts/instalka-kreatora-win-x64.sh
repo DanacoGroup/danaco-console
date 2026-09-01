@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
-# Instalka kreatora Danaco Console dla Windows 11 na x64: złożenie instalatora
-# NSIS na Linuksie z okna kreatora sześciu kroków. To jest plik, który pobiera
-# Operator ze strony „Pobierz"; powłokę programu kreator ściąga sam z kanału
-# wydań, więc w tej instalce jej nie ma.
+# Instalator Danaco Console dla Windows 11 na x64: samodzielny plik kreatora
+# sześciu kroków, składany na Linuksie. To jest plik, który pobiera Operator ze
+# strony „Pobierz" i który otwiera kreator wprost po uruchomieniu — bez
+# instalki pośredniej; powłokę programu kreator ściąga sam z kanału wydań.
 set -euo pipefail
 
 KORZEN="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
@@ -10,7 +10,11 @@ KREATOR="$KORZEN/budowa/instalator/src-tauri"
 INTERFEJS="$KORZEN/budowa/instalator/interfejs"
 DOSTAWA="$KORZEN/design/zasoby"
 WYKAZ="$KORZEN/budowa/witryna/wydania.json"
-CEL="x86_64-pc-windows-gnu"
+# Cel msvc, nie gnu: cel gnu wiąże WebView2Loader.dll importem statycznym, a plik
+# pobrany sam jeden nie ma tej biblioteki obok siebie i nie rusza. Cel msvc
+# wiąże WebView2LoaderStatic.lib, a statyczny CRT zdejmuje zależność od
+# VCRUNTIME — w imporcie zostają wyłącznie biblioteki systemu Windows.
+CEL="x86_64-pc-windows-msvc"
 WERSJA="2.0.0"
 # Katalog wydania wolno wskazać z zewnątrz, tak samo jak w pakiecie serwera:
 # złożenie próbne nie ma odkładać pliku między wydania.
@@ -47,11 +51,13 @@ PYTON
 
 zglos "Sprawdzenie narzędzi"
 # Brak narzędzia ujawniłby się dopiero po kilkuminutowej budowie, dlatego
-# sprawdzenie stoi przed nią. Llvm-mingw nie może być na ścieżce, bo cel
-# x86_64-pc-windows-gnu wymaga systemowego mingw-w64 i jego biblioteki libgcc.
-for narzedzie in cargo rustup x86_64-w64-mingw32-gcc makensis python3; do
+# sprawdzenie stoi przed nią. Cel msvc składa cargo-xwin z własnym zestawem
+# nagłówków i bibliotek Windows, a cc-rs szuka llvm-lib bez przyrostka wersji —
+# na tej maszynie dowiązania stoją w ~/.local/bin.
+export PATH="$HOME/.local/bin:$PATH"
+for narzedzie in cargo rustup cargo-xwin llvm-lib objdump python3; do
   command -v "$narzedzie" >/dev/null \
-    || padnij "brak narzędzia: $narzedzie (apt: mingw-w64, nsis, python3; rustup: https://rustup.rs)"
+    || padnij "brak narzędzia: $narzedzie (cargo install cargo-xwin; llvm-lib to dowiązanie do llvm-lib-<wersja> w ~/.local/bin)"
   printf '  jest: %s\n' "$narzedzie"
 done
 rustup target list --installed | grep -qx "$CEL" \
@@ -99,7 +105,7 @@ zglos "Sprawdzenie poświadczeń kanału i żądania podpisu"
 # złożony z pustego napisu, a odmowa 401 wygląda wtedy na usterkę kanału.
 if [ -n "${DANACO_KANAL_UZYTKOWNIK:-}" ] && [ -n "${DANACO_KANAL_HASLO:-}" ]; then
   POSWIADCZENIA=(DANACO_KANAL_UZYTKOWNIK="$DANACO_KANAL_UZYTKOWNIK" DANACO_KANAL_HASLO="$DANACO_KANAL_HASLO")
-  OPIS_POSWIADCZEN="wpisane w instalkę"
+  OPIS_POSWIADCZEN="wpisane w instalator"
 elif [ -n "${DANACO_KANAL_UZYTKOWNIK:-}${DANACO_KANAL_HASLO:-}" ]; then
   padnij "podano jedną połowę poświadczeń kanału — nagłówek uwierzytelnienia składa się z nazwy i hasła naraz"
 else
@@ -117,10 +123,12 @@ printf '  podpis Authenticode: %s\n' "${DANACO_PODPIS:-pomijany}"
 
 zglos "Budowa kreatora dla $CEL"
 # Cecha tauri/custom-protocol jest obowiązkowa: bez niej gotowy plik zachowuje
-# się jak budowa deweloperska i szuka okna na serwerze rozwojowym.
+# się jak budowa deweloperska i szuka serwera rozwojowego zamiast okna w sobie.
+# Statyczny CRT wchodzi flagą, nie profilem, bo profil w Cargo.toml obowiązuje
+# także cel gnu, którego ta flaga nie dotyczy.
 ( cd "$KREATOR" \
-  && env "${POSWIADCZENIA[@]}" \
-       cargo build --release --target "$CEL" --features tauri/custom-protocol )
+    && env "${POSWIADCZENIA[@]}" RUSTFLAGS="-C target-feature=+crt-static" \
+       cargo xwin build --release --target "$CEL" --features tauri/custom-protocol )
 
 KREATOR_EXE="$KREATOR/target/$CEL/release/danaco-instalator.exe"
 [ -f "$KREATOR_EXE" ] || padnij "cargo nie zgłosił błędu, ale binarki kreatora nie ma: $KREATOR_EXE"
@@ -130,6 +138,18 @@ printf '%s' "$OPIS_KREATORA" | grep -qi 'PE32+ executable' \
 printf '%s' "$OPIS_KREATORA" | grep -qi 'x86-64' \
   || padnij "kreator nie jest binarką PE dla x86-64: $OPIS_KREATORA"
 printf '  architektura kreatora: %s\n' "$OPIS_KREATORA"
+
+zglos "Zapora: plik samodzielny — import wyłącznie z bibliotek systemu"
+# Plik pobrany ze strony leży sam. Import WebView2Loader.dll albo VCRUNTIME
+# znaczyłby binarium, które na maszynie Operatora nie wstanie bez pliku obok —
+# dokładnie tak padał kreator złożony celem gnu.
+IMPORTY="$(objdump -p "$KREATOR_EXE" | awk '/DLL Name:/ {print $3}' | tr 'A-Z' 'a-z' | sort -u)"
+for zakazany in webview2loader.dll vcruntime140.dll vcruntime140_1.dll msvcp140.dll; do
+  if printf '%s\n' "$IMPORTY" | grep -qx "$zakazany"; then
+    padnij "kreator importuje $zakazany — nie jest plikiem samodzielnym; cel $CEL ze statycznym CRT nie wszedł"
+  fi
+done
+printf '  importy: %s\n' "$(printf '%s' "$IMPORTY" | tr '\n' ' ')"
 
 zglos "Zapora: osadzone zasoby okna kreatora"
 # Sondą jest ŚCIEŻKA pliku okna wewnątrz binarium, odczytana z katalogu
@@ -147,7 +167,7 @@ LICZBA_SONDY="$(strings -a "$KREATOR_EXE" | grep -cF -- "$SONDA" || true)"
 LICZBA_WARSTWY="$(strings -a "$KREATOR_EXE" | grep -cF -- '/warstwa/zasoby/' || true)"
 printf '  trafienia sondy: %s, wystąpienia /warstwa/zasoby/: %s\n' "$LICZBA_SONDY" "$LICZBA_WARSTWY"
 { [ "$LICZBA_SONDY" -gt 0 ] && [ "$LICZBA_WARSTWY" -gt 0 ]; } \
-  || padnij "kreator NIE ma osadzonego okna — cecha tauri/custom-protocol nie weszła, więc okno pójdzie do serwera rozwojowego i na maszynie Operatora zostanie puste. To produkt zepsuty, choć instalka wyglądałaby poprawnie"
+  || padnij "kreator NIE ma osadzonego okna — cecha tauri/custom-protocol nie weszła, więc okno pójdzie do serwera rozwojowego i na maszynie Operatora zostanie puste"
 printf '  osadzone okno kreatora: potwierdzone\n'
 
 # Suma treści okna liczona PO budowie, bo warstwę projektową wkłada do katalogu
@@ -159,53 +179,27 @@ SUMA_INTERFEJSU="$(
 )"
 printf '  suma treści okna: %s\n' "$SUMA_INTERFEJSU"
 
-zglos "Złożenie instalatora NSIS"
-# `--bundles nsis` podane jawnie, choć konfiguracja ma ten cel ustawiony:
-# skrypt składa instalator NSIS niezależnie od tego, jakie inne cele
-# konfiguracja produktu wymienia.
-( cd "$KREATOR" && cargo tauri bundle --target "$CEL" --bundles nsis )
-
-ZLOZONY="$KREATOR/target/$CEL/release/bundle/nsis/$NAZWA_WYDANIA"
-[ -f "$ZLOZONY" ] || padnij "makensis nie zgłosił błędu, ale pliku instalatora nie ma: $ZLOZONY"
-
 zglos "Odbiór — czego w środku być nie może"
-# Kreator POBIERA powłokę i nie wiezie ani jej, ani rdzenia. Gdyby wróciły do
-# konfiguracji jako zasoby, instalka złożyłaby się bez błędu i wyszła jako
-# produkt pełny pod nazwą kreatora; dowodem przeciwnym jest wykaz zawartości.
-command -v 7z >/dev/null \
-  || padnij "brak 7z (apt: p7zip-full) — bez wykazu zawartości nie ma dowodu, czego instalka nie wiezie"
-SPIS="$(mktemp)"
-ROZPAK="$(mktemp -d)"
-trap 'rm -f "$SPIS"; rm -rf "$ROZPAK"' EXIT
-7z l "$ZLOZONY" >"$SPIS"
-for zakazany in danaco-console.exe danaco-narzedzia.exe danaco-console-powloka.exe; do
-  [ "$(grep -c -- "$zakazany" "$SPIS" || true)" -eq 0 ] \
-    || padnij "instalka kreatora niesie $zakazany — kreator ma to pobrać z kanału, nie wieźć ze sobą"
-  printf '  nie ma w środku: %s\n' "$zakazany"
-done
-
-# Powyższe zapory badały binarkę z `target/`. Ta bada binarkę WYPAKOWANĄ
-# z instalatora, bo tylko ona jest tym, co dostanie Operator: `bundle` bierze
-# gotową binarkę z `target/` i sam nie kompiluje, więc podmiany nie byłoby widać
-# inaczej.
-7z x -o"$ROZPAK" "$ZLOZONY" >/dev/null 2>&1 \
-  || padnij "nie udało się wypakować instalatora do sprawdzenia"
-WIEZIONY="$ROZPAK/danaco-instalator.exe"
-[ -f "$WIEZIONY" ] || padnij "w instalatorze nie ma kreatora danaco-instalator.exe"
-OPIS_WIEZIONEGO="$(file -b "$WIEZIONY")"
-printf '%s' "$OPIS_WIEZIONEGO" | grep -qi 'x86-64' \
-  || padnij "kreator WIEZIONY przez instalator nie jest binarką x86-64: $OPIS_WIEZIONEGO"
-TRAFIENIA_WIEZIONEGO="$(strings -a "$WIEZIONY" | grep -cF -- "$SONDA" || true)"
-[ "$TRAFIENIA_WIEZIONEGO" -gt 0 ] \
-  || padnij "kreator WIEZIONY przez instalator nie ma osadzonego okna — instalka wiezie budowę rozwojową"
-printf '  wieziony kreator: %s, okno osadzone\n' "$OPIS_WIEZIONEGO"
+# Kreator POBIERA powłokę i nie wiezie ani jej, ani rdzenia. Nazwy plików
+# w binarium nie są dowodem — kreator wymienia je w treściach i przy
+# uruchomieniu — więc sondą jest treść właściwa tamtym binariom: nazwa paczki
+# interfejsu z sumą treści, którą powłoka osadza z klient/dist, i wiersz
+# dziennika startu, który wypisuje wyłącznie rdzeń.
+SONDA_POWLOKI="$(find "$KORZEN/budowa/klient/dist/assets" -maxdepth 1 -name 'index-*.js' -printf '%f\n' 2>/dev/null | head -1)"
+[ -n "$SONDA_POWLOKI" ] || padnij "brak budowa/klient/dist/assets/index-*.js — bez sondy powłoki nie ma jak sprawdzić, czego kreator nie wiezie"
+[ "$(strings -a "$KREATOR_EXE" | grep -cF -- "$SONDA_POWLOKI" || true)" -eq 0 ] \
+  || padnij "kreator niesie paczkę interfejsu powłoki ($SONDA_POWLOKI) — powłokę ma pobrać z kanału, nie wieźć ze sobą"
+printf '  nie ma w środku powłoki (sonda %s)\n' "$SONDA_POWLOKI"
+[ "$(strings -a "$KREATOR_EXE" | grep -cF -- 'serwer gotowy: komend=' || true)" -eq 0 ] \
+  || padnij "kreator niesie rdzeń — rdzeń stoi na serwerze wdrożenia i do kreatora nie wchodzi"
+printf '  nie ma w środku rdzenia\n'
 
 zglos "Zapora: podpis Authenticode"
 # Katalog Security gotowego pliku niesie tablicę certyfikatów; rozmiar zero
 # znaczy plik bez wydawcy. SmartScreen ukrywa wtedy przycisk uruchomienia,
 # a zasady firmowe blokują plik całkiem, więc stan podpisu jest mierzony
 # i wypisany, a nie zakładany.
-PODPIS_BAJTOW="$(rozmiar_podpisu "$ZLOZONY")"
+PODPIS_BAJTOW="$(rozmiar_podpisu "$KREATOR_EXE")"
 if [ "$PODPIS_BAJTOW" -gt 0 ]; then
   OPIS_PODPISU="katalog Security $PODPIS_BAJTOW bajtów"
 elif [ "${DANACO_PODPIS:-pomijany}" = "wymagany" ]; then
@@ -218,7 +212,7 @@ printf '  %s\n' "$OPIS_PODPISU"
 zglos "Odłożenie wyniku do wydania"
 mkdir -p "$WYDANIE"
 WYNIK="$WYDANIE/$NAZWA_WYDANIA"
-cp -f "$ZLOZONY" "$WYNIK"
+cp -f "$KREATOR_EXE" "$WYNIK"
 
 zglos "Pomiar wyniku"
 printf 'ścieżka : %s\n' "$WYNIK"
@@ -228,15 +222,12 @@ printf 'suma    : %s\n' "$(sha256sum "$WYNIK" | cut -d' ' -f1)"
 printf 'okno    : suma treści %s\n' "$SUMA_INTERFEJSU"
 printf 'kanał   : poświadczenia %s\n' "$OPIS_POSWIADCZEN"
 printf 'podpis  : %s\n' "$OPIS_PODPISU"
-# Ostatni wiersz listingu archiwum kończy się słowem oznaczającym liczbę
-# plików; sama liczba stoi w wierszu bezpośrednio przed tym słowem.
-printf 'wewnątrz: %s plików\n' "$(tail -1 "$SPIS" | awk '{print $(NF-1)}')"
 
 zglos "Czego ten skrypt NIE sprawdził"
 cat <<'KONIEC'
-  - czy instalator się uruchamia i czy przechodzi wszystkie sześć kroków,
+  - czy kreator się uruchamia i czy przechodzi wszystkie sześć kroków,
   - czy okno kreatora wstaje (wymaga WebView2 w systemie Windows 11),
-  - czy krok 5 pobiera powłokę — wymaga maszyny z Windows i kanału
+  - czy krok 5 pobiera i zakłada powłokę — wymaga maszyny z Windows i kanału
     odpowiadającego pod adresem z wykazu wydań.
   Wszystkie wymagają maszyny z Windows. Nie zakładaj ich powodzenia.
 KONIEC

@@ -85,6 +85,11 @@ func zlozPorty(s skladPortow) Porty {
 	}
 	// Ten sam sejf idzie do warstwy modeli uchwytem pakietowym, zapisanym przed pierwszym żądaniem.
 	models.UstawSejfPoswiadczen(sejf)
+	// Sesje powstają wcześniej: czyta je port Sesje i przestrzeń robocza przy kasowaniu projektu.
+	sesje := nowyAdapterSesji(s.nadzorca).ZTrwaloscia(s.trwalosc).
+		ZObecnoscia(s.obecnosc).ZZapewnieniem(s.utrwalacz).
+		ZProjektami(s.repozytoria.PrzestrzenRobocza).ZZestawem(s.repozytoria).
+		ZZatrzymaniemTur(s.rozmowa.PrzerwijTure).ZRozmowa(s.rozmowa.dziennik)
 	// Katalog akcji i przenoszenie kontekstu powstają wcześniej — mają po dwóch czytelników.
 	akcje := rejestrAkcji(s.zycie, s.repozytoria, s.montaz.Dziennik)
 
@@ -144,10 +149,7 @@ func zlozPorty(s skladPortow) Porty {
 		// Zajętość kontekstu liczy się z treści jadącej do modelu: prompt systemowy, historię i pamięć okna.
 		ZajetoscKontekstu: nowyAdapterZajetosciKontekstu(s.repozytoria.Okna,
 			s.repozytoria.Wiadomosci, s.repozytoria.Pamiec, s.kanaly, s.tozsamosc),
-		Sesje: nowyAdapterSesji(s.nadzorca).ZTrwaloscia(s.trwalosc).
-			ZObecnoscia(s.obecnosc).ZZapewnieniem(s.utrwalacz).
-			ZProjektami(s.repozytoria.PrzestrzenRobocza).ZZestawem(s.repozytoria).
-			ZZatrzymaniemTur(s.rozmowa.PrzerwijTure).ZRozmowa(s.rozmowa.dziennik),
+		Sesje:      sesje,
 		Okna:       okna,
 		Rozmowa:    s.telemetria.OwinRozmowe(s.rozmowa),
 		Ustawienia: s.ustawienia.ZProwenancja(s.rozmowa),
@@ -178,6 +180,7 @@ func zlozPorty(s skladPortow) Porty {
 			ZWarstwami(s.repozytoria.WarstwyAgenta),
 		// Moduł Workspace bierze instrukcje z rozstrzygacza platformy i bibliotekę z katalogu roboczego sesji.
 		PrzestrzenRobocza: nowyAdapterPrzestrzeniRoboczej(s.repozytoria.PrzestrzenRobocza).
+			ZSesjami(sesje).
 			ZInstrukcjami(s.repozytoria.Konfiguracja, s.rozstrzygacz).
 			ZKatalogiem(s.katalogRoboczy).
 			// Wydobycie treści idzie warsztatem `document.text.extract`; `ZPamiecia` musi stać ostatnim ogniwem.

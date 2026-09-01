@@ -39,5 +39,5 @@ func Przeloz(idOkna string, p Polecenie) (Uruchomienie, error) {
 			"i wymaga jego instalacji: %w", idOkna, nazwa, err)
 	}
 
-	return zbudujUruchomienie(sciezkaSSH, host, p), nil
+	return zbudujUruchomienie(sciezkaSSH, host, p)
 }

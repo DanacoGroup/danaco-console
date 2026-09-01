@@ -23,6 +23,20 @@ type adapterPrzestrzeniRoboczej struct {
 	katalog      *KatalogRoboczy
 	// dokumenty jest warsztatem odczytu treści plików, tym samym, którym jedzie document.text.extract.
 	dokumenty WydobycieTekstuDokumentu
+	// sesje odpina skasowany projekt od sesji żywych w rejestrze nadzorcy — baza
+	// odpięła je w transakcji kasowania, rejestr w pamięci sam tego nie widzi.
+	sesje OdpinanieProjektuZywych
+}
+
+// OdpinanieProjektuZywych zdejmuje kod projektu z sesji żywych i oddaje ich identyfikatory.
+type OdpinanieProjektuZywych interface {
+	OdepnijProjektZywych(kod string) []string
+}
+
+// ZSesjami wpina rejestr sesji żywych; bez niego project.delete zostawia kod projektu w pamięci nadzorcy.
+func (a *adapterPrzestrzeniRoboczej) ZSesjami(sesje OdpinanieProjektuZywych) *adapterPrzestrzeniRoboczej {
+	a.sesje = sesje
+	return a
 }
 
 // nowyAdapterPrzestrzeniRoboczej wiąże nowo utworzony port z repozytorium modułu przestrzeni roboczej.
@@ -187,6 +201,9 @@ func (a *adapterPrzestrzeniRoboczej) UsunProjekt(ctx context.Context,
 			return shared.ProjectDeleteResponse{}, bladNieznanegoProjektu(kod)
 		}
 		return shared.ProjectDeleteResponse{}, err
+	}
+	if a.sesje != nil {
+		a.sesje.OdepnijProjektZywych(kod)
 	}
 	return shared.ProjectDeleteResponse{ProjectId: kod, ReleasedSessionIds: odpiete}, nil
 }

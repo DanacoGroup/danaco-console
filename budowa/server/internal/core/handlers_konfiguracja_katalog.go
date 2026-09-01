@@ -31,7 +31,7 @@ func (a *adapterKatalogUstawien) Kategorie(ctx context.Context,
 	z shared.SettingsCategoryListRequest) (shared.SettingsCategoryListResponse, error) {
 
 	if a == nil || a.repozytorium == nil {
-		return shared.SettingsCategoryListResponse{Categories: []shared.SettingCategory{}}, nil
+		return shared.SettingsCategoryListResponse{}, bladBrakuKatalogu("ustawień")
 	}
 	wiersze, err := a.repozytorium.Kategorie(ctx, tylkoAktywneKatalogu(z.IncludeDisabled))
 	if err != nil {
@@ -53,7 +53,7 @@ func (a *adapterKatalogUstawien) Definicje(ctx context.Context,
 	z shared.SettingsDefinitionListRequest) (shared.SettingsDefinitionListResponse, error) {
 
 	if a == nil || a.repozytorium == nil {
-		return shared.SettingsDefinitionListResponse{Definitions: []shared.SettingDefinition{}}, nil
+		return shared.SettingsDefinitionListResponse{}, bladBrakuKatalogu("ustawień")
 	}
 	wiersze, err := a.repozytorium.Definicje(ctx, tylkoAktywneKatalogu(z.IncludeDisabled))
 	if err != nil {

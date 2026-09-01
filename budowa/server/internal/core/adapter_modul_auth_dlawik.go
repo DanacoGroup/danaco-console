@@ -16,8 +16,9 @@ const zwlokaPierwszaDlawika = 250 * time.Millisecond
 // wykładniczy bez sufitu dałby czekanie liczone w godzinach.
 const zwlokaGranicznaDlawika = 5 * time.Second
 
-// dlawikWejscia trzyma licznik prób nieudanych osobno dla każdej drogi wejścia, kluczowany
-// metodą i urządzeniem, bo bramka jest jedna, a Operator bezimienny.
+// dlawikWejscia trzyma licznik prób nieudanych osobno dla każdej drogi. Klucza drogi
+// nie składa sam: podaje go dlawikDrog (kluczDlawika — czynność i konto albo połączenie),
+// który też wygasza drogi bez prób; wartości z żądania kluczem nie są.
 type dlawikWejscia struct {
 	mu    sync.Mutex
 	proby map[string]int
@@ -95,13 +96,4 @@ func zwlokaPoProbach(nieudane int) time.Duration {
 		}
 	}
 	return zwloka
-}
-
-// drogaWejscia składa klucz licznika z metody i urządzenia żądania; urządzenie puste daje
-// klucz samej metody, bo hasło bramki jest jedno dla całej platformy.
-func drogaWejscia(metoda, urzadzenie string) string {
-	if urzadzenie == "" {
-		return metoda
-	}
-	return metoda + "\x00" + urzadzenie
 }

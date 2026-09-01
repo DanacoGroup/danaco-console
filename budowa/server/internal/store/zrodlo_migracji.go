@@ -13,6 +13,14 @@ import (
 
 // plikiMigracji zawiera schemat wkompilowany w binarium, żeby wdrożenie nie zależało od obecności plików obok programu; numeracja migracji może mieć luki z zamysłu.
 //
+// Pułapka kaskady przy pisaniu kroku: `DROP TABLE` i przebudowa tabeli
+// (jedyna droga zmiany więzu CHECK w SQLite) przy włączonych więzach kluczy
+// obcych wykonują niejawne DELETE wierszy i odpalają kaskady ON DELETE
+// w tabelach potomnych — bez komunikatu. `PRAGMA foreign_keys = off` w treści
+// kroku nie działa wewnątrz transakcji; więzy wygasza zastosujMigracje
+// (migracje.go) przed jej otwarciem, a `PRAGMA foreign_key_check` na końcu
+// kroku wykazuje wiersze bez rodzica. Krok nie ma stawiać tej pragmy sam.
+//
 //go:embed migracja_*.sql
 var plikiMigracji embed.FS
 

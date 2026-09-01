@@ -173,12 +173,13 @@ func (a *adapterAgentow) Zmien(ctx context.Context,
 }
 
 // Wykaz zwraca bibliotekę ekspertów. Biblioteka pusta nie jest odmową — okno
-// pokazuje wtedy stan pusty i zachętę do założenia pierwszego eksperta.
+// pokazuje wtedy stan pusty i zachętę do założenia pierwszego eksperta; odmową
+// jest brak wpiętego repozytorium, bo wykaz pusty udawałby wtedy bibliotekę.
 func (a *adapterAgentow) Wykaz(ctx context.Context,
 	z shared.AgentListRequest) (shared.AgentListResponse, error) {
 
 	if a == nil || a.repozytorium == nil {
-		return shared.AgentListResponse{Agents: []shared.Agent{}}, nil
+		return shared.AgentListResponse{}, bladBrakuKatalogu("ekspertów")
 	}
 	// Wskazany projekt zawęża wykaz do ekspertów w nim widocznych.
 	filtr := dane.FiltrAgentow{

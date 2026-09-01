@@ -131,7 +131,9 @@ func TestSkutekKodowaniaISprzecznosciBadania(t *testing.T) {
 
 	var zrodlo shared.ResearchSourceAddResponse
 	wykonajUdana(t, zmontowany, zycie, shared.CommandResearchSourceAdd,
-		shared.ResearchSourceAddRequest{WindowId: okno, Title: "Analiza segmentu X"}, &zrodlo)
+		shared.ResearchSourceAddRequest{
+			WindowId: okno, Title: "Analiza segmentu X", Kind: shared.ResearchSourceKindWeb,
+		}, &zrodlo)
 
 	var pierwsze, drugie shared.ResearchFindingAddResponse
 	wykonajUdana(t, zmontowany, zycie, shared.CommandResearchFindingAdd,
@@ -256,6 +258,7 @@ func TestSkutekPrzestrzeniIPokryciaBadania(t *testing.T) {
 	wykonajUdana(t, zmontowany, zycie, shared.CommandResearchSourceAdd,
 		shared.ResearchSourceAddRequest{
 			WindowId: okno, Title: "Dane o wzroście segmentu",
+			Kind:        shared.ResearchSourceKindWeb,
 			QuestionIds: []string{pierwszePytanie},
 		}, &zrodlo)
 	wykonajUdana(t, zmontowany, zycie, shared.CommandResearchSourceUpdate,
@@ -300,7 +303,9 @@ func TestSkutekRaportuIEksportuBadania(t *testing.T) {
 
 	var zrodlo shared.ResearchSourceAddResponse
 	wykonajUdana(t, zmontowany, zycie, shared.CommandResearchSourceAdd,
-		shared.ResearchSourceAddRequest{WindowId: okno, Title: "Rocznik statystyczny 2024"}, &zrodlo)
+		shared.ResearchSourceAddRequest{
+			WindowId: okno, Title: "Rocznik statystyczny 2024", Kind: shared.ResearchSourceKindWeb,
+		}, &zrodlo)
 
 	var ustalenie shared.ResearchFindingAddResponse
 	wykonajUdana(t, zmontowany, zycie, shared.CommandResearchFindingAdd,
@@ -419,7 +424,9 @@ func TestSkutekAdnotacjiIWypisowBadania(t *testing.T) {
 
 	var zrodlo shared.ResearchSourceAddResponse
 	wykonajUdana(t, zmontowany, zycie, shared.CommandResearchSourceAdd,
-		shared.ResearchSourceAddRequest{WindowId: okno, Title: "Wywiad branżowy"}, &zrodlo)
+		shared.ResearchSourceAddRequest{
+			WindowId: okno, Title: "Wywiad branżowy", Kind: shared.ResearchSourceKindWeb,
+		}, &zrodlo)
 
 	strona := 12
 	cytat := "Segment X rośnie o 12% rocznie od 2023 roku"

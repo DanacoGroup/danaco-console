@@ -23,9 +23,8 @@ func bladWskazania(err error, byt, identyfikator string) error {
 	return err
 }
 
-// bladBrakuKatalogu odmawia zapisu, gdy domena nie ma wpiętego repozytorium.
-// Odczyt w tej samej sytuacji zwraca wykaz pusty — czytać nie ma czego, ale
-// zapis, który nigdzie nie trafia, byłby potwierdzeniem czynności niewykonanej.
+// bladBrakuKatalogu odmawia, gdy domena nie ma wpiętego repozytorium — także
+// przy odczycie, bo wołający nie odróżniłby katalogu pustego od nieistniejącego.
 func bladBrakuKatalogu(byt string) error {
 	return protocol.JakoError(protocol.NowyBlad(shared.ErrorCodeInternalError,
 		"serwer: katalog "+byt+" nie jest wpięty"))

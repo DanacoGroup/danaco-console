@@ -15,6 +15,9 @@ type Host struct {
 	Uzytkownik string
 	Port       int
 	Zgoda      bool
+	// KluczHosta to klucz publiczny maszyny w postaci `<typ> <klucz base64>`
+	// (kolumna klucz_hosta, migracja 409); pusty znaczy: klucza nie wpisano.
+	KluczHosta string
 }
 
 // AdresPolaczenia zwraca adres, z którym łączy się SSH: adres sieciowy wiersza,
@@ -62,11 +65,12 @@ func hostZRejestru(nazwa string) (Host, error) {
 	if db == nil {
 		return Host{}, odmowaBrakuZasilenia()
 	}
-	const zapytanie = `SELECT id, nazwa, adres, uzytkownik, port, zgoda
+	const zapytanie = `SELECT id, nazwa, adres, uzytkownik, port, zgoda, klucz_hosta
 	                     FROM host_zdalny WHERE nazwa = ?`
 	var h Host
 	var zgoda int
-	err := db.QueryRow(zapytanie, nazwa).Scan(&h.Id, &h.Nazwa, &h.Adres, &h.Uzytkownik, &h.Port, &zgoda)
+	err := db.QueryRow(zapytanie, nazwa).Scan(&h.Id, &h.Nazwa, &h.Adres, &h.Uzytkownik,
+		&h.Port, &zgoda, &h.KluczHosta)
 	if err == sql.ErrNoRows {
 		return Host{}, fmt.Errorf("zdalne: połączenie z hostem %q nie zostało nawiązane, "+
 			"bo hosta nie ma w wykazie hostów zdalnych (tabela host_zdalny, migracja 088); "+
@@ -77,6 +81,7 @@ func hostZRejestru(nazwa string) (Host, error) {
 		return Host{}, fmt.Errorf("zdalne: odczyt hosta %q z wykazu: %w", nazwa, err)
 	}
 	h.Zgoda = zgoda == 1
+	h.KluczHosta = strings.TrimSpace(h.KluczHosta)
 	if !h.Zgoda {
 		return Host{}, fmt.Errorf("zdalne: połączenie z hostem %q nie zostało nawiązane, "+
 			"bo Operator nie wydał zgody na inicjowanie połączeń z tą maszyną — to ochrona "+

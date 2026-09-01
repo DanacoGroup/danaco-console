@@ -50,7 +50,7 @@ func (a *adapterTozsamosci) Kategorie(ctx context.Context,
 	z shared.IdentityCategoryListRequest) (shared.IdentityCategoryListResponse, error) {
 
 	if a == nil || a.repozytorium == nil {
-		return shared.IdentityCategoryListResponse{Categories: []shared.IdentityCategory{}}, nil
+		return shared.IdentityCategoryListResponse{}, bladBrakuKatalogu("tożsamości modelu")
 	}
 	wiersze, err := a.repozytorium.Kategorie(ctx, tylkoAktywneKatalogu(z.IncludeDisabled))
 	if err != nil {
@@ -72,7 +72,7 @@ func (a *adapterTozsamosci) Dokumenty(ctx context.Context,
 	z shared.IdentityDocumentGetRequest) (shared.IdentityDocumentGetResponse, error) {
 
 	if a == nil || a.repozytorium == nil {
-		return shared.IdentityDocumentGetResponse{Documents: []shared.IdentityDocument{}}, nil
+		return shared.IdentityDocumentGetResponse{}, bladBrakuKatalogu("tożsamości modelu")
 	}
 	filtr := dane.FiltrTozsamosci{
 		KodKategorii: wartoscTekstu(z.CategoryId),
@@ -123,12 +123,13 @@ func (a *adapterTozsamosci) Zapisz(ctx context.Context,
 }
 
 // Usun kasuje zapis treści. Brak zapisu znaczy treść z osi szerszej,
-// więc usunięcie zapisu, którego nie ma, nie jest błędem.
+// więc usunięcie zapisu, którego nie ma, nie jest błędem; brak wpiętego
+// katalogu jest odmową.
 func (a *adapterTozsamosci) Usun(ctx context.Context,
 	z shared.IdentityDocumentRemoveRequest) (shared.IdentityDocumentRemoveResponse, error) {
 
 	if a == nil || a.repozytorium == nil {
-		return shared.IdentityDocumentRemoveResponse{Removed: false}, nil
+		return shared.IdentityDocumentRemoveResponse{}, bladBrakuKatalogu("tożsamości modelu")
 	}
 	id, err := strconv.ParseInt(z.DocumentId, 10, 64)
 	if err != nil {

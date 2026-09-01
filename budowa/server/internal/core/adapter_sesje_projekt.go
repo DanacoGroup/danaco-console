@@ -77,6 +77,28 @@ func (a *adapterSesji) ustalProjekt(ctx context.Context,
 	return projekt.Kod, nil
 }
 
+// OdepnijProjektZywych zdejmuje kod projektu z sesji żywych rejestru nadzorcy
+// i zwraca ich identyfikatory. Idzie po `project.delete`: baza odpięła sesje
+// w transakcji kasowania, a rejestr w pamięci sam tego nie widzi i niósłby kod
+// projektu, którego nie ma.
+func (a *adapterSesji) OdepnijProjektZywych(kod string) []string {
+	odpiete := []string{}
+	if a == nil || a.nadzorca == nil || kod == "" {
+		return odpiete
+	}
+	rejestr := a.nadzorca.Rejestr()
+	for _, sesja := range rejestr.Sesje() {
+		if sesja.IdProjektu != kod {
+			continue
+		}
+		if _, err := rejestr.ZmienProjektSesji(sesja.Id, ""); err != nil {
+			continue
+		}
+		odpiete = append(odpiete, sesja.Id)
+	}
+	return odpiete
+}
+
 // przestawProjekt zapisuje przynależność sesji i zwraca te, które faktycznie
 // przestawiono. Wskazanie bez odpowiednika jest pomijane — czynność zbiorcza nie
 // może paść przez jedną pozycję.

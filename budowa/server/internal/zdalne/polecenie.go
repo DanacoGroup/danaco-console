@@ -4,8 +4,6 @@
 package zdalne
 
 import (
-	"database/sql"
-	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -48,13 +46,15 @@ var opcjeSSH = []string{
 	"-o", "ConnectTimeout=10",
 }
 
-// Funkcja zbudujUruchomienie składa wywołanie SSH prowadzące polecenie procesu na wskazany host zdalny.
-func zbudujUruchomienie(sciezkaSSH string, h Host, p Polecenie) Uruchomienie {
+// zbudujUruchomienie składa wywołanie SSH prowadzące polecenie procesu na
+// wskazany host zdalny. Brak klucza hosta jest odmową — tą samą, którą oddaje
+// tor plików — a nie wierszem poleceń, który ssh odrzuci dopiero przy łączeniu.
+func zbudujUruchomienie(sciezkaSSH string, h Host, p Polecenie) (Uruchomienie, error) {
+	plikKluczy, err := zapiszZnaneHosty(h)
+	if err != nil {
+		return Uruchomienie{}, err
+	}
 	argumenty := append([]string{}, opcjeSSH...)
-	// Odmowy braku klucza tor procesu nie ma czym oddać — Przeloz bierze z tej
-	// funkcji sam wiersz poleceń. Ścieżka wraca także wtedy, gdy klucza nie ma;
-	// plik jest wówczas usunięty i połączenie odrzuca ssh.
-	plikKluczy, _ := zapiszZnaneHosty(h)
 	argumenty = append(argumenty, "-o", "UserKnownHostsFile="+plikKluczy)
 	if h.Port != 0 && h.Port != 22 {
 		argumenty = append(argumenty, "-p", strconv.Itoa(h.Port))
@@ -63,7 +63,7 @@ func zbudujUruchomienie(sciezkaSSH string, h Host, p Polecenie) Uruchomienie {
 		argumenty = append(argumenty, "-l", uzytkownik)
 	}
 	argumenty = append(argumenty, h.AdresPolaczenia(), "--", komendaZdalna(p))
-	return Uruchomienie{Program: sciezkaSSH, Argumenty: argumenty, Host: h}
+	return Uruchomienie{Program: sciezkaSSH, Argumenty: argumenty, Host: h}, nil
 }
 
 // Funkcja komendaZdalna składa komendę wykonywaną przez powłokę logowania hosta, z katalogiem i środowiskiem.
@@ -93,16 +93,17 @@ func cytuj(tresc string) string {
 	return "'" + strings.ReplaceAll(tresc, "'", `'\''`) + "'"
 }
 
-// zapiszZnaneHosty składa plik known_hosts hosta z klucza zapisanego w wykazie
-// hostów zdalnych i zwraca jego ścieżkę. Ścieżka wraca także przy odmowie —
-// plik jest wtedy usunięty, więc ssh przy StrictHostKeyChecking=yes odrzuca
-// połączenie zamiast przyjąć klucz podstawiony w locie.
+// zapiszZnaneHosty składa plik known_hosts hosta z klucza niesionego wierszem
+// wykazu (Host.KluczHosta) i zwraca jego ścieżkę. Przy odmowie plik jest
+// usunięty, więc ssh przy StrictHostKeyChecking=yes odrzuca połączenie zamiast
+// przyjąć klucz podstawiony w locie. Odcisk sam w sobie by nie wystarczył: ssh
+// porównuje klucz, nie jego skrót.
 func zapiszZnaneHosty(h Host) (string, error) {
 	sciezka := sciezkaZnanychHostow(h)
-	klucz, err := kluczHosta(h.Nazwa)
-	if err != nil {
+	klucz := strings.TrimSpace(h.KluczHosta)
+	if klucz == "" {
 		_ = os.Remove(sciezka)
-		return sciezka, err
+		return sciezka, odmowaKluczaHosta(h.Nazwa)
 	}
 	if err := os.MkdirAll(filepath.Dir(sciezka), 0o700); err != nil {
 		_ = os.Remove(sciezka)
@@ -134,38 +135,12 @@ func wierszeZnanychHostow(h Host, klucz string) string {
 	return fmt.Sprintf("%s %s\n[%s]:%d %s\n", adres, klucz, adres, port(h), klucz)
 }
 
-// kluczHosta czyta z wykazu hostów zdalnych klucz publiczny maszyny w postaci
-// wiersza known_hosts (typ i klucz w base64). Odcisk sam w sobie nie
-// wystarcza: ssh porównuje klucz, nie jego skrót.
-func kluczHosta(nazwa string) (string, error) {
-	db := baza()
-	if db == nil {
-		return "", odmowaBrakuZasilenia()
-	}
-	const zapytanie = `SELECT COALESCE(klucz_hosta, '') FROM host_zdalny WHERE nazwa = ?`
-	var klucz string
-	err := db.QueryRow(zapytanie, nazwa).Scan(&klucz)
-	if err != nil && !errors.Is(err, sql.ErrNoRows) {
-		return "", odmowaKluczaHosta(nazwa, err)
-	}
-	if strings.TrimSpace(klucz) == "" {
-		return "", odmowaKluczaHosta(nazwa, nil)
-	}
-	return strings.TrimSpace(klucz), nil
-}
-
 // odmowaKluczaHosta nazywa brak klucza publicznego hosta — trójczęściowo, jak
 // pozostałe odmowy pakietu: co się nie stało, dlaczego i co to zdejmuje.
-func odmowaKluczaHosta(nazwa string, err error) error {
-	if err != nil {
-		return fmt.Errorf("zdalne: połączenie z hostem %q nie zostało nawiązane, bo wykaz "+
-			"hostów zdalnych nie oddał klucza publicznego tej maszyny — kolumny klucz_hosta "+
-			"nie ma jeszcze w tabeli host_zdalny; do czasu jej założenia tor odmawia zamiast "+
-			"przyjmować klucz nieznany: %w", nazwa, err)
-	}
+func odmowaKluczaHosta(nazwa string) error {
 	return fmt.Errorf("zdalne: połączenie z hostem %q nie zostało nawiązane, bo wiersz tego "+
 		"hosta nie niesie klucza publicznego, a bez niego ssh nie odróżni maszyny Operatora "+
 		"od maszyny podstawionej; klucz wpisuje Operator instrukcją Danaco: UPDATE host_zdalny "+
 		"SET klucz_hosta = '<typ> <klucz base64>' WHERE nazwa = '%s' — wartość bierze "+
-		"z ssh-keyscan uruchomionego na maszynie rdzenia", nazwa, nazwa)
+		"z ssh-keyscan uruchomionego na maszynie rdzenia (kolumna z migracji 409)", nazwa, nazwa)
 }

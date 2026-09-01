@@ -26099,8 +26099,8 @@ export interface OrchestrationCompensationSetRequest {
   workflowId: string;
   /** Krok glowny */
   stepId: string;
-  /** Krok wycofujacy; pusty zdejmuje kompensacje */
-  compensationStepId: string;
+  /** Krok wycofujacy; brak albo pusty zdejmuje kompensacje */
+  compensationStepId?: string;
 }
 
 /** Tresc wyniku orchestration.compensation.set — Ustala krok wycofujacy skutki kroku glownego przy bledzie w polowie przebiegu */

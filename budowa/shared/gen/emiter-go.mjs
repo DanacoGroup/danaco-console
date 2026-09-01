@@ -63,6 +63,17 @@ function wyliczenia(model) {
 }
 
 /**
+ * Wykaz "nazwa wyliczenia -> dopuszczalne wartosci" dla wszystkich wyliczen
+ * kontraktu. Brama kontraktu rdzenia siega po niego po nazwie typu odczytanej
+ * z pola zadania, wiec nowe wyliczenie wchodzi do bramy bez recznego wpisu.
+ */
+function zakresyWyliczen(model) {
+  return mapaGo('ZakresyWyliczen', 'dopuszczalne wartosci kazdego wyliczenia kontraktu pod nazwa jego typu',
+    'string', '[]string',
+    model.wyliczenia.map((w) => [`"${w.nazwa}"`, `{${w.wartosci.map((v) => v.staly).join(', ')}}`]));
+}
+
+/**
  * Odwzorowanie wartosci wyliczenia na wartosc kolumny modelu danych i z powrotem.
  * Warstwa trwalosci siega po te slowniki zamiast wpisywac przeklad u siebie.
  */
@@ -163,6 +174,7 @@ export function emitujGo(model) {
     ...importy(model),
     ...podstawy(model),
     ...wyliczenia(model),
+    ...zakresyWyliczen(model),
     ...odwzorowania(model),
     ...nazwyKomunikatow(model),
     ...kodyBledow(model),

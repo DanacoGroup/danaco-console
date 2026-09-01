@@ -206,7 +206,7 @@ func grupyKontraktu(idUkladu string, wiersze []dane.GrupaUkladu) []shared.Orches
 // ── orchestration.compensation.set ───────────────────────────────────────────
 
 // UstawKompensacje ustala krok wycofujący skutki kroku głównego przy błędzie
-// w połowie przebiegu. Krok wycofujący pusty zdejmuje kompensację.
+// w połowie przebiegu. Krok wycofujący pominięty albo pusty zdejmuje kompensację.
 func (a *adapterAutomatyk) UstawKompensacje(ctx context.Context,
 	z shared.OrchestrationCompensationSetRequest) (shared.OrchestrationCompensationSetResponse, error) {
 
@@ -222,7 +222,7 @@ func (a *adapterAutomatyk) UstawKompensacje(ctx context.Context,
 		return shared.OrchestrationCompensationSetResponse{},
 			bladWskazaniaAutomatyki("kompensacja bez wskazania kroku głównego")
 	}
-	wycofujacy := strings.TrimSpace(z.CompensationStepId)
+	wycofujacy := strings.TrimSpace(wartoscTekstu(z.CompensationStepId))
 	if wycofujacy == krok {
 		return shared.OrchestrationCompensationSetResponse{},
 			bladWskazaniaAutomatyki("krok " + krok + " nie wycofuje sam siebie")

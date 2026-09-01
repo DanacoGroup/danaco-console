@@ -53161,8 +53161,8 @@
         {
           "nazwa": "compensationStepId",
           "typ": "string",
-          "wymagane": true,
-          "opis": "Krok wycofujacy; pusty zdejmuje kompensacje"
+          "wymagane": false,
+          "opis": "Krok wycofujacy; brak albo pusty zdejmuje kompensacje"
         }
       ],
       "wynik": [

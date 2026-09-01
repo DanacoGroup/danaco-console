@@ -2,18 +2,14 @@
 // więc zwinięcie, rozwinięcie, zamknięcie i przeciąganie niesie belka z warstwy
 // projektowej — ta sama w oknie wejścia i w powłoce Centrum.
 
-type OknoPowloki = {
-  minimize: () => Promise<void>;
-  toggleMaximize: () => Promise<void>;
-  close: () => Promise<void>;
-  startDragging: () => Promise<void>;
-  show: () => Promise<void>;
-};
+import { isTauri } from '@tauri-apps/api/core';
+import { getCurrentWindow, type Window } from '@tauri-apps/api/window';
 
-type MostTauri = { window?: { getCurrentWindow?: () => OknoPowloki } };
+/** Czynności okna powłoki, które belka wywołuje; uprawnienia do nich wylicza `capabilities/domyslne.json`. */
+type CzynnoscOkna = 'minimize' | 'toggleMaximize' | 'close';
 
 /** Etykiety kontrolek belki: klucz warstwy projektowej → czynność okna. */
-const CZYNNOSCI: ReadonlyArray<readonly [RegExp, keyof OknoPowloki]> = [
+const CZYNNOSCI: ReadonlyArray<readonly [RegExp, CzynnoscOkna]> = [
   [/^(zwiń|zwin|minimalizuj)/i, 'minimize'],
   [/^(rozwiń|rozwin|maksymalizuj)/i, 'toggleMaximize'],
   [/^zamknij/i, 'close'],
@@ -22,10 +18,12 @@ const CZYNNOSCI: ReadonlyArray<readonly [RegExp, keyof OknoPowloki]> = [
 /** Belki, które zastępują ramę okna: wejściowa przed uwierzytelnieniem i powłoki. */
 const BELKI = '.dn-okno-wejsciowe-belka, .dn-belka';
 
-function oknoPowloki(): OknoPowloki | null {
-  const most = (globalThis as { __TAURI__?: MostTauri }).__TAURI__;
-  const pobierz = most?.window?.getCurrentWindow;
-  return pobierz === undefined ? null : pobierz();
+/* Import biblioteki jest jawny, nie przez obiekt globalny `__TAURI__`: most
+   globalny wystawiałby IPC każdemu skryptowi w dokumencie. Poza powłoką
+   `getCurrentWindow` nie ma metadanych okna, więc pyta się o nie dopiero po
+   rozpoznaniu powłoki. */
+function oknoPowloki(): Window | null {
+  return isTauri() ? getCurrentWindow() : null;
 }
 
 /** Wiąże belkę okna z oknem powłoki. Poza powłoką nie ma czego wiązać. */

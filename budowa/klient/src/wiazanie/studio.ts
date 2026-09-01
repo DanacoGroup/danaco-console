@@ -1,7 +1,9 @@
 /**
- * Wiązanie okna Studia z rdzeniem. Znacznik niesie biblioteka Właściciela —
+ * Wiązanie karty Studia z rdzeniem. Znacznik niesie biblioteka Właściciela —
  * ten plik nic nie buduje: słucha zdarzeń, woła komendy kontraktu i wypełnia
- * stojące węzły, a wpisy i pozycje powiela z wzorów zdjętych ze znacznika.
+ * węzły karty, a wpisy i pozycje powiela z wzorów zdjętych ze znacznika.
+ * Karty stoją w płótnie obok siebie: wiązanie idzie od korzenia karty i trzyma
+ * stan po jej identyfikatorze.
  */
 
 import {
@@ -15,15 +17,25 @@ import {
   PermissionMode,
   WindowRole,
   type Message,
+  type PanelSection,
   type Session,
   type StreamChunkEvent,
   type StudioDocument,
 } from '../../../shared/contract.ts';
+import type { Odsubskrybuj } from '../polaczenie/magistrala-zdarzen.ts';
 import type { Kanal } from '../protokol/kanal.ts';
 import { wywolaj } from '../protokol/wywolanie.ts';
 import { oglos } from './ogloszenie.ts';
 import { wpiszPole } from './okno-modulu.ts';
+import {
+  odczytajUkladPaneli,
+  oknoBiezace,
+  oknoStojaceSesji,
+  przypiszOknoKomunikacji,
+  zapiszUkladPaneli,
+} from './okna-robocze.ts';
 import { zapewnijSesje } from './sesja-biezaca.ts';
+import { zglosUchwyt } from './zdarzenia.ts';
 import { zdejmijTrescPrzykladowaNarzedzi, zwiazNarzedzia } from './studio-narzedzia.ts';
 import { zdejmijTrescPrzykladowaPlanu, zwiazPlan } from './studio-plan.ts';
 import { zdejmijTrescPrzykladowaPlikow, zwiazPliki } from './studio-pliki.ts';
@@ -37,6 +49,9 @@ import {
 
 /** Kod modułu Studia w rejestrze rdzenia; `module.list` oddaje po nim identyfikator, którego wymaga `window.create`. */
 const KOD_MODULU_STUDIO = 'studio';
+
+/** Panel, pod którym rdzeń trzyma układ kart pasma okna roboczego Studia; sekcja to karta pasma, ukryta znaczy nieotwartą. */
+const PANEL_KART_STUDIA = 'st-karty';
 
 /** Węzły znacznika Właściciela, na których wiązanie pracuje. Brak któregokolwiek znaczy, że okno Studia nie stoi i wiązać nie ma czego. */
 interface WezlyStudia {
@@ -73,42 +88,57 @@ interface StrumienOdpowiedzi {
   odlozone: Map<number, FragmentStrumienia>;
 }
 
-/**
- * Węzeł historii, na którym stoi wiązanie bieżące. Powłoka wstawia wnętrze okna
- * na nowo przy każdym wejściu w moduł, a wiązanie ma objąć znacznik świeży:
- * znacznik ten sam znaczy wiązanie już założone, znacznik inny — okno wstawione
- * ponownie i wiązanie do założenia od nowa.
- */
-let zwiazanaHistoria: Element | null = null;
+/** Wiązanie jednej karty Studia: korzeń wnętrza i odłączenia jego uchwytów zdarzeń oraz nasłuchów. */
+interface WiazanieKarty {
+  korzen: Element;
+  odlaczenia: Odsubskrybuj[];
+}
+
+/* Wiązania po identyfikatorze karty. Karty tego samego modułu stoją w płótnie
+   obok siebie, więc stan wiązania nie może być jeden na moduł: każda karta ma
+   własne okno, historię i uchwyty, a zamknięcie karty zwalnia tylko jej. */
+const WIAZANIA = new Map<string, WiazanieKarty>();
 
 /**
- * Wiąże okno Studia z rdzeniem. Kanał domyślnie z obiektu globalnego, bo
- * skrypty biblioteki są funkcjami domkniętymi i importu z nich nie ma.
- * Identyfikator okna podaje wołający wznawiający sesję: takie okno stoi już
- * w rejestrze rdzenia, a pustka znaczy okno zakładane pierwszą wiadomością.
- * Prawda znaczy, że znacznik okna stał i wiązanie zostało założone.
+ * Wiąże wnętrze karty Studia z rdzeniem. Korzeń to element
+ * `.cd-tresc--modul[data-karta]` albo identyfikator karty; zapytania o węzły
+ * idą od niego. Okno stojące podaje wołający wznawiający sesję, pustka znaczy
+ * okno zakładane pierwszą wiadomością. Prawda znaczy wiązanie założone; karta
+ * związana już na tym korzeniu wraca fałszem.
  */
 export function zwiazStudio(
-  kanal: Kanal | undefined = globalThis.DanacoKanal,
-  nazwaSrodowiska = '',
-  idOknaStojacego = '',
+  kanal: Kanal,
+  nazwaSrodowiska: string,
+  idOknaStojacego: string,
+  wskazanieKorzenia: Element | string,
 ): boolean {
-  if (kanal === undefined) return false;
-  const znalezione = zbierzWezly();
+  const korzen = korzenKarty(wskazanieKorzenia);
+  if (korzen === null) return false;
+  const idKarty = korzen.getAttribute('data-karta') ?? '';
+  if (idKarty === '') return false;
+  if (WIAZANIA.get(idKarty)?.korzen === korzen) return false;
+  const znalezione = zbierzWezly(korzen);
   if (znalezione === null) return false;
-  if (znalezione.historia === zwiazanaHistoria) return false;
-  zwiazanaHistoria = znalezione.historia;
+  zwolnijStudio(idKarty);
+  const odlaczenia: Odsubskrybuj[] = [];
+  WIAZANIA.set(idKarty, { korzen, odlaczenia });
   const wezly: WezlyStudia = znalezione;
 
   const wzory = zdejmijWzoryWpisow(wezly.historia);
   const wzorPozycji = zdejmijWzorPozycji(wezly.szyna);
-  zdejmijTrescPrzykladowa(wezly);
-  zdejmijCzynnosciWstazkiBezPokrycia();
+  zdejmijTrescPrzykladowa(wezly, korzen);
+  zdejmijCzynnosciWstazkiBezPokrycia(korzen);
 
   const wpisy = new Map<string, HTMLElement>();
   const strumienie = new Map<string, StrumienOdpowiedzi>();
   let idOkna = '';
+  let idSesji = '';
   let dokument: StudioDocument | null = null;
+
+  /** Opisuje wstążkę i pas tej karty dokumentem; węzły idą od korzenia karty, nie od dokumentu. */
+  const opiszDokument = (opisywany: StudioDocument | null): void => {
+    opiszDokumentKarty(korzen, opisywany);
+  };
 
   /** Wstawia wpis rdzenia na koniec historii, powielając wzór o kształcie zgodnym z rolą nadawcy. */
   function wstawWpis(wiadomosc: Message): void {
@@ -220,8 +250,21 @@ export function zwiazStudio(
      wskazane przez wołającego: ono stoi już w rejestrze i wchodzi przy montażu. */
   const zapewnijStanowisko = async (): Promise<string> => {
     if (idOkna !== '') return idOkna;
-    idOkna = await otworzStanowisko(kanal, wezly, wzorPozycji, wstawWpis, idOknaStojacego);
-    if (idOkna === '') return '';
+    const stanowisko = await otworzStanowisko(kanal, wezly, wzorPozycji, wstawWpis, idOknaStojacego);
+    if (stanowisko === null) return '';
+    idOkna = stanowisko.idOkna;
+    idSesji = stanowisko.idSesji;
+    /* Karta dostaje okno komunikacji: po nim zamknięcie karty zamyka okno
+       w rdzeniu, a układ kart pasma ma do czego przylgnąć. Przypisanie idzie
+       przez kartę bieżącą okna roboczego, więc karta odsunięta, zanim rdzeń
+       odpowiedział, zostaje bez okna — i mówi to wprost. */
+    if (oknoBiezace().kartaBiezaca === idKarty) {
+      przypiszOknoKomunikacji(KOD_MODULU_STUDIO, idOkna);
+    } else {
+      oglos('Studio', 'Okno rozmowy stanęło, gdy jego karta nie była bieżąca — '
+        + 'zamknięcie karty nie zamknie tego okna.', 'ostrzezenie');
+    }
+    zwiazUkladKart(kanal, idKarty, korzen, odlaczenia);
     zwiazPanele(kanal, idOkna);
     /* Okno stojące prowadzi już swój dokument. Zakładanie nowego przy powrocie
        do sesji mnożyłoby dokumenty przy każdym wejściu w moduł. */
@@ -322,29 +365,91 @@ export function zwiazStudio(
     });
   });
 
-  kanal.naZdarzenie(EventType.MessageChanged, (tresc) => {
-    if (tresc.message.windowId !== idOkna) return;
-    zmienWpis(tresc.change, tresc.message);
-  });
+  /* Zdarzenia idą rozdzielaczem wspólnym: uchwyt zgłoszony tam liczy się jako
+     odbiorca, a zdarzenie cudzego okna albo cudzej sesji jest pomijane. */
+  odlaczenia.push(
+    zglosUchwyt(EventType.MessageChanged, (tresc) => {
+      if (tresc.message.windowId !== idOkna) return;
+      zmienWpis(tresc.change, tresc.message);
+    }),
+  );
 
   /* Odpowiedź modelu przyrasta w oknie fragmentami: pełną wiadomość rdzeń
      rozgłasza dopiero po turze. Numer fragmentu i znacznik domknięcia stoją
      w kopercie, nie w treści zdarzenia. */
-  kanal.naZdarzenie(EventType.StreamChunk, (tresc, koperta) => {
-    if (tresc.windowId !== idOkna) return;
-    przyjmijFragment(tresc, koperta.seq ?? 0, koperta.done === true);
-  });
+  odlaczenia.push(
+    zglosUchwyt(EventType.StreamChunk, (tresc, koperta) => {
+      if (tresc.windowId !== idOkna) return;
+      przyjmijFragment(tresc, koperta.seq ?? 0, koperta.done === true);
+    }),
+  );
+
+  /* Sesja własna zmieniona z innego okna albo urządzenia: nazwa wraca na
+     pozycję bieżącą szyny, a sesja usunięta zostawia okno bez stanowiska. */
+  odlaczenia.push(
+    zglosUchwyt(EventType.SessionChanged, (tresc) => {
+      if (idSesji === '' || tresc.session.id !== idSesji) return;
+      if (tresc.change === ChangeKind.Deleted) {
+        idOkna = '';
+        idSesji = '';
+        oglos('Studio', 'Sesja tego okna została usunięta.', 'ostrzezenie');
+        return;
+      }
+      const tytul = wezly.szyna.querySelector('.pt-pozycja[aria-current="true"] .pt-pozycja-tytul');
+      if (tytul !== null) tytul.textContent = tresc.session.title ?? 'Sesja bez nazwy';
+    }),
+  );
+
+  /* Okno własne zamknięte poza tym wiązaniem: następna wiadomość zakłada
+     stanowisko od nowa, zamiast wracać odmową do okna, którego już nie ma. */
+  odlaczenia.push(
+    zglosUchwyt(EventType.WindowChanged, (tresc) => {
+      if (idOkna === '' || tresc.window.id !== idOkna) return;
+      if (tresc.change !== ChangeKind.Deleted) return;
+      idOkna = '';
+      oglos('Studio', 'Okno rozmowy zostało zamknięte w rdzeniu.', 'ostrzezenie');
+    }),
+  );
+
+  /* Dokument prowadzony w oknie zmieniony przez model albo inne okno: nazwa
+     i wersja na wstążce idą za rdzeniem, treść kanwy zostaje pracą Operatora. */
+  odlaczenia.push(
+    zglosUchwyt(EventType.StudioDocumentChanged, (tresc) => {
+      if (dokument === null || tresc.document.id !== dokument.id) return;
+      if (tresc.change === ChangeKind.Deleted) {
+        dokument = null;
+        opiszDokument(null);
+        return;
+      }
+      dokument = tresc.document;
+      opiszDokument(dokument);
+    }),
+  );
 
   /* Stan pusty dokumentu wchodzi od razu: nazwa pracy z prototypu jest treścią
      przykładową, a okno staje, zanim powstanie sesja i dokument. */
   opiszDokument(null);
-  void opiszKanal(kanal, nazwaSrodowiska);
-  void opiszWyborModelu(kanal);
-  opiszWyborNakladu();
+  void opiszKanal(kanal, nazwaSrodowiska, korzen);
+  void opiszWyborModelu(kanal, korzen);
+  opiszWyborNakladu(korzen);
   /* Okno wskazane przez wołającego stoi już w rdzeniu, więc historia rozmowy
      wraca przy montażu, bez czekania na pierwszą wiadomość. */
   if (idOknaStojacego !== '') void zapewnijStanowisko();
   return true;
+}
+
+/** Zwalnia wiązanie karty: zdejmuje jej uchwyty zdarzeń i nasłuchy. Karta bez wiązania nie robi nic. */
+export function zwolnijStudio(idKarty: string): void {
+  const wiazanie = WIAZANIA.get(idKarty);
+  if (wiazanie === undefined) return;
+  for (const odlacz of wiazanie.odlaczenia) odlacz();
+  WIAZANIA.delete(idKarty);
+}
+
+/** Korzeń karty ze wskazania: element wprost albo element odszukany w płótnie po identyfikatorze karty. */
+function korzenKarty(wskazanie: Element | string): Element | null {
+  if (typeof wskazanie !== 'string') return wskazanie;
+  return document.querySelector(`.cd-tresc--modul[data-karta="${wskazanie}"]`);
 }
 
 /**
@@ -367,11 +472,11 @@ function zlozTresc(dotychczasowa: string, fragment: StreamChunkEvent): string {
  * po założeniu okna komunikacji, a do tej chwili Operator nie ma prawa zobaczyć
  * dokumentu z prototypu i wziąć go za własną pracę.
  */
-function zdejmijTrescPrzykladowa(wezly: WezlyStudia): void {
+function zdejmijTrescPrzykladowa(wezly: WezlyStudia, korzen: Element): void {
   wezly.historia.replaceChildren();
   wezly.szyna.replaceChildren();
   wezly.kanwa.replaceChildren();
-  zdejmijZnacznikiBezZrodla();
+  zdejmijZnacznikiBezZrodla(korzen);
   zdejmijTrescPrzykladowaPlanu();
   zdejmijTrescPrzykladowaRoznic();
   zdejmijTrescPrzykladowaRepozytorium();
@@ -386,9 +491,9 @@ function zdejmijTrescPrzykladowa(wezly: WezlyStudia): void {
  * operacji i jej zakresu, przekazanie do Biblioteki — profilu wydania; wstążka
  * nie ma węzła, w którym Operator poda którąkolwiek z tych wartości.
  */
-function zdejmijCzynnosciWstazkiBezPokrycia(): void {
-  document.querySelector('.st-wstazka [data-etykietka="Podgląd wydruku"]')?.remove();
-  document.querySelector('.st-wstazka .st-wstazka-grupa--drugorzedna')?.remove();
+function zdejmijCzynnosciWstazkiBezPokrycia(korzen: Element): void {
+  korzen.querySelector('.st-wstazka [data-etykietka="Podgląd wydruku"]')?.remove();
+  korzen.querySelector('.st-wstazka .st-wstazka-grupa--drugorzedna')?.remove();
 }
 
 /**
@@ -396,19 +501,19 @@ function zdejmijCzynnosciWstazkiBezPokrycia(): void {
  * repozytorium i miarę różnicy w pasie czynności, wskazania źródła nad polem
  * wpisu oraz pas czytelności, dla którego rdzeń nie ma ani jednej miary.
  */
-function zdejmijZnacznikiBezZrodla(): void {
-  for (const znacznik of document.querySelectorAll('.sta-kontekst-akcji .sta-chip')) {
+function zdejmijZnacznikiBezZrodla(korzen: Element): void {
+  for (const znacznik of korzen.querySelectorAll('.sta-kontekst-akcji .sta-chip')) {
     if (znacznik.classList.contains('sta-chip--srodowisko')) continue;
     znacznik.remove();
   }
-  for (const zrodlo of document.querySelectorAll('.sta-zrodlo')) zrodlo.remove();
-  document.querySelector('.sta-kom-monitor')?.remove();
+  for (const zrodlo of korzen.querySelectorAll('.sta-zrodlo')) zrodlo.remove();
+  korzen.querySelector('.sta-kom-monitor')?.remove();
 }
 
 /** Wpisuje w wybór modelu kanały rejestru rdzenia; wiersz wzorcowy powiela się na każdy kanał, a kanał czynny nazywa sam znacznik wyboru. */
-async function opiszWyborModelu(kanal: Kanal): Promise<void> {
-  const znak = document.querySelector('.sta-chip--model');
-  const spis = document.getElementById('pop-model');
+async function opiszWyborModelu(kanal: Kanal, korzen: Element): Promise<void> {
+  const znak = korzen.querySelector('.sta-chip--model');
+  const spis = korzen.querySelector('#pop-model');
   if (znak === null || spis === null) return;
   const wynik = await wywolaj(kanal, Command.ChannelList, { enabledOnly: true });
   if (!wynik.udany || wynik.wynik === undefined) return;
@@ -436,9 +541,9 @@ async function opiszWyborModelu(kanal: Kanal): Promise<void> {
  * suwak i nazwę spoza kontraktu; rdzeń zna trzy nakłady, więc suwak dostaje
  * granice trzech stopni, a nazwa bierze się z wybranego stopnia.
  */
-function opiszWyborNakladu(): void {
-  const spis = document.getElementById('pop-wysilek');
-  const znak = document.querySelector('[data-popover="pop-wysilek"]');
+function opiszWyborNakladu(korzen: Element): void {
+  const spis = korzen.querySelector('#pop-wysilek');
+  const znak = korzen.querySelector('[data-popover="pop-wysilek"]');
   if (spis === null || znak === null) return;
   const naklady = Object.values(ReasoningEffort);
   const suwak = spis.querySelector<HTMLInputElement>('.sta-suwak');
@@ -461,8 +566,8 @@ function opiszWyborNakladu(): void {
 }
 
 /** Wpisuje w nagłówek okna komunikacji środowisko wejścia i model kanału; pole wysiłku znika, bo kontrakt nie niesie jego wartości. */
-async function opiszKanal(kanal: Kanal, nazwaSrodowiska: string): Promise<void> {
-  const naglowek = document.querySelector('.sta-kom-naglowek');
+async function opiszKanal(kanal: Kanal, nazwaSrodowiska: string, korzen: Element): Promise<void> {
+  const naglowek = korzen.querySelector('.sta-kom-naglowek');
   if (naglowek === null) return;
   const pola = [...naglowek.querySelectorAll('.sta-kom-pole')];
   wpiszPole(pola, 'Środowisko', nazwaSrodowiska);
@@ -472,17 +577,17 @@ async function opiszKanal(kanal: Kanal, nazwaSrodowiska: string): Promise<void> 
   wpiszPole(pola, 'Wysiłek', '');
 }
 
-/** Nadaje oknu i pasowi tytuł dokumentu; dokument bez nadanej nazwy dostaje nazwany stan pusty, nie własny identyfikator. */
-function opiszDokument(dokument: StudioDocument | null): void {
+/** Nadaje wstążce i karcie edytora tytuł dokumentu; dokument bez nadanej nazwy dostaje nazwany stan pusty, nie własny identyfikator. */
+function opiszDokumentKarty(korzen: Element, dokument: StudioDocument | null): void {
   const nazwa = dokument?.title ?? 'Dokument bez nazwy';
   const miejsca = '.st-wstazka-sesja span, .sta-okno-znacznik, .dn-karta--robocza .dn-karta-widoku-nazwa';
-  for (const wezel of document.querySelectorAll(miejsca)) wezel.textContent = nazwa;
-  wpiszWersje(dokument);
+  for (const wezel of korzen.querySelectorAll(miejsca)) wezel.textContent = nazwa;
+  wpiszWersje(korzen, dokument);
 }
 
 /** Nanosi wersję dokumentu na miarę wstążki; dokument bez wersji w repozytorium sesji nie ma czego pokazać, więc miara znika. */
-function wpiszWersje(dokument: StudioDocument | null): void {
-  for (const wezel of document.querySelectorAll('.st-wstazka-stan .st-miara')) {
+function wpiszWersje(korzen: Element, dokument: StudioDocument | null): void {
+  for (const wezel of korzen.querySelectorAll('.st-wstazka-stan .st-miara')) {
     if (dokument?.versionId === undefined) wezel.remove();
     else wezel.textContent = `wersja ${dokument.versionId}`;
   }
@@ -495,10 +600,10 @@ interface Stanowisko {
 }
 
 /**
- * Wskazuje stanowisko okna, wczytuje jego historię i szynę sesji; zwraca
- * identyfikator okna albo pustkę, gdy rdzeń odmówił. Okno podane przez
- * wołającego stoi już w rejestrze, więc `window.create` nie pada — pada
- * wyłącznie dla okna zakładanego pierwszą wiadomością.
+ * Wskazuje stanowisko okna, wczytuje jego historię i szynę sesji; pustka znaczy
+ * odmowę rdzenia. Okno podane przez wołającego stoi już w rejestrze, więc
+ * `window.create` nie pada — pada wyłącznie dla okna zakładanego pierwszą
+ * wiadomością, i to tylko wtedy, gdy sesja okna Studia jeszcze nie ma.
  */
 async function otworzStanowisko(
   kanal: Kanal,
@@ -506,11 +611,11 @@ async function otworzStanowisko(
   wzorPozycji: HTMLElement | null,
   wstawWpis: (wiadomosc: Message) => void,
   idOknaStojacego: string,
-): Promise<string> {
+): Promise<Stanowisko | null> {
   const stanowisko = idOknaStojacego === ''
     ? await zalozStanowisko(kanal)
     : await wskazStanowisko(kanal, idOknaStojacego);
-  if (stanowisko === null) return '';
+  if (stanowisko === null) return null;
 
   const historia = await wywolaj(kanal, Command.MessageList, { windowId: stanowisko.idOkna });
   if (historia.udany && historia.wynik !== undefined) {
@@ -518,18 +623,28 @@ async function otworzStanowisko(
   }
 
   await wypelnijSzyne(kanal, wezly.szyna, wzorPozycji, stanowisko.idSesji);
-  return stanowisko.idOkna;
+  return stanowisko;
 }
 
-/** Zakłada sesję i okno komunikacji; pustka znaczy odmowę rdzenia na którymkolwiek z trzech kroków. */
+/**
+ * Zakłada sesję i wskazuje w niej okno komunikacji Studia: stojące, gdy sesja
+ * takie ma, założone, gdy nie ma. Pustka znaczy odmowę rdzenia na którymkolwiek
+ * kroku — także przy pytaniu o okna stojące, bo zakładanie bez tej odpowiedzi
+ * mnożyłoby okna tego samego modułu w sesji.
+ */
 async function zalozStanowisko(kanal: Kanal): Promise<Stanowisko | null> {
   // Stanowisko staje w karcie sesji bieżącej, tak samo jak każde inne okno modułu.
   const idSesji = await zapewnijSesje(kanal, 'Studio');
   if (idSesji === '') return null;
 
   const modul = await wskazModulStudia(kanal);
+  if (modul === '') return null;
+  const stojace = await oknoStojaceSesji(kanal, idSesji, modul);
+  if (stojace === null) return null;
+  if (stojace !== '') return { idOkna: stojace, idSesji };
+
   const kanalModelu = await wskazKanalModelu(kanal);
-  if (modul === '' || kanalModelu === '') return null;
+  if (kanalModelu === '') return null;
 
   const okno = await wywolaj(kanal, Command.WindowCreate, {
     sessionId: idSesji,
@@ -564,6 +679,59 @@ async function wskazKanalModelu(kanal: Kanal): Promise<string> {
   const wynik = await wywolaj(kanal, Command.ChannelList, { enabledOnly: true });
   if (!wynik.udany || wynik.wynik === undefined) return '';
   return wynik.wynik.channels[0]?.id ?? '';
+}
+
+/**
+ * Układ kart pasma okna roboczego idzie do rdzenia przy każdym przełączeniu
+ * karty i wraca przy założeniu stanowiska. Sekcją jest karta pasma: kolejność
+ * według pasma, ukryta znaczy nieotwartą. Przełącza biblioteka
+ * `zakladki-paneli.js` na kliknięcie, więc odczyt stanu idzie po jej nasłuchu.
+ */
+function zwiazUkladKart(
+  kanal: Kanal,
+  idKarty: string,
+  korzen: Element,
+  odlaczenia: Odsubskrybuj[],
+): void {
+  if (idKarty === '') return;
+  void odczytajUkladPaneli(kanal, idKarty, PANEL_KART_STUDIA).then((sekcje) => {
+    if (sekcje !== null && sekcje.length > 0) naniesUkladKart(korzen, sekcje);
+  });
+  const naPrzelaczenie = (zdarzenie: Event): void => {
+    const cel = zdarzenie.target;
+    if (!(cel instanceof Element) || cel.closest('.st-karty [role="tab"][data-karta]') === null) return;
+    globalThis.setTimeout(() => {
+      void zapiszUkladPaneli(kanal, idKarty, PANEL_KART_STUDIA, zbierzUkladKart(korzen));
+    }, 0);
+  };
+  korzen.addEventListener('click', naPrzelaczenie);
+  odlaczenia.push(() => {
+    korzen.removeEventListener('click', naPrzelaczenie);
+  });
+}
+
+/** Układ kart pasma odczytany ze znacznika karty: kolejność według pasma, ukryta jest karta nieotwarta. */
+function zbierzUkladKart(korzen: Element): PanelSection[] {
+  const karty = korzen.querySelectorAll<HTMLElement>('.st-karty [role="tab"][data-karta]');
+  return [...karty].map((karta, numer) => ({
+    id: karta.dataset.karta ?? '',
+    order: numer + 1,
+    collapsed: false,
+    hidden: karta.getAttribute('aria-selected') !== 'true',
+  }));
+}
+
+/** Otwiera kartę pasma wskazaną układem z rdzenia; kliknięcie idzie przez bibliotekę, która przełącza panele. */
+function naniesUkladKart(korzen: Element, sekcje: PanelSection[]): void {
+  const otwarta = [...sekcje]
+    .sort((pierwsza, druga) => pierwsza.order - druga.order)
+    .find((sekcja) => sekcja.hidden !== true);
+  if (otwarta === undefined) return;
+  const karta = korzen.querySelector<HTMLElement>(
+    `.st-karty [role="tab"][data-karta="${otwarta.id}"]`,
+  );
+  if (karta === null || karta.getAttribute('aria-selected') === 'true') return;
+  karta.click();
 }
 
 /** Wypełnia szynę dokumentów pozycjami sesji rdzenia, powielając wzór pozycji zdjęty ze znacznika. */
@@ -694,15 +862,15 @@ function policzSlowa(tresc: string): number {
   return cialo === '' ? 0 : cialo.split(/\s+/u).length;
 }
 
-/** Wskazuje węzły okna Studia; pustka znaczy, że okno nie stoi w dokumencie. */
-function zbierzWezly(): WezlyStudia | null {
-  const kom = document.querySelector('.sta-kom');
+/** Wskazuje węzły karty Studia od jej korzenia; pustka znaczy, że znacznik Studia w karcie nie stoi. */
+function zbierzWezly(korzen: Element): WezlyStudia | null {
+  const kom = korzen.querySelector('.sta-kom');
   const historia = kom?.querySelector('.sta-kom-historia');
   const formularz = kom?.querySelector('form.sta-prompt');
   const pole = kom?.querySelector('textarea.sta-prompt-obszar');
-  const szyna = document.querySelector('.st-szyna-lista');
-  const kanwa = document.querySelector('.dn-kanwa');
-  const status = document.querySelector('.st-status');
+  const szyna = korzen.querySelector('.st-szyna-lista');
+  const kanwa = korzen.querySelector('.dn-kanwa');
+  const status = korzen.querySelector('.st-status');
   if (
     !(historia instanceof HTMLElement) ||
     !(formularz instanceof HTMLFormElement) ||
@@ -713,7 +881,7 @@ function zbierzWezly(): WezlyStudia | null {
   ) {
     return null;
   }
-  const nowyDokument = document.querySelector('.st-szyna-naglowek button.dn-btn');
+  const nowyDokument = korzen.querySelector('.st-szyna-naglowek button.dn-btn');
   return {
     historia,
     formularz,
@@ -723,9 +891,9 @@ function zbierzWezly(): WezlyStudia | null {
     nowyDokument: nowyDokument instanceof HTMLElement ? nowyDokument : null,
     kanwa,
     status,
-    zapiszWersje: wskazElement(document.querySelector('.st-wstazka [data-etykietka="Zapisz wersję"]')),
+    zapiszWersje: wskazElement(korzen.querySelector('.st-wstazka [data-etykietka="Zapisz wersję"]')),
     porownajWersje: wskazElement(
-      document.querySelector('.st-wstazka [data-etykietka="Porównaj wersje"]'),
+      korzen.querySelector('.st-wstazka [data-etykietka="Porównaj wersje"]'),
     ),
   };
 }
@@ -801,15 +969,6 @@ function trescWpisu(wpis: HTMLElement): string {
 /** Godzina wpisu w zapisie, którego używa znacznik historii — godziny i minuty. */
 function godzinaWpisu(znacznik: number): string {
   return new Date(znacznik).toLocaleTimeString('pl-PL', { hour: '2-digit', minute: '2-digit' });
-}
-
-// Okno Studia wstawia w ramę powłoka, już po wczytaniu modułów; obserwator
-// wiąże je w chwili, gdy znacznik stanie, i odłącza się po pierwszym wiązaniu.
-if (!zwiazStudio()) {
-  const obserwator = new MutationObserver(() => {
-    if (zwiazStudio()) obserwator.disconnect();
-  });
-  obserwator.observe(document.documentElement, { childList: true, subtree: true });
 }
 
 /* Panele okna roboczego wiąże się dopiero po założeniu okna: każdy z nich pyta

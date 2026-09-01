@@ -1,3 +1,4 @@
+import { adresNawiazania, sekretNawiazaniaOdPowloki } from './adres-rdzenia.ts';
 import { utworzKolejkeWychodzaca, type KolejkaWychodzaca } from './kolejka-wychodzaca.ts';
 import { utworzMagistrale, type Magistrala, type Odsubskrybuj } from './magistrala-zdarzen.ts';
 import { wykladniczePonawianie, type PolitykaPonawiania } from './ponawianie.ts';
@@ -14,6 +15,8 @@ export type PowodPorzucenia =
 export interface Transport {
   /** Rozpoczyna łączenie i utrzymuje je przez ponawianie. */
   polacz(): void;
+  /** Ponawia łączenie od razu, bez czekania na zaplanowane opóźnienie. */
+  wznow(): void;
   /** Wysyła ramkę; przy braku połączenia albo przy wstrzymaniu trafia ona do kolejki wychodzącej. */
   wyslij(ramka: string): void;
   /** Wysyła ramkę powitania, która wstrzymania nie podlega — to ono je zdejmuje. */
@@ -85,8 +88,16 @@ class Gniazdo implements Transport {
     if (this.gniazdo !== null) return;
     this.zaniechane = false;
     this.anulujPlan();
+    /* Transport bez adresu nie ma z czym się łączyć: ramki wracają porzucone
+       od razu, żeby wołający dostał odmowę zamiast ciszy. */
+    if (this.adres === '') {
+      this.zapiszStan('rozlaczony');
+      return;
+    }
     this.zapiszStan(this.numerProby === 0 ? 'laczenie' : 'ponawianie');
-    const gniazdo = new WebSocket(this.adres);
+    /* Sekret nawiązania idzie parametrem zapytania: rdzeń porównuje go przed
+       uaktualnieniem gniazda (`transport/ustawienia.go`, `ParametrSekretu`). */
+    const gniazdo = new WebSocket(adresNawiazania(this.adres, sekretNawiazaniaOdPowloki()));
     this.gniazdo = gniazdo;
     gniazdo.addEventListener('open', () => this.obsluzOtwarcie());
     gniazdo.addEventListener('message', (zdarzenie) => this.obsluzRamke(zdarzenie));
@@ -95,6 +106,12 @@ class Gniazdo implements Transport {
     gniazdo.addEventListener('error', () => {
       if (gniazdo.readyState === WebSocket.OPEN) gniazdo.close();
     });
+  }
+
+  wznow(): void {
+    if (this.gniazdo !== null) return;
+    this.numerProby = 0;
+    this.polacz();
   }
 
   wyslij(ramka: string): void {
@@ -173,6 +190,10 @@ class Gniazdo implements Transport {
   ): void {
     if (wolno && this.gniazdo !== null && this.gniazdo.readyState === WebSocket.OPEN) {
       this.gniazdo.send(ramka);
+      return;
+    }
+    if (this.adres === '') {
+      this.porzucone.oglos({ tresc: ramka, powod: 'zerwanie' });
       return;
     }
     kolejka.dodaj({ tresc: ramka, nadana: Date.now() });

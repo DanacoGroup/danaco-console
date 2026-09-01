@@ -14,6 +14,7 @@ import {
 } from '../polaczenie/dziennik-nieznanych.ts';
 import type { PowodPorzucenia, Transport } from '../polaczenie/gniazdo.ts';
 import { utworzMagistrale, type Odsubskrybuj } from '../polaczenie/magistrala-zdarzen.ts';
+import type { StanPolaczenia } from '../polaczenie/stan-polaczenia.ts';
 import { czyOdpowiedz, czyUdana, tresc, zbudujKoperte } from './koperta.ts';
 import { utworzKorelacje } from './korelacja.ts';
 import { odczytajRamke, zapiszRamke } from './ramka.ts';
@@ -45,6 +46,10 @@ export interface Kanal {
   ): Odsubskrybuj;
   /** Subskrypcja całego ruchu przychodzącego. */
   naDowolny(sluchacz: (koperta: Envelope) => void): Odsubskrybuj;
+  /** Subskrypcja stanu połączenia transportu; słuchacz dostaje stan bieżący od razu. */
+  naStan(sluchacz: (stan: StanPolaczenia) => void): Odsubskrybuj;
+  /** Ponawia łączenie od razu, z pominięciem zaplanowanego opóźnienia. */
+  wznowPolaczenie(): void;
   /** Sesja nadawana kopertom wychodzącym. */
   sesja(): Sesja;
   /** Zapamiętuje wykaz komend obsługiwanych przez rdzeń, podany w powitaniu. */
@@ -110,6 +115,10 @@ export function utworzKanal(transport: Transport, sesja: Sesja): Kanal {
     naDowolny(sluchacz) {
       return przychodzace.subskrybuj(sluchacz);
     },
+
+    naStan: (sluchacz) => transport.naStan(sluchacz),
+
+    wznowPolaczenie: () => transport.wznow(),
 
     sesja: () => sesja,
 

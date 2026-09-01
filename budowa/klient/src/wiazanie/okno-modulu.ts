@@ -11,13 +11,18 @@ import { oglos } from './ogloszenie.ts';
 import { przypiszOknoKomunikacji } from './okna-robocze.ts';
 
 /**
- * Wiąże wnętrze okna modułu, dla którego okna komunikacji w rdzeniu jeszcze
+ * Wiąże wnętrze karty modułu, dla której okna komunikacji w rdzeniu jeszcze
  * nie ma — okno zakłada dopiero praca podjęta w karcie. Kod modułu nie wchodzi
  * tu w wiązanie: karta bez okna komunikacji nie ma czego z rdzeniem uzgodnić.
- * Nazwa środowiska wchodzi w nagłówek okna.
+ * Nazwa środowiska wchodzi w nagłówek okna; węzły szuka się od korzenia karty.
  */
-export function zwiazOkno(kanal: Kanal, _kodModulu: string, nazwaSrodowiska: string): void {
-  void opiszNaglowek(kanal, nazwaSrodowiska);
+export function zwiazOkno(
+  kanal: Kanal,
+  _kodModulu: string,
+  nazwaSrodowiska: string,
+  korzen: ParentNode,
+): void {
+  void opiszNaglowek(kanal, nazwaSrodowiska, korzen);
 }
 
 /**
@@ -30,22 +35,27 @@ export function zwiazOknoStojace(
   kodModulu: string,
   nazwaSrodowiska: string,
   idOkna: string,
+  korzen: ParentNode,
 ): void {
   if (!przypiszOknoKomunikacji(kodModulu, idOkna)) {
     oglos('Okno modułu', 'Karta bieżąca niesie inny moduł niż okno wskazane przez rdzeń — '
       + 'zamknięcie karty nie zamknie tego okna.', 'ostrzezenie');
   }
-  void opiszNaglowek(kanal, nazwaSrodowiska);
+  void opiszNaglowek(kanal, nazwaSrodowiska, korzen);
 }
 
 /**
- * Opisuje nagłówek okna komunikacji środowiskiem wejścia i modelem kanału.
- * Pozostałe podpisy prototypu — wysiłek, wykonawca, pamięć, rola, format,
- * tura — schodzą: ich wartości niesie dopiero praca podjęta w oknie, a okno
- * dopiero co stanęło, więc podpis pokazywałby wartość wymyśloną.
+ * Opisuje nagłówek okna komunikacji karty środowiskiem wejścia i modelem
+ * kanału; nagłówek szuka się od korzenia karty, bo karty stoją w płótnie obok
+ * siebie. Pozostałe podpisy prototypu — wysiłek, wykonawca, pamięć, rola,
+ * format, tura — schodzą: ich wartości niesie dopiero praca podjęta w oknie.
  */
-async function opiszNaglowek(kanal: Kanal, nazwaSrodowiska: string): Promise<void> {
-  const naglowek = document.querySelector('.sta-kom-naglowek');
+async function opiszNaglowek(
+  kanal: Kanal,
+  nazwaSrodowiska: string,
+  korzen: ParentNode,
+): Promise<void> {
+  const naglowek = korzen.querySelector('.sta-kom-naglowek');
   if (naglowek === null) return;
   const wynik = await wywolaj(kanal, Command.ChannelList, { enabledOnly: true });
   const kanalModelu = wynik.udany ? wynik.wynik?.channels[0] : undefined;

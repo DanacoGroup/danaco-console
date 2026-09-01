@@ -2,16 +2,17 @@
  * Karta sesji, w której Operator teraz pracuje. Rdzeń prowadzi sesje trwale,
  * a okna modułów stają w ich wnętrzu — klient musi więc wiedzieć, która karta
  * jest bieżąca. Bez tego wskazania każde wejście w moduł zakładałoby kartę
- * nową, a praca Operatora nie miałaby dokąd wracać.
+ * nową, a praca Operatora nie miałaby dokąd wracać. Identyfikator sesji stoi
+ * w `protokol/sesja.ts` — ten sam, który niosą koperty wychodzące.
  */
 import { Command, type Window } from '../../../shared/contract.ts';
 import type { Kanal } from '../protokol/kanal.ts';
+import { sesjaKlienta } from '../protokol/sesja.ts';
 import { tozsamoscKlienta } from '../protokol/tozsamosc-klienta.ts';
 import { wywolaj } from '../protokol/wywolanie.ts';
 import { oglos } from './ogloszenie.ts';
 import { odtworzOknaRobocze } from './okna-robocze.ts';
 
-let biezaca = '';
 /* Środowisko, przez które Operator wszedł do pracy. Sesja zakładana pierwszą
    wiadomością bierze je stąd, bo karta środowiska liczy po nim swoje sesje. */
 let srodowiskoWejscia = '';
@@ -23,13 +24,13 @@ export function wskazSrodowisko(kod: string): void {
 
 /** Karta sesji bieżącej; pustka znaczy, że Operator żadnej jeszcze nie otworzył. */
 export function sesjaBiezaca(): string {
-  return biezaca;
+  return sesjaKlienta().id();
 }
 
 /** Przenosi ognisko na wskazaną kartę sesji i czyni ją bieżącą. */
 export async function wskazSesje(kanal: Kanal, idSesji: string): Promise<void> {
   if (idSesji === '') return;
-  biezaca = idSesji;
+  sesjaKlienta().ustaw(idSesji);
   await wywolaj(kanal, Command.SessionFocus, {
     sessionId: idSesji,
     clientId: tozsamoscKlienta().id,
@@ -56,6 +57,7 @@ export async function zapewnijSesje(
   nazwa: string,
   kodSrodowiska = '',
 ): Promise<string> {
+  const biezaca = sesjaKlienta().id();
   if (biezaca !== '') return biezaca;
   const zadanie: { title?: string; environmentCode?: string } = {};
   if (nazwa !== '') zadanie.title = nazwa;
@@ -64,15 +66,7 @@ export async function zapewnijSesje(
   const wynik = await wywolaj(kanal, Command.SessionCreate, zadanie);
   if (!wynik.udany || wynik.wynik === undefined) return '';
   await wskazSesje(kanal, wynik.wynik.session.id);
-  return biezaca;
-}
-
-/** Zakłada nową kartę sesji i czyni ją bieżącą; zwraca jej identyfikator. */
-export async function zalozSesje(kanal: Kanal, nazwa: string): Promise<string> {
-  const wynik = await wywolaj(kanal, Command.SessionCreate, nazwa === '' ? {} : { title: nazwa });
-  if (!wynik.udany || wynik.wynik === undefined) return '';
-  await wskazSesje(kanal, wynik.wynik.session.id);
-  return biezaca;
+  return sesjaKlienta().id();
 }
 
 /**
@@ -89,7 +83,9 @@ export async function przejmijOgnisko(kanal: Kanal): Promise<void> {
     return;
   }
   const ogniskowana = wynik.wynik.focusedSessionId ?? '';
-  if (ogniskowana !== '') biezaca = ogniskowana;
+  /* Ognisko idzie przez `session.focus`, nie samym wpisem: koperty wychodzące
+     biorą sesję z `protokol/sesja.ts`, a rdzeń potwierdza ją zdarzeniem. */
+  if (ogniskowana !== '') await wskazSesje(kanal, ogniskowana);
   const odtworzone = await odtworzOknaRobocze(
     kanal, wynik.wynik.sessions, wynik.wynik.presence ?? [], ogniskowana,
   );

@@ -7,11 +7,7 @@
     "wdrozony": true,
     "adres": "https://pobierz.danaco-group.pl/",
     "tymczasowy": false,
-    "czym_jest": "Kanał stoi pod własną nazwą pobierz.danaco-group.pl, z TLS na 443 i przekierowaniem z portu 80. Pliki, po które sięga kreator instalacji, leżą pod OTWARTĄ ścieżką /pliki/ — kreator sześciu kroków nie ma pola na hasło. Ścieżka /wydania/ jest zamknięta uwierzytelnieniem podstawowym i wolno ją nieść wyłącznie pozycji oznaczonej polem `chronione_haslem`. Opisu maszyn, serwera stron i poświadczeń w tym pliku nie ma i nie wolno go tu wpisywać: wykaz jest publiczny i wkompilowany w kreator, więc czyta się go poleceniem `strings` na pobranym pliku.",
-    "certyfikat": "Certyfikat wystawia i odnawia serwer stron samodzielnie (ACME, Let's Encrypt). Przeglądarka nie pokazuje ostrzeżenia — sprawdzone: https://pobierz.danaco-group.pl/ odpowiada 200.",
-    "docelowo": "Kanał jest na swoim miejscu. Do zrobienia zostaje strona wizerunkowa produktu w portfolio grupy — bez pobierania plików, z jednym odnośnikiem tutaj.",
-    "czego_brakuje": "",
-    "po_co_to_pole": "Pole rozstrzyga, czy strona „Pobierz” wystawia przycisk POBIERZ, czy tylko adres jako tekst. `wdrozony: true` znaczy: pliki naprawdę leżą pod tymi adresami — sprawdza to krok odbioru w `zloz.mjs`, żądaniem HEAD na każdą pozycję, i odmawia złożenia strony, gdy adres odpowiada inaczej. `tymczasowy: true` dokłada do tego zdanie, że kanał jest z maszyny budującej i pod certyfikatem własnym, żeby nikt nie wziął tego adresu za docelowy."
+    "czego_brakuje": ""
   },
   "protokol": {
     "dopuszczone": [

@@ -46,7 +46,9 @@ const modulAsystenta = "assistant"
 
 // zZasiegiemKlawiatury dopisuje do wpisu `danaco` rolę okna asystenta.
 // Rozszerzenie wchodzi wyłącznie wtedy, gdy okno tury jest oknem modułu
-// Assistant, i wchodzi do wpisu MCP, zanim proces modelu wystartuje.
+// Assistant, i wchodzi do wpisu MCP, zanim proces modelu wystartuje. Rola
+// obowiązuje w rdzeniu tylko razem z poświadczeniem, które wpis niesie
+// z `narzedzia.Wpis` — sam przełącznik zasięgu bez poświadczenia nie nadaje nic.
 func zZasiegiemKlawiatury(tekst string, okno session.Okno) string {
 	if okno.Modul != modulAsystenta {
 		return tekst

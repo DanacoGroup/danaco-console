@@ -102,12 +102,13 @@ func (u *blokadaUprzazSprawdzianu) blokadaWykonajJakoModel(t *testing.T,
 	}
 	ctx, przerwij := context.WithTimeout(u.zycie, granicaSprawdzianuKomendy(komenda))
 	defer przerwij()
-	// Rodzaj `narzedzia` przedstawia się przy nawiązaniu jako gniazdo modelu.
+	// Rodzaj `narzedzia` z poświadczeniem sprawdzonym przez transport przedstawia gniazdo modelu.
 	ctx = zPolaczeniem(ctx, transport.Tozsamosc{
-		IdPolaczenia: "gniazdo-narzedzi-sprawdzianu",
-		IdKlienta:    "serwer-narzedzi",
-		Rodzaj:       transport.RodzajNarzedzi,
-		IdOkna:       blokadaOknoSprawdzianu,
+		IdPolaczenia:            "gniazdo-narzedzi-sprawdzianu",
+		IdKlienta:               "serwer-narzedzi",
+		Rodzaj:                  transport.RodzajNarzedzi,
+		IdOkna:                  blokadaOknoSprawdzianu,
+		PoswiadczenieSprawdzone: true,
 	})
 	return u.zmontowany.Rdzen.Wykonaj(ctx, koperta)
 }

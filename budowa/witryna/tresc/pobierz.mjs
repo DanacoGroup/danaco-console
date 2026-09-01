@@ -219,7 +219,7 @@ function zdanieOHasle(w) {
 function zdanieOPodpisie(w) {
   if (String(w.system ?? '').toLowerCase() !== 'windows') return '';
   if (w.podpisany === true) return '';
-  return `\n      <p class="dc-pakiet__brak">Plik nie jest podpisany — Windows SmartScreen pokaże
+  return `\n      <p class="dc-pakiet__podpis">Plik nie jest podpisany — Windows SmartScreen pokaże
       ostrzeżenie o nieznanym wydawcy. Sprawdzianem, czy plik jest tym właściwym, zostaje suma niżej.</p>`;
 }
 

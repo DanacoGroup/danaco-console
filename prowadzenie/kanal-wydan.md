@@ -34,6 +34,25 @@ strona zapowiada wtedy pytanie o hasło przy tej jednej pozycji, a krok odbioru
 w `zloz.mjs` przyjmuje dla niej odpowiedź 401. Pozycja spod `/pliki/` niesie
 `chronione_haslem: false` i musi odpowiadać kodem 200.
 
+## Sekcja `kanal` wykazu
+
+Wykaz niesie w `kanal` wyłącznie cztery pola czytane maszynowo; opis kanału
+stoi tu, nie w wykazie. Kreator instalacji czyta z tej sekcji samo `adres`
+(`instalator/src-tauri/src/pobranie.rs`) i pod nim szuka bieżącego
+`wydania.json`, więc pole musi zostać pod tą nazwą.
+
+| Pole | Kto czyta | Znaczenie |
+|---|---|---|
+| `adres` | kreator, `zloz.mjs`, strona „Pobierz” | adres kanału; względem niego rozwijane są adresy w `plik` |
+| `wdrozony` | `zloz.mjs`, strona „Pobierz” | `true` — pliki leżą pod adresami i strona wystawia przycisk; krok odbioru w `zloz.mjs` pyta każdą pozycję żądaniem HEAD i odmawia złożenia przy innej odpowiedzi. `false` — strona pokazuje adres jako tekst, bez przycisku |
+| `tymczasowy` | strona „Pobierz” | `true` dokłada nad kartami zdanie, że kanał stoi na maszynie budującej pod certyfikatem własnym i adres nie jest docelowy |
+| `czego_brakuje` | strona „Pobierz” | zdanie o brakującym elemencie kanału, drukowane przy `wdrozony: false` |
+
+Certyfikat kanału wystawia i odnawia Caddy (ACME, Let's Encrypt); przeglądarka
+nie pokazuje ostrzeżenia, a `https://pobierz.danaco-group.pl/` odpowiada 200.
+Do zrobienia zostaje strona wizerunkowa produktu w portfolio grupy — bez
+pobierania plików, z jednym odnośnikiem do kanału.
+
 ## Rdzeń wdrożenia — czeka na rozstrzygnięcie Właściciela
 
 Pola `serwer.rdzen_wdrozenia.adres` i `.port` w wykazie stoją puste, bo trzy
@@ -100,5 +119,9 @@ a pozycje wykazu dostają `podpisany: true`.
   właściwy — wymiana pliku w kanale wymaga wgrania.
 - Pakiet serwera w kanale jest wydaniem 1.0.0 z 18 sierpnia i leży pod ścieżką
   za hasłem; pakiet 2.0.0 trzeba złożyć i wgrać pod `/pliki/`.
-- Powłoki ARM64 pod numerem 2.0.0 nie ma — pozycja stoi w `w_przygotowaniu`,
-  a kreator na maszynie ARM odmawia nazwanym powodem.
+- Powłoki ARM64 pod numerem 2.0.0 nie ma — pozycja stoi w `w_przygotowaniu`
+  bez adresu pliku, a kreator na maszynie ARM odmawia nazwanym powodem
+  (`wydanie-nieopublikowane`). Czy i kiedy ARM64 wychodzi pod 2.0.0,
+  rozstrzyga Właściciel; do tego czasu pozycji nie wolno wskazać na plik 1.0.0
+  spod `/wydania/`, bo kreator nie ma pola na hasło i pobranie kończy się
+  odmową 401.

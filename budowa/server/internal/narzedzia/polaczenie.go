@@ -26,14 +26,16 @@ type Polaczenie struct {
 }
 
 // Polacz przygotowuje gniazdo pod wskazanym adresem, nie nawiązując go,
-// i dokłada do adresu parametry tożsamości opisujące klienta wobec rdzenia.
-func Polacz(adres, okno string, zasieg Zasieg) *Polaczenie {
-	return &Polaczenie{adres: zAdresemTozsamosci(adres, okno, zasieg)}
+// i dokłada do adresu parametry tożsamości oraz poświadczenie wydane przez
+// rdzeń przy uruchomieniu.
+func Polacz(adres, okno string, zasieg Zasieg, poswiadczenie string) *Polaczenie {
+	return &Polaczenie{adres: zAdresemTozsamosci(adres, okno, zasieg, poswiadczenie)}
 }
 
-// zAdresemTozsamosci dokłada do adresu gniazda parametry tożsamości; adres
-// nieczytelny zostaje adresem dotychczasowym, bez tożsamości.
-func zAdresemTozsamosci(adres, okno string, zasieg Zasieg) string {
+// zAdresemTozsamosci dokłada do adresu gniazda parametry tożsamości
+// i poświadczenie; adres nieczytelny zostaje adresem dotychczasowym, bez
+// tożsamości. Poświadczenie jedzie osobnym parametrem, bo tożsamość go nie niesie.
+func zAdresemTozsamosci(adres, okno string, zasieg Zasieg, poswiadczenie string) string {
 	cel, err := url.Parse(adres)
 	if err != nil {
 		return adres
@@ -46,6 +48,9 @@ func zAdresemTozsamosci(adres, okno string, zasieg Zasieg) string {
 		IdOkna:    okno,
 	}) {
 		zapytanie.Set(nazwa, wartosc)
+	}
+	if poswiadczenie != "" {
+		zapytanie.Set(transport.ParametrPoswiadczenia, poswiadczenie)
 	}
 	cel.RawQuery = zapytanie.Encode()
 	return cel.String()

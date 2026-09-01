@@ -44,30 +44,34 @@ func (rdzenZeStanemBramki) Obsluz(context.Context, protocol.Request, Ujscie) pro
 func (r rdzenZeStanemBramki) PolaczenieZwiazane(id string) bool { return r.zwiazane[id] }
 
 // TestWymogLogowaniaRozstrzygaAdresAlboWskazanie sprawdza regułę wprost:
-// wskazanie Operatora wygrywa w obie strony, a jego brak oddaje głos adresowi
-// nasłuchu. Domyślna ma być bezpieczna, więc nasłuch szerszy bez wskazania musi
-// dać wymóg.
+// nastawa tylko włącza wymóg, jej brak oddaje głos adresowi nasłuchu, a zdejmuje
+// go wyłącznie zniesienie wskazane przy starcie procesu (Ustawienia.BramkaZniesiona).
+// Domyślna ma być bezpieczna, więc nasłuch szerszy bez wskazania musi dać wymóg.
 func TestWymogLogowaniaRozstrzygaAdresAlboWskazanie(t *testing.T) {
 	prawda, falsz := true, false
 
 	przypadki := []struct {
-		nazwa    string
-		adres    string
-		nastawa  *bool
-		wymagany bool
+		nazwa     string
+		adres     string
+		nastawa   *bool
+		zniesiona bool
+		wymagany  bool
 	}{
-		{"pętla zwrotna bez wskazania", "127.0.0.1", nil, false},
-		{"pętla zwrotna nazwana bez wskazania", "localhost", nil, false},
-		{"pętla zwrotna szóstej wersji bez wskazania", "::1", nil, false},
-		{"nasłuch szerszy bez wskazania", "0.0.0.0", nil, true},
-		{"adres maszyny bez wskazania", "51.75.62.180", nil, true},
-		{"pętla zwrotna ze wskazaniem wymogu", "127.0.0.1", &prawda, true},
-		{"nasłuch szerszy ze zniesieniem wymogu", "0.0.0.0", &falsz, false},
+		{"pętla zwrotna bez wskazania", "127.0.0.1", nil, false, false},
+		{"pętla zwrotna nazwana bez wskazania", "localhost", nil, false, false},
+		{"pętla zwrotna szóstej wersji bez wskazania", "::1", nil, false, false},
+		{"nasłuch szerszy bez wskazania", "0.0.0.0", nil, false, true},
+		{"adres maszyny bez wskazania", "51.75.62.180", nil, false, true},
+		{"pętla zwrotna ze wskazaniem wymogu", "127.0.0.1", &prawda, false, true},
+		{"nasłuch szerszy z nastawą zdejmującą zostaje z wymogiem", "0.0.0.0", &falsz, false, true},
+		{"nasłuch szerszy ze zniesieniem przy starcie", "0.0.0.0", nil, true, false},
+		{"nasłuch szerszy ze zniesieniem mimo nastawy wymogu", "0.0.0.0", &prawda, true, false},
 	}
 
 	for _, przypadek := range przypadki {
 		t.Run(przypadek.nazwa, func(t *testing.T) {
-			if wymagany := wymogLogowania(przypadek.adres, przypadek.nastawa); wymagany != przypadek.wymagany {
+			ustawienia := Ustawienia{Adres: przypadek.adres, WymogLogowania: przypadek.nastawa, BramkaZniesiona: przypadek.zniesiona}
+			if wymagany := ustawienia.dopuszczenie().wymagana; wymagany != przypadek.wymagany {
 				t.Errorf("wymóg logowania rozstrzygnięty jako %t, oczekiwane %t",
 					wymagany, przypadek.wymagany)
 			}

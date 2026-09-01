@@ -106,6 +106,8 @@ const STYL = `<style>
 .dc-pakiet__suma code, .dc-pakiet__brak code { display: inline-block; word-break: break-all; background: none; padding: 0; font-size: inherit; }
 .dc-pakiet__znacznik { color: var(--text-strong) !important; font-weight: 600; }
 .dc-pakiet__haslo { font-size: .76rem !important; }
+/* Zdanie o braku podpisu: ta sama wstęga co uwaga o braku — brak nazwany zdaniem, nie samą barwą. */
+.dc-pakiet__podpis { font-size: .76rem !important; color: var(--text-body) !important; border-left: 3px solid var(--brand-yellow); padding-left: 10px; }
 .dc-pakiet--przygotowanie { border-style: dashed; background: transparent; }
 .dc-rozpoznanie { color: var(--text-muted); font-size: .9rem; margin: 6px 0 0; }
 

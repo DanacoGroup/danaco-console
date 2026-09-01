@@ -23,19 +23,13 @@ const (
 	pojemnoscKolejkiDomyslna = 256
 	// czasZamknieciaDomyslny ogranicza czas oczekiwania na zamknięcie nasłuchu przy zatrzymaniu tego serwera.
 	czasZamknieciaDomyslny = 5 * time.Second
-	// KontoDomyslne obowiązuje, dopóki urządzenie nie wskaże konta.
-	// Uwierzytelnianie jest jedyną kontrolą dostępu i w fazie budowy nie działa,
-	// więc brak konta nie może wstrzymać połączenia.
+	// KontoDomyslne jest kontem każdego świeżego gniazda. Konto nadaje wyłącznie
+	// rdzeń po przejściu bramki (PrzypiszKonto); klient nie wskazuje konta przy
+	// nawiązaniu, bo słowo klienta o koncie nie jest ustaleniem.
 	KontoDomyslne = "lokalne"
-	// ParametrKonta nazywa parametr zapytania i nagłówek, którymi urządzenie
-	// wskazuje konto przy nawiązaniu.
-	ParametrKonta = "konto"
-	// NaglowekKonta jest nagłówkową postacią ParametrKonta — dla klientów, które
-	// nie mogą dopisać parametru do adresu.
-	NaglowekKonta = "X-Danaco-Konto"
 	// ParametrSekretu i NaglowekSekretu niosą sekret nawiązania, którym powłoka
-	// przedstawia się przed uaktualnieniem gniazda. Dwie drogi z tego samego
-	// powodu co przy koncie: nie każdy klient dopisze nagłówek do adresu gniazda.
+	// przedstawia się przed uaktualnieniem gniazda. Dwie drogi, bo nie każdy
+	// klient dopisze nagłówek do adresu gniazda.
 	ParametrSekretu = "sekret"
 	NaglowekSekretu = "X-Danaco-Sekret"
 	// ZmiennaZniesieniaBramki nazywa zmienną środowiska zdejmującą wymóg
@@ -69,6 +63,10 @@ type Ustawienia struct {
 	// obowiązuje klienta, który go nie wysyła, więc dopóki powłoka sekretu nie
 	// wystawia, dopóty gniazdo stoi otworem dla procesów tej maszyny.
 	SekretNawiazania string
+	// PoswiadczenieNarzedzi jest poświadczeniem, którym serwer narzędzi modelu
+	// przedstawia się przy nawiązaniu. Puste bierze poświadczenie procesu
+	// (PoswiadczenieNarzedzi) — to samo, które rdzeń wręcza serwerowi narzędzi.
+	PoswiadczenieNarzedzi string
 	// CertyfikatTLS i KluczTLS wskazują parę plików warstwy TLS; wskazanie obu włącza szyfrowany nasłuch.
 	CertyfikatTLS string
 	KluczTLS      string
@@ -128,6 +126,9 @@ func (u Ustawienia) zNormalizowane() Ustawienia {
 	}
 	if strings.TrimSpace(u.SekretNawiazania) == "" {
 		u.SekretNawiazania = strings.TrimSpace(os.Getenv(ZmiennaSekretuNawiazania))
+	}
+	if strings.TrimSpace(u.PoswiadczenieNarzedzi) == "" {
+		u.PoswiadczenieNarzedzi = PoswiadczenieNarzedzi()
 	}
 	// Rozpoznanie wystawienia stoi tutaj, bo tędy przechodzi każdy serwer i przechodzi dokładnie raz.
 	ostrzezJezeliWystawiony(u)

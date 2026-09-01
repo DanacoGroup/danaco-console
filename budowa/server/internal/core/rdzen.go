@@ -2,7 +2,6 @@ package core
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"log"
 
@@ -181,13 +180,13 @@ func dziennikZKontekstu(ctx context.Context) *log.Logger {
 	return dziennik
 }
 
-// odmowaZakresu pyta straż wyłącznie o rękę modelu. Zakres profilu asystenta nie obejmuje klawiatury Operatora ani pracy własnej rdzenia, więc te drogi przechodzą bez zawężenia.
+// odmowaZakresu pyta straż o każdą rękę poza pracą własną rdzenia i rozpoznanym Operatorem: model, klawiaturę i gniazdo bez tożsamości. Zakres profilu asystenta nie obejmuje Operatora, a gniazdo nierozpoznane nie ma jak dowieść, że nim jest.
 func (r *Rdzen) odmowaZakresu(ctx context.Context, z protocol.Request) *protocol.Blad {
 	if r == nil || r.straz == nil {
 		return nil
 	}
 	rodzaj, _ := sprawca(ctx)
-	if rodzaj == nil || *rodzaj != shared.ActorKindModel {
+	if rodzaj != nil && (*rodzaj == shared.ActorKindCore || *rodzaj == shared.ActorKindOperator) {
 		return nil
 	}
 	if err := r.straz.SprawdzWywolanie(ctx, z.Komenda, z.Zasieg.Sesja); err != nil {
@@ -208,10 +207,11 @@ czytają wtedy pracę konta najstarszego, bo tak stała praca zapisana przed
 rozdzieleniem kont; nic nowego wtedy nie powstaje, bo komendy pracy i tak
 wymagają przejścia przez bramkę.
 
-Nierozpoznanie sesji jest czym innym niż jej brak i kończy żądanie odmową:
-sesja jest przedstawiona, tylko rdzeń nie wie, czyja — wykonanie na koncie
-najstarszym oddawałoby wtedy pracę Właściciela pierwszemu połączeniu, któremu
-odczyt się nie udał. Powód idzie do dziennika, bo odpowiedź niesie sam kod.
+Sesja przedstawiona, której rdzeń nie potwierdza — nieznana, unieważniona,
+wygasła albo nieodczytana — kończy żądanie odmową `not_authenticated`, nie
+pracą bez konta: gniazdo stojące od chwili sprzed unieważnienia pracowałoby
+inaczej dalej na koncie najstarszym. Powód idzie do dziennika, bo odpowiedź
+niesie sam kod.
 */
 func (r *Rdzen) zKontemWolajacego(ctx context.Context) (context.Context, *protocol.Blad) {
 	if r.wiez == nil || r.konta == nil {
@@ -222,13 +222,10 @@ func (r *Rdzen) zKontemWolajacego(ctx context.Context) (context.Context, *protoc
 		return ctx, nil
 	}
 	kontoId, err := r.konta.KontoSesjiBramki(ctx, skrot)
-	if errors.Is(err, dane.ErrBrakWiersza) {
-		// Sesji nie ma w bazie: połączenie stoi tak, jak przed zalogowaniem.
-		return ctx, nil
-	}
 	if err != nil {
-		r.zapisz("rozpoznanie konta sesji bramki nie powiodło się: %v", err)
-		blad := protocol.BladZeZrodla(shared.ErrorCodeInternalError, err)
+		r.zapisz("sesja bramki połączenia %s nie nadaje: %v", polaczenieZKontekstu(ctx), err)
+		blad := protocol.NowyBlad(shared.ErrorCodeNotAuthenticated,
+			"Sesja tego połączenia nie nadaje — zaloguj się ponownie.")
 		return ctx, &blad
 	}
 	if kontoId == 0 {

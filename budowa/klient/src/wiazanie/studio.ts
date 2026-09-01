@@ -6,6 +6,7 @@
 
 import {
   ChangeKind,
+  ChunkKind,
   Command,
   ReasoningEffort,
   EventType,
@@ -15,18 +16,24 @@ import {
   WindowRole,
   type Message,
   type Session,
+  type StreamChunkEvent,
   type StudioDocument,
 } from '../../../shared/contract.ts';
 import type { Kanal } from '../protokol/kanal.ts';
 import { wywolaj } from '../protokol/wywolanie.ts';
+import { oglos } from './ogloszenie.ts';
 import { wpiszPole } from './okno-modulu.ts';
 import { zapewnijSesje } from './sesja-biezaca.ts';
-import { zwiazNarzedzia } from './studio-narzedzia.ts';
-import { zwiazPlan } from './studio-plan.ts';
-import { zwiazPliki } from './studio-pliki.ts';
-import { zwiazPodglad } from './studio-podglad.ts';
-import { zwiazRepozytorium } from './studio-repozytorium.ts';
-import { zwiazRoznice } from './studio-roznice.ts';
+import { zdejmijTrescPrzykladowaNarzedzi, zwiazNarzedzia } from './studio-narzedzia.ts';
+import { zdejmijTrescPrzykladowaPlanu, zwiazPlan } from './studio-plan.ts';
+import { zdejmijTrescPrzykladowaPlikow, zwiazPliki } from './studio-pliki.ts';
+import { zdejmijTrescPrzykladowaPodgladu, zwiazPodglad } from './studio-podglad.ts';
+import { zdejmijTrescPrzykladowaRepozytorium, zwiazRepozytorium } from './studio-repozytorium.ts';
+import {
+  porownajWersjeDokumentu,
+  zdejmijTrescPrzykladowaRoznic,
+  zwiazRoznice,
+} from './studio-roznice.ts';
 
 /** Kod modułu Studia w rejestrze rdzenia; `module.list` oddaje po nim identyfikator, którego wymaga `window.create`. */
 const KOD_MODULU_STUDIO = 'studio';
@@ -36,10 +43,13 @@ interface WezlyStudia {
   historia: HTMLElement;
   formularz: HTMLFormElement;
   pole: HTMLTextAreaElement;
+  zatrzymaj: HTMLElement | null;
   szyna: HTMLElement;
   nowyDokument: HTMLElement | null;
   kanwa: HTMLElement;
   status: HTMLElement;
+  zapiszWersje: HTMLElement | null;
+  porownajWersje: HTMLElement | null;
 }
 
 /** Wzory wpisu historii zdjęte z treści przykładowej, po jednym na rodzaj nadawcy — kształt wpisu rdzenia bierze się stąd, nie z kodu. */
@@ -47,6 +57,20 @@ interface WzoryWpisow {
   czlowiek: HTMLElement | null;
   inteligencja: HTMLElement | null;
   system: HTMLElement | null;
+}
+
+/** Fragment strumienia wraz z tym, co niesie o nim koperta: numerem w strumieniu i znacznikiem domknięcia. */
+interface FragmentStrumienia {
+  tresc: StreamChunkEvent;
+  ostatni: boolean;
+}
+
+/** Wpis odpowiedzi w budowie: tekst złożony z fragmentów, numer fragmentu oczekiwanego i fragmenty, które przyszły przed swoją koleją. */
+interface StrumienOdpowiedzi {
+  wpis: HTMLElement;
+  tekst: string;
+  nastepny: number;
+  odlozone: Map<number, FragmentStrumienia>;
 }
 
 /**
@@ -60,11 +84,14 @@ let zwiazanaHistoria: Element | null = null;
 /**
  * Wiąże okno Studia z rdzeniem. Kanał domyślnie z obiektu globalnego, bo
  * skrypty biblioteki są funkcjami domkniętymi i importu z nich nie ma.
- * Zwraca prawdę, gdy znacznik okna stał i wiązanie zostało założone.
+ * Identyfikator okna podaje wołający wznawiający sesję: takie okno stoi już
+ * w rejestrze rdzenia, a pustka znaczy okno zakładane pierwszą wiadomością.
+ * Prawda znaczy, że znacznik okna stał i wiązanie zostało założone.
  */
 export function zwiazStudio(
   kanal: Kanal | undefined = globalThis.DanacoKanal,
   nazwaSrodowiska = '',
+  idOknaStojacego = '',
 ): boolean {
   if (kanal === undefined) return false;
   const znalezione = zbierzWezly();
@@ -75,14 +102,11 @@ export function zwiazStudio(
 
   const wzory = zdejmijWzoryWpisow(wezly.historia);
   const wzorPozycji = zdejmijWzorPozycji(wezly.szyna);
-
-  // Treść przykładowa znika, zanim padnie pierwsza odpowiedź rdzenia: pusty
-  // węzeł jest uczciwy, znacznik z cudzym dokumentem — nie.
-  wezly.historia.replaceChildren();
-  wezly.szyna.replaceChildren();
-  wezly.kanwa.replaceChildren();
+  zdejmijTrescPrzykladowa(wezly);
+  zdejmijCzynnosciWstazkiBezPokrycia();
 
   const wpisy = new Map<string, HTMLElement>();
+  const strumienie = new Map<string, StrumienOdpowiedzi>();
   let idOkna = '';
   let dokument: StudioDocument | null = null;
 
@@ -97,12 +121,13 @@ export function zwiazStudio(
     wezly.historia.scrollTop = wezly.historia.scrollHeight;
   }
 
-  /** Nanosi zmianę wiadomości na wpis już stojący; wpis nieznany dopisuje, usunięty zdejmuje. */
+  /** Nanosi zmianę wiadomości na wpis już stojący; wpis nieznany dopisuje, usunięty zdejmuje wraz ze strumieniem, który do niego dopisywał. */
   function zmienWpis(zmiana: ChangeKind, wiadomosc: Message): void {
     const stojacy = wpisy.get(wiadomosc.id);
     if (zmiana === ChangeKind.Deleted) {
       stojacy?.remove();
       wpisy.delete(wiadomosc.id);
+      strumienie.delete(wiadomosc.id);
       return;
     }
     if (stojacy === undefined) {
@@ -110,6 +135,74 @@ export function zwiazStudio(
       return;
     }
     wypelnijWpis(stojacy, wiadomosc);
+  }
+
+  /**
+   * Stawia wpis odpowiedzi, do którego dopisują się fragmenty strumienia.
+   * Wiadomość modelu rdzeń rozgłasza dopiero po turze, więc godziny nadania
+   * nie ma jeszcze skąd wziąć; węzeł godziny zostaje pusty do tej chwili.
+   */
+  function wstawWpisStrumienia(idWiadomosci: string): HTMLElement | null {
+    const wzor = wzory.inteligencja;
+    if (wzor === null) return null;
+    const wpis = wzor.cloneNode(true) as HTMLElement;
+    const nadawca = wpis.querySelector('.sta-wpis-nadawca');
+    if (nadawca !== null) nadawca.textContent = nazwaNadawcy(MessageRole.Assistant);
+    const godzina = wpis.querySelector('.sta-wpis-godzina');
+    if (godzina !== null) godzina.textContent = '';
+    for (const plakietka of wpis.querySelectorAll('.dn-plakietka')) plakietka.remove();
+    wpiszTrescWpisu(wpis, '');
+    wezly.historia.appendChild(wpis);
+    wpisy.set(idWiadomosci, wpis);
+    return wpis;
+  }
+
+  /** Przyjmuje fragment strumienia: nanosi ten, na który przyszła kolej, a przyszły odkłada, aż przyjdzie jego poprzednik. */
+  function przyjmijFragment(tresc: StreamChunkEvent, numer: number, ostatni: boolean): void {
+    let strumien = strumienie.get(tresc.messageId);
+    if (strumien === undefined) {
+      const wpis = wpisy.get(tresc.messageId) ?? wstawWpisStrumienia(tresc.messageId);
+      if (wpis === null) return;
+      /* Porządek liczy się od fragmentu pierwszego, jaki to okno zobaczyło:
+         okno otwarte w trakcie tury zastaje strumień w połowie, a liczenie od
+         jedynki zatrzymałoby każdy kolejny fragment w oczekiwaniu na
+         poprzednika, który już przeszedł. */
+      strumien = {
+        wpis,
+        tekst: trescWpisu(wpis),
+        nastepny: numer === 0 ? 1 : numer,
+        odlozone: new Map(),
+      };
+      strumienie.set(tresc.messageId, strumien);
+    }
+    if (numer > strumien.nastepny) {
+      strumien.odlozone.set(numer, { tresc, ostatni });
+      return;
+    }
+    // Numer niższy od oczekiwanego znaczy fragment już naniesiony.
+    if (numer !== 0 && numer < strumien.nastepny) return;
+    naniesFragment(tresc.messageId, strumien, { tresc, ostatni });
+  }
+
+  /** Dokleja fragment do wpisu i wypuszcza za nim te odłożone, które właśnie doczekały swojej kolei; fragment domykający zamyka wpis. */
+  function naniesFragment(
+    idWiadomosci: string,
+    strumien: StrumienOdpowiedzi,
+    fragment: FragmentStrumienia,
+  ): void {
+    let biezacy: FragmentStrumienia | undefined = fragment;
+    while (biezacy !== undefined) {
+      strumien.tekst = zlozTresc(strumien.tekst, biezacy.tresc);
+      wpiszTrescWpisu(strumien.wpis, strumien.tekst);
+      wezly.historia.scrollTop = wezly.historia.scrollHeight;
+      if (biezacy.ostatni) {
+        strumienie.delete(idWiadomosci);
+        return;
+      }
+      strumien.nastepny += 1;
+      biezacy = strumien.odlozone.get(strumien.nastepny);
+      strumien.odlozone.delete(strumien.nastepny);
+    }
   }
 
   /* Enter wysyła, Shift+Enter przechodzi do nowego wiersza. Pole jest obszarem
@@ -123,37 +216,93 @@ export function zwiazStudio(
 
   /* Sesja powstaje dopiero pierwszą wiadomością wysłaną do modelu — nie
      otwarciem okna ani wejściem w moduł. Do tej chwili Operator chodzi po
-     produkcie swobodnie i żadna sesja po nim nie zostaje. */
+     produkcie swobodnie i żadna sesja po nim nie zostaje. Wyjątkiem jest okno
+     wskazane przez wołającego: ono stoi już w rejestrze i wchodzi przy montażu. */
   const zapewnijStanowisko = async (): Promise<string> => {
     if (idOkna !== '') return idOkna;
-    idOkna = await otworzStanowisko(kanal, wezly, wzorPozycji, wstawWpis);
+    idOkna = await otworzStanowisko(kanal, wezly, wzorPozycji, wstawWpis, idOknaStojacego);
     if (idOkna === '') return '';
     zwiazPanele(kanal, idOkna);
-    dokument = await zalozDokument(kanal, idOkna, wezly);
+    /* Okno stojące prowadzi już swój dokument. Zakładanie nowego przy powrocie
+       do sesji mnożyłoby dokumenty przy każdym wejściu w moduł. */
+    dokument = idOknaStojacego === ''
+      ? await zalozDokument(kanal, idOkna, wezly)
+      : await otworzDokumentOkna(kanal, idOkna, wezly);
     opiszDokument(dokument);
     return idOkna;
+  };
+
+  /**
+   * Wysyła wiadomość i czyści pole dopiero po jej przyjęciu przez rdzeń.
+   * Rdzeń odmawia wiadomości skierowanej do okna prowadzącego turę — pole
+   * wyczyszczone przed wysyłką zabrałoby Operatorowi tekst bez słowa.
+   */
+  const wyslijWiadomosc = async (tresc: string): Promise<void> => {
+    const okno = await zapewnijStanowisko();
+    if (okno === '') {
+      oglos('Studio', 'Rdzeń nie założył stanowiska — wiadomość nie została wysłana.', 'blad');
+      return;
+    }
+    const wynik = await wywolaj(kanal, Command.MessageSend, {
+      windowId: okno,
+      content: tresc,
+      stream: true,
+    });
+    if (!wynik.udany) {
+      oglos('Studio', wynik.blad?.message ?? 'Rdzeń odmówił przyjęcia wiadomości.', 'ostrzezenie');
+      return;
+    }
+    /* Pole czyści się tylko wtedy, gdy nadal niesie wysłany tekst: Operator,
+       który zdążył dopisać kolejne zdanie, nie traci go. */
+    if (wezly.pole.value.trim() === tresc) wezly.pole.value = '';
   };
 
   wezly.formularz.addEventListener('submit', (zdarzenie) => {
     zdarzenie.preventDefault();
     const tresc = wezly.pole.value.trim();
     if (tresc === '') return;
-    wezly.pole.value = '';
-    void zapewnijStanowisko().then((okno) => {
-      if (okno === '') return;
-      void wywolaj(kanal, Command.MessageSend, { windowId: okno, content: tresc, stream: true });
-    });
+    void wyslijWiadomosc(tresc);
   });
+
+  /* Zatrzymanie jest czynne niezależnie od stanu tury: rdzeń odpowiada na
+     `message.stop` zawsze, a brak tury w biegu oddaje `stopped` równe fałszowi,
+     nie odmowę. Okno bez stanowiska nie ma czego zatrzymać i mówi to wprost. */
+  wezly.zatrzymaj?.addEventListener('click', () => {
+    if (idOkna === '') {
+      oglos('Studio', 'Okno nie prowadzi jeszcze rozmowy — nie ma czego zatrzymać.');
+      return;
+    }
+    void wywolaj(kanal, Command.MessageStop, { windowId: idOkna });
+  });
+
+  /** Odkłada treść kanwy jako nową wersję w repozytorium sesji; okno bez dokumentu nie ma czego odłożyć i mówi to wprost. */
+  const odlozWersje = (): void => {
+    if (dokument === null) {
+      oglos('Studio', 'Okno nie prowadzi dokumentu — nie ma czego odłożyć w repozytorium sesji.');
+      return;
+    }
+    void zapiszDokument(kanal, dokument.id, wezly, (zapisany) => {
+      dokument = zapisany;
+      opiszDokument(zapisany);
+    });
+  };
 
   // Ctrl+S zapisuje treść kanwy: pas stanu prototypu mówi o zapisie
   // automatycznym, ale odłożenie wersji w repozytorium sesji ma mieć wyzwalacz.
   wezly.kanwa.addEventListener('keydown', (zdarzenie) => {
     if (!zdarzenie.ctrlKey || zdarzenie.key.toLowerCase() !== 's') return;
     zdarzenie.preventDefault();
-    if (dokument === null) return;
-    void zapiszDokument(kanal, dokument.id, wezly, (zapisany) => {
-      dokument = zapisany;
-      opiszDokument(zapisany);
+    odlozWersje();
+  });
+
+  wezly.zapiszWersje?.addEventListener('click', () => {
+    odlozWersje();
+  });
+
+  wezly.porownajWersje?.addEventListener('click', () => {
+    void porownajWersjeDokumentu().then((porownane) => {
+      if (porownane) return;
+      oglos('Studio', 'Okno nie prowadzi dokumentu — nie ma czego porównać.');
     });
   });
 
@@ -178,14 +327,68 @@ export function zwiazStudio(
     zmienWpis(tresc.change, tresc.message);
   });
 
-  zdejmijZnacznikiBezZrodla();
+  /* Odpowiedź modelu przyrasta w oknie fragmentami: pełną wiadomość rdzeń
+     rozgłasza dopiero po turze. Numer fragmentu i znacznik domknięcia stoją
+     w kopercie, nie w treści zdarzenia. */
+  kanal.naZdarzenie(EventType.StreamChunk, (tresc, koperta) => {
+    if (tresc.windowId !== idOkna) return;
+    przyjmijFragment(tresc, koperta.seq ?? 0, koperta.done === true);
+  });
+
   /* Stan pusty dokumentu wchodzi od razu: nazwa pracy z prototypu jest treścią
      przykładową, a okno staje, zanim powstanie sesja i dokument. */
   opiszDokument(null);
   void opiszKanal(kanal, nazwaSrodowiska);
   void opiszWyborModelu(kanal);
   opiszWyborNakladu();
+  /* Okno wskazane przez wołającego stoi już w rdzeniu, więc historia rozmowy
+     wraca przy montażu, bez czekania na pierwszą wiadomość. */
+  if (idOknaStojacego !== '') void zapewnijStanowisko();
   return true;
+}
+
+/**
+ * Treść wpisu po fragmencie strumienia. Tekstowy dokleja się do dotychczasowej,
+ * a wersja ostateczna zastępuje ją w całości — tak stanowi kontrakt rodzaju
+ * `final`. Fragment błędu domyka turę i jego zdanie jest jedyną treścią wpisu.
+ * Pozostałe rodzaje nie zmieniają wpisu: nie ma go w nim na czym pokazać.
+ */
+function zlozTresc(dotychczasowa: string, fragment: StreamChunkEvent): string {
+  if (fragment.kind === ChunkKind.Text) return dotychczasowa + (fragment.text ?? '');
+  if (fragment.kind === ChunkKind.Final || fragment.kind === ChunkKind.Error) {
+    return fragment.text ?? dotychczasowa;
+  }
+  return dotychczasowa;
+}
+
+/**
+ * Zdejmuje treść przykładową okna wraz z treścią sześciu jego paneli. Woła się
+ * przy montażu okna, przed powstaniem stanowiska: odczyt z rdzenia idzie osobno,
+ * po założeniu okna komunikacji, a do tej chwili Operator nie ma prawa zobaczyć
+ * dokumentu z prototypu i wziąć go za własną pracę.
+ */
+function zdejmijTrescPrzykladowa(wezly: WezlyStudia): void {
+  wezly.historia.replaceChildren();
+  wezly.szyna.replaceChildren();
+  wezly.kanwa.replaceChildren();
+  zdejmijZnacznikiBezZrodla();
+  zdejmijTrescPrzykladowaPlanu();
+  zdejmijTrescPrzykladowaRoznic();
+  zdejmijTrescPrzykladowaRepozytorium();
+  zdejmijTrescPrzykladowaPlikow();
+  zdejmijTrescPrzykladowaNarzedzi();
+  zdejmijTrescPrzykladowaPodgladu();
+}
+
+/**
+ * Zdejmuje ze wstążki czynności, których wywołać nie ma czym. Podgląd wydruku
+ * wymaga formatu wydania i miejsca na strony, wywołanie operacji — nazwy
+ * operacji i jej zakresu, przekazanie do Biblioteki — profilu wydania; wstążka
+ * nie ma węzła, w którym Operator poda którąkolwiek z tych wartości.
+ */
+function zdejmijCzynnosciWstazkiBezPokrycia(): void {
+  document.querySelector('.st-wstazka [data-etykietka="Podgląd wydruku"]')?.remove();
+  document.querySelector('.st-wstazka .st-wstazka-grupa--drugorzedna')?.remove();
 }
 
 /**
@@ -285,20 +488,48 @@ function wpiszWersje(dokument: StudioDocument | null): void {
   }
 }
 
-/** Zakłada sesję i okno komunikacji, wczytuje historię i szynę sesji; zwraca identyfikator okna albo pustkę, gdy rdzeń odmówił. */
+/** Okno komunikacji wraz z sesją, w której stoi; szyna dokumentów wskazuje po niej sesję bieżącą. */
+interface Stanowisko {
+  idOkna: string;
+  idSesji: string;
+}
+
+/**
+ * Wskazuje stanowisko okna, wczytuje jego historię i szynę sesji; zwraca
+ * identyfikator okna albo pustkę, gdy rdzeń odmówił. Okno podane przez
+ * wołającego stoi już w rejestrze, więc `window.create` nie pada — pada
+ * wyłącznie dla okna zakładanego pierwszą wiadomością.
+ */
 async function otworzStanowisko(
   kanal: Kanal,
   wezly: WezlyStudia,
   wzorPozycji: HTMLElement | null,
   wstawWpis: (wiadomosc: Message) => void,
+  idOknaStojacego: string,
 ): Promise<string> {
+  const stanowisko = idOknaStojacego === ''
+    ? await zalozStanowisko(kanal)
+    : await wskazStanowisko(kanal, idOknaStojacego);
+  if (stanowisko === null) return '';
+
+  const historia = await wywolaj(kanal, Command.MessageList, { windowId: stanowisko.idOkna });
+  if (historia.udany && historia.wynik !== undefined) {
+    for (const wiadomosc of historia.wynik.messages) wstawWpis(wiadomosc);
+  }
+
+  await wypelnijSzyne(kanal, wezly.szyna, wzorPozycji, stanowisko.idSesji);
+  return stanowisko.idOkna;
+}
+
+/** Zakłada sesję i okno komunikacji; pustka znaczy odmowę rdzenia na którymkolwiek z trzech kroków. */
+async function zalozStanowisko(kanal: Kanal): Promise<Stanowisko | null> {
   // Stanowisko staje w karcie sesji bieżącej, tak samo jak każde inne okno modułu.
   const idSesji = await zapewnijSesje(kanal, 'Studio');
-  if (idSesji === '') return '';
+  if (idSesji === '') return null;
 
   const modul = await wskazModulStudia(kanal);
   const kanalModelu = await wskazKanalModelu(kanal);
-  if (modul === '' || kanalModelu === '') return '';
+  if (modul === '' || kanalModelu === '') return null;
 
   const okno = await wywolaj(kanal, Command.WindowCreate, {
     sessionId: idSesji,
@@ -309,16 +540,15 @@ async function otworzStanowisko(
     permissionMode: PermissionMode.Manual,
     windowRole: WindowRole.Standalone,
   });
-  if (!okno.udany || okno.wynik === undefined) return '';
-  const idOkna = okno.wynik.window.id;
+  if (!okno.udany || okno.wynik === undefined) return null;
+  return { idOkna: okno.wynik.window.id, idSesji };
+}
 
-  const historia = await wywolaj(kanal, Command.MessageList, { windowId: idOkna });
-  if (historia.udany && historia.wynik !== undefined) {
-    for (const wiadomosc of historia.wynik.messages) wstawWpis(wiadomosc);
-  }
-
-  await wypelnijSzyne(kanal, wezly.szyna, wzorPozycji, idSesji);
-  return idOkna;
+/** Odczytuje sesję okna stojącego z rejestru okien; pustka znaczy okno, którego rdzeń nie zna. */
+async function wskazStanowisko(kanal: Kanal, idOkna: string): Promise<Stanowisko | null> {
+  const wynik = await wywolaj(kanal, Command.WindowStateGet, { windowId: idOkna });
+  if (!wynik.udany || wynik.wynik === undefined) return null;
+  return { idOkna, idSesji: wynik.wynik.window.sessionId };
 }
 
 /** Odczytuje identyfikator modułu Studia z rejestru modułów; kod modułu jest stały, identyfikator nadaje rdzeń. */
@@ -393,6 +623,30 @@ async function zalozDokument(
     ? otwarty.wynik.document
     : zalozony.wynik.document;
 
+  return wczytajDokumentDoKanwy(kanal, dokument, wezly);
+}
+
+/**
+ * Otwiera dokument prowadzony w oknie stojącym. Pustka znaczy okno, w którym
+ * dokumentu jeszcze nie ma — kanwa zostaje wtedy w stanie pustym, a dokument
+ * powstaje przyciskiem nowego dokumentu, tak samo jak w oknie świeżym.
+ */
+async function otworzDokumentOkna(
+  kanal: Kanal,
+  idOkna: string,
+  wezly: WezlyStudia,
+): Promise<StudioDocument | null> {
+  const otwarty = await wywolaj(kanal, Command.StudioDocumentOpen, { windowId: idOkna });
+  if (!otwarty.udany || otwarty.wynik === undefined) return null;
+  return wczytajDokumentDoKanwy(kanal, otwarty.wynik.document, wezly);
+}
+
+/** Wstawia treść dokumentu w kanwę wraz z pasem stanu i otwiera ją na pracę Operatora. */
+async function wczytajDokumentDoKanwy(
+  kanal: Kanal,
+  dokument: StudioDocument,
+  wezly: WezlyStudia,
+): Promise<StudioDocument> {
   const tekst = await wywolaj(kanal, Command.StudioTextGet, { documentId: dokument.id });
   wezly.kanwa.textContent = tekst.udany && tekst.wynik !== undefined ? tekst.wynik.text : '';
   // Kanwa prototypu stoi zamknięta na edycję, bo niosła dokument przykładowy;
@@ -464,11 +718,21 @@ function zbierzWezly(): WezlyStudia | null {
     historia,
     formularz,
     pole,
+    zatrzymaj: wskazElement(kom?.querySelector('.sta-prompt-zatrzymaj') ?? null),
     szyna,
     nowyDokument: nowyDokument instanceof HTMLElement ? nowyDokument : null,
     kanwa,
     status,
+    zapiszWersje: wskazElement(document.querySelector('.st-wstazka [data-etykietka="Zapisz wersję"]')),
+    porownajWersje: wskazElement(
+      document.querySelector('.st-wstazka [data-etykietka="Porównaj wersje"]'),
+    ),
   };
+}
+
+/** Węzeł znacznika jako element, gdy taki stoi; pustka znaczy węzeł, którego znacznik nie niesie. */
+function wskazElement(wezel: Element | null): HTMLElement | null {
+  return wezel instanceof HTMLElement ? wezel : null;
 }
 
 /** Zdejmuje z historii po jednym wpisie każdego rodzaju jako wzór; klon zachowuje medalion, układ i klasy nadane przez bibliotekę. */
@@ -511,13 +775,27 @@ function wypelnijWpis(wpis: HTMLElement, wiadomosc: Message): void {
   const godzina = wpis.querySelector('.sta-wpis-godzina');
   if (godzina !== null) godzina.textContent = godzinaWpisu(wiadomosc.createdAt);
   for (const plakietka of wpis.querySelectorAll('.dn-plakietka')) plakietka.remove();
+  wpiszTrescWpisu(wpis, wiadomosc.content);
+}
+
+/** Wpisuje treść w klon wpisu. Pasek działań należy do biblioteki i przeżywa podmianę treści; znika samo zdanie przykładowe, nie przyciski, które znacznik niesie. */
+function wpiszTrescWpisu(wpis: HTMLElement, tekst: string): void {
   const tresc = wpis.querySelector('.sta-wpis-tresc');
   if (tresc === null) return;
-  // Pasek działań wpisu należy do biblioteki i przeżywa podmianę treści;
-  // znika tylko zdanie przykładowe, nie przyciski, które znacznik niesie.
   const akcje = tresc.querySelector('.sta-wpis-akcje');
-  tresc.textContent = wiadomosc.content;
+  tresc.textContent = tekst;
   if (akcje !== null) tresc.appendChild(akcje);
+}
+
+/** Treść wpisu bez paska działań — od niej zaczyna dopisywanie strumień, który zastał wpis już stojący. */
+function trescWpisu(wpis: HTMLElement): string {
+  const tresc = wpis.querySelector('.sta-wpis-tresc');
+  if (tresc === null) return '';
+  const akcje = tresc.querySelector('.sta-wpis-akcje');
+  return [...tresc.childNodes]
+    .filter((wezel) => wezel !== akcje)
+    .map((wezel) => wezel.textContent ?? '')
+    .join('');
 }
 
 /** Godzina wpisu w zapisie, którego używa znacznik historii — godziny i minuty. */

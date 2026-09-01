@@ -245,8 +245,8 @@ func Zloz(p Porty) *Rdzen {
 		zarejestrujWiedzeProjektu(rejestr, wiedza, nadawca)
 	}
 	zarejestrujAutomatyki(rejestr, p.Automatyki, nadawca)
-	zarejestrujDobudoweAutomatyk(rejestr, p.Automatyki, nadawca)
-	zarejestrujHarmonogramy(rejestr, p.Automatyki.(Harmonogramy), nadawca)
+	zarejestrujDobudoweAutomatyk(rejestr, p.Automatyki.(AutomatykiDobudowa), nadawca)
+	zarejestrujHarmonogramy(rejestr, p.Automatyki.(HarmonogramyNadzoru), nadawca)
 	zarejestrujOrkiestracje(rejestr, p.Automatyki.(Orkiestracja), nadawca)
 	zarejestrujTerminal(rejestr, p.Terminal, nadawca)
 	zarejestrujWyjscieTerminala(rejestr, p.Terminal.(WyjscieTerminala))

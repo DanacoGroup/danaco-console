@@ -2,6 +2,7 @@ package core
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"log"
 
@@ -75,7 +76,11 @@ func (r *Rdzen) WykonajZadanie(ctx context.Context, z protocol.Request) protocol
 	/* Wskazanie konta wchodzi raz, w jednym miejscu przed rozdziałem na
 	   obsługiwacze: konta nie mieszają między sobą pracy, a zapytania sięgające
 	   kart sesji leżą głęboko pod tą warstwą i argumentem by go nie dostały. */
-	ctx = r.zKontemWolajacego(ctx)
+	ctx, blad := r.zKontemWolajacego(ctx)
+	if blad != nil {
+		r.odnotujNiepowodzenie(ctx, z, blad)
+		return protocol.KopertaOdpowiedzi(z.Koperta(), protocol.Odpowiedz{Blad: blad})
+	}
 	if !z.Znana {
 		return r.odmowaNieznanej(ctx, z)
 	}
@@ -202,18 +207,32 @@ Połączenie bez sesji — przed zalogowaniem — zostaje bez wskazania. Zapytan
 czytają wtedy pracę konta najstarszego, bo tak stała praca zapisana przed
 rozdzieleniem kont; nic nowego wtedy nie powstaje, bo komendy pracy i tak
 wymagają przejścia przez bramkę.
+
+Nierozpoznanie sesji jest czym innym niż jej brak i kończy żądanie odmową:
+sesja jest przedstawiona, tylko rdzeń nie wie, czyja — wykonanie na koncie
+najstarszym oddawałoby wtedy pracę Właściciela pierwszemu połączeniu, któremu
+odczyt się nie udał. Powód idzie do dziennika, bo odpowiedź niesie sam kod.
 */
-func (r *Rdzen) zKontemWolajacego(ctx context.Context) context.Context {
+func (r *Rdzen) zKontemWolajacego(ctx context.Context) (context.Context, *protocol.Blad) {
 	if r.wiez == nil || r.konta == nil {
-		return ctx
+		return ctx, nil
 	}
 	skrot := r.wiez.SkrotKontekstu(ctx)
 	if skrot == "" {
-		return ctx
+		return ctx, nil
 	}
 	kontoId, err := r.konta.KontoSesjiBramki(ctx, skrot)
-	if err != nil || kontoId == 0 {
-		return ctx
+	if errors.Is(err, dane.ErrBrakWiersza) {
+		// Sesji nie ma w bazie: połączenie stoi tak, jak przed zalogowaniem.
+		return ctx, nil
 	}
-	return dane.ZKontemOperatora(ctx, kontoId)
+	if err != nil {
+		r.zapisz("rozpoznanie konta sesji bramki nie powiodło się: %v", err)
+		blad := protocol.BladZeZrodla(shared.ErrorCodeInternalError, err)
+		return ctx, &blad
+	}
+	if kontoId == 0 {
+		return ctx, nil
+	}
+	return dane.ZKontemOperatora(ctx, kontoId), nil
 }

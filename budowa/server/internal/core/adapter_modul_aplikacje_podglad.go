@@ -98,6 +98,10 @@ func (a *adapterAplikacji) UruchomPodglad(ctx context.Context,
 	// Nasłuch zastany zostaje zatrzymany przed podniesieniem nowego: jedno okno ma jeden podgląd.
 	a.zatrzymajNasluchPodgladuApp(okno)
 
+	// Podgląd stoi na pętli zwrotnej pod portem nadanym przez system, więc jego
+	// strona ma pochodzenie `127.0.0.1:<port>`. Wykaz pochodzeń gniazda rdzenia
+	// nie niesie wzorca z portem dowolnym i to jest tu warunek: treść warstwy
+	// pisze model, a skrypt tej treści nie może otwierać kanału rdzenia.
 	nasluch, err := net.Listen("tcp", "127.0.0.1:0")
 	if err != nil {
 		a.zapiszStanPodgladuApp(ctx, okno, warstwa, "", shared.AppPreviewStatusFailed, 0)

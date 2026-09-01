@@ -4,7 +4,14 @@
  * rdzenia, zakłada sesje na żądanie i wprowadza w okno modułu.
  */
 
-import { Command, type Environment, type Module, type Session } from '../../../shared/contract.ts';
+import {
+  Command,
+  ErrorCode,
+  type Component,
+  type Environment,
+  type Module,
+  type Session,
+} from '../../../shared/contract.ts';
 import type { Kanal, Wynik } from '../protokol/kanal.ts';
 import { wywolaj } from '../protokol/wywolanie.ts';
 import { zwiazWyborModulu } from './wybor-modulu.ts';
@@ -37,7 +44,6 @@ import {
   przejmijOgnisko,
   sesjaBiezaca,
   wskazSrodowisko,
-  zalozSesje,
 } from './sesja-biezaca.ts';
 import { zwiazStudio } from './studio.ts';
 
@@ -76,6 +82,7 @@ export function zwiazCentrum(kanal: Kanal | undefined = globalThis.DanacoKanal):
      więc przygotowanie pasma stoi przed jej zdjęciem. */
   przygotujPasmo();
   zdejmijTresciPrzykladowe();
+  zdejmijDrogiBezPokrycia();
   const odswiez = (): void => {
     void odswiezWykaz(kanal, wezly.wykazSesji, wzorWiersza);
   };
@@ -90,13 +97,33 @@ export function zwiazCentrum(kanal: Kanal | undefined = globalThis.DanacoKanal):
   const katalogSrodowisk = new Map<string, Environment>();
   void wczytajSrodowiska(kanal, katalogSrodowisk);
 
+  /* Drogi do okien platformowych nazywają swoją niegotowość, zanim dojdą do
+     biblioteki: `rama.js` prowadzi je do pliku prototypu, a prototyp poza
+     zestawem okien nie stoi, więc naciśnięcie kończyłoby się ciszą. */
+  document.addEventListener('click', (zdarzenie) => {
+    const cel = zdarzenie.target;
+    if (!(cel instanceof Element)) return;
+    for (const droga of OKNA_PLATFORMOWE) {
+      const wezel = cel.closest<HTMLElement>(droga.wybor);
+      if (wezel === null) continue;
+      zdarzenie.stopPropagation();
+      zdarzenie.preventDefault();
+      zapowiedzOknoPlatformowe(droga, wezel);
+      return;
+    }
+  }, true);
+
+  /* „Nowa sesja" otwiera okno robocze na karcie Centrum. Sesja powstaje przy
+     pierwszej wiadomości, więc naciśnięcie przycisku nie ma czego założyć
+     w rejestrze rdzenia. */
   wezly.obszar.addEventListener('click', (zdarzenie) => {
     const cel = zdarzenie.target;
     if (!(cel instanceof Element)) return;
-    if (cel.closest('[data-okno-nowe]') !== null) {
-      void zalozKarteSesji(kanal, wezly.wykazSesji, wzorWiersza);
-      return;
-    }
+    /* Przycisk panelu bocznego niesie cechę bez wartości; wartość niosą pozycje
+       menu, a te prowadzą do okna nowego projektu, nie do nowej sesji. */
+    if (cel.closest<HTMLElement>('[data-okno-nowe]')?.dataset.oknoNowe !== '') return;
+    otworzOkno();
+    pokazOknoRobocze();
   });
 
   /* Czynności sesji słuchają na dokumencie, nie na wnętrzu okna: biblioteka
@@ -110,6 +137,9 @@ export function zwiazCentrum(kanal: Kanal | undefined = globalThis.DanacoKanal):
     const idSesji = czynnosc?.dataset.idSesji;
     if (wykonaj === undefined || idSesji === undefined) return;
     void wykonaj(kanal, idSesji).then((wynik) => {
+      // Czynność porzucona przez Operatora nie jest niepowodzeniem rdzenia
+      // i wykazu nie rusza.
+      if (wynik === null) return;
       // Odmowa rdzenia wychodzi na wierzch: czynność, która milczy po
       // niepowodzeniu, zostawia Operatora przy wykazie sprzed czynności bez
       // słowa, dlaczego się nie zmienił.
@@ -117,6 +147,34 @@ export function zwiazCentrum(kanal: Kanal | undefined = globalThis.DanacoKanal):
       odswiez();
     });
   });
+
+  /* Czynności komponentu własnego. Wykaz wraca odpowiedzią rdzenia, bo kopia
+     i usunięcie zmieniają go po stronie magazynu, nie w znaczniku. */
+  document.addEventListener('click', (zdarzenie) => {
+    const cel = zdarzenie.target;
+    if (!(cel instanceof Element)) return;
+    const czynnosc = cel.closest<HTMLElement>('[data-operacja]');
+    const idKomponentu = czynnosc?.dataset.idKomponentu;
+    if (czynnosc === null || idKomponentu === undefined) return;
+    zdarzenie.stopPropagation();
+    const operacja = czynnosc.dataset.operacja ?? '';
+    void wykonajOperacjeKomponentu(kanal, operacja, idKomponentu).then((wynik) => {
+      if (!wynik.udany) {
+        oglos('Czynność komponentu', wynik.blad?.message ?? 'Rdzeń odmówił wykonania.', 'blad');
+      }
+      void wypelnijKomponenty(kanal);
+    });
+  }, true);
+
+  /* Zakładanie komponentu własnego wymaga rodzaju i nazwy; okna, w którym
+     Operator je poda, to wydanie nie niesie, więc przycisk nazywa niegotowość
+     zamiast zakładać komponent nazwany za niego. */
+  document.addEventListener('click', (zdarzenie) => {
+    const cel = zdarzenie.target;
+    if (!(cel instanceof Element) || cel.closest('#cd-dodaj-komponent') === null) return;
+    zdarzenie.stopPropagation();
+    oglos('Nowy komponent', 'Okno zakładania komponentu własnego nie wchodzi do tego wydania.');
+  }, true);
 
   /* Wnętrze okna zmienia się w miejscu, więc kolejne wejście podmienia element
      wstawiony poprzednio, nie ten zdjęty przy pierwszym. Szyna stoi poza
@@ -144,7 +202,7 @@ export function zwiazCentrum(kanal: Kanal | undefined = globalThis.DanacoKanal):
     kartaBiezaca = modul.code;
     zapiszKarte(modul.code, modul.name);
     odswiezPasmo();
-    if (modul.code === KOD_MODULU_WYDANIA) zwiazStudio(kanal, nazwaSrodowiska);
+    if (modul.code === KOD_MODULU_WYDANIA) zwiazStudio(kanal, nazwaSrodowiska, idOkna);
     else if (idOkna === '') zwiazOkno(kanal, modul.code, nazwaSrodowiska);
     else zwiazOknoStojace(kanal, modul.code, nazwaSrodowiska, idOkna);
     /* Karta nazywa się pracą, którą niesie jej wnętrze — moduł stoi przy niej
@@ -196,10 +254,7 @@ export function zwiazCentrum(kanal: Kanal | undefined = globalThis.DanacoKanal):
     const pozycja = cel.closest<HTMLElement>('[data-cd-wskazowka]');
     if (pozycja === null) return;
     zdarzenie.stopPropagation();
-    const wskazowka = document.querySelector<HTMLElement>('.cd-wskazowka, #cd-start');
-    if (wskazowka === null) return;
-    wskazowka.hidden = !wskazowka.hidden;
-    pozycja.setAttribute('aria-checked', String(!wskazowka.hidden));
+    ustawWskazowke(pozycja.getAttribute('aria-checked') !== 'true');
   }, true);
 
   /* Zamknięcie wskazówki startowej znakiem przy niej samej. */
@@ -207,8 +262,7 @@ export function zwiazCentrum(kanal: Kanal | undefined = globalThis.DanacoKanal):
     const cel = zdarzenie.target;
     if (!(cel instanceof Element) || cel.closest('#cd-start-zamknij') === null) return;
     zdarzenie.stopPropagation();
-    const wskazowka = document.querySelector<HTMLElement>('.cd-wskazowka, #cd-start');
-    if (wskazowka !== null) wskazowka.hidden = true;
+    ustawWskazowke(false);
   }, true);
 
   /* Przypięcie panelu bocznego trzyma go rozwiniętym przy zmianie karty. */
@@ -259,11 +313,13 @@ export function zwiazCentrum(kanal: Kanal | undefined = globalThis.DanacoKanal):
     if (cel.closest('[data-przelacz-samouczek]') !== null) {
       zdarzenie.stopPropagation();
       panel.hidden = !panel.hidden;
+      oznaczStanPanelu(panel);
       return;
     }
     if (cel.closest('[data-zwin-samouczek]') !== null) {
       zdarzenie.stopPropagation();
       panel.hidden = true;
+      oznaczStanPanelu(panel);
     }
   }, true);
 
@@ -377,28 +433,63 @@ export function zwiazCentrum(kanal: Kanal | undefined = globalThis.DanacoKanal):
       }
       otworzModul(modul, '');
     },
+    /* Znak zamknięcia zdejmuje kartę i z pasma, i z wykazu okna roboczego:
+       karta zdjęta z samego pasma wracała przy najbliższym przełączeniu okna. */
     (kodKarty) => {
       if (kartaBiezaca === kodKarty) wrocDoCentrum();
+      zdejmijKarteOkna(kodKarty);
       zdejmijKarte(kodKarty);
+      odswiezPasmo();
     },
   );
+
+  /** Wprowadza w przedsionek środowiska; środowisko bez modułów w rejestrze nie ma czego pokazać i mówi to wprost. */
+  const wejdzWPrzedsionek = (kodSrodowiska: string, nazwaZKarty: string): void => {
+    if (kodSrodowiska === '') return;
+    const srodowisko = katalogSrodowisk.get(kodSrodowiska);
+    if (srodowisko !== undefined && (srodowisko.moduleCodes?.length ?? 0) === 0) {
+      oglos(srodowisko.name, 'Rejestr rdzenia nie wskazuje dla tego środowiska '
+        + 'ani jednego modułu, więc przedsionek nie ma czego pokazać.');
+      return;
+    }
+    const widok = widokPrzedsionka(wezly, gniazdoPrzedsionka(kodSrodowiska));
+    if (widok === null) return;
+    pokazWidok(wezly, widok);
+    const nazwa = srodowisko?.name ?? nazwaZKarty;
+    if (nazwa !== '') nazwaSrodowiska = nazwa;
+    wskazSrodowisko(kodSrodowiska);
+    void zwiazWyborModulu(kanal, kodSrodowiska);
+  };
+
+  /* Karty środowisk chodzą strzałkami, a Enter i spacja wprowadzają
+     w środowisko: karta jest pozycją listy, nie przyciskiem, więc sama
+     klawiatury nie obsłuży. */
+  document.addEventListener('keydown', (zdarzenie) => {
+    const cel = zdarzenie.target;
+    if (!(cel instanceof Element)) return;
+    const karta = cel.closest<HTMLElement>('.dn-karta-srodowiska');
+    if (karta === null) return;
+    const krok = zdarzenie.key === 'ArrowRight' ? 1 : (zdarzenie.key === 'ArrowLeft' ? -1 : 0);
+    if (krok !== 0) {
+      zdarzenie.preventDefault();
+      przestawOgnisko(karta, krok);
+      return;
+    }
+    if (zdarzenie.key !== 'Enter' && zdarzenie.key !== ' ') return;
+    zdarzenie.preventDefault();
+    wejdzWPrzedsionek(karta.dataset.srodowisko ?? '', nazwaKartySrodowiska(karta));
+  });
 
   document.addEventListener('click', (zdarzenie) => {
     const cel = zdarzenie.target;
     if (!(cel instanceof Element)) return;
 
+    // Wpis w miejscu trwa: kliknięcie w polu wpisu prowadzi kursor, nie wskazuje.
+    if (cel.closest('[contenteditable]') !== null) return;
+
     // Powrót na kartę główną okna roboczego.
     if (cel.closest(POWROT_NA_STRONE_GLOWNA) !== null) {
       wrocDoCentrum();
-      return;
-    }
-
-    /* Wykaz sesji stoi w panelu bocznym okna roboczego; osobnego okna rejestru
-       sesji to wydanie nie niesie, więc czynność nazywa to wprost. */
-    if (cel.closest('[data-otwarz-historie]') !== null) {
-      zdarzenie.stopPropagation();
-      oglos('Historia sesji', 'Sesje konta stoją w panelu bocznym okna roboczego. '
-        + 'Osobne okno rejestru sesji nie wchodzi do tego wydania.');
       return;
     }
 
@@ -424,16 +515,16 @@ export function zwiazCentrum(kanal: Kanal | undefined = globalThis.DanacoKanal):
       return;
     }
 
+    /* „Nowa sesja" wskazana środowiskiem otwiera okno robocze i wprowadza
+       w przedsionek; sesji nie zakłada, bo ta powstaje przy pierwszej
+       wiadomości. */
     const kodNowejSesji = cel.closest<HTMLElement>('[data-nowa-sesja-srodowisko]')?.dataset
       .nowaSesjaSrodowisko;
     if (kodNowejSesji !== undefined) {
-      void zalozKarteSesji(kanal, wezly.wykazSesji, wzorWiersza);
-      const widok = widokPrzedsionka(wezly, gniazdoPrzedsionka(kodNowejSesji));
-      if (widok === null) return;
-      pokazWidok(wezly, widok);
-      nazwaSrodowiska = katalogSrodowisk.get(kodNowejSesji)?.name ?? '';
-      wskazSrodowisko(kodNowejSesji);
-      void zwiazWyborModulu(kanal, kodNowejSesji);
+      zdarzenie.stopPropagation();
+      otworzOkno();
+      odswiezOknaRobocze();
+      wejdzWPrzedsionek(kodNowejSesji, '');
       return;
     }
 
@@ -451,12 +542,8 @@ export function zwiazCentrum(kanal: Kanal | undefined = globalThis.DanacoKanal):
 
     const kodSrodowiska = kodSrodowiskaWejscia(cel);
     if (kodSrodowiska !== '') {
-      const widok = widokPrzedsionka(wezly, gniazdoPrzedsionka(kodSrodowiska));
-      if (widok === null) return;
-      pokazWidok(wezly, widok);
-      nazwaSrodowiska = nazwaKartySrodowiska(cel) || nazwaSrodowiska;
-      wskazSrodowisko(kodSrodowiska);
-      void zwiazWyborModulu(kanal, kodSrodowiska);
+      zdarzenie.stopPropagation();
+      wejdzWPrzedsionek(kodSrodowiska, nazwaKartySrodowiska(cel));
       return;
     }
 
@@ -464,7 +551,8 @@ export function zwiazCentrum(kanal: Kanal | undefined = globalThis.DanacoKanal):
        automatyki wchodzi w Automations, ekspert w Agents. */
     const komponent = cel.closest<HTMLElement>('[data-otworz-komponent]')?.dataset.otworzKomponent;
     if (komponent !== undefined) {
-      const modulKomponentu = katalogModulow.get(RODZAJE_KOMPONENTOW.get(komponent) ?? '');
+      // Rodzaj komponentu jest kodem modułu, w którym komponent stoi.
+      const modulKomponentu = katalogModulow.get(KOMPONENTY.get(komponent)?.kind ?? '');
       if (modulKomponentu === undefined) return;
       zdarzenie.stopPropagation();
       otworzModul(modulKomponentu, '');
@@ -513,6 +601,8 @@ function kodModulu(cel: Element): string {
     cel.closest('.dn-szyna-poz--modul')?.getAttribute('data-modul') ??
     cel.closest('.pd-kafel')?.getAttribute('data-modul') ??
     cel.closest('.cd-kafel, .dn-kafel--modul')?.getAttribute('data-komponent') ??
+    // Skrót szybkiego wyboru nazywa rodzaj komponentu, a rodzaj jest kodem modułu.
+    cel.closest('.dn-szyna-poz--skrot')?.getAttribute('data-skrot-komponent') ??
     '';
   return wskazanie.toLowerCase();
 }
@@ -557,11 +647,40 @@ function nazwaKartySrodowiska(cel: Element): string {
   return karta?.querySelector('.dn-karta-srodowiska-tytul')?.textContent?.trim() ?? '';
 }
 
-/** Kod środowiska, do którego prowadzi naciśnięty grot karty Centrum; pustka znaczy, że kliknięcie karty nie dotyczyło. */
+/**
+ * Kod środowiska karty Centrum, w którą Operator nacisnął. Wejście niesie cała
+ * karta, nie sam jej grot: grot jest znakiem wejścia, a nie jedynym miejscem,
+ * w które da się trafić.
+ */
 function kodSrodowiskaWejscia(cel: Element): string {
-  const wejscie = cel.closest('[data-wejdz]');
-  if (wejscie === null) return '';
-  return wejscie.closest<HTMLElement>('.dn-karta-srodowiska')?.dataset.srodowisko ?? '';
+  return cel.closest<HTMLElement>('.dn-karta-srodowiska')?.dataset.srodowisko ?? '';
+}
+
+/** Przestawia ognisko na sąsiednią kartę środowiska; poza nią karty stoją w porządku tabulacji jako jedna pozycja. */
+function przestawOgnisko(karta: HTMLElement, krok: number): void {
+  const karty = [...document.querySelectorAll<HTMLElement>('.dn-karta-srodowiska')];
+  if (karty.length === 0) return;
+  const numer = karty.indexOf(karta);
+  const nastepna = karty[(numer + krok + karty.length) % karty.length];
+  for (const kandydat of karty) kandydat.tabIndex = -1;
+  nastepna.tabIndex = 0;
+  nastepna.focus();
+}
+
+/** Stawia albo chowa wskazówkę startową wraz ze znakiem wyboru przy pozycjach menu widoku. */
+function ustawWskazowke(widoczna: boolean): void {
+  const wskazowka = document.querySelector<HTMLElement>('.cd-wskazowka, #cd-start');
+  if (wskazowka !== null) wskazowka.hidden = !widoczna;
+  for (const pozycja of document.querySelectorAll('[data-cd-wskazowka]')) {
+    pozycja.setAttribute('aria-checked', String(widoczna));
+  }
+}
+
+/** Uzgadnia znak wyboru pozycji menu ze stanem panelu samouczka; pozycja menu jest przełącznikiem, więc musi mówić, w którym stanie panel stoi. */
+function oznaczStanPanelu(panel: HTMLElement): void {
+  for (const pozycja of document.querySelectorAll('[data-przelacz-samouczek][role="menuitemcheckbox"]')) {
+    pozycja.setAttribute('aria-checked', String(!panel.hidden));
+  }
 }
 
 /** Zbiera węzły Centrum; brak wykazu sesji znaczy, że w ramie stoi inne okno. */
@@ -654,32 +773,123 @@ function opiszGloweKarty(wezly: WezlyCentrum, nazwaModulu: string, nazwaSesji: s
   if (meta !== null) meta.textContent = nazwaSesji === '' ? '' : 'sesja: ' + nazwaSesji;
 }
 
-/**
- * Wypełnia wykaz komponentów własnych Centrum rejestrem rdzenia. Wzór pozycji
- * zdejmuje się z treści przykładowej, zanim wykaz zostanie wyczyszczony.
- */
-const RODZAJE_KOMPONENTOW = new Map<string, string>();
+/** Komponenty własne po identyfikatorze; kopia bierze z nich definicję, bo kontrakt nie zna kopiowania komponentu. */
+const KOMPONENTY = new Map<string, Component>();
 
+/** Wzór pozycji komponentu zdjęty z treści przykładowej; wykaz pustoszeje przed pytaniem rdzenia, więc wzór musi przeżyć pierwsze wypełnienie. */
+let wzorKomponentu: HTMLElement | null = null;
+
+/**
+ * Wypełnia wykaz komponentów własnych Centrum rejestrem rdzenia. Wykaz pustoszeje
+ * przed pytaniem rdzenia: przy odmowie na ekranie ma stać stan pusty ze znacznika,
+ * nie komponenty z prototypu.
+ */
 async function wypelnijKomponenty(kanal: Kanal): Promise<void> {
   const wykaz = document.getElementById('cd-wlasne');
   if (wykaz === null) return;
-  const wzor = wykaz.querySelector<HTMLElement>('.cd-wlasny');
-  const wzorPozycji = wzor === null ? null : (wzor.cloneNode(true) as HTMLElement);
-  const wynik = await wywolaj(kanal, Command.ComponentList, {});
-  if (!wynik.udany || wynik.wynik === undefined || wzorPozycji === null) return;
+  wzorKomponentu = zapamietajWzor(wzorKomponentu, wykaz, '.cd-wlasny');
+  const wzor = wzorKomponentu;
   wykaz.replaceChildren();
-  for (const komponent of wynik.wynik.components) {
-    const pozycja = wzorPozycji.cloneNode(true) as HTMLElement;
-    const przycisk = pozycja.querySelector<HTMLElement>('[data-otworz-komponent]');
-    if (przycisk !== null) przycisk.dataset.otworzKomponent = komponent.id;
-    // Rodzaj komponentu jest kodem modułu, w którym komponent stoi.
-    RODZAJE_KOMPONENTOW.set(komponent.id, komponent.kind);
-    const nazwa = pozycja.querySelector('.dn-kafel-nazwa');
-    if (nazwa !== null) nazwa.textContent = komponent.name;
-    const opis = pozycja.querySelector('.dn-kafel-opis');
-    if (opis !== null) opis.textContent = komponent.description ?? '';
-    wykaz.appendChild(pozycja);
+  if (wzor === null) return;
+  const wynik = await wywolaj(kanal, Command.ComponentList, {});
+  if (!wynik.udany || wynik.wynik === undefined) {
+    oglos('Komponenty własne', wynik.blad?.message ?? 'Rdzeń odmówił wykazu komponentów.', 'blad');
+    return;
   }
+  KOMPONENTY.clear();
+  for (const komponent of wynik.wynik.components) {
+    KOMPONENTY.set(komponent.id, komponent);
+    wykaz.appendChild(zbudujKomponent(wzor, komponent));
+  }
+}
+
+/**
+ * Zwraca klon wzoru opisany komponentem rdzenia. Menu czynności dostaje własne
+ * odwołanie i identyfikator komponentu przy każdej pozycji, bo biblioteka menu
+ * przenosi jego treść poza kafel.
+ */
+function zbudujKomponent(wzor: HTMLElement, komponent: Component): HTMLElement {
+  const pozycja = wzor.cloneNode(true) as HTMLElement;
+  for (const otworz of pozycja.querySelectorAll<HTMLElement>('[data-otworz-komponent]')) {
+    otworz.dataset.otworzKomponent = komponent.id;
+  }
+  const nazwa = pozycja.querySelector('.dn-kafel-nazwa');
+  if (nazwa !== null) nazwa.textContent = komponent.name;
+  /* Wiersz pod nazwą niesie w prototypie rodzaj i skrót konfiguracji; kontrakt
+     daje dla niego wyłącznie opis, a bez opisu wiersz znika. */
+  for (const podpis of pozycja.querySelectorAll('.dn-kafel-rodzaj, .dn-kafel-opis')) {
+    if (komponent.description === undefined || komponent.description === '') podpis.remove();
+    else podpis.textContent = komponent.description;
+  }
+  const menu = pozycja.querySelector('[data-menu-tresc]');
+  const wyzwalacz = pozycja.querySelector('[data-menu]');
+  if (menu !== null && wyzwalacz !== null) {
+    const oznaczenie = 'menu-komponentu-' + komponent.id;
+    menu.id = oznaczenie;
+    wyzwalacz.setAttribute('data-menu', oznaczenie);
+  }
+  zdejmijOperacjeBezZrodla(pozycja);
+  for (const czynnosc of pozycja.querySelectorAll<HTMLElement>('[data-operacja]')) {
+    czynnosc.dataset.idKomponentu = komponent.id;
+  }
+  return pozycja;
+}
+
+/* Czynności komponentu z pokryciem w kontrakcie. Kopia zakłada komponent od nowa
+   z definicji stojącej, bo kontrakt nie zna kopiowania komponentu; wydania
+   i wczytania definicji z pliku nie zna wcale. */
+const OPERACJE_KOMPONENTU = new Set(['duplikuj', 'usun']);
+
+/** Wykonuje czynność komponentu komendą kontraktu; komponent nieznany Centrum wraca nazwaną odmową, nie cichym niepowodzeniem. */
+async function wykonajOperacjeKomponentu(
+  kanal: Kanal,
+  operacja: string,
+  idKomponentu: string,
+): Promise<Wynik<unknown>> {
+  const zrodlo = KOMPONENTY.get(idKomponentu);
+  if (zrodlo === undefined) {
+    return {
+      udany: false,
+      blad: {
+        code: ErrorCode.NotFound,
+        message: 'Komponent zniknął z wykazu Centrum — odśwież widok.',
+        retryable: false,
+      },
+    };
+  }
+  if (operacja === 'usun') {
+    return wywolaj(kanal, Command.ComponentDelete, { componentId: idKomponentu });
+  }
+  return wywolaj(kanal, Command.ComponentCreate, {
+    kind: zrodlo.kind,
+    name: `${zrodlo.name} — kopia`,
+    description: zrodlo.description,
+    config: zrodlo.config,
+  });
+}
+
+/** Zdejmuje z menu komponentu pozycje bez komendy w kontrakcie; „Otwórz" zostaje, bo prowadzi do okna modułu. */
+function zdejmijOperacjeBezZrodla(pozycja: HTMLElement): void {
+  for (const czynnosc of pozycja.querySelectorAll('[data-menu-tresc] .sta-menu-poz')) {
+    const operacja = czynnosc.getAttribute('data-operacja');
+    if (operacja === null) {
+      if (!czynnosc.hasAttribute('data-otworz-komponent')) czynnosc.remove();
+      continue;
+    }
+    if (!OPERACJE_KOMPONENTU.has(operacja)) czynnosc.remove();
+  }
+  zdejmijRozdzielnikiSieroce(pozycja);
+}
+
+/** Zdejmuje wzór z treści przykładowej przy pierwszym wypełnieniu; przy kolejnych oddaje zapamiętany, bo wykaz pustoszeje przed pytaniem rdzenia. */
+function zapamietajWzor(
+  zapamietany: HTMLElement | null,
+  wykaz: HTMLElement,
+  wybor: string,
+): HTMLElement | null {
+  if (zapamietany !== null) return zapamietany;
+  const wezel = wykaz.querySelector<HTMLElement>(wybor);
+  return wezel === null ? null : (wezel.cloneNode(true) as HTMLElement);
 }
 
 /**
@@ -690,12 +900,19 @@ async function wypelnijKomponenty(kanal: Kanal): Promise<void> {
 async function wypelnijProjekty(kanal: Kanal): Promise<void> {
   const drzewo = document.querySelector<HTMLElement>('#panel-projekty .dn-panel-drzewo');
   if (drzewo === null) return;
-  const galaz = drzewo.querySelector<HTMLElement>('.dn-panel-galaz');
-  const wzorGalezi = galaz === null ? null : (galaz.cloneNode(true) as HTMLElement);
-  const wzorSesji = wzorGalezi?.querySelector<HTMLElement>('.dn-panel-wiersz') ?? null;
+  wzorGalezi = zapamietajWzor(wzorGalezi, drzewo, '.dn-panel-galaz');
+  const wzor = wzorGalezi;
+  const wzorSesji = wzor?.querySelector<HTMLElement>('.dn-panel-wiersz') ?? null;
+  // Drzewo pustoszeje przed pytaniem rdzenia: przy odmowie ma stać puste,
+  // a nie projektami i sesjami z prototypu.
+  drzewo.replaceChildren();
+  if (wzor === null) return;
   const projekty = await wywolaj(kanal, Command.ProjectList, {});
   const sesje = await wywolaj(kanal, Command.SessionList, {});
-  if (!projekty.udany || projekty.wynik === undefined || wzorGalezi === null) return;
+  if (!projekty.udany || projekty.wynik === undefined) {
+    oglos('Drzewo projektów', projekty.blad?.message ?? 'Rdzeń odmówił wykazu projektów.', 'blad');
+    return;
+  }
   const wedlugProjektu = new Map<string, Session[]>();
   for (const sesja of sesje.wynik?.sessions ?? []) {
     if (sesja.projectId === undefined || sesja.projectId === '') continue;
@@ -706,9 +923,8 @@ async function wypelnijProjekty(kanal: Kanal): Promise<void> {
   const uporzadkowane = [...projekty.wynik.projects].sort((a, b) => (
     porzadekProjektow === 'nazwa' ? a.name.localeCompare(b.name, 'pl') : b.updatedAt - a.updatedAt
   ));
-  drzewo.replaceChildren();
   for (const projekt of uporzadkowane) {
-    const wpis = wzorGalezi.cloneNode(true) as HTMLElement;
+    const wpis = wzor.cloneNode(true) as HTMLElement;
     wpis.dataset.projekt = projekt.id;
     const nazwa = wpis.querySelector('.dn-panel-galaz-nazwa');
     if (nazwa !== null) nazwa.textContent = projekt.name;
@@ -731,16 +947,23 @@ function zdejmijWzorWiersza(wykaz: HTMLElement): HTMLElement | null {
   return wiersz === null ? null : (wiersz.cloneNode(true) as HTMLElement);
 }
 
-/** Wczytuje wykaz sesji rdzenia i wstawia go w miejsce treści przykładowej. */
+/**
+ * Wczytuje wykaz sesji rdzenia i wstawia go w miejsce treści przykładowej.
+ * Wykaz pustoszeje przed pytaniem: przy odmowie panel ma stać pusty, a nie
+ * sesjami, których nie ma.
+ */
 async function odswiezWykaz(
   kanal: Kanal,
   wykaz: HTMLElement,
   wzor: HTMLElement | null,
 ): Promise<void> {
   if (wzor === null) return;
-  const wynik = await wywolaj(kanal, Command.SessionList, {});
-  if (!wynik.udany || wynik.wynik === undefined) return;
   wykaz.replaceChildren();
+  const wynik = await wywolaj(kanal, Command.SessionList, {});
+  if (!wynik.udany || wynik.wynik === undefined) {
+    oglos('Wykaz sesji', wynik.blad?.message ?? 'Rdzeń odmówił wykazu sesji.', 'blad');
+    return;
+  }
   for (const sesja of uporzadkuj(przesiej(wynik.wynik.sessions))) {
     wykaz.appendChild(zbudujWiersz(wzor, sesja));
   }
@@ -828,7 +1051,12 @@ function opiszStanWiersza(wiersz: HTMLElement, sesja: Session): void {
    Spis trzyma wywołania, nie same nazwy komend: każda z tych komend bierze
    wykaz sesji, a nie pojedyncze wskazanie, i tylko wywołanie zapisane przy
    swojej komendzie daje się sprawdzić kontraktem przy budowaniu. */
-const CZYNNOSCI_SESJI: Record<string, (kanal: Kanal, idSesji: string) => Promise<Wynik<unknown>>> = {
+const CZYNNOSCI_SESJI: Record<
+  string,
+  (kanal: Kanal, idSesji: string) => Promise<Wynik<unknown> | null>
+> = {
+  nazwa: (kanal, idSesji) => zmienNazweSesji(kanal, idSesji),
+  przenies: (kanal, idSesji) => przeniesSesjeDoProjektu(kanal, idSesji),
   archiwizuj: (kanal, idSesji) =>
     wywolaj(kanal, Command.SessionArchive, { sessionIds: [idSesji] }),
   // Potwierdzenie nieodwracalności niesie sama pozycja menu: nazywa usunięcie
@@ -839,26 +1067,109 @@ const CZYNNOSCI_SESJI: Record<string, (kanal: Kanal, idSesji: string) => Promise
     wywolaj(kanal, Command.SessionProjectClear, { sessionIds: [idSesji] }),
 };
 
+/**
+ * Zmienia nazwę sesji wpisaną w samym wierszu wykazu. Wpis pusty i porzucenie
+ * zostawiają nazwę bez zmiany; pustka nie jest nazwą, a rdzeń przyjąłby ją.
+ */
+async function zmienNazweSesji(kanal: Kanal, idSesji: string): Promise<Wynik<unknown> | null> {
+  const nazwa = await zapytajWWierszu(idSesji, null);
+  if (nazwa === null || nazwa === '') return null;
+  return wywolaj(kanal, Command.SessionRename, { sessionId: idSesji, title: nazwa });
+}
+
+/**
+ * Przenosi sesję do projektu o wpisanej nazwie. Kontrakt zakłada projekt nowy,
+ * gdy nie wskazano istniejącego — i jest to jedyna droga powstania projektu,
+ * bo rodzina `project.*` zakładania nie niesie.
+ */
+async function przeniesSesjeDoProjektu(
+  kanal: Kanal,
+  idSesji: string,
+): Promise<Wynik<unknown> | null> {
+  const nazwa = await zapytajWWierszu(idSesji, '');
+  if (nazwa === null || nazwa === '') return null;
+  return wywolaj(kanal, Command.SessionProjectSet, { sessionIds: [idSesji], projectName: nazwa });
+}
+
+/**
+ * Pyta o tekst w samym wierszu wykazu: węzeł nazwy staje się polem wpisu.
+ * Wartość pusta zaczyna od czystego pola, pusty wskaźnik zostawia w polu nazwę
+ * stojącą. Enter zatwierdza, Escape i wyjście ogniska porzucają; wiersz wraca do
+ * treści sprzed pytania, bo rozstrzyga o niej odpowiedź rdzenia.
+ *
+ * Osobnego okna nazwy rejestr sesji nie ma, a stawianie własnego wyszłoby poza
+ * znacznik Właściciela.
+ */
+function zapytajWWierszu(idSesji: string, wartosc: string | null): Promise<string | null> {
+  const wezel = wezelNazwySesji(idSesji);
+  if (wezel === null) return Promise.resolve(null);
+  const przed = wezel.textContent ?? '';
+  return new Promise((rozstrzygnij) => {
+    let domkniete = false;
+    const domknij = (wpis: string | null): void => {
+      if (domkniete) return;
+      domkniete = true;
+      wezel.removeAttribute('contenteditable');
+      wezel.textContent = przed;
+      rozstrzygnij(wpis);
+    };
+    wezel.addEventListener('keydown', (zdarzenie) => {
+      if (zdarzenie.key === 'Enter') {
+        zdarzenie.preventDefault();
+        domknij((wezel.textContent ?? '').trim());
+        return;
+      }
+      if (zdarzenie.key === 'Escape') {
+        zdarzenie.preventDefault();
+        domknij(null);
+      }
+    });
+    wezel.addEventListener('blur', () => domknij(null));
+    /* Wpis jest zwykłym tekstem: treść wklejona z formatowaniem wniosłaby do
+       wiersza znacznik, którego nazwa sesji nie niesie. */
+    wezel.setAttribute('contenteditable', 'plaintext-only');
+    if (wartosc !== null) wezel.textContent = wartosc;
+    wezel.focus();
+    zaznaczCalosc(wezel);
+  });
+}
+
+/** Węzeł nazwy w wierszu wskazanej sesji; biblioteka menu wynosi treść menu poza wiersz, więc wiersz szuka się w wykazie, nie w przodkach pozycji menu. */
+function wezelNazwySesji(idSesji: string): HTMLElement | null {
+  const wykaz = document.getElementById('wykaz-sesji');
+  if (wykaz === null) return null;
+  for (const wiersz of wykaz.querySelectorAll<HTMLElement>('.dn-panel-wiersz')) {
+    if (wiersz.dataset.idSesji === idSesji) {
+      return wiersz.querySelector<HTMLElement>('.dn-obszar-pozycja-nazwa');
+    }
+  }
+  return null;
+}
+
+/** Zaznacza całą treść węzła, żeby wpis ją zastąpił, a nie dopisał się do niej. */
+function zaznaczCalosc(wezel: HTMLElement): void {
+  const zakres = document.createRange();
+  zakres.selectNodeContents(wezel);
+  const zaznaczenie = window.getSelection();
+  zaznaczenie?.removeAllRanges();
+  zaznaczenie?.addRange(zakres);
+}
+
 /** Zdejmuje z menu wiersza pozycje bez komendy w kontrakcie wraz z rozdzielnikami, które po nich zostały. */
 function zdejmijCzynnosciBezZrodla(wiersz: HTMLElement): void {
   for (const pozycja of wiersz.querySelectorAll('[data-menu-tresc] .sta-menu-poz')) {
     const czynnosc = pozycja.getAttribute('data-poz-akcja') ?? '';
     if (CZYNNOSCI_SESJI[czynnosc] === undefined) pozycja.remove();
   }
-  for (const rozdzielnik of wiersz.querySelectorAll('[data-menu-tresc] .sta-menu-sep')) {
+  zdejmijRozdzielnikiSieroce(wiersz);
+}
+
+/** Zdejmuje rozdzielniki, które zostały bez pozycji przed sobą; rozdzielnik na czele menu dzieli je od niczego. */
+function zdejmijRozdzielnikiSieroce(obudowa: HTMLElement): void {
+  for (const rozdzielnik of obudowa.querySelectorAll('[data-menu-tresc] .sta-menu-sep')) {
     const przed = rozdzielnik.previousElementSibling;
     if (przed === null || przed.classList.contains('sta-menu-sep')) rozdzielnik.remove();
   }
-}
-
-/** Zakłada kartę sesji, czyni ją bieżącą i odświeża wykaz odpowiedzią rdzenia. */
-async function zalozKarteSesji(
-  kanal: Kanal,
-  wykaz: HTMLElement,
-  wzor: HTMLElement | null,
-): Promise<void> {
-  if (await zalozSesje(kanal, '') === '') return;
-  await odswiezWykaz(kanal, wykaz, wzor);
 }
 
 /** Nazwa środowiska, przez które Operator wszedł w moduł; pozycja szyny stoi w grupie środowiska, kafel Centrum nie należy do żadnej. */
@@ -882,18 +1193,110 @@ function zdejmijTresciPrzykladowe(): void {
   document.querySelector('.cd-modul-odnosnik')?.remove();
 }
 
-/** Wypełnia karty środowisk rejestrem rdzenia; karta bez pokrycia znika, bo znacznik niesie ich cztery, a rejestr rozstrzyga, ile ich jest. */
+/* Drogi Centrum bez pokrycia w rdzeniu. Listwa ustawień przełączała stan funkcji
+   globalnych, których nie ma, a wydanie i wczytanie definicji komponentu z pliku
+   nie mają komendy w kontrakcie. */
+const DROGI_BEZ_POKRYCIA = [
+  '#cd-konfiguracja',
+  '#cd-mobile',
+  '#cd-aod-przelacz',
+  '.cd-sekcja-glowa [data-operacja]',
+];
+
+/** Zdejmuje drogi bez pokrycia w rdzeniu; przycisk, który zmienia sam swój wygląd, twierdzi nieprawdę o stanie platformy. */
+function zdejmijDrogiBezPokrycia(): void {
+  for (const wybor of DROGI_BEZ_POKRYCIA) {
+    for (const wezel of document.querySelectorAll(wybor)) wezel.remove();
+  }
+  /* Listwa ustawień została bez ani jednej czynności, a sam jej nagłówek
+     zapowiadałby zakres, do którego okno nie prowadzi. */
+  for (const rzad of document.querySelectorAll('.cd-rzad-czynnosci')) {
+    if (rzad.querySelector('button') === null) (rzad.closest('.cd-strefa') ?? rzad).remove();
+  }
+  /* Menu sekcji zostało bez pozycji; sam jego znak otwierałby pustkę. */
+  for (const menu of document.querySelectorAll('.cd-sekcja-menu')) {
+    if (menu.querySelector('.sta-menu-poz') === null) menu.remove();
+  }
+}
+
+/** Droga Centrum do okna platformowego, którego to wydanie nie niesie. */
+interface DrogaPlatformowa {
+  /** Wskazanie węzłów drogi w znaczniku powłoki i Centrum. */
+  wybor: string;
+  /** Nazwa okna; pustka znaczy, że nazwę niesie podpis samej drogi. */
+  nazwa: string;
+  /** Zdanie o tym, gdzie ta praca stoi dzisiaj; pustka zostawia samą zapowiedź. */
+  zamiast: string;
+}
+
+/* Pięć dróg Centrum do okien platformowych. Droga zostaje w oknie i nazywa swoją
+   niegotowość — zdjęcie jej zabrałoby Operatorowi ślad, że taki zakres
+   w produkcie jest. */
+const OKNA_PLATFORMOWE: readonly DrogaPlatformowa[] = [
+  {
+    wybor: '[data-otwarz-historie]',
+    nazwa: 'Historia sesji',
+    zamiast: 'Sesje konta stoją w panelu bocznym okna roboczego.',
+  },
+  {
+    wybor: '[data-okno-nowe="Nowy projekt"], [data-nowy-projekt-srodowisko]',
+    nazwa: 'Nowy projekt',
+    zamiast: 'Projekt zakłada przeniesienie sesji do projektu z menu wiersza sesji.',
+  },
+  { wybor: '[data-skrot-komponent="Mobile"]', nazwa: 'Mobile', zamiast: '' },
+  { wybor: '[data-skrot-komponent="Always on Display"]', nazwa: 'Always On Display', zamiast: '' },
+  // Pozycje pomocy prowadzą do trzech różnych okien zestawu, więc nazwę niesie ich podpis.
+  { wybor: '[data-nawiguj]', nazwa: '', zamiast: '' },
+];
+
+/** Zapowiada okno platformowe, którego to wydanie nie niesie. */
+function zapowiedzOknoPlatformowe(droga: DrogaPlatformowa, wezel: HTMLElement): void {
+  const podpis = droga.nazwa === '' ? (wezel.textContent ?? '').trim() : droga.nazwa;
+  const zdanie = droga.zamiast === '' ? '' : droga.zamiast + ' ';
+  oglos(
+    podpis === '' ? 'Okno platformowe' : podpis,
+    zdanie + 'To okno nie wchodzi do tego wydania.',
+  );
+}
+
+/** Karty środowisk zdjęte ze znacznika, po kodzie środowiska; wykaz rdzenia rozstrzyga, które i w jakiej kolejności wracają. */
+const KARTY_SRODOWISK = new Map<string, HTMLElement>();
+
+/** Wzór gałęzi projektu zdjęty z treści przykładowej; drzewo pustoszeje przed pytaniem rdzenia, więc wzór musi przeżyć pierwsze wypełnienie. */
+let wzorGalezi: HTMLElement | null = null;
+
+/**
+ * Stawia karty środowisk w porządku rejestru rdzenia. Siatka pustoszeje przed
+ * pytaniem: przy odmowie na ekranie ma stać pusta strefa, a nie cztery karty
+ * z prototypu. Karta bez pokrycia w rejestrze nie wraca — znacznik niesie ich
+ * cztery, a rejestr rozstrzyga, ile ich jest.
+ */
 async function wypelnijSrodowiska(kanal: Kanal, obszar: HTMLElement): Promise<void> {
+  const siatka = obszar.querySelector<HTMLElement>('.cd-siatka-srodowisk');
+  if (siatka === null) return;
+  for (const karta of siatka.querySelectorAll<HTMLElement>('.dn-karta-srodowiska')) {
+    const kod = (karta.dataset.srodowisko ?? '').toLowerCase();
+    if (kod !== '') KARTY_SRODOWISK.set(kod, karta);
+  }
+  siatka.replaceChildren();
   const wynik = await wywolaj(kanal, Command.EnvironmentList, { includeModules: true });
-  if (!wynik.udany || wynik.wynik === undefined) return;
-  const rejestr = new Map(wynik.wynik.environments.map((s) => [s.code, s]));
-  for (const karta of obszar.querySelectorAll<HTMLElement>('.dn-karta-srodowiska')) {
-    const srodowisko = rejestr.get(karta.dataset.srodowisko ?? '');
-    if (srodowisko === undefined) {
-      karta.remove();
-      continue;
-    }
+  if (!wynik.udany || wynik.wynik === undefined) {
+    oglos('Środowiska pracy', wynik.blad?.message ?? 'Rdzeń odmówił wykazu środowisk.', 'blad');
+    return;
+  }
+  let pierwsza = true;
+  // Kolejność kart jest własnością rejestru, nie kolejnością odpowiedzi.
+  const uporzadkowane = [...wynik.wynik.environments].sort((a, b) => a.order - b.order);
+  for (const srodowisko of uporzadkowane) {
+    const karta = KARTY_SRODOWISK.get(srodowisko.code.toLowerCase());
+    if (karta === undefined) continue;
+    karta.dataset.srodowisko = srodowisko.code;
     opiszSrodowisko(karta, srodowisko);
+    /* Karty chodzą strzałkami, więc w porządku tabulacji stoi jedna z nich;
+       reszta wchodzi w ognisko strzałką, wzorem listy jednego przystanku. */
+    karta.tabIndex = pierwsza ? 0 : -1;
+    pierwsza = false;
+    siatka.appendChild(karta);
   }
 }
 

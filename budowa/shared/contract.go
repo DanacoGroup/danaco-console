@@ -9838,128 +9838,6 @@ var WartosciKontraktuModelCallQuality = map[string]ModelCallQuality{
 	"nietrafna": ModelCallQualityInaccurate,
 }
 
-// WartosciBazyAlertRuleKind — wartosc kontraktu AlertRuleKind -> wartosc kolumny alert_regula.rodzaj
-var WartosciBazyAlertRuleKind = map[AlertRuleKind]string{
-	AlertRuleKindThreshold:      "progowa",
-	AlertRuleKindAnomaly:        "anomalia",
-	AlertRuleKindNewFingerprint: "nowy_odcisk",
-}
-
-// WartosciKontraktuAlertRuleKind — wartosc kolumny alert_regula.rodzaj -> wartosc kontraktu AlertRuleKind
-var WartosciKontraktuAlertRuleKind = map[string]AlertRuleKind{
-	"progowa":     AlertRuleKindThreshold,
-	"anomalia":    AlertRuleKindAnomaly,
-	"nowy_odcisk": AlertRuleKindNewFingerprint,
-}
-
-// WartosciBazyAlertMetric — wartosc kontraktu AlertMetric -> wartosc kolumny alert_regula.miara
-var WartosciBazyAlertMetric = map[AlertMetric]string{
-	AlertMetricErrorCount:     "liczba_bledow",
-	AlertMetricErrorRate:      "udzial_bledow",
-	AlertMetricCost:           "koszt",
-	AlertMetricTokens:         "tokeny",
-	AlertMetricBudgetPercent:  "procent_budzetu",
-	AlertMetricCallLatency:    "opoznienie_wywolania",
-	AlertMetricProbeFailure:   "awarie_sondy",
-	AlertMetricProcessFailure: "awarie_procesu",
-}
-
-// WartosciKontraktuAlertMetric — wartosc kolumny alert_regula.miara -> wartosc kontraktu AlertMetric
-var WartosciKontraktuAlertMetric = map[string]AlertMetric{
-	"liczba_bledow":        AlertMetricErrorCount,
-	"udzial_bledow":        AlertMetricErrorRate,
-	"koszt":                AlertMetricCost,
-	"tokeny":               AlertMetricTokens,
-	"procent_budzetu":      AlertMetricBudgetPercent,
-	"opoznienie_wywolania": AlertMetricCallLatency,
-	"awarie_sondy":         AlertMetricProbeFailure,
-	"awarie_procesu":       AlertMetricProcessFailure,
-}
-
-// WartosciBazyAlertComparison — wartosc kontraktu AlertComparison -> wartosc kolumny alert_regula.porownanie
-var WartosciBazyAlertComparison = map[AlertComparison]string{
-	AlertComparisonGreaterThan:    "wieksze",
-	AlertComparisonGreaterOrEqual: "nie_mniejsze",
-	AlertComparisonLessThan:       "mniejsze",
-	AlertComparisonLessOrEqual:    "nie_wieksze",
-}
-
-// WartosciKontraktuAlertComparison — wartosc kolumny alert_regula.porownanie -> wartosc kontraktu AlertComparison
-var WartosciKontraktuAlertComparison = map[string]AlertComparison{
-	"wieksze":      AlertComparisonGreaterThan,
-	"nie_mniejsze": AlertComparisonGreaterOrEqual,
-	"mniejsze":     AlertComparisonLessThan,
-	"nie_wieksze":  AlertComparisonLessOrEqual,
-}
-
-// WartosciBazyAlertChannel — wartosc kontraktu AlertChannel -> wartosc kolumny alert_regula_kanal.kanal
-var WartosciBazyAlertChannel = map[AlertChannel]string{
-	AlertChannelApp:             "aplikacja",
-	AlertChannelAlwaysOnDisplay: "nakladka",
-	AlertChannelMail:            "poczta",
-	AlertChannelWebhook:         "webhook",
-}
-
-// WartosciKontraktuAlertChannel — wartosc kolumny alert_regula_kanal.kanal -> wartosc kontraktu AlertChannel
-var WartosciKontraktuAlertChannel = map[string]AlertChannel{
-	"aplikacja": AlertChannelApp,
-	"nakladka":  AlertChannelAlwaysOnDisplay,
-	"poczta":    AlertChannelMail,
-	"webhook":   AlertChannelWebhook,
-}
-
-// WartosciBazyAlertTriggerStatus — wartosc kontraktu AlertTriggerStatus -> wartosc kolumny alert_wyzwolenie.stan
-var WartosciBazyAlertTriggerStatus = map[AlertTriggerStatus]string{
-	AlertTriggerStatusFiring:       "czynne",
-	AlertTriggerStatusAcknowledged: "potwierdzone",
-	AlertTriggerStatusResolved:     "ustapilo",
-	AlertTriggerStatusEscalated:    "eskalowane",
-	AlertTriggerStatusMuted:        "wyciszone",
-}
-
-// WartosciKontraktuAlertTriggerStatus — wartosc kolumny alert_wyzwolenie.stan -> wartosc kontraktu AlertTriggerStatus
-var WartosciKontraktuAlertTriggerStatus = map[string]AlertTriggerStatus{
-	"czynne":       AlertTriggerStatusFiring,
-	"potwierdzone": AlertTriggerStatusAcknowledged,
-	"ustapilo":     AlertTriggerStatusResolved,
-	"eskalowane":   AlertTriggerStatusEscalated,
-	"wyciszone":    AlertTriggerStatusMuted,
-}
-
-// WartosciBazyHealthProbeKind — wartosc kontraktu HealthProbeKind -> wartosc kolumny kondycja_sonda.rodzaj
-var WartosciBazyHealthProbeKind = map[HealthProbeKind]string{
-	HealthProbeKindHttp:      "http",
-	HealthProbeKindTcp:       "tcp",
-	HealthProbeKindCommand:   "polecenie",
-	HealthProbeKindModelCall: "wywolanie_modelu",
-	HealthProbeKindInternal:  "wewnetrzna",
-}
-
-// WartosciKontraktuHealthProbeKind — wartosc kolumny kondycja_sonda.rodzaj -> wartosc kontraktu HealthProbeKind
-var WartosciKontraktuHealthProbeKind = map[string]HealthProbeKind{
-	"http":             HealthProbeKindHttp,
-	"tcp":              HealthProbeKindTcp,
-	"polecenie":        HealthProbeKindCommand,
-	"wywolanie_modelu": HealthProbeKindModelCall,
-	"wewnetrzna":       HealthProbeKindInternal,
-}
-
-// WartosciBazyHealthProbeStatus — wartosc kontraktu HealthProbeStatus -> wartosc kolumny kondycja_wynik.stan
-var WartosciBazyHealthProbeStatus = map[HealthProbeStatus]string{
-	HealthProbeStatusUp:       "dostepny",
-	HealthProbeStatusDegraded: "degradacja",
-	HealthProbeStatusDown:     "niedostepny",
-	HealthProbeStatusUnknown:  "nieustalony",
-}
-
-// WartosciKontraktuHealthProbeStatus — wartosc kolumny kondycja_wynik.stan -> wartosc kontraktu HealthProbeStatus
-var WartosciKontraktuHealthProbeStatus = map[string]HealthProbeStatus{
-	"dostepny":    HealthProbeStatusUp,
-	"degradacja":  HealthProbeStatusDegraded,
-	"niedostepny": HealthProbeStatusDown,
-	"nieustalony": HealthProbeStatusUnknown,
-}
-
 // WartosciBazyLibraryFileStatus — wartosc kontraktu LibraryFileStatus -> wartosc kolumny plik_biblioteki.stan
 var WartosciBazyLibraryFileStatus = map[LibraryFileStatus]string{
 	LibraryFileStatusActive:   "aktywny",
@@ -10142,6 +10020,12 @@ const (
 	CommandSessionList MessageType = "session.list"
 	// Zwraca projekty konta. Lewy panel ramy pokazuje calosc dorobku Operatora, wiec projekt bez ani jednej sesji tez musi byc widoczny
 	CommandProjectList MessageType = "project.list"
+	// Zaklada projekt konta. Kod projektu nadaje rdzen, Operator podaje nazwe — nazwa jest tym, co widac w lewym panelu ramy
+	CommandProjectCreate MessageType = "project.create"
+	// Zmienia nazwe projektu. Kod projektu zostaje bez zmiany, bo wiaza sie z nim sesje i wpisy modulu Workspace
+	CommandProjectRename MessageType = "project.rename"
+	// Usuwa projekt wraz z dorobkiem modulu Workspace zapisanym pod nim: pamiecia projektu, zadaniami, notatkami, materialem i sladem zdarzen. Sesje projektu zostaja w historii i traca przypisanie — usuniecie projektu nie jest usunieciem rozmow, ktore w nim powstaly, wiec kolumna projektu tych sesji wraca na pusta
+	CommandProjectDelete MessageType = "project.delete"
 	// Przenosi ognisko na wskazana karte sesji i opcjonalnie na okno w jej wnetrzu. Asystent przestawia ognisko OPERATOROWI polem targetClientId — inaczej jego posuniecia nie byly widoczne na ekranie
 	CommandSessionFocus MessageType = "session.focus"
 	// Wiaze biezace polaczenie z sesja trwajaca na rdzeniu; odtwarza jej okna
@@ -12450,6 +12334,8 @@ const (
 	EventModuleUnknown MessageType = "module.unknown"
 	// Przestrzen robocza karty sesji — Odpowiedz na nieznana komende obszaru. Fail-open: polaczenie nie jest zrywane, sesja nie jest blokowana, kolejne zadania sa przyjmowane.
 	EventWorkspaceUnknown MessageType = "workspace.unknown"
+	// Projekty konta — Odpowiedz na nieznana komende obszaru. Fail-open: polaczenie nie jest zrywane, sesja nie jest blokowana, kolejne zadania sa przyjmowane.
+	EventProjectUnknown MessageType = "project.unknown"
 	// Sesje — Odpowiedz na nieznana komende obszaru. Fail-open: polaczenie nie jest zrywane, sesja nie jest blokowana, kolejne zadania sa przyjmowane.
 	EventSessionUnknown MessageType = "session.unknown"
 	// Okna komunikacji — Odpowiedz na nieznana komende obszaru. Fail-open: polaczenie nie jest zrywane, sesja nie jest blokowana, kolejne zadania sa przyjmowane.
@@ -22985,6 +22871,48 @@ type ProjectListResponse struct {
 	Projects []WorkspaceProject `json:"projects"`
 	// Liczba projektow
 	Total int `json:"total"`
+}
+
+// ProjectCreateRequest — Tresc zadania project.create — Zaklada projekt konta. Kod projektu nadaje rdzen, Operator podaje nazwe — nazwa jest tym, co widac w lewym panelu ramy
+type ProjectCreateRequest struct {
+	// Nazwa projektu
+	Name string `json:"name"`
+	// Opis projektu; puste zostawia projekt bez opisu
+	Description *string `json:"description,omitempty"`
+}
+
+// ProjectCreateResponse — Tresc wyniku project.create — Zaklada projekt konta. Kod projektu nadaje rdzen, Operator podaje nazwe — nazwa jest tym, co widac w lewym panelu ramy
+type ProjectCreateResponse struct {
+	// Projekt zalozony
+	Project WorkspaceProject `json:"project"`
+}
+
+// ProjectRenameRequest — Tresc zadania project.rename — Zmienia nazwe projektu. Kod projektu zostaje bez zmiany, bo wiaza sie z nim sesje i wpisy modulu Workspace
+type ProjectRenameRequest struct {
+	// Projekt przemianowywany
+	ProjectId string `json:"projectId"`
+	// Nowa nazwa projektu
+	Name string `json:"name"`
+}
+
+// ProjectRenameResponse — Tresc wyniku project.rename — Zmienia nazwe projektu. Kod projektu zostaje bez zmiany, bo wiaza sie z nim sesje i wpisy modulu Workspace
+type ProjectRenameResponse struct {
+	// Projekt po zmianie nazwy
+	Project WorkspaceProject `json:"project"`
+}
+
+// ProjectDeleteRequest — Tresc zadania project.delete — Usuwa projekt wraz z dorobkiem modulu Workspace zapisanym pod nim: pamiecia projektu, zadaniami, notatkami, materialem i sladem zdarzen. Sesje projektu zostaja w historii i traca przypisanie — usuniecie projektu nie jest usunieciem rozmow, ktore w nim powstaly, wiec kolumna projektu tych sesji wraca na pusta
+type ProjectDeleteRequest struct {
+	// Projekt usuwany
+	ProjectId string `json:"projectId"`
+}
+
+// ProjectDeleteResponse — Tresc wyniku project.delete — Usuwa projekt wraz z dorobkiem modulu Workspace zapisanym pod nim: pamiecia projektu, zadaniami, notatkami, materialem i sladem zdarzen. Sesje projektu zostaja w historii i traca przypisanie — usuniecie projektu nie jest usunieciem rozmow, ktore w nim powstaly, wiec kolumna projektu tych sesji wraca na pusta
+type ProjectDeleteResponse struct {
+	// Projekt usuniety
+	ProjectId string `json:"projectId"`
+	// Sesje, ktore stracily przypisanie do projektu
+	ReleasedSessionIds []string `json:"releasedSessionIds"`
 }
 
 // SessionFocusRequest — Tresc zadania session.focus — Przenosi ognisko na wskazana karte sesji i opcjonalnie na okno w jej wnetrzu. Asystent przestawia ognisko OPERATOROWI polem targetClientId — inaczej jego posuniecia nie byly widoczne na ekranie
@@ -45303,6 +45231,9 @@ func WszystkieKomendy() []MessageType {
 		CommandSessionCreate,
 		CommandSessionList,
 		CommandProjectList,
+		CommandProjectCreate,
+		CommandProjectRename,
+		CommandProjectDelete,
 		CommandSessionFocus,
 		CommandSessionBind,
 		CommandSessionOpen,
@@ -46461,6 +46392,7 @@ func WszystkieZdarzenia() []MessageType {
 		EventEnvironmentUnknown,
 		EventModuleUnknown,
 		EventWorkspaceUnknown,
+		EventProjectUnknown,
 		EventSessionUnknown,
 		EventWindowUnknown,
 		EventMessageUnknown,
@@ -46540,6 +46472,9 @@ var zbiorKomend = map[MessageType]struct{}{
 	CommandSessionCreate:                       {},
 	CommandSessionList:                         {},
 	CommandProjectList:                         {},
+	CommandProjectCreate:                       {},
+	CommandProjectRename:                       {},
+	CommandProjectDelete:                       {},
 	CommandSessionFocus:                        {},
 	CommandSessionBind:                         {},
 	CommandSessionOpen:                         {},
@@ -47696,6 +47631,7 @@ var zbiorZdarzen = map[MessageType]struct{}{
 	EventEnvironmentUnknown:          {},
 	EventModuleUnknown:               {},
 	EventWorkspaceUnknown:            {},
+	EventProjectUnknown:              {},
 	EventSessionUnknown:              {},
 	EventWindowUnknown:               {},
 	EventMessageUnknown:              {},
@@ -47768,6 +47704,7 @@ var zdarzeniaNieznanej = map[string]MessageType{
 	"environment":   EventEnvironmentUnknown,
 	"module":        EventModuleUnknown,
 	"workspace":     EventWorkspaceUnknown,
+	"project":       EventProjectUnknown,
 	"session":       EventSessionUnknown,
 	"window":        EventWindowUnknown,
 	"message":       EventMessageUnknown,

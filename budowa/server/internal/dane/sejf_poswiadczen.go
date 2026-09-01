@@ -2,11 +2,19 @@
 package dane
 
 import (
+	"bytes"
 	"context"
+	"crypto/aes"
+	"crypto/cipher"
+	"crypto/rand"
+	"encoding/base64"
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	"io"
 	"os"
 	"path/filepath"
+	"runtime"
 	"strings"
 	"sync"
 )
@@ -17,6 +25,24 @@ const nazwaPlikuSejfu = "poswiadczenia.sejf"
 // przedrostekOdwolania znakuje odwołanie oddawane bazie, żeby było widać, że
 // wskazuje wpis sejfu, a nie zmienną środowiskową ani ścieżkę profilu.
 const przedrostekOdwolania = "sejf:"
+
+// zmiennaKlucza wskazuje plik klucza pieczętującego sejf. Klucz leży poza bazą
+// i poza katalogiem danych z zamysłu: kopia bazy ani kopia katalogu danych nie
+// mogą wystarczyć do odczytania haseł IMAP/SMTP i kluczy API.
+const zmiennaKlucza = "DANACO_KLUCZ_SEJFU"
+
+// prawaKlucza to jedyne prawa dopuszczane dla pliku klucza — odczyt wyłącznie
+// dla właściciela procesu rdzenia, bez prawa zapisu. Na Windows bity praw nie
+// niosą tej treści (system zwraca 0444 albo 0666 wedle atrybutu „tylko do
+// odczytu”), dlatego tam sprawdzenie nie obowiązuje.
+const prawaKlucza = 0o400
+
+// dlugoscKlucza wymusza AES-256: klucz krótszy zmieniałby siłę pieczęci bez śladu.
+const dlugoscKlucza = 32
+
+// znacznikPostaci otwiera plik zapieczętowany. Plik bez tego znacznika pochodzi
+// sprzed pieczętowania i jest czytany jako czysty JSON — pierwszy zapis pieczętuje go.
+const znacznikPostaci = "danaco-sejf-aes256gcm-v1\n"
 
 // SejfPlikowy jest sejfem poświadczeń opartym o plik katalogu danych. Spełnia
 // port core.SejfPoswiadczen strukturalnie (metody Zapisz/Usun) — pakiet dane
@@ -34,7 +60,9 @@ func NowySejfPlikowy(katalogDanych string) *SejfPlikowy {
 
 // Zapisz umieszcza poświadczenie bytu w sejfie i zwraca odwołanie do niego.
 // Odwołanie jest stabilne dla bytu — ponowny zapis tego samego bytu nadpisuje
-// sekret i oddaje to samo odwołanie.
+// sekret i oddaje to samo odwołanie. Bez klucza zapis kończy się odmową; sekret
+// nie ląduje na dysku otwartym tekstem nawet wtedy, gdy odmowa zatrzyma czynność
+// Operatora.
 func (s *SejfPlikowy) Zapisz(_ context.Context, byt, poswiadczenie string) (string, error) {
 	byt = strings.TrimSpace(byt)
 	if byt == "" {
@@ -89,7 +117,10 @@ func (s *SejfPlikowy) Usun(_ context.Context, byt string) error {
 }
 
 // wczytaj odczytuje mapę sekretów z pliku. Brak pliku znaczy sejf pusty, nie
-// błąd — pierwszy zapis dopiero go założy. Wołane pod zamkiem.
+// błąd — pierwszy zapis dopiero go założy. Plik zapieczętowany wymaga klucza;
+// plik bez znacznika postaci pochodzi sprzed pieczętowania i idzie jako czysty
+// JSON, bo odmowa odczytu nie usunęłaby go z dysku, a odcięłaby dostęp do
+// poświadczeń już zapisanych. Wołane pod zamkiem.
 func (s *SejfPlikowy) wczytaj() (map[string]string, error) {
 	surowe, err := os.ReadFile(s.sciezka)
 	if os.IsNotExist(err) {
@@ -99,8 +130,18 @@ func (s *SejfPlikowy) wczytaj() (map[string]string, error) {
 		return nil, fmt.Errorf("dane: sejf: odczyt %s: %w", s.sciezka, err)
 	}
 	wpisy := map[string]string{}
-	if len(strings.TrimSpace(string(surowe))) == 0 {
+	if len(bytes.TrimSpace(surowe)) == 0 {
 		return wpisy, nil
+	}
+	if bytes.HasPrefix(surowe, []byte(znacznikPostaci)) {
+		klucz, err := wczytajKlucz()
+		if err != nil {
+			return nil, err
+		}
+		surowe, err = odpieczetuj(klucz, surowe)
+		if err != nil {
+			return nil, fmt.Errorf("dane: sejf: %s nie otwiera się tym kluczem: %w", s.sciezka, err)
+		}
 	}
 	if err := json.Unmarshal(surowe, &wpisy); err != nil {
 		return nil, fmt.Errorf("dane: sejf: treść %s nieczytelna: %w", s.sciezka, err)
@@ -108,23 +149,129 @@ func (s *SejfPlikowy) wczytaj() (map[string]string, error) {
 	return wpisy, nil
 }
 
-// zapisz utrwala mapę sekretów z prawami tylko dla właściciela. Zapis idzie przez
-// plik tymczasowy i przemianowanie, żeby awaria w połowie nie zostawiła pliku
-// obciętego. Wołane pod zamkiem.
+// zapisz utrwala mapę sekretów zapieczętowaną kluczem spoza bazy, z prawami
+// tylko dla właściciela. Zapis idzie przez plik tymczasowy i przemianowanie, żeby
+// awaria w połowie nie zostawiła pliku obciętego. Wołane pod zamkiem.
 func (s *SejfPlikowy) zapisz(wpisy map[string]string) error {
+	klucz, err := wczytajKlucz()
+	if err != nil {
+		return err
+	}
 	if err := os.MkdirAll(filepath.Dir(s.sciezka), 0o700); err != nil {
 		return fmt.Errorf("dane: sejf: katalog %s: %w", filepath.Dir(s.sciezka), err)
 	}
-	surowe, err := json.Marshal(wpisy)
+	jawne, err := json.Marshal(wpisy)
 	if err != nil {
 		return fmt.Errorf("dane: sejf: kodowanie: %w", err)
 	}
+	zapieczetowane, err := zapieczetuj(klucz, jawne)
+	if err != nil {
+		return err
+	}
 	tymczasowy := s.sciezka + ".tmp"
-	if err := os.WriteFile(tymczasowy, surowe, 0o600); err != nil {
+	if err := os.WriteFile(tymczasowy, zapieczetowane, 0o600); err != nil {
 		return fmt.Errorf("dane: sejf: zapis %s: %w", tymczasowy, err)
 	}
 	if err := os.Rename(tymczasowy, s.sciezka); err != nil {
 		return fmt.Errorf("dane: sejf: przemianowanie %s: %w", s.sciezka, err)
 	}
 	return nil
+}
+
+// wczytajKlucz podaje klucz pieczęci wskazany zmienną środowiska. Brak wskazania,
+// prawa szersze niż odczyt właściciela i zła długość kończą się odmową nazwaną —
+// sekret nie ma innej drogi na dysk niż przez ten klucz.
+func wczytajKlucz() ([]byte, error) {
+	sciezka := strings.TrimSpace(os.Getenv(zmiennaKlucza))
+	if sciezka == "" {
+		return nil, fmt.Errorf("dane: sejf: brak klucza — zmienna %s nie wskazuje pliku klucza", zmiennaKlucza)
+	}
+	stan, err := os.Stat(sciezka)
+	if err != nil {
+		return nil, fmt.Errorf("dane: sejf: klucz %s niedostępny: %w", sciezka, err)
+	}
+	if stan.IsDir() {
+		return nil, fmt.Errorf("dane: sejf: klucz %s jest katalogiem, nie plikiem", sciezka)
+	}
+	if runtime.GOOS != "windows" && stan.Mode().Perm() != prawaKlucza {
+		return nil, fmt.Errorf("dane: sejf: klucz %s ma prawa %04o, wymagane %04o",
+			sciezka, stan.Mode().Perm(), prawaKlucza)
+	}
+	tresc, err := os.ReadFile(sciezka)
+	if err != nil {
+		return nil, fmt.Errorf("dane: sejf: odczyt klucza %s: %w", sciezka, err)
+	}
+	return rozbierzKlucz(sciezka, tresc)
+}
+
+// rozbierzKlucz przyjmuje klucz zapisany szesnastkowo albo trzydziestoma dwoma
+// bajtami wprost. Skracania ani rozciągania tu nie ma: klucz o innej długości
+// zmieniałby siłę pieczęci bez śladu w pliku.
+func rozbierzKlucz(sciezka string, tresc []byte) ([]byte, error) {
+	oczyszczona := bytes.TrimSpace(tresc)
+	if len(oczyszczona) == 2*dlugoscKlucza {
+		klucz, err := hex.DecodeString(string(oczyszczona))
+		if err != nil {
+			return nil, fmt.Errorf("dane: sejf: klucz %s nie jest zapisem szesnastkowym: %w", sciezka, err)
+		}
+		return klucz, nil
+	}
+	if len(oczyszczona) == dlugoscKlucza {
+		return oczyszczona, nil
+	}
+	return nil, fmt.Errorf("dane: sejf: klucz %s ma %d bajtów — wymagane %d bajtów albo %d znaków szesnastkowych",
+		sciezka, len(oczyszczona), dlugoscKlucza, 2*dlugoscKlucza)
+}
+
+// zapieczetuj składa plik sejfu: znacznik postaci, a po nim jednorazowa wartość
+// i szyfrogram AES-256-GCM zapisane base64. Jednorazowa wartość idzie przed
+// szyfrogramem, żeby odczyt nie potrzebował niczego poza samym plikiem i kluczem.
+func zapieczetuj(klucz, jawne []byte) ([]byte, error) {
+	pieczec, err := pieczecGCM(klucz)
+	if err != nil {
+		return nil, err
+	}
+	jednorazowa := make([]byte, pieczec.NonceSize())
+	if _, err := io.ReadFull(rand.Reader, jednorazowa); err != nil {
+		return nil, fmt.Errorf("dane: sejf: nie można wylosować wartości jednorazowej: %w", err)
+	}
+	szyfrogram := pieczec.Seal(jednorazowa, jednorazowa, jawne, nil)
+	plik := make([]byte, 0, len(znacznikPostaci)+base64.StdEncoding.EncodedLen(len(szyfrogram))+1)
+	plik = append(plik, znacznikPostaci...)
+	plik = append(plik, base64.StdEncoding.EncodeToString(szyfrogram)...)
+	plik = append(plik, '\n')
+	return plik, nil
+}
+
+// odpieczetuj odczytuje plik złożony przez zapieczetuj. Błąd rozpieczętowania
+// znaczy zły klucz albo naruszoną treść — GCM nie rozróżnia tych dwóch przypadków.
+func odpieczetuj(klucz, plik []byte) ([]byte, error) {
+	pieczec, err := pieczecGCM(klucz)
+	if err != nil {
+		return nil, err
+	}
+	tresc := bytes.TrimSpace(plik[len(znacznikPostaci):])
+	szyfrogram, err := base64.StdEncoding.DecodeString(string(tresc))
+	if err != nil {
+		return nil, fmt.Errorf("zapis base64 nieczytelny: %w", err)
+	}
+	if len(szyfrogram) < pieczec.NonceSize() {
+		return nil, fmt.Errorf("treść krótsza od wartości jednorazowej")
+	}
+	jednorazowa := szyfrogram[:pieczec.NonceSize()]
+	return pieczec.Open(nil, jednorazowa, szyfrogram[pieczec.NonceSize():], nil)
+}
+
+// pieczecGCM składa szyfr uwierzytelniający. AES-GCM, a nie sam AES, bo plik
+// sejfu leży poza bazą i nikt poza tą pieczęcią nie wykaże, że nie został podmieniony.
+func pieczecGCM(klucz []byte) (cipher.AEAD, error) {
+	blok, err := aes.NewCipher(klucz)
+	if err != nil {
+		return nil, fmt.Errorf("dane: sejf: klucz odrzucony przez szyfr: %w", err)
+	}
+	pieczec, err := cipher.NewGCM(blok)
+	if err != nil {
+		return nil, fmt.Errorf("dane: sejf: nie można złożyć pieczęci: %w", err)
+	}
+	return pieczec, nil
 }

@@ -10,10 +10,17 @@ export function adresRdzeniaLokalnego(port: number = PORT_RDZENIA_LOKALNEGO): st
   return `ws://127.0.0.1:${port}${SCIEZKA_GNIAZDA}`;
 }
 
+/* Pochodzenia własne powłoki desktopowej. Strona z pakietu Tauri stoi pod
+   `tauri://localhost` albo `http://tauri.localhost`, a pod tą nazwą nie
+   nasłuchuje żaden rdzeń — adres złożony z takiego pochodzenia wskazywałby na
+   samą powłokę. Wskazanie rdzenia powłoka podaje osobno. */
+const HOSTY_POWLOKI: readonly string[] = ['tauri.localhost'];
+
 export function adresGniazdaRdzenia(adresHttp: string): string | null {
   try {
     const adres = new URL(adresHttp);
     if (adres.protocol !== 'http:' && adres.protocol !== 'https:') return null;
+    if (HOSTY_POWLOKI.includes(adres.hostname)) return null;
     const schemat = adres.protocol === 'https:' ? 'wss:' : 'ws:';
     return `${schemat}//${adres.host}${SCIEZKA_GNIAZDA}`;
   } catch {

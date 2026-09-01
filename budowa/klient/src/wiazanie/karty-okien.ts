@@ -1,18 +1,21 @@
 /**
- * Pasmo kart okien roboczych. Karta pasma odpowiada oknu komunikacji stojącemu
- * w karcie sesji — bez tego Operator ma naraz jedno okno i drugie wchodzi na
- * miejsce pierwszego. Znacznik pasma niesie biblioteka Właściciela; ten plik
- * powiela jego kartę wzorcową i wiąże przełączanie oraz zamykanie.
+ * Pasmo kart okien roboczych. Karta pasma odpowiada karcie okna roboczego —
+ * jednej pracy Operatora, a nie modułowi: bez tego rozróżnienia druga rozmowa
+ * tego samego modułu wchodziłaby na miejsce pierwszej. Znacznik pasma niesie
+ * biblioteka Właściciela; ten plik powiela jego kartę wzorcową i wiąże
+ * przełączanie oraz zamykanie.
  */
 
-/** Okno pokazywane kartą pasma. */
+/** Karta okna roboczego w kształcie, w którym opisuje ją pasmo. */
 export interface KartaOkna {
-  /** Identyfikator okna komunikacji w rdzeniu. */
+  /** Identyfikator karty okna roboczego. */
   id: string;
   /** Nazwa karty widoczna w paśmie. */
   nazwa: string;
-  /** Nazwa modułu okna; pasmo pokazuje ją przy karcie. */
-  modul: string;
+  /** Kod modułu karty; stoi przy karcie cechą `data-modul`. */
+  kodModulu?: string;
+  /** Okno komunikacji rdzenia, które karta pokazuje; puste, gdy okno nie stoi. */
+  idOknaKomunikacji?: string;
 }
 
 /** Karta wzorcowa zdjęta z pasma przed wyczyszczeniem kart przykładowych. */
@@ -96,27 +99,27 @@ export function zwiazOknaRobocze(
   }, true);
 }
 
-/** Wstawia w pasmo karty wskazanych okien i zaznacza kartę bieżącą. */
-export function ustawKarty(okna: KartaOkna[], biezace: string): void {
+/** Wstawia w pasmo karty wskazane wykazem i zaznacza kartę bieżącą. */
+export function ustawKarty(karty: KartaOkna[], biezaca: string): void {
   if (lista === null) return;
   for (const karta of lista.querySelectorAll('.dn-karta-widoku')) {
     if ((karta as HTMLElement).dataset.kartaRodzaj !== 'centrum') karta.remove();
   }
-  for (const okno of okna) {
-    const karta = zbudujKarte(okno);
+  for (const opis of karty) {
+    const karta = zbudujKarte(opis);
     if (karta !== null) lista.appendChild(karta);
   }
-  odswiezWykaz(okna);
-  zaznaczKarte(biezace);
+  odswiezWykaz(karty);
+  zaznaczKarte(biezaca);
 }
 
-/** Zaznacza kartę wskazanego okna; pustka zaznacza kartę główną. */
-export function zaznaczKarte(idOkna: string): void {
+/** Zaznacza wskazaną kartę; pustka zaznacza kartę główną. */
+export function zaznaczKarte(idKarty: string): void {
   if (lista === null) return;
   for (const karta of lista.querySelectorAll<HTMLElement>('.dn-karta-widoku')) {
-    const wskazana = idOkna === ''
+    const wskazana = idKarty === ''
       ? karta.dataset.kartaRodzaj === 'centrum'
-      : karta.dataset.karta === idOkna;
+      : karta.dataset.karta === idKarty;
     karta.setAttribute('aria-selected', String(wskazana));
   }
 }
@@ -126,8 +129,8 @@ export function zaznaczKarte(idOkna: string): void {
  * zamyka je. Nasłuch stoi na paśmie, bo karty powstają i znikają w biegu.
  */
 export function zwiazPasmo(
-  przelacz: (idOkna: string) => void,
-  zamknij: (idOkna: string) => void,
+  przelacz: (idKarty: string) => void,
+  zamknij: (idKarty: string) => void,
 ): void {
   if (lista === null) return;
   lista.addEventListener('click', (zdarzenie) => {
@@ -135,24 +138,24 @@ export function zwiazPasmo(
     if (!(cel instanceof Element)) return;
     const karta = cel.closest<HTMLElement>('.dn-karta-widoku');
     if (karta === null || karta.dataset.kartaRodzaj === 'centrum') return;
-    const idOkna = karta.dataset.karta ?? '';
-    if (idOkna === '') return;
+    const idKarty = karta.dataset.karta ?? '';
+    if (idKarty === '') return;
     zdarzenie.stopPropagation();
     if (cel.closest('.dn-karta-widoku-zamknij') !== null) {
-      zamknij(idOkna);
+      zamknij(idKarty);
       return;
     }
-    przelacz(idOkna);
+    przelacz(idKarty);
   }, true);
 
   wykaz?.addEventListener('click', (zdarzenie) => {
     const cel = zdarzenie.target;
     if (!(cel instanceof Element)) return;
     const pozycja = cel.closest<HTMLElement>('[data-karta-przelacz]');
-    const idOkna = pozycja?.dataset.kartaPrzelacz ?? '';
-    if (idOkna === '' || idOkna === 'centrum') return;
+    const idKarty = pozycja?.dataset.kartaPrzelacz ?? '';
+    if (idKarty === '' || idKarty === 'centrum') return;
     zdarzenie.stopPropagation();
-    przelacz(idOkna);
+    przelacz(idKarty);
   }, true);
 }
 
@@ -160,58 +163,66 @@ export function zwiazPasmo(
  * Nadaje karcie nazwę pracy, którą niesie jej wnętrze. Karta pasma jest jedną
  * pracą w sesji, a nie modułem — moduł stoi przy niej cechą `data-modul`.
  */
-export function nazwijKarte(idOkna: string, nazwa: string): void {
-  const karta = lista?.querySelector<HTMLElement>(`.dn-karta-widoku[data-karta="${idOkna}"]`);
+export function nazwijKarte(idKarty: string, nazwa: string): void {
+  const karta = lista?.querySelector<HTMLElement>(`.dn-karta-widoku[data-karta="${idKarty}"]`);
   if (karta === undefined || karta === null || nazwa === '') return;
   karta.setAttribute('aria-label', nazwa);
   karta.setAttribute('data-etykietka', nazwa);
   const podpis = karta.querySelector('.dn-karta-widoku-nazwa');
   if (podpis !== null) podpis.textContent = nazwa;
-  const pozycja = wykaz?.querySelector<HTMLElement>(`[data-karta-przelacz="${idOkna}"]`);
+  const pozycja = wykaz?.querySelector<HTMLElement>(`[data-karta-przelacz="${idKarty}"]`);
   if (pozycja !== null && pozycja !== undefined) wpiszNazwe(pozycja, nazwa);
 }
 
 /** Przypina kartę albo zdejmuje przypięcie; przypięta zostaje przy zamykaniu pozostałych. */
-export function przypnijKarte(idOkna: string): void {
-  const karta = lista?.querySelector<HTMLElement>(`.dn-karta-widoku[data-karta="${idOkna}"]`);
+export function przypnijKarte(idKarty: string): void {
+  const karta = lista?.querySelector<HTMLElement>(`.dn-karta-widoku[data-karta="${idKarty}"]`);
   if (karta === undefined || karta === null) return;
   karta.dataset.przypieta = karta.dataset.przypieta === 'tak' ? 'nie' : 'tak';
 }
 
-/** Zdejmuje kartę zamkniętego okna z pasma. */
-export function zdejmijKarte(idOkna: string): void {
-  lista?.querySelector(`.dn-karta-widoku[data-karta="${idOkna}"]`)?.remove();
-  wykaz?.querySelector(`[data-karta-przelacz="${idOkna}"]`)?.remove();
+/** Zdejmuje kartę z pasma. */
+export function zdejmijKarte(idKarty: string): void {
+  lista?.querySelector(`.dn-karta-widoku[data-karta="${idKarty}"]`)?.remove();
+  wykaz?.querySelector(`[data-karta-przelacz="${idKarty}"]`)?.remove();
 }
 
-/** Klon karty wzorcowej opisany oknem; brak wzoru znaczy pasmo bez karty modułu. */
-function zbudujKarte(okno: KartaOkna): HTMLElement | null {
+/**
+ * Klon karty wzorcowej opisany kartą okna roboczego; brak wzoru znaczy pasmo
+ * bez karty modułu. Kod modułu i okno komunikacji stoją przy karcie cechami,
+ * bo pasmo pokazuje pracę, a nie moduł — dwie karty tego samego modułu różni
+ * dopiero okno rdzenia.
+ */
+function zbudujKarte(opis: KartaOkna): HTMLElement | null {
   if (wzor === null) return null;
   const karta = wzor.cloneNode(true) as HTMLElement;
-  karta.dataset.karta = okno.id;
-  karta.dataset.modul = okno.modul;
-  karta.setAttribute('aria-label', okno.nazwa);
-  karta.setAttribute('data-etykietka', okno.nazwa);
+  karta.dataset.karta = opis.id;
+  if (opis.kodModulu !== undefined) karta.dataset.modul = opis.kodModulu;
+  if (opis.idOknaKomunikacji !== undefined && opis.idOknaKomunikacji !== '') {
+    karta.dataset.oknoKomunikacji = opis.idOknaKomunikacji;
+  }
+  karta.setAttribute('aria-label', opis.nazwa);
+  karta.setAttribute('data-etykietka', opis.nazwa);
   const nazwa = karta.querySelector('.dn-karta-widoku-nazwa');
-  if (nazwa !== null) nazwa.textContent = okno.nazwa;
+  if (nazwa !== null) nazwa.textContent = opis.nazwa;
   return karta;
 }
 
 /** Odświeża wykaz otwartych kart w menu pasma; liczba w nagłówku liczy karty pasma wraz z główną. */
-function odswiezWykaz(okna: KartaOkna[]): void {
+function odswiezWykaz(karty: KartaOkna[]): void {
   if (naglowekWykazu !== null) {
-    naglowekWykazu.textContent = 'Otwarte karty (' + String(okna.length + 1) + ')';
+    naglowekWykazu.textContent = 'Otwarte karty (' + String(karty.length + 1) + ')';
   }
   if (wykaz === null || wzorPozycjiWykazu === null) return;
   for (const pozycja of wykaz.querySelectorAll<HTMLElement>('[data-karta-przelacz]')) {
     if (pozycja.dataset.kartaPrzelacz !== 'centrum') pozycja.remove();
   }
-  for (const okno of okna) {
+  for (const opis of karty) {
     const pozycja = wzorPozycjiWykazu.cloneNode(true) as HTMLElement;
-    pozycja.dataset.kartaPrzelacz = okno.id;
+    pozycja.dataset.kartaPrzelacz = opis.id;
     // Skrót klawiszowy pozycji przykładowej opisuje kolejność, której wydanie nie prowadzi.
     pozycja.querySelector('.skrot')?.remove();
-    wpiszNazwe(pozycja, okno.nazwa);
+    wpiszNazwe(pozycja, opis.nazwa);
     wykaz.appendChild(pozycja);
   }
 }

@@ -1,9 +1,4 @@
-import {
-  ZDARZENIA_NIEZNANEJ,
-  czyKomenda,
-  czyZdarzenie,
-  type EventType,
-} from '../../../shared/contract.ts';
+import { ZDARZENIA_NIEZNANEJ, czyKomenda, czyZdarzenie } from '../../../shared/contract.ts';
 import { utworzMagistrale, type Odsubskrybuj } from './magistrala-zdarzen.ts';
 import type { ZrodloZdarzen } from './zrodlo-zdarzen.ts';
 
@@ -35,6 +30,9 @@ export interface DziennikNieznanych {
   odlacz(): void;
 }
 
+/** Komplet zdarzeń `*.unknown` kontraktu, złożony z mapy zdarzeń zapasowych każdego obszaru nazwy, bez powtórzeń. */
+const NIEZNANE: ReadonlySet<string> = new Set<string>(Object.values(ZDARZENIA_NIEZNANEJ));
+
 export function zalozDziennikNieznanych(zrodlo: ZrodloZdarzen): DziennikNieznanych {
   const wpisy = utworzMagistrale<WpisNieznanego>();
   const odsubskrybowania: Odsubskrybuj[] = [];
@@ -48,17 +46,17 @@ export function zalozDziennikNieznanych(zrodlo: ZrodloZdarzen): DziennikNieznany
     wpisy.oglos(wpis);
   }
 
-  for (const rodzaj of rodzajeNieznanych()) {
-    odsubskrybowania.push(
-      zrodlo.naZdarzenie(rodzaj, (tresc, koperta) => zapisz(koperta.type, tresc)),
-    );
-  }
-
   odsubskrybowania.push(
     zrodlo.naDowolny((koperta) => {
+      const typ: string = koperta.type;
+      /* Odmowa nierozpoznania wraca kopertą ze statusem błędu, więc odsiew po
+         obecności statusu zamykał bramę na jej własne wejście: rozstrzyga typ. */
+      if (NIEZNANE.has(typ)) {
+        zapisz(typ, koperta.payload);
+        return;
+      }
       // Odpowiedź rozstrzyga korelacja żądania; typ znany kontraktowi ma odbiorcę, dziennik zbiera resztę.
       if (koperta.status !== undefined) return;
-      const typ: string = koperta.type;
       if (czyZdarzenie(typ) || czyKomenda(typ)) return;
       zapisz(typ, koperta.payload);
     }),
@@ -75,11 +73,6 @@ export function zalozDziennikNieznanych(zrodlo: ZrodloZdarzen): DziennikNieznany
       }
     },
   };
-}
-
-/** Komplet zdarzeń `*.unknown` kontraktu, złożony z mapy zdarzeń zapasowych każdego obszaru nazwy, bez powtórzeń. */
-function rodzajeNieznanych(): EventType[] {
-  return [...new Set<EventType>(Object.values(ZDARZENIA_NIEZNANEJ))];
 }
 
 /** Odczyt ładunku `UnknownCommandPayload` odporny na jego brak i na inny kształt niż oczekiwany, zwracający wartości domyślne zamiast zgłaszać błąd. */

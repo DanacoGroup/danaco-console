@@ -1,43 +1,29 @@
 /**
  * Wiązanie okna modułu z rdzeniem. Znacznik niesie biblioteka Właściciela;
- * ten plik zakłada oknu sesję w rdzeniu i oddaje je wiązaniu szczegółowemu
- * modułu, a treść przykładową zdejmuje, zanim Operator ją zobaczy.
+ * ten plik wiąże kartę okna roboczego z oknem komunikacji rdzenia, opisuje
+ * nagłówek okna wartościami rejestru i wystawia wpisy, z których korzystają
+ * wiązania szczegółowe modułów.
  */
-
 import { Command } from '../../../shared/contract.ts';
 import type { Kanal } from '../protokol/kanal.ts';
 import { wywolaj } from '../protokol/wywolanie.ts';
-
-/** Wiązania szczegółowe modułów, po kodzie rejestru rdzenia; moduł bez wpisu dostaje samo okno rdzenia. */
-type WiazanieModulu = (kanal: Kanal, idOkna: string) => void;
-const WIAZANIA = new Map<string, WiazanieModulu>();
+import { oglos } from './ogloszenie.ts';
+import { przypiszOknoKomunikacji } from './okna-robocze.ts';
 
 /**
- * Czy moduł ma wiązanie wypełniające jego wnętrze odpowiedzią rdzenia. Wnętrze
- * bez wiązania pokazałoby treść przykładową prototypu jako pracę Operatora,
- * więc takiego okna wydanie nie stawia wcale.
+ * Wiąże wnętrze okna modułu, dla którego okna komunikacji w rdzeniu jeszcze
+ * nie ma — okno zakłada dopiero praca podjęta w karcie. Kod modułu nie wchodzi
+ * tu w wiązanie: karta bez okna komunikacji nie ma czego z rdzeniem uzgodnić.
+ * Nazwa środowiska wchodzi w nagłówek okna.
  */
-export function maWiazanie(kod: string): boolean {
-  return WIAZANIA.has(kod);
-}
-
-/** Rejestruje wiązanie szczegółowe modułu. Woła to moduł wiązania przy wczytaniu, więc kolejność plików nie ma znaczenia. */
-export function zglosWiazanieModulu(kod: string, wiazanie: WiazanieModulu): void {
-  WIAZANIA.set(kod, wiazanie);
-}
-
-/**
- * Zakłada oknu modułu sesję i okno komunikacji w rdzeniu, po czym oddaje je
- * wiązaniu szczegółowemu. Nazwa środowiska wchodzi w nagłówek okna.
- */
-export function zwiazOkno(kanal: Kanal, kodModulu: string, nazwaSrodowiska: string): void {
+export function zwiazOkno(kanal: Kanal, _kodModulu: string, nazwaSrodowiska: string): void {
   void opiszNaglowek(kanal, nazwaSrodowiska);
-  WIAZANIA.get(kodModulu)?.(kanal, '');
 }
 
 /**
- * Wiąże wnętrze okna, które w rdzeniu już stoi. Powrót do karty sesji nie
- * zakłada okna drugi raz — Operator wraca do tego, w którym pracował.
+ * Wiąże wnętrze okna, które w rdzeniu już stoi: karta bieżąca dostaje jego
+ * identyfikator, więc powrót do karty sesji nie zakłada okna drugi raz,
+ * a zamknięcie karty zamyka okno także w rdzeniu.
  */
 export function zwiazOknoStojace(
   kanal: Kanal,
@@ -45,8 +31,11 @@ export function zwiazOknoStojace(
   nazwaSrodowiska: string,
   idOkna: string,
 ): void {
+  if (!przypiszOknoKomunikacji(kodModulu, idOkna)) {
+    oglos('Okno modułu', 'Karta bieżąca niesie inny moduł niż okno wskazane przez rdzeń — '
+      + 'zamknięcie karty nie zamknie tego okna.', 'ostrzezenie');
+  }
   void opiszNaglowek(kanal, nazwaSrodowiska);
-  WIAZANIA.get(kodModulu)?.(kanal, idOkna);
 }
 
 /**

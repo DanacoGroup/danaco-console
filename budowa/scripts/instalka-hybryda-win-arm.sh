@@ -18,12 +18,37 @@ export PATH="$LLVM_MINGW/bin:$PATH"
 zglos() { printf '\n=== %s ===\n' "$1"; }
 padnij() { printf 'ODMOWA: %s\n' "$1" >&2; exit 1; }
 
+# Rozmiar katalogu Security binarium PE, czyli tablicy certyfikatów podpisu
+# Authenticode. Czytany wprost z nagłówka, bo osslsigncode nie stoi na tej
+# maszynie, a jedynym rozstrzygającym śladem podpisu w pliku jest ten wpis.
+rozmiar_podpisu() {
+  python3 - "$1" <<'PYTON'
+import struct, sys
+with open(sys.argv[1], 'rb') as plik:
+    dane = plik.read()
+poczatek = struct.unpack_from('<I', dane, 0x3C)[0]
+if dane[poczatek:poczatek + 4] != b'PE\0\0':
+    raise SystemExit('plik nie jest binarium PE')
+naglowek = poczatek + 24
+magia = struct.unpack_from('<H', dane, naglowek)[0]
+# Katalog danych zaczyna sie za polami naglowka opcjonalnego, a te maja inna
+# dlugosc w PE32 i w PE32+; wpis czwarty to tablica certyfikatow.
+if magia == 0x20B:
+    odstep = 144
+elif magia == 0x10B:
+    odstep = 128
+else:
+    raise SystemExit('naglowek opcjonalny nie jest ani PE32, ani PE32+')
+print(struct.unpack_from('<I', dane, naglowek + odstep + 4)[0])
+PYTON
+}
+
 zglos "Sprawdzenie narzędzi"
 # Brak któregokolwiek ujawniłby się dopiero po kilkuminutowej budowie, dlatego
 # sprawdzenie stoi przed nią, nie po.
-for narzedzie in cargo rustup cargo-xwin makensis clang llvm-lib; do
+for narzedzie in cargo rustup cargo-xwin makensis clang llvm-lib python3; do
   command -v "$narzedzie" >/dev/null \
-    || padnij "brak narzędzia: $narzedzie (apt: nsis, clang; cargo install cargo-xwin; llvm-lib z wydania llvm-mingw rozpakowanego do $LLVM_MINGW)"
+    || padnij "brak narzędzia: $narzedzie (apt: nsis, clang, python3; cargo install cargo-xwin; llvm-lib z wydania llvm-mingw rozpakowanego do $LLVM_MINGW)"
   printf '  jest: %s\n' "$narzedzie"
 done
 rustup target list --installed | grep -qx "$CEL" \
@@ -37,12 +62,36 @@ zglos "Sprawdzenie artefaktów wejściowych"
   || padnij "brak artefaktu: budowa/klient/dist/index.html (zbuduj: npm run budowanie w budowa/klient)"
 printf '  jest: budowa/klient/dist/index.html\n'
 
+zglos "Sprawdzenie wskazania serwera wdrożenia i żądania podpisu"
+# Adres i port serwera wdrożenia wchodzą do binarium przy KOMPILACJI, przez
+# option_env! (desktop/src-tauri/src/ustawienia.rs:25 i :30) — po budowie nie ma
+# ich jak dopisać. Wartości nie stoją w tym skrypcie, bo instalka jest osobna dla
+# każdego wdrożenia i żaden krok kreatora o adres nie pyta; podaje je operator
+# wydania przy składaniu.
+[ -n "${DANACO_HOST_WDROZENIA:-}" ] \
+  || padnij "brak DANACO_HOST_WDROZENIA — powłoka wyszłaby z instalki bez wskazania rdzenia, a Operator nie ma w oknie drogi, którą by go wskazał"
+[ -n "${DANACO_PORT_WDROZENIA:-}" ] \
+  || padnij "brak DANACO_PORT_WDROZENIA — wskazanie bez portu jest niepełne; podaj port, pod którym rdzeń odpowiada na serwerze wdrożenia"
+printf '  serwer wdrożenia: %s:%s\n' "$DANACO_HOST_WDROZENIA" "$DANACO_PORT_WDROZENIA"
+# Żądanie podpisu sprawdzane jest tutaj, przed kilkuminutową budową, a nie
+# dopiero przy odkładaniu wyniku.
+case "${DANACO_PODPIS:-pomijany}" in
+  wymagany | pomijany) ;;
+  *) padnij "DANACO_PODPIS ma wartość ${DANACO_PODPIS}, a przyjmowane są wyłącznie: wymagany, pomijany" ;;
+esac
+printf '  podpis Authenticode: %s\n' "${DANACO_PODPIS:-pomijany}"
+
 zglos "Budowa powłoki dla $CEL"
 # Budowana jest sama powłoka, bez rdzenia — jedyna binarka tego produktu.
 # Cecha tauri/custom-protocol jest obowiązkowa: bez niej gotowy plik zachowuje
 # się jak budowa deweloperska i nie szuka rdzenia na serwerze wdrożenia.
+# Wskazanie serwera wdrożenia idzie do cargo jawnie, w wierszu wywołania: wzięte
+# ze środowiska powłoki wchodziłoby do wydania niezauważone, a wydania złożonego
+# z inną wartością nie da się odróżnić od tego po gotowym pliku.
 ( cd "$POWLOKA" \
-  && cargo xwin build --release --target "$CEL" \
+  && DANACO_HOST_WDROZENIA="$DANACO_HOST_WDROZENIA" \
+     DANACO_PORT_WDROZENIA="$DANACO_PORT_WDROZENIA" \
+     cargo xwin build --release --target "$CEL" \
        --features tauri/custom-protocol --cross-compiler clang )
 
 POWLOKA_EXE="$POWLOKA/target/$CEL/release/danaco-console-powloka.exe"
@@ -56,6 +105,13 @@ printf '%s' "$OPIS_POWLOKI" | grep -qi 'PE32+ executable' \
 printf '%s' "$OPIS_POWLOKI" | grep -qiE 'ARM64|Aarch64' \
   || padnij "powłoka nie jest binarką PE dla ARM64: $OPIS_POWLOKI"
 printf '  architektura powłoki: %s\n' "$OPIS_POWLOKI"
+
+# Wskazanie wchodzi do binarium jako napis. Jego brak znaczy, że cargo oddał
+# wynik złożony wcześniej, bez tej zmiennej — a taka powłoka wygląda jak dobra
+# i nie wie, gdzie jest rdzeń.
+[ "$(strings -a "$POWLOKA_EXE" | grep -cF -- "$DANACO_HOST_WDROZENIA" || true)" -gt 0 ] \
+  || padnij "w powłoce nie ma napisu $DANACO_HOST_WDROZENIA — wskazanie serwera wdrożenia nie weszło do binarium"
+printf '  wskazanie serwera wdrożenia w powłoce: potwierdzone\n'
 
 zglos "Zapora: osadzone zasoby interfejsu"
 # Zapora sprawdza obecność osadzonych zasobów interfejsu, bo tylko czynna
@@ -120,6 +176,21 @@ TRAFIENIA_WIEZIONEJ="$(strings -a "$WIEZIONA" | grep -c -- "$SONDA" || true)"
   || padnij "powłoka WIEZIONA przez instalator nie ma osadzonych zasobów interfejsu — instalka wiezie budowę rozwojową"
 printf '  wieziona powłoka: %s, zasoby osadzone\n' "$OPIS_WIEZIONEJ"
 
+zglos "Zapora: podpis Authenticode"
+# Katalog Security gotowego pliku niesie tablicę certyfikatów; rozmiar zero
+# znaczy plik bez wydawcy. SmartScreen ukrywa wtedy przycisk uruchomienia,
+# a zasady firmowe blokują plik całkiem, więc stan podpisu jest mierzony
+# i wypisany, a nie zakładany.
+PODPIS_BAJTOW="$(rozmiar_podpisu "$ZLOZONY")"
+if [ "$PODPIS_BAJTOW" -gt 0 ]; then
+  OPIS_PODPISU="katalog Security $PODPIS_BAJTOW bajtów"
+elif [ "${DANACO_PODPIS:-pomijany}" = "wymagany" ]; then
+  padnij "katalog Security jest pusty, a DANACO_PODPIS=wymagany — wyniku nie odkładam do wydania"
+else
+  OPIS_PODPISU="BRAK — katalog Security pusty"
+fi
+printf '  %s\n' "$OPIS_PODPISU"
+
 zglos "Odłożenie wyniku do wydania"
 mkdir -p "$WYDANIE"
 WYNIK="$WYDANIE/$NAZWA_WYDANIA"
@@ -130,6 +201,9 @@ printf 'ścieżka : %s\n' "$WYNIK"
 printf 'rozmiar : %s (%s bajtów)\n' "$(du -h "$WYNIK" | cut -f1)" "$(stat -c%s "$WYNIK")"
 printf 'typ     : %s\n' "$(file -b "$WYNIK")"
 printf 'suma    : %s\n' "$(sha256sum "$WYNIK" | cut -d' ' -f1)"
+printf 'rdzeń   : %s:%s (wpisany w powłokę przy tej budowie)\n' \
+  "$DANACO_HOST_WDROZENIA" "$DANACO_PORT_WDROZENIA"
+printf 'podpis  : %s\n' "$OPIS_PODPISU"
 # Ostatni wiersz listingu archiwum kończy się słowem oznaczającym liczbę
 # plików; sama liczba stoi w wierszu bezpośrednio przed tym słowem.
 printf 'wewnątrz: %s plików\n' "$(tail -1 "$SPIS" | awk '{print $(NF-1)}')"
@@ -138,8 +212,7 @@ zglos "Czego ten skrypt NIE sprawdził"
 cat <<'KONIEC'
   - czy instalator się uruchamia i czy przechodzi do końca,
   - czy zainstalowane okno wstaje (wymaga WebView2 dla ARM64 w Windows 11),
-  - czy okno łączy się z rdzeniem na serwerze wdrożenia — wymaga stojącego
-    rdzenia i wskazania hosta (DANACO_HOST_RDZENIA albo wskazanie w oknie),
-  - czy podpis Authenticode jest — NIE MA, plik jest niepodpisany.
+  - czy okno łączy się z rdzeniem — wymaga rdzenia odpowiadającego pod
+    adresem wpisanym w tę instalkę, wypisanym wyżej w pomiarze wyniku.
   Wszystkie wymagają maszyny z Windows na ARM64. Nie zakładaj ich powodzenia.
 KONIEC

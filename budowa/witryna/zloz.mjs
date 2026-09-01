@@ -41,6 +41,93 @@ if (!Array.isArray(wykaz.wydania)) {
   process.exit(1);
 }
 
+
+// KROK ODBIORU — STRONA POWSTAJE NA ODPOWIEDŹ KANAŁU, NIE NA SŁOWO WYKAZU.
+//
+// Strona wystawia przycisk „Pobierz" pod adresem wziętym z wykazu, a adres
+// wpisany do wykazu i adres, pod którym plik naprawdę leży, rozchodzą się
+// bezgłośnie: pozycja przeniesiona pod ścieżkę zamkniętą uwierzytelnieniem
+// zostawia stronę zapowiadającą pobranie bez pytania o hasło. Dlatego przed
+// złożeniem idzie na każdą pozycję żądanie HEAD i strona NIE POWSTAJE, gdy
+// odpowiedź jest inna niż umówiona.
+//
+// Pozycja z `chronione_haslem: true` odpowiada 401 i tak ma być — to jej
+// deklarowany stan, a strona zapowiada przy niej pytanie o hasło. Każdy inny kod
+// jest rozjazdem wykazu z kanałem. Rozmiar sprawdzany jest przy okazji, bo
+// nagłówek `content-length` rozstrzyga, czy pod adresem leży ten plik, o którym
+// wykaz mówi, czy inny o tej samej nazwie.
+const CZAS_ODBIORU_MS = 15000;
+
+/** Pozycje wykazu niosące adres pliku, wraz z nazwą miejsca — nazwa miejsca
+ *  wchodzi do odmowy, żeby było wiadomo, którą pozycję poprawić. Pozycje
+ *  `w_przygotowaniu` są pominięte: z założenia nie mają jeszcze pliku. */
+function pozycjeZPlikiem(w) {
+  const zebrane = [];
+  for (const [klucz, wartosc] of Object.entries(w)) {
+    if (klucz === 'pola' || klucz === 'w_przygotowaniu') continue;
+    if (Array.isArray(wartosc)) {
+      wartosc.forEach((p, i) => {
+        if (p && typeof p === 'object' && p.plik) zebrane.push({ p, gdzie: `${klucz}[${i}]` });
+      });
+    } else if (wartosc && typeof wartosc === 'object' && wartosc.plik) {
+      zebrane.push({ p: wartosc, gdzie: klucz });
+    }
+  }
+  return zebrane;
+}
+
+async function odbiorKanalu(w) {
+  // Kanał niewdrożony nie ma czego odpowiadać, a strona mówi o tym wprost
+  // i nie wystawia ani jednego przycisku — nie ma więc czego odbierać.
+  if (!w.kanal || w.kanal.wdrozony !== true) {
+    console.log('odbiór pominięty: kanał wykazu nie jest wdrożony — strona powie o tym wprost');
+    return;
+  }
+  const podstawa = typeof w.kanal.adres === 'string' ? w.kanal.adres : '';
+  const zarzuty = [];
+  for (const { p, gdzie } of pozycjeZPlikiem(w)) {
+    let adres;
+    try {
+      adres = new URL(p.plik, podstawa).href;
+    } catch {
+      zarzuty.push(`${gdzie}: adres „${p.plik}" jest nieczytelny`);
+      continue;
+    }
+    const dopuszczone = p.chronione_haslem === true ? [200, 401] : [200];
+    let odpowiedz;
+    try {
+      odpowiedz = await fetch(adres, { method: 'HEAD', signal: AbortSignal.timeout(CZAS_ODBIORU_MS) });
+    } catch (powod) {
+      zarzuty.push(`${gdzie}: ${adres} — kanał nie odpowiedział (${powod.message})`);
+      continue;
+    }
+    if (!dopuszczone.includes(odpowiedz.status)) {
+      zarzuty.push(
+        `${gdzie}: ${adres} — kod ${odpowiedz.status}, a umówione ${dopuszczone.join(' albo ')}` +
+          (p.chronione_haslem === true ? ' (pozycja deklaruje ścieżkę za hasłem)' : ''),
+      );
+      continue;
+    }
+    const dlugosc = Number.parseInt(odpowiedz.headers.get('content-length') ?? '', 10);
+    if (Number.isFinite(dlugosc) && Number.isFinite(p.rozmiarBajty) && dlugosc !== p.rozmiarBajty) {
+      zarzuty.push(`${gdzie}: ${adres} — pod adresem leży ${dlugosc} B, a wykaz mówi o ${p.rozmiarBajty} B`);
+      continue;
+    }
+    console.log(`= odbiór ${gdzie}: ${odpowiedz.status} (${p.nazwaPliku ?? adres})`);
+  }
+  if (zarzuty.length > 0) {
+    console.error(
+      'witryna NIE złożona: kanał odpowiada inaczej, niż mówi wykaz wydań.\n  ' +
+        zarzuty.join('\n  ') +
+        '\n  Strona wystawiłaby przycisk „Pobierz" pod adresem, który tego pliku nie odda;\n' +
+        '  katalog dist został nietknięty.',
+    );
+    process.exit(1);
+  }
+}
+
+await odbiorKanalu(wykaz);
+
 await rm(WYJSCIE, { recursive: true, force: true });
 await mkdir(WYJSCIE, { recursive: true });
 
@@ -75,8 +162,8 @@ if (media) {
 // względnymi (`../../zasoby/css/fundament.css`). Skopiowanie samych plików HTML
 // dałoby okna bez stylów, a przepisanie tych ścieżek byłoby przerabianiem
 // dostawy. Dlatego do `dist/prototypy/` wchodzą OBA katalogi w swoim wzajemnym
-// położeniu: `05-okna/` (rodziny okien), `_samodzielne/` (prototypy w jednym
-// pliku) oraz `zasoby/` (styl, kroje, ikony, skrypt prototypu).
+// położeniu: `05-okna/` (rodziny okien) oraz `zasoby/` (styl, kroje, ikony,
+// skrypt prototypu).
 //
 // CZEGO ŚWIADOMIE NIE KOPIUJEMY: `KANON.md`, `01-dokumentacja-*`, `03-marka/`
 // (księgi znaku), `04-portfolio/` i `INDEKS.html`. To wewnętrzna dokumentacja
@@ -86,14 +173,21 @@ if (media) {
 // który tu nie odpowiada; jest to odnośnik wewnątrz dostawy, nie element okna.
 const DOSTAWA = join(KATALOG, '..', '..', 'design');
 const PROTOTYPY = join(WYJSCIE, 'prototypy');
-const DO_SKOPIOWANIA = ['05-okna', '_samodzielne', 'zasoby'];
+const DO_SKOPIOWANIA = ['05-okna', 'zasoby'];
 
 let rodziny = [];
 try {
   await stat(DOSTAWA);
   await mkdir(PROTOTYPY, { recursive: true });
   for (const czlon of DO_SKOPIOWANIA) {
-    await cp(join(DOSTAWA, czlon), join(PROTOTYPY, czlon), { recursive: true });
+    try {
+      await cp(join(DOSTAWA, czlon), join(PROTOTYPY, czlon), { recursive: true });
+    } catch (powod) {
+      // Brak jednego członu nie przerywa kopiowania pozostałych: pętla przerwana
+      // na pierwszym braku zostawia okna bez arkuszy i skryptu, czyli strony
+      // wyglądające na zepsute zamiast witryny bez jednego działu.
+      console.warn(`UWAGA: członu prototypów „${czlon}" nie skopiowano (${powod.message}).`);
+    }
   }
   rodziny = await katalogPrototypow(DOSTAWA);
 } catch (powod) {

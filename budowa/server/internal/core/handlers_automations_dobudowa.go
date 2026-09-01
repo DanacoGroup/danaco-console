@@ -4,7 +4,6 @@ package core
 import (
 	"context"
 
-	"danacoconsole/server/internal/protocol"
 	"danacoconsole/shared"
 )
 
@@ -52,14 +51,9 @@ type AutomatykiDobudowa interface {
 	OdczytajAudyt(ctx context.Context, z shared.AutomationAuditListRequest) (shared.AutomationAuditListResponse, error)
 }
 
-// zarejestrujDobudoweAutomatyk wpina dwadzieścia sześć komend dopełniających; bez portu dobudowy wpina je jako odmowę wprost, zamiast jako komendy nieznane.
-func zarejestrujDobudoweAutomatyk(r *Rejestr, m Automatyki, e *emiter) {
-	if r == nil || m == nil {
-		return
-	}
-	dobudowa, ok := m.(AutomatykiDobudowa)
-	if !ok {
-		zarejestrujOdmoweDobudowyAutomatyk(r)
+// zarejestrujDobudoweAutomatyk wpina dwadzieścia sześć komend dopełniających moduł Automations.
+func zarejestrujDobudoweAutomatyk(r *Rejestr, dobudowa AutomatykiDobudowa, e *emiter) {
+	if r == nil || dobudowa == nil {
 		return
 	}
 
@@ -175,44 +169,3 @@ const (
 	etapWznowieniePrzebiegu  = "wznowienie od punktu"
 	etapOdtworzeniePrzebiegu = "odtworzenie z ładunku"
 )
-
-// zarejestrujOdmoweDobudowyAutomatyk wpina wszystkie dwadzieścia sześć komend jako odmowę montażu, gdy port modułu dobudowy nie niesie.
-func zarejestrujOdmoweDobudowyAutomatyk(r *Rejestr) {
-	const powod = "moduł Automations: port modułu nie niesie czynności dobudowy"
-
-	odmowa := func(typ shared.MessageType) {
-		r.Zarejestruj(typ, func(context.Context, protocol.Request) protocol.Odpowiedz {
-			return porazka(bladNiedostepnegoSilnika(powod))
-		})
-	}
-	for _, typ := range []shared.MessageType{
-		shared.CommandAutomationWorkflowSimulate,
-		shared.CommandAutomationWorkflowVersionList,
-		shared.CommandAutomationWorkflowVersionRestore,
-		shared.CommandAutomationWorkflowVersionDiff,
-		shared.CommandAutomationWorkflowTagSet,
-		shared.CommandAutomationWorkflowVariablesSet,
-		shared.CommandAutomationStepNoteSet,
-		shared.CommandAutomationStepLayoutSet,
-		shared.CommandAutomationTemplateSave,
-		shared.CommandAutomationTemplateList,
-		shared.CommandAutomationTemplateApply,
-		shared.CommandAutomationWorkflowPublish,
-		shared.CommandAutomationWorkflowShare,
-		shared.CommandAutomationExecutionLog,
-		shared.CommandAutomationExecutionSteps,
-		shared.CommandAutomationExecutionCheckpointList,
-		shared.CommandAutomationExecutionResume,
-		shared.CommandAutomationExecutionPayloadGet,
-		shared.CommandAutomationExecutionReplay,
-		shared.CommandAutomationAlertRuleSet,
-		shared.CommandAutomationAlertRuleList,
-		shared.CommandAutomationExecutionBudgetSet,
-		shared.CommandAutomationSecretSet,
-		shared.CommandAutomationSecretList,
-		shared.CommandAutomationSecretRemove,
-		shared.CommandAutomationAuditList,
-	} {
-		odmowa(typ)
-	}
-}

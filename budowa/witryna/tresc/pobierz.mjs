@@ -119,10 +119,6 @@ function stanKanalu(wykaz) {
     // Kanał tymczasowy jest osobnym stanem, nie odcieniem wdrożonego. Pliki
     // odpowiadają — ale adres jest z maszyny budującej i nie ma być zapamiętany.
     tymczasowy: kanal.tymczasowy === true,
-    // Obecność pliku poświadczeń rozstrzyga o zdaniu przy przyciskach. Deklaruje
-    // się ją w wykazie, bo generator nie zagląda w konfigurację serwera — a
-    // przycisk, po którym wyskakuje okienko bez uprzedzenia, wygląda na usterkę.
-    chronioneHaslem: typeof kanal.chronione_haslem === 'string' && kanal.chronione_haslem !== '',
     czegoBrakuje: typeof kanal.czego_brakuje === 'string' ? kanal.czego_brakuje : '',
     podstawa: podstawaAdresu(wykaz),
   };
@@ -148,35 +144,26 @@ function ostrzezenieKanalu(stan) {
 }
 
 /**
- * Zdanie o kanale, który STOI, ale jest tymczasowy — i o haśle przy pobieraniu.
+ * Zdanie o kanale, który STOI, ale jest tymczasowy.
  *
- * Kanał działający nie znaczy „nic więcej do powiedzenia". Pobranie może pytać
- * o hasło, a adres może być tymczasowy — jedno i drugie zaskoczyłoby pobierającego
- * w połowie czynności, więc stoi PRZED przyciskami, nie za nimi. Oba zdania są
- * warunkowe i biorą się z wykazu: gdy kanał dostał własną nazwę i certyfikat
- * urzędu, zdanie o ostrzeżeniu przeglądarki znika samo, bo przestało być prawdą.
+ * Kanał działający nie znaczy „nic więcej do powiedzenia": adres może być
+ * tymczasowy, a to zaskoczyłoby pobierającego w połowie czynności, więc stoi
+ * PRZED przyciskami, nie za nimi. Zdanie jest warunkowe i bierze się z wykazu:
+ * gdy kanał dostał własną nazwę i certyfikat urzędu, znika samo, bo przestało
+ * być prawdą. O hasło pyta nie kanał, tylko ŚCIEŻKA jednej pozycji — dlatego
+ * zdanie o haśle stoi przy pozycji, nie tutaj.
  */
 function uwagaKanaluTymczasowego(stan) {
-  if (!stan.tymczasowy && !stan.chronioneHaslem) return '';
-  const czesci = [];
-  if (stan.chronioneHaslem) {
-    czesci.push(`    <p><strong>Pobieranie jest chronione hasłem — na razie na wyłączność Właściciela.</strong>
-    Po kliknięciu „Pobierz" przeglądarka poprosi o nazwę użytkownika i hasło. Nie jest to usterka
-    i nie ma tu formularza rejestracji: dostęp ma dziś jedna osoba, a poświadczenie wydaje
-    producent. Czytanie tej strony i całej witryny hasła nie wymaga — pyta o nie dopiero sam plik.</p>`);
-  }
-  if (stan.tymczasowy) {
-    czesci.push(`    <p><strong>Ten adres jest tymczasowy i przeglądarka pokaże ostrzeżenie o certyfikacie.</strong>
+  if (!stan.tymczasowy) return '';
+  return `  <div class="dc-uwaga dc-uwaga--brak">
+    <p><strong>Ten adres jest tymczasowy i przeglądarka pokaże ostrzeżenie o certyfikacie.</strong>
     Pliki stoją na maszynie budującej, pod adresem liczbowym, a dla adresu liczbowego urząd
     certyfikacji certyfikatu nie wystawia — połączenie jest więc szyfrowane certyfikatem
     podpisanym samym sobą i trzeba to ostrzeżenie świadomie przejść. Szyfrowanie jest tu
     warunkiem, nie ozdobą: bez niego hasło do pobierania szłoby przez sieć w postaci jawnej.
-    Po przeniesieniu witryny na docelowy adres ostrzeżenie zniknie.</p>`);
-  }
-  czesci.push(`    <p>Niezależnie od adresu i certyfikatu sprawdzianem, czy plik jest tym właściwym,
-    zostaje <strong>suma SHA-256</strong> — stoi przy każdej pozycji niżej.</p>`);
-  return `  <div class="dc-uwaga dc-uwaga--brak">
-${czesci.join('\n')}
+    Po przeniesieniu witryny na docelowy adres ostrzeżenie zniknie.</p>
+    <p>Niezależnie od adresu i certyfikatu sprawdzianem, czy plik jest tym właściwym,
+    zostaje <strong>suma SHA-256</strong> — stoi przy każdej pozycji niżej.</p>
   </div>`;
 }
 
@@ -210,6 +197,32 @@ function naglowekPozycji(w) {
   return w.nazwa ? String(w.nazwa) : String(w.system ?? 'System nieokreślony');
 }
 
+/**
+ * Zdanie o haśle — przy pozycji, nie przy kanale. Uwierzytelnienie zamyka jedną
+ * ścieżkę kanału, a nie kanał: pozycje spod `/pliki/` pobiera się bez pytania.
+ * Zdanie postawione nad wszystkimi kartami stoi także nad tymi, które hasła nie
+ * wymagają, i zapowiada okienko, które przy nich nie wyskakuje.
+ */
+function zdanieOHasle(w) {
+  if (w.chronione_haslem !== true) return '';
+  return `\n      <p class="dc-pakiet__haslo">Zapyta o hasło — ten plik leży pod ścieżką zamkniętą
+      uwierzytelnieniem, a poświadczenie wydaje producent. Czytanie strony hasła nie wymaga.</p>`;
+}
+
+/**
+ * Zdanie o braku podpisu — przy KAŻDEJ pozycji Windows, nie raz na całej stronie.
+ * Pobierający czyta kartę tej pozycji, którą bierze, i przy niej ma się dowiedzieć,
+ * że SmartScreen ukryje przycisk uruchomienia. Pole `podpisany` jest mierzone przy
+ * składaniu instalki (katalog Security pliku), więc zdanie zniknie samo w dniu,
+ * w którym plik dostanie podpis — nikt nie będzie go stąd wykreślał ręcznie.
+ */
+function zdanieOPodpisie(w) {
+  if (String(w.system ?? '').toLowerCase() !== 'windows') return '';
+  if (w.podpisany === true) return '';
+  return `\n      <p class="dc-pakiet__brak">Plik nie jest podpisany — Windows SmartScreen pokaże
+      ostrzeżenie o nieznanym wydawcy. Sprawdzianem, czy plik jest tym właściwym, zostaje suma niżej.</p>`;
+}
+
 function kartaPakietu(w, stan) {
   const { adres, powod } = adresWydania(w, stan.podstawa);
   const braki = [];
@@ -227,10 +240,7 @@ function kartaPakietu(w, stan) {
     wiersz = `<p class="dc-pakiet__brak">Adres docelowy (jeszcze nie odpowiada):<br>
       <code>${tekst(adres)}</code></p>`;
   } else {
-    const haslo = stan.chronioneHaslem
-      ? '\n      <p class="dc-pakiet__haslo">Zapyta o hasło — dostęp na wyłączność Właściciela.</p>'
-      : '';
-    wiersz = `<p><a class="btn btn--primary" href="${tekst(adres)}">Pobierz <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12M6 13l6 6 6-6M4 21h16"/></svg></a></p>${haslo}`;
+    wiersz = `<p><a class="btn btn--primary" href="${tekst(adres)}">Pobierz <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12M6 13l6 6 6-6M4 21h16"/></svg></a></p>${zdanieOHasle(w)}`;
   }
 
   const coBierzesz = w.coBierzesz ? `\n      <p>${tekst(w.coBierzesz)}</p>` : '';
@@ -238,7 +248,7 @@ function kartaPakietu(w, stan) {
   return `    <div class="dc-pakiet" data-system="${tekst(kluczSystemu(w))}">
       <h3>${tekst(naglowekPozycji(w))}</h3>
       <p class="dc-pakiet__plik">${tekst(w.nazwaPliku ?? w.plik ?? '—')} — ${tekst(rozmiarPozycji(w))}</p>${coBierzesz}
-      ${wiersz}
+      ${wiersz}${zdanieOPodpisie(w)}
       <p class="dc-pakiet__suma">SHA-256:<br><code>${tekst(w.suma ?? 'BRAK — aplikacja takiego wydania NIE ZAŁOŻY')}</code></p>
     </div>`;
 }
@@ -386,6 +396,15 @@ export function stronaPobierz(strona, wykaz) {
   const wydania = Array.isArray(wykaz.wydania) ? wykaz.wydania : [];
   const stan = stanKanalu(wykaz);
 
+  // Nazwa pliku w przykładzie polecenia bierze się z wykazu, nie z pamięci:
+  // wpisana na stałe zestarzała się przy pierwszym wydaniu i uczyła pobierającego
+  // przepisywać nazwę cudzego pliku. Bez wydania przykładu nie ma wcale —
+  // polecenie z wymyśloną nazwą nie zadziała u nikogo.
+  const przykladSumy =
+    wydania.length === 0
+      ? ''
+      : `<br>\n  <code>certutil -hashfile &quot;${tekst(pozycjeNajnowszej(wydania)[0].nazwaPliku ?? '')}&quot; SHA256</code>`;
+
   const najnowsze =
     wydania.length === 0
       ? `  <div class="dc-uwaga">
@@ -431,11 +450,10 @@ ${sekcjaSerwera(wykaz, stan)}
   od pierwszego uruchomienia. Serwer zakłada administrator raz, z pakietu stojącego wyżej na tej
   stronie; stanowiska dostają samo okno.</p>
 
-  <h2>Numer wersji nie rośnie, rośnie data</h2>
-  <p>Wszystkie pozycje niosą <strong>1.0.0</strong> i nie jest to przeoczenie. Wydania różni
-  <strong>data</strong>, nie numer: żadna wersja nie stanęła jeszcze u klienta, więc nie ma czego
-  podnosić. Pliki z różnych dni leżą w osobnych katalogach z datą w nazwie i nie nadpisują się
-  wzajemnie. Numer ruszy w dniu, w którym ruszy pierwsze wdrożenie u klienta.</p>
+  <h2>Numer wersji i data</h2>
+  <p>Wydania różni <strong>data</strong>, nie sam numer: pliki z różnych dni leżą w osobnych
+  katalogach z datą w nazwie i nie nadpisują się wzajemnie. Numer podnosi się rozstrzygnięciem
+  producenta; bieżący stoi wyżej, przy najnowszym wydaniu, i tam też jest data.</p>
 
   <h2>Windows: x64 czy ARM64</h2>
   <p>Zwykły komputer i laptop z procesorem Intel albo AMD to <strong>x64</strong> — ta pozycja
@@ -443,11 +461,11 @@ ${sekcjaSerwera(wykaz, stan)}
   na Snapdragonie). Plik ARM64 nie uruchomi się na maszynie Intel/AMD ani odwrotnie. Sprawdzenie:
   Ustawienia Windows → System → Informacje → „Typ systemu".</p>
 
-  <h2>Instalka Windows jest niepodpisana</h2>
-  <p>Plik <code>.exe</code> nie ma podpisu kodu, więc przy pierwszym uruchomieniu Windows
-  SmartScreen pokaże ostrzeżenie o nieznanym wydawcy. Nie jest to usterka instalki i nie
-  znaczy, że plik jest podmieniony — znaczy, że wydawca nie kupił jeszcze certyfikatu
-  podpisującego. Sposób na sprawdzenie, czy plik jest tym właściwym, jest jeden i stoi wyżej:
+  <h2>Podpis kodu</h2>
+  <p>Przy każdej pozycji Windows stoi zdanie o jej podpisie. Plik bez podpisu daje przy pierwszym
+  uruchomieniu ostrzeżenie SmartScreen o nieznanym wydawcy — nie jest to usterka instalki i nie
+  znaczy, że plik jest podmieniony; znaczy, że wydawca nie ma jeszcze certyfikatu podpisującego.
+  Sposób na sprawdzenie, czy plik jest tym właściwym, jest wtedy jeden i stoi przy pozycji:
   suma SHA-256.</p>
 
   <h2>Aktualizacja z poziomu aplikacji</h2>
@@ -462,8 +480,7 @@ ${sekcjaSerwera(wykaz, stan)}
   z pobieranego strumienia i <strong>odmawia założenia pliku, którego suma się nie zgadza</strong> —
   plik jest wtedy kasowany, zanim cokolwiek zostanie podmienione. Wydanie bez podanej sumy
   nie zostanie założone w ogóle. Pobierając ręcznie, porównaj sumę samodzielnie — na Windows
-  robi to narzędzie systemowe, bez zakładania czegokolwiek:<br>
-  <code>certutil -hashfile &quot;Danaco Console_1.0.0_hybryda_x64-setup.exe&quot; SHA256</code></p>
+  robi to narzędzie systemowe, bez zakładania czegokolwiek:${przykladSumy}</p>
   <p>Certyfikat kanału potwierdza, z kim rozmawia przeglądarka. Suma kontrolna potwierdza coś
   innego i dlatego jedno nie zastępuje drugiego: że <strong>ten konkretny plik</strong> jest tym,
   który producent zbudował — niezależnie od tego, jaką drogą przyszedł i ile razy był kopiowany.</p>`,

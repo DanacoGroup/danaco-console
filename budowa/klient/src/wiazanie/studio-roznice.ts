@@ -48,21 +48,80 @@ interface Panel {
   wybor: WyborPorownania;
 }
 
+/** Panel po ostatnim wiązaniu; po nim idzie porównanie wywołane spoza panelu — ze wstążki okna roboczego. */
+interface Zwiazany {
+  kanal: Kanal;
+  idOkna: string;
+  panel: Panel;
+  odswiez: () => void;
+}
+
+/**
+ * Wzory zdjęte przy pierwszym montażu okna. Powłoka wstawia wnętrze okna na
+ * nowo przy każdym wejściu, a drugie zdjęcie zastałoby panel już opróżniony,
+ * więc wzoru nie da się z niego wziąć po raz drugi.
+ */
+let wzoryPanelu: WzoryWierszy | null = null;
+
+/** Panel wiązania bieżącego; pustka znaczy okno bez założonego stanowiska. */
+let zwiazany: Zwiazany | null = null;
+
+/**
+ * Zdejmuje treść przykładową panelu różnic, zabierając z niej wzory wierszy.
+ * Woła się przy montażu okna, przed powstaniem stanowiska: różnica z prototypu
+ * opisuje cudzy dokument. Zwraca prawdę, gdy panel stał w dokumencie.
+ */
+export function zdejmijTrescPrzykladowaRoznic(): boolean {
+  return przygotujPanel() !== null;
+}
+
+/** Zbiera węzły panelu i opróżnia je z treści przykładowej; pustka znaczy panel poza dokumentem. */
+function przygotujPanel(): { wezly: WezlyRoznic; wzory: WzoryWierszy } | null {
+  const wezly = zbierzWezly();
+  if (wezly === null) return null;
+  /* Znacznik inny niż związany znaczy panel wstawiony ponownie: wiązanie
+     poprzednie trzyma węzły odczepione od dokumentu i porównanie wypełniłoby
+     ekran, którego nie ma. */
+  if (zwiazany !== null && zwiazany.panel.wezly.tresc !== wezly.tresc) zwiazany = null;
+  wzoryPanelu ??= zdejmijWzory(wezly);
+  zdejmijTrescPrzykladowa(wezly);
+  return { wezly, wzory: wzoryPanelu };
+}
+
+/**
+ * Wczytuje wersje dokumentu otwartego w oknie i zestawia parę wskazaną na
+ * pasku panelu. Fałsz znaczy panel bez wiązania albo okno bez dokumentu —
+ * wołający ma wtedy czym odmówić Operatorowi zamiast milczeć.
+ */
+export async function porownajWersjeDokumentu(): Promise<boolean> {
+  const biezacy = zwiazany;
+  if (biezacy === null) return false;
+  if (biezacy.panel.wybor.idDokumentu === '') {
+    const otwarty = await wywolaj(biezacy.kanal, Command.StudioDocumentOpen, {
+      windowId: biezacy.idOkna,
+    });
+    if (!otwarty.udany || otwarty.wynik === undefined) return false;
+    biezacy.panel.wybor.idDokumentu = otwarty.wynik.document.id;
+  }
+  await wczytaj(biezacy.kanal, biezacy.panel, biezacy.odswiez);
+  return true;
+}
+
 /**
  * Wiąże panel różnic okna z rdzeniem. Dokument bierze się ze zdarzenia zmiany
  * dokumentu wskazanego okna, bo komendy pytającej o dokument otwarty w oknie
  * kontrakt nie ma. Zwraca prawdę, gdy znacznik panelu stał.
  */
 export function zwiazRoznice(kanal: Kanal, idOkna: string): boolean {
-  const wezly = zbierzWezly();
-  if (wezly === null) return false;
+  const przygotowany = przygotujPanel();
+  if (przygotowany === null) return false;
+  const wezly: WezlyRoznic = przygotowany.wezly;
 
   const panel: Panel = {
     wezly,
-    wzory: zdejmijWzory(wezly),
+    wzory: przygotowany.wzory,
     wybor: { idDokumentu: '', wersje: [], odniesienie: 0, porownywana: 0 },
   };
-  zdejmijTrescPrzykladowa(wezly);
 
   /** Powtarza porównanie wybranej pary; bez znanego dokumentu nie ma o co pytać. */
   function odswiez(): void {
@@ -98,6 +157,7 @@ export function zwiazRoznice(kanal: Kanal, idOkna: string): boolean {
     void wczytaj(kanal, panel, odswiez);
   });
 
+  zwiazany = { kanal, idOkna, panel, odswiez };
   return true;
 }
 

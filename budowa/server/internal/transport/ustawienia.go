@@ -5,6 +5,7 @@ import (
 	"io"
 	"log"
 	"net"
+	"os"
 	"strconv"
 	"strings"
 	"time"
@@ -32,6 +33,18 @@ const (
 	// NaglowekKonta jest nagłówkową postacią ParametrKonta — dla klientów, które
 	// nie mogą dopisać parametru do adresu.
 	NaglowekKonta = "X-Danaco-Konto"
+	// ParametrSekretu i NaglowekSekretu niosą sekret nawiązania, którym powłoka
+	// przedstawia się przed uaktualnieniem gniazda. Dwie drogi z tego samego
+	// powodu co przy koncie: nie każdy klient dopisze nagłówek do adresu gniazda.
+	ParametrSekretu = "sekret"
+	NaglowekSekretu = "X-Danaco-Sekret"
+	// ZmiennaZniesieniaBramki nazywa zmienną środowiska zdejmującą wymóg
+	// logowania. Zmienna, nie nastawa: nastawę zmienia komenda z gniazda,
+	// a zmienną wskazuje ten, kto uruchamia proces na maszynie.
+	ZmiennaZniesieniaBramki = "DANACO_BRAMKA_ZNIESIONA"
+	// ZmiennaSekretuNawiazania nazywa zmienną środowiska z sekretem nawiązania;
+	// bez niej sprawdzenie sekretu nie obowiązuje, bo nie ma z czym porównywać.
+	ZmiennaSekretuNawiazania = "DANACO_SEKRET_NAWIAZANIA"
 	// adresDomyslny wiąże nasłuch z pętlą zwrotną, ponieważ domyślna wartość ma być bezpieczna, a szeroka ma być wyborem.
 	adresDomyslny = "127.0.0.1"
 )
@@ -47,6 +60,15 @@ type Ustawienia struct {
 	PochodzeniaDozwolone []string
 	// WymogLogowania jest rozstrzygnięciem Operatora nad dopuszczeniem bramki; wskaźnik niesie trzy stany zamiast dwóch.
 	WymogLogowania *bool
+	// BramkaZniesiona zdejmuje wymóg logowania i jest jedyną drogą jego zdjęcia.
+	// Wartość bierze się ze zmiennej środowiska albo z przełącznika wiersza
+	// poleceń — nigdy z nastawy, bo nastawę zmienia komenda z gniazda.
+	BramkaZniesiona bool
+	// SekretNawiazania jest sekretem, którym powłoka przedstawia się przy
+	// uaktualnieniu gniazda. Pusty znaczy brak sprawdzenia: nagłówek Origin nie
+	// obowiązuje klienta, który go nie wysyła, więc dopóki powłoka sekretu nie
+	// wystawia, dopóty gniazdo stoi otworem dla procesów tej maszyny.
+	SekretNawiazania string
 	// CertyfikatTLS i KluczTLS wskazują parę plików warstwy TLS; wskazanie obu włącza szyfrowany nasłuch.
 	CertyfikatTLS string
 	KluczTLS      string
@@ -98,9 +120,38 @@ func (u Ustawienia) zNormalizowane() Ustawienia {
 	if strings.TrimSpace(u.Adres) == "" && !u.WszystkieInterfejsy {
 		u.Adres = adresDomyslny
 	}
+	// Zniesienie bramki i sekret nawiązania czyta transport wprost ze środowiska
+	// procesu, a nie z nastaw bazy — nastawa przychodzi komendą z gniazda,
+	// czyli z tej samej strony, której obie te dźwignie dotyczą.
+	if !u.BramkaZniesiona {
+		u.BramkaZniesiona = zniesienieZeSrodowiska(os.Getenv(ZmiennaZniesieniaBramki), u.Dziennik)
+	}
+	if strings.TrimSpace(u.SekretNawiazania) == "" {
+		u.SekretNawiazania = strings.TrimSpace(os.Getenv(ZmiennaSekretuNawiazania))
+	}
 	// Rozpoznanie wystawienia stoi tutaj, bo tędy przechodzi każdy serwer i przechodzi dokładnie raz.
 	ostrzezJezeliWystawiony(u)
 	return u
+}
+
+// zniesienieZeSrodowiska czyta zmienną zdejmującą bramkę. Wartość nieczytelna
+// zostaje zniesieniem nieudzielonym: transport nie ma jak przerwać startu z tego
+// miejsca, a wybór między „zatrzymaj" a „zdejmij bramkę" rozstrzyga się na
+// korzyść wymogu.
+func zniesienieZeSrodowiska(tekst string, dziennik *log.Logger) bool {
+	tekst = strings.TrimSpace(tekst)
+	if tekst == "" {
+		return false
+	}
+	zniesiona, err := strconv.ParseBool(tekst)
+	if err != nil {
+		if dziennik != nil {
+			dziennik.Printf("transport: %s=%q nie jest wartością logiczną (true|false) — bramka zostaje",
+				ZmiennaZniesieniaBramki, tekst)
+		}
+		return false
+	}
+	return zniesiona
 }
 
 // zTLS mówi, czy nasłuch ma iść warstwą szyfrowaną. Para kompletna znaczy tak;

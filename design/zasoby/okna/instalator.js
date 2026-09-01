@@ -495,7 +495,15 @@ function uruchom() {
       if (biezacy === 3 && !wybranaWersja()) return;
       if (biezacy === 3 && !zgodnaWersja() && !wersjaMimoTo) { pokazNiezgodnosc(true); return; }
       if (biezacy === 5) { if (odslona() === 'blad') uruchomZapis(); return; }
-      if (biezacy === ILE) { wyjdz(); return; }
+      /* Czynność domyślna kroku 6 nazywa się „Uruchom Danaco Console" i tym
+         jest, gdy okno stoi w programie: uruchomienie należy do powłoki, więc
+         kreator oddaje je wpisowi `uruchomProgram` i sam zamyka się dopiero po
+         nim. W podglądzie z dysku wpisu nie ma i zostaje samo wyjście. */
+      if (biezacy === ILE) {
+        if (typeof K.uruchomProgram === 'function') { K.uruchomProgram(wyjdz); return; }
+        wyjdz();
+        return;
+      }
       pokaz(biezacy + 1);
       return;
     }

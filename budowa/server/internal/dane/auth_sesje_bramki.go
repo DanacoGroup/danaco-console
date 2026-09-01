@@ -31,9 +31,12 @@ const (
 	                      wygasa, utworzono, uniewazniono, trwanie,
 	                      COALESCE(konto_id, 0)`
 
+	// Wskazanie puste wchodzi jako NULL, nie jako zero: zero znaczyłoby konto
+	// o identyfikatorze zero, czyli żadne, a taka sesja nie należałaby do
+	// nikogo i nie pokazałaby się w wykazie urządzeń własnego Operatora.
 	wstawSesjeBramki = `INSERT INTO sesja_bramki
 	                    (token_skrot, metoda_rodzaj, urzadzenie_kod, wygasa, utworzono, trwanie, konto_id)
-	                    VALUES (?, ?, ?, ?, ?, ?, ?)`
+	                    VALUES (?, ?, ?, ?, ?, ?, NULLIF(?, 0))`
 
 	sesjaBramkiPoSkrocie = `SELECT ` + kolumnySesjiBramki +
 		` FROM sesja_bramki WHERE token_skrot = ?`
@@ -44,8 +47,11 @@ const (
 	// Pusty napis w pierwszym argumencie zdejmuje wyłączenie — wtedy polecenie
 	// unieważnia komplet sesji czynnych. Jedno zapytanie na oba warianty, żeby
 	// „poza bieżącą" i „wszystkie" nie rozjechały się na dwie ścieżki.
+	// Zawężenie do konta stoi w tym samym zapytaniu, bo bez niego zmiana hasła
+	// jednego konta wylogowuje wszystkie.
 	uniewaznijSesjeBramki = `UPDATE sesja_bramki SET uniewazniono = ?
-	                         WHERE uniewazniono IS NULL AND (? = '' OR token_skrot <> ?)`
+	                         WHERE uniewazniono IS NULL AND (? = '' OR token_skrot <> ?)
+	                           AND ` + warunekKontaBramki
 
 	// Wykaz urządzeń powstaje z sesji, nie z osobnej tabeli, grupowany po kodzie do jednego wiersza na urządzenie.
 	urzadzeniaSesjiBramki = `SELECT urzadzenie_kod,
@@ -54,11 +60,13 @@ const (
 	                                         THEN 1 ELSE 0 END) AS czynny
 	                         FROM sesja_bramki
 	                         WHERE urzadzenie_kod IS NOT NULL AND urzadzenie_kod <> ''
+	                           AND ` + warunekKontaBramki + `
 	                         GROUP BY urzadzenie_kod
 	                         ORDER BY ostatnio DESC`
 
 	uniewaznijSesjeUrzadzenia = `UPDATE sesja_bramki SET uniewazniono = ?
-	                             WHERE uniewazniono IS NULL AND urzadzenie_kod = ?`
+	                             WHERE uniewazniono IS NULL AND urzadzenie_kod = ?
+	                               AND ` + warunekKontaBramki
 )
 
 // ZalozSesjeBramki zakłada sesję wejścia i oddaje ją odczytaną z bazy danych z nadanym numerem wiersza.
@@ -122,8 +130,11 @@ func (r *repozytoriumUwierzytelnienia) PrzedluzSesjeBramki(ctx context.Context,
 	return r.SesjaBramkiPoSkrocie(ctx, skrot)
 }
 
-// UniewaznijSesjeBramkiPoza unieważnia sesje czynne poza wskazaną i zwraca ich
-// liczbę — tej liczby żąda `auth.password.reset` polem `revokedSessions`.
+// UniewaznijSesjeBramkiPoza unieważnia sesje czynne konta wołającego poza
+// wskazaną i zwraca ich liczbę — tej liczby żąda `auth.password.reset` polem
+// `revokedSessions`. Konto bierze się z kontekstu, bo unieważnienie idzie dwiema
+// drogami: sesją wołającego przy zmianie hasła i kontem z drogi listu przy
+// odzyskaniu, a obie stawiają wskazanie tak samo.
 func (r *repozytoriumUwierzytelnienia) UniewaznijSesjeBramkiPoza(ctx context.Context,
 	skrotZachowany string, teraz int64) (int, error) {
 
@@ -131,7 +142,8 @@ func (r *repozytoriumUwierzytelnienia) UniewaznijSesjeBramkiPoza(ctx context.Con
 	if err != nil {
 		return 0, err
 	}
-	wynik, err := polecenie.ExecContext(ctx, teraz, skrotZachowany, skrotZachowany)
+	wynik, err := polecenie.ExecContext(ctx, teraz, skrotZachowany, skrotZachowany,
+		KontoOperatora(ctx))
 	if err != nil {
 		return 0, fmt.Errorf("dane: nie można unieważnić sesji bramki: %w", err)
 	}
@@ -142,7 +154,7 @@ func (r *repozytoriumUwierzytelnienia) UniewaznijSesjeBramkiPoza(ctx context.Con
 	return int(zmienione), nil
 }
 
-// UrzadzeniaKonta zwraca urządzenia, które kiedykolwiek weszły przez bramkę, wraz z ostatnią chwilą wejścia.
+// UrzadzeniaKonta zwraca urządzenia konta wołającego, które kiedykolwiek weszły przez bramkę, wraz z ostatnią chwilą wejścia.
 func (r *repozytoriumUwierzytelnienia) UrzadzeniaKonta(ctx context.Context,
 	teraz int64) ([]UrzadzenieKonta, error) {
 
@@ -150,7 +162,7 @@ func (r *repozytoriumUwierzytelnienia) UrzadzeniaKonta(ctx context.Context,
 	if err != nil {
 		return nil, err
 	}
-	wiersze, err := polecenie.QueryContext(ctx, teraz)
+	wiersze, err := polecenie.QueryContext(ctx, teraz, KontoOperatora(ctx))
 	if err != nil {
 		return nil, fmt.Errorf("dane: nie można odczytać urządzeń konta: %w", err)
 	}
@@ -172,7 +184,7 @@ func (r *repozytoriumUwierzytelnienia) UrzadzeniaKonta(ctx context.Context,
 	return lista, nil
 }
 
-// UniewaznijSesjeUrzadzenia zamyka sesje czynne wskazanego urządzenia i zwraca liczbę zamkniętych sesji.
+// UniewaznijSesjeUrzadzenia zamyka sesje czynne wskazanego urządzenia w obrębie konta wołającego i zwraca liczbę zamkniętych sesji.
 func (r *repozytoriumUwierzytelnienia) UniewaznijSesjeUrzadzenia(ctx context.Context,
 	urzadzenie string, teraz int64) (int, error) {
 
@@ -180,7 +192,7 @@ func (r *repozytoriumUwierzytelnienia) UniewaznijSesjeUrzadzenia(ctx context.Con
 	if err != nil {
 		return 0, err
 	}
-	wynik, err := polecenie.ExecContext(ctx, teraz, urzadzenie)
+	wynik, err := polecenie.ExecContext(ctx, teraz, urzadzenie, KontoOperatora(ctx))
 	if err != nil {
 		return 0, fmt.Errorf("dane: nie można unieważnić sesji urządzenia %q: %w", urzadzenie, err)
 	}

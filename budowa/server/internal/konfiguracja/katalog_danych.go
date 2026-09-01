@@ -22,8 +22,16 @@ func KatalogDanychDomyslny() string {
 	return filepath.Join(".", nazwaKatalogu)
 }
 
-// PrzygotujKatalogDanych zakłada katalog danych wraz z brakującymi katalogami nadrzędnymi.
-// Istniejący katalog nie jest zmieniany.
+// prawaKatalogu odcinają grupę i pozostałych. W katalogu danych leży plik bazy
+// z rozmowami i skrótami sesji bramki oraz sejf poświadczeń, więc prawo wejścia
+// ma wyłącznie właściciel procesu rdzenia.
+const prawaKatalogu = 0o700
+
+// PrzygotujKatalogDanych zakłada katalog danych wraz z brakującymi katalogami nadrzędnymi
+// i zawęża prawa samego katalogu danych — także wtedy, gdy zastał go szerzej otwartym.
 func PrzygotujKatalogDanych(katalog string) error {
-	return os.MkdirAll(katalog, 0o755)
+	if err := os.MkdirAll(katalog, prawaKatalogu); err != nil {
+		return err
+	}
+	return os.Chmod(katalog, prawaKatalogu)
 }

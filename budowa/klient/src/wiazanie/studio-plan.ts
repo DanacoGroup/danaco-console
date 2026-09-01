@@ -28,23 +28,54 @@ interface WzoryWierszy {
   czekajace: HTMLElement | null;
 }
 
+/** Panel gotowy do wypełnienia: węzły znacznika oraz wzory i przedrostek zdjęte z treści przykładowej. */
+interface PanelPlanu {
+  wezly: WezlyPlanu;
+  wzory: WzoryWierszy;
+  przedrostek: string;
+}
+
+/**
+ * Wzory i stały początek etykiety zdjęte przy pierwszym montażu okna. Powłoka
+ * wstawia wnętrze okna na nowo przy każdym wejściu, a drugie zdjęcie zastałoby
+ * panel już opróżniony, więc wzoru nie da się z niego wziąć po raz drugi.
+ */
+let zdjete: { wzory: WzoryWierszy; przedrostek: string } | null = null;
+
+/**
+ * Zdejmuje treść przykładową panelu planu, zabierając z niej wzory wierszy
+ * i stały początek etykiety zlecenia. Woła się przy montażu okna, przed
+ * powstaniem stanowiska: rozkład z prototypu jest cudzą pracą i Operator nie
+ * ma prawa wziąć go za swoją. Zwraca prawdę, gdy panel stał w dokumencie.
+ */
+export function zdejmijTrescPrzykladowaPlanu(): boolean {
+  return przygotujPanel() !== null;
+}
+
+/** Zbiera węzły panelu i opróżnia je z treści przykładowej; pustka znaczy panel poza dokumentem. */
+function przygotujPanel(): PanelPlanu | null {
+  const wezly = zbierzWezly();
+  if (wezly === null) return null;
+  zdjete ??= {
+    wzory: zdejmijWzoryWierszy(wezly.lista),
+    przedrostek: przedrostekZlecenia(wezly.etykieta),
+  };
+  zdejmijWiersze(wezly.lista);
+  wezly.etykieta.textContent = '';
+  wezly.znacznik.textContent = '';
+  return { wezly, wzory: zdjete.wzory, przedrostek: zdjete.przedrostek };
+}
+
 /**
  * Wiąże panel planu z rdzeniem. Zwraca prawdę, gdy węzły panelu stały i
  * wiązanie zostało założone; fałsz, gdy panelu w dokumencie nie ma.
  */
 export function zwiazPlan(kanal: Kanal, idOkna: string): boolean {
-  const znalezione = zbierzWezly();
-  if (znalezione === null) return false;
-  const wezly: WezlyPlanu = znalezione;
-
-  const wzory = zdejmijWzoryWierszy(wezly.lista);
-  const przedrostek = przedrostekZlecenia(wezly.etykieta);
-
-  // Treść przykładowa schodzi, zanim padnie pierwsza odpowiedź rdzenia: panel
-  // pusty jest uczciwy, panel z cudzym rozkładem nie.
-  zdejmijWiersze(wezly.lista);
-  wezly.etykieta.textContent = '';
-  wezly.znacznik.textContent = '';
+  const przygotowany = przygotujPanel();
+  if (przygotowany === null) return false;
+  const wezly: WezlyPlanu = przygotowany.wezly;
+  const wzory: WzoryWierszy = przygotowany.wzory;
+  const przedrostek: string = przygotowany.przedrostek;
 
   /** Nanosi rozkład rdzenia na panel; węzły, których nie ma czym wypełnić, schodzą. */
   function pokaz(plan: StudioTaskPlan | null): void {

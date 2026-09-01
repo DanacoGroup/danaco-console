@@ -29,19 +29,41 @@ interface WzoryWersji {
 }
 
 /**
+ * Wzory zdjęte przy pierwszym montażu okna. Powłoka wstawia wnętrze okna na
+ * nowo przy każdym wejściu, a drugie zdjęcie zastałoby wykaz już opróżniony,
+ * więc wzoru nie da się z niego wziąć po raz drugi.
+ */
+let wzoryPanelu: WzoryWersji | null = null;
+
+/**
+ * Zdejmuje wiersze przykładowe wykazu wersji, zabierając z nich wzory wiersza
+ * i oznaczenia wersji kluczowej. Woła się przy montażu okna, przed powstaniem
+ * stanowiska: cudza historia wersji nie ma prawa stać na ekranie ani chwili
+ * dłużej niż znacznik. Zwraca prawdę, gdy panel stał w dokumencie.
+ */
+export function zdejmijTrescPrzykladowaRepozytorium(): boolean {
+  return przygotujPanel() !== null;
+}
+
+/** Zbiera węzły panelu i opróżnia wykaz z wierszy przykładowych; pustka znaczy panel poza dokumentem. */
+function przygotujPanel(): { wezly: WezlyRepozytorium; wzory: WzoryWersji } | null {
+  const znalezione = zbierzWezly();
+  if (znalezione === null) return null;
+  const wiersze = [...znalezione.tresc.querySelectorAll<HTMLElement>('.dn-wersja')];
+  wzoryPanelu ??= zdejmijWzory(wiersze);
+  for (const wiersz of wiersze) wiersz.remove();
+  return { wezly: znalezione, wzory: wzoryPanelu };
+}
+
+/**
  * Wiąże panel repozytorium sesji okna Studia. Zwraca prawdę, gdy znacznik
  * panelu stał i wiązanie zostało założone.
  */
 export function zwiazRepozytorium(kanal: Kanal, idOkna: string): boolean {
-  const znalezione = zbierzWezly();
-  if (znalezione === null) return false;
-  const wezly: WezlyRepozytorium = znalezione;
-
-  const wiersze = [...wezly.tresc.querySelectorAll<HTMLElement>('.dn-wersja')];
-  const wzory = zdejmijWzory(wiersze);
-  // Wiersze przykładowe znikają, zanim padnie pierwsza odpowiedź rdzenia:
-  // pusty wykaz jest uczciwy, wykaz z cudzą historią — nie.
-  for (const wiersz of wiersze) wiersz.remove();
+  const przygotowany = przygotujPanel();
+  if (przygotowany === null) return false;
+  const wezly: WezlyRepozytorium = przygotowany.wezly;
+  const wzory: WzoryWersji = przygotowany.wzory;
 
   let dokument: StudioDocument | null = null;
 

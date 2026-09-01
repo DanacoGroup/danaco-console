@@ -51,7 +51,9 @@ function pozycje(w) {
     // klucz `nazwaPliku` z opisem w wartości i bez tego wyjątku polecenie
     // meldowałoby przy każdym przebiegu brak pliku o nazwie „nazwa pokazywana
     // na stronie". Meldunek, który zawsze kłamie, uczy nie czytać meldunków.
-    if (klucz === 'pola') continue;
+    // `w_przygotowaniu` z tego samego powodu: pozycja zapowiedziana nie ma
+    // jeszcze pliku i to jest jej stan, a nie rozjazd do zgłoszenia.
+    if (klucz === 'pola' || klucz === 'w_przygotowaniu') continue;
     if (Array.isArray(wartosc)) {
       wartosc.forEach((p, i) => {
         if (p && typeof p === 'object' && p.nazwaPliku) zebrane.push({ p, gdzie: `${klucz}[${i}]` });
@@ -72,8 +74,10 @@ for (const { p, gdzie } of pozycje(wykaz)) {
   try {
     dane = await stat(sciezka);
   } catch {
-    // Brak pliku NIE jest awarią polecenia. Pozycja „w przygotowaniu" właśnie tak
-    // wygląda i ma tak wyglądać do chwili, w której pakiet powstanie.
+    // Brak pliku jest BRAKIEM, nie stanem przejściowym: pozycja zapowiedziana
+    // stoi w `w_przygotowaniu` i tu jej nie ma. Pozycja publikowana, której pliku
+    // nie ma na dysku, niesie sumę wziętą skądinąd — a suma nie z pliku jest
+    // dokładnie tym, przed czym stoi to polecenie.
     console.log(`— ${gdzie}: pliku nie ma na dysku (${p.nazwaPliku})`);
     brakow += 1;
     continue;
@@ -106,7 +110,9 @@ console.log(
         (zmian > 0 ? ' — złóż witrynę ponownie: node zloz.mjs' : ''),
 );
 
-// Rozjazd przy `--sprawdz` jest odmową, nie uwagą: to polecenie ma dać się
+// Rozjazd i brak są przy `--sprawdz` odmową, nie uwagą: to polecenie ma dać się
 // wpiąć przed wgraniem i zatrzymać wgranie wykazu, który mówi o innych plikach
-// niż te leżące na dysku.
-if (TYLKO_SPRAWDZ && zmian > 0) process.exit(1);
+// niż te leżące na dysku — albo o plikach, których na dysku nie ma wcale i nie
+// ma z czego policzyć ich sumy. Wykaz publikuje się po przebiegu, który mówi
+// „rozjazdów 0, plików brakuje 0".
+if (TYLKO_SPRAWDZ && (zmian > 0 || brakow > 0)) process.exit(1);

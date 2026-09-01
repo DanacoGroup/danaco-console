@@ -17,18 +17,40 @@ interface WezlyPlikow {
 const JEDNOSTKI_ROZMIARU = ['B', 'kB', 'MB', 'GB', 'TB'];
 
 /**
+ * Wzór wiersza zdjęty przy pierwszym montażu okna. Powłoka wstawia wnętrze
+ * okna na nowo przy każdym wejściu, a drugie zdjęcie zastałoby wykaz już
+ * opróżniony, więc wzoru nie da się z niego wziąć po raz drugi.
+ */
+let wzorWiersza: HTMLElement | null = null;
+
+/**
+ * Zdejmuje wiersze przykładowe wykazu plików, zabierając z nich wzór wiersza.
+ * Woła się przy montażu okna, przed powstaniem stanowiska: cudze pliki nie
+ * mają prawa stać na ekranie ani chwili dłużej niż znacznik. Zwraca prawdę,
+ * gdy panel stał w dokumencie.
+ */
+export function zdejmijTrescPrzykladowaPlikow(): boolean {
+  return przygotujPanel() !== null;
+}
+
+/** Zbiera węzły panelu i opróżnia wykaz z wierszy przykładowych; pustka znaczy panel poza dokumentem. */
+function przygotujPanel(): WezlyPlikow | null {
+  const znalezione = zbierzWezly();
+  if (znalezione === null) return null;
+  wzorWiersza ??= sklonuj(znalezione.lista.querySelector('.st-panel-wiersz'));
+  zdejmijWiersze(znalezione.lista);
+  return znalezione;
+}
+
+/**
  * Wiąże panel Pliki okna Studia z wykazem repozytorium. Zwraca prawdę, gdy
  * znacznik panelu stał i wiązanie zostało założone.
  */
 export function zwiazPliki(kanal: Kanal, idOkna: string): boolean {
-  const znalezione = zbierzWezly();
+  const znalezione = przygotujPanel();
   if (znalezione === null) return false;
   const wezly: WezlyPlikow = znalezione;
-
-  const wzor = sklonuj(wezly.lista.querySelector('.st-panel-wiersz'));
-  // Treść przykładowa znika, zanim padnie pierwsza odpowiedź rdzenia: pusty
-  // wykaz jest uczciwy, wykaz z cudzymi plikami — nie.
-  zdejmijWiersze(wezly.lista);
+  const wzor: HTMLElement | null = wzorWiersza;
 
   const pliki = new Map<HTMLElement, string>();
   let idProjektu = '';

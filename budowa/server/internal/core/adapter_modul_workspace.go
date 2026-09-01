@@ -1,8 +1,10 @@
-// Odpowiedzialność pliku: moduł Workspace — projekt jako byt i zestawienie Project Dashboard, zakładany przez workspace.dashboard.get, gdy jeszcze go nie ma.
+// Odpowiedzialność pliku: moduł Workspace — projekt jako byt, jego zarząd rodziną project.* oraz zestawienie Project Dashboard; workspace.dashboard.get zakłada projekt, gdy jeszcze go nie ma.
 package core
 
 import (
 	"context"
+	"errors"
+	"strings"
 
 	"danacoconsole/server/internal/dane"
 	"danacoconsole/server/internal/konfig"
@@ -128,6 +130,67 @@ func (a *adapterPrzestrzeniRoboczej) Projekty(ctx context.Context,
 	return shared.ProjectListResponse{Projects: wykaz, Total: len(wykaz)}, nil
 }
 
+// ZalozProjekt obsługuje `project.create`. Kod projektu nadaje rdzeń tym samym
+// przedrostkiem, którym znakuje projekt zakładany przy przenoszeniu sesji —
+// Operator podaje nazwę, bo nazwa jest tym, co widzi w lewym panelu ramy.
+func (a *adapterPrzestrzeniRoboczej) ZalozProjekt(ctx context.Context,
+	z shared.ProjectCreateRequest) (shared.ProjectCreateResponse, error) {
+
+	nazwa := strings.TrimSpace(z.Name)
+	if nazwa == "" {
+		return shared.ProjectCreateResponse{}, bladProjektu("założenie projektu wymaga nazwy")
+	}
+	projekt, err := a.repozytorium.ZalozProjekt(ctx, nowyIdentyfikator(przedrostekProjektu),
+		nazwa, opisProjektu(z.Description))
+	if err != nil {
+		return shared.ProjectCreateResponse{}, err
+	}
+	return shared.ProjectCreateResponse{Project: projektKontraktu(projekt)}, nil
+}
+
+// PrzemianujProjekt obsługuje `project.rename`. Zmiana dotyczy samej nazwy: kod
+// projektu wiąże sesje i wiersze modułu, więc zostaje nietknięty.
+func (a *adapterPrzestrzeniRoboczej) PrzemianujProjekt(ctx context.Context,
+	z shared.ProjectRenameRequest) (shared.ProjectRenameResponse, error) {
+
+	kod := strings.TrimSpace(z.ProjectId)
+	nazwa := strings.TrimSpace(z.Name)
+	if kod == "" {
+		return shared.ProjectRenameResponse{}, bladProjektu("przemianowanie bez wskazania projektu")
+	}
+	if nazwa == "" {
+		return shared.ProjectRenameResponse{}, bladProjektu("przemianowanie wymaga nowej nazwy")
+	}
+	projekt, err := a.repozytorium.PrzemianujProjekt(ctx, kod, nazwa)
+	if err != nil {
+		if errors.Is(err, dane.ErrBrakWiersza) {
+			return shared.ProjectRenameResponse{}, bladNieznanegoProjektu(kod)
+		}
+		return shared.ProjectRenameResponse{}, err
+	}
+	return shared.ProjectRenameResponse{Project: projektKontraktu(projekt)}, nil
+}
+
+// UsunProjekt obsługuje `project.delete`. Sesje projektu zostają w historii
+// i tracą przypisanie — kontrakt zapowiada to wprost, a wykaz odpiętych kart
+// wraca Operatorowi, żeby wiedział, co zostało bez projektu.
+func (a *adapterPrzestrzeniRoboczej) UsunProjekt(ctx context.Context,
+	z shared.ProjectDeleteRequest) (shared.ProjectDeleteResponse, error) {
+
+	kod := strings.TrimSpace(z.ProjectId)
+	if kod == "" {
+		return shared.ProjectDeleteResponse{}, bladProjektu("usunięcie bez wskazania projektu")
+	}
+	odpiete, err := a.repozytorium.UsunProjekt(ctx, kod)
+	if err != nil {
+		if errors.Is(err, dane.ErrBrakWiersza) {
+			return shared.ProjectDeleteResponse{}, bladNieznanegoProjektu(kod)
+		}
+		return shared.ProjectDeleteResponse{}, err
+	}
+	return shared.ProjectDeleteResponse{ProjectId: kod, ReleasedSessionIds: odpiete}, nil
+}
+
 // Projekt oddaje projekt kontraktu — obsługiwacz potrzebuje go do rozgłoszenia
 // `workspace.project.changed` po komendach, których wynik projektu nie niesie.
 func (a *adapterPrzestrzeniRoboczej) Projekt(ctx context.Context,
@@ -177,6 +240,26 @@ func projektKontraktu(p dane.Projekt) shared.WorkspaceProject {
 		CreatedAt:   chwilaBazy(p.Utworzono),
 		UpdatedAt:   chwilaBazy(p.Zaktualizowano),
 	}
+}
+
+// opisProjektu zdejmuje z opisu białe znaki i zamienia opis pusty na brak
+// wartości, bo kolumna opisu dopuszcza NULL zamiast pustego łańcucha znaków.
+func opisProjektu(opis *string) *string {
+	if opis == nil {
+		return nil
+	}
+	przyciety := strings.TrimSpace(*opis)
+	if przyciety == "" {
+		return nil
+	}
+	return &przyciety
+}
+
+// bladNieznanegoProjektu znakuje wskazanie projektu, którego nie ma, kodem
+// `not_found` — inaczej klient nie odróżniłby literówki w kodzie od usterki.
+func bladNieznanegoProjektu(kod string) error {
+	return protocol.JakoError(protocol.NowyBlad(shared.ErrorCodeNotFound,
+		"moduł Workspace: projekt "+kod+" nie istnieje"))
 }
 
 // bladProjektu znakuje błąd wskazania projektu kodem kontraktu, żeby klient

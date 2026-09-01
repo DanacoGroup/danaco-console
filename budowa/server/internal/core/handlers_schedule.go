@@ -5,7 +5,6 @@ package core
 import (
 	"context"
 
-	"danacoconsole/server/internal/protocol"
 	"danacoconsole/shared"
 )
 
@@ -34,18 +33,12 @@ type HarmonogramyNadzoru interface {
 
 // zarejestrujHarmonogramy wpina sześć komend rodziny schedule.*. Zmiana harmonogramu rozgłasza
 // zdarzenie zmiany powiązania automatyki, bo harmonogram jest bytem wyzwalającym automatykę.
-func zarejestrujHarmonogramy(r *Rejestr, m Harmonogramy, e *emiter) {
-	if r == nil || m == nil {
+func zarejestrujHarmonogramy(r *Rejestr, nadzor HarmonogramyNadzoru, e *emiter) {
+	if r == nil || nadzor == nil {
 		return
 	}
 
-	r.Zarejestruj(shared.CommandScheduleGet, obsluz(m.HarmonogramyZadania))
-
-	nadzor, ok := m.(HarmonogramyNadzoru)
-	if !ok {
-		zarejestrujOdmoweNadzoruHarmonogramow(r)
-		return
-	}
+	r.Zarejestruj(shared.CommandScheduleGet, obsluz(nadzor.HarmonogramyZadania))
 
 	r.Zarejestruj(shared.CommandScheduleTriggerHistory, obsluz(nadzor.HistoriaWyzwolen))
 	r.Zarejestruj(shared.CommandScheduleWebhookEndpointGet, obsluz(nadzor.AdresWebhooka))
@@ -69,22 +62,4 @@ func zarejestrujHarmonogramy(r *Rejestr, m Harmonogramy, e *emiter) {
 		}))
 
 	r.Zarejestruj(shared.CommandScheduleBackfillRun, obsluz(nadzor.UruchomWstecznie))
-}
-
-// zarejestrujOdmoweNadzoruHarmonogramow wpina pięć komend nadzoru jako odmowę
-// montażu — port harmonogramów jest, lecz nie niesie ich czynności.
-func zarejestrujOdmoweNadzoruHarmonogramow(r *Rejestr) {
-	const powod = "moduł Automations: port harmonogramów nie niesie nadzoru ani okien wykonania"
-
-	for _, typ := range []shared.MessageType{
-		shared.CommandScheduleWindowSet,
-		shared.CommandScheduleBackfillRun,
-		shared.CommandScheduleTriggerHistory,
-		shared.CommandScheduleHeartbeatSet,
-		shared.CommandScheduleWebhookEndpointGet,
-	} {
-		r.Zarejestruj(typ, func(context.Context, protocol.Request) protocol.Odpowiedz {
-			return porazka(bladNiedostepnegoSilnika(powod))
-		})
-	}
 }

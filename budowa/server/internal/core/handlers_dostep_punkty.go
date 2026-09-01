@@ -69,6 +69,11 @@ func (a *adapterPunktowDostepu) Dodaj(ctx context.Context,
 	}
 	rozlozAdresPunktu(&punkt, z.Host, z.Endpoint)
 	if _, err := a.repozytorium.Dodaj(ctx, punkt); err != nil {
+		// Punkt nie powstał, więc nikt już nie sięgnie po jego sekret; w sejfie
+		// zostałby wpisem bez wiersza, którego nie zdejmie żadna komenda.
+		if odwolanie != nil {
+			usunPoswiadczenie(ctx, a.sejf, kod)
+		}
 		return shared.AccessPointAddResponse{}, odmowaUrzadzeniaPunktu(err)
 	}
 	zapisany, err := a.repozytorium.PoKodzie(ctx, kod)
@@ -78,13 +83,14 @@ func (a *adapterPunktowDostepu) Dodaj(ctx context.Context,
 	return shared.AccessPointAddResponse{Point: punktKontraktu(zapisany)}, nil
 }
 
-// Wykaz zwraca katalog punktów zawężony rodzajem i urządzeniem, pustym
-// wykazem, gdy repozytorium nie jest wpięte.
+// Wykaz zwraca katalog punktów zawężony rodzajem i urządzeniem, a odmowę —
+// gdy repozytorium nie jest wpięte, bo pusty wykaz mówiłby o katalogu bez
+// punktów, nie o katalogu, którego nie ma.
 func (a *adapterPunktowDostepu) Wykaz(ctx context.Context,
 	z shared.AccessPointListRequest) (shared.AccessPointListResponse, error) {
 
 	if a == nil || a.repozytorium == nil {
-		return shared.AccessPointListResponse{Points: []shared.AccessPoint{}}, nil
+		return shared.AccessPointListResponse{}, bladBrakuKatalogu("punktów dostępu")
 	}
 	wiersze, err := a.repozytorium.Lista(ctx, z.EnabledOnly != nil && *z.EnabledOnly)
 	if err != nil {

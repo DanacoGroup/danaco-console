@@ -46,20 +46,40 @@ interface StanPodgladu {
 }
 
 /**
+ * Wzór kartki zdjęty przy pierwszym montażu okna. Powłoka wstawia wnętrze okna
+ * na nowo przy każdym wejściu, a drugie zdjęcie zastałoby obszar stron już
+ * opróżniony, więc wzoru nie da się z niego wziąć po raz drugi.
+ */
+let wzorKartki: HTMLElement | null = null;
+
+/**
+ * Zdejmuje kartkę przykładową obszaru stron, zabierając z niej wzór kartki.
+ * Woła się przy montażu okna, przed powstaniem stanowiska: kartka prototypu
+ * niesie cudzy dokument. Zwraca prawdę, gdy panel stał w dokumencie.
+ */
+export function zdejmijTrescPrzykladowaPodgladu(): boolean {
+  return przygotujPanel() !== null;
+}
+
+/** Zbiera węzły panelu i opróżnia obszar stron z kartki przykładowej; pustka znaczy panel poza dokumentem albo znacznik bez kartki wzorcowej. */
+function przygotujPanel(): { wezly: WezlyPodgladu; wzorStrony: HTMLElement } | null {
+  const znalezione = zbierzWezly();
+  if (znalezione === null) return null;
+  wzorKartki ??= zdejmijWzorStrony(znalezione.podglad);
+  if (wzorKartki === null) return null;
+  znalezione.podglad.replaceChildren();
+  return { wezly: znalezione, wzorStrony: wzorKartki };
+}
+
+/**
  * Wiąże panel podglądu okna Studia z rdzeniem. Zwraca prawdę, gdy znacznik
  * panelu stał i wiązanie zostało założone.
  */
 export function zwiazPodglad(kanal: Kanal, idOkna: string): boolean {
-  const znalezione = zbierzWezly();
-  if (znalezione === null) return false;
-  const wezly: WezlyPodgladu = znalezione;
-  const kartka = zdejmijWzorStrony(wezly.podglad);
-  if (kartka === null) return false;
-  const wzorStrony: HTMLElement = kartka;
-
-  // Kartka przykładowa znika, zanim padnie pierwsza odpowiedź rdzenia: pusty
-  // obszar jest uczciwy, kartka z cudzym dokumentem — nie.
-  wezly.podglad.replaceChildren();
+  const przygotowany = przygotujPanel();
+  if (przygotowany === null) return false;
+  const wezly: WezlyPodgladu = przygotowany.wezly;
+  const wzorStrony: HTMLElement = przygotowany.wzorStrony;
 
   const formaty = Object.values(StudioExportFormat);
   // Nastawa własna odpada ze zbioru skal: znaczy wartość wpisaną przez

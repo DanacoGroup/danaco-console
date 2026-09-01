@@ -1,6 +1,7 @@
 package transport
 
 import (
+	"crypto/subtle"
 	"fmt"
 	"net/http"
 	"strings"
@@ -15,8 +16,31 @@ import (
 // kontrakt nie przewiduje.
 const LimitOdczytu = 16 << 20
 
+const (
+	// limitPolaczen jest górną granicą gniazd stojących naraz. Każde gniazdo to
+	// dwie gorutyny, bufor wyjściowy i ramka do 16 MiB w odczycie, więc rejestr
+	// bez granicy jest drogą wyczerpania pamięci maszyny z jednego procesu.
+	limitPolaczen = 512
+	// limitPolaczenNiezwiazanych ogranicza gniazda, które nie przeszły przez
+	// bramkę. Obowiązuje wyłącznie tam, gdzie bramka stoi: bez wymogu logowania
+	// żadne gniazdo nie jest związane i granica odcięłaby pracę własną.
+	limitPolaczenNiezwiazanych = 64
+)
+
 // Metoda nawiaz przyjmuje żądanie uaktualnienia do WebSocket i prowadzi całe życie połączenia od rejestracji do wykreślenia.
 func (s *Serwer) nawiaz(w http.ResponseWriter, r *http.Request) {
+	// Sekret i granica rejestru rozstrzygają się przed uaktualnieniem gniazda:
+	// po uaktualnieniu odmowa nie ma już postaci kodu HTTP.
+	if !s.sekretZgodny(r) {
+		s.ustawienia.Dziennik.Printf("transport: nawiązanie z %s odrzucone — sekret nawiązania niezgodny", adresZdalny(r))
+		http.Error(w, "sekret nawiązania niezgodny", http.StatusForbidden)
+		return
+	}
+	if powod, pelno := s.brakMiejscaWRejestrze(); pelno {
+		s.ustawienia.Dziennik.Printf("transport: nawiązanie z %s odrzucone — %s", adresZdalny(r), powod)
+		http.Error(w, powod, http.StatusServiceUnavailable)
+		return
+	}
 	gniazdo, err := websocket.Accept(w, r, &websocket.AcceptOptions{
 		OriginPatterns: s.pochodzeniaDozwolone(),
 	})
@@ -43,24 +67,72 @@ func (s *Serwer) nawiaz(w http.ResponseWriter, r *http.Request) {
 	}()
 
 	go polaczenie.petlaWysylki()
+	go polaczenie.petlaPingu()
 	polaczenie.petlaOdbioru(s.kontekst, s.rdzenPodlaczony, s.rejestrKomend, &s.pracaRdzenia, s.ustawienia.dopuszczenie())
+}
+
+// sekretZgodny sprawdza sekret nawiązania podawany przez powłokę. Sekret
+// niewskazany znaczy sprawdzenie niepodniesione — nie ma z czym porównywać.
+// Porównanie idzie czasem stałym, bo różnica czasu odpowiedzi wystarcza do
+// odgadnięcia sekretu bajt po bajcie.
+func (s *Serwer) sekretZgodny(r *http.Request) bool {
+	oczekiwany := s.ustawienia.SekretNawiazania
+	if oczekiwany == "" {
+		return true
+	}
+	podany := r.URL.Query().Get(ParametrSekretu)
+	if podany == "" {
+		podany = r.Header.Get(NaglowekSekretu)
+	}
+	return subtle.ConstantTimeCompare([]byte(podany), []byte(oczekiwany)) == 1
+}
+
+// brakMiejscaWRejestrze nazywa granicę, o którą opiera się nawiązanie, albo
+// milczy. Granica gniazd niezwiązanych liczy się tylko przy bramce stojącej,
+// bo bez wymogu logowania niezwiązane są wszystkie.
+func (s *Serwer) brakMiejscaWRejestrze() (string, bool) {
+	stojace := s.polaczenia.wszystkie()
+	if len(stojace) >= limitPolaczen {
+		return fmt.Sprintf("rejestr połączeń pełny (%d z %d)", len(stojace), limitPolaczen), true
+	}
+	if !s.ustawienia.dopuszczenie().wymagana {
+		return "", false
+	}
+	stan, zna := s.rdzenPodlaczony().(StanBramki)
+	if !zna {
+		return "", false
+	}
+	niezwiazane := 0
+	for _, p := range stojace {
+		if !stan.PolaczenieZwiazane(p.Id()) {
+			niezwiazane++
+		}
+	}
+	if niezwiazane >= limitPolaczenNiezwiazanych {
+		return fmt.Sprintf("gniazda przed bramką zajęły granicę (%d z %d)",
+			niezwiazane, limitPolaczenNiezwiazanych), true
+	}
+	return "", false
 }
 
 // pochodzeniaWlasne to wzorce Origin, którymi przedstawia się własny interfejs
 // produktu w powłoce i przeglądarce. Biblioteka gniazda dopasowuje wyłącznie
 // GOSPODARZA nagłówka Origin — schemat zdejmuje przed dopasowaniem — więc
 // wzorzec ze schematem nie zgadza się nigdy z niczym.
+// Wzorców z portem dowolnym tu nie ma: pod `127.0.0.1:*` mieści się każdy
+// nasłuch tej maszyny, w tym podgląd warstwy Apps, którego stronę pisze model —
+// skrypt takiej strony otwierałby gniazdo z pełnym wykazem komend. Interfejs
+// podawany przez sam rdzeń przechodzi bez wzorca, bo gospodarz nagłówka Origin
+// jest wtedy gospodarzem żądania; pochodzenia pracy deweloperskiej (serwer Vite)
+// wskazuje wykaz z nastaw.
 var pochodzeniaWlasne = []string{
 	// Powłoka desktopowa podaje stronę z pakietu: Windows przedstawia ją
 	// gospodarzem `tauri.localhost`, pozostałe platformy — `localhost` bez portu.
 	"tauri.localhost",
 	"localhost",
 	"127.0.0.1",
-	"localhost:*",
-	"127.0.0.1:*",
 	// Pętla zwrotna ma dwa adresy; ukośnik zdejmuje nawiasowi znaczenie klasy znaków we wzorcu.
 	`\[::1\]`,
-	`\[::1\]:*`,
 }
 
 // Metoda pochodzeniaDozwolone składa wykaz wzorców Origin dla biblioteki gniazda z wzorców własnych i wskazanych.

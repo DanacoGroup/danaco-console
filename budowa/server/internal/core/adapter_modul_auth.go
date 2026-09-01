@@ -6,6 +6,7 @@ package core
 import (
 	"context"
 	"errors"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -58,13 +59,13 @@ type adapterUwierzytelnienia struct {
 
 	// dlawik spowalnia zgadywanie sekretu zwłoką rosnącą po niepowodzeniach
 	// i zerowaną udanym wejściem.
-	dlawik *dlawikWejscia
+	dlawik *dlawikDrog
 }
 
 // nowyAdapterUwierzytelnienia składa adapter bramki nad repozytorium
 // uwierzytelnienia i zakłada dławik ograniczający tempo prób wejścia.
 func nowyAdapterUwierzytelnienia(repozytorium dane.RepozytoriumUwierzytelnienia) *adapterUwierzytelnienia {
-	return &adapterUwierzytelnienia{repozytorium: repozytorium, dlawik: nowyDlawikWejscia()}
+	return &adapterUwierzytelnienia{repozytorium: repozytorium, dlawik: nowyDlawikDrog()}
 }
 
 // ZSejfem wpina magazyn sekretów do adaptera; bez wpiętego sejfu żadna
@@ -232,9 +233,9 @@ func (a *adapterUwierzytelnienia) WejdzPrzezBramke(ctx context.Context,
 		return shared.AuthLoginResponse{}, err
 	}
 	// Zwłoka nakłada się przed sprawdzeniem sekretu, żeby czas odpowiedzi nie
-	// zdradzał wyniku.
-	droga := drogaWejscia(string(z.Method), wartoscTekstu(z.DeviceId))
-	a.dlawik.Zaczekaj(ctx, droga)
+	// zdradzał wyniku, i trzyma drogę zajętą do rozstrzygnięcia próby.
+	proba := a.dlawik.Podejdz(ctx, kluczDlawika(ctx, czynnoscWejscia, konto.Id))
+	defer proba.Zwolnij()
 
 	metoda, err := a.metodaWejscia(ctx, z, konto)
 	if err != nil {
@@ -251,7 +252,7 @@ func (a *adapterUwierzytelnienia) WejdzPrzezBramke(ctx context.Context,
 	if !zgadza {
 		// Nieudana próba podnosi zwłokę następnej; ta odpowiada od razu, bo
 		// wynik już jest znany.
-		a.dlawik.Niepowodzenie(droga)
+		proba.Niepowodzenie()
 		// Sekret niezgodny to nieudane wejście, nie wadliwe żądanie, więc kod
 		// jest not_authenticated.
 		return shared.AuthLoginResponse{}, bladBramki(shared.ErrorCodeNotAuthenticated,
@@ -259,7 +260,7 @@ func (a *adapterUwierzytelnienia) WejdzPrzezBramke(ctx context.Context,
 	}
 	// Wejście udane zeruje licznik zwłoki, więc kolejne pomyłki liczą się
 	// od nowa.
-	a.dlawik.Wyzeruj(droga)
+	proba.Wyzeruj()
 	if err := a.repozytorium.OdnotujUzycie(ctx, metoda.Kod, time.Now().UnixMilli()); err != nil {
 		return shared.AuthLoginResponse{}, err
 	}
@@ -269,11 +270,21 @@ func (a *adapterUwierzytelnienia) WejdzPrzezBramke(ctx context.Context,
 	if urzadzenie == nil {
 		urzadzenie = metoda.UrzadzenieKod
 	}
-	sesja, err := a.zalozSesje(ctx, metoda.Rodzaj, urzadzenie, wartoscPrawdy(z.KeepSignedIn), konto.Id)
+	/* Konto sesji wskazuje metoda, o ile je niesie: PIN należy do urządzenia
+	   i loginu nie niesie, więc bez tego wskazania wejście PIN-em zakładałoby
+	   sesję konta najstarszego, czyli cudzą. */
+	kontoSesji := konto.Id
+	if metoda.KontoId != 0 {
+		kontoSesji = metoda.KontoId
+	}
+	sesja, err := a.zalozSesje(ctx, metoda.Rodzaj, urzadzenie, wartoscPrawdy(z.KeepSignedIn), kontoSesji)
 	if err != nil {
 		return shared.AuthLoginResponse{}, err
 	}
-	metody, err := a.MetodyWejscia(ctx)
+	/* Wykaz metod idzie kontem, które właśnie weszło: rozpoznanie połączenia
+	   stanęło przed tym logowaniem, więc kontekst żądania niesie jeszcze stan
+	   sprzed wejścia. */
+	metody, err := a.MetodyWejscia(dane.ZKontemOperatora(ctx, kontoSesji))
 	if err != nil {
 		return shared.AuthLoginResponse{}, err
 	}
@@ -355,9 +366,15 @@ const odmowaHello = "metoda hello (Windows Hello przez WebAuthn) nie jest zbudow
 	"platformy na serwerze, a WebAuthn i tak wywodzi rp_id z pochodzenia dokumentu — " +
 	"pod http://127.0.0.1 poprawnego rp_id nie ma. Dziś działają hasło i PIN"
 
-// MetodyWejscia oddaje komplet metod w kształcie kontraktu. Zasila odpowiedzi
-// trzech komend i ładunek zdarzenia `auth.changed`.
+// MetodyWejscia oddaje komplet metod konta wołającego w kształcie kontraktu.
+// Zasila odpowiedzi trzech komend i ładunek zdarzenia `auth.changed`.
+//
+// Bez rozpoznanego konta wykaz jest pusty, nie pełny: niesie etykiety, kody
+// metod i nazwy urządzeń, a po samym kodzie metodę da się zdjąć.
 func (a *adapterUwierzytelnienia) MetodyWejscia(ctx context.Context) ([]shared.AuthMethod, error) {
+	if dane.KontoOperatora(ctx) == 0 {
+		return []shared.AuthMethod{}, nil
+	}
 	wiersze, err := a.repozytorium.Metody(ctx)
 	if err != nil {
 		return nil, err
@@ -384,11 +401,43 @@ func (a *adapterUwierzytelnienia) gotowa() error {
 	return nil
 }
 
-// kotwica zwraca hasło bramki. Wynik `dane.ErrBrakWiersza` przechodzi bez
-// przekładu — wołający rozstrzyga, czy brak kotwicy jest tu odmową, czy zgodą.
-func (a *adapterUwierzytelnienia) kotwica(ctx context.Context) (dane.MetodaUwierzytelnienia, error) {
-	return a.repozytorium.Kotwica(ctx)
+// kotwicaKonta zwraca hasło wskazanego konta. Wynik `dane.ErrBrakWiersza`
+// przechodzi bez przekładu — wołający rozstrzyga, czy brak kotwicy jest tu
+// odmową, czy zgodą.
+//
+// Konto podaje się zawsze, także zerem: kotwicy bez wskazania konta nie ma,
+// bo hasło należy do konta, a nie do platformy.
+func (a *adapterUwierzytelnienia) kotwicaKonta(ctx context.Context,
+	kontoId int64) (dane.MetodaUwierzytelnienia, error) {
+
+	return a.repozytorium.KotwicaKonta(ctx, kontoId)
 }
+
+/*
+kontoWolajacego oddaje konto, do którego należy żądanie. Rozpoznanie stawia
+rdzeń z sesji bramki związanej z gniazdem — tutaj zostaje sam odczyt.
+
+Zero jest odmową nazwaną, nie wartością zastępczą: czynność, która zmienia
+metodę wejścia albo hasło, musi wiedzieć, czyje one są, a zgadnięcie „konto
+najstarsze" oddawało bramkę Właściciela pierwszemu, kto o nią poprosił.
+*/
+func kontoWolajacego(ctx context.Context) (int64, error) {
+	kontoId := dane.KontoOperatora(ctx)
+	if kontoId == 0 {
+		return 0, bladBramki(shared.ErrorCodeNotAuthenticated,
+			"Nie wiadomo, czyje jest to połączenie — zaloguj się ponownie.")
+	}
+	return kontoId, nil
+}
+
+// czynnoscWejscia i czynnoscDrogi nazywają dwie drogi dławika: wejście sekretem
+// i wpisanie kodu z listu. Osobne, bo zgadywanie jednego nie ma opóźniać
+// drugiego — Operator, któremu ktoś obcy dławi logowanie, ma dalej móc
+// potwierdzić adres.
+const (
+	czynnoscWejscia = "wejscie"
+	czynnoscDrogi   = "droga"
+)
 
 // zalozMetode kładzie sekret w sejfie i dopiero potem wstawia wiersz metody,
 // żeby wiersz nie wskazywał na nieistniejący sekret; nieudane wstawienie
@@ -492,4 +541,132 @@ func trwanieWejscia(niewylogowuj bool) time.Duration {
 		return trwanieSesjiBramkiDlugie
 	}
 	return trwanieSesjiBramki
+}
+
+// ── dławik prób ──────────────────────────────────────────────────────────────
+
+// wygasanieDrogiDlawika — po tym czasie bez próby wpis drogi znika wraz z jej
+// licznikiem. Mapa bez wygaszania rośnie o wpis na każde połączenie i każde
+// konto przez całe życie procesu.
+const wygasanieDrogiDlawika = 15 * time.Minute
+
+/*
+dlawikDrog nakłada zwłokę na próby zgadywania sekretu i kodu z listu.
+
+Klucz drogi nie pochodzi z żądania: każda wartość podana przez proszącego —
+`deviceId` na czele — zakłada przy podmianie drogę nową, z licznikiem od zera,
+więc zwłoka nie obowiązuje nikogo. Kluczem jest wskazane konto albo połączenie,
+czyli to, czego proszący sam nie podmienia.
+
+Zwłoka nakłada się pod zamkiem drogi. Próby puszczone naraz czekają inaczej
+wspólnie tyle, ile jedna, i cała zwłoka sprowadza się do jednego odstępu.
+*/
+type dlawikDrog struct {
+	licznik *dlawikWejscia
+
+	zamek sync.Mutex
+	drogi map[string]*drogaDlawiona
+}
+
+// drogaDlawiona to jedna droga prób: zamek szeregujący próby i chwila ostatniej
+// z nich, po której wpis wygasa.
+type drogaDlawiona struct {
+	zamek    sync.Mutex
+	wZajeciu int
+	ostatnia time.Time
+}
+
+// zajecieDrogi jest uchwytem próby trwającej. Wołający oddaje go zawsze —
+// zwolnienie zdejmuje zamek drogi, a rozstrzygnięcie próby idzie osobno.
+type zajecieDrogi struct {
+	dlawik *dlawikDrog
+	klucz  string
+	droga  *drogaDlawiona
+}
+
+// nowyDlawikDrog zakłada dławik z pustą mapą dróg.
+func nowyDlawikDrog() *dlawikDrog {
+	return &dlawikDrog{licznik: nowyDlawikWejscia(), drogi: map[string]*drogaDlawiona{}}
+}
+
+// Podejdz zajmuje drogę i nakłada należną jej zwłokę. Wraca dopiero wtedy, gdy
+// próba wolno się rozstrzygnąć.
+func (d *dlawikDrog) Podejdz(ctx context.Context, klucz string) zajecieDrogi {
+	if d == nil {
+		return zajecieDrogi{}
+	}
+	teraz := time.Now()
+	d.zamek.Lock()
+	d.wygas(teraz)
+	droga, jest := d.drogi[klucz]
+	if !jest {
+		droga = &drogaDlawiona{}
+		d.drogi[klucz] = droga
+	}
+	droga.wZajeciu++
+	droga.ostatnia = teraz
+	d.zamek.Unlock()
+
+	droga.zamek.Lock()
+	d.licznik.Zaczekaj(ctx, klucz)
+	return zajecieDrogi{dlawik: d, klucz: klucz, droga: droga}
+}
+
+// Zwolnij oddaje drogę następnej próbie.
+func (z zajecieDrogi) Zwolnij() {
+	if z.dlawik == nil {
+		return
+	}
+	z.droga.zamek.Unlock()
+	z.dlawik.zamek.Lock()
+	defer z.dlawik.zamek.Unlock()
+	z.droga.wZajeciu--
+	z.droga.ostatnia = time.Now()
+}
+
+// Niepowodzenie podnosi zwłokę należną próbie następnej na tej samej drodze.
+func (z zajecieDrogi) Niepowodzenie() {
+	if z.dlawik == nil {
+		return
+	}
+	z.dlawik.licznik.Niepowodzenie(z.klucz)
+}
+
+// Wyzeruj kasuje licznik drogi; woła się po próbie udanej, nie po każdej.
+func (z zajecieDrogi) Wyzeruj() {
+	if z.dlawik == nil {
+		return
+	}
+	z.dlawik.licznik.Wyzeruj(z.klucz)
+}
+
+// wygas zdejmuje drogi bez próby dłużej niż wygasanieDrogiDlawika. Droga zajęta
+// zostaje: jej próba właśnie trwa. Wołane pod zamkiem dławika.
+func (d *dlawikDrog) wygas(teraz time.Time) {
+	for klucz, droga := range d.drogi {
+		if droga.wZajeciu > 0 || teraz.Sub(droga.ostatnia) < wygasanieDrogiDlawika {
+			continue
+		}
+		delete(d.drogi, klucz)
+		d.licznik.Wyzeruj(klucz)
+	}
+}
+
+/*
+kluczDlawika składa drogę licznika z czynności i z tego, kogo próba dotyczy.
+
+Konto wskazane żądaniem jest tu wartością pewną — rdzeń odczytał je z bazy,
+zanim doszło do sprawdzenia sekretu. Gdy czynność konta jeszcze nie zna, zostaje
+tożsamość połączenia nadana przez transport. Żądanie spoza gniazda ma jedną
+drogę wspólną: praca wewnętrzna rdzenia nie zgaduje sekretów, a rozdzielenie jej
+na drogi wymagałoby wartości, której nie ma.
+*/
+func kluczDlawika(ctx context.Context, czynnosc string, kontoId int64) string {
+	if kontoId != 0 {
+		return czynnosc + "\x00konto:" + strconv.FormatInt(kontoId, 10)
+	}
+	if polaczenie := polaczenieZKontekstu(ctx); polaczenie != "" {
+		return czynnosc + "\x00polaczenie:" + polaczenie
+	}
+	return czynnosc + "\x00bez zrodla"
 }

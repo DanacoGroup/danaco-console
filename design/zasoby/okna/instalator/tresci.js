@@ -96,7 +96,7 @@ window.DanacoKreator.tresci = {
     "katalogDanych": {
       "etykieta": "Katalog danych",
       "wartosc": "%LOCALAPPDATA%\\DanacoConsole",
-      "opis": "Lokalizacja projektów, ustawień i dzienników pracy. Katalog ustala sam program i instalacja go nie zmienia. Dane pozostają na dysku po odinstalowaniu programu."
+      "opis": "Lokalizacja projektów, ustawień i dzienników pracy. Wskazany tu katalog zapisuje instalacja, a program czyta go przy starcie. Dane pozostają na dysku po odinstalowaniu programu."
     },
     "zmien": "Zmień…",
     "miejsce": "Wymagane miejsce: {wymagane}",

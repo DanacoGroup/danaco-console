@@ -93,10 +93,9 @@ function wiazKrok4(stan) {
   }
 
   wiazZmienPrzycisk('katalog-programu', blokSprawdzenia);
-  /* Katalog danych składa sobie sam program z profilu Operatora i nie czyta
-     znikąd innego wskazania, więc instalacja nie ma czym wyboru spełnić —
-     pole zostaje odczytem, a czynność „Zmień…" schodzi z okna. */
-  zdejmijZmienPrzycisk('katalog-danych');
+  /* Wskazanie katalogu danych idzie do `zaloz_program`, które zapisuje je obok
+     programu w pliku czytanym przez powłokę przy starcie. */
+  wiazZmienPrzycisk('katalog-danych', null);
 }
 
 function ustawPole(id, wartosc, odmowaTekst) {
@@ -121,11 +120,6 @@ function wiazZmienPrzycisk(id, blokSprawdzenia) {
       if (blokSprawdzenia) ustawWynikSprawdzenia(blokSprawdzenia, wynik);
     });
   });
-}
-
-function zdejmijZmienPrzycisk(id) {
-  var przycisk = przyciskPola(id);
-  if (przycisk) przycisk.remove();
 }
 
 function odswiezSprawdzenie(sciezka, blok) {
@@ -176,12 +170,18 @@ if (TAURI && TAURI.event && TAURI.event.listen) {
   });
 }
 
-/** Katalog docelowy wskazany w kroku 4; pusty znaczy, że kroku nie wypełniono. */
-function katalogDocelowy() {
-  var pole = document.getElementById('katalog-programu');
+/** Wartość pola ścieżki z kroku 4; odmowa odczytu maszyny liczy się jak pole puste. */
+function wartoscPola(id) {
+  var pole = document.getElementById(id);
   var wartosc = pole ? pole.value.trim() : '';
   return wartosc.indexOf('Odmowa:') === 0 ? '' : wartosc;
 }
+
+/** Katalog docelowy wskazany w kroku 4; pusty znaczy, że kroku nie wypełniono. */
+function katalogDocelowy() { return wartoscPola('katalog-programu'); }
+
+/** Katalog danych z kroku 4; pusty zostawia powłoce jej katalog domyślny. */
+function katalogDanych() { return wartoscPola('katalog-danych'); }
 
 /** Wersja wybrana w kroku 3; wykrycie maszyny jest tam tylko zaznaczeniem domyślnym. */
 function wybranaArchitektura() {
@@ -207,7 +207,9 @@ var RADY = {
   'architektura-nierozpoznana': 'Wróć do kroku trzeciego i wskaż wersję programu.',
   'instalka-nie-ruszyla': 'Uruchom instalację ponownie jako administrator.',
   'instalka-odmowila': 'Zamknij otwarte okna Danaco Console i uruchom instalację ponownie.',
-  'program-nieodnaleziony': 'Wróć do kroku czwartego i wskaż katalog, do którego wolno zapisywać.'
+  'program-nieodnaleziony': 'Wróć do kroku czwartego i wskaż katalog, do którego wolno zapisywać.',
+  'katalog-danych-niezapisany': 'Uruchom instalację ponownie jako administrator albo wróć do kroku '
+    + 'czwartego i pozostaw katalog danych domyślny.'
 };
 
 /** Wpisuje powód odmowy wraz z radą w blok błędu kroku 5 i oddaje go odsłonie błędu. */
@@ -265,12 +267,14 @@ function przebiegKroku5(bieg) {
     bieg.postep(MIARA_ZAKLADANIE);
     return invoke('zaloz_program', {
       plikInstalki: pobrane.plik_instalki,
-      katalogProgramu: katalog
+      katalogProgramu: katalog,
+      katalogDanych: katalogDanych() || null
     });
   }).then(function (wynik) {
     odlacz();
     zalozone = wynik;
     opiszWiersz('lokalizacja', wynik.katalog_programu);
+    opiszKatalogDanych(wynik.katalog_danych);
     bieg.postep(1);
     bieg.koniec();
   }).catch(function (blad) {
@@ -283,20 +287,34 @@ function przebiegKroku5(bieg) {
 /* ——— Krok 6: podsumowanie mówi to, co naprawdę stanęło ————————————————
    Wiersze podsumowania rozpoznaje się po etykiecie z katalogu treści, bo blok
    danych nie znakuje ich atrybutem, a kolejność w bloku nie jest umową. */
+function wierszKroku6(etykieta) {
+  var ekran = document.querySelector('.dn-kreator-ekran[data-ekran="6"]');
+  var wiersze = ekran ? ekran.querySelectorAll('.dn-zestawienie') : [];
+  for (var i = 0; i < wiersze.length; i++) {
+    var podpis = wiersze[i].querySelector('span');
+    if (podpis && wiersze[i].querySelector('b') && podpis.textContent === etykieta) return wiersze[i];
+  }
+  return null;
+}
+
 function opiszWiersz(nazwaPola, wartosc) {
   var szczegoly = (K && K.tresci && K.tresci.krok6 && K.tresci.krok6.szczegoly) || {};
   var pole = szczegoly[nazwaPola];
-  var ekran = document.querySelector('.dn-kreator-ekran[data-ekran="6"]');
-  if (!pole || !pole.etykieta || !ekran || !wartosc) return;
-  var wiersze = ekran.querySelectorAll('.dn-zestawienie');
-  for (var i = 0; i < wiersze.length; i++) {
-    var podpis = wiersze[i].querySelector('span');
-    var miejsce = wiersze[i].querySelector('b');
-    if (podpis && miejsce && podpis.textContent === pole.etykieta) {
-      miejsce.textContent = wartosc;
-      return;
-    }
-  }
+  var w = pole && pole.etykieta && wartosc ? wierszKroku6(pole.etykieta) : null;
+  if (w) w.querySelector('b').textContent = wartosc;
+}
+
+/* Katalog danych nie ma wiersza w katalogu treści kroku 6 — wchodzi za wierszem
+   lokalizacji z etykietą pola kroku 4, w ten sam układ wykazu. */
+function opiszKatalogDanych(wartosc) {
+  var tresci = (K && K.tresci) || {};
+  var etykieta = tresci.krok4 && tresci.krok4.katalogDanych && tresci.krok4.katalogDanych.etykieta;
+  var lokalizacja = tresci.krok6 && tresci.krok6.szczegoly && tresci.krok6.szczegoly.lokalizacja;
+  if (!etykieta || !lokalizacja || !wartosc) return;
+  var istniejacy = wierszKroku6(etykieta);
+  if (istniejacy) { istniejacy.querySelector('b').textContent = wartosc; return; }
+  var poprzedni = wierszKroku6(lokalizacja.etykieta);
+  if (poprzedni) poprzedni.insertAdjacentElement('afterend', wiersz(etykieta, wartosc));
 }
 
 /** Ogłoszenie kroku 6 wchodzi we frazę nawigacyjną — jedyny obszar `aria-live` tego ekranu. */

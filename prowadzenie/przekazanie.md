@@ -147,6 +147,40 @@ w katalogu danych przy pierwszym użyciu. Sprawdzian
 zmienna ma wskazać plik poza katalogiem danych — to wchodzi z wdrożeniem
 (rozdział 5.1, jednostka systemd i `/etc/danaco-console/srodowisko`).
 
+### 5.0a Wdrożenie z 1/2 września — co stoi i czego pilnować
+
+Rdzeń po naprawach stoi na danaco-system w obu usługach (`danaco-console` 17870,
+`danaco-console-studio` 17871): `komend=1086`, `55 z 55`, wymóg logowania włączony,
+klucz sejfu ze zmiennej (`/etc/danaco-console/sejf.klucz`, dla Studia `sejf-studio.klucz`
+przez drop-in `danaco-console-studio.service.d/bramka.conf`). Podgląd na 51.75.62.180
+ma ten sam rdzeń. Wydanie 2.0.0 z 1 września leży w kanale pod `/pliki/2.0.0-2026-09-01/`
+i jest wykazane w Windows z pliku pobranego z kanału: kreator (6 597 632 B, samodzielny,
+cel `msvc`) → sześć kroków → założona powłoka (2 598 033 B, `https://console.danaco-group.pl:443`)
+→ start z kroku 6 → `przyłączenie` w dzienniku danaco-system → po restarcie rdzenia aplikacja
+wraca sama (`przyłączenie` sekundę po `serwer gotowy`).
+
+**Dwie rzeczy, które o mało nie położyły wdrożenia — obie czekają na naprawę w kodzie:**
+
+1. **Baza wdrożenia idzie inną linią numeracji migracji.** Powstała 18–19.08 rdzeniem
+   wersji poprzedniej: jej wiersze 406–480 nazywają się `awatar_konta_wlasciciela`,
+   `rejestr_urzadzen_konta`, `katalog_okna_ustawien`… i nie odpowiadają krokom
+   repozytorium. Nowe kroki dołożone przy naprawach jako 408 i 409 zderzyły się z jej 408 —
+   przemianowane na **481 i 482** (rewizja `7f5e5730`). Każdy następny krok ma numer
+   wyższy od 482. Bazy podglądu i Studia, które dziś zdążyły przyjąć 408/409 pod nową
+   treścią, cofnięto ręcznie (usunięte wiersze, kolumny `proby` i `klucz_hosta`, indeks);
+   kopie `*.bak-2026-09-01-2345` leżą obok.
+2. **`uzgodnijSumyKontrolne` w `store/migracje.go` przepisuje sumy po numerze, nie po treści.**
+   Przy pierwszym starcie z `PRAGMA user_version = 0` każda zastosowana wersja dostaje sumę
+   z bieżącego repozytorium — także wtedy, gdy krok o tym numerze ma zupełnie inną treść.
+   Tak baza wdrożenia „miała" kroki 406/407 (`konto_id` w tabelach bramki i kart sesji),
+   których DDL nigdy na niej nie wykonano; rdzeń padał na 481 (`no such column: konto_id`).
+   DDL kroków 406 i 407 wykonano na tej bazie **ręcznie** (kopia `danaco-console.db.bak-2026-09-01-2340`
+   w `/var/lib/danaco-console/`). Uzgodnienie sum ma porównywać nazwę kroku, nie sam numer,
+   a rozjazd nazwy ma być odmową startu — to wchodzi do audytu powtórnego jako ustalenie.
+
+Stan kanału: `zmierz.mjs --sprawdz` — rozjazdów 0; pozycja `serwer` (pakiet `.deb` z 18.08 za
+hasłem) wciąż bez pliku na dysku i bez rozstrzygnięcia (audyt, rozdział 5, pozycja 4).
+
 ### 5.1 Scalenie
 
 Osiemdziesiąt sześć zgłoszeń „poza terenem" to miejsca, których teren nie mógł tknąć, bo plik należał

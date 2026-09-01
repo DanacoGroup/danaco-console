@@ -4,11 +4,12 @@
  * jest bieżąca. Bez tego wskazania każde wejście w moduł zakładałoby kartę
  * nową, a praca Operatora nie miałaby dokąd wracać.
  */
-
 import { Command, type Window } from '../../../shared/contract.ts';
 import type { Kanal } from '../protokol/kanal.ts';
 import { tozsamoscKlienta } from '../protokol/tozsamosc-klienta.ts';
 import { wywolaj } from '../protokol/wywolanie.ts';
+import { oglos } from './ogloszenie.ts';
+import { odtworzOknaRobocze } from './okna-robocze.ts';
 
 let biezaca = '';
 /* Środowisko, przez które Operator wszedł do pracy. Sesja zakładana pierwszą
@@ -75,12 +76,25 @@ export async function zalozSesje(kanal: Kanal, nazwa: string): Promise<string> {
 }
 
 /**
- * Przejmuje kartę ogniskowaną przez rdzeń przy wejściu na stronę główną.
- * Rdzeń pamięta, gdzie Operator skończył — klient wraca tam, a nie do pustki.
+ * Przejmuje przy wejściu na stronę główną stan, który rdzeń prowadzi za
+ * Operatora: kartę ogniskowaną, sesje czynne konta i ich żywy odpis. Z sesji
+ * i ich okien odtwarza się wykaz okien roboczych — klient nie zapisuje go
+ * nigdzie sam, bo kontrakt nie ma na niego pola.
  */
 export async function przejmijOgnisko(kanal: Kanal): Promise<void> {
   const wynik = await wywolaj(kanal, Command.HomeEnter, { clientId: tozsamoscKlienta().id });
-  if (!wynik.udany || wynik.wynik === undefined) return;
+  if (!wynik.udany || wynik.wynik === undefined) {
+    oglos('Strona główna', wynik.blad?.message
+      ?? 'Rdzeń odmówił wejścia na stronę główną — sesje i okna robocze zostają puste.', 'blad');
+    return;
+  }
   const ogniskowana = wynik.wynik.focusedSessionId ?? '';
   if (ogniskowana !== '') biezaca = ogniskowana;
+  const odtworzone = await odtworzOknaRobocze(
+    kanal, wynik.wynik.sessions, wynik.wynik.presence ?? [], ogniskowana,
+  );
+  if (!odtworzone) {
+    oglos('Okna robocze', 'Rdzeń nie podał okien komunikacji — przełącznik okien '
+      + 'wstaje pusty, choć praca w sesjach mogła zostać.', 'ostrzezenie');
+  }
 }

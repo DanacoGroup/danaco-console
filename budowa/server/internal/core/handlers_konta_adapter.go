@@ -73,7 +73,7 @@ func (a *adapterKont) Dodaj(ctx context.Context, z shared.AccountAddRequest) (sh
 // poświadczeń wykaz nie niesie w żadnej postaci.
 func (a *adapterKont) Wykaz(ctx context.Context, z shared.AccountListRequest) (shared.AccountListResponse, error) {
 	if a == nil || a.repozytorium == nil {
-		return shared.AccountListResponse{Accounts: []shared.Account{}}, nil
+		return shared.AccountListResponse{}, bladBrakuKatalogu("kont")
 	}
 	wiersze, err := a.repozytorium.Lista(ctx, dane.FiltrKont{
 		Rodzaj: z.Kind, TylkoAktywne: z.EnabledOnly != nil && *z.EnabledOnly,
@@ -116,7 +116,7 @@ func (a *adapterKont) Zmien(ctx context.Context, z shared.AccountUpdateRequest) 
 // nie jest błędem — wynik mówi wtedy, że nic nie usunięto.
 func (a *adapterKont) Usun(ctx context.Context, z shared.AccountRemoveRequest) (shared.AccountRemoveResponse, error) {
 	if a == nil || a.repozytorium == nil {
-		return shared.AccountRemoveResponse{Removed: false}, nil
+		return shared.AccountRemoveResponse{}, bladBrakuKatalogu("kont")
 	}
 	konto, err := a.konto(ctx, z.AccountId)
 	if brakWiersza(err) {

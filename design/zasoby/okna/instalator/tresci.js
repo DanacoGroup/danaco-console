@@ -36,7 +36,7 @@ window.DanacoKreator.tresci = {
     "akapit2": "Kolejne kroki obejmują akceptację warunków licencji, wybór wersji programu zgodnej z procesorem oraz wskazanie katalogu instalacji.",
     "wymagania": {
       "naglowek": "Wymagania i parametry instalacji",
-      "wersja": { "etykieta": "Wersja programu", "wartosc": "2.0 (kompilacja 2026.08)" },
+      "wersja": { "etykieta": "Wersja programu", "wartosc": "2.0.0" },
       "system": { "etykieta": "Wymagany system", "wartosc": "Windows 11 w wersji 22H2 lub nowszej" },
       "procesor": { "etykieta": "Obsługiwane procesory", "wartosc": "Intel, AMD, ARM" },
       "miejsce": { "etykieta": "Wymagane miejsce", "wartosc": "ok. 250 MB" },
@@ -95,8 +95,8 @@ window.DanacoKreator.tresci = {
     },
     "katalogDanych": {
       "etykieta": "Katalog danych",
-      "wartosc": "%APPDATA%\\Danaco Console",
-      "opis": "Lokalizacja projektów, ustawień i dzienników pracy. Dane pozostają na dysku po odinstalowaniu programu."
+      "wartosc": "%LOCALAPPDATA%\\DanacoConsole",
+      "opis": "Lokalizacja projektów, ustawień i dzienników pracy. Katalog ustala sam program i instalacja go nie zmienia. Dane pozostają na dysku po odinstalowaniu programu."
     },
     "zmien": "Zmień…",
     "miejsce": "Wymagane miejsce: {wymagane}",
@@ -118,15 +118,15 @@ window.DanacoKreator.tresci = {
     "nadtytul": "Krok 5 z 6",
     "przebieg": {
       "tytul": "Instalowanie programu Danaco Console",
-      "podtytul": "Zamknięcie okna przerwie instalację i cofnie wprowadzone zmiany."
+      "podtytul": "Zamknięcie okna przerwie instalację."
     },
     "wycofywanie": {
-      "tytul": "Cofanie zmian",
-      "podtytul": "Instalator usuwa pliki i wpisy utworzone podczas instalacji."
+      "tytul": "Przerywanie instalacji",
+      "podtytul": "Instalator kończy pracę. Pliki pobrane do tej pory zostają na dysku."
     },
     "blad": {
       "tytul": "Nie udało się ukończyć instalacji",
-      "podtytul": "Zmiany zostały cofnięte — w komputerze nie pozostały pliki programu.",
+      "podtytul": "Instalacja zatrzymała się przed ukończeniem. Powód odmowy stoi poniżej.",
       "szczegoly": "",
       "rada": "Uruchom instalator ponownie. Jeżeli błąd się powtórzy, uruchom go jako administrator."
     },
@@ -136,21 +136,20 @@ window.DanacoKreator.tresci = {
     "etapy": [
       {
         "nazwa": "Sprawdzanie wymagań",
-        "opis": "Weryfikacja wersji systemu, architektury procesora i miejsca na dysku."
+        "opis": "Sprawdzenie katalogu docelowego i odpowiedzi serwera wydań."
       },
       {
-        "nazwa": "Rozpakowywanie plików",
-        "opis": "Zapis plików programu w katalogu docelowym.",
-        "licznik": { "czasownik": "Rozpakowano", "jednostka": "MB" }
+        "nazwa": "Pobieranie składników",
+        "opis": "Pobranie powłoki programu z kanału wydań Danaco.",
+        "licznik": { "czasownik": "Pobrano", "jednostka": "MB" }
       },
       {
-        "nazwa": "Rejestrowanie składników",
-        "opis": "Rejestracja bibliotek i skojarzeń plików w systemie.",
-        "licznik": { "czasownik": "Zarejestrowano", "rzecz": "składników" }
+        "nazwa": "Sprawdzenie sumy kontrolnej",
+        "opis": "Porównanie SHA-256 pobranego pliku z wykazem wydań."
       },
       {
-        "nazwa": "Weryfikacja podpisu",
-        "opis": "Kontrola integralności zainstalowanych plików."
+        "nazwa": "Zakładanie programu",
+        "opis": "Zapis plików programu w katalogu wskazanym w kroku czwartym."
       }
     ],
     "numerEtapu": "Etap {numer} z {ile}"
@@ -173,7 +172,7 @@ window.DanacoKreator.tresci = {
     "szczegoly": {
       "naglowek": "Szczegóły instalacji",
       "lokalizacja": { "etykieta": "Lokalizacja", "wartosc": "%LOCALAPPDATA%\\Programs\\Danaco Console" },
-      "wersja": { "etykieta": "Wersja programu", "wartosc": "2.0 (kompilacja 2026.08)" },
+      "wersja": { "etykieta": "Wersja programu", "wartosc": "2.0.0" },
       "procesor": { "etykieta": "Procesor" }
     },
     "przewodnik": {
@@ -204,7 +203,7 @@ window.DanacoKreator.tresci = {
     },
     "anulowanie": {
       "tytul": "Anulować instalację?",
-      "tresc": "Instalacja nie zostanie ukończona. Instalator cofnie zmiany wprowadzone do tej pory, więc w komputerze nie pozostaną pliki programu.",
+      "tresc": "Instalacja nie zostanie ukończona. Pliki pobrane do tej pory zostaną na dysku.",
       "zostan": "Kontynuuj instalację",
       "wyjdz": "Anuluj instalację"
     },

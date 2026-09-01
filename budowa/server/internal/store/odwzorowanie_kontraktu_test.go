@@ -33,14 +33,10 @@ var odwzorowaniaRozeszlyeSieZeSchematem = map[string]string{
 
 	// Automations — schemat modułu wszedł migracjami 260-275, więc wierszy rozjazdu tu nie ma.
 
-	// Diagnostics — prowenancja wywołań ma już swoje tabele, więc jej wiersze zeszły stąd razem z powodem.
-	"AlertRuleKind":      "tabela alert_regula powstaje z migracją modułu Diagnostics",
-	"AlertMetric":        "tabela alert_regula powstaje z migracją modułu Diagnostics",
-	"AlertComparison":    "tabela alert_regula powstaje z migracją modułu Diagnostics",
-	"AlertChannel":       "tabela alert_regula_kanal powstaje z migracją modułu Diagnostics",
-	"AlertTriggerStatus": "tabela alert_wyzwolenie powstaje z migracją modułu Diagnostics",
-	"HealthProbeKind":    "tabela kondycja_sonda powstaje z migracją modułu Diagnostics",
-	"HealthProbeStatus":  "tabela kondycja_wynik powstaje z migracją modułu Diagnostics",
+	// Diagnostics — wyliczenia alertów i sond nie deklarują już kolumny bazy, więc
+	// nie ma czego uznawać za rozjazd. Ścieżka alertów zapisuje wartość kontraktu
+	// wprost, a tabele nazywają się inaczej niż wskazywał kontrakt; przemianowanie
+	// tabel podstawiłoby pod działający zapis nazwy, których nikt nie czyta.
 
 	// Library — schemat modułu wszedł migracjami 180-186, więc wierszy rozjazdu tu nie ma.
 }

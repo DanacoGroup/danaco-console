@@ -4,6 +4,7 @@ package core
 import (
 	"context"
 	"sync"
+	"time"
 
 	"danacoconsole/server/internal/transport"
 )
@@ -49,13 +50,21 @@ func polaczenieZKontekstu(ctx context.Context) string {
 // wiezBramki trzyma przypisania połączenie-skrót tokenu sesji bramki. Skrót, nie token: token surowy zna klient i zna go rdzeń przez jedną chwilę przy zakładaniu sesji. Do obu zastosowań więzi skrót wystarcza.
 type wiezBramki struct {
 	zamek        sync.RWMutex
-	poPolaczeniu map[string]string
+	poPolaczeniu map[string]wpisWiezi
+}
+
+// wpisWiezi niesie sesję gniazda wraz z chwilą jej wygaśnięcia. Chwila jest tu
+// po to, żeby sesja, o której już wiadomo, że minęła, nie kosztowała zapytania
+// do bazy przy każdej komendzie tego gniazda. Zero znaczy „jeszcze nieodczytana".
+type wpisWiezi struct {
+	skrot  string
+	wygasa int64
 }
 
 // nowaWiezBramki zakłada pustą więź. Rdzeń bez wpiętej bramki dostaje ją tak
 // samo — pusta więź odpowiada „nie wiadomo" i nic się nie psuje.
 func nowaWiezBramki() *wiezBramki {
-	return &wiezBramki{poPolaczeniu: make(map[string]string)}
+	return &wiezBramki{poPolaczeniu: make(map[string]wpisWiezi)}
 }
 
 // Zwiaz przypisuje połączeniu sesję bramki. Powtórzone wiązanie nadpisuje
@@ -67,17 +76,40 @@ func (w *wiezBramki) Zwiaz(polaczenie, skrot string) {
 	}
 	w.zamek.Lock()
 	defer w.zamek.Unlock()
-	w.poPolaczeniu[polaczenie] = skrot
+	w.poPolaczeniu[polaczenie] = wpisWiezi{skrot: skrot}
 }
 
 // Skrot oddaje skrót tokenu związanego z połączeniem; pusty wynik znaczy połączenie niezwiązane z sesją.
 func (w *wiezBramki) Skrot(polaczenie string) string {
+	wpis := w.wpis(polaczenie)
+	return wpis.skrot
+}
+
+// wpis oddaje komplet zapamiętany o gnieździe: sesję i znaną chwilę jej wygaśnięcia.
+func (w *wiezBramki) wpis(polaczenie string) wpisWiezi {
 	if w == nil || polaczenie == "" {
-		return ""
+		return wpisWiezi{}
 	}
 	w.zamek.RLock()
 	defer w.zamek.RUnlock()
 	return w.poPolaczeniu[polaczenie]
+}
+
+// zapamietajWygasniecie dopisuje do wpisu chwilę wygaśnięcia odczytaną z wiersza
+// sesji. Wpis zdjęty w międzyczasie nie wraca — gniazdo rozłączone ma zostać
+// rozłączone.
+func (w *wiezBramki) zapamietajWygasniecie(polaczenie string, wygasa int64) {
+	if w == nil || polaczenie == "" || wygasa <= 0 {
+		return
+	}
+	w.zamek.Lock()
+	defer w.zamek.Unlock()
+	wpis, stoi := w.poPolaczeniu[polaczenie]
+	if !stoi {
+		return
+	}
+	wpis.wygasa = wygasa
+	w.poPolaczeniu[polaczenie] = wpis
 }
 
 // SkrotKontekstu jest skrótem myślowym dla dwóch wywołań, które i tak zawsze
@@ -111,12 +143,64 @@ func sesjaBiezacaZKontekstu(ctx context.Context) string {
 	return skrot
 }
 
-// PolaczenieZwiazane odpowiada na jedno pytanie straży transportu: czy gniazdo przeszło przez bramkę. Odpowiedź pochodzi z tego samego stanu, co authenticated w powitaniu. To nie jest sprawdzenie uprawnienia — więź odpowiada kto, nigdy czy wolno.
+// RozpoznanieWaznosciSesji oddaje chwilę wygaśnięcia sesji bramki i to, czy
+// sesja nadal nadaje. Jest rozszerzeniem nieobowiązkowym rozpoznania konta:
+// rdzeń bez trwałości uwierzytelnienia nie ma czego czytać.
+type RozpoznanieWaznosciSesji interface {
+	WaznoscSesjiBramki(ctx context.Context, skrotTokenu string) (int64, bool, error)
+}
+
+// czasSprawdzeniaWaznosci ogranicza odczyt wiersza sesji przy pytaniu bramki.
+// Odczyt idzie z pętli odbioru gniazda, więc zapytanie wstrzymane na zamku bazy
+// wstrzymałoby całe połączenie, a nie jedną komendę.
+const czasSprawdzeniaWaznosci = 2 * time.Second
+
+/*
+PolaczenieZwiazane odpowiada na jedno pytanie straży transportu: czy gniazdo
+przeszło przez bramkę i czy jego sesja nadal nadaje. Sama więź na to nie
+odpowiada: wpis w mapie powstaje przy powitaniu i przeżyłby unieważnienie sesji
+zrobione gdzie indziej — `auth.reset`, `auth.password.reset` i `device.revoke`
+meldują wtedy Operatorowi liczbę odebranych urządzeń, która nie byłaby prawdą.
+
+Czytany jest wiersz sesji, a nie jej migawka: unieważnienie ma odciąć gniazdo
+natychmiast, nie przy najbliższym rozłączeniu. Zapytania nie ma tylko wtedy, gdy
+chwila wygaśnięcia zapamiętana w więzi już minęła.
+*/
 func (w wejscieTransportu) PolaczenieZwiazane(id string) bool {
 	if w.rdzen == nil {
 		return false
 	}
-	return w.rdzen.wiez.Skrot(id) != ""
+	wpis := w.rdzen.wiez.wpis(id)
+	if wpis.skrot == "" {
+		return false
+	}
+	if wpis.wygasa > 0 && wpis.wygasa <= time.Now().UnixMilli() {
+		w.rdzen.wiez.Rozwiaz(id)
+		return false
+	}
+	waznosc, umie := w.rdzen.konta.(RozpoznanieWaznosciSesji)
+	if !umie {
+		// Rdzeń bez trwałości uwierzytelnienia nie ma wiersza sesji do
+		// przeczytania; więź jest wtedy całą wiedzą, jaka o gnieździe jest.
+		return true
+	}
+	ctx, koniec := context.WithTimeout(context.Background(), czasSprawdzeniaWaznosci)
+	defer koniec()
+	wygasa, wazna, err := waznosc.WaznoscSesjiBramki(ctx, wpis.skrot)
+	if err != nil {
+		// Nierozstrzygnięta ważność zamyka drogę: przepuszczenie żądania byłoby
+		// tu wpuszczeniem sesji, o której nic nie wiadomo.
+		if w.rdzen.dziennik != nil {
+			w.rdzen.dziennik.Printf("core: ważność sesji gniazda %s nierozstrzygnięta: %v", id, err)
+		}
+		return false
+	}
+	if !wazna {
+		w.rdzen.wiez.Rozwiaz(id)
+		return false
+	}
+	w.rdzen.wiez.zapamietajWygasniecie(id, wygasa)
+	return true
 }
 
 // Rozwiaz zdejmuje przypisanie po rozłączeniu urządzenia. Bez tego mapa rosłaby

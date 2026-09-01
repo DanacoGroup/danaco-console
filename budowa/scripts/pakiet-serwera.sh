@@ -32,6 +32,23 @@ done
 
 ARCHITEKTURA="$(dpkg --print-architecture)"
 
+# ── Port nasłuchu ────────────────────────────────────────────────────────────
+zglos "port nasłuchu rdzenia"
+# Port stoi w pakiecie w dwóch miejscach: w jednostce systemd, która go ustawia,
+# i w opisie z DEBIAN/control, który go zapowiada administratorowi. Rozejście
+# tych dwóch wartości wysyła administratora pod port, którego rdzeń nie ma
+# otwartego, a widać je dopiero po założeniu pakietu na maszynie — dlatego
+# zgodność sprawdzana jest tutaj, przed budową.
+JEDNOSTKA="$SZKIELET/lib/systemd/system/danaco-console.service"
+OPIS="$SZKIELET/DEBIAN/control"
+PORT_JEDNOSTKI="$(sed -n 's/^Environment=DANACO_PORT=\([0-9]\+\)$/\1/p' "$JEDNOSTKA")"
+PORT_OPISU="$(sed -n 's/.*nasłuchuje na porcie \([0-9]\+\).*/\1/p' "$OPIS")"
+[ -n "$PORT_JEDNOSTKI" ] || padnij "jednostka systemd nie niesie wiersza Environment=DANACO_PORT=<port> — pakiet nie wie, na czym ma nasłuchiwać"
+[ -n "$PORT_OPISU" ] || padnij "opis w DEBIAN/control nie nazywa portu nasłuchu — administrator nie ma skąd wziąć tej wartości"
+[ "$PORT_JEDNOSTKI" = "$PORT_OPISU" ] ||
+	padnij "port rozjechał się w pakiecie: jednostka systemd stawia rdzeń na $PORT_JEDNOSTKI, a opis w DEBIAN/control zapowiada $PORT_OPISU"
+printf '  jednostka systemd i opis pakietu zgodnie wskazują port %s\n' "$PORT_JEDNOSTKI"
+
 # ── Budowa składników ────────────────────────────────────────────────────────
 # Rdzeń idzie natywnie na Linuksa: bez krzyżowej kompilacji, bo pakiet .deb jest
 # dla tej samej rodziny maszyn, na której stoi to drzewo.
@@ -167,4 +184,5 @@ zglos "wynik"
 printf 'pakiet:  %s\n' "$PAKIET"
 printf 'rozmiar: %s\n' "$(du -h "$PAKIET" | cut -f1)"
 printf 'SHA-256: %s\n' "$SUMA"
+printf 'nasłuch: port %s na wszystkich interfejsach\n' "$PORT_JEDNOSTKI"
 printf '\nodbiór:\n  dpkg-deb -I %s\n  dpkg-deb -c %s\n' "$PAKIET" "$PAKIET"

@@ -45,7 +45,20 @@ type adapterDebaty struct {
 	rozstrzygacz *konfig.Rozstrzygacz
 
 	mu       sync.Mutex
-	biegnace map[string]context.CancelFunc
+	biegnace map[string]*biegDebaty
+}
+
+// biegDebaty opisuje zajęcie okna pod turę. Licznik tur jest konieczny, bo
+// tura przerwana kończy się później, niż następna się zaczyna, a wpis wolno
+// wykreślić dopiero tej, która schodzi z okna ostatnia.
+type biegDebaty struct {
+	// anuluj przerywa turę, która okno zajmuje w tej chwili.
+	anuluj context.CancelFunc
+	// zajete mówi, czy okno prowadzi turę przyjmującą wypowiedzi. Tura
+	// przerwana zwalnia okno od razu, choć jej głosy milkną dopiero po chwili.
+	zajete bool
+	// tury liczy tury, które okna jeszcze nie opuściły — wraz z przerwanymi.
+	tury int
 }
 
 // nowyAdapterDebaty wiąże port Debata z repozytorium modułu, jedyną
@@ -53,7 +66,7 @@ type adapterDebaty struct {
 func nowyAdapterDebaty(zycie context.Context, repozytorium dane.RepozytoriumRoundtable) *adapterDebaty {
 	return &adapterDebaty{
 		repozytorium: repozytorium, zycie: zycie,
-		biegnace: map[string]context.CancelFunc{},
+		biegnace: map[string]*biegDebaty{},
 	}
 }
 
@@ -159,10 +172,15 @@ func mowiacy(uczestnicy []dane.UczestnikDebaty) []dane.UczestnikDebaty {
 func (a *adapterDebaty) zajmijBieg(okno string, anuluj context.CancelFunc) bool {
 	a.mu.Lock()
 	defer a.mu.Unlock()
-	if _, biegnie := a.biegnace[okno]; biegnie {
+	bieg, jest := a.biegnace[okno]
+	if !jest {
+		a.biegnace[okno] = &biegDebaty{anuluj: anuluj, zajete: true, tury: 1}
+		return true
+	}
+	if bieg.zajete {
 		return false
 	}
-	a.biegnace[okno] = anuluj
+	bieg.anuluj, bieg.zajete, bieg.tury = anuluj, true, bieg.tury+1
 	return true
 }
 
@@ -172,40 +190,63 @@ func (a *adapterDebaty) zajmijBieg(okno string, anuluj context.CancelFunc) bool 
 func (a *adapterDebaty) przejmijBieg(okno string, anuluj context.CancelFunc) {
 	a.mu.Lock()
 	defer a.mu.Unlock()
-	if poprzedni, jest := a.biegnace[okno]; jest {
-		poprzedni()
+	bieg, jest := a.biegnace[okno]
+	if !jest {
+		a.biegnace[okno] = &biegDebaty{anuluj: anuluj, zajete: true, tury: 1}
+		return
 	}
-	a.biegnace[okno] = anuluj
+	if bieg.zajete {
+		bieg.anuluj()
+	}
+	bieg.anuluj, bieg.zajete, bieg.tury = anuluj, true, bieg.tury+1
 }
 
 // zwolnijBieg oddaje okno zajęte pod turę, która ostatecznie nie ruszyła —
 // każde wyjście błędem między zajęciem a założeniem tury musi okno oddać,
 // inaczej Debate Panel zostawałby zablokowany turą, której nigdy nie było.
 func (a *adapterDebaty) zwolnijBieg(okno string, anuluj context.CancelFunc) {
-	a.mu.Lock()
-	delete(a.biegnace, okno)
-	a.mu.Unlock()
+	a.zejdzZOkna(okno)
 	anuluj()
 }
 
 // zapomnijBieg zdejmuje turę z rejestru biegów po jej zakończeniu, zwalniając
 // okno pod kolejne otwarcie.
 func (a *adapterDebaty) zapomnijBieg(okno string) {
-	a.mu.Lock()
-	defer a.mu.Unlock()
-	delete(a.biegnace, okno)
+	a.zejdzZOkna(okno)
 }
 
-// PrzerwijBieg przerywa turę okna. Wywołuje to zamknięcie tury przez moderatora:
-// uczestnicy, którzy jeszcze mówią, mają przestać, bo tura już nie przyjmuje
-// wypowiedzi. Zatrzymanie jest dostępne zawsze.
+// zejdzZOkna odlicza turę, która zeszła z okna, i wykreśla wpis dopiero wtedy,
+// gdy okna nie prowadzi już żadna. Tura kończąca się nie zna swojego wpisu —
+// wpis zastany może należeć do tury, która ją przejęła — więc wykreślenie
+// bezwarunkowe zdejmowałoby z okna turę cudzą i wpuszczało drugą obok niej.
+func (a *adapterDebaty) zejdzZOkna(okno string) {
+	a.mu.Lock()
+	defer a.mu.Unlock()
+	bieg, jest := a.biegnace[okno]
+	if !jest {
+		return
+	}
+	bieg.tury--
+	if bieg.tury <= 0 {
+		delete(a.biegnace, okno)
+	}
+}
+
+// PrzerwijBieg przerywa turę okna i oddaje prawdę, gdy było co przerywać.
+// Wywołuje to zamknięcie tury przez moderatora: uczestnicy, którzy jeszcze
+// mówią, mają przestać, bo tura już nie przyjmuje wypowiedzi. Zatrzymanie jest
+// dostępne zawsze. Wpisu nie wykreśla — zdejmuje go tura, która z okna schodzi,
+// bo tura przerwana kończy się dopiero po tym wywołaniu.
 func (a *adapterDebaty) PrzerwijBieg(okno string) bool {
 	a.mu.Lock()
-	anuluj, biegnie := a.biegnace[okno]
-	delete(a.biegnace, okno)
-	a.mu.Unlock()
-	if biegnie {
-		anuluj()
+	var anuluj context.CancelFunc
+	if bieg, jest := a.biegnace[okno]; jest && bieg.zajete {
+		anuluj, bieg.zajete = bieg.anuluj, false
 	}
-	return biegnie
+	a.mu.Unlock()
+	if anuluj == nil {
+		return false
+	}
+	anuluj()
+	return true
 }

@@ -19,11 +19,16 @@ import (
 
 // BramkaZalozona mówi, czy sekret bramki istnieje. Brak kotwicy nie jest
 // błędem — jest odpowiedzią „nie" i tak wychodzi do powitania.
+//
+// Pytanie pada przed zalogowaniem, więc konta wołającego jeszcze nie ma i nie ma
+// go skąd wziąć: zero jako konto znaczy w zapytaniach bramki konto najstarsze,
+// czyli to założone przy instalacji. Powitanie pyta właśnie o nie — czy ta
+// instalacja ma w ogóle bramkę.
 func (a *adapterUwierzytelnienia) BramkaZalozona(ctx context.Context) (bool, error) {
 	if a == nil || a.repozytorium == nil {
 		return false, bladBramki(shared.ErrorCodeInternalError, "Magazyn kont jest niedostępny.")
 	}
-	if _, err := a.kotwica(ctx); err != nil {
+	if _, err := a.repozytorium.KotwicaKonta(ctx, 0); err != nil {
 		if errors.Is(err, dane.ErrBrakWiersza) {
 			return false, nil
 		}
@@ -36,6 +41,10 @@ func (a *adapterUwierzytelnienia) BramkaZalozona(ctx context.Context) (bool, err
 KontoSesjiBramki oddaje konto, któremu wydano sesję o podanym skrócie. Zero
 znaczy sesję nieznaną albo wiersz sprzed rozdzielenia kont — wołający czyta
 wtedy pracę konta najstarszego, tak jak stała przed migracją 407.
+
+Sesja unieważniona i sesja wygasła wracają odmową, nie kontem: gniazdo stojące
+od chwili sprzed unieważnienia pytałoby inaczej o konto sesji, której już nie ma,
+i pracowałoby dalej na jej prawach.
 */
 func (a *adapterUwierzytelnienia) KontoSesjiBramki(ctx context.Context,
 	skrotTokenu string) (int64, error) {
@@ -44,7 +53,36 @@ func (a *adapterUwierzytelnienia) KontoSesjiBramki(ctx context.Context,
 	if err != nil {
 		return 0, err
 	}
+	if err := sesjaNadaje(sesja, time.Now().UnixMilli()); err != nil {
+		return 0, err
+	}
 	return sesja.KontoId, nil
+}
+
+/*
+WaznoscSesjiBramki odpowiada straży bramki na pytanie o wiersz sesji: czy nadal
+nadaje i do kiedy. Chwila wygaśnięcia wraca razem z rozstrzygnięciem, bo więź
+połączenia zapamiętuje ją i nie pyta bazy o sesję, o której już wie, że minęła.
+
+Sesja nieznana nie jest błędem — jest odpowiedzią „nie nadaje".
+*/
+func (a *adapterUwierzytelnienia) WaznoscSesjiBramki(ctx context.Context,
+	skrotTokenu string) (int64, bool, error) {
+
+	if a == nil || a.repozytorium == nil {
+		return 0, false, bladBramki(shared.ErrorCodeInternalError, "Magazyn kont jest niedostępny.")
+	}
+	sesja, err := a.repozytorium.SesjaBramkiPoSkrocie(ctx, skrotTokenu)
+	if errors.Is(err, dane.ErrBrakWiersza) {
+		return 0, false, nil
+	}
+	if err != nil {
+		return 0, false, err
+	}
+	if sesja.Uniewazniono != nil || sesja.Wygasa <= time.Now().UnixMilli() {
+		return sesja.Wygasa, false, nil
+	}
+	return sesja.Wygasa, true, nil
 }
 
 // RozpoznajSesjeBramki sprawdza token z powitania i oddaje skrót sesji.

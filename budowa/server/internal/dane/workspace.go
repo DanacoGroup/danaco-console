@@ -1,6 +1,6 @@
 // Plik prowadzi obszar projektu przestrzeni roboczej w tabeli projekt oraz
-// odczyt kart sesji pracujących w projekcie; pamięć projektu i przypisania
-// ekspertów leżą w osobnych plikach tego repozytorium.
+// odczyt i odpięcie kart sesji pracujących w projekcie; pamięć projektu
+// i przypisania ekspertów leżą w osobnych plikach tego repozytorium.
 package dane
 
 import (
@@ -28,6 +28,9 @@ type Projekt struct {
 // pamięć, zadania, notatki, materiały i ślad zdarzeń.
 type RepozytoriumPrzestrzeniRoboczej interface {
 	ZapewnijProjekt(ctx context.Context, kod, nazwa string) (Projekt, bool, error)
+	ZalozProjekt(ctx context.Context, kod, nazwa string, opis *string) (Projekt, error)
+	PrzemianujProjekt(ctx context.Context, kod, nazwa string) (Projekt, error)
+	UsunProjekt(ctx context.Context, kod string) ([]string, error)
 	Projekt(ctx context.Context, kod string) (Projekt, error)
 	Projekty(ctx context.Context, zArchiwalnymi bool) ([]Projekt, error)
 	OdnotujCzynnosc(ctx context.Context, projektID int64) error
@@ -94,6 +97,25 @@ const (
 	wstawProjekt = `INSERT INTO projekt (kod, nazwa) VALUES (?, ?)
 	                ON CONFLICT(kod) DO NOTHING`
 
+	// Założenie projektu nie znosi konfliktu kodu: kod nadaje rdzeń, więc wiersz
+	// zastany znaczy zderzenie identyfikatorów, a nie powtórzone żądanie.
+	zalozProjekt = `INSERT INTO projekt (kod, nazwa, opis) VALUES (?, ?, ?)`
+
+	przemianujProjekt = `UPDATE projekt
+	                     SET nazwa = ?,
+	                         zaktualizowano = strftime('%Y-%m-%dT%H:%M:%fZ','now')
+	                     WHERE kod = ?`
+
+	usunProjekt = `DELETE FROM projekt WHERE kod = ?`
+
+	// Sesje projektu nie są jego wierszami potomnymi — kolumna `sesja.projekt`
+	// niesie sam kod, bez więzi obcej. Usunięcie projektu musi je odpiąć jawnie,
+	// inaczej wskazywałyby w pustkę.
+	odepnijSesjeProjektu = `UPDATE sesja
+	                        SET projekt = NULL,
+	                            zaktualizowano = strftime('%Y-%m-%dT%H:%M:%fZ','now')
+	                        WHERE projekt = ?`
+
 	pobierzProjekt = `SELECT ` + kolumnyProjektu + ` FROM projekt WHERE kod = ?`
 
 	listaProjektow = `SELECT ` + kolumnyProjektu + ` FROM projekt
@@ -150,6 +172,125 @@ func (r *repozytoriumPrzestrzeniRoboczej) ZapewnijProjekt(ctx context.Context,
 		return Projekt{}, false, err
 	}
 	return projekt, wstawione > 0, nil
+}
+
+// ZalozProjekt zakłada projekt o nadanym kodzie i zwraca go w kształcie, jaki
+// wychodzi kontraktem. Kod zajęty kończy się błędem: zwrócenie wiersza zastanego
+// pokazałoby Operatorowi cudzy projekt jako właśnie założony.
+func (r *repozytoriumPrzestrzeniRoboczej) ZalozProjekt(ctx context.Context,
+	kod, nazwa string, opis *string) (Projekt, error) {
+
+	if kod == "" {
+		return Projekt{}, fmt.Errorf("dane: projekt bez identyfikatora")
+	}
+	if nazwa == "" {
+		return Projekt{}, fmt.Errorf("dane: projekt %q bez nazwy", kod)
+	}
+	polecenie, err := r.zapytania.przygotuj(ctx, zalozProjekt)
+	if err != nil {
+		return Projekt{}, err
+	}
+	if _, err := polecenie.ExecContext(ctx, kod, nazwa, tekstDoKolumny(opis)); err != nil {
+		return Projekt{}, fmt.Errorf("dane: nie można założyć projektu %q: %w", kod, err)
+	}
+	return r.Projekt(ctx, kod)
+}
+
+// PrzemianujProjekt zmienia nazwę projektu, zostawiając kod bez zmiany: kodem
+// wiążą się sesje i wiersze modułu, więc przemianowanie nie ma prawa ich zerwać.
+// Brak wiersza wraca jako ErrBrakWiersza.
+func (r *repozytoriumPrzestrzeniRoboczej) PrzemianujProjekt(ctx context.Context,
+	kod, nazwa string) (Projekt, error) {
+
+	if nazwa == "" {
+		return Projekt{}, fmt.Errorf("dane: nazwa projektu %q nie może być pusta", kod)
+	}
+	polecenie, err := r.zapytania.przygotuj(ctx, przemianujProjekt)
+	if err != nil {
+		return Projekt{}, err
+	}
+	wynik, err := polecenie.ExecContext(ctx, nazwa, kod)
+	if err != nil {
+		return Projekt{}, fmt.Errorf("dane: nie można zmienić nazwy projektu %q: %w", kod, err)
+	}
+	zmienione, err := wynik.RowsAffected()
+	if err != nil {
+		return Projekt{}, fmt.Errorf("dane: nieznany wynik zmiany nazwy projektu %q: %w", kod, err)
+	}
+	if zmienione == 0 {
+		return Projekt{}, ErrBrakWiersza
+	}
+	return r.Projekt(ctx, kod)
+}
+
+// UsunProjekt kasuje projekt wraz z jego wierszami potomnymi i zwraca karty
+// sesji, które straciły przypisanie.
+//
+// Sesje zostają w historii — usunięcie projektu nie jest usunięciem rozmów,
+// które w nim powstały. Odpięcie i skasowanie idą jedną transakcją, bo projekt
+// zdjęty przy sesjach wskazujących na niego zostawiłby wykaz sesji z kodem bez
+// pokrycia. Wykaz zwracany obejmuje sesje mające identyfikator zewnętrzny —
+// tylko one wyszły kiedykolwiek kontraktem. Brak wiersza wraca jako
+// ErrBrakWiersza.
+func (r *repozytoriumPrzestrzeniRoboczej) UsunProjekt(ctx context.Context, kod string) ([]string, error) {
+	if kod == "" {
+		return nil, fmt.Errorf("dane: projekt bez identyfikatora")
+	}
+	odpiete := []string{}
+	err := wTransakcji(ctx, r.db, func(transakcja *sql.Tx) error {
+		odczyt, err := r.zapytania.wTransakcji(ctx, transakcja, sesjeProjektu)
+		if err != nil {
+			return err
+		}
+		wiersze, err := odczyt.QueryContext(ctx, kod)
+		if err != nil {
+			return fmt.Errorf("dane: nie można odczytać sesji projektu %q: %w", kod, err)
+		}
+		for wiersze.Next() {
+			var identyfikator string
+			if err := wiersze.Scan(&identyfikator); err != nil {
+				_ = wiersze.Close()
+				return fmt.Errorf("dane: nieczytelny wiersz sesji projektu: %w", err)
+			}
+			odpiete = append(odpiete, identyfikator)
+		}
+		if err := wiersze.Err(); err != nil {
+			_ = wiersze.Close()
+			return fmt.Errorf("dane: przerwany odczyt sesji projektu %q: %w", kod, err)
+		}
+		if err := wiersze.Close(); err != nil {
+			return fmt.Errorf("dane: przerwany odczyt sesji projektu %q: %w", kod, err)
+		}
+
+		odpiecie, err := r.zapytania.wTransakcji(ctx, transakcja, odepnijSesjeProjektu)
+		if err != nil {
+			return err
+		}
+		if _, err := odpiecie.ExecContext(ctx, kod); err != nil {
+			return fmt.Errorf("dane: nie można odpiąć sesji projektu %q: %w", kod, err)
+		}
+
+		kasowanie, err := r.zapytania.wTransakcji(ctx, transakcja, usunProjekt)
+		if err != nil {
+			return err
+		}
+		wynik, err := kasowanie.ExecContext(ctx, kod)
+		if err != nil {
+			return fmt.Errorf("dane: nie można usunąć projektu %q: %w", kod, err)
+		}
+		skasowane, err := wynik.RowsAffected()
+		if err != nil {
+			return fmt.Errorf("dane: nieznany wynik usunięcia projektu %q: %w", kod, err)
+		}
+		if skasowane == 0 {
+			return ErrBrakWiersza
+		}
+		return nil
+	})
+	if err != nil {
+		return nil, err
+	}
+	return odpiete, nil
 }
 
 // Projekt zwraca projekt o wskazanym kodzie. Brak wiersza wraca jako

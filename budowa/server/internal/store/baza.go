@@ -20,6 +20,20 @@ const nazwaSterownika = "sqlite"
 // maksPolaczen ogranicza pulę połączeń, ponieważ SQLite w trybie WAL dopuszcza wielu czytelników, ale wyłącznie jednego pisarza naraz.
 const maksPolaczen = 4
 
+// trybTransakcji każe sterownikowi otwierać transakcje poleceniem BEGIN
+// IMMEDIATE. Przy BEGIN DEFERRED zapis poprzedzony odczytem podnosi blokadę
+// dopiero przy pierwszym zapisie, więc dwie transakcje czytają tę samą wartość
+// i jedna z nich ginie — mierzone 14 przyrostów zamiast 20, z błędami 517 i 5
+// mimo busy_timeout. Blokada wzięta od razu zamienia zgubiony zapis na czekanie.
+const trybTransakcji = "immediate"
+
+// prawaPlikuBazy i prawaKatalogu odcinają grupę i pozostałych od pliku, który
+// niesie rozmowy, dokumenty, skróty sesji bramki i żetony udostępnień.
+const (
+	prawaPlikuBazy = 0o600
+	prawaKatalogu  = 0o700
+)
+
 // pragmyPolaczenia obowiązują każde połączenie z puli, dlatego trafiają do DSN,
 // a nie do pojedynczego zapytania wykonanego po otwarciu bazy.
 var pragmyPolaczenia = []string{
@@ -42,7 +56,7 @@ func Otworz(sciezka string) (*Baza, error) {
 		return nil, fmt.Errorf("store: pusta ścieżka pliku bazy")
 	}
 	if katalog := filepath.Dir(sciezka); katalog != "" && katalog != "." {
-		if err := os.MkdirAll(katalog, 0o755); err != nil {
+		if err := os.MkdirAll(katalog, prawaKatalogu); err != nil {
 			return nil, fmt.Errorf("store: nie można założyć katalogu %q: %w", katalog, err)
 		}
 	}
@@ -61,7 +75,25 @@ func Otworz(sciezka string) (*Baza, error) {
 		db.Close()
 		return nil, err
 	}
+	// Prawa nadaje się po migracjach, bo dziennik zapisu wyprzedzającego i plik
+	// pamięci wspólnej powstają dopiero przy pierwszym zapisie do bazy.
+	if err := zawezPrawaPlikow(sciezka); err != nil {
+		db.Close()
+		return nil, err
+	}
 	return baza, nil
+}
+
+// zawezPrawaPlikow odbiera grupie i pozostałym dostęp do pliku bazy oraz do jego
+// dziennika zapisu wyprzedzającego i pliku pamięci wspólnej. Plik nieistniejący
+// nie jest błędem: dziennik i pamięć wspólna znikają przy czystym zamknięciu bazy.
+func zawezPrawaPlikow(sciezka string) error {
+	for _, plik := range []string{sciezka, sciezka + "-wal", sciezka + "-shm"} {
+		if err := os.Chmod(plik, prawaPlikuBazy); err != nil && !os.IsNotExist(err) {
+			return fmt.Errorf("store: nie można zawęzić praw pliku %q: %w", plik, err)
+		}
+	}
+	return nil
 }
 
 // Metoda Zamknij zamyka pulę połączeń bazy; wywołanie na pustej, niezainicjowanej bazie jest bezpieczne.
@@ -79,6 +111,7 @@ func zbudujDSN(sciezka string) string {
 	for _, pragma := range pragmyPolaczenia {
 		parametry.Add("_pragma", pragma)
 	}
+	parametry.Set("_txlock", trybTransakcji)
 	return filepath.ToSlash(sciezka) + "?" + parametry.Encode()
 }
 

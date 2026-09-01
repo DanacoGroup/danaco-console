@@ -1,17 +1,18 @@
-import type {
+import {
   Command,
-  Envelope,
-  ErrorInfo,
-  EventPayloadOf,
-  EventType,
-  RequestOf,
-  ResponseOf,
+  ErrorCode,
+  type Envelope,
+  type ErrorInfo,
+  type EventPayloadOf,
+  type EventType,
+  type RequestOf,
+  type ResponseOf,
 } from '../../../shared/contract.ts';
 import {
   zalozDziennikNieznanych,
   type DziennikNieznanych,
 } from '../polaczenie/dziennik-nieznanych.ts';
-import type { Transport } from '../polaczenie/gniazdo.ts';
+import type { PowodPorzucenia, Transport } from '../polaczenie/gniazdo.ts';
 import { utworzMagistrale, type Odsubskrybuj } from '../polaczenie/magistrala-zdarzen.ts';
 import { czyOdpowiedz, czyUdana, tresc, zbudujKoperte } from './koperta.ts';
 import { utworzKorelacje } from './korelacja.ts';
@@ -46,6 +47,8 @@ export interface Kanal {
   naDowolny(sluchacz: (koperta: Envelope) => void): Odsubskrybuj;
   /** Sesja nadawana kopertom wychodzącym. */
   sesja(): Sesja;
+  /** Zapamiętuje wykaz komend obsługiwanych przez rdzeń, podany w powitaniu. */
+  zapamietajKomendy(komendy: readonly string[]): void;
   /** Dziennik komunikatów nierozpoznanych — brama fail-open kanału. */
   dziennikNieznanych(): DziennikNieznanych;
 }
@@ -53,6 +56,9 @@ export interface Kanal {
 export function utworzKanal(transport: Transport, sesja: Sesja): Kanal {
   const przychodzace = utworzMagistrale<Envelope>();
   const korelacja = utworzKorelacje();
+  /* Wykaz komend rdzenia z powitania. Pusty znaczy: rdzeń jeszcze nie mówił,
+     więc kanał niczego nie odsiewa — powitanie samo idzie przed tym wykazem. */
+  let komendyRdzenia: ReadonlySet<string> = new Set<string>();
 
   transport.naRamke((ramka) => {
     const koperta = odczytajRamke(ramka);
@@ -60,13 +66,34 @@ export function utworzKanal(transport: Transport, sesja: Sesja): Kanal {
     przychodzace.oglos(koperta);
   });
 
+  /* Ramka porzucona nie doręczy już nic: wywołujący ma dostać odmowę nazwaną
+     w chwili porzucenia, nie ciszę do upływu terminu korelacji. */
+  transport.naPorzucona((ramka, powod) => {
+    korelacja.odmow(odczytajRamke(ramka).id, bladPorzucenia(powod));
+  });
+
+  /* Zerwane gniazdo nie przyniesie odpowiedzi na żądania, które na nim stały —
+     rdzeń wiąże je z połączeniem, a nowe gniazdo o nich nie wie. */
+  transport.naStan((stan) => {
+    if (stan === 'polaczony') return;
+    korelacja.uniewaznijWszystkie(bladZerwania());
+  });
+
   const kanal: Kanal = {
     wyslij(komenda, zadanie, przyWyniku) {
       const koperta = zbudujKoperte(komenda, sesja.id(), zadanie);
-      if (przyWyniku !== undefined) {
-        korelacja.zarejestruj(koperta.id, (odpowiedz) => przyWyniku(zbudujWynik(odpowiedz)));
+      if (komendyRdzenia.size > 0 && !komendyRdzenia.has(komenda)) {
+        przyWyniku?.({ udany: false, blad: bladKomendyNieznanej(komenda) });
+        return koperta.id;
       }
-      transport.wyslij(zapiszRamke(koperta));
+      if (przyWyniku !== undefined) {
+        korelacja.zarejestruj(koperta.id, komenda, (odpowiedz) =>
+          przyWyniku(zbudujWynik(odpowiedz)),
+        );
+      }
+      const ramka = zapiszRamke(koperta);
+      if (komenda === Command.ConnectionHello) transport.wyslijPowitanie(ramka);
+      else transport.wyslij(ramka);
       return koperta.id;
     },
 
@@ -86,6 +113,10 @@ export function utworzKanal(transport: Transport, sesja: Sesja): Kanal {
 
     sesja: () => sesja,
 
+    zapamietajKomendy(komendy) {
+      komendyRdzenia = new Set<string>(komendy);
+    },
+
     dziennikNieznanych: () => dziennik,
   };
 
@@ -101,4 +132,34 @@ function zbudujWynik<T>(odpowiedz: Envelope): Wynik<T> {
     return { udany: false, blad: odpowiedz.error };
   }
   return { udany: true, wynik: tresc<T>(odpowiedz) };
+}
+
+/** Odmowa komendy, której rdzeń nie wymienił w powitaniu — wysłanie jej wróciłoby odmową nierozpoznania. */
+function bladKomendyNieznanej(komenda: string): ErrorInfo {
+  return {
+    code: ErrorCode.NotFound,
+    message: `Rdzeń nie obsługuje komendy ${komenda}`,
+    retryable: false,
+  };
+}
+
+/** Odmowa żądania porzuconego w kolejce wychodzącej, nazywająca powód porzucenia. */
+function bladPorzucenia(powod: PowodPorzucenia): ErrorInfo {
+  return {
+    code: ErrorCode.ChannelUnavailable,
+    message:
+      powod === 'zapora-czasu'
+        ? 'Żądanie czekało na łączność dłużej, niż wolno — nie zostało wysłane'
+        : 'Łączność zerwana, zanim żądanie wyszło do rdzenia',
+    retryable: true,
+  };
+}
+
+/** Odmowa żądania, które stało na zerwanym połączeniu. */
+function bladZerwania(): ErrorInfo {
+  return {
+    code: ErrorCode.ChannelUnavailable,
+    message: 'Łączność z rdzeniem zerwana przed nadejściem odpowiedzi',
+    retryable: true,
+  };
 }

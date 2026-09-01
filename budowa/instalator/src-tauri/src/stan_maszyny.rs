@@ -53,10 +53,10 @@ pub fn odczytaj() -> StanMaszyny {
         katalog_programu_odmowa: katalog_domyslny
             .is_none()
             .then(|| "zmienna środowiskowa LOCALAPPDATA nie jest ustawiona".to_string()),
-        katalog_danych: katalog_danych_domyslny().map(|p| p.display().to_string()),
-        katalog_danych_odmowa: katalog_danych_domyslny()
+        katalog_danych: katalog_danych_powloki().map(|p| p.display().to_string()),
+        katalog_danych_odmowa: katalog_danych_powloki()
             .is_none()
-            .then(|| "zmienna środowiskowa APPDATA nie jest ustawiona".to_string()),
+            .then(|| "zmienna środowiskowa LOCALAPPDATA nie jest ustawiona".to_string()),
     }
 }
 
@@ -74,16 +74,11 @@ fn katalog_programu_domyslny() -> Option<PathBuf> {
     }
 }
 
-/// Katalog danych proponowany domyślnie, odpowiednik `Roaming` w profilu operatora.
-fn katalog_danych_domyslny() -> Option<PathBuf> {
-    #[cfg(windows)]
-    {
-        std::env::var_os("APPDATA").map(|d| PathBuf::from(d).join("Danaco Console"))
-    }
-    #[cfg(not(windows))]
-    {
-        std::env::var_os("APPDATA").map(|d| PathBuf::from(d).join("Danaco Console"))
-    }
+/// Katalog danych powłoki. Nie jest propozycją do zmiany: powłoka składa go
+/// sama z `LOCALAPPDATA` i nazwy `DanacoConsole` (`desktop/src-tauri/src/dziennik.rs`)
+/// i nie czyta znikąd innego wskazania, więc krok 4 może go wyłącznie pokazać.
+fn katalog_danych_powloki() -> Option<PathBuf> {
+    std::env::var_os("LOCALAPPDATA").map(|d| PathBuf::from(d).join("DanacoConsole"))
 }
 
 /// Najbliższy istniejący przodek ścieżki, na którym da się zmierzyć wolne miejsce —

@@ -48,11 +48,18 @@ func PrzeniesPlik(kontekst context.Context, nazwaHosta, idOkna string,
 			"jego instalacji: %w", sciezkaLokalna, err)
 	}
 
+	plikKluczy, err := zapiszZnaneHosty(host)
+	if err != nil {
+		return err
+	}
+
 	zrodlo, cel := sciezkaLokalna, host.adresSCP(sciezkaZdalna)
 	if kierunek == Pobranie {
 		zrodlo, cel = host.adresSCP(sciezkaZdalna), sciezkaLokalna
 	}
-	argumenty := append(append([]string{"-q"}, opcjeSSH...), "-P", strconv.Itoa(port(host)), zrodlo, cel)
+	argumenty := append(append([]string{"-q"}, opcjeSSH...),
+		"-o", "UserKnownHostsFile="+plikKluczy,
+		"-P", strconv.Itoa(port(host)), zrodlo, cel)
 	if wyjscie, err := exec.CommandContext(kontekst, sciezkaSCP, argumenty...).CombinedOutput(); err != nil {
 		return fmt.Errorf("zdalne: przeniesienie %s → %s nie powiodło się: %w (%s)",
 			zrodlo, cel, err, strings.TrimSpace(string(wyjscie)))
@@ -74,13 +81,16 @@ func odmowDzwieku(sciezki ...string) error {
 	return nil
 }
 
-// Metoda adresSCP składa zdalny koniec drogi w postaci adresu użytkownika, hosta oraz jego ścieżki pliku.
+// Metoda adresSCP składa zdalny koniec drogi w postaci adresu użytkownika,
+// hosta oraz jego ścieżki pliku. Ścieżkę czyta powłoka logowania hosta, więc
+// idzie zacytowana — inaczej spacja rozbiłaby ją na dwie, a średnik dopisałby
+// do przenosin polecenie.
 func (h Host) adresSCP(sciezka string) string {
 	przod := h.AdresPolaczenia()
 	if uzytkownik := strings.TrimSpace(h.Uzytkownik); uzytkownik != "" {
 		przod = uzytkownik + "@" + przod
 	}
-	return przod + ":" + sciezka
+	return przod + ":" + cytuj(sciezka)
 }
 
 // Funkcja port zwraca port danego hosta wskazany w jego danych; wartość zero schodzi na domyślny port SSH.

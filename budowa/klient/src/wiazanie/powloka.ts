@@ -124,6 +124,10 @@ function ukryj(element: Element, rozliczenie: RozliczeniePowloki): void {
  * Wpisuje środowiska i ich moduły w gotowe pozycje szyny. Grupa modułów wiąże
  * się z pozycją przez aria-controls — atrybut zostaje nietknięty, bo po nim
  * rozwija grupy `zasoby/rama.js`.
+ *
+ * Pozycję z rejestrem wiąże kod w `data-srodowisko`, nie miejsce w znaczniku:
+ * kolejność pozycji nie jest kolejnością rejestru, więc wiązanie po numerze
+ * dawało pozycji podpis cudzego środowiska.
  */
 function wypelnijSzyne(
   powloka: HTMLElement,
@@ -131,27 +135,36 @@ function wypelnijSzyne(
   katalogModulow: Map<string, Module>,
   rozliczenie: RozliczeniePowloki,
 ): void {
-  const pozycje = [...powloka.querySelectorAll('.dn-szyna-poz--srodowisko')];
+  const pozycje = [...powloka.querySelectorAll<HTMLElement>('.dn-szyna-poz--srodowisko')];
   rozliczenie.srodowiskaZnacznika = pozycje.length;
+  const poKodzie = spisPoKodzie(pozycje, 'srodowisko');
+  const zajete = new Set<HTMLElement>();
 
-  pozycje.forEach((pozycja, numer) => {
-    const grupa = document.getElementById(pozycja.getAttribute('aria-controls') ?? '');
-    const srodowisko = wykazSrodowisk[numer];
-    if (srodowisko === undefined) {
-      ukryj(pozycja, rozliczenie);
-      if (grupa !== null) grupa.setAttribute('hidden', '');
-      return;
+  for (const srodowisko of wykazSrodowisk) {
+    const pozycja = poKodzie.get(srodowisko.code.toLowerCase());
+    if (pozycja === undefined) {
+      rozliczenie.bezPozycji.push(`środowisko ${srodowisko.code}`);
+      continue;
     }
+    zajete.add(pozycja);
+    const grupa = document.getElementById(pozycja.getAttribute('aria-controls') ?? '');
+    pozycja.removeAttribute('hidden');
     pozycja.setAttribute('data-srodowisko', srodowisko.code);
     opiszPozycje(pozycja, srodowisko.name, srodowisko.description);
+    przestaw(pozycja, grupa);
     if (grupa !== null) {
+      /* Zasłona grupy zostaje nietknięta: rozwija ją i zwija `zasoby/rama.js`
+         przy naciśnięciu pozycji środowiska. */
       grupa.setAttribute('aria-label', `Moduły środowiska ${srodowisko.name}`);
       wypelnijModuly(grupa, srodowisko, katalogModulow, rozliczenie);
     }
-  });
+  }
 
-  for (const nadmiarowe of wykazSrodowisk.slice(pozycje.length)) {
-    rozliczenie.bezPozycji.push(`środowisko ${nadmiarowe.code}`);
+  for (const pozycja of pozycje) {
+    if (zajete.has(pozycja)) continue;
+    ukryj(pozycja, rozliczenie);
+    const grupa = document.getElementById(pozycja.getAttribute('aria-controls') ?? '');
+    if (grupa !== null) grupa.setAttribute('hidden', '');
   }
 }
 
@@ -162,24 +175,51 @@ function wypelnijModuly(
   katalogModulow: Map<string, Module>,
   rozliczenie: RozliczeniePowloki,
 ): void {
-  const kody = srodowisko.moduleCodes ?? [];
-  const pozycje = [...grupa.querySelectorAll('.dn-szyna-poz--modul')];
+  const pozycje = [...grupa.querySelectorAll<HTMLElement>('.dn-szyna-poz--modul')];
+  const poKodzie = spisPoKodzie(pozycje, 'modul');
+  const zajete = new Set<HTMLElement>();
 
-  pozycje.forEach((pozycja, numer) => {
-    const kod = kody[numer];
-    const modul = kod === undefined ? undefined : katalogModulow.get(kod);
-    if (modul === undefined) {
-      ukryj(pozycja, rozliczenie);
-      return;
+  for (const kod of srodowisko.moduleCodes ?? []) {
+    const modul = katalogModulow.get(kod);
+    const pozycja = poKodzie.get(kod.toLowerCase());
+    if (modul === undefined || pozycja === undefined) {
+      rozliczenie.bezPozycji.push(`${srodowisko.code}/${kod}`);
+      continue;
     }
+    zajete.add(pozycja);
     pozycja.removeAttribute('hidden');
     pozycja.setAttribute('data-modul', modul.code);
     opiszPozycje(pozycja, modul.name, modul.description);
-  });
-
-  for (const kod of kody.slice(pozycje.length)) {
-    rozliczenie.bezPozycji.push(`${srodowisko.code}/${kod}`);
+    grupa.appendChild(pozycja);
   }
+
+  for (const pozycja of pozycje) {
+    if (!zajete.has(pozycja)) ukryj(pozycja, rozliczenie);
+  }
+}
+
+/** Spis pozycji po kodzie z ich cechy; kod sprowadza się do małych liter, bo znacznik pisze nazwy wielką, a rejestr trzyma kody małymi. */
+function spisPoKodzie(
+  pozycje: HTMLElement[],
+  cecha: 'srodowisko' | 'modul',
+): Map<string, HTMLElement> {
+  const spis = new Map<string, HTMLElement>();
+  for (const pozycja of pozycje) {
+    const kod = (pozycja.dataset[cecha] ?? '').toLowerCase();
+    if (kod !== '' && !spis.has(kod)) spis.set(kod, pozycja);
+  }
+  return spis;
+}
+
+/* Kolejność pozycji szyny jest własnością rejestru: pozycja wraz ze swoją grupą
+   modułów idzie na koniec listy, więc po przejściu całego rejestru lista stoi
+   w jego porządku. Grupa musi iść za swoją pozycją, bo rama rozwija ją
+   sąsiedztwem w znaczniku. */
+function przestaw(pozycja: HTMLElement, grupa: HTMLElement | null): void {
+  const lista = pozycja.parentElement;
+  if (lista === null) return;
+  lista.appendChild(pozycja);
+  if (grupa !== null && grupa.parentElement === lista) lista.appendChild(grupa);
 }
 
 /** Miara bez źródła w kontrakcie jest atrapą; znika wraz z rozdzielnikiem przed nią. */

@@ -7,9 +7,20 @@ import (
 	"net"
 	"net/http"
 	"sync"
+	"time"
 
 	"danacoconsole/server/internal/protocol"
 	"danacoconsole/shared"
+)
+
+const (
+	// czasNaglowkaZadania ogranicza czas na przysłanie nagłówków żądania. Bez
+	// niego proces przysyłający nagłówki po bajcie trzyma gniazdo bez końca.
+	czasNaglowkaZadania = 10 * time.Second
+	// czasBezczynnosciHttp zamyka bezczynne połączenie HTTP z podtrzymaniem.
+	// Gniazda WebSocket granica nie dotyczy: po uaktualnieniu połączenie
+	// przestaje być połączeniem HTTP, a bezczynne gniazdo rozstrzyga ping.
+	czasBezczynnosciHttp = 2 * time.Minute
 )
 
 // Serwer jest nasłuchem rdzenia: przyjmuje połączenia WebSocket, serwuje pliki klienta i realizuje interfejs Rozglosnik.
@@ -74,7 +85,16 @@ func (s *Serwer) Uruchom(kontekst context.Context) error {
 		return fmt.Errorf("transport: nasłuch %s: %w", s.ustawienia.adresNasluchu(), err)
 	}
 	s.nasluch = nasluch
-	s.serwerHttp = &http.Server{Handler: s.trasy()}
+	// Granice czasu stoją na nasłuchu, nie na nastawie: bez nich jedno
+	// niedokończone żądanie trzyma gniazdo systemowe do końca życia procesu,
+	// a uzgodnienie WebSocket zaczyna się od zwykłych nagłówków HTTP.
+	// Czas odczytu całego żądania granicy nie ma — po uaktualnieniu gniazdo
+	// czyta komunikaty przez cały czas sesji.
+	s.serwerHttp = &http.Server{
+		Handler:           s.trasy(),
+		ReadHeaderTimeout: czasNaglowkaZadania,
+		IdleTimeout:       czasBezczynnosciHttp,
+	}
 
 	go func() {
 		defer close(s.zakonczone)

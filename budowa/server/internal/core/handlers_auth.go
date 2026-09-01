@@ -52,6 +52,10 @@ func zarejestrujUwierzytelnianie(r *Rejestr, u Uwierzytelnianie, e *emiter, wiez
 	if r == nil || u == nil {
 		return
 	}
+	// Konto sesji bramki oddaje ten sam adapter, który sesje wydaje; port
+	// Uwierzytelnianie go nie wymienia, bo rozpoznanie konta służy adresowaniu
+	// rozgłoszeń, nie żadnej z komend rodziny.
+	konta, _ := u.(RozpoznanieKontaSesji)
 
 	// Rejestracja połączenia nie wiąże i sesji nie zakłada: konto powstaje niepotwierdzone.
 	r.Zarejestruj(shared.CommandAuthRegister,
@@ -64,7 +68,9 @@ func zarejestrujUwierzytelnianie(r *Rejestr, u Uwierzytelnianie, e *emiter, wiez
 		obsluz(func(ctx context.Context, z shared.AuthVerifyRequest) (shared.AuthVerifyResponse, error) {
 			odpowiedz, err := u.PotwierdzAdres(ctx, z)
 			if err == nil {
-				wiez.Zwiaz(polaczenieZKontekstu(ctx), skrotTokenu(odpowiedz.Session.Token))
+				skrot := skrotTokenu(odpowiedz.Session.Token)
+				wiez.Zwiaz(polaczenieZKontekstu(ctx), skrot)
+				przypiszKontoGniazda(ctx, konta, skrot)
 			}
 			return odpowiedz, err
 		}))
@@ -90,7 +96,9 @@ func zarejestrujUwierzytelnianie(r *Rejestr, u Uwierzytelnianie, e *emiter, wiez
 		obsluz(func(ctx context.Context, z shared.AuthLoginRequest) (shared.AuthLoginResponse, error) {
 			odpowiedz, err := u.WejdzPrzezBramke(ctx, z)
 			if err == nil {
-				wiez.Zwiaz(polaczenieZKontekstu(ctx), skrotTokenu(odpowiedz.Session.Token))
+				skrot := skrotTokenu(odpowiedz.Session.Token)
+				wiez.Zwiaz(polaczenieZKontekstu(ctx), skrot)
+				przypiszKontoGniazda(ctx, konta, skrot)
 			}
 			return odpowiedz, err
 		}))

@@ -28,14 +28,21 @@ func (a *adapterUwierzytelnienia) ZalozMetodeWejscia(ctx context.Context,
 	// nie przeszły oba sprawdzenia.
 	a.zamekZmiany.Lock()
 	defer a.zamekZmiany.Unlock()
-	if err := a.wolnoZalozyc(ctx, z); err != nil {
+	// Metoda powstaje przy koncie wołającego: PIN bez wskazania konta nie
+	// otwierałby niczyjej bramki i nie dałby się zdjąć.
+	kontoId, err := kontoWolajacego(ctx)
+	if err != nil {
 		return shared.AuthMethodAddResponse{}, err
 	}
-	_, err := a.zalozMetode(ctx, dane.MetodaUwierzytelnienia{
+	if err := a.wolnoZalozyc(ctx, z, kontoId); err != nil {
+		return shared.AuthMethodAddResponse{}, err
+	}
+	_, err = a.zalozMetode(ctx, dane.MetodaUwierzytelnienia{
 		Rodzaj:          shared.AuthMethodKindPin,
 		Etykieta:        niepustyTekst(z.Label),
 		UrzadzenieKod:   &z.DeviceId,
 		NazwaUrzadzenia: niepustyTekst(z.DeviceName),
+		KontoId:         kontoId,
 		Utworzono:       time.Now().UnixMilli(),
 	}, *z.Secret)
 	if err != nil {
@@ -52,7 +59,7 @@ func (a *adapterUwierzytelnienia) ZalozMetodeWejscia(ctx context.Context,
 // do skutku. Wydzielone, żeby sama czynność została czynnością, a nie ciągiem
 // warunków.
 func (a *adapterUwierzytelnienia) wolnoZalozyc(ctx context.Context,
-	z shared.AuthMethodAddRequest) error {
+	z shared.AuthMethodAddRequest, kontoId int64) error {
 
 	switch z.Kind {
 	case shared.AuthMethodKindPin:
@@ -73,8 +80,9 @@ func (a *adapterUwierzytelnienia) wolnoZalozyc(ctx context.Context,
 		return bladBramki(shared.ErrorCodeValidationFailed, "Podaj kod PIN.")
 	}
 	// Metoda szybkiego wejścia bez kotwicy zdjęta z urządzeniem zostawiłaby
-	// bramkę bez hasła.
-	if _, err := a.kotwica(ctx); errors.Is(err, dane.ErrBrakWiersza) {
+	// bramkę bez hasła. Kotwica liczy się kontowo: hasło cudzego konta nie
+	// otwiera drogi do założenia PIN-u na tym.
+	if _, err := a.kotwicaKonta(ctx, kontoId); errors.Is(err, dane.ErrBrakWiersza) {
 		return bladBramki(shared.ErrorCodeConflict,
 			"Kod PIN zakłada się dopiero po ustawieniu hasła.")
 	} else if err != nil {
@@ -150,6 +158,8 @@ func (a *adapterUwierzytelnienia) wolnoZdjac(ctx context.Context,
 		return bladBramki(shared.ErrorCodeConflict,
 			"metoda wejścia "+metoda.Kod+" nie należy do urządzenia "+wskazane)
 	}
+	// Wykaz obejmuje metody konta wołającego, więc zapora ostatniej metody liczy
+	// jego metody, nie wszystkich kont platformy.
 	metody, err := a.repozytorium.Metody(ctx)
 	if err != nil {
 		return err
@@ -180,7 +190,14 @@ func (a *adapterUwierzytelnienia) ZmienHasloBramki(ctx context.Context,
 		return shared.AuthPasswordResetResponse{}, bladBramki(shared.ErrorCodeValidationFailed,
 			"Podaj hasło bieżące oraz nowe.")
 	}
-	kotwica, err := a.kotwica(ctx)
+	// Hasło zmienia się temu kontu, z którego przyszło żądanie. Kotwica bez
+	// wskazania konta jest kotwicą konta najstarszego: właściciel konta drugiego
+	// zmieniałby wtedy nie swoje hasło i wylogowywał cudze urządzenia.
+	kontoId, err := kontoWolajacego(ctx)
+	if err != nil {
+		return shared.AuthPasswordResetResponse{}, err
+	}
+	kotwica, err := a.kotwicaKonta(ctx, kontoId)
 	if errors.Is(err, dane.ErrBrakWiersza) {
 		return shared.AuthPasswordResetResponse{}, bladBramki(shared.ErrorCodeNotFound,
 			"Hasło dostępu nie zostało jeszcze ustawione.")

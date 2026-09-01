@@ -4425,214 +4425,174 @@
     {
       "nazwa": "AlertRuleKind",
       "opis": "Rodzaj reguly wyzwalania",
-      "kolumnaBazy": "alert_regula.rodzaj",
       "wartosci": [
         {
           "wartosc": "threshold",
-          "opis": "Prog: miara przekracza wartosc w oknie czasu",
-          "baza": "progowa"
+          "opis": "Prog: miara przekracza wartosc w oknie czasu"
         },
         {
           "wartosc": "anomaly",
-          "opis": "Anomalia: miara odchyla sie od wzorca bez sztywnego progu",
-          "baza": "anomalia"
+          "opis": "Anomalia: miara odchyla sie od wzorca bez sztywnego progu"
         },
         {
           "wartosc": "newFingerprint",
-          "opis": "Pierwsze wystapienie nieznanego odcisku bledu",
-          "baza": "nowy_odcisk"
+          "opis": "Pierwsze wystapienie nieznanego odcisku bledu"
         }
       ]
     },
     {
       "nazwa": "AlertMetric",
       "opis": "Miara obserwowana przez regule. Kazda wartosc ma zrodlo w danych, ktore platforma juz przechowuje — reguly nad miara bez zrodla nie da sie ewaluowac",
-      "kolumnaBazy": "alert_regula.miara",
       "wartosci": [
         {
           "wartosc": "errorCount",
-          "opis": "Liczba bledow diagnostycznych w oknie czasu",
-          "baza": "liczba_bledow"
+          "opis": "Liczba bledow diagnostycznych w oknie czasu"
         },
         {
           "wartosc": "errorRate",
-          "opis": "Udzial odmow w liczbie komend w oknie czasu",
-          "baza": "udzial_bledow"
+          "opis": "Udzial odmow w liczbie komend w oknie czasu"
         },
         {
           "wartosc": "cost",
-          "opis": "Koszt wywolan kanalu modelu w oknie czasu",
-          "baza": "koszt"
+          "opis": "Koszt wywolan kanalu modelu w oknie czasu"
         },
         {
           "wartosc": "tokens",
-          "opis": "Suma tokenow w oknie czasu",
-          "baza": "tokeny"
+          "opis": "Suma tokenow w oknie czasu"
         },
         {
           "wartosc": "budgetPercent",
-          "opis": "Zuzycie miekkiego budzetu okresu w procentach",
-          "baza": "procent_budzetu"
+          "opis": "Zuzycie miekkiego budzetu okresu w procentach"
         },
         {
           "wartosc": "callLatency",
-          "opis": "Opoznienie wywolania kanalu modelu",
-          "baza": "opoznienie_wywolania"
+          "opis": "Opoznienie wywolania kanalu modelu"
         },
         {
           "wartosc": "probeFailure",
-          "opis": "Liczba nieudanych wynikow sondy kondycji",
-          "baza": "awarie_sondy"
+          "opis": "Liczba nieudanych wynikow sondy kondycji"
         },
         {
           "wartosc": "processFailure",
-          "opis": "Liczba procesow zakonczonych bledem",
-          "baza": "awarie_procesu"
+          "opis": "Liczba procesow zakonczonych bledem"
         }
       ]
     },
     {
       "nazwa": "AlertComparison",
       "opis": "Porownanie miary z progiem reguly",
-      "kolumnaBazy": "alert_regula.porownanie",
       "wartosci": [
         {
           "wartosc": "greaterThan",
-          "opis": "Miara wieksza od progu",
-          "baza": "wieksze"
+          "opis": "Miara wieksza od progu"
         },
         {
           "wartosc": "greaterOrEqual",
-          "opis": "Miara nie mniejsza od progu",
-          "baza": "nie_mniejsze"
+          "opis": "Miara nie mniejsza od progu"
         },
         {
           "wartosc": "lessThan",
-          "opis": "Miara mniejsza od progu",
-          "baza": "mniejsze"
+          "opis": "Miara mniejsza od progu"
         },
         {
           "wartosc": "lessOrEqual",
-          "opis": "Miara nie wieksza od progu",
-          "baza": "nie_wieksze"
+          "opis": "Miara nie wieksza od progu"
         }
       ]
     },
     {
       "nazwa": "AlertChannel",
       "opis": "Droga dostarczenia alertu. Poza droga w aplikacji kazda wymaga skonfigurowanej integracji; brak integracji nie wstrzymuje wyzwolenia, tylko dostarczenie",
-      "kolumnaBazy": "alert_regula_kanal.kanal",
       "wartosci": [
         {
           "wartosc": "app",
-          "opis": "Powiadomienie w aplikacji",
-          "baza": "aplikacja"
+          "opis": "Powiadomienie w aplikacji"
         },
         {
           "wartosc": "alwaysOnDisplay",
-          "opis": "Nakladka Always On Display",
-          "baza": "nakladka"
+          "opis": "Nakladka Always On Display"
         },
         {
           "wartosc": "mail",
-          "opis": "Wiadomosc pocztowa przez rejestr kont poczty",
-          "baza": "poczta"
+          "opis": "Wiadomosc pocztowa przez rejestr kont poczty"
         },
         {
           "wartosc": "webhook",
-          "opis": "Wywolanie zwrotne pod wskazany adres",
-          "baza": "webhook"
+          "opis": "Wywolanie zwrotne pod wskazany adres"
         }
       ]
     },
     {
       "nazwa": "AlertTriggerStatus",
       "opis": "Stan pojedynczego wyzwolenia reguly",
-      "kolumnaBazy": "alert_wyzwolenie.stan",
       "wartosci": [
         {
           "wartosc": "firing",
-          "opis": "Warunek reguly nadal spelniony",
-          "baza": "czynne"
+          "opis": "Warunek reguly nadal spelniony"
         },
         {
           "wartosc": "acknowledged",
-          "opis": "Wyzwolenie potwierdzone przez Operatora",
-          "baza": "potwierdzone"
+          "opis": "Wyzwolenie potwierdzone przez Operatora"
         },
         {
           "wartosc": "resolved",
-          "opis": "Warunek reguly przestal byc spelniony",
-          "baza": "ustapilo"
+          "opis": "Warunek reguly przestal byc spelniony"
         },
         {
           "wartosc": "escalated",
-          "opis": "Brak reakcji w czasie eskalacji; wyzwolenie podniesione",
-          "baza": "eskalowane"
+          "opis": "Brak reakcji w czasie eskalacji; wyzwolenie podniesione"
         },
         {
           "wartosc": "muted",
-          "opis": "Wyzwolenie wyciszone oknem serwisowym reguly",
-          "baza": "wyciszone"
+          "opis": "Wyzwolenie wyciszone oknem serwisowym reguly"
         }
       ]
     },
     {
       "nazwa": "HealthProbeKind",
       "opis": "Rodzaj sondy kondycji",
-      "kolumnaBazy": "kondycja_sonda.rodzaj",
       "wartosci": [
         {
           "wartosc": "http",
-          "opis": "Zadanie HTTP pod wskazany adres",
-          "baza": "http"
+          "opis": "Zadanie HTTP pod wskazany adres"
         },
         {
           "wartosc": "tcp",
-          "opis": "Nawiazanie polaczenia TCP z wskazanym portem",
-          "baza": "tcp"
+          "opis": "Nawiazanie polaczenia TCP z wskazanym portem"
         },
         {
           "wartosc": "command",
-          "opis": "Polecenie powloki wykonane warstwa Terminala",
-          "baza": "polecenie"
+          "opis": "Polecenie powloki wykonane warstwa Terminala"
         },
         {
           "wartosc": "modelCall",
-          "opis": "Testowe wywolanie kanalu modelu — monitoring syntetyczny",
-          "baza": "wywolanie_modelu"
+          "opis": "Testowe wywolanie kanalu modelu — monitoring syntetyczny"
         },
         {
           "wartosc": "internal",
-          "opis": "Kontrola stanu samej platformy: procesy sesji, kolejki, kanaly",
-          "baza": "wewnetrzna"
+          "opis": "Kontrola stanu samej platformy: procesy sesji, kolejki, kanaly"
         }
       ]
     },
     {
       "nazwa": "HealthProbeStatus",
       "opis": "Wynik pojedynczego przebiegu sondy",
-      "kolumnaBazy": "kondycja_wynik.stan",
       "wartosci": [
         {
           "wartosc": "up",
-          "opis": "Komponent odpowiedzial poprawnie",
-          "baza": "dostepny"
+          "opis": "Komponent odpowiedzial poprawnie"
         },
         {
           "wartosc": "degraded",
-          "opis": "Komponent odpowiedzial, lecz poza oczekiwaniem sondy",
-          "baza": "degradacja"
+          "opis": "Komponent odpowiedzial, lecz poza oczekiwaniem sondy"
         },
         {
           "wartosc": "down",
-          "opis": "Komponent nie odpowiedzial",
-          "baza": "niedostepny"
+          "opis": "Komponent nie odpowiedzial"
         },
         {
           "wartosc": "unknown",
-          "opis": "Sonda nie doszla do skutku; o komponencie nic nie orzeka",
-          "baza": "nieustalony"
+          "opis": "Sonda nie doszla do skutku; o komponencie nic nie orzeka"
         }
       ]
     },
@@ -35890,6 +35850,10 @@
       "opis": "Przestrzen robocza karty sesji"
     },
     {
+      "nazwa": "project",
+      "opis": "Projekty konta"
+    },
+    {
       "nazwa": "session",
       "opis": "Sesje"
     },
@@ -36653,6 +36617,84 @@
           "typ": "int",
           "wymagane": true,
           "opis": "Liczba projektow"
+        }
+      ]
+    },
+    {
+      "typ": "project.create",
+      "opis": "Zaklada projekt konta. Kod projektu nadaje rdzen, Operator podaje nazwe — nazwa jest tym, co widac w lewym panelu ramy",
+      "zadanie": [
+        {
+          "nazwa": "name",
+          "typ": "string",
+          "wymagane": true,
+          "opis": "Nazwa projektu"
+        },
+        {
+          "nazwa": "description",
+          "typ": "string",
+          "wymagane": false,
+          "opis": "Opis projektu; puste zostawia projekt bez opisu"
+        }
+      ],
+      "wynik": [
+        {
+          "nazwa": "project",
+          "typ": "WorkspaceProject",
+          "wymagane": true,
+          "opis": "Projekt zalozony"
+        }
+      ]
+    },
+    {
+      "typ": "project.rename",
+      "opis": "Zmienia nazwe projektu. Kod projektu zostaje bez zmiany, bo wiaza sie z nim sesje i wpisy modulu Workspace",
+      "zadanie": [
+        {
+          "nazwa": "projectId",
+          "typ": "string",
+          "wymagane": true,
+          "opis": "Projekt przemianowywany"
+        },
+        {
+          "nazwa": "name",
+          "typ": "string",
+          "wymagane": true,
+          "opis": "Nowa nazwa projektu"
+        }
+      ],
+      "wynik": [
+        {
+          "nazwa": "project",
+          "typ": "WorkspaceProject",
+          "wymagane": true,
+          "opis": "Projekt po zmianie nazwy"
+        }
+      ]
+    },
+    {
+      "typ": "project.delete",
+      "opis": "Usuwa projekt wraz z dorobkiem modulu Workspace zapisanym pod nim: pamiecia projektu, zadaniami, notatkami, materialem i sladem zdarzen. Sesje projektu zostaja w historii i traca przypisanie — usuniecie projektu nie jest usunieciem rozmow, ktore w nim powstaly, wiec kolumna projektu tych sesji wraca na pusta",
+      "zadanie": [
+        {
+          "nazwa": "projectId",
+          "typ": "string",
+          "wymagane": true,
+          "opis": "Projekt usuwany"
+        }
+      ],
+      "wynik": [
+        {
+          "nazwa": "projectId",
+          "typ": "string",
+          "wymagane": true,
+          "opis": "Projekt usuniety"
+        },
+        {
+          "nazwa": "releasedSessionIds",
+          "typ": "string[]",
+          "wymagane": true,
+          "opis": "Sesje, ktore stracily przypisanie do projektu"
         }
       ]
     },

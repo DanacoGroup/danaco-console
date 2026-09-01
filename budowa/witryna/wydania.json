@@ -2,23 +2,22 @@
   "opis": "Chronologia wydań Danaco Console — JEDYNE źródło prawdy dla strony „Pobierz” i dla banera aktualizacji w aplikacji. Pusty wykaz znaczy: nie ma jeszcze żadnego wydania. Każda pozycja MUSI nieść pole `suma` (SHA-256 pliku) — powłoka odmawia założenia pliku, którego suma się nie zgadza, a wydania bez sumy nie zakłada w ogóle.",
   "produkt": "Danaco Console",
   "katalog_plikow": "../wydania/2.0.0-2026-08-30",
-  "numer_wersji": "Wydanie 2.0.0 z 29 sierpnia 2026. Wcześniejsze pozycje niosły 1.0.0 i różniła je wyłącznie data; numer podniesiono na słowo Właściciela z 29.08 — produkt jest wersją 2.0. Katalog wydania nazywa się `2.0.0-2026-08-29`, więc data zostaje w ścieżce i dwa różne dni nie nadpisują się wzajemnie.",
+  "numer_wersji": "Wydanie 2.0.0. Wcześniejsze pozycje niosły 1.0.0 i różniła je wyłącznie data; numer podniesiono rozstrzygnięciem Właściciela — produkt jest wersją 2.0. Katalog wydania nazywa się `2.0.0-2026-08-30`, więc data zostaje w ścieżce i dwa różne dni nie nadpisują się wzajemnie.",
   "kanal": {
     "wdrozony": true,
     "adres": "https://pobierz.danaco-group.pl/",
     "tymczasowy": false,
-    "czym_jest": "Kanał stoi pod własną nazwą pobierz.danaco-group.pl na maszynie 57.128.253.74 (IPv6 2001:41d0:601:1100::2485) — tej samej, na której działa rdzeń wdrożenia. Serwerem stron jest CADDY, nie nginx; TLS na 443, przekierowanie z 80 robi Caddy sam. Katalog wydawany: /opt/danaco/danaco-console/portal, pliki wydań w /opt/danaco/danaco-console/wydania/. Strona wizerunkowa produktu stoi osobno, na danaco-group.pl (maszyna 137.74.41.149, nginx).",
-    "chronione_haslem": "Pliki, po które sięga instalator, leżą pod otwartą ścieżką /pliki/ — kreator sześciu kroków nie ma pola na hasło, więc składnik chroniony uwierzytelnieniem byłby dla niego nie do pobrania. Uwierzytelnienie podstawowe (użytkownik `wlasciciel`, hasło jako skrót bcrypt w /etc/caddy/Caddyfile) zostaje na katalogu /wydania/*, gdzie leżą kopie robocze wydań. Sama witryna, w tym strona „Pobierz”, jest otwarta do czytania.",
-    "certyfikat": "Certyfikat wystawia i odnawia Caddy samodzielnie (ACME, Let's Encrypt). Przeglądarka nie pokazuje ostrzeżenia — sprawdzone: https://pobierz.danaco-group.pl/ odpowiada 200, nagłówek `server: Caddy`, a /wydania/ zwraca 401.",
-    "docelowo": "Kanal jest na swoim miejscu. Do zrobienia zostaje strona wizerunkowa produktu w portfolio grupy: danaco-group.pl/danaco-console.html — bez pobierania plikow, z jednym odnosnikiem tutaj. Material do wgrania: DanacoConsole.git/DO-WGRANIA-DANACO-GROUP/.",
+    "czym_jest": "Kanał stoi pod własną nazwą pobierz.danaco-group.pl, z TLS na 443 i przekierowaniem z portu 80. Pliki, po które sięga kreator instalacji, leżą pod OTWARTĄ ścieżką /pliki/ — kreator sześciu kroków nie ma pola na hasło. Ścieżka /wydania/ jest zamknięta uwierzytelnieniem podstawowym i wolno ją nieść wyłącznie pozycji oznaczonej polem `chronione_haslem`. Opisu maszyn, serwera stron i poświadczeń w tym pliku nie ma i nie wolno go tu wpisywać: wykaz jest publiczny i wkompilowany w kreator, więc czyta się go poleceniem `strings` na pobranym pliku.",
+    "certyfikat": "Certyfikat wystawia i odnawia serwer stron samodzielnie (ACME, Let's Encrypt). Przeglądarka nie pokazuje ostrzeżenia — sprawdzone: https://pobierz.danaco-group.pl/ odpowiada 200.",
+    "docelowo": "Kanał jest na swoim miejscu. Do zrobienia zostaje strona wizerunkowa produktu w portfolio grupy — bez pobierania plików, z jednym odnośnikiem tutaj.",
     "czego_brakuje": "",
-    "po_co_to_pole": "Pole rozstrzyga, czy strona „Pobierz” wystawia przycisk POBIERZ, czy tylko adres jako tekst. `wdrozony: true` znaczy: pliki naprawdę leżą pod tymi adresami i odpowiadają kodem 200 — sprawdzone poleceniem `curl -sI`. `tymczasowy: true` dokłada do tego zdanie, że kanał jest z maszyny budującej i pod certyfikatem własnym, żeby nikt nie wziął tego adresu za docelowy."
+    "po_co_to_pole": "Pole rozstrzyga, czy strona „Pobierz” wystawia przycisk POBIERZ, czy tylko adres jako tekst. `wdrozony: true` znaczy: pliki naprawdę leżą pod tymi adresami — sprawdza to krok odbioru w `zloz.mjs`, żądaniem HEAD na każdą pozycję, i odmawia złożenia strony, gdy adres odpowiada inaczej. `tymczasowy: true` dokłada do tego zdanie, że kanał jest z maszyny budującej i pod certyfikatem własnym, żeby nikt nie wziął tego adresu za docelowy."
   },
   "protokol": {
     "dopuszczone": [
       "https:"
     ],
-    "rozstrzygniecie": "Generator odmawia odnośnika każdej pozycji, której adres nie jest https:// — i ta reguła ZOSTAJE nietknięta. Kanał tymczasowy miał najpierw stanąć po http, bo urząd certyfikacji nie wystawia certyfikatu dla samego adresu liczbowego. Wybrano drugie wyjście: postawiono TLS z certyfikatem własnym, zamiast rozluźniać regułę wykazu. Reguła jest tu warta więcej niż wygoda jednego dnia — bez niej na jedynej publicznej stronie produktu mógłby stanąć odnośnik o dowolnym protokole, także `javascript:`. Koszt wyboru: przeglądarka pokaże ostrzeżenie o nieznanym wydawcy (patrz `kanal.certyfikat`).",
+    "rozstrzygniecie": "Generator odmawia odnośnika każdej pozycji, której adres nie jest https:// — i ta reguła ZOSTAJE nietknięta. Kanał tymczasowy miał najpierw stanąć po http, bo urząd certyfikacji nie wystawia certyfikatu dla samego adresu liczbowego. Wybrano drugie wyjście: postawiono TLS, zamiast rozluźniać regułę wykazu. Reguła jest tu warta więcej niż wygoda jednego dnia — bez niej na jedynej publicznej stronie produktu mógłby stanąć odnośnik o dowolnym protokole, także `javascript:`.",
     "wciaz_odmawiane": "Wszystko poza https: — w szczególności `http:`, `javascript:`, `data:` i `file:`. Pozycja z takim adresem nie znika ze strony: traci odnośnik i dostaje zdanie, czego jej brakuje."
   },
   "wydania": [
@@ -35,6 +34,8 @@
       "rozmiar": "6,3 MB",
       "rozmiarBajty": 6569984,
       "suma": "7fcea53cf443e22d664bc85732793cdb98a45ca4f2c87a718c251f4b48dba244",
+      "chronione_haslem": false,
+      "podpisany": false,
       "zmiany": "Instalator stoi samodzielnym plikiem: pojedyncze binarium bez WebView2Loader.dll obok, okno bez ramy platformy, z własną belką kreatora."
     },
     {
@@ -50,25 +51,22 @@
       "rozmiar": "2,6 MB",
       "rozmiarBajty": 2583918,
       "suma": "d346897f5a24643d17061adfa4a32d61867361c2fb98455721e4d8885ab75e0f",
+      "chronione_haslem": false,
+      "podpisany": false,
       "zmiany": "Powłoka podaje oknu adres rdzenia skryptem wstępnym, stoi bez ramy systemu i wstaje z animacją startową."
-    },
+    }
+  ],
+  "w_przygotowaniu": [
     {
       "wersja": "2.0.0",
-      "data": "2026-08-28",
       "system": "Windows",
       "postac": "hybryda",
       "architektura": "ARM64",
       "nazwa": "Windows ARM64 — powłoka programu",
-      "coBierzesz": "To samo okno co pozycja wyżej, dla komputera z Windows na procesorze ARM. Na maszynie Intel/AMD ten plik się nie uruchomi.",
-      "plik": "https://pobierz.danaco-group.pl/wydania/1.0.0-2026-08-28/Danaco%20Console_1.0.0_hybryda_arm64-setup.exe",
-      "nazwaPliku": "Danaco Console_1.0.0_hybryda_arm64-setup.exe",
-      "rozmiar": "2,1 MB",
-      "rozmiarBajty": 2134570,
-      "suma": "7b4bf9fde722d1829e5c1c3110528f4d088805ef473b5d78b53c2e2366462cd7",
-      "zmiany": "Powłoka dla ARM64 z 28 sierpnia; wydanie z 30 sierpnia nie ma jeszcze postaci ARM64."
+      "nazwaPliku": "Danaco Console_2.0.0_hybryda_arm64-setup.exe",
+      "coBierzesz": "To samo okno co pozycja x64, dla komputera z Windows na procesorze ARM. Wydanie 2.0.0 nie ma jeszcze postaci ARM64, a kreator instalacji na maszynie ARM odmawia nazwanym powodem, zamiast podawać powłokę x64."
     }
   ],
-  "w_przygotowaniu": [],
   "serwer": {
     "czym_to_jest": "Pakiet serwera wdrożenia — NIE JEST TO POZYCJA DLA KLIENTA. Zakłada go administrator na maszynie serwerowej; dopiero wtedy pozycje wyżej mają z czym rozmawiać. Produkt występuje wyłącznie jako hybryda, więc bez tego pakietu nie działa żadna z nich.",
     "wersja": "1.0.0",
@@ -81,12 +79,18 @@
     "rozmiar": "42,6 MB",
     "rozmiarBajty": 44719274,
     "suma": "7cb532232cb93220001a707180ee42dd643389f0c26542d9a3d54b412cf0274c",
-    "zmiany": "Pierwsze wydanie pakietu serwerowego: rdzeń wraz z całym arsenałem po stronie serwera, do założenia przez apt na maszynie wdrożenia.",
-    "sprostowanie_28_08": "Zapis tej sekcji powstał przed wdrożeniem i opisywał nginx pod 51.75.62.180. Pomiar z 28.08.2026: kanał działa na 57.128.253.74 pod Caddy, a stary adres jest nieaktualny. Nazwy `danaco-system` i `danaco-web` nie są nazwami DNS — to etykiety wewnętrzne z migracji punktów dostępu; w DNS nie rozwiązują się."
+    "chronione_haslem": true,
+    "rdzen_wdrozenia": {
+      "adres": null,
+      "port": null,
+      "rozstrzygniecie": "Adres i port, pod którym rdzeń odpowiada po założeniu tego pakietu, czekają na rozstrzygnięcie Właściciela; do tego czasu pola stoją puste, bo wpisana tu wartość rozjeżdżałaby się z jednostką systemd i z instalką powłoki. Rozstrzygnięcie obowiązuje naraz w trzech miejscach: jednostce systemd pakietu, opisie w DEBIAN/control i zmiennych DANACO_HOST_WDROZENIA oraz DANACO_PORT_WDROZENIA podawanych przy składaniu instalki powłoki.",
+      "po_co_to_pole": "Administrator zakładający pakiet i operator składający instalkę czytają jedną wartość, nie dwie. Puste pole znaczy „nierozstrzygnięte” i nie wolno go czytać jako „domyślne”."
+    },
+    "zmiany": "Pierwsze wydanie pakietu serwerowego: rdzeń wraz z całym arsenałem po stronie serwera, do założenia przez apt na maszynie wdrożenia."
   },
-  "kolejnosc": "KOLEJNOŚĆ POZYCJI JEST ZNACZĄCA I NIE WOLNO JEJ SORTOWAĆ ALFABETYCZNIE. Strona „Pobierz” wystawia pozycje w tej kolejności, więc instalator stoi pierwszy — to on jest plikiem dla Operatora. Krok 5 instalatora nie bierze pozycji pierwszej, tylko pierwszą postaci `hybryda` zgodną z architekturą maszyny; x64 stoi przed ARM64, żeby maszyna Intel/AMD nie dostała powłoki ARM.",
+  "kolejnosc": "KOLEJNOŚĆ POZYCJI JEST ZNACZĄCA I NIE WOLNO JEJ SORTOWAĆ ALFABETYCZNIE. Strona „Pobierz” wystawia pozycje w tej kolejności, więc instalator stoi pierwszy — to on jest plikiem dla Operatora. Krok 5 instalatora nie bierze pozycji pierwszej, tylko pierwszą postaci `hybryda` zgodną z architekturą maszyny.",
   "pola": {
-    "wersja": "1.0.0",
+    "wersja": "2.0.0",
     "data": "RRRR-MM-DD — to ona, a nie numer, różni wydania",
     "system": "Windows — jedyna platforma produktu; pole zostaje, bo po nim aplikacja i skrypt na stronie rozpoznają maszynę czytającego. Nie wpisywać tu architektury ani postaci",
     "postac": "instalator — plik, który pobiera Operator; hybryda — powłoka programu, składnik ściągany przez instalator. Rdzeń w obu wypadkach stoi na serwerze wdrożenia.",
@@ -98,6 +102,8 @@
     "rozmiar": "zapis dla człowieka, np. 48,6 MB (mebibajty)",
     "rozmiarBajty": "dokładna liczba bajtów z `stat -c%s` — do porównania z nagłówkiem content-length",
     "suma": "SHA-256 pliku, zapis szesnastkowy — WYMAGANE, policzone `sha256sum` z tego właśnie pliku, nigdy przepisane z raportu",
+    "chronione_haslem": "prawda dla pozycji spod ścieżki /wydania/, zamkniętej uwierzytelnieniem podstawowym — strona uprzedza wtedy o pytaniu o hasło, a krok odbioru w `zloz.mjs` przyjmuje dla niej odpowiedź 401. Fałsz dla pozycji spod otwartej /pliki/, po które sięga kreator instalacji.",
+    "podpisany": "prawda wyłącznie dla pliku Windows z niepustym katalogiem Security, czyli z podpisem Authenticode. Fałsz drukuje przy pozycji zdanie o braku wydawcy — mierzy to zapora w skryptach składania instalki, a nie ręka.",
     "zmiany": "co się zmieniło, jednym zdaniem"
   },
   "w_przygotowaniu_uwaga": "Pusta tablica znaczy: nie ma dziś pakietu zapowiedzianego bez pliku. Pozycja trafia tu, gdy jest zapowiedziana, a przechodzi do `wydania` w chwili, w której plik leży na dysku i daje się zmierzyć."

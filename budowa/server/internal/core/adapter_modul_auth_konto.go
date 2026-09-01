@@ -30,6 +30,18 @@ import (
 // o nową.
 const trwanieDrogiPotwierdzenia = time.Hour
 
+// pulapProbDrogi — po tylu pomyłkach droga zostaje zamknięta. Sześciocyfrowy kod
+// ma milion wartości, więc dziesięć prób na jedną wydaną drogę zostawia
+// zgadującemu szansę jedną na sto tysięcy, a Operatorowi zapas na pomyłkę przy
+// przepisywaniu kodu z ekranu.
+const pulapProbDrogi = 10
+
+// odstepMiedzyListami — najkrótszy odstęp między dwoma listami z drogą do tego
+// samego konta i celu. Kod wysłany chwilę temu jest jeszcze ważny; odstęp
+// krótszy mnożyłby drogi czynne i dawałby pytającemu tyle listów na cudzy adres,
+// ile zdąży poprosić.
+const odstepMiedzyListami = time.Minute
+
 // kontoGotowe odmawia, gdy montaż nie wpiął trwałości tożsamości.
 //
 // Odmowa jest wprost, nie cicha: rejestracja bez zapisu konta wyglądałaby jak
@@ -105,6 +117,12 @@ func (a *adapterUwierzytelnienia) wyslijDrogePotwierdzenia(ctx context.Context,
 		return err
 	}
 	teraz := time.Now()
+	/* Droga nowa zamyka poprzednie drogi tego konta i celu. Bez tego kody się
+	   kumulują: każdy list zostawia w obiegu drogę ważną godzinę, więc zgadujący
+	   ma tyle celów naraz, ile razy Operator poprosił o list. */
+	if _, err := a.repozytorium.ZamknijDrogiKonta(ctx, kontoId, cel); err != nil {
+		return err
+	}
 	if err := a.konto.ZalozPotwierdzenie(ctx, dane.PotwierdzenieTozsamosci{
 		Skrot:     skrotTokenu(bezOdstepow(droga)),
 		Cel:       cel,
@@ -202,9 +220,6 @@ func rozdzielony(kod string) string {
 	return wynik.String()
 }
 
-// zuzyjDroge sprawdza drogę i zamyka ją w jednej czynności. Sprawdzenie
-// i zamknięcie są niepodzielne warunkiem w bazie, więc dwa żądania z tym
-// samym materiałem nie zastają obie drogi ważnej.
 /*
 bezOdstepow zdejmuje z kodu wszystkie odstępy, nie tylko brzegowe.
 
@@ -265,12 +280,51 @@ func (a *adapterUwierzytelnienia) zamknijDroge(ctx context.Context,
 	return nil
 }
 
-func (a *adapterUwierzytelnienia) zuzyjDroge(ctx context.Context, cel, droga string) error {
-	zapis, err := a.drogaKonta(ctx, cel, droga)
-	if err != nil {
-		return err
+// kontoDrogi oddaje konto, do którego droga prowadzi. Droga zastana, bez
+// wskazania konta, pochodzi sprzed migracji 406 i prowadzi do konta
+// najstarszego — instalacja z jednym kontem rozstrzyga jednoznacznie.
+func (a *adapterUwierzytelnienia) kontoDrogi(ctx context.Context,
+	zapis dane.PotwierdzenieTozsamosci) (int64, error) {
+
+	if zapis.KontoId != 0 {
+		return zapis.KontoId, nil
 	}
-	return a.zamknijDroge(ctx, zapis)
+	konto, err := a.konto.Konto(ctx)
+	if errors.Is(err, dane.ErrBrakWiersza) {
+		return 0, bladBramki(shared.ErrorCodeConflict,
+			"Konto Operatora nie zostało jeszcze założone. Zarejestruj się.")
+	}
+	if err != nil {
+		return 0, err
+	}
+	return konto.Id, nil
+}
+
+/*
+odnotujPomylkeDrogi zapisuje kod, który nie trafił w żadną drogę: podnosi zwłokę
+należną próbie następnej i dolicza pomyłkę drogom czynnym tego celu, zamykając
+te, które doszły do pułapu.
+
+Pomyłka liczy się drogom, a nie jednej z nich, bo kod nietrafiony żadnej nie
+nazywa. Niepowodzenie zapisu idzie do dziennika, nie do odpowiedzi — czynność
+i tak kończy się odmową, a wołający ma dostać jedno zdanie o kodzie, nie o bazie.
+*/
+func (a *adapterUwierzytelnienia) odnotujPomylkeDrogi(ctx context.Context,
+	cel string, proba zajecieDrogi) {
+
+	proba.Niepowodzenie()
+	zamkniete, err := a.repozytorium.OdnotujPomylkeDrogi(ctx, cel, pulapProbDrogi,
+		time.Now().UnixMilli())
+	dziennik := dziennikZKontekstu(ctx)
+	if dziennik == nil {
+		return
+	}
+	if err != nil {
+		dziennik.Printf("bramka: nie można doliczyć pomyłki drogom celu %s: %v", cel, err)
+		return
+	}
+	dziennik.Printf("bramka: kod celu %s nie trafił w żadną drogę; dróg zamkniętych po %d próbach: %d",
+		cel, pulapProbDrogi, zamkniete)
 }
 
 // ── auth.verify ──────────────────────────────────────────────────────────────
@@ -289,13 +343,25 @@ func (a *adapterUwierzytelnienia) PotwierdzAdres(ctx context.Context,
 	a.zamekZmiany.Lock()
 	defer a.zamekZmiany.Unlock()
 
+	// Zwłoka nakłada się przed sprawdzeniem kodu, żeby czas odpowiedzi nie
+	// zdradzał wyniku, i trzyma drogę zajętą do rozstrzygnięcia próby.
+	proba := a.dlawik.Podejdz(ctx, kluczDlawika(ctx, czynnoscDrogi, 0))
+	defer proba.Zwolnij()
+
 	/* Konto rozstrzyga droga, nie kolejność założenia: przy dwóch rejestracjach
 	   naraz kod z listu prowadzi do konta, na które ten list poszedł. */
 	zapis, err := a.drogaKonta(ctx, dane.CelWeryfikacja, z.Token)
 	if err != nil {
+		a.odnotujPomylkeDrogi(ctx, dane.CelWeryfikacja, proba)
 		return shared.AuthVerifyResponse{}, err
 	}
-	konto, err := a.konto.KontoPoId(ctx, zapis.KontoId)
+	proba.Wyzeruj()
+
+	kontoId, err := a.kontoDrogi(ctx, zapis)
+	if err != nil {
+		return shared.AuthVerifyResponse{}, err
+	}
+	konto, err := a.konto.KontoPoId(ctx, kontoId)
 	if errors.Is(err, dane.ErrBrakWiersza) {
 		return shared.AuthVerifyResponse{}, bladBramki(shared.ErrorCodeConflict,
 			"Konto Operatora nie zostało jeszcze założone. Zarejestruj się.")
@@ -370,6 +436,18 @@ func (a *adapterUwierzytelnienia) RozpocznijOdzyskanie(ctx context.Context,
 	if !konto.Potwierdzone {
 		cel = dane.CelWeryfikacja
 	}
+	/* Odstęp między listami. Droga wydana chwilę temu leży w skrzynce i jest
+	   ważna, a każdy list ponad nią to kolejna droga do zgadywania oraz kolejna
+	   wiadomość dla właściciela adresu, który o nią nie prosił. Odpowiedź
+	   zostaje ta sama, bo różnica mówiłaby pytającemu, że o ten adres ktoś
+	   właśnie prosił. */
+	ostatnia, err := a.repozytorium.OstatniaDrogaKonta(ctx, konto.Id, cel)
+	if err != nil {
+		return shared.AuthRecoverResponse{}, err
+	}
+	if ostatnia != 0 && time.Since(time.UnixMilli(ostatnia)) < odstepMiedzyListami {
+		return shared.AuthRecoverResponse{Sent: true}, nil
+	}
 	if err := a.wyslijDrogePotwierdzenia(ctx, cel, konto.Email, konto.Id); err != nil {
 		return shared.AuthRecoverResponse{}, err
 	}
@@ -397,7 +475,31 @@ func (a *adapterUwierzytelnienia) UstawNoweHaslo(ctx context.Context,
 	a.zamekZmiany.Lock()
 	defer a.zamekZmiany.Unlock()
 
-	kotwica, err := a.kotwica(ctx)
+	// Zwłoka nakłada się przed sprawdzeniem kodu, żeby czas odpowiedzi nie
+	// zdradzał wyniku, i trzyma drogę zajętą do rozstrzygnięcia próby.
+	proba := a.dlawik.Podejdz(ctx, kluczDlawika(ctx, czynnoscDrogi, 0))
+	defer proba.Zwolnij()
+
+	/* Konto wskazuje droga z listu, nie kolejność założenia. Kotwica czytana bez
+	   wskazania konta jest kotwicą konta najstarszego: kod przysłany na własny
+	   adres ustawiałby hasło konta założonego przy instalacji, czyli otwierał
+	   cudzą bramkę bez znajomości czegokolwiek, co do niej należy. */
+	zapis, err := a.drogaKonta(ctx, dane.CelOdzyskanie, z.Token)
+	if err != nil {
+		a.odnotujPomylkeDrogi(ctx, dane.CelOdzyskanie, proba)
+		return shared.AuthResetResponse{}, err
+	}
+	proba.Wyzeruj()
+
+	kontoId, err := a.kontoDrogi(ctx, zapis)
+	if err != nil {
+		return shared.AuthResetResponse{}, err
+	}
+	// Dalsze czynności idą kontem z drogi: żądanie przychodzi z urządzenia bez
+	// sesji, więc kontekst połączenia konta nie zna.
+	ctx = dane.ZKontemOperatora(ctx, kontoId)
+
+	kotwica, err := a.kotwicaKonta(ctx, kontoId)
 	if errors.Is(err, dane.ErrBrakWiersza) {
 		return shared.AuthResetResponse{}, bladBramki(shared.ErrorCodeConflict,
 			"Konto Operatora nie zostało jeszcze założone. Zarejestruj się.")
@@ -405,22 +507,23 @@ func (a *adapterUwierzytelnienia) UstawNoweHaslo(ctx context.Context,
 	if err != nil {
 		return shared.AuthResetResponse{}, err
 	}
-	if err := a.zuzyjDroge(ctx, dane.CelOdzyskanie, z.Token); err != nil {
+	if err := a.zamknijDroge(ctx, zapis); err != nil {
 		return shared.AuthResetResponse{}, err
 	}
 
-	zapis, err := zapisSekretu(z.NewPassword)
+	sekret, err := zapisSekretu(z.NewPassword)
 	if err != nil {
 		return shared.AuthResetResponse{}, err
 	}
-	odwolanie, err := a.sejf.Zapisz(ctx, przedrostekBytuSejfu+kotwica.Kod, zapis)
+	odwolanie, err := a.sejf.Zapisz(ctx, przedrostekBytuSejfu+kotwica.Kod, sekret)
 	if err != nil {
 		return shared.AuthResetResponse{}, err
 	}
 	if err := a.repozytorium.ZapiszOdwolanieSekretu(ctx, kotwica.Kod, odwolanie); err != nil {
 		return shared.AuthResetResponse{}, err
 	}
-	// Pusty skrót zachowany znaczy unieważnij wszystkie — odzyskanie idzie z urządzenia bez sesji.
+	// Pusty skrót zachowany znaczy unieważnij wszystkie sesje tego konta —
+	// odzyskanie idzie z urządzenia bez sesji, a konta obce zmiana nie dotyczy.
 	uniewaznione, err := a.repozytorium.UniewaznijSesjeBramkiPoza(ctx, "", time.Now().UnixMilli())
 	if err != nil {
 		return shared.AuthResetResponse{}, err

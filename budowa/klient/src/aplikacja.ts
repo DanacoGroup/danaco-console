@@ -1,5 +1,4 @@
 // Punkt wejścia klienta. Znacznik okien pochodzi z biblioteki `design/zasoby/`.
-
 import {
   adresGniazdaOdPowloki,
   adresGniazdaRdzenia,
@@ -7,10 +6,14 @@ import {
 } from './polaczenie/adres-rdzenia.ts';
 import { utworzTransport } from './polaczenie/gniazdo.ts';
 import { utworzKanal } from './protokol/kanal.ts';
-import { utworzSesje } from './protokol/sesja.ts';
+import { zadajPowitanie, zapomnijPowitanie } from './protokol/powitanie.ts';
+import { sesjaKlienta } from './protokol/sesja.ts';
+import { pilnujTokenu, tokenSesji } from './protokol/token-sesji.ts';
+import { tozsamoscKlienta } from './protokol/tozsamosc-klienta.ts';
 import { oglos } from './wiazanie/ogloszenie.ts';
 import { pokazOknoPowloki, zwiazBelkeOkna } from './wiazanie/belka-okna.ts';
 import { zwiazWejscie } from './wiazanie/wejscie.ts';
+import { zwiazZdarzenia } from './wiazanie/zdarzenia.ts';
 
 /**
  * Adres gniazda rdzenia pochodzi z dokumentu wczytanego po HTTP; w pozostałych
@@ -24,7 +27,7 @@ function adresRdzenia(): string {
    wdrożenia, którego pochodzenie dokumentu w powłoce nie zdradza. Poza powłoką
    odpowiedzi nie ma i zostaje adres wywiedziony z pochodzenia. */
 const transport = utworzTransport(adresGniazdaOdPowloki() ?? adresRdzenia());
-const kanal = utworzKanal(transport, utworzSesje());
+const kanal = utworzKanal(transport, sesjaKlienta());
 
 /*
 Kanał wystawiony na obiekcie globalnym: skrypty biblioteki są funkcjami
@@ -84,6 +87,44 @@ transport.naStan((stan) => {
   if (stan === 'ponawianie') oglos('Połączenie', 'Wznawianie łączności z rdzeniem.', 'ostrzezenie');
 });
 globalThis.setTimeout(raz, 6000);
+
+/* Token sesji bramki przejmowany jest z odpowiedzi rdzenia, bo to on rozstrzyga
+   o ważności sesji; powitanie ponawiane niesie go z powrotem. */
+pilnujTokenu(kanal);
+
+/*
+Powitanie idzie na każdym gnieździe od nowa: rdzeń wiąże z połączeniem sesję
+bramki właśnie w powitaniu, więc po uśpieniu maszyny, restarcie rdzenia albo
+mignięciu sieci komenda wysłana bez ponowienia wraca odmową `not_authenticated`.
+Do powrotu odpowiedzi kolejka wychodząca stoi wstrzymana — inaczej komendy
+odłożone na czas zerwania wyszłyby przed uwierzytelnieniem.
+*/
+transport.naStan((stan) => {
+  /* Stan `laczenie` to pierwsza próba, przed którą żadnego połączenia nie było:
+     powitanie zamówione wcześniej przez okno wejścia czeka na to samo gniazdo. */
+  if (stan === 'rozlaczony' || stan === 'ponawianie') {
+    zapomnijPowitanie();
+    return;
+  }
+  if (stan === 'polaczony') void przywitaj();
+});
+
+let powitanoJuz = false;
+async function przywitaj(): Promise<void> {
+  const wynik = await zadajPowitanie(kanal, tozsamoscKlienta(), tokenSesji() || undefined);
+  transport.zwolnijWstrzymanie();
+  /* Nieudane powitanie pierwsze ma swój obraz w oknie wejścia — wariant błędu
+     stoi tam zamiast okna logowania. Dalsze padają przy oknie już zamkniętym,
+     więc bez komunikatu Operator patrzyłby w okno, które przestało odpowiadać. */
+  if (!wynik.udany && powitanoJuz) {
+    oglos('Połączenie', wynik.blad?.message ?? 'Rdzeń odrzucił powitanie.', 'blad');
+  }
+  powitanoJuz = true;
+}
+
+/* Zdarzenia rdzenia idą jednym rozdzielaczem: wiązania okien zgłaszają do niego
+   uchwyty, a warstwa wspólna ma odbiorcę od chwili postawienia aplikacji. */
+zwiazZdarzenia(kanal);
 
 /* Wiązanie znacznika Właściciela z komendami rdzenia: nasłuchy na jego
    przyciskach i polach. Nie stawia żadnego elementu. */

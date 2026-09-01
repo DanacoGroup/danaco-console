@@ -87,23 +87,38 @@ ZNAKOW_KODU nie stoi tu przypadkiem: okno rejestracji ma sześć pól na kod
 z wiadomości. Token sesji ma 43 znaki i do tych pól nie wchodzi — dlatego kod
 potwierdzenia jest osobnym bytem, krótkim i cyfrowym.
 
-Sześć cyfr daje milion możliwości. Zgadywania pilnuje ten sam dławik, który
-opóźnia kolejne wejścia, oraz godzina ważności i zamknięcie drogi po pierwszym
+Sześć cyfr daje milion możliwości. Zgadywania pilnują cztery rzeczy naraz:
+dławik prób kluczowany połączeniem, licznik pomyłek zamykający drogę po
+`pulapProbDrogi` próbach, godzina ważności oraz zamknięcie drogi po pierwszym
 użyciu — bez nich krótki kod byłby słabością, nie ułatwieniem.
 */
 const znakowKoduPotwierdzenia = 6
+
+// granicaLosowaniaCyfry — bajty od tej wartości w górę odpadają. Dwieście
+// pięćdziesiąt sześć nie dzieli się przez dziesięć, więc reszta z dzielenia
+// dawałaby cyfrom od zera do pięciu szansę większą niż pozostałym; kod tak
+// krótki nie ma z czego oddać tej różnicy.
+const granicaLosowaniaCyfry = 250
 
 // nowyKodPotwierdzenia losuje kod przepisywany przez Operatora z wiadomości.
 // Cyfry, nie litery: kod czyta się z ekranu telefonu i przepisuje na klawiaturze,
 // a litery podobne do cyfr (O i zero, l i jedynka) mnożą pomyłki.
 func nowyKodPotwierdzenia() (string, error) {
-	cyfry := make([]byte, znakowKoduPotwierdzenia)
+	cyfry := make([]byte, 0, znakowKoduPotwierdzenia)
 	surowy := make([]byte, znakowKoduPotwierdzenia)
-	if _, err := rand.Read(surowy); err != nil {
-		return "", fmt.Errorf("core: brak losowości na kod potwierdzenia: %w", err)
-	}
-	for i, bajt := range surowy {
-		cyfry[i] = '0' + bajt%10
+	for len(cyfry) < znakowKoduPotwierdzenia {
+		if _, err := rand.Read(surowy); err != nil {
+			return "", fmt.Errorf("core: brak losowości na kod potwierdzenia: %w", err)
+		}
+		for _, bajt := range surowy {
+			if bajt >= granicaLosowaniaCyfry {
+				continue
+			}
+			cyfry = append(cyfry, '0'+bajt%10)
+			if len(cyfry) == znakowKoduPotwierdzenia {
+				break
+			}
+		}
 	}
 	return string(cyfry), nil
 }

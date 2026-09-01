@@ -96,8 +96,10 @@ const PLIKI_BIBLIOTEKI = [
   'kreator.css',
   'okna/przeplyw-wejscia.js',
   /* `okna/centrum-wejscie.js` do wydania nie wchodzi: przenosi przeglądarkę na
-     osobny plik prototypu, a produkt zmienia wnętrze okna w miejscu. */
-  'okna/centrum-dowodzenia.js',
+     osobny plik prototypu, a produkt zmienia wnętrze okna w miejscu.
+     `okna/centrum-dowodzenia.js` też nie: zachowania Centrum niesie
+     `src/wiazanie/centrum.ts`, a skrypt prototypu przełączał stan funkcji
+     globalnych bez wywołania rdzenia. */
   'okna/centrum-obszar.js',
   'okna/centrum-dymki.js',
 ];

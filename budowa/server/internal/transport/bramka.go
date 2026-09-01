@@ -29,18 +29,25 @@ type dopuszczenieBramki struct {
 	wymagana bool
 }
 
-// wymogLogowania składa obie przesłanki w jedno zdanie. Wskazanie Operatora
-// (nastawa niezerowa) wygrywa z adresem w OBIE strony — bo to jest dźwignia,
-// a nie podpowiedź; brak wskazania oddaje głos adresowi nasłuchu.
+// wymogLogowania składa obie przesłanki w jedno zdanie. Nastawa jest dźwignią
+// TYLKO WŁĄCZAJĄCĄ: nastawę `gateway.requireLogin` zmienia komenda `config.set`
+// wykonywana z gniazda, więc nastawa zdejmująca wymóg byłaby drogą zdjęcia
+// bramki tym samym gniazdem, które bramka ma zatrzymać — a zdjęcie przeżyłoby
+// restart i przeniesienie nasłuchu na adres publiczny. Wymóg zdejmuje wyłącznie
+// wskazanie przy starcie procesu (Ustawienia.BramkaZniesiona); brak wskazania
+// oddaje głos adresowi nasłuchu.
 func wymogLogowania(adres string, nastawa *bool) bool {
-	if nastawa != nil {
-		return *nastawa
+	if nastawa != nil && *nastawa {
+		return true
 	}
 	return !petlaZwrotna(adres)
 }
 
-// Metoda dopuszczenie składa regułę z ustawień okna; pętla zwrotna bez wskazania Operatora daje regułę wyłączoną.
+// Metoda dopuszczenie składa regułę z ustawień okna; zniesienie wskazane przy starcie procesu jest jedyną drogą zdjęcia wymogu.
 func (u Ustawienia) dopuszczenie() dopuszczenieBramki {
+	if u.BramkaZniesiona {
+		return dopuszczenieBramki{wymagana: false}
+	}
 	return dopuszczenieBramki{wymagana: wymogLogowania(u.Adres, u.WymogLogowania)}
 }
 

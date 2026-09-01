@@ -26,8 +26,8 @@ pub fn stan_rdzenia(ustawienia: State<'_, Ustawienia>) -> OpisRdzenia {
     rdzen::opisz(&ustawienia)
 }
 
-/// Zwraca adres HTTP rdzenia obowiązujący aktualnie dla powłoki albo brak, gdy wskazania
-/// serwera jeszcze nie złożono.
+/// Zwraca adres rdzenia obowiązujący aktualnie dla powłoki — wraz ze schematem, z którego
+/// klient wywodzi adres gniazda — albo brak, gdy wskazania serwera jeszcze nie złożono.
 #[tauri::command]
 pub fn adres_rdzenia(ustawienia: State<'_, Ustawienia>) -> Option<String> {
     ustawienia.adres_rdzenia_http()

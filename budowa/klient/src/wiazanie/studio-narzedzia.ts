@@ -19,17 +19,33 @@ let wzory: WzoryPanelu | null = null;
 /** Odłączenia nasłuchów poprzedniego wiązania; bez nich wiązanie założone ponownie nanosiłoby jedno zdarzenie wielokrotnie. */
 let odlaczenia: Array<() => void> = [];
 
+/**
+ * Zdejmuje treść przykładową panelu narzędzi, zabierając z niej wzory nagłówka
+ * grupy i wiersza pozycji. Woła się przy montażu okna, przed powstaniem
+ * stanowiska: wykaz narzędzi z prototypu opisuje cudzą sesję. Zwraca prawdę,
+ * gdy panel stał w dokumencie.
+ */
+export function zdejmijTrescPrzykladowaNarzedzi(): boolean {
+  return przygotujPanel() !== null;
+}
+
+/** Wskazuje listę panelu i opróżnia ją z treści przykładowej; pustka znaczy panel poza dokumentem. */
+function przygotujPanel(): HTMLElement | null {
+  const znaleziona = document.querySelector('#panel-tools .sta-okno-tresc.st-panel-lista');
+  if (!(znaleziona instanceof HTMLElement)) return null;
+  wzory ??= zdejmijWzory(znaleziona);
+  zdejmijTrescPrzykladowa(znaleziona);
+  return znaleziona;
+}
+
 /** Wiąże panel narzędzi z rdzeniem; panel pokazuje narzędzia dołożone do sesji okna. Prawda znaczy, że znacznik panelu stał i wiązanie stanęło. */
 export function zwiazNarzedzia(kanal: Kanal, idOkna: string): boolean {
-  const znaleziona = document.querySelector('#panel-tools .sta-okno-tresc.st-panel-lista');
-  if (!(znaleziona instanceof HTMLElement)) return false;
+  const znaleziona = przygotujPanel();
+  if (znaleziona === null) return false;
   const lista: HTMLElement = znaleziona;
 
   for (const odlacz of odlaczenia) odlacz();
   odlaczenia = [];
-
-  wzory ??= zdejmijWzory(lista);
-  zdejmijTrescPrzykladowa(lista);
 
   let idSesji = '';
   let dolozenia: SessionTool[] = [];

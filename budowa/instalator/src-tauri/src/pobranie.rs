@@ -1,17 +1,39 @@
-//! Krok 5 kreatora: pobranie składników programu z serwera wdrożenia Danaco.
-//! Adres i sumy kontrolne pochodzą z wykazu wydań `budowa/witryna/wydania.json`
-//! (wkompilowanego przy budowie, jak w powłoce głównej) — nic tu nie jest
-//! zgadywane ani wpisane na sztywno drugi raz.
+//! Krok 5 kreatora: pobranie powłoki programu z kanału wydań Danaco, sprawdzenie
+//! jej sumy kontrolnej i założenie programu pobraną instalką NSIS. Wykaz wydań
+//! czytany jest z kanału przy każdym przebiegu — wydanie wychodzi częściej niż
+//! instalator, a wykaz wkompilowany wiązałby cykl instalatora z cyklem powłoki.
+//! Kopia wkompilowana przy budowie zostaje wyłącznie na wypadek kanału, który nie
+//! odpowie, i niesie adres kanału, spod którego wykaz bieżący się czyta.
 
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
 use std::io::Read;
 use std::path::{Path, PathBuf};
+use std::time::Duration;
 use tauri::{AppHandle, Emitter};
 
-/// Wykaz wydań, jedyne źródło prawdy o adresie kanału i pozycjach do pobrania —
-/// ten sam plik, z którego korzysta powłoka główna (`aktualizacja/pobranie.rs`).
-const WYKAZ_WYDAN: &str = include_str!("../../../witryna/wydania.json");
+/// Kopia wykazu wydań z chwili budowy — ten sam plik, z którego korzysta powłoka
+/// główna (`aktualizacja/pobranie.rs`). Rozstrzyga wyłącznie o adresie kanału
+/// i o pozycjach wtedy, gdy kanał nie odpowie.
+const WYKAZ_WKOMPILOWANY: &str = include_str!("../../../witryna/wydania.json");
+
+/// Nazwa pliku wykazu w katalogu wydawanym kanału — ta sama, pod którą
+/// `witryna/zloz.mjs` odkłada wykaz obok stron.
+const PLIK_WYKAZU: &str = "wydania.json";
+
+/// Zapora czasu żądań poprzedzających pobranie: sprawdzenia kanału i odczytu
+/// wykazu. Bez niej okno czeka tyle, ile trwa zwłoka serwera niedostępnego.
+/// Samo pobranie pliku wydania zapory nie ma — trwa tyle, ile trwa łącze.
+const ZAPORA_CZASU: Duration = Duration::from_secs(10);
+
+/// Górna granica wykazu czytanego z kanału. Wykaz wydań ma kilkanaście kilobajtów;
+/// odpowiedź większa nie jest wykazem i nie ma powodu jej wczytywać.
+const GRANICA_WYKAZU: usize = 512 * 1024;
+
+/// Nazwa pliku wykonywalnego powłoki w katalogu programu. Ustala ją instalka NSIS
+/// wydania (`MAINBINARYNAME`), a ta bierze ją z nazwy pakietu
+/// `desktop/src-tauri/Cargo.toml` — nie z nazwy produktu.
+const NAZWA_PROGRAMU: &str = "danaco-console-powloka.exe";
 
 /// Poświadczenia kanału pobrań wpisane w postać instalki przy jej składaniu.
 /// Katalog `/wydania/` chroni uwierzytelnienie podstawowe, a kreator nie ma
@@ -53,6 +75,11 @@ fn base64_podstawowy(dane: &[u8]) -> String {
 /// Zdarzenie niosące postęp pobierania do okna kreatora.
 pub const ZDARZENIE_POSTEP: &str = "instalator:postep-pobrania";
 
+/// Zdarzenie niosące wynik sprawdzenia kanału wydań, wykonanego po zbudowaniu
+/// okna — okno stoi, zanim żądanie sieciowe padnie, więc wynik dochodzi do niego
+/// zdarzeniem, a nie parametrem adresu.
+pub const ZDARZENIE_KANAL: &str = "instalator:stan-kanalu";
+
 #[derive(Deserialize)]
 struct Wykaz {
     kanal: Kanal,
@@ -65,7 +92,8 @@ struct Kanal {
 }
 
 #[derive(Deserialize, Clone)]
-pub(crate) struct PozycjaWydania {
+struct PozycjaWydania {
+    wersja: String,
     system: String,
     postac: String,
     architektura: String,
@@ -94,6 +122,14 @@ impl Odmowa {
     }
 }
 
+/// Stan kanału wydań oddawany oknu po jego zbudowaniu: kanał odpowiada albo
+/// niesie odmowę, którą krok 5 pokaże bez udawanego przebiegu.
+#[derive(Serialize, Clone)]
+pub struct StanKanalu {
+    pub dostepny: bool,
+    pub odmowa: Option<Odmowa>,
+}
+
 #[derive(Serialize, Clone)]
 pub struct PostepPobrania {
     pub odebrano_bajtow: u64,
@@ -102,37 +138,108 @@ pub struct PostepPobrania {
 
 #[derive(Serialize, Clone)]
 pub struct WynikPobrania {
-    pub adres: String,
+    pub plik_instalki: String,
     pub nazwa_pliku: String,
     pub bajtow: u64,
     pub suma_sha256: String,
+    pub wersja: String,
 }
 
-/// Wybiera pozycję wykazu zgodną z architekturą wykrytą na tej maszynie
-/// (`x64` → x64 wykazu, `arm` → ARM64 wykazu). Architektura nierozpoznana
-/// (`brak`) nie ma czego dopasować — to nazwana odmowa, nie zgadywanie.
-fn dobierz_pozycje(architektura_kreatora: &str) -> Result<PozycjaWydania, Odmowa> {
-    let wykaz: Wykaz = serde_json::from_str(WYKAZ_WYDAN).map_err(|blad| {
+#[derive(Serialize, Clone)]
+pub struct WynikZalozenia {
+    pub katalog_programu: String,
+    pub sciezka_programu: String,
+}
+
+/// Klient HTTP kroku 5. Zapora czasu jest podawana osobno, bo pobranie pliku
+/// wydania nie może jej mieć, a żądania poprzedzające pobranie muszą.
+fn klient(zapora: Option<Duration>) -> ureq::Agent {
+    ureq::Agent::config_builder()
+        .http_status_as_error(false)
+        .timeout_global(zapora)
+        .build()
+        .into()
+}
+
+/// Wczytuje wykaz z kopii wkompilowanej przy budowie.
+fn wykaz_wkompilowany() -> Result<Wykaz, Odmowa> {
+    serde_json::from_str(WYKAZ_WKOMPILOWANY).map_err(|blad| {
         Odmowa::nowa(
             "wykaz-nieczytelny",
-            format!("Wykaz wydań budowa/witryna/wydania.json nie jest poprawnym JSON-em: {blad}."),
+            format!("Wykaz wydań wkompilowany w instalator nie jest poprawnym JSON-em: {blad}."),
+        )
+    })
+}
+
+/// Czyta wykaz wydań spod kanału podanego w kopii wkompilowanej.
+fn wykaz_z_kanalu(adres_kanalu: &str) -> Result<Wykaz, Odmowa> {
+    let adres = format!("{}/{PLIK_WYKAZU}", adres_kanalu.trim_end_matches('/'));
+    let zadanie = klient(Some(ZAPORA_CZASU)).get(&adres);
+    let zadanie = match naglowek_poswiadczen() {
+        Some(naglowek) => zadanie.header("Authorization", &naglowek),
+        None => zadanie,
+    };
+    let mut odpowiedz = zadanie.call().map_err(|blad| {
+        Odmowa::nowa(
+            "wykaz-nieosiagalny",
+            format!("Nie udało się pobrać wykazu wydań z {adres}: {blad}."),
         )
     })?;
+    let status = odpowiedz.status();
+    if !status.is_success() {
+        return Err(Odmowa::nowa(
+            "wykaz-nieosiagalny",
+            format!("Kanał wydań odpowiedział na {adres} kodem {status}."),
+        ));
+    }
+    let tresc = odpowiedz
+        .body_mut()
+        .with_config()
+        .limit(GRANICA_WYKAZU as u64)
+        .read_to_string()
+        .map_err(|blad| {
+            Odmowa::nowa(
+                "wykaz-nieosiagalny",
+                format!("Nie udało się wczytać wykazu wydań z {adres}: {blad}."),
+            )
+        })?;
+    serde_json::from_str(&tresc).map_err(|blad| {
+        Odmowa::nowa(
+            "wykaz-nieczytelny",
+            format!("Wykaz wydań spod {adres} nie jest poprawnym JSON-em: {blad}."),
+        )
+    })
+}
 
-    let architektura_wykazu = match architektura_kreatora {
+/// Wykaz obowiązujący w tym przebiegu: z kanału, a gdy kanał nie odpowie albo
+/// odda treść nieczytelną — z kopii wkompilowanej. Adres kanału pochodzi zawsze
+/// z kopii, bo bez niego nie ma skąd czytać wykazu bieżącego.
+fn wykaz_biezacy() -> Result<Wykaz, Odmowa> {
+    let wkompilowany = wykaz_wkompilowany()?;
+    match wykaz_z_kanalu(&wkompilowany.kanal.adres) {
+        Ok(z_kanalu) => Ok(z_kanalu),
+        Err(_) => Ok(wkompilowany),
+    }
+}
+
+/// Wybiera pozycję wykazu zgodną z architekturą wskazaną w kroku 3
+/// (`x64` → x64 wykazu, `arm` → ARM64 wykazu). Architektura nierozpoznana
+/// (`brak`) nie ma czego dopasować — to nazwana odmowa, nie zgadywanie.
+fn dobierz_pozycje(wykaz: &Wykaz, architektura_kroku3: &str) -> Result<PozycjaWydania, Odmowa> {
+    let architektura_wykazu = match architektura_kroku3 {
         "x64" => "x64",
         "arm" => "ARM64",
         _ => {
             return Err(Odmowa::nowa(
                 "architektura-nierozpoznana",
-                "Architektura procesora tej maszyny nie została rozpoznana — wykaz \
-                 wydań nie ma z czym jej dopasować."
+                "Architektura procesora tej maszyny nie została rozpoznana, a krok trzeci \
+                 nie niesie wyboru wersji — wykaz wydań nie ma z czym jej dopasować."
                     .to_string(),
             ))
         }
     };
 
-    wykaz
+    let pozycja = wykaz
         .wydania
         .iter()
         // Instalator ściąga POWŁOKĘ programu, nie siebie: wykaz niesie obie
@@ -152,33 +259,31 @@ fn dobierz_pozycje(architektura_kreatora: &str) -> Result<PozycjaWydania, Odmowa
                      nie ma czego pobrać dla tej maszyny."
                 ),
             )
-        })
-        .inspect(|pozycja| {
-            // Adres kanału pozycji musi zgadzać się z `kanal.adres` wykazu —
-            // rozjazd byłby usterką samego wykazu, nie tego kroku.
-            debug_assert!(
-                pozycja
-                    .plik
-                    .starts_with(wykaz.kanal.adres.trim_end_matches('/')),
-                "wykaz wydań: pozycja {} leży poza kanałem {}",
-                pozycja.plik,
-                wykaz.kanal.adres
-            );
-        })
+        })?;
+
+    // Wykaz przychodzi z sieci, więc reguła protokołu z samego wykazu
+    // (`protokol.dopuszczone`) musi obowiązywać także tutaj: pozycja spod
+    // adresu innego niż https nie ma czym potwierdzić, skąd pochodzi.
+    if !pozycja.plik.starts_with("https://") {
+        return Err(Odmowa::nowa(
+            "adres-nie-https",
+            format!(
+                "Pozycja wykazu wskazuje adres {} — instalator pobiera wyłącznie po https.",
+                pozycja.plik
+            ),
+        ));
+    }
+    Ok(pozycja)
 }
 
 /// Sprawdza, bez pobierania pliku, czy serwer wydań odda pozycję dobraną do
 /// architektury tej maszyny — jedno realne żądanie HTTPS do rzeczywistego
-/// adresu z wykazu wydań. Wołane przed otwarciem okna, żeby krok 5 wiedział
+/// adresu z wykazu wydań. Wołane po zbudowaniu okna, żeby krok 5 wiedział
 /// z góry, czy ma pokazać przebieg pobrania, czy od razu nazwaną odmowę.
-pub fn sprawdz_wstepnie(architektura: &str) -> Result<PozycjaWydania, Odmowa> {
-    let pozycja = dobierz_pozycje(architektura)?;
+pub fn sprawdz_wstepnie(architektura: &str) -> Result<(), Odmowa> {
+    let pozycja = dobierz_pozycje(&wykaz_biezacy()?, architektura)?;
 
-    let klient: ureq::Agent = ureq::Agent::config_builder()
-        .http_status_as_error(false)
-        .build()
-        .into();
-    let zadanie = klient.get(&pozycja.plik);
+    let zadanie = klient(Some(ZAPORA_CZASU)).get(&pozycja.plik);
     let zadanie = match naglowek_poswiadczen() {
         Some(naglowek) => zadanie.header("Authorization", &naglowek),
         None => zadanie,
@@ -192,32 +297,43 @@ pub fn sprawdz_wstepnie(architektura: &str) -> Result<PozycjaWydania, Odmowa> {
 
     let status = odpowiedz.status();
     if !status.is_success() {
-        let www_authenticate = odpowiedz
-            .headers()
-            .get("www-authenticate")
-            .and_then(|v| v.to_str().ok())
-            .unwrap_or("");
-        return Err(Odmowa::nowa(
-            "odpowiedz-serwera",
-            format!(
-                "Serwer wydań {} odpowiedział kodem {status}{}. Kanał pobrań \
-                 pozycji wydania chroni uwierzytelnienie podstawowe (plik \
-                 poświadczeń poza repozytorium) — ten instalator nie ma \
-                 poświadczeń dostępu.",
-                pozycja.plik,
-                if www_authenticate.is_empty() {
-                    String::new()
-                } else {
-                    format!(" ({www_authenticate})")
-                }
-            ),
-        ));
+        return Err(odmowa_serwera(&pozycja.plik, status, &odpowiedz));
     }
-    Ok(pozycja)
+    Ok(())
 }
 
-/// Pobiera plik wydania dobrany do architektury tej maszyny do katalogu roboczego
-/// i sprawdza jego sumę SHA-256 z wykazu. Zgłasza postęp zdarzeniami do okna.
+/// Odmowa serwera wydań nazwana kodem odpowiedzi wraz z nagłówkiem żądania
+/// poświadczeń, gdy serwer go podał — to on rozstrzyga, czy chodzi o dostęp,
+/// czy o brak pliku.
+fn odmowa_serwera<T>(
+    adres: &str,
+    kod: ureq::http::StatusCode,
+    odpowiedz: &ureq::http::Response<T>,
+) -> Odmowa {
+    let www_authenticate = odpowiedz
+        .headers()
+        .get("www-authenticate")
+        .and_then(|v| v.to_str().ok())
+        .unwrap_or("");
+    Odmowa::nowa(
+        "odpowiedz-serwera",
+        format!(
+            "Serwer wydań {adres} odpowiedział kodem {kod}{}. Kanał pobrań \
+             pozycji wydania chroni uwierzytelnienie podstawowe (plik \
+             poświadczeń poza repozytorium) — ten instalator nie ma \
+             poświadczeń dostępu.",
+            if www_authenticate.is_empty() {
+                String::new()
+            } else {
+                format!(" ({www_authenticate})")
+            }
+        ),
+    )
+}
+
+/// Pobiera plik wydania dobrany do wersji wskazanej w kroku 3 do katalogu
+/// roboczego i sprawdza jego sumę SHA-256 z wykazu. Zgłasza postęp zdarzeniami
+/// do okna. Samo pobranie programu nie zakłada — robi to `zaloz_program`.
 #[tauri::command]
 pub async fn pobierz_skladniki(
     aplikacja: AppHandle,
@@ -225,7 +341,7 @@ pub async fn pobierz_skladniki(
     katalog_roboczy: String,
 ) -> Result<WynikPobrania, Odmowa> {
     tauri::async_runtime::spawn_blocking(move || {
-        wykonaj(&aplikacja, &architektura, Path::new(&katalog_roboczy))
+        wykonaj_pobranie(&aplikacja, &architektura, Path::new(&katalog_roboczy))
     })
     .await
     .unwrap_or_else(|blad| {
@@ -236,12 +352,12 @@ pub async fn pobierz_skladniki(
     })
 }
 
-fn wykonaj(
+fn wykonaj_pobranie(
     aplikacja: &AppHandle,
     architektura: &str,
     katalog_roboczy: &Path,
 ) -> Result<WynikPobrania, Odmowa> {
-    let pozycja = dobierz_pozycje(architektura)?;
+    let pozycja = dobierz_pozycje(&wykaz_biezacy()?, architektura)?;
 
     std::fs::create_dir_all(katalog_roboczy).map_err(|blad| {
         Odmowa::nowa(
@@ -254,12 +370,7 @@ fn wykonaj(
     })?;
     let plik_roboczy: PathBuf = katalog_roboczy.join(&pozycja.nazwa_pliku);
 
-    let klient: ureq::Agent = ureq::Agent::config_builder()
-        .http_status_as_error(false)
-        .build()
-        .into();
-
-    let zadanie = klient.get(&pozycja.plik);
+    let zadanie = klient(None).get(&pozycja.plik);
     let zadanie = match naglowek_poswiadczen() {
         Some(naglowek) => zadanie.header("Authorization", &naglowek),
         None => zadanie,
@@ -273,26 +384,7 @@ fn wykonaj(
 
     let status = odpowiedz.status();
     if !status.is_success() {
-        let www_authenticate = odpowiedz
-            .headers()
-            .get("www-authenticate")
-            .and_then(|v| v.to_str().ok())
-            .unwrap_or("");
-        return Err(Odmowa::nowa(
-            "odpowiedz-serwera",
-            format!(
-                "Serwer wydań {} odpowiedział kodem {status}{}. Kanał pobrań \
-                 pozycji wydania chroni uwierzytelnienie podstawowe (plik \
-                 poświadczeń poza repozytorium) — ten instalator nie ma \
-                 poświadczeń dostępu.",
-                pozycja.plik,
-                if www_authenticate.is_empty() {
-                    String::new()
-                } else {
-                    format!(" ({www_authenticate})")
-                }
-            ),
-        ));
+        return Err(odmowa_serwera(&pozycja.plik, status, &odpowiedz));
     }
 
     let mut plik = std::fs::File::create(&plik_roboczy).map_err(|blad| {
@@ -350,9 +442,154 @@ fn wykonaj(
     }
 
     Ok(WynikPobrania {
-        adres: pozycja.plik,
+        plik_instalki: plik_roboczy.display().to_string(),
         nazwa_pliku: pozycja.nazwa_pliku,
         bajtow: odebrano,
         suma_sha256: suma_policzona,
+        wersja: pozycja.wersja,
     })
+}
+
+/// Zakłada program pobraną instalką NSIS: uruchamia ją cicho w katalogu z kroku 4
+/// i czeka na kod wyjścia. Kod niezerowy jest odmową kroku 5 — bez zera od instalki
+/// na dysku nie ma programu i okno nie ma czego ogłosić na kroku 6.
+#[tauri::command]
+pub async fn zaloz_program(
+    plik_instalki: String,
+    katalog_programu: String,
+) -> Result<WynikZalozenia, Odmowa> {
+    tauri::async_runtime::spawn_blocking(move || {
+        wykonaj_zalozenie(Path::new(&plik_instalki), Path::new(&katalog_programu))
+    })
+    .await
+    .unwrap_or_else(|blad| {
+        Err(Odmowa::nowa(
+            "przebieg-przerwany",
+            format!("Zakładanie programu przerwało się nieoczekiwanie: {blad}."),
+        ))
+    })
+}
+
+fn wykonaj_zalozenie(plik: &Path, katalog: &Path) -> Result<WynikZalozenia, Odmowa> {
+    if !plik.is_file() {
+        return Err(Odmowa::nowa(
+            "brak-instalki",
+            format!(
+                "Pobranej instalki nie ma pod {} — nie ma czym założyć programu.",
+                plik.display()
+            ),
+        ));
+    }
+
+    let kod = polecenie_instalki(plik, katalog)?
+        .spawn()
+        .map_err(|blad| {
+            Odmowa::nowa(
+                "instalka-nie-ruszyla",
+                format!(
+                    "Nie udało się uruchomić pobranej instalki {}: {blad}.",
+                    plik.display()
+                ),
+            )
+        })?
+        .wait()
+        .map_err(|blad| {
+            Odmowa::nowa(
+                "instalka-bez-kodu",
+                format!("Nie udało się doczekać końca instalki {}: {blad}.", plik.display()),
+            )
+        })?;
+
+    if !kod.success() {
+        return Err(Odmowa::nowa(
+            "instalka-odmowila",
+            match kod.code() {
+                Some(numer) => format!(
+                    "Instalka wydania zakończyła się kodem {numer}. Program nie został \
+                     założony w {}, a pobrany plik {} pozostał na dysku.",
+                    katalog.display(),
+                    plik.display()
+                ),
+                None => format!(
+                    "Instalka wydania została przerwana przez system. Program nie został \
+                     założony w {}, a pobrany plik {} pozostał na dysku.",
+                    katalog.display(),
+                    plik.display()
+                ),
+            },
+        ));
+    }
+
+    let program = katalog.join(NAZWA_PROGRAMU);
+    if !program.is_file() {
+        return Err(Odmowa::nowa(
+            "program-nieodnaleziony",
+            format!(
+                "Instalka zakończyła się powodzeniem, ale pliku {} nie ma na dysku — \
+                 program nie stanął w katalogu wskazanym w kroku czwartym.",
+                program.display()
+            ),
+        ));
+    }
+
+    // Pobrana instalka po założeniu programu nie jest już do niczego potrzebna,
+    // a leży w katalogu programu; odmowa jej skasowania nie unieważnia założenia.
+    let _ = std::fs::remove_file(plik);
+
+    Ok(WynikZalozenia {
+        katalog_programu: katalog.display().to_string(),
+        sciezka_programu: program.display().to_string(),
+    })
+}
+
+/// Polecenie uruchamiające instalkę NSIS cicho i w katalogu wskazanym w kroku 4.
+#[cfg(windows)]
+fn polecenie_instalki(plik: &Path, katalog: &Path) -> Result<std::process::Command, Odmowa> {
+    use std::os::windows::process::CommandExt;
+
+    let mut polecenie = std::process::Command::new(plik);
+    polecenie.arg("/S");
+    // NSIS czyta `/D=` wprost z linii poleceń i przyjmuje ją wyłącznie bez
+    // cudzysłowów oraz jako argument ostatni. `arg` ująłby ścieżkę ze spacją
+    // w cudzysłów, więc ten jeden argument idzie linią surową.
+    polecenie.raw_arg(format!("/D={}", katalog.display()));
+    Ok(polecenie)
+}
+
+/// Instalka wydania jest plikiem wykonywalnym Windows; poza Windows krok 5
+/// nie ma czym założyć programu i mówi to wprost.
+#[cfg(not(windows))]
+fn polecenie_instalki(_plik: &Path, _katalog: &Path) -> Result<std::process::Command, Odmowa> {
+    Err(Odmowa::nowa(
+        "system-nieobslugiwany",
+        "Instalka wydania jest plikiem wykonywalnym Windows — na tym systemie \
+         nie ma jej czym uruchomić."
+            .to_string(),
+    ))
+}
+
+/// Uruchamia program założony w kroku 5 — czynność domyślna kroku 6. Ścieżka
+/// pochodzi z założenia, nie z katalogu zgadywanego drugi raz.
+#[tauri::command]
+pub fn uruchom_program(sciezka_programu: String) -> Result<(), Odmowa> {
+    let sciezka = PathBuf::from(&sciezka_programu);
+    if !sciezka.is_file() {
+        return Err(Odmowa::nowa(
+            "program-nieodnaleziony",
+            format!("Pliku {sciezka_programu} nie ma na dysku — nie ma czego uruchomić."),
+        ));
+    }
+    // Katalog bieżący procesu instalatora nie jest katalogiem programu, a powłoka
+    // składa ścieżki swoich zasobów względem katalogu, w którym stoi.
+    let katalog = sciezka.parent().unwrap_or_else(|| Path::new("."));
+    std::process::Command::new(&sciezka)
+        .current_dir(katalog)
+        .spawn()
+        .map(|_| ())
+        .map_err(|blad| {
+            Odmowa::nowa(
+                "program-nie-ruszyl",
+                format!("Nie udało się uruchomić {sciezka_programu}: {blad}."),
+            )
+        })
 }

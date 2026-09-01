@@ -16,8 +16,8 @@ pub const NAZWA_PLIKU: &str = "powloka-nastawy.json";
 const ROZSZERZENIE_PRZEJSCIOWE: &str = "nowy";
 
 /// Nastawy zapisane trwale. Brak pola znaczy „Operator nie wskazał", a nie
-/// „wskazał wartość domyślną" — dlatego oba pola są opcjonalne, a nie wypełnione
-/// domyślnymi liczbami przy zapisie.
+/// „wskazał wartość domyślną" — dlatego wszystkie pola są opcjonalne, a nie
+/// wypełnione domyślnymi wartościami przy zapisie.
 #[derive(Clone, Debug, Default, Deserialize, Serialize)]
 pub struct Nastawy {
     /// Serwer wdrożenia, na którym stoi rdzeń.
@@ -26,6 +26,10 @@ pub struct Nastawy {
     /// Port nasłuchu rdzenia, gdy Operator wskazał inny niż domyślny.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub port_rdzenia: Option<u16>,
+    /// Schemat łącza z rdzeniem (`http` albo `https`) złożony w oknie wraz
+    /// z hostem; bez niego obowiązuje wpis instalki albo łącze otwarte.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub schemat_rdzenia: Option<String>,
 }
 
 impl Nastawy {

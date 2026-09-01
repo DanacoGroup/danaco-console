@@ -60,31 +60,38 @@ pub fn biezace(ustawienia: &Ustawienia) -> Wskazanie {
 /// i sprawdza łączność przed trwałym zapisem, bo zapis przed próbą utrwaliłby
 /// wskazanie, które nie działa.
 pub fn wskaz(ustawienia: &Ustawienia, adres: &str) -> Result<Wskazanie, Odmowa> {
-    let schemat = ustawienia.schemat();
     let (schemat_podany, host, port_podany) = rozbierz(adres)?;
 
-    /* Schemat obowiązujący niosą zmienna środowiska i wpis instalki, a nie plik
-    nastaw powłoki — okno nie ma go gdzie zapisać, więc wskazanie ze
-    schematem innym niż obowiązujący jest odmawiane, zamiast obowiązywać do
-    najbliższego zamknięcia powłoki i cicho wracać do poprzedniego. */
-    if let Some(podany) = schemat_podany {
-        if podany != schemat {
+    // Zmienna środowiska stoi nad nastawami zapisanymi, więc schemat inny niż
+    // przypięty nią nie wszedłby w życie — odmowa zamiast zapisu bez skutku.
+    if let (Some(podany), Some(przypiety)) = (schemat_podany, ustawienia.schemat_ze_srodowiska()) {
+        if podany != przypiety {
             return Err(Odmowa::nowa(
                 "schemat-niezgodny",
                 format!(
-                    "Powłoka rozmawia z rdzeniem schematem „{}”, a wskazanie podaje „{}”. \
-                     Schemat niesie zmienna środowiska {ZMIENNA_SCHEMAT_RDZENIA} albo wpis \
-                     instalki — okno go nie zmienia. Podaj sam adres serwera, bez przedrostka.",
-                    schemat.nazwa(),
+                    "Zmienna środowiska {ZMIENNA_SCHEMAT_RDZENIA} przypina schemat „{}”, \
+                     a wskazanie podaje „{}”. Zdejmij zmienną albo podaj sam adres serwera, \
+                     bez przedrostka.",
+                    przypiety.nazwa(),
                     podany.nazwa()
                 ),
             ));
         }
     }
 
-    let port = port_podany.unwrap_or_else(|| ustawienia.port());
+    let obowiazujacy = ustawienia.schemat();
+    let schemat = schemat_podany.unwrap_or(obowiazujacy);
+    // Port bez wskazania: przy zmianie schematu port domyślny nowego schematu,
+    // bo port poprzedniego (17870 albo 443) nie ma z nowym nic wspólnego.
+    let port = port_podany.unwrap_or_else(|| {
+        if schemat == obowiazujacy {
+            ustawienia.port()
+        } else {
+            schemat.port_domyslny()
+        }
+    });
 
-    if !nasluch::odpowiada_pod(&host, port) {
+    if !nasluch::odpowiada_pod(schemat, &host, port) {
         return Err(Odmowa::nowa(
             "rdzen-nieosiagalny",
             format!(
@@ -96,7 +103,7 @@ pub fn wskaz(ustawienia: &Ustawienia, adres: &str) -> Result<Wskazanie, Odmowa> 
     }
 
     ustawienia
-        .zapisz_wskazanie(&host, port)
+        .zapisz_wskazanie(schemat, &host, port)
         .map_err(|zdanie| Odmowa::nowa("zapis-nieudany", zdanie))?;
 
     Ok(biezace(ustawienia))

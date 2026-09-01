@@ -38,7 +38,7 @@ pub fn opisz(ustawienia: &Ustawienia) -> OpisRdzenia {
     };
 
     let adres = wskazane.adres_http();
-    let pracuje = nasluch::odpowiada_pod(&wskazane.host, wskazane.port);
+    let pracuje = nasluch::odpowiada_pod(wskazane.schemat, &wskazane.host, wskazane.port);
     let opis = if pracuje {
         format!("Rdzeń odpowiada pod {adres}.")
     } else {

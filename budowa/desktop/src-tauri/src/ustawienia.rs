@@ -96,22 +96,6 @@ impl Schemat {
             _ => None,
         }
     }
-
-    /// Schemat obowiązujący w tym uruchomieniu powłoki: zmienna środowiska,
-    /// schemat wpisany w instalkę, inaczej łącze otwarte.
-    ///
-    /// Warstwy nastaw zapisanych tu nie ma i mieć nie może: plik nastaw powłoki
-    /// (`nastawy::Nastawy`) niesie host i port, nie niesie schematu — wskazanie
-    /// złożone w oknie może więc schemat wyłącznie potwierdzić, nigdy zmienić.
-    /// Obie warstwy, które schemat niosą, są wspólne dla całego procesu, więc
-    /// wartość czyta się wprost, bez przechowywania w ustawieniach.
-    pub fn obowiazujacy() -> Schemat {
-        niepusta(ZMIENNA_SCHEMAT_RDZENIA)
-            .as_deref()
-            .and_then(Schemat::z_tekstu)
-            .or_else(|| SCHEMAT_WDROZENIA.and_then(Schemat::z_tekstu))
-            .unwrap_or(Schemat::Http)
-    }
 }
 
 /// Nazwa warstwy, z której pochodzi obowiązujące wskazanie hosta rdzenia,
@@ -176,6 +160,8 @@ pub struct Ustawienia {
     port_ze_srodowiska: Option<u16>,
     /// Host wskazany zmienną środowiska; brak = rozstrzygają nastawy.
     host_ze_srodowiska: Option<String>,
+    /// Schemat przypięty zmienną środowiska; brak = nastawy albo wpis instalki.
+    schemat_ze_srodowiska: Option<Schemat>,
     /// Sekret nawiązania gniazda wskazany zmienną środowiska; brak = rdzeń
     /// sekretu nie sprawdza, bo nie ma z czym porównywać.
     sekret_nawiazania: Option<String>,
@@ -187,13 +173,17 @@ impl Ustawienia {
     /// Ustala ustawienia obowiązujące: czyta nastawy zapisane i zmienne
     /// środowiska procesu powłoki.
     pub fn ustal() -> Self {
-        ostrzez_o_schemacie_nieznanym();
-        Self {
+        let ustawienia = Self {
             port_ze_srodowiska: port_ze_srodowiska(),
             host_ze_srodowiska: niepusta(ZMIENNA_HOST_RDZENIA),
+            schemat_ze_srodowiska: niepusta(ZMIENNA_SCHEMAT_RDZENIA)
+                .as_deref()
+                .and_then(Schemat::z_tekstu),
             sekret_nawiazania: niepusta(ZMIENNA_SEKRET_NAWIAZANIA),
             zapisane: Arc::new(Mutex::new(nastawy::czytaj())),
-        }
+        };
+        ostrzez_o_schemacie_nieznanym(ustawienia.schemat());
+        ustawienia
     }
 
     /// Wskazanie obowiązujące, gdy jest złożone: zmienna środowiska przed
@@ -213,9 +203,25 @@ impl Ustawienia {
         })
     }
 
-    /// Schemat łącza z rdzeniem obowiązujący dla tego uruchomienia powłoki.
+    /// Schemat łącza z rdzeniem obowiązujący: zmienna środowiska, nastawy
+    /// zapisane, schemat wpisany w instalkę, inaczej łącze otwarte — ta sama
+    /// kolejność warstw co przy hoście i porcie.
     pub fn schemat(&self) -> Schemat {
-        Schemat::obowiazujacy()
+        self.schemat_ze_srodowiska
+            .or_else(|| {
+                self.nastawy()
+                    .schemat_rdzenia
+                    .as_deref()
+                    .and_then(Schemat::z_tekstu)
+            })
+            .or_else(|| SCHEMAT_WDROZENIA.and_then(Schemat::z_tekstu))
+            .unwrap_or(Schemat::Http)
+    }
+
+    /// Schemat przypięty zmienną środowiska albo brak; wskazanie z okna nie
+    /// może go zmienić, bo zmienna stoi nad nastawami zapisanymi.
+    pub fn schemat_ze_srodowiska(&self) -> Option<Schemat> {
+        self.schemat_ze_srodowiska
     }
 
     /// Port rdzenia obowiązujący: zmienna środowiska, nastawy, port wpisany
@@ -255,11 +261,13 @@ impl Ustawienia {
     }
 
     /// Zapisuje wskazanie Operatora trwale i wprowadza je w życie dla
-    /// wszystkich kopii ustawień.
-    pub fn zapisz_wskazanie(&self, host: &str, port: u16) -> Result<(), String> {
+    /// wszystkich kopii ustawień. Schemat idzie do pliku razem z hostem —
+    /// inaczej wskazanie `https://` obowiązywałoby do zamknięcia powłoki.
+    pub fn zapisz_wskazanie(&self, schemat: Schemat, host: &str, port: u16) -> Result<(), String> {
         let nowe = Nastawy {
             host_rdzenia: Some(host.to_string()),
             port_rdzenia: Some(port),
+            schemat_rdzenia: Some(schemat.nazwa().to_string()),
         };
         nastawy::zapisz(&nowe)?;
         match self.zapisane.lock() {
@@ -299,13 +307,13 @@ pub fn gospodarz_w_adresie(host: &str) -> String {
 /// Dopisuje do dziennika wartość zmiennej schematu, której nie da się rozpoznać.
 /// Bez tego wpisu literówka w nazwie schematu cicho zostawiałaby łącze otwarte —
 /// czyli dawałaby skutek odwrotny do zamierzonego przez tego, kto ją ustawiał.
-fn ostrzez_o_schemacie_nieznanym() {
+fn ostrzez_o_schemacie_nieznanym(obowiazujacy: Schemat) {
     if let Some(tekst) = niepusta(ZMIENNA_SCHEMAT_RDZENIA) {
         if Schemat::z_tekstu(&tekst).is_none() {
             dziennik::dopisz(&format!(
                 "ustawienia: {ZMIENNA_SCHEMAT_RDZENIA}={tekst} nie jest schematem \
                  („http” albo „https”) — obowiązuje {}",
-                Schemat::obowiazujacy().nazwa()
+                obowiazujacy.nazwa()
             ));
         }
     }

@@ -347,9 +347,14 @@ mod testy {
         nowa.extend_from_slice(b" nowe wydanie");
         let plik_roboczy = katalog.plik_z_trescia("Danaco.AppImage.pobierane", &nowa);
 
-        let zalozenie = droga.zaloz(&plik_roboczy).expect("poprawne wydanie ma się założyć");
+        let zalozenie = droga
+            .zaloz(&plik_roboczy)
+            .expect("poprawne wydanie ma się założyć");
 
-        assert!(zalozenie.restartuje_powloka, "AppImage wstaje sam, bez instalatora");
+        assert!(
+            zalozenie.restartuje_powloka,
+            "AppImage wstaje sam, bez instalatora"
+        );
         assert_eq!(zalozenie.zalozone, cel.display().to_string());
         assert_eq!(
             std::fs::read(&cel).expect("nowa wersja ma być pod starą nazwą"),
@@ -359,7 +364,9 @@ mod testy {
             !plik_roboczy.exists(),
             "po `rename` nazwa robocza nie ma prawa zostać"
         );
-        let prawa = std::fs::metadata(&cel).expect("plik istnieje").permissions();
+        let prawa = std::fs::metadata(&cel)
+            .expect("plik istnieje")
+            .permissions();
         assert_eq!(
             prawa.mode() & 0o777,
             0o755,
@@ -386,7 +393,10 @@ mod testy {
             Some("Danaco Console_1.0.0_amd64.AppImage.pobierane"),
             "nazwa ma być jawnie robocza, żeby nikt nie wziął jej za aplikację"
         );
-        assert_ne!(roboczy, cel, "pobieranie pod nazwę celu niszczyłoby aplikację w locie");
+        assert_ne!(
+            roboczy, cel,
+            "pobieranie pod nazwę celu niszczyłoby aplikację w locie"
+        );
     }
 
     #[test]
@@ -474,7 +484,10 @@ mod testy {
                 PathBuf::from("/opt/danaco/Danaco.AppImage"),
                 "spacje wokół ścieżki mają być obcięte, inaczej `rename` chybi"
             ),
-            Err(odmowa) => panic!("zmienna wskazuje plik, a dostaliśmy odmowę {}", odmowa.powod),
+            Err(odmowa) => panic!(
+                "zmienna wskazuje plik, a dostaliśmy odmowę {}",
+                odmowa.powod
+            ),
         }
     }
 }

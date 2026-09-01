@@ -9,7 +9,9 @@ export type PowodPorzucenia =
   /** Ramka czekała na łączność dłużej niż zapora czasu odłożenia. */
   | 'zapora-czasu'
   /** Gniazdo, do którego ramka należała, zostało zerwane. */
-  | 'zerwanie';
+  | 'zerwanie'
+  /** Kolejka wychodząca doszła do sufitu i ramka najstarsza ustąpiła miejsca nowej. */
+  | 'przepelnienie';
 
 /** Transport ramek tekstowych do rdzenia, ukrywający przed wołającym stan gniazda i kolejkę wychodzącą. */
 export interface Transport {
@@ -51,11 +53,29 @@ interface RamkaOdlozona {
   nadana: number;
 }
 
+/*
+Sufit kolejki wychodzącej. Rdzeń trzyma na jedno gniazdo 256 ramek wyjściowych
+(`transport/ustawienia.go`, `pojemnoscKolejkiDomyslna`) i klient odkłada tyle
+samo: więcej nie wyszłoby do rdzenia jednym ciągiem. Ponad sufit najstarsza
+ramka ustępuje nowej i wraca porzucona, żeby wołający dostał odmowę, nie ciszę.
+*/
+const SUFIT_KOLEJKI = 256;
+
 /** Ramka, która rdzeniowi wydana nie będzie, wraz z powodem porzucenia. */
 interface RamkaPorzucona {
   tresc: string;
   powod: PowodPorzucenia;
 }
+
+/*
+Przeglądarka odpowiada na pingi rdzenia sama i nie pokazuje ich skryptowi, więc
+o uśpieniu maszyny mówi wyłącznie skok zegara między tyknięciami licznika.
+Rdzeń pinguje co 20 s i zamyka gniazdo po 10 s bez odpowiedzi
+(`transport/petla_odbioru.go`): przerwa od 30 s znaczy gniazdo już zamknięte
+po jego stronie, choć w przeglądarce nadal otwarte.
+*/
+const ODSTEP_PULSU_MS = 5_000;
+const PROG_USPIENIA_MS = 30_000;
 
 /** Połączenie WebSocket z ponawianiem i kolejkowaniem ramek, utrzymujące łączność z rdzeniem bez udziału wołającego. */
 class Gniazdo implements Transport {
@@ -63,7 +83,7 @@ class Gniazdo implements Transport {
   private readonly porzucone: Magistrala<RamkaPorzucona> = utworzMagistrale<RamkaPorzucona>();
   private readonly stany: Magistrala<StanPolaczenia> = utworzMagistrale<StanPolaczenia>();
   private readonly kolejka: KolejkaWychodzaca<RamkaOdlozona> =
-    utworzKolejkeWychodzaca<RamkaOdlozona>();
+    utworzKolejkeWychodzaca<RamkaOdlozona>(SUFIT_KOLEJKI);
   private readonly kolejkaPowitania: KolejkaWychodzaca<RamkaOdlozona> =
     utworzKolejkeWychodzaca<RamkaOdlozona>();
   private gniazdo: WebSocket | null = null;
@@ -75,6 +95,14 @@ class Gniazdo implements Transport {
      wydana przed jego odpowiedzią wraca odmową `not_authenticated`. Każde
      gniazdo zaczyna więc wstrzymane i czeka na powitanie własne. */
   private wstrzymana = true;
+  private licznikPulsu: ReturnType<typeof setInterval> | null = null;
+  private ostatniPuls = 0;
+  private odKiedyBezSieci: number | null = null;
+  private readonly naPowrotSieci = (): void => this.obsluzPowrotSieci();
+  private readonly naUtrateSieci = (): void => {
+    this.odKiedyBezSieci = Date.now();
+  };
+  private readonly naWidocznosc = (): void => this.obsluzWidocznosc();
 
   private readonly adres: string;
   private readonly polityka: PolitykaPonawiania;
@@ -94,14 +122,15 @@ class Gniazdo implements Transport {
       this.zapiszStan('rozlaczony');
       return;
     }
+    this.uruchomPuls();
     this.zapiszStan(this.numerProby === 0 ? 'laczenie' : 'ponawianie');
     /* Sekret nawiązania idzie parametrem zapytania: rdzeń porównuje go przed
        uaktualnieniem gniazda (`transport/ustawienia.go`, `ParametrSekretu`). */
     const gniazdo = new WebSocket(adresNawiazania(this.adres, sekretNawiazaniaOdPowloki()));
     this.gniazdo = gniazdo;
-    gniazdo.addEventListener('open', () => this.obsluzOtwarcie());
-    gniazdo.addEventListener('message', (zdarzenie) => this.obsluzRamke(zdarzenie));
-    gniazdo.addEventListener('close', () => this.obsluzZamkniecie());
+    gniazdo.addEventListener('open', () => this.obsluzOtwarcie(gniazdo));
+    gniazdo.addEventListener('message', (zdarzenie) => this.obsluzRamke(gniazdo, zdarzenie));
+    gniazdo.addEventListener('close', () => this.obsluzZamkniecie(gniazdo));
     // Zamknięcie na błędzie dotyczy gniazda już otwartego; ponowne close wywołuje nawrót bez końca.
     gniazdo.addEventListener('error', () => {
       if (gniazdo.readyState === WebSocket.OPEN) gniazdo.close();
@@ -152,6 +181,7 @@ class Gniazdo implements Transport {
   rozlacz(): void {
     this.zaniechane = true;
     this.anulujPlan();
+    this.zatrzymajPuls();
     const gniazdo = this.gniazdo;
     this.gniazdo = null;
     this.numerProby = 0;
@@ -159,27 +189,91 @@ class Gniazdo implements Transport {
     this.zapiszStan('rozlaczony');
   }
 
-  private obsluzOtwarcie(): void {
+  private obsluzOtwarcie(gniazdo: WebSocket): void {
+    if (this.gniazdo !== gniazdo) return;
     this.numerProby = 0;
     this.wstrzymana = true;
     this.zapiszStan('polaczony');
     this.wydajKolejke(this.kolejkaPowitania);
   }
 
-  private obsluzRamke(zdarzenie: MessageEvent<unknown>): void {
+  private obsluzRamke(gniazdo: WebSocket, zdarzenie: MessageEvent<unknown>): void {
+    if (this.gniazdo !== gniazdo) return;
     if (typeof zdarzenie.data === 'string') {
       this.ramki.oglos(zdarzenie.data);
     }
   }
 
-  private obsluzZamkniecie(): void {
-    if (this.zaniechane) return;
+  /** Zamknięcie gniazda już odciętego — przy zaniechaniu albo po uśpieniu — nie dotyczy gniazda następcy. */
+  private obsluzZamkniecie(gniazdo: WebSocket): void {
+    if (this.gniazdo !== gniazdo) return;
     this.gniazdo = null;
     /* Powitanie należy do gniazda, które je przyjęło: rdzeń wiąże po nim sesję
        bramki z konkretnym połączeniem, więc na nowym gnieździe jest bezużyteczne. */
     this.porzucKolejke(this.kolejkaPowitania, 'zerwanie');
     this.zapiszStan('ponawianie');
     this.zaplanujPonowienie();
+  }
+
+  /** Odcina gniazdo uznane za niepewne i łączy od razu; powitanie i żądania w locie wracają odmową jak przy zerwaniu. */
+  private polaczOdNowa(): void {
+    if (this.zaniechane) return;
+    const stare = this.gniazdo;
+    if (stare !== null) {
+      this.gniazdo = null;
+      stare.close();
+      this.porzucKolejke(this.kolejkaPowitania, 'zerwanie');
+      this.zapiszStan('ponawianie');
+    }
+    this.wznow();
+  }
+
+  private uruchomPuls(): void {
+    if (this.licznikPulsu !== null) return;
+    this.ostatniPuls = Date.now();
+    this.licznikPulsu = setInterval(() => this.sprawdzPuls(), ODSTEP_PULSU_MS);
+    globalThis.addEventListener('online', this.naPowrotSieci);
+    globalThis.addEventListener('offline', this.naUtrateSieci);
+    document.addEventListener('visibilitychange', this.naWidocznosc);
+  }
+
+  private zatrzymajPuls(): void {
+    if (this.licznikPulsu === null) return;
+    clearInterval(this.licznikPulsu);
+    this.licznikPulsu = null;
+    this.odKiedyBezSieci = null;
+    globalThis.removeEventListener('online', this.naPowrotSieci);
+    globalThis.removeEventListener('offline', this.naUtrateSieci);
+    document.removeEventListener('visibilitychange', this.naWidocznosc);
+  }
+
+  /** Skok zegara między tyknięciami ponad próg znaczy uśpienie maszyny, po którym gniazdo otwarte jest niepewne. */
+  private sprawdzPuls(): void {
+    const teraz = Date.now();
+    const przerwa = teraz - this.ostatniPuls;
+    this.ostatniPuls = teraz;
+    /* Karta ukryta dostaje od przeglądarki licznik dławiony do jednego
+       tyknięcia na minutę; przerwa zmierzona w ukryciu mówiłaby o dławieniu,
+       nie o śnie. Osąd czeka do powrotu widoczności. */
+    if (document.visibilityState === 'hidden') return;
+    if (przerwa < PROG_USPIENIA_MS) return;
+    this.polaczOdNowa();
+  }
+
+  private obsluzWidocznosc(): void {
+    if (document.visibilityState !== 'visible') return;
+    this.sprawdzPuls();
+  }
+
+  /** Po powrocie sieci łączy od razu; gniazdo otwarte przez przerwę od progu rdzeń już zamknął, więc idzie do odcięcia. */
+  private obsluzPowrotSieci(): void {
+    const bezSieci = this.odKiedyBezSieci;
+    this.odKiedyBezSieci = null;
+    if (bezSieci !== null && Date.now() - bezSieci >= PROG_USPIENIA_MS) {
+      this.polaczOdNowa();
+      return;
+    }
+    if (!this.zaniechane) this.wznow();
   }
 
   /** Wydaje ramkę do otwartego gniazda albo odkłada ją w podanej kolejce, gdy gniazdo jest zamknięte lub kolejka wstrzymana. */
@@ -196,7 +290,10 @@ class Gniazdo implements Transport {
       this.porzucone.oglos({ tresc: ramka, powod: 'zerwanie' });
       return;
     }
-    kolejka.dodaj({ tresc: ramka, nadana: Date.now() });
+    const wyparta = kolejka.dodaj({ tresc: ramka, nadana: Date.now() });
+    if (wyparta !== undefined) {
+      this.porzucone.oglos({ tresc: wyparta.tresc, powod: 'przepelnienie' });
+    }
   }
 
   /** Wydaje kolejkę do otwartego gniazda; ramka po zaporze czasu jest porzucana, a niewysłana wraca do kolejki. */

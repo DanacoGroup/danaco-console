@@ -1,4 +1,9 @@
-import { ZDARZENIA_NIEZNANEJ, czyKomenda, czyZdarzenie } from '../../../shared/contract.ts';
+import {
+  ZDARZENIA_NIEZNANEJ,
+  czyKomenda,
+  czyZdarzenie,
+  type Envelope,
+} from '../../../shared/contract.ts';
 import { utworzMagistrale, type Odsubskrybuj } from './magistrala-zdarzen.ts';
 import type { ZrodloZdarzen } from './zrodlo-zdarzen.ts';
 
@@ -14,11 +19,7 @@ export interface WpisNieznanego {
   powod: string;
 }
 
-/**
- * Dziennik komunikatów nierozpoznanych stanowi bramę fail-open połączenia:
- * żaden z nich nie zrywa połączenia ani nie blokuje sesji, wpis idzie do
- * dziennika, a klient pracuje dalej.
- */
+/** Dziennik komunikatów nierozpoznanych — brama fail-open: komunikat nie zrywa połączenia ani sesji, zostaje wpis, klient pracuje dalej. */
 export interface DziennikNieznanych {
   /** Liczba komunikatów nierozpoznanych od chwili założenia dziennika. */
   liczba(): number;
@@ -26,6 +27,8 @@ export interface DziennikNieznanych {
   ostatni(): WpisNieznanego | null;
   /** Subskrypcja wpisów — pozwala warstwie wyższej pokazać, czego rdzeń nie rozpoznał. */
   naWpis(sluchacz: (wpis: WpisNieznanego) => void): Odsubskrybuj;
+  /** Odnotowuje odpowiedź rdzenia, która przyszła po terminie korelacji i nie ma już odbiorcy. */
+  odnotujSpozniona(koperta: Envelope): void;
   /** Odłącza dziennik od źródła zdarzeń. */
   odlacz(): void;
 }
@@ -39,26 +42,28 @@ export function zalozDziennikNieznanych(zrodlo: ZrodloZdarzen): DziennikNieznany
   let licznik = 0;
   let ostatniWpis: WpisNieznanego | null = null;
 
-  function zapisz(typZdarzenia: string, ladunek: unknown): void {
-    const wpis: WpisNieznanego = { typZdarzenia, ...odczytajLadunek(ladunek) };
+  function zapisz(wpis: WpisNieznanego): void {
     licznik += 1;
     ostatniWpis = wpis;
     wpisy.oglos(wpis);
   }
 
+  function zapiszKoperte(typZdarzenia: string, ladunek: unknown): void {
+    zapisz({ typZdarzenia, ...odczytajLadunek(ladunek) });
+  }
+
   odsubskrybowania.push(
     zrodlo.naDowolny((koperta) => {
       const typ: string = koperta.type;
-      /* Odmowa nierozpoznania wraca kopertą ze statusem błędu, więc odsiew po
-         obecności statusu zamykał bramę na jej własne wejście: rozstrzyga typ. */
+      // Odmowa nierozpoznania wraca ze statusem błędu, więc odsiew po statusie zamykałby bramę: rozstrzyga typ.
       if (NIEZNANE.has(typ)) {
-        zapisz(typ, koperta.payload);
+        zapiszKoperte(typ, koperta.payload);
         return;
       }
       // Odpowiedź rozstrzyga korelacja żądania; typ znany kontraktowi ma odbiorcę, dziennik zbiera resztę.
       if (koperta.status !== undefined) return;
       if (czyZdarzenie(typ) || czyKomenda(typ)) return;
-      zapisz(typ, koperta.payload);
+      zapiszKoperte(typ, koperta.payload);
     }),
   );
 
@@ -66,6 +71,15 @@ export function zalozDziennikNieznanych(zrodlo: ZrodloZdarzen): DziennikNieznany
     liczba: () => licznik,
     ostatni: () => ostatniWpis,
     naWpis: (sluchacz) => wpisy.subskrybuj(sluchacz),
+
+    odnotujSpozniona(koperta) {
+      zapisz({
+        typZdarzenia: koperta.type,
+        zadanyTyp: koperta.type,
+        idZadania: koperta.id,
+        powod: 'odpowiedź po terminie korelacji',
+      });
+    },
 
     odlacz() {
       for (const odsubskrybuj of odsubskrybowania.splice(0)) {

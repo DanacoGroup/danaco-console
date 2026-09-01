@@ -50,6 +50,8 @@ type adapterRozmowy struct {
 	bloki *rejestratorBlokow
 	// zalaczniki jest magazynem bajtów załącznika; pusty zostawia go niedoręczonym, nazwanym wprost.
 	zalaczniki *magazynTresciBiblioteki
+	// tor wiąże turę z gniazdem zamawiającym; pusty rozgłasza strumień do wszystkich połączeń.
+	tor *torStrumieni
 
 	mu       sync.Mutex
 	biegnace map[string]context.CancelFunc
@@ -101,6 +103,13 @@ func (a *adapterRozmowy) ZZalacznikami(katalogDanych string) *adapterRozmowy {
 	return a
 }
 
+// ZTorem wpina tor strumieni styku z transportem; adapter bez toru rozgłasza
+// fragmenty do wszystkich połączeń.
+func (a *adapterRozmowy) ZTorem(t *torStrumieni) *adapterRozmowy {
+	a.tor = t
+	return a
+}
+
 // Wyslij przyjmuje wiadomość użytkownika, dopisuje ją do dziennika rozmowy
 // i otwiera turę okna gorutyną osobną od odpowiedzi tej komendy.
 func (a *adapterRozmowy) Wyslij(ctx context.Context, z shared.MessageSendRequest) (shared.MessageSendResponse, error) {
@@ -109,7 +118,8 @@ func (a *adapterRozmowy) Wyslij(ctx context.Context, z shared.MessageSendRequest
 		return shared.MessageSendResponse{}, bladSesji(err)
 	}
 	// Zajęcie okna idzie przed dziennikiem, żeby odmowa nie zostawiła pytania bez odpowiedzi.
-	kontekst, anuluj := context.WithCancel(a.zycie)
+	// Tura biegnie na koncie zamawiającego: jej zdarzenia i zapisy należą do niego, nie do konta najstarszego.
+	kontekst, anuluj := context.WithCancel(zKontemZadania(a.zycie, ctx))
 	if !a.zajmijBieg(okno.Id, anuluj) {
 		anuluj()
 		return shared.MessageSendResponse{}, odmowaTuryWBiegu(okno.Id)
@@ -134,6 +144,8 @@ func (a *adapterRozmowy) Wyslij(ctx context.Context, z shared.MessageSendRequest
 
 	// Tożsamość strumienia zdejmuje się tu — kontekst tury nie niesie już wpisu żądania.
 	idZadania := protocol.TozsamoscStrumienia(ctx, pytanie.Id)
+	// Strumień tury wraca do gniazda, które ją zamówiło, nie do wszystkich urządzeń.
+	a.tor.zwiaz(idZadania, ujscieZKontekstu(ctx))
 
 	go a.prowadzTure(kontekst, okno, pytanie, odpowiedz, idZadania)
 

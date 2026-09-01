@@ -15,7 +15,11 @@ import (
 type adapterUrzadzen struct {
 	repozytorium dane.RepozytoriumUwierzytelnienia
 	wiez         *wiezBramki
+	// rozlaczanie zrywa gniazda urządzenia po unieważnieniu; zerowe zostawia je bramce.
+	rozlaczanie RozlaczanieSesji
 }
+
+func (a *adapterUrzadzen) przyjmijRozlaczanie(r RozlaczanieSesji) { a.rozlaczanie = r }
 
 func nowyAdapterUrzadzen(repozytorium dane.RepozytoriumUwierzytelnienia) *adapterUrzadzen {
 	return &adapterUrzadzen{repozytorium: repozytorium}
@@ -58,6 +62,10 @@ func (a *adapterUrzadzen) UniewaznijUrzadzenie(ctx context.Context,
 	zamkniete, err := a.repozytorium.UniewaznijSesjeUrzadzenia(ctx, urzadzenie, time.Now().UnixMilli())
 	if err != nil {
 		return shared.DeviceRevokeResponse{}, err
+	}
+	// Gniazda urządzenia zrywa się od razu; inaczej unieważnienie skutkuje dopiero przy jego następnej komendzie.
+	if a.rozlaczanie != nil && zamkniete > 0 {
+		a.rozlaczanie.RozlaczPoUniewaznieniu(ctx, kontoAdresata(ctx), "sesja bramki urządzenia unieważniona")
 	}
 	// Zero zamkniętych sesji nie jest odmową: skutek żądany przez Operatora i tak obowiązuje.
 	return shared.DeviceRevokeResponse{Revoked: zamkniete > 0}, nil

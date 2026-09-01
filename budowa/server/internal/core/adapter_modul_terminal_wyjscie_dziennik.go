@@ -294,7 +294,7 @@ func (d *dziennikWyjscia) wyslijDoOkna(dalej Nadajnik, obserwacja *obserwacjaWyj
 	if err != nil {
 		return
 	}
-	dalej.Rozglos(koperta)
+	dalej.Rozglos("", koperta)
 }
 
 // nadajnikZDziennikiem owija nadajnik pompy wyjścia: fragment idzie dalej nietknięty, a jego kopia wchodzi do dziennika zbiorczego wyjścia.
@@ -304,9 +304,9 @@ type nadajnikZDziennikiem struct {
 }
 
 // Rozglos wypełnia port Nadajnik, przekazując fragment dalej i odkładając jego kopię w dzienniku zbiorczego wyjścia.
-func (n *nadajnikZDziennikiem) Rozglos(k protocol.Koperta) {
+func (n *nadajnikZDziennikiem) Rozglos(konto string, k protocol.Koperta) {
 	if n.dalej != nil {
-		n.dalej.Rozglos(k)
+		n.dalej.Rozglos(konto, k)
 	}
 	n.dziennik.przyjmij(k)
 }

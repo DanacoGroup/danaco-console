@@ -462,14 +462,24 @@ func (a *adapterUwierzytelnienia) RozpocznijOdzyskanie(ctx context.Context,
 func (a *adapterUwierzytelnienia) UstawNoweHaslo(ctx context.Context,
 	z shared.AuthResetRequest) (shared.AuthResetResponse, error) {
 
+	odpowiedz, _, err := a.ustawNoweHasloKonta(ctx, z)
+	return odpowiedz, err
+}
+
+// ustawNoweHasloKonta wykonuje odzyskanie i oddaje obok odpowiedzi konto z drogi
+// — adresata rozgłoszenia i zerwania gniazd, którego odpowiedź kontraktu nie
+// niesie.
+func (a *adapterUwierzytelnienia) ustawNoweHasloKonta(ctx context.Context,
+	z shared.AuthResetRequest) (shared.AuthResetResponse, int64, error) {
+
 	if err := a.gotowa(); err != nil {
-		return shared.AuthResetResponse{}, err
+		return shared.AuthResetResponse{}, 0, err
 	}
 	if err := a.kontoGotowe(); err != nil {
-		return shared.AuthResetResponse{}, err
+		return shared.AuthResetResponse{}, 0, err
 	}
 	if strings.TrimSpace(z.NewPassword) == "" {
-		return shared.AuthResetResponse{}, bladBramki(shared.ErrorCodeValidationFailed,
+		return shared.AuthResetResponse{}, 0, bladBramki(shared.ErrorCodeValidationFailed,
 			"Podaj nowe hasło.")
 	}
 	a.zamekZmiany.Lock()
@@ -487,13 +497,13 @@ func (a *adapterUwierzytelnienia) UstawNoweHaslo(ctx context.Context,
 	zapis, err := a.drogaKonta(ctx, dane.CelOdzyskanie, z.Token)
 	if err != nil {
 		a.odnotujPomylkeDrogi(ctx, dane.CelOdzyskanie, proba)
-		return shared.AuthResetResponse{}, err
+		return shared.AuthResetResponse{}, 0, err
 	}
 	proba.Wyzeruj()
 
 	kontoId, err := a.kontoDrogi(ctx, zapis)
 	if err != nil {
-		return shared.AuthResetResponse{}, err
+		return shared.AuthResetResponse{}, 0, err
 	}
 	// Dalsze czynności idą kontem z drogi: żądanie przychodzi z urządzenia bez
 	// sesji, więc kontekst połączenia konta nie zna.
@@ -501,32 +511,32 @@ func (a *adapterUwierzytelnienia) UstawNoweHaslo(ctx context.Context,
 
 	kotwica, err := a.kotwicaKonta(ctx, kontoId)
 	if errors.Is(err, dane.ErrBrakWiersza) {
-		return shared.AuthResetResponse{}, bladBramki(shared.ErrorCodeConflict,
+		return shared.AuthResetResponse{}, 0, bladBramki(shared.ErrorCodeConflict,
 			"Konto Operatora nie zostało jeszcze założone. Zarejestruj się.")
 	}
 	if err != nil {
-		return shared.AuthResetResponse{}, err
+		return shared.AuthResetResponse{}, 0, err
 	}
 	if err := a.zamknijDroge(ctx, zapis); err != nil {
-		return shared.AuthResetResponse{}, err
+		return shared.AuthResetResponse{}, 0, err
 	}
 
 	sekret, err := zapisSekretu(z.NewPassword)
 	if err != nil {
-		return shared.AuthResetResponse{}, err
+		return shared.AuthResetResponse{}, 0, err
 	}
 	odwolanie, err := a.sejf.Zapisz(ctx, przedrostekBytuSejfu+kotwica.Kod, sekret)
 	if err != nil {
-		return shared.AuthResetResponse{}, err
+		return shared.AuthResetResponse{}, 0, err
 	}
 	if err := a.repozytorium.ZapiszOdwolanieSekretu(ctx, kotwica.Kod, odwolanie); err != nil {
-		return shared.AuthResetResponse{}, err
+		return shared.AuthResetResponse{}, 0, err
 	}
 	// Pusty skrót zachowany znaczy unieważnij wszystkie sesje tego konta —
 	// odzyskanie idzie z urządzenia bez sesji, a konta obce zmiana nie dotyczy.
 	uniewaznione, err := a.repozytorium.UniewaznijSesjeBramkiPoza(ctx, "", time.Now().UnixMilli())
 	if err != nil {
-		return shared.AuthResetResponse{}, err
+		return shared.AuthResetResponse{}, 0, err
 	}
-	return shared.AuthResetResponse{Changed: true, RevokedDevices: uniewaznione}, nil
+	return shared.AuthResetResponse{Changed: true, RevokedDevices: uniewaznione}, kontoId, nil
 }

@@ -61,7 +61,7 @@ func (zrodloJednegoKanalu) Definicje(context.Context) ([]models.Definicja, error
 // stan biegu i stan wiadomości, nie ruch na kanale.
 type nadajnikCichy struct{}
 
-func (nadajnikCichy) Rozglos(protocol.Koperta) {}
+func (nadajnikCichy) Rozglos(string, protocol.Koperta) {}
 
 // stanowiskoTuryKoordynatora składa okna jednego biegu, pętlę i warstwę rozmowy
 // nad kanałem, który domyka turę zadanym `is_error`.

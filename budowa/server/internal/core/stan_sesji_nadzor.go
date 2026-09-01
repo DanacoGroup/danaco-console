@@ -29,18 +29,18 @@ func (r *rejestrObecnosci) OwinNadajnik(nadajnik Nadajnik) Nadajnik {
 // Rozglos przepuszcza komunikat, wzbogacając wyłącznie telemetrię postępu.
 // Komunikat niebędący postępem i postęp nieczytelny idą dalej nietknięte —
 // nasłuch nie ma prawa zgubić ani opóźnić komunikatu właściwego.
-func (n nadajnikZObecnoscia) Rozglos(k protocol.Koperta) {
+func (n nadajnikZObecnoscia) Rozglos(konto string, k protocol.Koperta) {
 	if k.Type != shared.EventProgressChanged {
-		n.nadajnik.Rozglos(k)
+		n.nadajnik.Rozglos(konto, k)
 		return
 	}
 	postep, idOkna, czytelny := postepZKoperty(k)
 	if !czytelny {
-		n.nadajnik.Rozglos(k)
+		n.nadajnik.Rozglos(konto, k)
 		return
 	}
 	idSesji := n.obecnosc.sesjaOkna(protocol.IdSesji(k), idOkna)
-	n.nadajnik.Rozglos(n.obecnosc.zBiegiem(k, postep, idOkna))
+	n.nadajnik.Rozglos(konto, n.obecnosc.zBiegiem(k, postep, idOkna))
 	n.obecnosc.przyjmijPostep(idSesji, idOkna, postep.Status)
 	// Zmiana etapu, tury albo postępu okna jest zmianą stanu okna operacyjnego wspólną każdemu oknu.
 	n.obecnosc.rozglosStanOkna(idOkna)

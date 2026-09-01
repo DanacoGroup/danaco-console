@@ -190,7 +190,8 @@ func (s *SejfPlikowy) zapisz(wpisy map[string]string) error {
 // sekret nie ma innej drogi na dysk niż przez ten klucz.
 func (s *SejfPlikowy) wczytajKlucz() ([]byte, error) {
 	sciezka := strings.TrimSpace(os.Getenv(zmiennaKlucza))
-	if sciezka == "" {
+	wlasny := sciezka == ""
+	if wlasny {
 		sciezka = s.sciezkaKluczaWlasnego()
 		if err := zalozKluczWlasny(sciezka); err != nil {
 			return nil, err
@@ -210,6 +211,15 @@ func (s *SejfPlikowy) wczytajKlucz() ([]byte, error) {
 	tresc, err := os.ReadFile(sciezka)
 	if err != nil {
 		return nil, fmt.Errorf("dane: sejf: odczyt klucza %s: %w", sciezka, err)
+	}
+	if wlasny {
+		klucz, zapieczetowany, err := odbezpieczKluczWlasny(tresc)
+		if err != nil {
+			return nil, fmt.Errorf("dane: sejf: klucz %s: %w", sciezka, err)
+		}
+		if zapieczetowany {
+			return klucz, nil
+		}
 	}
 	return rozbierzKlucz(sciezka, tresc)
 }
@@ -232,8 +242,12 @@ func zalozKluczWlasny(sciezka string) error {
 	if _, err := io.ReadFull(rand.Reader, surowy); err != nil {
 		return fmt.Errorf("dane: sejf: nie można wylosować klucza: %w", err)
 	}
+	zapis, err := zabezpieczKluczWlasny(surowy)
+	if err != nil {
+		return err
+	}
 	tymczasowy := sciezka + ".tmp"
-	if err := os.WriteFile(tymczasowy, []byte(hex.EncodeToString(surowy)+"\n"), prawaKlucza); err != nil {
+	if err := os.WriteFile(tymczasowy, zapis, prawaKlucza); err != nil {
 		return fmt.Errorf("dane: sejf: zapis klucza %s: %w", tymczasowy, err)
 	}
 	if err := os.Rename(tymczasowy, sciezka); err != nil {

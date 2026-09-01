@@ -212,19 +212,37 @@ ustalenia ma rozstrzygnąć audyt powtórny**, nie sprawozdania terenów.
 
 ## 8. Rozstrzygnięcia czekające na Właściciela
 
-Pełny wykaz stoi w audycie, rozdział 5. Trzy blokują wydanie:
+Pełny wykaz stoi w audycie, rozdział 5 (12 pozycji). Trzy blokujące wydanie
+zostały rozstrzygnięte 1 września z upoważnienia Właściciela („Rozstrzygaj za
+mnie") i zapisane w `prowadzenie/decyzje.md`:
 
-1. **Certyfikat podpisywania kodu** — OV czy EV, kto trzyma klucz, serwer znacznika czasu.
-   Dziś każdy pobierający dostaje „Nieznany wydawca".
-2. **Jedna maszyna i jeden port wdrożenia.** Trzy niezgodne zapisy: wykaz mówi 57.128.253.74,
-   wydanie celuje w 51.75.62.180:80 (a tam odpowiada rdzeń podglądowy), jednostka systemd
-   stawia 17870.
-3. **Nazwa i certyfikat TLS dla rdzenia wdrożenia** — bez nazwy `wss://` nie ma jak postawić,
-   gołe IP nie zestawia TLS.
+| pozycja audytu | rozstrzygnięcie | treść |
+|---|---|---|
+| 1. certyfikat podpisu kodu | 27 | OV od Certum, klucz w SimplySign, znacznik `http://time.certum.pl`; do zakupu wydania idą z `DANACO_PODPIS=pomijany` |
+| 2. jedna maszyna i jeden port wdrożenia | 29 | `danaco-system` 57.128.253.74, rdzeń `127.0.0.1:17870` z wymogiem logowania, na świat `console.danaco-group.pl:443` przez Caddy; wydanie z `DANACO_HOST_WDROZENIA=console.danaco-group.pl`, `DANACO_PORT_WDROZENIA=443`, `DANACO_SCHEMAT_WDROZENIA=https` |
+| 3. nazwa i certyfikat TLS dla rdzenia | 29 | nazwa i certyfikat ACME już stoją na Caddy; rdzeń nie potrzebuje `DANACO_TLS_*` |
+| 5. wydanie ARM64 | 28 | nie wchodzi w ten etap; pozycja zostaje „w przygotowaniu" bez pliku |
+| 8. domyślna wartość bramki na pętli zwrotnej | 14, 29 | domyślna zostaje; wdrożenie ustawia wymóg jawnie w jednostce systemd |
+| 10. czym szyfrować sejf poświadczeń | 26, 30 | plik klucza ze zmiennej na serwerze, klucz własny rdzenia bez niej, na Windows DPAPI |
 
-Dalej m.in.: kształt rodziny `project.*`, reguła wykazu narzędzi modelu (603 komendy poza
-wykazem bez podanej racji), wydanie ARM64, domyślna wartość bramki na pętli zwrotnej,
-czym szyfrować sejf poświadczeń, los siedmiu okien platformowych.
+Wykaz, pakiet, skrypty składania i dokumenty doprowadzone do tych wartości
+1 września (`wydania.json`, `danaco-console.service`, `srodowisko`,
+`DEBIAN/control`, `kanal-wydan.md`, `INSTALACJA-I-KONFIGURACJA.md`).
+
+**Zostaje po stronie Właściciela — czynność, nie rozstrzygnięcie:**
+
+- zakup certyfikatu OV w Certum na dokumenty spółki i założenie konta
+  SimplySign; po zakupie składanie idzie z `DANACO_PODPIS=wymagany`.
+
+**Pozycje audytu bez rozstrzygnięcia:**
+
+4. kanał `/wydania/` chroniony hasłem — utrzymać obok `/pliki/`, czy zwinąć;
+6. kształt rodziny `project.*` w kontrakcie;
+7. reguła wykazu narzędzi modelu (603 komendy poza wykazem bez podanej racji;
+   rozstrzygnięcie 20 nazywa kierunek, nie treść reguły);
+9. kolejność wpinania podgrup `studio.*` i projekt brakujących kontrolek;
+11. los siedmiu okien platformowych;
+12. zgoda na naprawę migracji nowym krokiem.
 
 ## 9. Jak sprawdzić, że wszystko stoi
 

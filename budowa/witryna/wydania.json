@@ -77,10 +77,11 @@
     "suma": "7cb532232cb93220001a707180ee42dd643389f0c26542d9a3d54b412cf0274c",
     "chronione_haslem": true,
     "rdzen_wdrozenia": {
-      "adres": null,
-      "port": null,
-      "rozstrzygniecie": "Adres i port, pod którym rdzeń odpowiada po założeniu tego pakietu, czekają na rozstrzygnięcie Właściciela; do tego czasu pola stoją puste, bo wpisana tu wartość rozjeżdżałaby się z jednostką systemd i z instalką powłoki. Rozstrzygnięcie obowiązuje naraz w trzech miejscach: jednostce systemd pakietu, opisie w DEBIAN/control i zmiennych DANACO_HOST_WDROZENIA oraz DANACO_PORT_WDROZENIA podawanych przy składaniu instalki powłoki.",
-      "po_co_to_pole": "Administrator zakładający pakiet i operator składający instalkę czytają jedną wartość, nie dwie. Puste pole znaczy „nierozstrzygnięte” i nie wolno go czytać jako „domyślne”."
+      "adres": "console.danaco-group.pl",
+      "port": 443,
+      "schemat": "https",
+      "rozstrzygniecie": "Rozstrzygnięcie 29 (prowadzenie/decyzje.md): rdzeń nasłuchuje na 127.0.0.1:17870 pod jednostką systemd pakietu, a na świat wychodzi jako console.danaco-group.pl:443 przez Caddy z TLS z ACME. Wartość obowiązuje naraz w trzech miejscach: jednostce systemd pakietu, opisie w DEBIAN/control i zmiennych DANACO_HOST_WDROZENIA, DANACO_PORT_WDROZENIA oraz DANACO_SCHEMAT_WDROZENIA podawanych przy składaniu instalki powłoki.",
+      "po_co_to_pole": "Administrator zakładający pakiet i operator składający instalkę czytają jedną wartość, nie dwie. Pola niosą nazwę, port i schemat publiczne, w które celuje powłoka — nie gniazdo pętli zwrotnej za Caddy. Podgląd budowy 51.75.62.180:80 nigdy nie jest celem wydania."
     },
     "zmiany": "Pierwsze wydanie pakietu serwerowego: rdzeń wraz z całym arsenałem po stronie serwera, do założenia przez apt na maszynie wdrożenia."
   },

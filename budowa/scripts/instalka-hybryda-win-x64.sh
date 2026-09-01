@@ -9,7 +9,9 @@ POWLOKA="$KORZEN/budowa/desktop/src-tauri"
 KLIENT="$KORZEN/budowa/klient"
 CEL="x86_64-pc-windows-gnu"
 WERSJA="2.0.0"
-WYDANIE="$KORZEN/budowa/wydania/$WERSJA-$(date +%Y-%m-%d)"
+# Katalog wydania wolno wskazać z zewnątrz, tak samo jak w kreatorze i pakiecie
+# serwera: złożenie próbne nie ma odkładać pliku między wydania.
+WYDANIE="${DANACO_KATALOG_WYDANIA:-$KORZEN/budowa/wydania/$WERSJA-$(date +%Y-%m-%d)}"
 NAZWA_WYDANIA="Danaco Console_${WERSJA}_hybryda_x64-setup.exe"
 
 zglos() { printf '\n=== %s ===\n' "$1"; }
@@ -191,7 +193,7 @@ if [ "$PODPIS_BAJTOW" -gt 0 ]; then
 elif [ "${DANACO_PODPIS:-pomijany}" = "wymagany" ]; then
   padnij "katalog Security jest pusty, a DANACO_PODPIS=wymagany — wyniku nie odkładam do wydania"
 else
-  OPIS_PODPISU="BRAK — katalog Security pusty"
+  OPIS_PODPISU="BRAK — katalog Security pusty; wydanie wychodzi bez podpisu (DANACO_PODPIS=pomijany, rozstrzygnięcie 27)"
 fi
 printf '  %s\n' "$OPIS_PODPISU"
 

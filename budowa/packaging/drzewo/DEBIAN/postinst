@@ -84,7 +84,7 @@ configure)
 	# ten skrypt go nie przepisuje, żeby druga lista nie rozjechała się
 	# z pierwszą.
 	echo "Danaco Console — serwer postawiony."
-	echo "  usługa:    systemctl status danaco-console   (port 17870)"
+	echo "  usługa:    systemctl status danaco-console   (127.0.0.1:17870, na świat przez Caddy)"
 	echo "  dane:      $KATALOG_DANYCH"
 	echo "  sejf:      $KLUCZ_SEJFU (klucz sejfu poświadczeń, 0400)"
 	echo "  nastawy:   /etc/danaco-console/srodowisko (TLS, konto nadawcze, sekret nawiązania)"

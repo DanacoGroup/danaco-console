@@ -2,27 +2,32 @@
 # (EnvironmentFile). Każdy wiersz to ZMIENNA=wartość, bez „export" i bez
 # rozwijania powłoki. Po zmianie: systemctl restart danaco-console
 #
-# Wartości wpisane w jednostce (port 17870, katalog danych, katalog interfejsu,
-# nasłuch na wszystkich interfejsach, plik klucza sejfu) obowiązują bez tego
+# Wartości wpisane w jednostce (nasłuch 127.0.0.1:17870, wymóg logowania,
+# katalog danych, katalog interfejsu, plik klucza sejfu) obowiązują bez tego
 # pliku. Wpis tutaj je nadpisuje.
 
 # ── Nasłuch ──────────────────────────────────────────────────────────────────
+# Rozstrzygnięcie 29: rdzeń stoi na pętli zwrotnej, a na świat wystawia go Caddy
+# jako console.danaco-group.pl:443. Inny adres tylko wraz z odpowiednim wpisem
+# w Caddyfile; DANACO_WSZYSTKIE_INTERFEJSY=1 wystawiłoby rdzeń bez Caddy.
 # DANACO_PORT=17870
-# Adres jednego interfejsu, gdy serwer nie ma nasłuchiwać wszędzie. Wskazanie
-# adresu wymaga zdjęcia DANACO_WSZYSTKIE_INTERFEJSY=1 z jednostki.
-# DANACO_ADRES=10.0.0.5
+# DANACO_ADRES=127.0.0.1
 
 # ── Warstwa TLS ──────────────────────────────────────────────────────────────
-# Wskazanie OBU plików przełącza gniazdo na wss. Wskazanie jednego zatrzymuje
-# start — cicha praca otwartym tekstem po wskazaniu certyfikatu byłaby zejściem
-# poniżej wskazania. Pliki muszą być czytelne dla konta danaco-console.
+# Przy wdrożeniu z rozstrzygnięcia 29 TLS kończy się na Caddy (ACME) i te
+# zmienne zostają puste. Wskazanie OBU plików przełącza gniazdo rdzenia na wss.
+# Wskazanie jednego zatrzymuje start — cicha praca otwartym tekstem po wskazaniu
+# certyfikatu byłaby zejściem poniżej wskazania. Pliki czytelne dla konta usługi.
 # DANACO_TLS_CERTYFIKAT=/etc/danaco-console/tls/serwer.crt
 # DANACO_TLS_KLUCZ=/etc/danaco-console/tls/serwer.key
 
 # ── Wymóg logowania ──────────────────────────────────────────────────────────
-# Bez wpisu rozstrzyga adres nasłuchu: poza pętlą zwrotną wymóg obowiązuje sam
-# z siebie. Zniesienie (nie) zostaje wypisane w dzienniku startu wprost.
-# DANACO_WYMOG_LOGOWANIA=tak
+# Jednostka ustawia DANACO_WYMOG_LOGOWANIA=true i ten wpis MUSI zostać: bez
+# niego rdzeń na pętli zwrotnej uznaje każde połączenie za Operatora, a Caddy
+# wystawia go publicznie — konsola stałaby w sieci bez bramki. Wartość logiczna
+# Go (true|false); „tak" zatrzymuje start. Ustawienie false jest odrzucane
+# i wypisane w dzienniku startu.
+DANACO_WYMOG_LOGOWANIA=true
 
 # ── Sekret nawiązania gniazda ────────────────────────────────────────────────
 # Rdzeń porównuje wartość z parametrem `sekret` adresu gniazda albo nagłówkiem
@@ -39,7 +44,11 @@
 
 # ── Pochodzenia gniazda ──────────────────────────────────────────────────────
 # Dodatkowe wzorce nagłówka Origin przyjmowane przy nawiązaniu gniazda;
-# pochodzeń własnych produktu nie zastępują.
+# pochodzeń własnych produktu nie zastępują. Nazwa console.danaco-group.pl
+# wpisu nie potrzebuje: Caddy przekazuje nagłówek Host bez zmiany, a Origin
+# równy Host przechodzi bez wzorca; powłoka Windows przedstawia się
+# tauri.localhost, które jest pochodzeniem własnym. Wpis jest potrzebny dopiero
+# dla strony podawanej spod innej nazwy niż rdzeń.
 # DANACO_POCHODZENIA=https://konsola.firma.pl
 
 # ── Konto nadawcze platformy ─────────────────────────────────────────────────

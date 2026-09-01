@@ -2,8 +2,8 @@
 # Jednostka rdzenia Danaco Console — serwer platformy.
 Description=Danaco Console — rdzeń platformy
 Documentation=file:///usr/share/doc/danaco-console/INSTALACJA-I-KONFIGURACJA.md
-# Nasłuch idzie na wszystkie interfejsy, więc usługa czeka na sieć zestawioną,
-# a nie tylko na podniesiony stos.
+# Rdzeń nasłuchuje na pętli zwrotnej, a na świat wystawia go Caddy; usługa
+# czeka na sieć zestawioną, żeby Caddy miał do czego przekierować od startu.
 Wants=network-online.target
 After=network-online.target
 
@@ -18,12 +18,15 @@ Group=danaco-console
 WorkingDirectory=/opt/danaco-console
 ExecStart=/opt/danaco-console/danaco-console
 
-# Port nasłuchu. Zmiana wymaga też otwarcia go na zaporze.
+# Nasłuch 127.0.0.1:17870 (rozstrzygnięcie 29). Na świat rdzeń wystawia Caddy
+# jako console.danaco-group.pl:443 i tam kończy się TLS; port 17870 nie jest
+# otwierany na zaporze. Zmiana portu wymaga zmiany w Caddyfile.
 Environment=DANACO_PORT=17870
-# Nasłuch poza pętlą zwrotną — bez tego okno Operatora nie dosięgnie serwera.
-# Skutek uboczny jest pożądany: poza pętlą zwrotną wymóg logowania obowiązuje
-# sam z siebie (DANACO_WYMOG_LOGOWANIA rozstrzyga adres nasłuchu).
-Environment=DANACO_WSZYSTKIE_INTERFEJSY=1
+Environment=DANACO_ADRES=127.0.0.1
+# Na pętli zwrotnej rdzeń zdejmuje wymóg logowania sam z siebie, a Caddy
+# wystawiłby wtedy konsolę publicznie bez bramki — dlatego wymóg stoi jawnie.
+# Wartość logiczna Go (true|false); zdjęcie tego wiersza otwiera rdzeń światu.
+Environment=DANACO_WYMOG_LOGOWANIA=true
 # Katalog danych zakłada systemd (StateDirectory) na koncie usługi.
 Environment=DANACO_KATALOG_DANYCH=/var/lib/danaco-console
 Environment=DANACO_KATALOG_PROFILI=/var/lib/danaco-console/profile

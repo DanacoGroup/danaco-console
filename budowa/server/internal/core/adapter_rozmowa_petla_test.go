@@ -135,7 +135,7 @@ func (s *stanowiskoTuryKoordynatora) turaKoordynatora(t *testing.T) shared.Messa
 	}
 	s.dziennik.Dopisz(pytanie)
 	s.dziennik.Dopisz(odpowiedz)
-	s.rozmowa.prowadzTure(context.Background(), s.koordynator, pytanie, odpowiedz, "zad-zamkniecie")
+	s.rozmowa.prowadzTure(context.Background(), s.koordynator, pytanie, odpowiedz, "zad-zamkniecie", nil)
 
 	wiadomosci, _ := s.dziennik.Wykaz(s.koordynator.Id, nil, nil)
 	for _, w := range wiadomosci {

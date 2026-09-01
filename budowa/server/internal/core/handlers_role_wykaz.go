@@ -60,7 +60,7 @@ func rozglosZmianeRoli(ctx context.Context, rw RoleWykaz, e *emiter,
 	if !jest {
 		return
 	}
-	e.wyslij(shared.EventRoleChanged, okno.SessionId, shared.RoleChangedEvent{
+	e.wyslijDoKonta(ctx, shared.EventRoleChanged, okno.SessionId, shared.RoleChangedEvent{
 		Change: zmiana,
 		Assignment: shared.WindowRoleAssignment{
 			WindowId:            okno.Id,

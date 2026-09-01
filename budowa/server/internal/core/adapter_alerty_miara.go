@@ -107,7 +107,7 @@ func (a *adapterAlertow) przeliczRegule(ctx context.Context, regula dane.RegulaA
 	if err != nil {
 		return
 	}
-	a.rozglosWyzwolenie(zapisane, regula)
+	a.rozglosWyzwolenie(ctx, zapisane, regula)
 	a.wniesDoCentrum(ctx, zapisane)
 }
 
@@ -125,11 +125,11 @@ func (a *adapterAlertow) wniesDoCentrum(ctx context.Context, w dane.WyzwolenieAl
 // rozglosWyzwolenie nadaje zdarzenie `alert.triggered`. Zdarzenie jest drogą
 // alertu do okien — bez niego Operator dowiedziałby się o wyzwoleniu dopiero
 // przy następnym otwarciu wykazu.
-func (a *adapterAlertow) rozglosWyzwolenie(w dane.WyzwolenieAlertu, regula dane.RegulaAlertu) {
+func (a *adapterAlertow) rozglosWyzwolenie(ctx context.Context, w dane.WyzwolenieAlertu, regula dane.RegulaAlertu) {
 	if a.nadajnik == nil {
 		return
 	}
-	a.nadajnik.wyzwolenieAlertu(wyzwolenieKontraktu(w), regulaKontraktu(regula))
+	a.nadajnik.wyzwolenieAlertu(ctx, wyzwolenieKontraktu(w), regulaKontraktu(regula))
 }
 
 // zmierzMiare wykonuje pomiar jednej miary w oknie czasu reguły. Drugi zwracany

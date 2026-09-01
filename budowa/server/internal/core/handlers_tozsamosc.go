@@ -35,7 +35,7 @@ func zarejestrujTozsamosc(r *Rejestr, tozsamosc Tozsamosc, e *emiter) {
 		obsluz(func(ctx context.Context, z shared.IdentityDocumentSetRequest) (shared.IdentityDocumentSetResponse, error) {
 			w, err := tozsamosc.Zapisz(ctx, z)
 			if err == nil {
-				e.tozsamosc(shared.ChangeKindUpdated, w.Document)
+				e.tozsamosc(ctx, shared.ChangeKindUpdated, w.Document)
 			}
 			return w, err
 		}))
@@ -44,7 +44,7 @@ func zarejestrujTozsamosc(r *Rejestr, tozsamosc Tozsamosc, e *emiter) {
 		obsluz(func(ctx context.Context, z shared.IdentityDocumentRemoveRequest) (shared.IdentityDocumentRemoveResponse, error) {
 			w, err := tozsamosc.Usun(ctx, z)
 			if err == nil && w.Removed {
-				e.tozsamosc(shared.ChangeKindDeleted, shared.IdentityDocument{Id: z.DocumentId})
+				e.tozsamosc(ctx, shared.ChangeKindDeleted, shared.IdentityDocument{Id: z.DocumentId})
 			}
 			return w, err
 		}))
@@ -52,6 +52,6 @@ func zarejestrujTozsamosc(r *Rejestr, tozsamosc Tozsamosc, e *emiter) {
 
 // tozsamosc rozgłasza zmianę treści kategorii zasad, obowiązującej platformę, model albo konto,
 // bez wskazania sesji; okno konfiguracji na drugim urządzeniu ma ją pokazać bez dopytywania.
-func (e *emiter) tozsamosc(zmiana shared.ChangeKind, d shared.IdentityDocument) {
-	e.wyslij(shared.EventIdentityChanged, "", shared.IdentityChangedEvent{Change: zmiana, Document: d})
+func (e *emiter) tozsamosc(ctx context.Context, zmiana shared.ChangeKind, d shared.IdentityDocument) {
+	e.wyslijDoKonta(ctx, shared.EventIdentityChanged, "", shared.IdentityChangedEvent{Change: zmiana, Document: d})
 }

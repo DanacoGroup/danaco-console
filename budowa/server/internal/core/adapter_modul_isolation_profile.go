@@ -54,7 +54,7 @@ func (a *adapterIzolacji) ZapiszProfilIzolacji(ctx context.Context,
 	if err != nil {
 		return shared.IsolationProfileSaveResponse{}, err
 	}
-	a.rozglosProfilIzolacji(rodzajZapisuProfilu(z.ProfileId), zapisany.Kod)
+	a.rozglosProfilIzolacji(ctx, rodzajZapisuProfilu(z.ProfileId), zapisany.Kod)
 	return shared.IsolationProfileSaveResponse{Profile: a.profilKontraktu(zapisany)}, nil
 }
 
@@ -157,7 +157,7 @@ func (a *adapterIzolacji) PrzypiszProfilIzolacji(ctx context.Context,
 		return shared.IsolationProfileAssignResponse{}, err
 	}
 	// Przypisanie zmienia politykę bytu, nie sam profil, więc idzie rozgłoszenie polityki.
-	a.rozglosPolitykeAdresu(adres)
+	a.rozglosPolitykeAdresu(ctx, adres)
 	return shared.IsolationProfileAssignResponse{Policy: polityka}, nil
 }
 
@@ -177,7 +177,7 @@ func (a *adapterIzolacji) UsunProfilIzolacji(ctx context.Context,
 	if !usuniety {
 		return shared.IsolationProfileDeleteResponse{}, bladBrakuProfilu(z.ProfileId)
 	}
-	a.rozglosProfilIzolacji(shared.ChangeKindDeleted, z.ProfileId)
+	a.rozglosProfilIzolacji(ctx, shared.ChangeKindDeleted, z.ProfileId)
 	return shared.IsolationProfileDeleteResponse{Deleted: true}, nil
 }
 
@@ -201,7 +201,7 @@ func (a *adapterIzolacji) UstawWarstweIzolacji(ctx context.Context,
 	if err := a.profile.ZapiszWarstwe(ctx, poziom, byt, string(warstwa)); err != nil {
 		return shared.IsolationLayerSetResponse{}, err
 	}
-	a.rozglosPolitykeWyboruWarstwy(poziom, byt)
+	a.rozglosPolitykeWyboruWarstwy(ctx, poziom, byt)
 	return shared.IsolationLayerSetResponse{Layer: warstwa}, nil
 }
 

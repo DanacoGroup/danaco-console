@@ -31,7 +31,7 @@ func zarejestrujKonta(r *Rejestr, konta Konta, e *emiter) {
 		obsluz(func(ctx context.Context, z shared.AccountAddRequest) (shared.AccountAddResponse, error) {
 			w, err := konta.Dodaj(ctx, z)
 			if err == nil {
-				e.konto(shared.ChangeKindCreated, w.Account)
+				e.konto(ctx, shared.ChangeKindCreated, w.Account)
 			}
 			return w, err
 		}))
@@ -40,7 +40,7 @@ func zarejestrujKonta(r *Rejestr, konta Konta, e *emiter) {
 		obsluz(func(ctx context.Context, z shared.AccountUpdateRequest) (shared.AccountUpdateResponse, error) {
 			w, err := konta.Zmien(ctx, z)
 			if err == nil {
-				e.konto(shared.ChangeKindUpdated, w.Account)
+				e.konto(ctx, shared.ChangeKindUpdated, w.Account)
 			}
 			return w, err
 		}))
@@ -49,7 +49,7 @@ func zarejestrujKonta(r *Rejestr, konta Konta, e *emiter) {
 		obsluz(func(ctx context.Context, z shared.AccountRemoveRequest) (shared.AccountRemoveResponse, error) {
 			w, err := konta.Usun(ctx, z)
 			if err == nil && w.Removed {
-				e.konto(shared.ChangeKindDeleted, shared.Account{Id: z.AccountId})
+				e.konto(ctx, shared.ChangeKindDeleted, shared.Account{Id: z.AccountId})
 			}
 			return w, err
 		}))
@@ -58,7 +58,7 @@ func zarejestrujKonta(r *Rejestr, konta Konta, e *emiter) {
 		obsluz(func(ctx context.Context, z shared.AccountDefaultSetRequest) (shared.AccountDefaultSetResponse, error) {
 			w, err := konta.UstawDomyslne(ctx, z)
 			if err == nil {
-				e.konto(shared.ChangeKindUpdated, w.Account)
+				e.konto(ctx, shared.ChangeKindUpdated, w.Account)
 			}
 			return w, err
 		}))
@@ -67,6 +67,6 @@ func zarejestrujKonta(r *Rejestr, konta Konta, e *emiter) {
 // konto rozgłasza zmianę konta. Konto nie należy do sesji, więc zdarzenie idzie
 // bez jej wskazania. Struktura Account nie ma pola na poświadczenie, więc
 // zdarzenie nie ma jak go wynieść.
-func (e *emiter) konto(zmiana shared.ChangeKind, k shared.Account) {
-	e.wyslij(shared.EventAccountChanged, "", shared.AccountChangedEvent{Change: zmiana, Account: k})
+func (e *emiter) konto(ctx context.Context, zmiana shared.ChangeKind, k shared.Account) {
+	e.wyslijDoKonta(ctx, shared.EventAccountChanged, "", shared.AccountChangedEvent{Change: zmiana, Account: k})
 }

@@ -567,7 +567,7 @@ func zarejestrujDesignPlansze(r *Rejestr, m Design, e *emiter) {
 		obsluz(func(ctx context.Context, z shared.DesignPresenceReportRequest) (shared.DesignPresenceReportResponse, error) {
 			odpowiedz, err := m.ZglosObecnosc(ctx, z)
 			if err == nil {
-				e.obecnoscDesignu(z.BoardId, odpowiedz.Participants)
+				e.obecnoscDesignu(ctx, z.BoardId, odpowiedz.Participants)
 			}
 			return odpowiedz, err
 		}))
@@ -591,14 +591,14 @@ func (e *emiter) kompozycjaDesignu(ctx context.Context, zmiana shared.ChangeKind
 
 	zdarzenie := shared.DesignBoardChangedEvent{Change: zmiana, Board: kompozycja}
 	zdarzenie.Actor, zdarzenie.ActorClientId = sprawca(ctx)
-	e.wyslij(shared.EventDesignBoardChanged, "", zdarzenie)
+	e.wyslijDoKonta(ctx, shared.EventDesignBoardChanged, "", zdarzenie)
 }
 
 // obecnoscDesignu rozgłasza `design.board.presence`. Zdarzenie nie niesie
 // sprawcy: sprawcą jest jeden z obecnych i już jest w wykazie pod swoim
 // identyfikatorem klienta, a drugie wskazanie tego samego nie dokłada wiedzy.
-func (e *emiter) obecnoscDesignu(kompozycja string, obecni []shared.DesignPresence) {
-	e.wyslij(shared.EventDesignBoardPresence, "", shared.DesignBoardPresenceEvent{
+func (e *emiter) obecnoscDesignu(ctx context.Context, kompozycja string, obecni []shared.DesignPresence) {
+	e.wyslijDoKonta(ctx, shared.EventDesignBoardPresence, "", shared.DesignBoardPresenceEvent{
 		BoardId: kompozycja, Participants: obecni,
 	})
 }
@@ -610,5 +610,5 @@ func (e *emiter) obecnoscDesignu(kompozycja string, obecni []shared.DesignPresen
 func (e *emiter) zasobDesignu(ctx context.Context, zmiana shared.ChangeKind, zasob shared.DesignAsset) {
 	zdarzenie := shared.DesignAssetChangedEvent{Change: zmiana, Asset: zasob}
 	zdarzenie.Actor, zdarzenie.ActorClientId = sprawca(ctx)
-	e.wyslij(shared.EventDesignAssetChanged, "", zdarzenie)
+	e.wyslijDoKonta(ctx, shared.EventDesignAssetChanged, "", zdarzenie)
 }

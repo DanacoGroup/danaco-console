@@ -137,7 +137,7 @@ func (a *adapterAsystenta) PolecenieGlosowe(ctx context.Context,
 	}
 
 	// Podejmij zlecenie z kolejki: świeżo założone queued ma zostać wykonane od razu, bez ręcznego wpisu.
-	a.podejmij(zapisaneZlecenie.Kod)
+	a.podejmij(ctx, zapisaneZlecenie.Kod)
 
 	return shared.AssistantVoiceCommandResponse{
 		Transcript: transkrypcja,

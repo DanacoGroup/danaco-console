@@ -603,17 +603,17 @@ func (p *adapterPetliStudia) petlaWykonajZadanie(ctx context.Context,
 	petlaPrzestawStan(zadanie, shared.StudioTaskStateRunning)
 	numer, ile := petlaNumerZadania(rozklad, zadanie)
 	p.magazyn.zamek.Unlock()
-	p.petlaOglosPostep(rozklad, numer, ile, shared.StudioTaskStateRunning, nil)
+	p.petlaOglosPostep(ctx, rozklad, numer, ile, shared.StudioTaskStateRunning, nil)
 
 	komenda, ladunek, blad := p.petlaZadanieNaKomende(rozklad, zadanie, okno)
 	if blad != "" {
-		p.petlaDomknijPorazke(rozklad, zadanie, numer, ile, blad, nil, bilans)
+		p.petlaDomknijPorazke(ctx, rozklad, zadanie, numer, ile, blad, nil, bilans)
 		return false
 	}
 
 	odpowiedz, powodBraku := p.petlaWolajRejestrem(ctx, rozklad, komenda, ladunek)
 	if powodBraku != "" {
-		p.petlaDomknijPorazke(rozklad, zadanie, numer, ile, powodBraku, nil, bilans)
+		p.petlaDomknijPorazke(ctx, rozklad, zadanie, numer, ile, powodBraku, nil, bilans)
 		return false
 	}
 	if odpowiedz.Status != shared.EnvelopeStatusOk {
@@ -623,7 +623,7 @@ func (p *adapterPetliStudia) petlaWykonajZadanie(ctx context.Context,
 		}
 		// Odmowa zapory blokad trafia do kolejki jako powód przy zadaniu, nie
 		// do dziennika.
-		p.petlaDomknijPorazke(rozklad, zadanie, numer, ile, powod, nil, bilans)
+		p.petlaDomknijPorazke(ctx, rozklad, zadanie, numer, ile, powod, nil, bilans)
 		return false
 	}
 
@@ -667,7 +667,7 @@ func (p *adapterPetliStudia) petlaWykonajZadanie(ctx context.Context,
 	if kodPropozycji != "" {
 		wskazanieKodu = &kodPropozycji
 	}
-	p.petlaOglosPostep(rozklad, numer, ile, shared.StudioTaskStateDone, wskazanieKodu)
+	p.petlaOglosPostep(ctx, rozklad, numer, ile, shared.StudioTaskStateDone, wskazanieKodu)
 	return true
 }
 
@@ -887,7 +887,7 @@ func petlaZdanieOPominieciach(pominiete []shared.StudioSkippedItem) string {
 
 // petlaDomknijPorazke zamyka zadanie stanem nieudanym i wpisuje powód do
 // bilansu wraz ze wskazaniem blokady, gdy ta zaszła.
-func (p *adapterPetliStudia) petlaDomknijPorazke(rozklad *petlaRozkladStudia,
+func (p *adapterPetliStudia) petlaDomknijPorazke(ctx context.Context, rozklad *petlaRozkladStudia,
 	zadanie *petlaZadanieStudia, numer, ile int, powod string,
 	blokada *shared.StudioSkippedItem, bilans *shared.StudioActionBalance) {
 
@@ -905,7 +905,7 @@ func (p *adapterPetliStudia) petlaDomknijPorazke(rozklad *petlaRozkladStudia,
 	}
 	bilans.SkippedCount++
 	bilans.Skipped = append(bilans.Skipped, pozycja)
-	p.petlaOglosPostep(rozklad, numer, ile, shared.StudioTaskStateFailed, nil)
+	p.petlaOglosPostep(ctx, rozklad, numer, ile, shared.StudioTaskStateFailed, nil)
 }
 
 // petlaNumerZadania oddaje numer zadania w rozkładzie (od 1) i liczbę zadań.
@@ -922,13 +922,13 @@ func petlaNumerZadania(rozklad *petlaRozkladStudia, zadanie *petlaZadanieStudia)
 // petlaOglosPostep rozgłasza `studio.chain.progressed` — zdarzenie, którym
 // kontrakt zasila pętlę wykonawczą okna. Okno odświeża się nim, zamiast pytać
 // rdzeń w kółko o stan każdego zadania.
-func (p *adapterPetliStudia) petlaOglosPostep(rozklad *petlaRozkladStudia,
+func (p *adapterPetliStudia) petlaOglosPostep(ctx context.Context, rozklad *petlaRozkladStudia,
 	numer, ile int, stan shared.StudioTaskState, kodPropozycji *string) {
 
 	if p.emiter == nil || numer == 0 {
 		return
 	}
-	p.emiter.wyslij(shared.EventStudioChainProgressed, "", shared.StudioChainProgressedEvent{
+	p.emiter.wyslijDoKonta(ctx, shared.EventStudioChainProgressed, "", shared.StudioChainProgressedEvent{
 		RunId: rozklad.Kod, StepIndex: numer, StepCount: ile,
 		State: string(stan), ProposalId: kodPropozycji,
 	})
@@ -1116,7 +1116,7 @@ func zarejestrujPetleWykonawczaStudia(r *Rejestr, m Studio, e *emiter) {
 				DocumentId: &kod,
 			})
 			if bladOdczytu == nil {
-				e.dokumentStudio(shared.ChangeKindUpdated, po.Document)
+				e.dokumentStudio(ctx, shared.ChangeKindUpdated, po.Document)
 			}
 			return odpowiedz, nil
 		}))

@@ -270,7 +270,7 @@ func (a *adapterMowy) ogloszOdcinekNasluchu(ctx context.Context, okno, odnosnik 
 		return
 	}
 
-	a.nadajnik.czesciowaTranskrypcja(nasluch, tekst, wynik.Confidence)
+	a.nadajnik.czesciowaTranskrypcja(ctx, nasluch, tekst, wynik.Confidence)
 
 	// Fraza wybudzająca jest rozpoznawana na tekście, nie osobnym modelem słowa kluczowego.
 	// to, co robi.
@@ -280,7 +280,7 @@ func (a *adapterMowy) ogloszOdcinekNasluchu(ctx context.Context, okno, odnosnik 
 		return
 	}
 	if strings.Contains(strings.ToLower(tekst), strings.ToLower(fraza)) {
-		a.nadajnik.wykrycieFrazyWybudzajacej(nasluch, fraza)
+		a.nadajnik.wykrycieFrazyWybudzajacej(ctx, nasluch, fraza)
 	}
 }
 
@@ -359,17 +359,17 @@ func kontekstZasieguMowy() konfig.Kontekst {
 }
 
 // czesciowaTranskrypcja rozgłasza `speech.listen.partial` z rozpoznanym dotąd tekstem odcinka nasłuchu.
-func (e *emiter) czesciowaTranskrypcja(n nasluchMowy, tekst string, pewnosc *int) {
+func (e *emiter) czesciowaTranskrypcja(ctx context.Context, n nasluchMowy, tekst string, pewnosc *int) {
 	// `final` jest prawdą, bo odcinek został rozpoznany w całości, a nie jako strumień w locie.
-	e.wyslij(shared.EventSpeechListenPartial, n.Sesja, shared.SpeechListenPartialEvent{
+	e.wyslijDoKonta(ctx, shared.EventSpeechListenPartial, n.Sesja, shared.SpeechListenPartialEvent{
 		ListenerId: n.Kod, WindowId: n.Okno, Transcript: tekst, Final: true,
 		Confidence: pewnosc,
 	})
 }
 
 // wykrycieFrazyWybudzajacej rozgłasza `speech.wake.detected`, gdy w rozpoznanym tekście padła fraza wybudzająca.
-func (e *emiter) wykrycieFrazyWybudzajacej(n nasluchMowy, fraza string) {
-	e.wyslij(shared.EventSpeechWakeDetected, n.Sesja, shared.SpeechWakeDetectedEvent{
+func (e *emiter) wykrycieFrazyWybudzajacej(ctx context.Context, n nasluchMowy, fraza string) {
+	e.wyslijDoKonta(ctx, shared.EventSpeechWakeDetected, n.Sesja, shared.SpeechWakeDetectedEvent{
 		ListenerId: n.Kod, WindowId: n.Okno, Phrase: fraza,
 		DetectedAt: time.Now().UnixMilli(),
 	})

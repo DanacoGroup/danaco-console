@@ -23,9 +23,9 @@ func (a *adapterDebaty) wypowiedz(kontekst context.Context, tura dane.TuraDebaty
 	}
 	kontrakt := turaKontraktu(tura)
 	wpis := wypowiedzKontraktu(wypowiedz)
-	a.rozglos(shared.ChangeKindCreated, kontrakt, &wpis)
+	a.rozglos(kontekst, shared.ChangeKindCreated, kontrakt, &wpis)
 
-	strumien := nowyNadawcaStrumienia(a.nadajnik, wypowiedz.Kod, "")
+	strumien := nowyNadawcaStrumienia(a.nadajnik, kontoAdresata(kontekst), wypowiedz.Kod, "")
 	var tresc strings.Builder
 	ujscie := models.UjscieFunkcji(func(ctx context.Context, f models.Fragment) error {
 		if f.Kind == shared.ChunkKindText {
@@ -44,7 +44,7 @@ func (a *adapterDebaty) wypowiedz(kontekst context.Context, tura dane.TuraDebaty
 		_ = a.repozytorium.UzupelnijWypowiedz(kontekst, wypowiedz.Kod, wypowiedz.Tresc)
 	}
 	po := wypowiedzKontraktu(wypowiedz)
-	a.rozglos(shared.ChangeKindUpdated, kontrakt, &po)
+	a.rozglos(kontekst, shared.ChangeKindUpdated, kontrakt, &po)
 	return wypowiedz.Tresc
 }
 

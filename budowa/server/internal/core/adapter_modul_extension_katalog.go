@@ -289,7 +289,7 @@ func (a *adapterRozszerzen) ZastosujKolekcje(ctx context.Context,
 			continue
 		}
 		pozycja := rozszerzenieKontraktu(zmieniona)
-		a.rozglosRozszerzenie(shared.ChangeKindUpdated, pozycja)
+		a.rozglosRozszerzenie(ctx, shared.ChangeKindUpdated, pozycja)
 		a.odnotujCyklZycia(ctx, zmieniona, czynnoscWlaczenia(wlacz), nil, nil,
 			"zmiana grupowa kolekcji "+kolekcja.Nazwa)
 		zastosowane = append(zastosowane, pozycja)
@@ -468,7 +468,7 @@ func (a *adapterRozszerzen) PrzypnijWersje(ctx context.Context,
 		return shared.ExtensionVersionPinResponse{}, bladRozszerzenia(err)
 	}
 	pozycja := rozszerzenieKontraktu(odswiezona)
-	a.rozglosRozszerzenie(shared.ChangeKindUpdated, pozycja)
+	a.rozglosRozszerzenie(ctx, shared.ChangeKindUpdated, pozycja)
 	a.odnotujCyklZycia(ctx, odswiezona, shared.ExtensionLifecycleActionConfigured, nil, nil,
 		"przypięcie wersji: "+wersjaAlboBrak(wersja))
 	return shared.ExtensionVersionPinResponse{
@@ -511,7 +511,7 @@ func (a *adapterRozszerzen) CofnijWersje(ctx context.Context,
 		return shared.ExtensionVersionRollbackResponse{}, bladRozszerzenia(err)
 	}
 	pozycja := rozszerzenieKontraktu(zmieniona)
-	a.rozglosRozszerzenie(shared.ChangeKindUpdated, pozycja)
+	a.rozglosRozszerzenie(ctx, shared.ChangeKindUpdated, pozycja)
 	a.odnotujCyklZycia(ctx, zmieniona, shared.ExtensionLifecycleActionRolledBack,
 		&poprzednia, &cel, "cofnięcie do wersji zarejestrowanej")
 	return shared.ExtensionVersionRollbackResponse{
@@ -610,7 +610,7 @@ func (a *adapterRozszerzen) ZainstalujZestaw(ctx context.Context,
 				continue
 			}
 			pozycja := rozszerzenieKontraktu(zmieniona)
-			a.rozglosRozszerzenie(shared.ChangeKindUpdated, pozycja)
+			a.rozglosRozszerzenie(ctx, shared.ChangeKindUpdated, pozycja)
 			a.odnotujCyklZycia(ctx, zmieniona, shared.ExtensionLifecycleActionUpdated,
 				zastane.Wersja, zmieniona.Wersja, "instalacja z manifestu zestawu")
 			zainstalowane = append(zainstalowane, pozycja)
@@ -639,7 +639,7 @@ func (a *adapterRozszerzen) ZainstalujZestaw(ctx context.Context,
 			continue
 		}
 		pozycja := rozszerzenieKontraktu(zalozona)
-		a.rozglosRozszerzenie(shared.ChangeKindCreated, pozycja)
+		a.rozglosRozszerzenie(ctx, shared.ChangeKindCreated, pozycja)
 		a.odnotujCyklZycia(ctx, zalozona, shared.ExtensionLifecycleActionInstalled,
 			nil, zalozona.Wersja, "instalacja z manifestu zestawu")
 		zainstalowane = append(zainstalowane, pozycja)
@@ -732,7 +732,7 @@ func (a *adapterRozszerzen) WykonajZbiorczo(ctx context.Context,
 			continue
 		}
 		pozycja := rozszerzenieKontraktu(zmieniona)
-		a.rozglosRozszerzenie(shared.ChangeKindUpdated, pozycja)
+		a.rozglosRozszerzenie(ctx, shared.ChangeKindUpdated, pozycja)
 		a.odnotujCyklZycia(ctx, zmieniona, czynnosc, nil, nil, "operacja zbiorcza rejestru")
 		dotkniete = append(dotkniete, pozycja)
 	}

@@ -42,7 +42,7 @@ type adapterTerminala struct {
 	// wyjscie rozsyła fragmenty strumienia do okna Output Console.
 	wyjscie *nadawcaWyjscia
 	// zmiana rozgłasza `terminal.process.changed`. Podpina ją obsługiwacz.
-	zmiana func(shared.ChangeKind, shared.TerminalProcess)
+	zmiana func(context.Context, shared.ChangeKind, shared.TerminalProcess)
 }
 
 // nowyAdapterTerminala wiąże port z rejestrem okien i uruchamiaczem procesów, zakładając rejestry tuneli i obserwacji.

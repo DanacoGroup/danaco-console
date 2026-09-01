@@ -89,7 +89,7 @@ func zarejestrujZmianyAutomatyki(r *Rejestr, m AutomatykiDobudowa, e *emiter) {
 		obsluz(func(ctx context.Context, z shared.AutomationWorkflowVersionRestoreRequest) (shared.AutomationWorkflowVersionRestoreResponse, error) {
 			odpowiedz, err := m.PrzywrocWersje(ctx, z)
 			if err == nil {
-				e.powiazanieAutomatyki(shared.ChangeKindUpdated, z.WorkflowId)
+				e.powiazanieAutomatyki(ctx, shared.ChangeKindUpdated, z.WorkflowId)
 			}
 			return odpowiedz, err
 		}))
@@ -98,7 +98,7 @@ func zarejestrujZmianyAutomatyki(r *Rejestr, m AutomatykiDobudowa, e *emiter) {
 		obsluz(func(ctx context.Context, z shared.AutomationWorkflowTagSetRequest) (shared.AutomationWorkflowTagSetResponse, error) {
 			odpowiedz, err := m.UstawEtykiety(ctx, z)
 			if err == nil {
-				e.powiazanieAutomatyki(shared.ChangeKindUpdated, z.WorkflowId)
+				e.powiazanieAutomatyki(ctx, shared.ChangeKindUpdated, z.WorkflowId)
 			}
 			return odpowiedz, err
 		}))
@@ -107,7 +107,7 @@ func zarejestrujZmianyAutomatyki(r *Rejestr, m AutomatykiDobudowa, e *emiter) {
 		obsluz(func(ctx context.Context, z shared.AutomationWorkflowPublishRequest) (shared.AutomationWorkflowPublishResponse, error) {
 			odpowiedz, err := m.Opublikuj(ctx, z)
 			if err == nil {
-				e.powiazanieAutomatyki(shared.ChangeKindUpdated, z.WorkflowId)
+				e.powiazanieAutomatyki(ctx, shared.ChangeKindUpdated, z.WorkflowId)
 			}
 			return odpowiedz, err
 		}))
@@ -116,7 +116,7 @@ func zarejestrujZmianyAutomatyki(r *Rejestr, m AutomatykiDobudowa, e *emiter) {
 		obsluz(func(ctx context.Context, z shared.AutomationWorkflowShareRequest) (shared.AutomationWorkflowShareResponse, error) {
 			odpowiedz, err := m.Udostepnij(ctx, z)
 			if err == nil {
-				e.powiazanieAutomatyki(shared.ChangeKindUpdated, z.WorkflowId)
+				e.powiazanieAutomatyki(ctx, shared.ChangeKindUpdated, z.WorkflowId)
 			}
 			return odpowiedz, err
 		}))
@@ -125,7 +125,7 @@ func zarejestrujZmianyAutomatyki(r *Rejestr, m AutomatykiDobudowa, e *emiter) {
 		obsluz(func(ctx context.Context, z shared.AutomationExecutionBudgetSetRequest) (shared.AutomationExecutionBudgetSetResponse, error) {
 			odpowiedz, err := m.UstawBudzetyPrzebiegu(ctx, z)
 			if err == nil {
-				e.powiazanieAutomatyki(shared.ChangeKindUpdated, z.WorkflowId)
+				e.powiazanieAutomatyki(ctx, shared.ChangeKindUpdated, z.WorkflowId)
 			}
 			return odpowiedz, err
 		}))
@@ -135,7 +135,7 @@ func zarejestrujZmianyAutomatyki(r *Rejestr, m AutomatykiDobudowa, e *emiter) {
 		obsluz(func(ctx context.Context, z shared.AutomationTemplateApplyRequest) (shared.AutomationTemplateApplyResponse, error) {
 			odpowiedz, err := m.ZastosujSzablon(ctx, z)
 			if err == nil {
-				e.powiazanieAutomatyki(shared.ChangeKindCreated, odpowiedz.Workflow.Id)
+				e.powiazanieAutomatyki(ctx, shared.ChangeKindCreated, odpowiedz.Workflow.Id)
 			}
 			return odpowiedz, err
 		}))
@@ -147,7 +147,7 @@ func zarejestrujZmianyPrzebiegu(r *Rejestr, m AutomatykiDobudowa, e *emiter) {
 		obsluz(func(ctx context.Context, z shared.AutomationExecutionResumeRequest) (shared.AutomationExecutionResumeResponse, error) {
 			odpowiedz, err := m.WznowPrzebieg(ctx, z)
 			if err == nil {
-				e.przebiegAutomatyki(odpowiedz.Execution, etapWznowieniePrzebiegu)
+				e.przebiegAutomatyki(ctx, odpowiedz.Execution, etapWznowieniePrzebiegu)
 			}
 			return odpowiedz, err
 		}))
@@ -156,7 +156,7 @@ func zarejestrujZmianyPrzebiegu(r *Rejestr, m AutomatykiDobudowa, e *emiter) {
 		obsluz(func(ctx context.Context, z shared.AutomationExecutionReplayRequest) (shared.AutomationExecutionReplayResponse, error) {
 			odpowiedz, err := m.OdtworzPrzebieg(ctx, z)
 			if err == nil {
-				e.przebiegAutomatyki(odpowiedz.Execution, etapOdtworzeniePrzebiegu)
+				e.przebiegAutomatyki(ctx, odpowiedz.Execution, etapOdtworzeniePrzebiegu)
 			}
 			return odpowiedz, err
 		}))

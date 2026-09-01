@@ -5,6 +5,7 @@
 package core
 
 import (
+	"context"
 	"strings"
 	"sync"
 	"sync/atomic"
@@ -30,6 +31,8 @@ type przebiegBudowania struct {
 	idSesji   string
 	zadanie   string
 	argumenty []string
+	// kontekst niesie konto zamawiającego; przebieg przeżywa żądanie, a jego przyrosty adresuje się tym kontem.
+	kontekst context.Context
 
 	mu   sync.Mutex
 	stan shared.BuildStatus

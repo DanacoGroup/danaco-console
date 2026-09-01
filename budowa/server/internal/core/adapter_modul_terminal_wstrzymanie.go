@@ -41,7 +41,7 @@ func (a *adapterTerminala) WstrzymajProces(ctx context.Context,
 	}
 	if wspierane {
 		// Zmiana biegu jest zmianą stanu widoczną w Process Monitorze.
-		a.rozglos(shared.ChangeKindUpdated, proces)
+		a.rozglos(ctx, shared.ChangeKindUpdated, proces)
 	}
 	return shared.TerminalProcessSuspendResponse{
 		Process:   procesKontraktu(proces),

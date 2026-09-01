@@ -83,7 +83,7 @@ func zarejestrujNakladkeAod(r *Rejestr, n NakladkaAod, e *emiter) {
 			// Rozgłoszenie odróżnia zdarzenie realne od powtórzonego bez zmiany,
 			// zapobiegając rozjazdowi powłok.
 			if err == nil && odpowiedz.Changed {
-				e.wyciszenieNakladki(rodzajZmianyWyciszenia(z.Muted), wyciszenie, odpowiedz.Mutes)
+				e.wyciszenieNakladki(ctx, rodzajZmianyWyciszenia(z.Muted), wyciszenie, odpowiedz.Mutes)
 			}
 			return odpowiedz, err
 		}))
@@ -102,10 +102,10 @@ func rodzajZmianyWyciszenia(wyciszone bool) shared.ChangeKind {
 // wyciszenieNakladki rozgłasza `aod.mute.changed`. Zdarzenie idzie bez wskazania
 // sesji, bo wyciszenie obowiązuje wszystkie powłoki Operatora, a nie kartę,
 // z której przyszło — po to jest bytem rdzenia.
-func (e *emiter) wyciszenieNakladki(zmiana shared.ChangeKind, wyciszenie shared.AodMute,
+func (e *emiter) wyciszenieNakladki(ctx context.Context, zmiana shared.ChangeKind, wyciszenie shared.AodMute,
 	wykaz []shared.AodMute) {
 
-	e.wyslij(shared.EventAodMuteChanged, "", shared.AodMuteChangedEvent{
+	e.wyslijDoKonta(ctx, shared.EventAodMuteChanged, "", shared.AodMuteChangedEvent{
 		Change: zmiana,
 		Mute:   wyciszenie,
 		Mutes:  wykaz,

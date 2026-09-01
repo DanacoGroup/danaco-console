@@ -15,7 +15,7 @@ type Developer interface {
 	CzynnoscRepozytorium(ctx context.Context, z shared.DeveloperGitActionRequest) (shared.DeveloperGitActionResponse, error)
 	Budowanie(ctx context.Context, z shared.DeveloperBuildRunRequest) (shared.DeveloperBuildRunResponse, error)
 	// PodepnijPrzyrostBudowania oddaje drogę do zdarzenia; budowanie kończy się poza wykonaniem komendy.
-	PodepnijPrzyrostBudowania(rozglos func(shared.ChangeKind, shared.DeveloperBuild, string))
+	PodepnijPrzyrostBudowania(rozglos func(context.Context, shared.ChangeKind, shared.DeveloperBuild, string))
 
 	// Odczyt repozytorium Git Panelu: sześć czynności na bibliotece `go-git`, bez procesu potomnego.
 	StanRepozytorium(ctx context.Context, z shared.DeveloperGitStatusRequest) (shared.DeveloperGitStatusResponse, error)
@@ -162,7 +162,7 @@ func zarejestrujDevelopera(r *Rejestr, d Developer, e *emiter) {
 // przyrostBudowania rozgłasza przyrost przebiegu. Wiersz logu jedzie osobnym
 // polem kontraktu, a nie doklejony do przebiegu: Build Output dopisuje go do
 // ogona bez przerysowywania całego widoku.
-func (e *emiter) przyrostBudowania(zmiana shared.ChangeKind, budowanie shared.DeveloperBuild,
+func (e *emiter) przyrostBudowania(ctx context.Context, zmiana shared.ChangeKind, budowanie shared.DeveloperBuild,
 	wiersz string) {
 
 	tresc := shared.DeveloperBuildChangedEvent{Change: zmiana, Build: budowanie}
@@ -170,12 +170,12 @@ func (e *emiter) przyrostBudowania(zmiana shared.ChangeKind, budowanie shared.De
 		tresc.LogLine = &wiersz
 	}
 	// Sesja komunikatu zostaje pusta: przebieg należy do okna, rozgłaszany też po jego zamknięciu.
-	e.wyslij(shared.EventDeveloperBuildChanged, "", tresc)
+	e.wyslijDoKonta(ctx, shared.EventDeveloperBuildChanged, "", tresc)
 }
 
 // PodepnijPrzyrostBudowania wypełnia port: adapter zapamiętuje drogę do zdarzenia przyrostu budowania.
 func (a *adapterDevelopera) PodepnijPrzyrostBudowania(
-	rozglos func(shared.ChangeKind, shared.DeveloperBuild, string)) {
+	rozglos func(context.Context, shared.ChangeKind, shared.DeveloperBuild, string)) {
 
 	a.przyrost = rozglos
 }

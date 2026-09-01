@@ -138,7 +138,7 @@ func (a *adapterCentrumPowiadomien) Odczytaj(ctx context.Context,
 	if err != nil {
 		return shared.NotificationAcknowledgeResponse{}, err
 	}
-	a.rozglosZmiane(z.Ids, shared.NotificationStateOdczytane, nowe)
+	a.rozglosZmiane(ctx, z.Ids, shared.NotificationStateOdczytane, nowe)
 	return shared.NotificationAcknowledgeResponse{Acknowledged: ile, Unread: nowe}, nil
 }
 
@@ -161,7 +161,7 @@ func (a *adapterCentrumPowiadomien) Zamknij(ctx context.Context,
 		return shared.NotificationResolveResponse{}, err
 	}
 	if zmienione {
-		a.rozglosZmiane([]string{z.Id}, shared.NotificationStateObsluzone, nowe)
+		a.rozglosZmiane(ctx, []string{z.Id}, shared.NotificationStateObsluzone, nowe)
 	}
 	return shared.NotificationResolveResponse{Resolved: zmienione, Unread: nowe}, nil
 }
@@ -191,7 +191,7 @@ func (a *adapterCentrumPowiadomien) Odloz(ctx context.Context,
 		return shared.NotificationSnoozeResponse{}, err
 	}
 	if zmienione {
-		a.rozglosZmiane([]string{z.Id}, shared.NotificationStateOdlozone, nowe)
+		a.rozglosZmiane(ctx, []string{z.Id}, shared.NotificationStateOdlozone, nowe)
 	}
 	return shared.NotificationSnoozeResponse{Snoozed: zmienione, Unread: nowe}, nil
 }
@@ -241,7 +241,7 @@ func (a *adapterCentrumPowiadomien) Zglos(ctx context.Context, z ZgloszenieCentr
 	}
 	pozycja := powiadomienieKontraktu(wiersz)
 	if a.nadawca != nil {
-		a.nadawca.wyslij(shared.EventNotificationRaised, "", shared.NotificationRaisedEvent{
+		a.nadawca.wyslijDoKonta(ctx, shared.EventNotificationRaised, "", shared.NotificationRaisedEvent{
 			Notification: pozycja,
 			Unread:       nowe,
 		})
@@ -263,13 +263,13 @@ func (a *adapterCentrumPowiadomien) Zglos(ctx context.Context, z ZgloszenieCentr
 
 // rozglosZmiane niesie zmianę stanu zdarzenia do wszystkich połączeń
 // Operatora, wraz z nowym stanem i liczbą pozycji nieprzeczytanych w rejestrze.
-func (a *adapterCentrumPowiadomien) rozglosZmiane(identyfikatory []string,
+func (a *adapterCentrumPowiadomien) rozglosZmiane(ctx context.Context, identyfikatory []string,
 	stan shared.NotificationState, nowe int) {
 
 	if a.nadawca == nil {
 		return
 	}
-	a.nadawca.wyslij(shared.EventNotificationChanged, "", shared.NotificationChangedEvent{
+	a.nadawca.wyslijDoKonta(ctx, shared.EventNotificationChanged, "", shared.NotificationChangedEvent{
 		Ids:    identyfikatory,
 		State:  stan,
 		Unread: nowe,

@@ -36,7 +36,7 @@ func zarejestrujWersjeEksperta(r *Rejestr, wersje WersjeEksperta, e *emiter) {
 		obsluz(func(ctx context.Context, z shared.AgentVersionRestoreRequest) (shared.AgentVersionRestoreResponse, error) {
 			w, err := wersje.PrzywrocWersje(ctx, z)
 			if err == nil {
-				e.agent(shared.ChangeKindUpdated, w.Agent)
+				e.agent(ctx, shared.ChangeKindUpdated, w.Agent)
 			}
 			return w, err
 		}))
@@ -46,7 +46,7 @@ func zarejestrujWersjeEksperta(r *Rejestr, wersje WersjeEksperta, e *emiter) {
 			w, err := wersje.Zarchiwizuj(ctx, z)
 			// Zdarzenie idzie rodzajem updated, nie deleted: ekspert istnieje nadal, zszedł z wykazu czynnych.
 			if err == nil && w.Archived && w.Agent != nil {
-				e.agent(shared.ChangeKindUpdated, *w.Agent)
+				e.agent(ctx, shared.ChangeKindUpdated, *w.Agent)
 			}
 			return w, err
 		}))
@@ -55,7 +55,7 @@ func zarejestrujWersjeEksperta(r *Rejestr, wersje WersjeEksperta, e *emiter) {
 		obsluz(func(ctx context.Context, z shared.AgentRestoreRequest) (shared.AgentRestoreResponse, error) {
 			w, err := wersje.PrzywrocZArchiwum(ctx, z)
 			if err == nil && w.Restored && w.Agent != nil {
-				e.agent(shared.ChangeKindUpdated, *w.Agent)
+				e.agent(ctx, shared.ChangeKindUpdated, *w.Agent)
 			}
 			return w, err
 		}))

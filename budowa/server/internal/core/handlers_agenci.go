@@ -39,7 +39,7 @@ func zarejestrujAgentow(r *Rejestr, agenci Agenci, e *emiter) {
 		obsluz(func(ctx context.Context, z shared.AgentCreateRequest) (shared.AgentCreateResponse, error) {
 			w, err := agenci.Utworz(ctx, z)
 			if err == nil {
-				e.agent(shared.ChangeKindCreated, w.Agent)
+				e.agent(ctx, shared.ChangeKindCreated, w.Agent)
 			}
 			return w, err
 		}))
@@ -48,7 +48,7 @@ func zarejestrujAgentow(r *Rejestr, agenci Agenci, e *emiter) {
 		obsluz(func(ctx context.Context, z shared.AgentUpdateRequest) (shared.AgentUpdateResponse, error) {
 			w, err := agenci.Zmien(ctx, z)
 			if err == nil {
-				e.agent(shared.ChangeKindUpdated, w.Agent)
+				e.agent(ctx, shared.ChangeKindUpdated, w.Agent)
 			}
 			return w, err
 		}))
@@ -57,7 +57,7 @@ func zarejestrujAgentow(r *Rejestr, agenci Agenci, e *emiter) {
 		obsluz(func(ctx context.Context, z shared.AgentDeleteRequest) (shared.AgentDeleteResponse, error) {
 			w, err := agenci.Usun(ctx, z)
 			if err == nil && w.Deleted {
-				e.agent(shared.ChangeKindDeleted, shared.Agent{Id: z.AgentId})
+				e.agent(ctx, shared.ChangeKindDeleted, shared.Agent{Id: z.AgentId})
 			}
 			return w, err
 		}))
@@ -66,7 +66,7 @@ func zarejestrujAgentow(r *Rejestr, agenci Agenci, e *emiter) {
 		obsluz(func(ctx context.Context, z shared.AgentModelSetRequest) (shared.AgentModelSetResponse, error) {
 			w, err := agenci.UstawModel(ctx, z)
 			if err == nil {
-				e.agent(shared.ChangeKindUpdated, w.Agent)
+				e.agent(ctx, shared.ChangeKindUpdated, w.Agent)
 			}
 			return w, err
 		}))
@@ -75,7 +75,7 @@ func zarejestrujAgentow(r *Rejestr, agenci Agenci, e *emiter) {
 		obsluz(func(ctx context.Context, z shared.AgentSkillAddRequest) (shared.AgentSkillAddResponse, error) {
 			w, err := agenci.DodajUmiejetnosc(ctx, z)
 			if err == nil {
-				e.agent(shared.ChangeKindUpdated, w.Agent)
+				e.agent(ctx, shared.ChangeKindUpdated, w.Agent)
 			}
 			return w, err
 		}))
@@ -109,11 +109,11 @@ func rozglosEksperta(ctx context.Context, agenci Agenci, e *emiter, idEksperta s
 	if err != nil {
 		return
 	}
-	e.agent(shared.ChangeKindUpdated, ekspert)
+	e.agent(ctx, shared.ChangeKindUpdated, ekspert)
 }
 
 // agent rozgłasza zmianę eksperta. Ekspert jest komponentem własnym, nie bytem
 // sesji, więc zdarzenie idzie bez jej wskazania — tak samo jak zmiana konta.
-func (e *emiter) agent(zmiana shared.ChangeKind, a shared.Agent) {
-	e.wyslij(shared.EventAgentChanged, "", shared.AgentChangedEvent{Change: zmiana, Agent: a})
+func (e *emiter) agent(ctx context.Context, zmiana shared.ChangeKind, a shared.Agent) {
+	e.wyslijDoKonta(ctx, shared.EventAgentChanged, "", shared.AgentChangedEvent{Change: zmiana, Agent: a})
 }

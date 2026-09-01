@@ -264,7 +264,7 @@ func zarejestrujStudio(r *Rejestr, m Studio, e *emiter) {
 				WindowId: z.WindowId, DocumentId: &z.DocumentId,
 			})
 			if bladOdczytu == nil {
-				e.dokumentStudio(shared.ChangeKindUpdated, po.Document)
+				e.dokumentStudio(ctx, shared.ChangeKindUpdated, po.Document)
 			}
 			return odpowiedz, nil
 		}))
@@ -274,7 +274,7 @@ func zarejestrujStudio(r *Rejestr, m Studio, e *emiter) {
 		obsluz(func(ctx context.Context, z shared.StudioDocumentSaveRequest) (shared.StudioDocumentSaveResponse, error) {
 			odpowiedz, err := m.ZapiszDokument(ctx, z)
 			if err == nil {
-				e.dokumentStudio(shared.ChangeKindUpdated, odpowiedz.Document)
+				e.dokumentStudio(ctx, shared.ChangeKindUpdated, odpowiedz.Document)
 			}
 			return odpowiedz, err
 		}))
@@ -288,7 +288,7 @@ func zarejestrujStudio(r *Rejestr, m Studio, e *emiter) {
 		obsluz(func(ctx context.Context, z shared.StudioIngestRecognizeRequest) (shared.StudioIngestRecognizeResponse, error) {
 			odpowiedz, err := m.Rozpoznaj(ctx, z)
 			if err == nil {
-				e.pozycjaWczytywania(odpowiedz.Item)
+				e.pozycjaWczytywania(ctx, odpowiedz.Item)
 			}
 			return odpowiedz, err
 		}))
@@ -297,7 +297,7 @@ func zarejestrujStudio(r *Rejestr, m Studio, e *emiter) {
 		obsluz(func(ctx context.Context, z shared.StudioIngestCorrectionSetRequest) (shared.StudioIngestCorrectionSetResponse, error) {
 			odpowiedz, err := m.PoprawRozpoznanie(ctx, z)
 			if err == nil {
-				e.pozycjaWczytywania(odpowiedz.Item)
+				e.pozycjaWczytywania(ctx, odpowiedz.Item)
 			}
 			return odpowiedz, err
 		}))
@@ -306,7 +306,7 @@ func zarejestrujStudio(r *Rejestr, m Studio, e *emiter) {
 		obsluz(func(ctx context.Context, z shared.StudioIngestItemAcceptRequest) (shared.StudioIngestItemAcceptResponse, error) {
 			odpowiedz, err := m.PrzyjmijPozycje(ctx, z)
 			if err == nil {
-				e.dokumentStudio(shared.ChangeKindCreated, odpowiedz.Document)
+				e.dokumentStudio(ctx, shared.ChangeKindCreated, odpowiedz.Document)
 			}
 			return odpowiedz, err
 		}))
@@ -324,7 +324,7 @@ func zarejestrujStudio(r *Rejestr, m Studio, e *emiter) {
 		obsluz(func(ctx context.Context, z shared.StudioTrackingDecideRequest) (shared.StudioTrackingDecideResponse, error) {
 			odpowiedz, err := m.RozstrzygnijZmiany(ctx, z)
 			if err == nil {
-				e.dokumentStudio(shared.ChangeKindUpdated, odpowiedz.Document)
+				e.dokumentStudio(ctx, shared.ChangeKindUpdated, odpowiedz.Document)
 			}
 			return odpowiedz, err
 		}))
@@ -333,7 +333,7 @@ func zarejestrujStudio(r *Rejestr, m Studio, e *emiter) {
 		obsluz(func(ctx context.Context, z shared.StudioProposalDecideRequest) (shared.StudioProposalDecideResponse, error) {
 			odpowiedz, err := m.RozstrzygnijPropozycje(ctx, z)
 			if err == nil {
-				e.dokumentStudio(shared.ChangeKindUpdated, odpowiedz.Document)
+				e.dokumentStudio(ctx, shared.ChangeKindUpdated, odpowiedz.Document)
 			}
 			return odpowiedz, err
 		}))
@@ -354,7 +354,7 @@ func zarejestrujStudio(r *Rejestr, m Studio, e *emiter) {
 		obsluz(func(ctx context.Context, z shared.StudioTemplateApplyRequest) (shared.StudioTemplateApplyResponse, error) {
 			odpowiedz, err := m.ZastosujSzablon(ctx, z)
 			if err == nil {
-				e.dokumentStudio(shared.ChangeKindCreated, odpowiedz.Document)
+				e.dokumentStudio(ctx, shared.ChangeKindCreated, odpowiedz.Document)
 			}
 			return odpowiedz, err
 		}))
@@ -363,7 +363,7 @@ func zarejestrujStudio(r *Rejestr, m Studio, e *emiter) {
 		obsluz(func(ctx context.Context, z shared.StudioDocumentFormatSetRequest) (shared.StudioDocumentFormatSetResponse, error) {
 			odpowiedz, err := m.UstawFormatDokumentu(ctx, z)
 			if err == nil {
-				e.dokumentStudio(shared.ChangeKindUpdated, odpowiedz.Document)
+				e.dokumentStudio(ctx, shared.ChangeKindUpdated, odpowiedz.Document)
 			}
 			return odpowiedz, err
 		}))
@@ -372,7 +372,7 @@ func zarejestrujStudio(r *Rejestr, m Studio, e *emiter) {
 		obsluz(func(ctx context.Context, z shared.StudioRepositoryRestoreRequest) (shared.StudioRepositoryRestoreResponse, error) {
 			odpowiedz, err := m.PrzywrocWersje(ctx, z)
 			if err == nil {
-				e.dokumentStudio(shared.ChangeKindUpdated, odpowiedz.Document)
+				e.dokumentStudio(ctx, shared.ChangeKindUpdated, odpowiedz.Document)
 			}
 			return odpowiedz, err
 		}))
@@ -394,7 +394,7 @@ func zarejestrujStudio(r *Rejestr, m Studio, e *emiter) {
 		obsluz(func(ctx context.Context, z shared.StudioIngestUrlRequest) (shared.StudioIngestUrlResponse, error) {
 			odpowiedz, err := m.WczytajZAdresu(ctx, z)
 			if err == nil {
-				e.pozycjaWczytywania(odpowiedz.Item)
+				e.pozycjaWczytywania(ctx, odpowiedz.Item)
 			}
 			return odpowiedz, err
 		}))
@@ -403,7 +403,7 @@ func zarejestrujStudio(r *Rejestr, m Studio, e *emiter) {
 		obsluz(func(ctx context.Context, z shared.StudioBranchCreateRequest) (shared.StudioBranchCreateResponse, error) {
 			odpowiedz, err := m.ZalozGalaz(ctx, z)
 			if err == nil {
-				e.dokumentStudio(shared.ChangeKindUpdated, odpowiedz.Document)
+				e.dokumentStudio(ctx, shared.ChangeKindUpdated, odpowiedz.Document)
 			}
 			return odpowiedz, err
 		}))
@@ -413,7 +413,7 @@ func zarejestrujStudio(r *Rejestr, m Studio, e *emiter) {
 			odpowiedz, err := m.ScalGalezie(ctx, z)
 			// Scalenie zatrzymane konfliktem nie rozgłasza — treść się nie zmieniła.
 			if err == nil && odpowiedz.Merged && odpowiedz.Document != nil {
-				e.dokumentStudio(shared.ChangeKindUpdated, *odpowiedz.Document)
+				e.dokumentStudio(ctx, shared.ChangeKindUpdated, *odpowiedz.Document)
 			}
 			return odpowiedz, err
 		}))
@@ -422,7 +422,7 @@ func zarejestrujStudio(r *Rejestr, m Studio, e *emiter) {
 		obsluz(func(ctx context.Context, z shared.StudioAssetEmbedRequest) (shared.StudioAssetEmbedResponse, error) {
 			odpowiedz, err := m.OsadzZasob(ctx, z)
 			if err == nil {
-				e.dokumentStudio(shared.ChangeKindUpdated, odpowiedz.Document)
+				e.dokumentStudio(ctx, shared.ChangeKindUpdated, odpowiedz.Document)
 			}
 			return odpowiedz, err
 		}))
@@ -505,7 +505,7 @@ func zarejestrujStudio(r *Rejestr, m Studio, e *emiter) {
 		obsluz(func(ctx context.Context, z shared.StudioDocumentCopyRequest) (shared.StudioDocumentCopyResponse, error) {
 			odpowiedz, err := m.SkopiujDokument(ctx, z)
 			if err == nil {
-				e.dokumentStudio(shared.ChangeKindCreated, odpowiedz.Document)
+				e.dokumentStudio(ctx, shared.ChangeKindCreated, odpowiedz.Document)
 			}
 			return odpowiedz, err
 		}))
@@ -513,7 +513,7 @@ func zarejestrujStudio(r *Rejestr, m Studio, e *emiter) {
 		obsluz(func(ctx context.Context, z shared.StudioDocumentCreateRequest) (shared.StudioDocumentCreateResponse, error) {
 			odpowiedz, err := m.ZalozDokument(ctx, z)
 			if err == nil {
-				e.dokumentStudio(shared.ChangeKindCreated, odpowiedz.Document)
+				e.dokumentStudio(ctx, shared.ChangeKindCreated, odpowiedz.Document)
 			}
 			return odpowiedz, err
 		}))
@@ -521,7 +521,7 @@ func zarejestrujStudio(r *Rejestr, m Studio, e *emiter) {
 		obsluz(func(ctx context.Context, z shared.StudioDocumentImportFileRequest) (shared.StudioDocumentImportFileResponse, error) {
 			odpowiedz, err := m.WniesPlikDoEdytora(ctx, z)
 			if err == nil {
-				e.dokumentStudio(shared.ChangeKindCreated, odpowiedz.Document)
+				e.dokumentStudio(ctx, shared.ChangeKindCreated, odpowiedz.Document)
 			}
 			return odpowiedz, err
 		}))
@@ -529,7 +529,7 @@ func zarejestrujStudio(r *Rejestr, m Studio, e *emiter) {
 		obsluz(func(ctx context.Context, z shared.StudioDocumentImportPdfRequest) (shared.StudioDocumentImportPdfResponse, error) {
 			odpowiedz, err := m.WniesPdfDoEdytora(ctx, z)
 			if err == nil {
-				e.dokumentStudio(shared.ChangeKindCreated, odpowiedz.Document)
+				e.dokumentStudio(ctx, shared.ChangeKindCreated, odpowiedz.Document)
 			}
 			return odpowiedz, err
 		}))
@@ -537,7 +537,7 @@ func zarejestrujStudio(r *Rejestr, m Studio, e *emiter) {
 		obsluz(func(ctx context.Context, z shared.StudioDocumentSaveAsRequest) (shared.StudioDocumentSaveAsResponse, error) {
 			odpowiedz, err := m.ZapiszDokumentPodNazwa(ctx, z)
 			if err == nil {
-				e.dokumentStudio(shared.ChangeKindCreated, odpowiedz.Document)
+				e.dokumentStudio(ctx, shared.ChangeKindCreated, odpowiedz.Document)
 			}
 			return odpowiedz, err
 		}))
@@ -545,7 +545,7 @@ func zarejestrujStudio(r *Rejestr, m Studio, e *emiter) {
 		obsluz(func(ctx context.Context, z shared.StudioTemplateFillRequest) (shared.StudioTemplateFillResponse, error) {
 			odpowiedz, err := m.WypelnijSzablon(ctx, z)
 			if err == nil {
-				e.dokumentStudio(shared.ChangeKindUpdated, odpowiedz.Document)
+				e.dokumentStudio(ctx, shared.ChangeKindUpdated, odpowiedz.Document)
 			}
 			return odpowiedz, err
 		}))
@@ -581,7 +581,7 @@ func zarejestrujStudio(r *Rejestr, m Studio, e *emiter) {
 		obsluz(func(ctx context.Context, z shared.StudioBackupRestoreRequest) (shared.StudioBackupRestoreResponse, error) {
 			odpowiedz, err := m.PrzywrocKopie(ctx, z)
 			if err == nil {
-				e.dokumentStudio(shared.ChangeKindUpdated, odpowiedz.Document)
+				e.dokumentStudio(ctx, shared.ChangeKindUpdated, odpowiedz.Document)
 			}
 			return odpowiedz, err
 		}))
@@ -589,7 +589,7 @@ func zarejestrujStudio(r *Rejestr, m Studio, e *emiter) {
 		obsluz(func(ctx context.Context, z shared.StudioDiffHunkApplyRequest) (shared.StudioDiffHunkApplyResponse, error) {
 			odpowiedz, err := m.PrzeniesFragmentRoznicy(ctx, z)
 			if err == nil {
-				e.dokumentStudio(shared.ChangeKindUpdated, odpowiedz.Document)
+				e.dokumentStudio(ctx, shared.ChangeKindUpdated, odpowiedz.Document)
 			}
 			return odpowiedz, err
 		}))
@@ -597,7 +597,7 @@ func zarejestrujStudio(r *Rejestr, m Studio, e *emiter) {
 		obsluz(func(ctx context.Context, z shared.StudioJournalRedoRequest) (shared.StudioJournalRedoResponse, error) {
 			odpowiedz, err := m.PonowCzynnosc(ctx, z)
 			if err == nil {
-				e.dokumentStudio(shared.ChangeKindUpdated, odpowiedz.Document)
+				e.dokumentStudio(ctx, shared.ChangeKindUpdated, odpowiedz.Document)
 			}
 			return odpowiedz, err
 		}))
@@ -605,7 +605,7 @@ func zarejestrujStudio(r *Rejestr, m Studio, e *emiter) {
 		obsluz(func(ctx context.Context, z shared.StudioJournalRevertRequest) (shared.StudioJournalRevertResponse, error) {
 			odpowiedz, err := m.CofnijCzynnosc(ctx, z)
 			if err == nil {
-				e.dokumentStudio(shared.ChangeKindUpdated, odpowiedz.Document)
+				e.dokumentStudio(ctx, shared.ChangeKindUpdated, odpowiedz.Document)
 			}
 			return odpowiedz, err
 		}))
@@ -613,7 +613,7 @@ func zarejestrujStudio(r *Rejestr, m Studio, e *emiter) {
 		obsluz(func(ctx context.Context, z shared.StudioMarkupDecideRequest) (shared.StudioMarkupDecideResponse, error) {
 			odpowiedz, err := m.RozstrzygnijZnakowanie(ctx, z)
 			if err == nil {
-				e.dokumentStudio(shared.ChangeKindUpdated, odpowiedz.Document)
+				e.dokumentStudio(ctx, shared.ChangeKindUpdated, odpowiedz.Document)
 			}
 			return odpowiedz, err
 		}))
@@ -621,7 +621,7 @@ func zarejestrujStudio(r *Rejestr, m Studio, e *emiter) {
 		obsluz(func(ctx context.Context, z shared.StudioModelChangesRevertRequest) (shared.StudioModelChangesRevertResponse, error) {
 			odpowiedz, err := m.CofnijZmianyModelu(ctx, z)
 			if err == nil {
-				e.dokumentStudio(shared.ChangeKindUpdated, odpowiedz.Document)
+				e.dokumentStudio(ctx, shared.ChangeKindUpdated, odpowiedz.Document)
 			}
 			return odpowiedz, err
 		}))
@@ -629,7 +629,7 @@ func zarejestrujStudio(r *Rejestr, m Studio, e *emiter) {
 		obsluz(func(ctx context.Context, z shared.StudioVersionRestoreInitialRequest) (shared.StudioVersionRestoreInitialResponse, error) {
 			odpowiedz, err := m.PrzywrocWersjeZalozycielska(ctx, z)
 			if err == nil {
-				e.dokumentStudio(shared.ChangeKindUpdated, odpowiedz.Document)
+				e.dokumentStudio(ctx, shared.ChangeKindUpdated, odpowiedz.Document)
 			}
 			return odpowiedz, err
 		}))
@@ -642,7 +642,7 @@ func zarejestrujStudio(r *Rejestr, m Studio, e *emiter) {
 		obsluz(func(ctx context.Context, z shared.StudioDocumentFormSaveRequest) (shared.StudioDocumentFormSaveResponse, error) {
 			odpowiedz, err := m.ZapiszPostacDokumentu(ctx, z)
 			if err == nil {
-				e.dokumentStudio(shared.ChangeKindUpdated, odpowiedz.Document)
+				e.dokumentStudio(ctx, shared.ChangeKindUpdated, odpowiedz.Document)
 			}
 			return odpowiedz, err
 		}))
@@ -711,8 +711,8 @@ func podpisStempelAutora(ladunek json.RawMessage) (json.RawMessage, error) {
 
 // pozycjaWczytywania rozgłasza zmianę stanu pozycji kolejki cyfryzacji, żeby
 // panel wczytywania odświeżał się zdarzeniem zamiast odpytywać rdzeń w pętli.
-func (e *emiter) pozycjaWczytywania(pozycja shared.StudioIngestItem) {
-	e.wyslij(shared.EventStudioIngestChanged, "", shared.StudioIngestChangedEvent{
+func (e *emiter) pozycjaWczytywania(ctx context.Context, pozycja shared.StudioIngestItem) {
+	e.wyslijDoKonta(ctx, shared.EventStudioIngestChanged, "", shared.StudioIngestChangedEvent{
 		WindowId: pozycja.WindowId, Item: pozycja,
 	})
 }
@@ -720,8 +720,8 @@ func (e *emiter) pozycjaWczytywania(pozycja shared.StudioIngestItem) {
 // dokumentStudio rozgłasza zmianę dokumentu Studio. Rodzaj zmiany podaje
 // wołający: zapis i przywrócenie wersji zmieniają dokument zastany, a przyjęcie
 // pozycji cyfryzacji zakłada dokument nowy z treścią od razu.
-func (e *emiter) dokumentStudio(zmiana shared.ChangeKind, dokument shared.StudioDocument) {
-	e.wyslij(shared.EventStudioDocumentChanged, "", shared.StudioDocumentChangedEvent{
+func (e *emiter) dokumentStudio(ctx context.Context, zmiana shared.ChangeKind, dokument shared.StudioDocument) {
+	e.wyslijDoKonta(ctx, shared.EventStudioDocumentChanged, "", shared.StudioDocumentChangedEvent{
 		Change: zmiana, Document: dokument,
 	})
 }

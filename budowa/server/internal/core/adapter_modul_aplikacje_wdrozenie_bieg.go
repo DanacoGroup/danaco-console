@@ -24,13 +24,13 @@ var errBrakMagazynuArtefaktuApp = errors.New(
 
 // uruchomWdrozenie oddaje przebieg silnikowi wykonania. Bieg idzie osobną
 // gorutyną: przejście przez stany dzieje się po odesłaniu odpowiedzi komendy.
-func (a *adapterAplikacji) uruchomWdrozenie(wdrozenie dane.WdrozenieApp) {
-	go a.wykonajWdrozenie(wdrozenie)
+func (a *adapterAplikacji) uruchomWdrozenie(zadanie context.Context, wdrozenie dane.WdrozenieApp) {
+	go a.wykonajWdrozenie(zadanie, wdrozenie)
 }
 
-// wykonajWdrozenie przesuwa przebieg z `pending` przez `running` do stanu końcowego i rozgłasza każde przejście. Kontekst jest własny, nie komendy — wdrożenie przeżywa rozłączenie klienta.
-func (a *adapterAplikacji) wykonajWdrozenie(wdrozenie dane.WdrozenieApp) {
-	ctx := context.Background()
+// wykonajWdrozenie przesuwa przebieg z `pending` przez `running` do stanu końcowego i rozgłasza każde przejście. Kontekst jest własny, nie komendy — wdrożenie przeżywa rozłączenie klienta; z komendy zostaje konto zamawiającego, adresat zdarzeń.
+func (a *adapterAplikacji) wykonajWdrozenie(zadanie context.Context, wdrozenie dane.WdrozenieApp) {
+	ctx := zKontemZadania(context.Background(), zadanie)
 
 	wdrozenie.Stan = shared.AppDeployStatusRunning
 	wdrozenie = a.zapiszIRozglosWdrozenie(ctx, wdrozenie)
@@ -173,18 +173,18 @@ func (a *adapterAplikacji) zapiszIRozglosWdrozenie(ctx context.Context,
 
 	zapisane, err := a.repozytorium.ZapiszWdrozenie(ctx, wdrozenie)
 	if err != nil {
-		a.rozglosWdrozenie(shared.ChangeKindUpdated, wdrozenie)
+		a.rozglosWdrozenie(ctx, shared.ChangeKindUpdated, wdrozenie)
 		return wdrozenie
 	}
-	a.rozglosWdrozenie(shared.ChangeKindUpdated, zapisane)
+	a.rozglosWdrozenie(ctx, shared.ChangeKindUpdated, zapisane)
 	return zapisane
 }
 
 // rozglosWdrozenie oddaje przebieg obsługiwaczowi, który rozsyła
 // `apps.build.changed`. Brak podpięcia nie zmienia pracy modułu.
-func (a *adapterAplikacji) rozglosWdrozenie(zmiana shared.ChangeKind, wdrozenie dane.WdrozenieApp) {
+func (a *adapterAplikacji) rozglosWdrozenie(ctx context.Context, zmiana shared.ChangeKind, wdrozenie dane.WdrozenieApp) {
 	if a.przyrostWdrozenia == nil {
 		return
 	}
-	a.przyrostWdrozenia(zmiana, wdrozenieKontraktu(wdrozenie))
+	a.przyrostWdrozenia(ctx, zmiana, wdrozenieKontraktu(wdrozenie))
 }

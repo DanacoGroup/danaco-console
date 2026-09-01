@@ -3,6 +3,7 @@
 package core
 
 import (
+	"context"
 	"sync"
 	"sync/atomic"
 	"time"
@@ -49,6 +50,8 @@ type procesTerminala struct {
 	inicjator    shared.ProcessInitiator
 	pid          int
 	pidNadrzedny int
+	// kontekst niesie konto zamawiającego; proces przeżywa żądanie, a jego fragmenty i zmiany stanu adresuje się tym kontem.
+	kontekst context.Context
 
 	mu sync.Mutex
 	// wstrzymany mówi, czy drzewo procesu stoi wstrzymane, choć stan kontraktu wciąż jest "running".

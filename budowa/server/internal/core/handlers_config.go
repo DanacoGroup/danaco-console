@@ -24,7 +24,7 @@ func zarejestrujUstawienia(r *Rejestr, ustawienia Ustawienia, e *emiter) {
 		obsluz(func(ctx context.Context, z shared.ConfigSetRequest) (shared.ConfigSetResponse, error) {
 			w, err := ustawienia.Zapisz(ctx, z)
 			if err == nil {
-				e.ustawienie(shared.ChangeKindUpdated, w.Entry)
+				e.ustawienie(ctx, shared.ChangeKindUpdated, w.Entry)
 			}
 			return w, err
 		}))
@@ -36,7 +36,7 @@ func zarejestrujUstawienia(r *Rejestr, ustawienia Ustawienia, e *emiter) {
 				return w, err
 			}
 			for _, wpis := range w.Entries {
-				e.ustawienie(shared.ChangeKindDeleted, wpis)
+				e.ustawienie(ctx, shared.ChangeKindDeleted, wpis)
 			}
 			return w, nil
 		}))

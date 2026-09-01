@@ -59,7 +59,7 @@ func (a *adapterTlumaczenia) DodajPanel(ctx context.Context,
 
 	// Panel z treścią przekładu jest zmianą, rozgłoszoną zdarzeniem translate.translation.changed.
 	if tresc != nil {
-		a.rozglosZmianePanelu(shared.ChangeKindCreated, panel)
+		a.rozglosZmianePanelu(ctx, shared.ChangeKindCreated, panel)
 
 		// Migawka jakości powstaje zaraz po przekładzie, bez czekania na quality.check.
 		niezgodnosci := zbadajPanel(panel, tekstZrodlowy)
@@ -86,7 +86,7 @@ func (a *adapterTlumaczenia) UstawTlumaczenie(ctx context.Context,
 	if err != nil {
 		return shared.TranslateTranslationSetResponse{}, przelozBladPanelu(err, z.PanelId)
 	}
-	a.rozglosZmianePanelu(shared.ChangeKindUpdated, panel)
+	a.rozglosZmianePanelu(ctx, shared.ChangeKindUpdated, panel)
 
 	// Korekta Operatora także idzie do pamięci tłumaczeń, jeśli okno panelu ma tekst źródłowy.
 	if okno, err := a.repozytorium.Okno(ctx, panel.OknoKod); err == nil && okno.TekstZrodlowy != nil {

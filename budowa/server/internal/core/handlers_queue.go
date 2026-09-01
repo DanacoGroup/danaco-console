@@ -17,7 +17,7 @@ func zarejestrujKolejki(r *Rejestr, kolejki Kolejki, e *emiter) {
 		obsluz(func(ctx context.Context, z shared.QueueCreateRequest) (shared.QueueCreateResponse, error) {
 			w, err := kolejki.Utworz(ctx, z)
 			if err == nil {
-				e.kolejka(shared.ChangeKindCreated, w.Queue)
+				e.kolejka(ctx, shared.ChangeKindCreated, w.Queue)
 			}
 			return w, err
 		}))
@@ -26,7 +26,7 @@ func zarejestrujKolejki(r *Rejestr, kolejki Kolejki, e *emiter) {
 		obsluz(func(ctx context.Context, z shared.QueueActionRequest) (shared.QueueActionResponse, error) {
 			w, err := kolejki.Wykonaj(ctx, z)
 			if err == nil {
-				e.kolejka(shared.ChangeKindUpdated, w.Queue)
+				e.kolejka(ctx, shared.ChangeKindUpdated, w.Queue)
 			}
 			return w, err
 		}))

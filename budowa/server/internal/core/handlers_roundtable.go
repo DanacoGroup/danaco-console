@@ -73,7 +73,7 @@ type Debata interface {
 	Odsluch(ctx context.Context, z shared.RoundtableSpeechSynthesizeRequest) (shared.RoundtableSpeechSynthesizeResponse, error)
 
 	// PodepnijRozgloszenie oddaje drogę do zdarzenia zmiany debaty; wypowiedź powstaje poza komendą.
-	PodepnijRozgloszenie(rozglos func(shared.ChangeKind, shared.RoundtableTurn, *shared.RoundtableStatement))
+	PodepnijRozgloszenie(rozglos func(context.Context, shared.ChangeKind, shared.RoundtableTurn, *shared.RoundtableStatement))
 }
 
 // zarejestrujDebate wpina komplet komend modułu Roundtable w rejestr komend rdzenia, przy starcie modułu.
@@ -142,12 +142,12 @@ func zarejestrujDebate(r *Rejestr, d Debata, e *emiter) {
 // debata rozgłasza przyrost debaty. Sesja komunikatu jest pusta, bo debata jest
 // bytem okna, nie karty sesji: kontrakt kieruje wszystkie cztery komendy przez
 // `windowId` i nie zna sesji nadrzędnej debaty.
-func (e *emiter) debata(zmiana shared.ChangeKind, t shared.RoundtableTurn,
+func (e *emiter) debata(ctx context.Context, zmiana shared.ChangeKind, t shared.RoundtableTurn,
 	w *shared.RoundtableStatement) {
 
 	zdarzenie := shared.RoundtableDebateChangedEvent{Change: zmiana, Turn: t}
 	if w != nil {
 		zdarzenie.Statement = w
 	}
-	e.wyslij(shared.EventRoundtableDebateChanged, "", zdarzenie)
+	e.wyslijDoKonta(ctx, shared.EventRoundtableDebateChanged, "", zdarzenie)
 }

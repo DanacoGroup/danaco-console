@@ -39,7 +39,8 @@ func (a *adapterDebaty) Uruchom(ctx context.Context,
 	}
 
 	// Zajęcie okna idzie przed założeniem tury, żeby odmowa nie zostawiła martwej tury w bazie.
-	kontekst, anuluj := context.WithCancel(a.zycie)
+	// Tura biegnie na koncie zamawiającego: jej wypowiedzi i zdarzenia idą do jego urządzeń.
+	kontekst, anuluj := context.WithCancel(zKontemZadania(a.zycie, ctx))
 	if !a.zajmijBieg(okno, anuluj) {
 		anuluj()
 		return shared.RoundtableDebateStartResponse{}, odmowaTuryDebatyWBiegu(okno)
@@ -71,7 +72,7 @@ func (a *adapterDebaty) Uruchom(ctx context.Context,
 	}
 
 	kontrakt := turaKontraktu(tura)
-	a.rozglos(shared.ChangeKindCreated, kontrakt, nil)
+	a.rozglos(ctx, shared.ChangeKindCreated, kontrakt, nil)
 
 	go a.prowadzTure(kontekst, tura, czynni, pytanie)
 
@@ -94,10 +95,10 @@ func (a *adapterDebaty) prowadzTure(kontekst context.Context, tura dane.TuraDeba
 	// Rozgłoszenie domykające niesie turę wraz z zapisem, znak końca zbierania wypowiedzi.
 	po, err := a.repozytorium.Tura(kontekst, tura.Kod)
 	if err != nil {
-		a.rozglos(shared.ChangeKindUpdated, turaKontraktu(tura), nil)
+		a.rozglos(kontekst, shared.ChangeKindUpdated, turaKontraktu(tura), nil)
 		return
 	}
-	a.rozglos(shared.ChangeKindUpdated, turaKontraktu(po), nil)
+	a.rozglos(kontekst, shared.ChangeKindUpdated, turaKontraktu(po), nil)
 }
 
 // prowadzRownolegle rozsyła pytanie wszystkim naraz. Jedna gorutyna na
@@ -181,11 +182,11 @@ func granicaTur(wskazanie *int, tury []dane.TuraDebaty) (int, error) {
 
 // rozglos oddaje przyrost debaty warstwie transportu. Nadajnik niepodłączony
 // nie jest błędem: debata biegnie także wtedy, gdy nikt nie słucha.
-func (a *adapterDebaty) rozglos(zmiana shared.ChangeKind, t shared.RoundtableTurn,
+func (a *adapterDebaty) rozglos(ctx context.Context, zmiana shared.ChangeKind, t shared.RoundtableTurn,
 	w *shared.RoundtableStatement) {
 
 	if a == nil || a.zmiana == nil {
 		return
 	}
-	a.zmiana(zmiana, t, w)
+	a.zmiana(ctx, zmiana, t, w)
 }

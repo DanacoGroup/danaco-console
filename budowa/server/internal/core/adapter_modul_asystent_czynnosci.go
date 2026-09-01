@@ -1,7 +1,4 @@
-// Odpowiedzialność pliku: stan zleceń asystenta i sterowanie nimi
-// (`assistant.action.status`) oraz chronologiczny dziennik działań
-// (`assistant.activity.list`) — obszar Actions Monitor. Zlecenie ma własny
-// automat stanu, odrębny od katalogu akcji.
+// Odpowiedzialność pliku: stan zleceń asystenta i sterowanie nimi (`assistant.action.status`) oraz chronologiczny dziennik działań (`assistant.activity.list`) — obszar Actions Monitor. Zlecenie ma własny automat stanu, odrębny od katalogu akcji.
 package core
 
 import (
@@ -14,9 +11,7 @@ import (
 	"danacoconsole/shared"
 )
 
-// StanCzynnosci obsługuje `assistant.action.status`. Z kontrolą — zmienia stan
-// wskazanego zlecenia i oddaje je po zmianie. Bez kontroli — czyta jedno
-// zlecenie (po `ActionId`) albo wszystkie zlecenia okna (po `WindowId`).
+// StanCzynnosci obsługuje `assistant.action.status`. Z kontrolą — zmienia stan wskazanego zlecenia i oddaje je po zmianie. Bez kontroli — czyta jedno zlecenie (po `ActionId`) albo wszystkie zlecenia okna (po `WindowId`).
 func (a *adapterAsystenta) StanCzynnosci(ctx context.Context,
 	z shared.AssistantActionStatusRequest) (shared.AssistantActionStatusResponse, error) {
 
@@ -44,10 +39,7 @@ func (a *adapterAsystenta) StanCzynnosci(ctx context.Context,
 		"żądanie bez wskazania zlecenia (actionId) i bez okna (windowId)")
 }
 
-// steruj przekłada `AssistantActionControl` na zmianę stanu zlecenia.
-// Wymaga `ActionId` — sterowanie bez wskazania zlecenia nie ma na czym
-// zadziałać, więc jest błędem żądania, nie operacją na wszystkich zleceniach
-// okna naraz.
+// steruj przekłada `AssistantActionControl` na zmianę stanu zlecenia. Wymaga `ActionId` — sterowanie bez wskazania zlecenia nie ma na czym zadziałać, więc jest błędem żądania, nie operacją na wszystkich zleceniach okna naraz.
 func (a *adapterAsystenta) steruj(ctx context.Context,
 	z shared.AssistantActionStatusRequest) (shared.AssistantActionStatusResponse, error) {
 
@@ -60,8 +52,7 @@ func (a *adapterAsystenta) steruj(ctx context.Context,
 		return shared.AssistantActionStatusResponse{}, err
 	}
 
-	// Stan sprzed zapisu jest czytany zawsze — resume i sterowanie zamkniętego
-	// zlecenia zależą od niego.
+	// Stan sprzed zapisu jest czytany zawsze — resume i sterowanie zamkniętego zlecenia zależą od niego.
 	przed, err := a.repozytorium.Zlecenie(ctx, *z.ActionId)
 	if err != nil {
 		return shared.AssistantActionStatusResponse{}, bladNieznanegoZleceniaAsystenta(*z.ActionId, err)
@@ -71,8 +62,7 @@ func (a *adapterAsystenta) steruj(ctx context.Context,
 	}
 	wstrzymanePrzed := przed.Stan == string(shared.AssistantActionStatusPaused)
 
-	// Anulowanie i wstrzymanie sięgają biegu, nie tylko wiersza — przerwanie
-	// idzie przed zapisem stanu.
+	// Anulowanie i wstrzymanie sięgają biegu, nie tylko wiersza — przerwanie idzie przed zapisem stanu.
 	if *z.Control == shared.AssistantActionControlCancel || *z.Control == shared.AssistantActionControlPause {
 		a.przerwijBieg(*z.ActionId)
 	}
@@ -81,8 +71,7 @@ func (a *adapterAsystenta) steruj(ctx context.Context,
 		return shared.AssistantActionStatusResponse{}, bladNieznanegoZleceniaAsystenta(*z.ActionId, err)
 	}
 
-	// Priorytet idzie osobnym zapisem, bo jest osobną czynnością kontraktu
-	// przy sterowaniu.
+	// Priorytet idzie osobnym zapisem, bo jest osobną czynnością kontraktu przy sterowaniu.
 	if z.Priority != nil {
 		zlecenie, err = a.repozytorium.UstawPriorytetZlecenia(ctx, *z.ActionId, int64(*z.Priority))
 		if err != nil {
@@ -90,24 +79,20 @@ func (a *adapterAsystenta) steruj(ctx context.Context,
 		}
 	}
 
-	// Ponowna próba wraca do wykonawcy: `retry` przestawia zlecenie na
-	// `queued`, a to podejmuje wykonawca.
+	// Ponowna próba wraca do wykonawcy: `retry` przestawia zlecenie na `queued`, a to podejmuje wykonawca.
 	if zlecenie.Stan == string(shared.AssistantActionStatusQueued) {
-		a.podejmij(*z.ActionId)
+		a.podejmij(ctx, *z.ActionId)
 	}
 
-	// Wznowienie też wraca do wykonawcy — `resume` oddaje je temu wykonawcy
-	// ze stanem `running`.
+	// Wznowienie też wraca do wykonawcy — `resume` oddaje je temu wykonawcy ze stanem `running`.
 	if wstrzymanePrzed && zlecenie.Stan == string(shared.AssistantActionStatusRunning) {
-		a.wznow(*z.ActionId)
+		a.wznow(ctx, *z.ActionId)
 	}
 
 	return shared.AssistantActionStatusResponse{Actions: []shared.AssistantAction{zlozZlecenie(zlecenie)}}, nil
 }
 
-// stanDlaSterowania tłumaczy sterowanie Actions Monitor na wartość stanu
-// automatu kontraktu. `retry` wraca zlecenie do `queued` — jedyny sposób,
-// jakim automat stanu opisuje ponowną próbę.
+// stanDlaSterowania tłumaczy sterowanie Actions Monitor na wartość stanu automatu kontraktu. `retry` wraca zlecenie do `queued` — jedyny sposób, jakim automat stanu opisuje ponowną próbę.
 func stanDlaSterowania(sterowanie shared.AssistantActionControl) (string, error) {
 	switch sterowanie {
 	case shared.AssistantActionControlPause:
@@ -123,9 +108,7 @@ func stanDlaSterowania(sterowanie shared.AssistantActionControl) (string, error)
 	}
 }
 
-// zlecenieZamkniete mówi, czy stan zlecenia jest końcowy. Automat kontraktu ma
-// trzy takie stany (`done`, `failed`, `cancelled`) i żaden z nich nie prowadzi
-// dalej sam z siebie — z każdego wychodzi się wyłącznie ponowną próbą.
+// zlecenieZamkniete mówi, czy stan zlecenia jest końcowy. Automat kontraktu ma trzy takie stany (`done`, `failed`, `cancelled`) i żaden z nich nie prowadzi dalej sam z siebie — z każdego wychodzi się wyłącznie ponowną próbą.
 func zlecenieZamkniete(stan string) bool {
 	switch stan {
 	case string(shared.AssistantActionStatusDone),
@@ -136,10 +119,7 @@ func zlecenieZamkniete(stan string) bool {
 	return false
 }
 
-// sprawdzSterowalnosc odmawia sterowania, którego zlecenie zamknięte nie ma
-// jak wykonać. Jedynym sterowaniem, które z zamkniętego zlecenia prowadzi
-// dalej, jest `retry`. Kod `conflict` znaczy tu: stan wyklucza czynność,
-// `retryable` fałszem.
+// sprawdzSterowalnosc odmawia sterowania, którego zlecenie zamknięte nie ma jak wykonać. Jedynym sterowaniem, które z zamkniętego zlecenia prowadzi dalej, jest `retry`. Kod `conflict` znaczy tu: stan wyklucza czynność, `retryable` fałszem.
 func sprawdzSterowalnosc(sterowanie shared.AssistantActionControl, stan string) error {
 	if !zlecenieZamkniete(stan) || sterowanie == shared.AssistantActionControlRetry {
 		return nil
@@ -149,9 +129,7 @@ func sprawdzSterowalnosc(sterowanie shared.AssistantActionControl, stan string) 
 			string(sterowanie)+" nie ma czego dotyczyć; ponowne wykonanie zamawia się sterowaniem retry"))
 }
 
-// WykazCzynnosci obsługuje `assistant.activity.list`. Po `ActionId` czyta
-// dziennik jednego zlecenia bez granicy; po `WindowId` czyta chronologiczny
-// dziennik okna, ucięty `Limit`, gdy żądanie go niesie.
+// WykazCzynnosci obsługuje `assistant.activity.list`. Po `ActionId` czyta dziennik jednego zlecenia bez granicy; po `WindowId` czyta chronologiczny dziennik okna, ucięty `Limit`, gdy żądanie go niesie.
 func (a *adapterAsystenta) WykazCzynnosci(ctx context.Context,
 	z shared.AssistantActivityListRequest) (shared.AssistantActivityListResponse, error) {
 
@@ -179,9 +157,7 @@ func (a *adapterAsystenta) WykazCzynnosci(ctx context.Context,
 		"żądanie bez wskazania okna (windowId) i bez zlecenia (actionId)")
 }
 
-// zlozWpisyUciete składa wpisy dziennika zlecenia i ucina je granicą, której
-// `WpisyZlecenia` nie stosuje samo — dziennik zlecenia w repozytorium wraca
-// w całości, ucięcie skraca już złożoną listę.
+// zlozWpisyUciete składa wpisy dziennika zlecenia i ucina je granicą, której `WpisyZlecenia` nie stosuje samo — dziennik zlecenia w repozytorium wraca w całości, ucięcie skraca już złożoną listę.
 func zlozWpisyUciete(wiersze []dane.WpisDziennikaAsystenta, limit *int) []shared.AssistantActivityEntry {
 	wpisy := zlozWpisy(wiersze)
 	if limit != nil && *limit > 0 && len(wpisy) > *limit {
@@ -190,8 +166,7 @@ func zlozWpisyUciete(wiersze []dane.WpisDziennikaAsystenta, limit *int) []shared
 	return wpisy
 }
 
-// zlozWpisy składa listę wpisów kontraktu z wierszy repozytorium, zachowując
-// kolejność zwróconą przez zapytanie.
+// zlozWpisy składa listę wpisów kontraktu z wierszy repozytorium, zachowując kolejność zwróconą przez zapytanie.
 func zlozWpisy(wiersze []dane.WpisDziennikaAsystenta) []shared.AssistantActivityEntry {
 	wpisy := make([]shared.AssistantActivityEntry, 0, len(wiersze))
 	for _, wiersz := range wiersze {
@@ -209,8 +184,7 @@ func zlozWpisy(wiersze []dane.WpisDziennikaAsystenta) []shared.AssistantActivity
 	return wpisy
 }
 
-// zlozZlecenia składa listę zleceń kontraktu z wierszy repozytorium, po
-// jednym wywołaniu `zlozZlecenie` na wiersz.
+// zlozZlecenia składa listę zleceń kontraktu z wierszy repozytorium, po jednym wywołaniu `zlozZlecenie` na wiersz.
 func zlozZlecenia(wiersze []dane.ZlecenieAsystenta) []shared.AssistantAction {
 	zlecenia := make([]shared.AssistantAction, 0, len(wiersze))
 	for _, wiersz := range wiersze {
@@ -219,9 +193,7 @@ func zlozZlecenia(wiersze []dane.ZlecenieAsystenta) []shared.AssistantAction {
 	return zlecenia
 }
 
-// zlozZlecenie składa jedno zlecenie kontraktu z wiersza repozytorium. Czas
-// jest tu liczbą wprost — bez przekładu przez `chwilaBazy`, którego używają
-// moduły trzymające czas tekstem.
+// zlozZlecenie składa jedno zlecenie kontraktu z wiersza repozytorium. Czas jest tu liczbą wprost — bez przekładu przez `chwilaBazy`, którego używają moduły trzymające czas tekstem.
 func zlozZlecenie(wiersz dane.ZlecenieAsystenta) shared.AssistantAction {
 	return shared.AssistantAction{
 		Id:          wiersz.Kod,
@@ -238,9 +210,7 @@ func zlozZlecenie(wiersz dane.ZlecenieAsystenta) shared.AssistantAction {
 	}
 }
 
-// liczbaIntZInt64 przekłada wskaźnik na `int64` warstwy danych na wskaźnik na
-// `int` kontraktu — kontrakt trzyma `CurrentStep`/`TotalSteps`/`Priority` jako
-// `*int`, repozytorium jako `*int64` (kolumna INTEGER SQLite).
+// liczbaIntZInt64 przekłada wskaźnik na `int64` warstwy danych na wskaźnik na `int` kontraktu — kontrakt trzyma `CurrentStep`/`TotalSteps`/`Priority` jako `*int`, repozytorium jako `*int64` (kolumna INTEGER SQLite).
 func liczbaIntZInt64(wartosc *int64) *int {
 	if wartosc == nil {
 		return nil
@@ -249,8 +219,7 @@ func liczbaIntZInt64(wartosc *int64) *int {
 	return &liczba
 }
 
-// bladNieznanegoZleceniaAsystenta odróżnia „zlecenia nie ma" (odmowa wprost,
-// nie cicha zgoda) od „odczyt/zapis się nie powiódł".
+// bladNieznanegoZleceniaAsystenta odróżnia „zlecenia nie ma" (odmowa wprost, nie cicha zgoda) od „odczyt/zapis się nie powiódł".
 func bladNieznanegoZleceniaAsystenta(kod string, err error) error {
 	if errors.Is(err, dane.ErrBrakWiersza) {
 		return protocol.JakoError(protocol.NowyBlad(shared.ErrorCodeNotFound,
@@ -259,10 +228,7 @@ func bladNieznanegoZleceniaAsystenta(kod string, err error) error {
 	return bladAsystenta(err)
 }
 
-// OznaczWpisDziennika obsługuje `assistant.activity.flag`. Wyróżnienie
-// mieszka w kolumnach `wazny` i `notatka_wyroznienia` tabeli dziennika.
-// Zdjęcie wyróżnienia kasuje też powód: powód bez znacznika byłby notatką
-// do wpisu, którego nikt nie wyróżnił.
+// OznaczWpisDziennika obsługuje `assistant.activity.flag`. Wyróżnienie mieszka w kolumnach `wazny` i `notatka_wyroznienia` tabeli dziennika. Zdjęcie wyróżnienia kasuje też powód: powód bez znacznika byłby notatką do wpisu, którego nikt nie wyróżnił.
 func (a *adapterAsystenta) OznaczWpisDziennika(ctx context.Context,
 	z shared.AssistantActivityFlagRequest) (shared.AssistantActivityFlagResponse, error) {
 
@@ -282,7 +248,6 @@ func (a *adapterAsystenta) OznaczWpisDziennika(ctx context.Context,
 	}
 
 	wpis := zlozWpisy([]dane.WpisDziennikaAsystenta{wiersz})[0]
-	// Notatka wyróżnienia nie ma pola w kontrakcie: wraca przy treści wpisu
-	// i przy odczycie dziennika.
+	// Notatka wyróżnienia nie ma pola w kontrakcie: wraca przy treści wpisu i przy odczycie dziennika.
 	return shared.AssistantActivityFlagResponse{Entry: wpis}, nil
 }

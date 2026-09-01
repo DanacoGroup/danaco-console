@@ -48,7 +48,7 @@ func zarejestrujZakresEksperta(r *Rejestr, zakres ZakresEksperta, e *emiter) {
 		obsluz(func(ctx context.Context, z shared.AgentSkillRemoveRequest) (shared.AgentSkillRemoveResponse, error) {
 			w, err := zakres.UsunUmiejetnosc(ctx, z)
 			if err == nil {
-				e.agent(shared.ChangeKindUpdated, w.Agent)
+				e.agent(ctx, shared.ChangeKindUpdated, w.Agent)
 			}
 			return w, err
 		}))
@@ -57,7 +57,7 @@ func zarejestrujZakresEksperta(r *Rejestr, zakres ZakresEksperta, e *emiter) {
 		obsluz(func(ctx context.Context, z shared.AgentConnectorRemoveRequest) (shared.AgentConnectorRemoveResponse, error) {
 			w, err := zakres.UsunKonektor(ctx, z)
 			if err == nil {
-				e.agent(shared.ChangeKindUpdated, w.Agent)
+				e.agent(ctx, shared.ChangeKindUpdated, w.Agent)
 			}
 			return w, err
 		}))
@@ -66,7 +66,7 @@ func zarejestrujZakresEksperta(r *Rejestr, zakres ZakresEksperta, e *emiter) {
 		obsluz(func(ctx context.Context, z shared.AgentModulesSetRequest) (shared.AgentModulesSetResponse, error) {
 			w, err := zakres.UstawModuly(ctx, z)
 			if err == nil {
-				e.agent(shared.ChangeKindUpdated, w.Agent)
+				e.agent(ctx, shared.ChangeKindUpdated, w.Agent)
 			}
 			return w, err
 		}))
@@ -75,7 +75,7 @@ func zarejestrujZakresEksperta(r *Rejestr, zakres ZakresEksperta, e *emiter) {
 		obsluz(func(ctx context.Context, z shared.AgentSubagentSetRequest) (shared.AgentSubagentSetResponse, error) {
 			w, err := zakres.UstawPodagentow(ctx, z)
 			if err == nil {
-				e.agent(shared.ChangeKindUpdated, w.Agent)
+				e.agent(ctx, shared.ChangeKindUpdated, w.Agent)
 			}
 			return w, err
 		}))
@@ -117,5 +117,5 @@ func rozglosEkspertaZakresu(ctx context.Context, zakres ZakresEksperta, e *emite
 	if err != nil {
 		return
 	}
-	e.agent(shared.ChangeKindUpdated, ekspert)
+	e.agent(ctx, shared.ChangeKindUpdated, ekspert)
 }

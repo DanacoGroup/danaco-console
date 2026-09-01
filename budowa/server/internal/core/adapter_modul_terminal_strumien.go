@@ -1,6 +1,4 @@
-// Odpowiedzialność pliku: wyjście procesu terminala jako strumień fragmentów
-// kontraktu — nośnik okna Output Console. Wyjście jedzie wspólnym strumieniem
-// `stream.chunk`, opisanym kontraktem jako jedna droga dla wszystkich kanałów.
+// Odpowiedzialność pliku: wyjście procesu terminala jako strumień fragmentów kontraktu — nośnik okna Output Console. Wyjście jedzie wspólnym strumieniem `stream.chunk`, opisanym kontraktem jako jedna droga dla wszystkich kanałów.
 package core
 
 import (
@@ -11,25 +9,20 @@ import (
 	"danacoconsole/shared"
 )
 
-// rozmiarBuforaWyjscia jest porcją odczytu z potoku wyjścia procesu terminala
-// uruchomionego przez kartę.
+// rozmiarBuforaWyjscia jest porcją odczytu z potoku wyjścia procesu terminala uruchomionego przez kartę.
 const rozmiarBuforaWyjscia = 32 * 1024
 
-// nadawcaWyjscia rozsyła fragmenty wyjścia procesów terminala zdarzeniami
-// transportu okna komunikacji.
+// nadawcaWyjscia rozsyła fragmenty wyjścia procesów terminala zdarzeniami transportu okna komunikacji.
 type nadawcaWyjscia struct {
 	nadajnik Nadajnik
 }
 
-// nowyNadawcaWyjscia opakowuje nadajnik zdarzeń transportu nadawcą wyjścia
-// procesów terminala montowanym przy starcie.
+// nowyNadawcaWyjscia opakowuje nadajnik zdarzeń transportu nadawcą wyjścia procesów terminala montowanym przy starcie.
 func nowyNadawcaWyjscia(nadajnik Nadajnik) *nadawcaWyjscia {
 	return &nadawcaWyjscia{nadajnik: nadajnik}
 }
 
-// Pompuj czyta wyjście procesu do wyczerpania i rozsyła je fragmentami.
-// Wywołuje się to w osobnej gorutynie — jedną dla wyjścia zwykłego, jedną dla
-// diagnostycznego.
+// Pompuj czyta wyjście procesu do wyczerpania i rozsyła je fragmentami. Wywołuje się to w osobnej gorutynie — jedną dla wyjścia zwykłego, jedną dla diagnostycznego.
 func (n *nadawcaWyjscia) Pompuj(proces *procesTerminala, zrodlo io.Reader, rodzaj shared.ChunkKind) {
 	if zrodlo == nil {
 		return
@@ -41,16 +34,13 @@ func (n *nadawcaWyjscia) Pompuj(proces *procesTerminala, zrodlo io.Reader, rodza
 			n.Fragment(proces, rodzaj, string(bufor[:odczytane]), false)
 		}
 		if err != nil {
-			// Koniec potoku jest normalnym końcem odczytu; proces i tak domknie go
-			// czekający na zakończenie.
+			// Koniec potoku jest normalnym końcem odczytu; proces i tak domknie go czekający na zakończenie.
 			return
 		}
 	}
 }
 
-// Fragment wysyła jedną porcję wyjścia. Fragment ostatni zamyka strumień
-// procesu znacznikiem `done` — bez niego Output Console czekałby na ciąg dalszy,
-// którego nigdy nie będzie.
+// Fragment wysyła jedną porcję wyjścia do urządzeń konta, które proces zamówiło. Fragment ostatni zamyka strumień procesu znacznikiem `done` — bez niego Output Console czekałby na ciąg dalszy, którego nigdy nie będzie.
 func (n *nadawcaWyjscia) Fragment(proces *procesTerminala, rodzaj shared.ChunkKind,
 	tresc string, ostatni bool) {
 
@@ -64,11 +54,10 @@ func (n *nadawcaWyjscia) Fragment(proces *procesTerminala, rodzaj shared.ChunkKi
 	if err != nil {
 		return
 	}
-	n.nadajnik.Rozglos("", koperta)
+	n.nadajnik.Rozglos(kontoAdresata(proces.kontekst), koperta)
 }
 
-// Domknij wysyła fragment zamykający strumień procesu wraz z podsumowaniem
-// zakończenia. Output Console pokazuje tę treść jako ostatni wiersz przebiegu.
+// Domknij wysyła fragment zamykający strumień procesu wraz z podsumowaniem zakończenia. Output Console pokazuje tę treść jako ostatni wiersz przebiegu.
 func (n *nadawcaWyjscia) Domknij(proces *procesTerminala, stan shared.TerminalProcessStatus,
 	kodWyjscia *int, powod string) {
 
@@ -79,8 +68,7 @@ func (n *nadawcaWyjscia) Domknij(proces *procesTerminala, stan shared.TerminalPr
 	n.Fragment(proces, rodzaj, podsumowanieZakonczenia(stan, kodWyjscia, powod), true)
 }
 
-// podsumowanieZakonczenia składa ostatni wiersz przebiegu procesu, widoczny
-// jako podsumowanie w oknie.
+// podsumowanieZakonczenia składa ostatni wiersz przebiegu procesu, widoczny jako podsumowanie w oknie.
 func podsumowanieZakonczenia(stan shared.TerminalProcessStatus, kodWyjscia *int, powod string) string {
 	tresc := "\n[proces " + string(stan)
 	if kodWyjscia != nil {

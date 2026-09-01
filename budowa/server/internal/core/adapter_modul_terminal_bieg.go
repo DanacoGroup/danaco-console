@@ -48,6 +48,7 @@ func (a *adapterTerminala) uruchom(ctx context.Context, karta *kartaTerminala, o
 		inicjator:    inicjator,
 		pid:          uchwyt.Pid(),
 		pidNadrzedny: os.Getpid(),
+		kontekst:     zKontemZadania(context.Background(), ctx),
 		stan:         shared.TerminalProcessStatusRunning,
 		uruchomiono:  time.Now().UTC(),
 		uchwyt:       uchwyt,
@@ -58,7 +59,7 @@ func (a *adapterTerminala) uruchom(ctx context.Context, karta *kartaTerminala, o
 	a.zapiszProces(ctx, proces)
 
 	// Rozgłoszenie idzie przed pompą wyjścia, przed odrzuceniem fragmentu jako cudzego.
-	a.rozglos(shared.ChangeKindCreated, proces)
+	a.rozglos(ctx, shared.ChangeKindCreated, proces)
 
 	go a.wyjscie.Pompuj(proces, uchwyt.Wyjscie(), shared.ChunkKindText)
 	go a.wyjscie.Pompuj(proces, uchwyt.Diagnostyka(), shared.ChunkKindError)
@@ -104,10 +105,10 @@ func (a *adapterTerminala) domknij(proces *procesTerminala, blad error, powod st
 	a.rejestr.Przytnij()
 
 	if a.repozytorium != nil {
-		_ = a.repozytorium.ZakonczProces(context.Background(), proces.kod, stan, wskaznikDuzej(kodWyjscia))
+		_ = a.repozytorium.ZakonczProces(proces.kontekst, proces.kod, stan, wskaznikDuzej(kodWyjscia))
 	}
 	a.wyjscie.Domknij(proces, stan, kodWyjscia, powod)
-	a.rozglos(shared.ChangeKindUpdated, proces)
+	a.rozglos(proces.kontekst, shared.ChangeKindUpdated, proces)
 }
 
 // wynikZakonczenia przekłada wynik oczekiwania na stan i kod wyjścia. Kod
@@ -150,11 +151,11 @@ func (a *adapterTerminala) zapiszProces(ctx context.Context, proces *procesTermi
 
 // rozglos oddaje zmianę procesu obsługiwaczowi, który rozsyła
 // `terminal.process.changed`. Brak podpięcia nie zmienia pracy modułu.
-func (a *adapterTerminala) rozglos(zmiana shared.ChangeKind, proces *procesTerminala) {
+func (a *adapterTerminala) rozglos(ctx context.Context, zmiana shared.ChangeKind, proces *procesTerminala) {
 	if a.zmiana == nil {
 		return
 	}
-	a.zmiana(zmiana, procesKontraktu(proces))
+	a.zmiana(ctx, zmiana, procesKontraktu(proces))
 }
 
 // CzekajNaKoniec czeka na domknięcie procesu nie dłużej niż podany czas,

@@ -19,6 +19,7 @@ var bladTuryPrzerwanej = errors.New(
 // nadawcaStrumienia zamienia fragmenty kanału modelu na koperty stream.chunk i oddaje je transportowi, numerując fragmenty i domykając strumień dokładnie jednym znacznikiem końca dla całej tury.
 type nadawcaStrumienia struct {
 	nadajnik  Nadajnik
+	konto     string
 	idZadania string
 	idSesji   string
 
@@ -29,9 +30,12 @@ type nadawcaStrumienia struct {
 	domkniety   bool
 }
 
-// nowyNadawcaStrumienia zakłada nadawcę dla jednej tury, powiązanego z zadaniem, sesją i transportem nadajnika.
-func nowyNadawcaStrumienia(nadajnik Nadajnik, idZadania, idSesji string) *nadawcaStrumienia {
-	return &nadawcaStrumienia{nadajnik: nadajnik, idZadania: idZadania, idSesji: idSesji}
+// nowyNadawcaStrumienia zakłada nadawcę dla jednej tury, powiązanego z zadaniem,
+// sesją i transportem nadajnika. Konto jest adresem zapasowym fragmentu: tor
+// transportu kieruje go do gniazda zamawiającego, a bez wpisu w torze fragment
+// idzie do urządzeń konta zamawiającego, nie do wszystkich połączeń rdzenia.
+func nowyNadawcaStrumienia(nadajnik Nadajnik, konto, idZadania, idSesji string) *nadawcaStrumienia {
+	return &nadawcaStrumienia{nadajnik: nadajnik, konto: konto, idZadania: idZadania, idSesji: idSesji}
 }
 
 // Fragment przyjmuje fragment kanału. Wypełnia interfejs models.Ujscie.
@@ -94,5 +98,5 @@ func (n *nadawcaStrumienia) wyslijZawieszony(ostatni bool) {
 	if err != nil {
 		return
 	}
-	n.nadajnik.Rozglos("", k)
+	n.nadajnik.Rozglos(n.konto, k)
 }

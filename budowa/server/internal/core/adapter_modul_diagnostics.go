@@ -1,6 +1,4 @@
-// Odpowiedzialność pliku: moduł Diagnostics — wypełnienie portu Diagnostyka
-// komendami obszaru diagnostics.* oraz podłączenie źródeł faktów: dziennik
-// rdzenia i odmowy wykonania komend.
+// Odpowiedzialność pliku: moduł Diagnostics — wypełnienie portu Diagnostyka komendami obszaru diagnostics.* oraz podłączenie źródeł faktów: dziennik rdzenia i odmowy wykonania komend.
 package core
 
 import (
@@ -13,7 +11,6 @@ import (
 	"danacoconsole/shared"
 )
 
-// Zgodność adaptera z portem Diagnostyka sprawdzana jest przy kompilacji pakietu core rdzenia platformy.
 var _ Diagnostyka = (*adapterDiagnostyki)(nil)
 
 // Przedrostki identyfikatorów bytów modułu Diagnostics, po jednym na każdy rodzaj bytu trwałego tego dziennika.
@@ -24,9 +21,7 @@ const (
 	przedrostekRekomendacji   = "rekom-"
 )
 
-// pojemnoscKolejkiWpisow ogranicza zaległość zapisu dziennika. Wartość jest
-// kompromisem: bufor za mały gubiłby wpisy przy nagłym wysypie, za duży
-// trzymałby w pamięci dziennik, którego i tak nikt nie zdąży odczytać.
+// pojemnoscKolejkiWpisow ogranicza zaległość zapisu dziennika. Wartość jest kompromisem: bufor za mały gubiłby wpisy przy nagłym wysypie, za duży trzymałby w pamięci dziennik, którego i tak nikt nie zdąży odczytać.
 const pojemnoscKolejkiWpisow = 1024
 
 // adapterDiagnostyki wypełnia port Diagnostyka i trzyma stan pisarza dziennika rdzenia tej platformy Danaco.
@@ -48,12 +43,10 @@ type adapterDiagnostyki struct {
 	flagi       int
 
 	// zmiana rozgłasza diagnostics.analysis.changed do klientów; podpina ją obsługiwacz komend.
-	zmiana func(shared.ChangeKind, shared.DiagnosticAnalysis)
+	zmiana func(context.Context, shared.ChangeKind, shared.DiagnosticAnalysis)
 }
 
-// nowyAdapterDiagnostyki wiąże port z repozytorium modułu i uruchamia pisarza
-// dziennika. Bez repozytorium moduł nie ma czego przeszukiwać i komendy
-// odmawiają, zamiast oddawać pusty wykaz.
+// nowyAdapterDiagnostyki wiąże port z repozytorium modułu i uruchamia pisarza dziennika. Bez repozytorium moduł nie ma czego przeszukiwać i komendy odmawiają, zamiast oddawać pusty wykaz.
 func nowyAdapterDiagnostyki(ctx context.Context,
 	repozytorium dane.RepozytoriumDiagnostyki) *adapterDiagnostyki {
 
@@ -67,12 +60,11 @@ func nowyAdapterDiagnostyki(ctx context.Context,
 }
 
 // PodepnijRozgloszenie wypełnia port: adapter zapamiętuje drogę do rozgłoszenia zdarzenia zmiany analizy.
-func (a *adapterDiagnostyki) PodepnijRozgloszenie(rozglos func(shared.ChangeKind, shared.DiagnosticAnalysis)) {
+func (a *adapterDiagnostyki) PodepnijRozgloszenie(rozglos func(context.Context, shared.ChangeKind, shared.DiagnosticAnalysis)) {
 	a.zmiana = rozglos
 }
 
-// Zamknij domyka pisarza dziennika. Wpisy już zakolejkowane zostają zapisane,
-// bo ostatnie linie przed zatrzymaniem rdzenia niosą najwięcej dla diagnozy.
+// Zamknij domyka pisarza dziennika. Wpisy już zakolejkowane zostają zapisane, bo ostatnie linie przed zatrzymaniem rdzenia niosą najwięcej dla diagnozy.
 func (a *adapterDiagnostyki) Zamknij() {
 	if a == nil {
 		return
@@ -89,16 +81,13 @@ func bladDiagnostyki(err error) error {
 	return protocol.JakoError(protocol.BladZeZrodla(shared.ErrorCodeInternalError, err))
 }
 
-// bladBrakuTrwalosci odmawia wykonania komendy, gdy moduł nie ma repozytorium.
-// Pusty wykaz znaczyłby, że nic się nie wydarzyło, a tego adapter bez dziennika
-// nie ma jak stwierdzić.
+// bladBrakuTrwalosci odmawia wykonania komendy, gdy moduł nie ma repozytorium. Pusty wykaz znaczyłby, że nic się nie wydarzyło, a tego adapter bez dziennika nie ma jak stwierdzić.
 func bladBrakuTrwalosci(czynnosc string) error {
 	return protocol.JakoError(protocol.NowyBlad(shared.ErrorCodeInternalError,
 		"moduł Diagnostics: "+czynnosc+" wymaga dziennika, a serwer nie ma podłączonego repozytorium"))
 }
 
-// bladWskazaniaDiagnostyki nazywa brak danych w żądaniu — to błąd wywołującego,
-// nie usterka rdzenia, więc kod odmowy jest inny.
+// bladWskazaniaDiagnostyki nazywa brak danych w żądaniu — to błąd wywołującego, nie usterka rdzenia, więc kod odmowy jest inny.
 func bladWskazaniaDiagnostyki(powod string) error {
 	return protocol.JakoError(protocol.NowyBlad(shared.ErrorCodeValidationFailed,
 		"moduł Diagnostics: "+powod))

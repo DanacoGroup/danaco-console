@@ -32,7 +32,7 @@ func zarejestrujHistorie(r *Rejestr, h Historia, e *emiter) {
 			w, err := h.Usun(ctx, z)
 			// Zdarzenie idzie wyłącznie po czynności, która coś zmieniła: usunięcie zera pozycji zmianą nie jest.
 			if err == nil && w.Deleted > 0 {
-				e.historia(shared.ChangeKindDeleted, w.WindowId, nil)
+				e.historia(ctx, shared.ChangeKindDeleted, w.WindowId, nil)
 			}
 			return w, err
 		}))
@@ -44,7 +44,7 @@ func zarejestrujHistorie(r *Rejestr, h Historia, e *emiter) {
 				return w, err
 			}
 			for _, oknoKod := range h.OknaZasady(ctx, z) {
-				e.historia(shared.ChangeKindDeleted, oknoKod, nil)
+				e.historia(ctx, shared.ChangeKindDeleted, oknoKod, nil)
 			}
 			return w, nil
 		}))
@@ -53,8 +53,8 @@ func zarejestrujHistorie(r *Rejestr, h Historia, e *emiter) {
 // historia rozgłasza zmianę historii rozmowy okna. Sesji komunikatu rdzeń tu
 // nie wyznacza: zmiana dotyczy okna, a jedno rozgłoszenie potrafi
 // objąć okna wielu sesji naraz — zasada zakresu globalnego tnie je wszystkie.
-func (e *emiter) historia(zmiana shared.ChangeKind, oknoKod string, pozycja *shared.HistoryEntry) {
-	e.wyslij(shared.EventHistoryChanged, "",
+func (e *emiter) historia(ctx context.Context, zmiana shared.ChangeKind, oknoKod string, pozycja *shared.HistoryEntry) {
+	e.wyslijDoKonta(ctx, shared.EventHistoryChanged, "",
 		shared.HistoryChangedEvent{Change: zmiana, WindowId: oknoKod, Entry: pozycja})
 }
 

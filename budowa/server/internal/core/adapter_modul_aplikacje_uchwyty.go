@@ -20,11 +20,11 @@ type Aplikacje interface {
 	PobierzArchitekture(ctx context.Context, z shared.AppsArchitectureGetRequest) (shared.AppsArchitectureGetResponse, error)
 	WypiszPlikiWarsztatu(ctx context.Context, z shared.AppsWorkspaceListRequest) (shared.AppsWorkspaceListResponse, error)
 	// PodepnijPrzyrostWdrozenia oddaje adapterowi droge do zdarzenia zmiany wdrozenia.
-	PodepnijPrzyrostWdrozenia(rozglos func(shared.ChangeKind, shared.AppDeployment))
+	PodepnijPrzyrostWdrozenia(rozglos func(context.Context, shared.ChangeKind, shared.AppDeployment))
 	// PodepnijPrzyrostWarsztatu oddaje adapterowi droge do zdarzenia apps.workspace.changed.
-	PodepnijPrzyrostWarsztatu(rozglos func(shared.ChangeKind, string, shared.AppWorkspaceLayer, shared.DeveloperFile))
+	PodepnijPrzyrostWarsztatu(rozglos func(context.Context, shared.ChangeKind, string, shared.AppWorkspaceLayer, shared.DeveloperFile))
 	// PodepnijPrzyrostEtapu oddaje adapterowi druga droge do zdarzenia apps.build.changed.
-	PodepnijPrzyrostEtapu(rozglos func(shared.ChangeKind, shared.AppStage))
+	PodepnijPrzyrostEtapu(rozglos func(context.Context, shared.ChangeKind, shared.AppStage))
 
 	// --- Product Builder: produkt, etapy, kamienie milowe, oś czasu ---
 	PobierzProdukt(ctx context.Context, z shared.AppsProductGetRequest) (shared.AppsProductGetResponse, error)
@@ -143,8 +143,8 @@ func zarejestrujAplikacje(r *Rejestr, m Aplikacje, e *emiter) {
 // etapApp rozgłasza `apps.build.changed` przy zmianie etapu budowy. Pole
 // `Deployment` zostaje puste: zmiana dotyczy osi etapów Product Buildera,
 // a przebiegu wdrożenia w niej nie ma.
-func (e *emiter) etapApp(zmiana shared.ChangeKind, etap shared.AppStage) {
-	e.wyslij(shared.EventAppsBuildChanged, "", shared.AppsBuildChangedEvent{
+func (e *emiter) etapApp(ctx context.Context, zmiana shared.ChangeKind, etap shared.AppStage) {
+	e.wyslijDoKonta(ctx, shared.EventAppsBuildChanged, "", shared.AppsBuildChangedEvent{
 		Change: zmiana,
 		Stage:  etap,
 	})
@@ -152,10 +152,10 @@ func (e *emiter) etapApp(zmiana shared.ChangeKind, etap shared.AppStage) {
 
 // warsztatApp rozglasza zdarzenie apps.workspace.changed po zapisie pliku warsztatu;
 // sesja komunikatu zostaje pusta, bo warsztat nalezy do okna, a nie do sesji rdzenia.
-func (e *emiter) warsztatApp(zmiana shared.ChangeKind, okno string,
+func (e *emiter) warsztatApp(ctx context.Context, zmiana shared.ChangeKind, okno string,
 	warstwa shared.AppWorkspaceLayer, plik shared.DeveloperFile) {
 
-	e.wyslij(shared.EventAppsWorkspaceChanged, "", shared.AppsWorkspaceChangedEvent{
+	e.wyslijDoKonta(ctx, shared.EventAppsWorkspaceChanged, "", shared.AppsWorkspaceChangedEvent{
 		Change:   zmiana,
 		WindowId: okno,
 		Layer:    warstwa,
@@ -165,8 +165,8 @@ func (e *emiter) warsztatApp(zmiana shared.ChangeKind, okno string,
 
 // wdrozenieApp rozglasza zdarzenie apps.build.changed przy zmianie stanu przebiegu
 // wdrozenia; pole Stage niesie okno zmiany, a pole Deployment sam przebieg.
-func (e *emiter) wdrozenieApp(zmiana shared.ChangeKind, wdrozenie shared.AppDeployment) {
-	e.wyslij(shared.EventAppsBuildChanged, "", shared.AppsBuildChangedEvent{
+func (e *emiter) wdrozenieApp(ctx context.Context, zmiana shared.ChangeKind, wdrozenie shared.AppDeployment) {
+	e.wyslijDoKonta(ctx, shared.EventAppsBuildChanged, "", shared.AppsBuildChangedEvent{
 		Change:     zmiana,
 		Stage:      shared.AppStage{WindowId: wdrozenie.WindowId},
 		Deployment: &wdrozenie,

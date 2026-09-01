@@ -1,5 +1,4 @@
-// Plik wpina dziesięć komend obszaru mail.* i rozgłasza mail.changed po tych, które skrzynkę
-// zmieniają: zapisany szkic, wysłany list, zmianę oznaczenia.
+// Plik wpina dziesięć komend obszaru mail.* i rozgłasza mail.changed po tych, które skrzynkę zmieniają: zapisany szkic, wysłany list, zmianę oznaczenia.
 package core
 
 import (
@@ -8,8 +7,7 @@ import (
 	"danacoconsole/shared"
 )
 
-// Poczta jest portem rodziny mail.*, stojącym osobno od portu Asystenta: skrzynka jest zasobem
-// urządzenia, po który model sięga w dowolnym oknie, tak samo jak po narzędzia obrazu czy dokumentów.
+// Poczta jest portem rodziny mail.*, stojącym osobno od portu Asystenta: skrzynka jest zasobem urządzenia, po który model sięga w dowolnym oknie, tak samo jak po narzędzia obrazu czy dokumentów.
 type Poczta interface {
 	Skrzynki(ctx context.Context, z shared.MailAccountListRequest) (shared.MailAccountListResponse, error)
 	Foldery(ctx context.Context, z shared.MailFolderListRequest) (shared.MailFolderListResponse, error)
@@ -72,10 +70,7 @@ func zarejestrujPoczte(r *Rejestr, m Poczta, e *emiter) {
 		}))
 }
 
-// wskazanaSkrzynka oddaje skrzynkę z żądania albo pustkę. Pustka znaczy
-// „domyślna" — tak samo, jak rozumie ją adapter. Podstawianie tu nazwy
-// skrzynki domyślnej wymagałoby zapytania bazy z wnętrza rejestru, który bazy
-// nie zna i znać nie ma.
+// wskazanaSkrzynka oddaje skrzynkę z żądania albo pustkę. Pustka znaczy „domyślna" — tak samo, jak rozumie ją adapter. Podstawianie tu nazwy skrzynki domyślnej wymagałoby zapytania bazy z wnętrza rejestru, który bazy nie zna i znać nie ma.
 func wskazanaSkrzynka(id *string) string {
 	if id == nil {
 		return ""
@@ -83,13 +78,11 @@ func wskazanaSkrzynka(id *string) string {
 	return *id
 }
 
-// poczta rozgłasza `mail.changed`. Skrzynka jest bytem platformy, nie karty
-// sesji — jedna poczta obsługuje wszystkie sesje konta — więc zdarzenie idzie
-// bez wskazania sesji.
+// poczta rozgłasza `mail.changed`. Skrzynka jest bytem platformy, nie karty sesji — jedna poczta obsługuje wszystkie sesje konta — więc zdarzenie idzie bez wskazania sesji.
 func (e *emiter) poczta(ctx context.Context, zmiana shared.ChangeKind,
 	skrzynka string, wiadomosc *shared.MailMessage) {
 
 	zdarzenie := shared.MailChangedEvent{Change: zmiana, AccountId: skrzynka, Message: wiadomosc}
 	zdarzenie.Actor, zdarzenie.ActorClientId = sprawca(ctx)
-	e.wyslij(shared.EventMailChanged, "", zdarzenie)
+	e.wyslijDoKonta(ctx, shared.EventMailChanged, "", zdarzenie)
 }

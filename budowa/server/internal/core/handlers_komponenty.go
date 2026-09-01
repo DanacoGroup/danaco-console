@@ -30,7 +30,7 @@ func zarejestrujKomponenty(r *Rejestr, k Komponenty, e *emiter) {
 		obsluz(func(ctx context.Context, z shared.ComponentCreateRequest) (shared.ComponentCreateResponse, error) {
 			odpowiedz, err := k.Utworz(ctx, z)
 			if err == nil {
-				e.komponent(shared.ChangeKindCreated, odpowiedz.Component)
+				e.komponent(ctx, shared.ChangeKindCreated, odpowiedz.Component)
 			}
 			return odpowiedz, err
 		}))
@@ -39,7 +39,7 @@ func zarejestrujKomponenty(r *Rejestr, k Komponenty, e *emiter) {
 		obsluz(func(ctx context.Context, z shared.ComponentUpdateRequest) (shared.ComponentUpdateResponse, error) {
 			odpowiedz, err := k.Zmien(ctx, z)
 			if err == nil {
-				e.komponent(shared.ChangeKindUpdated, odpowiedz.Component)
+				e.komponent(ctx, shared.ChangeKindUpdated, odpowiedz.Component)
 			}
 			return odpowiedz, err
 		}))
@@ -48,7 +48,7 @@ func zarejestrujKomponenty(r *Rejestr, k Komponenty, e *emiter) {
 		obsluz(func(ctx context.Context, z shared.ComponentDeleteRequest) (shared.ComponentDeleteResponse, error) {
 			odpowiedz, err := k.Usun(ctx, z)
 			if err == nil && odpowiedz.Deleted {
-				e.komponent(shared.ChangeKindDeleted, shared.Component{Id: z.ComponentId})
+				e.komponent(ctx, shared.ChangeKindDeleted, shared.Component{Id: z.ComponentId})
 			}
 			return odpowiedz, err
 		}))
@@ -59,7 +59,7 @@ func zarejestrujKomponenty(r *Rejestr, k Komponenty, e *emiter) {
 		obsluz(func(ctx context.Context, z shared.ComponentAssignRequest) (shared.ComponentAssignResponse, error) {
 			odpowiedz, err := k.Przypisz(ctx, z)
 			if err == nil && odpowiedz.Assigned {
-				e.komponent(shared.ChangeKindUpdated, odpowiedz.Component)
+				e.komponent(ctx, shared.ChangeKindUpdated, odpowiedz.Component)
 			}
 			return odpowiedz, err
 		}))
@@ -68,7 +68,7 @@ func zarejestrujKomponenty(r *Rejestr, k Komponenty, e *emiter) {
 // komponent rozgłasza zmianę komponentu własnego. Komponent nie jest bytem
 // jednej karty sesji — jest kaflem Strony głównej, więc zdarzenie idzie bez
 // wskazania sesji, tak samo jak `workspace.project.changed`.
-func (e *emiter) komponent(zmiana shared.ChangeKind, k shared.Component) {
-	e.wyslij(shared.EventComponentChanged, "",
+func (e *emiter) komponent(ctx context.Context, zmiana shared.ChangeKind, k shared.Component) {
+	e.wyslijDoKonta(ctx, shared.EventComponentChanged, "",
 		shared.ComponentChangedEvent{Change: zmiana, Component: k})
 }

@@ -23,6 +23,9 @@ const (
 	zmiennaKluczTLS            = "DANACO_TLS_KLUCZ"
 	zmiennaPochodzenia         = "DANACO_POCHODZENIA"
 	zmiennaWymogLogowania      = "DANACO_WYMOG_LOGOWANIA"
+	// Plik klucza sejfu poświadczeń; czyta go pakiet dane. Puste = klucz
+	// własny rdzenia w katalogu danych.
+	zmiennaKluczSejfu = "DANACO_KLUCZ_SEJFU"
 
 	// Konto nadawcze platformy, nie skrzynka operatora. Idą nim dwa listy
 	// systemowe: potwierdzenie adresu przy rejestracji i droga odzyskania
@@ -50,7 +53,7 @@ func ZmienneSrodowiska() []string {
 		zmiennaKatalogKlienta, zmiennaKatalogProfili,
 		zmiennaAdres, zmiennaWszystkieInterfejsy,
 		zmiennaCertyfikatTLS, zmiennaKluczTLS, zmiennaPochodzenia,
-		zmiennaWymogLogowania,
+		zmiennaWymogLogowania, zmiennaKluczSejfu,
 		zmiennaAdresKonsoli,
 		zmiennaNadawcaHost, zmiennaNadawcaPort, zmiennaNadawcaUzytkownik,
 		zmiennaNadawcaSekret, zmiennaNadawcaAdres, zmiennaNadawcaNazwa,

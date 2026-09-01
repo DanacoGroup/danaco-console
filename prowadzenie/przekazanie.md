@@ -121,32 +121,16 @@ Materiał leży w `~/robocze/przekazanie-2026-09-01/`:
 Bilans czternastu terenów: **145 napraw wykonanych, 37 pozycji pominiętych** (czekają
 na rozstrzygnięcia Właściciela albo na pracę projektową) i **86 zgłoszeń „poza terenem"**.
 
-### 5.0 Najpierw to: rejestracja jest zepsuta przez zderzenie terenów
+### 5.0 Rejestracja: zderzenie terenów rozstrzygnięte 1 września
 
-**Zmierzone poleceniem `go test ./server/internal/core/ -run TestKontoDrugieNieSiegaKontaPierwszego`:**
-
-```
-komenda auth.register odmówiła: kod=internal_error
-treść=dane: sejf: brak klucza — zmienna DANACO_KLUCZ_SEJFU nie wskazuje pliku klucza
-```
-
-Teren granicy konta napisał sprawdzian pokazujący, że konto B nie sięga po konto A (K1).
-Sprawdzian nie przechodzi — ale nie z powodu K1. Teren trwałości zaszyfrował w tym samym czasie
-sejf poświadczeń (`dane/sejf_poswiadczen.go:184`), a zakładanie konta zapisuje odwołanie do sekretu
-właśnie w sejfie (`core/adapter_modul_auth_konto.go:518`). Bez zmiennej `DANACO_KLUCZ_SEJFU`
-**nie da się założyć żadnego konta** — świeża instalacja jest martwa od pierwszego kroku.
-
-To jest dokładnie to zderzenie, którego scalenie miało nie przepuścić. Dwie drogi wyjścia
-i **żadnej nie wolno wybrać bez Właściciela** — audyt stawia tę rzecz jako rozstrzygnięcie
-(rozdział 5, pozycja 10: czym szyfrować sejf poświadczeń):
-
-1. sejf odmawia tylko tam, gdzie naprawdę idzie sekret zewnętrzny (hasła IMAP/SMTP, klucze API),
-   a zakładanie konta przestaje przez niego przechodzić — hasła kont i tak są PBKDF2 w bazie;
-2. klucz sejfu staje się częścią wdrożenia: plik o prawach 0400, zmienna w
-   `/etc/danaco-console/srodowisko`, a rdzeń bez niego odmawia startu wprost, zamiast dopuszczać
-   do siebie i odmawiać przy pierwszym koncie.
-
-**Wdrożenie produkcyjne jest tym nietknięte** — na danaco-system stoi rdzeń wgrany przed naprawami.
+Teren trwałości zaszyfrował sejf poświadczeń kluczem ze zmiennej
+`DANACO_KLUCZ_SEJFU`, a zakładanie konta zapisuje skrót hasła w sejfie — bez
+zmiennej świeża instalacja nie zakładała żadnego konta. Rozstrzygnięcie 26
+w `decyzje.md`: klucz ze zmiennej, a bez niej klucz własny rdzenia zakładany
+w katalogu danych przy pierwszym użyciu. Sprawdzian
+`TestKontoDrugieNieSiegaKontaPierwszego` przechodzi. Na serwerze wdrożenia
+zmienna ma wskazać plik poza katalogiem danych — to wchodzi z wdrożeniem
+(rozdział 5.1, jednostka systemd i `/etc/danaco-console/srodowisko`).
 
 ### 5.1 Scalenie
 

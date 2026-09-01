@@ -26,10 +26,16 @@ const nazwaPlikuSejfu = "poswiadczenia.sejf"
 // wskazuje wpis sejfu, a nie zmienną środowiskową ani ścieżkę profilu.
 const przedrostekOdwolania = "sejf:"
 
-// zmiennaKlucza wskazuje plik klucza pieczętującego sejf. Klucz leży poza bazą
-// i poza katalogiem danych z zamysłu: kopia bazy ani kopia katalogu danych nie
-// mogą wystarczyć do odczytania haseł IMAP/SMTP i kluczy API.
+// zmiennaKlucza wskazuje plik klucza pieczętującego sejf. Na serwerze wdrożenia
+// klucz leży poza katalogiem danych: kopia bazy ani kopia katalogu danych nie
+// wystarczą do odczytania haseł IMAP/SMTP i kluczy API.
 const zmiennaKlucza = "DANACO_KLUCZ_SEJFU"
+
+// nazwaPlikuKlucza to klucz własny rdzenia, zakładany w katalogu danych przy
+// pierwszym użyciu sejfu, gdy zmienna nie wskazuje klucza. Instalacja na
+// urządzeniu Operatora nie ma skąd wziąć zmiennej, a bez klucza nie da się
+// założyć pierwszego konta (rozstrzygnięcie 26 w prowadzenie/decyzje.md).
+const nazwaPlikuKlucza = "sejf.klucz"
 
 // prawaKlucza to jedyne prawa dopuszczane dla pliku klucza — odczyt wyłącznie
 // dla właściciela procesu rdzenia, bez prawa zapisu. Na Windows bity praw nie
@@ -134,7 +140,7 @@ func (s *SejfPlikowy) wczytaj() (map[string]string, error) {
 		return wpisy, nil
 	}
 	if bytes.HasPrefix(surowe, []byte(znacznikPostaci)) {
-		klucz, err := wczytajKlucz()
+		klucz, err := s.wczytajKlucz()
 		if err != nil {
 			return nil, err
 		}
@@ -153,12 +159,12 @@ func (s *SejfPlikowy) wczytaj() (map[string]string, error) {
 // tylko dla właściciela. Zapis idzie przez plik tymczasowy i przemianowanie, żeby
 // awaria w połowie nie zostawiła pliku obciętego. Wołane pod zamkiem.
 func (s *SejfPlikowy) zapisz(wpisy map[string]string) error {
-	klucz, err := wczytajKlucz()
-	if err != nil {
-		return err
-	}
 	if err := os.MkdirAll(filepath.Dir(s.sciezka), 0o700); err != nil {
 		return fmt.Errorf("dane: sejf: katalog %s: %w", filepath.Dir(s.sciezka), err)
+	}
+	klucz, err := s.wczytajKlucz()
+	if err != nil {
+		return err
 	}
 	jawne, err := json.Marshal(wpisy)
 	if err != nil {
@@ -178,13 +184,17 @@ func (s *SejfPlikowy) zapisz(wpisy map[string]string) error {
 	return nil
 }
 
-// wczytajKlucz podaje klucz pieczęci wskazany zmienną środowiska. Brak wskazania,
-// prawa szersze niż odczyt właściciela i zła długość kończą się odmową nazwaną —
+// wczytajKlucz podaje klucz pieczęci: ze zmiennej środowiska, a bez niej z pliku
+// klucza własnego w katalogu danych, założonego przy pierwszym użyciu. Prawa
+// szersze niż odczyt właściciela i zła długość kończą się odmową nazwaną —
 // sekret nie ma innej drogi na dysk niż przez ten klucz.
-func wczytajKlucz() ([]byte, error) {
+func (s *SejfPlikowy) wczytajKlucz() ([]byte, error) {
 	sciezka := strings.TrimSpace(os.Getenv(zmiennaKlucza))
 	if sciezka == "" {
-		return nil, fmt.Errorf("dane: sejf: brak klucza — zmienna %s nie wskazuje pliku klucza", zmiennaKlucza)
+		sciezka = s.sciezkaKluczaWlasnego()
+		if err := zalozKluczWlasny(sciezka); err != nil {
+			return nil, err
+		}
 	}
 	stan, err := os.Stat(sciezka)
 	if err != nil {
@@ -202,6 +212,43 @@ func wczytajKlucz() ([]byte, error) {
 		return nil, fmt.Errorf("dane: sejf: odczyt klucza %s: %w", sciezka, err)
 	}
 	return rozbierzKlucz(sciezka, tresc)
+}
+
+// sciezkaKluczaWlasnego wskazuje klucz zakładany przez rdzeń obok pliku sejfu.
+func (s *SejfPlikowy) sciezkaKluczaWlasnego() string {
+	return filepath.Join(filepath.Dir(s.sciezka), nazwaPlikuKlucza)
+}
+
+// zalozKluczWlasny losuje klucz i zapisuje go szesnastkowo z prawami tylko do
+// odczytu dla właściciela. Plik istniejący zostaje nietknięty: nadpisanie
+// odcięłoby dostęp do wszystkiego, co sejf już zapieczętował.
+func zalozKluczWlasny(sciezka string) error {
+	if _, err := os.Stat(sciezka); err == nil {
+		return nil
+	} else if !os.IsNotExist(err) {
+		return fmt.Errorf("dane: sejf: klucz %s: %w", sciezka, err)
+	}
+	surowy := make([]byte, dlugoscKlucza)
+	if _, err := io.ReadFull(rand.Reader, surowy); err != nil {
+		return fmt.Errorf("dane: sejf: nie można wylosować klucza: %w", err)
+	}
+	tymczasowy := sciezka + ".tmp"
+	if err := os.WriteFile(tymczasowy, []byte(hex.EncodeToString(surowy)+"\n"), prawaKlucza); err != nil {
+		return fmt.Errorf("dane: sejf: zapis klucza %s: %w", tymczasowy, err)
+	}
+	if err := os.Rename(tymczasowy, sciezka); err != nil {
+		return fmt.Errorf("dane: sejf: przemianowanie klucza %s: %w", sciezka, err)
+	}
+	return nil
+}
+
+// OpisKlucza mówi do dziennika startu, skąd sejf bierze klucz. Nie czyta ani
+// nie zakłada klucza — to robi pierwsze użycie sejfu.
+func (s *SejfPlikowy) OpisKlucza() string {
+	if sciezka := strings.TrimSpace(os.Getenv(zmiennaKlucza)); sciezka != "" {
+		return "klucz ze zmiennej " + zmiennaKlucza + ": " + sciezka
+	}
+	return "klucz własny rdzenia: " + s.sciezkaKluczaWlasnego()
 }
 
 // rozbierzKlucz przyjmuje klucz zapisany szesnastkowo albo trzydziestoma dwoma

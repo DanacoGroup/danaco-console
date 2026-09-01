@@ -110,6 +110,7 @@ da się wskazać w kodzie.
    - [12.3 Zmienne świadomie nieobecne](#123-zmienne-świadomie-nieobecne)
    - [12.4 Zmienne przekazywane procesowi kanału](#124-zmienne-przekazywane-procesowi-kanału)
    - [12.5 Plik `.env` i zmienne budowania interfejsu](#125-plik-env-i-zmienne-budowania-interfejsu)
+   - [12.6 Zmienne wdrożenia serwerowego i składania wydania](#126-zmienne-wdrożenia-serwerowego-i-składania-wydania)
 13. [Konfiguracja katalogów roboczych i nadań](#13-konfiguracja-katalogów-roboczych-i-nadań)
    - [13.1 Katalog roboczy sesji](#131-katalog-roboczy-sesji)
    - [13.2 Katalogi dodatkowe okna](#132-katalogi-dodatkowe-okna)
@@ -1653,6 +1654,60 @@ Zmienna `VITE_KANAL_MODELU` zasługuje na osobną uwagę: jest jedyną drogą zm
 kanału po stronie klienta bez ingerencji w bazę. Wartość domyślna `cli` jest **rodzajem kanału**, nie
 identyfikatorem wiersza — konsekwencje opisują rozdziały 10.3 i 20.
 
+### 12.6 Zmienne wdrożenia serwerowego i składania wydania
+
+Rozdziały 12.1–12.2 opisują pięć zmiennych stacji Operatora. Wdrożenie serwerowe — pakiet `.deb`
+z `packaging/drzewo/`, jednostka `danaco-console.service`, rozstrzygnięcie 29 rejestru
+`prowadzenie/decyzje.md` — dokłada zmienne czytane przez rdzeń poza tą piątką oraz zmienne czytane
+wyłącznie przy składaniu instalki. Pełny wykaz nazw prowadzi nadal `ZmienneSrodowiska` i wzorzec
+`budowa/.env.example`; poniżej te, bez których wdrożenie nie stanie albo stanie niezabezpieczone.
+
+**`DANACO_KLUCZ_SEJFU`** — ścieżka pliku klucza pieczętującego sejf poświadczeń (hasła IMAP/SMTP,
+klucze API; `server/internal/dane/sejf_poswiadczen.go`). Plik niesie 32 bajty albo 64 znaki
+szesnastkowe; poza Windows rdzeń przyjmuje wyłącznie prawa `0400` i przy innych odmawia otwarcia sejfu
+komunikatem `dane: sejf: klucz … ma prawa …, wymagane 0400`. Jednostka systemd wskazuje
+`/etc/danaco-console/sejf.klucz`; skrypt `postinst` pakietu zakłada ten plik, gdy go nie ma (64 znaki
+szesnastkowe z `/dev/urandom`, właściciel `danaco-console`, prawa `0400`), a plik istniejący zostawia —
+nowy klucz odciąłby sejf zapieczętowany poprzednim. Wartość pusta = klucz własny `sejf.klucz` zakładany
+w katalogu danych przy pierwszym użyciu sejfu (rozstrzygnięcia 26 i 30). Na serwerze plik ma leżeć poza
+katalogiem danych: kopia bazy ani kopia katalogu danych nie otwiera wtedy sejfu. Utrata pliku jest
+utratą dostępu do zapieczętowanych poświadczeń, więc kopia zapasowa (rozdział 9.4) obejmuje go osobno.
+
+**`DANACO_SEKRET_NAWIAZANIA`** — sekret, którym klient przedstawia się przed uaktualnieniem połączenia
+do WebSocket: parametrem `sekret` w adresie gniazda (klient składa go w `adresNawiazania`,
+`klient/src/polaczenie/adres-rdzenia.ts`, wartość bierze z powłoki) albo nagłówkiem `X-Danaco-Sekret`.
+Rdzeń czyta zmienną wprost ze środowiska procesu (warstwa transportu, nie nastawy bazy) i porównuje
+czasem stałym; niezgodność odrzuca nawiązanie przed otwarciem gniazda. Puste = bez sprawdzenia.
+Miejsce wpisu na serwerze: `/etc/danaco-console/srodowisko` (plik `EnvironmentFile` jednostki, prawa
+`0640`, `root:danaco-console`). Tę samą wartość musi nieść powłoka na urządzeniu Operatora
+(`ZMIENNA_SEKRET_NAWIAZANIA` w `desktop/src-tauri/src/ustawienia.rs`) — w instalkę sekretu się nie
+wpisuje, bo napis wkompilowany w plik wykonywalny czyta `strings`. Bez odpowiednika w wierszu poleceń.
+
+**Zmienne składania wydania** — czytane wyłącznie przy kompilacji powłoki (`option_env!`
+w `desktop/src-tauri/src/ustawienia.rs`) i wpisywane w binarium instalki jako napis; po budowie nie ma
+ich jak dopisać, a kreator instalacji o adres rdzenia nie pyta (rozstrzygnięcie 8). Skrypty
+`scripts/instalka-hybryda-win-x64.sh` i `scripts/instalka-hybryda-win-arm.sh` odmawiają budowy bez
+którejkolwiek z nich i po budowie sprawdzają, że host wszedł do binarium. Wartości wdrożenia
+z rozstrzygnięcia 29:
+
+| Zmienna | Wartość wdrożenia | Znaczenie |
+| --- | --- | --- |
+| `DANACO_HOST_WDROZENIA` | `console.danaco-group.pl` | nazwa rdzenia, do którego łączy się powłoka |
+| `DANACO_PORT_WDROZENIA` | `443` | port na świat (Caddy, TLS z ACME); rdzeń za nim nasłuchuje na `127.0.0.1:17870` |
+| `DANACO_SCHEMAT_WDROZENIA` | `https` | schemat łącza; klient wywodzi z niego `wss:`. Przyjmowane wyłącznie `http` albo `https`; bez `https` hasło Operatora szłoby otwartym tekstem |
+
+```bash
+DANACO_HOST_WDROZENIA=console.danaco-group.pl \
+DANACO_PORT_WDROZENIA=443 \
+DANACO_SCHEMAT_WDROZENIA=https \
+  scripts/instalka-hybryda-win-x64.sh
+```
+
+TLS kończy się na Caddy, więc rdzeń wdrożenia nie potrzebuje `DANACO_TLS_CERTYFIKAT` ani
+`DANACO_TLS_KLUCZ`. Adres podglądu budowy `51.75.62.180:80` nigdy nie jest celem wydania. Na
+urządzeniu Operatora wskazanie z instalki nadpisują zmienne powłoki `DANACO_HOST_RDZENIA`
+i `DANACO_SCHEMAT_RDZENIA`.
+
 ---
 
 ## 13. Konfiguracja katalogów roboczych i nadań
@@ -3041,6 +3096,8 @@ w czasie pracy, czy wyłącznie w czasie budowy.
 | `budowa/desktop/src-tauri/Cargo.toml` | budowa powłoki | wersja Rust, cechy Tauri, profil wydania |
 | `budowa/shared/contract.json` | generowanie kontraktu | jedno źródło nazw komend, zdarzeń i narzędzi |
 | `%LOCALAPPDATA%\DanacoConsole\danaco-console.db` | **każdy start i praca rdzenia** | **jedyne miejsce konfiguracji dziedzinowej**: kanały, konta, dostępy, ustawienia, tożsamość |
+| `/etc/danaco-console/sejf.klucz` (serwer) | pierwsze użycie sejfu po starcie | klucz sejfu poświadczeń wskazany `DANACO_KLUCZ_SEJFU`; `postinst` zakłada go z prawami `0400`, gdy go nie ma (rozdz. 12.6) |
+| `/etc/danaco-console/srodowisko` (serwer) | start jednostki systemd | nastawy Operatora czytane `EnvironmentFile`: TLS, `DANACO_SEKRET_NAWIAZANIA`, konto nadawcze (rozdz. 12.6) |
 | katalogi `CLAUDE_CONFIG_DIR` kont | każde wywołanie kanału `cli` | poświadczenia programu `claude`; poza produktem i poza bazą |
 
 Wniosek: **konfiguracja pracującego produktu mieszka w bazie, nie w plikach.** Pliki wpływają na

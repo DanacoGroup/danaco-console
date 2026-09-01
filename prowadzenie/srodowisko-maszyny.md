@@ -144,6 +144,8 @@ Postawione na polecenie Właściciela:
 | rustup wraz z rustc i cargo | rustup 1.29.0, toolchain stable 1.97.1, profil minimalny | ~1,4 GB z celami | budowa powłoki Tauri |
 | cel `x86_64-pc-windows-gnu` | — | w powyższym | wariant x64 instalatora |
 | cel `aarch64-pc-windows-msvc` | — | w powyższym | wariant ARM64 instalatora |
+| cel `x86_64-pc-windows-msvc` | — | w powyższym | kreator instalacji jako plik samodzielny: `WebView2LoaderStatic.lib` i statyczny CRT, bez `WebView2Loader.dll` obok (`instalka-kreatora-win-x64.sh`) |
+| dowiązania `~/.local/bin/llvm-{lib,rc,ar,dlltool,objcopy}` → `/usr/bin/*-21` | llvm 21 | 0 | `cc-rs` w budowie celem MSVC woła `llvm-lib` bez przyrostka wersji; bez dowiązań `cargo xwin build` pada |
 | `cargo-tauri` | 2.11.4 | ~40 MB | złożenie pakietu NSIS |
 | `cargo-xwin` | 0.23.1 | ~25 MB | biblioteki Windows SDK dla celu MSVC na Linuksie |
 

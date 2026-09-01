@@ -1,7 +1,7 @@
 {
   "opis": "Chronologia wydań Danaco Console — JEDYNE źródło prawdy dla strony „Pobierz” i dla banera aktualizacji w aplikacji. Pusty wykaz znaczy: nie ma jeszcze żadnego wydania. Każda pozycja MUSI nieść pole `suma` (SHA-256 pliku) — powłoka odmawia założenia pliku, którego suma się nie zgadza, a wydania bez sumy nie zakłada w ogóle.",
   "produkt": "Danaco Console",
-  "katalog_plikow": "../wydania/2.0.0-2026-08-30",
+  "katalog_plikow": "../wydania/2.0.0-2026-09-01",
   "numer_wersji": "Wydanie 2.0.0. Wcześniejsze pozycje niosły 1.0.0 i różniła je wyłącznie data; numer podniesiono rozstrzygnięciem Właściciela — produkt jest wersją 2.0. Katalog wydania nazywa się `2.0.0-2026-08-30`, więc data zostaje w ścieżce i dwa różne dni nie nadpisują się wzajemnie.",
   "kanal": {
     "wdrozony": true,
@@ -19,37 +19,37 @@
   "wydania": [
     {
       "wersja": "2.0.0",
-      "data": "2026-08-30",
+      "data": "2026-09-01",
       "system": "Windows",
       "postac": "instalator",
       "architektura": "x64",
       "nazwa": "Windows x64 — instalator",
       "coBierzesz": "Plik, który pobiera Operator. Otwiera kreator instalacji w sześciu krokach i sam ściąga z tego kanału powłokę programu. Nic obok siebie nie potrzebuje — biblioteka WebView2 jest w nim wkompilowana.",
-      "plik": "https://pobierz.danaco-group.pl/pliki/2.0.0-2026-08-30/Danaco%20Console%20%E2%80%94%20Instalator_2.0.0_x64-setup.exe",
+      "plik": "https://pobierz.danaco-group.pl/pliki/2.0.0-2026-09-01/Danaco%20Console%20%E2%80%94%20Instalator_2.0.0_x64-setup.exe",
       "nazwaPliku": "Danaco Console — Instalator_2.0.0_x64-setup.exe",
       "rozmiar": "6,3 MB",
-      "rozmiarBajty": 6569984,
-      "suma": "7fcea53cf443e22d664bc85732793cdb98a45ca4f2c87a718c251f4b48dba244",
+      "rozmiarBajty": 6597632,
+      "suma": "bf574825fec6dce707823fae45c5f7a6e51d54c0f404a68a93e215937e8c5d59",
       "chronione_haslem": false,
       "podpisany": false,
-      "zmiany": "Instalator stoi samodzielnym plikiem: pojedyncze binarium bez WebView2Loader.dll obok, okno bez ramy platformy, z własną belką kreatora."
+      "zmiany": "Kreator zakłada powłokę po pobraniu i sprawdzeniu sumy (uruchamia instalkę i czeka na jej kod wyjścia), okno wstaje przed sprawdzeniem kanału, katalog danych z kroku 4 trafia do nastaw."
     },
     {
       "wersja": "2.0.0",
-      "data": "2026-08-30",
+      "data": "2026-09-01",
       "system": "Windows",
       "postac": "hybryda",
       "architektura": "x64",
       "nazwa": "Windows x64 — powłoka programu",
       "coBierzesz": "Składnik, który ściąga instalator — okno aplikacji na komputer z Windows (Intel/AMD). Rdzeń zostaje na serwerze wdrożenia; ten plik go nie niesie.",
-      "plik": "https://pobierz.danaco-group.pl/pliki/2.0.0-2026-08-30/Danaco%20Console_2.0.0_hybryda_x64-setup.exe",
+      "plik": "https://pobierz.danaco-group.pl/pliki/2.0.0-2026-09-01/Danaco%20Console_2.0.0_hybryda_x64-setup.exe",
       "nazwaPliku": "Danaco Console_2.0.0_hybryda_x64-setup.exe",
-      "rozmiar": "2,6 MB",
-      "rozmiarBajty": 2583918,
-      "suma": "d346897f5a24643d17061adfa4a32d61867361c2fb98455721e4d8885ab75e0f",
+      "rozmiar": "2,5 MB",
+      "rozmiarBajty": 2598033,
+      "suma": "6e46defbeed4166eba15aa9c5fafda6d85cb0ad605d9a6519f0d1db840831d91",
       "chronione_haslem": false,
       "podpisany": false,
-      "zmiany": "Powłoka podaje oknu adres rdzenia skryptem wstępnym, stoi bez ramy systemu i wstaje z animacją startową."
+      "zmiany": "Powłoka celuje w rdzeń wdrożenia console.danaco-group.pl przez https/wss (rozstrzygnięcie 29), ponawia powitanie po zerwaniu i wykrywa uśpienie maszyny."
     }
   ],
   "w_przygotowaniu": [

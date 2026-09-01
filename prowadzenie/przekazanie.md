@@ -98,14 +98,29 @@ jako `danaco-console.bak-2026-08-30`.
 189 ustaleń, 18 krytycznych (5 obalonych przez weryfikację).
 
 **Naprawy.** Czternaście terenów o rozłącznych wykazach plików, praca równoległa.
-Zapis: rewizja `955c03e0` — 94 pliki, +6490/−1423, drabina zdana. **Scalenia ani kontroli
-odbioru ta sesja nie wykonała** — rozdział 5 mówi, jak je przeprowadzić.
+Zapis: rewizja `955c03e0` — 94 pliki, +6490/−1423, drabina zdana.
+
+**Scalenie i kontrola odbioru (sesja druga, 1 września).** Zgłoszenia „poza terenem"
+domknięte w zakresach A–L, każdy własną rewizją (`db8d8eff` … `92e82cad`); kontrola
+odbioru w pięciu zakresach; klucz sejfu rozstrzygnięty (26, 30); jedna maszyna i nazwa
+wdrożenia (29); certyfikat podpisu (27); ARM64 poza etapem (28). Pełny bieg sprawdzianów
+rdzenia: 662 przechodzą w 12 minut (limit domyślny 10 minut jest za krótki — bieg z `-timeout 20m`).
+
+**Domknięcie (sesja trzecia, 1–2 września).** Zakres N — kanał klienta po zerwaniu
+(`082ab081`): wykrywanie uśpienia skokiem zegara (próg 30 s = ping rdzenia 20 s + 10 s
+czekania), nasłuch `online`/`visibilitychange`, sufit kolejki 256 ramek z powodem
+porzucenia `przepelnienie`, odpowiedź po terminie korelacji odrzucana do dziennika.
+Zakres M — 56 emisji zdarzeń rdzenia bez konta, trzy strumienie rozgłaszane do wszystkich
+gniazd, wyścig przy zatrzymaniu tury. Skrypt `instalka-kreatora-win-x64.sh` przepisany
+na cel `msvc` ze statycznym CRT i zaporą importów — poprzednia postać składała kreator
+celem `gnu` i pakowała go w instalkę NSIS, czyli w to, co Właściciel odrzucił.
 
 ## 5. Praca w biegu — czym zaczyna następna sesja
 
 Naprawy z audytu wykonało czternaście terenów pracujących równolegle na rozłącznych wykazach
-plików. Ich wynik jest zapisany rewizją `955c03e0`. **Scalenia i kontroli odbioru ta sesja
-nie wykonała** — to pierwsza rzecz do zrobienia, i dopiero po niej wolno cokolwiek scalać do `main`.
+plików (`955c03e0`); scalenie i kontrolę odbioru wykonała sesja druga (rozdział 4).
+Rozdziały 5.1–5.3 zostają jako opis metody — audyt powtórny (5.3) wciąż nie był uruchomiony
+i jest pierwszą rzeczą po wykazaniu wydania w Windows.
 
 Materiał leży w `~/robocze/przekazanie-2026-09-01/`:
 

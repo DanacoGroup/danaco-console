@@ -1576,3 +1576,58 @@ i zmiana kontraktu repozytorium bez zysku dla bezpieczeństwa.
 sejfu, więc kopia katalogu danych wystarcza do odczytu haseł IMAP/SMTP
 i kluczy API. Zamknięcie tej drogi na Windows to DPAPI powłoki — pozycja 10
 audytu pozostaje otwarta w tym zakresie.
+
+## 27. Certyfikat podpisu kodu: OV od Certum, klucz w SimplySign
+
+**Rozstrzygnięcie Prowadzącego z upoważnienia Właściciela, 1 września 2026**
+(„Rozstrzygaj za mnie").
+
+Certyfikat OV, nie EV: EV nie daje dziś lepszej reputacji SmartScreen, a wymaga
+osobnej weryfikacji i tokenu. Wystawca Certum: polski urząd, weryfikacja spółki
+po polsku, klucz w usłudze SimplySign — od czerwca 2023 klucz podpisu kodu musi
+leżeć na sprzęcie albo w HSM wystawcy, więc maszyna budująca podpisuje przez
+klienta SimplySign (PKCS#11, `osslsigncode`), nie z pliku. Znacznik czasu:
+`http://time.certum.pl`. Konto SimplySign trzyma Właściciel; maszyna budująca
+dostaje dostęp na czas podpisu.
+
+Zakup wymaga dokumentów spółki — to jedyna czynność, której Prowadzący nie
+wykona. Do zakupu wydania idą niepodpisane, strona Pobierz mówi o tym wprost,
+a skrypty składania biorą `DANACO_PODPIS=niewymagany` jawnie.
+
+## 28. Wydanie ARM64 nie wchodzi w ten etap
+
+**Rozstrzygnięcie Prowadzącego z upoważnienia Właściciela, 1 września 2026.**
+
+W wykazie maszyn nie ma żadnej z ARM64, więc wydania nie ma na czym wykazać,
+a wydanie niewykazane nie idzie do Operatora (rozdział 7 przekazania). Pozycja
+ARM64 zostaje w wykazie jako „w przygotowaniu" bez pliku; kreator nie oferuje
+jej do pobrania. Wraca, gdy pojawi się maszyna ARM64 do sprawdzenia.
+
+## 29. Jedna maszyna, jedna nazwa, jeden port wdrożenia
+
+**Rozstrzygnięcie Prowadzącego z upoważnienia Właściciela, 1 września 2026.**
+
+| co | wartość |
+|---|---|
+| maszyna wdrożenia | danaco-system, 57.128.253.74 |
+| nasłuch rdzenia | 127.0.0.1:17870 (jednostka systemd) |
+| nazwa i port na świat | `console.danaco-group.pl:443` przez Caddy, TLS z ACME |
+| wskazanie w wydaniu | `DANACO_HOST_WDROZENIA=console.danaco-group.pl`, `DANACO_PORT_WDROZENIA=443`, `DANACO_SCHEMAT_WDROZENIA=https` |
+| podgląd budowy | 51.75.62.180:80 — wyłącznie podgląd, nigdy cel wydania |
+
+TLS kończy się na Caddy; rdzeń nie potrzebuje `DANACO_TLS_*`. To zamyka też
+pozycję „nazwa i certyfikat TLS dla rdzenia" — nazwa i certyfikat już stoją.
+Wpis `console2.danaco-group.pl` jest przejściowy: po wdrożeniu rdzenia po
+scaleniu oba wpisy niosą ten sam rdzeń i `console2` idzie do zdjęcia.
+
+## 30. Klucz własny sejfu na Windows chroni DPAPI
+
+**Rozstrzygnięcie Prowadzącego z upoważnienia Właściciela, 1 września 2026.**
+Domyka rozstrzygnięcie 26.
+
+Na Windows plik klucza własnego `sejf.klucz` niesie klucz zapieczętowany DPAPI
+w zakresie użytkownika (`CryptProtectData`, bez okna dialogowego), ze
+znacznikiem postaci `danaco-klucz-dpapi-v1`. Kopia katalogu danych na inne konto
+albo inną maszynę nie otwiera sejfu. Poza Windows zostaje plik 0400 z 26.
+Klucz ze zmiennej `DANACO_KLUCZ_SEJFU` (serwer) pozostaje jawnym zapisem
+szesnastkowym — tam chroni go system plików i brak dostępu do maszyny.

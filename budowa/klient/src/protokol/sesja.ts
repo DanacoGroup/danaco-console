@@ -1,7 +1,8 @@
 /**
  * Bieżąca sesja klienta — identyfikator niesiony w kopertach wychodzących.
- * Identyfikator nadaje rdzeń, a klient poznaje go ze zdarzenia `session.focus.changed`
- * potwierdzającego ognisko tego klienta; do tej chwili sesja jest pusta.
+ * Nadaje go rdzeń i potwierdza zdarzeniem `session.focus.changed`. Wartość
+ * jest pochodną okna roboczego bieżącego (`wiazanie/sesja-biezaca.ts`): okno
+ * bez sesji zostawia ją pustą, przełączenie okna ją przestawia.
  */
 export interface Sesja {
   /** Identyfikator sesji; pusty, dopóki rdzeń nie potwierdził ogniska. */
@@ -13,9 +14,9 @@ export interface Sesja {
 }
 
 /*
-Sesja jest jedna na uruchomienie klienta. Koperta wychodząca niesie jej
-identyfikator, a wiązania okien rozstrzygają po nim, dokąd wraca praca —
-druga instancja rozeszłaby te dwa odczyty i koperta mówiłaby co innego niż okno.
+Jedna wartość na klienta, choć zmienna: niesie sesję okna roboczego bieżącego.
+Koperta wychodząca bierze stąd identyfikator, a wiązania okien rozstrzygają po
+nim, dokąd wraca praca — druga instancja rozeszłaby te dwa odczyty.
 */
 let identyfikator = '';
 

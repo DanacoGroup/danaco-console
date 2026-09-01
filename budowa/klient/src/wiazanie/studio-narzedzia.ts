@@ -4,6 +4,7 @@
  */
 
 import { Command, EventType, type SessionTool } from '../../../shared/contract.ts';
+import type { Odsubskrybuj } from '../polaczenie/magistrala-zdarzen.ts';
 import type { Kanal } from '../protokol/kanal.ts';
 import { wywolaj } from '../protokol/wywolanie.ts';
 
@@ -13,11 +14,8 @@ interface WzoryPanelu {
   wiersz: HTMLElement | null;
 }
 
-/** Wzory zdejmuje pierwsze wiązanie: kolejne zastaje listę wypełnioną treścią rdzenia, z której wzoru odtworzyć się już nie da. */
+/** Wzory zdejmuje pierwsze wiązanie: każda karta niesie ten sam znacznik, a lista opróżniona wzoru już nie oddaje. */
 let wzory: WzoryPanelu | null = null;
-
-/** Odłączenia nasłuchów poprzedniego wiązania; bez nich wiązanie założone ponownie nanosiłoby jedno zdarzenie wielokrotnie. */
-let odlaczenia: Array<() => void> = [];
 
 /**
  * Zdejmuje treść przykładową panelu narzędzi, zabierając z niej wzory nagłówka
@@ -25,27 +23,25 @@ let odlaczenia: Array<() => void> = [];
  * stanowiska: wykaz narzędzi z prototypu opisuje cudzą sesję. Zwraca prawdę,
  * gdy panel stał w dokumencie.
  */
-export function zdejmijTrescPrzykladowaNarzedzi(): boolean {
-  return przygotujPanel() !== null;
+export function zdejmijTrescPrzykladowaNarzedzi(korzen: ParentNode): boolean {
+  return przygotujPanel(korzen) !== null;
 }
 
-/** Wskazuje listę panelu i opróżnia ją z treści przykładowej; pustka znaczy panel poza dokumentem. */
-function przygotujPanel(): HTMLElement | null {
-  const znaleziona = document.querySelector('#panel-tools .sta-okno-tresc.st-panel-lista');
+/** Wskazuje listę panelu od korzenia karty i opróżnia ją z treści przykładowej; pustka znaczy panel poza kartą. */
+function przygotujPanel(korzen: ParentNode): HTMLElement | null {
+  const znaleziona = korzen.querySelector('#panel-tools .sta-okno-tresc.st-panel-lista');
   if (!(znaleziona instanceof HTMLElement)) return null;
   wzory ??= zdejmijWzory(znaleziona);
   zdejmijTrescPrzykladowa(znaleziona);
   return znaleziona;
 }
 
-/** Wiąże panel narzędzi z rdzeniem; panel pokazuje narzędzia dołożone do sesji okna. Prawda znaczy, że znacznik panelu stał i wiązanie stanęło. */
-export function zwiazNarzedzia(kanal: Kanal, idOkna: string): boolean {
-  const znaleziona = przygotujPanel();
-  if (znaleziona === null) return false;
+/** Wiąże panel narzędzi karty z rdzeniem; panel pokazuje narzędzia dołożone do sesji okna. Zwraca odłączenie nasłuchów, a pustkę, gdy panelu w karcie nie ma. */
+export function zwiazNarzedzia(kanal: Kanal, idOkna: string, korzen: ParentNode): Odsubskrybuj | null {
+  const znaleziona = przygotujPanel(korzen);
+  if (znaleziona === null) return null;
   const lista: HTMLElement = znaleziona;
-
-  for (const odlacz of odlaczenia) odlacz();
-  odlaczenia = [];
+  const odlaczenia: Odsubskrybuj[] = [];
 
   let idSesji = '';
   let dolozenia: SessionTool[] = [];
@@ -75,7 +71,9 @@ export function zwiazNarzedzia(kanal: Kanal, idOkna: string): boolean {
   );
 
   void wczytaj();
-  return true;
+  return () => {
+    for (const odlacz of odlaczenia) odlacz();
+  };
 }
 
 /** Zdejmuje wzory z treści przykładowej. Nagłówkiem grupy jest drugi napis listy — pierwszy niesie miarę zaznaczenia, której kontrakt nie oddaje. */

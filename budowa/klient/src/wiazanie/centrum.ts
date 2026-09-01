@@ -10,6 +10,7 @@ import {
   ErrorCode,
   EventType,
   ProgressStatus,
+  WindowStatus,
   type Component,
   type Environment,
   type Module,
@@ -36,8 +37,12 @@ import {
   kartyOkna,
   oknaRobocze,
   oknoBiezace,
+  oknoSesji,
+  otworzKarte,
   otworzOkno,
   przelaczOkno,
+  przypiszSesjeOkna,
+  wskazKanalRdzenia,
   wskazKarte,
   zamknijOkno,
   zapiszKarte,
@@ -51,7 +56,9 @@ import {
   otworzSesje,
   przejmijOgnisko,
   sesjaBiezaca,
+  uzgodnijSesjeOkna,
   wskazSrodowisko,
+  zapomnijSesje,
 } from './sesja-biezaca.ts';
 import { zwiazStudio, zwolnijStudio } from './studio.ts';
 import { zglosUchwyt } from './zdarzenia.ts';
@@ -85,6 +92,10 @@ export function zwiazCentrum(kanal: Kanal | undefined = globalThis.DanacoKanal):
   const wezly = zbierzWezly();
   if (wezly === null) return false;
   zwiazane = true;
+  /* Kanał wchodzi do rejestru okien roboczych przy wiązaniu, nie przy
+     odtworzeniu z `home.enter`: zamknięcie karty ma czym zamknąć okno w rdzeniu
+     także wtedy, gdy rdzeń wejścia na stronę główną odmówił. */
+  wskazKanalRdzenia(kanal);
 
   const wzorWiersza = zdejmijWzorWiersza(wezly.wykazSesji);
   /* Pasmo kart i wykaz okien roboczych biorą wzory z treści przykładowej,
@@ -102,12 +113,6 @@ export function zwiazCentrum(kanal: Kanal | undefined = globalThis.DanacoKanal):
   const katalogModulow = new Map<string, Module>();
   const modulyPoId = new Map<string, Module>();
   void wczytajModuly(kanal, katalogModulow, modulyPoId);
-  /* Okna robocze odtwarzają się z odpowiedzi rdzenia, więc przełącznik okien
-     i pasmo kart przerysowują się po niej, nie przed nią. */
-  void przejmijOgnisko(kanal).then(() => {
-    odswiezOknaRobocze();
-    odswiezPasmo();
-  });
   const katalogSrodowisk = new Map<string, Environment>();
   void wczytajSrodowiska(kanal, katalogSrodowisk);
 
@@ -227,7 +232,7 @@ export function zwiazCentrum(kanal: Kanal | undefined = globalThis.DanacoKanal):
       } else if (idOkna === '') {
         zwiazOkno(kanal, modul.code, nazwaSrodowiska, wnetrze.wezel);
       } else {
-        zwiazOknoStojace(kanal, modul.code, nazwaSrodowiska, idOkna, wnetrze.wezel);
+        zwiazOknoStojace(kanal, karta.id, nazwaSrodowiska, idOkna, wnetrze.wezel);
       }
     }
     /* Karta nazywa się pracą, którą niesie jej wnętrze — moduł stoi przy niej
@@ -246,6 +251,16 @@ export function zwiazCentrum(kanal: Kanal | undefined = globalThis.DanacoKanal):
       return;
     }
     const karta = kartaOkna(zapiszKarte(modul.code, modul.name, idOkna));
+    if (karta !== undefined) postawKarte(karta, modul);
+  };
+
+  /** Otwiera moduł nową kartą okna bieżącego, także gdy karta tego modułu już stoi: druga praca staje obok pierwszej, z własnym oknem rdzenia. */
+  const otworzNowaKarte = (modul: Module): void => {
+    if (szablonModulu('dn-tresc-' + modul.code) === null) {
+      zapowiedzModul(modul);
+      return;
+    }
+    const karta = kartaOkna(otworzKarte(modul.code, modul.name));
     if (karta !== undefined) postawKarte(karta, modul);
   };
 
@@ -462,10 +477,11 @@ export function zwiazCentrum(kanal: Kanal | undefined = globalThis.DanacoKanal):
     );
   }
 
-  /** Stawia okno robocze na jego karcie bieżącej: Centrum albo karta modułu. */
+  /** Stawia okno robocze na jego karcie bieżącej: Centrum albo karta modułu; sesja klienta idzie za sesją tego okna. */
   const pokazOknoRobocze = (): void => {
     uprzatnijWnetrza();
     const okno = oknoBiezace();
+    void uzgodnijSesjeOkna(kanal, okno);
     if (kartaOkna(okno.kartaBiezaca) === undefined) {
       pokazWidok(wezly, wezly.kartaGlowna);
       kartaBiezaca = '';
@@ -479,6 +495,14 @@ export function zwiazCentrum(kanal: Kanal | undefined = globalThis.DanacoKanal):
   };
 
   odswiezOknaRobocze();
+  /* Przełącznik okien i pasmo przerysowują się po odpowiedzi rdzenia. Płótno
+     zostaje na Centrum — stanie początkowym każdego okna roboczego wedle
+     rozstrzygnięcia 5 i przedpokoju prototypu; karta ogniskowana ostatnio stoi
+     w paśmie i wraca na kliknięcie, a rejestr okna idzie za tym, co widać. */
+  void przejmijOgnisko(kanal).then(() => {
+    zapiszKarte('', '');
+    odswiezPasmo();
+  });
   zwiazOknaRobocze(
     (id) => {
       if (przelaczOkno(id) === undefined) return;
@@ -503,6 +527,11 @@ export function zwiazCentrum(kanal: Kanal | undefined = globalThis.DanacoKanal):
   /* Zdarzenia rdzenia warstwy wspólnej: zmiana zrobiona w innym oknie albo przez
      proces w tle dochodzi do Centrum wyłącznie nimi. */
   zglosUchwyt(EventType.SessionChanged, (tresc) => {
+    // Sesja usunięta schodzi z okna roboczego, które ją niosło.
+    if (tresc.change === ChangeKind.Deleted) {
+      zapomnijSesje(tresc.session.id);
+      odswiezOknaRobocze();
+    }
     odswiez();
     void wypelnijProjekty(kanal);
     // Miara sesji na karcie środowiska liczy sesje, nie ich zmiany.
@@ -622,24 +651,47 @@ export function zwiazCentrum(kanal: Kanal | undefined = globalThis.DanacoKanal):
       return;
     }
 
-    /* Wiersz wykazu sesji jest drogą powrotu do pracy: karta sesji otwiera się
-       wraz z oknami, a Operator wraca do okna, w którym był. Wiersz nie
-       przechwytuje kliknięć swojego menu — tam stoją czynności karty. */
+    /* Wiersz wykazu sesji jest drogą powrotu do pracy: sesja należy do jednego
+       okna roboczego, więc kliknięcie przełącza na to okno, a gdy okno nie
+       stoi — zakłada je z sesją i kartami jej otwartych okien komunikacji.
+       Wiersz nie przechwytuje kliknięć swojego menu — tam stoją czynności. */
     const wiersz = cel.closest<HTMLElement>('[data-id-sesji]');
     if (wiersz !== null && cel.closest('[data-menu]') === null
       && cel.closest('[data-poz-akcja]') === null) {
       zdarzenie.stopPropagation();
-      void otworzSesje(kanal, wiersz.dataset.idSesji ?? '').then((okna) => {
-        const okno = okna.find((kandydat) => kandydat.status !== 'closed') ?? okna[0];
-        const modul = okno === undefined
-          ? undefined
-          : modulyPoId.get(okno.moduleId) ?? katalogModulow.get(okno.moduleId);
-        if (okno === undefined || modul === undefined) {
-          oglos('Karta sesji', 'Karta jest otwarta i przyjmie okno modułu; '
-            + 'okna w niej jeszcze nie ma.');
+      const idSesji = wiersz.dataset.idSesji ?? '';
+      const stojace = oknoSesji(idSesji);
+      if (stojace !== undefined) {
+        przelaczOkno(stojace.id);
+        pokazOknoRobocze();
+        return;
+      }
+      void otworzSesje(kanal, idSesji).then((otwarta) => {
+        if (otwarta === null) {
+          oglos('Sesja', 'Rdzeń odmówił otwarcia sesji.', 'blad');
           return;
         }
-        otworzModul(modul, okno.id);
+        const okno = otworzOkno();
+        przypiszSesjeOkna(okno.id, otwarta.sesja.id, otwarta.sesja.title ?? '');
+        let pierwsza = '';
+        let pozaWydaniem = 0;
+        for (const okienko of otwarta.okna) {
+          if (okienko.status === WindowStatus.Closed) continue;
+          const modul = modulyPoId.get(okienko.moduleId) ?? katalogModulow.get(okienko.moduleId);
+          if (modul === undefined || szablonModulu('dn-tresc-' + modul.code) === null) {
+            pozaWydaniem += 1;
+            continue;
+          }
+          const idKarty = otworzKarte(modul.code, okienko.title ?? modul.name, okienko.id);
+          if (pierwsza === '') pierwsza = idKarty;
+        }
+        if (pierwsza !== '') wskazKarte(pierwsza);
+        pokazOknoRobocze();
+        if (pierwsza === '') {
+          oglos('Sesja', pozaWydaniem === 0
+            ? 'Sesja stoi w nowym oknie roboczym; okna modułu jeszcze w niej nie ma.'
+            : 'Sesja stoi w nowym oknie roboczym; jej okna należą do modułów spoza tego wydania.');
+        }
       });
       return;
     }
@@ -688,14 +740,15 @@ export function zwiazCentrum(kanal: Kanal | undefined = globalThis.DanacoKanal):
       return;
     }
 
-    /* Znak „+" pasma otwiera kartę modułu wskazanego pozycją menu; nazwa
-       pozycji jest nazwą modułu z rejestru rdzenia. */
+    /* Znak „+" pasma otwiera NOWĄ kartę modułu wskazanego pozycją menu, także
+       obok karty tego modułu już stojącej; nazwa pozycji jest nazwą modułu
+       z rejestru rdzenia. */
     const nowaKarta = cel.closest<HTMLElement>('[data-nowa-karta-modul]')?.dataset.nowaKartaModul;
     if (nowaKarta !== undefined) {
       const wskazany = [...katalogModulow.values()].find((modul) => modul.name === nowaKarta);
       if (wskazany === undefined) return;
       zdarzenie.stopPropagation();
-      otworzModul(wskazany, '');
+      otworzNowaKarte(wskazany);
       return;
     }
 
@@ -871,8 +924,8 @@ function wnetrzeStojace(wezly: WezlyCentrum, idKarty: string): HTMLElement | nul
  * Wnętrze karty w płótnie: stojące wraca, brakujące powstaje z klonu karty
  * modułu ze znacznika i bloku szablonu. Każda karta ma własny węzeł — dwie
  * karty tego samego modułu nie dzielą wnętrza, więc przełączenie nie czyści
- * rozmowy. Wnętrze nowe staje na czele płótna, bo wiązanie Studia bierze
- * pierwszy węzeł okna w dokumencie.
+ * rozmowy; wiązania idą od korzenia karty, więc miejsce w płótnie nie ma
+ * znaczenia.
  */
 function wnetrzeKarty(
   wezly: WezlyCentrum,
@@ -890,7 +943,7 @@ function wnetrzeKarty(
     if (!dziecko.classList.contains('cd-modul-glowa')) dziecko.remove();
   }
   wezel.appendChild(blok.cloneNode(true));
-  wezly.plotno.prepend(wezel);
+  wezly.plotno.appendChild(wezel);
   return { wezel, nowe: true };
 }
 

@@ -4,6 +4,7 @@
  * z wzoru zdjętego z treści przykładowej.
  */
 import { Command, EventType, type LibraryFile } from '../../../shared/contract.ts';
+import type { Odsubskrybuj } from '../polaczenie/magistrala-zdarzen.ts';
 import type { Kanal } from '../protokol/kanal.ts';
 import { wywolaj } from '../protokol/wywolanie.ts';
 
@@ -17,9 +18,9 @@ interface WezlyPlikow {
 const JEDNOSTKI_ROZMIARU = ['B', 'kB', 'MB', 'GB', 'TB'];
 
 /**
- * Wzór wiersza zdjęty przy pierwszym montażu okna. Powłoka wstawia wnętrze
- * okna na nowo przy każdym wejściu, a drugie zdjęcie zastałoby wykaz już
- * opróżniony, więc wzoru nie da się z niego wziąć po raz drugi.
+ * Wzór wiersza zdjęty przy pierwszym montażu karty. Każda karta niesie ten
+ * sam znacznik, a wykaz opróżniony wzoru już nie oddaje, więc zdjęcie stoi
+ * raz dla wszystkich kart.
  */
 let wzorWiersza: HTMLElement | null = null;
 
@@ -29,13 +30,13 @@ let wzorWiersza: HTMLElement | null = null;
  * mają prawa stać na ekranie ani chwili dłużej niż znacznik. Zwraca prawdę,
  * gdy panel stał w dokumencie.
  */
-export function zdejmijTrescPrzykladowaPlikow(): boolean {
-  return przygotujPanel() !== null;
+export function zdejmijTrescPrzykladowaPlikow(korzen: ParentNode): boolean {
+  return przygotujPanel(korzen) !== null;
 }
 
-/** Zbiera węzły panelu i opróżnia wykaz z wierszy przykładowych; pustka znaczy panel poza dokumentem. */
-function przygotujPanel(): WezlyPlikow | null {
-  const znalezione = zbierzWezly();
+/** Zbiera węzły panelu i opróżnia wykaz z wierszy przykładowych; pustka znaczy panel poza kartą. */
+function przygotujPanel(korzen: ParentNode): WezlyPlikow | null {
+  const znalezione = zbierzWezly(korzen);
   if (znalezione === null) return null;
   wzorWiersza ??= sklonuj(znalezione.lista.querySelector('.st-panel-wiersz'));
   zdejmijWiersze(znalezione.lista);
@@ -43,12 +44,12 @@ function przygotujPanel(): WezlyPlikow | null {
 }
 
 /**
- * Wiąże panel Pliki okna Studia z wykazem repozytorium. Zwraca prawdę, gdy
- * znacznik panelu stał i wiązanie zostało założone.
+ * Wiąże panel Pliki karty Studia z wykazem repozytorium; węzły idą od korzenia
+ * karty. Zwraca odłączenie nasłuchu, a pustkę, gdy panelu w karcie nie ma.
  */
-export function zwiazPliki(kanal: Kanal, idOkna: string): boolean {
-  const znalezione = przygotujPanel();
-  if (znalezione === null) return false;
+export function zwiazPliki(kanal: Kanal, idOkna: string, korzen: ParentNode): Odsubskrybuj | null {
+  const znalezione = przygotujPanel(korzen);
+  if (znalezione === null) return null;
   const wezly: WezlyPlikow = znalezione;
   const wzor: HTMLElement | null = wzorWiersza;
 
@@ -91,7 +92,7 @@ export function zwiazPliki(kanal: Kanal, idOkna: string): boolean {
     });
   });
 
-  kanal.naZdarzenie(EventType.LibraryFileChanged, () => {
+  const odlacz = kanal.naZdarzenie(EventType.LibraryFileChanged, () => {
     void odswiez();
   });
 
@@ -100,7 +101,7 @@ export function zwiazPliki(kanal: Kanal, idOkna: string): boolean {
     void odswiez();
   });
 
-  return true;
+  return odlacz;
 }
 
 /** Odczytuje projekt sesji, do której należy okno; pustka znaczy sesję bez projektu, dla której biblioteka projektu nie ma czym się zawęzić. */
@@ -173,9 +174,9 @@ function zdejmijWiersze(lista: HTMLElement): void {
   for (const wiersz of lista.querySelectorAll('.st-panel-wiersz')) wiersz.remove();
 }
 
-/** Wskazuje węzły panelu Pliki; pustka znaczy, że panel nie stoi w dokumencie. */
-function zbierzWezly(): WezlyPlikow | null {
-  const panel = document.querySelector('#panel-pliki');
+/** Wskazuje węzły panelu Pliki od korzenia karty; pustka znaczy, że panel nie stoi w karcie. */
+function zbierzWezly(korzen: ParentNode): WezlyPlikow | null {
+  const panel = korzen.querySelector('#panel-pliki');
   const lista = panel?.querySelector('.sta-okno-tresc.st-panel-lista');
   const szukaj = panel?.querySelector('input[type="search"]');
   if (!(lista instanceof HTMLElement) || !(szukaj instanceof HTMLInputElement)) return null;

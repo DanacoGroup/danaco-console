@@ -16,6 +16,7 @@ import {
   MessageRole,
   PermissionMode,
   WindowRole,
+  WindowStatus,
   type Message,
   type PanelSection,
   type Session,
@@ -29,8 +30,6 @@ import { oglos } from './ogloszenie.ts';
 import { wpiszPole } from './okno-modulu.ts';
 import {
   odczytajUkladPaneli,
-  oknoBiezace,
-  oknoStojaceSesji,
   przypiszOknoKomunikacji,
   zapiszUkladPaneli,
 } from './okna-robocze.ts';
@@ -244,28 +243,39 @@ export function zwiazStudio(
     wezly.formularz.requestSubmit();
   });
 
+  /** Przycisk nowego dokumentu jest czynny wyłącznie przy stanowisku: dokument stoi w oknie komunikacji, a okno powstaje pierwszą wiadomością. */
+  const ustawNowyDokument = (): void => {
+    if (wezly.nowyDokument instanceof HTMLButtonElement) wezly.nowyDokument.disabled = idOkna === '';
+  };
+
+  /** Zdejmuje okno komunikacji z karty: rdzeń je zamknął albo usunął, a kolejna wiadomość zakłada stanowisko od nowa. */
+  const zdejmijStanowisko = (): void => {
+    idOkna = '';
+    ustawNowyDokument();
+  };
+
   /* Sesja powstaje dopiero pierwszą wiadomością wysłaną do modelu — nie
      otwarciem okna ani wejściem w moduł. Do tej chwili Operator chodzi po
      produkcie swobodnie i żadna sesja po nim nie zostaje. Wyjątkiem jest okno
      wskazane przez wołającego: ono stoi już w rejestrze i wchodzi przy montażu. */
   const zapewnijStanowisko = async (): Promise<string> => {
     if (idOkna !== '') return idOkna;
-    const stanowisko = await otworzStanowisko(kanal, wezly, wzorPozycji, wstawWpis, idOknaStojacego);
+    const stanowisko = await otworzStanowisko(
+      kanal, wezly, wzorPozycji, wstawWpis, idOknaStojacego, idKarty,
+    );
     if (stanowisko === null) return '';
     idOkna = stanowisko.idOkna;
     idSesji = stanowisko.idSesji;
+    ustawNowyDokument();
     /* Karta dostaje okno komunikacji: po nim zamknięcie karty zamyka okno
-       w rdzeniu, a układ kart pasma ma do czego przylgnąć. Przypisanie idzie
-       przez kartę bieżącą okna roboczego, więc karta odsunięta, zanim rdzeń
-       odpowiedział, zostaje bez okna — i mówi to wprost. */
-    if (oknoBiezace().kartaBiezaca === idKarty) {
-      przypiszOknoKomunikacji(KOD_MODULU_STUDIO, idOkna);
-    } else {
-      oglos('Studio', 'Okno rozmowy stanęło, gdy jego karta nie była bieżąca — '
+       w rdzeniu, a układ kart pasma ma do czego przylgnąć. Karta zdjęta, zanim
+       rdzeń odpowiedział, zostaje bez okna — i mówi to wprost. */
+    if (!przypiszOknoKomunikacji(idKarty, idOkna)) {
+      oglos('Studio', 'Okno rozmowy stanęło, gdy jego karta zeszła z pasma — '
         + 'zamknięcie karty nie zamknie tego okna.', 'ostrzezenie');
     }
     zwiazUkladKart(kanal, idKarty, korzen, odlaczenia);
-    zwiazPanele(kanal, idOkna);
+    zwiazPanele(kanal, idOkna, idKarty, korzen, odlaczenia);
     /* Okno stojące prowadzi już swój dokument. Zakładanie nowego przy powrocie
        do sesji mnożyłoby dokumenty przy każdym wejściu w moduł. */
     dokument = idOknaStojacego === ''
@@ -343,7 +353,7 @@ export function zwiazStudio(
   });
 
   wezly.porownajWersje?.addEventListener('click', () => {
-    void porownajWersjeDokumentu().then((porownane) => {
+    void porownajWersjeDokumentu(idKarty).then((porownane) => {
       if (porownane) return;
       oglos('Studio', 'Okno nie prowadzi dokumentu — nie ma czego porównać.');
     });
@@ -353,15 +363,17 @@ export function zwiazStudio(
     odswiezPasStanu(wezly, dokument);
   });
 
-  /* Nowy dokument jest pracą z modelem w edytorze, więc zakłada stanowisko
-     tak samo jak pierwsza wiadomość. */
+  /* Nowy dokument nie zakłada stanowiska: sesja powstaje wyłącznie pierwszą
+     wiadomością, a dokument stoi w oknie komunikacji. Przycisk jest nieczynny
+     do tej chwili; kliknięcie w kartę bez okna mówi to wprost. */
   wezly.nowyDokument?.addEventListener('click', () => {
-    void zapewnijStanowisko().then((okno) => {
-      if (okno === '') return;
-      void zalozDokument(kanal, okno, wezly).then((zalozony) => {
-        dokument = zalozony;
-        opiszDokument(zalozony);
-      });
+    if (idOkna === '') {
+      oglos('Studio', 'Dokument powstaje w oknie rozmowy — wyślij pierwszą wiadomość.');
+      return;
+    }
+    void zalozDokument(kanal, idOkna, wezly).then((zalozony) => {
+      dokument = zalozony;
+      opiszDokument(zalozony);
     });
   });
 
@@ -390,7 +402,7 @@ export function zwiazStudio(
     zglosUchwyt(EventType.SessionChanged, (tresc) => {
       if (idSesji === '' || tresc.session.id !== idSesji) return;
       if (tresc.change === ChangeKind.Deleted) {
-        idOkna = '';
+        zdejmijStanowisko();
         idSesji = '';
         oglos('Studio', 'Sesja tego okna została usunięta.', 'ostrzezenie');
         return;
@@ -400,13 +412,14 @@ export function zwiazStudio(
     }),
   );
 
-  /* Okno własne zamknięte poza tym wiązaniem: następna wiadomość zakłada
-     stanowisko od nowa, zamiast wracać odmową do okna, którego już nie ma. */
+  /* Okno własne zamknięte poza tym wiązaniem — usunięte albo w stanie
+     zamkniętym po `session.close`: następna wiadomość zakłada stanowisko od
+     nowa, zamiast wracać odmową do okna, które już nie przyjmuje. */
   odlaczenia.push(
     zglosUchwyt(EventType.WindowChanged, (tresc) => {
       if (idOkna === '' || tresc.window.id !== idOkna) return;
-      if (tresc.change !== ChangeKind.Deleted) return;
-      idOkna = '';
+      if (tresc.change !== ChangeKind.Deleted && tresc.window.status !== WindowStatus.Closed) return;
+      zdejmijStanowisko();
       oglos('Studio', 'Okno rozmowy zostało zamknięte w rdzeniu.', 'ostrzezenie');
     }),
   );
@@ -429,6 +442,7 @@ export function zwiazStudio(
   /* Stan pusty dokumentu wchodzi od razu: nazwa pracy z prototypu jest treścią
      przykładową, a okno staje, zanim powstanie sesja i dokument. */
   opiszDokument(null);
+  ustawNowyDokument();
   void opiszKanal(kanal, nazwaSrodowiska, korzen);
   void opiszWyborModelu(kanal, korzen);
   opiszWyborNakladu(korzen);
@@ -477,12 +491,12 @@ function zdejmijTrescPrzykladowa(wezly: WezlyStudia, korzen: Element): void {
   wezly.szyna.replaceChildren();
   wezly.kanwa.replaceChildren();
   zdejmijZnacznikiBezZrodla(korzen);
-  zdejmijTrescPrzykladowaPlanu();
-  zdejmijTrescPrzykladowaRoznic();
-  zdejmijTrescPrzykladowaRepozytorium();
-  zdejmijTrescPrzykladowaPlikow();
-  zdejmijTrescPrzykladowaNarzedzi();
-  zdejmijTrescPrzykladowaPodgladu();
+  zdejmijTrescPrzykladowaPlanu(korzen);
+  zdejmijTrescPrzykladowaRoznic(korzen);
+  zdejmijTrescPrzykladowaRepozytorium(korzen);
+  zdejmijTrescPrzykladowaPlikow(korzen);
+  zdejmijTrescPrzykladowaNarzedzi(korzen);
+  zdejmijTrescPrzykladowaPodgladu(korzen);
 }
 
 /**
@@ -600,10 +614,10 @@ interface Stanowisko {
 }
 
 /**
- * Wskazuje stanowisko okna, wczytuje jego historię i szynę sesji; pustka znaczy
- * odmowę rdzenia. Okno podane przez wołającego stoi już w rejestrze, więc
- * `window.create` nie pada — pada wyłącznie dla okna zakładanego pierwszą
- * wiadomością, i to tylko wtedy, gdy sesja okna Studia jeszcze nie ma.
+ * Wskazuje stanowisko karty, wczytuje jego historię i szynę sesji; pustka
+ * znaczy odmowę rdzenia. Okno podane przez wołającego stoi już w rejestrze,
+ * więc `window.create` nie pada — pada wyłącznie dla okna zakładanego
+ * pierwszą wiadomością.
  */
 async function otworzStanowisko(
   kanal: Kanal,
@@ -611,9 +625,10 @@ async function otworzStanowisko(
   wzorPozycji: HTMLElement | null,
   wstawWpis: (wiadomosc: Message) => void,
   idOknaStojacego: string,
+  idKarty: string,
 ): Promise<Stanowisko | null> {
   const stanowisko = idOknaStojacego === ''
-    ? await zalozStanowisko(kanal)
+    ? await zalozStanowisko(kanal, idKarty)
     : await wskazStanowisko(kanal, idOknaStojacego);
   if (stanowisko === null) return null;
 
@@ -627,21 +642,18 @@ async function otworzStanowisko(
 }
 
 /**
- * Zakłada sesję i wskazuje w niej okno komunikacji Studia: stojące, gdy sesja
- * takie ma, założone, gdy nie ma. Pustka znaczy odmowę rdzenia na którymkolwiek
- * kroku — także przy pytaniu o okna stojące, bo zakładanie bez tej odpowiedzi
- * mnożyłoby okna tego samego modułu w sesji.
+ * Zakłada dla karty okno komunikacji Studia w sesji jej okna roboczego —
+ * stojącej albo założonej tą wiadomością. Okno jest zawsze nowe: karta bez
+ * okna to nowa praca, a okno stojące w sesji należy do innej karty i wchodzi
+ * wyłącznie przy wznowieniu, jako okno wskazane wołającemu. Pustka znaczy
+ * odmowę rdzenia na którymkolwiek kroku.
  */
-async function zalozStanowisko(kanal: Kanal): Promise<Stanowisko | null> {
-  // Stanowisko staje w karcie sesji bieżącej, tak samo jak każde inne okno modułu.
-  const idSesji = await zapewnijSesje(kanal, 'Studio');
+async function zalozStanowisko(kanal: Kanal, idKarty: string): Promise<Stanowisko | null> {
+  const idSesji = await zapewnijSesje(kanal, idKarty, 'Studio');
   if (idSesji === '') return null;
 
   const modul = await wskazModulStudia(kanal);
   if (modul === '') return null;
-  const stojace = await oknoStojaceSesji(kanal, idSesji, modul);
-  if (stojace === null) return null;
-  if (stojace !== '') return { idOkna: stojace, idSesji };
 
   const kanalModelu = await wskazKanalModelu(kanal);
   if (kanalModelu === '') return null;
@@ -971,14 +983,26 @@ function godzinaWpisu(znacznik: number): string {
   return new Date(znacznik).toLocaleTimeString('pl-PL', { hour: '2-digit', minute: '2-digit' });
 }
 
-/* Panele okna roboczego wiąże się dopiero po założeniu okna: każdy z nich pyta
-   rdzeń o treść tego okna, a przed jego powstaniem nie ma o co pytać. Panel,
-   którego znacznik nie stoi, zwraca fałsz i nie robi nic. */
-function zwiazPanele(kanal: Kanal, idOkna: string): void {
-  zwiazPlan(kanal, idOkna);
-  zwiazRoznice(kanal, idOkna);
-  zwiazRepozytorium(kanal, idOkna);
-  zwiazPliki(kanal, idOkna);
-  zwiazNarzedzia(kanal, idOkna);
-  zwiazPodglad(kanal, idOkna);
+/* Panele karty wiąże się dopiero po założeniu okna komunikacji: każdy z nich
+   pyta rdzeń o treść tego okna, a przed jego powstaniem nie ma o co pytać.
+   Węzły idą od korzenia karty, a odłączenia nasłuchów wchodzą do wiązania
+   karty i schodzą razem z nim. Panel, którego znacznik nie stoi, nie robi nic. */
+function zwiazPanele(
+  kanal: Kanal,
+  idOkna: string,
+  idKarty: string,
+  korzen: Element,
+  odlaczenia: Odsubskrybuj[],
+): void {
+  const zwiazane = [
+    zwiazPlan(kanal, idOkna, korzen),
+    zwiazRoznice(kanal, idOkna, idKarty, korzen),
+    zwiazRepozytorium(kanal, idOkna, korzen),
+    zwiazPliki(kanal, idOkna, korzen),
+    zwiazNarzedzia(kanal, idOkna, korzen),
+  ];
+  for (const odlacz of zwiazane) {
+    if (odlacz !== null) odlaczenia.push(odlacz);
+  }
+  zwiazPodglad(kanal, idOkna, korzen);
 }

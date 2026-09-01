@@ -13,6 +13,7 @@ import {
   type StudioDiffHunk,
   type StudioVersion,
 } from '../../../shared/contract.ts';
+import type { Odsubskrybuj } from '../polaczenie/magistrala-zdarzen.ts';
 import type { Kanal } from '../protokol/kanal.ts';
 import { wywolaj } from '../protokol/wywolanie.ts';
 
@@ -48,7 +49,7 @@ interface Panel {
   wybor: WyborPorownania;
 }
 
-/** Panel po ostatnim wiązaniu; po nim idzie porównanie wywołane spoza panelu — ze wstążki okna roboczego. */
+/** Panel po wiązaniu karty; po nim idzie porównanie wywołane spoza panelu — ze wstążki karty. */
 interface Zwiazany {
   kanal: Kanal;
   idOkna: string;
@@ -57,45 +58,43 @@ interface Zwiazany {
 }
 
 /**
- * Wzory zdjęte przy pierwszym montażu okna. Powłoka wstawia wnętrze okna na
- * nowo przy każdym wejściu, a drugie zdjęcie zastałoby panel już opróżniony,
- * więc wzoru nie da się z niego wziąć po raz drugi.
+ * Wzory zdjęte przy pierwszym montażu karty. Każda karta niesie ten sam
+ * znacznik, a panel opróżniony wzoru już nie oddaje, więc zdjęcie stoi raz
+ * dla wszystkich kart.
  */
 let wzoryPanelu: WzoryWierszy | null = null;
 
-/** Panel wiązania bieżącego; pustka znaczy okno bez założonego stanowiska. */
-let zwiazany: Zwiazany | null = null;
+/* Panele związane po identyfikatorze karty: karty Studia stoją w płótnie obok
+   siebie, a porównanie ze wstążki ma trafić w panel własnej karty. Karta bez
+   wpisu nie ma jeszcze stanowiska. */
+const ZWIAZANE = new Map<string, Zwiazany>();
 
 /**
  * Zdejmuje treść przykładową panelu różnic, zabierając z niej wzory wierszy.
  * Woła się przy montażu okna, przed powstaniem stanowiska: różnica z prototypu
  * opisuje cudzy dokument. Zwraca prawdę, gdy panel stał w dokumencie.
  */
-export function zdejmijTrescPrzykladowaRoznic(): boolean {
-  return przygotujPanel() !== null;
+export function zdejmijTrescPrzykladowaRoznic(korzen: ParentNode): boolean {
+  return przygotujPanel(korzen) !== null;
 }
 
-/** Zbiera węzły panelu i opróżnia je z treści przykładowej; pustka znaczy panel poza dokumentem. */
-function przygotujPanel(): { wezly: WezlyRoznic; wzory: WzoryWierszy } | null {
-  const wezly = zbierzWezly();
+/** Zbiera węzły panelu i opróżnia je z treści przykładowej; pustka znaczy panel poza kartą. */
+function przygotujPanel(korzen: ParentNode): { wezly: WezlyRoznic; wzory: WzoryWierszy } | null {
+  const wezly = zbierzWezly(korzen);
   if (wezly === null) return null;
-  /* Znacznik inny niż związany znaczy panel wstawiony ponownie: wiązanie
-     poprzednie trzyma węzły odczepione od dokumentu i porównanie wypełniłoby
-     ekran, którego nie ma. */
-  if (zwiazany !== null && zwiazany.panel.wezly.tresc !== wezly.tresc) zwiazany = null;
   wzoryPanelu ??= zdejmijWzory(wezly);
   zdejmijTrescPrzykladowa(wezly);
   return { wezly, wzory: wzoryPanelu };
 }
 
 /**
- * Wczytuje wersje dokumentu otwartego w oknie i zestawia parę wskazaną na
- * pasku panelu. Fałsz znaczy panel bez wiązania albo okno bez dokumentu —
- * wołający ma wtedy czym odmówić Operatorowi zamiast milczeć.
+ * Wczytuje wersje dokumentu otwartego w oknie wskazanej karty i zestawia parę
+ * wskazaną na pasku panelu. Fałsz znaczy kartę bez wiązania panelu albo okno
+ * bez dokumentu — wołający ma wtedy czym odmówić Operatorowi zamiast milczeć.
  */
-export async function porownajWersjeDokumentu(): Promise<boolean> {
-  const biezacy = zwiazany;
-  if (biezacy === null) return false;
+export async function porownajWersjeDokumentu(idKarty: string): Promise<boolean> {
+  const biezacy = ZWIAZANE.get(idKarty);
+  if (biezacy === undefined) return false;
   if (biezacy.panel.wybor.idDokumentu === '') {
     const otwarty = await wywolaj(biezacy.kanal, Command.StudioDocumentOpen, {
       windowId: biezacy.idOkna,
@@ -108,13 +107,20 @@ export async function porownajWersjeDokumentu(): Promise<boolean> {
 }
 
 /**
- * Wiąże panel różnic okna z rdzeniem. Dokument bierze się ze zdarzenia zmiany
+ * Wiąże panel różnic karty z rdzeniem; węzły idą od korzenia karty, a stan
+ * stoi pod jej identyfikatorem. Dokument bierze się ze zdarzenia zmiany
  * dokumentu wskazanego okna, bo komendy pytającej o dokument otwarty w oknie
- * kontrakt nie ma. Zwraca prawdę, gdy znacznik panelu stał.
+ * kontrakt nie ma. Zwraca odłączenie wiązania, a pustkę, gdy panelu w karcie
+ * nie ma.
  */
-export function zwiazRoznice(kanal: Kanal, idOkna: string): boolean {
-  const przygotowany = przygotujPanel();
-  if (przygotowany === null) return false;
+export function zwiazRoznice(
+  kanal: Kanal,
+  idOkna: string,
+  idKarty: string,
+  korzen: ParentNode,
+): Odsubskrybuj | null {
+  const przygotowany = przygotujPanel(korzen);
+  if (przygotowany === null) return null;
   const wezly: WezlyRoznic = przygotowany.wezly;
 
   const panel: Panel = {
@@ -145,7 +151,7 @@ export function zwiazRoznice(kanal: Kanal, idOkna: string): boolean {
     odswiez();
   });
 
-  kanal.naZdarzenie(EventType.StudioDocumentChanged, (tresc) => {
+  const odlacz = kanal.naZdarzenie(EventType.StudioDocumentChanged, (tresc) => {
     if (tresc.document.windowId !== idOkna) return;
     if (tresc.change === ChangeKind.Deleted) {
       panel.wybor.idDokumentu = '';
@@ -157,8 +163,11 @@ export function zwiazRoznice(kanal: Kanal, idOkna: string): boolean {
     void wczytaj(kanal, panel, odswiez);
   });
 
-  zwiazany = { kanal, idOkna, panel, odswiez };
-  return true;
+  ZWIAZANE.set(idKarty, { kanal, idOkna, panel, odswiez });
+  return () => {
+    odlacz();
+    if (ZWIAZANE.get(idKarty)?.panel === panel) ZWIAZANE.delete(idKarty);
+  };
 }
 
 /** Wczytuje nazwane wersje dokumentu z repozytorium sesji i porównuje parę wskazaną na pasku. */
@@ -298,9 +307,9 @@ function nastepneMiejsce(miejsce: number, ile: number): number {
   return ile === 0 ? 0 : (miejsce + 1) % ile;
 }
 
-/** Wskazuje węzły panelu różnic; pustka znaczy, że panel nie stoi w dokumencie. */
-function zbierzWezly(): WezlyRoznic | null {
-  const tresc = document.querySelector('#panel-diff .sta-okno-tresc');
+/** Wskazuje węzły panelu różnic od korzenia karty; pustka znaczy, że panel nie stoi w karcie. */
+function zbierzWezly(korzen: ParentNode): WezlyRoznic | null {
+  const tresc = korzen.querySelector('#panel-diff .sta-okno-tresc');
   const wierszWersji = tresc?.querySelector(':scope > .st-panel-wiersz');
   const poleWzorca = tresc?.querySelector('.dn-szukaj');
   const wzorzec = poleWzorca?.querySelector('input[type="search"]');

@@ -12,6 +12,7 @@ import {
   type StudioDocument,
   type StudioVersion,
 } from '../../../shared/contract.ts';
+import type { Odsubskrybuj } from '../polaczenie/magistrala-zdarzen.ts';
 import type { Kanal } from '../protokol/kanal.ts';
 import { wywolaj } from '../protokol/wywolanie.ts';
 
@@ -29,9 +30,9 @@ interface WzoryWersji {
 }
 
 /**
- * Wzory zdjęte przy pierwszym montażu okna. Powłoka wstawia wnętrze okna na
- * nowo przy każdym wejściu, a drugie zdjęcie zastałoby wykaz już opróżniony,
- * więc wzoru nie da się z niego wziąć po raz drugi.
+ * Wzory zdjęte przy pierwszym montażu karty. Każda karta niesie ten sam
+ * znacznik, a wykaz opróżniony wzoru już nie oddaje, więc zdjęcie stoi raz
+ * dla wszystkich kart.
  */
 let wzoryPanelu: WzoryWersji | null = null;
 
@@ -41,13 +42,13 @@ let wzoryPanelu: WzoryWersji | null = null;
  * stanowiska: cudza historia wersji nie ma prawa stać na ekranie ani chwili
  * dłużej niż znacznik. Zwraca prawdę, gdy panel stał w dokumencie.
  */
-export function zdejmijTrescPrzykladowaRepozytorium(): boolean {
-  return przygotujPanel() !== null;
+export function zdejmijTrescPrzykladowaRepozytorium(korzen: ParentNode): boolean {
+  return przygotujPanel(korzen) !== null;
 }
 
-/** Zbiera węzły panelu i opróżnia wykaz z wierszy przykładowych; pustka znaczy panel poza dokumentem. */
-function przygotujPanel(): { wezly: WezlyRepozytorium; wzory: WzoryWersji } | null {
-  const znalezione = zbierzWezly();
+/** Zbiera węzły panelu i opróżnia wykaz z wierszy przykładowych; pustka znaczy panel poza kartą. */
+function przygotujPanel(korzen: ParentNode): { wezly: WezlyRepozytorium; wzory: WzoryWersji } | null {
+  const znalezione = zbierzWezly(korzen);
   if (znalezione === null) return null;
   const wiersze = [...znalezione.tresc.querySelectorAll<HTMLElement>('.dn-wersja')];
   wzoryPanelu ??= zdejmijWzory(wiersze);
@@ -56,12 +57,16 @@ function przygotujPanel(): { wezly: WezlyRepozytorium; wzory: WzoryWersji } | nu
 }
 
 /**
- * Wiąże panel repozytorium sesji okna Studia. Zwraca prawdę, gdy znacznik
- * panelu stał i wiązanie zostało założone.
+ * Wiąże panel repozytorium sesji karty Studia; węzły idą od korzenia karty.
+ * Zwraca odłączenie nasłuchu, a pustkę, gdy panelu w karcie nie ma.
  */
-export function zwiazRepozytorium(kanal: Kanal, idOkna: string): boolean {
-  const przygotowany = przygotujPanel();
-  if (przygotowany === null) return false;
+export function zwiazRepozytorium(
+  kanal: Kanal,
+  idOkna: string,
+  korzen: ParentNode,
+): Odsubskrybuj | null {
+  const przygotowany = przygotujPanel(korzen);
+  if (przygotowany === null) return null;
   const wezly: WezlyRepozytorium = przygotowany.wezly;
   const wzory: WzoryWersji = przygotowany.wzory;
 
@@ -100,7 +105,7 @@ export function zwiazRepozytorium(kanal: Kanal, idOkna: string): boolean {
     });
   }
 
-  kanal.naZdarzenie(EventType.StudioDocumentChanged, (zmiana) => {
+  const odlacz = kanal.naZdarzenie(EventType.StudioDocumentChanged, (zmiana) => {
     if (dokument === null || zmiana.document.id !== dokument.id) return;
     dokument = zmiana.document;
     void wypelnijWykaz(kanal, wezly, wzory, zmiana.document);
@@ -115,12 +120,12 @@ export function zwiazRepozytorium(kanal: Kanal, idOkna: string): boolean {
     void wypelnijWykaz(kanal, wezly, wzory, otwarty);
   });
 
-  return true;
+  return odlacz;
 }
 
-/** Wskazuje węzły panelu; pustka znaczy, że karta repozytorium nie stoi w dokumencie. */
-function zbierzWezly(): WezlyRepozytorium | null {
-  const panel = document.querySelector('#panel-repo');
+/** Wskazuje węzły panelu od korzenia karty; pustka znaczy, że panel repozytorium nie stoi w karcie. */
+function zbierzWezly(korzen: ParentNode): WezlyRepozytorium | null {
+  const panel = korzen.querySelector('#panel-repo');
   const tresc = panel?.querySelector('.sta-okno-tresc');
   if (!(tresc instanceof HTMLElement)) return null;
   const licznik = panel?.querySelector('.sta-okno-znacznik');

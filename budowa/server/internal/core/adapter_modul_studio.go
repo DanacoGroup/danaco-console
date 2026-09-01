@@ -82,8 +82,10 @@ func (a *adapterStudia) ZBiblioteka(biblioteka dane.RepozytoriumBiblioteki) *ada
 	return a
 }
 
-// OtworzDokument wczytuje dokument istniejący (po `documentId`) albo zakłada
-// nowy, bez treści — treść wymaga pierwszego wywołania `document.save`.
+// OtworzDokument wczytuje dokument istniejący (po `documentId`), a bez wskazania
+// wraca do ostatnio zmienianego dokumentu okna — wznowienie sesji nie ma skąd
+// znać kodu, a zakładanie nowego przy każdym wejściu mnożyło puste dokumenty.
+// Nowy dokument powstaje, gdy okno nie ma żadnego albo wskazano plik biblioteki.
 func (a *adapterStudia) OtworzDokument(ctx context.Context,
 	z shared.StudioDocumentOpenRequest) (shared.StudioDocumentOpenResponse, error) {
 
@@ -99,6 +101,12 @@ func (a *adapterStudia) OtworzDokument(ctx context.Context,
 		return shared.StudioDocumentOpenResponse{Document: a.zlozDokument(wiersz)}, nil
 	}
 
+	if wartoscTekstu(z.LibraryFileId) == "" {
+		if ostatni, jest := a.ostatniDokumentOkna(ctx, z.WindowId); jest {
+			return shared.StudioDocumentOpenResponse{Document: a.zlozDokument(ostatni)}, nil
+		}
+	}
+
 	nowy := dane.DokumentStudia{
 		Kod:                nowyIdentyfikator(przedrostekDokumentuStudio),
 		Okno:               z.WindowId,
@@ -110,6 +118,22 @@ func (a *adapterStudia) OtworzDokument(ctx context.Context,
 		return shared.StudioDocumentOpenResponse{}, bladStudio(err)
 	}
 	return shared.StudioDocumentOpenResponse{Document: a.zlozDokument(zapisany)}, nil
+}
+
+// ostatniDokumentOkna oddaje dokument okna o najpóźniejszej zmianie; brak
+// dokumentów albo błąd odczytu oddaje false — wtedy powstaje nowy.
+func (a *adapterStudia) ostatniDokumentOkna(ctx context.Context, okno string) (dane.DokumentStudia, bool) {
+	dokumenty, err := a.repozytorium.Dokumenty(ctx, okno)
+	if err != nil || len(dokumenty) == 0 {
+		return dane.DokumentStudia{}, false
+	}
+	ostatni := dokumenty[0]
+	for _, dokument := range dokumenty[1:] {
+		if dokument.Zaktualizowano > ostatni.Zaktualizowano {
+			ostatni = dokument
+		}
+	}
+	return ostatni, true
 }
 
 // ZapiszDokument zapisuje treść dokumentu i, gdy Operator o to poprosi,

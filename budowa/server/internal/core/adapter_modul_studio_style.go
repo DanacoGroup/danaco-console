@@ -205,14 +205,30 @@ func postacStyl(forma *shared.StudioDocumentForm, nazwa string) *shared.StudioNa
 			return &forma.Styles[i]
 		}
 	}
+	// Arkusz wniesiony z pliku kluczuje style nazwą małą literą z nazwą
+	// wyświetlaną osobno; arkusz fabryczny — nazwą pełną. Ten sam styl ma
+	// być znajdowany w obu.
+	for i := range forma.Styles {
+		if postacNazwaStyluZgodna(forma.Styles[i], nazwa) {
+			return &forma.Styles[i]
+		}
+	}
 	return nil
+}
+
+// postacNazwaStyluZgodna porównuje nazwę i nazwę wyświetlaną stylu bez rozróżniania wielkości liter.
+func postacNazwaStyluZgodna(styl shared.StudioNamedStyle, nazwa string) bool {
+	if strings.EqualFold(styl.Name, nazwa) {
+		return true
+	}
+	return styl.DisplayName != nil && strings.EqualFold(*styl.DisplayName, nazwa)
 }
 
 // postacStylFabryczny mówi, czy styl o tej nazwie jest fabryczny, oddając
 // fałsz, gdy arkusz stylu o takiej nazwie nie niesie.
 func postacStylFabryczny(style []shared.StudioNamedStyle, nazwa string) bool {
 	for _, styl := range style {
-		if styl.Name == nazwa {
+		if styl.Name == nazwa || postacNazwaStyluZgodna(styl, nazwa) {
 			return styl.Builtin != nil && *styl.Builtin
 		}
 	}

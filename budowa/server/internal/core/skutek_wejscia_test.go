@@ -470,8 +470,10 @@ func TestDrogaWydanaDoOdzyskaniaNieDzialaJakoDrogaWeryfikacji(t *testing.T) {
 	if blad.Code != shared.ErrorCodeNotAuthenticated {
 		t.Errorf("odmowa niesie kod %q, oczekiwany %q", blad.Code, shared.ErrorCodeNotAuthenticated)
 	}
-	if !strings.Contains(blad.Message, "innej czynności") {
-		t.Errorf("odmowa nie mówi, że droga wydana jest do innej czynności: %q", blad.Message)
+	// Kod innego celu ma odpowiadać tak samo jak kod nieznany — różnica byłaby
+	// wyrocznią trafienia skrótu.
+	if strings.Contains(blad.Message, "innej czynności") {
+		t.Errorf("odmowa zdradza, że kod istnieje i dotyczy innej czynności: %q", blad.Message)
 	}
 	if ile := liczbaWierszy(t, u,
 		`SELECT COUNT(*) FROM potwierdzenie_tozsamosci WHERE uzyte = 1 AND cel = ?`,

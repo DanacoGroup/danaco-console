@@ -49,6 +49,9 @@ func (p *Polaczenie) petlaPingu() {
 
 // Metoda petlaOdbioru czyta komunikaty urządzenia i kieruje je do rdzenia w kontekście serwera, nie połączenia.
 func (p *Polaczenie) petlaOdbioru(kontekstRdzenia context.Context, zrodloRdzenia func() Rdzen, rejestr *protocol.RejestrKomend, praca *sync.WaitGroup, dopuszczenie dopuszczenieBramki) {
+	if dopuszczenie.wymagana && !p.przeszlaPrzezBramke() {
+		p.gniazdo.SetReadLimit(LimitOdczytuPrzedBramka)
+	}
 	for {
 		_, dane, err := p.gniazdo.Read(p.kontekst)
 		if err != nil {
@@ -120,6 +123,7 @@ func (p *Polaczenie) dopuscZadanie(rdzen Rdzen, dopuszczenie dopuszczenieBramki,
 	if dopuszczenie.przepusc(rdzen, zadanie.Komenda, p) {
 		if _, wejscie := komendyWejscia[zadanie.Komenda]; dopuszczenie.wymagana && !wejscie {
 			p.oznaczPrzejscieBramki()
+			p.gniazdo.SetReadLimit(LimitOdczytu)
 		}
 		return true
 	}

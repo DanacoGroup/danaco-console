@@ -26,11 +26,12 @@ func zarejestrujPolaczenie(r *Rejestr, u Uwierzytelnianie, wiez *wiezBramki, n N
 				ProtocolVersion: shared.ProtocolVersion,
 				Commands:        r.Nazwy(),
 			}
-			// Nastawa nieznana zostaje milczeniem: pole puste znaczy brak
-			// wiedzy, nie brak wymogu.
+			// Pole niesie wyłącznie wymóg włączony nastawą. Nastawa zdejmująca
+			// nie zdejmuje bramki (o tym rozstrzyga adres nasłuchu w transporcie),
+			// więc pole zostaje puste — brak wiedzy, nie brak wymogu.
 			if n != nil {
-				if wymog, wskazana := n.WymogLogowania(ctx); wskazana {
-					odpowiedz.LoginRequired = wskaznikPrawdy(wymog)
+				if wymog, wskazana := n.WymogLogowania(ctx); wskazana && wymog {
+					odpowiedz.LoginRequired = wskaznikPrawdy(true)
 				}
 			}
 			// Rdzeń bez wpiętej bramki mówi o tym milczeniem — oba pola

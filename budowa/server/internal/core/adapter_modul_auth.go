@@ -227,6 +227,7 @@ func (a *adapterUwierzytelnienia) WejdzPrzezBramke(ctx context.Context,
 	   najstarsze niezależnie od tego, kto się loguje. */
 	konto, err := a.kontoWejscia(ctx, z)
 	if err != nil {
+		a.wyrownajNieznanyLogin(ctx, z)
 		return shared.AuthLoginResponse{}, err
 	}
 	if err := a.kontoPotwierdzone(ctx, konto); err != nil {
@@ -661,6 +662,34 @@ tożsamość połączenia nadana przez transport. Żądanie spoza gniazda ma jed
 drogę wspólną: praca wewnętrzna rdzenia nie zgaduje sekretów, a rozdzielenie jej
 na drogi wymagałoby wartości, której nie ma.
 */
+// wyrownajNieznanyLogin nakłada na login nieznany tę samą zwłokę i ten sam koszt
+// sprawdzenia sekretu, co na login znany — inaczej czas odpowiedzi i brak
+// dławika zdradzałyby, które loginy mają konto.
+func (a *adapterUwierzytelnienia) wyrownajNieznanyLogin(ctx context.Context, z shared.AuthLoginRequest) {
+	proba := a.dlawik.Podejdz(ctx, kluczDlawika(ctx, czynnoscWejscia, 0))
+	defer proba.Zwolnij()
+	sekret := ""
+	if z.Secret != nil {
+		sekret = *z.Secret
+	}
+	_, _ = sekretZgadzaSie(zapisSekretuWzorcowego(), sekret)
+	proba.Niepowodzenie()
+}
+
+var (
+	zapisWzorcowyRaz   sync.Once
+	zapisWzorcowyTekst string
+)
+
+// zapisSekretuWzorcowego oddaje zapis PBKDF2 sekretu pustego, liczony raz, do
+// porównań o tym samym koszcie przy loginie bez konta.
+func zapisSekretuWzorcowego() string {
+	zapisWzorcowyRaz.Do(func() {
+		zapisWzorcowyTekst, _ = zapisSekretu("")
+	})
+	return zapisWzorcowyTekst
+}
+
 func kluczDlawika(ctx context.Context, czynnosc string, kontoId int64) string {
 	if kontoId != 0 {
 		return czynnosc + "\x00konto:" + strconv.FormatInt(kontoId, 10)

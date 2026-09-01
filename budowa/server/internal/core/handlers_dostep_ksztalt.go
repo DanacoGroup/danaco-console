@@ -5,6 +5,7 @@ package core
 import (
 	"errors"
 	"strconv"
+	"strings"
 
 	"danacoconsole/server/internal/dane"
 	"danacoconsole/server/internal/protocol"
@@ -14,6 +15,9 @@ import (
 // sprawdzKsztaltPunktu odmawia założenia punktu, którego schemat i tak by nie
 // przyjął, i podaje operatorowi powód odmowy.
 func sprawdzKsztaltPunktu(z shared.AccessPointAddRequest) error {
+	if strings.TrimSpace(z.Name) == "" {
+		return odmowaKsztaltuPunktu("punkt dostępu wymaga nazwy")
+	}
 	if z.Kind == shared.AccessPointKindMcpBridge &&
 		wartoscTekstu(z.Host) == "" && wartoscTekstu(z.Endpoint) == "" {
 		return odmowaKsztaltuPunktu("punkt rodzaju mcpBridge wymaga nazwy maszyny albo adresu mostu")

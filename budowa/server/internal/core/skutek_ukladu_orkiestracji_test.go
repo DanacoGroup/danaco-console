@@ -138,7 +138,7 @@ func TestSkutekKompensacjiWBazie(t *testing.T) {
 
 	wykonajUdana(t, zmontowany, zycie, shared.CommandOrchestrationCompensationSet,
 		shared.OrchestrationCompensationSetRequest{
-			WorkflowId: uklad, StepId: "krok-a", CompensationStepId: "krok-b",
+			WorkflowId: uklad, StepId: "krok-a", CompensationStepId: tekstOpcjonalny("krok-b"),
 		}, nil)
 	if liczbaWierszyZakresu(t, baza,
 		`SELECT COUNT(*) FROM orkiestracja_kompensacja k JOIN automatyka a ON a.id = k.automatyka_id
@@ -149,7 +149,7 @@ func TestSkutekKompensacjiWBazie(t *testing.T) {
 	// Krok wycofujący pusty zdejmuje kompensację.
 	wykonajUdana(t, zmontowany, zycie, shared.CommandOrchestrationCompensationSet,
 		shared.OrchestrationCompensationSetRequest{
-			WorkflowId: uklad, StepId: "krok-a", CompensationStepId: "",
+			WorkflowId: uklad, StepId: "krok-a", CompensationStepId: nil,
 		}, nil)
 	if liczbaWierszyZakresu(t, baza,
 		`SELECT COUNT(*) FROM orkiestracja_kompensacja k JOIN automatyka a ON a.id = k.automatyka_id
@@ -160,7 +160,7 @@ func TestSkutekKompensacjiWBazie(t *testing.T) {
 	// Krok wycofujący sam siebie nie wycofuje niczego.
 	odmowa := wykonajOdmowna(t, zmontowany, zycie, shared.CommandOrchestrationCompensationSet,
 		shared.OrchestrationCompensationSetRequest{
-			WorkflowId: uklad, StepId: "krok-a", CompensationStepId: "krok-a",
+			WorkflowId: uklad, StepId: "krok-a", CompensationStepId: tekstOpcjonalny("krok-a"),
 		})
 	if odmowa.Code == "" {
 		t.Error("kompensacja kroku samym sobą przeszła bez odmowy")

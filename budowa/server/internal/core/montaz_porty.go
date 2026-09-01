@@ -80,6 +80,9 @@ func zlozPorty(s skladPortow) Porty {
 	katalogDanych := s.montaz.Konfiguracja.KatalogDanych
 	// Jeden sejf poświadczeń nad katalogiem danych skonfigurowanym: druga instancja ścigałaby się o zapis.
 	sejf := dane.NowySejfPlikowy(katalogDanych)
+	if s.montaz.Dziennik != nil {
+		s.montaz.Dziennik.Printf("sejf poświadczeń: %s", sejf.OpisKlucza())
+	}
 	// Ten sam sejf idzie do warstwy modeli uchwytem pakietowym, zapisanym przed pierwszym żądaniem.
 	models.UstawSejfPoswiadczen(sejf)
 	// Katalog akcji i przenoszenie kontekstu powstają wcześniej — mają po dwóch czytelników.

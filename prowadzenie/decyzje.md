@@ -1544,3 +1544,35 @@ wyłącznie przebiegów, które by je nadały — zakres opisuje
 
 Rozstrzygnięcie jest zgodne z zakresem etapu 2: poza Studiem moduły są
 zapowiedziane, a nie działające.
+
+## 26. Klucz sejfu poświadczeń: ze zmiennej, a bez niej własny klucz rdzenia
+
+**Rozstrzygnięcie Prowadzącego, 1 września 2026. Stan: obowiązuje do czasu
+rozstrzygnięcia Właściciela (audyt, rozdział 5, pozycja 10).**
+
+Sejf poświadczeń jest pieczętowany AES-256-GCM kluczem spoza bazy. Klucz
+pochodzi z dwóch źródeł, w tej kolejności:
+
+1. plik wskazany zmienną `DANACO_KLUCZ_SEJFU` (prawa 0400, 32 bajty albo
+   64 znaki szesnastkowe) — droga serwera wdrożenia, plik poza katalogiem
+   danych, np. `/etc/danaco-console/sejf.klucz`;
+2. bez zmiennej — plik `sejf.klucz` w katalogu danych, założony przez rdzeń
+   przy pierwszym użyciu sejfu z prawami 0400 i nigdy nie nadpisywany.
+
+Dziennik startu mówi, z którego źródła sejf bierze klucz.
+
+**Dlaczego nie odmowa startu bez zmiennej.** Rdzeń na urządzeniu Operatora
+uruchamia powłoka Tauri bez zmiennych wdrożenia; sejf niesie skróty PBKDF2
+haseł kont i znacznik bramki bez poczty, więc bez klucza nie da się założyć
+pierwszego konta. Zmierzone sprawdzianem `TestKontoDrugieNieSiegaKontaPierwszego`:
+przed zmianą `auth.register` odmawiał kodem `internal_error`, po zmianie
+przechodzi.
+
+**Dlaczego nie wyjęcie haseł z sejfu.** Odwołania do sekretów siedzą
+w tabelach metod wejścia; przeniesienie skrótów do bazy to nowy krok migracji
+i zmiana kontraktu repozytorium bez zysku dla bezpieczeństwa.
+
+**Co zostaje Właścicielowi.** Na urządzeniu Operatora klucz własny leży obok
+sejfu, więc kopia katalogu danych wystarcza do odczytu haseł IMAP/SMTP
+i kluczy API. Zamknięcie tej drogi na Windows to DPAPI powłoki — pozycja 10
+audytu pozostaje otwarta w tym zakresie.

@@ -10,7 +10,9 @@ KLIENT="$KORZEN/budowa/klient"
 CEL="aarch64-pc-windows-msvc"
 LLVM_MINGW="${LLVM_MINGW:-/opt/llvm-mingw}"
 WERSJA="2.0.0"
-WYDANIE="$KORZEN/budowa/wydania/$WERSJA-$(date +%Y-%m-%d)"
+# Katalog wydania wolno wskazać z zewnątrz, tak samo jak w kreatorze i pakiecie
+# serwera: złożenie próbne nie ma odkładać pliku między wydania.
+WYDANIE="${DANACO_KATALOG_WYDANIA:-$KORZEN/budowa/wydania/$WERSJA-$(date +%Y-%m-%d)}"
 NAZWA_WYDANIA="Danaco Console_${WERSJA}_hybryda_arm64-setup.exe"
 
 export PATH="$LLVM_MINGW/bin:$PATH"
@@ -197,7 +199,7 @@ if [ "$PODPIS_BAJTOW" -gt 0 ]; then
 elif [ "${DANACO_PODPIS:-pomijany}" = "wymagany" ]; then
   padnij "katalog Security jest pusty, a DANACO_PODPIS=wymagany — wyniku nie odkładam do wydania"
 else
-  OPIS_PODPISU="BRAK — katalog Security pusty"
+  OPIS_PODPISU="BRAK — katalog Security pusty; wydanie wychodzi bez podpisu (DANACO_PODPIS=pomijany, rozstrzygnięcie 27)"
 fi
 printf '  %s\n' "$OPIS_PODPISU"
 

@@ -14,9 +14,10 @@ Description: Danaco Console — rdzeń platformy wraz z pakietem interfejsu
  klientom. Zgodnie z modelem wdrożenia całość stoi na serwerze, a u Operatora
  zostaje wyłącznie okno aplikacji.
  .
- Usługa nasłuchuje na porcie 17870 pod jednostką systemd danaco-console.service,
- pracuje na koncie systemowym danaco-console, a dane trzyma w
- /var/lib/danaco-console.
+ Usługa nasłuchuje na porcie 17870 pętli zwrotnej (127.0.0.1) pod jednostką
+ systemd danaco-console.service z wymogiem logowania; na świat wystawia ją Caddy
+ jako console.danaco-group.pl:443. Pracuje na koncie systemowym danaco-console,
+ a dane trzyma w /var/lib/danaco-console.
  .
  Pole Depends niesie te programy arsenału, które ma dystrybucja. Reszty arsenału
  apt nie niesie — Real-ESRGAN (powiększanie obrazu), rembg (wycinanie tła),

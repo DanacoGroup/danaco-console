@@ -1592,7 +1592,9 @@ dostaje dostęp na czas podpisu.
 
 Zakup wymaga dokumentów spółki — to jedyna czynność, której Prowadzący nie
 wykona. Do zakupu wydania idą niepodpisane, strona Pobierz mówi o tym wprost,
-a skrypty składania biorą `DANACO_PODPIS=niewymagany` jawnie.
+a skrypty składania biorą `DANACO_PODPIS=pomijany` jawnie (wartość przyjmowana
+przez `instalka-hybryda-win-{x64,arm}.sh` i `instalka-kreatora-win-x64.sh`;
+brak podpisu skrypt wypisuje w pomiarze wyniku).
 
 ## 28. Wydanie ARM64 nie wchodzi w ten etap
 

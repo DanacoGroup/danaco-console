@@ -68,10 +68,11 @@ for artefakt in "$INTERFEJS/index.html" "$INTERFEJS/integracja.js" "$DOSTAWA"; d
 done
 
 zglos "Sprawdzenie wykazu wydań"
-# Wykaz wydań jest wkompilowywany w kreator (`instalator/src-tauri/src/pobranie.rs`)
-# i to z niego krok 5 bierze adres oraz sumę powłoki. Wykaz bez pozycji dla tej
-# architektury dałby kreator, który dochodzi do kroku 5 i odmawia — a odmowę
-# widać dopiero na maszynie z Windows, więc wykaz sprawdzany jest tu.
+# Krok 5 czyta wykaz najpierw z kanału (`wykaz_biezacy` w
+# `instalator/src-tauri/src/pobranie.rs`), a kopia wkompilowana z tego pliku jest
+# zapasem na kanał, który nie odpowie. Wykaz bez pozycji dla tej architektury
+# dałby kreator, który dochodzi do kroku 5 i odmawia — a odmowę widać dopiero na
+# maszynie z Windows, więc wykaz sprawdzany jest tu, przed budową.
 python3 - "$WYKAZ" <<'PYTON'
 import json, sys
 wykaz = json.load(open(sys.argv[1], encoding='utf-8'))
@@ -93,7 +94,7 @@ PYTON
 
 zglos "Sprawdzenie poświadczeń kanału i żądania podpisu"
 # Poświadczenia kanału wchodzą do binarium przy KOMPILACJI, przez option_env!
-# (instalator/src-tauri/src/pobranie.rs:21). Idą do cargo jawnie albo są jawnie
+# (`instalator/src-tauri/src/pobranie.rs`). Idą do cargo jawnie albo są jawnie
 # zdejmowane ze środowiska: połowa poświadczenia daje nagłówek uwierzytelnienia
 # złożony z pustego napisu, a odmowa 401 wygląda wtedy na usterkę kanału.
 if [ -n "${DANACO_KANAL_UZYTKOWNIK:-}" ] && [ -n "${DANACO_KANAL_HASLO:-}" ]; then
@@ -210,7 +211,7 @@ if [ "$PODPIS_BAJTOW" -gt 0 ]; then
 elif [ "${DANACO_PODPIS:-pomijany}" = "wymagany" ]; then
   padnij "katalog Security jest pusty, a DANACO_PODPIS=wymagany — wyniku nie odkładam do wydania"
 else
-  OPIS_PODPISU="BRAK — katalog Security pusty"
+  OPIS_PODPISU="BRAK — katalog Security pusty; wydanie wychodzi bez podpisu (DANACO_PODPIS=pomijany, rozstrzygnięcie 27)"
 fi
 printf '  %s\n' "$OPIS_PODPISU"
 

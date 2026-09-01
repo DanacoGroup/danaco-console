@@ -179,8 +179,9 @@ da się wskazać w kodzie.
 Danaco Console to środowisko operacyjne pracy z modelami językowymi, zbudowane jako aplikacja instalowana
 na stacji Operatora. Z perspektywy wdrożeniowej nie jest to pojedynczy plik wykonywalny ani usługa sieciowa
 kupowana w chmurze, lecz zestaw trzech współpracujących części, budowanych ze źródeł i składanych w jeden
-katalog produktu. Instalacja polega dziś na zbudowaniu tych części i złożeniu ich skryptem wydania —
-klasycznego instalatora typu „kliknij dalej” produkt w wersji v2.0 **nie posiada**.
+katalog produktu. Instalacja u Operatora idzie przez kreator instalacji sześciu kroków
+(`Danaco Console — Instalator_2.0.0_x64-setup.exe`, rozdział 5.1), a rdzeń stoi na serwerze wdrożenia
+z pakietu `.deb` (rozdział 12.6); budowa ze źródeł opisana niżej jest drogą stacji budującej.
 
 Konsekwencja jest praktyczna: stacja, na której Danaco Console ma powstać, musi mieć zainstalowane
 środowiska uruchomieniowe kompilatorów (Go, Node.js, opcjonalnie Rust). Stacja, na której produkt ma jedynie
@@ -288,8 +289,8 @@ Port wybrano świadomie poza pulą zajętą przez inne systemy Danaco (8090, 809
 8771, 8772, 8790, 9980, 18765).
 
 Ruch produktu jest w całości ruchem pętli zwrotnej: klient łączy się z rdzeniem na tej samej maszynie.
-Otwieranie portu 17870 na zewnątrz nie jest wymagane do pracy i nie jest przez dokument zalecane —
-produkt w wersji v2.0 nie posiada uwierzytelniania transportu.
+Otwieranie portu 17870 na zewnątrz nie jest wymagane do pracy i nie jest zalecane; wdrożenie serwerowe
+wystawia rdzeń przez Caddy z jawnym wymogiem logowania (rozdział 2.4, rozstrzygnięcie 29).
 
 Dostęp do sieci publicznej jest natomiast potrzebny:
 
@@ -304,11 +305,13 @@ w profilu użytkownika i do katalogów roboczych wskazanych przez Operatora. Upr
 być potrzebne jednorazowo przy instalowaniu środowisk uruchomieniowych (Go, Node.js, Rust) oraz przy
 budowie instalatora NSIS.
 
-Danaco Console jest projektowana jako aplikacja jednego Operatora na jednej stacji. Produkt nie posiada
-w v2.0 rozdziału ról użytkowników ani uwierzytelniania — kto ma dostęp do gniazda rdzenia, ma pełnię
-możliwości. To wiąże się z zaleceniem z rozdziału 2.3: nasłuch pozostaje na pętli zwrotnej.
-**[DO DECYZJI OPERATORA]** — czy dopuścić nasłuch na interfejsie sieciowym i jakim mechanizmem
-zewnętrznym (zapora, tunel SSH, odwrotne proxy z uwierzytelnianiem) go osłonić.
+Na stacji deweloperskiej rdzeń nasłuchuje na pętli zwrotnej i tam zdejmuje wymóg logowania sam z siebie:
+każdy proces tej maszyny jest Operatorem. Nasłuch na interfejsie sieciowym rozstrzyga rozstrzygnięcie 29
+(`prowadzenie/decyzje.md`): rdzeń wdrożenia stoi na `127.0.0.1:17870` z jawnym
+`DANACO_WYMOG_LOGOWANIA=true` w jednostce systemd, a na świat wystawia go odwrotne proxy Caddy jako
+`console.danaco-group.pl:443` z TLS z ACME. Port 17870 nie jest otwierany na zaporze;
+`DANACO_WSZYSTKIE_INTERFEJSY=1` nie wchodzi do wdrożenia. Bez jawnego wymogu Caddy wystawiłoby konsolę
+publicznie bez bramki — rdzeń na pętli zwrotnej nie odróżnia proxy od procesu lokalnego.
 
 ---
 
@@ -493,9 +496,12 @@ prywatnej; udostępnianie w sieciach publicznych nie jest potrzebne i nie jest z
 
 Oprogramowanie ochronne bywa źródłem dwóch utrudnień: spowalnia budowę przez skanowanie katalogów
 `node_modules` i `target` w czasie rzeczywistym oraz może kwarantannować świeżo zbudowane, niepodpisane
-pliki wykonywalne. Produkt w v2.0 **nie posiada podpisu kodu**. **[DO DECYZJI OPERATORA]** —
-czy wprowadzić podpisywanie artefaktów wydania certyfikatem producenta oraz jakie wyłączenia
-z monitorowania czasu rzeczywistego ustanowić dla katalogów budowy.
+pliki wykonywalne. Podpis kodu rozstrzyga rozstrzygnięcie 27 (`prowadzenie/decyzje.md`): certyfikat
+OV od Certum, klucz w usłudze SimplySign, podpis przez klienta SimplySign (PKCS#11, `osslsigncode`),
+znacznik czasu `http://time.certum.pl`. Do zakupu certyfikatu (dokumenty spółki, czynność Właściciela)
+wydania idą bez podpisu z jawnym `DANACO_PODPIS=pomijany`, wykaz niesie `podpisany: false`, a strona
+„Pobierz” mówi o tym przy każdej pozycji Windows. Wyłączenia katalogów budowy z monitorowania czasu
+rzeczywistego pozostają nastawą stacji, nie produktu.
 
 ---
 
@@ -503,9 +509,15 @@ z monitorowania czasu rzeczywistego ustanowić dla katalogów budowy.
 
 ### 5.1 Stan faktyczny dróg instalacji
 
-Danaco Console w wersji v2.0 **nie posiada klasycznego instalatora** — nie ma pakietu MSI ani gotowego
-pliku `setup.exe` do pobrania i uruchomienia. Instalacja polega na zbudowaniu produktu ze źródeł
-i złożeniu artefaktów w katalogu produktu.
+Operator pobiera ze strony „Pobierz” kreator instalacji sześciu kroków — pakiet NSIS
+`Danaco Console — Instalator_2.0.0_x64-setup.exe` składany skryptem
+`budowa/scripts/instalka-kreatora-win-x64.sh`. Kreator rozpoznaje architekturę maszyny, czyta wykaz
+wydań z kanału `https://pobierz.danaco-group.pl/` (kopia wkompilowana jest zapasem) i w kroku 5 sam
+ściąga powłokę programu (`Danaco Console_2.0.0_hybryda_x64-setup.exe`, składana
+`instalka-hybryda-win-x64.sh`). Rdzenia w żadnym z tych plików nie ma — stoi na serwerze wdrożenia
+(rozstrzygnięcie 8, model hybrydowy). Pozycja ARM64 stoi w wykazie jako „w przygotowaniu” bez pliku
+(rozstrzygnięcie 28); kreator na maszynie ARM odmawia nazwanym powodem. Poniższy opis budowy ze źródeł
+dotyczy stacji budującej, nie stacji Operatora.
 
 Do niedawna nie istniała nawet zautomatyzowana droga tego złożenia: audyt w stanie sprzed prac naprawczych odnotował
 wprost, że **żaden skrypt nie wytwarzał katalogu `C:\DanacoConsole_App`**, a Operator musiał budować trzy
@@ -636,16 +648,16 @@ wraz z metadanymi producenta (`publisher`: Danaco Holding Group Sp. z o.o., `cop
 DeveloperTool) oraz zestawem ikon. Oznacza to, że projekt jest **przygotowany** do wytworzenia
 instalatora Windows.
 
-Wytworzenie instalatora nie należy jednak do drogi wydania: skrypt buduje powłokę z przełącznikiem
-`--no-bundle`, świadomie pomijając pakowanie. Instalator jest osobnym krokiem, wymagającym zainstalowanego
-NSIS, i uruchamia się poleceniem `cargo tauri build` (bez `--no-bundle`) w `budowa/desktop/src-tauri`.
+Instalatory NSIS składają na Linuksie dwa skrypty wydania: `budowa/scripts/instalka-hybryda-win-x64.sh`
+(powłoka programu, ze wskazaniem rdzenia wdrożenia z rozstrzygnięcia 29 wpisanym przy kompilacji —
+rozdział 12.6) i `budowa/scripts/instalka-kreatora-win-x64.sh` (kreator sześciu kroków). Oba mierzą
+katalog Security gotowego pliku i przyjmują `DANACO_PODPIS=wymagany|pomijany`.
 
-Uwaga ostrzegawcza: instalator NSIS zainstalowałby **wyłącznie powłokę** wraz z pakietem interfejsu,
-zgodnie z konfiguracją Tauri. Nie obejmuje on binarki rdzenia `danaco-console.exe`, której powłoka szuka
-obok siebie. Wytworzenie kompletnego instalatora produktu wymagałoby dołączenia rdzenia jako zasobu
-zewnętrznego pakietu. **[DO DECYZJI OPERATORA]** — czy i w jakim kształcie wprowadzić pełny instalator
-produktu obejmujący rdzeń, oraz czy podpisywać go certyfikatem producenta. Dopóki decyzja nie zapadnie,
-dokument nie zaleca drogi NSIS jako drogi instalacji.
+Instalator NSIS niesie **wyłącznie powłokę** z osadzonym interfejsem — i tak ma być: rdzeń stoi na
+serwerze wdrożenia (rozstrzygnięcie 8), a instalator pełny obejmujący rdzeń nie powstaje. Podpis
+Authenticode rozstrzyga rozstrzygnięcie 27 (rozdział 4.4): do zakupu certyfikatu OV od Certum oba
+skrypty składają z jawnym `DANACO_PODPIS=pomijany`; po zakupie polecenie podpisujące wchodzi do
+`bundle.windows` obu profili i składanie idzie z `DANACO_PODPIS=wymagany`.
 
 ---
 
@@ -1917,7 +1929,7 @@ Różnica ma znaczenie praktyczne przy planowaniu wdrożenia:
 | --- | --- |
 | model ma czytać i zmieniać pliki na maszynie zdalnej | most MCP (rozdział 15) — **[DZIAŁA CZĘŚCIOWO]**, z ograniczeniami stałych |
 | tura modelu ma biec na maszynie zdalnej (odciążenie stacji) | **brak drogi** — **[BRAK]** |
-| rdzeń ma pracować na serwerze, a interfejs na stacji | technicznie możliwe (rola `hub` + nasłuch poza pętlą zwrotną), lecz **bez uwierzytelniania transportu** — patrz rozdz. 2.4 |
+| rdzeń ma pracować na serwerze, a interfejs na stacji | droga wdrożenia z rozstrzygnięcia 29: rdzeń na `127.0.0.1:17870` z wymogiem logowania za Caddy — patrz rozdz. 2.4 i 12.6 |
 
 **[DO DECYZJI OPERATORA]** — czy i kiedy wprowadzić transport sieciowy agenta wraz z uwierzytelnianiem,
 bo dopiero to zamyka pion pracy rozproszonej. Do tego czasu dokument zaleca wdrożenie jednomaszynowe
@@ -2892,10 +2904,11 @@ Get-Process -Id <OwningProcess>
 **Rozwiązania:** zatrzymać zbędny proces rdzenia albo — jeżeli konflikt pochodzi od zupełnie innej
 usługi — zmienić port, pamiętając o **podwójnej zmianie** opisanej w rozdziale 8.4 (rdzeń **i** klient).
 
-**Uwaga o zakresie nasłuchu.** Warstwa transportu nie zawęża nasłuchu samodzielnie: pole adresu
-pozostaje puste, co dla `net.Listen` oznacza **wszystkie interfejsy**, nie samą pętlę zwrotną. Produkt
-nie posiada uwierzytelniania transportu, więc osłona należy do zapory systemowej (rozdziały 2.3
-i 4.4). **[DO DECYZJI OPERATORA]** — czy ograniczyć nasłuch regułą zapory do pętli zwrotnej.
+**Uwaga o zakresie nasłuchu.** Pusty adres nasłuchu znaczy pętlę zwrotną (`127.0.0.1`,
+`transport/ustawienia.go`); nasłuch na wszystkich interfejsach wymaga jawnego
+`DANACO_WSZYSTKIE_INTERFEJSY=1` i włącza wymóg logowania sam z siebie. Wdrożenie z rozstrzygnięcia 29
+nasłuchu nie poszerza: rdzeń stoi na `127.0.0.1:17870` z jawnym wymogiem logowania, a na świat wystawia
+go Caddy (rozdział 2.4). Reguła zapory dla portu 17870 nie jest potrzebna.
 
 ### 21.6 Powłoka bez pakietu interfejsu — „pusta strona”
 
@@ -3186,10 +3199,10 @@ produkcyjnym.
 
 | Nr | Rozdział | Kwestia |
 | --- | --- | --- |
-| 1 | 2.4 | Czy dopuścić nasłuch na interfejsie sieciowym i jakim mechanizmem zewnętrznym go osłonić |
+| 1 | 2.4 | rozstrzygnięte: rozstrzygnięcie 29 — nasłuch `127.0.0.1:17870` z wymogiem logowania, na świat Caddy `console.danaco-group.pl:443` |
 | 2 | 3.3 | Ustalenie wiążącej wersji Node.js (`engines` albo `.nvmrc`) dla powtarzalnej budowy |
-| 3 | 4.4 | Podpisywanie artefaktów wydania i wyłączenia z monitorowania czasu rzeczywistego |
-| 4 | 5.6 | Czy wprowadzić pełny instalator produktu obejmujący rdzeń i czy go podpisywać |
+| 3 | 4.4 | rozstrzygnięte: rozstrzygnięcie 27 — OV od Certum, klucz w SimplySign; do zakupu `DANACO_PODPIS=pomijany`. Otwarte: wyłączenia z monitorowania na stacji budującej |
+| 4 | 5.6 | rozstrzygnięte: rozstrzygnięcia 8 i 27 — instalator pełny nie powstaje (rdzeń na serwerze), podpis jak w pozycji 3 |
 | 5 | 7.4 | Czy wprowadzić jawne ustawienie adresu rdzenia po stronie klienta |
 | 6 | 8.4 | Czy przekazywać port z rdzenia do klienta, by usunąć konieczność podwójnej zmiany |
 | 7 | 9.4 | Czy ustanowić cykliczną kopię katalogu danych i jaki okres przechowywania przyjąć |
@@ -3204,7 +3217,7 @@ produkcyjnym.
 | 16 | 20.2 | Liczba kont w puli rotacji |
 | 17 | 20.8 | Czy uruchamiać wdrożenie pilotażowe w obecnym zakresie |
 | 18 | 21.1 | Czy przekierowywać wyjście diagnostyczne rdzenia do pliku |
-| 19 | 21.5 | Czy ograniczyć nasłuch regułą zapory do pętli zwrotnej |
+| 19 | 21.5 | rozstrzygnięte: rozstrzygnięcie 29 — nasłuch stoi na pętli zwrotnej z jednostki, reguła zapory zbędna |
 
 ### 23.5 Słownik pojęć użytych w dokumencie
 

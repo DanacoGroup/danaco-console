@@ -4,49 +4,51 @@
 package core
 
 import (
+	"context"
+
 	"danacoconsole/server/internal/konfig"
 	"danacoconsole/shared"
 )
 
 // rozglosProfilIzolacji rozgłasza zmianę profilu izolacji, zdarzeniem
 // `isolation.profile.changed` rodziny kontraktu.
-func (a *adapterIzolacji) rozglosProfilIzolacji(zmiana shared.ChangeKind, kodProfilu string) {
+func (a *adapterIzolacji) rozglosProfilIzolacji(ctx context.Context, zmiana shared.ChangeKind, kodProfilu string) {
 	if a.rozgloszenie == nil || kodProfilu == "" {
 		return
 	}
-	a.rozgloszenie.wyslij(shared.EventIsolationProfileChanged, "",
+	a.rozgloszenie.wyslijDoKonta(ctx, shared.EventIsolationProfileChanged, "",
 		shared.IsolationProfileChangedEvent{Change: zmiana, ProfileId: kodProfilu})
 }
 
 // rozglosPolitykeAdresu rozgłasza zmianę polityki obowiązującej okno, gdy adres
 // zapisu okna dotyczy. Adres spod innego poziomu nie rozgłasza niczego —
 // powody w nagłówku pliku.
-func (a *adapterIzolacji) rozglosPolitykeAdresu(adres konfig.Adres) {
+func (a *adapterIzolacji) rozglosPolitykeAdresu(ctx context.Context, adres konfig.Adres) {
 	if adres.Poziom != shared.ConfigScopeWindow {
 		return
 	}
-	a.rozglosPolitykeOkna(adres.KluczZasiegu)
+	a.rozglosPolitykeOkna(ctx, adres.KluczZasiegu)
 }
 
 // rozglosPolitykeOkna rozgłasza `isolation.policy.changed` dla jednego okna.
 // Rodzaj zmiany jest zawsze `updated`: polityka okna nie powstaje ani nie znika,
 // okno ma ją zawsze, choćby złożoną z samych wartości domyślnych.
-func (a *adapterIzolacji) rozglosPolitykeOkna(idOkna string) {
+func (a *adapterIzolacji) rozglosPolitykeOkna(ctx context.Context, idOkna string) {
 	if a.rozgloszenie == nil || idOkna == "" {
 		return
 	}
-	a.rozgloszenie.wyslij(shared.EventIsolationPolicyChanged, "",
+	a.rozgloszenie.wyslijDoKonta(ctx, shared.EventIsolationPolicyChanged, "",
 		shared.IsolationPolicyChangedEvent{Change: shared.ChangeKindUpdated, WindowId: idOkna})
 }
 
 // rozglosPolitykeWyboruWarstwy rozgłasza zmianę polityki po
 // `isolation.layer.set`. Przełączenie warstwy zmienia politykę, choć nie
 // zmienia wartości.
-func (a *adapterIzolacji) rozglosPolitykeWyboruWarstwy(poziom shared.ConfigScope, byt string) {
+func (a *adapterIzolacji) rozglosPolitykeWyboruWarstwy(ctx context.Context, poziom shared.ConfigScope, byt string) {
 	if poziom != shared.ConfigScopeWindow {
 		return
 	}
-	a.rozglosPolitykeOkna(byt)
+	a.rozglosPolitykeOkna(ctx, byt)
 }
 
 // rodzajZapisuProfilu rozstrzyga, czy `isolation.profile.save` założył profil,

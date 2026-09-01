@@ -38,7 +38,7 @@ func zarejestrujPrzestrzenRobocza(r *Rejestr, w PrzestrzenRobocza, e *emiter) {
 		obsluz(func(ctx context.Context, z shared.ProjectCreateRequest) (shared.ProjectCreateResponse, error) {
 			odpowiedz, err := w.ZalozProjekt(ctx, z)
 			if err == nil {
-				e.projekt(shared.ChangeKindCreated, odpowiedz.Project)
+				e.projekt(ctx, shared.ChangeKindCreated, odpowiedz.Project)
 			}
 			return odpowiedz, err
 		}))
@@ -47,7 +47,7 @@ func zarejestrujPrzestrzenRobocza(r *Rejestr, w PrzestrzenRobocza, e *emiter) {
 		obsluz(func(ctx context.Context, z shared.ProjectRenameRequest) (shared.ProjectRenameResponse, error) {
 			odpowiedz, err := w.PrzemianujProjekt(ctx, z)
 			if err == nil {
-				e.projekt(shared.ChangeKindUpdated, odpowiedz.Project)
+				e.projekt(ctx, shared.ChangeKindUpdated, odpowiedz.Project)
 			}
 			return odpowiedz, err
 		}))
@@ -57,7 +57,7 @@ func zarejestrujPrzestrzenRobocza(r *Rejestr, w PrzestrzenRobocza, e *emiter) {
 			odpowiedz, err := w.UsunProjekt(ctx, z)
 			if err == nil {
 				// Projektu już nie ma, więc zdarzenie niesie sam identyfikator.
-				e.projekt(shared.ChangeKindDeleted, shared.WorkspaceProject{Id: odpowiedz.ProjectId})
+				e.projekt(ctx, shared.ChangeKindDeleted, shared.WorkspaceProject{Id: odpowiedz.ProjectId})
 			}
 			return odpowiedz, err
 		}))
@@ -66,7 +66,7 @@ func zarejestrujPrzestrzenRobocza(r *Rejestr, w PrzestrzenRobocza, e *emiter) {
 		obsluz(func(ctx context.Context, z shared.WorkspaceDashboardGetRequest) (shared.WorkspaceDashboardGetResponse, error) {
 			odpowiedz, err := w.Pulpit(ctx, z)
 			if err == nil {
-				e.projekt(rodzajZmianyProjektu(odpowiedz.Dashboard.Project), odpowiedz.Dashboard.Project)
+				e.projekt(ctx, rodzajZmianyProjektu(odpowiedz.Dashboard.Project), odpowiedz.Dashboard.Project)
 			}
 			return odpowiedz, err
 		}))
@@ -119,13 +119,13 @@ func rozglosProjekt(ctx context.Context, w PrzestrzenRobocza, e *emiter, idProje
 	if err != nil {
 		return
 	}
-	e.projekt(shared.ChangeKindUpdated, projekt)
+	e.projekt(ctx, shared.ChangeKindUpdated, projekt)
 }
 
 // projekt rozgłasza zmianę projektu przestrzeni roboczej. Projekt jest
 // komponentem własnym, nie bytem jednej karty sesji, więc zdarzenie idzie bez
 // jej wskazania — pracuje nad nim wiele kart naraz.
-func (e *emiter) projekt(zmiana shared.ChangeKind, p shared.WorkspaceProject) {
-	e.wyslij(shared.EventWorkspaceProjectChanged, "",
+func (e *emiter) projekt(ctx context.Context, zmiana shared.ChangeKind, p shared.WorkspaceProject) {
+	e.wyslijDoKonta(ctx, shared.EventWorkspaceProjectChanged, "",
 		shared.WorkspaceProjectChangedEvent{Change: zmiana, Project: p})
 }

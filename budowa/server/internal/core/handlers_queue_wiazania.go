@@ -37,7 +37,7 @@ func zarejestrujWiazaniaKolejek(r *Rejestr, kolejki Kolejki, e *emiter) {
 		obsluz(func(ctx context.Context, z shared.QueueLinkRequest) (shared.QueueLinkResponse, error) {
 			w, err := wiazane.Zwiaz(ctx, z)
 			if err == nil {
-				e.kolejka(shared.ChangeKindUpdated, w.Queue)
+				e.kolejka(ctx, shared.ChangeKindUpdated, w.Queue)
 			}
 			return w, err
 		}))

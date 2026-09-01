@@ -34,7 +34,7 @@ func (a *adapterDiagnostyki) UruchomAnalize(ctx context.Context,
 
 	wynik := analizaKontraktu(analiza, kodyRekomendacji(rekomendacje))
 	if a.zmiana != nil {
-		a.zmiana(shared.ChangeKindCreated, wynik)
+		a.zmiana(ctx, shared.ChangeKindCreated, wynik)
 	}
 	return shared.DiagnosticsAnalyzeRunResponse{Analysis: wynik}, nil
 }

@@ -40,7 +40,7 @@ func zarejestrujPunktyDostepu(r *Rejestr, punkty PunktyDostepu, e *emiter) {
 		obsluz(func(ctx context.Context, z shared.AccessPointAddRequest) (shared.AccessPointAddResponse, error) {
 			w, err := punkty.Dodaj(ctx, z)
 			if err == nil {
-				e.punktDostepu(shared.ChangeKindCreated, w.Point)
+				e.punktDostepu(ctx, shared.ChangeKindCreated, w.Point)
 			}
 			return w, err
 		}))
@@ -49,7 +49,7 @@ func zarejestrujPunktyDostepu(r *Rejestr, punkty PunktyDostepu, e *emiter) {
 		obsluz(func(ctx context.Context, z shared.AccessPointUpdateRequest) (shared.AccessPointUpdateResponse, error) {
 			w, err := punkty.Zmien(ctx, z)
 			if err == nil {
-				e.punktDostepu(shared.ChangeKindUpdated, w.Point)
+				e.punktDostepu(ctx, shared.ChangeKindUpdated, w.Point)
 			}
 			return w, err
 		}))
@@ -58,7 +58,7 @@ func zarejestrujPunktyDostepu(r *Rejestr, punkty PunktyDostepu, e *emiter) {
 		obsluz(func(ctx context.Context, z shared.AccessPointRemoveRequest) (shared.AccessPointRemoveResponse, error) {
 			w, err := punkty.Usun(ctx, z)
 			if err == nil && w.Removed {
-				e.punktDostepu(shared.ChangeKindDeleted, shared.AccessPoint{Id: z.AccessPointId})
+				e.punktDostepu(ctx, shared.ChangeKindDeleted, shared.AccessPoint{Id: z.AccessPointId})
 			}
 			return w, err
 		}))
@@ -76,7 +76,7 @@ func zarejestrujNadaniaDostepu(r *Rejestr, nadania NadaniaDostepu, e *emiter) {
 		obsluz(func(ctx context.Context, z shared.AccessGrantAddRequest) (shared.AccessGrantAddResponse, error) {
 			w, err := nadania.Dodaj(ctx, z)
 			if err == nil {
-				e.nadanieDostepu(shared.ChangeKindCreated, w.Grant)
+				e.nadanieDostepu(ctx, shared.ChangeKindCreated, w.Grant)
 			}
 			return w, err
 		}))
@@ -85,7 +85,7 @@ func zarejestrujNadaniaDostepu(r *Rejestr, nadania NadaniaDostepu, e *emiter) {
 		obsluz(func(ctx context.Context, z shared.AccessGrantUpdateRequest) (shared.AccessGrantUpdateResponse, error) {
 			w, err := nadania.Zmien(ctx, z)
 			if err == nil {
-				e.nadanieDostepu(shared.ChangeKindUpdated, w.Grant)
+				e.nadanieDostepu(ctx, shared.ChangeKindUpdated, w.Grant)
 			}
 			return w, err
 		}))
@@ -94,7 +94,7 @@ func zarejestrujNadaniaDostepu(r *Rejestr, nadania NadaniaDostepu, e *emiter) {
 		obsluz(func(ctx context.Context, z shared.AccessGrantRemoveRequest) (shared.AccessGrantRemoveResponse, error) {
 			w, err := nadania.Usun(ctx, z)
 			if err == nil && w.Removed {
-				e.nadanieDostepu(shared.ChangeKindDeleted,
+				e.nadanieDostepu(ctx, shared.ChangeKindDeleted,
 					shared.AccessGrant{Id: z.GrantId, WindowId: oknoZbioru(w.Grants)})
 			}
 			return w, err
@@ -104,15 +104,15 @@ func zarejestrujNadaniaDostepu(r *Rejestr, nadania NadaniaDostepu, e *emiter) {
 // punktDostepu rozgłasza zmianę punktu dostępu. Punkt nie należy do żadnej
 // sesji, więc zdarzenie idzie bez jej wskazania — dociera do wszystkich
 // połączeń konta.
-func (e *emiter) punktDostepu(zmiana shared.ChangeKind, p shared.AccessPoint) {
-	e.wyslij(shared.EventAccessPointChanged, "",
+func (e *emiter) punktDostepu(ctx context.Context, zmiana shared.ChangeKind, p shared.AccessPoint) {
+	e.wyslijDoKonta(ctx, shared.EventAccessPointChanged, "",
 		shared.AccessPointChangedEvent{Change: zmiana, Point: p})
 }
 
 // nadanieDostepu rozgłasza zmianę nadania wraz z oknem, którego zbioru
 // dotyczy, zdarzeniem dostępnym wszystkim połączeniom konta.
-func (e *emiter) nadanieDostepu(zmiana shared.ChangeKind, n shared.AccessGrant) {
-	e.wyslij(shared.EventAccessGrantChanged, "",
+func (e *emiter) nadanieDostepu(ctx context.Context, zmiana shared.ChangeKind, n shared.AccessGrant) {
+	e.wyslijDoKonta(ctx, shared.EventAccessGrantChanged, "",
 		shared.AccessGrantChangedEvent{Change: zmiana, WindowId: n.WindowId, Grant: n})
 }
 

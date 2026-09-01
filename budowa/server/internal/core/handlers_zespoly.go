@@ -28,7 +28,7 @@ func zarejestrujZespoly(r *Rejestr, zespoly Zespoly, e *emiter) {
 		obsluz(func(ctx context.Context, z shared.TeamSaveRequest) (shared.TeamSaveResponse, error) {
 			w, err := zespoly.Zapisz(ctx, z)
 			if err == nil {
-				e.zespol(rodzajZapisuZespolu(z), w.Team)
+				e.zespol(ctx, rodzajZapisuZespolu(z), w.Team)
 			}
 			return w, err
 		}))
@@ -38,7 +38,7 @@ func zarejestrujZespoly(r *Rejestr, zespoly Zespoly, e *emiter) {
 			w, err := zespoly.Skopiuj(ctx, z)
 			if err == nil {
 				// Kopia jest założeniem, nie zmianą źródła; zdarzenie niesie zespół nowy.
-				e.zespol(shared.ChangeKindCreated, w.Team)
+				e.zespol(ctx, shared.ChangeKindCreated, w.Team)
 			}
 			return w, err
 		}))
@@ -56,6 +56,6 @@ func rodzajZapisuZespolu(z shared.TeamSaveRequest) shared.ChangeKind {
 // zespol rozgłasza zmianę zespołu ekspertów. Zespół jest bytem własnym
 // Operatora, nie bytem sesji, więc zdarzenie idzie bez jej wskazania — tak samo
 // jak zmiana eksperta.
-func (e *emiter) zespol(zmiana shared.ChangeKind, z shared.Team) {
-	e.wyslij(shared.EventTeamChanged, "", shared.TeamChangedEvent{Change: zmiana, Team: z})
+func (e *emiter) zespol(ctx context.Context, zmiana shared.ChangeKind, z shared.Team) {
+	e.wyslijDoKonta(ctx, shared.EventTeamChanged, "", shared.TeamChangedEvent{Change: zmiana, Team: z})
 }

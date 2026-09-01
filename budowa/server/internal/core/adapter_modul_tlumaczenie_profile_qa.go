@@ -139,7 +139,7 @@ func (a *adapterTlumaczenia) UstawZatwierdzenie(ctx context.Context,
 	if err != nil {
 		return shared.TranslateApprovalSetResponse{}, bladTlumaczenia(err)
 	}
-	a.rozglosZmianePanelu(shared.ChangeKindUpdated, poZmianie)
+	a.rozglosZmianePanelu(ctx, shared.ChangeKindUpdated, poZmianie)
 
 	zapis.PanelKod = panel.Kod
 	return shared.TranslateApprovalSetResponse{

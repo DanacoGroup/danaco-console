@@ -36,7 +36,7 @@ func zarejestrujDoradcow(r *Rejestr, d Doradcy, e *emiter) {
 		obsluz(func(ctx context.Context, z shared.AdvisorConsultRequest) (shared.AdvisorConsultResponse, error) {
 			odpowiedz, jawnosc, err := d.Konsultacja(ctx, z)
 			if err == nil {
-				e.konsultacja(jawnosc)
+				e.konsultacja(ctx, jawnosc)
 			}
 			return odpowiedz, err
 		}))
@@ -45,6 +45,6 @@ func zarejestrujDoradcow(r *Rejestr, d Doradcy, e *emiter) {
 // konsultacja rozgłasza odbytą konsultację u doradcy. Zdarzenie jedzie z kartą
 // sesji okna pytającego — tak samo jak zmiana okna czy zlecenie asystenta —
 // żeby powierzchnia obserwująca tę sesję dostała radę tam, gdzie pracuje agent.
-func (e *emiter) konsultacja(j JawnoscKonsultacji) {
-	e.wyslij(shared.EventAdvisorConsulted, j.IdSesji, j.Zdarzenie)
+func (e *emiter) konsultacja(ctx context.Context, j JawnoscKonsultacji) {
+	e.wyslijDoKonta(ctx, shared.EventAdvisorConsulted, j.IdSesji, j.Zdarzenie)
 }

@@ -72,7 +72,7 @@ func (a *adapterDebaty) Doprecyzuj(ctx context.Context,
 	if err != nil {
 		return shared.RoundtableDebateFollowupResponse{}, bladDebaty(err)
 	}
-	a.rozglos(shared.ChangeKindCreated, turaKontraktu(tura), nil)
+	a.rozglos(ctx, shared.ChangeKindCreated, turaKontraktu(tura), nil)
 
 	a.wypowiedz(ctx, tura, uczestnik, pytanie, "")
 	wypowiedzi, err := a.repozytorium.Wypowiedzi(ctx, tura.Kod)
@@ -95,7 +95,7 @@ func (a *adapterDebaty) zamknijTureWatku(ctx context.Context, tura dane.TuraDeba
 		return
 	}
 	if po, err := a.repozytorium.Tura(ctx, tura.Kod); err == nil {
-		a.rozglos(shared.ChangeKindUpdated, turaKontraktu(po), nil)
+		a.rozglos(ctx, shared.ChangeKindUpdated, turaKontraktu(po), nil)
 	}
 }
 
@@ -149,7 +149,7 @@ func (a *adapterDebaty) Powtorz(ctx context.Context,
 		return shared.RoundtableStatementRegenerateResponse{}, bladNieznanejWypowiedzi(kod, err)
 	}
 	wynik := wypowiedzKontraktu(po)
-	a.rozglos(shared.ChangeKindUpdated, turaKontraktu(tura), &wynik)
+	a.rozglos(ctx, shared.ChangeKindUpdated, turaKontraktu(tura), &wynik)
 	return shared.RoundtableStatementRegenerateResponse{Statement: wynik}, nil
 }
 
@@ -205,6 +205,6 @@ func (a *adapterDebaty) Rozgalez(ctx context.Context,
 		return shared.RoundtableDebateBranchResponse{}, bladDebaty(err)
 	}
 	kontrakt := turaKontraktu(wariant)
-	a.rozglos(shared.ChangeKindCreated, kontrakt, nil)
+	a.rozglos(ctx, shared.ChangeKindCreated, kontrakt, nil)
 	return shared.RoundtableDebateBranchResponse{Turn: kontrakt}, nil
 }

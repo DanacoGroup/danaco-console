@@ -36,7 +36,7 @@ func (a *adapterDoradcow) Konsultacja(ctx context.Context, z shared.AdvisorConsu
 	// Strumień jawności powstaje przed konsultacją i domyka się zawsze, także po
 	// odmowie doboru doradcy.
 	idStrumienia := nowyIdentyfikator(przedrostekKonsultacji)
-	strumien := nowyNadawcaStrumienia(a.nadajnik, idStrumienia, okno.IdSesji)
+	strumien := nowyNadawcaStrumienia(a.nadajnik, kontoAdresata(ctx), idStrumienia, okno.IdSesji)
 	ujscie := &ujscieKonsultacji{strumien: strumien}
 
 	rada, err := a.Skonsultuj(ctx, pytanieZOkna(okno, idStrumienia, z), ujscie)

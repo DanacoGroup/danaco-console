@@ -53,7 +53,7 @@ func (a *adapterRozszerzen) UstawTransport(ctx context.Context,
 		return shared.ExtensionTransportSetResponse{}, bladRozszerzenia(err)
 	}
 	pozycja := rozszerzenieKontraktu(odswiezona)
-	a.rozglosRozszerzenie(shared.ChangeKindUpdated, pozycja)
+	a.rozglosRozszerzenie(ctx, shared.ChangeKindUpdated, pozycja)
 	a.odnotujCyklZycia(ctx, odswiezona, shared.ExtensionLifecycleActionConfigured, nil, nil,
 		"transport ustawiony na "+transport)
 
@@ -103,7 +103,7 @@ func (a *adapterRozszerzen) PowiazPoswiadczenie(ctx context.Context,
 		return shared.ExtensionCredentialBindResponse{}, bladRozszerzenia(err)
 	}
 	pozycja := rozszerzenieKontraktu(odswiezona)
-	a.rozglosRozszerzenie(shared.ChangeKindUpdated, pozycja)
+	a.rozglosRozszerzenie(ctx, shared.ChangeKindUpdated, pozycja)
 	a.odnotujCyklZycia(ctx, odswiezona, shared.ExtensionLifecycleActionConfigured, nil, nil,
 		"poświadczenie powiązane sposobem "+sposob)
 
@@ -540,7 +540,7 @@ func (a *adapterRozszerzen) ZaimportujDefinicje(ctx context.Context,
 		return shared.ExtensionDefinitionImportResponse{}, bladRozszerzenia(err)
 	}
 	pozycja := rozszerzenieKontraktu(odswiezona)
-	a.rozglosRozszerzenie(shared.ChangeKindUpdated, pozycja)
+	a.rozglosRozszerzenie(ctx, shared.ChangeKindUpdated, pozycja)
 	a.odnotujCyklZycia(ctx, odswiezona, shared.ExtensionLifecycleActionConfigured, nil, nil,
 		"import definicji "+string(z.Format)+", operacji: "+strconv.Itoa(len(operacje)))
 

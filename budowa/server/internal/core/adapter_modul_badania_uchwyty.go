@@ -125,7 +125,7 @@ func zarejestrujBadania(r *Rejestr, m Badania, e *emiter) {
 		obsluz(func(ctx context.Context, z shared.ResearchSourceAddRequest) (shared.ResearchSourceAddResponse, error) {
 			odpowiedz, err := m.DodajZrodlo(ctx, z)
 			if err == nil {
-				e.zrodloBadania(shared.ChangeKindCreated, odpowiedz.Source)
+				e.zrodloBadania(ctx, shared.ChangeKindCreated, odpowiedz.Source)
 			}
 			return odpowiedz, err
 		}))
@@ -133,7 +133,7 @@ func zarejestrujBadania(r *Rejestr, m Badania, e *emiter) {
 		obsluz(func(ctx context.Context, z shared.ResearchSourceCaptureRequest) (shared.ResearchSourceCaptureResponse, error) {
 			odpowiedz, err := m.PrzechwycStrone(ctx, z)
 			if err == nil {
-				e.zrodloBadania(shared.ChangeKindCreated, odpowiedz.Source)
+				e.zrodloBadania(ctx, shared.ChangeKindCreated, odpowiedz.Source)
 			}
 			return odpowiedz, err
 		}))
@@ -141,7 +141,7 @@ func zarejestrujBadania(r *Rejestr, m Badania, e *emiter) {
 		obsluz(func(ctx context.Context, z shared.ResearchSourceUpdateRequest) (shared.ResearchSourceUpdateResponse, error) {
 			odpowiedz, err := m.ZmienZrodlo(ctx, z)
 			if err == nil {
-				e.zrodloBadania(shared.ChangeKindUpdated, odpowiedz.Source)
+				e.zrodloBadania(ctx, shared.ChangeKindUpdated, odpowiedz.Source)
 			}
 			return odpowiedz, err
 		}))
@@ -150,7 +150,7 @@ func zarejestrujBadania(r *Rejestr, m Badania, e *emiter) {
 			odpowiedz, err := m.UsunZrodlo(ctx, z)
 			if err == nil {
 				// Zdarzenie niesie samo wskazanie zdjętej pozycji, bo pełny byt już nie istnieje.
-				e.zrodloBadania(shared.ChangeKindDeleted,
+				e.zrodloBadania(ctx, shared.ChangeKindDeleted,
 					shared.ResearchSource{Id: odpowiedz.SourceId})
 			}
 			return odpowiedz, err
@@ -167,7 +167,7 @@ func zarejestrujBadania(r *Rejestr, m Badania, e *emiter) {
 		obsluz(func(ctx context.Context, z shared.ResearchMonitorSetRequest) (shared.ResearchMonitorSetResponse, error) {
 			odpowiedz, err := m.UstawMonitor(ctx, z)
 			if err == nil {
-				e.monitorBadania(odpowiedz.Monitor, 0)
+				e.monitorBadania(ctx, odpowiedz.Monitor, 0)
 			}
 			return odpowiedz, err
 		}))
@@ -180,7 +180,7 @@ func zarejestrujBadania(r *Rejestr, m Badania, e *emiter) {
 					if monitor.PendingCount != nil {
 						nowe = *monitor.PendingCount
 					}
-					e.monitorBadania(monitor, nowe)
+					e.monitorBadania(ctx, monitor, nowe)
 				}
 			}
 			return odpowiedz, err
@@ -212,7 +212,7 @@ func zarejestrujBadania(r *Rejestr, m Badania, e *emiter) {
 		obsluz(func(ctx context.Context, z shared.ResearchFindingAddRequest) (shared.ResearchFindingAddResponse, error) {
 			odpowiedz, err := m.DodajUstalenie(ctx, z)
 			if err == nil {
-				e.ustalenieBadania(zmianaUstaleniaBadania(z.FindingId), odpowiedz.Finding)
+				e.ustalenieBadania(ctx, zmianaUstaleniaBadania(z.FindingId), odpowiedz.Finding)
 			}
 			return odpowiedz, err
 		}))
@@ -220,7 +220,7 @@ func zarejestrujBadania(r *Rejestr, m Badania, e *emiter) {
 		obsluz(func(ctx context.Context, z shared.ResearchFindingUpdateRequest) (shared.ResearchFindingUpdateResponse, error) {
 			odpowiedz, err := m.ZmienUstalenie(ctx, z)
 			if err == nil {
-				e.ustalenieBadania(shared.ChangeKindUpdated, odpowiedz.Finding)
+				e.ustalenieBadania(ctx, shared.ChangeKindUpdated, odpowiedz.Finding)
 			}
 			return odpowiedz, err
 		}))
@@ -228,7 +228,7 @@ func zarejestrujBadania(r *Rejestr, m Badania, e *emiter) {
 		obsluz(func(ctx context.Context, z shared.ResearchFindingMergeRequest) (shared.ResearchFindingMergeResponse, error) {
 			odpowiedz, err := m.ScalUstalenia(ctx, z)
 			if err == nil {
-				e.ustalenieBadania(shared.ChangeKindUpdated, odpowiedz.Finding)
+				e.ustalenieBadania(ctx, shared.ChangeKindUpdated, odpowiedz.Finding)
 			}
 			return odpowiedz, err
 		}))
@@ -236,7 +236,7 @@ func zarejestrujBadania(r *Rejestr, m Badania, e *emiter) {
 		obsluz(func(ctx context.Context, z shared.ResearchFindingRemoveRequest) (shared.ResearchFindingRemoveResponse, error) {
 			odpowiedz, err := m.UsunUstalenie(ctx, z)
 			if err == nil {
-				e.ustalenieBadania(shared.ChangeKindDeleted,
+				e.ustalenieBadania(ctx, shared.ChangeKindDeleted,
 					shared.ResearchFinding{Id: odpowiedz.FindingId})
 			}
 			return odpowiedz, err
@@ -273,7 +273,7 @@ func zarejestrujBadania(r *Rejestr, m Badania, e *emiter) {
 		obsluz(func(ctx context.Context, z shared.ResearchReportBuildRequest) (shared.ResearchReportBuildResponse, error) {
 			odpowiedz, err := m.ZbudujRaport(ctx, z)
 			if err == nil {
-				e.raportBadania(zmianaRaportu(z.ReportId), odpowiedz.Report)
+				e.raportBadania(ctx, zmianaRaportu(z.ReportId), odpowiedz.Report)
 			}
 			return odpowiedz, err
 		}))
@@ -308,28 +308,28 @@ func zmianaUstaleniaBadania(findingId *string) shared.ChangeKind {
 // raportBadania rozgłasza `research.report.changed`. Raport jest bytem okna
 // badania, nie karty sesji, więc zdarzenie idzie bez wskazania sesji — okno
 // Report Builder odbiera je stroną własną (wzór `przebiegAutomatyki`).
-func (e *emiter) raportBadania(zmiana shared.ChangeKind, raport shared.ResearchReport) {
-	e.wyslij(shared.EventResearchReportChanged, "",
+func (e *emiter) raportBadania(ctx context.Context, zmiana shared.ChangeKind, raport shared.ResearchReport) {
+	e.wyslijDoKonta(ctx, shared.EventResearchReportChanged, "",
 		shared.ResearchReportChangedEvent{Change: zmiana, Report: raport})
 }
 
 // zrodloBadania rozgłasza `research.source.changed` — Sources Manager odbiera
 // zmianę katalogu bez odpytywania.
-func (e *emiter) zrodloBadania(zmiana shared.ChangeKind, zrodlo shared.ResearchSource) {
-	e.wyslij(shared.EventResearchSourceChanged, "",
+func (e *emiter) zrodloBadania(ctx context.Context, zmiana shared.ChangeKind, zrodlo shared.ResearchSource) {
+	e.wyslijDoKonta(ctx, shared.EventResearchSourceChanged, "",
 		shared.ResearchSourceChangedEvent{Change: zmiana, Source: zrodlo})
 }
 
 // ustalenieBadania rozgłasza `research.finding.changed` — Findings Panel
 // odbiera zmianę rejestru ustaleń bez odpytywania.
-func (e *emiter) ustalenieBadania(zmiana shared.ChangeKind, ustalenie shared.ResearchFinding) {
-	e.wyslij(shared.EventResearchFindingChanged, "",
+func (e *emiter) ustalenieBadania(ctx context.Context, zmiana shared.ChangeKind, ustalenie shared.ResearchFinding) {
+	e.wyslijDoKonta(ctx, shared.EventResearchFindingChanged, "",
 		shared.ResearchFindingChangedEvent{Change: zmiana, Finding: ustalenie})
 }
 
 // monitorBadania rozgłasza `research.monitor.changed` — skrzynka „nowe źródła"
 // Discovery Panelu dowiaduje się o odświeżeniu bez odpytywania.
-func (e *emiter) monitorBadania(monitor shared.ResearchMonitor, nowych int) {
-	e.wyslij(shared.EventResearchMonitorChanged, "",
+func (e *emiter) monitorBadania(ctx context.Context, monitor shared.ResearchMonitor, nowych int) {
+	e.wyslijDoKonta(ctx, shared.EventResearchMonitorChanged, "",
 		shared.ResearchMonitorChangedEvent{Monitor: monitor, NewCount: nowych})
 }

@@ -243,7 +243,7 @@ func (a *adapterAplikacji) ZapiszEtap(ctx context.Context,
 		return shared.AppsStageSaveResponse{}, bladAplikacji(err)
 	}
 	// Etap jest też źródłem zdarzenia `apps.build.changed` obok wdrożenia.
-	a.rozglosEtap(zmianaZalozenia(nowy), etapKontraktu(zapisany))
+	a.rozglosEtap(ctx, zmianaZalozenia(nowy), etapKontraktu(zapisany))
 	return shared.AppsStageSaveResponse{Stage: etapKontraktu(zapisany)}, nil
 }
 

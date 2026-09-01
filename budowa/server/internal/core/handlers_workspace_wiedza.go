@@ -98,7 +98,7 @@ func zarejestrujWiedzeProjektu(r *Rejestr, w WiedzaProjektu, e *emiter) {
 		obsluz(func(ctx context.Context, z shared.WorkspaceProjectStatusSetRequest) (shared.WorkspaceProjectStatusSetResponse, error) {
 			odpowiedz, err := w.UstawStanProjektu(ctx, z)
 			if err == nil {
-				e.projekt(shared.ChangeKindUpdated, odpowiedz.Project)
+				e.projekt(ctx, shared.ChangeKindUpdated, odpowiedz.Project)
 			}
 			return odpowiedz, err
 		}))
@@ -133,5 +133,5 @@ func rozglosProjektWiedzy(ctx context.Context, w WiedzaProjektu, e *emiter, idPr
 	if err != nil {
 		return
 	}
-	e.projekt(shared.ChangeKindUpdated, projekt)
+	e.projekt(ctx, shared.ChangeKindUpdated, projekt)
 }

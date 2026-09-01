@@ -31,7 +31,7 @@ func zarejestrujAutomatyki(r *Rejestr, m Automatyki, e *emiter) {
 		obsluz(func(ctx context.Context, z shared.AutomationScheduleSetRequest) (shared.AutomationScheduleSetResponse, error) {
 			odpowiedz, err := m.UstawHarmonogram(ctx, z)
 			if err == nil {
-				e.powiazanieAutomatyki(shared.ChangeKindUpdated, z.WorkflowId)
+				e.powiazanieAutomatyki(ctx, shared.ChangeKindUpdated, z.WorkflowId)
 			}
 			return odpowiedz, err
 		}))
@@ -41,7 +41,7 @@ func zarejestrujAutomatyki(r *Rejestr, m Automatyki, e *emiter) {
 			odpowiedz, err := m.Zaleznosci(ctx, z)
 			// Żądanie bez dependencies sprawdza układ zastany, niczego nie zmienia ani nie rozgłasza.
 			if err == nil && z.Dependencies != nil {
-				e.ukladOrkiestracji(shared.ChangeKindUpdated, "")
+				e.ukladOrkiestracji(ctx, shared.ChangeKindUpdated, "")
 			}
 			return odpowiedz, err
 		}))
@@ -52,7 +52,7 @@ func zarejestrujAutomatyki(r *Rejestr, m Automatyki, e *emiter) {
 		obsluz(func(ctx context.Context, z shared.AutomationQueueActionRequest) (shared.AutomationQueueActionResponse, error) {
 			odpowiedz, err := m.DzialanieKolejki(ctx, z)
 			if err == nil {
-				e.kolejka(shared.ChangeKindUpdated, odpowiedz.Queue)
+				e.kolejka(ctx, shared.ChangeKindUpdated, odpowiedz.Queue)
 				rozglosPrzebieg(ctx, m, e, odpowiedz.Queue.Id, z.Action)
 			}
 			return odpowiedz, err
@@ -69,7 +69,7 @@ func rozglosPrzebieg(ctx context.Context, m Automatyki, e *emiter,
 	if !jest {
 		return
 	}
-	e.przebiegAutomatyki(przebieg, nazwaEtapuPrzebiegu(dzialanie))
+	e.przebiegAutomatyki(ctx, przebieg, nazwaEtapuPrzebiegu(dzialanie))
 }
 
 // nazwaEtapuPrzebiegu opisuje Operatorowi, co właśnie zrobiono z przebiegiem.
@@ -89,7 +89,7 @@ func nazwaEtapuPrzebiegu(dzialanie shared.QueueAction) string {
 // przebiegAutomatyki rozgłasza stan przebiegu automatyki. Automatyka jest
 // komponentem własnym, nie bytem karty sesji, więc zdarzenie idzie bez jej
 // wskazania — Execution Monitor otwiera się ze strony głównej.
-func (e *emiter) przebiegAutomatyki(przebieg shared.AutomationExecution, nazwaEtapu string) {
+func (e *emiter) przebiegAutomatyki(ctx context.Context, przebieg shared.AutomationExecution, nazwaEtapu string) {
 	tresc := shared.AutomationExecutionStatusEvent{Execution: przebieg}
 	if nazwaEtapu != "" {
 		etap := nazwaEtapu
@@ -99,14 +99,14 @@ func (e *emiter) przebiegAutomatyki(przebieg shared.AutomationExecution, nazwaEt
 		wiersz := *przebieg.ErrorMessage
 		tresc.LogLine = &wiersz
 	}
-	e.wyslij(shared.EventAutomationExecutionStatus, "", tresc)
+	e.wyslijDoKonta(ctx, shared.EventAutomationExecutionStatus, "", tresc)
 }
 
 // powiazanieAutomatyki rozgłasza automation.link.changed po zmianie powiązania automatyki z bytem wyzwalającym, zawsze jako rodzaj updated.
-func (e *emiter) powiazanieAutomatyki(zmiana shared.ChangeKind, idAutomatyki string) {
+func (e *emiter) powiazanieAutomatyki(ctx context.Context, zmiana shared.ChangeKind, idAutomatyki string) {
 	if idAutomatyki == "" {
 		return
 	}
-	e.wyslij(shared.EventAutomationLinkChanged, "",
+	e.wyslijDoKonta(ctx, shared.EventAutomationLinkChanged, "",
 		shared.AutomationLinkChangedEvent{Change: zmiana, AutomationId: idAutomatyki})
 }

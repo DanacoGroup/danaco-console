@@ -60,9 +60,9 @@ func (a *adapterPodagentow) Powolaj(ctx context.Context,
 		a.zapisz("podagenci: prowadzenie powołania nie zostało oznaczone: %v", err)
 	}
 	// Rozgłoszenie idzie przed pracą w tle, żeby panel widział kolejność zgodną z faktami.
-	a.rozglosPowolanie(powolani)
+	a.rozglosPowolanie(ctx, powolani)
 	for _, podagent := range powolani {
-		a.puscWTle(podagent, okno)
+		a.puscWTle(ctx, podagent, okno)
 	}
 	return shared.SubagentSpawnResponse{Subagents: podagenciKontraktu(powolani)}, nil
 }
@@ -143,7 +143,7 @@ func (a *adapterPodagentow) biegOkna(ctx context.Context, okno dane.Okno) *int64
 // Silnik niewpięty nie udaje wykonania: podagent zostaje wtedy w stanie
 // `pending`, czyli powołany i nierozpoczęty, zamiast oznaczonego jako zrobiony
 // bez wykonawcy.
-func (a *adapterPodagentow) puscWTle(podagent dane.Podagent, okno dane.Okno) {
+func (a *adapterPodagentow) puscWTle(ctx context.Context, podagent dane.Podagent, okno dane.Okno) {
 	if a.kolejki == nil {
 		a.zapisz("subagent.spawn: podagent %s powołany bez wpiętego silnika kolejek — zostaje w stanie %q",
 			podagent.Kod, dane.StanPodagentaOczekuje)
@@ -159,8 +159,8 @@ func (a *adapterPodagentow) puscWTle(podagent dane.Podagent, okno dane.Okno) {
 	if zycie == nil {
 		zycie = context.Background()
 	}
-	// Kontekst własny na podagenta daje `subagent.stop` uchwyt do jednej pracy.
-	zycie, odwolaj := context.WithCancel(zycie)
+	// Kontekst własny na podagenta daje `subagent.stop` uchwyt do jednej pracy; konto zamawiającego adresuje jego zdarzenia.
+	zycie, odwolaj := context.WithCancel(zKontemZadania(zycie, ctx))
 	a.zapamietajPrace(podagent.Kod, odwolaj)
 	go func() {
 		// Odwołanie zwalnia się zawsze, inaczej wykaz prac rósłby z każdym powołaniem.

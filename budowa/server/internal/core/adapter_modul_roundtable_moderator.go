@@ -105,13 +105,13 @@ func (a *adapterDebaty) ukierunkuj(ctx context.Context, tura dane.TuraDebaty,
 		return tura, bladDebaty(err)
 	}
 	kontrakt := wypowiedzKontraktu(wpis)
-	a.rozglos(shared.ChangeKindCreated, turaKontraktu(tura), &kontrakt)
+	a.rozglos(ctx, shared.ChangeKindCreated, turaKontraktu(tura), &kontrakt)
 
 	adresaci, err := a.adresaciInterwencji(ctx, tura.Okno, z.ParticipantId)
 	if err != nil {
 		return tura, err
 	}
-	kontekst, anuluj := context.WithCancel(a.zycie)
+	kontekst, anuluj := context.WithCancel(zKontemZadania(a.zycie, ctx))
 	// Ukierunkowanie dyskusji jest aktem przerwania: treścią komendy, nie skutkiem ubocznym.
 	a.przejmijBieg(tura.Okno, anuluj)
 	go a.prowadzTure(kontekst, tura, adresaci, tresc)
@@ -155,7 +155,7 @@ func (a *adapterDebaty) zamknijTure(ctx context.Context, tura dane.TuraDebaty) (
 	// Stanowisko składa się po zamknięciu tury; Consensus Panel aktualizuje się po turze albo debacie.
 	a.zloz(ctx, tura.Okno, tura.Kod)
 	a.zloz(ctx, tura.Okno, "")
-	a.rozglos(shared.ChangeKindUpdated, turaKontraktu(tura), nil)
+	a.rozglos(ctx, shared.ChangeKindUpdated, turaKontraktu(tura), nil)
 	return tura, nil
 }
 
@@ -178,7 +178,7 @@ func (a *adapterDebaty) kolejneZagadnienie(ctx context.Context, okno string,
 	if err != nil {
 		return tura, bladDebaty(err)
 	}
-	a.rozglos(shared.ChangeKindCreated, turaKontraktu(nowa), nil)
+	a.rozglos(ctx, shared.ChangeKindCreated, turaKontraktu(nowa), nil)
 	return nowa, nil
 }
 

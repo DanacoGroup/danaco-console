@@ -139,9 +139,10 @@ func (d *dziennikWyjscia) Ogon(filtr filtrWyjscia, ile int) []shared.TerminalOut
 	return wynik
 }
 
-// przyjmij odkłada w dzienniku wiersze niesione przez fragment strumienia.
-// Kopertę innego rodzaju niż `stream.chunk` przepuszcza bez śladu.
-func (d *dziennikWyjscia) przyjmij(k protocol.Koperta) {
+// przyjmij odkłada w dzienniku wiersze niesione przez fragment strumienia
+// i rozsyła je obserwatorom kontem, którym przyszedł fragment. Kopertę innego
+// rodzaju niż `stream.chunk` przepuszcza bez śladu.
+func (d *dziennikWyjscia) przyjmij(konto string, k protocol.Koperta) {
 	if d == nil || k.Type != shared.EventStreamChunk {
 		return
 	}
@@ -165,7 +166,7 @@ func (d *dziennikWyjscia) przyjmij(k protocol.Koperta) {
 		kanal = shared.TerminalOutputChannelStderr
 	}
 	for _, tekst := range d.zloz(kodProcesu, kanal, protocol.Tresc(fragment), protocol.Ostatni(k)) {
-		d.odloz(przypisanie, kodProcesu, kanal, tekst)
+		d.odloz(konto, przypisanie, kodProcesu, kanal, tekst)
 	}
 }
 
@@ -233,7 +234,7 @@ func (d *dziennikWyjscia) zloz(kodProcesu string, kanal shared.TerminalOutputCha
 }
 
 // odloz wpisuje jeden wiersz do pierścienia dziennika i rozsyła jego kopię wszystkim zapisanym obserwatorom okien.
-func (d *dziennikWyjscia) odloz(przypisanie przypisanieWyjscia, kodProcesu string,
+func (d *dziennikWyjscia) odloz(konto string, przypisanie przypisanieWyjscia, kodProcesu string,
 	kanal shared.TerminalOutputChannel, tekst string) {
 
 	proces := kodProcesu
@@ -269,14 +270,14 @@ func (d *dziennikWyjscia) odloz(przypisanie przypisanieWyjscia, kodProcesu strin
 		if obserwacja.oknoKod == wpis.oknoKod || !obserwacja.filtr.przepuszcza(wpis) {
 			continue
 		}
-		d.wyslijDoOkna(dalej, obserwacja, wpis, kanal)
+		d.wyslijDoOkna(dalej, konto, obserwacja, wpis, kanal)
 	}
 }
 
 // wyslijDoOkna oddaje wiersz oknu obserwatora tą samą drogą, którą idzie całe
 // wyjście modułu — zdarzeniem `stream.chunk`. Kontrakt nie ma osobnego
 // zdarzenia zbiorczego wyjścia.
-func (d *dziennikWyjscia) wyslijDoOkna(dalej Nadajnik, obserwacja *obserwacjaWyjscia,
+func (d *dziennikWyjscia) wyslijDoOkna(dalej Nadajnik, konto string, obserwacja *obserwacjaWyjscia,
 	wpis wpisWyjscia, kanal shared.TerminalOutputChannel) {
 
 	rodzaj := shared.ChunkKind(shared.ChunkKindText)
@@ -294,7 +295,7 @@ func (d *dziennikWyjscia) wyslijDoOkna(dalej Nadajnik, obserwacja *obserwacjaWyj
 	if err != nil {
 		return
 	}
-	dalej.Rozglos("", koperta)
+	dalej.Rozglos(konto, koperta)
 }
 
 // nadajnikZDziennikiem owija nadajnik pompy wyjścia: fragment idzie dalej nietknięty, a jego kopia wchodzi do dziennika zbiorczego wyjścia.
@@ -308,5 +309,5 @@ func (n *nadajnikZDziennikiem) Rozglos(konto string, k protocol.Koperta) {
 	if n.dalej != nil {
 		n.dalej.Rozglos(konto, k)
 	}
-	n.dziennik.przyjmij(k)
+	n.dziennik.przyjmij(konto, k)
 }

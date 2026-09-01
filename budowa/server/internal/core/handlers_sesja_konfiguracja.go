@@ -49,7 +49,7 @@ func zarejestrujKonfiguracjeSesji(r *Rejestr, konfiguracja KonfiguracjaSesji, e 
 				return w, err
 			}
 			for _, wpis := range w.Entries {
-				e.ustawienie(zmianaObszaru(w.StoredAreas, wpis), wpis)
+				e.ustawienie(ctx, zmianaObszaru(w.StoredAreas, wpis), wpis)
 			}
 			return w, nil
 		}))

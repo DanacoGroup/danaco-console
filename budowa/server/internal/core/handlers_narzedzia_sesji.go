@@ -76,7 +76,7 @@ func rozglosDolozenieNarzedzia(ctx context.Context, e *emiter, idSesji string, n
 	}
 	zdarzenie := shared.SessionToolAttachedEvent{SessionId: idSesji, Tool: narzedzie}
 	zdarzenie.Actor, zdarzenie.ActorClientId = sprawca(ctx)
-	e.wyslij(shared.EventSessionToolAttached, idSesji, zdarzenie)
+	e.wyslijDoKonta(ctx, shared.EventSessionToolAttached, idSesji, zdarzenie)
 }
 
 // rozglosZdjecieNarzedzia rozgłasza session.tool.detached, niosąc całą zdjętą pozycję, nie samą nazwę.
@@ -86,7 +86,7 @@ func rozglosZdjecieNarzedzia(ctx context.Context, e *emiter, idSesji string, nar
 	}
 	zdarzenie := shared.SessionToolDetachedEvent{SessionId: idSesji, Tool: narzedzie}
 	zdarzenie.Actor, zdarzenie.ActorClientId = sprawca(ctx)
-	e.wyslij(shared.EventSessionToolDetached, idSesji, zdarzenie)
+	e.wyslijDoKonta(ctx, shared.EventSessionToolDetached, idSesji, zdarzenie)
 }
 
 // narzedzieKontraktu przekłada wiersz dołożenia narzędzia z bazy na kształt oczekiwany przez kontrakt.

@@ -135,7 +135,7 @@ func (a *adapterTlumaczenia) panelJezyka(ctx context.Context, okno dane.OknoTlum
 		if err != nil {
 			return nil, bladTlumaczenia(err)
 		}
-		a.rozglosZmianePanelu(shared.ChangeKindUpdated, zmieniony)
+		a.rozglosZmianePanelu(ctx, shared.ChangeKindUpdated, zmieniony)
 		return &zmieniony, nil
 	}
 	zalozony, err := a.repozytorium.ZapiszPanel(ctx, okno.ID, dane.PanelTlumaczenia{
@@ -146,7 +146,7 @@ func (a *adapterTlumaczenia) panelJezyka(ctx context.Context, okno dane.OknoTlum
 	if err != nil {
 		return nil, bladTlumaczenia(err)
 	}
-	a.rozglosZmianePanelu(shared.ChangeKindCreated, zalozony)
+	a.rozglosZmianePanelu(ctx, shared.ChangeKindCreated, zalozony)
 	return &zalozony, nil
 }
 

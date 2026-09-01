@@ -95,7 +95,7 @@ func zarejestrujBiblioteke(r *Rejestr, m Biblioteka, e *emiter) {
 		obsluz(func(ctx context.Context, z shared.LibraryFileUploadRequest) (shared.LibraryFileUploadResponse, error) {
 			odpowiedz, err := m.Wgraj(ctx, z)
 			if err == nil {
-				e.plikBiblioteki(shared.ChangeKindCreated, odpowiedz.File)
+				e.plikBiblioteki(ctx, shared.ChangeKindCreated, odpowiedz.File)
 			}
 			return odpowiedz, err
 		}))
@@ -103,7 +103,7 @@ func zarejestrujBiblioteke(r *Rejestr, m Biblioteka, e *emiter) {
 		obsluz(func(ctx context.Context, z shared.LibraryVersionAddRequest) (shared.LibraryVersionAddResponse, error) {
 			odpowiedz, err := m.DolozWersje(ctx, z)
 			if err == nil {
-				e.plikBiblioteki(shared.ChangeKindUpdated, odpowiedz.File)
+				e.plikBiblioteki(ctx, shared.ChangeKindUpdated, odpowiedz.File)
 			}
 			return odpowiedz, err
 		}))
@@ -115,7 +115,7 @@ func zarejestrujBiblioteke(r *Rejestr, m Biblioteka, e *emiter) {
 		obsluz(func(ctx context.Context, z shared.LibraryVersionRestoreRequest) (shared.LibraryVersionRestoreResponse, error) {
 			odpowiedz, err := m.PrzywrocWersje(ctx, z)
 			if err == nil {
-				e.plikBiblioteki(shared.ChangeKindUpdated, odpowiedz.File)
+				e.plikBiblioteki(ctx, shared.ChangeKindUpdated, odpowiedz.File)
 			}
 			return odpowiedz, err
 		}))
@@ -123,7 +123,7 @@ func zarejestrujBiblioteke(r *Rejestr, m Biblioteka, e *emiter) {
 		obsluz(func(ctx context.Context, z shared.LibraryTagSetRequest) (shared.LibraryTagSetResponse, error) {
 			odpowiedz, err := m.UstawEtykiety(ctx, z)
 			if err == nil {
-				e.plikBiblioteki(shared.ChangeKindUpdated, odpowiedz.File)
+				e.plikBiblioteki(ctx, shared.ChangeKindUpdated, odpowiedz.File)
 			}
 			return odpowiedz, err
 		}))
@@ -136,7 +136,7 @@ func zarejestrujBiblioteke(r *Rejestr, m Biblioteka, e *emiter) {
 		obsluz(func(ctx context.Context, z shared.LibraryMetadataSetRequest) (shared.LibraryMetadataSetResponse, error) {
 			odpowiedz, err := m.ZapiszOpis(ctx, z)
 			if err == nil {
-				e.plikBiblioteki(shared.ChangeKindUpdated, odpowiedz.File)
+				e.plikBiblioteki(ctx, shared.ChangeKindUpdated, odpowiedz.File)
 			}
 			return odpowiedz, err
 		}))
@@ -163,7 +163,7 @@ func zarejestrujBiblioteke(r *Rejestr, m Biblioteka, e *emiter) {
 		obsluz(func(ctx context.Context, z shared.LibraryDuplicateMergeRequest) (shared.LibraryDuplicateMergeResponse, error) {
 			odpowiedz, err := m.PolaczDuplikaty(ctx, z)
 			if err == nil {
-				e.plikBiblioteki(shared.ChangeKindUpdated, odpowiedz.File)
+				e.plikBiblioteki(ctx, shared.ChangeKindUpdated, odpowiedz.File)
 			}
 			return odpowiedz, err
 		}))
@@ -179,7 +179,7 @@ func zarejestrujBiblioteke(r *Rejestr, m Biblioteka, e *emiter) {
 		obsluz(func(ctx context.Context, z shared.LibraryFileMoveRequest) (shared.LibraryFileMoveResponse, error) {
 			odpowiedz, err := m.PrzeniesZasoby(ctx, z)
 			if err == nil {
-				rozglosPlikiBiblioteki(e, shared.ChangeKindUpdated, odpowiedz.Files)
+				rozglosPlikiBiblioteki(ctx, e, shared.ChangeKindUpdated, odpowiedz.Files)
 			}
 			return odpowiedz, err
 		}))
@@ -187,7 +187,7 @@ func zarejestrujBiblioteke(r *Rejestr, m Biblioteka, e *emiter) {
 		obsluz(func(ctx context.Context, z shared.LibraryFileArchiveRequest) (shared.LibraryFileArchiveResponse, error) {
 			odpowiedz, err := m.ZarchiwizujZasoby(ctx, z)
 			if err == nil {
-				rozglosPlikiBiblioteki(e, shared.ChangeKindUpdated, odpowiedz.Files)
+				rozglosPlikiBiblioteki(ctx, e, shared.ChangeKindUpdated, odpowiedz.Files)
 			}
 			return odpowiedz, err
 		}))
@@ -195,7 +195,7 @@ func zarejestrujBiblioteke(r *Rejestr, m Biblioteka, e *emiter) {
 		obsluz(func(ctx context.Context, z shared.LibraryFileRestoreRequest) (shared.LibraryFileRestoreResponse, error) {
 			odpowiedz, err := m.PrzywrocZasoby(ctx, z)
 			if err == nil {
-				rozglosPlikiBiblioteki(e, shared.ChangeKindUpdated, odpowiedz.Files)
+				rozglosPlikiBiblioteki(ctx, e, shared.ChangeKindUpdated, odpowiedz.Files)
 			}
 			return odpowiedz, err
 		}))
@@ -222,7 +222,7 @@ func zarejestrujBiblioteke(r *Rejestr, m Biblioteka, e *emiter) {
 		obsluz(func(ctx context.Context, z shared.LibrarySuggestionApplyRequest) (shared.LibrarySuggestionApplyResponse, error) {
 			odpowiedz, err := m.RozstrzygnijSugestie(ctx, z)
 			if err == nil {
-				rozglosPlikiBiblioteki(e, shared.ChangeKindUpdated, odpowiedz.Files)
+				rozglosPlikiBiblioteki(ctx, e, shared.ChangeKindUpdated, odpowiedz.Files)
 			}
 			return odpowiedz, err
 		}))
@@ -232,16 +232,16 @@ func zarejestrujBiblioteke(r *Rejestr, m Biblioteka, e *emiter) {
 // rozglosPlikiBiblioteki rozgłasza zmianę wielu zasobów naraz — komendy
 // zbiorowe zmieniają wykaz w kilku miejscach jednocześnie, a okno ma odświeżyć
 // każde z nich.
-func rozglosPlikiBiblioteki(e *emiter, zmiana shared.ChangeKind, pliki []shared.LibraryFile) {
+func rozglosPlikiBiblioteki(ctx context.Context, e *emiter, zmiana shared.ChangeKind, pliki []shared.LibraryFile) {
 	for _, plik := range pliki {
-		e.plikBiblioteki(zmiana, plik)
+		e.plikBiblioteki(ctx, zmiana, plik)
 	}
 }
 
 // plikBiblioteki rozgłasza `library.file.changed`, plik repozytorium po
 // zmianie. Plik nie jest bytem karty sesji, więc zdarzenie idzie bez jej
 // wskazania, a Library Explorer odświeża się ze strony głównej.
-func (e *emiter) plikBiblioteki(zmiana shared.ChangeKind, plik shared.LibraryFile) {
-	e.wyslij(shared.EventLibraryFileChanged, "",
+func (e *emiter) plikBiblioteki(ctx context.Context, zmiana shared.ChangeKind, plik shared.LibraryFile) {
+	e.wyslijDoKonta(ctx, shared.EventLibraryFileChanged, "",
 		shared.LibraryFileChangedEvent{Change: zmiana, File: plik})
 }

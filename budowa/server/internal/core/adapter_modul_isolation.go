@@ -162,7 +162,7 @@ func (a *adapterIzolacji) ZapiszIzolacjeKontekstu(ctx context.Context,
 	if err != nil {
 		return shared.IsolationContextSetResponse{}, err
 	}
-	a.rozglosPolitykeAdresu(adres)
+	a.rozglosPolitykeAdresu(ctx, adres)
 	return shared.IsolationContextSetResponse{Switches: a.przelacznikiKontekstu(zapisane)}, nil
 }
 
@@ -211,7 +211,7 @@ func (a *adapterIzolacji) ZapiszIzolacjeTechniczna(ctx context.Context,
 	if err != nil {
 		return shared.IsolationTechnicalSetResponse{}, err
 	}
-	a.rozglosPolitykeAdresu(adres)
+	a.rozglosPolitykeAdresu(ctx, adres)
 	return shared.IsolationTechnicalSetResponse{Switches: a.przelacznikiTechniczne(zapisane)}, nil
 }
 
@@ -306,7 +306,7 @@ func (a *adapterIzolacji) zapiszPunkt(ctx context.Context, adres konfig.Adres,
 		return err
 	}
 	if a.rozgloszenie != nil {
-		a.rozgloszenie.ustawienie(shared.ChangeKindUpdated, wpisOsi(ustawienie))
+		a.rozgloszenie.ustawienie(ctx, shared.ChangeKindUpdated, wpisOsi(ustawienie))
 	}
 	return nil
 }

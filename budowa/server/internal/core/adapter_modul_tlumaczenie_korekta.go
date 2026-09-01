@@ -263,7 +263,7 @@ func (a *adapterTlumaczenia) ZastosujKorekte(ctx context.Context,
 		if err != nil {
 			return shared.TranslateProofreadApplyResponse{}, bladTlumaczenia(err)
 		}
-		a.rozglosZmianePanelu(shared.ChangeKindUpdated, zmieniony)
+		a.rozglosZmianePanelu(ctx, shared.ChangeKindUpdated, zmieniony)
 		return shared.TranslateProofreadApplyResponse{
 			Panel:        zlozPanelTlumaczenia(zmieniony),
 			AppliedCount: zastosowane,

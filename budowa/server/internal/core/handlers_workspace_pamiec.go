@@ -47,7 +47,7 @@ func zarejestrujPamiec(r *Rejestr, m PamiecPrzestrzeni, e *emiter) {
 			odpowiedz, err := m.UsunWpisPamieciKomenda(ctx, z)
 			if err == nil && wpis.Id != "" {
 				rozglosProjekt(ctx, m, e, wpis.ProjectId)
-				e.wpisPamieci(shared.ChangeKindDeleted, wpis)
+				e.wpisPamieci(ctx, shared.ChangeKindDeleted, wpis)
 			}
 			return odpowiedz, err
 		}))
@@ -58,7 +58,7 @@ func zarejestrujPamiec(r *Rejestr, m PamiecPrzestrzeni, e *emiter) {
 			// Bez odpięcia nie ma zmiany, więc nie ma czego rozgłaszać.
 			if err == nil && odpowiedz.Detached {
 				rozglosProjekt(ctx, m, e, odpowiedz.Entry.ProjectId)
-				e.wpisPamieci(shared.ChangeKindUpdated, odpowiedz.Entry)
+				e.wpisPamieci(ctx, shared.ChangeKindUpdated, odpowiedz.Entry)
 			}
 			return odpowiedz, err
 		}))
@@ -70,7 +70,7 @@ func zarejestrujPamiec(r *Rejestr, m PamiecPrzestrzeni, e *emiter) {
 			odpowiedz, err := m.ZapiszPamiec(ctx, z)
 			if err == nil {
 				rozglosProjekt(ctx, m, e, odpowiedz.Entry.ProjectId)
-				e.wpisPamieci(rodzajZapisuPamieci(z.EntryId), odpowiedz.Entry)
+				e.wpisPamieci(ctx, rodzajZapisuPamieci(z.EntryId), odpowiedz.Entry)
 			}
 			return odpowiedz, err
 		}))
@@ -84,7 +84,7 @@ func zarejestrujPamiec(r *Rejestr, m PamiecPrzestrzeni, e *emiter) {
 			odpowiedz, err := m.PrzestawWylaczeniePamieci(ctx, z)
 			// Bez zmiany wykazu nie ma czego rozgłaszać; wyłączenie zakłada wiersz, zniesienie go kasuje.
 			if err == nil && odpowiedz.Changed {
-				e.wylaczeniePamieci(rodzajZmianyWylaczenia(z.Disabled), odpowiedz.Disable)
+				e.wylaczeniePamieci(ctx, rodzajZmianyWylaczenia(z.Disabled), odpowiedz.Disable)
 			}
 			return odpowiedz, err
 		}))
@@ -103,8 +103,8 @@ func rodzajZmianyWylaczenia(wylaczone bool) shared.ChangeKind {
 // wylaczeniePamieci rozgłasza `memory.disable.changed`. Zdarzenie idzie bez
 // wskazania sesji, tak samo jak `memory.changed`: wyłączenie obowiązuje zasięg,
 // który sam nazywa, a nie kartę, z której przyszło.
-func (e *emiter) wylaczeniePamieci(zmiana shared.ChangeKind, wylaczenie shared.MemoryDisable) {
-	e.wyslij(shared.EventMemoryDisableChanged, "",
+func (e *emiter) wylaczeniePamieci(ctx context.Context, zmiana shared.ChangeKind, wylaczenie shared.MemoryDisable) {
+	e.wyslijDoKonta(ctx, shared.EventMemoryDisableChanged, "",
 		shared.MemoryDisableChangedEvent{Change: zmiana, Disable: wylaczenie})
 }
 
@@ -121,6 +121,6 @@ func rodzajZapisuPamieci(idWpisu *string) shared.ChangeKind {
 // wpisPamieci rozgłasza `memory.changed`. Wpis pamięci należy do projektu, nie
 // do karty sesji — projekt bywa otwarty w wielu kartach naraz — więc zdarzenie
 // idzie bez wskazania sesji, tak samo jak `workspace.project.changed`.
-func (e *emiter) wpisPamieci(zmiana shared.ChangeKind, wpis shared.WorkspaceMemoryEntry) {
-	e.wyslij(shared.EventMemoryChanged, "", shared.MemoryChangedEvent{Change: zmiana, Entry: wpis})
+func (e *emiter) wpisPamieci(ctx context.Context, zmiana shared.ChangeKind, wpis shared.WorkspaceMemoryEntry) {
+	e.wyslijDoKonta(ctx, shared.EventMemoryChanged, "", shared.MemoryChangedEvent{Change: zmiana, Entry: wpis})
 }

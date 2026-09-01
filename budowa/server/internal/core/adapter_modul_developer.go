@@ -12,7 +12,6 @@ import (
 	"danacoconsole/shared"
 )
 
-// Zgodność adaptera z portem sprawdzana jest przy kompilacji, wprost przez pustą asercję interfejsu Developer.
 var _ Developer = (*adapterDevelopera)(nil)
 
 const (
@@ -36,9 +35,8 @@ type adapterDevelopera struct {
 	rozstrzygacz *konfig.Rozstrzygacz
 	katalog      *KatalogRoboczy
 	// kanaly są rejestrem kanałów modelu, jedyną drogą operacji kontekstowych (`developer.contextual.op`).
-	kanaly *models.Rejestr
-	// przyrost rozgłasza `developer.build.changed`. Podpina go obsługiwacz.
-	przyrost func(shared.ChangeKind, shared.DeveloperBuild, string)
+	kanaly   *models.Rejestr
+	przyrost func(context.Context, shared.ChangeKind, shared.DeveloperBuild, string)
 }
 
 // nowyAdapterDevelopera wiąże port z rejestrem okien i uruchamiaczem procesów, oddając adapter gotowy do dalszego wpięcia zależności.
@@ -57,15 +55,13 @@ func (a *adapterDevelopera) ZTrwaloscia(repozytorium dane.RepozytoriumDevelopera
 	return a
 }
 
-// ZIzolacja podpina rozstrzygacz zasięgu i ustalacz katalogu roboczego — dwa
-// źródła, z których powstaje obszar okna egzekwowany przy każdej ścieżce.
+// ZIzolacja podpina rozstrzygacz zasięgu i ustalacz katalogu roboczego — dwa źródła, z których powstaje obszar okna egzekwowany przy każdej ścieżce.
 func (a *adapterDevelopera) ZIzolacja(rozstrzygacz *konfig.Rozstrzygacz, katalog *KatalogRoboczy) *adapterDevelopera {
 	a.rozstrzygacz, a.katalog = rozstrzygacz, katalog
 	return a
 }
 
-// ZKanalami wpina rejestr kanałów modelu — drogę operacji kontekstowych paska
-// pływającego Code Editora.
+// ZKanalami wpina rejestr kanałów modelu — drogę operacji kontekstowych paska pływającego Code Editora.
 func (a *adapterDevelopera) ZKanalami(kanaly *models.Rejestr) *adapterDevelopera {
 	a.kanaly = kanaly
 	return a
@@ -80,9 +76,7 @@ func (a *adapterDevelopera) Przygotuj(ctx context.Context) error {
 	return err
 }
 
-// Zamknij przerywa przebiegi budowania czynne w chwili zatrzymania rdzenia.
-// Budowanie przeżywa rozłączenie klienta, lecz nie przeżywa końca rdzenia:
-// bez uchwytu zostałoby sierotą poza rejestrem.
+// Zamknij przerywa przebiegi budowania czynne w chwili zatrzymania rdzenia. Budowanie przeżywa rozłączenie klienta, lecz nie przeżywa końca rdzenia: bez uchwytu zostałoby sierotą poza rejestrem.
 func (a *adapterDevelopera) Zamknij() {
 	if a == nil {
 		return
@@ -91,9 +85,7 @@ func (a *adapterDevelopera) Zamknij() {
 	a.sesjeDebugowania.Zamknij()
 }
 
-// przygotujDevelopera odtwarza stan modułu Developer przy montażu rdzenia.
-// Niepowodzenie nie zatrzymuje startu — idzie do dziennika, bo
-// przebieg oznaczony jako trwający wprowadzałby Operatora w błąd.
+// przygotujDevelopera odtwarza stan modułu Developer przy montażu rdzenia. Niepowodzenie nie zatrzymuje startu — idzie do dziennika, bo przebieg oznaczony jako trwający wprowadzałby Operatora w błąd.
 func przygotujDevelopera(kontekst context.Context, developer *adapterDevelopera, dziennik *log.Logger) {
 	if err := developer.Przygotuj(kontekst); err != nil && dziennik != nil {
 		dziennik.Printf("moduł Developer: nie można osierocić przebiegów budowania: %v", err)

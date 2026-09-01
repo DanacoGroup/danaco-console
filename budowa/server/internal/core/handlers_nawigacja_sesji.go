@@ -17,7 +17,7 @@ func zarejestrujWiazanieSesji(r *Rejestr, w WiazanieSesji, e *emiter) {
 		obsluz(func(ctx context.Context, z shared.SessionFocusRequest) (shared.SessionFocusResponse, error) {
 			wynik, err := w.Ogniskuj(ctx, z)
 			if err == nil {
-				e.ognisko(z.ClientId, wynik)
+				e.ognisko(ctx, z.ClientId, wynik)
 			}
 			return wynik, err
 		}))
@@ -27,8 +27,8 @@ func zarejestrujWiazanieSesji(r *Rejestr, w WiazanieSesji, e *emiter) {
 
 // ognisko rozgłasza zmianę ogniska karty sesji, niosąc klienta, na którym zmiana nastąpiła, do
 // pozostałych urządzeń konta.
-func (e *emiter) ognisko(idKlienta string, w shared.SessionFocusResponse) {
-	e.wyslij(shared.EventSessionFocusChanged, w.SessionId, shared.SessionFocusChangedEvent{
+func (e *emiter) ognisko(ctx context.Context, idKlienta string, w shared.SessionFocusResponse) {
+	e.wyslijDoKonta(ctx, shared.EventSessionFocusChanged, w.SessionId, shared.SessionFocusChangedEvent{
 		SessionId:         w.SessionId,
 		ClientId:          idKlienta,
 		WindowId:          w.WindowId,

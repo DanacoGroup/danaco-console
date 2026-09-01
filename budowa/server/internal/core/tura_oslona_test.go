@@ -28,7 +28,7 @@ func TestTuraNieGasiRdzeniaPrzyUsterceAdaptera(t *testing.T) {
 		okno := session.Okno{Id: "okn-oslona", IdSesji: "ses-oslona"}
 		pytanie := shared.Message{Id: "msg-pyt", WindowId: okno.Id, SessionId: okno.IdSesji}
 		odpowiedz := shared.Message{Id: "msg-odp", WindowId: okno.Id, SessionId: okno.IdSesji}
-		rozmowa.prowadzTure(context.Background(), okno, pytanie, odpowiedz, "zad-oslona")
+		rozmowa.prowadzTure(context.Background(), okno, pytanie, odpowiedz, "zad-oslona", nil)
 	}()
 
 	select {

@@ -89,7 +89,7 @@ func zarejestrujPrzegladarke(r *Rejestr, m Przegladarka, e *emiter) {
 		obsluz(func(ctx context.Context, z shared.BrowserNavigateRequest) (shared.BrowserNavigateResponse, error) {
 			odpowiedz, err := m.Nawiguj(ctx, z)
 			if err == nil {
-				e.stronaPrzegladarki(odpowiedz.Snapshot, powodPrzejscia)
+				e.stronaPrzegladarki(ctx, odpowiedz.Snapshot, powodPrzejscia)
 			}
 			return odpowiedz, err
 		}))
@@ -106,7 +106,7 @@ func zarejestrujPrzegladarke(r *Rejestr, m Przegladarka, e *emiter) {
 		obsluz(func(ctx context.Context, z shared.BrowserTabOpenRequest) (shared.BrowserTabOpenResponse, error) {
 			odpowiedz, err := m.OtworzKarte(ctx, z)
 			if err == nil {
-				e.kartaPrzegladarki(odpowiedz.Tab, shared.ChangeKindCreated)
+				e.kartaPrzegladarki(ctx, odpowiedz.Tab, shared.ChangeKindCreated)
 			}
 			return odpowiedz, err
 		}))
@@ -115,7 +115,7 @@ func zarejestrujPrzegladarke(r *Rejestr, m Przegladarka, e *emiter) {
 		obsluz(func(ctx context.Context, z shared.BrowserTabUpdateRequest) (shared.BrowserTabUpdateResponse, error) {
 			odpowiedz, err := m.ZmienKarte(ctx, z)
 			if err == nil {
-				e.kartaPrzegladarki(odpowiedz.Tab, shared.ChangeKindUpdated)
+				e.kartaPrzegladarki(ctx, odpowiedz.Tab, shared.ChangeKindUpdated)
 			}
 			return odpowiedz, err
 		}))
@@ -134,7 +134,7 @@ func zarejestrujPrzegladarke(r *Rejestr, m Przegladarka, e *emiter) {
 		obsluz(func(ctx context.Context, z shared.BrowserMonitorCheckRequest) (shared.BrowserMonitorCheckResponse, error) {
 			odpowiedz, err := m.SprawdzMonitor(ctx, z)
 			if err == nil && odpowiedz.Changed {
-				e.monitorPrzegladarki(odpowiedz.Monitor, odpowiedz.Diff)
+				e.monitorPrzegladarki(ctx, odpowiedz.Monitor, odpowiedz.Diff)
 			}
 			return odpowiedz, err
 		}))
@@ -173,7 +173,7 @@ func zarejestrujPrzegladarke(r *Rejestr, m Przegladarka, e *emiter) {
 		obsluz(func(ctx context.Context, z shared.BrowserDeviceEmulateRequest) (shared.BrowserDeviceEmulateResponse, error) {
 			odpowiedz, err := m.EmulujUrzadzenie(ctx, z)
 			if err == nil && odpowiedz.Snapshot != nil {
-				e.stronaPrzegladarki(*odpowiedz.Snapshot, powodInterakcji)
+				e.stronaPrzegladarki(ctx, *odpowiedz.Snapshot, powodInterakcji)
 			}
 			return odpowiedz, err
 		}))
@@ -181,7 +181,7 @@ func zarejestrujPrzegladarke(r *Rejestr, m Przegladarka, e *emiter) {
 		obsluz(func(ctx context.Context, z shared.BrowserScrollRequest) (shared.BrowserScrollResponse, error) {
 			odpowiedz, err := m.Przewin(ctx, z)
 			if err == nil {
-				e.stronaPrzegladarki(odpowiedz.Snapshot, powodInterakcji)
+				e.stronaPrzegladarki(ctx, odpowiedz.Snapshot, powodInterakcji)
 			}
 			return odpowiedz, err
 		}))
@@ -198,7 +198,7 @@ func zarejestrujPrzegladarke(r *Rejestr, m Przegladarka, e *emiter) {
 		obsluz(func(ctx context.Context, z shared.BrowserDownloadControlRequest) (shared.BrowserDownloadControlResponse, error) {
 			odpowiedz, err := m.SterujPobraniem(ctx, z)
 			if err == nil {
-				e.pobraniePrzegladarki(odpowiedz.Download)
+				e.pobraniePrzegladarki(ctx, odpowiedz.Download)
 			}
 			return odpowiedz, err
 		}))
@@ -215,33 +215,33 @@ const powodInterakcji = "interaction"
 // kartaPrzegladarki rozgłasza `browser.tab.changed`. Rodzaj zmiany jest polem
 // kontraktu (`ChangeKind`), a nie dowolnym napisem: klient odsiewa po nim
 // założenie karty od zmiany jej stanu.
-func (e *emiter) kartaPrzegladarki(karta shared.BrowserTab, rodzaj shared.ChangeKind) {
+func (e *emiter) kartaPrzegladarki(ctx context.Context, karta shared.BrowserTab, rodzaj shared.ChangeKind) {
 	kopia := karta
 	tresc := shared.BrowserTabChangedEvent{WindowId: karta.WindowId, Change: rodzaj, Tab: &kopia}
-	e.wyslij(shared.EventBrowserTabChanged, "", tresc)
+	e.wyslijDoKonta(ctx, shared.EventBrowserTabChanged, "", tresc)
 }
 
 // monitorPrzegladarki rozgłasza `browser.monitor.changed` — wykrytą zmianę
 // pilnowanej strony wraz z jej miarą. Zdarzenie idzie wyłącznie przy zmianie
 // naprawdę wykrytej; rozgłoszenie przy każdym sprawdzeniu byłoby alarmem bez
 // zdarzenia.
-func (e *emiter) monitorPrzegladarki(monitor shared.BrowserMonitor, roznica *shared.BrowserContentDiff) {
+func (e *emiter) monitorPrzegladarki(ctx context.Context, monitor shared.BrowserMonitor, roznica *shared.BrowserContentDiff) {
 	tresc := shared.BrowserMonitorChangedEvent{
 		MonitorId: monitor.Id, WindowId: monitor.WindowId, Monitor: monitor,
 	}
 	if roznica != nil {
 		tresc.Diff = *roznica
 	}
-	e.wyslij(shared.EventBrowserMonitorChanged, "", tresc)
+	e.wyslijDoKonta(ctx, shared.EventBrowserMonitorChanged, "", tresc)
 }
 
 // pobraniePrzegladarki rozgłasza zdarzenie zmiany pobrania wraz z jego bieżącym
 // stanem, aby menedżer pobrań pokazywał postęp bez odpytywania rejestru.
-func (e *emiter) pobraniePrzegladarki(pobranie shared.BrowserDownload) {
+func (e *emiter) pobraniePrzegladarki(ctx context.Context, pobranie shared.BrowserDownload) {
 	tresc := shared.BrowserDownloadChangedEvent{
 		DownloadId: pobranie.Id, WindowId: pobranie.WindowId, Download: pobranie,
 	}
-	e.wyslij(shared.EventBrowserDownloadChanged, "", tresc)
+	e.wyslijDoKonta(ctx, shared.EventBrowserDownloadChanged, "", tresc)
 }
 
 // powodPrzejscia nazywa powód migawki rozgłaszanej po `browser.navigate`:
@@ -252,11 +252,11 @@ const powodPrzejscia = "navigation"
 // stronaPrzegladarki rozgłasza zdarzenie zmiany strony niosące migawkę po
 // zmianie. Zdarzenie jedzie bez wskazania sesji, bo okno przeglądarki nie jest
 // bytem karty sesji.
-func (e *emiter) stronaPrzegladarki(migawka shared.BrowserSnapshot, powod string) {
+func (e *emiter) stronaPrzegladarki(ctx context.Context, migawka shared.BrowserSnapshot, powod string) {
 	tresc := shared.BrowserPageChangedEvent{WindowId: migawka.WindowId, Snapshot: migawka}
 	if powod != "" {
 		p := powod
 		tresc.Reason = &p
 	}
-	e.wyslij(shared.EventBrowserPageChanged, "", tresc)
+	e.wyslijDoKonta(ctx, shared.EventBrowserPageChanged, "", tresc)
 }

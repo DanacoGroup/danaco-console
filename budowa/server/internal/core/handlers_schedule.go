@@ -47,7 +47,7 @@ func zarejestrujHarmonogramy(r *Rejestr, nadzor HarmonogramyNadzoru, e *emiter) 
 		obsluz(func(ctx context.Context, z shared.ScheduleWindowSetRequest) (shared.ScheduleWindowSetResponse, error) {
 			odpowiedz, err := nadzor.UstawOknaWykonania(ctx, z)
 			if err == nil {
-				e.powiazanieAutomatyki(shared.ChangeKindUpdated, odpowiedz.Schedule.WorkflowId)
+				e.powiazanieAutomatyki(ctx, shared.ChangeKindUpdated, odpowiedz.Schedule.WorkflowId)
 			}
 			return odpowiedz, err
 		}))
@@ -56,7 +56,7 @@ func zarejestrujHarmonogramy(r *Rejestr, nadzor HarmonogramyNadzoru, e *emiter) 
 		obsluz(func(ctx context.Context, z shared.ScheduleHeartbeatSetRequest) (shared.ScheduleHeartbeatSetResponse, error) {
 			odpowiedz, err := nadzor.UstawNadzorUruchomien(ctx, z)
 			if err == nil {
-				e.powiazanieAutomatyki(shared.ChangeKindUpdated, odpowiedz.Schedule.WorkflowId)
+				e.powiazanieAutomatyki(ctx, shared.ChangeKindUpdated, odpowiedz.Schedule.WorkflowId)
 			}
 			return odpowiedz, err
 		}))

@@ -335,7 +335,7 @@ func (a *adapterTlumaczenia) wykonajOperacjePakietu(ctx context.Context,
 		if err != nil {
 			return "error", err.Error()
 		}
-		a.rozglosZmianePanelu(shared.ChangeKindUpdated, zmieniony)
+		a.rozglosZmianePanelu(ctx, shared.ChangeKindUpdated, zmieniony)
 		return "done", ""
 
 	case shared.BatchOperationKindQualityCheck:

@@ -22,12 +22,12 @@ func (a *adapterPodagentow) ustawStanPodagenta(ctx context.Context, kod string,
 }
 
 // rozglosPowolanie rozgłasza podagentów świeżo założonych, z wierszy odczytu bazy przy tym samym założeniu.
-func (a *adapterPodagentow) rozglosPowolanie(wiersze []dane.Podagent) {
+func (a *adapterPodagentow) rozglosPowolanie(ctx context.Context, wiersze []dane.Podagent) {
 	if a.rozgloszenie == nil {
 		return
 	}
 	for _, wiersz := range wiersze {
-		a.rozgloszenie.podagent(shared.ChangeKindCreated, podagentKontraktu(wiersz))
+		a.rozgloszenie.podagent(ctx, shared.ChangeKindCreated, podagentKontraktu(wiersz))
 	}
 }
 
@@ -45,17 +45,17 @@ func (a *adapterPodagentow) rozglosPodagenta(ctx context.Context, kod string,
 		return
 	}
 	for _, wiersz := range wiersze {
-		a.rozgloszenie.podagent(zmiana, podagentKontraktu(wiersz))
+		a.rozgloszenie.podagent(ctx, zmiana, podagentKontraktu(wiersz))
 	}
 }
 
 // podagent rozgłasza `subagent.changed` ze wskazaniem karty sesji, gdy okno wykonawcy
 // do niej należy; podagent bez karty rozgłasza się bez niej, zamiast wcale.
-func (e *emiter) podagent(zmiana shared.ChangeKind, p shared.Subagent) {
+func (e *emiter) podagent(ctx context.Context, zmiana shared.ChangeKind, p shared.Subagent) {
 	idSesji := ""
 	if p.SessionId != nil {
 		idSesji = *p.SessionId
 	}
-	e.wyslij(shared.EventSubagentChanged, idSesji,
+	e.wyslijDoKonta(ctx, shared.EventSubagentChanged, idSesji,
 		shared.SubagentChangedEvent{Change: zmiana, Subagent: p})
 }

@@ -137,8 +137,8 @@ func (a *adapterTlumaczenia) rozpoznajJezykModelem(ctx context.Context, tekst st
 }
 
 // rozglosZmianePanelu rozgłasza translate.translation.changed po zmianie treści panelu, bez identyfikatora sesji, bo schemat okna tłumaczenia jej nie wiąże.
-func (a *adapterTlumaczenia) rozglosZmianePanelu(zmiana shared.ChangeKind, panel dane.PanelTlumaczenia) {
-	a.wyjscie.wyslij(shared.EventTranslateTranslationChanged, "",
+func (a *adapterTlumaczenia) rozglosZmianePanelu(ctx context.Context, zmiana shared.ChangeKind, panel dane.PanelTlumaczenia) {
+	a.wyjscie.wyslijDoKonta(ctx, shared.EventTranslateTranslationChanged, "",
 		shared.TranslateTranslationChangedEvent{Change: zmiana, Panel: zlozPanelTlumaczenia(panel)})
 }
 

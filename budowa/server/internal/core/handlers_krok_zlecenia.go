@@ -140,7 +140,7 @@ func zarejestrujSterowanieKrokiem(r *Rejestr, kolejki Kolejki, e *emiter) {
 		obsluz(func(ctx context.Context, z zadanieWstrzymaniaKroku) (odpowiedzKroku, error) {
 			w, err := sterowanie.WstrzymajKrok(ctx, z)
 			if err == nil {
-				e.kolejka(shared.ChangeKindUpdated, w.Queue)
+				e.kolejka(ctx, shared.ChangeKindUpdated, w.Queue)
 			}
 			return w, err
 		}))
@@ -149,7 +149,7 @@ func zarejestrujSterowanieKrokiem(r *Rejestr, kolejki Kolejki, e *emiter) {
 		obsluz(func(ctx context.Context, z zadanieDecyzjiKroku) (odpowiedzDecyzjiKroku, error) {
 			w, err := sterowanie.ZdecydujOKroku(ctx, z)
 			if err == nil {
-				e.kolejka(shared.ChangeKindUpdated, w.Queue)
+				e.kolejka(ctx, shared.ChangeKindUpdated, w.Queue)
 			}
 			return w, err
 		}))

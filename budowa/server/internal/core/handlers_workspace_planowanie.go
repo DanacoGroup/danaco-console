@@ -103,5 +103,5 @@ func rozglosProjektPlanowania(ctx context.Context, p PlanowanieProjektu, e *emit
 	if err != nil {
 		return
 	}
-	e.projekt(shared.ChangeKindUpdated, projekt)
+	e.projekt(ctx, shared.ChangeKindUpdated, projekt)
 }

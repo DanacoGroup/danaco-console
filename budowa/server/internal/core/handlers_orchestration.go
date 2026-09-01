@@ -43,7 +43,7 @@ func zarejestrujOrkiestracje(r *Rejestr, m Orkiestracja, e *emiter) {
 			zmiana := rodzajZmianyLuku(ctx, m, z)
 			odpowiedz, err := m.UstawZaleznosc(ctx, z)
 			if err == nil {
-				e.ukladOrkiestracji(zmiana, wskazanieLuku(z.Dependency))
+				e.ukladOrkiestracji(ctx, zmiana, wskazanieLuku(z.Dependency))
 			}
 			return odpowiedz, err
 		}))
@@ -54,7 +54,7 @@ func zarejestrujOrkiestracje(r *Rejestr, m Orkiestracja, e *emiter) {
 		obsluz(func(ctx context.Context, z shared.OrchestrationDependencyRemoveRequest) (shared.OrchestrationDependencyRemoveResponse, error) {
 			odpowiedz, err := m.UsunZaleznoscUkladu(ctx, z)
 			if err == nil {
-				e.ukladOrkiestracji(shared.ChangeKindDeleted,
+				e.ukladOrkiestracji(ctx, shared.ChangeKindDeleted,
 					wskazanieLuku(shared.AutomationDependency{FromStepId: z.FromStepId, ToStepId: z.ToStepId}))
 			}
 			return odpowiedz, err
@@ -67,7 +67,7 @@ func zarejestrujOrkiestracje(r *Rejestr, m Orkiestracja, e *emiter) {
 		obsluz(func(ctx context.Context, z shared.OrchestrationGateSetRequest) (shared.OrchestrationGateSetResponse, error) {
 			odpowiedz, err := m.UstawBramke(ctx, z)
 			if err == nil {
-				e.ukladOrkiestracji(shared.ChangeKindUpdated, "")
+				e.ukladOrkiestracji(ctx, shared.ChangeKindUpdated, "")
 			}
 			return odpowiedz, err
 		}))
@@ -76,7 +76,7 @@ func zarejestrujOrkiestracje(r *Rejestr, m Orkiestracja, e *emiter) {
 		obsluz(func(ctx context.Context, z shared.OrchestrationGroupSetRequest) (shared.OrchestrationGroupSetResponse, error) {
 			odpowiedz, err := m.UstawGrupe(ctx, z)
 			if err == nil {
-				e.ukladOrkiestracji(shared.ChangeKindUpdated, "")
+				e.ukladOrkiestracji(ctx, shared.ChangeKindUpdated, "")
 			}
 			return odpowiedz, err
 		}))
@@ -85,7 +85,7 @@ func zarejestrujOrkiestracje(r *Rejestr, m Orkiestracja, e *emiter) {
 		obsluz(func(ctx context.Context, z shared.OrchestrationCompensationSetRequest) (shared.OrchestrationCompensationSetResponse, error) {
 			odpowiedz, err := m.UstawKompensacje(ctx, z)
 			if err == nil {
-				e.ukladOrkiestracji(shared.ChangeKindUpdated, "")
+				e.ukladOrkiestracji(ctx, shared.ChangeKindUpdated, "")
 			}
 			return odpowiedz, err
 		}))
@@ -94,7 +94,7 @@ func zarejestrujOrkiestracje(r *Rejestr, m Orkiestracja, e *emiter) {
 		obsluz(func(ctx context.Context, z shared.OrchestrationMultitaskingLinkRequest) (shared.OrchestrationMultitaskingLinkResponse, error) {
 			odpowiedz, err := m.SpnijZMultitaskingiem(ctx, z)
 			if err == nil {
-				e.ukladOrkiestracji(shared.ChangeKindUpdated, "")
+				e.ukladOrkiestracji(ctx, shared.ChangeKindUpdated, "")
 			}
 			return odpowiedz, err
 		}))
@@ -128,11 +128,11 @@ func wskazanieLuku(luk shared.AutomationDependency) string {
 
 // ukladOrkiestracji rozgłasza orchestration.changed dla komponentu własnego automatyki, bez
 // wskazania karty sesji, tak samo jak przebieg automatyki.
-func (e *emiter) ukladOrkiestracji(zmiana shared.ChangeKind, idZaleznosci string) {
+func (e *emiter) ukladOrkiestracji(ctx context.Context, zmiana shared.ChangeKind, idZaleznosci string) {
 	tresc := shared.OrchestrationChangedEvent{Change: zmiana}
 	if idZaleznosci != "" {
 		wskazanie := idZaleznosci
 		tresc.DependencyId = &wskazanie
 	}
-	e.wyslij(shared.EventOrchestrationChanged, "", tresc)
+	e.wyslijDoKonta(ctx, shared.EventOrchestrationChanged, "", tresc)
 }

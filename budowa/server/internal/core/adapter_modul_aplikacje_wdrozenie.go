@@ -54,7 +54,7 @@ func (a *adapterAplikacji) ZaktualizujPrzestrzen(ctx context.Context,
 	}
 	// Rozgloszenie idzie po udanym zapisie, zeby zdarzenie opisywalo stan, ktory naprawde wszedl do bazy.
 	plikKontraktu := plikWarsztatuKontraktu(zapisany)
-	a.rozglosWarsztat(zmiana, oknoKod, zapisany.Warstwa, plikKontraktu)
+	a.rozglosWarsztat(ctx, zmiana, oknoKod, zapisany.Warstwa, plikKontraktu)
 
 	return shared.AppsWorkspaceUpdateResponse{
 		Layer: zapisany.Warstwa,
@@ -137,8 +137,8 @@ func (a *adapterAplikacji) UruchomWdrozenie(ctx context.Context,
 		return shared.AppsDeploymentRunResponse{}, bladAplikacji(err)
 	}
 	// Przebieg powstal w pending — rozglos jego zalozenie i oddaj silnikowi wykonania.
-	a.rozglosWdrozenie(shared.ChangeKindCreated, zapisane)
-	a.uruchomWdrozenie(zapisane)
+	a.rozglosWdrozenie(ctx, shared.ChangeKindCreated, zapisane)
+	a.uruchomWdrozenie(ctx, zapisane)
 	return shared.AppsDeploymentRunResponse{Deployment: wdrozenieKontraktu(zapisane)}, nil
 }
 

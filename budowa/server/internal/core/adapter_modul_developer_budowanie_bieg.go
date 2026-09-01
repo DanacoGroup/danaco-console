@@ -37,6 +37,7 @@ func (a *adapterDevelopera) uruchomBudowanie(ctx context.Context, okno session.O
 		idSesji:     okno.IdSesji,
 		zadanie:     zadanie,
 		argumenty:   argumenty,
+		kontekst:    zKontemZadania(context.Background(), ctx),
 		stan:        shared.BuildStatusRunning,
 		ogon:        make([]string, 0, 64),
 		uruchomiono: time.Now().UTC(),
@@ -65,7 +66,7 @@ func (a *adapterDevelopera) uruchomBudowanie(ctx context.Context, okno session.O
 
 	a.zapiszPrzebieg(ctx, przebieg)
 	// Rozgłoszenie idzie przed pompami logu: wiersz nie może wyprzedzić zdarzenia created.
-	a.rozglosBudowanie(shared.ChangeKindCreated, przebieg, "")
+	a.rozglosBudowanie(ctx, shared.ChangeKindCreated, przebieg, "")
 
 	gotowe := make(chan struct{}, 2)
 	go a.pompujLog(przebieg, uchwyt.Wyjscie(), gotowe)
@@ -87,7 +88,7 @@ func (a *adapterDevelopera) pompujLog(przebieg *przebiegBudowania, zrodlo io.Rea
 		wiersz, err := czytajWiersz(czytnik)
 		if wiersz != "" {
 			przebieg.Dopisz(wiersz)
-			a.rozglosBudowanie(shared.ChangeKindUpdated, przebieg, wiersz)
+			a.rozglosBudowanie(przebieg.kontekst, shared.ChangeKindUpdated, przebieg, wiersz)
 		}
 		if err != nil {
 			// Koniec potoku jest normalnym końcem odczytu; przebieg domknie czekający na zakończenie procesu.
@@ -132,7 +133,7 @@ func (a *adapterDevelopera) pilnujBudowania(przebieg *przebiegBudowania, gotowe 
 			wskaznikDuzej(kodWyjscia), przebieg.Ogon())
 		a.odlozPomiarPrzebiegu(przebieg)
 	}
-	a.rozglosBudowanie(shared.ChangeKindUpdated, przebieg, podsumowaniePrzebiegu(stan, kodWyjscia))
+	a.rozglosBudowanie(przebieg.kontekst, shared.ChangeKindUpdated, przebieg, podsumowaniePrzebiegu(stan, kodWyjscia))
 }
 
 // wynikBudowania przekłada wynik oczekiwania na stan i kod wyjścia. Kod różny
@@ -179,11 +180,11 @@ func (a *adapterDevelopera) zapiszPrzebieg(ctx context.Context, przebieg *przebi
 
 // rozglosBudowanie oddaje przyrost obsługiwaczowi, który rozsyła
 // `developer.build.changed`. Brak podpięcia nie zmienia pracy modułu.
-func (a *adapterDevelopera) rozglosBudowanie(zmiana shared.ChangeKind, przebieg *przebiegBudowania,
+func (a *adapterDevelopera) rozglosBudowanie(ctx context.Context, zmiana shared.ChangeKind, przebieg *przebiegBudowania,
 	wiersz string) {
 
 	if a.przyrost == nil {
 		return
 	}
-	a.przyrost(zmiana, budowanieKontraktu(przebieg), wiersz)
+	a.przyrost(ctx, zmiana, budowanieKontraktu(przebieg), wiersz)
 }

@@ -49,7 +49,7 @@ func zarejestrujZleceniaKolejek(r *Rejestr, kolejki Kolejki, e *emiter) {
 		obsluz(func(ctx context.Context, z shared.QueuePolicySetRequest) (shared.QueuePolicySetResponse, error) {
 			w, err := zleceniowe.UstawPolitykeKolejki(ctx, z)
 			if err == nil {
-				e.kolejka(shared.ChangeKindUpdated, w.Queue)
+				e.kolejka(ctx, shared.ChangeKindUpdated, w.Queue)
 			}
 			return w, err
 		}))
@@ -68,7 +68,7 @@ func zarejestrujZleceniaKolejek(r *Rejestr, kolejki Kolejki, e *emiter) {
 		obsluz(func(ctx context.Context, z shared.QueueItemDequeueRequest) (shared.QueueItemDequeueResponse, error) {
 			w, err := zleceniowe.ZdejmijZlecenie(ctx, z)
 			if err == nil && w.Removed {
-				e.kolejka(shared.ChangeKindUpdated, w.Queue)
+				e.kolejka(ctx, shared.ChangeKindUpdated, w.Queue)
 			}
 			return w, err
 		}))
@@ -153,7 +153,7 @@ func rozglosKolejkeZlecenia(ctx context.Context, m zlecenioweKolejki, e *emiter,
 	if err != nil {
 		return
 	}
-	e.kolejka(shared.ChangeKindUpdated, kolejka)
+	e.kolejka(ctx, shared.ChangeKindUpdated, kolejka)
 }
 
 // zarejestrujOdmoweZlecenKolejek wpina wszystkie dwanaście komend jako odmowę montażu, tym samym powodem co przy wiązaniach: kolejki są, a rdzeń nie umie oddać ich zleceń.

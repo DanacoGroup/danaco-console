@@ -381,8 +381,8 @@ func bladMagazynuAlertow(err error) error {
 // wyzwolenieAlertu rozgłasza `alert.triggered` bez wskazania karty sesji,
 // ponieważ wyzwolenie jest bytem przekrojowym, a nie bytem jednej sesji, i
 // niesie razem z sobą regułę, której próg został przekroczony.
-func (e *emiter) wyzwolenieAlertu(wyzwolenie shared.AlertTrigger, regula shared.AlertRule) {
-	e.wyslij(shared.EventAlertTriggered, "", shared.AlertTriggeredEvent{
+func (e *emiter) wyzwolenieAlertu(ctx context.Context, wyzwolenie shared.AlertTrigger, regula shared.AlertRule) {
+	e.wyslijDoKonta(ctx, shared.EventAlertTriggered, "", shared.AlertTriggeredEvent{
 		Trigger: wyzwolenie, Rule: regula,
 	})
 }

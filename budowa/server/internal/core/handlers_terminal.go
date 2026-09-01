@@ -15,7 +15,7 @@ type Terminal interface {
 	WykazProcesow(ctx context.Context, z shared.TerminalProcessListRequest) (shared.TerminalProcessListResponse, error)
 	ZakonczProces(ctx context.Context, z shared.TerminalProcessKillRequest) (shared.TerminalProcessKillResponse, error)
 	// PodepnijRozgloszenie oddaje adapterowi drogę do zdarzenia zmiany procesu.
-	PodepnijRozgloszenie(rozglos func(shared.ChangeKind, shared.TerminalProcess))
+	PodepnijRozgloszenie(rozglos func(context.Context, shared.ChangeKind, shared.TerminalProcess))
 }
 
 // zarejestrujTerminal wpina cztery komendy modułu Terminal obsługujące karty, procesy i wyjście konsoli.
@@ -32,15 +32,15 @@ func zarejestrujTerminal(r *Rejestr, t Terminal, e *emiter) {
 	r.Zarejestruj(shared.CommandTerminalProcessKill, obsluz(t.ZakonczProces))
 }
 
-// procesTerminala rozgłasza zmianę procesu rejestru rdzenia. Sesja komunikatu
-// bywa pusta: proces okna, którego sesji rdzeń już nie zna, rozgłasza się bez
-// niej, zamiast nie rozgłaszać się wcale.
-func (e *emiter) procesTerminala(zmiana shared.ChangeKind, p shared.TerminalProcess) {
-	e.wyslij(shared.EventTerminalProcessChanged, "",
+// procesTerminala rozgłasza zmianę procesu rejestru rdzenia do konta, które
+// proces zamówiło. Sesja komunikatu bywa pusta: proces okna, którego sesji
+// rdzeń już nie zna, rozgłasza się bez niej, zamiast nie rozgłaszać się wcale.
+func (e *emiter) procesTerminala(ctx context.Context, zmiana shared.ChangeKind, p shared.TerminalProcess) {
+	e.wyslijDoKonta(ctx, shared.EventTerminalProcessChanged, "",
 		shared.TerminalProcessChangedEvent{Change: zmiana, Process: p})
 }
 
 // PodepnijRozgloszenie wypełnia port: adapter zapamiętuje drogę do zdarzenia zmiany procesu w terminalu.
-func (a *adapterTerminala) PodepnijRozgloszenie(rozglos func(shared.ChangeKind, shared.TerminalProcess)) {
+func (a *adapterTerminala) PodepnijRozgloszenie(rozglos func(context.Context, shared.ChangeKind, shared.TerminalProcess)) {
 	a.zmiana = rozglos
 }

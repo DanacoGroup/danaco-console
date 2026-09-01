@@ -35,7 +35,7 @@ func zarejestrujWarstwyAgenta(r *Rejestr, warstwy WarstwyEksperta, e *emiter) {
 		obsluz(func(ctx context.Context, z shared.AgentLayerSetRequest) (shared.AgentLayerSetResponse, error) {
 			w, err := warstwy.UstawWarstwe(ctx, z)
 			if err == nil {
-				e.agent(shared.ChangeKindUpdated, w.Agent)
+				e.agent(ctx, shared.ChangeKindUpdated, w.Agent)
 			}
 			return w, err
 		}))
@@ -44,7 +44,7 @@ func zarejestrujWarstwyAgenta(r *Rejestr, warstwy WarstwyEksperta, e *emiter) {
 		obsluz(func(ctx context.Context, z shared.AgentLayerRemoveRequest) (shared.AgentLayerRemoveResponse, error) {
 			w, err := warstwy.UsunWarstwe(ctx, z)
 			if err == nil {
-				e.agent(shared.ChangeKindUpdated, w.Agent)
+				e.agent(ctx, shared.ChangeKindUpdated, w.Agent)
 			}
 			return w, err
 		}))
@@ -62,7 +62,7 @@ func zarejestrujWarstwyAgenta(r *Rejestr, warstwy WarstwyEksperta, e *emiter) {
 		obsluz(func(ctx context.Context, z shared.AgentPluginRemoveRequest) (shared.AgentPluginRemoveResponse, error) {
 			w, err := warstwy.UsunWtyczke(ctx, z)
 			if err == nil {
-				e.agent(shared.ChangeKindUpdated, w.Agent)
+				e.agent(ctx, shared.ChangeKindUpdated, w.Agent)
 			}
 			return w, err
 		}))
@@ -78,5 +78,5 @@ func rozglosEkspertaPelnego(ctx context.Context, warstwy WarstwyEksperta, e *emi
 	if err != nil {
 		return
 	}
-	e.agent(shared.ChangeKindUpdated, ekspert)
+	e.agent(ctx, shared.ChangeKindUpdated, ekspert)
 }

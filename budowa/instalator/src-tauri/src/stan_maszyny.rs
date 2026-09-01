@@ -74,10 +74,10 @@ fn katalog_programu_domyslny() -> Option<PathBuf> {
     }
 }
 
-/// Katalog danych powłoki. Nie jest propozycją do zmiany: powłoka składa go
-/// sama z `LOCALAPPDATA` i nazwy `DanacoConsole` (`desktop/src-tauri/src/dziennik.rs`)
-/// i nie czyta znikąd innego wskazania, więc krok 4 może go wyłącznie pokazać.
-fn katalog_danych_powloki() -> Option<PathBuf> {
+/// Katalog danych powłoki proponowany domyślnie: `LOCALAPPDATA\DanacoConsole`,
+/// ten sam, który powłoka składa bez wskazania (`desktop/src-tauri/src/dziennik.rs`).
+/// Wybór z kroku 4 zapisuje `pobranie::zaloz_program` obok programu.
+pub fn katalog_danych_powloki() -> Option<PathBuf> {
     std::env::var_os("LOCALAPPDATA").map(|d| PathBuf::from(d).join("DanacoConsole"))
 }
 

@@ -3,8 +3,8 @@
 # rozwijania powłoki. Po zmianie: systemctl restart danaco-console
 #
 # Wartości wpisane w jednostce (port 17870, katalog danych, katalog interfejsu,
-# nasłuch na wszystkich interfejsach) obowiązują bez tego pliku. Wpis tutaj je
-# nadpisuje.
+# nasłuch na wszystkich interfejsach, plik klucza sejfu) obowiązują bez tego
+# pliku. Wpis tutaj je nadpisuje.
 
 # ── Nasłuch ──────────────────────────────────────────────────────────────────
 # DANACO_PORT=17870
@@ -23,6 +23,19 @@
 # Bez wpisu rozstrzyga adres nasłuchu: poza pętlą zwrotną wymóg obowiązuje sam
 # z siebie. Zniesienie (nie) zostaje wypisane w dzienniku startu wprost.
 # DANACO_WYMOG_LOGOWANIA=tak
+
+# ── Sekret nawiązania gniazda ────────────────────────────────────────────────
+# Rdzeń porównuje wartość z parametrem `sekret` adresu gniazda albo nagłówkiem
+# X-Danaco-Sekret. Przy wdrożeniu serwerowym sekret podaje klient w adresie —
+# powłoka bierze go ze zmiennej DANACO_SEKRET_NAWIAZANIA na urządzeniu Operatora.
+# Puste = bez sprawdzenia.
+# DANACO_SEKRET_NAWIAZANIA=
+
+# ── Sejf poświadczeń ─────────────────────────────────────────────────────────
+# Plik klucza pieczętującego sejf: 32 bajty albo 64 znaki szesnastkowe, prawa
+# 0400, właściciel danaco-console. Jednostka wskazuje go sama, a postinst zakłada
+# brakujący. Inna ścieżka — wyłącznie poza katalogiem danych.
+# DANACO_KLUCZ_SEJFU=/etc/danaco-console/sejf.klucz
 
 # ── Pochodzenia gniazda ──────────────────────────────────────────────────────
 # Dodatkowe wzorce nagłówka Origin przyjmowane przy nawiązaniu gniazda;

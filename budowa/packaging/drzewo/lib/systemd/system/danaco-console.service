@@ -29,6 +29,9 @@ Environment=DANACO_KATALOG_DANYCH=/var/lib/danaco-console
 Environment=DANACO_KATALOG_PROFILI=/var/lib/danaco-console/profile
 # Pakiet interfejsu wskazany wprost, żeby nie zależał od katalogu roboczego.
 Environment=DANACO_KATALOG_KLIENTA=/opt/danaco-console/client/dist
+# Klucz sejfu poświadczeń poza katalogiem danych (rozstrzygnięcie 26): plik
+# zakłada postinst — 64 znaki szesnastkowe, właściciel danaco-console, prawa 0400.
+Environment=DANACO_KLUCZ_SEJFU=/etc/danaco-console/sejf.klucz
 # Nastawy Operatora — plik nieobowiązkowy (wiodący minus), więc brak nie
 # wstrzymuje startu. Tu idą TLS i konto nadawcze platformy.
 EnvironmentFile=-/etc/danaco-console/srodowisko

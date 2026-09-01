@@ -16,13 +16,10 @@ const CZAS_PROBY: Duration = Duration::from_millis(250);
 const CZAS_PROBY_SZYFROWANEJ: Duration = Duration::from_secs(2);
 
 /// Zwraca prawdę, gdy pod wskazanym serwerem i portem odpowiada rdzeń, dając
-/// fałsz przy nazwie nierozwiązywalnej.
-///
-/// Schemat nie jest cechą pytanego adresu, tylko konfiguracji powłoki, więc nie
-/// wchodzi tu parametrem: obie warstwy, które go niosą — zmienna środowiska
-/// i wpis instalki — są wspólne dla całego procesu.
-pub fn odpowiada_pod(host: &str, port: u16) -> bool {
-    match Schemat::obowiazujacy() {
+/// fałsz przy nazwie nierozwiązywalnej. Schemat podaje wołający: przy wskazaniu
+/// z okna jest nim schemat z adresu, jeszcze niezapisany w nastawach.
+pub fn odpowiada_pod(schemat: Schemat, host: &str, port: u16) -> bool {
+    match schemat {
         Schemat::Http => przyjmuje_polaczenie(host, port),
         Schemat::Https => uzgadnia_tls(host, port),
     }

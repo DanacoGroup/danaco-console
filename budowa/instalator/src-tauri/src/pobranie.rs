@@ -3,7 +3,7 @@
 //! czytany jest z kanału przy każdym przebiegu — wydanie wychodzi częściej niż
 //! instalator, a wykaz wkompilowany wiązałby cykl instalatora z cyklem powłoki.
 //! Kopia wkompilowana przy budowie zostaje wyłącznie na wypadek kanału, który nie
-//! odpowie, i niesie adres kanału, spod którego wykaz bieżący się czyta.
+//! odpowie; adres kanału niesie stała `ADRES_KANALU`, nie wykaz.
 
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
@@ -12,9 +12,14 @@ use std::path::{Path, PathBuf};
 use std::time::Duration;
 use tauri::{AppHandle, Emitter};
 
-/// Kopia wykazu wydań z chwili budowy — ten sam plik, z którego korzysta powłoka
-/// główna (`aktualizacja/pobranie.rs`). Rozstrzyga wyłącznie o adresie kanału
-/// i o pozycjach wtedy, gdy kanał nie odpowie.
+/// Adres kanału pobrań (`prowadzenie/kanal-wydan.md`), ta sama wartość co
+/// `ADRES_KANALU` w `desktop/src-tauri/src/aktualizacja/pobranie.rs`. Stoi
+/// w kodzie, nie w wykazie: wykaz czyta się spod tego adresu, więc nie może
+/// go nieść.
+const ADRES_KANALU: &str = "https://pobierz.danaco-group.pl/";
+
+/// Kopia wykazu wydań z chwili budowy — droga zapasowa na wypadek kanału,
+/// który nie odpowie; o pozycjach rozstrzyga dopiero wtedy.
 const WYKAZ_WKOMPILOWANY: &str = include_str!("../../../witryna/wydania.json");
 
 /// Nazwa pliku wykazu w katalogu wydawanym kanału — ta sama, pod którą
@@ -31,9 +36,16 @@ const ZAPORA_CZASU: Duration = Duration::from_secs(10);
 const GRANICA_WYKAZU: usize = 512 * 1024;
 
 /// Nazwa pliku wykonywalnego powłoki w katalogu programu. Ustala ją instalka NSIS
-/// wydania (`MAINBINARYNAME`), a ta bierze ją z nazwy pakietu
-/// `desktop/src-tauri/Cargo.toml` — nie z nazwy produktu.
+/// wydania (`MAINBINARYNAME`), a ta bierze ją z pola `name` pakietu
+/// `desktop/src-tauri/Cargo.toml` — nie z nazwy produktu. Zmiana tamtej nazwy
+/// wymaga zmiany tej stałej; przy polu `name` stoi komentarz zwrotny.
 const NAZWA_PROGRAMU: &str = "danaco-console-powloka.exe";
+
+/// Nazwa pliku wskazania katalogu danych, zakładanego w katalogu programu
+/// z wyboru kroku 4. Powłoka czyta go obok własnego pliku wykonywalnego
+/// (`desktop/src-tauri/src/dziennik.rs`, `NAZWA_WSKAZANIA_KATALOGU` — obie
+/// stałe muszą być równe).
+const NAZWA_WSKAZANIA_KATALOGU_DANYCH: &str = "powloka-katalog-danych.txt";
 
 /// Poświadczenia kanału pobrań wpisane w postać instalki przy jej składaniu.
 /// Katalog `/wydania/` chroni uwierzytelnienie podstawowe, a kreator nie ma
@@ -59,7 +71,11 @@ fn base64_podstawowy(dane: &[u8]) -> String {
     const ZNAKI: &[u8; 64] = b"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
     let mut wynik = String::with_capacity(dane.len().div_ceil(3) * 4);
     for porcja in dane.chunks(3) {
-        let b = [porcja[0], *porcja.get(1).unwrap_or(&0), *porcja.get(2).unwrap_or(&0)];
+        let b = [
+            porcja[0],
+            *porcja.get(1).unwrap_or(&0),
+            *porcja.get(2).unwrap_or(&0),
+        ];
         let trojka = u32::from(b[0]) << 16 | u32::from(b[1]) << 8 | u32::from(b[2]);
         for i in 0..4 {
             if i <= porcja.len() {
@@ -80,15 +96,10 @@ pub const ZDARZENIE_POSTEP: &str = "instalator:postep-pobrania";
 /// zdarzeniem, a nie parametrem adresu.
 pub const ZDARZENIE_KANAL: &str = "instalator:stan-kanalu";
 
+/// Wykaz wydań; pozostałe klucze pliku (opis, protokół) nie są tu czytane.
 #[derive(Deserialize)]
 struct Wykaz {
-    kanal: Kanal,
     wydania: Vec<PozycjaWydania>,
-}
-
-#[derive(Deserialize)]
-struct Kanal {
-    adres: String,
 }
 
 #[derive(Deserialize, Clone)]
@@ -149,6 +160,8 @@ pub struct WynikPobrania {
 pub struct WynikZalozenia {
     pub katalog_programu: String,
     pub sciezka_programu: String,
+    /// Katalog danych zapisany dla powłoki; brak, gdy krok 4 go nie podał.
+    pub katalog_danych: Option<String>,
 }
 
 /// Klient HTTP kroku 5. Zapora czasu jest podawana osobno, bo pobranie pliku
@@ -171,9 +184,9 @@ fn wykaz_wkompilowany() -> Result<Wykaz, Odmowa> {
     })
 }
 
-/// Czyta wykaz wydań spod kanału podanego w kopii wkompilowanej.
-fn wykaz_z_kanalu(adres_kanalu: &str) -> Result<Wykaz, Odmowa> {
-    let adres = format!("{}/{PLIK_WYKAZU}", adres_kanalu.trim_end_matches('/'));
+/// Czyta wykaz wydań spod kanału pobrań.
+fn wykaz_z_kanalu() -> Result<Wykaz, Odmowa> {
+    let adres = format!("{}/{PLIK_WYKAZU}", ADRES_KANALU.trim_end_matches('/'));
     let zadanie = klient(Some(ZAPORA_CZASU)).get(&adres);
     let zadanie = match naglowek_poswiadczen() {
         Some(naglowek) => zadanie.header("Authorization", &naglowek),
@@ -212,14 +225,9 @@ fn wykaz_z_kanalu(adres_kanalu: &str) -> Result<Wykaz, Odmowa> {
 }
 
 /// Wykaz obowiązujący w tym przebiegu: z kanału, a gdy kanał nie odpowie albo
-/// odda treść nieczytelną — z kopii wkompilowanej. Adres kanału pochodzi zawsze
-/// z kopii, bo bez niego nie ma skąd czytać wykazu bieżącego.
+/// odda treść nieczytelną — z kopii wkompilowanej.
 fn wykaz_biezacy() -> Result<Wykaz, Odmowa> {
-    let wkompilowany = wykaz_wkompilowany()?;
-    match wykaz_z_kanalu(&wkompilowany.kanal.adres) {
-        Ok(z_kanalu) => Ok(z_kanalu),
-        Err(_) => Ok(wkompilowany),
-    }
+    wykaz_z_kanalu().or_else(|_| wykaz_wkompilowany())
 }
 
 /// Wybiera pozycję wykazu zgodną z architekturą wskazaną w kroku 3
@@ -246,9 +254,7 @@ fn dobierz_pozycje(wykaz: &Wykaz, architektura_kroku3: &str) -> Result<PozycjaWy
         // postaci pod tym samym systemem i architekturą, więc pozycję
         // rozstrzyga `postac`, a nie kolejność w wykazie.
         .find(|w| {
-            w.system == "Windows"
-                && w.architektura == architektura_wykazu
-                && w.postac == "hybryda"
+            w.system == "Windows" && w.architektura == architektura_wykazu && w.postac == "hybryda"
         })
         .cloned()
         .ok_or_else(|| {
@@ -452,14 +458,20 @@ fn wykonaj_pobranie(
 
 /// Zakłada program pobraną instalką NSIS: uruchamia ją cicho w katalogu z kroku 4
 /// i czeka na kod wyjścia. Kod niezerowy jest odmową kroku 5 — bez zera od instalki
-/// na dysku nie ma programu i okno nie ma czego ogłosić na kroku 6.
+/// na dysku nie ma programu i okno nie ma czego ogłosić na kroku 6. Katalog danych
+/// z kroku 4, gdy podany, zostaje zapisany obok programu dla powłoki.
 #[tauri::command]
 pub async fn zaloz_program(
     plik_instalki: String,
     katalog_programu: String,
+    katalog_danych: Option<String>,
 ) -> Result<WynikZalozenia, Odmowa> {
     tauri::async_runtime::spawn_blocking(move || {
-        wykonaj_zalozenie(Path::new(&plik_instalki), Path::new(&katalog_programu))
+        wykonaj_zalozenie(
+            Path::new(&plik_instalki),
+            Path::new(&katalog_programu),
+            katalog_danych.as_deref(),
+        )
     })
     .await
     .unwrap_or_else(|blad| {
@@ -470,7 +482,11 @@ pub async fn zaloz_program(
     })
 }
 
-fn wykonaj_zalozenie(plik: &Path, katalog: &Path) -> Result<WynikZalozenia, Odmowa> {
+fn wykonaj_zalozenie(
+    plik: &Path,
+    katalog: &Path,
+    katalog_danych: Option<&str>,
+) -> Result<WynikZalozenia, Odmowa> {
     if !plik.is_file() {
         return Err(Odmowa::nowa(
             "brak-instalki",
@@ -496,7 +512,10 @@ fn wykonaj_zalozenie(plik: &Path, katalog: &Path) -> Result<WynikZalozenia, Odmo
         .map_err(|blad| {
             Odmowa::nowa(
                 "instalka-bez-kodu",
-                format!("Nie udało się doczekać końca instalki {}: {blad}.", plik.display()),
+                format!(
+                    "Nie udało się doczekać końca instalki {}: {blad}.",
+                    plik.display()
+                ),
             )
         })?;
 
@@ -532,6 +551,8 @@ fn wykonaj_zalozenie(plik: &Path, katalog: &Path) -> Result<WynikZalozenia, Odmo
         ));
     }
 
+    let katalog_danych = zapisz_wskazanie_katalogu_danych(katalog, katalog_danych)?;
+
     // Pobrana instalka po założeniu programu nie jest już do niczego potrzebna,
     // a leży w katalogu programu; odmowa jej skasowania nie unieważnia założenia.
     let _ = std::fs::remove_file(plik);
@@ -539,7 +560,33 @@ fn wykonaj_zalozenie(plik: &Path, katalog: &Path) -> Result<WynikZalozenia, Odmo
     Ok(WynikZalozenia {
         katalog_programu: katalog.display().to_string(),
         sciezka_programu: program.display().to_string(),
+        katalog_danych,
     })
+}
+
+/// Zapisuje katalog danych z kroku 4 w pliku obok programu. Brak wskazania
+/// albo wskazanie puste nie zakłada pliku — powłoka bierze wtedy katalog
+/// domyślny (`stan_maszyny::katalog_danych_powloki`).
+fn zapisz_wskazanie_katalogu_danych(
+    katalog_programu: &Path,
+    katalog_danych: Option<&str>,
+) -> Result<Option<String>, Odmowa> {
+    let Some(katalog_danych) = katalog_danych.map(str::trim).filter(|k| !k.is_empty()) else {
+        return Ok(None);
+    };
+    let plik = katalog_programu.join(NAZWA_WSKAZANIA_KATALOGU_DANYCH);
+    std::fs::write(&plik, format!("{katalog_danych}\n")).map_err(|blad| {
+        Odmowa::nowa(
+            "katalog-danych-niezapisany",
+            format!(
+                "Program stanął, ale wskazania katalogu danych nie udało się zapisać \
+                 w {}: {blad}. Powłoka użyłaby katalogu domyślnego zamiast wskazanego \
+                 w kroku czwartym.",
+                plik.display()
+            ),
+        )
+    })?;
+    Ok(Some(katalog_danych.to_string()))
 }
 
 /// Polecenie uruchamiające instalkę NSIS cicho i w katalogu wskazanym w kroku 4.

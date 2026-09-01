@@ -63,16 +63,25 @@ zglos "Sprawdzenie artefaktów wejściowych"
 printf '  jest: budowa/klient/dist/index.html\n'
 
 zglos "Sprawdzenie wskazania serwera wdrożenia i żądania podpisu"
-# Adres i port serwera wdrożenia wchodzą do binarium przy KOMPILACJI, przez
-# option_env! (desktop/src-tauri/src/ustawienia.rs:25 i :30) — po budowie nie ma
-# ich jak dopisać. Wartości nie stoją w tym skrypcie, bo instalka jest osobna dla
-# każdego wdrożenia i żaden krok kreatora o adres nie pyta; podaje je operator
-# wydania przy składaniu.
+# Schemat, adres i port serwera wdrożenia wchodzą do binarium przy KOMPILACJI,
+# przez option_env! (HOST_WDROZENIA, PORT_WDROZENIA i SCHEMAT_WDROZENIA
+# w desktop/src-tauri/src/ustawienia.rs) — po budowie nie ma ich jak dopisać.
+# Wartości nie stoją w tym skrypcie, bo instalka jest osobna dla każdego
+# wdrożenia i żaden krok kreatora o adres nie pyta; podaje je operator wydania
+# przy składaniu.
 [ -n "${DANACO_HOST_WDROZENIA:-}" ] \
   || padnij "brak DANACO_HOST_WDROZENIA — powłoka wyszłaby z instalki bez wskazania rdzenia, a Operator nie ma w oknie drogi, którą by go wskazał"
 [ -n "${DANACO_PORT_WDROZENIA:-}" ] \
   || padnij "brak DANACO_PORT_WDROZENIA — wskazanie bez portu jest niepełne; podaj port, pod którym rdzeń odpowiada na serwerze wdrożenia"
-printf '  serwer wdrożenia: %s:%s\n' "$DANACO_HOST_WDROZENIA" "$DANACO_PORT_WDROZENIA"
+# Bez schematu powłoka wychodzi z łączem otwartym (http) i hasło Operatora
+# idzie do serwera wdrożenia otwartym tekstem — dlatego brak jest odmową.
+[ -n "${DANACO_SCHEMAT_WDROZENIA:-}" ] \
+  || padnij "brak DANACO_SCHEMAT_WDROZENIA — bez niej powłoka wyszłaby ze schematem http; podaj http albo https"
+case "$DANACO_SCHEMAT_WDROZENIA" in
+  http | https) ;;
+  *) padnij "DANACO_SCHEMAT_WDROZENIA ma wartość ${DANACO_SCHEMAT_WDROZENIA}, a przyjmowane są wyłącznie: http, https" ;;
+esac
+printf '  serwer wdrożenia: %s://%s:%s\n' "$DANACO_SCHEMAT_WDROZENIA" "$DANACO_HOST_WDROZENIA" "$DANACO_PORT_WDROZENIA"
 # Żądanie podpisu sprawdzane jest tutaj, przed kilkuminutową budową, a nie
 # dopiero przy odkładaniu wyniku.
 case "${DANACO_PODPIS:-pomijany}" in
@@ -91,6 +100,7 @@ zglos "Budowa powłoki dla $CEL"
 ( cd "$POWLOKA" \
   && DANACO_HOST_WDROZENIA="$DANACO_HOST_WDROZENIA" \
      DANACO_PORT_WDROZENIA="$DANACO_PORT_WDROZENIA" \
+     DANACO_SCHEMAT_WDROZENIA="$DANACO_SCHEMAT_WDROZENIA" \
      cargo xwin build --release --target "$CEL" \
        --features tauri/custom-protocol --cross-compiler clang )
 
@@ -201,8 +211,8 @@ printf 'ścieżka : %s\n' "$WYNIK"
 printf 'rozmiar : %s (%s bajtów)\n' "$(du -h "$WYNIK" | cut -f1)" "$(stat -c%s "$WYNIK")"
 printf 'typ     : %s\n' "$(file -b "$WYNIK")"
 printf 'suma    : %s\n' "$(sha256sum "$WYNIK" | cut -d' ' -f1)"
-printf 'rdzeń   : %s:%s (wpisany w powłokę przy tej budowie)\n' \
-  "$DANACO_HOST_WDROZENIA" "$DANACO_PORT_WDROZENIA"
+printf 'rdzeń   : %s://%s:%s (wpisany w powłokę przy tej budowie)\n' \
+  "$DANACO_SCHEMAT_WDROZENIA" "$DANACO_HOST_WDROZENIA" "$DANACO_PORT_WDROZENIA"
 printf 'podpis  : %s\n' "$OPIS_PODPISU"
 # Ostatni wiersz listingu archiwum kończy się słowem oznaczającym liczbę
 # plików; sama liczba stoi w wierszu bezpośrednio przed tym słowem.

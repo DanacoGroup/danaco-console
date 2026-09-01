@@ -337,8 +337,11 @@ mod testy {
     #[test]
     fn adres_spoza_kanalu_odrzucony() {
         // Strona podstawiona wskazuje własny serwer z pasującą sumą; zatrzymać ma kanał.
-        let odmowa = sprawdz_zadanie("https://obcy-serwer.example/wydanie-setup.exe", &suma_poprawna())
-            .expect_err("adres spoza kanału pobrań nie ma prawa przejść");
+        let odmowa = sprawdz_zadanie(
+            "https://obcy-serwer.example/wydanie-setup.exe",
+            &suma_poprawna(),
+        )
+        .expect_err("adres spoza kanału pobrań nie ma prawa przejść");
         assert_eq!(odmowa.powod, "adres-poza-kanalem");
         assert!(
             odmowa.zdanie.contains(ADRES_KANALU),
@@ -361,8 +364,11 @@ mod testy {
     #[test]
     fn adres_http_odrzucony_wczesniejsza_odmowa() {
         // HTTP pada na warunku protokołu, nie kanału.
-        let odmowa = sprawdz_zadanie("http://pobierz.danaco-group.pl/wydanie-setup.exe", &suma_poprawna())
-            .expect_err("adres bez https nie ma prawa przejść");
+        let odmowa = sprawdz_zadanie(
+            "http://pobierz.danaco-group.pl/wydanie-setup.exe",
+            &suma_poprawna(),
+        )
+        .expect_err("adres bez https nie ma prawa przejść");
         assert_eq!(odmowa.powod, "adres-nie-https");
     }
 

@@ -1,4 +1,7 @@
 [package]
+# Nazwa pakietu jest zarazem nazwą pliku wykonywalnego (danaco-console-powloka.exe):
+# tę samą nazwę niesie stała NAZWA_PROGRAMU w instalator/src-tauri/src/pobranie.rs,
+# po której instalator szuka programu po założeniu. Zmiana jednej wymaga zmiany drugiej.
 name = "danaco-console-powloka"
 version = "2.0.0"
 description = "Danaco Console — powłoka okna dla Windows 11"

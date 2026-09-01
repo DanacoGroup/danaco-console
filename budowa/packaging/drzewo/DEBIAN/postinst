@@ -1,15 +1,18 @@
 #!/bin/sh
 # Skrypt poinstalacyjny pakietu serwera Danaco Console.
 #
-# Robi trzy rzeczy i ani jednej więcej: zakłada konto usługi, wprowadza jednostkę
-# systemd do obiegu i nazywa Operatorowi tę część arsenału, której apt nie
-# niesie. Arsenału NIE stawia sam — instalacja pakietów w trakcie postinst
-# weszłaby na blokadę dpkg trzymaną przez apt, który ten skrypt właśnie
-# uruchomił. Od stawiania arsenału jest osobny skrypt, wskazany na końcu.
+# Robi cztery rzeczy i ani jednej więcej: zakłada konto usługi, zakłada klucz
+# sejfu poświadczeń, wprowadza jednostkę systemd do obiegu i nazywa Operatorowi
+# tę część arsenału, której apt nie niesie. Arsenału NIE stawia sam —
+# instalacja pakietów w trakcie postinst weszłaby na blokadę dpkg trzymaną
+# przez apt, który ten skrypt właśnie uruchomił. Od stawiania arsenału jest
+# osobny skrypt, wskazany na końcu.
 set -e
 
 KONTO=danaco-console
 KATALOG_DANYCH=/var/lib/danaco-console
+# Ta sama ścieżka co DANACO_KLUCZ_SEJFU w jednostce systemd.
+KLUCZ_SEJFU=/etc/danaco-console/sejf.klucz
 ARSENAL=/opt/danaco-console/scripts/arsenal-serwera.sh
 
 case "$1" in
@@ -49,6 +52,21 @@ configure)
 		chmod 0640 /etc/danaco-console/srodowisko
 	fi
 
+	# ── Klucz sejfu poświadczeń ──────────────────────────────────────────
+	# Rdzeń przyjmuje 32 bajty albo 64 znaki szesnastkowe pod prawami 0400
+	# (rozstrzygnięcie 26). Istniejący plik zostaje — nowy klucz odciąłby
+	# sejf już zapieczętowany poprzednim.
+	if [ ! -f "$KLUCZ_SEJFU" ]; then
+		mkdir -p "$(dirname "$KLUCZ_SEJFU")"
+		(
+			umask 077
+			od -An -N32 -tx1 /dev/urandom | tr -d ' \n' >"$KLUCZ_SEJFU"
+			echo >>"$KLUCZ_SEJFU"
+		)
+	fi
+	chown "$KONTO:$KONTO" "$KLUCZ_SEJFU"
+	chmod 0400 "$KLUCZ_SEJFU"
+
 	# ── Jednostka systemd ────────────────────────────────────────────────
 	if [ -d /run/systemd/system ]; then
 		systemctl daemon-reload >/dev/null 2>&1 || true
@@ -65,10 +83,11 @@ configure)
 	# Wykaz bierze rdzeń z własnego rejestru deklaracji (--wykaz-zaleznosci);
 	# ten skrypt go nie przepisuje, żeby druga lista nie rozjechała się
 	# z pierwszą.
-	echo "Danaco Console 1.0.0 — serwer postawiony."
+	echo "Danaco Console — serwer postawiony."
 	echo "  usługa:    systemctl status danaco-console   (port 17870)"
 	echo "  dane:      $KATALOG_DANYCH"
-	echo "  nastawy:   /etc/danaco-console/srodowisko (TLS, konto nadawcze)"
+	echo "  sejf:      $KLUCZ_SEJFU (klucz sejfu poświadczeń, 0400)"
+	echo "  nastawy:   /etc/danaco-console/srodowisko (TLS, konto nadawcze, sekret nawiązania)"
 	echo "  dokumenty: /usr/share/doc/danaco-console"
 	echo ""
 	echo "Arsenał spoza apt (Real-ESRGAN, rembg, piper wraz z głosami, warsztat Go,"

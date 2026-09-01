@@ -118,8 +118,8 @@ Materiał leży w `~/robocze/przekazanie-2026-09-01/`:
 | `workflow-naprawy.js` | przebieg napraw wraz z wykazami plików czternastu terenów |
 | `workflow-audyt-powtorny.js` | przebieg audytu powtórnego, napisany i nieuruchomiony |
 
-Bilans terenów: **132 naprawy wykonane, 37 pozycji pominiętych** (czekają na rozstrzygnięcia
-Właściciela albo na pracę projektową) i **80 zgłoszeń „poza terenem"**.
+Bilans czternastu terenów: **145 napraw wykonanych, 37 pozycji pominiętych** (czekają
+na rozstrzygnięcia Właściciela albo na pracę projektową) i **86 zgłoszeń „poza terenem"**.
 
 ### 5.0 Najpierw to: rejestracja jest zepsuta przez zderzenie terenów
 
@@ -150,7 +150,7 @@ i **żadnej nie wolno wybrać bez Właściciela** — audyt stawia tę rzecz jak
 
 ### 5.1 Scalenie
 
-Osiemdziesiąt zgłoszeń „poza terenem" to miejsca, których teren nie mógł tknąć, bo plik należał
+Osiemdziesiąt sześć zgłoszeń „poza terenem" to miejsca, których teren nie mógł tknąć, bo plik należał
 do sąsiada pracującego w tej samej chwili. Teraz nikt nie pracuje równolegle, więc wolno tknąć
 każdy plik. Wykaz stoi w `sprawozdania-terenow.md`, w blokach „Do domknięcia poza terenem".
 

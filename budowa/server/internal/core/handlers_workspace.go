@@ -21,15 +21,46 @@ type PrzestrzenRobocza interface {
 	Projekt(ctx context.Context, idProjektu string) (shared.WorkspaceProject, error)
 	// Projekty oddaje wykaz projektów konta dla lewego panelu ramy.
 	Projekty(ctx context.Context, z shared.ProjectListRequest) (shared.ProjectListResponse, error)
+	ZalozProjekt(ctx context.Context, z shared.ProjectCreateRequest) (shared.ProjectCreateResponse, error)
+	PrzemianujProjekt(ctx context.Context, z shared.ProjectRenameRequest) (shared.ProjectRenameResponse, error)
+	UsunProjekt(ctx context.Context, z shared.ProjectDeleteRequest) (shared.ProjectDeleteResponse, error)
 }
 
-// zarejestrujPrzestrzenRobocza wpina sześć komend modułu Workspace w rejestrze rdzenia tej platformy konta.
+// zarejestrujPrzestrzenRobocza wpina komendy modułu Workspace i rodziny project.* w rejestrze rdzenia.
 func zarejestrujPrzestrzenRobocza(r *Rejestr, w PrzestrzenRobocza, e *emiter) {
 	if r == nil || w == nil {
 		return
 	}
 
 	r.Zarejestruj(shared.CommandProjectList, obsluz(w.Projekty))
+
+	r.Zarejestruj(shared.CommandProjectCreate,
+		obsluz(func(ctx context.Context, z shared.ProjectCreateRequest) (shared.ProjectCreateResponse, error) {
+			odpowiedz, err := w.ZalozProjekt(ctx, z)
+			if err == nil {
+				e.projekt(shared.ChangeKindCreated, odpowiedz.Project)
+			}
+			return odpowiedz, err
+		}))
+
+	r.Zarejestruj(shared.CommandProjectRename,
+		obsluz(func(ctx context.Context, z shared.ProjectRenameRequest) (shared.ProjectRenameResponse, error) {
+			odpowiedz, err := w.PrzemianujProjekt(ctx, z)
+			if err == nil {
+				e.projekt(shared.ChangeKindUpdated, odpowiedz.Project)
+			}
+			return odpowiedz, err
+		}))
+
+	r.Zarejestruj(shared.CommandProjectDelete,
+		obsluz(func(ctx context.Context, z shared.ProjectDeleteRequest) (shared.ProjectDeleteResponse, error) {
+			odpowiedz, err := w.UsunProjekt(ctx, z)
+			if err == nil {
+				// Projektu już nie ma, więc zdarzenie niesie sam identyfikator.
+				e.projekt(shared.ChangeKindDeleted, shared.WorkspaceProject{Id: odpowiedz.ProjectId})
+			}
+			return odpowiedz, err
+		}))
 
 	r.Zarejestruj(shared.CommandWorkspaceDashboardGet,
 		obsluz(func(ctx context.Context, z shared.WorkspaceDashboardGetRequest) (shared.WorkspaceDashboardGetResponse, error) {

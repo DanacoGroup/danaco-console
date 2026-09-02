@@ -421,8 +421,9 @@ func (r *repozytoriumZakresuAgenta) kolizjaEksperta(ctx context.Context, zdjete 
 	if zdjete > 0 {
 		return nil
 	}
-	err := odmowaEksperta(ctx, r.zapytania, kodAgenta)
-	if errors.Is(err, ErrBrakWiersza) {
+	// Kontrakt dopuszcza zdjęcie powtórzone: brak przypisania nie jest kolizją.
+	_, err := r.numerEkspertaZakresu(ctx, kodAgenta)
+	if err == nil || errors.Is(err, ErrBrakWiersza) {
 		return nil
 	}
 	return err

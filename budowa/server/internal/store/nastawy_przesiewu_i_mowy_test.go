@@ -1,4 +1,4 @@
-package store
+package store_test
 
 import (
 	"testing"
@@ -9,7 +9,7 @@ import (
 
 // TestNastawyPrzesiewuIObrazuStojaWKatalogu sprawdza, że cztery nastawy przesiewu i osi obrazu mają wiersz w katalogu ustawień.
 func TestNastawyPrzesiewuIObrazuStojaWKatalogu(t *testing.T) {
-	baza := swiezaBaza(t)
+	baza := swiezaBazaWiedzy(t)
 
 	oczekiwane := map[string]string{
 		wiedza.KluczModelPrzesiewu:   wiedza.ModelPrzesiewuDomyslny,
@@ -68,7 +68,7 @@ func TestNastawyPrzesiewuIObrazuStojaWKatalogu(t *testing.T) {
 
 // TestNastawaWagMowyWskazujeWagiStojace sprawdza, że nastawa katalogu wag mowy i stała pakietu wskazują te same wagi.
 func TestNastawaWagMowyWskazujeWagiStojace(t *testing.T) {
-	baza := swiezaBaza(t)
+	baza := swiezaBazaWiedzy(t)
 
 	var domyslna string
 	if err := baza.DB.QueryRow(

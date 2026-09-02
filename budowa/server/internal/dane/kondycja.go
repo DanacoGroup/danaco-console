@@ -1,6 +1,4 @@
-// Plik jest magazynem sond kondycji i serii ich wyników w tabelach sonda_kondycji oraz
-// wynik_sondy_kondycji, na potrzeby rodziny poleceń health. Uzasadnienie granic
-// repozytorium niesie rozdział kondycja.go dokumentacji architektury.
+// Magazyn sond kondycji i serii ich wyników (sonda_kondycji, wynik_sondy_kondycji) dla rodziny poleceń health.
 package dane
 
 import (
@@ -11,8 +9,7 @@ import (
 	"strings"
 )
 
-// SondaKondycji to wiersz tabeli `sonda_kondycji` — definicja jednego pomiaru
-// wraz z odbiciem ostatniego przebiegu.
+// SondaKondycji to definicja jednego pomiaru wraz z odbiciem ostatniego przebiegu.
 type SondaKondycji struct {
 	ID              int64
 	Kod             string
@@ -32,8 +29,7 @@ type SondaKondycji struct {
 	Zaktualizowano  *int64
 }
 
-// WynikSondyKondycji to wiersz tabeli `wynik_sondy_kondycji` — jeden pomiar
-// wykonany o znanej godzinie. Wiersz jest niezmienny.
+// WynikSondyKondycji to jeden niezmienny pomiar wykonany o znanej godzinie.
 type WynikSondyKondycji struct {
 	Kod              string
 	SondaKod         string
@@ -45,8 +41,7 @@ type WynikSondyKondycji struct {
 	BladKod          *string
 }
 
-// SitoWynikowKondycji zawęża odczyt serii pomiarów: sondą, stanem, przedziałem czasu
-// oraz granicą liczby zwracanych wierszy.
+// SitoWynikowKondycji zawęża odczyt serii: sondą, stanem, przedziałem czasu i granicą wierszy.
 type SitoWynikowKondycji struct {
 	SondaKod string
 	Stan     string
@@ -55,8 +50,7 @@ type SitoWynikowKondycji struct {
 	Granica  int
 }
 
-// RepozytoriumKondycji jest kontraktem magazynu sond kondycji i serii ich wyników, wraz
-// z pulsem mierzącym czas obiegu bazy rdzenia.
+// RepozytoriumKondycji jest kontraktem magazynu sond, serii wyników i pulsu bazy rdzenia.
 type RepozytoriumKondycji interface {
 	ZapiszSonde(ctx context.Context, sonda SondaKondycji) (SondaKondycji, bool, error)
 	Sonda(ctx context.Context, kod string) (SondaKondycji, error)
@@ -64,7 +58,6 @@ type RepozytoriumKondycji interface {
 	UsunSonde(ctx context.Context, kod string) (int, error)
 	ZapiszWynik(ctx context.Context, wynik WynikSondyKondycji) (WynikSondyKondycji, error)
 	Wyniki(ctx context.Context, sito SitoWynikowKondycji) ([]WynikSondyKondycji, int, error)
-	// Puls wykonuje najprostsze możliwe zapytanie do bazy rdzenia, żeby zmierzyć czas jej obiegu naprawdę.
 	Puls(ctx context.Context) error
 }
 
@@ -77,19 +70,19 @@ const (
 	wstawSondeKondycji = `INSERT INTO sonda_kondycji
 	                      (identyfikator_zewnetrzny, nazwa, rodzaj, cel, komponent_kod, odstep_ms,
 	                       limit_czasu_ms, oczekiwany_status, tresc_wysylana, cel_dostepnosci,
-	                       czynna, utworzono, zaktualizowano)
-	                      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+	                       czynna, utworzono, zaktualizowano, konto_id)
+	                      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ` + WskazanieKonta + `)`
 
 	aktualizujSondeKondycji = `UPDATE sonda_kondycji SET
 	                               nazwa = ?, rodzaj = ?, cel = ?, komponent_kod = ?, odstep_ms = ?,
 	                               limit_czasu_ms = ?, oczekiwany_status = ?, tresc_wysylana = ?,
 	                               cel_dostepnosci = ?, czynna = ?, zaktualizowano = ?
-	                           WHERE identyfikator_zewnetrzny = ?`
+	                           WHERE identyfikator_zewnetrzny = ? AND ` + WarunekKonta
 
 	pobierzSondeKondycji = `SELECT ` + kolumnySondyKondycji +
-		` FROM sonda_kondycji s WHERE s.identyfikator_zewnetrzny = ?`
+		` FROM sonda_kondycji s WHERE s.identyfikator_zewnetrzny = ? AND ` + WarunekKonta
 
-	usunSondeKondycji = `DELETE FROM sonda_kondycji WHERE identyfikator_zewnetrzny = ?`
+	usunSondeKondycji = `DELETE FROM sonda_kondycji WHERE identyfikator_zewnetrzny = ? AND ` + WarunekKonta
 
 	policzWynikiSondyKondycji = `SELECT COUNT(*) FROM wynik_sondy_kondycji WHERE sonda_kod = ?`
 
@@ -101,7 +94,7 @@ const (
 
 	odbijPrzebiegSondyKondycji = `UPDATE sonda_kondycji
 	                              SET ostatni_stan = ?, ostatni_przebieg = ?
-	                              WHERE identyfikator_zewnetrzny = ?`
+	                              WHERE identyfikator_zewnetrzny = ? AND ` + WarunekKonta
 )
 
 type repozytoriumKondycji struct {
@@ -109,14 +102,11 @@ type repozytoriumKondycji struct {
 	db        *sql.DB
 }
 
-// noweRepozytoriumKondycji zakłada magazyn sond kondycji nad bazą zestawu, gotowy
-// do zapisu definicji i wyników.
 func noweRepozytoriumKondycji(z *zapytania, db *sql.DB) *repozytoriumKondycji {
 	return &repozytoriumKondycji{zapytania: z, db: db}
 }
 
-// ZapiszSonde zakłada definicję albo nadpisuje zastaną po kodzie. Drugi zwracany wynik
-// mówi, czy sonda powstała teraz, ponieważ kontrakt health.probe.save niesie to wprost.
+// ZapiszSonde zakłada definicję albo nadpisuje zastaną po kodzie; drugi wynik mówi, czy sonda powstała teraz.
 func (r *repozytoriumKondycji) ZapiszSonde(ctx context.Context,
 	sonda SondaKondycji) (SondaKondycji, bool, error) {
 
@@ -129,7 +119,7 @@ func (r *repozytoriumKondycji) ZapiszSonde(ctx context.Context,
 		if err != nil {
 			return err
 		}
-		zastana, err := odczytajSondeKondycji(odczyt.QueryRowContext(ctx, sonda.Kod))
+		zastana, err := odczytajSondeKondycji(odczyt.QueryRowContext(ctx, sonda.Kod, KontoOperatora(ctx)))
 		switch {
 		case errors.Is(err, sql.ErrNoRows):
 			powstala = true
@@ -156,9 +146,11 @@ func (r *repozytoriumKondycji) ZapiszSonde(ctx context.Context,
 		var argumenty []any
 		if powstala {
 			argumenty = append([]any{sonda.Kod}, wspolne...)
-			argumenty = append(argumenty, sonda.Utworzono, liczbaDoKolumny(sonda.Zaktualizowano))
+			argumenty = append(argumenty, sonda.Utworzono, liczbaDoKolumny(sonda.Zaktualizowano),
+				KontoOperatora(ctx))
 		} else {
-			argumenty = append(wspolne, liczbaDoKolumny(sonda.Zaktualizowano), sonda.Kod)
+			argumenty = append(wspolne, liczbaDoKolumny(sonda.Zaktualizowano), sonda.Kod,
+				KontoOperatora(ctx))
 		}
 		if _, err := zapis.ExecContext(ctx, argumenty...); err != nil {
 			return fmt.Errorf("dane: nie można zapisać sondy kondycji %q: %w", sonda.Kod, err)
@@ -172,27 +164,25 @@ func (r *repozytoriumKondycji) ZapiszSonde(ctx context.Context,
 	return zapisana, powstala, err
 }
 
-// Sonda zwraca jedną definicję sondy kondycji wskazaną kodem. Brak wiersza jest
-// sygnałem błędu ErrBrakWiersza.
+// Sonda zwraca jedną definicję sondy po kodzie; brak wiersza sygnalizuje ErrBrakWiersza.
 func (r *repozytoriumKondycji) Sonda(ctx context.Context, kod string) (SondaKondycji, error) {
 	polecenie, err := r.zapytania.przygotuj(ctx, pobierzSondeKondycji)
 	if err != nil {
 		return SondaKondycji{}, err
 	}
-	sonda, err := odczytajSondeKondycji(polecenie.QueryRowContext(ctx, kod))
+	sonda, err := odczytajSondeKondycji(polecenie.QueryRowContext(ctx, kod, KontoOperatora(ctx)))
 	if errors.Is(err, sql.ErrNoRows) {
 		return SondaKondycji{}, fmt.Errorf("dane: sonda kondycji %q nie istnieje: %w", kod, ErrBrakWiersza)
 	}
 	return sonda, err
 }
 
-// Sondy zwraca definicje spełniające zawężenie rodzajem, komponentem i stanem
-// czynności, uporządkowane od najstarszej.
+// Sondy zwraca definicje zawężone rodzajem, komponentem i stanem czynności, od najstarszej.
 func (r *repozytoriumKondycji) Sondy(ctx context.Context, rodzaj, komponent string,
 	tylkoCzynne bool, granica int) ([]SondaKondycji, error) {
 
-	warunki := []string{"1 = 1"}
-	argumenty := []any{}
+	warunki := []string{"1 = 1", WarunekKonta}
+	argumenty := []any{KontoOperatora(ctx)}
 	if strings.TrimSpace(rodzaj) != "" {
 		warunki = append(warunki, "s.rodzaj = ?")
 		argumenty = append(argumenty, rodzaj)
@@ -230,9 +220,7 @@ func (r *repozytoriumKondycji) Sondy(ctx context.Context, rodzaj, komponent stri
 	return lista, nil
 }
 
-// UsunSonde wykreśla definicję wraz z serią jej wyników i oddaje liczbę
-// usuniętych pomiarów. Serię liczy się przed skasowaniem, bo po kaskadzie nie ma
-// już czego policzyć, a kontrakt tę liczbę oddaje.
+// UsunSonde wykreśla definicję z serią wyników i oddaje liczbę pomiarów, liczoną przed kaskadą.
 func (r *repozytoriumKondycji) UsunSonde(ctx context.Context, kod string) (int, error) {
 	usunietych := 0
 	err := wTransakcji(ctx, r.db, func(transakcja *sql.Tx) error {
@@ -263,9 +251,7 @@ func (r *repozytoriumKondycji) UsunSonde(ctx context.Context, kod string) (int, 
 	return usunietych, nil
 }
 
-// ZapiszWynik dopisuje pomiar i podnosi odbicie w definicji sondy. Jedna
-// transakcja: wykaz sond nie ma prawa pokazać stanu innego niż ostatni wiersz
-// serii.
+// ZapiszWynik dopisuje pomiar i podnosi odbicie w definicji sondy w jednej transakcji.
 func (r *repozytoriumKondycji) ZapiszWynik(ctx context.Context,
 	wynik WynikSondyKondycji) (WynikSondyKondycji, error) {
 
@@ -283,7 +269,7 @@ func (r *repozytoriumKondycji) ZapiszWynik(ctx context.Context,
 		if err != nil {
 			return err
 		}
-		if _, err := odbicie.ExecContext(ctx, wynik.Stan, wynik.Wykonano, wynik.SondaKod); err != nil {
+		if _, err := odbicie.ExecContext(ctx, wynik.Stan, wynik.Wykonano, wynik.SondaKod, KontoOperatora(ctx)); err != nil {
 			return fmt.Errorf("dane: nie można odnotować przebiegu sondy kondycji %q: %w",
 				wynik.SondaKod, err)
 		}
@@ -295,14 +281,13 @@ func (r *repozytoriumKondycji) ZapiszWynik(ctx context.Context,
 	return wynik, nil
 }
 
-// Wyniki zwraca serię pomiarów spełniającą zawężenie, od najnowszego, wraz
-// z liczbą wierszy spełniających warunki bez granicy — okno musi wiedzieć, czy
-// wykaz został przycięty.
+// Wyniki zwraca serię pomiarów od najnowszego wraz z liczbą wszystkich bez granicy.
 func (r *repozytoriumKondycji) Wyniki(ctx context.Context,
 	sito SitoWynikowKondycji) ([]WynikSondyKondycji, int, error) {
 
-	warunki := []string{"1 = 1"}
-	argumenty := []any{}
+	warunki := []string{"1 = 1", `EXISTS (SELECT 1 FROM sonda_kondycji s
+		WHERE s.identyfikator_zewnetrzny = wynik_sondy_kondycji.sonda_kod AND ` + WarunekKonta + `)`}
+	argumenty := []any{KontoOperatora(ctx)}
 	if strings.TrimSpace(sito.SondaKod) != "" {
 		warunki = append(warunki, "sonda_kod = ?")
 		argumenty = append(argumenty, sito.SondaKod)
@@ -353,8 +338,6 @@ func (r *repozytoriumKondycji) Wyniki(ctx context.Context,
 	return lista, wszystkich, nil
 }
 
-// odczytajSondeKondycji przekłada wiersz wyniku zapytania na strukturę SondaKondycji
-// wraz z jej odbiciem ostatniego przebiegu.
 func odczytajSondeKondycji(s skaner) (SondaKondycji, error) {
 	var sonda SondaKondycji
 	var komponent, ostatniStan, tresc sql.NullString
@@ -379,8 +362,6 @@ func odczytajSondeKondycji(s skaner) (SondaKondycji, error) {
 	return sonda, nil
 }
 
-// odczytajWynikKondycji przekłada wiersz wyniku zapytania na strukturę WynikSondyKondycji
-// jednego pomiaru.
 func odczytajWynikKondycji(s skaner) (WynikSondyKondycji, error) {
 	var wynik WynikSondyKondycji
 	var czas, status sql.NullInt64
@@ -397,9 +378,7 @@ func odczytajWynikKondycji(s skaner) (WynikSondyKondycji, error) {
 	return wynik, nil
 }
 
-// Puls wykonuje jedno, celowo najtańsze możliwe zapytanie do bazy, żeby zmierzyć czas
-// jej obiegu, a nie obciążyć ją przy okazji. Wynik zapytania nie ma znaczenia —
-// znaczenie ma to, że baza w ogóle odpowiedziała.
+// Puls wykonuje najtańsze możliwe zapytanie do bazy, by zmierzyć czas jej obiegu; liczy się sama odpowiedź.
 func (r *repozytoriumKondycji) Puls(ctx context.Context) error {
 	var jeden int
 	if err := r.db.QueryRowContext(ctx, "SELECT 1").Scan(&jeden); err != nil {

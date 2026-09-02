@@ -31,8 +31,7 @@ type WariantDebaty struct {
 	Kolejnosc  int
 }
 
-// GlosDebaty to jeden oddany głos. Kształt zależy od metody agregacji, więc
-// wypełnione bywa jedno z trzech pól.
+// GlosDebaty to jeden oddany głos; kształt zależy od metody agregacji, więc wypełnione bywa jedno z trzech pól.
 type GlosDebaty struct {
 	Kod        string
 	Glosowanie string
@@ -60,18 +59,18 @@ const (
 	                           uprawnieni, rozpoczeto, zamknieto`
 
 	zalozGlosowanieDebaty = `INSERT INTO debata_glosowanie
-	                         (identyfikator_zewnetrzny, okno, tura, metoda, stan, prog, uprawnieni)
-	                         VALUES (?, ?, ?, ?, ?, ?, ?)`
+	                         (identyfikator_zewnetrzny, okno, tura, metoda, stan, prog, uprawnieni, konto_id)
+	                         VALUES (?, ?, ?, ?, ?, ?, ?, ` + WskazanieKonta + `)`
 
 	zalozWariantDebaty = `INSERT INTO debata_wariant
 	                      (identyfikator_zewnetrzny, glosowanie, etykieta, wypowiedz, kolejnosc)
 	                      VALUES (?, ?, ?, ?, ?)`
 
 	pobierzGlosowanieDebaty = `SELECT ` + kolumnyGlosowaniaDebaty + `
-	                           FROM debata_glosowanie WHERE identyfikator_zewnetrzny = ?`
+	                           FROM debata_glosowanie WHERE identyfikator_zewnetrzny = ? AND ` + WarunekKonta
 
 	pobierzOstatnieGlosowanieDebaty = `SELECT ` + kolumnyGlosowaniaDebaty + `
-	                                   FROM debata_glosowanie WHERE okno = ?
+	                                   FROM debata_glosowanie WHERE okno = ? AND ` + WarunekKonta + `
 	                                   ORDER BY id DESC LIMIT 1`
 
 	pobierzWariantyDebaty = `SELECT identyfikator_zewnetrzny, glosowanie, etykieta, wypowiedz,
@@ -79,8 +78,7 @@ const (
 	                         FROM debata_wariant WHERE glosowanie = ?
 	                         ORDER BY kolejnosc ASC, id ASC`
 
-	// Powtórne oddanie głosu zastępuje poprzedni: zmiana zdania w otwartym
-	// głosowaniu jest czynnością dozwoloną, dwa głosy tej samej osoby nie są.
+	// Powtórne oddanie głosu zastępuje poprzedni: zmiana zdania jest dozwolona, dwa głosy tej samej osoby nie.
 	oddajGlosDebaty = `INSERT INTO debata_glos
 	                   (identyfikator_zewnetrzny, glosowanie, wyborca, aprobaty, ranking, punkty_json)
 	                   VALUES (?, ?, ?, ?, ?, ?)
@@ -99,11 +97,10 @@ const (
 	                      FROM debata_glos WHERE glosowanie = ? ORDER BY id ASC`
 
 	ustawStanGlosowaniaDebaty = `UPDATE debata_glosowanie SET stan = ?, zamknieto = ?
-	                             WHERE identyfikator_zewnetrzny = ?`
+	                             WHERE identyfikator_zewnetrzny = ? AND ` + WarunekKonta
 )
 
-// ZalozGlosowanieDebaty otwiera głosowanie wraz z wariantami w jednej
-// transakcji. Głosowanie bez wariantów byłoby pytaniem bez odpowiedzi do wyboru.
+// ZalozGlosowanieDebaty otwiera głosowanie wraz z wariantami w jednej transakcji.
 func (r *repozytoriumRoundtable) ZalozGlosowanieDebaty(ctx context.Context,
 	glosowanie GlosowanieDebaty, warianty []WariantDebaty) (GlosowanieDebaty, error) {
 
@@ -114,7 +111,7 @@ func (r *repozytoriumRoundtable) ZalozGlosowanieDebaty(ctx context.Context,
 		}
 		if _, err := naglowek.ExecContext(ctx, glosowanie.Kod, glosowanie.Okno, glosowanie.Tura,
 			glosowanie.Metoda, glosowanie.Stan, glosowanie.Prog,
-			strings.Join(glosowanie.Uprawnieni, "\n")); err != nil {
+			strings.Join(glosowanie.Uprawnieni, "\n"), KontoOperatora(ctx)); err != nil {
 			return fmt.Errorf("dane: nie można otworzyć głosowania debaty %q: %w", glosowanie.Kod, err)
 		}
 		wstaw, err := r.zapytania.wTransakcji(ctx, transakcja, zalozWariantDebaty)
@@ -144,7 +141,7 @@ func (r *repozytoriumRoundtable) GlosowanieDebatyPoKodzie(ctx context.Context,
 	if err != nil {
 		return GlosowanieDebaty{}, err
 	}
-	return odczytajGlosowanieDebaty(polecenie.QueryRowContext(ctx, kod))
+	return odczytajGlosowanieDebaty(polecenie.QueryRowContext(ctx, kod, KontoOperatora(ctx)))
 }
 
 // OstatnieGlosowanieDebaty zwraca ostatnio otwarte głosowanie danego okna operacyjnego tej samej debaty.
@@ -155,10 +152,9 @@ func (r *repozytoriumRoundtable) OstatnieGlosowanieDebaty(ctx context.Context,
 	if err != nil {
 		return GlosowanieDebaty{}, err
 	}
-	return odczytajGlosowanieDebaty(polecenie.QueryRowContext(ctx, okno))
+	return odczytajGlosowanieDebaty(polecenie.QueryRowContext(ctx, okno, KontoOperatora(ctx)))
 }
 
-// WariantyDebaty zwraca warianty tego głosowania w kolejności ich podania przy otwarciu tego głosowania.
 func (r *repozytoriumRoundtable) WariantyDebaty(ctx context.Context,
 	glosowanie string) ([]WariantDebaty, error) {
 
@@ -209,7 +205,6 @@ func (r *repozytoriumRoundtable) OddajGlosDebaty(ctx context.Context,
 	return zapisany, nil
 }
 
-// GlosyDebaty zwraca wszystkie głosy oddane w danym głosowaniu tej samej debaty, w kolejności ich oddania.
 func (r *repozytoriumRoundtable) GlosyDebaty(ctx context.Context,
 	glosowanie string) ([]GlosDebaty, error) {
 
@@ -242,14 +237,13 @@ func (r *repozytoriumRoundtable) UstawStanGlosowaniaDebaty(ctx context.Context,
 	if err != nil {
 		return err
 	}
-	wynik, err := polecenie.ExecContext(ctx, stan, zamknieto, kod)
+	wynik, err := polecenie.ExecContext(ctx, stan, zamknieto, kod, KontoOperatora(ctx))
 	if err != nil {
 		return fmt.Errorf("dane: nie można zmienić stanu głosowania %q: %w", kod, err)
 	}
 	return trafienieDebaty(wynik)
 }
 
-// odczytajGlosowanieDebaty składa głosowanie debaty z jednego wiersza wyniku zapytania, kolumna po kolumnie.
 func odczytajGlosowanieDebaty(wiersz interface{ Scan(...any) error }) (GlosowanieDebaty, error) {
 	var glosowanie GlosowanieDebaty
 	var uprawnieni string
@@ -266,7 +260,6 @@ func odczytajGlosowanieDebaty(wiersz interface{ Scan(...any) error }) (Glosowani
 	return glosowanie, nil
 }
 
-// odczytajGlosDebaty składa oddany głos debaty z jednego wiersza wyniku zapytania, kolumna po kolumnie.
 func odczytajGlosDebaty(wiersz interface{ Scan(...any) error }) (GlosDebaty, error) {
 	var glos GlosDebaty
 	var aprobaty, ranking string
@@ -283,9 +276,7 @@ func odczytajGlosDebaty(wiersz interface{ Scan(...any) error }) (GlosDebaty, err
 	return glos, nil
 }
 
-// rozdzielWierszeDebaty rozbija wykaz zapisany w jednej kolumnie. Tekst pusty
-// oddaje wykaz pusty, a nie wykaz z jedną pustą pozycją — inaczej „bez
-// zawężenia" byłoby nie do odróżnienia od „jeden uprawniony bez kodu".
+// rozdzielWierszeDebaty rozbija wykaz z jednej kolumny; tekst pusty oddaje wykaz pusty, nie jedną pustą pozycję.
 func rozdzielWierszeDebaty(zapis string) []string {
 	if strings.TrimSpace(zapis) == "" {
 		return nil

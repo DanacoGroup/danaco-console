@@ -25,8 +25,9 @@ const (
 	wstawPunktDostepu = `INSERT INTO punkt_dostepu
 	                     (kod, nazwa, opis, rodzaj, urzadzenie_id, host, port, uzytkownik,
 	                      sciezka_klucza, polecenie_startu, nazwa_mostu, poswiadczenie_odwolanie,
-	                      tryb_domyslny, stan, aktywny, kolejnosc)
-	                     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+	                      tryb_domyslny, stan, aktywny, kolejnosc, konto_id)
+	                     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ` +
+		WskazanieKonta + `)`
 
 	aktualizujPunktDostepu = `UPDATE punkt_dostepu
 	                          SET nazwa = ?, opis = ?, rodzaj = ?, urzadzenie_id = ?, host = ?,
@@ -35,9 +36,9 @@ const (
 	                              poswiadczenie_odwolanie = ?, tryb_domyslny = ?, aktywny = ?,
 	                              kolejnosc = ?,
 	                              zaktualizowano = strftime('%Y-%m-%dT%H:%M:%fZ','now')
-	                          WHERE id = ?`
+	                          WHERE id = ? AND ` + WarunekKonta
 
-	usunPunktDostepu = `DELETE FROM punkt_dostepu WHERE id = ?`
+	usunPunktDostepu = `DELETE FROM punkt_dostepu WHERE id = ? AND ` + WarunekKonta
 
 	// Wskazanie urządzenia jest sprawdzane przed zapisem, bo więz klucza obcego
 	// zgłasza pomyłkę dopiero jako awarię INSERT-a.
@@ -51,7 +52,7 @@ const (
 	zapiszStanPunktu = `UPDATE punkt_dostepu
 	                    SET stan = ?, sprawdzono = ?,
 	                        zaktualizowano = strftime('%Y-%m-%dT%H:%M:%fZ','now')
-	                    WHERE id = ?`
+	                    WHERE id = ? AND ` + WarunekKonta
 )
 
 // Dodaj wpisuje punkt dostępu do katalogu wraz z jego korzeniami i słownictwem trybu używanym przez most.
@@ -74,7 +75,7 @@ func (r *repozytoriumPunktowDostepu) Dodaj(ctx context.Context, punkt PunktDoste
 			wartosci.rodzaj, liczbaDoKolumny(urzadzenie), punkt.Host, portPunktu(punkt),
 			punkt.Uzytkownik, punkt.SciezkaKlucza, punkt.PolecenieStartu, punkt.NazwaMostu,
 			tekstDoKolumny(punkt.PoswiadczenieOdwolanie), wartosci.tryb, wartosci.stan,
-			liczbaLogiczna(punkt.Aktywny), punkt.Kolejnosc)
+			liczbaLogiczna(punkt.Aktywny), punkt.Kolejnosc, KontoOperatora(ctx))
 		if err != nil {
 			return fmt.Errorf("dane: nie można dodać punktu dostępu %q: %w", punkt.Kod, err)
 		}
@@ -109,7 +110,7 @@ func (r *repozytoriumPunktowDostepu) Aktualizuj(ctx context.Context, punkt Punkt
 			liczbaDoKolumny(urzadzenie), punkt.Host, portPunktu(punkt), punkt.Uzytkownik,
 			punkt.SciezkaKlucza, punkt.PolecenieStartu, punkt.NazwaMostu,
 			tekstDoKolumny(punkt.PoswiadczenieOdwolanie), wartosci.tryb,
-			liczbaLogiczna(punkt.Aktywny), punkt.Kolejnosc, punkt.ID)
+			liczbaLogiczna(punkt.Aktywny), punkt.Kolejnosc, punkt.ID, KontoOperatora(ctx))
 		if err != nil {
 			return fmt.Errorf("dane: nie można zapisać punktu dostępu %d: %w", punkt.ID, err)
 		}
@@ -127,7 +128,7 @@ func (r *repozytoriumPunktowDostepu) Usun(ctx context.Context, id int64) error {
 	if err != nil {
 		return err
 	}
-	wynik, err := polecenie.ExecContext(ctx, id)
+	wynik, err := polecenie.ExecContext(ctx, id, KontoOperatora(ctx))
 	if err != nil {
 		return fmt.Errorf("dane: nie można usunąć punktu dostępu %d: %w", id, err)
 	}
@@ -151,7 +152,7 @@ func (r *repozytoriumPunktowDostepu) ZapiszWynikSprawdzenia(ctx context.Context,
 	if sprawdzono != "" {
 		czas = sprawdzono
 	}
-	wynik, err := polecenie.ExecContext(ctx, kolumna, czas, id)
+	wynik, err := polecenie.ExecContext(ctx, kolumna, czas, id, KontoOperatora(ctx))
 	if err != nil {
 		return fmt.Errorf("dane: nie można zapisać stanu punktu dostępu %d: %w", id, err)
 	}

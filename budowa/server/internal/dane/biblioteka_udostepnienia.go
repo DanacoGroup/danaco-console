@@ -42,33 +42,38 @@ const (
 	                                  wygasa, odwolano, utworzono`
 
 	zapiszUdostepnienieBiblioteki = `INSERT INTO udostepnienie_biblioteki
-	                                 (identyfikator_zewnetrzny, zasieg, cel_kod, token, wygasa)
-	                                 VALUES (?, ?, ?, ?, ?)`
+	                                 (identyfikator_zewnetrzny, zasieg, cel_kod, token, wygasa,
+	                                  konto_id)
+	                                 VALUES (?, ?, ?, ?, ?, ` + WskazanieKonta + `)`
 
 	pobierzUdostepnienieBiblioteki = `SELECT ` + kolumnyUdostepnieniaBiblioteki + `
 	                                  FROM udostepnienie_biblioteki
-	                                  WHERE identyfikator_zewnetrzny = ?`
+	                                  WHERE identyfikator_zewnetrzny = ? AND ` + WarunekKonta
 
 	odwolajUdostepnienieBiblioteki = `UPDATE udostepnienie_biblioteki
 	                                  SET odwolano = strftime('%Y-%m-%dT%H:%M:%fZ','now')
-	                                  WHERE identyfikator_zewnetrzny = ? AND odwolano IS NULL`
+	                                  WHERE identyfikator_zewnetrzny = ? AND odwolano IS NULL
+	                                    AND ` + WarunekKonta
 
 	kolumnyWebhookaBiblioteki = `id, identyfikator_zewnetrzny, adres, sekret, czynny,
 	                             ostatnie_zgloszenie, utworzono`
 
 	zapiszWebhookBiblioteki = `INSERT INTO webhook_biblioteki
-	                           (identyfikator_zewnetrzny, adres, sekret, czynny, ostatnie_zgloszenie)
-	                           VALUES (?, ?, ?, ?, ?)
+	                           (identyfikator_zewnetrzny, adres, sekret, czynny, ostatnie_zgloszenie,
+	                            konto_id)
+	                           VALUES (?, ?, ?, ?, ?, ` + WskazanieKonta + `)
 	                           ON CONFLICT(identyfikator_zewnetrzny) DO UPDATE SET
 	                               adres = excluded.adres,
 	                               sekret = excluded.sekret,
 	                               czynny = excluded.czynny,
-	                               ostatnie_zgloszenie = excluded.ostatnie_zgloszenie`
+	                               ostatnie_zgloszenie = excluded.ostatnie_zgloszenie
+	                           WHERE ` + WarunekKonta
 
 	pobierzWebhookBiblioteki = `SELECT ` + kolumnyWebhookaBiblioteki + ` FROM webhook_biblioteki
-	                            WHERE identyfikator_zewnetrzny = ?`
+	                            WHERE identyfikator_zewnetrzny = ? AND ` + WarunekKonta
 
-	usunWebhookBiblioteki = `DELETE FROM webhook_biblioteki WHERE identyfikator_zewnetrzny = ?`
+	usunWebhookBiblioteki = `DELETE FROM webhook_biblioteki
+	                         WHERE identyfikator_zewnetrzny = ? AND ` + WarunekKonta
 
 	usunZdarzeniaWebhookaBiblioteki = `DELETE FROM zdarzenie_webhooka_biblioteki WHERE webhook_id = ?`
 
@@ -93,7 +98,8 @@ func (r *repozytoriumBiblioteki) ZapiszUdostepnienie(ctx context.Context,
 		return UdostepnienieBiblioteki{}, err
 	}
 	_, err = polecenie.ExecContext(ctx, udostepnienie.Kod, udostepnienie.Zasieg,
-		udostepnienie.CelKod, udostepnienie.Token, tekstDoKolumny(udostepnienie.Wygasa))
+		udostepnienie.CelKod, udostepnienie.Token, tekstDoKolumny(udostepnienie.Wygasa),
+		KontoOperatora(ctx))
 	if err != nil {
 		return UdostepnienieBiblioteki{}, fmt.Errorf("dane: nie można zapisać udostępnienia %q: %w",
 			udostepnienie.Kod, err)
@@ -102,7 +108,8 @@ func (r *repozytoriumBiblioteki) ZapiszUdostepnienie(ctx context.Context,
 	if err != nil {
 		return UdostepnienieBiblioteki{}, err
 	}
-	zapisane, err := odczytajUdostepnienieBiblioteki(odczyt.QueryRowContext(ctx, udostepnienie.Kod))
+	zapisane, err := odczytajUdostepnienieBiblioteki(
+		odczyt.QueryRowContext(ctx, udostepnienie.Kod, KontoOperatora(ctx)))
 	if err != nil {
 		return UdostepnienieBiblioteki{}, fmt.Errorf("dane: nieczytelne udostępnienie %q: %w",
 			udostepnienie.Kod, err)
@@ -115,8 +122,8 @@ func (r *repozytoriumBiblioteki) ZapiszUdostepnienie(ctx context.Context,
 func (r *repozytoriumBiblioteki) Udostepnienia(ctx context.Context, celKod *string,
 	tylkoCzynne bool) ([]UdostepnienieBiblioteki, error) {
 
-	warunki := []string{"1 = 1"}
-	argumenty := []any{}
+	warunki := []string{WarunekKonta}
+	argumenty := []any{KontoOperatora(ctx)}
 	if celKod != nil && *celKod != "" {
 		warunki = append(warunki, "cel_kod = ?")
 		argumenty = append(argumenty, *celKod)
@@ -156,7 +163,7 @@ func (r *repozytoriumBiblioteki) OdwolajUdostepnienie(ctx context.Context, kod s
 	if err != nil {
 		return false, err
 	}
-	wynik, err := polecenie.ExecContext(ctx, kod)
+	wynik, err := polecenie.ExecContext(ctx, kod, KontoOperatora(ctx))
 	if err != nil {
 		return false, fmt.Errorf("dane: nie można odwołać udostępnienia %q: %w", kod, err)
 	}
@@ -183,16 +190,27 @@ func (r *repozytoriumBiblioteki) ZapiszWebhook(ctx context.Context,
 		if err != nil {
 			return err
 		}
-		if _, err := zapis.ExecContext(ctx, webhook.Kod, webhook.Adres,
+		wynik, err := zapis.ExecContext(ctx, webhook.Kod, webhook.Adres,
 			tekstDoKolumny(webhook.Sekret), liczbaLogiczna(webhook.Czynny),
-			tekstDoKolumny(webhook.OstatnieZgloszenie)); err != nil {
+			tekstDoKolumny(webhook.OstatnieZgloszenie), KontoOperatora(ctx),
+			KontoOperatora(ctx))
+		if err != nil {
 			return fmt.Errorf("dane: nie można zapisać nasłuchu %q: %w", webhook.Kod, err)
+		}
+		zmienione, err := wynik.RowsAffected()
+		if err != nil {
+			return fmt.Errorf("dane: nieznana liczba zapisanych nasłuchów biblioteki: %w", err)
+		}
+		if zmienione == 0 {
+			return fmt.Errorf("dane: nasłuch %q należy do innego konta: %w",
+				webhook.Kod, ErrKolizjaWiersza)
 		}
 		odczyt, err := r.zapytania.wTransakcji(ctx, transakcja, pobierzWebhookBiblioteki)
 		if err != nil {
 			return err
 		}
-		zapisany, err := odczytajWebhookBiblioteki(odczyt.QueryRowContext(ctx, webhook.Kod))
+		zapisany, err := odczytajWebhookBiblioteki(
+			odczyt.QueryRowContext(ctx, webhook.Kod, KontoOperatora(ctx)))
 		if err != nil {
 			return fmt.Errorf("dane: nieczytelny nasłuch %q: %w", webhook.Kod, err)
 		}
@@ -227,14 +245,14 @@ func (r *repozytoriumBiblioteki) ZapiszWebhook(ctx context.Context,
 // Webhooki zwraca nasłuchy od najnowszego wraz z ich zdarzeniami, opcjonalnie
 // zawężone do wierszy czynnych.
 func (r *repozytoriumBiblioteki) Webhooki(ctx context.Context, tylkoCzynne bool) ([]WebhookBiblioteki, error) {
-	warunek := "1 = 1"
+	warunek := WarunekKonta
 	if tylkoCzynne {
-		warunek = "czynny = 1"
+		warunek += " AND czynny = 1"
 	}
 	zapytanie := `SELECT ` + kolumnyWebhookaBiblioteki + ` FROM webhook_biblioteki
 	              WHERE ` + warunek + ` ORDER BY utworzono DESC, id DESC`
 
-	wiersze, err := r.db.QueryContext(ctx, zapytanie)
+	wiersze, err := r.db.QueryContext(ctx, zapytanie, KontoOperatora(ctx))
 	if err != nil {
 		return nil, fmt.Errorf("dane: nie można odczytać nasłuchów biblioteki: %w", err)
 	}
@@ -268,7 +286,7 @@ func (r *repozytoriumBiblioteki) UsunWebhook(ctx context.Context, kod string) (b
 	if err != nil {
 		return false, err
 	}
-	wynik, err := polecenie.ExecContext(ctx, kod)
+	wynik, err := polecenie.ExecContext(ctx, kod, KontoOperatora(ctx))
 	if err != nil {
 		return false, fmt.Errorf("dane: nie można usunąć nasłuchu %q: %w", kod, err)
 	}
@@ -286,7 +304,8 @@ func (r *repozytoriumBiblioteki) webhookPoKodzie(ctx context.Context, kod string
 	if err != nil {
 		return WebhookBiblioteki{}, err
 	}
-	webhook, err := odczytajWebhookBiblioteki(polecenie.QueryRowContext(ctx, kod))
+	webhook, err := odczytajWebhookBiblioteki(
+		polecenie.QueryRowContext(ctx, kod, KontoOperatora(ctx)))
 	if errors.Is(err, sql.ErrNoRows) {
 		return WebhookBiblioteki{}, ErrBrakWiersza
 	}

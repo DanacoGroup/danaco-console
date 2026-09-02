@@ -57,8 +57,8 @@ const (
 	// zakończeniu procesu generowania) jest normalną ścieżką, nie usterką.
 	zapiszZasobDesign = `INSERT INTO zasob_design
 	                     (identyfikator_zewnetrzny, okno, nazwa, rodzaj, format, uri,
-	                      prompt_id, wariant_zasobu_id, ulubiony, szerokosc, wysokosc)
-	                     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+	                      prompt_id, wariant_zasobu_id, ulubiony, szerokosc, wysokosc, konto_id)
+	                     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ` + WskazanieKonta + `)
 	                     ON CONFLICT(identyfikator_zewnetrzny) DO UPDATE SET
 	                         okno = excluded.okno,
 	                         nazwa = excluded.nazwa,
@@ -69,10 +69,11 @@ const (
 	                         wariant_zasobu_id = excluded.wariant_zasobu_id,
 	                         ulubiony = excluded.ulubiony,
 	                         szerokosc = excluded.szerokosc,
-	                         wysokosc = excluded.wysokosc`
+	                         wysokosc = excluded.wysokosc
+	                     WHERE ` + WarunekKonta
 
 	pobierzZasobDesign = `SELECT ` + kolumnyZasobuDesign + ` FROM zasob_design z
-	                      WHERE z.identyfikator_zewnetrzny = ?`
+	                      WHERE z.identyfikator_zewnetrzny = ? AND ` + WarunekKonta
 
 	usunEtykietyZasobuDesign = `DELETE FROM etykieta_zasobu_design WHERE zasob_id = ?`
 
@@ -121,12 +122,20 @@ func (r *repozytoriumDesignu) ZapiszZasob(ctx context.Context, zasob ZasobDesign
 	if zasob.Ulubiony {
 		ulubiony = 1
 	}
-	_, err = polecenie.ExecContext(ctx, zasob.Kod, zasob.Okno, tekstDoKolumny(zasob.Nazwa),
+	wynik, err := polecenie.ExecContext(ctx, zasob.Kod, zasob.Okno, tekstDoKolumny(zasob.Nazwa),
 		zasob.Rodzaj, tekstDoKolumny(zasob.Format), tekstDoKolumny(zasob.URI),
 		liczbaDoKolumny(zasob.PromptID), tekstDoKolumny(zasob.WariantZasobuID), ulubiony,
-		szerokosc, wysokosc)
+		szerokosc, wysokosc, KontoOperatora(ctx), KontoOperatora(ctx))
 	if err != nil {
 		return ZasobDesignu{}, fmt.Errorf("dane: nie można zapisać zasobu design %q: %w", zasob.Kod, err)
+	}
+	zmienione, err := wynik.RowsAffected()
+	if err != nil {
+		return ZasobDesignu{}, fmt.Errorf("dane: nieznana liczba zapisanych zasobów design: %w", err)
+	}
+	if zmienione == 0 {
+		return ZasobDesignu{}, fmt.Errorf("dane: zasób design %q należy do innego konta: %w",
+			zasob.Kod, ErrKolizjaWiersza)
 	}
 	return r.Zasob(ctx, zasob.Kod)
 }
@@ -135,7 +144,7 @@ func (r *repozytoriumDesignu) ZapiszZasob(ctx context.Context, zasob ZasobDesign
 // liczbę wszystkich zasobów spełniających ten sam filtr, bez przycięcia
 // limitem — druga wartość zasila `DesignAssetListResponse.Total`.
 func (r *repozytoriumDesignu) Zasoby(ctx context.Context, filtr FiltrZasobow) ([]ZasobDesignu, int, error) {
-	warunki, argumenty := warunkiFiltruZasobow(filtr)
+	warunki, argumenty := warunkiFiltruZasobow(ctx, filtr)
 
 	zapytanieStrony := `SELECT ` + kolumnyZasobuDesign + ` FROM zasob_design z` + warunki +
 		` ORDER BY z.utworzono DESC, z.id DESC LIMIT ?`
@@ -177,9 +186,9 @@ func (r *repozytoriumDesignu) Zasoby(ctx context.Context, filtr FiltrZasobow) ([
 // stronicowanego odczytu i liczenia całości — dwa zapytania muszą widzieć
 // dokładnie te same warunki, inaczej Total i długość strony rozjadą się
 // pozornie losowo.
-func warunkiFiltruZasobow(filtr FiltrZasobow) (string, []any) {
-	warunki := []string{}
-	argumenty := []any{}
+func warunkiFiltruZasobow(ctx context.Context, filtr FiltrZasobow) (string, []any) {
+	warunki := []string{WarunekKonta}
+	argumenty := []any{KontoOperatora(ctx)}
 
 	if filtr.Okno != nil {
 		warunki = append(warunki, "z.okno = ?")
@@ -206,9 +215,6 @@ func warunkiFiltruZasobow(filtr FiltrZasobow) (string, []any) {
 		argumenty = append(argumenty, len(filtr.Etykiety))
 	}
 
-	if len(warunki) == 0 {
-		return "", argumenty
-	}
 	return " WHERE " + strings.Join(warunki, " AND "), argumenty
 }
 
@@ -278,7 +284,7 @@ func (r *repozytoriumDesignu) Zasob(ctx context.Context, kod string) (ZasobDesig
 	if err != nil {
 		return ZasobDesignu{}, err
 	}
-	zasob, err := odczytajZasobDesign(polecenie.QueryRowContext(ctx, kod))
+	zasob, err := odczytajZasobDesign(polecenie.QueryRowContext(ctx, kod, KontoOperatora(ctx)))
 	if errors.Is(err, sql.ErrNoRows) {
 		return ZasobDesignu{}, ErrBrakWiersza
 	}

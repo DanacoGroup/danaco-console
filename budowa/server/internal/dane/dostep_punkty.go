@@ -59,11 +59,21 @@ const (
 	                        utworzono, zaktualizowano`
 
 	listaPunktowDostepu = `SELECT ` + kolumnyPunktuDostepu + ` FROM punkt_dostepu
-	                       WHERE (? = 0 OR aktywny = 1) ORDER BY kolejnosc, kod`
+	                       WHERE (? = 0 OR aktywny = 1) AND ` + WarunekKonta + `
+	                       ORDER BY kolejnosc, kod`
 
-	pobierzPunktDostepu = `SELECT ` + kolumnyPunktuDostepu + ` FROM punkt_dostepu WHERE id = ?`
+	pobierzPunktDostepu = `SELECT ` + kolumnyPunktuDostepu + ` FROM punkt_dostepu
+	                       WHERE id = ? AND ` + WarunekKonta
 
-	punktDostepuPoKodzie = `SELECT ` + kolumnyPunktuDostepu + ` FROM punkt_dostepu WHERE kod = ?`
+	// Kolumna `kod` jest unikalna w całej tabeli, nie w obrębie konta, więc kod
+	// zajęty przez punkt innego konta wraca po zawężeniu jako brak wiersza.
+	punktDostepuPoKodzie = `SELECT ` + kolumnyPunktuDostepu + ` FROM punkt_dostepu
+	                        WHERE kod = ? AND ` + WarunekKonta
+
+	// Nadanie wskazuje punkt identyfikatorem przyniesionym przez żądanie,
+	// a punkt cudzy oddaje pusty wykaz korzeni — nie do odróżnienia od punktu
+	// bez ograniczenia obszaru. Przynależność punktu rozstrzyga się osobno.
+	punktDostepuKonta = `SELECT 1 FROM punkt_dostepu WHERE id = ? AND ` + WarunekKonta
 )
 
 type repozytoriumPunktowDostepu struct {
@@ -87,7 +97,7 @@ func (r *repozytoriumPunktowDostepu) Lista(ctx context.Context, tylkoAktywne boo
 	if err != nil {
 		return nil, err
 	}
-	wiersze, err := polecenie.QueryContext(ctx, liczbaLogiczna(tylkoAktywne))
+	wiersze, err := polecenie.QueryContext(ctx, liczbaLogiczna(tylkoAktywne), KontoOperatora(ctx))
 	if err != nil {
 		return nil, fmt.Errorf("dane: nie można odczytać katalogu punktów dostępu: %w", err)
 	}
@@ -126,7 +136,7 @@ func (r *repozytoriumPunktowDostepu) jeden(ctx context.Context, zapytanie, opis 
 	if err != nil {
 		return PunktDostepu{}, err
 	}
-	punkt, err := odczytajPunktDostepu(polecenie.QueryRowContext(ctx, argument))
+	punkt, err := odczytajPunktDostepu(polecenie.QueryRowContext(ctx, argument, KontoOperatora(ctx)))
 	if errors.Is(err, sql.ErrNoRows) {
 		return PunktDostepu{}, fmt.Errorf("dane: punkt dostępu %s nie istnieje: %w",
 			opis, ErrBrakWiersza)
@@ -141,7 +151,8 @@ func (r *repozytoriumPunktowDostepu) jeden(ctx context.Context, zapytanie, opis 
 func (r *repozytoriumPunktowDostepu) uzupelnijPunkt(ctx context.Context,
 	punkt PunktDostepu) (PunktDostepu, error) {
 
-	korzenie, err := wczytajKorzenie(ctx, r.zapytania, listaKorzeniPunktu, punkt.ID, "punktu dostępu")
+	korzenie, err := wczytajKorzenie(ctx, r.zapytania, listaKorzeniPunktu, punkt.ID,
+		"punktu dostępu", KontoOperatora(ctx))
 	if err != nil {
 		return PunktDostepu{}, err
 	}

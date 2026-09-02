@@ -70,6 +70,24 @@ type StylCytowaniaBadania struct {
 	Wlasny bool
 }
 
+// zapiszWGranicyBadania wykonuje polecenie zawężone kontem i odróżnia zapis
+// wykonany od odciętego granicą. Więzy UNIQUE tych tabel obejmują je w całości,
+// więc konflikt sięga wiersza cudzego konta, a zero zmienionych wierszy przy
+// DO UPDATE jest odmową, nie powodzeniem.
+func (r *repozytoriumBadan) zapiszWGranicyBadania(ctx context.Context, sqlTekst, byt,
+	wskazanie string, argumenty ...any) error {
+
+	polecenie, err := r.zapytania.przygotuj(ctx, sqlTekst)
+	if err != nil {
+		return err
+	}
+	wynik, err := polecenie.ExecContext(ctx, argumenty...)
+	if err != nil {
+		return fmt.Errorf("dane: badania — polecenie nie powiodło się: %w", err)
+	}
+	return sprawdzTrafienieZapisu(wynik, byt, wskazanie)
+}
+
 // ── Wyniki odkrycia ────────────────────────────────────────────────────────
 
 // ZapiszWynikiOdkrycia utrwala pozycje zwrócone przez dostawców. Pozycja już
@@ -80,21 +98,23 @@ func (r *repozytoriumBadan) ZapiszWynikiOdkrycia(ctx context.Context, wyniki []W
 		if strings.TrimSpace(wynik.Klucz) == "" {
 			continue
 		}
-		err := r.wykonajBadania(ctx, `INSERT INTO wynik_odkrycia_badania
+		err := r.zapiszWGranicyBadania(ctx, `INSERT INTO wynik_odkrycia_badania
 		    (klucz, okno, tytul, adres, autorzy, rok, dostawca, identyfikator, fragment,
-		     otwarty_dostep, duplikat, zrodlo_kod)
-		    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+		     otwarty_dostep, duplikat, zrodlo_kod, konto_id)
+		    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, `+WskazanieKonta+`)
 		    ON CONFLICT(klucz) DO UPDATE SET
 		        tytul = excluded.tytul, adres = excluded.adres, autorzy = excluded.autorzy,
 		        rok = excluded.rok, dostawca = excluded.dostawca,
 		        identyfikator = excluded.identyfikator, fragment = excluded.fragment,
 		        otwarty_dostep = excluded.otwarty_dostep, duplikat = excluded.duplikat,
-		        zrodlo_kod = COALESCE(excluded.zrodlo_kod, wynik_odkrycia_badania.zrodlo_kod)`,
+		        zrodlo_kod = COALESCE(excluded.zrodlo_kod, wynik_odkrycia_badania.zrodlo_kod)
+		    WHERE `+WarunekKonta,
+			"wynik odkrycia", wynik.Klucz,
 			wynik.Klucz, wynik.Okno, wynik.Tytul, tekstDoKolumny(wynik.Adres),
 			listaJakoBadania(wynik.Autorzy), liczbaDoKolumny(wynik.Rok), wynik.Dostawca,
 			tekstDoKolumny(wynik.Identyfikator), tekstDoKolumny(wynik.Fragment),
 			liczbaDoKolumny(wynik.OtwartyDostep), wartoscCalkowitaBadania(wynik.Duplikat),
-			tekstDoKolumny(wynik.ZrodloKod))
+			tekstDoKolumny(wynik.ZrodloKod), KontoOperatora(ctx), KontoOperatora(ctx))
 		if err != nil {
 			return err
 		}
@@ -107,7 +127,8 @@ func (r *repozytoriumBadan) ZapiszWynikiOdkrycia(ctx context.Context, wyniki []W
 func (r *repozytoriumBadan) WynikiOdkrycia(ctx context.Context, okno string) ([]WynikOdkryciaBadania, error) {
 	wiersze, err := r.pytajBadania(ctx, `SELECT klucz, okno, tytul, adres, autorzy, rok, dostawca,
 	        identyfikator, fragment, otwarty_dostep, duplikat, odrzucony, powod_odrzucenia, zrodlo_kod
-	    FROM wynik_odkrycia_badania WHERE okno = ? ORDER BY utworzono DESC, id DESC`, okno)
+	    FROM wynik_odkrycia_badania WHERE okno = ? AND `+WarunekKonta+`
+	    ORDER BY utworzono DESC, id DESC`, okno, KontoOperatora(ctx))
 	if err != nil {
 		return nil, err
 	}
@@ -148,13 +169,13 @@ func (r *repozytoriumBadan) OdrzucWynikiOdkrycia(ctx context.Context, okno strin
 
 	polecenie, err := r.zapytania.przygotuj(ctx, `UPDATE wynik_odkrycia_badania
 	    SET odrzucony = 1, powod_odrzucenia = ?
-	    WHERE okno = ? AND klucz = ? AND odrzucony = 0`)
+	    WHERE okno = ? AND klucz = ? AND odrzucony = 0 AND `+WarunekKonta)
 	if err != nil {
 		return 0, err
 	}
 	odrzucone := 0
 	for _, klucz := range klucze {
-		wynik, err := polecenie.ExecContext(ctx, powod, okno, klucz)
+		wynik, err := polecenie.ExecContext(ctx, powod, okno, klucz, KontoOperatora(ctx))
 		if err != nil {
 			return odrzucone, fmt.Errorf("dane: nie można odrzucić wyniku %q: %w", klucz, err)
 		}
@@ -169,16 +190,18 @@ func (r *repozytoriumBadan) OdrzucWynikiOdkrycia(ctx context.Context, okno strin
 // ZapiszMonitor zakłada monitor tematu albo nadpisuje zastany wiersz o tym samym
 // identyfikatorze zewnętrznym, nie naruszając jego stanu odświeżenia.
 func (r *repozytoriumBadan) ZapiszMonitor(ctx context.Context, m MonitorBadania) (MonitorBadania, error) {
-	err := r.wykonajBadania(ctx, `INSERT INTO monitor_badania
+	err := r.zapiszWGranicyBadania(ctx, `INSERT INTO monitor_badania
 	    (identyfikator_zewnetrzny, okno, rodzaj, zapytanie, adres, interwal_minut, wlaczony,
-	     oczekujace, odswiezono_o)
-	    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+	     oczekujace, odswiezono_o, konto_id)
+	    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, `+WskazanieKonta+`)
 	    ON CONFLICT(identyfikator_zewnetrzny) DO UPDATE SET
 	        rodzaj = excluded.rodzaj, zapytanie = excluded.zapytanie, adres = excluded.adres,
-	        interwal_minut = excluded.interwal_minut, wlaczony = excluded.wlaczony`,
+	        interwal_minut = excluded.interwal_minut, wlaczony = excluded.wlaczony
+	    WHERE `+WarunekKonta,
+		"monitor badania", m.Kod,
 		m.Kod, m.Okno, m.Rodzaj, tekstDoKolumny(m.Zapytanie), tekstDoKolumny(m.Adres),
 		liczbaDoKolumny(m.InterwalMinut), wartoscCalkowitaBadania(m.Wlaczony), m.Oczekujace,
-		tekstDoKolumny(m.OdswiezonoO))
+		tekstDoKolumny(m.OdswiezonoO), KontoOperatora(ctx), KontoOperatora(ctx))
 	if err != nil {
 		return MonitorBadania{}, err
 	}
@@ -191,9 +214,13 @@ func (r *repozytoriumBadan) ZapiszMonitor(ctx context.Context, m MonitorBadania)
 func (r *repozytoriumBadan) ZapiszMonitorZeStanem(ctx context.Context,
 	m MonitorBadania) (MonitorBadania, error) {
 
+	// Zero zmienionych wierszy nie idzie tu przez sprawdzTrafienieZapisu: przy
+	// zwykłym UPDATE znaczy tak samo „monitora nie ma" jak „monitor jest cudzy",
+	// a odmowę wypowiada odczyt poniżej brakiem wiersza.
 	err := r.wykonajBadania(ctx, `UPDATE monitor_badania
-	    SET oczekujace = ?, odswiezono_o = ? WHERE identyfikator_zewnetrzny = ?`,
-		m.Oczekujace, tekstDoKolumny(m.OdswiezonoO), m.Kod)
+	    SET oczekujace = ?, odswiezono_o = ?
+	    WHERE identyfikator_zewnetrzny = ? AND `+WarunekKonta,
+		m.Oczekujace, tekstDoKolumny(m.OdswiezonoO), m.Kod, KontoOperatora(ctx))
 	if err != nil {
 		return MonitorBadania{}, err
 	}
@@ -208,11 +235,12 @@ const zapytanieMonitoraBadania = `SELECT identyfikator_zewnetrzny, okno, rodzaj,
 // Monitor oddaje jeden monitor tematu wskazany kodem zewnętrznym albo błąd
 // ErrBrakWiersza, gdy taki monitor nie istnieje w bazie.
 func (r *repozytoriumBadan) Monitor(ctx context.Context, kod string) (MonitorBadania, error) {
-	polecenie, err := r.zapytania.przygotuj(ctx, zapytanieMonitoraBadania+`WHERE identyfikator_zewnetrzny = ?`)
+	polecenie, err := r.zapytania.przygotuj(ctx,
+		zapytanieMonitoraBadania+`WHERE identyfikator_zewnetrzny = ? AND `+WarunekKonta)
 	if err != nil {
 		return MonitorBadania{}, err
 	}
-	m, err := odczytajMonitorBadania(polecenie.QueryRowContext(ctx, kod))
+	m, err := odczytajMonitorBadania(polecenie.QueryRowContext(ctx, kod, KontoOperatora(ctx)))
 	if errors.Is(err, sql.ErrNoRows) {
 		return MonitorBadania{}, ErrBrakWiersza
 	}
@@ -227,12 +255,12 @@ func (r *repozytoriumBadan) Monitor(ctx context.Context, kod string) (MonitorBad
 func (r *repozytoriumBadan) Monitory(ctx context.Context, okno string,
 	tylkoWlaczone bool) ([]MonitorBadania, error) {
 
-	sqlTekst := zapytanieMonitoraBadania + `WHERE okno = ?`
+	sqlTekst := zapytanieMonitoraBadania + `WHERE okno = ? AND ` + WarunekKonta
 	if tylkoWlaczone {
 		sqlTekst += ` AND wlaczony = 1`
 	}
 	sqlTekst += ` ORDER BY identyfikator_zewnetrzny`
-	wiersze, err := r.pytajBadania(ctx, sqlTekst, okno)
+	wiersze, err := r.pytajBadania(ctx, sqlTekst, okno, KontoOperatora(ctx))
 	if err != nil {
 		return nil, err
 	}
@@ -277,20 +305,23 @@ func (r *repozytoriumBadan) UstawPytaniaBadania(ctx context.Context,
 	pytania []PytanieBadania) ([]PytanieBadania, error) {
 
 	err := wTransakcji(ctx, r.db, func(t *sql.Tx) error {
-		czyszczenie, err := r.zapytania.wTransakcji(ctx, t, `DELETE FROM pytanie_badania`)
+		czyszczenie, err := r.zapytania.wTransakcji(ctx, t,
+			`DELETE FROM pytanie_badania WHERE `+WarunekKonta)
 		if err != nil {
 			return err
 		}
-		if _, err := czyszczenie.ExecContext(ctx); err != nil {
+		if _, err := czyszczenie.ExecContext(ctx, KontoOperatora(ctx)); err != nil {
 			return fmt.Errorf("dane: nie można wyczyścić pytań badania: %w", err)
 		}
 		zapis, err := r.zapytania.wTransakcji(ctx, t,
-			`INSERT INTO pytanie_badania (identyfikator_zewnetrzny, tekst, kolejnosc) VALUES (?, ?, ?)`)
+			`INSERT INTO pytanie_badania (identyfikator_zewnetrzny, tekst, kolejnosc, konto_id)
+			 VALUES (?, ?, ?, `+WskazanieKonta+`)`)
 		if err != nil {
 			return err
 		}
 		for _, pytanie := range pytania {
-			if _, err := zapis.ExecContext(ctx, pytanie.Kod, pytanie.Tekst, pytanie.Kolejnosc); err != nil {
+			if _, err := zapis.ExecContext(ctx, pytanie.Kod, pytanie.Tekst, pytanie.Kolejnosc,
+				KontoOperatora(ctx)); err != nil {
 				return fmt.Errorf("dane: nie można zapisać pytania %q: %w", pytanie.Kod, err)
 			}
 		}
@@ -306,7 +337,8 @@ func (r *repozytoriumBadan) UstawPytaniaBadania(ctx context.Context,
 // polem kolejnosc każdego wiersza.
 func (r *repozytoriumBadan) PytaniaBadania(ctx context.Context) ([]PytanieBadania, error) {
 	wiersze, err := r.pytajBadania(ctx,
-		`SELECT identyfikator_zewnetrzny, tekst, kolejnosc FROM pytanie_badania ORDER BY kolejnosc, id`)
+		`SELECT identyfikator_zewnetrzny, tekst, kolejnosc FROM pytanie_badania
+		 WHERE `+WarunekKonta+` ORDER BY kolejnosc, id`, KontoOperatora(ctx))
 	if err != nil {
 		return nil, err
 	}
@@ -393,16 +425,19 @@ func (r *repozytoriumBadan) zapewnijPrzestrzen(ctx context.Context) error {
 // ZapiszStylCytowania utrwala styl cytowania własny operatora albo nadpisuje nazwę
 // zastanego stylu o tym samym identyfikatorze zewnętrznym.
 func (r *repozytoriumBadan) ZapiszStylCytowania(ctx context.Context, kod, nazwa string) error {
-	return r.wykonajBadania(ctx, `INSERT INTO styl_cytowania_badania
-	    (identyfikator_zewnetrzny, nazwa, wlasny) VALUES (?, ?, 1)
-	    ON CONFLICT(identyfikator_zewnetrzny) DO UPDATE SET nazwa = excluded.nazwa`, kod, nazwa)
+	return r.zapiszWGranicyBadania(ctx, `INSERT INTO styl_cytowania_badania
+	    (identyfikator_zewnetrzny, nazwa, wlasny, konto_id) VALUES (?, ?, 1, `+WskazanieKonta+`)
+	    ON CONFLICT(identyfikator_zewnetrzny) DO UPDATE SET nazwa = excluded.nazwa
+	    WHERE `+WarunekKonta,
+		"styl cytowania", kod, kod, nazwa, KontoOperatora(ctx), KontoOperatora(ctx))
 }
 
 // StyleCytowania oddaje style własne zapisane w instalacji. Style wbudowane
 // dokłada adapter — repozytorium mówi wyłącznie o tym, co leży w bazie.
 func (r *repozytoriumBadan) StyleCytowania(ctx context.Context) ([]StylCytowaniaBadania, error) {
 	wiersze, err := r.pytajBadania(ctx,
-		`SELECT identyfikator_zewnetrzny, nazwa, wlasny FROM styl_cytowania_badania ORDER BY nazwa`)
+		`SELECT identyfikator_zewnetrzny, nazwa, wlasny FROM styl_cytowania_badania
+		 WHERE `+WarunekKonta+` ORDER BY nazwa`, KontoOperatora(ctx))
 	if err != nil {
 		return nil, err
 	}

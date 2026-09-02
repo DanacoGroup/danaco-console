@@ -51,15 +51,16 @@ const (
 
 	zapiszSzablonDebaty = `INSERT INTO debata_szablon
 	                       (identyfikator_zewnetrzny, nazwa, format, granica_tur,
-	                        granica_czasu_ms, kolejnosc_glosu)
-	                       VALUES (?, ?, ?, ?, ?, ?)`
+	                        granica_czasu_ms, kolejnosc_glosu, konto_id)
+	                       VALUES (?, ?, ?, ?, ?, ?, ` + WskazanieKonta + `)`
 
 	pobierzSzablonDebaty = `SELECT ` + kolumnySzablonuDebaty + `
-	                        FROM debata_szablon WHERE identyfikator_zewnetrzny = ?`
+	                        FROM debata_szablon
+	                        WHERE identyfikator_zewnetrzny = ? AND ` + WarunekKonta
 
 	pobierzSzablonyDebaty = `SELECT ` + kolumnySzablonuDebaty + `
 	                         FROM debata_szablon
-	                         WHERE nazwa LIKE '%' || ? || '%'
+	                         WHERE nazwa LIKE '%' || ? || '%' AND ` + WarunekKonta + `
 	                         ORDER BY id DESC`
 
 	kolumnyArtefaktuDebaty = `identyfikator_zewnetrzny, okno, rodzaj, format, odwolanie, rozmiar,
@@ -67,14 +68,16 @@ const (
 
 	zapiszArtefaktDebaty = `INSERT INTO debata_artefakt
 	                        (identyfikator_zewnetrzny, okno, rodzaj, format, odwolanie, rozmiar,
-	                         suma_kontrolna, dlugosc_ms)
-	                        VALUES (?, ?, ?, ?, ?, ?, ?, ?)`
+	                         suma_kontrolna, dlugosc_ms, konto_id)
+	                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ` + WskazanieKonta + `)`
 
 	pobierzArtefaktDebaty = `SELECT ` + kolumnyArtefaktuDebaty + `
-	                         FROM debata_artefakt WHERE identyfikator_zewnetrzny = ?`
+	                         FROM debata_artefakt
+	                         WHERE identyfikator_zewnetrzny = ? AND ` + WarunekKonta
 
 	pobierzArtefaktyDebaty = `SELECT ` + kolumnyArtefaktuDebaty + `
-	                          FROM debata_artefakt WHERE okno = ? ORDER BY id DESC`
+	                          FROM debata_artefakt WHERE okno = ? AND ` + WarunekKonta + `
+	                          ORDER BY id DESC`
 )
 
 // ZapiszSzablonDebaty utrwala szablon moderacji jako osobny wpis gotowy do ponownego użycia w debacie.
@@ -87,7 +90,12 @@ func (r *repozytoriumRoundtable) ZapiszSzablonDebaty(ctx context.Context,
 	}
 	if _, err := polecenie.ExecContext(ctx, szablon.Kod, szablon.Nazwa, szablon.Format,
 		szablon.GranicaTur, szablon.GranicaCzasuMs,
-		strings.Join(szablon.KolejnoscGlosu, "\n")); err != nil {
+		strings.Join(szablon.KolejnoscGlosu, "\n"), KontoOperatora(ctx)); err != nil {
+		// Więz UNIQUE na identyfikatorze obejmuje całą tabelę: kod zajęty przez konto inne rozbija zapis.
+		if czyKolizja(err) {
+			return SzablonModeracjiDebaty{}, fmt.Errorf(
+				"dane: kod %q nosi szablon moderacji innego konta: %w", szablon.Kod, ErrKolizjaWiersza)
+		}
 		return SzablonModeracjiDebaty{}, fmt.Errorf("dane: nie można zapisać szablonu moderacji %q: %w",
 			szablon.Kod, err)
 	}
@@ -95,7 +103,7 @@ func (r *repozytoriumRoundtable) ZapiszSzablonDebaty(ctx context.Context,
 	if err != nil {
 		return SzablonModeracjiDebaty{}, err
 	}
-	return odczytajSzablonDebaty(odczyt.QueryRowContext(ctx, szablon.Kod))
+	return odczytajSzablonDebaty(odczyt.QueryRowContext(ctx, szablon.Kod, KontoOperatora(ctx)))
 }
 
 // SzablonyDebaty zwraca szablony moderacji tego okna od najnowszego do najstarszego zapisanego szablonu.
@@ -106,7 +114,7 @@ func (r *repozytoriumRoundtable) SzablonyDebaty(ctx context.Context,
 	if err != nil {
 		return nil, err
 	}
-	wiersze, err := polecenie.QueryContext(ctx, strings.TrimSpace(fraza))
+	wiersze, err := polecenie.QueryContext(ctx, strings.TrimSpace(fraza), KontoOperatora(ctx))
 	if err != nil {
 		return nil, fmt.Errorf("dane: nie można odczytać szablonów moderacji: %w", err)
 	}
@@ -131,7 +139,12 @@ func (r *repozytoriumRoundtable) ZapiszArtefaktDebaty(ctx context.Context, artef
 	}
 	if _, err := polecenie.ExecContext(ctx, artefakt.Kod, artefakt.Okno, artefakt.Rodzaj,
 		artefakt.Format, artefakt.Odwolanie, artefakt.Rozmiar, artefakt.SumaKontrolna,
-		artefakt.DlugoscMs); err != nil {
+		artefakt.DlugoscMs, KontoOperatora(ctx)); err != nil {
+		// Więz UNIQUE na identyfikatorze obejmuje całą tabelę: kod zajęty przez konto inne rozbija zapis.
+		if czyKolizja(err) {
+			return fmt.Errorf("dane: kod %q nosi artefakt debaty innego konta: %w",
+				artefakt.Kod, ErrKolizjaWiersza)
+		}
 		return fmt.Errorf("dane: nie można zapisać artefaktu debaty %q: %w", artefakt.Kod, err)
 	}
 	return nil
@@ -145,7 +158,7 @@ func (r *repozytoriumRoundtable) ArtefaktDebatyPoKodzie(ctx context.Context,
 	if err != nil {
 		return ArtefaktDebaty{}, err
 	}
-	return odczytajArtefaktDebaty(polecenie.QueryRowContext(ctx, kod))
+	return odczytajArtefaktDebaty(polecenie.QueryRowContext(ctx, kod, KontoOperatora(ctx)))
 }
 
 // ArtefaktyDebaty zwraca artefakty danego okna od najnowszego do najstarszego wydanego artefaktu debaty.
@@ -156,7 +169,7 @@ func (r *repozytoriumRoundtable) ArtefaktyDebaty(ctx context.Context,
 	if err != nil {
 		return nil, err
 	}
-	wiersze, err := polecenie.QueryContext(ctx, okno)
+	wiersze, err := polecenie.QueryContext(ctx, okno, KontoOperatora(ctx))
 	if err != nil {
 		return nil, fmt.Errorf("dane: nie można odczytać artefaktów debaty okna %q: %w", okno, err)
 	}

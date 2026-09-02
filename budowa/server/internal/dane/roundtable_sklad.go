@@ -62,34 +62,38 @@ const (
 	                             waga = ?, rola = ?, agent = ?, awatar = ?, opis_roli = ?,
 	                             liczba_probek = ?,
 	                             zaktualizowano = strftime('%Y-%m-%dT%H:%M:%fZ','now')
-	                         WHERE identyfikator_zewnetrzny = ?`
+	                         WHERE identyfikator_zewnetrzny = ? AND ` + WarunekKonta
 
-	usunUczestnikaDebaty = `DELETE FROM debata_uczestnik WHERE identyfikator_zewnetrzny = ?`
+	usunUczestnikaDebaty = `DELETE FROM debata_uczestnik
+	                        WHERE identyfikator_zewnetrzny = ? AND ` + WarunekKonta
 
-	zalozZespolDebaty = `INSERT INTO debata_zespol (identyfikator_zewnetrzny, nazwa, format)
-	                     VALUES (?, ?, ?)`
+	zalozZespolDebaty = `INSERT INTO debata_zespol
+	                     (identyfikator_zewnetrzny, nazwa, format, konto_id)
+	                     VALUES (?, ?, ?, ` + WskazanieKonta + `)`
 
+	// Skład zespołu własnej kolumny konta nie ma: granica dochodzi do niego przez
+	// wiersz zespołu wskazany kolumną `zespol_id`.
 	zalozUczestnikaZespoluDebaty = `INSERT INTO debata_zespol_uczestnik
 	                          (zespol_id, kanal_modelu, nazwa_tozsamosci, prompt_systemowy,
 	                           rola, waga, awatar, opis_roli, kolejnosc)
 	                          SELECT z.id, ?, ?, ?, ?, ?, ?, ?, ?
 	                            FROM debata_zespol z
-	                           WHERE z.identyfikator_zewnetrzny = ?`
+	                           WHERE z.identyfikator_zewnetrzny = ? AND ` + WarunekKonta
 
 	pobierzZespolDebaty = `SELECT identyfikator_zewnetrzny, nazwa, format, utworzono
-	                 FROM debata_zespol WHERE identyfikator_zewnetrzny = ?`
+	                 FROM debata_zespol WHERE identyfikator_zewnetrzny = ? AND ` + WarunekKonta
 
 	// Fraza pusta przepuszcza wszystko: warunek porównuje z wzorcem procentowym, któremu odpowiada każda nazwa uczestnika.
 	pobierzZespolyDebaty = `SELECT identyfikator_zewnetrzny, nazwa, format, utworzono
 	                  FROM debata_zespol
-	                  WHERE nazwa LIKE '%' || ? || '%'
+	                  WHERE nazwa LIKE '%' || ? || '%' AND ` + WarunekKonta + `
 	                  ORDER BY id DESC LIMIT (CASE WHEN ? > 0 THEN ? ELSE -1 END)`
 
 	pobierzUczestnikowZespoluDebaty = `SELECT u.kanal_modelu, u.nazwa_tozsamosci, u.prompt_systemowy,
 	                                    u.rola, u.waga, u.awatar, u.opis_roli, u.kolejnosc
 	                               FROM debata_zespol_uczestnik u
 	                               JOIN debata_zespol z ON z.id = u.zespol_id
-	                              WHERE z.identyfikator_zewnetrzny = ?
+	                              WHERE z.identyfikator_zewnetrzny = ? AND ` + WarunekKonta + `
 	                              ORDER BY u.kolejnosc ASC, u.id ASC`
 
 	pobierzRoleDebaty = `SELECT identyfikator_zewnetrzny, nazwa, prompt_systemowy, opis, fabryczna
@@ -106,7 +110,7 @@ func (r *repozytoriumRoundtable) ZmienUczestnika(ctx context.Context, uczestnik 
 	}
 	wynik, err := polecenie.ExecContext(ctx, uczestnik.NazwaTozsamosci, uczestnik.PromptSystemowy,
 		uczestnik.Kluczowy, uczestnik.Waga, uczestnik.Rola, uczestnik.Agent, uczestnik.Awatar,
-		uczestnik.OpisRoli, uczestnik.LiczbaProbek, uczestnik.Kod)
+		uczestnik.OpisRoli, uczestnik.LiczbaProbek, uczestnik.Kod, KontoOperatora(ctx))
 	if err != nil {
 		return fmt.Errorf("dane: nie można zmienić uczestnika debaty %q: %w", uczestnik.Kod, err)
 	}
@@ -120,7 +124,7 @@ func (r *repozytoriumRoundtable) UsunUczestnika(ctx context.Context, kod string)
 	if err != nil {
 		return err
 	}
-	wynik, err := polecenie.ExecContext(ctx, kod)
+	wynik, err := polecenie.ExecContext(ctx, kod, KontoOperatora(ctx))
 	if err != nil {
 		return fmt.Errorf("dane: nie można usunąć uczestnika debaty %q: %w", kod, err)
 	}
@@ -137,7 +141,8 @@ func (r *repozytoriumRoundtable) ZapiszZespol(ctx context.Context,
 		if err != nil {
 			return err
 		}
-		if _, err := naglowek.ExecContext(ctx, zespol.Kod, zespol.Nazwa, zespol.Format); err != nil {
+		if _, err := naglowek.ExecContext(ctx, zespol.Kod, zespol.Nazwa, zespol.Format,
+			KontoOperatora(ctx)); err != nil {
 			return fmt.Errorf("dane: nie można założyć zespołu debaty %q: %w", zespol.Kod, err)
 		}
 		wiersz, err := r.zapytania.wTransakcji(ctx, transakcja, zalozUczestnikaZespoluDebaty)
@@ -147,7 +152,7 @@ func (r *repozytoriumRoundtable) ZapiszZespol(ctx context.Context,
 		for pozycja, uczestnik := range zespol.Uczestnicy {
 			if _, err := wiersz.ExecContext(ctx, uczestnik.KanalModelu, uczestnik.NazwaTozsamosci,
 				uczestnik.PromptSystemowy, uczestnik.Rola, uczestnik.Waga, uczestnik.Awatar,
-				uczestnik.OpisRoli, pozycja+1, zespol.Kod); err != nil {
+				uczestnik.OpisRoli, pozycja+1, zespol.Kod, KontoOperatora(ctx)); err != nil {
 
 				return fmt.Errorf("dane: nie można zapisać uczestnika zespołu %q: %w", zespol.Kod, err)
 			}
@@ -167,7 +172,7 @@ func (r *repozytoriumRoundtable) Zespol(ctx context.Context, kod string) (Zespol
 		return ZespolDebaty{}, err
 	}
 	var zespol ZespolDebaty
-	err = polecenie.QueryRowContext(ctx, kod).Scan(&zespol.Kod, &zespol.Nazwa,
+	err = polecenie.QueryRowContext(ctx, kod, KontoOperatora(ctx)).Scan(&zespol.Kod, &zespol.Nazwa,
 		&zespol.Format, &zespol.Utworzono)
 	if errors.Is(err, sql.ErrNoRows) {
 		return ZespolDebaty{}, ErrBrakWiersza
@@ -190,7 +195,8 @@ func (r *repozytoriumRoundtable) Zespoly(ctx context.Context,
 	if err != nil {
 		return nil, err
 	}
-	wiersze, err := polecenie.QueryContext(ctx, strings.TrimSpace(fraza), limit, limit)
+	wiersze, err := polecenie.QueryContext(ctx, strings.TrimSpace(fraza), KontoOperatora(ctx),
+		limit, limit)
 	if err != nil {
 		return nil, fmt.Errorf("dane: nie można odczytać zespołów debaty: %w", err)
 	}
@@ -226,7 +232,7 @@ func (r *repozytoriumRoundtable) uczestnicyZespolu(ctx context.Context,
 	if err != nil {
 		return nil, err
 	}
-	wiersze, err := polecenie.QueryContext(ctx, kod)
+	wiersze, err := polecenie.QueryContext(ctx, kod, KontoOperatora(ctx))
 	if err != nil {
 		return nil, fmt.Errorf("dane: nie można odczytać składu zespołu %q: %w", kod, err)
 	}

@@ -216,12 +216,13 @@ func (r *repozytoriumBadan) idZrodla(ctx context.Context, kod string) (int64, er
 // idUstalenia oddaje klucz główny ustalenia o podanym kodzie zewnętrznym albo
 // błąd ErrBrakWiersza, gdy ustalenie o tym kodzie nie istnieje.
 func (r *repozytoriumBadan) idUstalenia(ctx context.Context, kod string) (int64, error) {
-	polecenie, err := r.zapytania.przygotuj(ctx, `SELECT id FROM ustalenie_badania WHERE identyfikator_zewnetrzny = ?`)
+	polecenie, err := r.zapytania.przygotuj(ctx,
+		`SELECT id FROM ustalenie_badania WHERE identyfikator_zewnetrzny = ? AND `+WarunekKonta)
 	if err != nil {
 		return 0, err
 	}
 	var id int64
-	err = polecenie.QueryRowContext(ctx, kod).Scan(&id)
+	err = polecenie.QueryRowContext(ctx, kod, KontoOperatora(ctx)).Scan(&id)
 	if errors.Is(err, sql.ErrNoRows) {
 		return 0, ErrBrakWiersza
 	}
@@ -517,12 +518,17 @@ func (r *repozytoriumBadan) UsunZrodlo(ctx context.Context, kodZrodla string) (i
 	}
 	var odwiazane int
 	err = wTransakcji(ctx, r.db, func(t *sql.Tx) error {
+		// Wiązanie wisi na ustaleniu, a konto niesie ustalenie, więc liczba
+		// bez sięgnięcia do korzenia mówiłaby o ustaleniach konta obcego.
 		liczenie, err := r.zapytania.wTransakcji(ctx, t,
-			`SELECT COUNT(*) FROM zrodlo_ustalenia_badania WHERE zrodlo_id = ?`)
+			`SELECT COUNT(*) FROM zrodlo_ustalenia_badania zu
+			  WHERE zu.zrodlo_id = ?
+			    AND EXISTS (SELECT 1 FROM ustalenie_badania w
+			                 WHERE w.id = zu.ustalenie_id AND `+WarunekKonta+`)`)
 		if err != nil {
 			return err
 		}
-		if err := liczenie.QueryRowContext(ctx, id).Scan(&odwiazane); err != nil {
+		if err := liczenie.QueryRowContext(ctx, id, KontoOperatora(ctx)).Scan(&odwiazane); err != nil {
 			return fmt.Errorf("dane: nie można policzyć ustaleń źródła %q: %w", kodZrodla, err)
 		}
 		usuniecie, err := r.zapytania.wTransakcji(ctx, t, `DELETE FROM zrodlo_badania WHERE id = ?`)
@@ -565,13 +571,18 @@ func (r *repozytoriumBadan) PrzeniesUstaleniaZrodel(ctx context.Context, kodyZro
 			if err != nil {
 				return fmt.Errorf("dane: nie można odnaleźć źródła scalanego %q: %w", kod, err)
 			}
+			// Przepięcie zmienia wiersze dziecka, więc sięga korzenia: bez tego
+			// scalenie źródeł przestawiałoby wiązania ustaleń konta obcego.
 			przepiecie, err := r.zapytania.wTransakcji(ctx, t,
 				`INSERT OR IGNORE INTO zrodlo_ustalenia_badania (ustalenie_id, zrodlo_id)
-				 SELECT ustalenie_id, ? FROM zrodlo_ustalenia_badania WHERE zrodlo_id = ?`)
+				 SELECT zu.ustalenie_id, ? FROM zrodlo_ustalenia_badania zu
+				  WHERE zu.zrodlo_id = ?
+				    AND EXISTS (SELECT 1 FROM ustalenie_badania w
+				                 WHERE w.id = zu.ustalenie_id AND `+WarunekKonta+`)`)
 			if err != nil {
 				return err
 			}
-			wynik, err := przepiecie.ExecContext(ctx, docelowe, scalane)
+			wynik, err := przepiecie.ExecContext(ctx, docelowe, scalane, KontoOperatora(ctx))
 			if err != nil {
 				return fmt.Errorf("dane: nie można przepiąć ustaleń źródła %q: %w", kod, err)
 			}

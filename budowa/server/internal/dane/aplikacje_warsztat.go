@@ -31,21 +31,22 @@ const (
 
 	// UPSERT po kluczu okna, warstwy i ścieżki: zapis nadpisuje stan bieżący pliku warstwy, nie zakłada nowego wiersza historii.
 	zapiszPlikWarsztatuApps = `INSERT INTO plik_warsztatu_apps
-	                    (okno, warstwa, sciezka, tresc, rozmiar, komponent_id)
-	                    VALUES (?, ?, ?, ?, ?, ?)
+	                    (okno, warstwa, sciezka, tresc, rozmiar, komponent_id, konto_id)
+	                    VALUES (?, ?, ?, ?, ?, ?, ` + WskazanieKonta + `)
 	                    ON CONFLICT(okno, warstwa, sciezka) DO UPDATE SET
 	                        tresc = excluded.tresc,
 	                        rozmiar = excluded.rozmiar,
 	                        komponent_id = excluded.komponent_id,
-	                        zaktualizowano = strftime('%Y-%m-%dT%H:%M:%fZ','now')`
+	                        zaktualizowano = strftime('%Y-%m-%dT%H:%M:%fZ','now')
+	                    WHERE ` + WarunekKonta
 
 	pobierzPlikWarsztatuApps = `SELECT ` + kolumnyPlikuWarsztatu + `
 	                    FROM plik_warsztatu_apps
-	                    WHERE okno = ? AND warstwa = ? AND sciezka = ?`
+	                    WHERE okno = ? AND warstwa = ? AND sciezka = ? AND ` + WarunekKonta
 
 	listaPlikowWarsztatuApps = `SELECT ` + kolumnyPlikuWarsztatu + `
 	                    FROM plik_warsztatu_apps
-	                    WHERE okno = ?
+	                    WHERE okno = ? AND ` + WarunekKonta + `
 	                    ORDER BY warstwa, sciezka`
 )
 
@@ -67,10 +68,14 @@ func (r *repozytoriumAplikacji) ZapiszPlikWarsztatu(ctx context.Context, plik Pl
 	if err != nil {
 		return PlikWarsztatu{}, err
 	}
-	_, err = polecenie.ExecContext(ctx, plik.Okno, string(plik.Warstwa), plik.Sciezka,
-		plik.Tresc, rozmiar, tekstDoKolumny(plik.KomponentID))
+	konto := KontoOperatora(ctx)
+	wynik, err := polecenie.ExecContext(ctx, plik.Okno, string(plik.Warstwa), plik.Sciezka,
+		plik.Tresc, rozmiar, tekstDoKolumny(plik.KomponentID), konto, konto)
 	if err != nil {
 		return PlikWarsztatu{}, fmt.Errorf("dane: nie można zapisać pliku warsztatu %q okna %q: %w", plik.Sciezka, plik.Okno, err)
+	}
+	if err := sprawdzTrafienieZapisu(wynik, "plik warsztatu", plik.Sciezka); err != nil {
+		return PlikWarsztatu{}, err
 	}
 	return r.jedenPlikWarsztatu(ctx, plik.Okno, plik.Warstwa, plik.Sciezka)
 }
@@ -82,7 +87,7 @@ func (r *repozytoriumAplikacji) PlikiWarsztatu(ctx context.Context, okno string)
 	if err != nil {
 		return nil, err
 	}
-	wiersze, err := polecenie.QueryContext(ctx, okno)
+	wiersze, err := polecenie.QueryContext(ctx, okno, KontoOperatora(ctx))
 	if err != nil {
 		return nil, fmt.Errorf("dane: nie można odczytać plików warsztatu okna %q: %w", okno, err)
 	}
@@ -118,7 +123,8 @@ func (r *repozytoriumAplikacji) jedenPlikWarsztatu(ctx context.Context, okno str
 	if err != nil {
 		return PlikWarsztatu{}, err
 	}
-	plik, err := odczytajPlikWarsztatu(polecenie.QueryRowContext(ctx, okno, string(warstwa), sciezka))
+	plik, err := odczytajPlikWarsztatu(polecenie.QueryRowContext(ctx, okno, string(warstwa), sciezka,
+		KontoOperatora(ctx)))
 	if errors.Is(err, sql.ErrNoRows) {
 		return PlikWarsztatu{}, ErrBrakWiersza
 	}

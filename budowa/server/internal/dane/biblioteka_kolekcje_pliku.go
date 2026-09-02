@@ -13,15 +13,27 @@ const (
 	// Kolekcje pliku wychodzą kodami, bo tym plik i kolekcja wychodzą
 	// kontraktem (`LibraryFile.collectionIds`) — klucz wiersza zostaje
 	// wewnątrz warstwy danych.
+	// Przypisanie wskazania konta nie niesie, a klucz pliku przychodzi z żądania:
+	// granicę bierze podzapytanie o `plik_biblioteki`, do którego wiąże się nazwa
+	// niekwalifikowana warunku.
 	listaKolekcjiPliku = `SELECT k.identyfikator_zewnetrzny
 	                      FROM przypisanie_kolekcji_biblioteki pk
 	                      JOIN kolekcja_biblioteki k ON k.id = pk.kolekcja_id
 	                      WHERE pk.plik_id = ?
+	                        AND EXISTS (SELECT 1 FROM plik_biblioteki
+	                                     WHERE plik_biblioteki.id = pk.plik_id
+	                                       AND ` + WarunekKonta + `)
 	                      ORDER BY k.identyfikator_zewnetrzny`
 
-	usunPrzypisaniaPliku = `DELETE FROM przypisanie_kolekcji_biblioteki WHERE plik_id = ?`
+	usunPrzypisaniaPliku = `DELETE FROM przypisanie_kolekcji_biblioteki
+	                        WHERE plik_id = ?
+	                          AND EXISTS (SELECT 1 FROM plik_biblioteki
+	                                       WHERE plik_biblioteki.id = przypisanie_kolekcji_biblioteki.plik_id
+	                                         AND ` + WarunekKonta + `)`
 
-	idKolekcjiPoKodzie = `SELECT id FROM kolekcja_biblioteki WHERE identyfikator_zewnetrzny = ?`
+	// Kod kolekcji idzie wprost z żądania — bez konta przypiąłby plik do cudzej kolekcji.
+	idKolekcjiPoKodzie = `SELECT id FROM kolekcja_biblioteki
+	                      WHERE identyfikator_zewnetrzny = ? AND ` + WarunekKonta
 )
 
 // KolekcjePliku zwraca kody kolekcji, do których plik należy. Porządek jest
@@ -32,7 +44,7 @@ func (r *repozytoriumBiblioteki) KolekcjePliku(ctx context.Context, plikID int64
 	if err != nil {
 		return nil, err
 	}
-	wiersze, err := polecenie.QueryContext(ctx, plikID)
+	wiersze, err := polecenie.QueryContext(ctx, plikID, KontoOperatora(ctx))
 	if err != nil {
 		return nil, fmt.Errorf("dane: nie można odczytać kolekcji pliku %d: %w", plikID, err)
 	}
@@ -71,7 +83,7 @@ func (r *repozytoriumBiblioteki) UstawKolekcjePliku(ctx context.Context,
 		if err != nil {
 			return err
 		}
-		if _, err := czyszczenie.ExecContext(ctx, plik.ID); err != nil {
+		if _, err := czyszczenie.ExecContext(ctx, plik.ID, KontoOperatora(ctx)); err != nil {
 			return fmt.Errorf("dane: nie można zdjąć pliku %q z kolekcji: %w", kodPliku, err)
 		}
 		wstawienie, err := r.zapytania.wTransakcji(ctx, transakcja, wstawPrzypisanieKolekcji)
@@ -106,7 +118,7 @@ func (r *repozytoriumBiblioteki) kluczeKolekcji(ctx context.Context, transakcja 
 			continue
 		}
 		var kolekcjaID int64
-		err := polecenie.QueryRowContext(ctx, kod).Scan(&kolekcjaID)
+		err := polecenie.QueryRowContext(ctx, kod, KontoOperatora(ctx)).Scan(&kolekcjaID)
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, ErrBrakWiersza
 		}

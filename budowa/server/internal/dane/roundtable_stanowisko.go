@@ -14,22 +14,24 @@ const (
 
 	// Warunek redagowane = 0 broni redakcji Operatora: od chwili nadania własnej treści, złożenie z zapisu tur nie ma prawa jej nadpisać.
 	zapiszStanowiskoDebaty = `INSERT INTO debata_stanowisko
-	                          (identyfikator_zewnetrzny, okno, tura, tresc)
-	                          VALUES (?, ?, ?, ?)
+	                          (identyfikator_zewnetrzny, okno, tura, tresc, konto_id)
+	                          VALUES (?, ?, ?, ?, ` + WskazanieKonta + `)
 	                          ON CONFLICT(okno, tura) DO UPDATE SET
 	                              tresc = excluded.tresc,
 	                              wersja = debata_stanowisko.wersja + 1,
 	                              zaktualizowano = strftime('%Y-%m-%dT%H:%M:%fZ','now')
 	                          WHERE debata_stanowisko.redagowane = 0
-	                            AND COALESCE(debata_stanowisko.tresc, '') <> COALESCE(excluded.tresc, '')`
+	                            AND COALESCE(debata_stanowisko.tresc, '') <> COALESCE(excluded.tresc, '')
+	                            AND ` + WarunekKonta
 
 	// Redakcja Operatora podnosi wersję zawsze — także wtedy, gdy treść wyszła
 	// ta sama. Zapisanie tej samej treści jest czynnością zamierzoną (na przykład
 	// samą akceptacją), a wersja liczy redakcje, nie różnice.
 	redagujStanowiskoDebaty = `INSERT INTO debata_stanowisko
 	                           (identyfikator_zewnetrzny, okno, tura, tresc, redagowane,
-	                            zaakceptowane, kontekst, warianty, konsekwencje, tury)
-	                           VALUES (?, ?, ?, ?, 1, ?, ?, ?, ?, ?)
+	                            zaakceptowane, kontekst, warianty, konsekwencje, tury,
+	                            konto_id)
+	                           VALUES (?, ?, ?, ?, 1, ?, ?, ?, ?, ?, ` + WskazanieKonta + `)
 	                           ON CONFLICT(okno, tura) DO UPDATE SET
 	                               tresc = excluded.tresc,
 	                               redagowane = 1,
@@ -39,13 +41,16 @@ const (
 	                               konsekwencje = excluded.konsekwencje,
 	                               tury = excluded.tury,
 	                               wersja = debata_stanowisko.wersja + 1,
-	                               zaktualizowano = strftime('%Y-%m-%dT%H:%M:%fZ','now')`
+	                               zaktualizowano = strftime('%Y-%m-%dT%H:%M:%fZ','now')
+	                           WHERE ` + WarunekKonta
 
 	pobierzStanowisko = `SELECT ` + kolumnyStanowiska + `
-	                     FROM debata_stanowisko WHERE okno = ? AND tura = ?`
+	                     FROM debata_stanowisko
+	                     WHERE okno = ? AND tura = ? AND ` + WarunekKonta
 
 	pobierzStanowiskoDebatyPoKodzie = `SELECT ` + kolumnyStanowiska + `
-	                             FROM debata_stanowisko WHERE identyfikator_zewnetrzny = ?`
+	                             FROM debata_stanowisko
+	                             WHERE identyfikator_zewnetrzny = ? AND ` + WarunekKonta
 )
 
 // ZapiszStanowisko utrwala stanowisko okna albo tury. Treść niezmieniona nie
@@ -58,11 +63,20 @@ func (r *repozytoriumRoundtable) ZapiszStanowisko(ctx context.Context,
 		return StanowiskoDebaty{}, err
 	}
 	if _, err := polecenie.ExecContext(ctx, stanowisko.Kod, stanowisko.Okno,
-		stanowisko.Tura, stanowisko.Tresc); err != nil {
+		stanowisko.Tura, stanowisko.Tresc, KontoOperatora(ctx),
+		KontoOperatora(ctx)); err != nil {
 		return StanowiskoDebaty{}, fmt.Errorf("dane: nie można zapisać stanowiska debaty okna %q: %w",
 			stanowisko.Okno, err)
 	}
-	return r.Stanowisko(ctx, stanowisko.Okno, stanowisko.Tura)
+	zapisane, err := r.Stanowisko(ctx, stanowisko.Okno, stanowisko.Tura)
+	if errors.Is(err, ErrBrakWiersza) {
+		// Zero zmienionych wierszy jest tu stanem normalnym: treść niezmieniona
+		// albo wiersz redagowany. Brak wiersza po zapisie normalny nie jest —
+		// parę (okno, tura) zajmuje wtedy wiersz konta innego.
+		return StanowiskoDebaty{}, fmt.Errorf("dane: stanowisko debaty %q należy do innego konta: %w",
+			stanowisko.Kod, ErrKolizjaWiersza)
+	}
+	return zapisane, err
 }
 
 // Stanowisko zwraca stanowisko wskazanego okna albo jednej jego tury; pusta tura znaczy całą tę debatę.
@@ -73,7 +87,8 @@ func (r *repozytoriumRoundtable) Stanowisko(ctx context.Context,
 	if err != nil {
 		return StanowiskoDebaty{}, err
 	}
-	stanowisko, err := odczytajStanowiskoDebaty(polecenie.QueryRowContext(ctx, okno, tura))
+	stanowisko, err := odczytajStanowiskoDebaty(polecenie.QueryRowContext(ctx, okno, tura,
+		KontoOperatora(ctx)))
 	if errors.Is(err, sql.ErrNoRows) {
 		return StanowiskoDebaty{}, ErrBrakWiersza
 	}
@@ -94,7 +109,7 @@ func (r *repozytoriumRoundtable) StanowiskoPoKodzie(ctx context.Context,
 	if err != nil {
 		return StanowiskoDebaty{}, err
 	}
-	stanowisko, err := odczytajStanowiskoDebaty(polecenie.QueryRowContext(ctx, kod))
+	stanowisko, err := odczytajStanowiskoDebaty(polecenie.QueryRowContext(ctx, kod, KontoOperatora(ctx)))
 	if errors.Is(err, sql.ErrNoRows) {
 		return StanowiskoDebaty{}, ErrBrakWiersza
 	}
@@ -113,12 +128,16 @@ func (r *repozytoriumRoundtable) RedagujStanowisko(ctx context.Context,
 	if err != nil {
 		return StanowiskoDebaty{}, err
 	}
-	if _, err := polecenie.ExecContext(ctx, stanowisko.Kod, stanowisko.Okno, stanowisko.Tura,
+	wynik, err := polecenie.ExecContext(ctx, stanowisko.Kod, stanowisko.Okno, stanowisko.Tura,
 		stanowisko.Tresc, stanowisko.Zaakceptowane, stanowisko.Kontekst, stanowisko.Warianty,
-		stanowisko.Konsekwencje, stanowisko.Tury); err != nil {
-
+		stanowisko.Konsekwencje, stanowisko.Tury, KontoOperatora(ctx),
+		KontoOperatora(ctx))
+	if err != nil {
 		return StanowiskoDebaty{}, fmt.Errorf(
 			"dane: nie można zredagować stanowiska debaty okna %q: %w", stanowisko.Okno, err)
+	}
+	if err := sprawdzTrafienieZapisu(wynik, "stanowisko debaty", stanowisko.Kod); err != nil {
+		return StanowiskoDebaty{}, err
 	}
 	return r.Stanowisko(ctx, stanowisko.Okno, stanowisko.Tura)
 }

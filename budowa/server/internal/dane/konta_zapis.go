@@ -14,13 +14,14 @@ const (
 	// znacznikZmiany podnosi datę ostatniej zmiany kolumny przy każdym zapisie wiersza konta do bazy danych.
 	znacznikZmiany = `zaktualizowano = strftime('%Y-%m-%dT%H:%M:%fZ','now')`
 
-	nastepnaKolejnoscKonta = `SELECT COALESCE(MAX(kolejnosc), 0) + 1 FROM konto WHERE rodzaj = ?`
+	nastepnaKolejnoscKonta = `SELECT COALESCE(MAX(kolejnosc), 0) + 1 FROM konto
+	                          WHERE rodzaj = ? AND ` + WarunekKonta
 
 	wstawKonto = `INSERT INTO konto
 	              (nazwa, rodzaj, dostawca, identyfikator_zewnetrzny, model_domyslny,
 	               adres_bazowy, katalog_konfiguracji, poswiadczenie_odwolanie,
-	               stan, aktywne, kolejnosc)
-	              VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+	               stan, aktywne, kolejnosc, konto_id)
+	              VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ` + WskazanieKonta + `)`
 
 	// aktualizujKonto nie rusza poświadczenia, stanu rotacji ani oznaczenia konta
 	// domyślnego — każde z nich ma własną, jawnie nazwaną drogę zapisu.
@@ -28,19 +29,23 @@ const (
 	                   SET nazwa = ?, rodzaj = ?, dostawca = ?, identyfikator_zewnetrzny = ?,
 	                       model_domyslny = ?, adres_bazowy = ?, katalog_konfiguracji = ?,
 	                       aktywne = ?, kolejnosc = ?, ` + znacznikZmiany + `
-	                   WHERE id = ?`
+	                   WHERE id = ? AND ` + WarunekKonta
 
 	zapiszPoswiadczenieKonta = `UPDATE konto SET poswiadczenie_odwolanie = ?, ` +
-		znacznikZmiany + ` WHERE id = ?`
+		znacznikZmiany + ` WHERE id = ? AND ` + WarunekKonta
 
-	odczytajPoswiadczenieKonta = `SELECT poswiadczenie_odwolanie FROM konto WHERE id = ?`
+	odczytajPoswiadczenieKonta = `SELECT poswiadczenie_odwolanie FROM konto
+	                              WHERE id = ? AND ` + WarunekKonta
 
 	oznaczStanKonta = `UPDATE konto SET stan = ?, wyczerpane_do = ?, ` +
-		znacznikZmiany + ` WHERE id = ?`
+		znacznikZmiany + ` WHERE id = ? AND ` + WarunekKonta
 
-	kanalyKonta = `SELECT id FROM kanal_modelu WHERE konto_id = ?`
+	// Wykaz odłączanych kanałów jest odczytem rejestru kanałów, więc niesie
+	// warunek konta osobno: kolumna `konto_dostawcy_id` wskazuje konto dostawcy
+	// poświadczeń, a nie konto Operatora, do którego kanał należy.
+	kanalyKonta = `SELECT id FROM kanal_modelu WHERE konto_dostawcy_id = ? AND ` + WarunekKonta
 
-	usunKonto = `DELETE FROM konto WHERE id = ?`
+	usunKonto = `DELETE FROM konto WHERE id = ? AND ` + WarunekKonta
 )
 
 // Dodaj zakłada konto; poświadczenie wchodzi osobnym argumentem, żeby nie dało się go zapisać przypadkiem
@@ -64,7 +69,8 @@ func (r *repozytoriumKont) Dodaj(ctx context.Context, konto Konto,
 		wynik, err := polecenie.ExecContext(ctx, konto.Nazwa, rodzaj, konto.Dostawca,
 			tekstDoKolumny(konto.IdentyfikatorZewnetrzny), tekstDoKolumny(konto.ModelDomyslny),
 			tekstDoKolumny(konto.AdresBazowy), tekstDoKolumny(konto.KatalogKonfiguracji),
-			tekstDoKolumny(odwolaniePoswiadczenia), stan, liczbaLogiczna(konto.Aktywne), kolejnosc)
+			tekstDoKolumny(odwolaniePoswiadczenia), stan, liczbaLogiczna(konto.Aktywne), kolejnosc,
+			KontoOperatora(ctx))
 		if err != nil {
 			return fmt.Errorf("dane: nie można dodać konta %q: %w", konto.Nazwa, err)
 		}
@@ -87,7 +93,7 @@ func (r *repozytoriumKont) Aktualizuj(ctx context.Context, konto Konto) error {
 	wynik, err := polecenie.ExecContext(ctx, konto.Nazwa, rodzaj, konto.Dostawca,
 		tekstDoKolumny(konto.IdentyfikatorZewnetrzny), tekstDoKolumny(konto.ModelDomyslny),
 		tekstDoKolumny(konto.AdresBazowy), tekstDoKolumny(konto.KatalogKonfiguracji),
-		liczbaLogiczna(konto.Aktywne), konto.Kolejnosc, konto.ID)
+		liczbaLogiczna(konto.Aktywne), konto.Kolejnosc, konto.ID, KontoOperatora(ctx))
 	if err != nil {
 		return fmt.Errorf("dane: nie można zapisać konta %d: %w", konto.ID, err)
 	}
@@ -101,7 +107,7 @@ func (r *repozytoriumKont) UstawPoswiadczenie(ctx context.Context, id int64, odw
 	if err != nil {
 		return err
 	}
-	wynik, err := polecenie.ExecContext(ctx, tekstDoKolumny(odwolanie), id)
+	wynik, err := polecenie.ExecContext(ctx, tekstDoKolumny(odwolanie), id, KontoOperatora(ctx))
 	if err != nil {
 		return fmt.Errorf("dane: nie można zapisać odwołania poświadczenia konta %d: %w", id, err)
 	}
@@ -117,7 +123,7 @@ func (r *repozytoriumKont) OdwolaniePoswiadczenia(ctx context.Context, id int64)
 		return "", err
 	}
 	var odwolanie sql.NullString
-	err = polecenie.QueryRowContext(ctx, id).Scan(&odwolanie)
+	err = polecenie.QueryRowContext(ctx, id, KontoOperatora(ctx)).Scan(&odwolanie)
 	if errors.Is(err, sql.ErrNoRows) {
 		return "", fmt.Errorf("%w: konto %d", ErrBrakWiersza, id)
 	}
@@ -146,7 +152,7 @@ func (r *repozytoriumKont) OznaczStan(ctx context.Context, id int64, stan StanKo
 	if err != nil {
 		return err
 	}
-	wynik, err := polecenie.ExecContext(ctx, wartosc, tekstDoKolumny(doChwili), id)
+	wynik, err := polecenie.ExecContext(ctx, wartosc, tekstDoKolumny(doChwili), id, KontoOperatora(ctx))
 	if err != nil {
 		return fmt.Errorf("dane: nie można oznaczyć stanu konta %d: %w", id, err)
 	}
@@ -175,7 +181,8 @@ func kolejnoscKonta(ctx context.Context, r *repozytoriumKont, transakcja *sql.Tx
 		return 0, err
 	}
 	var kolejnosc int
-	if err := polecenie.QueryRowContext(ctx, rodzaj).Scan(&kolejnosc); err != nil {
+	if err := polecenie.QueryRowContext(ctx, rodzaj,
+		KontoOperatora(ctx)).Scan(&kolejnosc); err != nil {
 		return 0, fmt.Errorf("dane: nie można ustalić kolejności konta rodzaju %q: %w", rodzaj, err)
 	}
 	return kolejnosc, nil

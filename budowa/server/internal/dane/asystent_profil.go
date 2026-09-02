@@ -32,13 +32,14 @@ const (
 	                           utworzono, zaktualizowano`
 
 	pobierzProfilAsystenta = `SELECT ` + kolumnyProfiluAsystenta + ` FROM profil_asystenta
-	                          WHERE identyfikator_zewnetrzny = ?`
+	                          WHERE identyfikator_zewnetrzny = ? AND ` + WarunekKonta
 
-	// Domyślny jest co najwyżej jeden — pilnuje tego indeks częściowy migracji
-	// 117. LIMIT 1 stoi tu mimo to, żeby odczyt nie zależał od tego, czy indeks
-	// przetrwał każdą przyszłą zmianę schematu.
+	// Domyślny jest co najwyżej jeden w koncie — indeks częściowy migracji 485
+	// obejmuje wskazanie konta. Bez warunku konta odczyt oddawałby profil konta
+	// najstarszego; LIMIT 1 zostaje na wypadek zmiany schematu.
 	pobierzProfilDomyslnyAsystenta = `SELECT ` + kolumnyProfiluAsystenta + ` FROM profil_asystenta
-	                                  WHERE domyslny = 1 ORDER BY id LIMIT 1`
+	                                  WHERE domyslny = 1 AND ` + WarunekKonta + `
+	                                  ORDER BY id LIMIT 1`
 )
 
 // Profil zwraca profil o wskazanym kodzie. Kod nieznany wraca jako
@@ -49,7 +50,7 @@ func (r *repozytoriumAsystenta) Profil(ctx context.Context, kod string) (ProfilA
 	if err != nil {
 		return ProfilAsystenta{}, err
 	}
-	profil, err := odczytajProfilAsystenta(polecenie.QueryRowContext(ctx, kod))
+	profil, err := odczytajProfilAsystenta(polecenie.QueryRowContext(ctx, kod, KontoOperatora(ctx)))
 	if errors.Is(err, sql.ErrNoRows) {
 		return ProfilAsystenta{}, ErrBrakWiersza
 	}
@@ -67,7 +68,7 @@ func (r *repozytoriumAsystenta) ProfilDomyslny(ctx context.Context) (ProfilAsyst
 	if err != nil {
 		return ProfilAsystenta{}, err
 	}
-	profil, err := odczytajProfilAsystenta(polecenie.QueryRowContext(ctx))
+	profil, err := odczytajProfilAsystenta(polecenie.QueryRowContext(ctx, KontoOperatora(ctx)))
 	if errors.Is(err, sql.ErrNoRows) {
 		return ProfilAsystenta{}, ErrBrakWiersza
 	}

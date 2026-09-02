@@ -14,7 +14,7 @@ const (
 	                         host_posredni_kod, notatka, utworzono, zaktualizowano`
 
 	pobierzHostaTerminala = `SELECT ` + kolumnyHostaTerminala + `
-	                         FROM terminal_host WHERE kod = ?`
+	                         FROM terminal_host WHERE kod = ? AND ` + WarunekKonta
 
 	// Fraza szuka w nazwie, adresie celu i notatce. LIKE w SQLite nie rozróżnia
 	// wielkości liter dla znaków ASCII; dla pozostałych schodzi do porównania
@@ -23,6 +23,7 @@ const (
 	                         FROM terminal_host
 	                         WHERE (? = '' OR grupa = ?)
 	                           AND (? = '' OR nazwa LIKE ? OR cel LIKE ? OR notatka LIKE ?)
+	                           AND ` + WarunekKonta + `
 	                         ORDER BY grupa ASC, nazwa ASC, id ASC`
 
 	kolumnySkryptuTerminala = `kod, nazwa, rodzaj, powloka, tresc, znaczniki, alias,
@@ -43,10 +44,11 @@ const (
 	kolumnyKluczaTerminala = `kod, nazwa, rodzaj, odcisk, klucz_jawny, sciezka, haslo, utworzono`
 
 	pobierzKluczTerminala = `SELECT ` + kolumnyKluczaTerminala + `
-	                         FROM terminal_klucz WHERE kod = ?`
+	                         FROM terminal_klucz WHERE kod = ? AND ` + WarunekKonta
 
 	pobierzKluczeTerminala = `SELECT ` + kolumnyKluczaTerminala + `
-	                          FROM terminal_klucz ORDER BY nazwa ASC, id ASC`
+	                          FROM terminal_klucz WHERE ` + WarunekKonta + `
+	                          ORDER BY nazwa ASC, id ASC`
 
 	kolumnyTuneluTerminala = `kod, okno_kod, rodzaj, host_kod, cel, port_lokalny,
 	                          host_docelowy, port_docelowy, stan, powod, zalozono, zamknieto`
@@ -89,7 +91,7 @@ func (r *repozytoriumTerminala) Host(ctx context.Context, kod string) (HostTermi
 	if err != nil {
 		return HostTerminala{}, err
 	}
-	host, err := odczytajHostaTerminala(polecenie.QueryRowContext(ctx, kod))
+	host, err := odczytajHostaTerminala(polecenie.QueryRowContext(ctx, kod, KontoOperatora(ctx)))
 	if errors.Is(err, sql.ErrNoRows) {
 		return HostTerminala{}, ErrBrakWiersza
 	}
@@ -111,7 +113,8 @@ func (r *repozytoriumTerminala) Hosty(ctx context.Context,
 	wzorzec := wzorzecFrazyTerminala(filtr.Fraza)
 	wiersze, err := polecenie.QueryContext(ctx,
 		filtr.Grupa, filtr.Grupa,
-		filtr.Fraza, wzorzec, wzorzec, wzorzec)
+		filtr.Fraza, wzorzec, wzorzec, wzorzec,
+		KontoOperatora(ctx))
 	if err != nil {
 		return nil, fmt.Errorf("dane: nie można odczytać książki hostów: %w", err)
 	}
@@ -187,7 +190,7 @@ func (r *repozytoriumTerminala) Klucz(ctx context.Context, kod string) (KluczTer
 	if err != nil {
 		return KluczTerminala{}, err
 	}
-	klucz, err := odczytajKluczTerminala(polecenie.QueryRowContext(ctx, kod))
+	klucz, err := odczytajKluczTerminala(polecenie.QueryRowContext(ctx, kod, KontoOperatora(ctx)))
 	if errors.Is(err, sql.ErrNoRows) {
 		return KluczTerminala{}, ErrBrakWiersza
 	}
@@ -204,7 +207,7 @@ func (r *repozytoriumTerminala) Klucze(ctx context.Context) ([]KluczTerminala, e
 	if err != nil {
 		return nil, err
 	}
-	wiersze, err := polecenie.QueryContext(ctx)
+	wiersze, err := polecenie.QueryContext(ctx, KontoOperatora(ctx))
 	if err != nil {
 		return nil, fmt.Errorf("dane: nie można odczytać wykazu kluczy: %w", err)
 	}

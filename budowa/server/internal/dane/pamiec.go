@@ -43,23 +43,24 @@ const (
 	                 utworzono, zaktualizowano`
 
 	zapiszZasobPamieci = `INSERT INTO zasob_pamieci
-	                      (poziom, klucz_zasiegu, klucz, tresc, tresc_odwolanie, waga)
-	                      VALUES (?, ?, ?, ?, ?, ?)
+	                      (poziom, klucz_zasiegu, klucz, tresc, tresc_odwolanie, waga, konto_id)
+	                      VALUES (?, ?, ?, ?, ?, ?, ` + WskazanieKonta + `)
 	                      ON CONFLICT(poziom, klucz_zasiegu, klucz) DO UPDATE SET
 	                          tresc = excluded.tresc,
 	                          tresc_odwolanie = excluded.tresc_odwolanie,
 	                          waga = excluded.waga,
-	                          zaktualizowano = strftime('%Y-%m-%dT%H:%M:%fZ','now')`
+	                          zaktualizowano = strftime('%Y-%m-%dT%H:%M:%fZ','now')
+	                      WHERE ` + WarunekKonta
 
 	pobierzZasobPamieci = `SELECT ` + kolumnyZasobu + ` FROM zasob_pamieci
-	                       WHERE poziom = ? AND klucz_zasiegu = ? AND klucz = ?`
+	                       WHERE poziom = ? AND klucz_zasiegu = ? AND klucz = ? AND ` + WarunekKonta
 
 	listaZasobowPoziomu = `SELECT ` + kolumnyZasobu + ` FROM zasob_pamieci
-	                       WHERE poziom = ? AND klucz_zasiegu = ?
+	                       WHERE poziom = ? AND klucz_zasiegu = ? AND ` + WarunekKonta + `
 	                       ORDER BY waga DESC, klucz`
 
 	usunZasobPamieci = `DELETE FROM zasob_pamieci
-	                    WHERE poziom = ? AND klucz_zasiegu = ? AND klucz = ?`
+	                    WHERE poziom = ? AND klucz_zasiegu = ? AND klucz = ? AND ` + WarunekKonta
 )
 
 type repozytoriumPamieci struct {
@@ -79,13 +80,15 @@ func (r *repozytoriumPamieci) Zapisz(ctx context.Context, zasob Zasob) error {
 	if err != nil {
 		return err
 	}
-	_, err = polecenie.ExecContext(ctx, string(zasob.Poziom), zasob.KluczZasiegu, zasob.Klucz,
-		tekstDoKolumny(zasob.Tresc), tekstDoKolumny(zasob.TrescOdwolanie), zasob.Waga)
+	konto := KontoOperatora(ctx)
+	wynik, err := polecenie.ExecContext(ctx, string(zasob.Poziom), zasob.KluczZasiegu, zasob.Klucz,
+		tekstDoKolumny(zasob.Tresc), tekstDoKolumny(zasob.TrescOdwolanie), zasob.Waga,
+		konto, konto)
 	if err != nil {
 		return fmt.Errorf("dane: nie można zapisać zasobu pamięci %q poziomu %q: %w",
 			zasob.Klucz, zasob.Poziom, err)
 	}
-	return nil
+	return sprawdzTrafienieZapisu(wynik, "zasób pamięci", zasob.Klucz)
 }
 
 // Pobierz zwraca zasób pamięci wraz ze znacznikiem jego istnienia; brak wpisu nie jest błędem odczytu.
@@ -96,7 +99,8 @@ func (r *repozytoriumPamieci) Pobierz(ctx context.Context, poziom PoziomPamieci,
 	if err != nil {
 		return Zasob{}, false, err
 	}
-	zasob, err := odczytajZasob(polecenie.QueryRowContext(ctx, string(poziom), kluczZasiegu, klucz))
+	zasob, err := odczytajZasob(polecenie.QueryRowContext(ctx, string(poziom), kluczZasiegu, klucz,
+		KontoOperatora(ctx)))
 	if errors.Is(err, sql.ErrNoRows) {
 		return Zasob{}, false, nil
 	}
@@ -114,7 +118,7 @@ func (r *repozytoriumPamieci) ListaPoziomu(ctx context.Context, poziom PoziomPam
 	if err != nil {
 		return nil, err
 	}
-	wiersze, err := polecenie.QueryContext(ctx, string(poziom), kluczZasiegu)
+	wiersze, err := polecenie.QueryContext(ctx, string(poziom), kluczZasiegu, KontoOperatora(ctx))
 	if err != nil {
 		return nil, fmt.Errorf("dane: nie można odczytać pamięci poziomu %q: %w", poziom, err)
 	}
@@ -142,7 +146,7 @@ func (r *repozytoriumPamieci) Usun(ctx context.Context, poziom PoziomPamieci,
 	if err != nil {
 		return err
 	}
-	if _, err := polecenie.ExecContext(ctx, string(poziom), kluczZasiegu, klucz); err != nil {
+	if _, err := polecenie.ExecContext(ctx, string(poziom), kluczZasiegu, klucz, KontoOperatora(ctx)); err != nil {
 		return fmt.Errorf("dane: nie można usunąć zasobu pamięci %q: %w", klucz, err)
 	}
 	return nil

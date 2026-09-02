@@ -53,13 +53,13 @@ const (
 	                         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`
 
 	pobierzPanelTlumaczenia = `SELECT ` + kolumnyPaneluTlumaczenia + zrodloPaneluTlumaczenia +
-		` WHERE p.identyfikator_zewnetrzny = ?`
+		` WHERE p.identyfikator_zewnetrzny = ? AND ` + WarunekKonta
 
 	pobierzPaneleOkna = `SELECT ` + kolumnyPaneluTlumaczenia + zrodloPaneluTlumaczenia +
-		` WHERE p.okno_id = ? ORDER BY p.jezyk`
+		` WHERE p.okno_id = ? AND ` + WarunekKonta + ` ORDER BY p.jezyk`
 
 	pobierzWszystkiePanele = `SELECT ` + kolumnyPaneluTlumaczenia + zrodloPaneluTlumaczenia +
-		` ORDER BY p.okno_id, p.jezyk`
+		` WHERE ` + WarunekKonta + ` ORDER BY p.okno_id, p.jezyk`
 )
 
 // ZapiszPanel zakłada panel tłumaczenia dla wskazanego okna i nie nadpisuje
@@ -100,7 +100,7 @@ func (r *repozytoriumTlumaczen) Panel(ctx context.Context, kod string) (PanelTlu
 	if err != nil {
 		return PanelTlumaczenia{}, err
 	}
-	panel, err := odczytajPanelTlumaczenia(polecenie.QueryRowContext(ctx, kod))
+	panel, err := odczytajPanelTlumaczenia(polecenie.QueryRowContext(ctx, kod, KontoOperatora(ctx)))
 	if errors.Is(err, sql.ErrNoRows) {
 		return PanelTlumaczenia{}, ErrBrakWiersza
 	}
@@ -118,7 +118,7 @@ func (r *repozytoriumTlumaczen) Panele(ctx context.Context, oknoID int64) ([]Pan
 	if err != nil {
 		return nil, err
 	}
-	wiersze, err := polecenie.QueryContext(ctx, oknoID)
+	wiersze, err := polecenie.QueryContext(ctx, oknoID, KontoOperatora(ctx))
 	if err != nil {
 		return nil, fmt.Errorf("dane: nie można odczytać paneli okna %d: %w", oknoID, err)
 	}
@@ -145,7 +145,7 @@ func (r *repozytoriumTlumaczen) WszystkiePanele(ctx context.Context) ([]PanelTlu
 	if err != nil {
 		return nil, err
 	}
-	wiersze, err := polecenie.QueryContext(ctx)
+	wiersze, err := polecenie.QueryContext(ctx, KontoOperatora(ctx))
 	if err != nil {
 		return nil, fmt.Errorf("dane: nie można odczytać paneli tłumaczenia: %w", err)
 	}

@@ -140,16 +140,32 @@ func gotowoscOdsluchu() (bool, string) {
 func (a *adapterMowy) Przepisz(ctx context.Context,
 	z shared.SpeechTranscribeRequest) (shared.SpeechTranscribeResponse, error) {
 
-	if strings.TrimSpace(z.AudioRef) == "" {
+	odnosnik := strings.TrimSpace(z.AudioRef)
+	if odnosnik == "" {
 		return shared.SpeechTranscribeResponse{}, bladZadaniaMowy(
 			"transkrypcja bez odnośnika nagrania nie ma czego przepisać")
+	}
+	// Odnośnik pod katalogiem nagrań przyjętych wydaje wyłącznie rejestr
+	// zawężony do konta żądania. Ścieżka spoza tego katalogu to plik Operatora
+	// (`research.source.transcribe`, dyktowanie z dysku) i idzie do silnika
+	// bez zmiany.
+	if a.wKataloguNagranPrzyjetych(odnosnik) {
+		if a.nagrania == nil {
+			return shared.SpeechTranscribeResponse{}, bladZapleczaNagran(
+				"serwer nie ma wpiętego rejestru nagrań")
+		}
+		wiersz, err := a.nagrania.NagranieMowyPoSciezce(ctx, odnosnik)
+		if err != nil {
+			return shared.SpeechTranscribeResponse{}, bladObcegoNagrania(odnosnik)
+		}
+		odnosnik = wiersz.Sciezka
 	}
 
 	ustawienia := a.ustawienia(ctx)
 	okno, zasady, obszar := a.zasiegPlatformy()
 
 	transkrypcja, err := a.silnik(ustawienia).Transkrybuj(ctx, mowa.Zlecenie{
-		Odnosnik: z.AudioRef,
+		Odnosnik: odnosnik,
 		Jezyk:    wartoscTekstu(z.Language),
 		Model:    wartoscTekstu(z.Model),
 		Okno:     okno,

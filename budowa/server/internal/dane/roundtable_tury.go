@@ -9,29 +9,35 @@ import (
 )
 
 const (
+	warunekKontaWypowiedzi = `EXISTS (SELECT 1 FROM debata_tura
+	                                   WHERE debata_tura.id = debata_wypowiedz.tura_id
+	                                     AND ` + WarunekKonta + `)`
+
 	kolumnyTury = `identyfikator_zewnetrzny, okno, numer, zagadnienie, pytanie, format,
 	               stan, granica_tur, tura_nadrzedna, granica_czasu_ms, granica_znakow,
 	               anonimowa, rozpoczeto, zamknieto`
 
+	// Numer liczy się po całej tabeli: więz UNIQUE (okno, numer) obejmuje ją w całości, a numeracja zawężona kontem dałaby numer zajęty.
 	zalozTureDebaty = `INSERT INTO debata_tura
 	                   (identyfikator_zewnetrzny, okno, numer, zagadnienie, pytanie,
 	                    format, stan, granica_tur, tura_nadrzedna, granica_czasu_ms,
-	                    granica_znakow, anonimowa)
+	                    granica_znakow, anonimowa, konto_id)
 	                   VALUES (?, ?,
 	                           (SELECT COALESCE(MAX(numer), 0) + 1 FROM debata_tura WHERE okno = ?),
-	                           ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+	                           ?, ?, ?, ?, ?, ?, ?, ?, ?, ` + WskazanieKonta + `)`
 
 	zmienTureDebaty = `UPDATE debata_tura
 	                   SET zagadnienie = ?, stan = ?, zamknieto = ?
-	                   WHERE identyfikator_zewnetrzny = ?`
+	                   WHERE identyfikator_zewnetrzny = ? AND ` + WarunekKonta
 
 	pobierzTure = `SELECT ` + kolumnyTury + `
-	               FROM debata_tura WHERE identyfikator_zewnetrzny = ?`
+	               FROM debata_tura WHERE identyfikator_zewnetrzny = ?
+	                 AND ` + WarunekKonta
 
 	// Zero w granicy znaczy „bez granicy”, więc jedno przygotowane zapytanie
 	// obsługuje wykaz pełny i wykaz przycięty.
 	pobierzTury = `SELECT ` + kolumnyTury + `
-	               FROM debata_tura WHERE okno = ?
+	               FROM debata_tura WHERE okno = ? AND ` + WarunekKonta + `
 	               ORDER BY numer DESC LIMIT (CASE WHEN ? > 0 THEN ? ELSE -1 END)`
 
 	zapiszWypowiedzDebaty = `INSERT INTO debata_wypowiedz
@@ -39,20 +45,23 @@ const (
 	                          odpowiedz_na, akt_mowy, pewnosc, redakcja)
 	                         SELECT ?, t.id, ?, ?, ?, ?, ?, ?
 	                           FROM debata_tura t
-	                          WHERE t.identyfikator_zewnetrzny = ?`
+	                          WHERE t.identyfikator_zewnetrzny = ? AND ` + WarunekKonta
 
 	uzupelnijWypowiedzDebaty = `UPDATE debata_wypowiedz SET tresc = ?
-	                            WHERE identyfikator_zewnetrzny = ?`
+	                            WHERE identyfikator_zewnetrzny = ?
+	                              AND ` + warunekKontaWypowiedzi
 
 	// ZastapWypowiedz podnosi numer redakcji razem z treścią: regeneracja jest
 	// zastąpieniem, a nie dopisaniem, więc licznik redakcji jest jedynym śladem
 	// tego, że wypowiedź już raz padła inaczej.
 	zastapWypowiedzDebaty = `UPDATE debata_wypowiedz
 	                         SET tresc = ?, redakcja = redakcja + 1
-	                         WHERE identyfikator_zewnetrzny = ?`
+	                         WHERE identyfikator_zewnetrzny = ?
+	                           AND ` + warunekKontaWypowiedzi
 
 	oznaczWypowiedzDebaty = `UPDATE debata_wypowiedz SET akt_mowy = ?, pewnosc = ?
-	                         WHERE identyfikator_zewnetrzny = ?`
+	                         WHERE identyfikator_zewnetrzny = ?
+	                           AND ` + warunekKontaWypowiedzi
 
 	kolumnyWypowiedziDebaty = `w.identyfikator_zewnetrzny, t.identyfikator_zewnetrzny,
 	                     w.uczestnik, w.tresc, w.odpowiedz_na, w.akt_mowy, w.pewnosc,
@@ -61,18 +70,18 @@ const (
 	pobierzWypowiedzi = `SELECT ` + kolumnyWypowiedziDebaty + `
 	                       FROM debata_wypowiedz w
 	                       JOIN debata_tura t ON t.id = w.tura_id
-	                      WHERE t.identyfikator_zewnetrzny = ?
+	                      WHERE t.identyfikator_zewnetrzny = ? AND ` + WarunekKonta + `
 	                      ORDER BY w.id ASC`
 
 	pobierzWypowiedzDebaty = `SELECT ` + kolumnyWypowiedziDebaty + `
 	                      FROM debata_wypowiedz w
 	                      JOIN debata_tura t ON t.id = w.tura_id
-	                     WHERE w.identyfikator_zewnetrzny = ?`
+	                     WHERE w.identyfikator_zewnetrzny = ? AND ` + WarunekKonta
 
 	pobierzWypowiedziOknaDebaty = `SELECT ` + kolumnyWypowiedziDebaty + `
 	                           FROM debata_wypowiedz w
 	                           JOIN debata_tura t ON t.id = w.tura_id
-	                          WHERE t.okno = ?
+	                          WHERE t.okno = ? AND ` + WarunekKonta + `
 	                          ORDER BY t.numer ASC, w.id ASC`
 )
 
@@ -84,7 +93,8 @@ func (r *repozytoriumRoundtable) ZalozTure(ctx context.Context, tura TuraDebaty)
 	}
 	if _, err := polecenie.ExecContext(ctx, tura.Kod, tura.Okno, tura.Okno, tura.Zagadnienie,
 		tura.Pytanie, tura.Format, tura.Stan, tura.GranicaTur, tura.TuraNadrzedna,
-		tura.GranicaCzasuMs, tura.GranicaZnakow, tura.Anonimowa); err != nil {
+		tura.GranicaCzasuMs, tura.GranicaZnakow, tura.Anonimowa,
+		KontoOperatora(ctx)); err != nil {
 		return TuraDebaty{}, fmt.Errorf("dane: nie można założyć tury debaty %q: %w", tura.Kod, err)
 	}
 	return r.Tura(ctx, tura.Kod)
@@ -96,7 +106,8 @@ func (r *repozytoriumRoundtable) ZmienTure(ctx context.Context, tura TuraDebaty)
 	if err != nil {
 		return err
 	}
-	wynik, err := polecenie.ExecContext(ctx, tura.Zagadnienie, tura.Stan, tura.Zamknieto, tura.Kod)
+	wynik, err := polecenie.ExecContext(ctx, tura.Zagadnienie, tura.Stan, tura.Zamknieto,
+		tura.Kod, KontoOperatora(ctx))
 	if err != nil {
 		return fmt.Errorf("dane: nie można zmienić tury debaty %q: %w", tura.Kod, err)
 	}
@@ -109,7 +120,7 @@ func (r *repozytoriumRoundtable) Tura(ctx context.Context, kod string) (TuraDeba
 	if err != nil {
 		return TuraDebaty{}, err
 	}
-	tura, err := odczytajTure(polecenie.QueryRowContext(ctx, kod))
+	tura, err := odczytajTure(polecenie.QueryRowContext(ctx, kod, KontoOperatora(ctx)))
 	if errors.Is(err, sql.ErrNoRows) {
 		return TuraDebaty{}, ErrBrakWiersza
 	}
@@ -125,7 +136,7 @@ func (r *repozytoriumRoundtable) Tury(ctx context.Context, okno string, limit in
 	if err != nil {
 		return nil, err
 	}
-	wiersze, err := polecenie.QueryContext(ctx, okno, limit, limit)
+	wiersze, err := polecenie.QueryContext(ctx, okno, KontoOperatora(ctx), limit, limit)
 	if err != nil {
 		return nil, fmt.Errorf("dane: nie można odczytać tur debaty okna %q: %w", okno, err)
 	}
@@ -159,7 +170,7 @@ func (r *repozytoriumRoundtable) ZapiszWypowiedz(ctx context.Context,
 	}
 	wynik, err := polecenie.ExecContext(ctx, wypowiedz.Kod, wypowiedz.Uczestnik,
 		wypowiedz.Tresc, wypowiedz.OdpowiedzNa, wypowiedz.AktMowy, wypowiedz.Pewnosc,
-		wypowiedz.Redakcja, wypowiedz.TuraKod)
+		wypowiedz.Redakcja, wypowiedz.TuraKod, KontoOperatora(ctx))
 	if err != nil {
 		return WypowiedzDebaty{}, fmt.Errorf("dane: nie można zapisać wypowiedzi %q: %w",
 			wypowiedz.Kod, err)
@@ -176,7 +187,7 @@ func (r *repozytoriumRoundtable) UzupelnijWypowiedz(ctx context.Context, kod, tr
 	if err != nil {
 		return err
 	}
-	wynik, err := polecenie.ExecContext(ctx, tresc, kod)
+	wynik, err := polecenie.ExecContext(ctx, tresc, kod, KontoOperatora(ctx))
 	if err != nil {
 		return fmt.Errorf("dane: nie można uzupełnić wypowiedzi %q: %w", kod, err)
 	}
@@ -189,7 +200,7 @@ func (r *repozytoriumRoundtable) Wypowiedzi(ctx context.Context, turaKod string)
 	if err != nil {
 		return nil, err
 	}
-	wiersze, err := polecenie.QueryContext(ctx, turaKod)
+	wiersze, err := polecenie.QueryContext(ctx, turaKod, KontoOperatora(ctx))
 	if err != nil {
 		return nil, fmt.Errorf("dane: nie można odczytać wypowiedzi tury %q: %w", turaKod, err)
 	}
@@ -208,7 +219,7 @@ func (r *repozytoriumRoundtable) WypowiedziOkna(ctx context.Context,
 	if err != nil {
 		return nil, err
 	}
-	wiersze, err := polecenie.QueryContext(ctx, okno)
+	wiersze, err := polecenie.QueryContext(ctx, okno, KontoOperatora(ctx))
 	if err != nil {
 		return nil, fmt.Errorf("dane: nie można odczytać wypowiedzi okna %q: %w", okno, err)
 	}
@@ -223,7 +234,7 @@ func (r *repozytoriumRoundtable) Wypowiedz(ctx context.Context, kod string) (Wyp
 	if err != nil {
 		return WypowiedzDebaty{}, err
 	}
-	wypowiedz, err := odczytajWypowiedzDebaty(polecenie.QueryRowContext(ctx, kod))
+	wypowiedz, err := odczytajWypowiedzDebaty(polecenie.QueryRowContext(ctx, kod, KontoOperatora(ctx)))
 	if errors.Is(err, sql.ErrNoRows) {
 		return WypowiedzDebaty{}, ErrBrakWiersza
 	}
@@ -239,7 +250,7 @@ func (r *repozytoriumRoundtable) ZastapWypowiedz(ctx context.Context, kod, tresc
 	if err != nil {
 		return err
 	}
-	wynik, err := polecenie.ExecContext(ctx, tresc, kod)
+	wynik, err := polecenie.ExecContext(ctx, tresc, kod, KontoOperatora(ctx))
 	if err != nil {
 		return fmt.Errorf("dane: nie można zastąpić wypowiedzi %q: %w", kod, err)
 	}
@@ -254,7 +265,7 @@ func (r *repozytoriumRoundtable) OznaczWypowiedz(ctx context.Context,
 	if err != nil {
 		return err
 	}
-	wynik, err := polecenie.ExecContext(ctx, aktMowy, pewnosc, kod)
+	wynik, err := polecenie.ExecContext(ctx, aktMowy, pewnosc, kod, KontoOperatora(ctx))
 	if err != nil {
 		return fmt.Errorf("dane: nie można oznaczyć wypowiedzi %q: %w", kod, err)
 	}

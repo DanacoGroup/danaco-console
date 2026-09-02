@@ -113,16 +113,20 @@ const (
 	                                   AND (? = '' OR grupa = ?)
 	                                   AND (? = '' OR zakres = ?)`
 
+	// Zawężenie stoi w zapytaniu podrzędnym, bo `agent` i `punkt_dostepu` mają
+	// obie kolumnę `konto_id`; punkt innego konta wchodzi do złączenia bez kodu.
+	punktKonektoraZakresu = ` LEFT JOIN (SELECT id, kod FROM punkt_dostepu
+	                                      WHERE ` + WarunekKonta + `) p
+	                                 ON p.id = k.punkt_dostepu_id`
+
 	konektoryZakresuAgenta = `SELECT ` + kolumnyKonektoraZakresu + `
 	                            FROM agent_konektor k
-	                            JOIN agent a ON a.id = k.agent_id
-	                            LEFT JOIN punkt_dostepu p ON p.id = k.punkt_dostepu_id
+	                            JOIN agent a ON a.id = k.agent_id` + punktKonektoraZakresu + `
 	                           WHERE a.kod = ? ORDER BY k.utworzono, k.id`
 
 	konektorZakresuPoKodzie = `SELECT ` + kolumnyKonektoraZakresu + `
 	                             FROM agent_konektor k
-	                             JOIN agent a ON a.id = k.agent_id
-	                             LEFT JOIN punkt_dostepu p ON p.id = k.punkt_dostepu_id
+	                             JOIN agent a ON a.id = k.agent_id` + punktKonektoraZakresu + `
 	                            WHERE k.kod = ? AND a.kod = ?`
 
 	usunKonektorZakresuAgenta = `DELETE FROM agent_konektor
@@ -369,7 +373,7 @@ func (r *repozytoriumZakresuAgenta) KonektoryAgenta(ctx context.Context,
 	if err != nil {
 		return nil, nil, err
 	}
-	wiersze, err := polecenie.QueryContext(ctx, kodAgenta)
+	wiersze, err := polecenie.QueryContext(ctx, KontoOperatora(ctx), kodAgenta)
 	if err != nil {
 		return nil, nil, fmt.Errorf("dane: nie można odczytać konektorów eksperta %q: %w", kodAgenta, err)
 	}
@@ -477,7 +481,8 @@ func (r *repozytoriumZakresuAgenta) konektorZakresu(ctx context.Context,
 	if err != nil {
 		return KonektorAgenta{}, "", err
 	}
-	return odczytajKonektorZakresu(polecenie.QueryRowContext(ctx, kodKonektora, kodAgenta))
+	return odczytajKonektorZakresu(polecenie.QueryRowContext(ctx, KontoOperatora(ctx),
+		kodKonektora, kodAgenta))
 }
 
 // UsunUmiejetnoscAgenta zdejmuje umiejętność z definicji wskazanego eksperta

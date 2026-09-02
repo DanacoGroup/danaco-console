@@ -72,10 +72,18 @@ const (
 	                   takt_sekundy, aktywna`
 
 	skrzynkiCzynneSQL = `SELECT ` + kolumnySkrzynki + ` FROM skrzynka_pocztowa
-	                     WHERE aktywna = 1 ORDER BY kod`
+	                     WHERE aktywna = 1 AND ` + WarunekKonta + ` ORDER BY kod`
 
 	skrzynkaPoKodzieSQL = `SELECT ` + kolumnySkrzynki + ` FROM skrzynka_pocztowa
-	                       WHERE kod = ?`
+	                       WHERE kod = ? AND ` + WarunekKonta
+
+	// Listy wiszą na skrzynce kluczem obcym i własnego wskazania konta nie
+	// niosą; skrzynka podana w żądaniu musi więc należeć do konta żądania.
+	skrzynkaListuNalezyDoKonta = `EXISTS (SELECT 1 FROM skrzynka_pocztowa
+	                              WHERE skrzynka_pocztowa.id = list_odebrany.skrzynka_id
+	                                AND ` + WarunekKonta + `)`
+
+	skrzynkaWKoncieSQL = `SELECT 1 FROM skrzynka_pocztowa WHERE id = ? AND ` + WarunekKonta
 
 	kolumnyListu = `id, skrzynka_id, identyfikator_listu, nadawca, temat, chwila,
 	                tresc, odebrano, przetworzony`
@@ -87,15 +95,19 @@ const (
 
 	listyNieprzetworzoneSQL = `SELECT ` + kolumnyListu + ` FROM list_odebrany
 	                           WHERE skrzynka_id = ? AND przetworzony = 0
+	                             AND ` + skrzynkaListuNalezyDoKonta + `
 	                           ORDER BY id`
 
-	oznaczPrzetworzonySQL = `UPDATE list_odebrany SET przetworzony = 1 WHERE id = ?`
+	oznaczPrzetworzonySQL = `UPDATE list_odebrany SET przetworzony = 1
+	                         WHERE id = ? AND ` + skrzynkaListuNalezyDoKonta
 
 	ostatniListSQL = `SELECT ` + kolumnyListu + ` FROM list_odebrany
-	                  WHERE skrzynka_id = ? ORDER BY id DESC LIMIT 1`
+	                  WHERE skrzynka_id = ? AND ` + skrzynkaListuNalezyDoKonta + `
+	                  ORDER BY id DESC LIMIT 1`
 
 	listPoIdentyfikatorzeSQL = `SELECT ` + kolumnyListu + ` FROM list_odebrany
-	                            WHERE skrzynka_id = ? AND identyfikator_listu = ?`
+	                            WHERE skrzynka_id = ? AND identyfikator_listu = ?
+	                              AND ` + skrzynkaListuNalezyDoKonta
 
 	zapiszWyslanySQL = `INSERT INTO list_wyslany
 	                    (skrzynka_id, adresat, temat, tresc, w_odpowiedzi_na,
@@ -116,7 +128,7 @@ func (r *repozytoriumPoczty) SkrzynkiCzynne(ctx context.Context) ([]SkrzynkaPocz
 	if err != nil {
 		return nil, err
 	}
-	wiersze, err := polecenie.QueryContext(ctx)
+	wiersze, err := polecenie.QueryContext(ctx, KontoOperatora(ctx))
 	if err != nil {
 		return nil, fmt.Errorf("dane: nie można odczytać skrzynek pocztowych: %w", err)
 	}
@@ -140,7 +152,7 @@ func (r *repozytoriumPoczty) SkrzynkaPoKodzie(ctx context.Context, kod string) (
 	if err != nil {
 		return SkrzynkaPocztowa{}, err
 	}
-	skrzynka, err := odczytajSkrzynke(polecenie.QueryRowContext(ctx, kod))
+	skrzynka, err := odczytajSkrzynke(polecenie.QueryRowContext(ctx, kod, KontoOperatora(ctx)))
 	if errors.Is(err, sql.ErrNoRows) {
 		return SkrzynkaPocztowa{}, ErrBrakWiersza
 	}
@@ -148,6 +160,9 @@ func (r *repozytoriumPoczty) SkrzynkaPoKodzie(ctx context.Context, kod string) (
 }
 
 func (r *repozytoriumPoczty) DodajList(ctx context.Context, list ListOdebrany) (bool, error) {
+	if err := r.skrzynkaWKoncie(ctx, list.SkrzynkaID); err != nil {
+		return false, err
+	}
 	polecenie, err := r.zapytania.przygotuj(ctx, dodajListSQL)
 	if err != nil {
 		return false, err
@@ -169,7 +184,7 @@ func (r *repozytoriumPoczty) ListyNieprzetworzone(ctx context.Context, skrzynkaI
 	if err != nil {
 		return nil, err
 	}
-	wiersze, err := polecenie.QueryContext(ctx, skrzynkaID)
+	wiersze, err := polecenie.QueryContext(ctx, skrzynkaID, KontoOperatora(ctx))
 	if err != nil {
 		return nil, fmt.Errorf("dane: nie można odczytać listów skrzynki %d: %w", skrzynkaID, err)
 	}
@@ -193,22 +208,45 @@ func (r *repozytoriumPoczty) OznaczPrzetworzony(ctx context.Context, id int64) e
 	if err != nil {
 		return err
 	}
-	if _, err := polecenie.ExecContext(ctx, id); err != nil {
+	wynik, err := polecenie.ExecContext(ctx, id, KontoOperatora(ctx))
+	if err != nil {
 		return fmt.Errorf("dane: nie można oznaczyć listu %d jako przetworzonego: %w", id, err)
+	}
+	return sprawdzTrafienie(wynik, "list_odebrany", id)
+}
+
+// skrzynkaWKoncie rozstrzyga przynależność skrzynki, bo zapis listu nie ma klauzuli WHERE, w której warunek konta mógłby stanąć.
+func (r *repozytoriumPoczty) skrzynkaWKoncie(ctx context.Context, skrzynkaID int64) error {
+	polecenie, err := r.zapytania.przygotuj(ctx, skrzynkaWKoncieSQL)
+	if err != nil {
+		return err
+	}
+	var trafienie int
+	err = polecenie.QueryRowContext(ctx, skrzynkaID, KontoOperatora(ctx)).Scan(&trafienie)
+	if errors.Is(err, sql.ErrNoRows) {
+		return fmt.Errorf("dane: skrzynka %d nie należy do konta żądania: %w",
+			skrzynkaID, ErrBrakWiersza)
+	}
+	if err != nil {
+		return fmt.Errorf("dane: nie można rozstrzygnąć przynależności skrzynki %d: %w",
+			skrzynkaID, err)
 	}
 	return nil
 }
 
 func (r *repozytoriumPoczty) OstatniList(ctx context.Context, skrzynkaID int64) (ListOdebrany, error) {
-	return r.jedenList(ctx, ostatniListSQL, skrzynkaID)
+	return r.jedenList(ctx, ostatniListSQL, skrzynkaID, KontoOperatora(ctx))
 }
 
 func (r *repozytoriumPoczty) ListPoIdentyfikatorze(ctx context.Context,
 	skrzynkaID int64, identyfikator string) (ListOdebrany, error) {
-	return r.jedenList(ctx, listPoIdentyfikatorzeSQL, skrzynkaID, identyfikator)
+	return r.jedenList(ctx, listPoIdentyfikatorzeSQL, skrzynkaID, identyfikator, KontoOperatora(ctx))
 }
 
 func (r *repozytoriumPoczty) ZapiszWyslany(ctx context.Context, list ListWyslany) error {
+	if err := r.skrzynkaWKoncie(ctx, list.SkrzynkaID); err != nil {
+		return err
+	}
 	polecenie, err := r.zapytania.przygotuj(ctx, zapiszWyslanySQL)
 	if err != nil {
 		return err

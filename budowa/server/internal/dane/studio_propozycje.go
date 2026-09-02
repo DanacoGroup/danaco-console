@@ -32,8 +32,15 @@ const (
 	                          tresc_wyniku, tresc, tresc_odwolanie)
 	                         VALUES (?, ?, ?, ?, ?, ?, ?)`
 
+	// Kod propozycji przychodzi z żądania niezależnie od kodu dokumentu
+	// (`studio.diff.compare`, `studio.proposal.decide`), a własnej kolumny konta
+	// tabela nie ma: granica idzie drogą po `dokument_id`.
 	propozycjaZmianyPoKodzie = `SELECT ` + kolumnyPropozycjiZmiany + `
-	                            FROM propozycja_zmiany_studio WHERE identyfikator_zewnetrzny = ?`
+	                            FROM propozycja_zmiany_studio
+	                            WHERE identyfikator_zewnetrzny = ?
+	                              AND EXISTS (SELECT 1 FROM dokument_studio
+	                                          WHERE dokument_studio.id = propozycja_zmiany_studio.dokument_id
+	                                            AND ` + WarunekKonta + `)`
 
 	listaPropozycjiZmianyDokumentu = `SELECT ` + kolumnyPropozycjiZmiany + `
 	                                  FROM propozycja_zmiany_studio WHERE dokument_id = ?
@@ -66,7 +73,8 @@ func (r *repozytoriumStudia) Propozycja(ctx context.Context, kod string) (Propoz
 	if err != nil {
 		return PropozycjaZmiany{}, err
 	}
-	propozycja, err := odczytajPropozycjeZmiany(polecenie.QueryRowContext(ctx, kod))
+	propozycja, err := odczytajPropozycjeZmiany(
+		polecenie.QueryRowContext(ctx, kod, KontoOperatora(ctx)))
 	if errors.Is(err, sql.ErrNoRows) {
 		return PropozycjaZmiany{}, fmt.Errorf("%w: propozycja zmiany %q", ErrBrakWiersza, kod)
 	}

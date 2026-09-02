@@ -277,11 +277,12 @@ func (r *repozytoriumBadan) UstawSzczegolyUstalenia(ctx context.Context, kod str
 	        kotwica_selektor = COALESCE(?, kotwica_selektor),
 	        kotwica_czas_ms = COALESCE(?, kotwica_czas_ms),
 	        zaktualizowano = strftime('%Y-%m-%dT%H:%M:%fZ','now')
-	    WHERE identyfikator_zewnetrzny = ?`,
+	    WHERE identyfikator_zewnetrzny = ? AND `+WarunekKonta,
 		s.Rodzaj, s.Waga, tekstDoKolumny(s.Notatka), wartoscCalkowitaBadania(s.WymagaPotwierdzeni),
 		tekstDoKolumny(s.AdnotacjaKod), s.Kotwica.Rodzaj, liczbaDoKolumny(s.Kotwica.Strona),
 		liczbaDoKolumny(s.Kotwica.Od), liczbaDoKolumny(s.Kotwica.Do),
-		tekstDoKolumny(s.Kotwica.Selektor), liczbaDoKolumny(s.Kotwica.CzasMs), kod)
+		tekstDoKolumny(s.Kotwica.Selektor), liczbaDoKolumny(s.Kotwica.CzasMs), kod,
+		KontoOperatora(ctx))
 }
 
 // SzczegolyUstaleniaBadania oddaje cechy dobudowane ustalenia migracją 150:
@@ -290,7 +291,7 @@ func (r *repozytoriumBadan) SzczegolyUstaleniaBadania(ctx context.Context, kod s
 	polecenie, err := r.zapytania.przygotuj(ctx, `SELECT rodzaj, waga, notatka, wymaga_potwierdzenia,
 	        adnotacja_kod, kotwica_rodzaj, kotwica_strona, kotwica_od, kotwica_do,
 	        kotwica_selektor, kotwica_czas_ms
-	    FROM ustalenie_badania WHERE identyfikator_zewnetrzny = ?`)
+	    FROM ustalenie_badania WHERE identyfikator_zewnetrzny = ? AND `+WarunekKonta)
 	if err != nil {
 		return SzczegolyUstaleniaBadania{}, err
 	}
@@ -298,7 +299,7 @@ func (r *repozytoriumBadan) SzczegolyUstaleniaBadania(ctx context.Context, kod s
 	var rodzaj, waga, notatka, adnotacja, kotwicaRodzaj, selektor sql.NullString
 	var wymaga int64
 	var strona, od, doZnaku, czas sql.NullInt64
-	err = polecenie.QueryRowContext(ctx, kod).Scan(&rodzaj, &waga, &notatka, &wymaga,
+	err = polecenie.QueryRowContext(ctx, kod, KontoOperatora(ctx)).Scan(&rodzaj, &waga, &notatka, &wymaga,
 		&adnotacja, &kotwicaRodzaj, &strona, &od, &doZnaku, &selektor, &czas)
 	if errors.Is(err, sql.ErrNoRows) {
 		return SzczegolyUstaleniaBadania{}, ErrBrakWiersza
@@ -335,11 +336,12 @@ func (r *repozytoriumBadan) UsunUstalenie(ctx context.Context, kod string) (int,
 		if err := liczenie.QueryRowContext(ctx, id).Scan(&odwiazane); err != nil {
 			return fmt.Errorf("dane: nie można policzyć sekcji ustalenia %q: %w", kod, err)
 		}
-		usuniecie, err := r.zapytania.wTransakcji(ctx, t, `DELETE FROM ustalenie_badania WHERE id = ?`)
+		usuniecie, err := r.zapytania.wTransakcji(ctx, t,
+			`DELETE FROM ustalenie_badania WHERE id = ? AND `+WarunekKonta)
 		if err != nil {
 			return err
 		}
-		if _, err := usuniecie.ExecContext(ctx, id); err != nil {
+		if _, err := usuniecie.ExecContext(ctx, id, KontoOperatora(ctx)); err != nil {
 			return fmt.Errorf("dane: nie można usunąć ustalenia %q: %w", kod, err)
 		}
 		return nil
@@ -363,12 +365,12 @@ func (r *repozytoriumBadan) PrzeniesZrodlaUstalen(ctx context.Context, kodyUstal
 				continue
 			}
 			wskazanie, err := r.zapytania.wTransakcji(ctx, t,
-				`SELECT id FROM ustalenie_badania WHERE identyfikator_zewnetrzny = ?`)
+				`SELECT id FROM ustalenie_badania WHERE identyfikator_zewnetrzny = ? AND `+WarunekKonta)
 			if err != nil {
 				return err
 			}
 			var scalane int64
-			err = wskazanie.QueryRowContext(ctx, kod).Scan(&scalane)
+			err = wskazanie.QueryRowContext(ctx, kod, KontoOperatora(ctx)).Scan(&scalane)
 			if errors.Is(err, sql.ErrNoRows) {
 				continue
 			}
@@ -388,11 +390,12 @@ func (r *repozytoriumBadan) PrzeniesZrodlaUstalen(ctx context.Context, kodyUstal
 			ile, _ := wynik.RowsAffected()
 			przeniesione += int(ile)
 
-			usuniecie, err := r.zapytania.wTransakcji(ctx, t, `DELETE FROM ustalenie_badania WHERE id = ?`)
+			usuniecie, err := r.zapytania.wTransakcji(ctx, t,
+				`DELETE FROM ustalenie_badania WHERE id = ? AND `+WarunekKonta)
 			if err != nil {
 				return err
 			}
-			if _, err := usuniecie.ExecContext(ctx, scalane); err != nil {
+			if _, err := usuniecie.ExecContext(ctx, scalane, KontoOperatora(ctx)); err != nil {
 				return fmt.Errorf("dane: nie można usunąć ustalenia scalonego %q: %w", kod, err)
 			}
 		}
@@ -429,9 +432,14 @@ func (r *repozytoriumBadan) ZapiszKsiazkeKodow(ctx context.Context, okno string,
 // KsiazkaKodow oddaje pozycje książki kodów okna wraz z liczbą wystąpień
 // każdego kodu wśród ustaleń, uporządkowane według nazwy.
 func (r *repozytoriumBadan) KsiazkaKodow(ctx context.Context, okno string) ([]KodBadania, error) {
+	// Liczba wystąpień idzie po ustaleniach konta żądania — książka kodów jest
+	// wspólna, przypisania do niej nie są.
 	wiersze, err := r.pytajBadania(ctx, `SELECT k.identyfikator_zewnetrzny, k.nazwa, k.opis, k.nadrzedny_kod,
-	        (SELECT COUNT(*) FROM kod_ustalenia_badania ku WHERE ku.kod_id = k.id)
-	   FROM kod_badania k WHERE k.okno = ? ORDER BY k.nazwa`, okno)
+	        (SELECT COUNT(*) FROM kod_ustalenia_badania ku
+	          WHERE ku.kod_id = k.id
+	            AND EXISTS (SELECT 1 FROM ustalenie_badania w
+	                         WHERE w.id = ku.ustalenie_id AND `+WarunekKonta+`))
+	   FROM kod_badania k WHERE k.okno = ? ORDER BY k.nazwa`, KontoOperatora(ctx), okno)
 	if err != nil {
 		return nil, err
 	}
@@ -487,11 +495,15 @@ func (r *repozytoriumBadan) UstawKodyUstalenia(ctx context.Context, kodUstalenia
 // KodyUstalenia oddaje pozycje książki kodów przypisane wskazanemu ustaleniu,
 // uporządkowane według nazwy kodu.
 func (r *repozytoriumBadan) KodyUstalenia(ctx context.Context, kodUstalenia string) ([]KodBadania, error) {
+	// Warunek konta idzie podzapytaniem, bo `kod_badania` niesie własną kolumnę
+	// `konto_id` i nazwa niekwalifikowana w złączeniu byłaby dwuznaczna.
 	wiersze, err := r.pytajBadania(ctx, `SELECT k.identyfikator_zewnetrzny, k.okno, k.nazwa, k.opis, k.nadrzedny_kod
 	   FROM kod_badania k
 	   JOIN kod_ustalenia_badania ku ON ku.kod_id = k.id
 	   JOIN ustalenie_badania u ON u.id = ku.ustalenie_id
-	  WHERE u.identyfikator_zewnetrzny = ? ORDER BY k.nazwa`, kodUstalenia)
+	  WHERE u.identyfikator_zewnetrzny = ?
+	    AND EXISTS (SELECT 1 FROM ustalenie_badania w WHERE w.id = u.id AND `+WarunekKonta+`)
+	  ORDER BY k.nazwa`, kodUstalenia, KontoOperatora(ctx))
 	if err != nil {
 		return nil, err
 	}
@@ -523,8 +535,9 @@ func (r *repozytoriumBadan) MacierzKodow(ctx context.Context, okno string) ([]Ko
 	   JOIN zrodlo_ustalenia_badania zu ON zu.ustalenie_id = u.id
 	   JOIN zrodlo_badania z ON z.id = zu.zrodlo_id
 	  WHERE k.okno = ? AND u.okno = ?
+	    AND EXISTS (SELECT 1 FROM ustalenie_badania w WHERE w.id = u.id AND `+WarunekKonta+`)
 	  GROUP BY k.identyfikator_zewnetrzny, z.identyfikator_zewnetrzny
-	  ORDER BY k.identyfikator_zewnetrzny, z.identyfikator_zewnetrzny`, okno, okno)
+	  ORDER BY k.identyfikator_zewnetrzny, z.identyfikator_zewnetrzny`, okno, okno, KontoOperatora(ctx))
 	if err != nil {
 		return nil, err
 	}

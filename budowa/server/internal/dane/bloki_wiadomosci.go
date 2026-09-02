@@ -36,15 +36,16 @@ const (
 
 	// Kolejność w obrębie wiadomości wyliczana w tym samym poleceniu — wzorem
 	// numeracji historii okna (wiadomosci.go): bez osobnego odczytu i transakcji.
+	// Numeracja liczy wyłącznie bloki konta żądania, bo tylko one wracają odczytem.
 	wstawBlok = `INSERT INTO blok_wiadomosci
-	             (chwila, okno_kod, wiadomosc_kod, kolejnosc, rodzaj, tresc, ladunek)
+	             (chwila, okno_kod, wiadomosc_kod, kolejnosc, rodzaj, tresc, ladunek, konto_id)
 	             VALUES (?, ?, ?,
 	                     (SELECT COALESCE(MAX(kolejnosc) + 1, 0) FROM blok_wiadomosci
-	                      WHERE wiadomosc_kod = ?),
-	                     ?, ?, ?)`
+	                      WHERE wiadomosc_kod = ? AND ` + WarunekKonta + `),
+	                     ?, ?, ?, ` + WskazanieKonta + `)`
 
 	listaBlokowOkna = `SELECT ` + kolumnyBloku + ` FROM blok_wiadomosci
-	                   WHERE okno_kod = ?
+	                   WHERE okno_kod = ? AND ` + WarunekKonta + `
 	                   ORDER BY wiadomosc_kod, kolejnosc, id`
 )
 
@@ -68,7 +69,8 @@ func (r *repozytoriumBlokow) Dopisz(ctx context.Context, blok BlokWiadomosci) er
 		return err
 	}
 	_, err = polecenie.ExecContext(ctx, blok.Chwila, blok.OknoKod, blok.WiadomoscKod,
-		blok.WiadomoscKod, string(blok.Rodzaj), blok.Tresc, ladunekDoKolumny(blok.Ladunek))
+		blok.WiadomoscKod, KontoOperatora(ctx), string(blok.Rodzaj), blok.Tresc,
+		ladunekDoKolumny(blok.Ladunek), KontoOperatora(ctx))
 	if err != nil {
 		return fmt.Errorf("dane: nie można zapisać bloku wiadomości %q: %w", blok.WiadomoscKod, err)
 	}
@@ -82,7 +84,7 @@ func (r *repozytoriumBlokow) ListaOkna(ctx context.Context, oknoKod string) ([]B
 	if err != nil {
 		return nil, err
 	}
-	wiersze, err := polecenie.QueryContext(ctx, oknoKod)
+	wiersze, err := polecenie.QueryContext(ctx, oknoKod, KontoOperatora(ctx))
 	if err != nil {
 		return nil, fmt.Errorf("dane: nie można odczytać bloków okna %q: %w", oknoKod, err)
 	}

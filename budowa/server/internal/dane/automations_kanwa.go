@@ -5,6 +5,7 @@ package dane
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"fmt"
 )
 
@@ -37,13 +38,34 @@ type AdnotacjaKroku struct {
 }
 
 const (
+	// Wiersze tych czterech tabel wskazania konta nie niosą, a klucz automatyki
+	// przychodzi z żądania: odczyt sięga korzenia podzapytaniem, zapis strażą.
+	automatykaWGranicyKonta = `SELECT 1 FROM automatyka WHERE id = ? AND ` + WarunekKonta
+
+	granicaAutomatykiEtykiety = ` AND EXISTS (SELECT 1 FROM automatyka
+	                              WHERE automatyka.id = etykieta_automatyki.automatyka_id
+	                                AND ` + WarunekKonta + `)`
+
+	granicaAutomatykiZmienne = ` AND EXISTS (SELECT 1 FROM automatyka
+	                             WHERE automatyka.id = zmienna_automatyki.automatyka_id
+	                               AND ` + WarunekKonta + `)`
+
+	granicaAutomatykiMapowania = ` AND EXISTS (SELECT 1 FROM automatyka
+	                               WHERE automatyka.id = mapowanie_danych_automatyki.automatyka_id
+	                                 AND ` + WarunekKonta + `)`
+
+	granicaAutomatykiAdnotacje = ` AND EXISTS (SELECT 1 FROM automatyka
+	                               WHERE automatyka.id = adnotacja_kroku_automatyki.automatyka_id
+	                                 AND ` + WarunekKonta + `)`
+
 	usunEtykietyAutomatyki = `DELETE FROM etykieta_automatyki WHERE automatyka_id = ?`
 
 	wstawEtykieteAutomatyki = `INSERT OR IGNORE INTO etykieta_automatyki
 	                           (automatyka_id, etykieta) VALUES (?, ?)`
 
 	listaEtykietAutomatyki = `SELECT etykieta FROM etykieta_automatyki
-	                          WHERE automatyka_id = ? ORDER BY etykieta`
+	                          WHERE automatyka_id = ?` + granicaAutomatykiEtykiety + `
+	                          ORDER BY etykieta`
 
 	usunZmienneAutomatyki = `DELETE FROM zmienna_automatyki WHERE automatyka_id = ?`
 
@@ -53,8 +75,8 @@ const (
 	                          VALUES (?, ?, ?, ?, ?, ?)`
 
 	listaZmiennychAutomatyki = `SELECT nazwa, rodzaj, wartosc_domyslna, odwolanie_sekretu, kolejnosc
-	                            FROM zmienna_automatyki WHERE automatyka_id = ?
-	                            ORDER BY kolejnosc, nazwa`
+	                            FROM zmienna_automatyki WHERE automatyka_id = ?` +
+		granicaAutomatykiZmienne + ` ORDER BY kolejnosc, nazwa`
 
 	usunMapowaniaAutomatyki = `DELETE FROM mapowanie_danych_automatyki WHERE automatyka_id = ?`
 
@@ -64,8 +86,8 @@ const (
 	                            VALUES (?, ?, ?, ?, ?, ?, ?)`
 
 	listaMapowanAutomatyki = `SELECT krok_z, sciezka_z, krok_do, pole_do, szablon, kolejnosc
-	                          FROM mapowanie_danych_automatyki WHERE automatyka_id = ?
-	                          ORDER BY kolejnosc, id`
+	                          FROM mapowanie_danych_automatyki WHERE automatyka_id = ?` +
+		granicaAutomatykiMapowania + ` ORDER BY kolejnosc, id`
 
 	// Notatka i położenie zapisują się osobno, więc każdy zapis dotyka wyłącznie
 	// swoich kolumn: ustawienie notatki nie przesuwa węzła, a przesunięcie węzła
@@ -83,8 +105,8 @@ const (
 	                            wspolrzedna_y = excluded.wspolrzedna_y`
 
 	listaAdnotacjiKrokow = `SELECT krok_kod, notatka, wspolrzedna_x, wspolrzedna_y
-	                        FROM adnotacja_kroku_automatyki WHERE automatyka_id = ?
-	                        ORDER BY krok_kod`
+	                        FROM adnotacja_kroku_automatyki WHERE automatyka_id = ?` +
+		granicaAutomatykiAdnotacje + ` ORDER BY krok_kod`
 )
 
 // UstawEtykietyAutomatyki podmienia komplet etykiet. Wykaz pusty zdejmuje
@@ -92,6 +114,9 @@ const (
 func (r *repozytoriumAutomatyk) UstawEtykietyAutomatyki(ctx context.Context,
 	automatykaID int64, etykiety []string) error {
 
+	if err := r.automatykaWKoncie(ctx, automatykaID); err != nil {
+		return err
+	}
 	return wTransakcji(ctx, r.db, func(transakcja *sql.Tx) error {
 		if err := wykonajWTransakcjiAutomatyzacji(ctx, r.zapytania, transakcja,
 			usunEtykietyAutomatyki, automatykaID); err != nil {
@@ -118,7 +143,7 @@ func (r *repozytoriumAutomatyk) EtykietyAutomatyki(ctx context.Context,
 	if err != nil {
 		return nil, err
 	}
-	wiersze, err := polecenie.QueryContext(ctx, automatykaID)
+	wiersze, err := polecenie.QueryContext(ctx, automatykaID, KontoOperatora(ctx))
 	if err != nil {
 		return nil, fmt.Errorf("dane: nie można odczytać etykiet automatyki %d: %w", automatykaID, err)
 	}
@@ -139,6 +164,9 @@ func (r *repozytoriumAutomatyk) EtykietyAutomatyki(ctx context.Context,
 func (r *repozytoriumAutomatyk) ZapiszZmienneAutomatyki(ctx context.Context,
 	automatykaID int64, zmienne []ZmiennaAutomatyki) error {
 
+	if err := r.automatykaWKoncie(ctx, automatykaID); err != nil {
+		return err
+	}
 	return wTransakcji(ctx, r.db, func(transakcja *sql.Tx) error {
 		if err := wykonajWTransakcjiAutomatyzacji(ctx, r.zapytania, transakcja,
 			usunZmienneAutomatyki, automatykaID); err != nil {
@@ -168,7 +196,7 @@ func (r *repozytoriumAutomatyk) ZmienneAutomatyki(ctx context.Context,
 	if err != nil {
 		return nil, err
 	}
-	wiersze, err := polecenie.QueryContext(ctx, automatykaID)
+	wiersze, err := polecenie.QueryContext(ctx, automatykaID, KontoOperatora(ctx))
 	if err != nil {
 		return nil, fmt.Errorf("dane: nie można odczytać zmiennych automatyki %d: %w", automatykaID, err)
 	}
@@ -193,6 +221,9 @@ func (r *repozytoriumAutomatyk) ZmienneAutomatyki(ctx context.Context,
 func (r *repozytoriumAutomatyk) ZapiszMapowaniaAutomatyki(ctx context.Context,
 	automatykaID int64, mapowania []MapowanieDanych) error {
 
+	if err := r.automatykaWKoncie(ctx, automatykaID); err != nil {
+		return err
+	}
 	return wTransakcji(ctx, r.db, func(transakcja *sql.Tx) error {
 		if err := wykonajWTransakcjiAutomatyzacji(ctx, r.zapytania, transakcja,
 			usunMapowaniaAutomatyki, automatykaID); err != nil {
@@ -221,7 +252,7 @@ func (r *repozytoriumAutomatyk) MapowaniaAutomatyki(ctx context.Context,
 	if err != nil {
 		return nil, err
 	}
-	wiersze, err := polecenie.QueryContext(ctx, automatykaID)
+	wiersze, err := polecenie.QueryContext(ctx, automatykaID, KontoOperatora(ctx))
 	if err != nil {
 		return nil, fmt.Errorf("dane: nie można odczytać mapowań automatyki %d: %w", automatykaID, err)
 	}
@@ -245,6 +276,9 @@ func (r *repozytoriumAutomatyk) MapowaniaAutomatyki(ctx context.Context,
 func (r *repozytoriumAutomatyk) UstawNotatkeKroku(ctx context.Context, automatykaID int64,
 	krokKod string, notatka *string) error {
 
+	if err := r.automatykaWKoncie(ctx, automatykaID); err != nil {
+		return err
+	}
 	polecenie, err := r.zapytania.przygotuj(ctx, zapiszNotatkeKroku)
 	if err != nil {
 		return err
@@ -261,6 +295,9 @@ func (r *repozytoriumAutomatyk) UstawNotatkeKroku(ctx context.Context, automatyk
 func (r *repozytoriumAutomatyk) ZapiszPolozeniaKrokow(ctx context.Context, automatykaID int64,
 	polozenia []AdnotacjaKroku) error {
 
+	if err := r.automatykaWKoncie(ctx, automatykaID); err != nil {
+		return err
+	}
 	return wTransakcji(ctx, r.db, func(transakcja *sql.Tx) error {
 		for _, polozenie := range polozenia {
 			if polozenie.KrokKod == "" {
@@ -284,7 +321,7 @@ func (r *repozytoriumAutomatyk) AdnotacjeKrokow(ctx context.Context,
 	if err != nil {
 		return nil, err
 	}
-	wiersze, err := polecenie.QueryContext(ctx, automatykaID)
+	wiersze, err := polecenie.QueryContext(ctx, automatykaID, KontoOperatora(ctx))
 	if err != nil {
 		return nil, fmt.Errorf("dane: nie można odczytać adnotacji kroków automatyki %d: %w",
 			automatykaID, err)
@@ -302,6 +339,25 @@ func (r *repozytoriumAutomatyk) AdnotacjeKrokow(ctx context.Context,
 		adnotacje = append(adnotacje, adnotacja)
 	}
 	return adnotacje, wiersze.Err()
+}
+
+// automatykaWKoncie odmawia, gdy automatyka o podanym kluczu nie należy do konta
+// żądania. Granica pada przed zapisem, bo INSERT warunku w sobie nie zmieści.
+func (r *repozytoriumAutomatyk) automatykaWKoncie(ctx context.Context, automatykaID int64) error {
+	polecenie, err := r.zapytania.przygotuj(ctx, automatykaWGranicyKonta)
+	if err != nil {
+		return err
+	}
+	var jest int64
+	err = polecenie.QueryRowContext(ctx, automatykaID, KontoOperatora(ctx)).Scan(&jest)
+	if errors.Is(err, sql.ErrNoRows) {
+		return fmt.Errorf("dane: automatyka %d nie należy do konta żądania: %w",
+			automatykaID, ErrBrakWiersza)
+	}
+	if err != nil {
+		return fmt.Errorf("dane: nie można rozpoznać konta automatyki %d: %w", automatykaID, err)
+	}
+	return nil
 }
 
 // wykonajWTransakcji przygotowuje i wykonuje jedno polecenie w transakcji.

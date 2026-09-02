@@ -62,7 +62,8 @@ const (
 	wstawSekcjeRaportuBadania = `INSERT INTO sekcja_raportu_badania
 	                             (identyfikator_zewnetrzny, raport_id, tytul, tresc,
 	                              tresc_odwolanie, kolejnosc) VALUES (?, ?, ?, ?, ?, ?)`
-	znajdzIDUstaleniaPoKodzie   = `SELECT id FROM ustalenie_badania WHERE identyfikator_zewnetrzny = ?`
+	znajdzIDUstaleniaPoKodzie = `SELECT id FROM ustalenie_badania
+	                               WHERE identyfikator_zewnetrzny = ? AND ` + WarunekKonta
 	wstawUstalenieSekcjiRaportu = `INSERT INTO ustalenie_sekcji_raportu_badania
 	                               (sekcja_id, ustalenie_id) VALUES (?, ?)`
 	listaSekcjiRaportuBadania = `SELECT id, identyfikator_zewnetrzny, raport_id, tytul, tresc,
@@ -71,7 +72,8 @@ const (
 	listaKodowUstalenSekcji = `SELECT u.identyfikator_zewnetrzny
 	                           FROM ustalenie_sekcji_raportu_badania s
 	                           JOIN ustalenie_badania u ON u.id = s.ustalenie_id
-	                           WHERE s.sekcja_id = ? ORDER BY u.id`
+	                           WHERE s.sekcja_id = ? AND ` + WarunekKonta + `
+	                           ORDER BY u.id`
 	znajdzIDRaportuPoKodzie    = `SELECT id FROM raport_badania WHERE identyfikator_zewnetrzny = ?`
 	wstawEksportRaportuBadania = `INSERT INTO eksport_raportu_badania
 	                              (identyfikator_zewnetrzny, raport_id, format, cel, sciezka_docelowa,
@@ -162,7 +164,7 @@ func zapiszSekcjeRaportu(ctx context.Context, z *zapytania, transakcja *sql.Tx, 
 		}
 		for _, kodUstalenia := range sekcja.UstalenieKody {
 			var ustalenieID int64
-			err := szukanieUstalenia.QueryRowContext(ctx, kodUstalenia).Scan(&ustalenieID)
+			err := szukanieUstalenia.QueryRowContext(ctx, kodUstalenia, KontoOperatora(ctx)).Scan(&ustalenieID)
 			if errors.Is(err, sql.ErrNoRows) {
 				return fmt.Errorf("dane: sekcja %q odwołuje się do nieznanego ustalenia %q: %w", sekcja.Kod, kodUstalenia, ErrBrakWiersza)
 			}
@@ -239,7 +241,7 @@ func (r *repozytoriumBadan) Sekcje(ctx context.Context, raportID int64) ([]Sekcj
 		return nil, err
 	}
 	for indeks := range lista {
-		wierszeKodow, err := powiazania.QueryContext(ctx, lista[indeks].ID)
+		wierszeKodow, err := powiazania.QueryContext(ctx, lista[indeks].ID, KontoOperatora(ctx))
 		if err != nil {
 			return nil, fmt.Errorf("dane: nie można odczytać ustaleń sekcji %d: %w", lista[indeks].ID, err)
 		}

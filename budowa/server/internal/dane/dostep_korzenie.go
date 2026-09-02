@@ -21,8 +21,14 @@ const (
 	wstawKorzenPunktu = `INSERT INTO korzen_punktu_dostepu (punkt_dostepu_id, sciezka, kolejnosc)
 	                     VALUES (?, ?, ?)`
 
+	// Korzeń własnego wskazania konta nie niesie, a identyfikator punktu przychodzi
+	// tu również wprost z żądania, nie tylko z punktu odczytanego już zawężonym zapytaniem.
 	listaKorzeniPunktu = `SELECT sciezka FROM korzen_punktu_dostepu
-	                      WHERE punkt_dostepu_id = ? ORDER BY kolejnosc, id`
+	                      WHERE punkt_dostepu_id = ?
+	                        AND EXISTS (SELECT 1 FROM punkt_dostepu
+	                                     WHERE punkt_dostepu.id = korzen_punktu_dostepu.punkt_dostepu_id
+	                                       AND ` + WarunekKonta + `)
+	                      ORDER BY kolejnosc, id`
 
 	usunKorzenieNadania = `DELETE FROM korzen_nadania WHERE nadanie_dostepu_id = ?`
 
@@ -62,14 +68,15 @@ func zapiszKorzenie(ctx context.Context, z *zapytania, transakcja *sql.Tx,
 }
 
 // wczytajKorzenie zwraca listę korzeni jednego właściciela w zapisanej kolejności wpisów w tabeli bazy danych.
+// Dalsze argumenty wypełniają zawężenie konta wpisane w zapytanie: korzeń punktu je ma, korzeń nadania nie.
 func wczytajKorzenie(ctx context.Context, z *zapytania, zapytanie string,
-	wlascicielID int64, opis string) ([]string, error) {
+	wlascicielID int64, opis string, dalszeArgumenty ...any) ([]string, error) {
 
 	polecenie, err := z.przygotuj(ctx, zapytanie)
 	if err != nil {
 		return nil, err
 	}
-	wiersze, err := polecenie.QueryContext(ctx, wlascicielID)
+	wiersze, err := polecenie.QueryContext(ctx, append([]any{wlascicielID}, dalszeArgumenty...)...)
 	if err != nil {
 		return nil, fmt.Errorf("dane: nie można odczytać korzeni %s %d: %w", opis, wlascicielID, err)
 	}
@@ -109,15 +116,17 @@ func uporzadkujKorzenie(korzenie []string) []string {
 	return wynik
 }
 
-// sprawdzZawezenieKorzeni pilnuje, żeby korzenie nadania mieściły się w obszarze wyznaczonym korzeniami punktu dostępu.
+// sprawdzZawezenieKorzeni pilnuje, żeby korzenie nadania mieściły się w obszarze
+// wyznaczonym korzeniami punktu. Komunikat nazywa samą ścieżkę odrzuconą: jego treść
+// wychodzi kontraktem jako `validation_failed`, więc wykaz korzeni wydałby ścieżki dyskowe punktu.
 func sprawdzZawezenieKorzeni(korzeniePunktu, korzenieNadania []string) error {
 	if len(korzeniePunktu) == 0 {
 		return nil
 	}
 	for _, sciezka := range uporzadkujKorzenie(korzenieNadania) {
 		if !wKtorymkolwiekKorzeniu(korzeniePunktu, sciezka) {
-			return fmt.Errorf("dane: korzeń nadania %q leży poza obszarem punktu dostępu %v: %w",
-				sciezka, korzeniePunktu, ErrPozaKorzeniami)
+			return fmt.Errorf("dane: korzeń nadania %q leży poza obszarem punktu dostępu: %w",
+				sciezka, ErrPozaKorzeniami)
 		}
 	}
 	return nil

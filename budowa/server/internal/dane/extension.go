@@ -124,7 +124,12 @@ const (
 	                       r.zrodlo_deklarowane, r.zrodlo_pochodzenia, r.konfiguracja,
 	                       r.zaktualizowano`
 
-	zrodloRozszerzenia = ` FROM rozszerzenie r LEFT JOIN punkt_dostepu p ON p.id = r.punkt_dostepu_id`
+	// Zawężenie stoi w zapytaniu podrzędnym, bo obie złączane tabele mają kolumnę
+	// `konto_id`; punkt innego konta wchodzi do złączenia bez kodu.
+	zrodloRozszerzenia = ` FROM rozszerzenie r
+	                       LEFT JOIN (SELECT id, kod FROM punkt_dostepu
+	                                   WHERE ` + WarunekKonta + `) p
+	                              ON p.id = r.punkt_dostepu_id`
 
 	pobierzRozszerzenie = `SELECT ` + kolumnyRozszerzenia + zrodloRozszerzenia +
 		` WHERE r.identyfikator_zewnetrzny = ?`
@@ -189,7 +194,7 @@ func (r *repozytoriumRozszerzen) Rozszerzenia(ctx context.Context,
 	if err != nil {
 		return nil, err
 	}
-	wiersze, err := polecenie.QueryContext(ctx, filtr.Rodzaj, filtr.Rodzaj,
+	wiersze, err := polecenie.QueryContext(ctx, KontoOperatora(ctx), filtr.Rodzaj, filtr.Rodzaj,
 		liczbaLogiczna(filtr.TylkoZainstalowane))
 	if err != nil {
 		return nil, fmt.Errorf("dane: nie można odczytać katalogu rozszerzeń: %w", err)
@@ -235,7 +240,7 @@ func (r *repozytoriumRozszerzen) jednaPozycja(ctx context.Context,
 	if err != nil {
 		return Rozszerzenie{}, err
 	}
-	pozycja, err := odczytajRozszerzenie(polecenie.QueryRowContext(ctx, wskazanie))
+	pozycja, err := odczytajRozszerzenie(polecenie.QueryRowContext(ctx, KontoOperatora(ctx), wskazanie))
 	if errors.Is(err, sql.ErrNoRows) {
 		return Rozszerzenie{}, fmt.Errorf("dane: %s %q nie istnieje: %w",
 			nazwaBytu, wskazanie, ErrBrakWiersza)

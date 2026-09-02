@@ -11,10 +11,13 @@ import (
 )
 
 const (
+	// Warunek przy DO UPDATE odczytuje konto wiersza już stojącego: kolumna `kod`
+	// ma UNIQUE na całej tabeli, więc bez niego kod podany przez jedno konto
+	// nadpisywałby wpis drugiego.
 	wstawHostaTerminala = `INSERT INTO terminal_host
 	                       (kod, nazwa, cel, port, grupa, katalog_roboczy, klucz_kod,
-	                        host_posredni_kod, notatka)
-	                       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+	                        host_posredni_kod, notatka, konto_id)
+	                       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ` + WskazanieKonta + `)
 	                       ON CONFLICT(kod) DO UPDATE SET
 	                         nazwa             = excluded.nazwa,
 	                         cel               = excluded.cel,
@@ -24,18 +27,20 @@ const (
 	                         klucz_kod         = excluded.klucz_kod,
 	                         host_posredni_kod = excluded.host_posredni_kod,
 	                         notatka           = excluded.notatka,
-	                         zaktualizowano    = strftime('%Y-%m-%dT%H:%M:%fZ','now')`
+	                         zaktualizowano    = strftime('%Y-%m-%dT%H:%M:%fZ','now')
+	                       WHERE ` + WarunekKonta
 
-	usunHostaTerminala = `DELETE FROM terminal_host WHERE kod = ?`
+	usunHostaTerminala = `DELETE FROM terminal_host WHERE kod = ? AND ` + WarunekKonta
 
 	// Odpięcie klucza czyta wpisy przed zmianą, żeby oddać ich kody; sama zmiana
 	// idzie osobnym poleceniem w tej samej transakcji.
-	hostyPoKluczuTerminala = `SELECT kod FROM terminal_host WHERE klucz_kod = ?`
+	hostyPoKluczuTerminala = `SELECT kod FROM terminal_host
+	                          WHERE klucz_kod = ? AND ` + WarunekKonta
 
 	odepnijKluczTerminala = `UPDATE terminal_host
 	                         SET klucz_kod = NULL,
 	                             zaktualizowano = strftime('%Y-%m-%dT%H:%M:%fZ','now')
-	                         WHERE klucz_kod = ?`
+	                         WHERE klucz_kod = ? AND ` + WarunekKonta
 
 	wstawSkryptTerminala = `INSERT INTO terminal_skrypt
 	                        (kod, nazwa, rodzaj, powloka, tresc, znaczniki, alias, wersja)
@@ -61,17 +66,18 @@ const (
 	usunSkryptTerminala = `DELETE FROM terminal_skrypt WHERE kod = ?`
 
 	wstawKluczTerminala = `INSERT INTO terminal_klucz
-	                       (kod, nazwa, rodzaj, odcisk, klucz_jawny, sciezka, haslo)
-	                       VALUES (?, ?, ?, ?, ?, ?, ?)
+	                       (kod, nazwa, rodzaj, odcisk, klucz_jawny, sciezka, haslo, konto_id)
+	                       VALUES (?, ?, ?, ?, ?, ?, ?, ` + WskazanieKonta + `)
 	                       ON CONFLICT(kod) DO UPDATE SET
 	                         nazwa       = excluded.nazwa,
 	                         rodzaj      = excluded.rodzaj,
 	                         odcisk      = excluded.odcisk,
 	                         klucz_jawny = excluded.klucz_jawny,
 	                         sciezka     = excluded.sciezka,
-	                         haslo       = excluded.haslo`
+	                         haslo       = excluded.haslo
+	                       WHERE ` + WarunekKonta
 
-	usunKluczTerminala = `DELETE FROM terminal_klucz WHERE kod = ?`
+	usunKluczTerminala = `DELETE FROM terminal_klucz WHERE kod = ? AND ` + WarunekKonta
 
 	wstawTunelTerminala = `INSERT INTO terminal_tunel
 	                       (kod, okno_kod, rodzaj, host_kod, cel, port_lokalny,
@@ -130,17 +136,18 @@ func (r *repozytoriumTerminala) ZapiszHosta(ctx context.Context, host HostTermin
 	if err != nil {
 		return err
 	}
-	if _, err := polecenie.ExecContext(ctx, host.Kod, host.Nazwa, host.Cel, host.Port,
+	wynik, err := polecenie.ExecContext(ctx, host.Kod, host.Nazwa, host.Cel, host.Port,
 		host.Grupa, host.KatalogRoboczy, host.KluczKod, host.HostPosredniKod,
-		host.Notatka); err != nil {
+		host.Notatka, KontoOperatora(ctx), KontoOperatora(ctx))
+	if err != nil {
 		return fmt.Errorf("dane: nie można zapisać wpisu hosta %q: %w", host.Kod, err)
 	}
-	return nil
+	return sprawdzTrafienieZapisu(wynik, "wpis hosta", host.Kod)
 }
 
 // UsunHosta zdejmuje wpis książki hostów po kodzie. Fałsz znaczy, że takiego wpisu nie było w książce.
 func (r *repozytoriumTerminala) UsunHosta(ctx context.Context, kod string) (bool, error) {
-	return r.usunWpisTerminala(ctx, usunHostaTerminala, kod, "wpisu hosta")
+	return r.usunWpisTerminala(ctx, usunHostaTerminala, kod, "wpisu hosta", KontoOperatora(ctx))
 }
 
 // OdepnijKlucz zdejmuje wskazanie klucza z wpisów, które go używały, i oddaje
@@ -152,7 +159,8 @@ func (r *repozytoriumTerminala) OdepnijKlucz(ctx context.Context, kluczKod strin
 	}
 	kody := make([]string, 0, 4)
 	err := wTransakcji(ctx, r.db, func(transakcja *sql.Tx) error {
-		wiersze, err := transakcja.QueryContext(ctx, hostyPoKluczuTerminala, kluczKod)
+		wiersze, err := transakcja.QueryContext(ctx, hostyPoKluczuTerminala,
+			kluczKod, KontoOperatora(ctx))
 		if err != nil {
 			return fmt.Errorf("dane: nie można odczytać wpisów wskazujących klucz %q: %w", kluczKod, err)
 		}
@@ -167,7 +175,8 @@ func (r *repozytoriumTerminala) OdepnijKlucz(ctx context.Context, kluczKod strin
 		if err := wiersze.Err(); err != nil {
 			return err
 		}
-		if _, err := transakcja.ExecContext(ctx, odepnijKluczTerminala, kluczKod); err != nil {
+		if _, err := transakcja.ExecContext(ctx, odepnijKluczTerminala,
+			kluczKod, KontoOperatora(ctx)); err != nil {
 			return fmt.Errorf("dane: nie można odpiąć klucza %q od wpisów hostów: %w", kluczKod, err)
 		}
 		return nil
@@ -242,17 +251,19 @@ func (r *repozytoriumTerminala) ZapiszKlucz(ctx context.Context, klucz KluczTerm
 	if err != nil {
 		return err
 	}
-	if _, err := polecenie.ExecContext(ctx, klucz.Kod, klucz.Nazwa, klucz.Rodzaj,
-		klucz.Odcisk, klucz.KluczJawny, klucz.Sciezka, klucz.Haslo); err != nil {
+	wynik, err := polecenie.ExecContext(ctx, klucz.Kod, klucz.Nazwa, klucz.Rodzaj,
+		klucz.Odcisk, klucz.KluczJawny, klucz.Sciezka, klucz.Haslo,
+		KontoOperatora(ctx), KontoOperatora(ctx))
+	if err != nil {
 		return fmt.Errorf("dane: nie można zapisać klucza %q: %w", klucz.Kod, err)
 	}
-	return nil
+	return sprawdzTrafienieZapisu(wynik, "klucz", klucz.Kod)
 }
 
 // UsunKlucz zdejmuje klucz z wykazu. Pliki klucza na dysku to osobna czynność
 // rdzenia — baza ich nie tyka.
 func (r *repozytoriumTerminala) UsunKlucz(ctx context.Context, kod string) (bool, error) {
-	return r.usunWpisTerminala(ctx, usunKluczTerminala, kod, "klucza")
+	return r.usunWpisTerminala(ctx, usunKluczTerminala, kod, "klucza", KontoOperatora(ctx))
 }
 
 // ZapiszTunel zakłada wiersz tunelu terminala albo odświeża jego stan po kodzie tego wskazanego tunelu.
@@ -361,8 +372,10 @@ func (r *repozytoriumTerminala) OsierocObserwacje(ctx context.Context) (int64, e
 }
 
 // usunWpisTerminala wykonuje kasowanie po kodzie i oddaje prawdę o skutku: czy wiersz naprawdę zniknął.
+// Dalsze argumenty idą za kodem w kolejności zapytania; tabela z granicą konta
+// dokłada tu wynik KontoOperatora, tabela bez granicy nie dokłada niczego.
 func (r *repozytoriumTerminala) usunWpisTerminala(ctx context.Context,
-	zapytanie, kod, czego string) (bool, error) {
+	zapytanie, kod, czego string, dalsze ...any) (bool, error) {
 
 	if kod == "" {
 		return false, fmt.Errorf("dane: usunięcie %s bez identyfikatora", czego)
@@ -371,7 +384,7 @@ func (r *repozytoriumTerminala) usunWpisTerminala(ctx context.Context,
 	if err != nil {
 		return false, err
 	}
-	wynik, err := polecenie.ExecContext(ctx, kod)
+	wynik, err := polecenie.ExecContext(ctx, append([]any{kod}, dalsze...)...)
 	if err != nil {
 		return false, fmt.Errorf("dane: nie można usunąć %s %q: %w", czego, kod, err)
 	}

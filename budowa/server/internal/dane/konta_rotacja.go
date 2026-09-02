@@ -65,6 +65,7 @@ func rodzajKontaZBazy(kolumna string) (shared.AccountKind, error) {
 // kolejność nadana przez operatora.
 const listaKontRotacji = `SELECT ` + kolumnyKonta + ` FROM konto
 	WHERE rodzaj = ? AND aktywne = 1 AND stan <> '` + string(StanKontaZawieszone) + `'
+	  AND ` + WarunekKonta + `
 	ORDER BY domyslne DESC, kolejnosc, id`
 
 // KontaRotacji zwraca pulę kont wskazanego rodzaju w kolejności rotacji.
@@ -79,7 +80,7 @@ func (r *repozytoriumKont) KontaRotacji(ctx context.Context, rodzaj shared.Accou
 	if err != nil {
 		return nil, err
 	}
-	wiersze, err := polecenie.QueryContext(ctx, wartosc)
+	wiersze, err := polecenie.QueryContext(ctx, wartosc, KontoOperatora(ctx))
 	if err != nil {
 		return nil, fmt.Errorf("dane: nie można odczytać puli kont rodzaju %q: %w", wartosc, err)
 	}

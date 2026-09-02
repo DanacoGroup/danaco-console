@@ -7,11 +7,13 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"os"
 	"sort"
 	"strconv"
 	"time"
 
+	"danacoconsole/server/internal/dane"
 	"danacoconsole/server/internal/session"
 	"danacoconsole/server/internal/zewnetrzne"
 )
@@ -323,12 +325,13 @@ func (s *SilnikObrazu) podobienstwaZeSkladnicy(ctx context.Context, sciezki []st
 	}
 	zapytanie := `SELECT sciezka, odcisk, podobienstwo FROM podobienstwo_obrazu
 	                WHERE model = ? AND pytanie = ? AND sciezka IN (` +
-		znakiZapytania(len(sciezki)) + `)`
-	argumenty := make([]any, 0, len(sciezki)+2)
+		znakiZapytania(len(sciezki)) + `) AND ` + dane.WarunekKonta
+	argumenty := make([]any, 0, len(sciezki)+3)
 	argumenty = append(argumenty, s.ustawienia.ModelObrazu, pytanie)
 	for _, sciezka := range sciezki {
 		argumenty = append(argumenty, sciezka)
 	}
+	argumenty = append(argumenty, dane.KontoOperatora(ctx))
 	wiersze, err := s.skladnica.baza.QueryContext(ctx, zapytanie, argumenty...)
 	if err != nil {
 		return nil, errors.New("wskaźnik znaczenia: odczyt wyników osi obrazu: " + err.Error())
@@ -366,13 +369,16 @@ func (s *SilnikObrazu) zapiszPodobienstwaDoSkladnicy(ctx context.Context,
 	}
 	defer transakcja.Rollback()
 
+	// Więz UNIQUE (sciezka, model, pytanie) obejmuje całą tabelę: człon DO UPDATE bez zawężenia nadpisałby wynik konta cudzego.
 	polecenie, err := transakcja.PrepareContext(ctx, `
-		INSERT INTO podobienstwo_obrazu (sciezka, odcisk, model, pytanie, podobienstwo, utworzono)
-		VALUES (?, ?, ?, ?, ?, ?)
+		INSERT INTO podobienstwo_obrazu (sciezka, odcisk, model, pytanie, podobienstwo,
+		                                 utworzono, konto_id)
+		VALUES (?, ?, ?, ?, ?, ?, `+dane.WskazanieKonta+`)
 		ON CONFLICT(sciezka, model, pytanie) DO UPDATE SET
 		    odcisk       = excluded.odcisk,
 		    podobienstwo = excluded.podobienstwo,
-		    utworzono    = excluded.utworzono`)
+		    utworzono    = excluded.utworzono
+		WHERE `+dane.WarunekKonta)
 	if err != nil {
 		return errors.New("wskaźnik znaczenia: przygotowanie zapisu osi obrazu: " + err.Error())
 	}
@@ -380,10 +386,21 @@ func (s *SilnikObrazu) zapiszPodobienstwaDoSkladnicy(ctx context.Context,
 
 	chwila := time.Now().UTC().UnixMilli()
 	for _, wpis := range wpisy {
-		if _, err := polecenie.ExecContext(ctx, wpis.sciezka, wpis.odcisk,
-			s.ustawienia.ModelObrazu, pytanie, wpis.podobienstwo, chwila); err != nil {
+		wynik, err := polecenie.ExecContext(ctx, wpis.sciezka, wpis.odcisk,
+			s.ustawienia.ModelObrazu, pytanie, wpis.podobienstwo, chwila,
+			dane.KontoOperatora(ctx), dane.KontoOperatora(ctx))
+		if err != nil {
 			return errors.New("wskaźnik znaczenia: zapis wyniku osi obrazu dla " +
 				wpis.sciezka + ": " + err.Error())
+		}
+		zmienione, err := wynik.RowsAffected()
+		if err != nil {
+			return errors.New("wskaźnik znaczenia: nieznany wynik zapisu osi obrazu dla " +
+				wpis.sciezka + ": " + err.Error())
+		}
+		if zmienione == 0 {
+			return fmt.Errorf("wskaźnik znaczenia: wynik osi obrazu dla %s stoi na koncie innym: %w",
+				wpis.sciezka, dane.ErrKolizjaWiersza)
 		}
 	}
 	if err := transakcja.Commit(); err != nil {

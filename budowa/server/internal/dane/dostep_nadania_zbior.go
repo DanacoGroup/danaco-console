@@ -81,10 +81,32 @@ func (r *repozytoriumNadan) sprawdzKorzenie(ctx context.Context, nadanie Nadanie
 	if len(uporzadkujKorzenie(nadanie.Korzenie)) == 0 {
 		return nil
 	}
+	if err := r.sprawdzPunktKonta(ctx, nadanie.PunktDostepuID); err != nil {
+		return err
+	}
 	korzeniePunktu, err := wczytajKorzenie(ctx, r.zapytania, listaKorzeniPunktu,
-		nadanie.PunktDostepuID, "punktu dostępu")
+		nadanie.PunktDostepuID, "punktu dostępu", KontoOperatora(ctx))
 	if err != nil {
 		return err
 	}
 	return sprawdzZawezenieKorzeni(korzeniePunktu, nadanie.Korzenie)
+}
+
+// sprawdzPunktKonta rozstrzyga, czy punkt wskazany przez nadanie należy do konta
+// żądania. Punkt spoza konta jest brakiem wiersza, nie awarią odczytu — inaczej
+// odpowiedź potwierdzałaby jego istnienie.
+func (r *repozytoriumNadan) sprawdzPunktKonta(ctx context.Context, punktID int64) error {
+	polecenie, err := r.zapytania.przygotuj(ctx, punktDostepuKonta)
+	if err != nil {
+		return err
+	}
+	var obecny int
+	err = polecenie.QueryRowContext(ctx, punktID, KontoOperatora(ctx)).Scan(&obecny)
+	if err == sql.ErrNoRows {
+		return fmt.Errorf("dane: punkt dostępu %d nie istnieje: %w", punktID, ErrBrakWiersza)
+	}
+	if err != nil {
+		return fmt.Errorf("dane: nie można odczytać punktu dostępu %d: %w", punktID, err)
+	}
+	return nil
 }

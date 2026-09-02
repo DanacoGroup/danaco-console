@@ -317,20 +317,29 @@ func (r *repozytoriumTlumaczen) ZapiszPakietPrzekazania(ctx context.Context,
 	if utworzono == 0 {
 		utworzono = teraz
 	}
-	_, err := r.db.ExecContext(ctx, `INSERT INTO pakiet_przekazania
+	// Kod pakietu jest unikalny w całej tabeli, więc kod cudzego konta trafia
+	// w konflikt; warunek przy DO UPDATE zostawia wtedy wiersz nietknięty,
+	// a zapis kończy się ErrKolizjaWiersza.
+	wynik, err := r.db.ExecContext(ctx, `INSERT INTO pakiet_przekazania
 		(identyfikator_zewnetrzny, okno_id, zawartosci, panele, instrukcje, sciezka,
 		 stan, utworzono, zaktualizowano)
 		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
 		ON CONFLICT(identyfikator_zewnetrzny) DO UPDATE SET
 			zawartosci = excluded.zawartosci, panele = excluded.panele,
 			instrukcje = excluded.instrukcje, sciezka = excluded.sciezka,
-			stan = excluded.stan, zaktualizowano = excluded.zaktualizowano`,
+			stan = excluded.stan, zaktualizowano = excluded.zaktualizowano
+		WHERE EXISTS (SELECT 1 FROM okno_tlumaczenia
+		               WHERE okno_tlumaczenia.id = pakiet_przekazania.okno_id
+		                 AND `+WarunekKonta+`)`,
 		pakiet.Kod, pakiet.OknoID, strings.Join(pakiet.Zawartosci, "\n"),
 		strings.Join(pakiet.Panele, "\n"), tekstDoKolumny(pakiet.Instrukcje),
-		pakiet.Sciezka, pakiet.Stan, utworzono, teraz)
+		pakiet.Sciezka, pakiet.Stan, utworzono, teraz, KontoOperatora(ctx))
 	if err != nil {
 		return PakietPrzekazania{}, fmt.Errorf("dane: nie można zapisać pakietu przekazania %q: %w",
 			pakiet.Kod, err)
+	}
+	if err := sprawdzTrafienieZapisu(wynik, "pakiet przekazania", pakiet.Kod); err != nil {
+		return PakietPrzekazania{}, err
 	}
 	return r.PakietPrzekazania(ctx, pakiet.Kod)
 }
@@ -347,7 +356,7 @@ func (r *repozytoriumTlumaczen) PakietPrzekazania(ctx context.Context,
 		        p.zawartosci, p.panele, p.instrukcje, p.sciezka, p.stan, p.utworzono, p.zaktualizowano
 		   FROM pakiet_przekazania p
 		   JOIN okno_tlumaczenia o ON o.id = p.okno_id
-		  WHERE p.identyfikator_zewnetrzny = ?`, kod).
+		  WHERE p.identyfikator_zewnetrzny = ? AND `+WarunekKonta, kod, KontoOperatora(ctx)).
 		Scan(&pakiet.Kod, &pakiet.OknoID, &pakiet.OknoKod, &zawartosci, &panele,
 			&instrukcje, &pakiet.Sciezka, &pakiet.Stan, &pakiet.Utworzono, &pakiet.Zaktualizowano)
 	if errors.Is(err, sql.ErrNoRows) {
@@ -411,7 +420,9 @@ func (r *repozytoriumTlumaczen) PozycjePakietu(ctx context.Context,
 		`SELECT p.panel_kod, p.operacja, p.stan, p.szczegol
 		   FROM pozycja_pakietu_tlumaczenia p
 		   JOIN zlecenie_pakietu_tlumaczenia z ON z.id = p.zlecenie_id
-		  WHERE z.identyfikator_zewnetrzny = ? ORDER BY p.id`, kod)
+		   JOIN okno_tlumaczenia o ON o.id = z.okno_id
+		  WHERE z.identyfikator_zewnetrzny = ? AND `+WarunekKonta+`
+		  ORDER BY p.id`, kod, KontoOperatora(ctx))
 	if err != nil {
 		return nil, fmt.Errorf("dane: nie można odczytać pozycji pakietu %q: %w", kod, err)
 	}
@@ -440,17 +451,20 @@ type MostTlumaczenia struct {
 
 // ZapiszMost zakłada wiązanie okna tłumaczenia z dokumentem albo przestawia zastane wiązanie na nowy dokument.
 func (r *repozytoriumTlumaczen) ZapiszMost(ctx context.Context, most MostTlumaczenia) error {
-	_, err := r.db.ExecContext(ctx, `INSERT INTO most_tlumaczenia
+	wynik, err := r.db.ExecContext(ctx, `INSERT INTO most_tlumaczenia
 		(okno_id, dokument_kod, zakotwiczenie, zaktualizowano) VALUES (?, ?, ?, ?)
 		ON CONFLICT(okno_id) DO UPDATE SET
 			dokument_kod = excluded.dokument_kod, zakotwiczenie = excluded.zakotwiczenie,
-			zaktualizowano = excluded.zaktualizowano`,
+			zaktualizowano = excluded.zaktualizowano
+		WHERE EXISTS (SELECT 1 FROM okno_tlumaczenia
+		               WHERE okno_tlumaczenia.id = most_tlumaczenia.okno_id
+		                 AND `+WarunekKonta+`)`,
 		most.OknoID, most.DokumentKod, tekstDoKolumny(most.Zakotwiczenie),
-		time.Now().UnixMilli())
+		time.Now().UnixMilli(), KontoOperatora(ctx))
 	if err != nil {
 		return fmt.Errorf("dane: nie można zapisać mostu okna %d: %w", most.OknoID, err)
 	}
-	return nil
+	return sprawdzTrafienieZapisu(wynik, "most okna tłumaczenia", most.DokumentKod)
 }
 
 // Most oddaje wiązanie okna z dokumentem tłumaczenia po identyfikatorze okna. Brak wiersza wraca jako ErrBrakWiersza.
@@ -458,8 +472,11 @@ func (r *repozytoriumTlumaczen) Most(ctx context.Context, oknoID int64) (MostTlu
 	var most MostTlumaczenia
 	var zakotwiczenie sql.NullString
 	err := r.db.QueryRowContext(ctx,
-		`SELECT okno_id, dokument_kod, zakotwiczenie FROM most_tlumaczenia WHERE okno_id = ?`,
-		oknoID).Scan(&most.OknoID, &most.DokumentKod, &zakotwiczenie)
+		`SELECT m.okno_id, m.dokument_kod, m.zakotwiczenie
+		   FROM most_tlumaczenia m
+		   JOIN okno_tlumaczenia o ON o.id = m.okno_id
+		  WHERE m.okno_id = ? AND `+WarunekKonta,
+		oknoID, KontoOperatora(ctx)).Scan(&most.OknoID, &most.DokumentKod, &zakotwiczenie)
 	if errors.Is(err, sql.ErrNoRows) {
 		return MostTlumaczenia{}, ErrBrakWiersza
 	}

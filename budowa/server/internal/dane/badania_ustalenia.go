@@ -29,22 +29,26 @@ const (
 	kolumnyUstaleniaBadania = `id, identyfikator_zewnetrzny, okno, tresc, tresc_odwolanie,
 	                           stan, utworzono, zaktualizowano`
 
+	// Więz UNIQUE na `identyfikator_zewnetrzny` obejmuje całą tabelę, więc
+	// warunek konta w gałęzi DO UPDATE zostawia wiersz cudzy nietknięty.
 	zapiszUstalenieBadania = `INSERT INTO ustalenie_badania
-	                          (identyfikator_zewnetrzny, okno, tresc, tresc_odwolanie, stan)
-	                          VALUES (?, ?, ?, ?, ?)
+	                          (identyfikator_zewnetrzny, okno, tresc, tresc_odwolanie, stan, konto_id)
+	                          VALUES (?, ?, ?, ?, ?, ` + WskazanieKonta + `)
 	                          ON CONFLICT(identyfikator_zewnetrzny) DO UPDATE SET
 	                              tresc = excluded.tresc,
 	                              tresc_odwolanie = excluded.tresc_odwolanie,
 	                              stan = excluded.stan,
-	                              zaktualizowano = strftime('%Y-%m-%dT%H:%M:%fZ','now')`
+	                              zaktualizowano = strftime('%Y-%m-%dT%H:%M:%fZ','now')
+	                          WHERE ` + WarunekKonta
 
 	pobierzUstalenieBadania = `SELECT ` + kolumnyUstaleniaBadania + ` FROM ustalenie_badania
-	                           WHERE identyfikator_zewnetrzny = ?`
+	                           WHERE identyfikator_zewnetrzny = ? AND ` + WarunekKonta
 
 	pobierzUstaleniaBadaniaOkna = `SELECT ` + kolumnyUstaleniaBadania + ` FROM ustalenie_badania
-	                               WHERE okno = ?
+	                               WHERE okno = ? AND ` + WarunekKonta + `
 	                               ORDER BY zaktualizowano DESC, id DESC`
 
+	// Klucz `ustalenie_id` pochodzi z odczytu zawężonego kontem.
 	usunZrodlaUstalenia = `DELETE FROM zrodlo_ustalenia_badania WHERE ustalenie_id = ?`
 
 	// idZrodlaPoKodzie odnajduje wiersz źródła po kodzie zewnętrznym — powiązanie
@@ -85,9 +89,16 @@ func (r *repozytoriumBadan) ZapiszUstalenie(ctx context.Context, ustalenie Ustal
 		if err != nil {
 			return err
 		}
-		if _, err := zapis.ExecContext(ctx, ustalenie.Kod, ustalenie.Okno,
-			tekstDoKolumny(ustalenie.Tresc), tekstDoKolumny(ustalenie.TrescOdwolanie), stan); err != nil {
+		wynik, err := zapis.ExecContext(ctx, ustalenie.Kod, ustalenie.Okno,
+			tekstDoKolumny(ustalenie.Tresc), tekstDoKolumny(ustalenie.TrescOdwolanie), stan,
+			KontoOperatora(ctx), KontoOperatora(ctx))
+		if err != nil {
 			return fmt.Errorf("dane: nie można zapisać ustalenia badania %q: %w", ustalenie.Kod, err)
+		}
+		// Kod zewnętrzny zajęty przez wiersz konta obcego daje zero zmienionych
+		// wierszy; dalszy odczyt oddałby „brak wiersza” zamiast powodu odmowy.
+		if err := sprawdzTrafienieZapisu(wynik, "ustalenie badania", ustalenie.Kod); err != nil {
+			return err
 		}
 
 		id, err := r.identyfikatorUstalenia(ctx, transakcja, ustalenie.Kod)
@@ -141,12 +152,13 @@ func (r *repozytoriumBadan) ZapiszUstalenie(ctx context.Context, ustalenie Ustal
 // konflikcie (ON CONFLICT DO UPDATE nie niesie LastInsertId na wierszu
 // istniejącym).
 func (r *repozytoriumBadan) identyfikatorUstalenia(ctx context.Context, transakcja *sql.Tx, kod string) (int64, error) {
-	odczyt, err := r.zapytania.wTransakcji(ctx, transakcja, `SELECT id FROM ustalenie_badania WHERE identyfikator_zewnetrzny = ?`)
+	odczyt, err := r.zapytania.wTransakcji(ctx, transakcja,
+		`SELECT id FROM ustalenie_badania WHERE identyfikator_zewnetrzny = ? AND `+WarunekKonta)
 	if err != nil {
 		return 0, err
 	}
 	var id int64
-	if err := odczyt.QueryRowContext(ctx, kod).Scan(&id); err != nil {
+	if err := odczyt.QueryRowContext(ctx, kod, KontoOperatora(ctx)).Scan(&id); err != nil {
 		return 0, fmt.Errorf("dane: nie można odczytać identyfikatora ustalenia %q: %w", kod, err)
 	}
 	return id, nil
@@ -158,7 +170,7 @@ func (r *repozytoriumBadan) Ustalenie(ctx context.Context, kod string) (Ustaleni
 	if err != nil {
 		return UstalenieBadania{}, err
 	}
-	ustalenie, err := odczytajUstalenieBadania(polecenie.QueryRowContext(ctx, kod))
+	ustalenie, err := odczytajUstalenieBadania(polecenie.QueryRowContext(ctx, kod, KontoOperatora(ctx)))
 	if errors.Is(err, sql.ErrNoRows) {
 		return UstalenieBadania{}, ErrBrakWiersza
 	}
@@ -174,7 +186,7 @@ func (r *repozytoriumBadan) Ustalenia(ctx context.Context, okno string) ([]Ustal
 	if err != nil {
 		return nil, err
 	}
-	wiersze, err := polecenie.QueryContext(ctx, okno)
+	wiersze, err := polecenie.QueryContext(ctx, okno, KontoOperatora(ctx))
 	if err != nil {
 		return nil, fmt.Errorf("dane: nie można odczytać ustaleń badania okna %q: %w", okno, err)
 	}

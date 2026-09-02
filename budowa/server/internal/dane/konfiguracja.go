@@ -39,24 +39,32 @@ const (
 
 	zrodloUstawienia = ` FROM ustawienie u JOIN poziom_zasiegu p ON p.id = u.poziom_zasiegu_id`
 
+	// Więz UNIQUE adresu obejmuje całą tabelę, więc konflikt trafia i w wiersz
+	// cudzego konta; WarunekKonta przy DO UPDATE odcina tam zapis.
 	zapiszUstawienie = `INSERT INTO ustawienie
-	                    (poziom_zasiegu_id, klucz_zasiegu, os, klucz_osi, klucz, wartosc, rodzaj_wartosci)
-	                    VALUES ((SELECT id FROM poziom_zasiegu WHERE kod = ?), ?, ?, ?, ?, ?, ?)
+	                    (poziom_zasiegu_id, klucz_zasiegu, os, klucz_osi, klucz, wartosc,
+	                     rodzaj_wartosci, konto_id)
+	                    VALUES ((SELECT id FROM poziom_zasiegu WHERE kod = ?), ?, ?, ?, ?, ?, ?,
+	                            ` + WskazanieKonta + `)
 	                    ON CONFLICT(poziom_zasiegu_id, klucz_zasiegu, os, klucz_osi, klucz) DO UPDATE SET
 	                        wartosc = excluded.wartosc,
 	                        rodzaj_wartosci = excluded.rodzaj_wartosci,
-	                        zaktualizowano = strftime('%Y-%m-%dT%H:%M:%fZ','now')`
+	                        zaktualizowano = strftime('%Y-%m-%dT%H:%M:%fZ','now')
+	                    WHERE ` + WarunekKonta
 
 	pobierzUstawienie = `SELECT ` + kolumnyUstawienia + zrodloUstawienia +
-		` WHERE p.kod = ? AND u.klucz_zasiegu = ? AND u.os = ? AND u.klucz_osi = ? AND u.klucz = ?`
+		` WHERE p.kod = ? AND u.klucz_zasiegu = ? AND u.os = ? AND u.klucz_osi = ? AND u.klucz = ?
+		  AND ` + WarunekKonta
 
 	listaUstawienPoziomu = `SELECT ` + kolumnyUstawienia + zrodloUstawienia +
 		` WHERE p.kod = ? AND u.klucz_zasiegu = ? AND u.os = ? AND u.klucz_osi = ?
+		  AND ` + WarunekKonta + `
 		  ORDER BY u.klucz`
 
 	usunUstawienie = `DELETE FROM ustawienie
 	                  WHERE poziom_zasiegu_id = (SELECT id FROM poziom_zasiegu WHERE kod = ?)
-	                    AND klucz_zasiegu = ? AND os = ? AND klucz_osi = ? AND klucz = ?`
+	                    AND klucz_zasiegu = ? AND os = ? AND klucz_osi = ? AND klucz = ?
+	                    AND ` + WarunekKonta
 )
 
 type repozytoriumKonfiguracji struct {
@@ -86,13 +94,14 @@ func (r *repozytoriumKonfiguracji) Ustaw(ctx context.Context, ustawienie Ustawie
 	if err != nil {
 		return err
 	}
-	_, err = polecenie.ExecContext(ctx, poziom, ustawienie.KluczZasiegu, os, ustawienie.KluczOsi,
-		ustawienie.Klucz, tekstDoKolumny(ustawienie.Wartosc), rodzaj)
+	wynik, err := polecenie.ExecContext(ctx, poziom, ustawienie.KluczZasiegu, os, ustawienie.KluczOsi,
+		ustawienie.Klucz, tekstDoKolumny(ustawienie.Wartosc), rodzaj, KontoOperatora(ctx),
+		KontoOperatora(ctx))
 	if err != nil {
 		return fmt.Errorf("dane: nie można zapisać ustawienia %q na poziomie %q osi %q: %w",
 			ustawienie.Klucz, poziom, os, err)
 	}
-	return nil
+	return sprawdzTrafienieZapisu(wynik, "ustawienie", ustawienie.Klucz)
 }
 
 // Odczytaj zwraca ustawienie osi platformy z jednego poziomu. Drugi wynik mówi,

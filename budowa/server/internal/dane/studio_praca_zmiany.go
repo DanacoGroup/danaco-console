@@ -55,7 +55,10 @@ const (
 	                               postac_przed_json = COALESCE(?, postac_przed_json),
 	                               postac_po_json = COALESCE(?, postac_po_json),
 	                               czynnosc_kod = COALESCE(?, czynnosc_kod)
-	                           WHERE identyfikator_zewnetrzny = ?`
+	                           WHERE identyfikator_zewnetrzny = ?
+	                             AND EXISTS (SELECT 1 FROM dokument_studio
+	                                         WHERE dokument_studio.id = zmiana_sledzona_studio.dokument_id
+	                                           AND ` + WarunekKonta + `)`
 )
 
 // ZmianyWykonawcow oddaje zmiany śledzone dokumentu wraz z tożsamością
@@ -99,11 +102,20 @@ func (r *repozytoriumStudia) StemplujTozsamoscZmiany(ctx context.Context, kod st
 	if err != nil {
 		return err
 	}
-	_, err = polecenie.ExecContext(ctx, tekstDoKolumny(agentKod), tekstDoKolumny(agentNazwa),
+	wynik, err := polecenie.ExecContext(ctx, tekstDoKolumny(agentKod), tekstDoKolumny(agentNazwa),
 		tekstDoKolumny(agentWersja), tekstDoKolumny(podagentKod), tekstDoKolumny(postacPrzed),
-		tekstDoKolumny(postacPo), tekstDoKolumny(czynnoscKod), kod)
+		tekstDoKolumny(postacPo), tekstDoKolumny(czynnoscKod), kod, KontoOperatora(ctx))
 	if err != nil {
 		return fmt.Errorf("dane: nie można zapisać tożsamości wykonawcy zmiany %q: %w", kod, err)
+	}
+	// Zero wierszy znaczy zmianę spoza pracy konta żądania: droga do korzenia
+	// jej nie sięga, a silnik nie zgłasza tego błędem.
+	zmienione, err := wynik.RowsAffected()
+	if err != nil {
+		return fmt.Errorf("dane: nieznany skutek stemplowania zmiany %q: %w", kod, err)
+	}
+	if zmienione == 0 {
+		return fmt.Errorf("%w: zmiana śledzona %q", ErrBrakWiersza, kod)
 	}
 	return nil
 }

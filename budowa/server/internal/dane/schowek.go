@@ -49,24 +49,28 @@ const (
 	                       postac_json`
 
 	// Postać odłożona ponownie nadpisuje zastaną, a postać niepodana jej nie zabiera przy tym samym zapisie.
-	wstawWpisSchowka = `INSERT INTO wpis_schowka (` + kolumnyWpisuSchowka + `)
-	                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+	// Więz UNIQUE kolumny `odcisk` obejmuje całą tabelę, więc ta sama treść odłożona przez dwa konta trafia
+	// w jeden wiersz; WarunekKonta przy DO UPDATE odcina zapis w wiersz cudzy.
+	wstawWpisSchowka = `INSERT INTO wpis_schowka (` + kolumnyWpisuSchowka + `, konto_id)
+	                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ` + WskazanieKonta + `)
 	                    ON CONFLICT(odcisk) DO UPDATE SET
 	                        utworzono = excluded.utworzono,
 	                        okno_zrodlowe = COALESCE(excluded.okno_zrodlowe, okno_zrodlowe),
 	                        wrazliwy = MAX(wrazliwy, excluded.wrazliwy),
-	                        postac_json = COALESCE(excluded.postac_json, postac_json)`
+	                        postac_json = COALESCE(excluded.postac_json, postac_json)
+	                    WHERE ` + WarunekKonta
 
 	pobierzWpisSchowkaPoOdcisku = `SELECT ` + kolumnyWpisuSchowka +
-		` FROM wpis_schowka WHERE odcisk = ?`
+		` FROM wpis_schowka WHERE odcisk = ? AND ` + WarunekKonta
 
 	pobierzWpisSchowka = `SELECT ` + kolumnyWpisuSchowka +
-		` FROM wpis_schowka WHERE identyfikator_zewnetrzny = ?`
+		` FROM wpis_schowka WHERE identyfikator_zewnetrzny = ? AND ` + WarunekKonta
 
 	przypnijWpisSchowka = `UPDATE wpis_schowka SET przypiety = ?
-	                       WHERE identyfikator_zewnetrzny = ?`
+	                       WHERE identyfikator_zewnetrzny = ? AND ` + WarunekKonta
 
-	usunWpisSchowka = `DELETE FROM wpis_schowka WHERE identyfikator_zewnetrzny = ?`
+	usunWpisSchowka = `DELETE FROM wpis_schowka
+	                   WHERE identyfikator_zewnetrzny = ? AND ` + WarunekKonta
 )
 
 type repozytoriumSchowka struct {
@@ -93,7 +97,8 @@ func (r *repozytoriumSchowka) DopiszWpisSchowka(ctx context.Context,
 		if err != nil {
 			return err
 		}
-		zastany, err := odczytajWpisSchowka(odczyt.QueryRowContext(ctx, wpis.Odcisk))
+		zastany, err := odczytajWpisSchowka(
+			odczyt.QueryRowContext(ctx, wpis.Odcisk, KontoOperatora(ctx)))
 		switch {
 		case errors.Is(err, sql.ErrNoRows):
 		case err != nil:
@@ -107,14 +112,15 @@ func (r *repozytoriumSchowka) DopiszWpisSchowka(ctx context.Context,
 		if err != nil {
 			return err
 		}
-		_, err = zapis.ExecContext(ctx, wpis.Kod, wpis.Rodzaj, wpis.Tresc, wpis.Odcisk,
+		wynik, err := zapis.ExecContext(ctx, wpis.Kod, wpis.Rodzaj, wpis.Tresc, wpis.Odcisk,
 			tekstDoKolumny(wpis.Zajawka), wpis.RozmiarBajtow, liczbaLogiczna(wpis.Przypiety),
 			liczbaLogiczna(wpis.Wrazliwy), tekstDoKolumny(wpis.OknoZrodlowe), wpis.Utworzono,
-			liczbaDoKolumny(wpis.Uzyto), tekstDoKolumny(wpis.PostacJSON))
+			liczbaDoKolumny(wpis.Uzyto), tekstDoKolumny(wpis.PostacJSON), KontoOperatora(ctx),
+			KontoOperatora(ctx))
 		if err != nil {
 			return fmt.Errorf("dane: nie można zapisać wpisu schowka: %w", err)
 		}
-		return nil
+		return sprawdzTrafienieZapisu(wynik, "wpis schowka o odcisku", wpis.Odcisk)
 	})
 	if err != nil {
 		return WpisSchowka{}, false, err
@@ -123,16 +129,20 @@ func (r *repozytoriumSchowka) DopiszWpisSchowka(ctx context.Context,
 	if err != nil {
 		return WpisSchowka{}, false, err
 	}
-	zapisany, err := odczytajWpisSchowka(polecenie.QueryRowContext(ctx, wpis.Odcisk))
-	return zapisany, bylo, err
+	zapisany, err := odczytajWpisSchowka(
+		polecenie.QueryRowContext(ctx, wpis.Odcisk, KontoOperatora(ctx)))
+	if err != nil {
+		return WpisSchowka{}, false, fmt.Errorf("dane: nieczytelny wiersz wpisu schowka: %w", err)
+	}
+	return zapisany, bylo, nil
 }
 
 // WpisySchowka zwraca historię schowka: przypięte wpisy na czele, potem pozostałe od najnowszego wpisu.
 func (r *repozytoriumSchowka) WpisySchowka(ctx context.Context,
 	sito SitoSchowka) ([]WpisSchowka, int, error) {
 
-	warunki := []string{"1 = 1"}
-	argumenty := []any{}
+	warunki := []string{WarunekKonta}
+	argumenty := []any{KontoOperatora(ctx)}
 	if fraza := strings.TrimSpace(sito.Fraza); fraza != "" {
 		warunki = append(warunki, "tresc LIKE ?")
 		argumenty = append(argumenty, "%"+fraza+"%")
@@ -191,7 +201,7 @@ func (r *repozytoriumSchowka) PrzypnijWpisSchowka(ctx context.Context, kod strin
 	if err != nil {
 		return WpisSchowka{}, err
 	}
-	wynik, err := polecenie.ExecContext(ctx, liczbaLogiczna(przypiety), kod)
+	wynik, err := polecenie.ExecContext(ctx, liczbaLogiczna(przypiety), kod, KontoOperatora(ctx))
 	if err != nil {
 		return WpisSchowka{}, fmt.Errorf("dane: nie można przypiąć wpisu schowka %q: %w", kod, err)
 	}
@@ -202,7 +212,7 @@ func (r *repozytoriumSchowka) PrzypnijWpisSchowka(ctx context.Context, kod strin
 	if err != nil {
 		return WpisSchowka{}, err
 	}
-	return odczytajWpisSchowka(odczyt.QueryRowContext(ctx, kod))
+	return odczytajWpisSchowka(odczyt.QueryRowContext(ctx, kod, KontoOperatora(ctx)))
 }
 
 // UsunWpisySchowka kasuje jeden wpis albo całą historię. Bez wskazania wpisu
@@ -216,7 +226,7 @@ func (r *repozytoriumSchowka) UsunWpisySchowka(ctx context.Context, kod string,
 		if err != nil {
 			return 0, err
 		}
-		wynik, err := polecenie.ExecContext(ctx, kod)
+		wynik, err := polecenie.ExecContext(ctx, kod, KontoOperatora(ctx))
 		if err != nil {
 			return 0, fmt.Errorf("dane: nie można usunąć wpisu schowka %q: %w", kod, err)
 		}
@@ -230,11 +240,11 @@ func (r *repozytoriumSchowka) UsunWpisySchowka(ctx context.Context, kod string,
 		return int(usuniete), nil
 	}
 
-	tekst := `DELETE FROM wpis_schowka`
+	tekst := `DELETE FROM wpis_schowka WHERE ` + WarunekKonta
 	if !zPrzypietymi {
-		tekst += ` WHERE przypiety = 0`
+		tekst += ` AND przypiety = 0`
 	}
-	wynik, err := r.db.ExecContext(ctx, tekst)
+	wynik, err := r.db.ExecContext(ctx, tekst, KontoOperatora(ctx))
 	if err != nil {
 		return 0, fmt.Errorf("dane: nie można wyczyścić historii schowka: %w", err)
 	}

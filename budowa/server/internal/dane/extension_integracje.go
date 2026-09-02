@@ -50,10 +50,13 @@ const (
 
 	// Pola podane jako brak NIE kasują wartości zastanych: transport i
 	// poświadczenie nadaje się osobnymi komendami, a każda zna tylko swoją część.
+	// Klucz główny stoi na samej pozycji katalogu, więc pozycja zajęta przez inne
+	// konto trafia w konflikt: warunek przy DO UPDATE zostawia wiersz nietknięty.
 	zapiszIntegracjeRozszerzenia = `INSERT INTO integracja_rozszerzenia
 	                                (rozszerzenie_kod, transport, adres, polecenie,
-	                                 sposob_logowania, odwolanie_sekretu, zakresy, zaktualizowano)
-	                                VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+	                                 sposob_logowania, odwolanie_sekretu, zakresy, zaktualizowano,
+	                                 konto_id)
+	                                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ` + WskazanieKonta + `)
 	                                ON CONFLICT(rozszerzenie_kod) DO UPDATE SET
 	                                    transport = IFNULL(excluded.transport,
 	                                                       integracja_rozszerzenia.transport),
@@ -66,10 +69,12 @@ const (
 	                                                               integracja_rozszerzenia.odwolanie_sekretu),
 	                                    zakresy = IFNULL(excluded.zakresy,
 	                                                     integracja_rozszerzenia.zakresy),
-	                                    zaktualizowano = excluded.zaktualizowano`
+	                                    zaktualizowano = excluded.zaktualizowano
+	                                WHERE ` + WarunekKonta
 
 	pobierzIntegracjeRozszerzenia = `SELECT ` + kolumnyIntegracjiRozszerzenia + `
-	                                 FROM integracja_rozszerzenia WHERE rozszerzenie_kod = ?`
+	                                 FROM integracja_rozszerzenia
+	                                 WHERE rozszerzenie_kod = ? AND ` + WarunekKonta
 
 	kolumnyWebhookaRozszerzenia = `id, identyfikator_zewnetrzny, rozszerzenie_kod, kierunek,
 	                               adres, adres_nasluchu, zdarzenia, odwolanie_sekretu,
@@ -77,8 +82,9 @@ const (
 
 	zapiszWebhookRozszerzenia = `INSERT INTO webhook_rozszerzenia
 	                             (identyfikator_zewnetrzny, rozszerzenie_kod, kierunek, adres,
-	                              adres_nasluchu, zdarzenia, odwolanie_sekretu, czynny, zaktualizowano)
-	                             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+	                              adres_nasluchu, zdarzenia, odwolanie_sekretu, czynny,
+	                              zaktualizowano, konto_id)
+	                             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ` + WskazanieKonta + `)
 	                             ON CONFLICT(identyfikator_zewnetrzny) DO UPDATE SET
 	                                 kierunek = excluded.kierunek,
 	                                 adres = excluded.adres,
@@ -86,14 +92,17 @@ const (
 	                                 zdarzenia = excluded.zdarzenia,
 	                                 odwolanie_sekretu = excluded.odwolanie_sekretu,
 	                                 czynny = excluded.czynny,
-	                                 zaktualizowano = excluded.zaktualizowano`
+	                                 zaktualizowano = excluded.zaktualizowano
+	                             WHERE ` + WarunekKonta
 
 	pobierzWebhookRozszerzenia = `SELECT ` + kolumnyWebhookaRozszerzenia + `
-	                              FROM webhook_rozszerzenia WHERE identyfikator_zewnetrzny = ?`
+	                              FROM webhook_rozszerzenia
+	                              WHERE identyfikator_zewnetrzny = ? AND ` + WarunekKonta
 
 	listaWebhookowRozszerzenia = `SELECT ` + kolumnyWebhookaRozszerzenia + `
 	                              FROM webhook_rozszerzenia
 	                              WHERE (? = '' OR rozszerzenie_kod = ?) AND (? = '' OR kierunek = ?)
+	                                AND ` + WarunekKonta + `
 	                              ORDER BY rozszerzenie_kod, kierunek, id`
 
 	kolumnyMapowaniaRozszerzenia = `id, identyfikator_zewnetrzny, rozszerzenie_kod, nazwa,
@@ -101,15 +110,17 @@ const (
 
 	zapiszMapowanieRozszerzenia = `INSERT INTO mapowanie_rozszerzenia
 	                               (identyfikator_zewnetrzny, rozszerzenie_kod, nazwa, reguly,
-	                                zaktualizowano)
-	                               VALUES (?, ?, ?, ?, ?)
+	                                zaktualizowano, konto_id)
+	                               VALUES (?, ?, ?, ?, ?, ` + WskazanieKonta + `)
 	                               ON CONFLICT(identyfikator_zewnetrzny) DO UPDATE SET
 	                                   nazwa = excluded.nazwa,
 	                                   reguly = excluded.reguly,
-	                                   zaktualizowano = excluded.zaktualizowano`
+	                                   zaktualizowano = excluded.zaktualizowano
+	                               WHERE ` + WarunekKonta
 
 	pobierzMapowanieRozszerzenia = `SELECT ` + kolumnyMapowaniaRozszerzenia + `
-	                                FROM mapowanie_rozszerzenia WHERE identyfikator_zewnetrzny = ?`
+	                                FROM mapowanie_rozszerzenia
+	                                WHERE identyfikator_zewnetrzny = ? AND ` + WarunekKonta
 )
 
 // ZapiszIntegracjeRozszerzenia zapisuje transport albo poświadczenie integracji rozszerzenia w jednym wierszu tabeli.
@@ -123,14 +134,24 @@ func (r *repozytoriumRozszerzen) ZapiszIntegracjeRozszerzenia(ctx context.Contex
 	if err != nil {
 		return IntegracjaRozszerzenia{}, err
 	}
-	_, err = polecenie.ExecContext(ctx, integracja.RozszerzenieKod,
+	wynik, err := polecenie.ExecContext(ctx, integracja.RozszerzenieKod,
 		tekstDoKolumny(integracja.Transport), tekstDoKolumny(integracja.Adres),
 		tekstDoKolumny(integracja.Polecenie), tekstDoKolumny(integracja.SposobLogowania),
 		tekstDoKolumny(integracja.OdwolanieSekretu), listaDoKolumny(integracja.Zakresy),
-		integracja.Zaktualizowano)
+		integracja.Zaktualizowano, KontoOperatora(ctx), KontoOperatora(ctx))
 	if err != nil {
 		return IntegracjaRozszerzenia{}, fmt.Errorf("dane: nie można zapisać integracji %q: %w",
 			integracja.RozszerzenieKod, err)
+	}
+	zmienione, err := wynik.RowsAffected()
+	if err != nil {
+		return IntegracjaRozszerzenia{}, fmt.Errorf(
+			"dane: nieznana liczba zapisanych integracji rozszerzeń: %w", err)
+	}
+	if zmienione == 0 {
+		return IntegracjaRozszerzenia{}, fmt.Errorf(
+			"dane: integracja %q należy do innego konta: %w",
+			integracja.RozszerzenieKod, ErrKolizjaWiersza)
 	}
 	return r.IntegracjaRozszerzenia(ctx, integracja.RozszerzenieKod)
 }
@@ -145,8 +166,9 @@ func (r *repozytoriumRozszerzen) IntegracjaRozszerzenia(ctx context.Context,
 	}
 	var integracja IntegracjaRozszerzenia
 	var transport, adres, komenda, sposob, sekret, zakresy sql.NullString
-	err = polecenie.QueryRowContext(ctx, rozszerzenie).Scan(&integracja.RozszerzenieKod,
-		&transport, &adres, &komenda, &sposob, &sekret, &zakresy, &integracja.Zaktualizowano)
+	err = polecenie.QueryRowContext(ctx, rozszerzenie, KontoOperatora(ctx)).Scan(
+		&integracja.RozszerzenieKod, &transport, &adres, &komenda, &sposob, &sekret,
+		&zakresy, &integracja.Zaktualizowano)
 	if err == sql.ErrNoRows {
 		return IntegracjaRozszerzenia{}, ErrBrakWiersza
 	}
@@ -175,13 +197,23 @@ func (r *repozytoriumRozszerzen) ZapiszWebhookRozszerzenia(ctx context.Context,
 	if err != nil {
 		return WebhookRozszerzenia{}, err
 	}
-	_, err = polecenie.ExecContext(ctx, webhook.Kod, webhook.RozszerzenieKod, webhook.Kierunek,
-		tekstDoKolumny(webhook.Adres), tekstDoKolumny(webhook.AdresNasluchu),
+	wynik, err := polecenie.ExecContext(ctx, webhook.Kod, webhook.RozszerzenieKod,
+		webhook.Kierunek, tekstDoKolumny(webhook.Adres), tekstDoKolumny(webhook.AdresNasluchu),
 		listaDoKolumny(webhook.Zdarzenia), tekstDoKolumny(webhook.OdwolanieSekretu),
-		liczbaLogiczna(webhook.Czynny), webhook.Zaktualizowano)
+		liczbaLogiczna(webhook.Czynny), webhook.Zaktualizowano,
+		KontoOperatora(ctx), KontoOperatora(ctx))
 	if err != nil {
 		return WebhookRozszerzenia{}, fmt.Errorf("dane: nie można zapisać webhooka %q: %w",
 			webhook.Kod, err)
+	}
+	zmienione, err := wynik.RowsAffected()
+	if err != nil {
+		return WebhookRozszerzenia{}, fmt.Errorf(
+			"dane: nieznana liczba zapisanych webhooków rozszerzeń: %w", err)
+	}
+	if zmienione == 0 {
+		return WebhookRozszerzenia{}, fmt.Errorf("dane: webhook %q należy do innego konta: %w",
+			webhook.Kod, ErrKolizjaWiersza)
 	}
 	return r.WebhookRozszerzenia(ctx, webhook.Kod)
 }
@@ -192,7 +224,8 @@ func (r *repozytoriumRozszerzen) WebhookRozszerzenia(ctx context.Context, kod st
 	if err != nil {
 		return WebhookRozszerzenia{}, err
 	}
-	webhook, err := odczytajWebhookRozszerzenia(polecenie.QueryRowContext(ctx, kod))
+	webhook, err := odczytajWebhookRozszerzenia(
+		polecenie.QueryRowContext(ctx, kod, KontoOperatora(ctx)))
 	if err == sql.ErrNoRows {
 		return WebhookRozszerzenia{}, ErrBrakWiersza
 	}
@@ -210,7 +243,8 @@ func (r *repozytoriumRozszerzen) WebhookiRozszerzen(ctx context.Context,
 	if err != nil {
 		return nil, err
 	}
-	wiersze, err := polecenie.QueryContext(ctx, rozszerzenie, rozszerzenie, kierunek, kierunek)
+	wiersze, err := polecenie.QueryContext(ctx, rozszerzenie, rozszerzenie, kierunek, kierunek,
+		KontoOperatora(ctx))
 	if err != nil {
 		return nil, fmt.Errorf("dane: nie można odczytać webhooków: %w", err)
 	}
@@ -245,11 +279,21 @@ func (r *repozytoriumRozszerzen) ZapiszMapowanieRozszerzenia(ctx context.Context
 	if err != nil {
 		return MapowanieRozszerzenia{}, err
 	}
-	_, err = polecenie.ExecContext(ctx, mapowanie.Kod, mapowanie.RozszerzenieKod,
-		mapowanie.Nazwa, mapowanie.Reguly, mapowanie.Zaktualizowano)
+	wynik, err := polecenie.ExecContext(ctx, mapowanie.Kod, mapowanie.RozszerzenieKod,
+		mapowanie.Nazwa, mapowanie.Reguly, mapowanie.Zaktualizowano,
+		KontoOperatora(ctx), KontoOperatora(ctx))
 	if err != nil {
 		return MapowanieRozszerzenia{}, fmt.Errorf("dane: nie można zapisać odwzorowania %q: %w",
 			mapowanie.Kod, err)
+	}
+	zmienione, err := wynik.RowsAffected()
+	if err != nil {
+		return MapowanieRozszerzenia{}, fmt.Errorf(
+			"dane: nieznana liczba zapisanych odwzorowań rozszerzeń: %w", err)
+	}
+	if zmienione == 0 {
+		return MapowanieRozszerzenia{}, fmt.Errorf(
+			"dane: odwzorowanie %q należy do innego konta: %w", mapowanie.Kod, ErrKolizjaWiersza)
 	}
 	return r.MapowanieRozszerzenia(ctx, mapowanie.Kod)
 }
@@ -261,7 +305,7 @@ func (r *repozytoriumRozszerzen) MapowanieRozszerzenia(ctx context.Context, kod 
 		return MapowanieRozszerzenia{}, err
 	}
 	var mapowanie MapowanieRozszerzenia
-	err = polecenie.QueryRowContext(ctx, kod).Scan(&mapowanie.ID, &mapowanie.Kod,
+	err = polecenie.QueryRowContext(ctx, kod, KontoOperatora(ctx)).Scan(&mapowanie.ID, &mapowanie.Kod,
 		&mapowanie.RozszerzenieKod, &mapowanie.Nazwa, &mapowanie.Reguly, &mapowanie.Zaktualizowano)
 	if err == sql.ErrNoRows {
 		return MapowanieRozszerzenia{}, ErrBrakWiersza

@@ -201,25 +201,31 @@ const (
 	kolumnyZakladki = `id, identyfikator_zewnetrzny, okno, url, tytul, folder,
 	                   etykiety_json, notatka, utworzono`
 
+	// Więz UNIQUE na `identyfikator_zewnetrzny` obejmuje całą tabelę, więc
+	// warunek konta w gałęzi DO UPDATE zostawia wiersz cudzy nietknięty.
 	zapiszZakladke = `INSERT INTO zakladka_przegladania
-	                  (identyfikator_zewnetrzny, okno, url, tytul, folder, etykiety_json, notatka)
-	                  VALUES (?, ?, ?, ?, ?, ?, ?)
+	                  (identyfikator_zewnetrzny, okno, url, tytul, folder, etykiety_json, notatka,
+	                   konto_id)
+	                  VALUES (?, ?, ?, ?, ?, ?, ?, ` + WskazanieKonta + `)
 	                  ON CONFLICT(identyfikator_zewnetrzny) DO UPDATE SET
 	                      url = excluded.url,
 	                      tytul = excluded.tytul,
 	                      folder = excluded.folder,
 	                      etykiety_json = excluded.etykiety_json,
-	                      notatka = excluded.notatka`
+	                      notatka = excluded.notatka
+	                  WHERE ` + WarunekKonta
 
 	pobierzZakladke = `SELECT ` + kolumnyZakladki + ` FROM zakladka_przegladania
-	                   WHERE identyfikator_zewnetrzny = ?`
+	                   WHERE identyfikator_zewnetrzny = ? AND ` + WarunekKonta
 
 	listaZakladek = `SELECT ` + kolumnyZakladki + ` FROM zakladka_przegladania
 	                 WHERE (? = '' OR okno = ?) AND (? = '' OR folder = ?)
 	                   AND (? = '' OR url LIKE ? OR IFNULL(tytul,'') LIKE ? OR IFNULL(notatka,'') LIKE ?)
+	                   AND ` + WarunekKonta + `
 	                 ORDER BY utworzono DESC, id DESC LIMIT ?`
 
-	usunZakladke = `DELETE FROM zakladka_przegladania WHERE identyfikator_zewnetrzny = ?`
+	usunZakladke = `DELETE FROM zakladka_przegladania
+	                WHERE identyfikator_zewnetrzny = ? AND ` + WarunekKonta
 )
 
 // ZapiszMonitor zakłada monitor albo nadpisuje zastany, przyjmując stan
@@ -547,11 +553,17 @@ func (r *repozytoriumPrzegladania) ZapiszZakladke(ctx context.Context,
 	if err != nil {
 		return ZakladkaPrzegladania{}, err
 	}
-	_, err = polecenie.ExecContext(ctx, zakladka.Kod, zakladka.Okno, zakladka.Url,
+	wynik, err := polecenie.ExecContext(ctx, zakladka.Kod, zakladka.Okno, zakladka.Url,
 		tekstDoKolumny(zakladka.Tytul), tekstDoKolumny(zakladka.Folder),
-		tekstDoKolumny(zakladka.EtykietyJson), tekstDoKolumny(zakladka.Notatka))
+		tekstDoKolumny(zakladka.EtykietyJson), tekstDoKolumny(zakladka.Notatka),
+		KontoOperatora(ctx), KontoOperatora(ctx))
 	if err != nil {
 		return ZakladkaPrzegladania{}, fmt.Errorf("dane: nie można zapisać zakładki %q: %w", zakladka.Kod, err)
+	}
+	// Kod zewnętrzny zajęty przez wiersz konta obcego daje zero zmienionych
+	// wierszy; odczyt zwrotny oddałby „brak wiersza” zamiast powodu odmowy.
+	if err := sprawdzTrafienieZapisu(wynik, "zakładka", zakladka.Kod); err != nil {
+		return ZakladkaPrzegladania{}, err
 	}
 	return r.Zakladka(ctx, zakladka.Kod)
 }
@@ -563,7 +575,7 @@ func (r *repozytoriumPrzegladania) Zakladka(ctx context.Context, kod string) (Za
 	if err != nil {
 		return ZakladkaPrzegladania{}, err
 	}
-	zakladka, err := odczytajZakladke(polecenie.QueryRowContext(ctx, kod))
+	zakladka, err := odczytajZakladke(polecenie.QueryRowContext(ctx, kod, KontoOperatora(ctx)))
 	if errors.Is(err, sql.ErrNoRows) {
 		return ZakladkaPrzegladania{}, ErrBrakWiersza
 	}
@@ -585,7 +597,7 @@ func (r *repozytoriumPrzegladania) Zakladki(ctx context.Context, filtr FiltrZakl
 		wzorzec = "%" + filtr.Szukaj + "%"
 	}
 	wiersze, err := polecenie.QueryContext(ctx, filtr.Okno, filtr.Okno, filtr.Folder, filtr.Folder,
-		filtr.Szukaj, wzorzec, wzorzec, wzorzec, granicaWykazu(filtr.Limit))
+		filtr.Szukaj, wzorzec, wzorzec, wzorzec, KontoOperatora(ctx), granicaWykazu(filtr.Limit))
 	if err != nil {
 		return nil, fmt.Errorf("dane: nie można odczytać zakładek: %w", err)
 	}
@@ -608,13 +620,17 @@ func (r *repozytoriumPrzegladania) Zakladki(ctx context.Context, filtr FiltrZakl
 // UsunZakladke zdejmuje zakładkę o wskazanym kodzie zewnętrznym z wykazu okna
 // i mówi, czy zakładka istniała.
 func (r *repozytoriumPrzegladania) UsunZakladke(ctx context.Context, kod string) (bool, error) {
-	return r.usunWiersz(ctx, usunZakladke, kod, "zakładka")
+	return r.usunWiersz(ctx, usunZakladke, kod, "zakładka", KontoOperatora(ctx))
 }
 
 // usunWiersz jest wspólnym skasowaniem po kodzie zewnętrznym. Fałsz znaczy
 // „nie było takiego wiersza" — wołający ma z czego zbudować odmowę `not_found`
 // zamiast meldować usunięcie czegoś, czego nie było.
-func (r *repozytoriumPrzegladania) usunWiersz(ctx context.Context, zapytanie, kod, nazwa string) (bool, error) {
+// Argumenty dalsze przyjmuje jako ogon, bo część zapytań niesie za kodem
+// warunek konta, a część jeszcze nie.
+func (r *repozytoriumPrzegladania) usunWiersz(ctx context.Context, zapytanie, kod, nazwa string,
+	dalsze ...any) (bool, error) {
+
 	if kod == "" {
 		return false, fmt.Errorf("dane: %s bez identyfikatora do usunięcia", nazwa)
 	}
@@ -622,7 +638,7 @@ func (r *repozytoriumPrzegladania) usunWiersz(ctx context.Context, zapytanie, ko
 	if err != nil {
 		return false, err
 	}
-	wynik, err := polecenie.ExecContext(ctx, kod)
+	wynik, err := polecenie.ExecContext(ctx, append([]any{kod}, dalsze...)...)
 	if err != nil {
 		return false, fmt.Errorf("dane: nie można usunąć wiersza (%s) %q: %w", nazwa, kod, err)
 	}

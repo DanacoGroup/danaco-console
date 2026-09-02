@@ -7,6 +7,8 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+
+	"danacoconsole/server/internal/dane"
 )
 
 // Wartości kolumny `stan`, przepisane z CHECK-u tabeli `transkrypcja`. Napis
@@ -81,20 +83,20 @@ const (
 	zrodloTranskrypcji = ` FROM transkrypcja t`
 
 	pobierzTranskrypcje = `SELECT ` + kolumnyTranskrypcji + zrodloTranskrypcji +
-		` WHERE t.identyfikator_zewnetrzny = ?`
+		` WHERE t.identyfikator_zewnetrzny = ? AND ` + dane.WarunekKonta
 
 	// Zapytanie obsługuje oba warianty żądania: puste zawężenie okna wyłącza
 	// pierwszy warunek, a wskazane oddaje wpisy tylko z tego okna, obie
 	// gałęzie od najnowszego wpisu.
 	listaTranskrypcji = `SELECT ` + kolumnyTranskrypcji + zrodloTranskrypcji +
-		` WHERE (? = '' OR t.okno_id = ?)
+		` WHERE (? = '' OR t.okno_id = ?) AND ` + dane.WarunekKonta + `
 		  ORDER BY t.utworzono DESC, t.id DESC
 		  LIMIT ?`
 
 	wstawTranskrypcje = `INSERT INTO transkrypcja
 	                     (identyfikator_zewnetrzny, okno_id, nagranie_odnosnik, model,
-	                      jezyk, znakow, trwanie_ms, stan, powod, utworzono)
-	                     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+	                      jezyk, znakow, trwanie_ms, stan, powod, utworzono, konto_id)
+	                     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ` + dane.WskazanieKonta + `)`
 )
 
 // dziennikTranskrypcji jest jedyną implementacją Dziennika, opartą wprost
@@ -127,7 +129,7 @@ func (d *dziennikTranskrypcji) Zapisz(ctx context.Context,
 	if _, err := d.db.ExecContext(ctx, wstawTranskrypcje, wpis.Identyfikator,
 		napisDoKolumny(wpis.OknoId), wpis.NagranieOdnosnik, wpis.Model, wpis.Jezyk,
 		wpis.Znakow, wpis.TrwanieMs, wpis.Stan, napisDoKolumny(wpis.Powod),
-		wpis.Utworzono); err != nil {
+		wpis.Utworzono, dane.KontoOperatora(ctx)); err != nil {
 
 		return WpisTranskrypcji{}, fmt.Errorf("mowa: nie można zapisać transkrypcji %q: %w",
 			wpis.Identyfikator, err)
@@ -144,7 +146,8 @@ func (d *dziennikTranskrypcji) Wykaz(ctx context.Context,
 	if limit <= 0 {
 		limit = LimitWykazuDomyslny
 	}
-	wiersze, err := d.db.QueryContext(ctx, listaTranskrypcji, filtr.OknoId, filtr.OknoId, limit)
+	wiersze, err := d.db.QueryContext(ctx, listaTranskrypcji, filtr.OknoId, filtr.OknoId,
+		dane.KontoOperatora(ctx), limit)
 	if err != nil {
 		return nil, fmt.Errorf("mowa: nie można odczytać dziennika transkrypcji: %w", err)
 	}
@@ -170,7 +173,8 @@ func (d *dziennikTranskrypcji) Wykaz(ctx context.Context,
 func (d *dziennikTranskrypcji) wpisPoIdentyfikatorze(ctx context.Context,
 	identyfikator string) (WpisTranskrypcji, error) {
 
-	wpis, err := odczytajTranskrypcje(d.db.QueryRowContext(ctx, pobierzTranskrypcje, identyfikator))
+	wpis, err := odczytajTranskrypcje(d.db.QueryRowContext(ctx, pobierzTranskrypcje,
+		identyfikator, dane.KontoOperatora(ctx)))
 	if errors.Is(err, sql.ErrNoRows) {
 		return WpisTranskrypcji{}, fmt.Errorf("mowa: transkrypcja %q nie istnieje: %w",
 			identyfikator, ErrBrakWpisu)

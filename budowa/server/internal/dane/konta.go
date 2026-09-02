@@ -70,14 +70,17 @@ const (
 
 	listaKont = `SELECT ` + kolumnyKonta + ` FROM konto
 	             WHERE (? = '' OR rodzaj = ?) AND (? = 0 OR aktywne = 1)
+	               AND ` + WarunekKonta + `
 	             ORDER BY rodzaj, kolejnosc, id`
 
-	pobierzKonto = `SELECT ` + kolumnyKonta + ` FROM konto WHERE id = ?`
+	pobierzKonto = `SELECT ` + kolumnyKonta + ` FROM konto
+	                WHERE id = ? AND ` + WarunekKonta
 
-	pobierzKontoPoNazwie = `SELECT ` + kolumnyKonta + ` FROM konto WHERE nazwa = ?`
+	pobierzKontoPoNazwie = `SELECT ` + kolumnyKonta + ` FROM konto
+	                        WHERE nazwa = ? AND ` + WarunekKonta
 
 	pobierzKontoDomyslne = `SELECT ` + kolumnyKonta + ` FROM konto
-	                        WHERE rodzaj = ? AND domyslne = 1`
+	                        WHERE rodzaj = ? AND domyslne = 1 AND ` + WarunekKonta
 )
 
 type repozytoriumKont struct {
@@ -107,7 +110,8 @@ func (r *repozytoriumKont) Lista(ctx context.Context, filtr FiltrKont) ([]Konto,
 	if err != nil {
 		return nil, err
 	}
-	wiersze, err := polecenie.QueryContext(ctx, rodzaj, rodzaj, liczbaLogiczna(filtr.TylkoAktywne))
+	wiersze, err := polecenie.QueryContext(ctx, rodzaj, rodzaj,
+		liczbaLogiczna(filtr.TylkoAktywne), KontoOperatora(ctx))
 	if err != nil {
 		return nil, fmt.Errorf("dane: nie można odczytać katalogu kont: %w", err)
 	}
@@ -117,13 +121,14 @@ func (r *repozytoriumKont) Lista(ctx context.Context, filtr FiltrKont) ([]Konto,
 
 // Pobierz zwraca jedno konto z katalogu kont wskazane kluczem głównym wiersza tabeli kont w bazie danych.
 func (r *repozytoriumKont) Pobierz(ctx context.Context, id int64) (Konto, error) {
-	return r.jednoKonto(ctx, pobierzKonto, fmt.Sprintf("konto %d", id), id)
+	return r.jednoKonto(ctx, pobierzKonto, fmt.Sprintf("konto %d", id), id, KontoOperatora(ctx))
 }
 
 // PobierzPoNazwie zwraca konto po jego nazwie — nazwa jest w tabeli unikalna
 // i to ona jest kodem konta w profilach rotacji.
 func (r *repozytoriumKont) PobierzPoNazwie(ctx context.Context, nazwa string) (Konto, error) {
-	return r.jednoKonto(ctx, pobierzKontoPoNazwie, fmt.Sprintf("konto %q", nazwa), nazwa)
+	return r.jednoKonto(ctx, pobierzKontoPoNazwie, fmt.Sprintf("konto %q", nazwa), nazwa,
+		KontoOperatora(ctx))
 }
 
 // Domyslne zwraca konto domyślne wskazanego rodzaju. Brak wskazania jest stanem
@@ -134,7 +139,7 @@ func (r *repozytoriumKont) Domyslne(ctx context.Context, rodzaj shared.AccountKi
 		return Konto{}, err
 	}
 	return r.jednoKonto(ctx, pobierzKontoDomyslne,
-		fmt.Sprintf("konto domyślne rodzaju %q", wartosc), wartosc)
+		fmt.Sprintf("konto domyślne rodzaju %q", wartosc), wartosc, KontoOperatora(ctx))
 }
 
 // jednoKonto wykonuje odczyt jednego wiersza i przekłada brak wiersza wyniku na zgłoszony błąd braku wiersza.

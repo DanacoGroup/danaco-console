@@ -1,40 +1,24 @@
-/**
- * Wiązanie powłoki Właściciela z rdzeniem. Znacznik stawia
- * `design/zasoby/powloka.js`; tutaj wyłącznie wypełniane są istniejące węzły
- * wartościami z kontraktu i chowane pozycje, dla których rdzeń nie ma pokrycia.
- * Żaden element nie powstaje po tej stronie.
- */
+/* Znacznik powłoki niesie `design/zasoby/powloka.js`; szyna powstaje tu
+   z pozycji wzorcowej środowiska i modułu, powielanych wykazem rejestru. */
 
 import { Command, SessionStatus } from '../../../shared/contract.ts';
 import type { Environment, Module } from '../../../shared/contract.ts';
 import type { Kanal } from '../protokol/kanal.ts';
 import { wywolaj } from '../protokol/wywolanie.ts';
 
-/** Dane znane warstwie wejścia w chwili zalogowania, nieosiągalne z listy komend powłoki. */
 export interface DanePowloki {
-  /** Login Operatora podany przy wejściu; pusty zostawia pozycję paska bez zmiany. */
   login?: string;
-  /** Nazwa okna bieżącego wystawiana w belce tytułowej. */
   nazwaOkna?: string;
-  /** Kod środowiska bieżącego; puste zostawia w pasku znak pustej wartości prototypu. */
   kodSrodowiska?: string;
-  /** Kod modułu bieżącego wewnątrz środowiska. */
   kodModulu?: string;
 }
 
-/** Rozliczenie wiązania: ile pozycji rdzeń pokrył, ile znacznik ma ponad to, czego zabrakło. */
 export interface RozliczeniePowloki {
-  /** Czy powłoka była zamontowana i wiązanie doszło do skutku. */
   zwiazana: boolean;
-  /** Liczba środowisk oddanych przez rdzeń. */
   srodowiskaRdzenia: number;
-  /** Liczba pozycji środowisk stojących w znaczniku. */
   srodowiskaZnacznika: number;
-  /** Pozycje modułów w znaczniku ukryte, bo rdzeń nie miał dla nich pokrycia. */
   ukrytePozycje: number;
-  /** Środowiska i moduły rdzenia bez pozycji w znaczniku; nie są dorabiane. */
   bezPozycji: string[];
-  /** Napotkane niepowodzenia komend, opisem błędu z kontraktu. */
   bledy: string[];
 }
 
@@ -43,10 +27,6 @@ function kanalGlobalny(): Kanal | undefined {
   return (globalThis as { DanacoKanal?: Kanal }).DanacoKanal;
 }
 
-/**
- * Wypełnia powłokę wartościami rdzenia. Woła to warstwa wejścia po zalogowaniu,
- * bo dopiero wtedy znany jest login i okno, do którego Operator wchodzi.
- */
 export async function zwiazPowloke(
   dane: DanePowloki = {},
   kanalWskazany?: Kanal,
@@ -98,12 +78,106 @@ export async function zwiazPowloke(
   return rozliczenie;
 }
 
-/** Kolejność wyświetlania jest własnością rdzenia, nie kolejnością odpowiedzi. */
 function uporzadkuj(wykaz: Environment[]): Environment[] {
   return [...wykaz].sort((a, b) => a.order - b.order);
 }
 
-/** Nazwa pod pozycją szyny: pogrubiona nazwa i opis; oba węzły stoją już w znaczniku. */
+interface WzorySzyny {
+  lista: HTMLElement;
+  srodowisko: HTMLElement;
+  grupa: HTMLElement;
+  modul: HTMLElement;
+  znaki: Map<string, Element>;
+}
+
+/* Znak jest jedyną cechą pozycji, której rejestr nie niesie: `Module.icon` podaje
+   kod, a zestawu znaków klient nie ma. Znak bierze się więc z pozycji znacznika
+   o tym samym kodzie. */
+function zdejmijWzory(powloka: HTMLElement): WzorySzyny | null {
+  const srodowisko = powloka.querySelector<HTMLElement>('.dn-szyna-poz--srodowisko');
+  const lista = srodowisko?.parentElement ?? null;
+  const grupa = document.getElementById(srodowisko?.getAttribute('aria-controls') ?? '');
+  const modul = grupa?.querySelector<HTMLElement>('.dn-szyna-poz--modul') ?? null;
+  if (srodowisko === null || lista === null || grupa === null || modul === null) return null;
+  const znaki = new Map<string, Element>();
+  for (const pozycja of powloka.querySelectorAll<HTMLElement>('.dn-szyna-poz--srodowisko, .dn-szyna-poz--modul')) {
+    const kod = (pozycja.dataset.srodowisko ?? pozycja.dataset.modul ?? '').toLowerCase();
+    const znak = pozycja.querySelector(':scope > svg');
+    if (kod !== '' && znak !== null && !znaki.has(kod)) znaki.set(kod, znak.cloneNode(true) as Element);
+  }
+  return {
+    lista,
+    srodowisko: srodowisko.cloneNode(true) as HTMLElement,
+    grupa: grupa.cloneNode(true) as HTMLElement,
+    modul: modul.cloneNode(true) as HTMLElement,
+    znaki,
+  };
+}
+
+/* Lista pustoszeje przed wypełnieniem: pozycja znacznika, której rejestr nie
+   potwierdza, byłaby drogą do środowiska spoza platformy. */
+function wypelnijSzyne(
+  powloka: HTMLElement,
+  wykazSrodowisk: Environment[],
+  katalogModulow: Map<string, Module>,
+  rozliczenie: RozliczeniePowloki,
+): void {
+  const wzory = zdejmijWzory(powloka);
+  if (wzory === null) return;
+  wzory.lista.replaceChildren();
+  for (const srodowisko of wykazSrodowisk) {
+    if (srodowisko.code === '') {
+      rozliczenie.ukrytePozycje += 1;
+      continue;
+    }
+    const oznaczenie = 'moduly-' + srodowisko.code.toLowerCase();
+    const pozycja = wzory.srodowisko.cloneNode(true) as HTMLElement;
+    pozycja.removeAttribute('hidden');
+    pozycja.dataset.srodowisko = srodowisko.code;
+    pozycja.setAttribute('aria-controls', oznaczenie);
+    pozycja.setAttribute('aria-expanded', 'false');
+    wstawZnak(pozycja, wzory.znaki.get(srodowisko.code.toLowerCase()));
+    opiszPozycje(pozycja, srodowisko.name, srodowisko.description);
+    const grupa = wzory.grupa.cloneNode(true) as HTMLElement;
+    grupa.id = oznaczenie;
+    grupa.setAttribute('hidden', '');
+    grupa.setAttribute('aria-label', `Moduły środowiska ${srodowisko.name}`);
+    grupa.replaceChildren();
+    wypelnijModuly(grupa, wzory, srodowisko, katalogModulow, rozliczenie);
+    wzory.lista.appendChild(pozycja);
+    wzory.lista.appendChild(grupa);
+    rozliczenie.srodowiskaZnacznika += 1;
+  }
+}
+
+function wypelnijModuly(
+  grupa: HTMLElement,
+  wzory: WzorySzyny,
+  srodowisko: Environment,
+  katalogModulow: Map<string, Module>,
+  rozliczenie: RozliczeniePowloki,
+): void {
+  for (const kod of srodowisko.moduleCodes ?? []) {
+    const modul = katalogModulow.get(kod);
+    if (modul === undefined) {
+      rozliczenie.bezPozycji.push(`${srodowisko.code}/${kod}`);
+      continue;
+    }
+    const pozycja = wzory.modul.cloneNode(true) as HTMLElement;
+    pozycja.removeAttribute('hidden');
+    pozycja.dataset.modul = modul.code;
+    wstawZnak(pozycja, wzory.znaki.get(modul.code.toLowerCase()));
+    opiszPozycje(pozycja, modul.name, modul.description);
+    grupa.appendChild(pozycja);
+  }
+}
+
+function wstawZnak(pozycja: HTMLElement, znak: Element | undefined): void {
+  const stojacy = pozycja.querySelector(':scope > svg');
+  if (znak === undefined || stojacy === null) return;
+  stojacy.replaceWith(znak.cloneNode(true));
+}
+
 function opiszPozycje(pozycja: Element, nazwa: string, opis: string | undefined): void {
   pozycja.setAttribute('aria-label', nazwa);
   const etykieta = pozycja.querySelector('.dn-szyna-etyk');
@@ -112,114 +186,6 @@ function opiszPozycje(pozycja: Element, nazwa: string, opis: string | undefined)
   if (tytul !== null) tytul.textContent = nazwa;
   const podpis = etykieta.querySelector('span');
   if (podpis !== null) podpis.textContent = opis ?? '';
-}
-
-/** Pozycja bez pokrycia w rdzeniu znika z widoku; dorabianie brakującej byłoby atrapą. */
-function ukryj(element: Element, rozliczenie: RozliczeniePowloki): void {
-  element.setAttribute('hidden', '');
-  rozliczenie.ukrytePozycje += 1;
-}
-
-/**
- * Wpisuje środowiska i ich moduły w gotowe pozycje szyny. Grupa modułów wiąże
- * się z pozycją przez aria-controls — atrybut zostaje nietknięty, bo po nim
- * rozwija grupy `zasoby/rama.js`.
- *
- * Pozycję z rejestrem wiąże kod w `data-srodowisko`, nie miejsce w znaczniku:
- * kolejność pozycji nie jest kolejnością rejestru, więc wiązanie po numerze
- * dawało pozycji podpis cudzego środowiska.
- */
-function wypelnijSzyne(
-  powloka: HTMLElement,
-  wykazSrodowisk: Environment[],
-  katalogModulow: Map<string, Module>,
-  rozliczenie: RozliczeniePowloki,
-): void {
-  const pozycje = [...powloka.querySelectorAll<HTMLElement>('.dn-szyna-poz--srodowisko')];
-  rozliczenie.srodowiskaZnacznika = pozycje.length;
-  const poKodzie = spisPoKodzie(pozycje, 'srodowisko');
-  const zajete = new Set<HTMLElement>();
-
-  for (const srodowisko of wykazSrodowisk) {
-    const pozycja = poKodzie.get(srodowisko.code.toLowerCase());
-    if (pozycja === undefined) {
-      rozliczenie.bezPozycji.push(`środowisko ${srodowisko.code}`);
-      continue;
-    }
-    zajete.add(pozycja);
-    const grupa = document.getElementById(pozycja.getAttribute('aria-controls') ?? '');
-    pozycja.removeAttribute('hidden');
-    pozycja.setAttribute('data-srodowisko', srodowisko.code);
-    opiszPozycje(pozycja, srodowisko.name, srodowisko.description);
-    przestaw(pozycja, grupa);
-    if (grupa !== null) {
-      /* Zasłona grupy zostaje nietknięta: rozwija ją i zwija `zasoby/rama.js`
-         przy naciśnięciu pozycji środowiska. */
-      grupa.setAttribute('aria-label', `Moduły środowiska ${srodowisko.name}`);
-      wypelnijModuly(grupa, srodowisko, katalogModulow, rozliczenie);
-    }
-  }
-
-  for (const pozycja of pozycje) {
-    if (zajete.has(pozycja)) continue;
-    ukryj(pozycja, rozliczenie);
-    const grupa = document.getElementById(pozycja.getAttribute('aria-controls') ?? '');
-    if (grupa !== null) grupa.setAttribute('hidden', '');
-  }
-}
-
-/** Moduły widoczne w środowisku podaje samo środowisko; katalog daje im nazwy. */
-function wypelnijModuly(
-  grupa: HTMLElement,
-  srodowisko: Environment,
-  katalogModulow: Map<string, Module>,
-  rozliczenie: RozliczeniePowloki,
-): void {
-  const pozycje = [...grupa.querySelectorAll<HTMLElement>('.dn-szyna-poz--modul')];
-  const poKodzie = spisPoKodzie(pozycje, 'modul');
-  const zajete = new Set<HTMLElement>();
-
-  for (const kod of srodowisko.moduleCodes ?? []) {
-    const modul = katalogModulow.get(kod);
-    const pozycja = poKodzie.get(kod.toLowerCase());
-    if (modul === undefined || pozycja === undefined) {
-      rozliczenie.bezPozycji.push(`${srodowisko.code}/${kod}`);
-      continue;
-    }
-    zajete.add(pozycja);
-    pozycja.removeAttribute('hidden');
-    pozycja.setAttribute('data-modul', modul.code);
-    opiszPozycje(pozycja, modul.name, modul.description);
-    grupa.appendChild(pozycja);
-  }
-
-  for (const pozycja of pozycje) {
-    if (!zajete.has(pozycja)) ukryj(pozycja, rozliczenie);
-  }
-}
-
-/** Spis pozycji po kodzie z ich cechy; kod sprowadza się do małych liter, bo znacznik pisze nazwy wielką, a rejestr trzyma kody małymi. */
-function spisPoKodzie(
-  pozycje: HTMLElement[],
-  cecha: 'srodowisko' | 'modul',
-): Map<string, HTMLElement> {
-  const spis = new Map<string, HTMLElement>();
-  for (const pozycja of pozycje) {
-    const kod = (pozycja.dataset[cecha] ?? '').toLowerCase();
-    if (kod !== '' && !spis.has(kod)) spis.set(kod, pozycja);
-  }
-  return spis;
-}
-
-/* Kolejność pozycji szyny jest własnością rejestru: pozycja wraz ze swoją grupą
-   modułów idzie na koniec listy, więc po przejściu całego rejestru lista stoi
-   w jego porządku. Grupa musi iść za swoją pozycją, bo rama rozwija ją
-   sąsiedztwem w znaczniku. */
-function przestaw(pozycja: HTMLElement, grupa: HTMLElement | null): void {
-  const lista = pozycja.parentElement;
-  if (lista === null) return;
-  lista.appendChild(pozycja);
-  if (grupa !== null && grupa.parentElement === lista) lista.appendChild(grupa);
 }
 
 /** Miara bez źródła w kontrakcie jest atrapą; znika wraz z rozdzielnikiem przed nią. */
@@ -234,7 +200,6 @@ function usunMiaryBezZrodla(stan: Element): void {
   }
 }
 
-/** Pierwsza pozycja paska niesie rolę w pogrubieniu i login w tekście za nią. */
 function wpiszKonto(stan: Element, login: string | undefined): void {
   if (login === undefined || login.length === 0) return;
   const pozycja = stan.querySelector('.dn-stan-poz');
@@ -243,7 +208,6 @@ function wpiszKonto(stan: Element, login: string | undefined): void {
   if (tekst !== null) tekst.nodeValue = ` · ${login}`;
 }
 
-/** Druga pozycja paska mówi, gdzie Operator stoi: środowisko w pogrubieniu, moduł za nim. */
 function wpiszPolozenie(
   stan: Element,
   wykazSrodowisk: Environment[],
@@ -261,7 +225,6 @@ function wpiszPolozenie(
   if (tekst !== null && modul !== undefined) tekst.nodeValue = ` · ${modul.name}`;
 }
 
-/** Liczba sesji czynnych; rdzeń podaje sumę, nie długość odcinka wykazu. */
 function wpiszSesje(stan: Element, liczba: number): void {
   const licznik = stan.querySelector('[data-stan-sesje]');
   if (licznik !== null) licznik.textContent = String(liczba);

@@ -92,16 +92,23 @@
 <template id="dn-tresc-studio"></template>
 
 <!--
-  Skrypty biblioteki, w kolejności wczytania przez źródło prawdy — osiemnaście
-  plików, kopiowane do `dist/zasoby/` przez `vite.config.js` (rozstrzygnięcie
-  opisane tam). To funkcje domknięte działające na znaczniku przez klasy
-  i atrybuty `data-*`, nie moduły — bez `type="module"`, tak jak w źródle.
+  Podstawa okna: powiadomienie, przełączanie widoków, zakładki, menu podręczne
+  i okno modalne. Wchodzi przed biblioteką, bo jej skrypty wołają `dnToast`
+  i `dnPrzelaczWidok` od pierwszego zdarzenia. Warstwy prototypu
+  `zasoby/prototyp.js` produkt nie wczytuje.
+-->
+<script type="module" src="./src/wiazanie/podstawa-okna.ts"></script>
+
+<!--
+  Skrypty biblioteki, w kolejności wczytania przez źródło prawdy, kopiowane
+  do `dist/zasoby/` przez `vite.config.js` (rozstrzygnięcie opisane tam).
+  To funkcje domknięte działające na znaczniku przez klasy i atrybuty `data-*`,
+  nie moduły — bez `type="module"`, tak jak w źródle.
 -->
 <script src="./zasoby/wspolne.js"></script>
 <script src="./zasoby/narzedzia-okien.js"></script>
 <script src="./zasoby/ekran-startowy.js"></script>
 <script src="./zasoby/powloka.js"></script>
-<script src="./zasoby/prototyp.js"></script>
 <script src="./zasoby/menu.js"></script>
 <script src="./zasoby/okna-modalne.js"></script>
 <script src="./zasoby/rama.js"></script>

@@ -1,6 +1,4 @@
-// Obszar Apps — strona budowy produktu. Produkt okna (tabela `produkt_apps`),
-// etapy budowy (`etap_apps`) oraz kamienie milowe wraz ze związkiem z etapami
-// (`kamien_milowy_apps`, `kamien_milowy_etap_apps`).
+// Obszar Apps — strona budowy produktu: produkt okna, etapy budowy oraz kamienie milowe z ich etapami.
 package dane
 
 import (
@@ -9,8 +7,7 @@ import (
 	"fmt"
 )
 
-// ProduktApp to wiersz tabeli `produkt_apps`: metadane produktu jednego
-// okna wraz z listą platform docelowych.
+// ProduktApp to metadane produktu jednego okna wraz z listą platform docelowych.
 type ProduktApp struct {
 	ID             int64
 	Kod            string
@@ -23,8 +20,7 @@ type ProduktApp struct {
 	Zaktualizowano string
 }
 
-// EtapApp to wiersz tabeli `etap_apps` — etap trackera Product Buildera,
-// wraz z kolejnością i wykonawcą.
+// EtapApp to etap trackera Product Buildera wraz z kolejnością i wykonawcą.
 type EtapApp struct {
 	ID             int64
 	Kod            string
@@ -37,9 +33,7 @@ type EtapApp struct {
 	Zaktualizowano string
 }
 
-// KamienMilowyApp to wiersz tabeli `kamien_milowy_apps` wraz z kodami etapów,
-// które się na niego składają — kontrakt oddaje kamień milowy zawsze razem
-// z nimi, więc rozdzielanie tego na dwa odczyty byłoby pracą bez odbiorcy.
+// KamienMilowyApp to kamień milowy wraz z kodami etapów, które się na niego składają.
 type KamienMilowyApp struct {
 	ID             int64
 	Kod            string
@@ -56,9 +50,7 @@ const (
 	kolumnyProduktuApp = `id, identyfikator_zewnetrzny, okno, nazwa, opis, platformy,
 	                      repozytorium, utworzono, zaktualizowano`
 
-	// UPSERT po oknie — jeden produkt na okno (czoło migracji 200). Kod
-	// zewnętrzny nadany przy pierwszym zapisie zostaje: `AppProduct.id` ma być
-	// stały, a kolejne zapisy zmieniają metadane, nie tożsamość produktu.
+	// wstawienie-lub-nadpisanie po oknie — jeden produkt na okno; kod nadany przy pierwszym zapisie zostaje stały.
 	zapiszProduktApp = `INSERT INTO produkt_apps
 	                    (identyfikator_zewnetrzny, okno, nazwa, opis, platformy, repozytorium)
 	                    VALUES (?, ?, ?, ?, ?, ?)
@@ -75,40 +67,42 @@ const (
 	                   wykonawca, utworzono, zaktualizowano`
 
 	zapiszEtapApp = `INSERT INTO etap_apps
-	                 (identyfikator_zewnetrzny, okno, nazwa, kolejnosc, stan, wykonawca)
-	                 VALUES (?, ?, ?, ?, ?, ?)
+	                 (identyfikator_zewnetrzny, okno, nazwa, kolejnosc, stan, wykonawca, konto_id)
+	                 VALUES (?, ?, ?, ?, ?, ?, ` + WskazanieKonta + `)
 	                 ON CONFLICT(identyfikator_zewnetrzny) DO UPDATE SET
 	                     nazwa = excluded.nazwa,
 	                     kolejnosc = excluded.kolejnosc,
 	                     stan = excluded.stan,
 	                     wykonawca = excluded.wykonawca,
-	                     zaktualizowano = strftime('%Y-%m-%dT%H:%M:%fZ','now')`
+	                     zaktualizowano = strftime('%Y-%m-%dT%H:%M:%fZ','now')
+	                 WHERE ` + WarunekKonta
 
 	pobierzEtapApp = `SELECT ` + kolumnyEtapuApp + ` FROM etap_apps
-	                  WHERE identyfikator_zewnetrzny = ?`
+	                  WHERE identyfikator_zewnetrzny = ? AND ` + WarunekKonta
 
 	listaEtapowApp = `SELECT ` + kolumnyEtapuApp + ` FROM etap_apps
-	                  WHERE okno = ? ORDER BY kolejnosc, id`
+	                  WHERE okno = ? AND ` + WarunekKonta + ` ORDER BY kolejnosc, id`
 
 	kolumnyKamieniaApp = `id, identyfikator_zewnetrzny, okno, nazwa, termin, stan,
 	                      utworzono, zaktualizowano`
 
 	zapiszKamienApp = `INSERT INTO kamien_milowy_apps
-	                   (identyfikator_zewnetrzny, okno, nazwa, termin, stan)
-	                   VALUES (?, ?, ?, ?, ?)
+	                   (identyfikator_zewnetrzny, okno, nazwa, termin, stan, konto_id)
+	                   VALUES (?, ?, ?, ?, ?, ` + WskazanieKonta + `)
 	                   ON CONFLICT(identyfikator_zewnetrzny) DO UPDATE SET
 	                       nazwa = excluded.nazwa,
 	                       termin = excluded.termin,
 	                       stan = excluded.stan,
-	                       zaktualizowano = strftime('%Y-%m-%dT%H:%M:%fZ','now')`
+	                       zaktualizowano = strftime('%Y-%m-%dT%H:%M:%fZ','now')
+	                   WHERE ` + WarunekKonta
 
 	pobierzKamienApp = `SELECT ` + kolumnyKamieniaApp + ` FROM kamien_milowy_apps
-	                    WHERE identyfikator_zewnetrzny = ?`
+	                    WHERE identyfikator_zewnetrzny = ? AND ` + WarunekKonta
 
 	listaKamieniApp = `SELECT ` + kolumnyKamieniaApp + ` FROM kamien_milowy_apps
-	                   WHERE okno = ? ORDER BY IFNULL(termin, 0), id`
+	                   WHERE okno = ? AND ` + WarunekKonta + ` ORDER BY IFNULL(termin, 0), id`
 
-	usunKamienApp = `DELETE FROM kamien_milowy_apps WHERE identyfikator_zewnetrzny = ?`
+	usunKamienApp = `DELETE FROM kamien_milowy_apps WHERE identyfikator_zewnetrzny = ? AND ` + WarunekKonta
 
 	usunEtapyKamieniaApp = `DELETE FROM kamien_milowy_etap_apps WHERE kamien_id = ?`
 
@@ -118,12 +112,10 @@ const (
 	listaEtapowKamieniApp = `SELECT k.identyfikator_zewnetrzny, z.etap_kod
 	                         FROM kamien_milowy_etap_apps z
 	                         JOIN kamien_milowy_apps k ON k.id = z.kamien_id
-	                         WHERE k.okno = ? ORDER BY z.etap_kod`
+	                         WHERE k.okno = ? AND ` + WarunekKonta + ` ORDER BY z.etap_kod`
 )
 
-// ZapiszProduktApp zapisuje produkt okna, UPSERT po kolumnie okna. Kod
-// zewnętrzny podany w strukturze obowiązuje wyłącznie przy pierwszym
-// zapisie — przy kolejnych wiersz zostaje pod kodem nadanym wcześniej.
+// ZapiszProduktApp zapisuje produkt okna (wstawienie-lub-nadpisanie po oknie); kod podany obowiązuje tylko przy pierwszym zapisie.
 func (r *repozytoriumAplikacji) ZapiszProduktApp(ctx context.Context, produkt ProduktApp) (ProduktApp, error) {
 	if produkt.Okno == "" {
 		return ProduktApp{}, fmt.Errorf("dane: produkt aplikacji bez okna")
@@ -144,8 +136,7 @@ func (r *repozytoriumAplikacji) ZapiszProduktApp(ctx context.Context, produkt Pr
 	return r.ProduktApp(ctx, produkt.Okno)
 }
 
-// ProduktApp zwraca produkt zapisany dla wskazanego okna aplikacji; brak
-// wiersza wraca jako ErrBrakWiersza.
+// ProduktApp zwraca produkt okna aplikacji; brak wiersza wraca jako ErrBrakWiersza.
 func (r *repozytoriumAplikacji) ProduktApp(ctx context.Context, okno string) (ProduktApp, error) {
 	polecenie, err := r.zapytania.przygotuj(ctx, pobierzProduktApp)
 	if err != nil {
@@ -161,8 +152,7 @@ func (r *repozytoriumAplikacji) ProduktApp(ctx context.Context, okno string) (Pr
 	return produkt, nil
 }
 
-// ZapiszEtapApp zapisuje jeden etap budowy produktu, UPSERT po
-// identyfikatorze zewnętrznym etapu w oknie.
+// ZapiszEtapApp zapisuje jeden etap budowy produktu (wstawienie-lub-nadpisanie po kodzie etapu).
 func (r *repozytoriumAplikacji) ZapiszEtapApp(ctx context.Context, etap EtapApp) (EtapApp, error) {
 	if etap.Kod == "" || etap.Okno == "" {
 		return EtapApp{}, fmt.Errorf("dane: etap aplikacji bez identyfikatora albo bez okna")
@@ -175,21 +165,20 @@ func (r *repozytoriumAplikacji) ZapiszEtapApp(ctx context.Context, etap EtapApp)
 		return EtapApp{}, err
 	}
 	_, err = polecenie.ExecContext(ctx, etap.Kod, etap.Okno, etap.Nazwa, etap.Kolejnosc,
-		etap.Stan, tekstDoKolumny(etap.Wykonawca))
+		etap.Stan, tekstDoKolumny(etap.Wykonawca), KontoOperatora(ctx), KontoOperatora(ctx))
 	if err != nil {
 		return EtapApp{}, fmt.Errorf("dane: nie można zapisać etapu %q: %w", etap.Kod, err)
 	}
 	return r.EtapApp(ctx, etap.Kod)
 }
 
-// EtapApp zwraca jeden etap trackera Product Buildera po jego kodzie
-// zewnętrznym, niezależnie od okna.
+// EtapApp zwraca jeden etap trackera Product Buildera po jego kodzie.
 func (r *repozytoriumAplikacji) EtapApp(ctx context.Context, kod string) (EtapApp, error) {
 	polecenie, err := r.zapytania.przygotuj(ctx, pobierzEtapApp)
 	if err != nil {
 		return EtapApp{}, err
 	}
-	etap, err := odczytajEtapApp(polecenie.QueryRowContext(ctx, kod))
+	etap, err := odczytajEtapApp(polecenie.QueryRowContext(ctx, kod, KontoOperatora(ctx)))
 	if err == sql.ErrNoRows {
 		return EtapApp{}, ErrBrakWiersza
 	}
@@ -199,14 +188,13 @@ func (r *repozytoriumAplikacji) EtapApp(ctx context.Context, kod string) (EtapAp
 	return etap, nil
 }
 
-// EtapyApp zwraca wszystkie etapy budowy produktu okna w kolejności
-// trackera, tej ustawionej polem Kolejnosc.
+// EtapyApp zwraca etapy budowy produktu okna w kolejności trackera (pole Kolejnosc).
 func (r *repozytoriumAplikacji) EtapyApp(ctx context.Context, okno string) ([]EtapApp, error) {
 	polecenie, err := r.zapytania.przygotuj(ctx, listaEtapowApp)
 	if err != nil {
 		return nil, err
 	}
-	wiersze, err := polecenie.QueryContext(ctx, okno)
+	wiersze, err := polecenie.QueryContext(ctx, okno, KontoOperatora(ctx))
 	if err != nil {
 		return nil, fmt.Errorf("dane: nie można odczytać etapów okna %q: %w", okno, err)
 	}
@@ -226,9 +214,7 @@ func (r *repozytoriumAplikacji) EtapyApp(ctx context.Context, okno string) ([]Et
 	return lista, nil
 }
 
-// ZapiszKamienMilowyApp zapisuje kamień milowy wraz z kompletem etapów, które
-// się na niego składają — związek wymieniany jest w całości w jednej
-// transakcji, bo kontrakt nadsyła `stageIds` bez trybu częściowej zmiany.
+// ZapiszKamienMilowyApp zapisuje kamień milowy wraz z kompletem etapów w jednej transakcji (wymiana całości).
 func (r *repozytoriumAplikacji) ZapiszKamienMilowyApp(ctx context.Context,
 	kamien KamienMilowyApp) (KamienMilowyApp, error) {
 
@@ -245,13 +231,14 @@ func (r *repozytoriumAplikacji) ZapiszKamienMilowyApp(ctx context.Context,
 			return err
 		}
 		if _, err := zapis.ExecContext(ctx, kamien.Kod, kamien.Okno, kamien.Nazwa,
-			liczbaDoKolumny(kamien.Termin), kamien.Stan); err != nil {
+			liczbaDoKolumny(kamien.Termin), kamien.Stan, KontoOperatora(ctx), KontoOperatora(ctx)); err != nil {
 			return fmt.Errorf("dane: nie można zapisać kamienia milowego %q: %w", kamien.Kod, err)
 		}
 
 		var kamienID int64
 		wiersz := transakcja.QueryRowContext(ctx,
-			`SELECT id FROM kamien_milowy_apps WHERE identyfikator_zewnetrzny = ?`, kamien.Kod)
+			`SELECT id FROM kamien_milowy_apps WHERE identyfikator_zewnetrzny = ? AND `+WarunekKonta,
+			kamien.Kod, KontoOperatora(ctx))
 		if err := wiersz.Scan(&kamienID); err != nil {
 			return fmt.Errorf("dane: nie można odczytać id kamienia milowego %q: %w", kamien.Kod, err)
 		}
@@ -284,14 +271,13 @@ func (r *repozytoriumAplikacji) ZapiszKamienMilowyApp(ctx context.Context,
 	return r.KamienMilowyApp(ctx, kamien.Kod)
 }
 
-// KamienMilowyApp zwraca jeden kamień milowy budowy produktu wraz z kodami
-// wszystkich jego etapów składowych.
+// KamienMilowyApp zwraca jeden kamień milowy wraz z kodami jego etapów składowych.
 func (r *repozytoriumAplikacji) KamienMilowyApp(ctx context.Context, kod string) (KamienMilowyApp, error) {
 	polecenie, err := r.zapytania.przygotuj(ctx, pobierzKamienApp)
 	if err != nil {
 		return KamienMilowyApp{}, err
 	}
-	kamien, err := odczytajKamienApp(polecenie.QueryRowContext(ctx, kod))
+	kamien, err := odczytajKamienApp(polecenie.QueryRowContext(ctx, kod, KontoOperatora(ctx)))
 	if err == sql.ErrNoRows {
 		return KamienMilowyApp{}, ErrBrakWiersza
 	}
@@ -306,14 +292,13 @@ func (r *repozytoriumAplikacji) KamienMilowyApp(ctx context.Context, kod string)
 	return kamien, nil
 }
 
-// KamienieMiloweApp zwraca wszystkie kamienie milowe budowy produktu okna
-// wraz z kodami etapów każdego z nich.
+// KamienieMiloweApp zwraca kamienie milowe okna wraz z kodami etapów każdego z nich.
 func (r *repozytoriumAplikacji) KamienieMiloweApp(ctx context.Context, okno string) ([]KamienMilowyApp, error) {
 	polecenie, err := r.zapytania.przygotuj(ctx, listaKamieniApp)
 	if err != nil {
 		return nil, err
 	}
-	wiersze, err := polecenie.QueryContext(ctx, okno)
+	wiersze, err := polecenie.QueryContext(ctx, okno, KontoOperatora(ctx))
 	if err != nil {
 		return nil, fmt.Errorf("dane: nie można odczytać kamieni milowych okna %q: %w", okno, err)
 	}
@@ -341,15 +326,13 @@ func (r *repozytoriumAplikacji) KamienieMiloweApp(ctx context.Context, okno stri
 	return lista, nil
 }
 
-// UsunKamienMilowyApp kasuje kamień milowy; związek z etapami znika kaskadą.
-// Zwraca prawdę, gdy wiersz naprawdę zniknął — kontrakt oddaje `deleted`, więc
-// „nie było czego kasować" nie ma prawa wrócić jako powodzenie usunięcia.
+// UsunKamienMilowyApp kasuje kamień milowy (etapy kaskadą); prawda tylko, gdy wiersz naprawdę zniknął.
 func (r *repozytoriumAplikacji) UsunKamienMilowyApp(ctx context.Context, kod string) (bool, error) {
 	polecenie, err := r.zapytania.przygotuj(ctx, usunKamienApp)
 	if err != nil {
 		return false, err
 	}
-	wynik, err := polecenie.ExecContext(ctx, kod)
+	wynik, err := polecenie.ExecContext(ctx, kod, KontoOperatora(ctx))
 	if err != nil {
 		return false, fmt.Errorf("dane: nie można usunąć kamienia milowego %q: %w", kod, err)
 	}
@@ -360,15 +343,13 @@ func (r *repozytoriumAplikacji) UsunKamienMilowyApp(ctx context.Context, kod str
 	return ile > 0, nil
 }
 
-// etapyKamieniOkna zwraca mapę kod kamienia → kody etapów. Jedno zapytanie na
-// całe okno zamiast jednego na kamień: wykaz kamieni ciągnąłby inaczej tyle
-// zapytań, ile ma pozycji.
+// etapyKamieniOkna zwraca mapę kod kamienia → kody etapów jednym zapytaniem na całe okno.
 func (r *repozytoriumAplikacji) etapyKamieniOkna(ctx context.Context, okno string) (map[string][]string, error) {
 	polecenie, err := r.zapytania.przygotuj(ctx, listaEtapowKamieniApp)
 	if err != nil {
 		return nil, err
 	}
-	wiersze, err := polecenie.QueryContext(ctx, okno)
+	wiersze, err := polecenie.QueryContext(ctx, okno, KontoOperatora(ctx))
 	if err != nil {
 		return nil, fmt.Errorf("dane: nie można odczytać etapów kamieni okna %q: %w", okno, err)
 	}
@@ -388,8 +369,6 @@ func (r *repozytoriumAplikacji) etapyKamieniOkna(ctx context.Context, okno strin
 	return mapa, nil
 }
 
-// odczytajProduktApp składa pełną strukturę ProduktApp z jednego wiersza
-// wyniku zapytania SQL bazy danych.
 func odczytajProduktApp(wiersz skaner) (ProduktApp, error) {
 	var produkt ProduktApp
 	var opis, platformy, repozytorium sql.NullString
@@ -404,8 +383,6 @@ func odczytajProduktApp(wiersz skaner) (ProduktApp, error) {
 	return produkt, nil
 }
 
-// odczytajEtapApp składa pełną strukturę EtapApp z jednego wiersza wyniku
-// wykonanego zapytania SQL bazy danych.
 func odczytajEtapApp(wiersz skaner) (EtapApp, error) {
 	var etap EtapApp
 	var wykonawca sql.NullString
@@ -418,8 +395,6 @@ func odczytajEtapApp(wiersz skaner) (EtapApp, error) {
 	return etap, nil
 }
 
-// odczytajKamienApp składa kamień milowy z jednego wiersza wyniku; kody etapów
-// dokłada wołający z osobnego zapytania.
 func odczytajKamienApp(wiersz skaner) (KamienMilowyApp, error) {
 	var kamien KamienMilowyApp
 	var termin sql.NullInt64

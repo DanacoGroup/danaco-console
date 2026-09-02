@@ -66,7 +66,26 @@ export function zwiazPasPrzygotowania(kanal: Kanal): void {
       return;
     }
     if (cel.closest('.we-pas [data-komunikat-tytul]') !== null) domknij();
+    if (cel.closest('[data-zmien-haslo]') !== null) void zmienHaslo(kanal);
   }, true);
+}
+
+// Zmiana hasła ze znanym hasłem bieżącym; odzyskanie listem to osobna auth.reset.
+async function zmienHaslo(kanal: Kanal): Promise<void> {
+  const biezace = document.querySelector<HTMLInputElement>('[data-haslo-biezace]');
+  const nowe = document.querySelector<HTMLInputElement>('[data-haslo-nowe]');
+  if (biezace === null || nowe === null) return;
+  const wynik = await wywolaj(kanal, Command.AuthPasswordReset, {
+    currentPassword: biezace.value,
+    newPassword: nowe.value,
+  });
+  if (!wynik.udany) {
+    oglos('Konto', wynik.blad?.message ?? 'Rdzeń odmówił zmiany hasła.', 'ostrzezenie');
+    return;
+  }
+  biezace.value = '';
+  nowe.value = '';
+  oglos('Konto', 'Hasło bramki zmienione.');
 }
 
 /* Wylogowanie unieważnia sesję bramki tego urządzenia — kontrakt nie zna innej

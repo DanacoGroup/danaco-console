@@ -119,7 +119,8 @@ export function zwiazKatalogModulu(
         return;
       }
     }
-    const zadanie: Record<string, unknown> = { windowId: idOkna, ...dodatkowe };
+    const zadanie: Record<string, unknown> = { ...dodatkowe };
+    if (idOkna !== '' && !('windowId' in zadanie)) zadanie['windowId'] = idOkna;
     const wynik = await wywolaj(kanal, komenda, zadanie as never);
     if (!wynik.udany) {
       oglos(nazwaModulu, wynik.blad?.message ?? 'Rdzeń odmówił wykonania operacji.', 'ostrzezenie');

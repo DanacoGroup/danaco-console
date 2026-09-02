@@ -82,6 +82,8 @@ Prowadzącego, kontrola przez inną sesję, scalenie, `git worktree remove`.
   nigdy przebieg prac.
 - Bez wymyślonych oznaczeń: żadnych autorskich kodów, sygnatur i numeracji.
 - Jedno pojęcie — jedna nazwa, w całym repozytorium.
+- Komentarze: plik od 100 wierszy kodu niesie ich najwyżej 5% wierszy, komentarz
+  do 350 znaków; sprawdza walidator pluginu `danaco-dyscyplina` (decyzja 35).
 
 ## Weryfikacja
 

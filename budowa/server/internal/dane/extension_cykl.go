@@ -1,6 +1,4 @@
-// Plik utrzymuje rodzinę extension.*: kolekcje kuratorskie, dziennik cyklu
-// życia, wersje pozycji wraz z przypięciem oraz paczki przesłane instalacją
-// Personal, jako jeden z czterech plików repozytorium rozszerzeń.
+// Rodzina extension.*: kolekcje kuratorskie, dziennik cyklu życia, wersje z przypięciem i paczki instalacji Personal.
 package dane
 
 import (
@@ -9,8 +7,7 @@ import (
 	"fmt"
 )
 
-// KolekcjaRozszerzen to wiersz tabeli `kolekcja_rozszerzen` wraz z kodami
-// pozycji, które ją tworzą — kontrakt oddaje kolekcję zawsze razem z nimi.
+// KolekcjaRozszerzen to wiersz `kolekcja_rozszerzen` wraz z kodami pozycji, które ją tworzą.
 type KolekcjaRozszerzen struct {
 	ID               int64
 	Kod              string
@@ -60,19 +57,20 @@ const (
 	                             oznaczenie_barwne, zaktualizowano`
 
 	zapiszKolekcjeRozszerzen = `INSERT INTO kolekcja_rozszerzen
-	                            (identyfikator_zewnetrzny, nazwa, opis, oznaczenie_barwne, zaktualizowano)
-	                            VALUES (?, ?, ?, ?, ?)
+	                            (identyfikator_zewnetrzny, nazwa, opis, oznaczenie_barwne, zaktualizowano, konto_id)
+	                            VALUES (?, ?, ?, ?, ?, ` + WskazanieKonta + `)
 	                            ON CONFLICT(identyfikator_zewnetrzny) DO UPDATE SET
 	                                nazwa = excluded.nazwa,
 	                                opis = excluded.opis,
 	                                oznaczenie_barwne = excluded.oznaczenie_barwne,
-	                                zaktualizowano = excluded.zaktualizowano`
+	                                zaktualizowano = excluded.zaktualizowano
+	                            WHERE ` + WarunekKonta
 
 	pobierzKolekcjeRozszerzen = `SELECT ` + kolumnyKolekcjiRozszerzen + `
-	                             FROM kolekcja_rozszerzen WHERE identyfikator_zewnetrzny = ?`
+	                             FROM kolekcja_rozszerzen WHERE identyfikator_zewnetrzny = ? AND ` + WarunekKonta
 
 	listaKolekcjiRozszerzen = `SELECT ` + kolumnyKolekcjiRozszerzen + `
-	                           FROM kolekcja_rozszerzen ORDER BY nazwa, id`
+	                           FROM kolekcja_rozszerzen WHERE ` + WarunekKonta + ` ORDER BY nazwa, id`
 
 	usunPozycjeKolekcjiRozszerzen = `DELETE FROM pozycja_kolekcji_rozszerzen WHERE kolekcja_id = ?`
 
@@ -84,55 +82,55 @@ const (
 	listaPozycjiKolekcjiRozszerzen = `SELECT k.identyfikator_zewnetrzny, p.rozszerzenie_kod
 	                                  FROM pozycja_kolekcji_rozszerzen p
 	                                  JOIN kolekcja_rozszerzen k ON k.id = p.kolekcja_id
+	                                  WHERE ` + WarunekKonta + `
 	                                  ORDER BY p.kolejnosc, p.rozszerzenie_kod`
 
 	wstawHistorieRozszerzenia = `INSERT INTO historia_rozszerzenia
 	                             (identyfikator_zewnetrzny, rozszerzenie_kod, czynnosc,
-	                              wersja_przed, wersja_po, szczegol, zaszlo)
-	                             VALUES (?, ?, ?, ?, ?, ?, ?)`
+	                              wersja_przed, wersja_po, szczegol, zaszlo, konto_id)
+	                             VALUES (?, ?, ?, ?, ?, ?, ?, ` + WskazanieKonta + `)`
 
 	listaHistoriiRozszerzenia = `SELECT id, identyfikator_zewnetrzny, rozszerzenie_kod, czynnosc,
 	                                    wersja_przed, wersja_po, szczegol, zaszlo
 	                             FROM historia_rozszerzenia
-	                             WHERE (? = '' OR rozszerzenie_kod = ?) AND zaszlo >= ?
+	                             WHERE (? = '' OR rozszerzenie_kod = ?) AND zaszlo >= ? AND ` + WarunekKonta + `
 	                             ORDER BY zaszlo DESC, id DESC LIMIT ?`
 
 	policzHistorieRozszerzenia = `SELECT COUNT(*) FROM historia_rozszerzenia
-	                              WHERE (? = '' OR rozszerzenie_kod = ?) AND zaszlo >= ?`
+	                              WHERE (? = '' OR rozszerzenie_kod = ?) AND zaszlo >= ? AND ` + WarunekKonta
 
 	zapiszWersjeRozszerzenia = `INSERT INTO wersja_rozszerzenia
-	                            (rozszerzenie_kod, wersja, dziennik_zmian, paczka_odwolanie, utworzono)
-	                            VALUES (?, ?, ?, ?, ?)
+	                            (rozszerzenie_kod, wersja, dziennik_zmian, paczka_odwolanie, utworzono, konto_id)
+	                            VALUES (?, ?, ?, ?, ?, ` + WskazanieKonta + `)
 	                            ON CONFLICT(rozszerzenie_kod, wersja) DO UPDATE SET
 	                                dziennik_zmian = IFNULL(excluded.dziennik_zmian,
 	                                                        wersja_rozszerzenia.dziennik_zmian),
 	                                paczka_odwolanie = IFNULL(excluded.paczka_odwolanie,
-	                                                          wersja_rozszerzenia.paczka_odwolanie)`
+	                                                          wersja_rozszerzenia.paczka_odwolanie)
+	                            WHERE ` + WarunekKonta
 
 	listaWersjiRozszerzenia = `SELECT id, rozszerzenie_kod, wersja, dziennik_zmian,
 	                                  paczka_odwolanie, utworzono
-	                           FROM wersja_rozszerzenia WHERE rozszerzenie_kod = ?
+	                           FROM wersja_rozszerzenia WHERE rozszerzenie_kod = ? AND ` + WarunekKonta + `
 	                           ORDER BY utworzono DESC, id DESC`
 
 	przypnijWersjeRozszerzenia = `UPDATE rozszerzenie SET wersja_przypieta = ?, zaktualizowano = ?
-	                              WHERE identyfikator_zewnetrzny = ?`
+	                              WHERE identyfikator_zewnetrzny = ? AND ` + WarunekKonta
 
 	pobierzPrzypiecieRozszerzenia = `SELECT IFNULL(wersja_przypieta,'') FROM rozszerzenie
-	                                 WHERE identyfikator_zewnetrzny = ?`
+	                                 WHERE identyfikator_zewnetrzny = ? AND ` + WarunekKonta
 
 	wstawPaczkeRozszerzenia = `INSERT INTO paczka_rozszerzenia
 	                           (identyfikator_zewnetrzny, nazwa_pliku, sciezka, rozmiar,
-	                            suma_kontrolna, utworzono)
-	                           VALUES (?, ?, ?, ?, ?, ?)`
+	                            suma_kontrolna, utworzono, konto_id)
+	                           VALUES (?, ?, ?, ?, ?, ?, ` + WskazanieKonta + `)`
 
 	pobierzPaczkeRozszerzenia = `SELECT id, identyfikator_zewnetrzny, nazwa_pliku, sciezka,
 	                                    rozmiar, suma_kontrolna, utworzono
-	                             FROM paczka_rozszerzenia WHERE identyfikator_zewnetrzny = ?`
+	                             FROM paczka_rozszerzenia WHERE identyfikator_zewnetrzny = ? AND ` + WarunekKonta
 )
 
-// ZapiszKolekcjeRozszerzen zapisuje kolekcję wraz z kompletem jej pozycji
-// w jednej transakcji — kontrakt nadsyła `extensionIds` bez trybu częściowej
-// zmiany, więc związek wymienia się „usuń, wstaw od nowa".
+// ZapiszKolekcjeRozszerzen zapisuje kolekcję wraz z kompletem pozycji w jednej transakcji („usuń, wstaw od nowa").
 func (r *repozytoriumRozszerzen) ZapiszKolekcjeRozszerzen(ctx context.Context,
 	kolekcja KolekcjaRozszerzen) (KolekcjaRozszerzen, error) {
 
@@ -146,13 +144,14 @@ func (r *repozytoriumRozszerzen) ZapiszKolekcjeRozszerzen(ctx context.Context,
 		}
 		if _, err := zapis.ExecContext(ctx, kolekcja.Kod, kolekcja.Nazwa,
 			tekstDoKolumny(kolekcja.Opis), tekstDoKolumny(kolekcja.OznaczenieBarwne),
-			kolekcja.Zaktualizowano); err != nil {
+			kolekcja.Zaktualizowano, KontoOperatora(ctx), KontoOperatora(ctx)); err != nil {
 			return fmt.Errorf("dane: nie można zapisać kolekcji %q: %w", kolekcja.Kod, err)
 		}
 
 		var kolekcjaID int64
 		wiersz := transakcja.QueryRowContext(ctx,
-			`SELECT id FROM kolekcja_rozszerzen WHERE identyfikator_zewnetrzny = ?`, kolekcja.Kod)
+			`SELECT id FROM kolekcja_rozszerzen WHERE identyfikator_zewnetrzny = ? AND `+WarunekKonta,
+			kolekcja.Kod, KontoOperatora(ctx))
 		if err := wiersz.Scan(&kolekcjaID); err != nil {
 			return fmt.Errorf("dane: nie można odczytać id kolekcji %q: %w", kolekcja.Kod, err)
 		}
@@ -191,7 +190,7 @@ func (r *repozytoriumRozszerzen) KolekcjaRozszerzen(ctx context.Context, kod str
 	if err != nil {
 		return KolekcjaRozszerzen{}, err
 	}
-	kolekcja, err := odczytajKolekcjeRozszerzen(polecenie.QueryRowContext(ctx, kod))
+	kolekcja, err := odczytajKolekcjeRozszerzen(polecenie.QueryRowContext(ctx, kod, KontoOperatora(ctx)))
 	if err == sql.ErrNoRows {
 		return KolekcjaRozszerzen{}, ErrBrakWiersza
 	}
@@ -212,7 +211,7 @@ func (r *repozytoriumRozszerzen) KolekcjeRozszerzen(ctx context.Context) ([]Kole
 	if err != nil {
 		return nil, err
 	}
-	wiersze, err := polecenie.QueryContext(ctx)
+	wiersze, err := polecenie.QueryContext(ctx, KontoOperatora(ctx))
 	if err != nil {
 		return nil, fmt.Errorf("dane: nie można odczytać kolekcji rozszerzeń: %w", err)
 	}
@@ -239,15 +238,13 @@ func (r *repozytoriumRozszerzen) KolekcjeRozszerzen(ctx context.Context) ([]Kole
 	return lista, nil
 }
 
-// pozycjeKolekcjiRozszerzen zwraca mapę kod kolekcji → kody pozycji. Jedno
-// zapytanie na wszystkie kolekcje: wykaz ciągnąłby inaczej tyle zapytań, ile ma
-// pozycji.
+// pozycjeKolekcjiRozszerzen zwraca mapę kod kolekcji → kody pozycji jednym zapytaniem na wszystkie kolekcje.
 func (r *repozytoriumRozszerzen) pozycjeKolekcjiRozszerzen(ctx context.Context) (map[string][]string, error) {
 	polecenie, err := r.zapytania.przygotuj(ctx, listaPozycjiKolekcjiRozszerzen)
 	if err != nil {
 		return nil, err
 	}
-	wiersze, err := polecenie.QueryContext(ctx)
+	wiersze, err := polecenie.QueryContext(ctx, KontoOperatora(ctx))
 	if err != nil {
 		return nil, fmt.Errorf("dane: nie można odczytać pozycji kolekcji: %w", err)
 	}
@@ -280,7 +277,7 @@ func (r *repozytoriumRozszerzen) DopiszHistorieRozszerzenia(ctx context.Context,
 	}
 	_, err = polecenie.ExecContext(ctx, wpis.Kod, wpis.RozszerzenieKod, wpis.Czynnosc,
 		tekstDoKolumny(wpis.WersjaPrzed), tekstDoKolumny(wpis.WersjaPo),
-		tekstDoKolumny(wpis.Szczegol), wpis.Zaszlo)
+		tekstDoKolumny(wpis.Szczegol), wpis.Zaszlo, KontoOperatora(ctx))
 	if err != nil {
 		return fmt.Errorf("dane: nie można zapisać wpisu historii %q: %w", wpis.Kod, err)
 	}
@@ -299,7 +296,7 @@ func (r *repozytoriumRozszerzen) HistoriaRozszerzenia(ctx context.Context, rozsz
 	if err != nil {
 		return nil, 0, err
 	}
-	wiersze, err := polecenie.QueryContext(ctx, rozszerzenie, rozszerzenie, od, granica)
+	wiersze, err := polecenie.QueryContext(ctx, rozszerzenie, rozszerzenie, od, KontoOperatora(ctx), granica)
 	if err != nil {
 		return nil, 0, fmt.Errorf("dane: nie można odczytać historii rozszerzeń: %w", err)
 	}
@@ -328,7 +325,7 @@ func (r *repozytoriumRozszerzen) HistoriaRozszerzenia(ctx context.Context, rozsz
 		return nil, 0, err
 	}
 	var razem int
-	if err := liczenie.QueryRowContext(ctx, rozszerzenie, rozszerzenie, od).Scan(&razem); err != nil {
+	if err := liczenie.QueryRowContext(ctx, rozszerzenie, rozszerzenie, od, KontoOperatora(ctx)).Scan(&razem); err != nil {
 		return nil, 0, fmt.Errorf("dane: nie można policzyć wpisów historii: %w", err)
 	}
 	return lista, razem, nil
@@ -347,7 +344,7 @@ func (r *repozytoriumRozszerzen) ZapiszWersjeRozszerzenia(ctx context.Context,
 	}
 	_, err = polecenie.ExecContext(ctx, wersja.RozszerzenieKod, wersja.Wersja,
 		tekstDoKolumny(wersja.DziennikZmian), tekstDoKolumny(wersja.PaczkaOdwolanie),
-		wersja.Utworzono)
+		wersja.Utworzono, KontoOperatora(ctx), KontoOperatora(ctx))
 	if err != nil {
 		return fmt.Errorf("dane: nie można zapisać wersji %q pozycji %q: %w",
 			wersja.Wersja, wersja.RozszerzenieKod, err)
@@ -363,7 +360,7 @@ func (r *repozytoriumRozszerzen) WersjeRozszerzenia(ctx context.Context,
 	if err != nil {
 		return nil, err
 	}
-	wiersze, err := polecenie.QueryContext(ctx, rozszerzenie)
+	wiersze, err := polecenie.QueryContext(ctx, rozszerzenie, KontoOperatora(ctx))
 	if err != nil {
 		return nil, fmt.Errorf("dane: nie można odczytać wersji pozycji %q: %w", rozszerzenie, err)
 	}
@@ -388,9 +385,7 @@ func (r *repozytoriumRozszerzen) WersjeRozszerzenia(ctx context.Context,
 	return lista, nil
 }
 
-// PrzypnijWersjeRozszerzenia ustawia albo zdejmuje przypięcie wersji pozycji.
-// Pusty numer zdejmuje przypięcie — kontrakt mówi wprost, że brak `version`
-// „zdejmuje przypięcie".
+// PrzypnijWersjeRozszerzenia ustawia albo zdejmuje przypięcie wersji pozycji; pusty numer zdejmuje przypięcie.
 func (r *repozytoriumRozszerzen) PrzypnijWersjeRozszerzenia(ctx context.Context,
 	rozszerzenie, wersja string, teraz int64) error {
 
@@ -402,7 +397,7 @@ func (r *repozytoriumRozszerzen) PrzypnijWersjeRozszerzenia(ctx context.Context,
 	if wersja != "" {
 		wartosc = wersja
 	}
-	if _, err := polecenie.ExecContext(ctx, wartosc, teraz, rozszerzenie); err != nil {
+	if _, err := polecenie.ExecContext(ctx, wartosc, teraz, rozszerzenie, KontoOperatora(ctx)); err != nil {
 		return fmt.Errorf("dane: nie można przypiąć wersji pozycji %q: %w", rozszerzenie, err)
 	}
 	return nil
@@ -417,7 +412,7 @@ func (r *repozytoriumRozszerzen) PrzypiecieWersjiRozszerzenia(ctx context.Contex
 		return "", err
 	}
 	var wersja string
-	err = polecenie.QueryRowContext(ctx, rozszerzenie).Scan(&wersja)
+	err = polecenie.QueryRowContext(ctx, rozszerzenie, KontoOperatora(ctx)).Scan(&wersja)
 	if err == sql.ErrNoRows {
 		return "", ErrBrakWiersza
 	}
@@ -439,7 +434,7 @@ func (r *repozytoriumRozszerzen) ZalozPaczkeRozszerzenia(ctx context.Context,
 		return err
 	}
 	_, err = polecenie.ExecContext(ctx, paczka.Kod, paczka.NazwaPliku, paczka.Sciezka,
-		paczka.Rozmiar, paczka.SumaKontrolna, paczka.Utworzono)
+		paczka.Rozmiar, paczka.SumaKontrolna, paczka.Utworzono, KontoOperatora(ctx))
 	if err != nil {
 		return fmt.Errorf("dane: nie można zapisać paczki %q: %w", paczka.Kod, err)
 	}
@@ -453,7 +448,7 @@ func (r *repozytoriumRozszerzen) PaczkaRozszerzenia(ctx context.Context, kod str
 		return PaczkaRozszerzenia{}, err
 	}
 	var paczka PaczkaRozszerzenia
-	err = polecenie.QueryRowContext(ctx, kod).Scan(&paczka.ID, &paczka.Kod, &paczka.NazwaPliku,
+	err = polecenie.QueryRowContext(ctx, kod, KontoOperatora(ctx)).Scan(&paczka.ID, &paczka.Kod, &paczka.NazwaPliku,
 		&paczka.Sciezka, &paczka.Rozmiar, &paczka.SumaKontrolna, &paczka.Utworzono)
 	if err == sql.ErrNoRows {
 		return PaczkaRozszerzenia{}, ErrBrakWiersza
@@ -464,8 +459,6 @@ func (r *repozytoriumRozszerzen) PaczkaRozszerzenia(ctx context.Context, kod str
 	return paczka, nil
 }
 
-// odczytajKolekcjeRozszerzen składa kolekcję z jednego wiersza wyniku; kody
-// pozycji dokłada wołający z osobnego zapytania.
 func odczytajKolekcjeRozszerzen(wiersz skaner) (KolekcjaRozszerzen, error) {
 	var kolekcja KolekcjaRozszerzen
 	var opis, barwa sql.NullString

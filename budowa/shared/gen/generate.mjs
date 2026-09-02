@@ -11,6 +11,7 @@ import { katalogShared, wczytajKontrakt } from './wczytaj-kontrakt.mjs';
 import { zbudujModel } from './model-kontraktu.mjs';
 import { emitujTypeScript } from './emiter-typescript.mjs';
 import { emitujGo } from './emiter-go.mjs';
+import { emitujRejestrKlienta } from './emiter-rejestr-klienta.mjs';
 import { opisArtefaktu, zapiszArtefakt } from './zapisz-artefakt.mjs';
 
 const katalogGen = dirname(fileURLToPath(import.meta.url));
@@ -21,6 +22,7 @@ const model = zbudujModel(zrodlo);
 const artefakty = [
   zapiszArtefakt(katalog, model.kontrakt.artefakty.typescript, emitujTypeScript(model)),
   zapiszArtefakt(katalog, model.kontrakt.artefakty.go, emitujGo(model)),
+  zapiszArtefakt(katalog, '../klient/src/wiazanie/rejestr-komend.ts', emitujRejestrKlienta(model)),
 ];
 
 console.log(`Kontrakt ${model.kontrakt.produkt} — protokol ${model.kontrakt.protokol}`);

@@ -1,57 +1,68 @@
-// Operacje platformowe: rodziny komend bez własnego okna modułu (nastawy,
-// poczta, izolacja, pamięć, kolejka i pozostałe globalne) dostają katalog
-// otwierany z Centrum. Każda pozycja wywołuje własną komendę rodziny.
+// Operacje platformowe: katalog otwierany z Centrum, obejmujący każdą rodzinę
+// komend kontraktu. Wykaz rodzin bierze się z rejestru komend, więc żadna
+// rodzina nie wypada poza zasięg; etykiety znane niosą nazwę czytelną.
 
 import type { Kanal } from '../protokol/kanal.ts';
 import { zwiazKatalogModulu } from './katalog-modulu.ts';
+import { REJESTR_KOMEND } from './rejestr-komend.ts';
 
-const RODZINY_PLATFORMY: readonly [string, string][] = [
-  ['config', 'Nastawy'],
-  ['settings', 'Ustawienia'],
-  ['mail', 'Poczta'],
-  ['isolation', 'Izolacja'],
-  ['memory', 'Pamięć'],
-  ['queue', 'Kolejka zadań'],
-  ['orchestration', 'Orkiestracja'],
-  ['schedule', 'Harmonogram'],
-  ['automation', 'Automatyzacje'],
-  ['extension', 'Rozszerzenia'],
-  ['image', 'Obraz'],
-  ['speech', 'Mowa'],
-  ['knowledge', 'Wiedza'],
-  ['access', 'Dostępy'],
-  ['identity', 'Tożsamość'],
-  ['role', 'Role'],
-  ['account', 'Konta'],
-  ['session', 'Sesje'],
-  ['channel', 'Kanały modeli'],
-  ['health', 'Kondycja'],
-  ['alert', 'Alerty'],
-  ['aod', 'Nakładka ekranowa'],
-  ['history', 'Historia sesji'],
-  ['diagnostics', 'Diagnostyka'],
-  ['provenance', 'Prowenancja'],
-  ['notification', 'Powiadomienia'],
-  ['clipboard', 'Schowek'],
-  ['snippet', 'Wstawki tekstowe'],
-  ['tools', 'Narzędzia modelu'],
-  ['media', 'Multimedia'],
-  ['usage', 'Zużycie'],
-  ['archive', 'Archiwum'],
-  ['context', 'Kontekst'],
-  ['launcher', 'Wyzwalacz'],
-  ['monitor', 'Monitor'],
-  ['document', 'Dokumenty'],
-  ['subagent', 'Podagenci'],
-  ['team', 'Zespoły'],
-  ['mobile', 'Mobile'],
-  ['component', 'Komponenty'],
-  ['window', 'Okna'],
-  ['model', 'Model'],
-  ['retention', 'Retencja'],
-  ['action', 'Akcje'],
-  ['advisor', 'Doradca'],
-];
+const ETYKIETY_RODZIN: Readonly<Record<string, string>> = {
+  config: 'Nastawy',
+  settings: 'Ustawienia',
+  mail: 'Poczta',
+  isolation: 'Izolacja',
+  memory: 'Pamięć',
+  queue: 'Kolejka zadań',
+  orchestration: 'Orkiestracja',
+  schedule: 'Harmonogram',
+  automation: 'Automatyzacje',
+  extension: 'Rozszerzenia',
+  image: 'Obraz',
+  speech: 'Mowa',
+  knowledge: 'Wiedza',
+  access: 'Dostępy',
+  identity: 'Tożsamość',
+  role: 'Role',
+  account: 'Konta',
+  session: 'Sesje',
+  channel: 'Kanały modeli',
+  health: 'Kondycja',
+  alert: 'Alerty',
+  aod: 'Nakładka ekranowa',
+  history: 'Historia sesji',
+  diagnostics: 'Diagnostyka',
+  provenance: 'Prowenancja',
+  notification: 'Powiadomienia',
+  clipboard: 'Schowek',
+  snippet: 'Wstawki tekstowe',
+  tools: 'Narzędzia modelu',
+  media: 'Multimedia',
+  usage: 'Zużycie',
+  archive: 'Archiwum',
+  context: 'Kontekst',
+  launcher: 'Wyzwalacz',
+  monitor: 'Monitor',
+  document: 'Dokumenty',
+  subagent: 'Podagenci',
+  team: 'Zespoły',
+  mobile: 'Mobile',
+  component: 'Komponenty',
+  window: 'Okna',
+  model: 'Model',
+  retention: 'Retencja',
+  action: 'Akcje',
+  advisor: 'Doradca',
+};
+
+// Wszystkie rodziny obecne w kontrakcie, w porządku alfabetycznym, złożone raz.
+function rodzinyKontraktu(): [string, string][] {
+  const nazwy = new Set<string>();
+  for (const komenda of REJESTR_KOMEND) {
+    const rodzina = String(komenda).split('.')[0];
+    if (rodzina !== undefined && rodzina !== '') nazwy.add(rodzina);
+  }
+  return [...nazwy].sort().map((rodzina) => [rodzina, ETYKIETY_RODZIN[rodzina] ?? rodzina]);
+}
 
 let otwarte: HTMLElement | null = null;
 
@@ -89,7 +100,7 @@ export function otworzOperacjePlatformy(kanal: Kanal): void {
   dokument.body.append(nakladka);
   otwarte = nakladka;
 
-  for (const [rodzina, nazwa] of RODZINY_PLATFORMY) {
+  for (const [rodzina, nazwa] of rodzinyKontraktu()) {
     zwiazKatalogModulu(kanal, '', obszar, rodzina, nazwa);
   }
 

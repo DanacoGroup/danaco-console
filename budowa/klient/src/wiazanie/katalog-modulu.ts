@@ -7,6 +7,7 @@ import type { Odsubskrybuj } from '../polaczenie/magistrala-zdarzen.ts';
 import type { Kanal } from '../protokol/kanal.ts';
 import { wywolaj } from '../protokol/wywolanie.ts';
 import { oglos } from './ogloszenie.ts';
+import { REJESTR_KOMEND } from './rejestr-komend.ts';
 
 interface PozycjaKatalogu {
   komenda: Command;
@@ -17,12 +18,12 @@ interface PozycjaKatalogu {
 function operacjeRodziny(rodzina: string): PozycjaKatalogu[] {
   const przedrostek = `${rodzina}.`;
   const pozycje: PozycjaKatalogu[] = [];
-  for (const [, wartosc] of Object.entries(Command)) {
-    if (typeof wartosc !== 'string') continue;
+  for (const komenda of REJESTR_KOMEND) {
+    const wartosc = String(komenda);
     if (!wartosc.startsWith(przedrostek) || wartosc.endsWith('.unknown')) continue;
     const czlony = wartosc.slice(przedrostek.length).split('.');
     pozycje.push({
-      komenda: wartosc as Command,
+      komenda,
       nazwa: czlony.join(' · '),
       grupa: czlony[0] ?? 'ogólne',
     });

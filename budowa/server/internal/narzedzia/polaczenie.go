@@ -1,11 +1,10 @@
-// Gniazdo do rdzenia Danaco Console jest dla rdzenia zwykłym urządzeniem,
-// łączącym się tym samym gniazdem WebSocket i kopertą kontraktu, co okno
-// interfejsu; zestawia się leniwie, przy pierwszym wywołaniu.
+// Gniazdo do rdzenia niesie tę samą kopertę kontraktu, co okno interfejsu.
 package narzedzia
 
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/url"
 	"sync"
@@ -14,27 +13,33 @@ import (
 
 	"danacoconsole/server/internal/protocol"
 	"danacoconsole/server/internal/transport"
+	"danacoconsole/shared"
 )
 
-// Polaczenie prowadzi jedno gniazdo do rdzenia. Wywołania narzędzi idą po nim
-// pojedynczo — protokół MCP po stdio przyjmuje żądania wierszami, a rozdzielnia
-// obsługuje je po kolei.
+// Protokół MCP po stdio przyjmuje żądania wierszami — wywołania idą pojedynczo.
 type Polaczenie struct {
-	adres   string
-	zamek   sync.Mutex
-	gniazdo *websocket.Conn
+	adres  string
+	zamek  sync.Mutex
+	czynne *czynneGniazdo
 }
 
-// Polacz przygotowuje gniazdo pod wskazanym adresem, nie nawiązując go,
-// i dokłada do adresu parametry tożsamości oraz poświadczenie wydane przez
-// rdzeń przy uruchomieniu.
+// Wskazanie oczekiwanego żądania ma własny zamek: bieg odczytu nie może brać
+// zamka połączenia, bo trzyma go wywołanie czekające na ten bieg.
+type czynneGniazdo struct {
+	gniazdo           *websocket.Conn
+	koperty           chan protocol.Koperta
+	blad              chan error
+	zatrzymaj         context.CancelFunc
+	zamekOczekiwania  sync.Mutex
+	oczekiwaneZadanie string
+	oczekiwanaKomenda shared.MessageType
+}
+
 func Polacz(adres, okno string, zasieg Zasieg, poswiadczenie string) *Polaczenie {
 	return &Polaczenie{adres: zAdresemTozsamosci(adres, okno, zasieg, poswiadczenie)}
 }
 
-// zAdresemTozsamosci dokłada do adresu gniazda parametry tożsamości
-// i poświadczenie; adres nieczytelny zostaje adresem dotychczasowym, bez
-// tożsamości. Poświadczenie jedzie osobnym parametrem, bo tożsamość go nie niesie.
+// Poświadczenie jedzie osobnym parametrem, bo tożsamość go nie niesie.
 func zAdresemTozsamosci(adres, okno string, zasieg Zasieg, poswiadczenie string) string {
 	cel, err := url.Parse(adres)
 	if err != nil {
@@ -56,79 +61,173 @@ func zAdresemTozsamosci(adres, okno string, zasieg Zasieg, poswiadczenie string)
 	return cel.String()
 }
 
-// Wykonaj wysyła żądanie i czeka na odpowiedź o tym samym identyfikatorze,
-// rozpoznawaną też po nazwie komendy i obecności pola stanu.
+// Żądanie z gniazda zastanego idzie raz jeszcze gniazdem zestawionym od nowa.
 func (p *Polaczenie) Wykonaj(kontekst context.Context, zadanie protocol.Koperta) (protocol.Koperta, error) {
 	p.zamek.Lock()
 	defer p.zamek.Unlock()
 
-	gniazdo, err := p.nawiazane(kontekst)
-	if err != nil {
-		return protocol.Koperta{}, err
-	}
 	bajty, err := protocol.Zakoduj(zadanie)
 	if err != nil {
 		return protocol.Koperta{}, err
 	}
-	if err := gniazdo.Write(kontekst, websocket.MessageText, bajty); err != nil {
-		return protocol.Koperta{}, p.zerwane("zapis żądania", err)
+	odpowiedz, zastane, err := p.podejscie(kontekst, zadanie, bajty)
+	if err != nil && zastane && ponowienieMaSens(kontekst, err) {
+		odpowiedz, _, err = p.podejscie(kontekst, zadanie, bajty)
 	}
-	return p.czekajNaOdpowiedz(kontekst, gniazdo, zadanie)
+	return odpowiedz, err
 }
 
-// Zamknij kończy gniazdo połączenia z rdzeniem; wywołanie na połączeniu
-// nienawiązanym nic nie robi tutaj.
 func (p *Polaczenie) Zamknij() {
 	p.zamek.Lock()
 	defer p.zamek.Unlock()
-	if p.gniazdo == nil {
+	if p.czynne == nil {
 		return
 	}
-	p.gniazdo.Close(websocket.StatusNormalClosure, "koniec pracy serwera narzędzi")
-	p.gniazdo = nil
+	// Pożegnanie czyta ten sam bieg, więc idzie przed jego zatrzymaniem.
+	p.czynne.gniazdo.Close(websocket.StatusNormalClosure, "koniec pracy serwera narzędzi")
+	p.czynne.zatrzymaj()
+	p.czynne = nil
 }
 
-// czekajNaOdpowiedz czyta ramki gniazda aż do odpowiedzi na to jedno żądanie,
-// pomijając rozgłoszenia rdzenia po drodze.
-func (p *Polaczenie) czekajNaOdpowiedz(kontekst context.Context, gniazdo *websocket.Conn,
+// Drugi wynik mówi, czy szło gniazdem zastanym.
+func (p *Polaczenie) podejscie(kontekst context.Context, zadanie protocol.Koperta,
+	bajty []byte) (protocol.Koperta, bool, error) {
+
+	zastane := p.czynne != nil
+	czynne, err := p.nawiazane(kontekst)
+	if err != nil {
+		return protocol.Koperta{}, zastane, err
+	}
+	czynne.czekaNa(zadanie)
+	defer czynne.przestanCzekac()
+	if err := czynne.gniazdo.Write(kontekst, websocket.MessageText, bajty); err != nil {
+		return protocol.Koperta{}, zastane, p.zerwane("zapis żądania", err)
+	}
+	odpowiedz, err := p.czekajNaOdpowiedz(kontekst, czynne, zadanie)
+	return odpowiedz, zastane, err
+}
+
+// Kontekst wywołującego nie jest stanem gniazda.
+func ponowienieMaSens(kontekst context.Context, err error) bool {
+	return kontekst.Err() == nil &&
+		!errors.Is(err, context.Canceled) &&
+		!errors.Is(err, context.DeadlineExceeded)
+}
+
+// Kontekst wygasły kończy tutaj samo wywołanie; gniazdo odkłada dopiero zerwane,
+// wołane przy zapisie żądania i przy błędzie odczytu.
+func (p *Polaczenie) czekajNaOdpowiedz(kontekst context.Context, czynne *czynneGniazdo,
 	zadanie protocol.Koperta) (protocol.Koperta, error) {
 
 	for {
-		_, bajty, err := gniazdo.Read(kontekst)
-		if err != nil {
+		// Koperta doręczona wraca także wtedy, gdy kontekst właśnie wygasł.
+		select {
+		case koperta := <-czynne.koperty:
+			if jestOdpowiedzia(koperta, zadanie) {
+				return koperta, nil
+			}
+			continue
+		default:
+		}
+		select {
+		case <-kontekst.Done():
+			return protocol.Koperta{}, fmt.Errorf("oczekiwanie na odpowiedź przerwane: %w", kontekst.Err())
+		case err := <-czynne.blad:
 			return protocol.Koperta{}, p.zerwane("odczyt odpowiedzi", err)
-		}
-		var koperta protocol.Koperta
-		if err := json.Unmarshal(bajty, &koperta); err != nil {
-			continue // ramka nie w kształcie koperty — nie jest odpowiedzią na to żądanie
-		}
-		if koperta.Id == zadanie.Id && koperta.Type == zadanie.Type && koperta.Status != nil {
-			return koperta, nil
+		case koperta := <-czynne.koperty:
+			if jestOdpowiedzia(koperta, zadanie) {
+				return koperta, nil
+			}
 		}
 	}
 }
 
-// nawiazane zwraca gniazdo czynne połączenia z rdzeniem, zestawiając je przy
-// pierwszym użyciu tego połączenia.
-func (p *Polaczenie) nawiazane(kontekst context.Context) (*websocket.Conn, error) {
-	if p.gniazdo != nil {
-		return p.gniazdo, nil
+// Pole stanu niesie odpowiedź, a żądanie go nie ma.
+func jestOdpowiedzia(koperta, zadanie protocol.Koperta) bool {
+	return koperta.Id == zadanie.Id && koperta.Type == zadanie.Type && koperta.Status != nil
+}
+
+func (p *Polaczenie) nawiazane(kontekst context.Context) (*czynneGniazdo, error) {
+	if p.czynne != nil {
+		return p.czynne, nil
 	}
 	gniazdo, _, err := websocket.Dial(kontekst, p.adres, nil)
 	if err != nil {
 		return nil, fmt.Errorf("serwer pod adresem %s nie odpowiada: %w", p.adres, err)
 	}
 	gniazdo.SetReadLimit(transport.LimitOdczytu)
-	p.gniazdo = gniazdo
-	return gniazdo, nil
+	// Bieg odczytu żyje tak długo jak gniazdo, więc nie bierze kontekstu wywołania.
+	zycie, zatrzymaj := context.WithCancel(context.Background())
+	czynne := &czynneGniazdo{
+		gniazdo: gniazdo,
+		// Oczekiwane żądanie jest jedno naraz, więc kanał niesie jedną odpowiedź.
+		koperty:   make(chan protocol.Koperta, 1),
+		blad:      make(chan error, 1),
+		zatrzymaj: zatrzymaj,
+	}
+	go czynne.czytaj(zycie)
+	p.czynne = czynne
+	return czynne, nil
 }
 
-// zerwane odkłada gniazdo zerwane, żeby wywołanie następne zestawiło je od nowa,
-// i zwraca czytelny opis dla modelu.
 func (p *Polaczenie) zerwane(czynnosc string, err error) error {
-	if p.gniazdo != nil {
-		p.gniazdo.CloseNow()
-		p.gniazdo = nil
+	if p.czynne != nil {
+		p.czynne.gniazdo.CloseNow()
+		p.czynne.zatrzymaj()
+		p.czynne = nil
 	}
 	return fmt.Errorf("połączenie z serwerem zerwane przy czynności %q: %w", czynnosc, err)
+}
+
+// Biblioteka odsyła pong wyłącznie z pętli czytającej, a rdzeń zamyka gniazdo
+// po pierwszym pingu bez odpowiedzi.
+func (c *czynneGniazdo) czytaj(kontekst context.Context) {
+	for {
+		_, bajty, err := c.gniazdo.Read(kontekst)
+		if err != nil {
+			// Kanał ma miejsce na ten jeden błąd, więc bieg nie wisi.
+			c.blad <- err
+			return
+		}
+		var koperta protocol.Koperta
+		if err := json.Unmarshal(bajty, &koperta); err != nil {
+			continue // ramka nie w kształcie koperty
+		}
+		c.podaj(koperta)
+	}
+}
+
+func (c *czynneGniazdo) czekaNa(zadanie protocol.Koperta) {
+	select {
+	case <-c.koperty:
+	default:
+	}
+	c.zamekOczekiwania.Lock()
+	c.oczekiwaneZadanie = zadanie.Id
+	c.oczekiwanaKomenda = zadanie.Type
+	c.zamekOczekiwania.Unlock()
+}
+
+func (c *czynneGniazdo) przestanCzekac() {
+	c.zamekOczekiwania.Lock()
+	c.oczekiwaneZadanie = ""
+	c.oczekiwanaKomenda = ""
+	c.zamekOczekiwania.Unlock()
+}
+
+// Rozgłoszenia rdzenia odpadają w miejscu: gniazdo nieczytane nie odpowiada na ping.
+func (c *czynneGniazdo) podaj(koperta protocol.Koperta) {
+	c.zamekOczekiwania.Lock()
+	oczekiwana := c.oczekiwaneZadanie != "" &&
+		koperta.Id == c.oczekiwaneZadanie &&
+		koperta.Type == c.oczekiwanaKomenda &&
+		koperta.Status != nil
+	c.zamekOczekiwania.Unlock()
+	if !oczekiwana {
+		return
+	}
+	select {
+	case c.koperty <- koperta:
+	default:
+	}
 }

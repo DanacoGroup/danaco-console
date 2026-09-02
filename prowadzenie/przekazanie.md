@@ -5,18 +5,20 @@ i czego nie wolno ruszyć.
 
 ## 1. Czym rzecz stoi
 
-Rdzeń działa, interfejsu nie ma. Praca leży na gałęzi `teren/naprawy-audytu`;
+Rdzeń działa. Interfejs prowadzi od wejścia przez przedsionek do Centrum i Studia;
+pozostałe moduły stoją na zapowiedzi niegotowości. Praca leży na gałęzi `teren/naprawy-audytu`;
 `main` i punkt cofnięcia `2881c425` są nietknięte.
 
 | miara | wartość |
 |---|---|
 | komendy kontraktu | 1086 |
-| komendy wołane przez klienta | 55 |
+| komendy wołane przez klienta | 86 |
 | tabele w bazie po przejeździe migracji | 418 |
 | tabele niosące pracę Operatora | 373, w tym 172 korzenie |
-| korzenie z granicą konta w zapytaniach | 47 najcięższych, praca niedokończona |
+| korzenie z granicą konta w zapytaniach | 47 najcięższych i 53 pliki rundy trzeciej |
 | kroki migracji | do 485 |
 | prototypy okien w `design/05-okna/` | 35; okien w produkcie 8 |
+| droga wejścia | rejestracja, logowanie, metody, urządzenia, sesje bramki |
 
 ## 2. Gałęzie, dokumenty, materiał
 

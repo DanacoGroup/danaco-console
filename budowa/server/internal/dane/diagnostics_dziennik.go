@@ -1,5 +1,4 @@
-// Odpowiedzialność pliku: dziennik modułu Diagnostics — dopisanie wpisów
-// partią, odczyt zawężony filtrem, wykaz źródeł i rozkład poziomów.
+// Dziennik modułu Diagnostics: dopisanie partią, odczyt zawężony filtrem, wykaz źródeł i rozkład poziomów.
 package dane
 
 import (
@@ -10,9 +9,7 @@ import (
 	"danacoconsole/shared"
 )
 
-// granicaDziennika obowiązuje, gdy Operator nie poda własnej. Bez niej pierwsze
-// otwarcie Logs Viewer po tygodniu pracy ściągnęłoby cały dziennik do
-// przeglądarki.
+// granicaDziennika obowiązuje, gdy Operator nie poda własnej — inaczej pierwsze otwarcie ściągnęłoby cały dziennik.
 const granicaDziennika = 500
 
 const (
@@ -22,18 +19,17 @@ const (
 	                   AND (? = 0 OR chwila <= ?)
 	                   AND (? = '' OR poziom = ?)
 	                   AND (? = '' OR zrodlo = ?)
-	                   AND (? = '' OR instr(lower(tresc), lower(?)) > 0)`
+	                   AND (? = '' OR instr(lower(tresc), lower(?)) > 0)
+	                   AND ` + WarunekKonta
 
 	wstawWpisDiagnostyki = `INSERT INTO diagnostyka_wpis
-	                        (kod, chwila, poziom, zrodlo, tresc, sesja_kod, okno_kod, proces_kod, odcisk)
-	                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`
+	                        (kod, chwila, poziom, zrodlo, tresc, sesja_kod, okno_kod, proces_kod, odcisk, konto_id)
+	                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ` + WskazanieKonta + `)`
 
 	pobierzWpisy = `SELECT ` + kolumnyWpisu + `, 1 FROM diagnostyka_wpis` + warunkiWpisu +
 		` ORDER BY chwila DESC, id DESC LIMIT CASE WHEN ? > 0 THEN ? ELSE -1 END`
 
-	// Wariant scalający: SQLite w grupowaniu z MAX() oddaje kolumny gołe
-	// z wiersza, na którym maksimum wypadło — wpis reprezentujący grupę jest
-	// więc wpisem najnowszym, a nie przypadkowym.
+	// Wariant scalający: MAX(chwila) w grupie oddaje kolumny wpisu najnowszego, nie przypadkowego.
 	pobierzWpisyScalone = `SELECT kod, MAX(chwila), poziom, zrodlo, tresc, sesja_kod, okno_kod,
 	                              proces_kod, odcisk, COUNT(*)
 	                       FROM diagnostyka_wpis` + warunkiWpisu +
@@ -44,10 +40,10 @@ const (
 	policzWpisyScalone = `SELECT COUNT(DISTINCT odcisk) FROM diagnostyka_wpis` + warunkiWpisu
 
 	pobierzZrodlaWpisow = `SELECT DISTINCT zrodlo FROM diagnostyka_wpis
-	                       WHERE zrodlo IS NOT NULL AND zrodlo <> '' ORDER BY zrodlo`
+	                       WHERE zrodlo IS NOT NULL AND zrodlo <> '' AND ` + WarunekKonta + ` ORDER BY zrodlo`
 
 	policzPoziomyWpisow = `SELECT poziom, COUNT(*) FROM diagnostyka_wpis
-	                       WHERE (? = 0 OR chwila >= ?) AND (? = 0 OR chwila <= ?)
+	                       WHERE (? = 0 OR chwila >= ?) AND (? = 0 OR chwila <= ?) AND ` + WarunekKonta + `
 	                       GROUP BY poziom`
 )
 
@@ -60,9 +56,7 @@ func noweRepozytoriumDiagnostyki(z *zapytania, db *sql.DB) *repozytoriumDiagnost
 	return &repozytoriumDiagnostyki{zapytania: z, db: db}
 }
 
-// DopiszWpisy zapisuje partię wpisów w jednej transakcji. Partia, a nie wpis
-// pojedynczy: dziennik rdzenia bywa gęsty, a osobna transakcja na każdą linię
-// zamieniłaby zapis dziennika w wąskie gardło pracy rdzenia.
+// DopiszWpisy zapisuje partię wpisów w jednej transakcji — osobna transakcja na linię byłaby wąskim gardłem.
 func (r *repozytoriumDiagnostyki) DopiszWpisy(ctx context.Context, wpisy []WpisDiagnostyki) error {
 	if len(wpisy) == 0 {
 		return nil
@@ -75,7 +69,8 @@ func (r *repozytoriumDiagnostyki) DopiszWpisy(ctx context.Context, wpisy []WpisD
 		for _, wpis := range wpisy {
 			_, err := polecenie.ExecContext(ctx, wpis.Kod, wpis.Chwila, string(wpis.Poziom),
 				tekstDoKolumny(wpis.Zrodlo), wpis.Tresc, tekstDoKolumny(wpis.SesjaKod),
-				tekstDoKolumny(wpis.OknoKod), tekstDoKolumny(wpis.ProcesKod), wpis.Odcisk)
+				tekstDoKolumny(wpis.OknoKod), tekstDoKolumny(wpis.ProcesKod), wpis.Odcisk,
+				KontoOperatora(ctx))
 			if err != nil {
 				return fmt.Errorf("dane: nie można dopisać wpisu dziennika %q: %w", wpis.Kod, err)
 			}
@@ -84,8 +79,7 @@ func (r *repozytoriumDiagnostyki) DopiszWpisy(ctx context.Context, wpisy []WpisD
 	})
 }
 
-// Wpisy zwraca dziennik zawężony filtrem oraz liczbę wpisów spełniających
-// warunki przed ucięciem granicą — klient odróżnia „tyle jest" od „tyle widać".
+// Wpisy zwraca dziennik zawężony filtrem oraz liczbę wpisów przed ucięciem granicą.
 func (r *repozytoriumDiagnostyki) Wpisy(ctx context.Context,
 	filtr FiltrDziennika) ([]WpisDiagnostyki, int, error) {
 
@@ -97,7 +91,7 @@ func (r *repozytoriumDiagnostyki) Wpisy(ctx context.Context,
 	if granica <= 0 {
 		granica = granicaDziennika
 	}
-	warunki := warunkiDziennika(filtr)
+	warunki := warunkiDziennika(ctx, filtr)
 
 	razem, err := r.policz(ctx, zliczanie, warunki)
 	if err != nil {
@@ -131,7 +125,7 @@ func (r *repozytoriumDiagnostyki) ZrodlaWpisow(ctx context.Context) ([]string, e
 	if err != nil {
 		return nil, err
 	}
-	wiersze, err := polecenie.QueryContext(ctx)
+	wiersze, err := polecenie.QueryContext(ctx, KontoOperatora(ctx))
 	if err != nil {
 		return nil, fmt.Errorf("dane: nie można odczytać źródeł dziennika: %w", err)
 	}
@@ -154,7 +148,7 @@ func (r *repozytoriumDiagnostyki) PoziomyWpisow(ctx context.Context, od, do int6
 	if err != nil {
 		return nil, err
 	}
-	wiersze, err := polecenie.QueryContext(ctx, od, od, do, do)
+	wiersze, err := polecenie.QueryContext(ctx, od, od, do, do, KontoOperatora(ctx))
 	if err != nil {
 		return nil, fmt.Errorf("dane: nie można policzyć poziomów dziennika: %w", err)
 	}
@@ -172,7 +166,6 @@ func (r *repozytoriumDiagnostyki) PoziomyWpisow(ctx context.Context, od, do int6
 	return licznik, wiersze.Err()
 }
 
-// policz wykonuje zapytanie zliczające wiersze na tych samych warunkach zawężenia, na których działa odczyt wpisów.
 func (r *repozytoriumDiagnostyki) policz(ctx context.Context, zapytanie string, warunki []any) (int, error) {
 	polecenie, err := r.zapytania.przygotuj(ctx, zapytanie)
 	if err != nil {
@@ -185,8 +178,7 @@ func (r *repozytoriumDiagnostyki) policz(ctx context.Context, zapytanie string, 
 	return razem, nil
 }
 
-// warunkiDziennika składa listę argumentów zawężeń w kolejności odpowiadającej znakom zapytania przygotowanego polecenia.
-func warunkiDziennika(filtr FiltrDziennika) []any {
+func warunkiDziennika(ctx context.Context, filtr FiltrDziennika) []any {
 	poziom, zrodlo, wzorzec := string(filtr.Poziom), filtr.Zrodlo, filtr.Wzorzec
 	return []any{
 		filtr.Od, filtr.Od,
@@ -194,6 +186,7 @@ func warunkiDziennika(filtr FiltrDziennika) []any {
 		poziom, poziom,
 		zrodlo, zrodlo,
 		wzorzec, wzorzec,
+		KontoOperatora(ctx),
 	}
 }
 

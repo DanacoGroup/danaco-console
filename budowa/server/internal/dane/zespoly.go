@@ -1,5 +1,4 @@
-// Odpowiedzialność pliku: trwałość zespołów ekspertów — nazwanych składów biblioteki modułu
-// Agents, tabele `zespol` i `zespol_sklad`, wraz z odczytem i zapisem pełnego składu.
+// Trwałość zespołów ekspertów modułu Agents (tabele `zespol` i `zespol_sklad`) wraz z zapisem pełnego składu.
 package dane
 
 import (
@@ -11,16 +10,13 @@ import (
 	"time"
 )
 
-// Zespol to wiersz tabeli `zespol` wraz ze składem. `Kod` jest identyfikatorem
-// trwałym i odpowiada polu `Team.id` kontraktu.
+// Zespol to wiersz `zespol` wraz ze składem; `Kod` jest identyfikatorem trwałym, polem `Team.id` kontraktu.
 type Zespol struct {
-	ID    int64
-	Kod   string
-	Nazwa string
-	Opis  string
-	// Sklad niesie kody ekspertów czynnych, w kolejności nadanej w oknie.
-	Sklad []string
-	// Pominieci niesie kody bez czynnego eksperta; puste znaczy „skład kompletny”.
+	ID             int64
+	Kod            string
+	Nazwa          string
+	Opis           string
+	Sklad          []string
 	Pominieci      []string
 	Utworzono      int64
 	Zaktualizowano *int64
@@ -28,15 +24,12 @@ type Zespol struct {
 
 // FiltrZespolow zawęża wykaz zespołów zwracany zapytaniem `Lista` modułu Agents; pole puste znaczy „bez zawężenia”.
 type FiltrZespolow struct {
-	Fraza string
-	// Granica ogranicza liczbę zwróconych wierszy; zero i wartości ujemne znaczą „bez granicy”.
+	Fraza        string
 	Granica      int
 	Przesuniecie int
 }
 
-// RepozytoriumZespolow jest kontraktem trwałości zespołów ekspertów.
-// Kopiowania zespołu tu nie ma: `team.duplicate` warstwa wyższa składa
-// z odczytu źródła i założenia nowego wiersza.
+// RepozytoriumZespolow jest kontraktem trwałości zespołów ekspertów; `team.duplicate` składa warstwa wyższa.
 type RepozytoriumZespolow interface {
 	Lista(ctx context.Context, filtr FiltrZespolow) ([]Zespol, int, error)
 	PoKodzie(ctx context.Context, kod string) (Zespol, error)
@@ -47,17 +40,15 @@ type RepozytoriumZespolow interface {
 const (
 	kolumnyZespolu = `id, kod, nazwa, opis, utworzono, zaktualizowano`
 
-	// Fraza wchodzi do LIKE jako treść, nie jako wzorzec: `%` i `_` z frazy są
-	// znakami szukanymi. Klauzula `ESCAPE` jest konieczna, bo bez niej fraza
-	// „%" pasuje do każdego wiersza zamiast zawęzić wykaz.
+	// Fraza wchodzi do LIKE jako treść, nie wzorzec — stąd osłona i klauzula ESCAPE.
 	listaZespolow = `SELECT ` + kolumnyZespolu + ` FROM zespol
 	                 WHERE (? = '' OR lower(nazwa) LIKE ? ESCAPE '\' OR lower(opis) LIKE ? ESCAPE '\')
+	                       AND ` + WarunekKonta + `
 	                 ORDER BY nazwa, kod`
 
-	zespolPoKodzie = `SELECT ` + kolumnyZespolu + ` FROM zespol WHERE kod = ?`
+	zespolPoKodzie = `SELECT ` + kolumnyZespolu + ` FROM zespol WHERE kod = ? AND ` + WarunekKonta
 
-	// Skład idzie LEWYM złączeniem z biblioteką: kod bez czynnego eksperta ma
-	// wrócić z wyniku jako pominięty, a nie zniknąć z niego bez śladu.
+	// Lewe złączenie z biblioteką: kod bez czynnego eksperta wraca jako pominięty, a nie znika.
 	skladZespolow = `SELECT s.zespol_id, s.agent_kod,
 	                        CASE WHEN a.id IS NULL THEN 0 ELSE 1 END
 	                 FROM zespol_sklad s
@@ -65,15 +56,15 @@ const (
 	                        ON a.kod = s.agent_kod AND a.zarchiwizowano_o IS NULL
 	                 ORDER BY s.zespol_id, s.kolejnosc`
 
-	wstawZespol = `INSERT INTO zespol (kod, nazwa, opis, utworzono) VALUES (?, ?, ?, ?)`
+	wstawZespol = `INSERT INTO zespol (kod, nazwa, opis, utworzono, konto_id) VALUES (?, ?, ?, ?, ` + WskazanieKonta + `)`
 
-	aktualizujZespol = `UPDATE zespol SET nazwa = ?, opis = ?, zaktualizowano = ? WHERE kod = ?`
+	aktualizujZespol = `UPDATE zespol SET nazwa = ?, opis = ?, zaktualizowano = ? WHERE kod = ? AND ` + WarunekKonta
 
 	usunSkladZespolu = `DELETE FROM zespol_sklad WHERE zespol_id = ?`
 
 	wstawSkladZespolu = `INSERT INTO zespol_sklad (zespol_id, agent_kod, kolejnosc) VALUES (?, ?, ?)`
 
-	numerZespolu = `SELECT id FROM zespol WHERE kod = ?`
+	numerZespolu = `SELECT id FROM zespol WHERE kod = ? AND ` + WarunekKonta
 )
 
 type repozytoriumZespolow struct {
@@ -87,8 +78,7 @@ func noweRepozytoriumZespolow(z *zapytania, db *sql.DB) *repozytoriumZespolow {
 	return &repozytoriumZespolow{zapytania: z, db: db}
 }
 
-// Lista zwraca zespoły spełniające warunki wraz z ich liczbą przed ucięciem
-// granicą i przesunięciem. Wykaz pusty nie jest błędem.
+// Lista zwraca zespoły wraz z ich liczbą przed ucięciem granicą i przesunięciem; wykaz pusty nie jest błędem.
 func (r *repozytoriumZespolow) Lista(ctx context.Context, filtr FiltrZespolow) ([]Zespol, int, error) {
 	polecenie, err := r.zapytania.przygotuj(ctx, listaZespolow)
 	if err != nil {
@@ -96,7 +86,7 @@ func (r *repozytoriumZespolow) Lista(ctx context.Context, filtr FiltrZespolow) (
 	}
 	fraza := strings.ToLower(strings.TrimSpace(filtr.Fraza))
 	wzorzec := "%" + oslonWieloznaczniki(fraza) + "%"
-	wiersze, err := polecenie.QueryContext(ctx, fraza, wzorzec, wzorzec)
+	wiersze, err := polecenie.QueryContext(ctx, fraza, wzorzec, wzorzec, KontoOperatora(ctx))
 	if err != nil {
 		return nil, 0, fmt.Errorf("dane: nie można odczytać wykazu zespołów: %w", err)
 	}
@@ -120,17 +110,13 @@ func (r *repozytoriumZespolow) Lista(ctx context.Context, filtr FiltrZespolow) (
 	return utnijWykaz(wszystkie, filtr), razem, nil
 }
 
-// oslonWieloznaczniki osłania znaki, którym LIKE nadaje znaczenie: `%`, `_`
-// oraz sam znak osłaniający `\`. Replacer przechodzi napis jednym przebiegiem,
-// więc wstawione osłony nie są osłaniane powtórnie.
+// oslonWieloznaczniki osłania `%`, `_` i sam znak `\`; replacer idzie napisem jednym przebiegiem.
 func oslonWieloznaczniki(fraza string) string {
 	zastepnik := strings.NewReplacer(`\`, `\\`, `%`, `\%`, `_`, `\_`)
 	return zastepnik.Replace(fraza)
 }
 
-// utnijWykaz nakłada przesunięcie i granicę wykazu. Przesunięcie za końcem
-// wykazu oddaje pustkę, a nie błąd — okno przewinięte za daleko ma pokazać
-// stan pusty, nie odmowę.
+// utnijWykaz nakłada przesunięcie i granicę; przesunięcie za końcem wykazu oddaje pustkę, nie błąd.
 func utnijWykaz(wszystkie []Zespol, filtr FiltrZespolow) []Zespol {
 	if filtr.Przesuniecie > 0 {
 		if filtr.Przesuniecie >= len(wszystkie) {
@@ -144,14 +130,13 @@ func utnijWykaz(wszystkie []Zespol, filtr FiltrZespolow) []Zespol {
 	return wszystkie
 }
 
-// PoKodzie zwraca jeden zespół wraz ze składem. Brak wiersza wraca jako
-// ErrBrakWiersza, żeby warstwa wyższa odróżniła „nie ma” od „odczyt padł”.
+// PoKodzie zwraca jeden zespół wraz ze składem; brak wiersza wraca jako ErrBrakWiersza.
 func (r *repozytoriumZespolow) PoKodzie(ctx context.Context, kod string) (Zespol, error) {
 	polecenie, err := r.zapytania.przygotuj(ctx, zespolPoKodzie)
 	if err != nil {
 		return Zespol{}, err
 	}
-	zespol, err := odczytajZespol(polecenie.QueryRowContext(ctx, kod))
+	zespol, err := odczytajZespol(polecenie.QueryRowContext(ctx, kod, KontoOperatora(ctx)))
 	if errors.Is(err, sql.ErrNoRows) {
 		return Zespol{}, fmt.Errorf("dane: zespół %q nie istnieje: %w", kod, ErrBrakWiersza)
 	}
@@ -176,7 +161,7 @@ func (r *repozytoriumZespolow) Dodaj(ctx context.Context, zespol Zespol) (Zespol
 		if err != nil {
 			return err
 		}
-		wynik, err := polecenie.ExecContext(ctx, zespol.Kod, zespol.Nazwa, zespol.Opis, teraz)
+		wynik, err := polecenie.ExecContext(ctx, zespol.Kod, zespol.Nazwa, zespol.Opis, teraz, KontoOperatora(ctx))
 		if err != nil {
 			return fmt.Errorf("dane: nie można założyć zespołu %q: %w", zespol.Kod, err)
 		}
@@ -192,10 +177,7 @@ func (r *repozytoriumZespolow) Dodaj(ctx context.Context, zespol Zespol) (Zespol
 	return r.PoKodzie(ctx, zespol.Kod)
 }
 
-// Zapisz zmienia zespół istniejący: nazwę, opis i cały skład. Skład wymienia
-// się w całości, a nie różnicowo, bo kontrakt `team.save` niesie komplet
-// `agentIds`; dopisywanie do stanu zastanego rozjeżdżałoby zespół z zawartością
-// okna.
+// Zapisz zmienia nazwę, opis i cały skład; skład wymienia się w całości, bo `team.save` niesie komplet `agentIds`.
 func (r *repozytoriumZespolow) Zapisz(ctx context.Context, zespol Zespol) (Zespol, error) {
 	if strings.TrimSpace(zespol.Nazwa) == "" {
 		return Zespol{}, fmt.Errorf("dane: zespół %q wymaga nazwy", zespol.Kod)
@@ -210,7 +192,7 @@ func (r *repozytoriumZespolow) Zapisz(ctx context.Context, zespol Zespol) (Zespo
 		if err != nil {
 			return err
 		}
-		if _, err := polecenie.ExecContext(ctx, zespol.Nazwa, zespol.Opis, teraz, zespol.Kod); err != nil {
+		if _, err := polecenie.ExecContext(ctx, zespol.Nazwa, zespol.Opis, teraz, zespol.Kod, KontoOperatora(ctx)); err != nil {
 			return fmt.Errorf("dane: nie można zapisać zespołu %q: %w", zespol.Kod, err)
 		}
 		czyszczenie, err := r.zapytania.wTransakcji(ctx, transakcja, usunSkladZespolu)
@@ -228,14 +210,13 @@ func (r *repozytoriumZespolow) Zapisz(ctx context.Context, zespol Zespol) (Zespo
 	return r.PoKodzie(ctx, zespol.Kod)
 }
 
-// numer odnajduje numer wiersza zespołu w tabeli `zespol` po jego kodzie trwałym, potrzebny do zapisu składu.
 func (r *repozytoriumZespolow) numer(ctx context.Context, kod string) (int64, error) {
 	polecenie, err := r.zapytania.przygotuj(ctx, numerZespolu)
 	if err != nil {
 		return 0, err
 	}
 	var numer int64
-	err = polecenie.QueryRowContext(ctx, kod).Scan(&numer)
+	err = polecenie.QueryRowContext(ctx, kod, KontoOperatora(ctx)).Scan(&numer)
 	if errors.Is(err, sql.ErrNoRows) {
 		return 0, fmt.Errorf("dane: zespół %q nie istnieje: %w", kod, ErrBrakWiersza)
 	}
@@ -245,8 +226,7 @@ func (r *repozytoriumZespolow) numer(ctx context.Context, kod string) (int64, er
 	return numer, nil
 }
 
-// zapiszSklad wpisuje skład w kolejności nadanej w żądaniu. Kod powtórzony
-// wchodzi tylko raz; kolejność liczona jest po odrzuceniu powtórzeń.
+// zapiszSklad wpisuje skład w kolejności żądania; kod powtórzony wchodzi tylko raz.
 func (r *repozytoriumZespolow) zapiszSklad(ctx context.Context, transakcja *sql.Tx,
 	numer int64, sklad []string) error {
 
@@ -276,7 +256,6 @@ func (r *repozytoriumZespolow) zapiszSklad(ctx context.Context, transakcja *sql.
 	return nil
 }
 
-// dolaczSklad dokłada skład wszystkim zespołom wykazu jednym zapytaniem zamiast osobno dla każdego wiersza.
 func (r *repozytoriumZespolow) dolaczSklad(ctx context.Context, zespoly []Zespol) error {
 	if len(zespoly) == 0 {
 		return nil
@@ -316,7 +295,6 @@ func (r *repozytoriumZespolow) dolaczSklad(ctx context.Context, zespoly []Zespol
 	return nil
 }
 
-// odczytajZespol składa strukturę zespołu z jednego wiersza wyniku zapytania SQL, bez składu ekspertów.
 func odczytajZespol(wiersz skaner) (Zespol, error) {
 	var zespol Zespol
 	var zaktualizowano sql.NullInt64

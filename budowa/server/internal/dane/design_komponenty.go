@@ -1,5 +1,4 @@
-// Plik prowadzi obszar komponentów makiety modułu Design, część RepozytoriumDesignu; komponent wisi na oknie,
-// biblioteka UI jest wspólna dla wszystkich plansz, a instancja wisi na kompozycji konkretnej planszy.
+// Komponenty makiety modułu Design: komponent wisi na oknie, jego instancja na kompozycji konkretnej planszy.
 package dane
 
 import (
@@ -9,9 +8,7 @@ import (
 	"fmt"
 )
 
-// KomponentDesignu to wiersz tabeli `komponent_design`. WariantyJSON niesie
-// zapis kontraktu bez rozkładania go w warstwie danych — składa go i rozkłada
-// adapter, bo to on zna kontrakt.
+// KomponentDesignu to wiersz `komponent_design`; WariantyJSON niesie zapis kontraktu bez rozkładania w warstwie danych.
 type KomponentDesignu struct {
 	ID               int64
 	Kod              string
@@ -23,8 +20,7 @@ type KomponentDesignu struct {
 	Zaktualizowano   string
 }
 
-// InstancjaKomponentuDesignu to wiersz tabeli `instancja_komponentu_design` —
-// jedno wystąpienie komponentu na planszy.
+// InstancjaKomponentuDesignu to jedno wystąpienie komponentu na planszy.
 type InstancjaKomponentuDesignu struct {
 	ID           int64
 	KomponentID  int64
@@ -42,22 +38,25 @@ const (
 
 	zapiszKomponentDesignu = `INSERT INTO komponent_design
 	                          (identyfikator_zewnetrzny, okno, nazwa, warianty_json,
-	                           zestaw_zetonow_kod, zaktualizowano)
-	                          VALUES (?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now'))
+	                           zestaw_zetonow_kod, zaktualizowano, konto_id)
+	                          VALUES (?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now'), ` + WskazanieKonta + `)
 	                          ON CONFLICT(identyfikator_zewnetrzny) DO UPDATE SET
 	                              nazwa = excluded.nazwa,
 	                              warianty_json = excluded.warianty_json,
 	                              zestaw_zetonow_kod = excluded.zestaw_zetonow_kod,
-	                              zaktualizowano = excluded.zaktualizowano`
+	                              zaktualizowano = excluded.zaktualizowano
+	                          WHERE ` + WarunekKonta
 
 	pobierzKomponentDesignu = `SELECT ` + kolumnyKomponentuDesignu +
-		` FROM komponent_design k WHERE k.identyfikator_zewnetrzny = ?`
+		` FROM komponent_design k WHERE k.identyfikator_zewnetrzny = ? AND ` + WarunekKonta
 
 	listaKomponentowDesignu = `SELECT ` + kolumnyKomponentuDesignu +
-		` FROM komponent_design k WHERE k.okno = ? ORDER BY k.zaktualizowano DESC, k.id DESC`
+		` FROM komponent_design k WHERE k.okno = ? AND ` + WarunekKonta +
+		` ORDER BY k.zaktualizowano DESC, k.id DESC`
 
 	listaKomponentowDesignuJeden = `SELECT ` + kolumnyKomponentuDesignu +
-		` FROM komponent_design k WHERE k.okno = ? AND k.identyfikator_zewnetrzny = ?`
+		` FROM komponent_design k WHERE k.okno = ? AND ` + WarunekKonta +
+		` AND k.identyfikator_zewnetrzny = ?`
 
 	wstawInstancjeKomponentuDesignu = `INSERT INTO instancja_komponentu_design
 	                                   (komponent_id, kompozycja_id, warstwa_kod, wariant)
@@ -91,7 +90,8 @@ func (r *repozytoriumDesignu) ZapiszKomponentDesignu(ctx context.Context,
 		return KomponentDesignu{}, err
 	}
 	_, err = polecenie.ExecContext(ctx, komponent.Kod, komponent.Okno, komponent.Nazwa,
-		tekstDoKolumny(komponent.WariantyJSON), tekstDoKolumny(komponent.ZestawZetonowKod))
+		tekstDoKolumny(komponent.WariantyJSON), tekstDoKolumny(komponent.ZestawZetonowKod),
+		KontoOperatora(ctx), KontoOperatora(ctx))
 	if err != nil {
 		return KomponentDesignu{}, fmt.Errorf("dane: nie można zapisać komponentu design %q: %w",
 			komponent.Kod, err)
@@ -99,8 +99,7 @@ func (r *repozytoriumDesignu) ZapiszKomponentDesignu(ctx context.Context,
 	return r.KomponentDesignuPoKodzie(ctx, komponent.Kod)
 }
 
-// KomponentDesignuPoKodzie zwraca komponent o wskazanym identyfikatorze
-// zewnętrznym wraz z liczbą instancji.
+// KomponentDesignuPoKodzie zwraca komponent po kodzie wraz z liczbą instancji.
 func (r *repozytoriumDesignu) KomponentDesignuPoKodzie(ctx context.Context,
 	kod string) (KomponentDesignu, error) {
 
@@ -108,7 +107,7 @@ func (r *repozytoriumDesignu) KomponentDesignuPoKodzie(ctx context.Context,
 	if err != nil {
 		return KomponentDesignu{}, err
 	}
-	komponent, err := odczytajKomponentDesignu(polecenie.QueryRowContext(ctx, kod))
+	komponent, err := odczytajKomponentDesignu(polecenie.QueryRowContext(ctx, kod, KontoOperatora(ctx)))
 	if errors.Is(err, sql.ErrNoRows) {
 		return KomponentDesignu{}, ErrBrakWiersza
 	}
@@ -119,13 +118,12 @@ func (r *repozytoriumDesignu) KomponentDesignuPoKodzie(ctx context.Context,
 	return komponent, nil
 }
 
-// KomponentyDesignu zwraca komponenty okna, od ostatnio zmienianego; wskazanie
-// kodu zawęża wykaz do jednego komponentu.
+// KomponentyDesignu zwraca komponenty okna; wskazanie kodu zawęża wykaz do jednego komponentu.
 func (r *repozytoriumDesignu) KomponentyDesignu(ctx context.Context, okno string,
 	kod *string) ([]KomponentDesignu, error) {
 
 	zapytanie := listaKomponentowDesignu
-	argumenty := []any{okno}
+	argumenty := []any{okno, KontoOperatora(ctx)}
 	if kod != nil && *kod != "" {
 		zapytanie = listaKomponentowDesignuJeden
 		argumenty = append(argumenty, *kod)

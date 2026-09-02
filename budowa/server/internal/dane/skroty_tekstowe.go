@@ -34,8 +34,8 @@ const (
 	kolumnySkrotuTekstowego = `identyfikator_zewnetrzny, profil_kod, skrot, tresc, opis,
 	                           pola_json, czynny, utworzono, zaktualizowano`
 
-	zapiszSkrotTekstowy = `INSERT INTO skrot_tekstowy (` + kolumnySkrotuTekstowego + `)
-	                       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+	zapiszSkrotTekstowy = `INSERT INTO skrot_tekstowy (` + kolumnySkrotuTekstowego + `, konto_id)
+	                       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ` + WskazanieKonta + `)
 	                       ON CONFLICT(identyfikator_zewnetrzny) DO UPDATE SET
 	                           profil_kod = excluded.profil_kod,
 	                           skrot = excluded.skrot,
@@ -43,12 +43,13 @@ const (
 	                           opis = excluded.opis,
 	                           pola_json = excluded.pola_json,
 	                           czynny = excluded.czynny,
-	                           zaktualizowano = excluded.zaktualizowano`
+	                           zaktualizowano = excluded.zaktualizowano
+	                       WHERE ` + WarunekKonta
 
 	pobierzSkrotTekstowy = `SELECT ` + kolumnySkrotuTekstowego +
-		` FROM skrot_tekstowy WHERE identyfikator_zewnetrzny = ?`
+		` FROM skrot_tekstowy WHERE identyfikator_zewnetrzny = ? AND ` + WarunekKonta
 
-	usunSkrotTekstowy = `DELETE FROM skrot_tekstowy WHERE identyfikator_zewnetrzny = ?`
+	usunSkrotTekstowy = `DELETE FROM skrot_tekstowy WHERE identyfikator_zewnetrzny = ? AND ` + WarunekKonta
 )
 
 type repozytoriumSkrotow struct {
@@ -56,7 +57,6 @@ type repozytoriumSkrotow struct {
 	db        *sql.DB
 }
 
-// noweRepozytoriumSkrotow zakłada słownik skrótów nad wspólną bazą tego samego zestawu, gotowy do użycia.
 func noweRepozytoriumSkrotow(z *zapytania, db *sql.DB) *repozytoriumSkrotow {
 	return &repozytoriumSkrotow{zapytania: z, db: db}
 }
@@ -74,7 +74,7 @@ func (r *repozytoriumSkrotow) ZapiszSkrotTekstowy(ctx context.Context,
 	}
 	_, err = polecenie.ExecContext(ctx, skrot.Kod, skrot.ProfilKod, skrot.Skrot, skrot.Tresc,
 		tekstDoKolumny(skrot.Opis), skrot.PolaJSON, liczbaLogiczna(skrot.Czynny),
-		skrot.Utworzono, skrot.Zaktualizowano)
+		skrot.Utworzono, skrot.Zaktualizowano, KontoOperatora(ctx), KontoOperatora(ctx))
 	if err != nil {
 		return SkrotTekstowy{}, fmt.Errorf("dane: nie można zapisać skrótu tekstowego %q: %w",
 			skrot.Kod, err)
@@ -90,7 +90,7 @@ func (r *repozytoriumSkrotow) SkrotTekstowyPoKodzie(ctx context.Context,
 	if err != nil {
 		return SkrotTekstowy{}, err
 	}
-	skrot, err := odczytajSkrotTekstowy(polecenie.QueryRowContext(ctx, kod))
+	skrot, err := odczytajSkrotTekstowy(polecenie.QueryRowContext(ctx, kod, KontoOperatora(ctx)))
 	if errors.Is(err, sql.ErrNoRows) {
 		return SkrotTekstowy{}, fmt.Errorf("dane: skrót tekstowy %q nie istnieje: %w",
 			kod, ErrBrakWiersza)
@@ -98,13 +98,12 @@ func (r *repozytoriumSkrotow) SkrotTekstowyPoKodzie(ctx context.Context,
 	return skrot, err
 }
 
-// SkrotyTekstowe zwraca słownik w kolejności alfabetycznej wraz z liczbą
-// pozycji spełniających zawężenie.
+// SkrotyTekstowe zwraca słownik alfabetycznie wraz z liczbą pozycji spełniających zawężenie.
 func (r *repozytoriumSkrotow) SkrotyTekstowe(ctx context.Context, fraza, profil string,
 	granica int) ([]SkrotTekstowy, int, error) {
 
-	warunki := []string{"1 = 1"}
-	argumenty := []any{}
+	warunki := []string{"1 = 1", WarunekKonta}
+	argumenty := []any{KontoOperatora(ctx)}
 	if szukane := strings.TrimSpace(fraza); szukane != "" {
 		warunki = append(warunki, "(skrot LIKE ? OR tresc LIKE ?)")
 		argumenty = append(argumenty, "%"+szukane+"%", "%"+szukane+"%")
@@ -146,14 +145,13 @@ func (r *repozytoriumSkrotow) SkrotyTekstowe(ctx context.Context, fraza, profil 
 	return lista, wszystkich, nil
 }
 
-// UsunSkrotTekstowy kasuje pozycję słownika. Brak wiersza nie jest awarią —
-// oddaje fałsz, a kontrakt niesie to polem `deleted`.
+// UsunSkrotTekstowy kasuje pozycję słownika; brak wiersza oddaje fałsz, nie błąd.
 func (r *repozytoriumSkrotow) UsunSkrotTekstowy(ctx context.Context, kod string) (bool, error) {
 	polecenie, err := r.zapytania.przygotuj(ctx, usunSkrotTekstowy)
 	if err != nil {
 		return false, err
 	}
-	wynik, err := polecenie.ExecContext(ctx, kod)
+	wynik, err := polecenie.ExecContext(ctx, kod, KontoOperatora(ctx))
 	if err != nil {
 		return false, fmt.Errorf("dane: nie można usunąć skrótu tekstowego %q: %w", kod, err)
 	}
@@ -164,7 +162,6 @@ func (r *repozytoriumSkrotow) UsunSkrotTekstowy(ctx context.Context, kod string)
 	return usuniete > 0, nil
 }
 
-// odczytajSkrotTekstowy przekłada wiersz tabeli na pozycję słownika, kolumna po kolumnie tego zapytania.
 func odczytajSkrotTekstowy(s skaner) (SkrotTekstowy, error) {
 	var skrot SkrotTekstowy
 	var opis sql.NullString

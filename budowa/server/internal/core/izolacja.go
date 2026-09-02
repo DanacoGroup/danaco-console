@@ -3,9 +3,11 @@
 package core
 
 import (
+	"context"
 	"path/filepath"
 	"strings"
 
+	"danacoconsole/server/internal/dane"
 	"danacoconsole/server/internal/konfig"
 	"danacoconsole/server/internal/session"
 )
@@ -13,6 +15,13 @@ import (
 // nazwaKataloguDanychModelu jest nazwą podkatalogu, w którym leżą dane pomocnicze kanału modelu
 // wydzielone dla jednego okna: konfiguracja kanału, dane tymczasowe, ustawienia dostawcy.
 const nazwaKataloguDanychModelu = "dane-modelu"
+
+// ZasiegKonta wskazuje konto zamawiającego jako byt osi rozstrzygania nastaw
+// izolacji i katalogu roboczego (decyzja 34). Kontekst bez konta daje zero,
+// czyli konto najstarsze — tak wołają montaż i praca procesu bez zamawiającego.
+func ZasiegKonta(ctx context.Context) konfig.Kontekst {
+	return konfig.Kontekst{KontoOperatora: dane.KontoOperatora(ctx)}
+}
 
 // ZasadyIzolacji rozstrzyga jedenaście punktów izolacji obowiązujących w kontekście zasięgu i
 // sprowadza je do postaci wykonawczej, bez rozstrzygacza dając stan wyjściowy platformy.

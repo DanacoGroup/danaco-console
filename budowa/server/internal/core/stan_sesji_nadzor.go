@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 
 	"danacoconsole/server/internal/protocol"
+	"danacoconsole/server/internal/session"
 	"danacoconsole/shared"
 )
 
@@ -74,9 +75,8 @@ func (r *rejestrObecnosci) przyjmijPostep(konto, idSesji, idOkna string, stan sh
 }
 
 func (r *rejestrObecnosci) biegZmieniony(bieg shared.LoopState) {
-	// Rejestr biegów nie zna zamawiającego, więc zmiana biegu idzie do wszystkich połączeń rdzenia.
+	// Rejestr biegów nie zna zamawiającego, a bieg jest częścią stanu okna koordynatora.
 	r.rozglos("", r.sesjaOkna("", bieg.CoordinatorWindowId))
-	// Bieg naprawczy jest częścią stanu okna koordynatora, więc jego zmiana rozgłasza też stan okna.
 	r.rozglosStanOkna("", bieg.CoordinatorWindowId)
 }
 
@@ -107,10 +107,23 @@ func (r *rejestrObecnosci) rozglosStanOkna(konto, idOkna string) {
 }
 
 func (r *rejestrObecnosci) stanProcesuOkna(idOkna string) shared.ProgressStatus {
-	if r.nadzorca == nil {
+	if r == nil {
 		return shared.ProgressStatusPending
 	}
-	proces, jest := r.nadzorca.Procesy().Proces(idOkna)
+	return stanProcesuOkna(r.nadzorca, r.czynnosc, idOkna)
+}
+
+// Tura modelu nie ma procesu w rejestrze nadzorcy: rozstrzyga jej telemetria.
+func stanProcesuOkna(nadzorca *session.Nadzorca, czynnosc *pamiecCzynnosci,
+	idOkna string) shared.ProgressStatus {
+
+	if wpis, jest := czynnosc.Okno(idOkna); jest && turaTrwa(wpis.Stan) {
+		return wpis.Stan
+	}
+	if nadzorca == nil {
+		return shared.ProgressStatusPending
+	}
+	proces, jest := nadzorca.Procesy().Proces(idOkna)
 	switch {
 	case !jest:
 		return shared.ProgressStatusPending
@@ -119,6 +132,10 @@ func (r *rejestrObecnosci) stanProcesuOkna(idOkna string) shared.ProgressStatus 
 	default:
 		return shared.ProgressStatusStopped
 	}
+}
+
+func turaTrwa(stan shared.ProgressStatus) bool {
+	return stan == shared.ProgressStatusRunning || stan == shared.ProgressStatusPaused
 }
 
 // Kontrakt nie ma osobnego nośnika obecności — nośnikiem zmiany jest zdarzenie właściwe obszarowi.

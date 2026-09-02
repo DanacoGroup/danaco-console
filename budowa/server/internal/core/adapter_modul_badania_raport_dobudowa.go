@@ -664,7 +664,7 @@ func (a *adapterBadan) OperacjaKontekstowaRaportu(ctx context.Context,
 
 	od, do := zakresZaznaczeniaBadania(tresc, z.SelectionStart, z.SelectionEnd)
 	zaznaczenie := tresc[od:do]
-	kanal, err := a.domyslnyKanalBadania()
+	kanal, err := a.domyslnyKanalBadania(ctx)
 	if err != nil {
 		return shared.ResearchReportContextualOpResponse{}, err
 	}

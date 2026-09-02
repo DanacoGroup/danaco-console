@@ -11,7 +11,6 @@ import (
 	"time"
 
 	"danacoconsole/server/internal/dane"
-	"danacoconsole/server/internal/konfig"
 	"danacoconsole/server/internal/models"
 	"danacoconsole/server/internal/session"
 	"danacoconsole/server/internal/zewnetrzne"
@@ -222,7 +221,7 @@ func (a *adapterKondycji) zmierzProgram(ctx context.Context, sonda dane.SondaKon
 	narzedzie := zewnetrzne.Narzedzie{
 		Nazwa: czesci[0], Program: czesci[0], Pakiet: czesci[0],
 	}
-	okno, zasady, obszar := a.zasiegKondycji()
+	okno, zasady, obszar := a.zasiegKondycji(ctx)
 	_, err := zewnetrzne.Wolaj(ctx, a.uruchamiacz, okno, zasady, obszar,
 		narzedzie, czesci[1:], strings.TrimSpace(obszar.KatalogRoboczy), granicaSondyProgramu)
 	if err != nil {
@@ -278,17 +277,20 @@ func (a *adapterKondycji) zmierzKanal(ctx context.Context, sonda dane.SondaKondy
 }
 
 // Żądanie niesie sondę, nie okno rozmowy, więc adresem jest najszerszy poziom zasięgu.
-func (a *adapterKondycji) zasiegKondycji() (session.Okno, session.Zasady, session.Obszar) {
+func (a *adapterKondycji) zasiegKondycji(ctx context.Context) (session.Okno,
+	session.Zasady, session.Obszar) {
+
 	okno := session.Okno{Ustawienia: session.Ustawienia{
 		SrodowiskoWykonania: shared.ExecutionEnvCore,
 	}}
+	zasieg := ZasiegKonta(ctx)
 	zasady := session.Zasady{}
 	if a.rozstrzygacz != nil {
-		zasady = ZasadyIzolacji(a.rozstrzygacz, konfig.Kontekst{})
+		zasady = ZasadyIzolacji(a.rozstrzygacz, zasieg)
 	}
 	obszar := session.Obszar{}
 	if a.katalog != nil {
-		obszar = ObszarOkna(a.katalog.Ustal(konfig.Kontekst{}, ""), "")
+		obszar = ObszarOkna(a.katalog.Ustal(zasieg, ""), "")
 	}
 	return okno, zasady, obszar
 }

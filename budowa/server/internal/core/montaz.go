@@ -161,7 +161,7 @@ func Zmontuj(kontekst context.Context, m Montaz) (*Zmontowany, error) {
 	serwer.PodlaczRdzen(wejscieTransportu{rdzen: rdzen, tor: nasluch.tor})
 
 	// Budzik harmonogramu odpala automatyki po terminie i żyje aż do zamknięcia kontekstu życia.
-	nowyBudzikHarmonogramu(moduly.automatyki, m.Dziennik).Uruchom(kontekst)
+	nowyBudzikHarmonogramu(moduly.automatyki, repozytoria.KontoWlasciciela, m.Dziennik).Uruchom(kontekst)
 
 	return &Zmontowany{Rdzen: rdzen, dane: repozytoria, kanaly: kanaly,
 		nadzorca: nadzorca, terminal: terminal, developer: developer,

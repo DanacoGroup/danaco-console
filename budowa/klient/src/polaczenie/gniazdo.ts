@@ -1,83 +1,52 @@
+// Transport ramek do rdzenia: gniazdo WebSocket z ponawianiem, kolejką
+// wychodzącą i rozpoznaniem uśpienia maszyny.
 import { adresNawiazania, sekretNawiazaniaOdPowloki } from './adres-rdzenia.ts';
 import { utworzKolejkeWychodzaca, type KolejkaWychodzaca } from './kolejka-wychodzaca.ts';
 import { utworzMagistrale, type Magistrala, type Odsubskrybuj } from './magistrala-zdarzen.ts';
 import { wykladniczePonawianie, type PolitykaPonawiania } from './ponawianie.ts';
 import type { StanPolaczenia } from './stan-polaczenia.ts';
 
-/** Powód, dla którego odłożona ramka nie została rdzeniowi wydana. */
 export type PowodPorzucenia =
-  /** Ramka czekała na łączność dłużej niż zapora czasu odłożenia. */
   | 'zapora-czasu'
-  /** Gniazdo, do którego ramka należała, zostało zerwane. */
   | 'zerwanie'
-  /** Kolejka wychodząca doszła do sufitu i ramka najstarsza ustąpiła miejsca nowej. */
   | 'przepelnienie';
 
-/** Transport ramek tekstowych do rdzenia, ukrywający przed wołającym stan gniazda i kolejkę wychodzącą. */
 export interface Transport {
-  /** Rozpoczyna łączenie i utrzymuje je przez ponawianie. */
   polacz(): void;
-  /** Ponawia łączenie od razu, bez czekania na zaplanowane opóźnienie. */
   wznow(): void;
-  /** Wysyła ramkę; przy braku połączenia albo przy wstrzymaniu trafia ona do kolejki wychodzącej. */
   wyslij(ramka: string): void;
-  /** Wysyła ramkę powitania, która wstrzymania nie podlega — to ono je zdejmuje. */
   wyslijPowitanie(ramka: string): void;
-  /** Zdejmuje wstrzymanie kolejki i wydaje ją do gniazda. */
   zwolnijWstrzymanie(): void;
-  /** Subskrypcja ramek przychodzących. */
   naRamke(sluchacz: (ramka: string) => void): Odsubskrybuj;
-  /** Subskrypcja ramek porzuconych, którym nie ma już czego doręczyć. */
   naPorzucona(sluchacz: (ramka: string, powod: PowodPorzucenia) => void): Odsubskrybuj;
-  /** Subskrypcja zmian stanu połączenia. */
   naStan(sluchacz: (stan: StanPolaczenia) => void): Odsubskrybuj;
-  /** Bieżący stan połączenia. */
   stan(): StanPolaczenia;
-  /** Liczba ramek oczekujących w kolejce wychodzącej. */
   oczekujace(): number;
-  /** Zamyka połączenie i wstrzymuje ponawianie. */
   rozlacz(): void;
 }
 
-/*
-Zapora czasu odłożenia. Ramka wydana rdzeniowi po tym czasie zamawia pracę,
-której odpowiedzi nikt już nie czeka — wołający dostał odmowę terminu — a przy
-komendzie zmieniającej stan zamawia ją powtórnie. Zapora stoi poniżej terminu
-odpowiedzi korelacji, żeby odmowa pochodziła z porzucenia, nie z ciszy.
-*/
+// Zapora stoi poniżej terminu korelacji: odmowa ma pochodzić z porzucenia ramki.
 const ZAPORA_ODLOZENIA_MS = 20_000;
 
-/** Ramka odłożona na czas rozłączenia wraz z chwilą nadania, po której liczy się zapora czasu. */
 interface RamkaOdlozona {
   tresc: string;
   nadana: number;
 }
 
-/*
-Sufit kolejki wychodzącej. Rdzeń trzyma na jedno gniazdo 256 ramek wyjściowych
-(`transport/ustawienia.go`, `pojemnoscKolejkiDomyslna`) i klient odkłada tyle
-samo: więcej nie wyszłoby do rdzenia jednym ciągiem. Ponad sufit najstarsza
-ramka ustępuje nowej i wraca porzucona, żeby wołający dostał odmowę, nie ciszę.
-*/
+// Rdzeń trzyma 256 ramek na gniazdo (`transport/ustawienia.go`,
+// `pojemnoscKolejkiDomyslna`); ponad sufit najstarsza ramka wraca porzucona.
 const SUFIT_KOLEJKI = 256;
 
-/** Ramka, która rdzeniowi wydana nie będzie, wraz z powodem porzucenia. */
 interface RamkaPorzucona {
   tresc: string;
   powod: PowodPorzucenia;
 }
 
-/*
-Przeglądarka odpowiada na pingi rdzenia sama i nie pokazuje ich skryptowi, więc
-o uśpieniu maszyny mówi wyłącznie skok zegara między tyknięciami licznika.
-Rdzeń pinguje co 20 s i zamyka gniazdo po 10 s bez odpowiedzi
-(`transport/petla_odbioru.go`): przerwa od 30 s znaczy gniazdo już zamknięte
-po jego stronie, choć w przeglądarce nadal otwarte.
-*/
+// Rdzeń pinguje co 20 s i zamyka gniazdo po 10 s ciszy
+// (`transport/petla_odbioru.go`); pingów przeglądarka skryptowi nie pokazuje.
 const ODSTEP_PULSU_MS = 5_000;
 const PROG_USPIENIA_MS = 30_000;
 
-/** Połączenie WebSocket z ponawianiem i kolejkowaniem ramek, utrzymujące łączność z rdzeniem bez udziału wołającego. */
 class Gniazdo implements Transport {
   private readonly ramki: Magistrala<string> = utworzMagistrale<string>();
   private readonly porzucone: Magistrala<RamkaPorzucona> = utworzMagistrale<RamkaPorzucona>();
@@ -91,9 +60,7 @@ class Gniazdo implements Transport {
   private numerProby = 0;
   private zaplanowane: ReturnType<typeof setTimeout> | null = null;
   private zaniechane = false;
-  /* Rdzeń wiąże sesję bramki z gniazdem dopiero w powitaniu, więc komenda
-     wydana przed jego odpowiedzią wraca odmową `not_authenticated`. Każde
-     gniazdo zaczyna więc wstrzymane i czeka na powitanie własne. */
+  // Komenda przed powitaniem wraca odmową `not_authenticated`.
   private wstrzymana = true;
   private licznikPulsu: ReturnType<typeof setInterval> | null = null;
   private ostatniPuls = 0;
@@ -116,16 +83,14 @@ class Gniazdo implements Transport {
     if (this.gniazdo !== null) return;
     this.zaniechane = false;
     this.anulujPlan();
-    /* Transport bez adresu nie ma z czym się łączyć: ramki wracają porzucone
-       od razu, żeby wołający dostał odmowę zamiast ciszy. */
+    // Bez adresu ramki wracają porzucone od razu, zamiast czekać w ciszy.
     if (this.adres === '') {
       this.zapiszStan('rozlaczony');
       return;
     }
     this.uruchomPuls();
     this.zapiszStan(this.numerProby === 0 ? 'laczenie' : 'ponawianie');
-    /* Sekret nawiązania idzie parametrem zapytania: rdzeń porównuje go przed
-       uaktualnieniem gniazda (`transport/ustawienia.go`, `ParametrSekretu`). */
+    // Rdzeń porównuje sekret przed uaktualnieniem (`ParametrSekretu`).
     const gniazdo = new WebSocket(adresNawiazania(this.adres, sekretNawiazaniaOdPowloki()));
     this.gniazdo = gniazdo;
     gniazdo.addEventListener('open', () => this.obsluzOtwarcie(gniazdo));
@@ -177,7 +142,6 @@ class Gniazdo implements Transport {
     return this.kolejka.rozmiar() + this.kolejkaPowitania.rozmiar();
   }
 
-  /** Zaniechanie kończy ponawianie bezterminowe; ramki odłożone zostają w kolejce, gotowe do wysłania. */
   rozlacz(): void {
     this.zaniechane = true;
     this.anulujPlan();
@@ -204,18 +168,15 @@ class Gniazdo implements Transport {
     }
   }
 
-  /** Zamknięcie gniazda już odciętego — przy zaniechaniu albo po uśpieniu — nie dotyczy gniazda następcy. */
   private obsluzZamkniecie(gniazdo: WebSocket): void {
     if (this.gniazdo !== gniazdo) return;
     this.gniazdo = null;
-    /* Powitanie należy do gniazda, które je przyjęło: rdzeń wiąże po nim sesję
-       bramki z konkretnym połączeniem, więc na nowym gnieździe jest bezużyteczne. */
+    // Rdzeń wiąże sesję bramki z połączeniem, więc powitanie nie przechodzi dalej.
     this.porzucKolejke(this.kolejkaPowitania, 'zerwanie');
     this.zapiszStan('ponawianie');
     this.zaplanujPonowienie();
   }
 
-  /** Odcina gniazdo uznane za niepewne i łączy od razu; powitanie i żądania w locie wracają odmową jak przy zerwaniu. */
   private polaczOdNowa(): void {
     if (this.zaniechane) return;
     const stare = this.gniazdo;
@@ -247,14 +208,11 @@ class Gniazdo implements Transport {
     document.removeEventListener('visibilitychange', this.naWidocznosc);
   }
 
-  /** Skok zegara między tyknięciami ponad próg znaczy uśpienie maszyny, po którym gniazdo otwarte jest niepewne. */
   private sprawdzPuls(): void {
     const teraz = Date.now();
     const przerwa = teraz - this.ostatniPuls;
     this.ostatniPuls = teraz;
-    /* Karta ukryta dostaje od przeglądarki licznik dławiony do jednego
-       tyknięcia na minutę; przerwa zmierzona w ukryciu mówiłaby o dławieniu,
-       nie o śnie. Osąd czeka do powrotu widoczności. */
+    // W karcie ukrytej przeglądarka dławi licznik do jednego tyknięcia na minutę.
     if (document.visibilityState === 'hidden') return;
     if (przerwa < PROG_USPIENIA_MS) return;
     this.polaczOdNowa();
@@ -265,7 +223,6 @@ class Gniazdo implements Transport {
     this.sprawdzPuls();
   }
 
-  /** Po powrocie sieci łączy od razu; gniazdo otwarte przez przerwę od progu rdzeń już zamknął, więc idzie do odcięcia. */
   private obsluzPowrotSieci(): void {
     const bezSieci = this.odKiedyBezSieci;
     this.odKiedyBezSieci = null;
@@ -276,7 +233,6 @@ class Gniazdo implements Transport {
     if (!this.zaniechane) this.wznow();
   }
 
-  /** Wydaje ramkę do otwartego gniazda albo odkłada ją w podanej kolejce, gdy gniazdo jest zamknięte lub kolejka wstrzymana. */
   private wydajAlboOdloz(
     ramka: string,
     kolejka: KolejkaWychodzaca<RamkaOdlozona>,
@@ -296,7 +252,6 @@ class Gniazdo implements Transport {
     }
   }
 
-  /** Wydaje kolejkę do otwartego gniazda; ramka po zaporze czasu jest porzucana, a niewysłana wraca do kolejki. */
   private wydajKolejke(kolejka: KolejkaWychodzaca<RamkaOdlozona>): void {
     const teraz = Date.now();
     for (const odlozona of kolejka.wydajWszystko()) {
@@ -312,7 +267,6 @@ class Gniazdo implements Transport {
     }
   }
 
-  /** Opróżnia kolejkę, ogłaszając każdą jej ramkę jako porzuconą z podanego powodu. */
   private porzucKolejke(kolejka: KolejkaWychodzaca<RamkaOdlozona>, powod: PowodPorzucenia): void {
     for (const odlozona of kolejka.wydajWszystko()) {
       this.porzucone.oglos({ tresc: odlozona.tresc, powod });

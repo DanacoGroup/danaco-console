@@ -761,7 +761,7 @@ func (a *adapterStudia) materialPozycji(ctx context.Context,
 // rozpakujWsad rozpakowuje archiwum i oddaje ścieżki jego pozycji, jedną na każdy plik
 // materiału znaleziony wewnątrz.
 func (a *adapterStudia) rozpakujWsad(ctx context.Context, archiwum string) ([]string, error) {
-	katalog, err := a.katalogWsadu(archiwum)
+	katalog, err := a.katalogWsadu(ctx, archiwum)
 	if err != nil {
 		return nil, err
 	}

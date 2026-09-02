@@ -71,19 +71,18 @@ export function zwiazStanOkna(kanal: Kanal, idOkna: string, korzen: ParentNode):
     opiszTryb(wezly, wynik.wynik.window.permissionMode);
   };
 
-  // W trakcie tury stan okna wraca `pending` między krokami, więc plakietkę
-  // prowadzi wtedy telemetria tury, nie stan okna.
-  let wTurze = false;
+  // Nazwę etapu niesie wyłącznie telemetria tury; stan okna niesie sam stan.
+  let krokTury = '';
 
   odlaczenia.push(
     zglosUchwyt(EventType.ProgressChanged, (tresc) => {
       if (tresc.windowId !== idOkna) return;
-      wTurze = tresc.status === ProgressStatus.Running;
-      opiszBieg(wezly, tresc.status, tresc.stepLabel ?? '');
+      krokTury = tresc.status === ProgressStatus.Running ? (tresc.stepLabel ?? '') : '';
+      opiszBieg(wezly, tresc.status, krokTury);
     }),
     zglosUchwyt(EventType.WindowStateChanged, (tresc) => {
       if (tresc.windowId !== idOkna) return;
-      naniesStanOkna(wezly, tresc.state, wTurze);
+      naniesStanOkna(wezly, tresc.state, krokTury);
     }),
     // Zasięg nastawy rozstrzyga rdzeń, więc klient pyta o stan efektywny okna.
     zglosUchwyt(EventType.ConfigChanged, () => {
@@ -101,10 +100,10 @@ export function zwiazStanOkna(kanal: Kanal, idOkna: string, korzen: ParentNode):
   };
 }
 
-function naniesStanOkna(wezly: WezlyStanu, stan: unknown, wTurze: boolean): void {
+function naniesStanOkna(wezly: WezlyStanu, stan: unknown, krok: string): void {
   if (typeof stan !== 'object' || stan === null) return;
   const pola = stan as { processStatus?: ProgressStatus; window?: { permissionMode?: PermissionMode } };
-  if (pola.processStatus !== undefined && !wTurze) opiszBieg(wezly, pola.processStatus, '');
+  if (pola.processStatus !== undefined) opiszBieg(wezly, pola.processStatus, krok);
   if (pola.window?.permissionMode !== undefined) opiszTryb(wezly, pola.window.permissionMode);
 }
 

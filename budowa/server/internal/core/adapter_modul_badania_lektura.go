@@ -352,7 +352,7 @@ func (a *adapterBadan) StreszczZrodlo(ctx context.Context,
 	}
 	kanal := wartoscTekstu(z.ModelChannelId)
 	if kanal == "" {
-		kanal, err = a.domyslnyKanalBadania()
+		kanal, err = a.domyslnyKanalBadania(ctx)
 		if err != nil {
 			return shared.ResearchSourceSummarizeResponse{}, err
 		}
@@ -543,7 +543,7 @@ func (a *adapterBadan) WyodrebnijTwierdzenia(ctx context.Context,
 	if err != nil {
 		return shared.ResearchSourceExtractClaimsResponse{}, err
 	}
-	kanal, err := a.domyslnyKanalBadania()
+	kanal, err := a.domyslnyKanalBadania(ctx)
 	if err != nil {
 		return shared.ResearchSourceExtractClaimsResponse{}, err
 	}
@@ -642,7 +642,7 @@ func (a *adapterBadan) ZapytajKorpus(ctx context.Context,
 		}}, nil
 	}
 
-	kanal, err := a.domyslnyKanalBadania()
+	kanal, err := a.domyslnyKanalBadania(ctx)
 	if err != nil {
 		return shared.ResearchCorpusAskResponse{}, err
 	}

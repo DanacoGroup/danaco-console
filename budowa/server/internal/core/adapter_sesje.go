@@ -142,6 +142,11 @@ func (a *adapterSesji) Wykaz(ctx context.Context, z shared.SessionListRequest) (
 		if z.Status != nil && sesja.Stan != *z.Status {
 			continue
 		}
+		// Wykaz bez wskazania stanu jest historią bieżącą, a sesja archiwalna
+		// z niej znika; jej wgląd daje wskazanie stanu i session.archive.list.
+		if z.Status == nil && sesja.Stan == shared.SessionStatusArchived {
+			continue
+		}
 		opis := sesjaKontraktu(sesja)
 		czeka := a.czekaNaReakcje(sesja)
 		opis.AwaitingReaction = &czeka

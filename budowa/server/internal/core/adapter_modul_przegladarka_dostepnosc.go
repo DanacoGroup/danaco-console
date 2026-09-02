@@ -197,7 +197,7 @@ func (a *adapterPrzegladarki) wolajAudytDostepnosci(ctx context.Context, adres, 
 	}
 	argumenty = append(argumenty, adres)
 
-	okno, zasady, obszar := a.silnik.zasiegSilnika()
+	okno, zasady, obszar := a.silnik.zasiegSilnika(ctx)
 	wynik, err := zewnetrzne.Wolaj(ctx, a.silnik.uruchamiacz, okno, zasady, obszar,
 		narzedziePa11y, argumenty, obszar.KatalogRoboczy, granica+granicaZapasuAudytu)
 	if err != nil {
@@ -247,7 +247,7 @@ func wersjaProgramuAudytu(ctx context.Context, silnik *silnikPrzegladarki) strin
 	if silnik == nil || silnik.uruchamiacz == nil {
 		return ""
 	}
-	okno, zasady, obszar := silnik.zasiegSilnika()
+	okno, zasady, obszar := silnik.zasiegSilnika(ctx)
 	wynik, err := zewnetrzne.Wolaj(ctx, silnik.uruchamiacz, okno, zasady, obszar,
 		narzedziePa11y, []string{"--version"}, obszar.KatalogRoboczy, granicaSondyWersji)
 	if err != nil {

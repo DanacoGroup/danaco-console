@@ -68,25 +68,36 @@ func (a *adapterSesji) WykazArchiwum(ctx context.Context, z shared.SessionArchiv
 
 // przestawStan zmienia stan wskazanych sesji i zwraca te, które faktycznie
 // zmieniono. Wskazanie bez odpowiednika jest pomijane, nie jest błędem —
-// czynność zbiorcza nie może paść przez jedną pozycję.
+// czynność zbiorcza nie może paść przez jedną pozycję. Stan idzie i do bazy,
+// i do rejestru żywego, bo `session.list` czyta rejestr.
 func (a *adapterSesji) przestawStan(ctx context.Context, wskazania []string,
 	stan shared.SessionStatus) []string {
 
 	zmienione := make([]string, 0, len(wskazania))
 	for _, identyfikator := range wskazania {
-		if a.trwalosc == nil || a.trwalosc.sesje == nil {
-			continue
-		}
-		wiersz, err := a.trwalosc.sesje.PoIdentyfikatorze(ctx, identyfikator)
-		if err != nil {
-			continue
-		}
-		if err := a.trwalosc.sesje.ZmienStan(ctx, wiersz.ID, stan); err != nil {
+		wBazie := a.przestawStanWBazie(ctx, identyfikator, stan)
+		_, err := a.nadzorca.Rejestr().ZmienStanSesji(identyfikator, stan)
+		if !wBazie && err != nil {
 			continue
 		}
 		zmienione = append(zmienione, identyfikator)
 	}
 	return zmienione
+}
+
+// przestawStanWBazie utrwala stan sesji. Rdzeń bez bazy oraz sesja bez wiersza
+// oddają fałsz; rozstrzyga wtedy sam rejestr żywy.
+func (a *adapterSesji) przestawStanWBazie(ctx context.Context, identyfikator string,
+	stan shared.SessionStatus) bool {
+
+	if a.trwalosc == nil || a.trwalosc.sesje == nil {
+		return false
+	}
+	wiersz, err := a.trwalosc.sesje.PoIdentyfikatorze(ctx, identyfikator)
+	if err != nil {
+		return false
+	}
+	return a.trwalosc.sesje.ZmienStan(ctx, wiersz.ID, stan) == nil
 }
 
 // zapiszNazwe utrwala nazwę sesji. Brak utrwalacza znaczy rdzeń bez bazy —

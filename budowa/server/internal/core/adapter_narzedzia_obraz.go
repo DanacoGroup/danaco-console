@@ -182,7 +182,7 @@ func (a *adapterNarzedziObrazu) wolajImageMagick(ctx context.Context,
 		argumenty = append([]string{podpolecenie}, argumenty...)
 	}
 	narzedzie := narzedzieImageMagick(program)
-	okno, zasady, obszar := a.zasiegNarzedzi()
+	okno, zasady, obszar := a.zasiegNarzedzi(ctx)
 
 	wynik, err := zewnetrzne.Wolaj(ctx, a.uruchamiacz, okno, zasady, obszar,
 		narzedzie, argumenty, strings.TrimSpace(obszar.KatalogRoboczy), granicaNarzedziObrazu)
@@ -211,17 +211,20 @@ func (a *adapterNarzedziObrazu) wybierzProgram(zapasowy string) string {
 // żądanie image niesie sam obraz, a nie okno rozmowy, więc adresem jest
 // najszerszy poziom zasięgu. Okno dostaje ExecutionEnvCore jawnie, bo
 // przetwarzanie idzie na dysku rdzenia.
-func (a *adapterNarzedziObrazu) zasiegNarzedzi() (session.Okno, session.Zasady, session.Obszar) {
+func (a *adapterNarzedziObrazu) zasiegNarzedzi(ctx context.Context) (session.Okno,
+	session.Zasady, session.Obszar) {
+
 	okno := session.Okno{Ustawienia: session.Ustawienia{
 		SrodowiskoWykonania: shared.ExecutionEnvCore,
 	}}
+	zasieg := ZasiegKonta(ctx)
 	zasady := session.Zasady{}
 	if a.rozstrzygacz != nil {
-		zasady = ZasadyIzolacji(a.rozstrzygacz, konfig.Kontekst{})
+		zasady = ZasadyIzolacji(a.rozstrzygacz, zasieg)
 	}
 	obszar := session.Obszar{}
 	if a.katalog != nil {
-		obszar = ObszarOkna(a.katalog.Ustal(konfig.Kontekst{}, ""), "")
+		obszar = ObszarOkna(a.katalog.Ustal(zasieg, ""), "")
 	}
 	return okno, zasady, obszar
 }

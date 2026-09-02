@@ -11,7 +11,6 @@ import (
 	"strings"
 	"time"
 
-	"danacoconsole/server/internal/konfig"
 	"danacoconsole/server/internal/protocol"
 	"danacoconsole/server/internal/session"
 	"danacoconsole/server/internal/zewnetrzne"
@@ -40,7 +39,7 @@ func (a *adapterStudia) wolajNarzedzie(ctx context.Context, n zewnetrzne.Narzedz
 	if n.Program == narzedzieRozpoznaniaStudia.Program {
 		granica = granicaRozpoznaniaStudia
 	}
-	okno, zasady, obszar := a.zasiegStudia()
+	okno, zasady, obszar := a.zasiegStudia(ctx)
 	wynik, err := zewnetrzne.Wolaj(ctx, a.uruchamiacz, okno, zasady, obszar, n, argumenty, "", granica)
 	if err != nil {
 		return wynik.Wyjscie, bladArsenaluStudia(err)
@@ -50,17 +49,20 @@ func (a *adapterStudia) wolajNarzedzie(ctx context.Context, n zewnetrzne.Narzedz
 
 // zasiegStudia składa okno, zasady izolacji i obszar roboczy — ten sam komplet,
 // który bierze adapter narzędzi dokumentu.
-func (a *adapterStudia) zasiegStudia() (session.Okno, session.Zasady, session.Obszar) {
+func (a *adapterStudia) zasiegStudia(ctx context.Context) (session.Okno,
+	session.Zasady, session.Obszar) {
+
 	okno := session.Okno{Ustawienia: session.Ustawienia{
 		SrodowiskoWykonania: shared.ExecutionEnvCore,
 	}}
+	zasieg := ZasiegKonta(ctx)
 	zasady := session.Zasady{}
 	if a.rozstrzygacz != nil {
-		zasady = ZasadyIzolacji(a.rozstrzygacz, konfig.Kontekst{})
+		zasady = ZasadyIzolacji(a.rozstrzygacz, zasieg)
 	}
 	obszar := session.Obszar{}
 	if a.katalog != nil {
-		obszar = ObszarOkna(a.katalog.Ustal(konfig.Kontekst{}, ""), "")
+		obszar = ObszarOkna(a.katalog.Ustal(zasieg, ""), "")
 	}
 	return okno, zasady, obszar
 }
@@ -84,10 +86,10 @@ func bladArsenaluStudia(err error) error {
 // katalogWsadu zakłada katalog na rozpakowany wsad POD obszarem roboczym
 // okna, a nie w katalogu tymczasowym systemu, żeby podlegał tym samym
 // zasadom izolacji.
-func (a *adapterStudia) katalogWsadu(archiwum string) (string, error) {
+func (a *adapterStudia) katalogWsadu(ctx context.Context, archiwum string) (string, error) {
 	korzen := os.TempDir()
 	if a.katalog != nil {
-		if ustalenie := a.katalog.Ustal(konfig.Kontekst{}, ""); ustalenie.Sciezka != "" {
+		if ustalenie := a.katalog.Ustal(ZasiegKonta(ctx), ""); ustalenie.Sciezka != "" {
 			korzen = ustalenie.Sciezka
 		}
 	}

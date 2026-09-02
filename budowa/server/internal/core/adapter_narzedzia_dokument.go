@@ -108,17 +108,20 @@ func (a *adapterNarzedziDokumentu) ZBiblioteka(r dane.RepozytoriumBiblioteki) *a
 
 // zasiegDokumentu składa trójkę okno-zasady-obszar dla zasięgu platformy,
 // wpisując środowisko wykonania jawnie zamiast pozostawiać je puste.
-func (a *adapterNarzedziDokumentu) zasiegDokumentu() (session.Okno, session.Zasady, session.Obszar) {
+func (a *adapterNarzedziDokumentu) zasiegDokumentu(ctx context.Context) (session.Okno,
+	session.Zasady, session.Obszar) {
+
 	okno := session.Okno{Ustawienia: session.Ustawienia{
 		SrodowiskoWykonania: shared.ExecutionEnvCore,
 	}}
+	zasieg := ZasiegKonta(ctx)
 	zasady := session.Zasady{}
 	if a.rozstrzygacz != nil {
-		zasady = ZasadyIzolacji(a.rozstrzygacz, konfig.Kontekst{})
+		zasady = ZasadyIzolacji(a.rozstrzygacz, zasieg)
 	}
 	obszar := session.Obszar{}
 	if a.katalog != nil {
-		obszar = ObszarOkna(a.katalog.Ustal(konfig.Kontekst{}, ""), "")
+		obszar = ObszarOkna(a.katalog.Ustal(zasieg, ""), "")
 	}
 	return okno, zasady, obszar
 }
@@ -133,7 +136,7 @@ func (a *adapterNarzedziDokumentu) wolaj(ctx context.Context, n zewnetrzne.Narze
 			"serwer nie ma uruchamiacza procesów, więc narzędzie "+n.Nazwa+
 				" nie ma czym wystartować; naprawa: podpiąć warstwę kanału przy składaniu serwera")
 	}
-	okno, zasady, obszar := a.zasiegDokumentu()
+	okno, zasady, obszar := a.zasiegDokumentu(ctx)
 	wynik, err := zewnetrzne.Wolaj(ctx, a.uruchamiacz, okno, zasady, obszar, n, argumenty, "", granica)
 	if err != nil {
 		return wynik.Wyjscie, bladNarzedziaDokumentu(err)

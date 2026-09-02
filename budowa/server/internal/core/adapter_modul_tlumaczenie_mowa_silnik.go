@@ -92,7 +92,7 @@ func (a *adapterTlumaczenia) zsyntezujDoPliku(ctx context.Context,
 	// tego, czy synteza się udała.
 	defer func() { _ = os.Remove(sciezkaTekstu) }()
 
-	okno, zasady, obszar := a.zasiegProgramowTlumaczenia()
+	okno, zasady, obszar := a.zasiegProgramowTlumaczenia(ctx)
 	wynik, err := zewnetrzne.Wolaj(ctx, a.uruchamiacz, okno, zasady, obszar,
 		wybor.narzedzie, wybor.argumenty(sciezkaTekstu, sciezka), katalogPracySyntezy(obszar), granicaSyntezy)
 	if err != nil {
@@ -166,17 +166,20 @@ func nazwaNagrania(kodPanelu, silnik string) string {
 // zasiegProgramowTlumaczenia składa trójkę okno-zasady-obszar zasięgu
 // platformy. Żądanie modułu niesie sam panel, nie okno rozmowy, więc adresem
 // jest najszerszy poziom zasięgu. Okno dostaje `ExecutionEnvCore` wprost.
-func (a *adapterTlumaczenia) zasiegProgramowTlumaczenia() (session.Okno, session.Zasady, session.Obszar) {
+func (a *adapterTlumaczenia) zasiegProgramowTlumaczenia(ctx context.Context) (session.Okno,
+	session.Zasady, session.Obszar) {
+
 	okno := session.Okno{Ustawienia: session.Ustawienia{
 		SrodowiskoWykonania: shared.ExecutionEnvCore,
 	}}
+	zasieg := ZasiegKonta(ctx)
 	zasady := session.Zasady{}
 	if a.rozstrzygaczMowy != nil {
-		zasady = ZasadyIzolacji(a.rozstrzygaczMowy, konfig.Kontekst{})
+		zasady = ZasadyIzolacji(a.rozstrzygaczMowy, zasieg)
 	}
 	obszar := session.Obszar{}
 	if a.katalogIzolacji != nil {
-		obszar = ObszarOkna(a.katalogIzolacji.Ustal(konfig.Kontekst{}, ""), "")
+		obszar = ObszarOkna(a.katalogIzolacji.Ustal(zasieg, ""), "")
 	}
 	return okno, zasady, obszar
 }

@@ -172,7 +172,7 @@ func (a *adapterBadan) UlozZapytania(ctx context.Context,
 	if strings.TrimSpace(z.Question) == "" {
 		return shared.ResearchDiscoveryAssistResponse{}, bladWskazaniaBadan("discovery.assist bez pytania")
 	}
-	kanal, err := a.domyslnyKanalBadania()
+	kanal, err := a.domyslnyKanalBadania(ctx)
 	if err != nil {
 		return shared.ResearchDiscoveryAssistResponse{}, err
 	}

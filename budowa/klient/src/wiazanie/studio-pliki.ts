@@ -1,40 +1,23 @@
-/**
- * Wiązanie panelu Pliki okna Studia z repozytorium rdzenia. Znacznik należy do
- * Właściciela — ten plik wypełnia stojące węzły, a wiersze wykazu powiela
- * z wzoru zdjętego z treści przykładowej.
- */
+// Panel Pliki okna Studia wobec repozytorium rdzenia. Znacznik należy do
+// Właściciela — wiersze wykazu powielają wzór zdjęty z treści przykładowej.
 import { Command, EventType, type LibraryFile } from '../../../shared/contract.ts';
 import type { Odsubskrybuj } from '../polaczenie/magistrala-zdarzen.ts';
 import type { Kanal } from '../protokol/kanal.ts';
 import { wywolaj } from '../protokol/wywolanie.ts';
 
-/** Węzły panelu Pliki, na których wiązanie pracuje; brak któregokolwiek znaczy, że panel nie stoi w dokumencie. */
 interface WezlyPlikow {
   lista: HTMLElement;
   szukaj: HTMLInputElement;
 }
 
-/** Jednostki rozmiaru w brzmieniu znacznika prototypu, w rzędach tysięcznych. */
 const JEDNOSTKI_ROZMIARU = ['B', 'kB', 'MB', 'GB', 'TB'];
 
-/**
- * Wzór wiersza zdjęty przy pierwszym montażu karty. Każda karta niesie ten
- * sam znacznik, a wykaz opróżniony wzoru już nie oddaje, więc zdjęcie stoi
- * raz dla wszystkich kart.
- */
 let wzorWiersza: HTMLElement | null = null;
 
-/**
- * Zdejmuje wiersze przykładowe wykazu plików, zabierając z nich wzór wiersza.
- * Woła się przy montażu okna, przed powstaniem stanowiska: cudze pliki nie
- * mają prawa stać na ekranie ani chwili dłużej niż znacznik. Zwraca prawdę,
- * gdy panel stał w dokumencie.
- */
 export function zdejmijTrescPrzykladowaPlikow(korzen: ParentNode): boolean {
   return przygotujPanel(korzen) !== null;
 }
 
-/** Zbiera węzły panelu i opróżnia wykaz z wierszy przykładowych; pustka znaczy panel poza kartą. */
 function przygotujPanel(korzen: ParentNode): WezlyPlikow | null {
   const znalezione = zbierzWezly(korzen);
   if (znalezione === null) return null;
@@ -43,10 +26,6 @@ function przygotujPanel(korzen: ParentNode): WezlyPlikow | null {
   return znalezione;
 }
 
-/**
- * Wiąże panel Pliki karty Studia z wykazem repozytorium; węzły idą od korzenia
- * karty. Zwraca odłączenie nasłuchu, a pustkę, gdy panelu w karcie nie ma.
- */
 export function zwiazPliki(kanal: Kanal, idOkna: string, korzen: ParentNode): Odsubskrybuj | null {
   const znalezione = przygotujPanel(korzen);
   if (znalezione === null) return null;
@@ -57,7 +36,6 @@ export function zwiazPliki(kanal: Kanal, idOkna: string, korzen: ParentNode): Od
   let idProjektu = '';
   let numerZadania = 0;
 
-  /** Wczytuje wykaz zawężony frazą pola i wstawia go w miejsce wierszy poprzednich; odpowiedź spóźniona wobec kolejnej odpada. */
   async function odswiez(): Promise<void> {
     if (wzor === null) return;
     const numer = (numerZadania += 1);
@@ -104,7 +82,6 @@ export function zwiazPliki(kanal: Kanal, idOkna: string, korzen: ParentNode): Od
   return odlacz;
 }
 
-/** Odczytuje projekt sesji, do której należy okno; pustka znaczy sesję bez projektu, dla której biblioteka projektu nie ma czym się zawęzić. */
 async function wskazProjekt(kanal: Kanal, idOkna: string): Promise<string> {
   if (idOkna === '') return '';
   const okna = await wywolaj(kanal, Command.WindowList, {});
@@ -116,7 +93,6 @@ async function wskazProjekt(kanal: Kanal, idOkna: string): Promise<string> {
   return sesje.wynik.sessions.find((pozycja) => pozycja.id === okno.sessionId)?.projectId ?? '';
 }
 
-/** Wykaz plików: z biblioteki projektu, gdy sesja okna ma projekt, w przeciwnym razie z repozytorium bez zawężenia projektem. */
 async function pobierzPliki(
   kanal: Kanal,
   idProjektu: string,
@@ -134,7 +110,6 @@ async function pobierzPliki(
   return wykaz.udany && wykaz.wynik !== undefined ? wykaz.wynik.files : [];
 }
 
-/** Wczytuje plik repozytorium do Studia; prawda znaczy, że rdzeń dokument oddał. */
 async function otworzPlik(kanal: Kanal, idOkna: string, idPliku: string): Promise<boolean> {
   if (idOkna === '') return false;
   const wynik = await wywolaj(kanal, Command.StudioDocumentOpen, {
@@ -144,7 +119,6 @@ async function otworzPlik(kanal: Kanal, idOkna: string, idPliku: string): Promis
   return wynik.udany && wynik.wynik !== undefined;
 }
 
-/** Zwraca klon wzoru wiersza opisany nazwą pliku; miara przy nazwie zostaje wyłącznie dla pliku o znanym rozmiarze. */
 function zbudujWiersz(wzor: HTMLElement, plik: LibraryFile): HTMLElement {
   const wiersz = wzor.cloneNode(true) as HTMLElement;
   // Nazwa stoi we wzorze jako tekst przed miarą, bez własnego węzła
@@ -158,7 +132,6 @@ function zbudujWiersz(wzor: HTMLElement, plik: LibraryFile): HTMLElement {
   return wiersz;
 }
 
-/** Rozmiar pliku w zapisie znacznika: bajty rdzenia przeliczone na rząd tysięczny, z jednym miejscem po przecinku. */
 function zapiszRozmiar(bajty: number): string {
   let wartosc = bajty;
   let rzad = 0;
@@ -169,12 +142,10 @@ function zapiszRozmiar(bajty: number): string {
   return `${wartosc.toLocaleString('pl-PL', { maximumFractionDigits: 1 })} ${JEDNOSTKI_ROZMIARU[rzad]}`;
 }
 
-/** Zdejmuje wiersze wykazu, zostawiając pole zawężania, które pozycją pliku nie jest. */
 function zdejmijWiersze(lista: HTMLElement): void {
   for (const wiersz of lista.querySelectorAll('.st-panel-wiersz')) wiersz.remove();
 }
 
-/** Wskazuje węzły panelu Pliki od korzenia karty; pustka znaczy, że panel nie stoi w karcie. */
 function zbierzWezly(korzen: ParentNode): WezlyPlikow | null {
   const panel = korzen.querySelector('#panel-pliki');
   const lista = panel?.querySelector('.sta-okno-tresc.st-panel-lista');
@@ -183,7 +154,6 @@ function zbierzWezly(korzen: ParentNode): WezlyPlikow | null {
   return { lista, szukaj };
 }
 
-/** Klon węzła wzorcowego, odporny na jego brak w znaczniku. */
 function sklonuj(wezel: Element | null): HTMLElement | null {
   return wezel instanceof HTMLElement ? (wezel.cloneNode(true) as HTMLElement) : null;
 }

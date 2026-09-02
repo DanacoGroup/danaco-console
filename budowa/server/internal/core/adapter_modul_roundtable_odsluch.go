@@ -73,7 +73,7 @@ func (a *adapterDebaty) Odsluch(ctx context.Context,
 	}
 	defer os.RemoveAll(katalog)
 
-	oknoZasiegu, zasady, obszar := a.zasiegNarzedziDebaty()
+	oknoZasiegu, zasady, obszar := a.zasiegNarzedziDebaty(ctx)
 	probki := make([]byte, 0, 1<<20)
 	odczytanych := 0
 	for numer, wypowiedz := range wypowiedzi {

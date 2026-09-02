@@ -25,7 +25,6 @@ import (
 	"github.com/pdfcpu/pdfcpu/pkg/api"
 
 	"danacoconsole/server/internal/dane"
-	"danacoconsole/server/internal/konfig"
 	"danacoconsole/server/internal/session"
 	"danacoconsole/server/internal/zewnetrzne"
 	"danacoconsole/shared"
@@ -652,13 +651,14 @@ func (a *adapterBiblioteki) archiwum7z(ctx context.Context,
 	okno := session.Okno{Ustawienia: session.Ustawienia{
 		SrodowiskoWykonania: shared.ExecutionEnvCore,
 	}}
+	zasieg := ZasiegKonta(ctx)
 	zasady := session.Zasady{}
 	if a.rozstrzygacz != nil {
-		zasady = ZasadyIzolacji(a.rozstrzygacz, konfig.Kontekst{})
+		zasady = ZasadyIzolacji(a.rozstrzygacz, zasieg)
 	}
 	obszar := session.Obszar{}
 	if a.katalog != nil {
-		obszar = ObszarOkna(a.katalog.Ustal(konfig.Kontekst{}, ""), "")
+		obszar = ObszarOkna(a.katalog.Ustal(zasieg, ""), "")
 	}
 	_, err = zewnetrzne.Wolaj(ctx, a.uruchamiacz, okno, zasady, obszar,
 		narzedziePakowaniaBiblioteki,

@@ -174,3 +174,16 @@ func (r *Rejestr) ZmienTytulSesji(id, tytul string) (Sesja, error) {
 	sesja.Zaktualizowano = time.Now().UTC()
 	return sesja.Kopia(), nil
 }
+
+// Wykaz sesji czyta rejestr żywy, nie bazę, więc stan idzie i tutaj.
+func (r *Rejestr) ZmienStanSesji(id string, stan shared.SessionStatus) (Sesja, error) {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	sesja, jest := r.sesje[id]
+	if !jest {
+		return Sesja{}, fmt.Errorf("%w: %s", ErrBrakSesji, id)
+	}
+	sesja.Stan = stan
+	sesja.Zaktualizowano = time.Now().UTC()
+	return sesja.Kopia(), nil
+}

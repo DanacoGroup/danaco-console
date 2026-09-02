@@ -154,7 +154,7 @@ func (a *adapterNarzedziObrazuModelu) wolajSilnik(ctx context.Context,
 			"serwer nie ma uruchamiacza procesów — silniki obrazu nie mają czym wystartować; " +
 				"naprawa: podpiąć warstwę kanału (injection) przy składaniu serwera")
 	}
-	okno, zasady, obszar := a.wspolne.zasiegNarzedzi()
+	okno, zasady, obszar := a.wspolne.zasiegNarzedzi(ctx)
 	_, err := zewnetrzne.Wolaj(ctx, a.wspolne.uruchamiacz, okno, zasady, obszar,
 		narzedzie, argumenty, strings.TrimSpace(obszar.KatalogRoboczy), limit)
 	if err != nil {

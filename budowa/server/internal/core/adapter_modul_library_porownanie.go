@@ -9,7 +9,6 @@ import (
 	"time"
 
 	"danacoconsole/server/internal/dane"
-	"danacoconsole/server/internal/konfig"
 	"danacoconsole/server/internal/session"
 	"danacoconsole/server/internal/zewnetrzne"
 	"danacoconsole/shared"
@@ -108,14 +107,16 @@ func (a *adapterBiblioteki) stronaPorownania(ctx context.Context, zasob dane.Pli
 	if err != nil {
 		return "", "", false, bladBrakuTresciBiblioteki(zasob.Kod)
 	}
-	tresc, wydobyta := a.trescPorownywalnaBiblioteki(bajty, *odwolanie)
+	tresc, wydobyta := a.trescPorownywalnaBiblioteki(ctx, bajty, *odwolanie)
 	return tresc, nazwa, wydobyta, nil
 }
 
 // trescPorownywalnaBiblioteki oddaje tekst do porównania i mówi, czy trzeba było go wydobyć z dokumentu binarnego programem pdftotext.
-func (a *adapterBiblioteki) trescPorownywalnaBiblioteki(bajty []byte, sciezka string) (string, bool) {
+func (a *adapterBiblioteki) trescPorownywalnaBiblioteki(ctx context.Context,
+	bajty []byte, sciezka string) (string, bool) {
+
 	if bytes.HasPrefix(bajty, []byte("%PDF-")) {
-		return a.tekstDokumentu(sciezka), true
+		return a.tekstDokumentu(ctx, sciezka), true
 	}
 	// Treść z bajtem zerowym nie jest tekstem; odpowiedź mówi, że wydobyć się nie dało.
 	if bytes.IndexByte(bajty, 0) >= 0 {
@@ -125,27 +126,28 @@ func (a *adapterBiblioteki) trescPorownywalnaBiblioteki(bajty []byte, sciezka st
 }
 
 // tekstDokumentu wyciąga warstwę tekstową dokumentu PDF programem pdftotext, jedyną dozwoloną drogą wołania programów zewnętrznych.
-func (a *adapterBiblioteki) tekstDokumentu(sciezka string) string {
+func (a *adapterBiblioteki) tekstDokumentu(ctx context.Context, sciezka string) string {
 	if a.uruchamiacz == nil {
 		return ""
 	}
-	ctx, przerwij := context.WithTimeout(context.Background(), granicaWydobyciaTekstu)
+	praca, przerwij := context.WithTimeout(ctx, granicaWydobyciaTekstu)
 	defer przerwij()
 
 	okno := session.Okno{Ustawienia: session.Ustawienia{
 		SrodowiskoWykonania: shared.ExecutionEnvCore,
 	}}
+	zasieg := ZasiegKonta(ctx)
 	zasady := session.Zasady{}
 	if a.rozstrzygacz != nil {
-		zasady = ZasadyIzolacji(a.rozstrzygacz, konfig.Kontekst{})
+		zasady = ZasadyIzolacji(a.rozstrzygacz, zasieg)
 	}
 	obszar := session.Obszar{}
 	if a.katalog != nil {
-		obszar = ObszarOkna(a.katalog.Ustal(konfig.Kontekst{}, ""), "")
+		obszar = ObszarOkna(a.katalog.Ustal(zasieg, ""), "")
 	}
 	// Wynik idzie na wyjście standardowe („-" jako plik docelowy), więc plik
 	// pośredni nie powstaje.
-	wynik, err := zewnetrzne.Wolaj(ctx, a.uruchamiacz, okno, zasady, obszar,
+	wynik, err := zewnetrzne.Wolaj(praca, a.uruchamiacz, okno, zasady, obszar,
 		narzedzieTekstuBiblioteki, []string{"-layout", "-enc", "UTF-8", sciezka, "-"},
 		"", granicaWydobyciaTekstu)
 	if err != nil {

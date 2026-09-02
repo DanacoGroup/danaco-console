@@ -129,7 +129,7 @@ func (a *adapterTlumaczenia) rozpoznajPismoDokumentu(ctx context.Context,
 		return "", bladWskazaniaTlumaczenia(
 			"rozpoznanie pisma wymaga wpiętego portu uruchamiania procesów, którego serwer nie ma")
 	}
-	okno, zasady, obszar := a.zasiegProgramowTlumaczenia()
+	okno, zasady, obszar := a.zasiegProgramowTlumaczenia(ctx)
 	wynik, err := zewnetrzne.Wolaj(ctx, a.uruchamiacz, okno, zasady, obszar,
 		narzedzieTesseract, []string{sciezka, "stdout", "-l", jezykRozpoznaniaDomyslny},
 		katalogPracySyntezy(obszar), granicaRozpoznaniaPisma)

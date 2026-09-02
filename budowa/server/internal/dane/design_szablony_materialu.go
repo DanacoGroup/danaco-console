@@ -1,6 +1,4 @@
-// Obszar szablonów materiału: tabele `szablon_materialu_design`
-// i `warstwa_szablonu_materialu_design`, część `RepozytoriumDesignu`
-// z `design.go`. Szablony promptu leżą w `design_szablony.go` i są innym bytem.
+// Szablony materiału modułu Design (szablon_materialu_design i jego warstwy oraz strony); prompty są osobnym bytem.
 package dane
 
 import (
@@ -10,9 +8,7 @@ import (
 	"fmt"
 )
 
-// SzablonMaterialuDesignu to wiersz tabeli `szablon_materialu_design`:
-// opisuje jeden szablon materiału przypisany do okna, wraz z rozmiarem
-// i opisem.
+// SzablonMaterialuDesignu opisuje jeden szablon materiału przypisany do okna, wraz z rozmiarem i opisem.
 type SzablonMaterialuDesignu struct {
 	ID             int64
 	Kod            string
@@ -31,23 +27,24 @@ const (
 
 	zapiszSzablonMaterialuDesignu = `INSERT INTO szablon_materialu_design
 	                                 (identyfikator_zewnetrzny, okno, nazwa, rodzaj, szerokosc,
-	                                  wysokosc, opis, zaktualizowano)
+	                                  wysokosc, opis, zaktualizowano, konto_id)
 	                                 VALUES (?, ?, ?, ?, ?, ?, ?,
-	                                         strftime('%Y-%m-%dT%H:%M:%fZ','now'))
+	                                         strftime('%Y-%m-%dT%H:%M:%fZ','now'), ` + WskazanieKonta + `)
 	                                 ON CONFLICT(identyfikator_zewnetrzny) DO UPDATE SET
 	                                     nazwa = excluded.nazwa,
 	                                     rodzaj = excluded.rodzaj,
 	                                     szerokosc = excluded.szerokosc,
 	                                     wysokosc = excluded.wysokosc,
 	                                     opis = excluded.opis,
-	                                     zaktualizowano = excluded.zaktualizowano`
+	                                     zaktualizowano = excluded.zaktualizowano
+	                                 WHERE ` + WarunekKonta
 
 	pobierzSzablonMaterialuDesignu = `SELECT ` + kolumnySzablonuMaterialuDesignu +
-		` FROM szablon_materialu_design WHERE identyfikator_zewnetrzny = ?`
+		` FROM szablon_materialu_design WHERE identyfikator_zewnetrzny = ? AND ` + WarunekKonta
 
 	listaSzablonowMaterialuDesignu = `SELECT ` + kolumnySzablonuMaterialuDesignu +
-		` FROM szablon_materialu_design WHERE okno = ? AND (? = '' OR rodzaj = ?)
-		  ORDER BY zaktualizowano DESC, id DESC`
+		` FROM szablon_materialu_design WHERE okno = ? AND (? = '' OR rodzaj = ?) AND ` + WarunekKonta +
+		`  ORDER BY zaktualizowano DESC, id DESC`
 
 	usunWarstwySzablonuMaterialuDesignu = `DELETE FROM warstwa_szablonu_materialu_design
 	                                       WHERE szablon_id = ?`
@@ -64,8 +61,7 @@ const (
 	                                       WHERE szablon_id = ? ORDER BY kolejnosc, id`
 )
 
-// ZapiszSzablonMaterialuDesignu zakłada szablon albo nadpisuje zastany po
-// identyfikatorze zewnętrznym i podmienia komplet jego warstw.
+// ZapiszSzablonMaterialuDesignu zakłada szablon albo nadpisuje zastany po kodzie i podmienia komplet jego warstw.
 func (r *repozytoriumDesignu) ZapiszSzablonMaterialuDesignu(ctx context.Context,
 	szablon SzablonMaterialuDesignu, warstwy []WarstwaKompozycji) (SzablonMaterialuDesignu, error) {
 
@@ -84,7 +80,7 @@ func (r *repozytoriumDesignu) ZapiszSzablonMaterialuDesignu(ctx context.Context,
 		}
 		if _, err := zapis.ExecContext(ctx, szablon.Kod, szablon.Okno, szablon.Nazwa,
 			szablon.Rodzaj, szablon.Szerokosc, szablon.Wysokosc,
-			tekstDoKolumny(szablon.Opis)); err != nil {
+			tekstDoKolumny(szablon.Opis), KontoOperatora(ctx), KontoOperatora(ctx)); err != nil {
 			return fmt.Errorf("dane: nie można zapisać szablonu materiału design %q: %w",
 				szablon.Kod, err)
 		}
@@ -93,7 +89,7 @@ func (r *repozytoriumDesignu) ZapiszSzablonMaterialuDesignu(ctx context.Context,
 		if err != nil {
 			return err
 		}
-		zapisany, err := odczytajSzablonMaterialuDesignu(odczyt.QueryRowContext(ctx, szablon.Kod))
+		zapisany, err := odczytajSzablonMaterialuDesignu(odczyt.QueryRowContext(ctx, szablon.Kod, KontoOperatora(ctx)))
 		if err != nil {
 			return fmt.Errorf("dane: nie można odczytać zapisanego szablonu materiału design %q: %w",
 				szablon.Kod, err)
@@ -138,8 +134,7 @@ func (r *repozytoriumDesignu) ZapiszSzablonMaterialuDesignu(ctx context.Context,
 	return r.SzablonMaterialuDesignuPoKodzie(ctx, szablon.Kod)
 }
 
-// SzablonMaterialuDesignuPoKodzie zwraca szablon o wskazanym kodzie. Brak
-// wiersza wraca jako ErrBrakWiersza.
+// SzablonMaterialuDesignuPoKodzie zwraca szablon po kodzie; brak wiersza wraca jako ErrBrakWiersza.
 func (r *repozytoriumDesignu) SzablonMaterialuDesignuPoKodzie(ctx context.Context,
 	kod string) (SzablonMaterialuDesignu, error) {
 
@@ -147,7 +142,7 @@ func (r *repozytoriumDesignu) SzablonMaterialuDesignuPoKodzie(ctx context.Contex
 	if err != nil {
 		return SzablonMaterialuDesignu{}, err
 	}
-	szablon, err := odczytajSzablonMaterialuDesignu(polecenie.QueryRowContext(ctx, kod))
+	szablon, err := odczytajSzablonMaterialuDesignu(polecenie.QueryRowContext(ctx, kod, KontoOperatora(ctx)))
 	if errors.Is(err, sql.ErrNoRows) {
 		return SzablonMaterialuDesignu{}, ErrBrakWiersza
 	}
@@ -158,9 +153,7 @@ func (r *repozytoriumDesignu) SzablonMaterialuDesignuPoKodzie(ctx context.Contex
 	return szablon, nil
 }
 
-// SzablonyMaterialuDesignu zwraca szablony okna, od ostatnio zmienianego.
-// Rodzaj pusty znaczy „wszystkie rodzaje" — pole zawężające jest opcjonalne
-// w żądaniu `design.template.list`.
+// SzablonyMaterialuDesignu zwraca szablony okna; rodzaj pusty znaczy „wszystkie rodzaje".
 func (r *repozytoriumDesignu) SzablonyMaterialuDesignu(ctx context.Context,
 	okno, rodzaj string) ([]SzablonMaterialuDesignu, error) {
 
@@ -168,7 +161,7 @@ func (r *repozytoriumDesignu) SzablonyMaterialuDesignu(ctx context.Context,
 	if err != nil {
 		return nil, err
 	}
-	wiersze, err := polecenie.QueryContext(ctx, okno, rodzaj, rodzaj)
+	wiersze, err := polecenie.QueryContext(ctx, okno, rodzaj, rodzaj, KontoOperatora(ctx))
 	if err != nil {
 		return nil, fmt.Errorf("dane: nie można odczytać szablonów materiału design okna %q: %w",
 			okno, err)
@@ -191,8 +184,7 @@ func (r *repozytoriumDesignu) SzablonyMaterialuDesignu(ctx context.Context,
 	return lista, nil
 }
 
-// WarstwySzablonuMaterialuDesignu zwraca warstwy szablonu w kolejności
-// wyrysu, tej samej, w jakiej zostały zapisane przy tworzeniu szablonu.
+// WarstwySzablonuMaterialuDesignu zwraca warstwy szablonu w kolejności wyrysu.
 func (r *repozytoriumDesignu) WarstwySzablonuMaterialuDesignu(ctx context.Context,
 	szablonID int64) ([]WarstwaKompozycji, error) {
 
@@ -235,8 +227,6 @@ func (r *repozytoriumDesignu) WarstwySzablonuMaterialuDesignu(ctx context.Contex
 	return lista, nil
 }
 
-// odczytajSzablonMaterialuDesignu składa strukturę SzablonMaterialuDesignu
-// z jednego wiersza wyniku zapytania SQL.
 func odczytajSzablonMaterialuDesignu(wiersz skaner) (SzablonMaterialuDesignu, error) {
 	var szablon SzablonMaterialuDesignu
 	var opis sql.NullString
@@ -249,10 +239,7 @@ func odczytajSzablonMaterialuDesignu(wiersz skaner) (SzablonMaterialuDesignu, er
 	return szablon, nil
 }
 
-// StronaSzablonuMaterialuDesignu to wiersz tabeli
-// `strona_szablonu_materialu_design`: jedna strona publikacji
-// wielostronicowej. Szablon bez stron jest jednostronicowy, a jego warstwy
-// leżą w `warstwa_szablonu_materialu_design`.
+// StronaSzablonuMaterialuDesignu to jedna strona publikacji wielostronicowej; szablon bez stron jest jednostronicowy.
 type StronaSzablonuMaterialuDesignu struct {
 	ID        int64
 	Kod       string
@@ -278,9 +265,7 @@ const (
 	                                      szerokosc, wysokosc, kolejnosc, zablokowana, adnotacja)
 	                                     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
 
-	// Kolumna `strona_id` wchodzi w miejsce kompozycji; odczyt warstwy dzieli
-	// wspólny odczytywacz z warstwami kompozycji, więc dokłada pustą wartość
-	// `utworzono`, by dopasować liczbę kolumn.
+	// Pusta wartość `utworzono` dopasowuje liczbę kolumn do wspólnego odczytywacza warstw kompozycji.
 	listaWarstwStronySzablonuDesignu = `SELECT id, identyfikator_zewnetrzny, strona_id, zasob_id,
 	                                           x, y, szerokosc, wysokosc, kolejnosc, zablokowana,
 	                                           adnotacja, '' AS utworzono
@@ -288,9 +273,7 @@ const (
 	                                    WHERE strona_id = ? ORDER BY kolejnosc, id`
 )
 
-// ZapiszStronySzablonuMaterialuDesignu podmienia komplet stron szablonu wraz
-// z ich warstwami w jednej transakcji: usuwa zastane strony i wstawia
-// przysłane od nowa, a kasowanie kaskadowe zdejmuje warstwy stron usuniętych.
+// ZapiszStronySzablonuMaterialuDesignu podmienia komplet stron szablonu wraz z ich warstwami w jednej transakcji.
 func (r *repozytoriumDesignu) ZapiszStronySzablonuMaterialuDesignu(ctx context.Context,
 	szablonID int64, strony []StronaSzablonuMaterialuDesignu,
 	warstwy map[string][]WarstwaKompozycji) error {
@@ -374,8 +357,7 @@ func (r *repozytoriumDesignu) StronySzablonuMaterialuDesignu(ctx context.Context
 	return strony, nil
 }
 
-// WarstwyStronySzablonuMaterialuDesignu oddaje warstwy jednej strony
-// w kolejności wyrysu, tej samej co przy warstwach szablonu.
+// WarstwyStronySzablonuMaterialuDesignu oddaje warstwy jednej strony w kolejności wyrysu.
 func (r *repozytoriumDesignu) WarstwyStronySzablonuMaterialuDesignu(ctx context.Context,
 	stronaID int64) ([]WarstwaKompozycji, error) {
 

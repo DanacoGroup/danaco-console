@@ -14,6 +14,7 @@ import {
   zdejmijTrescWspolna,
 } from './okno-modulu.ts';
 import { sesjaBiezaca } from './sesja-biezaca.ts';
+import { zwiazKatalogModulu } from './katalog-modulu.ts';
 import { zwiazAgentow } from './workspace-agenci.ts';
 import { zwiazBiblioteke } from './workspace-biblioteka.ts';
 import { zwiazInstrukcje } from './workspace-instrukcje.ts';
@@ -127,6 +128,9 @@ export function zwiazWorkspace(
     }
     await odswiezWszystko();
   })();
+
+  const katalog = zwiazKatalogModulu(kanal, idOknaStojacego, korzen, 'workspace', 'Warsztat');
+  if (katalog !== null) odlaczenia.push(katalog);
 
   return true;
 }

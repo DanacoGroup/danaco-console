@@ -14,6 +14,7 @@ import { zglosUchwyt } from '../polaczenie/rozdzielacz-zdarzen.ts';
 import type { Kanal } from '../protokol/kanal.ts';
 import { wywolaj } from '../protokol/wywolanie.ts';
 import { oglos } from './ogloszenie.ts';
+import { zwiazKatalogModulu } from './katalog-modulu.ts';
 
 interface WiazanieTerminala {
   korzen: Element;
@@ -83,6 +84,9 @@ export function zwiazTerminal(
   odlaczenia.push(zglosUchwyt(EventType.TerminalProcessChanged, () => {
     void wypelnijProcesy(kanal, korzen, idOkna);
   }));
+
+  const katalog = zwiazKatalogModulu(kanal, idOkna, korzen, 'terminal', 'Terminal');
+  if (katalog !== null) odlaczenia.push(katalog);
 
   return true;
 }

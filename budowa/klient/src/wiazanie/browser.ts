@@ -14,6 +14,7 @@ import { zglosUchwyt } from '../polaczenie/rozdzielacz-zdarzen.ts';
 import type { Kanal } from '../protokol/kanal.ts';
 import { wywolaj } from '../protokol/wywolanie.ts';
 import { oglos } from './ogloszenie.ts';
+import { zwiazKatalogModulu } from './katalog-modulu.ts';
 import { zwiazWytworyPrzegladania } from './browser-wytwory.ts';
 
 interface WiazaniePrzegladarki {
@@ -83,6 +84,9 @@ export function zwiazPrzegladarke(
   odlaczenia.push(zglosUchwyt(EventType.BrowserPageChanged, () => {
     void wypelnijZrodla(kanal, korzen, idOkna);
   }));
+
+  const katalog = zwiazKatalogModulu(kanal, idOkna, korzen, 'browser', 'Przeglądarka');
+  if (katalog !== null) odlaczenia.push(katalog);
 
   return true;
 }

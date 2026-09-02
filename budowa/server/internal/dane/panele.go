@@ -1,6 +1,4 @@
-// Odpowiedzialność pliku: układ sekcji panelu okna, czyli kolejność, zwinięcie
-// i zdjęcie z widoku, jest zapisywany i odczytywany całościowo w tabeli
-// sekcja_panelu dla pary okno i panel.
+// Układ sekcji panelu okna (kolejność, zwinięcie, zdjęcie) zapisywany całościowo w sekcja_panelu dla pary okno+panel.
 package dane
 
 import (
@@ -11,43 +9,32 @@ import (
 	"time"
 )
 
-// SekcjaPanelu to jedna sekcja panelu widziana od strony układu: gdzie stoi,
-// czy jest zwinięta i czy w ogóle jest na widoku. Nazwy ani treści sekcji ten
-// byt nie zna — należą do warstwy widoku, która sekcje rysuje.
+// SekcjaPanelu to jedna sekcja panelu od strony układu; nazw ani treści nie zna — należą do warstwy widoku.
 type SekcjaPanelu struct {
-	// Id jest identyfikatorem sekcji w obrębie panelu; nadaje go widok.
-	Id string
-	// Kolejnosc to miejsce na widoku, liczone od 1.
+	Id        string
 	Kolejnosc int
-	// Zwinieta znaczy „sekcja jest na widoku, zawinięta do nagłówka”.
-	Zwinieta bool
-	// Zdjeta znaczy „sekcji na widoku nie ma wcale”, niezależnie od zwinięcia.
-	Zdjeta bool
+	Zwinieta  bool
+	Zdjeta    bool
 }
 
-// RepozytoriumSekcjiPaneli jest kontraktem odczytu i zapisu układu sekcji
-// jednego panelu jednego okna.
+// RepozytoriumSekcjiPaneli jest kontraktem odczytu i zapisu układu sekcji jednego panelu jednego okna.
 type RepozytoriumSekcjiPaneli interface {
-	// SekcjePanelu oddaje układ w kolejności widoku; panel nigdy nieustawiany
-	// oddaje wykaz pusty.
 	SekcjePanelu(ctx context.Context, okno, panel string) ([]SekcjaPanelu, error)
-	// ZapiszSekcje zastępuje układ panelu w całości i oddaje układ obowiązujący
-	// z numeracją 1..N.
 	ZapiszSekcje(ctx context.Context, okno, panel string, sekcje []SekcjaPanelu) ([]SekcjaPanelu, error)
 }
 
 const (
 	sekcjePaneluWykaz = `SELECT sekcja_id, kolejnosc, zwinieta, zdjeta
 	                     FROM sekcja_panelu
-	                     WHERE okno_id = ? AND panel_id = ?
+	                     WHERE okno_id = ? AND panel_id = ? AND ` + WarunekKonta + `
 	                     ORDER BY kolejnosc, sekcja_id`
 
 	sekcjePaneluCzyszczenie = `DELETE FROM sekcja_panelu
-	                           WHERE okno_id = ? AND panel_id = ?`
+	                           WHERE okno_id = ? AND panel_id = ? AND ` + WarunekKonta
 
 	sekcjaPaneluZapis = `INSERT INTO sekcja_panelu
-	                         (okno_id, panel_id, sekcja_id, kolejnosc, zwinieta, zdjeta, zaktualizowano)
-	                     VALUES (?, ?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now'))`
+	                         (okno_id, panel_id, sekcja_id, kolejnosc, zwinieta, zdjeta, zaktualizowano, konto_id)
+	                     VALUES (?, ?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now'), ` + WskazanieKonta + `)`
 )
 
 type repozytoriumSekcjiPaneli struct {
@@ -59,9 +46,6 @@ func noweRepozytoriumSekcjiPaneli(z *zapytania, db *sql.DB) *repozytoriumSekcjiP
 	return &repozytoriumSekcjiPaneli{zapytania: z, db: db}
 }
 
-// SekcjePaneli oddaje repozytorium układów paneli nad tą samą bazą, co reszta
-// zestawu. Jest metodą, a nie polem struktury — wzorem `RoleOkien` — bo
-// repozytorium nie trzyma stanu poza wskaźnikiem na wspólną pamięć zapytań.
 func (z *Zestaw) SekcjePaneli() RepozytoriumSekcjiPaneli {
 	if z == nil || z.zapytania == nil || z.zapytania.db == nil {
 		return nil
@@ -69,7 +53,6 @@ func (z *Zestaw) SekcjePaneli() RepozytoriumSekcjiPaneli {
 	return noweRepozytoriumSekcjiPaneli(z.zapytania, z.zapytania.db)
 }
 
-// SekcjePanelu czyta bieżący układ sekcji jednego panelu wskazanego okna z tabeli sekcja_panelu, w kolejności widoku.
 func (r *repozytoriumSekcjiPaneli) SekcjePanelu(ctx context.Context,
 	okno, panel string) ([]SekcjaPanelu, error) {
 
@@ -77,7 +60,7 @@ func (r *repozytoriumSekcjiPaneli) SekcjePanelu(ctx context.Context,
 	if err != nil {
 		return nil, err
 	}
-	wiersze, err := polecenie.QueryContext(ctx, okno, panel)
+	wiersze, err := polecenie.QueryContext(ctx, okno, panel, KontoOperatora(ctx))
 	if err != nil {
 		return nil, fmt.Errorf("dane: nie można odczytać układu panelu %q okna %q: %w", panel, okno, err)
 	}
@@ -97,9 +80,7 @@ func (r *repozytoriumSekcjiPaneli) SekcjePanelu(ctx context.Context,
 	return uklad, nil
 }
 
-// ZapiszSekcje zastępuje układ panelu w całości. Wykaz pusty jest poleceniem
-// poprawnym i znaczy „panel wraca do układu domyślnego”: stary układ znika,
-// a nowego nie ma.
+// ZapiszSekcje zastępuje układ panelu w całości; wykaz pusty znaczy „powrót do układu domyślnego".
 func (r *repozytoriumSekcjiPaneli) ZapiszSekcje(ctx context.Context, okno, panel string,
 	sekcje []SekcjaPanelu) ([]SekcjaPanelu, error) {
 
@@ -112,13 +93,12 @@ func (r *repozytoriumSekcjiPaneli) ZapiszSekcje(ctx context.Context, okno, panel
 	adres := okno + "\x00" + panel
 	zapisyPaneli.wejdz(adres)
 
-	// Układ oddawany czyta się z bazy, nie z żądania, bo klient bierze odpowiedź za dowód skutku zapisu.
 	err := wTransakcji(ctx, r.db, func(transakcja *sql.Tx) error {
 		czyszczenie, err := r.zapytania.wTransakcji(ctx, transakcja, sekcjePaneluCzyszczenie)
 		if err != nil {
 			return err
 		}
-		if _, err := czyszczenie.ExecContext(ctx, okno, panel); err != nil {
+		if _, err := czyszczenie.ExecContext(ctx, okno, panel, KontoOperatora(ctx)); err != nil {
 			return fmt.Errorf("dane: nie można zdjąć układu panelu %q okna %q: %w", panel, okno, err)
 		}
 		if len(uklad) == 0 {
@@ -130,7 +110,7 @@ func (r *repozytoriumSekcjiPaneli) ZapiszSekcje(ctx context.Context, okno, panel
 		}
 		for _, sekcja := range uklad {
 			_, err := zapis.ExecContext(ctx, okno, panel, sekcja.Id,
-				sekcja.Kolejnosc, sekcja.Zwinieta, sekcja.Zdjeta)
+				sekcja.Kolejnosc, sekcja.Zwinieta, sekcja.Zdjeta, KontoOperatora(ctx))
 			if err != nil {
 				return fmt.Errorf("dane: nie można zapisać sekcji %q panelu %q okna %q: %w",
 					sekcja.Id, panel, okno, err)
@@ -142,19 +122,13 @@ func (r *repozytoriumSekcjiPaneli) ZapiszSekcje(ctx context.Context, okno, panel
 	if err != nil {
 		return nil, err
 	}
-	// Odczyt idzie po zamknięciu transakcji i opadnięciu zapisów zbiegłych, by oddać stan już ustalony.
 	zapisyPaneli.poczekaj(adres)
 	return r.SekcjePanelu(ctx, okno, panel)
 }
 
-// ── zbieg zapisów jednego panelu ─────────────────────────────────────────────
-
-// zapisyPaneli liczy zapisy w toku dla każdego adresu okno i panel, aby odczyt
-// zaczekał na opadnięcie zapisów zbieżnych w czasie, do kresu
-// kresCzekaniaPaneli, i oddał układ już ustalony.
+// zapisyPaneli liczy zapisy w toku na adres okno+panel, by odczyt zaczekał na opadnięcie zapisów zbieżnych.
 var zapisyPaneli = licznikZapisowPaneli{wToku: map[string]int{}}
 
-// kresCzekaniaPaneli ogranicza czas oczekiwania odczytu na opadnięcie zapisów zbiegłych w czasie dla tego samego panelu.
 const kresCzekaniaPaneli = 250 * time.Millisecond
 
 type licznikZapisowPaneli struct {
@@ -178,7 +152,6 @@ func (l *licznikZapisowPaneli) wyjdz(adres string) {
 	l.zamek.Unlock()
 }
 
-// poczekaj wstrzymuje odczyt, dopóki trwa cudzy zapis tego samego panelu, najwyżej do upływu kresu kresCzekaniaPaneli.
 func (l *licznikZapisowPaneli) poczekaj(adres string) {
 	koniec := time.Now().Add(kresCzekaniaPaneli)
 	for {

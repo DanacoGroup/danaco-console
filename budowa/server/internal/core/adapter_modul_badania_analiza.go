@@ -622,7 +622,7 @@ func (a *adapterBadan) ZweryfikujUstalenie(ctx context.Context,
 		return shared.ResearchFindingFactCheckResponse{}, bladBadan(err)
 	}
 	trafienia := a.trafieniaKorpusuBadania(ctx, zrodla, nil, twierdzenie, 6)
-	kanal, err := a.domyslnyKanalBadania()
+	kanal, err := a.domyslnyKanalBadania(ctx)
 	if err != nil {
 		return shared.ResearchFindingFactCheckResponse{}, err
 	}

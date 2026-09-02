@@ -108,17 +108,20 @@ func (s *silnikPrzegladarki) dostepny() error {
 	return nil
 }
 
-func (s *silnikPrzegladarki) zasiegSilnika() (session.Okno, session.Zasady, session.Obszar) {
+func (s *silnikPrzegladarki) zasiegSilnika(ctx context.Context) (session.Okno,
+	session.Zasady, session.Obszar) {
+
 	okno := session.Okno{Ustawienia: session.Ustawienia{
 		SrodowiskoWykonania: shared.ExecutionEnvCore,
 	}}
+	zasieg := ZasiegKonta(ctx)
 	zasady := session.Zasady{}
 	obszar := session.Obszar{}
 	if s.rozstrzygacz != nil {
-		zasady = ZasadyIzolacji(s.rozstrzygacz, konfig.Kontekst{})
+		zasady = ZasadyIzolacji(s.rozstrzygacz, zasieg)
 	}
 	if s.katalog != nil {
-		obszar = ObszarOkna(s.katalog.Ustal(konfig.Kontekst{}, ""), "")
+		obszar = ObszarOkna(s.katalog.Ustal(zasieg, ""), "")
 	}
 	return okno, zasady, obszar
 }
@@ -167,7 +170,7 @@ func (s *silnikPrzegladarki) otworz(ctx context.Context, nastawy nastawyStrony) 
 		argumenty = append([]string{"--user-agent=" + agent}, argumenty...)
 	}
 
-	okno, zasady, obszar := s.zasiegSilnika()
+	okno, zasady, obszar := s.zasiegSilnika(ctx)
 	sciezka, jest := zewnetrzne.Odnajdz(narzedzieChromium())
 	if !jest {
 		_ = os.RemoveAll(profil)

@@ -172,7 +172,7 @@ func (a *adapterNarzedziMediow) wolajMediow(ctx context.Context,
 	narzedzie zewnetrzne.Narzedzie, argumenty []string,
 	granica time.Duration) (zewnetrzne.Wynik, error) {
 
-	okno, zasady, obszar := a.zasiegNarzedziMediow()
+	okno, zasady, obszar := a.zasiegNarzedziMediow(ctx)
 	return zewnetrzne.Wolaj(ctx, a.uruchamiacz, okno, zasady, obszar,
 		narzedzie, argumenty, "", granica)
 }
@@ -181,19 +181,20 @@ func (a *adapterNarzedziMediow) wolajMediow(ctx context.Context,
 // platformy. Żądania tej rodziny okna nie niosą, bo pytają o zdolność
 // maszyny, nie okna; środowisko wykonania jest rdzeniowe wprost, bo materiał
 // leży na hoście rdzenia.
-func (a *adapterNarzedziMediow) zasiegNarzedziMediow() (session.Okno,
+func (a *adapterNarzedziMediow) zasiegNarzedziMediow(ctx context.Context) (session.Okno,
 	session.Zasady, session.Obszar) {
 
 	okno := session.Okno{Ustawienia: session.Ustawienia{
 		SrodowiskoWykonania: shared.ExecutionEnvCore,
 	}}
+	zasieg := ZasiegKonta(ctx)
 	zasady := session.Zasady{}
 	if a.rozstrzygacz != nil {
-		zasady = ZasadyIzolacji(a.rozstrzygacz, konfig.Kontekst{})
+		zasady = ZasadyIzolacji(a.rozstrzygacz, zasieg)
 	}
 	obszar := session.Obszar{}
 	if a.katalog != nil {
-		obszar = ObszarOkna(a.katalog.Ustal(konfig.Kontekst{}, ""), "")
+		obszar = ObszarOkna(a.katalog.Ustal(zasieg, ""), "")
 	}
 	return okno, zasady, obszar
 }

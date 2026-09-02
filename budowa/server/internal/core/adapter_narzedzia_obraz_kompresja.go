@@ -123,7 +123,7 @@ func (a *adapterNarzedziObrazu) przezPlik(ctx context.Context, bajty []byte,
 		return bajty
 	}
 
-	okno, zasady, obszar := a.zasiegNarzedzi()
+	okno, zasady, obszar := a.zasiegNarzedzi(ctx)
 	if _, err := zewnetrzne.Wolaj(ctx, a.uruchamiacz, okno, zasady, obszar,
 		narzedzie, argumenty(wejscie, wyjscie), katalog, granicaNarzedziObrazu); err != nil {
 		// Kod niezerowy znaczy tu najczęściej „nie umiem tego skrócić".

@@ -382,7 +382,7 @@ func (a *adapterTlumaczenia) slownikHunspella(ctx context.Context,
 	if err := os.WriteFile(pusty, nil, 0o600); err != nil {
 		return "", bladKorektyZewnetrznej("nie można założyć pliku pomocniczego: " + err.Error())
 	}
-	okno, zasady, obszar := a.zasiegProgramowTlumaczenia()
+	okno, zasady, obszar := a.zasiegProgramowTlumaczenia(ctx)
 	wynik, blad := zewnetrzne.Wolaj(ctx, a.uruchamiacz, okno, zasady, obszar,
 		narzedzieHunspella, []string{"-D", pusty}, katalog, granicaKorektyPisowni)
 
@@ -512,7 +512,7 @@ func (a *adapterTlumaczenia) korektaVale(ctx context.Context,
 func (a *adapterTlumaczenia) wolajKorekte(ctx context.Context, katalog string,
 	narzedzie zewnetrzne.Narzedzie, argumenty []string, granica time.Duration) ([]byte, error) {
 
-	okno, zasady, obszar := a.zasiegProgramowTlumaczenia()
+	okno, zasady, obszar := a.zasiegProgramowTlumaczenia(ctx)
 	wynik, err := zewnetrzne.Wolaj(ctx, a.uruchamiacz, okno, zasady, obszar,
 		narzedzie, argumenty, katalog, granica)
 	if err != nil {

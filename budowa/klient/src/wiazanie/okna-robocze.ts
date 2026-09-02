@@ -1,12 +1,5 @@
-/**
- * Okna robocze aplikacji wraz z kartami, które w nich stoją. Okno robocze jest
- * kontenerem jednego działania Operatora: otwiera się na Centrum dowodzenia,
- * niesie najwyżej jedną sesję rdzenia i trzyma własne karty. Karta jest jedną
- * pracą, nie modułem — niesie kod modułu i okno komunikacji rdzenia osobno,
- * więc w oknie stoi obok siebie wiele kart tego samego modułu. Kontrakt nie ma
- * pola na wykaz okien roboczych: odtwarza się przy starcie z `home.enter`
- * i `window.list`.
- */
+// Okna robocze wraz z kartami, które w nich stoją: kontener jednego działania
+// Operatora. Kontrakt wykazu okien roboczych nie ma — odtwarza się ze stanu.
 import {
   ChangeKind,
   Command,
@@ -22,73 +15,49 @@ import { wywolaj } from '../protokol/wywolanie.ts';
 import { oglos } from './ogloszenie.ts';
 import { zglosUchwyt } from './zdarzenia.ts';
 
-/** Karta okna roboczego: jedna praca Operatora wraz z jej oknem w rdzeniu. */
 export interface KartaRobocza {
-  /** Oznaczenie karty nadane przy otwarciu; nie wychodzi poza klienta. */
   id: string;
-  /** Kod modułu, którego wnętrze karta pokazuje. */
   kodModulu: string;
-  /** Okno komunikacji w rdzeniu; pustka znaczy okno jeszcze niezałożone. */
   idOknaKomunikacji: string;
-  /** Nazwa karty widoczna w paśmie. */
   nazwa: string;
 }
 
-/** Okno robocze widziane przez wiązanie: nazwa dla przełącznika, sesja i karta bieżąca. */
 export interface OknoRobocze {
-  /** Oznaczenie okna nadane przy otwarciu; nie wychodzi poza klienta. */
   id: string;
-  /** Nazwa pokazywana w przełączniku; okno bez pracy nazywa się Centrum dowodzenia. */
   nazwa: string;
-  /** Sesja rdzenia niesiona przez okno; pustka znaczy sesję jeszcze niezałożoną — powstaje pierwszą wiadomością. */
   idSesji: string;
-  /** Identyfikator karty bieżącej; pustka znaczy kartę główną — Centrum. */
   kartaBiezaca: string;
-  /** Identyfikatory kart otwartych w oknie, w kolejności otwarcia; karta główna stoi poza wykazem. */
   karty: string[];
 }
 
 const OKNA: OknoRobocze[] = [];
-/* Karty wszystkich okien roboczych. Okno wymienia je identyfikatorem, bo karta
-   przeżywa zamknięcie pasma i odszukuje się ją po identyfikatorze, nie po
-   miejscu w wykazie. */
+// Karta przeżywa zamknięcie pasma, więc okno wymienia ją identyfikatorem.
 const KARTY = new Map<string, KartaRobocza>();
 let biezace = '';
 let licznik = 0;
 let licznikKart = 0;
-/* Kanał wpięty przy wiązaniu Centrum. Zamknięcie karty i okna sięga rdzenia,
-   a woła je czynność okna, która kanału nie niesie. */
+// Zamknięcie karty sięga rdzenia, a czynność okna kanału nie niesie.
 let kanalRdzenia: Kanal | null = null;
 
-/** Nazwa okna roboczego bez podjętej pracy. */
 const NAZWA_POCZATKOWA = 'Centrum dowodzenia';
 
-/** Wpina kanał rdzenia, którym okna robocze zamykają okna komunikacji swoich kart. */
 export function wskazKanalRdzenia(kanal: Kanal): void {
   kanalRdzenia = kanal;
 }
 
-/** Wykaz okien roboczych w kolejności otwarcia. */
 export function oknaRobocze(): OknoRobocze[] {
   return OKNA;
 }
 
-/** Okno robocze, w którym stoi wskazana karta; brak znaczy kartę zdjętą. */
 export function oknoKarty(idKarty: string): OknoRobocze | undefined {
   return OKNA.find((okno) => okno.karty.includes(idKarty));
 }
 
-/** Okno robocze niosące wskazaną sesję; brak znaczy sesję bez okna w tym kliencie. */
 export function oknoSesji(idSesji: string): OknoRobocze | undefined {
   if (idSesji === '') return undefined;
   return OKNA.find((okno) => okno.idSesji === idSesji);
 }
 
-/**
- * Zapisuje na oknie roboczym sesję, którą rdzeń dla niego założył albo
- * otworzył. Okno niesie najwyżej jedną sesję, więc wpis stoi raz — kolejny
- * na oknie z sesją wraca fałszem i nic nie zmienia.
- */
 export function przypiszSesjeOkna(idOkna: string, idSesji: string, nazwa = ''): boolean {
   const okno = OKNA.find((kandydat) => kandydat.id === idOkna);
   if (okno === undefined || idSesji === '' || (okno.idSesji !== '' && okno.idSesji !== idSesji)) {
@@ -99,7 +68,6 @@ export function przypiszSesjeOkna(idOkna: string, idSesji: string, nazwa = ''): 
   return true;
 }
 
-/** Zdejmuje sesję usuniętą w rdzeniu z okien, które ją niosły; zwraca identyfikatory tych okien. */
 export function zdejmijSesjeOkien(idSesji: string): string[] {
   const dotkniete: string[] = [];
   for (const okno of OKNA) {
@@ -110,13 +78,11 @@ export function zdejmijSesjeOkien(idSesji: string): string[] {
   return dotkniete;
 }
 
-/** Okno robocze bieżące; przy pierwszym pytaniu otwiera pierwsze okno. */
 export function oknoBiezace(): OknoRobocze {
   if (OKNA.length === 0) otworzOkno();
   return OKNA.find((okno) => okno.id === biezace) ?? OKNA[0];
 }
 
-/** Otwiera okno robocze na Centrum dowodzenia i czyni je bieżącym. */
 export function otworzOkno(): OknoRobocze {
   licznik += 1;
   const okno: OknoRobocze = {
@@ -127,7 +93,6 @@ export function otworzOkno(): OknoRobocze {
   return okno;
 }
 
-/** Czyni wskazane okno bieżącym; okno nieznane zostawia stan bez zmiany. */
 export function przelaczOkno(id: string): OknoRobocze | undefined {
   const okno = OKNA.find((kandydat) => kandydat.id === id);
   if (okno === undefined) return undefined;
@@ -135,11 +100,6 @@ export function przelaczOkno(id: string): OknoRobocze | undefined {
   return okno;
 }
 
-/**
- * Zamyka okno bieżące wraz z oknami komunikacji jego kart i wraca do
- * poprzedniego. Ostatnie okno nie znika — aplikacja bez okna roboczego nie
- * miałaby czego pokazać; wraca na Centrum.
- */
 export function zamknijOkno(): OknoRobocze {
   const numer = OKNA.findIndex((okno) => okno.id === biezace);
   if (OKNA.length === 1 || numer < 0) {
@@ -159,13 +119,6 @@ export function zamknijOkno(): OknoRobocze {
   return poprzednie;
 }
 
-/**
- * Zapisuje na oknie bieżącym kartę, na której Operator stanął, i zwraca jej
- * identyfikator. Kartę rozpoznaje para modułu i okna komunikacji: wejście
- * w moduł bez wskazanego okna wraca na kartę stojącą, a okno wskazane wprost
- * otwiera kartę własną — dwie rozmowy tego samego modułu stoją obok siebie.
- * Kod pusty wraca na kartę główną i zwraca pustkę.
- */
 export function zapiszKarte(kodModulu: string, nazwa: string, idOknaKomunikacji = ''): string {
   const okno = oknoBiezace();
   if (kodModulu === '') {
@@ -184,12 +137,6 @@ export function zapiszKarte(kodModulu: string, nazwa: string, idOknaKomunikacji 
   return karta.id;
 }
 
-/**
- * Otwiera w oknie bieżącym nową kartę modułu i czyni ją bieżącą — zawsze nową,
- * także gdy karta tego modułu już stoi: znak „+" pasma zakłada drugą pracę
- * obok pierwszej. Okno komunikacji podaje się przy wznowieniu sesji; pustka
- * znaczy okno zakładane pierwszą wiadomością. Zwraca identyfikator karty.
- */
 export function otworzKarte(kodModulu: string, nazwa: string, idOknaKomunikacji = ''): string {
   const okno = oknoBiezace();
   const karta = zalozKarte(okno, kodModulu, idOknaKomunikacji, nazwa);
@@ -198,12 +145,6 @@ export function otworzKarte(kodModulu: string, nazwa: string, idOknaKomunikacji 
   return karta.id;
 }
 
-/**
- * Wiąże wskazaną kartę z oknem komunikacji, które stanęło w rdzeniu. Fałsz
- * znaczy kartę już zdjętą albo wskazanie puste: po tym przypisaniu idzie
- * zamknięcie okna w rdzeniu, a wiązania raz zawiązanego nie zdejmuje wskazanie
- * puste — zdejmuje je dopiero zamknięcie karty.
- */
 export function przypiszOknoKomunikacji(idKarty: string, idOknaKomunikacji: string): boolean {
   const karta = KARTY.get(idKarty);
   if (karta === undefined || idOknaKomunikacji === '') return false;
@@ -211,16 +152,10 @@ export function przypiszOknoKomunikacji(idKarty: string, idOknaKomunikacji: stri
   return true;
 }
 
-/** Opis karty po identyfikatorze; brak znaczy kartę już zdjętą. */
 export function kartaOkna(idKarty: string): KartaRobocza | undefined {
   return KARTY.get(idKarty);
 }
 
-/**
- * Czyni wskazaną kartę bieżącą w oknie bieżącym i zwraca jej opis. Brak znaczy
- * kartę zdjętą albo stojącą w innym oknie roboczym — takiej nie wolno postawić
- * w tym oknie, bo pasmo pokazuje karty jednego okna.
- */
 export function wskazKarte(idKarty: string): KartaRobocza | undefined {
   const okno = oknoBiezace();
   const karta = KARTY.get(idKarty);
@@ -230,12 +165,6 @@ export function wskazKarte(idKarty: string): KartaRobocza | undefined {
   return karta;
 }
 
-/**
- * Nanosi zmianę okna komunikacji zgłoszoną przez rdzeń na karty okien roboczych.
- * Okno zamknięte poza tym klientem zdejmuje swoją kartę bez wołania `window.close`
- * — okno już nie stoi; zmiana nazwy przechodzi na kartę. Zwraca identyfikatory
- * kart zdjętych.
- */
 export function zastosujZmianeOkna(zmiana: ChangeKind, okno: Window): string[] {
   const zdjete: string[] = [];
   for (const karta of KARTY.values()) {
@@ -260,18 +189,12 @@ export function zastosujZmianeOkna(zmiana: ChangeKind, okno: Window): string[] {
   return zdjete;
 }
 
-/**
- * Zgłasza uchwyt `window.changed`: zmiana okna komunikacji w rdzeniu wchodzi na
- * karty okien roboczych, a wołający dostaje identyfikatory kart zdjętych, żeby
- * zdjąć je z pasma i z płótna.
- */
 export function zwiazZdarzeniaOkien(naZmiane: (zdjete: string[]) => void): void {
   zglosUchwyt(EventType.WindowChanged, (tresc) => {
     naZmiane(zastosujZmianeOkna(tresc.change, tresc.window));
   });
 }
 
-/** Karty wskazanego okna roboczego w kolejności otwarcia. */
 export function kartyOkna(okno: OknoRobocze = oknoBiezace()): KartaRobocza[] {
   const karty: KartaRobocza[] = [];
   for (const idKarty of okno.karty) {
@@ -281,10 +204,6 @@ export function kartyOkna(okno: OknoRobocze = oknoBiezace()): KartaRobocza[] {
   return karty;
 }
 
-/**
- * Zdejmuje kartę z okna bieżącego i zamyka jej okno komunikacji w rdzeniu;
- * zwraca identyfikatory kart, które zostały.
- */
 export function zdejmijKarteOkna(idKarty: string): string[] {
   const okno = oknoBiezace();
   if (!okno.karty.includes(idKarty)) return okno.karty;
@@ -297,7 +216,6 @@ export function zdejmijKarteOkna(idKarty: string): string[] {
   return okno.karty;
 }
 
-/** Zostawia w oknie wyłącznie kartę wskazaną; zwraca identyfikatory kart zdjętych. */
 export function zostawKarte(idKarty: string): string[] {
   const okno = oknoBiezace();
   const zdjete = okno.karty.filter((id) => id !== idKarty);
@@ -306,7 +224,6 @@ export function zostawKarte(idKarty: string): string[] {
   return zdjete;
 }
 
-/** Zdejmuje karty stojące po wskazanej; zwraca identyfikatory kart zdjętych. */
 export function zdejmijKartyPoPrawej(idKarty: string): string[] {
   const okno = oknoBiezace();
   const numer = okno.karty.indexOf(idKarty);
@@ -317,10 +234,6 @@ export function zdejmijKartyPoPrawej(idKarty: string): string[] {
   return zdjete;
 }
 
-/**
- * Układ sekcji panelu karty zapisany w rdzeniu; `null` znaczy odmowę rdzenia
- * albo kartę bez okna komunikacji, dla której układu nie ma gdzie szukać.
- */
 export async function odczytajUkladPaneli(
   kanal: Kanal,
   idKarty: string,
@@ -333,10 +246,6 @@ export async function odczytajUkladPaneli(
   return wynik.wynik.sections;
 }
 
-/**
- * Zapisuje w rdzeniu układ sekcji panelu karty. Fałsz znaczy odmowę rdzenia
- * albo kartę bez okna komunikacji — układ nie ma wtedy do czego przylgnąć.
- */
 export async function zapiszUkladPaneli(
   kanal: Kanal,
   idKarty: string,
@@ -351,13 +260,6 @@ export async function zapiszUkladPaneli(
   return wynik.udany;
 }
 
-/**
- * Odtwarza wykaz okien roboczych ze stanu rdzenia: sesja czynna konta daje
- * okno robocze niosące tę sesję, a każde jej otwarte okno komunikacji — kartę.
- * Karta ogniskowana ostatnio staje się bieżącą, sesja ogniskowana — oknem
- * bieżącym. Fałsz znaczy odmowę rdzenia: wykaz zostaje pusty i wołający ma to
- * nazwać.
- */
 export async function odtworzOknaRobocze(
   kanal: Kanal,
   sesje: Session[],
@@ -407,14 +309,12 @@ export async function odtworzOknaRobocze(
     biezace = przedBiezace;
     return true;
   }
-  /* Okna otwarte, zanim rdzeń odpowiedział, są puste — praca stoi w tych
-     odtworzonych, więc puste schodzą z przełącznika. */
+  // Okna otwarte, zanim rdzeń odpowiedział, są puste i schodzą z przełącznika.
   OKNA.splice(0, przed);
   biezace = odtworzone !== '' ? odtworzone : OKNA[0].id;
   return true;
 }
 
-/** Zakłada w oknie kartę o własnym identyfikatorze i wpisuje ją do rejestru kart. */
 function zalozKarte(
   okno: OknoRobocze,
   kodModulu: string,
@@ -430,11 +330,6 @@ function zalozKarte(
   return karta;
 }
 
-/**
- * Zdejmuje kartę z rejestru i zamyka jej okno komunikacji w rdzeniu. Karta
- * zdjęta bez tego zostawiłaby okno otwarte na zawsze: rdzeń liczy okna sesji
- * i wybiera po nich okno, do którego Operator wraca.
- */
 function zwolnijKarte(idKarty: string): void {
   const karta = KARTY.get(idKarty);
   KARTY.delete(idKarty);

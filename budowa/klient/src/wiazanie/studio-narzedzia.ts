@@ -17,6 +17,12 @@ import { oglos } from './ogloszenie.ts';
 const KLASA_WCISNIETY = 'dn-btn--zarys';
 const KLASA_SPOCZYNKU = 'dn-btn--duch';
 
+// Rdzeń oddaje wykaz pusty, dopóki baza nie niesie operacji fabrycznych;
+// panel nazywa ten stan, zamiast stać bez wiersza.
+const KATALOG_PUSTY_NAZWA = 'Katalog operacji pusty';
+const KATALOG_PUSTY_POWOD =
+  'Katalog operacji jest pusty — zapisz operację własną, zanim ją uruchomisz.';
+
 interface WezlyPanelu {
   lista: HTMLElement;
   zakladki: HTMLElement | null;
@@ -77,6 +83,7 @@ export function zwiazNarzedzia(
   let wybrana = '';
   let zakres: StudioOperationScope = StudioOperationScope.Selection;
   let idDokumentu = '';
+  let katalogPusty = true;
 
   const wskaz = (identyfikator: string): void => {
     wybrana = identyfikator;
@@ -84,6 +91,10 @@ export function zwiazNarzedzia(
   };
 
   const uruchom = async (): Promise<void> => {
+    if (katalogPusty) {
+      oglos('Studio', KATALOG_PUSTY_POWOD);
+      return;
+    }
     const dokument = idDokumentu === '' ? await otworzDokument(kanal, idOkna) : idDokumentu;
     idDokumentu = dokument;
     await wywolajOperacje(kanal, { idOkna, dokument, wybrana, zakres }, kanwa);
@@ -115,6 +126,7 @@ export function zwiazNarzedzia(
   );
 
   void odczytajOperacje(kanal).then((wykaz) => {
+    katalogPusty = wykaz.length === 0;
     wypelnij(wezly, wykaz);
     oznaczWybor(wezly.lista, wybrana);
   });
@@ -195,6 +207,10 @@ async function otworzDokument(kanal: Kanal, idOkna: string): Promise<string> {
 
 function wypelnij(wezly: WezlyPanelu, operacje: StudioOperation[]): void {
   zdejmijPozycje(wezly);
+  if (operacje.length === 0) {
+    wstaw(wezly, naglowek(KATALOG_PUSTY_NAZWA));
+    return;
+  }
   let kategoria: string | null = null;
   for (const operacja of operacje) {
     if (operacja.category !== kategoria) {

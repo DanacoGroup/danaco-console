@@ -56,22 +56,14 @@ func (a *adapterNawigacji) oknoStanu(ctx context.Context, idOkna string) (shared
 	return okno, err
 }
 
-// stanProcesu przekłada obecność procesu okna na stan telemetrii postępu,
-// odpowiednik kolumny `proces_sesji.stan`. Okno bez procesu oczekuje,
-// proces żywy pracuje, proces zamknięty jest zatrzymany.
+// stanProcesu oddaje stan okna tą samą wykładnią, którą niesie zdarzenie
+// window.state.changed; rdzeń bez rejestru obecności zna wyłącznie procesy okna.
 func (a *adapterNawigacji) stanProcesu(idOkna string) shared.ProgressStatus {
-	if a.nadzorca == nil {
-		return shared.ProgressStatusPending
+	var czynnosc *pamiecCzynnosci
+	if a.obecnosc != nil {
+		czynnosc = a.obecnosc.czynnosc
 	}
-	proces, jest := a.nadzorca.Procesy().Proces(idOkna)
-	switch {
-	case !jest:
-		return shared.ProgressStatusPending
-	case proces.Zyje():
-		return shared.ProgressStatusRunning
-	default:
-		return shared.ProgressStatusStopped
-	}
+	return stanProcesuOkna(a.nadzorca, czynnosc, idOkna)
 }
 
 // historiaOkna mierzy zapisaną rozmowę okna: liczbę wiadomości i identyfikator

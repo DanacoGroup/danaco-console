@@ -1,24 +1,12 @@
-/**
- * Pasmo kart okien roboczych. Karta pasma odpowiada karcie okna roboczego —
- * jednej pracy Operatora, a nie modułowi: bez tego rozróżnienia druga rozmowa
- * tego samego modułu wchodziłaby na miejsce pierwszej. Znacznik pasma niesie
- * biblioteka Właściciela; ten plik powiela jego kartę wzorcową i wiąże
- * przełączanie oraz zamykanie.
- */
-
-/** Karta okna roboczego w kształcie, w którym opisuje ją pasmo. */
+// Pasmo kart okien roboczych: karta pasma jest jedną pracą Operatora, nie
+// modułem. Znacznik pasma niesie biblioteka Właściciela.
 export interface KartaOkna {
-  /** Identyfikator karty okna roboczego. */
   id: string;
-  /** Nazwa karty widoczna w paśmie. */
   nazwa: string;
-  /** Kod modułu karty; stoi przy karcie cechą `data-modul`. */
   kodModulu?: string;
-  /** Okno komunikacji rdzenia, które karta pokazuje; puste, gdy okno nie stoi. */
   idOknaKomunikacji?: string;
 }
 
-/** Karta wzorcowa zdjęta z pasma przed wyczyszczeniem kart przykładowych. */
 let wzor: HTMLElement | null = null;
 let lista: HTMLElement | null = null;
 let naglowekWykazu: HTMLElement | null = null;
@@ -27,10 +15,6 @@ let wzorPozycjiWykazu: HTMLElement | null = null;
 let wykazOkien: HTMLElement | null = null;
 let wzorPozycjiOkna: HTMLElement | null = null;
 
-/**
- * Zdejmuje z pasma karty przykładowe, zachowując kartę główną i wzór karty
- * modułu. Fałsz znaczy, że pasma nie ma — okno Centrum nie stoi.
- */
 export function przygotujPasmo(): boolean {
   lista = document.querySelector<HTMLElement>('.dn-obszar-panel--glowny .dn-karty-lista');
   if (lista === null) return false;
@@ -50,8 +34,7 @@ export function przygotujPasmo(): boolean {
   for (const pozycja of pozycje) {
     if (pozycja.dataset.kartaPrzelacz !== 'centrum') pozycja.remove();
   }
-  /* Okna robocze stoją w menu powłok pasma, osobnym od menu otwartych kart:
-     pozycje przełączania powstają z wzoru zdjętego z pozycji przykładowej. */
+  // Okna robocze stoją w menu powłok, osobnym od menu otwartych kart.
   wykazOkien = document.querySelector<HTMLElement>('#menu-powloki');
   const przelaczniki = [...(wykazOkien?.querySelectorAll<HTMLElement>('[data-okno-akcja="przelacz"]') ?? [])];
   wzorPozycjiOkna = przelaczniki[0]?.cloneNode(true) as HTMLElement | undefined ?? null;
@@ -59,7 +42,6 @@ export function przygotujPasmo(): boolean {
   return true;
 }
 
-/** Wstawia w menu okna pozycje przełączania okien roboczych i zaznacza bieżące. */
 export function ustawOknaRobocze(
   okna: { id: string; nazwa: string }[],
   biezace: string,
@@ -80,7 +62,6 @@ export function ustawOknaRobocze(
   }
 }
 
-/** Wiąże sekcję okien roboczych: przełączenie, nowe okno i zamknięcie bieżącego. */
 export function zwiazOknaRobocze(
   przelacz: (id: string) => void,
   nowe: () => void,
@@ -99,7 +80,6 @@ export function zwiazOknaRobocze(
   }, true);
 }
 
-/** Wstawia w pasmo karty wskazane wykazem i zaznacza kartę bieżącą. */
 export function ustawKarty(karty: KartaOkna[], biezaca: string): void {
   if (lista === null) return;
   for (const karta of lista.querySelectorAll('.dn-karta-widoku')) {
@@ -113,7 +93,6 @@ export function ustawKarty(karty: KartaOkna[], biezaca: string): void {
   zaznaczKarte(biezaca);
 }
 
-/** Zaznacza wskazaną kartę; pustka zaznacza kartę główną. */
 export function zaznaczKarte(idKarty: string): void {
   if (lista === null) return;
   for (const karta of lista.querySelectorAll<HTMLElement>('.dn-karta-widoku')) {
@@ -124,10 +103,6 @@ export function zaznaczKarte(idKarty: string): void {
   }
 }
 
-/**
- * Wiąże pasmo: naciśnięcie karty przełącza okno, naciśnięcie znaku zamknięcia
- * zamyka je. Nasłuch stoi na paśmie, bo karty powstają i znikają w biegu.
- */
 export function zwiazPasmo(
   przelacz: (idKarty: string) => void,
   zamknij: (idKarty: string) => void,
@@ -159,10 +134,6 @@ export function zwiazPasmo(
   }, true);
 }
 
-/**
- * Nadaje karcie nazwę pracy, którą niesie jej wnętrze. Karta pasma jest jedną
- * pracą w sesji, a nie modułem — moduł stoi przy niej cechą `data-modul`.
- */
 export function nazwijKarte(idKarty: string, nazwa: string): void {
   const karta = lista?.querySelector<HTMLElement>(`.dn-karta-widoku[data-karta="${idKarty}"]`);
   if (karta === undefined || karta === null || nazwa === '') return;
@@ -174,25 +145,17 @@ export function nazwijKarte(idKarty: string, nazwa: string): void {
   if (pozycja !== null && pozycja !== undefined) wpiszNazwe(pozycja, nazwa);
 }
 
-/** Przypina kartę albo zdejmuje przypięcie; przypięta zostaje przy zamykaniu pozostałych. */
 export function przypnijKarte(idKarty: string): void {
   const karta = lista?.querySelector<HTMLElement>(`.dn-karta-widoku[data-karta="${idKarty}"]`);
   if (karta === undefined || karta === null) return;
   karta.dataset.przypieta = karta.dataset.przypieta === 'tak' ? 'nie' : 'tak';
 }
 
-/** Zdejmuje kartę z pasma. */
 export function zdejmijKarte(idKarty: string): void {
   lista?.querySelector(`.dn-karta-widoku[data-karta="${idKarty}"]`)?.remove();
   wykaz?.querySelector(`[data-karta-przelacz="${idKarty}"]`)?.remove();
 }
 
-/**
- * Klon karty wzorcowej opisany kartą okna roboczego; brak wzoru znaczy pasmo
- * bez karty modułu. Kod modułu i okno komunikacji stoją przy karcie cechami,
- * bo pasmo pokazuje pracę, a nie moduł — dwie karty tego samego modułu różni
- * dopiero okno rdzenia.
- */
 function zbudujKarte(opis: KartaOkna): HTMLElement | null {
   if (wzor === null) return null;
   const karta = wzor.cloneNode(true) as HTMLElement;
@@ -208,7 +171,6 @@ function zbudujKarte(opis: KartaOkna): HTMLElement | null {
   return karta;
 }
 
-/** Odświeża wykaz otwartych kart w menu pasma; liczba w nagłówku liczy karty pasma wraz z główną. */
 function odswiezWykaz(karty: KartaOkna[]): void {
   if (naglowekWykazu !== null) {
     naglowekWykazu.textContent = 'Otwarte karty (' + String(karty.length + 1) + ')';
@@ -227,7 +189,6 @@ function odswiezWykaz(karty: KartaOkna[]): void {
   }
 }
 
-/** Wpisuje nazwę w węzeł tekstowy pozycji, zostawiając jej ikonę. */
 function wpiszNazwe(pozycja: HTMLElement, nazwa: string): void {
   for (const dziecko of pozycja.childNodes) {
     if (dziecko.nodeType !== Node.TEXT_NODE) continue;

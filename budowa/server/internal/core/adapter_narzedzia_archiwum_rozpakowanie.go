@@ -19,7 +19,7 @@ import (
 func (a *adapterNarzedziArchiwum) Rozpakuj(ctx context.Context,
 	z shared.ArchiveUnpackRequest) (shared.ArchiveUnpackResponse, error) {
 
-	katalogOkna, err := a.katalogRoboczyOkna()
+	katalogOkna, err := a.katalogRoboczyOkna(ctx)
 	if err != nil {
 		return shared.ArchiveUnpackResponse{}, err
 	}

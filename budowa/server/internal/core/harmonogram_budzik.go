@@ -4,6 +4,7 @@ package core
 
 import (
 	"context"
+	"errors"
 	"log"
 	"time"
 
@@ -20,13 +21,17 @@ const interwalBudzika = time.Minute
 // drugiego silnika kolejek.
 type budzikHarmonogramu struct {
 	automatyki *adapterAutomatyk
+	konta      dane.RepozytoriumKontaWlasciciela
 	dziennik   *log.Logger
 }
 
-// nowyBudzikHarmonogramu wiąże budzik z adapterem Automations i dziennikiem
-// rdzenia. Dziennik pusty wyłącza wyłącznie ślad, nie budzik.
-func nowyBudzikHarmonogramu(automatyki *adapterAutomatyk, dziennik *log.Logger) *budzikHarmonogramu {
-	return &budzikHarmonogramu{automatyki: automatyki, dziennik: dziennik}
+// nowyBudzikHarmonogramu wiąże budzik z adapterem Automations, wykazem kont
+// właściciela i dziennikiem rdzenia. Dziennik pusty wyłącza wyłącznie ślad,
+// nie budzik.
+func nowyBudzikHarmonogramu(automatyki *adapterAutomatyk,
+	konta dane.RepozytoriumKontaWlasciciela, dziennik *log.Logger) *budzikHarmonogramu {
+
+	return &budzikHarmonogramu{automatyki: automatyki, konta: konta, dziennik: dziennik}
 }
 
 // Uruchom wpina budzik w cykl życia rdzenia: zakłada wątek, który tyka aż do
@@ -56,8 +61,22 @@ func (b *budzikHarmonogramu) petla(zycie context.Context) {
 	}
 }
 
-// wyzwolNalezne odpala wszystkie harmonogramy czynne, których termin już minął w tym takcie zegara budzika.
+// wyzwolNalezne odpala harmonogramy należne po kolei dla każdego konta
+// właściciela: praca procesu bez zamawiającego nie podszywa się pod jedno konto
+// (decyzja 34), a zapytania automatyk stoją za granicą konta.
 func (b *budzikHarmonogramu) wyzwolNalezne(ctx context.Context, teraz time.Time) {
+	konteksty, err := kontekstyKont(ctx, b.konta)
+	if err != nil {
+		b.zapisz("budzik harmonogramu: nie można odczytać kont właściciela: %v", err)
+		return
+	}
+	for _, kontekstKonta := range konteksty {
+		b.wyzwolNalezneKonta(kontekstKonta, teraz)
+	}
+}
+
+// wyzwolNalezneKonta odpala wszystkie harmonogramy czynne jednego konta, których termin już minął w tym takcie zegara budzika.
+func (b *budzikHarmonogramu) wyzwolNalezneKonta(ctx context.Context, teraz time.Time) {
 	znacznik := teraz.Format(formatZnacznikaBazy)
 	nalezne, err := b.automatyki.repozytorium.HarmonogramyNalezne(ctx, znacznik)
 	if err != nil {
@@ -70,18 +89,23 @@ func (b *budzikHarmonogramu) wyzwolNalezne(ctx context.Context, teraz time.Time)
 }
 
 // wyzwol przesuwa termin harmonogramu, a następnie odpala jego automatykę.
-// Kolejność jest rozmyślna: przesunięcie idzie pierwsze, więc nawet gdy
+// Kolejność jest rozmyślna: przesunięcie idzie przed odpaleniem, więc nawet gdy
 // odpalenie zawiedzie, harmonogram nie zostanie w stanie „należny na zawsze".
+// Przed przesunięciem stoi odczyt automatyki, bo dopiero on rozstrzyga konto.
 func (b *budzikHarmonogramu) wyzwol(ctx context.Context, harmonogram dane.Harmonogram, teraz time.Time) {
+	automatyka, err := b.automatyki.repozytorium.AutomatykaPoID(ctx, harmonogram.AutomatykaID)
+	if errors.Is(err, dane.ErrBrakWiersza) {
+		// Tabela harmonogramów wskazania konta nie ma; niesie je dopiero wiersz automatyki.
+		return
+	}
+	if err != nil {
+		b.zapisz("budzik harmonogramu: nie można odczytać automatyki %d: %v", harmonogram.AutomatykaID, err)
+		return
+	}
 	nastepne := b.nastepneUruchomienie(ctx, harmonogram, teraz)
 	if err := b.automatyki.repozytorium.UstawNastepneUruchomienie(ctx, harmonogram.AutomatykaID, nastepne); err != nil {
 		b.zapisz("budzik harmonogramu: nie można przesunąć terminu automatyki %d: %v",
 			harmonogram.AutomatykaID, err)
-		return
-	}
-	automatyka, err := b.automatyki.repozytorium.AutomatykaPoID(ctx, harmonogram.AutomatykaID)
-	if err != nil {
-		b.zapisz("budzik harmonogramu: nie można odczytać automatyki %d: %v", harmonogram.AutomatykaID, err)
 		return
 	}
 	if !automatyka.Czynna {

@@ -74,24 +74,27 @@ func (a *adapterNarzedziArchiwum) ZArsenalem(uruchamiacz session.Uruchamiacz,
 }
 
 // zasiegNarzedzi składa trójkę okno–zasady–obszar dla zasięgu platformy: żądanie archive.* niesie samo archiwum, a nie okno rozmowy, więc adresem jest najszerszy z ośmiu poziomów zasięgu.
-func (a *adapterNarzedziArchiwum) zasiegNarzedzi() (session.Okno, session.Zasady, session.Obszar) {
+func (a *adapterNarzedziArchiwum) zasiegNarzedzi(ctx context.Context) (session.Okno,
+	session.Zasady, session.Obszar) {
+
 	okno := session.Okno{Ustawienia: session.Ustawienia{
 		SrodowiskoWykonania: shared.ExecutionEnvCore,
 	}}
+	zasieg := ZasiegKonta(ctx)
 	zasady := session.Zasady{}
 	if a.rozstrzygacz != nil {
-		zasady = ZasadyIzolacji(a.rozstrzygacz, konfig.Kontekst{})
+		zasady = ZasadyIzolacji(a.rozstrzygacz, zasieg)
 	}
 	obszar := session.Obszar{}
 	if a.katalog != nil {
-		obszar = ObszarOkna(a.katalog.Ustal(konfig.Kontekst{}, ""), "")
+		obszar = ObszarOkna(a.katalog.Ustal(zasieg, ""), "")
 	}
 	return okno, zasady, obszar
 }
 
 // katalogRoboczyOkna oddaje katalog, względem którego rozstrzygane są wszystkie ścieżki tej rodziny. Katalog roboczy okna jest jedynym miejscem, w którym model ma prawo pisać.
-func (a *adapterNarzedziArchiwum) katalogRoboczyOkna() (string, error) {
-	_, _, obszar := a.zasiegNarzedzi()
+func (a *adapterNarzedziArchiwum) katalogRoboczyOkna(ctx context.Context) (string, error) {
+	_, _, obszar := a.zasiegNarzedzi(ctx)
 	sciezka := strings.TrimSpace(obszar.KatalogRoboczy)
 	if sciezka == "" {
 		return "", bladZapleczaArchiwum("serwer nie ma ustalonego katalogu roboczego okna — " +
@@ -110,7 +113,7 @@ func (a *adapterNarzedziArchiwum) wolaj7z(ctx context.Context,
 			"narzędzia archiwum nie mają czym wystartować; " +
 			"naprawa: podpiąć warstwę kanału (injection) przy składaniu serwera")
 	}
-	okno, zasady, obszar := a.zasiegNarzedzi()
+	okno, zasady, obszar := a.zasiegNarzedzi(ctx)
 	if strings.TrimSpace(katalog) == "" {
 		katalog = strings.TrimSpace(obszar.KatalogRoboczy)
 	}

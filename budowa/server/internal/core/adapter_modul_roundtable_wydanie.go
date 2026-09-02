@@ -14,7 +14,6 @@ import (
 	"github.com/pdfcpu/pdfcpu/pkg/api"
 
 	"danacoconsole/server/internal/dane"
-	"danacoconsole/server/internal/konfig"
 	"danacoconsole/server/internal/session"
 	"danacoconsole/server/internal/zewnetrzne"
 	"danacoconsole/shared"
@@ -339,7 +338,7 @@ func (a *adapterDebaty) zamienNaDocx(ctx context.Context, tekst string) ([]byte,
 		return nil, bladDebaty(err)
 	}
 
-	okno, zasady, obszar := a.zasiegNarzedziDebaty()
+	okno, zasady, obszar := a.zasiegNarzedziDebaty(ctx)
 	if _, err := zewnetrzne.Wolaj(ctx, a.uruchamiacz, okno, zasady, obszar,
 		narzedziePandoc, []string{zrodlo, "-o", docelowy}, katalog,
 		granicaZamianyFormatu); err != nil {
@@ -355,13 +354,15 @@ func (a *adapterDebaty) zamienNaDocx(ctx context.Context, tekst string) ([]byte,
 // zasiegNarzedziDebaty skada trojke okno-zasady-obszar dla wywolan arsenalu;
 // zasady izolacji biora sie z zasiegu platformy, tak samo jak w rodzinie
 // narzedzi mediow.
-func (a *adapterDebaty) zasiegNarzedziDebaty() (session.Okno, session.Zasady, session.Obszar) {
+func (a *adapterDebaty) zasiegNarzedziDebaty(ctx context.Context) (session.Okno,
+	session.Zasady, session.Obszar) {
+
 	okno := session.Okno{Ustawienia: session.Ustawienia{
 		SrodowiskoWykonania: shared.ExecutionEnvCore,
 	}}
 	zasady := session.Zasady{}
 	if a.rozstrzygacz != nil {
-		zasady = ZasadyIzolacji(a.rozstrzygacz, konfig.Kontekst{})
+		zasady = ZasadyIzolacji(a.rozstrzygacz, ZasiegKonta(ctx))
 	}
 	return okno, zasady, session.Obszar{}
 }

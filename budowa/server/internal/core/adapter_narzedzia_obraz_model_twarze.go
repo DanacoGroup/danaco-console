@@ -161,7 +161,7 @@ func (a *adapterNarzedziObrazuModelu) poprawTwarze(ctx context.Context,
 			"serwer nie ma uruchamiacza procesów — pomocnik twarzy nie ma czym wystartować; " +
 				"naprawa: podpiąć warstwę kanału (injection) przy składaniu serwera")
 	}
-	okno, zasady, obszar := a.wspolne.zasiegNarzedzi()
+	okno, zasady, obszar := a.wspolne.zasiegNarzedzi(ctx)
 	wynik, err := zewnetrzne.Wolaj(ctx, a.wspolne.uruchamiacz, okno, zasady, obszar,
 		narzedzieOdtwarzaniaTwarzy(),
 		[]string{skrypt, pracownia.wyjscie, wyjscie,

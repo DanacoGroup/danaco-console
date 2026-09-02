@@ -191,7 +191,7 @@ func zlozPorty(s skladPortow) Porty {
 		Design: nowyAdapterDesignu(s.repozytoria.Design).ZKanalami(s.kanaly, s.repozytoria.Kanaly).
 			ZKatalogiemDanych(katalogDanych).ZSejfem(sejf).
 			ZOdczytemPisma(injection.UruchamiaczOkien(), s.rozstrzygacz, s.katalogRoboczy),
-		Badania: nowyAdapterBadan(s.repozytoria.Badania).ZKanalami(s.kanaly).
+		Badania: nowyAdapterBadan(s.repozytoria.Badania).ZKanalami(s.kanaly, s.repozytoria.Kanaly).
 			ZKatalogiemDanych(katalogDanych).
 			ZDokumentami(nowyAdapterNarzedziDokumentu(injection.UruchamiaczOkien()).
 				ZKatalogiemDanych(katalogDanych).ZIzolacja(s.rozstrzygacz, s.katalogRoboczy).

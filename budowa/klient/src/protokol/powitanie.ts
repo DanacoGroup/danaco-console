@@ -1,3 +1,5 @@
+// `connection.hello` — jedyna komenda, którą warstwa protokołu wysyła sama;
+// poprzedza każdą rozmowę z rdzeniem i uzgadnia wersję protokołu.
 import {
   Command,
   ErrorCode,
@@ -11,20 +13,9 @@ import { zapomnijTokenSesji } from './token-sesji.ts';
 import type { TozsamoscKlienta } from './tozsamosc-klienta.ts';
 import { wywolaj } from './wywolanie.ts';
 
-/*
-Powitanie bieżącego połączenia. Rdzeń wiąże sesję bramki z gniazdem właśnie
-w powitaniu, więc jest ono jedno na gniazdo: drugie uzgadniałoby tę samą sesję
-po raz wtóry. Wołający, który przyjdzie po odpowiedź później, dostaje tę samą
-obietnicę zamiast wysyłać komunikat powtórnie.
-*/
+// Rdzeń wiąże sesję bramki z gniazdem w powitaniu, więc jest ono jedno na gniazdo.
 let biezace: Promise<Wynik<ConnectionHelloResponse>> | null = null;
 
-/**
- * `connection.hello` — powitanie połączenia i uzgodnienie wersji protokołu;
- * jedyna komenda, którą warstwa protokołu wysyła z własnej woli. Poprzedza
- * każdą inną rozmowę z rdzeniem, ustalając wersję protokołu i obsługiwane
- * komendy.
- */
 export function zadajPowitanie(
   kanal: Kanal,
   klient: TozsamoscKlienta,

@@ -21,7 +21,6 @@ import (
 	"github.com/disintegration/imaging"
 
 	"danacoconsole/server/internal/dane"
-	"danacoconsole/server/internal/konfig"
 	"danacoconsole/server/internal/models"
 	"danacoconsole/server/internal/protocol"
 	"danacoconsole/server/internal/session"
@@ -557,7 +556,7 @@ func (a *adapterDesignu) odczytajPismoObszarowDesignu(ctx context.Context, obraz
 	}
 	defer func() { _ = os.RemoveAll(katalog) }()
 
-	okno, zasady, obszarZasiegu := a.zasiegOdczytuPismaDesignu()
+	okno, zasady, obszarZasiegu := a.zasiegOdczytuPismaDesignu(ctx)
 	odczyt := map[int]string{}
 	for _, numer := range numery {
 		wycinek := wycinekObszaruZrzutuDesignu(obraz, obszary[numer])
@@ -603,19 +602,20 @@ func (a *adapterDesignu) odczytajPismoObszarowDesignu(ctx context.Context, obraz
 // zasiegOdczytuPismaDesignu składa trójkę okno-zasady-obszar dla uruchomienia programu
 // rozpoznającego pismo. Odczyt pisma jest zdolnością platformy, nie czynnością okna, więc
 // zasady i obszar składają się dla kontekstu najszerszego.
-func (a *adapterDesignu) zasiegOdczytuPismaDesignu() (session.Okno, session.Zasady,
-	session.Obszar) {
+func (a *adapterDesignu) zasiegOdczytuPismaDesignu(ctx context.Context) (session.Okno,
+	session.Zasady, session.Obszar) {
 
 	okno := session.Okno{Ustawienia: session.Ustawienia{
 		SrodowiskoWykonania: shared.ExecutionEnvCore,
 	}}
+	zasieg := ZasiegKonta(ctx)
 	zasady := session.Zasady{}
 	if a.rozstrzygacz != nil {
-		zasady = ZasadyIzolacji(a.rozstrzygacz, konfig.Kontekst{})
+		zasady = ZasadyIzolacji(a.rozstrzygacz, zasieg)
 	}
 	obszar := session.Obszar{}
 	if a.katalogRoboczy != nil {
-		obszar = ObszarOkna(a.katalogRoboczy.Ustal(konfig.Kontekst{}, ""), "")
+		obszar = ObszarOkna(a.katalogRoboczy.Ustal(zasieg, ""), "")
 	}
 	return okno, zasady, obszar
 }

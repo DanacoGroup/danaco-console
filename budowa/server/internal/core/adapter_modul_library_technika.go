@@ -22,7 +22,6 @@ import (
 	"github.com/pdfcpu/pdfcpu/pkg/api"
 
 	"danacoconsole/server/internal/dane"
-	"danacoconsole/server/internal/konfig"
 	"danacoconsole/server/internal/session"
 	"danacoconsole/server/internal/zewnetrzne"
 	"danacoconsole/shared"
@@ -57,7 +56,9 @@ var narzedzieMetadanychBiblioteki = zewnetrzne.Narzedzie{
 // metadaneTechniczne czyta metadane osadzone w bajtach zasobu. Odczyt nie
 // odmawia: zasób bez treści, format nieznany czy nagłówek uszkodzony oddają
 // mniej pól, a nie błąd całej komendy — opis jest wtedy niepełny, nie błędny.
-func (a *adapterBiblioteki) metadaneTechniczne(zasob dane.PlikBiblioteki) *shared.LibraryTechnicalMetadata {
+func (a *adapterBiblioteki) metadaneTechniczne(ctx context.Context,
+	zasob dane.PlikBiblioteki) *shared.LibraryTechnicalMetadata {
+
 	if zasob.TrescOdwolanie == nil || *zasob.TrescOdwolanie == "" {
 		return nil
 	}
@@ -89,10 +90,10 @@ func (a *adapterBiblioteki) metadaneTechniczne(zasob dane.PlikBiblioteki) *share
 		}
 		techniczne.GpsLatitude, techniczne.GpsLongitude = szerokosc, dlugosc
 	}
-	if czas := a.zmierzCzasTrwania(*zasob.TrescOdwolanie, rodzaj); czas != nil {
+	if czas := a.zmierzCzasTrwania(ctx, *zasob.TrescOdwolanie, rodzaj); czas != nil {
 		techniczne.DurationMs = czas
 	}
-	a.dopiszMetadaneOsadzone(*zasob.TrescOdwolanie, techniczne)
+	a.dopiszMetadaneOsadzone(ctx, *zasob.TrescOdwolanie, techniczne)
 	return techniczne
 }
 
@@ -100,29 +101,30 @@ func (a *adapterBiblioteki) metadaneTechniczne(zasob dane.PlikBiblioteki) *share
 // umie przeczytać: IPTC, XMP i ID3, korzystając z `exiftool` jako jedynego
 // programu zdolnego rozebrać te formaty. Brak programu albo metadanych
 // zostawia pola puste, nie błąd.
-func (a *adapterBiblioteki) dopiszMetadaneOsadzone(sciezka string,
+func (a *adapterBiblioteki) dopiszMetadaneOsadzone(ctx context.Context, sciezka string,
 	techniczne *shared.LibraryTechnicalMetadata) {
 
 	if a.uruchamiacz == nil || !zewnetrzne.Stoi(narzedzieMetadanychBiblioteki) {
 		return
 	}
-	ctx, przerwij := context.WithTimeout(context.Background(), granicaOdczytuMetadanych)
+	praca, przerwij := context.WithTimeout(ctx, granicaOdczytuMetadanych)
 	defer przerwij()
 
 	okno := session.Okno{Ustawienia: session.Ustawienia{
 		SrodowiskoWykonania: shared.ExecutionEnvCore,
 	}}
+	zasieg := ZasiegKonta(ctx)
 	zasady := session.Zasady{}
 	if a.rozstrzygacz != nil {
-		zasady = ZasadyIzolacji(a.rozstrzygacz, konfig.Kontekst{})
+		zasady = ZasadyIzolacji(a.rozstrzygacz, zasieg)
 	}
 	obszar := session.Obszar{}
 	if a.katalog != nil {
-		obszar = ObszarOkna(a.katalog.Ustal(konfig.Kontekst{}, ""), "")
+		obszar = ObszarOkna(a.katalog.Ustal(zasieg, ""), "")
 	}
 
 	// `-g1` grupuje wynik rodziną pierwszą; `-n` wyłącza upiększanie wartości pól.
-	wynik, err := zewnetrzne.Wolaj(ctx, a.uruchamiacz, okno, zasady, obszar,
+	wynik, err := zewnetrzne.Wolaj(praca, a.uruchamiacz, okno, zasady, obszar,
 		narzedzieMetadanychBiblioteki, []string{
 			"-json", "-n", "-g1", "-IPTC:all", "-XMP:all", "-ID3:all", sciezka,
 		}, "", granicaOdczytuMetadanych)
@@ -166,14 +168,14 @@ func (a *adapterBiblioteki) dopiszMetadaneOsadzone(sciezka string,
 // zmierzCzasTrwania woła `ffprobe` dla materiału dźwiękowego i filmowego. Brak
 // binarium nie jest odmową: pole czasu trwania po prostu nie wchodzi do
 // odpowiedzi, a materiał niebędący nagraniem nie jest mierzony wcale.
-func (a *adapterBiblioteki) zmierzCzasTrwania(sciezka, rodzaj string) *int {
+func (a *adapterBiblioteki) zmierzCzasTrwania(ctx context.Context, sciezka, rodzaj string) *int {
 	if !strings.HasPrefix(rodzaj, "audio/") && !strings.HasPrefix(rodzaj, "video/") {
 		return nil
 	}
 	if a.uruchamiacz == nil {
 		return nil
 	}
-	ctx, przerwij := context.WithTimeout(context.Background(), granicaPomiaruNagrania)
+	praca, przerwij := context.WithTimeout(ctx, granicaPomiaruNagrania)
 	defer przerwij()
 
 	// Zasięg pomiaru jest platformowy: żądanie dotyczy pliku, nie okna — opis
@@ -181,16 +183,17 @@ func (a *adapterBiblioteki) zmierzCzasTrwania(sciezka, rodzaj string) *int {
 	okno := session.Okno{Ustawienia: session.Ustawienia{
 		SrodowiskoWykonania: shared.ExecutionEnvCore,
 	}}
+	zasieg := ZasiegKonta(ctx)
 	zasady := session.Zasady{}
 	if a.rozstrzygacz != nil {
-		zasady = ZasadyIzolacji(a.rozstrzygacz, konfig.Kontekst{})
+		zasady = ZasadyIzolacji(a.rozstrzygacz, zasieg)
 	}
 	obszar := session.Obszar{}
 	if a.katalog != nil {
-		obszar = ObszarOkna(a.katalog.Ustal(konfig.Kontekst{}, ""), "")
+		obszar = ObszarOkna(a.katalog.Ustal(zasieg, ""), "")
 	}
 
-	wynik, err := zewnetrzne.Wolaj(ctx, a.uruchamiacz, okno, zasady, obszar,
+	wynik, err := zewnetrzne.Wolaj(praca, a.uruchamiacz, okno, zasady, obszar,
 		narzedziePomiaruBiblioteki, []string{
 			"-v", "error", "-show_entries", "format=duration",
 			"-of", "default=noprint_wrappers=1:nokey=1", sciezka,

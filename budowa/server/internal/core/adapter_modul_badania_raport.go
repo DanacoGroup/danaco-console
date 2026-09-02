@@ -136,7 +136,7 @@ func (a *adapterBadan) sekcjeDoZapisu(ctx context.Context,
 func (a *adapterBadan) sekcjaStreszczenia(ctx context.Context, okno string,
 	ustalenia []dane.UstalenieBadania) (dane.SekcjaRaportu, error) {
 
-	kanal, err := a.domyslnyKanalBadania()
+	kanal, err := a.domyslnyKanalBadania(ctx)
 	if err != nil {
 		return dane.SekcjaRaportu{}, err
 	}

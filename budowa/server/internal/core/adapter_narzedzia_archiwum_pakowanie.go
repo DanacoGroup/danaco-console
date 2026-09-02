@@ -20,7 +20,7 @@ func (a *adapterNarzedziArchiwum) Spakuj(ctx context.Context,
 	if err != nil {
 		return shared.ArchivePackResponse{}, err
 	}
-	katalogOkna, err := a.katalogRoboczyOkna()
+	katalogOkna, err := a.katalogRoboczyOkna(ctx)
 	if err != nil {
 		return shared.ArchivePackResponse{}, err
 	}

@@ -117,8 +117,7 @@ function odegrajLaczenie(wariant: 'w-laczenie' | 'w-token' = 'w-laczenie'): void
     ?.dispatchEvent(new CustomEvent('ekran-startowy-koniec', { bubbles: true }));
 }
 
-/* Rdzeń adresuje `auth.changed` do konta, więc unieważnienie nazywające
-   urządzenie zdejmuje token tylko wtedy, gdy to urządzenie tej sesji. */
+// Rdzeń adresuje `auth.changed` do konta, nie do jednego urządzenia sesji.
 function zwiazZmianeUwierzytelnienia(): void {
   zglosUchwyt(EventType.AuthChanged, (tresc) => {
     const powodZdjecia =
@@ -240,9 +239,7 @@ async function powitaj(most: Kanal | undefined): Promise<void> {
     ustawWariant('w-blad');
     return;
   }
-  /* Okno staje w gnieździe później niż rusza przebieg łączenia, więc przebieg
-     nie zastaje panelu z celem przejścia. Wariant i sygnał końca ekranu idą
-     dopiero po powrocie powitania, kiedy panel stoi. */
+  // Panel z celem przejścia staje w gnieździe dopiero po powrocie powitania.
   odegrajLaczenie(wynik.wynik?.authenticated === true ? 'w-token' : 'w-laczenie');
 }
 

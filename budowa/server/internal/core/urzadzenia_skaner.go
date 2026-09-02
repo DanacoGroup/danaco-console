@@ -15,7 +15,6 @@ import (
 	"strings"
 	"time"
 
-	"danacoconsole/server/internal/konfig"
 	"danacoconsole/server/internal/protocol"
 	"danacoconsole/server/internal/zewnetrzne"
 	"danacoconsole/shared"
@@ -159,7 +158,7 @@ type zamowienieSkanu struct {
 func (a *adapterStudia) skanujUrzadzenie(ctx context.Context,
 	zamowienie zamowienieSkanu) ([]string, error) {
 
-	katalog, err := a.katalogSkanow()
+	katalog, err := a.katalogSkanow(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -473,7 +472,7 @@ func (a *adapterStudia) wolajUrzadzenie(ctx context.Context, n zewnetrzne.Narzed
 				n.Nazwa+") nie ma czym wystartować; naprawa: podpiąć warstwę kanału "+
 				"przy składaniu serwera"))
 	}
-	okno, zasady, obszar := a.zasiegStudia()
+	okno, zasady, obszar := a.zasiegStudia(ctx)
 	wynik, err := zewnetrzne.Wolaj(ctx, a.uruchamiacz, okno, zasady, obszar, n,
 		argumenty, "", granica)
 	if err != nil {
@@ -491,10 +490,10 @@ func (a *adapterStudia) wolajUrzadzenie(ctx context.Context, n zewnetrzne.Narzed
 // katalogSkanow wskazuje katalog, w którym wolno położyć pobrany obraz —
 // obszar roboczy okna, bo tam sięga izolacja i tam kolejka wczytywania ma
 // prawo czytać.
-func (a *adapterStudia) katalogSkanow() (string, error) {
+func (a *adapterStudia) katalogSkanow(ctx context.Context) (string, error) {
 	korzen := ""
 	if a.katalog != nil {
-		korzen = strings.TrimSpace(a.katalog.Ustal(konfig.Kontekst{}, "").Sciezka)
+		korzen = strings.TrimSpace(a.katalog.Ustal(ZasiegKonta(ctx), "").Sciezka)
 	}
 	if korzen == "" {
 		tymczasowy, err := os.MkdirTemp("", "danaco-skan-")

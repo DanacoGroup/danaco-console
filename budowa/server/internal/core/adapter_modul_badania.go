@@ -51,6 +51,8 @@ type adapterBadan struct {
 	mowa          Mowa
 	katalogDanych string
 	kanaly        *models.Rejestr
+	// repozytoriumKanalow zawęża rejestr procesu do kanałów konta (decyzja 34).
+	repozytoriumKanalow dane.RepozytoriumKanalow
 }
 
 func nowyAdapterBadan(repozytorium dane.RepozytoriumBadan) *adapterBadan {
@@ -126,8 +128,10 @@ func (a *adapterBadan) odlozMaterialBadania(bajty []byte) (string, int64, error)
 	return sciezka, int64(len(bajty)), nil
 }
 
-func (a *adapterBadan) ZKanalami(kanaly *models.Rejestr) *adapterBadan {
-	a.kanaly = kanaly
+func (a *adapterBadan) ZKanalami(kanaly *models.Rejestr,
+	repozytorium dane.RepozytoriumKanalow) *adapterBadan {
+
+	a.kanaly, a.repozytoriumKanalow = kanaly, repozytorium
 	return a
 }
 
@@ -157,15 +161,23 @@ func (a *adapterBadan) zapytajModel(ctx context.Context, okno, kanal, tresc stri
 	return zebrane.String(), nil
 }
 
-func (a *adapterBadan) domyslnyKanalBadania() (string, error) {
+// Kanał domyślny wybiera się spośród kanałów konta zamawiającego: rejestr
+// procesu niesie kanały wszystkich kont, a własność rozstrzyga zawężone
+// repozytorium (decyzja 34).
+func (a *adapterBadan) domyslnyKanalBadania(ctx context.Context) (string, error) {
 	if a.kanaly == nil {
 		return "", bladBrakuKanalowBadan()
 	}
-	czynne := a.kanaly.Kontrakt(true)
-	if len(czynne) == 0 {
-		return "", bladBrakuCzynnegoKanaluBadan()
+	konta, err := kluczeKanalowKonta(ctx, a.repozytoriumKanalow)
+	if err != nil {
+		return "", err
 	}
-	return czynne[0].Id, nil
+	for _, kanal := range a.kanaly.Kontrakt(true) {
+		if _, jest := konta[kanal.Id]; jest {
+			return kanal.Id, nil
+		}
+	}
+	return "", bladBrakuCzynnegoKanaluBadan()
 }
 
 func bladBrakuKanalowBadan() error {
@@ -175,7 +187,7 @@ func bladBrakuKanalowBadan() error {
 
 func bladBrakuCzynnegoKanaluBadan() error {
 	return protocol.JakoError(protocol.NowyBlad(shared.ErrorCodeChannelUnavailable,
-		"moduł Research: rejestr kanałów nie ma czynnego kanału — redakcja sekcji raportu nie ma czym wołać modelu"))
+		"moduł Research: konto nie ma czynnego kanału modelu — redakcja sekcji raportu nie ma czym wołać modelu"))
 }
 
 func (a *adapterBadan) DodajZrodlo(ctx context.Context,

@@ -26,7 +26,7 @@ func (a *adapterBiblioteki) Opis(ctx context.Context,
 	}
 	opis := opisKontraktuBiblioteki(plik.Kod, wiersz)
 	if z.IncludeTechnical != nil && *z.IncludeTechnical {
-		opis.Technical = a.metadaneTechniczne(plik)
+		opis.Technical = a.metadaneTechniczne(ctx, plik)
 	}
 	// Odczyt opisu jest dostępem do zasobu i zostawia ślad w dzienniku audytu.
 	a.odnotuj(ctx, shared.LibraryAuditActionAccess, &plik.Kod, "odczyt opisu zasobu")

@@ -64,6 +64,8 @@ import { zwiazLibrary, zwolnijLibrary } from './library.ts';
 import { zwiazWorkspace, zwolnijWorkspace } from './workspace.ts';
 import { zwiazAgents, zwolnijAgents } from './agents.ts';
 import { zwiazDesign, zwolnijDesign } from './design.ts';
+import { zwiazTerminal, zwolnijTerminal } from './terminal.ts';
+import { zwiazPrzegladarke, zwolnijPrzegladarke } from './browser.ts';
 import { zglosUchwyt } from './zdarzenia.ts';
 
 const KOD_MODULU_WYDANIA = 'studio';
@@ -71,6 +73,8 @@ const KOD_MODULU_BIBLIOTEKI = 'library';
 const KOD_MODULU_WARSZTATU = 'workspace';
 const KOD_MODULU_EKSPERTOW = 'agents';
 const KOD_MODULU_DESIGN = 'design';
+const KOD_MODULU_TERMINALA = 'terminal';
+const KOD_MODULU_PRZEGLADARKI = 'browser';
 
 const POWROT_NA_STRONE_GLOWNA =
   '[aria-label="Centrum dowodzenia"], .dn-karta-widoku--glowna, [data-wyjscie-modulu]';
@@ -222,6 +226,10 @@ export function zwiazCentrum(kanal: Kanal | undefined = globalThis.DanacoKanal):
         zwiazAgents(kanal, nazwaSrodowiska, idOkna, wnetrze.wezel);
       } else if (modul.code === KOD_MODULU_DESIGN) {
         zwiazDesign(kanal, nazwaSrodowiska, idOkna, wnetrze.wezel);
+      } else if (modul.code === KOD_MODULU_TERMINALA) {
+        zwiazTerminal(kanal, idOkna, wnetrze.wezel);
+      } else if (modul.code === KOD_MODULU_PRZEGLADARKI) {
+        zwiazPrzegladarke(kanal, idOkna, wnetrze.wezel);
       } else if (idOkna === '') {
         zwiazOkno(kanal, modul.code, nazwaSrodowiska, wnetrze.wezel);
       } else {
@@ -417,6 +425,8 @@ export function zwiazCentrum(kanal: Kanal | undefined = globalThis.DanacoKanal):
       zwolnijWorkspace(idKarty);
       zwolnijAgents(idKarty);
       zwolnijDesign(idKarty);
+      zwolnijTerminal(idKarty);
+      zwolnijPrzegladarke(idKarty);
       wnetrze.remove();
     }
   };

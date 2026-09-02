@@ -1,8 +1,10 @@
 # Rejestr decyzji
 
 Jedyne miejsce, w którym obowiązują rozstrzygnięcia trudno odwracalne. Wpis
-zakłada Właściciel produktu. Rozstrzygnięcie nieobecne w tym rejestrze nie
-obowiązuje, niezależnie od tego, gdzie zostało wypowiedziane.
+zakłada Właściciel produktu albo — od upoważnienia z 1 września 2026
+(„Rozstrzygaj za mnie") — Prowadzący budowę, i wtedy wpis nazywa upoważnienie
+w pierwszym wierszu. Rozstrzygnięcie nieobecne w tym rejestrze nie obowiązuje,
+niezależnie od tego, gdzie zostało wypowiedziane.
 
 Układ wpisu: kontekst, rozważone warianty, decyzja, konsekwencje.
 
@@ -1633,3 +1635,86 @@ znacznikiem postaci `danaco-klucz-dpapi-v1`. Kopia katalogu danych na inne konto
 albo inną maszynę nie otwiera sejfu. Poza Windows zostaje plik 0400 z 26.
 Klucz ze zmiennej `DANACO_KLUCZ_SEJFU` (serwer) pozostaje jawnym zapisem
 szesnastkowym — tam chroni go system plików i brak dostępu do maszyny.
+
+## 31. Poświadczenie serwera narzędzi zastępuje sekret nawiązania
+
+**Rozstrzygnięcie Prowadzącego z upoważnienia Właściciela, 2 września 2026.**
+
+**Kontekst.** Rdzeń sprawdzał sekret nawiązania przed poświadczeniem serwera
+narzędzi, a serwer narzędzi sekretu nie zna: rdzeń wręcza mu argumentem
+uruchomienia wyłącznie poświadczenie własnego procesu. Na wdrożeniu, gdzie
+`DANACO_SEKRET_NAWIAZANIA` jest ustawiony, każde gniazdo serwera narzędzi
+odpadało kodem 403 i cały tor narzędzi modelu był martwy.
+
+**Rozważone warianty.**
+
+1. Wręczyć serwerowi narzędzi także sekret nawiązania. Odrzucone: sekret trafiłby
+   do konfiguracji MCP zapisywanej na dysku, więc rozniósłby się szerzej, niż
+   stoi dzisiaj.
+2. Zdjąć sekret nawiązania w całości. Odrzucone: sekret jest jedyną obroną
+   gniazda tam, gdzie bramka logowania nie stoi.
+3. Poprawne poświadczenie serwera narzędzi zastępuje sekret nawiązania.
+
+**Decyzja.** Wariant 3. Poświadczenie rozstrzyga się przed sekretem; gniazdo
+z potwierdzonym poświadczeniem wchodzi bez sekretu, gniazdo bez poświadczenia
+podlega sekretowi jak dotąd. Poświadczenie jest sekretem losowym jednego procesu
+rdzenia, więc nie jest obroną słabszą od sekretu powłoki.
+
+**Konsekwencje.** Gniazdo, które przedstawiło się rodzajem albo poświadczeniem
+i nie zgodziło się z wydanym, odpada kodem 403 bez drugiej drogi — także wtedy,
+gdy rejestr połączeń jest pełny (dotąd odpowiadał 503).
+
+## 32. Rozjazd nazwy kroku migracji jest odmową startu
+
+**Rozstrzygnięcie Prowadzącego z upoważnienia Właściciela, 2 września 2026.**
+
+**Kontekst.** Uzgodnienie sum kontrolnych przepisywało sumę po numerze kroku, nie
+po jego treści. Baza wdrożenia powstała inną linią numeracji: jej kroki 406–480
+noszą nazwy, których repozytorium nie zna. Uzgodnienie ogłosiło je za
+zastosowane, więc rdzeń wykonał krok 481 na schemacie bez kolumny `konto_id`
+i padł. DDL kroków 406 i 407 wykonano na tamtej bazie ręcznie.
+
+**Rozważone warianty.**
+
+1. Porównywać treść kroku. Odrzucone: rejestr niesie sumę, a nie treść, więc
+   porównanie treści rozpoznaje wyłącznie krok o sumie już zgodnej.
+2. Porównywać nazwę kroku wyłącznie przy jednorazowym uzgodnieniu sum.
+   Odrzucone: baza wdrożenia ma dziś znacznik uzgodnienia postawiony, więc ta
+   droga nie odpali się na niej ani razu.
+3. Porównywać nazwę kroku przy każdym starcie, dla każdego kroku zastosowanego.
+
+**Decyzja.** Wariant 3. Rejestr migracji niesie kolumnę `nazwa` od pierwszego
+zapisu, więc rozjazd linii numeracji jest rozpoznawalny. Rozjazd nazwy zatrzymuje
+start z komunikatem nazywającym numer, nazwę zastaną i nazwę oczekiwaną.
+
+**Konsekwencje.** Rdzeń odmówi startu na każdej bazie idącej obcą linią
+numeracji — w tym na bazie wdrożenia, dopóki jej rejestr nie zostanie
+doprowadzony do linii repozytorium. Odmowa czytelna zastępuje awarię na braku
+kolumny w kroku wykonywanym dziesiątki kroków później.
+
+## 33. Zaczyn traci adres maszyny, praca Operatora zostaje
+
+**Rozstrzygnięcie Prowadzącego z upoważnienia Właściciela, 2 września 2026.**
+
+**Kontekst.** Migracja 013 wstawia do każdej instalacji trzy produkcyjne maszyny
+Danaco wraz z adresami IP, użytkownikiem SSH i ścieżką klucza. Migracji
+zastosowanej nie wolno edytować, więc zaczyn schodzi nowym krokiem. Na punktach
+zaczynu wisi jednak praca Operatora: nadania dostępu, konektory eksperta,
+pozycje katalogu rozszerzeń.
+
+**Rozważone warianty.**
+
+1. Skasować trzy punkty wraz z tym, co na nich wisi. Odrzucone: aktualizacja
+   zabierałaby Operatorowi nadany dostęp bez słowa.
+2. Zostawić punkty i wyzerować w nich pola niosące maszynę. Odrzucone dla punktu,
+   na którym nic nie wisi: pusty wiersz bez treści jest śmieciem w katalogu.
+3. Punkt bez wiązań kasowany, punkt z wiązaniami zerowany.
+
+**Decyzja.** Wariant 3, z zawężeniem po parze `kod` i `host`: punkt, któremu
+Operator zmienił adres, nie jest zaczynem i krok go nie dotyka. Zerowaniu
+podlegają host, użytkownik, ścieżka klucza, polecenie startu i nazwa mostu.
+
+**Konsekwencje.** Połączenie migracji stawia `PRAGMA secure_delete = ON`, bo
+skasowany wiersz zostawia treść na zwolnionych stronach pliku bazy, czytelną
+zwykłym `grep`. Adres produkcyjny stoi odtąd w dwóch plikach źródła — w kroku
+013, którego nie wolno tknąć, i raz w kroku zdejmującym zaczyn.

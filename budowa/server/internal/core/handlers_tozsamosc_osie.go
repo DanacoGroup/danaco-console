@@ -53,8 +53,8 @@ func (w *wskazanieOsiOkna) osieKanalu(ctx context.Context, kanalID int64) (Zapyt
 			continue
 		}
 		zapytanie := ZapytanieTozsamosci{Model: kanal.IdentyfikatorModelu}
-		if kanal.KontoID != nil {
-			zapytanie.Konto = strconv.FormatInt(*kanal.KontoID, 10)
+		if kanal.KontoDostawcyID != nil {
+			zapytanie.Konto = strconv.FormatInt(*kanal.KontoDostawcyID, 10)
 		}
 		return zapytanie, nil
 	}

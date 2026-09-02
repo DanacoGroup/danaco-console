@@ -51,7 +51,7 @@ const (
 	// jednego konta wylogowuje wszystkie.
 	uniewaznijSesjeBramki = `UPDATE sesja_bramki SET uniewazniono = ?
 	                         WHERE uniewazniono IS NULL AND (? = '' OR token_skrot <> ?)
-	                           AND ` + warunekKontaBramki
+	                           AND ` + WarunekKonta
 
 	// Wykaz urządzeń powstaje z sesji, nie z osobnej tabeli, grupowany po kodzie do jednego wiersza na urządzenie.
 	urzadzeniaSesjiBramki = `SELECT urzadzenie_kod,
@@ -60,13 +60,13 @@ const (
 	                                         THEN 1 ELSE 0 END) AS czynny
 	                         FROM sesja_bramki
 	                         WHERE urzadzenie_kod IS NOT NULL AND urzadzenie_kod <> ''
-	                           AND ` + warunekKontaBramki + `
+	                           AND ` + WarunekKonta + `
 	                         GROUP BY urzadzenie_kod
 	                         ORDER BY ostatnio DESC`
 
 	uniewaznijSesjeUrzadzenia = `UPDATE sesja_bramki SET uniewazniono = ?
 	                             WHERE uniewazniono IS NULL AND urzadzenie_kod = ?
-	                               AND ` + warunekKontaBramki
+	                               AND ` + WarunekKonta
 )
 
 // ZalozSesjeBramki zakłada sesję wejścia i oddaje ją odczytaną z bazy danych z nadanym numerem wiersza.

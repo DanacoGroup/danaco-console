@@ -12,7 +12,7 @@ import (
 // wykaz kanałów jest wtedy powtarzalny między uruchomieniami.
 const zapytanieOKanaly = `
 SELECT id, kod, nazwa, dostawca, identyfikator_modelu, rodzaj_kanalu,
-       COALESCE(konto_id, 0), COALESCE(poswiadczenie_odwolanie, ''),
+       COALESCE(konto_dostawcy_id, 0), COALESCE(poswiadczenie_odwolanie, ''),
        COALESCE(parametry_json, '{}'), multimodalny, aktywny, kolejnosc, utworzono
   FROM kanal_modelu
  ORDER BY kolejnosc, kod`
@@ -71,7 +71,7 @@ func odczytajWiersz(wiersze *sql.Rows) (Definicja, error) {
 		aktywny       int
 	)
 	err := wiersze.Scan(&d.Id, &d.Kod, &d.Nazwa, &d.Dostawca, &d.Model, &d.Rodzaj,
-		&d.KontoId, &d.PoswiadczenieOdwolanie, &parametryJSON,
+		&d.KontoDostawcyId, &d.PoswiadczenieOdwolanie, &parametryJSON,
 		&multimodalny, &aktywny, &d.Kolejnosc, &d.Utworzono)
 	if err != nil {
 		return Definicja{}, fmt.Errorf("models: wiersz rejestru kanałów: %w", err)

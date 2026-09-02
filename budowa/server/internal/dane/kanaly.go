@@ -19,7 +19,7 @@ type Kanal struct {
 	Dostawca               string
 	IdentyfikatorModelu    string
 	RodzajKanalu           string
-	KontoID                *int64
+	KontoDostawcyID        *int64
 	PoswiadczenieOdwolanie *string
 	ParametryJSON          string
 	Multimodalny           bool
@@ -38,26 +38,27 @@ type RepozytoriumKanalow interface {
 }
 
 const (
-	kolumnyKanalu = `id, kod, nazwa, dostawca, identyfikator_modelu, rodzaj_kanalu, konto_id,
+	kolumnyKanalu = `id, kod, nazwa, dostawca, identyfikator_modelu, rodzaj_kanalu, konto_dostawcy_id,
 	                 poswiadczenie_odwolanie, parametry_json, multimodalny, aktywny, kolejnosc, utworzono`
 
 	wstawKanal = `INSERT INTO kanal_modelu
-	              (kod, nazwa, dostawca, identyfikator_modelu, rodzaj_kanalu, konto_id,
-	               poswiadczenie_odwolanie, parametry_json, multimodalny, aktywny, kolejnosc)
-	              VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+	              (kod, nazwa, dostawca, identyfikator_modelu, rodzaj_kanalu, konto_dostawcy_id,
+	               poswiadczenie_odwolanie, parametry_json, multimodalny, aktywny, kolejnosc, konto_id)
+	              VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ` + WskazanieKonta + `)`
 
 	aktualizujKanal = `UPDATE kanal_modelu
 	                   SET nazwa = ?, dostawca = ?, identyfikator_modelu = ?, rodzaj_kanalu = ?,
-	                       konto_id = ?, poswiadczenie_odwolanie = ?, parametry_json = ?,
+	                       konto_dostawcy_id = ?, poswiadczenie_odwolanie = ?, parametry_json = ?,
 	                       multimodalny = ?, aktywny = ?, kolejnosc = ?
-	                   WHERE id = ?`
+	                   WHERE id = ? AND ` + WarunekKonta
 
-	usunKanal = `DELETE FROM kanal_modelu WHERE id = ?`
+	usunKanal = `DELETE FROM kanal_modelu WHERE id = ? AND ` + WarunekKonta
 
 	listaKanalow = `SELECT ` + kolumnyKanalu + ` FROM kanal_modelu
-	                WHERE (? = 0 OR aktywny = 1) ORDER BY kolejnosc, id`
+	                WHERE (? = 0 OR aktywny = 1) AND ` + WarunekKonta + ` ORDER BY kolejnosc, id`
 
-	pobierzKanalPoKodzie = `SELECT ` + kolumnyKanalu + ` FROM kanal_modelu WHERE kod = ?`
+	pobierzKanalPoKodzie = `SELECT ` + kolumnyKanalu + ` FROM kanal_modelu
+	                        WHERE kod = ? AND ` + WarunekKonta
 )
 
 type repozytoriumKanalow struct {
@@ -79,9 +80,10 @@ func (r *repozytoriumKanalow) Dodaj(ctx context.Context, kanal Kanal) (int64, er
 		return 0, err
 	}
 	wynik, err := polecenie.ExecContext(ctx, kanal.Kod, kanal.Nazwa, kanal.Dostawca,
-		kanal.IdentyfikatorModelu, kanal.RodzajKanalu, liczbaDoKolumny(kanal.KontoID),
+		kanal.IdentyfikatorModelu, kanal.RodzajKanalu, liczbaDoKolumny(kanal.KontoDostawcyID),
 		tekstDoKolumny(kanal.PoswiadczenieOdwolanie), parametry,
-		liczbaLogiczna(kanal.Multimodalny), liczbaLogiczna(kanal.Aktywny), kanal.Kolejnosc)
+		liczbaLogiczna(kanal.Multimodalny), liczbaLogiczna(kanal.Aktywny), kanal.Kolejnosc,
+		KontoOperatora(ctx))
 	if err != nil {
 		return 0, fmt.Errorf("dane: nie można dodać kanału %q: %w", kanal.Kod, err)
 	}
@@ -100,9 +102,10 @@ func (r *repozytoriumKanalow) Aktualizuj(ctx context.Context, kanal Kanal) error
 		return err
 	}
 	wynik, err := polecenie.ExecContext(ctx, kanal.Nazwa, kanal.Dostawca, kanal.IdentyfikatorModelu,
-		kanal.RodzajKanalu, liczbaDoKolumny(kanal.KontoID),
+		kanal.RodzajKanalu, liczbaDoKolumny(kanal.KontoDostawcyID),
 		tekstDoKolumny(kanal.PoswiadczenieOdwolanie), parametry,
-		liczbaLogiczna(kanal.Multimodalny), liczbaLogiczna(kanal.Aktywny), kanal.Kolejnosc, kanal.ID)
+		liczbaLogiczna(kanal.Multimodalny), liczbaLogiczna(kanal.Aktywny), kanal.Kolejnosc, kanal.ID,
+		KontoOperatora(ctx))
 	if err != nil {
 		return fmt.Errorf("dane: nie można zapisać kanału %d: %w", kanal.ID, err)
 	}
@@ -115,7 +118,7 @@ func (r *repozytoriumKanalow) Usun(ctx context.Context, id int64) error {
 	if err != nil {
 		return err
 	}
-	wynik, err := polecenie.ExecContext(ctx, id)
+	wynik, err := polecenie.ExecContext(ctx, id, KontoOperatora(ctx))
 	if err != nil {
 		return fmt.Errorf("dane: nie można usunąć kanału %d: %w", id, err)
 	}
@@ -128,7 +131,7 @@ func (r *repozytoriumKanalow) Lista(ctx context.Context, tylkoAktywne bool) ([]K
 	if err != nil {
 		return nil, err
 	}
-	wiersze, err := polecenie.QueryContext(ctx, liczbaLogiczna(tylkoAktywne))
+	wiersze, err := polecenie.QueryContext(ctx, liczbaLogiczna(tylkoAktywne), KontoOperatora(ctx))
 	if err != nil {
 		return nil, fmt.Errorf("dane: nie można odczytać rejestru kanałów: %w", err)
 	}
@@ -154,7 +157,7 @@ func (r *repozytoriumKanalow) PobierzPoKodzie(ctx context.Context, kod string) (
 	if err != nil {
 		return Kanal{}, err
 	}
-	kanal, err := odczytajKanal(polecenie.QueryRowContext(ctx, kod))
+	kanal, err := odczytajKanal(polecenie.QueryRowContext(ctx, kod, KontoOperatora(ctx)))
 	if errors.Is(err, sql.ErrNoRows) {
 		return Kanal{}, fmt.Errorf("dane: kanał %q nie istnieje w rejestrze", kod)
 	}
@@ -186,7 +189,7 @@ func odczytajKanal(wiersz skaner) (Kanal, error) {
 	if err != nil {
 		return Kanal{}, err
 	}
-	kanal.KontoID = liczbaZKolumny(kontoID)
+	kanal.KontoDostawcyID = liczbaZKolumny(kontoID)
 	kanal.PoswiadczenieOdwolanie = tekstZKolumny(odwolanie)
 	kanal.Multimodalny = multimodalny == 1
 	kanal.Aktywny = aktywny == 1

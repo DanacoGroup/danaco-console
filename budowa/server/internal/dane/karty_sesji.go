@@ -36,25 +36,16 @@ const (
 	kolumnyKartySesji = `id, srodowisko_id, nazwa, opis, przypieta, kolejnosc,
 	                     utworzono, zaktualizowano, COALESCE(konto_id, 0)`
 
-	// Karta zastana, bez wskazania konta, należy do konta najstarszego — inaczej
-	// instalacja sprzed rozdzielenia straciłaby całą dotychczasową pracę z oczu.
-	warunekKonta = `(konto_id = ?
-	                 OR (konto_id IS NULL
-	                     AND ? = (SELECT id FROM konto_wlasciciela ORDER BY id LIMIT 1)))`
-
 	kartaSesjiPoNazwie = `SELECT ` + kolumnyKartySesji + ` FROM karta_sesji
-	                      WHERE srodowisko_id = ? AND nazwa = ? AND ` + warunekKonta + `
+	                      WHERE srodowisko_id = ? AND nazwa = ? AND ` + WarunekKonta + `
 	                      ORDER BY id LIMIT 1`
 
-	// `NULLIF` zapisuje pustą wartość zamiast zera: karta założona bez
-	// rozpoznanego konta ma należeć do tej samej rodziny co karty zastane,
-	// a nie do konta o numerze zero, którego nie ma.
 	wstawKarteSesji = `INSERT INTO karta_sesji (srodowisko_id, nazwa, konto_id, kolejnosc)
-	                   VALUES (?, ?, NULLIF(?, 0), (SELECT COALESCE(MAX(kolejnosc) + 1, 0)
+	                   VALUES (?, ?, ` + WskazanieKonta + `, (SELECT COALESCE(MAX(kolejnosc) + 1, 0)
 	                                                FROM karta_sesji WHERE srodowisko_id = ?))`
 
 	listaKartSesji = `SELECT ` + kolumnyKartySesji + ` FROM karta_sesji
-	                  WHERE srodowisko_id = ? AND ` + warunekKonta + `
+	                  WHERE srodowisko_id = ? AND ` + WarunekKonta + `
 	                  ORDER BY kolejnosc, id`
 )
 
@@ -73,7 +64,7 @@ func (r *repozytoriumKartSesji) Zapewnij(ctx context.Context, srodowiskoID, kont
 	if err != nil {
 		return 0, err
 	}
-	karta, err := odczytajKarteSesji(odczyt.QueryRowContext(ctx, srodowiskoID, nazwa, kontoId, kontoId))
+	karta, err := odczytajKarteSesji(odczyt.QueryRowContext(ctx, srodowiskoID, nazwa, kontoId))
 	if err == nil {
 		return karta.ID, nil
 	}
@@ -97,7 +88,7 @@ func (r *repozytoriumKartSesji) Lista(ctx context.Context, srodowiskoID, kontoId
 	if err != nil {
 		return nil, err
 	}
-	wiersze, err := polecenie.QueryContext(ctx, srodowiskoID, kontoId, kontoId)
+	wiersze, err := polecenie.QueryContext(ctx, srodowiskoID, kontoId)
 	if err != nil {
 		return nil, fmt.Errorf("dane: nie można odczytać kart środowiska %d: %w", srodowiskoID, err)
 	}

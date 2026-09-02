@@ -66,25 +66,44 @@ i treści Operatora: `punkt_dostepu`, `terminal_klucz`, `terminal_host`,
 `blok_wiadomosci`, `plik_biblioteki` i pozostałe. Zawężonych zapytań: 301
 w pierwszym przejściu, 106 dziur domkniętych w drugim.
 
+**Runda trzecia (2 września, wieczór).** Trzynaście terenów domknęło pozycje
+otwarte 53 plików i zapisało konto w każdym `INSERT` do korzenia w tych plikach
+(rewizja `a9ea0447`); sprawozdania wykonawców co do pliku i stałej:
+`~/robocze/przekazanie-2026-09-02/runda-3/wyniki-terenow-01-13.txt`, instrukcja
+dokończenia: `runda-3/STAN.md`. Kontrolerzy terenów NIE zdążyli — sesja stanęła na
+limicie; rewizja `a9ea0447` przeszła drabinę szybką (budowa, vet, walidator), nie
+przeszła sprawdzianów ani kontroli. Teren 14 (nastawy per konto przez
+`konfig.Kontekst.KontoOperatora`) przerwany w połowie, stan zapisany rewizją `abc78ea8`
+— rozstrzygacz z zerem konta czyta konto najstarsze, więc stan częściowy nie cofa
+zachowania. Teren 15 (własność kanału przy użyciu, 11 miejsc w `core`, wykaz
+`channel.list` po koncie) nie ruszył.
+
+**Reguła Właściciela dla rund (2 września).** Agent dostaje pracę wartą co najmniej
+500K tokenów wyniku i ma dać więcej wyniku, niż przeczyta; rundy dzielić na 3–5
+szerokich terenów, nie na kilkanaście wąskich.
+
 **Co otwarte — praca następnej sesji.**
 
-1. **54 pliki z pozycjami niedomkniętymi.** Wykaz co do pliku i stałej:
-   `~/robocze/przekazanie-2026-09-02/granica-konta-pozycje-otwarte.json`.
-   Podział na dwanaście terenów o rozłącznych plikach jest gotowy
-   (`granica-konta-tereny-domkniecia.json`, teczki `otwarte-domkniecie-*.md`),
-   przebieg do uruchomienia: `przebieg-granica-domkniecie.js`.
-2. **125 korzeni pozostałych** — wagi średnia i niska. Kolumna konta stoi
-   (krok 484), zapytania czekają. Wykaz: `korzenie-granicy-konta.json`.
-3. **176 więzów UNIQUE stoi wewnątrz `CREATE TABLE`** i obejmuje całą tabelę,
-   nie konto. Zapis konta B pod kodem konta A trafia w cudzy wiersz. Zdjęcie
-   wymaga przebudowy tabeli krokiem migracji — osobny etap, nie robić w biegu.
-4. **Kontekst życia procesu nie niesie konta.** Rejestr kanałów czytany przy
-   montażu rdzenia (`models/zrodlo_bazy.go`), pula rotacji
-   (`core/montaz_zrodla.go`) i rejestrator bloków wiadomości
-   (`core/rejestrator_blokow.go`) pracują poza turą, więc `KontoOperatora` daje
-   tam zero i zawężenie zsunęłoby pracę na konto najstarsze. To rozstrzygnięcie
-   po stronie rdzenia: albo praca w tle niesie konto zamawiającego, albo rejestr
-   zostaje jeden na instalację i jest to zapisane wprost.
+1. **Kontrola rundy trzeciej i sprawdziany.** `go test -count=1 -timeout 30m` na
+   `dane`, `konfig`, `zdalne`, `session`, `injection`, `transport`; jeden kontroler na
+   rodzinę plików, nie na teren.
+2. **Poza terenem z rundy trzeciej** (pełny wykaz w `wyniki-terenow-01-13.txt`):
+   przekład `ErrKolizjaWiersza` na `conflict` w kilkunastu adapterach (`bladStudio`,
+   `bladTlumaczenia`, `bladBiblioteki`, `bladDesignu`, `bladDebaty`, `bladBadan`,
+   `bladAutomatyki`, `bladKomponentu`, `bladRozszerzenia`, `bladPrzegladarki`,
+   `bladNadania`, `bladWskazania`); `sesje_historia.go` i `agenci.go` bez warunku
+   konta; stan sesji odtwarzany z kontekstu montażu (`trwalosc_stanow.go`,
+   `odtworzenie_stanu.go`, `stan_sesji_nadzor.go`) — po zawężeniu odtwarza wyłącznie
+   konto najstarsze, do rozstrzygnięcia wg decyzji 34; tunele i obserwacje terminala
+   na kontekście życia procesu (`adapter_modul_terminal_tunele.go`,
+   `_obserwacje.go`); `przegladarka_okno.go` `sladOkna` bez warunku.
+3. **Tabele bez drogi do konta**: `pamiec_tlumaczen` (bez `konto_id`, `panel_id`
+   bywa NULL), `nastawa_pracy_studio` na poziomie okna, `przestrzen_badania`
+   jednowierszowa na instalację (`CHECK(id = 1)`, migracja 049) — po zawężeniu konto
+   młodsze dostaje kolizję; wymagają migracji ponad 485.
+4. **125 korzeni pozostałych** oraz **77 zapisów do korzeni bez konta w 49 plikach**
+   spoza rundy: `zapisy-korzeni-bez-konta-poza-runda-3.json`.
+5. **176 więzów UNIQUE wewnątrz `CREATE TABLE`** — osobny etap z migracją.
 
 ## 4. Naprawy krytyczne — stan
 

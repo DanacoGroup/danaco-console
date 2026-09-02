@@ -1,5 +1,4 @@
-// Plik prowadzi polityki przechowywania i zapis utrwalenia archiwalnego; polityka opisuje regułę, nie zdarzenie,
-// a upływ terminu liczy się przy odczycie raportu retencji, bo data graniczna wynika z chwili pytania.
+// Polityki przechowywania i ślad utrwalenia archiwalnego; upływ terminu liczy się przy odczycie raportu retencji.
 package dane
 
 import (
@@ -39,32 +38,33 @@ const (
 
 	zapiszPolitykeRetencjiBiblioteki = `INSERT INTO polityka_retencji_biblioteki
 	                                    (identyfikator_zewnetrzny, zasieg, zasieg_id,
-	                                     dni_przechowywania, czynnosc)
-	                                    VALUES (?, ?, ?, ?, ?)
+	                                     dni_przechowywania, czynnosc, konto_id)
+	                                    VALUES (?, ?, ?, ?, ?, ` + WskazanieKonta + `)
 	                                    ON CONFLICT(identyfikator_zewnetrzny) DO UPDATE SET
 	                                        zasieg = excluded.zasieg,
 	                                        zasieg_id = excluded.zasieg_id,
 	                                        dni_przechowywania = excluded.dni_przechowywania,
-	                                        czynnosc = excluded.czynnosc`
+	                                        czynnosc = excluded.czynnosc
+	                                    WHERE ` + WarunekKonta
 
 	pobierzPolitykeRetencjiBiblioteki = `SELECT ` + kolumnyPolitykiRetencjiBiblioteki + `
 	                                     FROM polityka_retencji_biblioteki
-	                                     WHERE identyfikator_zewnetrzny = ?`
+	                                     WHERE identyfikator_zewnetrzny = ? AND ` + WarunekKonta
 
 	usunPolitykeRetencjiBiblioteki = `DELETE FROM polityka_retencji_biblioteki
-	                                  WHERE identyfikator_zewnetrzny = ?`
+	                                  WHERE identyfikator_zewnetrzny = ? AND ` + WarunekKonta
 
 	kolumnyUtrwaleniaBiblioteki = `id, identyfikator_zewnetrzny, plik_kod, rodzaj,
 	                               plik_wynikowy_kod, profil, poprawne, raport, utworzono`
 
 	zapiszUtrwalenieBiblioteki = `INSERT INTO zadanie_utrwalenia_biblioteki
 	                              (identyfikator_zewnetrzny, plik_kod, rodzaj, plik_wynikowy_kod,
-	                               profil, poprawne, raport)
-	                              VALUES (?, ?, ?, ?, ?, ?, ?)`
+	                               profil, poprawne, raport, konto_id)
+	                              VALUES (?, ?, ?, ?, ?, ?, ?, ` + WskazanieKonta + `)`
 
 	pobierzUtrwalenieBiblioteki = `SELECT ` + kolumnyUtrwaleniaBiblioteki + `
 	                               FROM zadanie_utrwalenia_biblioteki
-	                               WHERE identyfikator_zewnetrzny = ?`
+	                               WHERE identyfikator_zewnetrzny = ? AND ` + WarunekKonta
 )
 
 // ZapiszPolitykeRetencji zakłada politykę retencji albo zmienia zastaną politykę tego samego zasięgu w bazie.
@@ -79,7 +79,8 @@ func (r *repozytoriumBiblioteki) ZapiszPolitykeRetencji(ctx context.Context,
 		return PolitykaRetencjiBiblioteki{}, err
 	}
 	_, err = polecenie.ExecContext(ctx, polityka.Kod, polityka.Zasieg,
-		tekstDoKolumny(polityka.ZasiegID), polityka.DniPrzechowywania, polityka.Czynnosc)
+		tekstDoKolumny(polityka.ZasiegID), polityka.DniPrzechowywania, polityka.Czynnosc,
+		KontoOperatora(ctx), KontoOperatora(ctx))
 	if err != nil {
 		return PolitykaRetencjiBiblioteki{}, fmt.Errorf("dane: nie można zapisać polityki retencji %q: %w",
 			polityka.Kod, err)
@@ -88,7 +89,7 @@ func (r *repozytoriumBiblioteki) ZapiszPolitykeRetencji(ctx context.Context,
 	if err != nil {
 		return PolitykaRetencjiBiblioteki{}, err
 	}
-	zapisana, err := odczytajPolitykeRetencjiBiblioteki(odczyt.QueryRowContext(ctx, polityka.Kod))
+	zapisana, err := odczytajPolitykeRetencjiBiblioteki(odczyt.QueryRowContext(ctx, polityka.Kod, KontoOperatora(ctx)))
 	if err != nil {
 		return PolitykaRetencjiBiblioteki{}, fmt.Errorf("dane: nieczytelna polityka retencji %q: %w",
 			polityka.Kod, err)
@@ -100,10 +101,10 @@ func (r *repozytoriumBiblioteki) ZapiszPolitykeRetencji(ctx context.Context,
 func (r *repozytoriumBiblioteki) PolitykiRetencji(ctx context.Context,
 	zasieg *string) ([]PolitykaRetencjiBiblioteki, error) {
 
-	warunek := "1 = 1"
-	argumenty := []any{}
+	warunek := WarunekKonta
+	argumenty := []any{KontoOperatora(ctx)}
 	if zasieg != nil && *zasieg != "" {
-		warunek = "zasieg = ?"
+		warunek += " AND zasieg = ?"
 		argumenty = append(argumenty, *zasieg)
 	}
 	zapytanie := `SELECT ` + kolumnyPolitykiRetencjiBiblioteki + `
@@ -136,7 +137,7 @@ func (r *repozytoriumBiblioteki) UsunPolitykeRetencji(ctx context.Context, kod s
 	if err != nil {
 		return false, err
 	}
-	wynik, err := polecenie.ExecContext(ctx, kod)
+	wynik, err := polecenie.ExecContext(ctx, kod, KontoOperatora(ctx))
 	if err != nil {
 		return false, fmt.Errorf("dane: nie można usunąć polityki retencji %q: %w", kod, err)
 	}
@@ -160,7 +161,7 @@ func (r *repozytoriumBiblioteki) ZapiszUtrwalenie(ctx context.Context,
 	}
 	_, err = polecenie.ExecContext(ctx, zadanie.Kod, zadanie.PlikKod, zadanie.Rodzaj,
 		tekstDoKolumny(zadanie.PlikWynikowyKod), tekstDoKolumny(zadanie.Profil),
-		liczbaLogiczna(zadanie.Poprawne), zadanie.Raport)
+		liczbaLogiczna(zadanie.Poprawne), zadanie.Raport, KontoOperatora(ctx))
 	if err != nil {
 		return ZadanieUtrwaleniaBiblioteki{}, fmt.Errorf("dane: nie można zapisać utrwalenia %q: %w",
 			zadanie.Kod, err)
@@ -169,7 +170,7 @@ func (r *repozytoriumBiblioteki) ZapiszUtrwalenie(ctx context.Context,
 	if err != nil {
 		return ZadanieUtrwaleniaBiblioteki{}, err
 	}
-	zapisane, err := odczytajUtrwalenieBiblioteki(odczyt.QueryRowContext(ctx, zadanie.Kod))
+	zapisane, err := odczytajUtrwalenieBiblioteki(odczyt.QueryRowContext(ctx, zadanie.Kod, KontoOperatora(ctx)))
 	if err != nil {
 		return ZadanieUtrwaleniaBiblioteki{}, fmt.Errorf("dane: nieczytelny zapis utrwalenia %q: %w",
 			zadanie.Kod, err)
@@ -190,7 +191,6 @@ func odczytajPolitykeRetencjiBiblioteki(wiersz skaner) (PolitykaRetencjiBibliote
 	return polityka, nil
 }
 
-// odczytajUtrwalenieBiblioteki składa zapis utrwalenia wprost z jednego wiersza wyniku zapytania do bazy.
 func odczytajUtrwalenieBiblioteki(wiersz skaner) (ZadanieUtrwaleniaBiblioteki, error) {
 	var zadanie ZadanieUtrwaleniaBiblioteki
 	var wynikowy, profil sql.NullString

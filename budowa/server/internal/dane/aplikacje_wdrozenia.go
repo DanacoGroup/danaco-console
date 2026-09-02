@@ -1,5 +1,4 @@
-// Plik prowadzi obszar Deployment modułu Apps: zapis i odczyt przebiegów wdrożenia; tabela niesie wyłącznie ślad
-// zlecenia wdrożenia i jego stan, rdzeń niczego sam nie wdraża, a repozytorium nie dorabia przejść stanu, których nikt nie zlecił.
+// Obszar Deployment modułu Apps: zapis i odczyt przebiegów wdrożenia; tabela niesie ślad zlecenia i jego stan.
 package dane
 
 import (
@@ -11,8 +10,7 @@ import (
 	"danacoconsole/shared"
 )
 
-// WdrozenieApp to wiersz tabeli `wdrozenie_apps` — jeden przebieg zlecenia
-// `apps.deployment.run`, wraz z jego stanem i (opcjonalnie) wynikiem.
+// WdrozenieApp to jeden przebieg zlecenia `apps.deployment.run` wraz z jego stanem i wynikiem.
 type WdrozenieApp struct {
 	Kod            string
 	OknoKod        string
@@ -31,8 +29,8 @@ type WdrozenieApp struct {
 const (
 	wstawWdrozenieApp = `INSERT INTO wdrozenie_apps
 	                     (kod, okno, srodowisko, strategia, stan, wersja,
-	                      notatki_wydania, adres, log_odwolanie, cofniete_do_kodu, zakonczono)
-	                     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+	                      notatki_wydania, adres, log_odwolanie, cofniete_do_kodu, zakonczono, konto_id)
+	                     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ` + WskazanieKonta + `)
 	                     ON CONFLICT(kod) DO UPDATE SET
 	                       srodowisko       = excluded.srodowisko,
 	                       strategia        = excluded.strategia,
@@ -43,6 +41,7 @@ const (
 	                       log_odwolanie    = excluded.log_odwolanie,
 	                       cofniete_do_kodu = excluded.cofniete_do_kodu,
 	                       zakonczono       = excluded.zakonczono
+	                     WHERE ` + WarunekKonta + `
 	                     RETURNING kod, okno, srodowisko, strategia, stan, wersja,
 	                       notatki_wydania, adres, log_odwolanie, cofniete_do_kodu,
 	                       rozpoczeto, zakonczono`
@@ -53,20 +52,17 @@ const (
 
 	pobierzWdrozenieApp = `SELECT ` + kolumnyWdrozeniaApp + `
 	                       FROM wdrozenie_apps
-	                       WHERE kod = ?`
+	                       WHERE kod = ? AND ` + WarunekKonta
 
-	// Zawężenie do środowiska jedzie pustym łańcuchem jako „bez zawężenia" —
-	// jedno zapytanie zamiast dwóch sklejanych warunkowo, bo dwa warianty
-	// tekstu SQL rozjeżdżają się przy pierwszej zmianie kolumn.
-	warunekWdrozenApp = ` WHERE okno = ? AND (? = '' OR srodowisko = ?)`
+	// Zawężenie do środowiska pustym łańcuchem znaczy „bez zawężenia" — jedno zapytanie zamiast dwóch sklejanych.
+	warunekWdrozenApp = ` WHERE okno = ? AND (? = '' OR srodowisko = ?) AND ` + WarunekKonta
 
 	pobierzWdrozeniaApp = `SELECT ` + kolumnyWdrozeniaApp + `
 	                       FROM wdrozenie_apps` + warunekWdrozenApp + `
 	                       ORDER BY rozpoczeto DESC, id DESC
 	                       LIMIT CASE WHEN ? > 0 THEN ? ELSE -1 END`
 
-	// Liczba pozycji spełniających te same warunki co strona, ale bez LIMIT-u:
-	// `total` kontraktu opisuje rozmiar historii, nie rozmiar strony.
+	// Bez LIMIT-u: `total` kontraktu opisuje rozmiar historii, nie rozmiar strony.
 	policzWdrozeniaApp = `SELECT COUNT(*) FROM wdrozenie_apps` + warunekWdrozenApp
 )
 
@@ -87,7 +83,8 @@ func (r *repozytoriumAplikacji) ZapiszWdrozenie(ctx context.Context,
 	}
 	wiersz := polecenie.QueryRowContext(ctx, wdrozenie.Kod, wdrozenie.OknoKod, wdrozenie.Srodowisko,
 		wdrozenie.Strategia, stan, wdrozenie.Wersja, wdrozenie.NotatkiWydania, wdrozenie.Adres,
-		wdrozenie.LogOdwolanie, wdrozenie.CofnieteDoKodu, wdrozenie.Zakonczono)
+		wdrozenie.LogOdwolanie, wdrozenie.CofnieteDoKodu, wdrozenie.Zakonczono,
+		KontoOperatora(ctx), KontoOperatora(ctx))
 	zapisane, err := odczytajWdrozenieApp(wiersz)
 	if err != nil {
 		return WdrozenieApp{}, fmt.Errorf("dane: nie można zapisać wdrożenia %q: %w", wdrozenie.Kod, err)
@@ -95,15 +92,13 @@ func (r *repozytoriumAplikacji) ZapiszWdrozenie(ctx context.Context,
 	return zapisane, nil
 }
 
-// Wdrozenie zwraca przebieg wdrożenia o wskazanym kodzie. Brak wiersza wraca
-// jako ErrBrakWiersza — warstwa wyższa odróżnia „nie ma” od „odczyt się nie
-// powiódł”.
+// Wdrozenie zwraca przebieg wdrożenia po kodzie; brak wiersza wraca jako ErrBrakWiersza.
 func (r *repozytoriumAplikacji) Wdrozenie(ctx context.Context, kod string) (WdrozenieApp, error) {
 	polecenie, err := r.zapytania.przygotuj(ctx, pobierzWdrozenieApp)
 	if err != nil {
 		return WdrozenieApp{}, err
 	}
-	wdrozenie, err := odczytajWdrozenieApp(polecenie.QueryRowContext(ctx, kod))
+	wdrozenie, err := odczytajWdrozenieApp(polecenie.QueryRowContext(ctx, kod, KontoOperatora(ctx)))
 	if errors.Is(err, sql.ErrNoRows) {
 		return WdrozenieApp{}, ErrBrakWiersza
 	}
@@ -126,7 +121,7 @@ func (r *repozytoriumAplikacji) Wdrozenia(ctx context.Context, okno string,
 	if err != nil {
 		return nil, 0, err
 	}
-	wiersze, err := polecenie.QueryContext(ctx, okno, zawezenie, zawezenie, limit, limit)
+	wiersze, err := polecenie.QueryContext(ctx, okno, zawezenie, zawezenie, KontoOperatora(ctx), limit, limit)
 	if err != nil {
 		return nil, 0, fmt.Errorf("dane: nie można odczytać wdrożeń okna %q: %w", okno, err)
 	}
@@ -149,13 +144,12 @@ func (r *repozytoriumAplikacji) Wdrozenia(ctx context.Context, okno string,
 		return nil, 0, err
 	}
 	razem := 0
-	if err := licznik.QueryRowContext(ctx, okno, zawezenie, zawezenie).Scan(&razem); err != nil {
+	if err := licznik.QueryRowContext(ctx, okno, zawezenie, zawezenie, KontoOperatora(ctx)).Scan(&razem); err != nil {
 		return nil, 0, fmt.Errorf("dane: nie można policzyć wdrożeń okna %q: %w", okno, err)
 	}
 	return wdrozenia, razem, nil
 }
 
-// odczytajWdrozenieApp składa przebieg wdrożenia aplikacji wprost z jednego wiersza wyniku zapytania SQL.
 func odczytajWdrozenieApp(wiersz interface{ Scan(...any) error }) (WdrozenieApp, error) {
 	var wdrozenie WdrozenieApp
 	err := wiersz.Scan(&wdrozenie.Kod, &wdrozenie.OknoKod, &wdrozenie.Srodowisko, &wdrozenie.Strategia,

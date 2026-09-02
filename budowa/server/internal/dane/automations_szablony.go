@@ -1,5 +1,4 @@
-// Plik prowadzi bibliotekę szablonów przepływów: szablon jest bytem odrębnym od automatyki, z której powstał,
-// i ma dalej zakładać automatyki o kształcie z chwili zapisu, dlatego kroki leżą tu jako migawka, bez klucza obcego do automatyki.
+// Biblioteka szablonów przepływów: szablon jest bytem odrębnym od automatyki, a kroki leżą tu jako migawka.
 package dane
 
 import (
@@ -19,8 +18,7 @@ type SzablonAutomatyki struct {
 	Zaktualizowano string
 }
 
-// ParametrSzablonu to wiersz tabeli `parametr_szablonu_automatyki` — pole
-// formularza uzupełnianego przy zastosowaniu szablonu.
+// ParametrSzablonu to pole formularza uzupełnianego przy zastosowaniu szablonu.
 type ParametrSzablonu struct {
 	Nazwa           string
 	Etykieta        *string
@@ -33,19 +31,20 @@ const (
 	kolumnySzablonuAutomatyki = `id, identyfikator_zewnetrzny, nazwa, opis, kroki, zaktualizowano`
 
 	zapiszSzablonAutomatyki = `INSERT INTO szablon_automatyki
-	                           (identyfikator_zewnetrzny, nazwa, opis, kroki)
-	                           VALUES (?, ?, ?, ?)
+	                           (identyfikator_zewnetrzny, nazwa, opis, kroki, konto_id)
+	                           VALUES (?, ?, ?, ?, ` + WskazanieKonta + `)
 	                           ON CONFLICT(identyfikator_zewnetrzny) DO UPDATE SET
 	                               nazwa = excluded.nazwa,
 	                               opis = excluded.opis,
 	                               kroki = excluded.kroki,
-	                               zaktualizowano = strftime('%Y-%m-%dT%H:%M:%fZ','now')`
+	                               zaktualizowano = strftime('%Y-%m-%dT%H:%M:%fZ','now')
+	                           WHERE ` + WarunekKonta
 
 	pobierzSzablonAutomatyki = `SELECT ` + kolumnySzablonuAutomatyki + ` FROM szablon_automatyki
-	                            WHERE identyfikator_zewnetrzny = ?`
+	                            WHERE identyfikator_zewnetrzny = ? AND ` + WarunekKonta
 
 	listaSzablonowAutomatyki = `SELECT ` + kolumnySzablonuAutomatyki + ` FROM szablon_automatyki
-	                            ORDER BY nazwa, id LIMIT ?`
+	                            WHERE ` + WarunekKonta + ` ORDER BY nazwa, id LIMIT ?`
 
 	usunParametrySzablonu = `DELETE FROM parametr_szablonu_automatyki WHERE szablon_id = ?`
 
@@ -58,9 +57,7 @@ const (
 	                           ORDER BY kolejnosc, nazwa`
 )
 
-// ZapiszSzablonAutomatyki zakłada szablon albo nadpisuje zastany wraz z jego
-// parametrami. Jedna transakcja, bo szablon zapisany z parametrami poprzedniej
-// wersji byłby formularzem pytającym o pola, których szablon już nie zna.
+// ZapiszSzablonAutomatyki zakłada szablon albo nadpisuje zastany wraz z parametrami, w jednej transakcji.
 func (r *repozytoriumAutomatyk) ZapiszSzablonAutomatyki(ctx context.Context,
 	szablon SzablonAutomatyki, parametry []ParametrSzablonu) (SzablonAutomatyki, error) {
 
@@ -69,7 +66,8 @@ func (r *repozytoriumAutomatyk) ZapiszSzablonAutomatyki(ctx context.Context,
 	}
 	err := wTransakcji(ctx, r.db, func(transakcja *sql.Tx) error {
 		if err := wykonajWTransakcjiAutomatyzacji(ctx, r.zapytania, transakcja, zapiszSzablonAutomatyki,
-			szablon.Kod, szablon.Nazwa, tekstDoKolumny(szablon.Opis), szablon.Kroki); err != nil {
+			szablon.Kod, szablon.Nazwa, tekstDoKolumny(szablon.Opis), szablon.Kroki,
+			KontoOperatora(ctx), KontoOperatora(ctx)); err != nil {
 			return err
 		}
 		zapisany, err := szablonWTransakcji(ctx, r.zapytania, transakcja, szablon.Kod)
@@ -108,7 +106,7 @@ func (r *repozytoriumAutomatyk) SzablonAutomatyki(ctx context.Context,
 	if err != nil {
 		return SzablonAutomatyki{}, err
 	}
-	szablon, err := odczytajSzablonAutomatyki(polecenie.QueryRowContext(ctx, kod))
+	szablon, err := odczytajSzablonAutomatyki(polecenie.QueryRowContext(ctx, kod, KontoOperatora(ctx)))
 	if errors.Is(err, sql.ErrNoRows) {
 		return SzablonAutomatyki{}, ErrBrakWiersza
 	}
@@ -126,7 +124,7 @@ func (r *repozytoriumAutomatyk) SzablonyAutomatyki(ctx context.Context,
 	if err != nil {
 		return nil, err
 	}
-	wiersze, err := polecenie.QueryContext(ctx, granicaWykazu(limit))
+	wiersze, err := polecenie.QueryContext(ctx, KontoOperatora(ctx), granicaWykazu(limit))
 	if err != nil {
 		return nil, fmt.Errorf("dane: nie można odczytać szablonów automatyk: %w", err)
 	}
@@ -174,8 +172,7 @@ func (r *repozytoriumAutomatyk) ParametrySzablonuAutomatyki(ctx context.Context,
 	return parametry, wiersze.Err()
 }
 
-// szablonWTransakcji dobiera świeżo zapisany szablon wewnątrz tej samej
-// transakcji — potrzebny jest jego klucz wiersza pod parametry.
+// szablonWTransakcji dobiera świeżo zapisany szablon w tej samej transakcji — po jego klucz wiersza pod parametry.
 func szablonWTransakcji(ctx context.Context, z *zapytania, transakcja *sql.Tx,
 	kod string) (SzablonAutomatyki, error) {
 
@@ -183,14 +180,13 @@ func szablonWTransakcji(ctx context.Context, z *zapytania, transakcja *sql.Tx,
 	if err != nil {
 		return SzablonAutomatyki{}, err
 	}
-	szablon, err := odczytajSzablonAutomatyki(polecenie.QueryRowContext(ctx, kod))
+	szablon, err := odczytajSzablonAutomatyki(polecenie.QueryRowContext(ctx, kod, KontoOperatora(ctx)))
 	if err != nil {
 		return SzablonAutomatyki{}, fmt.Errorf("dane: nieczytelny szablon automatyki %q: %w", kod, err)
 	}
 	return szablon, nil
 }
 
-// odczytajSzablonAutomatyki składa szablon automatyki wprost z jednego wiersza wyniku zapytania do bazy danych.
 func odczytajSzablonAutomatyki(wiersz skaner) (SzablonAutomatyki, error) {
 	var szablon SzablonAutomatyki
 	var opis sql.NullString

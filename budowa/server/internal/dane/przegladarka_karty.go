@@ -1,6 +1,4 @@
-// Odpowiedzialność pliku: karty przeglądania, grupy kart i przestrzenie robocze
-// — trwałość rzędu kart okna przeglądarki i przełącznika przestrzeni. Karta
-// zamknięta zostaje w tabeli, odsiewa ją kolumna `zamknieta`.
+// Karty przeglądania, grupy kart i przestrzenie robocze; karta zamknięta zostaje w tabeli, odsiewa ją `zamknieta`.
 package dane
 
 import (
@@ -10,8 +8,7 @@ import (
 	"fmt"
 )
 
-// KartaPrzegladania to wiersz tabeli `karta_przegladania` — jedna karta rzędu
-// kart okna przeglądarki, powiązana z grupą i przestrzenią roboczą.
+// KartaPrzegladania to jedna karta rzędu kart okna przeglądarki, powiązana z grupą i przestrzenią.
 type KartaPrzegladania struct {
 	ID               int64
 	Kod              string
@@ -29,8 +26,7 @@ type KartaPrzegladania struct {
 	Utworzono        string
 }
 
-// GrupaKart to wiersz tabeli `grupa_kart_przegladania` — nazwany, kolorowany
-// zestaw kart zwijany jednym kliknięciem.
+// GrupaKart to nazwany, kolorowany zestaw kart zwijany jednym kliknięciem.
 type GrupaKart struct {
 	ID        int64
 	Kod       string
@@ -41,8 +37,7 @@ type GrupaKart struct {
 	Utworzono string
 }
 
-// PrzestrzenPrzegladania to wiersz tabeli `przestrzen_przegladania` — zapisany
-// zestaw kart przełączany bez utraty stanu.
+// PrzestrzenPrzegladania to zapisany zestaw kart przełączany bez utraty stanu.
 type PrzestrzenPrzegladania struct {
 	ID             int64
 	Kod            string
@@ -53,20 +48,12 @@ type PrzestrzenPrzegladania struct {
 	Zaktualizowano string
 }
 
-// FiltrKartPrzegladania zawęża wykaz kart okna — obsługuje pola żądania
-// `browser.tab.list`: okno, przestrzeń, uśpione i zamknięte.
+// FiltrKartPrzegladania zawęża wykaz kart okna — pola żądania `browser.tab.list`: okno, przestrzeń, uśpione, zamknięte.
 type FiltrKartPrzegladania struct {
-	// Okno operacyjne, którego rząd kart jest odczytywany.
-	Okno string
-	// Przestrzen zawęża wykaz do kart jednej przestrzeni; pusta wartość znaczy
-	// wszystkie karty okna.
-	Przestrzen string
-	// ZZawieszonymi dopuszcza karty uśpione, które domyślnie już wchodzą do
-	// wykazu jako otwarte.
+	Okno          string
+	Przestrzen    string
 	ZZawieszonymi bool
-	// ZZamknietymi dopuszcza karty zamknięte, których rząd kart nie pokazuje,
-	// a przestrzeń pamięta.
-	ZZamknietymi bool
+	ZZamknietymi  bool
 }
 
 const (
@@ -77,8 +64,8 @@ const (
 	zapiszKartePrzegladania = `INSERT INTO karta_przegladania
 	                           (identyfikator_zewnetrzny, okno, url, tytul, stan, przypieta,
 	                            zamknieta, grupa, przestrzen, karta_otwierajaca, kolejnosc,
-	                            ostatnio_czynna)
-	                           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+	                            ostatnio_czynna, konto_id)
+	                           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ` + WskazanieKonta + `)
 	                           ON CONFLICT(identyfikator_zewnetrzny) DO UPDATE SET
 	                               okno = excluded.okno,
 	                               url = excluded.url,
@@ -90,88 +77,87 @@ const (
 	                               przestrzen = excluded.przestrzen,
 	                               karta_otwierajaca = excluded.karta_otwierajaca,
 	                               kolejnosc = excluded.kolejnosc,
-	                               ostatnio_czynna = excluded.ostatnio_czynna`
+	                               ostatnio_czynna = excluded.ostatnio_czynna
+	                           WHERE ` + WarunekKonta
 
 	pobierzKartePrzegladania = `SELECT ` + kolumnyKartyPrzegladania + `
-	                            FROM karta_przegladania WHERE identyfikator_zewnetrzny = ?`
+	                            FROM karta_przegladania WHERE identyfikator_zewnetrzny = ? AND ` + WarunekKonta
 
-	// Karty zamknięte nie wchodzą do wykazu nigdy: rząd kart pokazuje to, co
-	// otwarte. Zawężenie do przestrzeni działa tym samym idiomem co reszta
-	// wykazów modułu — pusty tekst wyłącza warunek, więc plan zapytania jest
-	// jeden.
+	// Karty zamknięte nie wchodzą do wykazu; pusty tekst wyłącza warunek przestrzeni, więc plan zapytania jest jeden.
 	listaKartPrzegladania = `SELECT ` + kolumnyKartyPrzegladania + `
 	                         FROM karta_przegladania
 	                         WHERE okno = ? AND (? = 1 OR zamknieta = 0)
 	                           AND (? = '' OR przestrzen = ?)
-	                           AND (? = 1 OR stan <> 'suspended')
+	                           AND (? = 1 OR stan <> 'suspended') AND ` + WarunekKonta + `
 	                         ORDER BY kolejnosc, id`
 
 	najwyzszaKolejnoscKart = `SELECT COALESCE(MAX(kolejnosc), -1) FROM karta_przegladania
-	                          WHERE okno = ? AND zamknieta = 0`
+	                          WHERE okno = ? AND zamknieta = 0 AND ` + WarunekKonta
 
 	zamknijKartePrzegladania = `UPDATE karta_przegladania
 	                            SET zamknieta = 1, stan = 'inactive'
-	                            WHERE identyfikator_zewnetrzny = ? AND zamknieta = 0`
+	                            WHERE identyfikator_zewnetrzny = ? AND zamknieta = 0 AND ` + WarunekKonta
 
 	odznaczCzynneKarty = `UPDATE karta_przegladania SET stan = 'inactive'
 	                      WHERE okno = ? AND zamknieta = 0 AND stan = 'active'
-	                        AND identyfikator_zewnetrzny <> ?`
+	                        AND identyfikator_zewnetrzny <> ? AND ` + WarunekKonta
 
 	kolumnyGrupyKart = `id, identyfikator_zewnetrzny, okno, nazwa, barwa, zwinieta, utworzono`
 
 	zapiszGrupeKart = `INSERT INTO grupa_kart_przegladania
-	                   (identyfikator_zewnetrzny, okno, nazwa, barwa, zwinieta)
-	                   VALUES (?, ?, ?, ?, ?)
+	                   (identyfikator_zewnetrzny, okno, nazwa, barwa, zwinieta, konto_id)
+	                   VALUES (?, ?, ?, ?, ?, ` + WskazanieKonta + `)
 	                   ON CONFLICT(identyfikator_zewnetrzny) DO UPDATE SET
 	                       okno = excluded.okno,
 	                       nazwa = excluded.nazwa,
 	                       barwa = excluded.barwa,
-	                       zwinieta = excluded.zwinieta`
+	                       zwinieta = excluded.zwinieta
+	                   WHERE ` + WarunekKonta
 
 	pobierzGrupeKart = `SELECT ` + kolumnyGrupyKart + `
-	                    FROM grupa_kart_przegladania WHERE identyfikator_zewnetrzny = ?`
+	                    FROM grupa_kart_przegladania WHERE identyfikator_zewnetrzny = ? AND ` + WarunekKonta
 
 	listaGrupKart = `SELECT ` + kolumnyGrupyKart + `
-	                 FROM grupa_kart_przegladania WHERE okno = ?
+	                 FROM grupa_kart_przegladania WHERE okno = ? AND ` + WarunekKonta + `
 	                 ORDER BY utworzono DESC, id DESC LIMIT ?`
 
-	usunGrupeKart = `DELETE FROM grupa_kart_przegladania WHERE identyfikator_zewnetrzny = ?`
+	usunGrupeKart = `DELETE FROM grupa_kart_przegladania WHERE identyfikator_zewnetrzny = ? AND ` + WarunekKonta
 
-	odepnijKartyGrupy = `UPDATE karta_przegladania SET grupa = NULL WHERE grupa = ?`
+	odepnijKartyGrupy = `UPDATE karta_przegladania SET grupa = NULL WHERE grupa = ? AND ` + WarunekKonta
 
 	przypiszKarteDoGrupy = `UPDATE karta_przegladania SET grupa = ?
-	                        WHERE identyfikator_zewnetrzny = ? AND okno = ?`
+	                        WHERE identyfikator_zewnetrzny = ? AND okno = ? AND ` + WarunekKonta
 
 	kolumnyPrzestrzeni = `id, identyfikator_zewnetrzny, okno, nazwa, profil, utworzono, zaktualizowano`
 
 	zapiszPrzestrzen = `INSERT INTO przestrzen_przegladania
-	                    (identyfikator_zewnetrzny, okno, nazwa, profil)
-	                    VALUES (?, ?, ?, ?)
+	                    (identyfikator_zewnetrzny, okno, nazwa, profil, konto_id)
+	                    VALUES (?, ?, ?, ?, ` + WskazanieKonta + `)
 	                    ON CONFLICT(identyfikator_zewnetrzny) DO UPDATE SET
 	                        okno = excluded.okno,
 	                        nazwa = excluded.nazwa,
 	                        profil = excluded.profil,
-	                        zaktualizowano = strftime('%Y-%m-%dT%H:%M:%fZ','now')`
+	                        zaktualizowano = strftime('%Y-%m-%dT%H:%M:%fZ','now')
+	                    WHERE ` + WarunekKonta
 
 	pobierzPrzestrzen = `SELECT ` + kolumnyPrzestrzeni + `
-	                     FROM przestrzen_przegladania WHERE identyfikator_zewnetrzny = ?`
+	                     FROM przestrzen_przegladania WHERE identyfikator_zewnetrzny = ? AND ` + WarunekKonta
 
 	listaPrzestrzeni = `SELECT ` + kolumnyPrzestrzeni + `
 	                    FROM przestrzen_przegladania
-	                    WHERE (? = '' OR okno = ?)
+	                    WHERE (? = '' OR okno = ?) AND ` + WarunekKonta + `
 	                    ORDER BY utworzono DESC, id DESC LIMIT ?`
 
-	usunPrzestrzen = `DELETE FROM przestrzen_przegladania WHERE identyfikator_zewnetrzny = ?`
+	usunPrzestrzen = `DELETE FROM przestrzen_przegladania WHERE identyfikator_zewnetrzny = ? AND ` + WarunekKonta
 
 	przypiszKarteDoPrzestrzeni = `UPDATE karta_przegladania SET przestrzen = ?
-	                              WHERE identyfikator_zewnetrzny = ? AND okno = ?`
+	                              WHERE identyfikator_zewnetrzny = ? AND okno = ? AND ` + WarunekKonta
 
 	liczbaKartPrzestrzeni = `SELECT COUNT(*) FROM karta_przegladania
-	                         WHERE przestrzen = ? AND zamknieta = 0`
+	                         WHERE przestrzen = ? AND zamknieta = 0 AND ` + WarunekKonta
 )
 
-// ZapiszKarte zakłada kartę albo nadpisuje zastaną (dopasowaną po kodzie
-// zewnętrznym) i oddaje stan po zapisie.
+// ZapiszKarte zakłada kartę albo nadpisuje zastaną po kodzie i oddaje stan po zapisie.
 func (r *repozytoriumPrzegladania) ZapiszKarte(ctx context.Context,
 	karta KartaPrzegladania) (KartaPrzegladania, error) {
 
@@ -189,21 +175,20 @@ func (r *repozytoriumPrzegladania) ZapiszKarte(ctx context.Context,
 		tekstDoKolumny(karta.Tytul), karta.Stan, liczbaLogiczna(karta.Przypieta),
 		liczbaLogiczna(karta.Zamknieta), tekstDoKolumny(karta.Grupa),
 		tekstDoKolumny(karta.Przestrzen), tekstDoKolumny(karta.KartaOtwierajaca),
-		karta.Kolejnosc, tekstDoKolumny(karta.OstatnioCzynna))
+		karta.Kolejnosc, tekstDoKolumny(karta.OstatnioCzynna), KontoOperatora(ctx), KontoOperatora(ctx))
 	if err != nil {
 		return KartaPrzegladania{}, fmt.Errorf("dane: nie można zapisać karty przeglądania %q: %w", karta.Kod, err)
 	}
 	return r.Karta(ctx, karta.Kod)
 }
 
-// Karta oddaje kartę przeglądania o wskazanym kodzie zewnętrznym; brak wiersza
-// wraca jako ErrBrakWiersza.
+// Karta oddaje kartę przeglądania po kodzie; brak wiersza wraca jako ErrBrakWiersza.
 func (r *repozytoriumPrzegladania) Karta(ctx context.Context, kod string) (KartaPrzegladania, error) {
 	polecenie, err := r.zapytania.przygotuj(ctx, pobierzKartePrzegladania)
 	if err != nil {
 		return KartaPrzegladania{}, err
 	}
-	karta, err := odczytajKartePrzegladania(polecenie.QueryRowContext(ctx, kod))
+	karta, err := odczytajKartePrzegladania(polecenie.QueryRowContext(ctx, kod, KontoOperatora(ctx)))
 	if errors.Is(err, sql.ErrNoRows) {
 		return KartaPrzegladania{}, ErrBrakWiersza
 	}
@@ -213,8 +198,7 @@ func (r *repozytoriumPrzegladania) Karta(ctx context.Context, kod string) (Karta
 	return karta, nil
 }
 
-// Karty oddaje otwarte karty okna w kolejności rzędu kart, zawężone filtrem
-// przestrzeni, stanu i uśpienia.
+// Karty oddaje otwarte karty okna w kolejności rzędu, zawężone filtrem przestrzeni, stanu i uśpienia.
 func (r *repozytoriumPrzegladania) Karty(ctx context.Context,
 	filtr FiltrKartPrzegladania) ([]KartaPrzegladania, error) {
 
@@ -223,7 +207,7 @@ func (r *repozytoriumPrzegladania) Karty(ctx context.Context,
 		return nil, err
 	}
 	wiersze, err := polecenie.QueryContext(ctx, filtr.Okno, liczbaLogiczna(filtr.ZZamknietymi),
-		filtr.Przestrzen, filtr.Przestrzen, liczbaLogiczna(filtr.ZZawieszonymi))
+		filtr.Przestrzen, filtr.Przestrzen, liczbaLogiczna(filtr.ZZawieszonymi), KontoOperatora(ctx))
 	if err != nil {
 		return nil, fmt.Errorf("dane: nie można odczytać kart okna %q: %w", filtr.Okno, err)
 	}
@@ -243,30 +227,26 @@ func (r *repozytoriumPrzegladania) Karty(ctx context.Context,
 	return lista, nil
 }
 
-// NastepnaKolejnoscKarty oddaje pozycję, na którą wchodzi nowa karta okna.
-// Liczenie po stronie bazy, a nie po długości wykazu: dwie karty otwarte
-// równocześnie dostałyby wtedy tę samą pozycję.
+// NastepnaKolejnoscKarty oddaje pozycję nowej karty okna, liczoną po stronie bazy, nie po długości wykazu.
 func (r *repozytoriumPrzegladania) NastepnaKolejnoscKarty(ctx context.Context, okno string) (int64, error) {
 	polecenie, err := r.zapytania.przygotuj(ctx, najwyzszaKolejnoscKart)
 	if err != nil {
 		return 0, err
 	}
 	var najwyzsza int64
-	if err := polecenie.QueryRowContext(ctx, okno).Scan(&najwyzsza); err != nil {
+	if err := polecenie.QueryRowContext(ctx, okno, KontoOperatora(ctx)).Scan(&najwyzsza); err != nil {
 		return 0, fmt.Errorf("dane: nie można ustalić kolejności kart okna %q: %w", okno, err)
 	}
 	return najwyzsza + 1, nil
 }
 
-// ZamknijKarte oznacza kartę jako zamkniętą i mówi, czy naprawdę była otwarta.
-// Fałsz przy istniejącym wierszu znaczy „już zamknięta" — to nie to samo co
-// brak karty i wołający ma prawo rozróżnić te dwie odpowiedzi.
+// ZamknijKarte oznacza kartę jako zamkniętą i mówi, czy naprawdę była otwarta (fałsz = już zamknięta).
 func (r *repozytoriumPrzegladania) ZamknijKarte(ctx context.Context, kod string) (bool, error) {
 	polecenie, err := r.zapytania.przygotuj(ctx, zamknijKartePrzegladania)
 	if err != nil {
 		return false, err
 	}
-	wynik, err := polecenie.ExecContext(ctx, kod)
+	wynik, err := polecenie.ExecContext(ctx, kod, KontoOperatora(ctx))
 	if err != nil {
 		return false, fmt.Errorf("dane: nie można zamknąć karty %q: %w", kod, err)
 	}
@@ -277,22 +257,19 @@ func (r *repozytoriumPrzegladania) ZamknijKarte(ctx context.Context, kod string)
 	return zmienione > 0, nil
 }
 
-// OdznaczPozostaleKarty gasi czynność pozostałych kart okna. Karta czynna jest
-// w oknie jedna — dwie naraz byłyby dwoma odpowiedziami na pytanie, co Operator
-// i Wykonawca widzą.
+// OdznaczPozostaleKarty gasi czynność pozostałych kart okna — karta czynna jest w oknie jedna.
 func (r *repozytoriumPrzegladania) OdznaczPozostaleKarty(ctx context.Context, okno, kod string) error {
 	polecenie, err := r.zapytania.przygotuj(ctx, odznaczCzynneKarty)
 	if err != nil {
 		return err
 	}
-	if _, err := polecenie.ExecContext(ctx, okno, kod); err != nil {
+	if _, err := polecenie.ExecContext(ctx, okno, kod, KontoOperatora(ctx)); err != nil {
 		return fmt.Errorf("dane: nie można odznaczyć kart okna %q: %w", okno, err)
 	}
 	return nil
 }
 
-// PrzypiszKarteDoGrupy wiąże kartę z grupą kart albo zdejmuje wiązanie, gdy
-// podany kod grupy jest pusty.
+// PrzypiszKarteDoGrupy wiąże kartę z grupą albo zdejmuje wiązanie przy pustym kodzie grupy.
 func (r *repozytoriumPrzegladania) PrzypiszKarteDoGrupy(ctx context.Context, okno, karta, grupa string) error {
 	polecenie, err := r.zapytania.przygotuj(ctx, przypiszKarteDoGrupy)
 	if err != nil {
@@ -302,14 +279,13 @@ func (r *repozytoriumPrzegladania) PrzypiszKarteDoGrupy(ctx context.Context, okn
 	if grupa != "" {
 		wartosc = grupa
 	}
-	if _, err := polecenie.ExecContext(ctx, wartosc, karta, okno); err != nil {
+	if _, err := polecenie.ExecContext(ctx, wartosc, karta, okno, KontoOperatora(ctx)); err != nil {
 		return fmt.Errorf("dane: nie można przypisać karty %q do grupy: %w", karta, err)
 	}
 	return nil
 }
 
-// PrzypiszKarteDoPrzestrzeni wiąże kartę z przestrzenią roboczą albo zdejmuje
-// wiązanie, gdy podany kod jest pusty.
+// PrzypiszKarteDoPrzestrzeni wiąże kartę z przestrzenią albo zdejmuje wiązanie przy pustym kodzie.
 func (r *repozytoriumPrzegladania) PrzypiszKarteDoPrzestrzeni(ctx context.Context, okno, karta, przestrzen string) error {
 	polecenie, err := r.zapytania.przygotuj(ctx, przypiszKarteDoPrzestrzeni)
 	if err != nil {
@@ -319,14 +295,13 @@ func (r *repozytoriumPrzegladania) PrzypiszKarteDoPrzestrzeni(ctx context.Contex
 	if przestrzen != "" {
 		wartosc = przestrzen
 	}
-	if _, err := polecenie.ExecContext(ctx, wartosc, karta, okno); err != nil {
+	if _, err := polecenie.ExecContext(ctx, wartosc, karta, okno, KontoOperatora(ctx)); err != nil {
 		return fmt.Errorf("dane: nie można przypisać karty %q do przestrzeni: %w", karta, err)
 	}
 	return nil
 }
 
-// ZapiszGrupeKart zakłada grupę kart okna albo nadpisuje zastaną, dopasowaną po
-// kodzie zewnętrznym grupy.
+// ZapiszGrupeKart zakłada grupę kart okna albo nadpisuje zastaną po kodzie.
 func (r *repozytoriumPrzegladania) ZapiszGrupeKart(ctx context.Context, grupa GrupaKart) (GrupaKart, error) {
 	if grupa.Kod == "" || grupa.Okno == "" || grupa.Nazwa == "" {
 		return GrupaKart{}, fmt.Errorf("dane: grupa kart bez identyfikatora, okna albo nazwy")
@@ -336,21 +311,20 @@ func (r *repozytoriumPrzegladania) ZapiszGrupeKart(ctx context.Context, grupa Gr
 		return GrupaKart{}, err
 	}
 	_, err = polecenie.ExecContext(ctx, grupa.Kod, grupa.Okno, grupa.Nazwa,
-		tekstDoKolumny(grupa.Barwa), liczbaLogiczna(grupa.Zwinieta))
+		tekstDoKolumny(grupa.Barwa), liczbaLogiczna(grupa.Zwinieta), KontoOperatora(ctx), KontoOperatora(ctx))
 	if err != nil {
 		return GrupaKart{}, fmt.Errorf("dane: nie można zapisać grupy kart %q: %w", grupa.Kod, err)
 	}
 	return r.GrupaKart(ctx, grupa.Kod)
 }
 
-// GrupaKart oddaje grupę kart okna o wskazanym kodzie zewnętrznym; brak
-// wiersza wraca jako ErrBrakWiersza.
+// GrupaKart oddaje grupę kart okna po kodzie; brak wiersza wraca jako ErrBrakWiersza.
 func (r *repozytoriumPrzegladania) GrupaKart(ctx context.Context, kod string) (GrupaKart, error) {
 	polecenie, err := r.zapytania.przygotuj(ctx, pobierzGrupeKart)
 	if err != nil {
 		return GrupaKart{}, err
 	}
-	grupa, err := odczytajGrupeKart(polecenie.QueryRowContext(ctx, kod))
+	grupa, err := odczytajGrupeKart(polecenie.QueryRowContext(ctx, kod, KontoOperatora(ctx)))
 	if errors.Is(err, sql.ErrNoRows) {
 		return GrupaKart{}, ErrBrakWiersza
 	}
@@ -360,14 +334,13 @@ func (r *repozytoriumPrzegladania) GrupaKart(ctx context.Context, kod string) (G
 	return grupa, nil
 }
 
-// GrupyKart oddaje grupy kart okna od najnowszej do najstarszej, ograniczone
-// podanym limitem wyniku wykazu.
+// GrupyKart oddaje grupy kart okna od najnowszej, ograniczone limitem wykazu.
 func (r *repozytoriumPrzegladania) GrupyKart(ctx context.Context, okno string, limit int) ([]GrupaKart, error) {
 	polecenie, err := r.zapytania.przygotuj(ctx, listaGrupKart)
 	if err != nil {
 		return nil, err
 	}
-	wiersze, err := polecenie.QueryContext(ctx, okno, granicaWykazu(limit))
+	wiersze, err := polecenie.QueryContext(ctx, okno, KontoOperatora(ctx), granicaWykazu(limit))
 	if err != nil {
 		return nil, fmt.Errorf("dane: nie można odczytać grup kart okna %q: %w", okno, err)
 	}
@@ -387,21 +360,20 @@ func (r *repozytoriumPrzegladania) GrupyKart(ctx context.Context, okno string, l
 	return lista, nil
 }
 
-// UsunGrupeKart zdejmuje grupę i odpina od niej karty. Karty zostają otwarte —
-// grupa jest zestawem, nie właścicielem kart.
+// UsunGrupeKart zdejmuje grupę i odpina od niej karty; karty zostają otwarte.
 func (r *repozytoriumPrzegladania) UsunGrupeKart(ctx context.Context, kod string) (bool, error) {
 	odpiecie, err := r.zapytania.przygotuj(ctx, odepnijKartyGrupy)
 	if err != nil {
 		return false, err
 	}
-	if _, err := odpiecie.ExecContext(ctx, kod); err != nil {
+	if _, err := odpiecie.ExecContext(ctx, kod, KontoOperatora(ctx)); err != nil {
 		return false, fmt.Errorf("dane: nie można odpiąć kart grupy %q: %w", kod, err)
 	}
 	polecenie, err := r.zapytania.przygotuj(ctx, usunGrupeKart)
 	if err != nil {
 		return false, err
 	}
-	wynik, err := polecenie.ExecContext(ctx, kod)
+	wynik, err := polecenie.ExecContext(ctx, kod, KontoOperatora(ctx))
 	if err != nil {
 		return false, fmt.Errorf("dane: nie można usunąć grupy kart %q: %w", kod, err)
 	}
@@ -412,8 +384,7 @@ func (r *repozytoriumPrzegladania) UsunGrupeKart(ctx context.Context, kod string
 	return zmienione > 0, nil
 }
 
-// ZapiszPrzestrzen zakłada przestrzeń roboczą albo nadpisuje zastaną,
-// dopasowaną po kodzie zewnętrznym.
+// ZapiszPrzestrzen zakłada przestrzeń roboczą albo nadpisuje zastaną po kodzie.
 func (r *repozytoriumPrzegladania) ZapiszPrzestrzen(ctx context.Context,
 	przestrzen PrzestrzenPrzegladania) (PrzestrzenPrzegladania, error) {
 
@@ -425,21 +396,20 @@ func (r *repozytoriumPrzegladania) ZapiszPrzestrzen(ctx context.Context,
 		return PrzestrzenPrzegladania{}, err
 	}
 	_, err = polecenie.ExecContext(ctx, przestrzen.Kod, tekstDoKolumny(przestrzen.Okno),
-		przestrzen.Nazwa, tekstDoKolumny(przestrzen.Profil))
+		przestrzen.Nazwa, tekstDoKolumny(przestrzen.Profil), KontoOperatora(ctx), KontoOperatora(ctx))
 	if err != nil {
 		return PrzestrzenPrzegladania{}, fmt.Errorf("dane: nie można zapisać przestrzeni %q: %w", przestrzen.Kod, err)
 	}
 	return r.Przestrzen(ctx, przestrzen.Kod)
 }
 
-// Przestrzen oddaje przestrzeń roboczą o wskazanym kodzie zewnętrznym; brak
-// wiersza wraca jako ErrBrakWiersza.
+// Przestrzen oddaje przestrzeń roboczą po kodzie; brak wiersza wraca jako ErrBrakWiersza.
 func (r *repozytoriumPrzegladania) Przestrzen(ctx context.Context, kod string) (PrzestrzenPrzegladania, error) {
 	polecenie, err := r.zapytania.przygotuj(ctx, pobierzPrzestrzen)
 	if err != nil {
 		return PrzestrzenPrzegladania{}, err
 	}
-	przestrzen, err := odczytajPrzestrzen(polecenie.QueryRowContext(ctx, kod))
+	przestrzen, err := odczytajPrzestrzen(polecenie.QueryRowContext(ctx, kod, KontoOperatora(ctx)))
 	if errors.Is(err, sql.ErrNoRows) {
 		return PrzestrzenPrzegladania{}, ErrBrakWiersza
 	}
@@ -449,14 +419,13 @@ func (r *repozytoriumPrzegladania) Przestrzen(ctx context.Context, kod string) (
 	return przestrzen, nil
 }
 
-// Przestrzenie oddaje przestrzenie robocze okna, opcjonalnie zawężone do okna
-// i ograniczone limitem wyniku.
+// Przestrzenie oddaje przestrzenie robocze, opcjonalnie zawężone do okna, ograniczone limitem.
 func (r *repozytoriumPrzegladania) Przestrzenie(ctx context.Context, okno string, limit int) ([]PrzestrzenPrzegladania, error) {
 	polecenie, err := r.zapytania.przygotuj(ctx, listaPrzestrzeni)
 	if err != nil {
 		return nil, err
 	}
-	wiersze, err := polecenie.QueryContext(ctx, okno, okno, granicaWykazu(limit))
+	wiersze, err := polecenie.QueryContext(ctx, okno, okno, KontoOperatora(ctx), granicaWykazu(limit))
 	if err != nil {
 		return nil, fmt.Errorf("dane: nie można odczytać przestrzeni przeglądania: %w", err)
 	}
@@ -476,14 +445,13 @@ func (r *repozytoriumPrzegladania) Przestrzenie(ctx context.Context, okno string
 	return lista, nil
 }
 
-// UsunPrzestrzen zdejmuje przestrzeń roboczą. Karty zostają nietknięte —
-// kontrakt mówi o tym wprost przy `browser.workspace.remove`.
+// UsunPrzestrzen zdejmuje przestrzeń roboczą; karty zostają nietknięte.
 func (r *repozytoriumPrzegladania) UsunPrzestrzen(ctx context.Context, kod string) (bool, error) {
 	polecenie, err := r.zapytania.przygotuj(ctx, usunPrzestrzen)
 	if err != nil {
 		return false, err
 	}
-	wynik, err := polecenie.ExecContext(ctx, kod)
+	wynik, err := polecenie.ExecContext(ctx, kod, KontoOperatora(ctx))
 	if err != nil {
 		return false, fmt.Errorf("dane: nie można usunąć przestrzeni %q: %w", kod, err)
 	}
@@ -494,24 +462,19 @@ func (r *repozytoriumPrzegladania) UsunPrzestrzen(ctx context.Context, kod strin
 	return zmienione > 0, nil
 }
 
-// LiczbaKartPrzestrzeni liczy karty zapisane w przestrzeni roboczej — kontrakt
-// oddaje ją polem `tabCount`, a liczba wzięta z bazy nie rozjedzie się
-// z rzeczywistym składem tak, jak rozjechałaby się liczba zapamiętana przy
-// zapisie.
+// LiczbaKartPrzestrzeni liczy karty przestrzeni z bazy (`tabCount`), a nie z liczby zapamiętanej przy zapisie.
 func (r *repozytoriumPrzegladania) LiczbaKartPrzestrzeni(ctx context.Context, kod string) (int64, error) {
 	polecenie, err := r.zapytania.przygotuj(ctx, liczbaKartPrzestrzeni)
 	if err != nil {
 		return 0, err
 	}
 	var liczba int64
-	if err := polecenie.QueryRowContext(ctx, kod).Scan(&liczba); err != nil {
+	if err := polecenie.QueryRowContext(ctx, kod, KontoOperatora(ctx)).Scan(&liczba); err != nil {
 		return 0, fmt.Errorf("dane: nie można policzyć kart przestrzeni %q: %w", kod, err)
 	}
 	return liczba, nil
 }
 
-// odczytajKartePrzegladania składa kartę przeglądania z jednego wiersza wyniku
-// zapytania o rząd kart okna.
 func odczytajKartePrzegladania(wiersz skaner) (KartaPrzegladania, error) {
 	var karta KartaPrzegladania
 	var url, tytul, grupa, przestrzen, otwierajaca, czynna sql.NullString
@@ -533,8 +496,6 @@ func odczytajKartePrzegladania(wiersz skaner) (KartaPrzegladania, error) {
 	return karta, nil
 }
 
-// odczytajGrupeKart składa grupę kart przeglądania z jednego wiersza wyniku
-// zapytania o wykaz grup okna.
 func odczytajGrupeKart(wiersz skaner) (GrupaKart, error) {
 	var grupa GrupaKart
 	var barwa sql.NullString
@@ -548,8 +509,6 @@ func odczytajGrupeKart(wiersz skaner) (GrupaKart, error) {
 	return grupa, nil
 }
 
-// odczytajPrzestrzen składa przestrzeń roboczą przeglądania z jednego wiersza
-// wyniku tego samego zapytania.
 func odczytajPrzestrzen(wiersz skaner) (PrzestrzenPrzegladania, error) {
 	var przestrzen PrzestrzenPrzegladania
 	var okno, profil sql.NullString

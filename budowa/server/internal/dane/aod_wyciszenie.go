@@ -1,5 +1,4 @@
-// Plik zapisuje i odczytuje wyciszenia nakładki Always On Display oraz sygnały klas zdarzeń wyzwalających; wyciszenie
-// wskazuje moduł, kartę sesji albo klasę zdarzeń i sięga wszystkich powłok Operatora.
+// Wyciszenia nakładki Always On Display i sygnały klas zdarzeń wyzwalających; wyciszenie sięga wszystkich powłok konta.
 package dane
 
 import (
@@ -41,20 +40,14 @@ type SygnalNakladki struct {
 
 // RepozytoriumWyciszenNakladki jest kontraktem wyciszeń i sygnałów nakładki: zapis, odczyt i zniesienie.
 type RepozytoriumWyciszenNakladki interface {
-	// ZapiszWyciszenieNakladki zakłada wyciszenie albo oddaje zastane, mówiąc, czy wiersz powstał.
 	ZapiszWyciszenieNakladki(ctx context.Context,
 		wyciszenie WyciszenieNakladki) (WyciszenieNakladki, bool, error)
-	// ZniesWyciszenieNakladki usuwa wyciszenie wskazane identyfikatorem kontraktu.
 	ZniesWyciszenieNakladki(ctx context.Context, identyfikator string) (bool, error)
-	// WyciszenieNakladkiPoBycie odnajduje wyciszenie złożone z rodzaju i zakresu, bez identyfikatora.
 	WyciszenieNakladkiPoBycie(ctx context.Context,
 		wzor WyciszenieNakladki) (WyciszenieNakladki, bool, error)
-	// WyciszeniaNakladki zwraca wyciszenia czynne o wskazanej chwili, usuwając po drodze przeterminowane.
 	WyciszeniaNakladki(ctx context.Context, teraz string) ([]WyciszenieNakladki, error)
 
-	// ZapiszSygnalNakladki odkłada sygnał klasy zdarzeń wyzwalających.
 	ZapiszSygnalNakladki(ctx context.Context, sygnal SygnalNakladki) (SygnalNakladki, error)
-	// SygnalyNakladki zwraca sygnały zawężone niepustymi polami wzoru, najświeższe na początku.
 	SygnalyNakladki(ctx context.Context, wzor SygnalNakladki, granica int) ([]SygnalNakladki, error)
 }
 
@@ -64,42 +57,42 @@ const (
 
 	zapiszWyciszenieNakladki = `INSERT INTO wyciszenie_nakladki
 	                            (identyfikator_zewnetrzny, rodzaj, zakres, klucz_zakresu,
-	                             nazwa_zakresu, klasa_zdarzen, urzadzenie_id, konczy_sie)
-	                            VALUES (?, ?, ?, ?, ?, ?, ?, ?)`
+	                             nazwa_zakresu, klasa_zdarzen, urzadzenie_id, konczy_sie, konto_id)
+	                            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ` + WskazanieKonta + `)`
 
 	pobierzWyciszenieNakladki = `SELECT ` + kolumnyWyciszenia +
-		` FROM wyciszenie_nakladki WHERE identyfikator_zewnetrzny = ?`
+		` FROM wyciszenie_nakladki WHERE identyfikator_zewnetrzny = ? AND ` + WarunekKonta
 
 	pobierzWyciszeniePoBycie = `SELECT ` + kolumnyWyciszenia +
 		` FROM wyciszenie_nakladki
-		  WHERE rodzaj = ? AND zakres = ? AND klucz_zakresu = ? AND klasa_zdarzen = ?`
+		  WHERE rodzaj = ? AND zakres = ? AND klucz_zakresu = ? AND klasa_zdarzen = ? AND ` + WarunekKonta
 
-	zniesWyciszenieNakladki = `DELETE FROM wyciszenie_nakladki WHERE identyfikator_zewnetrzny = ?`
+	zniesWyciszenieNakladki = `DELETE FROM wyciszenie_nakladki WHERE identyfikator_zewnetrzny = ? AND ` + WarunekKonta
 
-	// Wyciszenie czasowe, którego chwila końca minęła, przestaje być stanem
-	// platformy — znika przy pierwszym odczycie.
+	// Wyciszenie czasowe po chwili końca przestaje być stanem platformy — znika przy pierwszym odczycie.
 	usunWyciszeniaPrzeterminowane = `DELETE FROM wyciszenie_nakladki
-	                                 WHERE konczy_sie <> '' AND konczy_sie <= ?`
+	                                 WHERE konczy_sie <> '' AND konczy_sie <= ? AND ` + WarunekKonta
 
 	listaWyciszenNakladki = `SELECT ` + kolumnyWyciszenia +
-		` FROM wyciszenie_nakladki ORDER BY utworzono ASC, id ASC`
+		` FROM wyciszenie_nakladki WHERE ` + WarunekKonta + ` ORDER BY utworzono ASC, id ASC`
 
 	kolumnySygnalu = `id, identyfikator_zewnetrzny, klasa_zdarzen, tresc, modul_kod,
 	                  sesja_kod, liczba_wystapien, zdarzylo_sie`
 
 	zapiszSygnalNakladki = `INSERT INTO sygnal_nakladki
 	                        (identyfikator_zewnetrzny, klasa_zdarzen, tresc, modul_kod,
-	                         sesja_kod, liczba_wystapien)
-	                        VALUES (?, ?, ?, ?, ?, ?)`
+	                         sesja_kod, liczba_wystapien, konto_id)
+	                        VALUES (?, ?, ?, ?, ?, ?, ` + WskazanieKonta + `)`
 
 	pobierzSygnalNakladki = `SELECT ` + kolumnySygnalu +
-		` FROM sygnal_nakladki WHERE identyfikator_zewnetrzny = ?`
+		` FROM sygnal_nakladki WHERE identyfikator_zewnetrzny = ? AND ` + WarunekKonta
 
 	listaSygnalowNakladki = `SELECT ` + kolumnySygnalu +
 		` FROM sygnal_nakladki
 		  WHERE (? = '' OR klasa_zdarzen = ?)
 		    AND (? = '' OR modul_kod = ?)
 		    AND (? = '' OR sesja_kod = ?)
+		    AND ` + WarunekKonta + `
 		  ORDER BY zdarzylo_sie DESC, id DESC
 		  LIMIT ?`
 )
@@ -108,7 +101,6 @@ type repozytoriumWyciszenNakladki struct {
 	zapytania *zapytania
 }
 
-// noweRepozytoriumWyciszenNakladki zakłada magazyn wyciszeń i sygnałów nakładki nad zapytaniami zestawu.
 func noweRepozytoriumWyciszenNakladki(z *zapytania) *repozytoriumWyciszenNakladki {
 	return &repozytoriumWyciszenNakladki{zapytania: z}
 }
@@ -138,7 +130,7 @@ func (r *repozytoriumWyciszenNakladki) ZapiszWyciszenieNakladki(ctx context.Cont
 	}
 	_, err = polecenie.ExecContext(ctx, wyciszenie.Identyfikator, string(wyciszenie.Rodzaj),
 		string(wyciszenie.Zakres), wyciszenie.KluczZakresu, wyciszenie.NazwaZakresu,
-		string(wyciszenie.KlasaZdarzen), wyciszenie.Urzadzenie, wyciszenie.KonczySie)
+		string(wyciszenie.KlasaZdarzen), wyciszenie.Urzadzenie, wyciszenie.KonczySie, KontoOperatora(ctx))
 	if err != nil {
 		return WyciszenieNakladki{}, false,
 			fmt.Errorf("dane: nie można zapisać wyciszenia nakładki %q: %w",
@@ -149,7 +141,7 @@ func (r *repozytoriumWyciszenNakladki) ZapiszWyciszenieNakladki(ctx context.Cont
 		return WyciszenieNakladki{}, false, err
 	}
 	zapisane, err := odczytajWyciszenieNakladki(
-		polecenie.QueryRowContext(ctx, wyciszenie.Identyfikator))
+		polecenie.QueryRowContext(ctx, wyciszenie.Identyfikator, KontoOperatora(ctx)))
 	if err != nil {
 		return WyciszenieNakladki{}, false,
 			fmt.Errorf("dane: nieczytelne wyciszenie nakładki %q: %w", wyciszenie.Identyfikator, err)
@@ -168,7 +160,7 @@ func (r *repozytoriumWyciszenNakladki) ZniesWyciszenieNakladki(ctx context.Conte
 	if err != nil {
 		return false, err
 	}
-	wynik, err := polecenie.ExecContext(ctx, identyfikator)
+	wynik, err := polecenie.ExecContext(ctx, identyfikator, KontoOperatora(ctx))
 	if err != nil {
 		return false, fmt.Errorf("dane: nie można znieść wyciszenia nakładki %q: %w",
 			identyfikator, err)
@@ -190,7 +182,8 @@ func (r *repozytoriumWyciszenNakladki) WyciszenieNakladkiPoBycie(ctx context.Con
 		return WyciszenieNakladki{}, false, err
 	}
 	wyciszenie, err := odczytajWyciszenieNakladki(polecenie.QueryRowContext(ctx,
-		string(wzor.Rodzaj), string(wzor.Zakres), wzor.KluczZakresu, string(wzor.KlasaZdarzen)))
+		string(wzor.Rodzaj), string(wzor.Zakres), wzor.KluczZakresu, string(wzor.KlasaZdarzen),
+		KontoOperatora(ctx)))
 	if errors.Is(err, sql.ErrNoRows) {
 		return WyciszenieNakladki{}, false, nil
 	}
@@ -210,7 +203,7 @@ func (r *repozytoriumWyciszenNakladki) WyciszeniaNakladki(ctx context.Context,
 		if err != nil {
 			return nil, err
 		}
-		if _, err := polecenie.ExecContext(ctx, teraz); err != nil {
+		if _, err := polecenie.ExecContext(ctx, teraz, KontoOperatora(ctx)); err != nil {
 			return nil, fmt.Errorf("dane: nie można zdjąć przeterminowanych wyciszeń nakładki: %w", err)
 		}
 	}
@@ -218,7 +211,7 @@ func (r *repozytoriumWyciszenNakladki) WyciszeniaNakladki(ctx context.Context,
 	if err != nil {
 		return nil, err
 	}
-	wiersze, err := polecenie.QueryContext(ctx)
+	wiersze, err := polecenie.QueryContext(ctx, KontoOperatora(ctx))
 	if err != nil {
 		return nil, fmt.Errorf("dane: nie można odczytać wyciszeń nakładki: %w", err)
 	}
@@ -254,7 +247,7 @@ func (r *repozytoriumWyciszenNakladki) ZapiszSygnalNakladki(ctx context.Context,
 		return SygnalNakladki{}, err
 	}
 	_, err = polecenie.ExecContext(ctx, sygnal.Identyfikator, string(sygnal.KlasaZdarzen),
-		sygnal.Tresc, sygnal.ModulKod, sygnal.SesjaKod, wystapienia)
+		sygnal.Tresc, sygnal.ModulKod, sygnal.SesjaKod, wystapienia, KontoOperatora(ctx))
 	if err != nil {
 		return SygnalNakladki{}, fmt.Errorf("dane: nie można zapisać sygnału nakładki %q: %w",
 			sygnal.Identyfikator, err)
@@ -263,7 +256,7 @@ func (r *repozytoriumWyciszenNakladki) ZapiszSygnalNakladki(ctx context.Context,
 	if err != nil {
 		return SygnalNakladki{}, err
 	}
-	zapisany, err := odczytajSygnalNakladki(polecenie.QueryRowContext(ctx, sygnal.Identyfikator))
+	zapisany, err := odczytajSygnalNakladki(polecenie.QueryRowContext(ctx, sygnal.Identyfikator, KontoOperatora(ctx)))
 	if err != nil {
 		return SygnalNakladki{}, fmt.Errorf("dane: nieczytelny sygnał nakładki %q: %w",
 			sygnal.Identyfikator, err)
@@ -281,7 +274,7 @@ func (r *repozytoriumWyciszenNakladki) SygnalyNakladki(ctx context.Context,
 	}
 	klasa := string(wzor.KlasaZdarzen)
 	wiersze, err := polecenie.QueryContext(ctx, klasa, klasa, wzor.ModulKod, wzor.ModulKod,
-		wzor.SesjaKod, wzor.SesjaKod, granicaWykazu(granica))
+		wzor.SesjaKod, wzor.SesjaKod, KontoOperatora(ctx), granicaWykazu(granica))
 	if err != nil {
 		return nil, fmt.Errorf("dane: nie można odczytać sygnałów nakładki: %w", err)
 	}

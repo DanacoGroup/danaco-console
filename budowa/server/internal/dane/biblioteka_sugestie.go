@@ -1,5 +1,4 @@
-// Plik prowadzi sugestie porządkujące biblioteki; sugestia jest bytem trwałym, nie wynikiem oddanym i zapomnianym
-// — klasyfikacja wsadowa ją wytwarza, a decyzja Operatora zapada osobnym żądaniem, często znacznie później.
+// Sugestie porządkujące biblioteki: byt trwały — klasyfikacja je wytwarza, a decyzja Operatora zapada osobno.
 package dane
 
 import (
@@ -37,21 +36,23 @@ const (
 
 	zapiszSugestieBiblioteki = `INSERT INTO sugestia_biblioteki
 	                            (identyfikator_zewnetrzny, plik_kod, rodzaj, wartosc,
-	                             uzasadnienie, pewnosc, stan)
-	                            VALUES (?, ?, ?, ?, ?, ?, ?)
+	                             uzasadnienie, pewnosc, stan, konto_id)
+	                            VALUES (?, ?, ?, ?, ?, ?, ?, ` + WskazanieKonta + `)
 	                            ON CONFLICT(identyfikator_zewnetrzny) DO UPDATE SET
 	                                wartosc = excluded.wartosc,
 	                                uzasadnienie = excluded.uzasadnienie,
 	                                pewnosc = excluded.pewnosc,
-	                                stan = excluded.stan`
+	                                stan = excluded.stan
+	                            WHERE ` + WarunekKonta
 
 	pobierzSugestieBiblioteki = `SELECT ` + kolumnySugestiiBiblioteki + ` FROM sugestia_biblioteki
-	                             WHERE identyfikator_zewnetrzny = ?`
+	                             WHERE identyfikator_zewnetrzny = ? AND ` + WarunekKonta
 
 	rozstrzygnijSugestieBiblioteki = `UPDATE sugestia_biblioteki
 	                                  SET stan = ?,
 	                                      rozstrzygnieto = strftime('%Y-%m-%dT%H:%M:%fZ','now')
-	                                  WHERE identyfikator_zewnetrzny = ? AND stan = 'oczekujaca'`
+	                                  WHERE identyfikator_zewnetrzny = ? AND stan = 'oczekujaca'
+	                                        AND ` + WarunekKonta
 )
 
 // ZapiszSugestie zakłada sugestię porządkującą albo zmienia zastaną sugestię tego samego kodu w bazie.
@@ -74,7 +75,7 @@ func (r *repozytoriumBiblioteki) ZapiszSugestie(ctx context.Context,
 	}
 	_, err = polecenie.ExecContext(ctx, sugestia.Kod, sugestia.PlikKod, sugestia.Rodzaj,
 		tekstDoKolumny(sugestia.Wartosc), sugestia.Uzasadnienie,
-		liczbaDoKolumny(sugestia.Pewnosc), stan)
+		liczbaDoKolumny(sugestia.Pewnosc), stan, KontoOperatora(ctx), KontoOperatora(ctx))
 	if err != nil {
 		return SugestiaBiblioteki{}, fmt.Errorf("dane: nie można zapisać sugestii %q: %w",
 			sugestia.Kod, err)
@@ -88,7 +89,7 @@ func (r *repozytoriumBiblioteki) Sugestia(ctx context.Context, kod string) (Suge
 	if err != nil {
 		return SugestiaBiblioteki{}, err
 	}
-	sugestia, err := odczytajSugestieBiblioteki(polecenie.QueryRowContext(ctx, kod))
+	sugestia, err := odczytajSugestieBiblioteki(polecenie.QueryRowContext(ctx, kod, KontoOperatora(ctx)))
 	if errors.Is(err, sql.ErrNoRows) {
 		return SugestiaBiblioteki{}, ErrBrakWiersza
 	}
@@ -102,8 +103,8 @@ func (r *repozytoriumBiblioteki) Sugestia(ctx context.Context, kod string) (Suge
 func (r *repozytoriumBiblioteki) Sugestie(ctx context.Context, plikKod *string,
 	rodzaje []string, limit int) ([]SugestiaBiblioteki, int, error) {
 
-	warunki := []string{"stan = 'oczekujaca'"}
-	argumenty := []any{}
+	warunki := []string{"stan = 'oczekujaca'", WarunekKonta}
+	argumenty := []any{KontoOperatora(ctx)}
 	if plikKod != nil && *plikKod != "" {
 		warunki = append(warunki, "plik_kod = ?")
 		argumenty = append(argumenty, *plikKod)
@@ -147,9 +148,7 @@ func (r *repozytoriumBiblioteki) Sugestie(ctx context.Context, plikKod *string,
 	return lista, lacznie, nil
 }
 
-// RozstrzygnijSugestie znakuje sugestie jako przyjęte albo odrzucone i oddaje
-// liczbę wierszy, które zmiana objęła. Sugestia już rozstrzygnięta nie liczy się
-// po raz drugi — warunek zapytania pilnuje tego zamiast wołającego.
+// RozstrzygnijSugestie znakuje sugestie jako przyjęte albo odrzucone i oddaje liczbę objętych wierszy.
 func (r *repozytoriumBiblioteki) RozstrzygnijSugestie(ctx context.Context, kody []string,
 	przyjeto bool) (int, error) {
 
@@ -163,7 +162,7 @@ func (r *repozytoriumBiblioteki) RozstrzygnijSugestie(ctx context.Context, kody 
 	}
 	rozstrzygniete := 0
 	for _, kod := range kody {
-		wynik, err := polecenie.ExecContext(ctx, stan, kod)
+		wynik, err := polecenie.ExecContext(ctx, stan, kod, KontoOperatora(ctx))
 		if err != nil {
 			return 0, fmt.Errorf("dane: nie można rozstrzygnąć sugestii %q: %w", kod, err)
 		}

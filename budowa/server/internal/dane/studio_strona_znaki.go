@@ -32,7 +32,6 @@ type ZnakOstatnioUzytyStudia struct {
 const (
 	symbolKolumnyZasady = `id, skrot, zamiennik, czynna, fabryczna, utworzono, zaktualizowano`
 
-	// Zapis zasady jest nadpisaniem wiersza, nie założeniem drugiego, bo skrót jest tożsamością zasady; zapis nie rusza kolumny oznaczenia fabrycznego.
 	symbolZapiszZasade = `INSERT INTO autozamiana_znaku_studio (skrot, zamiennik, czynna, fabryczna)
 	                      VALUES (?, ?, ?, 0)
 	                      ON CONFLICT(skrot) DO UPDATE SET
@@ -46,24 +45,21 @@ const (
 	symbolListaZasad = `SELECT ` + symbolKolumnyZasady + ` FROM autozamiana_znaku_studio
 	                    ORDER BY skrot`
 
-	// Usunięcie obejmuje wyłącznie zasadę własną. Zasada fabryczna zostaje
-	// i metoda oddaje fałsz — powód odmowy nazywa rdzeń. Warunek stoi w SQL,
-	// a nie w rdzeniu, żeby żadna droga wołania go nie ominęła.
+	// Usunięcie obejmuje wyłącznie zasadę własną; zasada fabryczna zostaje, a warunek stoi w SQL, nie w rdzeniu.
 	symbolUsunZasade = `DELETE FROM autozamiana_znaku_studio
 	                    WHERE skrot = ? AND fabryczna = 0`
 
-	// Odnotowanie użycia podnosi licznik i przestawia czas. Licznik liczy baza,
-	// nie wywołujący: dwa okna wstawiające ten sam znak naraz zgubiłyby jedno
-	// z użyć, gdyby każde odczytało licznik i zapisało własną sumę.
-	symbolOdnotujUzycie = `INSERT INTO znak_ostatnio_uzyty_studio (kod, znak)
-	                       VALUES (?, ?)
-	                       ON CONFLICT(kod) DO UPDATE SET
+	// Licznik podnosi baza, nie wywołujący: dwa okna wstawiające ten sam znak naraz nie zgubią użycia.
+	symbolOdnotujUzycie = `INSERT INTO znak_ostatnio_uzyty_studio (kod, znak, konto_id)
+	                       VALUES (?, ?, ` + WskazanieKonta + `)
+	                       ON CONFLICT(kod, COALESCE(konto_id, 0)) DO UPDATE SET
 	                           znak = excluded.znak,
 	                           ile_uzyc = znak_ostatnio_uzyty_studio.ile_uzyc + 1,
 	                           uzyto = strftime('%Y-%m-%dT%H:%M:%fZ','now')`
 
 	symbolListaOstatnich = `SELECT id, kod, znak, ile_uzyc, uzyto
 	                        FROM znak_ostatnio_uzyty_studio
+	                        WHERE ` + WarunekKonta + `
 	                        ORDER BY uzyto DESC, ile_uzyc DESC, id DESC
 	                        LIMIT ?`
 )
@@ -91,7 +87,6 @@ func (r *repozytoriumStudia) ZapiszZasadeAutozamiany(ctx context.Context,
 	return r.ZasadaAutozamiany(ctx, skrot)
 }
 
-// ZasadaAutozamiany oddaje zasadę autozamiany o wskazanym skrócie, wraz z jej zamiennikiem i stanem czynności.
 func (r *repozytoriumStudia) ZasadaAutozamiany(ctx context.Context,
 	skrot string) (ZasadaAutozamianyStudia, error) {
 
@@ -110,7 +105,6 @@ func (r *repozytoriumStudia) ZasadaAutozamiany(ctx context.Context,
 	return zasada, nil
 }
 
-// ZasadyAutozamiany oddaje wszystkie zasady, zarówno fabryczne, jak i własne Operatora, w jednym wykazie.
 func (r *repozytoriumStudia) ZasadyAutozamiany(ctx context.Context) ([]ZasadaAutozamianyStudia, error) {
 	polecenie, err := r.zapytania.przygotuj(ctx, symbolListaZasad)
 	if err != nil {
@@ -136,7 +130,6 @@ func (r *repozytoriumStudia) ZasadyAutozamiany(ctx context.Context) ([]ZasadaAut
 	return lista, nil
 }
 
-// UsunZasadeAutozamiany usuwa zasadę własną Operatora i oddaje, czy wiersz został usunięty; zasada fabryczna zawsze zostaje.
 func (r *repozytoriumStudia) UsunZasadeAutozamiany(ctx context.Context, skrot string) (bool, error) {
 	polecenie, err := r.zapytania.przygotuj(ctx, symbolUsunZasade)
 	if err != nil {
@@ -153,8 +146,7 @@ func (r *repozytoriumStudia) UsunZasadeAutozamiany(ctx context.Context, skrot st
 	return usuniete > 0, nil
 }
 
-// OdnotujUzycieZnaku zapisuje, że Operator posłużył się znakiem — po tym wykaz
-// „znaki ostatnio użyte" ma z czego powstać.
+// OdnotujUzycieZnaku zapisuje, że Operator posłużył się znakiem — z tego powstaje wykaz „znaki ostatnio użyte".
 func (r *repozytoriumStudia) OdnotujUzycieZnaku(ctx context.Context, kod, znak string) error {
 	kod = strings.TrimSpace(strings.ToUpper(kod))
 	if kod == "" || znak == "" {
@@ -164,7 +156,7 @@ func (r *repozytoriumStudia) OdnotujUzycieZnaku(ctx context.Context, kod, znak s
 	if err != nil {
 		return err
 	}
-	if _, err := polecenie.ExecContext(ctx, kod, znak); err != nil {
+	if _, err := polecenie.ExecContext(ctx, kod, znak, KontoOperatora(ctx)); err != nil {
 		return fmt.Errorf("dane: nie można odnotować użycia znaku %q: %w", kod, err)
 	}
 	return nil
@@ -181,7 +173,7 @@ func (r *repozytoriumStudia) ZnakiOstatnioUzyte(ctx context.Context,
 	if err != nil {
 		return nil, err
 	}
-	wiersze, err := polecenie.QueryContext(ctx, ile)
+	wiersze, err := polecenie.QueryContext(ctx, KontoOperatora(ctx), ile)
 	if err != nil {
 		return nil, fmt.Errorf("dane: nie można odczytać znaków ostatnio użytych: %w", err)
 	}
@@ -201,7 +193,6 @@ func (r *repozytoriumStudia) ZnakiOstatnioUzyte(ctx context.Context,
 	return lista, nil
 }
 
-// symbolOdczytajZasade składa zasadę autozamiany z jednego wiersza wyniku zapytania, kolumna po kolumnie.
 func symbolOdczytajZasade(wiersz skaner) (ZasadaAutozamianyStudia, error) {
 	var zasada ZasadaAutozamianyStudia
 	var czynna, fabryczna int64

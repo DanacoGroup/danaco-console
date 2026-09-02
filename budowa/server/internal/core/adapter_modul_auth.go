@@ -172,7 +172,7 @@ func (a *adapterUwierzytelnienia) ZalozBramke(ctx context.Context,
 	// Bez poczty rejestracja kończy się tutaj: konto jest, hasło otwiera
 	// bramkę, adres niepotwierdzony.
 	if !pocztaJest {
-		if err := a.zapiszZnacznikBezPoczty(ctx, email); err != nil {
+		if err := a.zapiszZnacznikBezPoczty(ctx, kontoId, email); err != nil {
 			a.cofnijRejestracje(ctx, kotwica.Kod, kontoId)
 			return shared.AuthRegisterResponse{}, err
 		}
@@ -186,7 +186,7 @@ func (a *adapterUwierzytelnienia) ZalozBramke(ctx context.Context,
 		if dziennik := dziennikZKontekstu(ctx); dziennik != nil {
 			dziennik.Printf("rejestracja: list z kodem nie wyszedł na %s: %v", email, err)
 		}
-		if err := a.zapiszZnacznikBezPoczty(ctx, email); err != nil {
+		if err := a.zapiszZnacznikBezPoczty(ctx, kontoId, email); err != nil {
 			a.cofnijRejestracje(ctx, kotwica.Kod, kontoId)
 			return shared.AuthRegisterResponse{}, err
 		}
@@ -203,12 +203,12 @@ func (a *adapterUwierzytelnienia) cofnijRejestracje(ctx context.Context, kodKotw
 		_, _ = a.repozytorium.UsunMetode(ctx, kodKotwicy)
 		usunPoswiadczenie(ctx, a.sejf, przedrostekBytuSejfu+kodKotwicy)
 	}
+	// Znacznik bramki bez poczty odchodzi z kontem, żeby nie przeżył w sejfie
+	// usuniętej rejestracji.
+	a.zdejmijZnacznikBezPoczty(ctx, kontoId)
 	if a.konto != nil && kontoId != 0 {
 		_ = a.konto.UsunKonto(ctx, kontoId)
 	}
-	// Znacznik bramki bez poczty odchodzi z kontem, żeby nie przeżył w sejfie
-	// usuniętej rejestracji.
-	a.zdejmijZnacznikBezPoczty(ctx)
 }
 
 // ── auth.login ───────────────────────────────────────────────────────────────

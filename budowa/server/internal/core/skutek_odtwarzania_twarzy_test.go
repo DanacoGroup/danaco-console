@@ -153,6 +153,10 @@ func roznicaWObszarze(bez, z image.Image, wycinek image.Rectangle) (
 // bez i z przebiegiem twarzowym: rozstrzyga wyłącznie zmierzona różnica w wycinku
 // twarzy, nigdy samoopis pomocnika, a różnica poza wycinkiem ma zostać znikoma.
 func TestPrzebiegTwarzowyZmieniaPikseleTwarzyNaPrawdziwymZdjeciu(t *testing.T) {
+	// Przebieg sięga Real-ESRGAN i GFPGAN; bieg krótki go pomija, bieg pełny wykonuje.
+	if testing.Short() {
+		t.Skip("przebieg twarzowy sięga silników zewnętrznych; bieg pełny: go test bez -short")
+	}
 	wymagajSilnikaTwarzowego(t)
 
 	zmontowany, zycie, katalog := zmontujDoPomiaruSkutku(t)

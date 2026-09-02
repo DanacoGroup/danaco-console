@@ -1,13 +1,10 @@
 // Wiązanie drogi wejścia z komendami rdzenia. Znacznik i przełączanie widoków
 // należą do biblioteki `design/zasoby/okna/wejscie/`.
-
-import { invoke, isTauri } from '@tauri-apps/api/core';
 import {
   AuthChangeReason,
   AuthMethodKind,
   Command,
   EventType,
-  type ErrorInfo,
 } from '../../../shared/contract.ts';
 import type { Kanal } from '../protokol/kanal.ts';
 import { zadajPowitanie } from '../protokol/powitanie.ts';
@@ -18,23 +15,22 @@ import { oglos } from './ogloszenie.ts';
 import { zwiazPowloke } from './powloka.ts';
 import { zwiazCentrum } from './centrum.ts';
 import { zglosUchwyt } from './zdarzenia.ts';
+import { napis, urzadzenieTrwale } from './wejscie-katalog.ts';
+import { odmowaLogowania, odmowaRejestracji, pokazOdmowe } from './wejscie-odmowa.ts';
+import { przygotujSrodowisko, zwiazPasPrzygotowania } from './wejscie-przygotowanie.ts';
+import { powlokaStoi, stanRdzenia, wskazRdzen, wskazanieRdzenia } from './wejscie-powloka.ts';
+import { zapamietajMetody, zwiazMetody } from './logowanie-metody.ts';
+import { zwiazPrzedsionek } from './przedsionek.ts';
 
 interface EkranStartowy {
   gotowe(): void;
 }
 
-interface Katalog {
-  tekst(sciezka: string): unknown;
-}
-
 // Skrypty biblioteki są funkcjami domkniętymi, nie modułami — importu z nich nie ma.
 interface Styk {
   DanacoKanal?: Kanal;
-  DanacoNarzedzia?: { zwiaz(katalog: unknown): Katalog };
-  DanacoWejscie?: { tresci?: unknown };
   dnPrzelaczWidok?: (widok: string, grupa?: string | null) => void;
   dnPrzejdz?: (widok: string, grupa?: string | null) => void;
-  dnToast?: (tytul: string, tresc: string, rodzaj?: string) => void;
 }
 
 function styk(): Styk {
@@ -47,7 +43,6 @@ const ETAPY: Readonly<Record<string, string>> = {
   przygotowanie: 'przygotowanie',
 };
 
-/** Widoki, których czynność główna woła rdzeń. */
 type Widok =
   | 'logowanie'
   | 'logowanie-blad'
@@ -59,30 +54,9 @@ type Widok =
 
 // Kod z widoku `odzyskiwanie-kod` zużywa dopiero `auth.reset`, razem z hasłem.
 let drogaOdzyskania = '';
-
 let ostatniLogin = '';
-/* Pierwsze powitanie należy do `powitaj`; dopiero po nim zmiany stanu
-   transportu mają w oknie co odzwierciedlać. */
 let powitanoRaz = false;
-
-/** Polecenia powłoki z `desktop/src-tauri/src/polecenia.rs`. */
-const POLECENIE_WSKAZANIA_RDZENIA = 'wskazanie_rdzenia';
-const POLECENIE_WSKAZ_RDZEN = 'wskaz_rdzen';
-
-/** Stan wskazania rdzenia oddawany przez powłokę; nazwy pól jak w `wskazanie.rs`, bo serde ich nie przemianowuje. */
-interface WskazanieRdzenia {
-  schemat: string;
-  host: string | null;
-  port: number;
-  adres: string | null;
-  warstwa: string;
-}
-
-/** Odmowa wskazania rdzenia; nazwy pól jak w `wskazanie.rs`. */
-interface OdmowaWskazania {
-  powod: string;
-  zdanie: string;
-}
+let powlokaOdsloniona = false;
 
 export function zwiazWejscie(podany?: Kanal): void {
   oznaczObszary();
@@ -92,16 +66,19 @@ export function zwiazWejscie(podany?: Kanal): void {
   document.addEventListener('keydown', naKlawisz);
   zwiazStanPolaczenia(kanal(podany));
   zwiazZmianeUwierzytelnienia();
+  const most = kanal(podany);
+  poMontazu(() => {
+    if (most === undefined) return;
+    zwiazMetody(most);
+    zwiazPasPrzygotowania(most);
+    zwiazPrzedsionek(most);
+  });
   gotowosc(() => {
-    void powitaj(kanal(podany));
+    void powitaj(most);
   });
 }
 
-/**
- * Zerwanie po pierwszym powitaniu pokazuje w oknie wejścia wariant błędu,
- * a powrót łączności — po ponowionym powitaniu — odgrywa łączenie od nowa.
- * Okno już schowane za powłoką nie ma czego pokazywać.
- */
+// Zerwanie po powitaniu pokazuje wariant błędu; powrót łączności odgrywa łączenie.
 function zwiazStanPolaczenia(most: Kanal | undefined): void {
   if (most === undefined) return;
   most.naStan((stan) => {
@@ -133,8 +110,6 @@ function etapLaczeniaAktywny(): boolean {
   return document.querySelector('.we-scena[data-widok="laczenie"][data-widok-aktywny="tak"]') !== null;
 }
 
-/* Przebieg łączenia rusza w bibliotece na `ekran-startowy-koniec`; po powrocie
-   łączności to samo zdarzenie odgrywa etapy i przechodzi do etapu następnego. */
 function odegrajLaczenie(): void {
   ustawWariant('w-laczenie');
   document
@@ -142,11 +117,8 @@ function odegrajLaczenie(): void {
     ?.dispatchEvent(new CustomEvent('ekran-startowy-koniec', { bubbles: true }));
 }
 
-/**
- * Token schodzi przy odzyskaniu konta i unieważnieniu sesji. Rdzeń adresuje
- * `auth.changed` do konta, więc zdarzenie dotyczy konta bieżącego; unieważnienie
- * nazywające urządzenie zdejmuje token tylko wtedy, gdy to urządzenie tej sesji.
- */
+/* Rdzeń adresuje `auth.changed` do konta, więc unieważnienie nazywające
+   urządzenie zdejmuje token tylko wtedy, gdy to urządzenie tej sesji. */
 function zwiazZmianeUwierzytelnienia(): void {
   zglosUchwyt(EventType.AuthChanged, (tresc) => {
     const powodZdjecia =
@@ -161,6 +133,14 @@ function zwiazZmianeUwierzytelnienia(): void {
 
 function kanal(podany?: Kanal): Kanal | undefined {
   return podany ?? styk().DanacoKanal;
+}
+
+function poMontazu(bieg: () => void): void {
+  if (document.querySelector('[data-wejscie-okno="dostep"] .we-okno') !== null) {
+    bieg();
+    return;
+  }
+  document.addEventListener('wejscie-gotowe', bieg, { once: true });
 }
 
 function gotowosc(bieg: () => void): void {
@@ -181,6 +161,8 @@ function oznaczObszary(): void {
     obszar.dataset.grupaWidoku = 'etap';
     obszar.dataset.widokAktywny = etap === 'laczenie' ? 'tak' : 'nie';
     if (etap === 'laczenie') obszar.dataset.uruchomienieScena = '';
+    // Okno przygotowania ma jedną odsłonę, więc jest czynna zawsze.
+    if (etap === 'przygotowanie') miejsce.dataset.widokAktywny = 'tak';
   }
 }
 
@@ -193,7 +175,6 @@ function zalozPrzejscie(): void {
   };
 }
 
-// Sprawdzenie pól z `przeplyw-wejscia.js` idzie w fazie przechwytywania i rozstrzyga pierwsze.
 function naKlikniecie(zdarzenie: MouseEvent): void {
   const cel = zdarzenie.target;
   if (!(cel instanceof Element)) return;
@@ -215,9 +196,7 @@ function naKlikniecie(zdarzenie: MouseEvent): void {
   void wykonaj(most, widok, dokad, grupa);
 }
 
-/* Enter w polu wchodzi tak samo jak naciśnięcie czynności głównej. Pas działań
-   domyka okno u dołu, więc w oknie niższym niż panel czynność bywa poza
-   widokiem — wpisane dane zostawałyby wtedy bez drogi zatwierdzenia. */
+// Enter w polu wchodzi tak samo jak naciśnięcie czynności głównej pasa.
 function naKlawisz(zdarzenie: KeyboardEvent): void {
   if (zdarzenie.key !== 'Enter' || zdarzenie.shiftKey) return;
   const cel = zdarzenie.target;
@@ -258,9 +237,6 @@ async function powitaj(most: Kanal | undefined): Promise<void> {
   powitanoRaz = true;
   ustawWariant(wynik.udany ? 'w-laczenie' : 'w-blad');
   domknijEkranStartowy();
-  /* Dalej okno przechodzi samo: po animacji biblioteka odgrywa etapy łączenia
-     i przechodzi do etapu z `data-po-polaczeniu`. Przełączenie stąd wyprzedzałoby
-     ten przebieg i pomijało okno uruchomienia. */
 }
 
 function ustawWariant(widok: string): void {
@@ -268,31 +244,23 @@ function ustawWariant(widok: string): void {
   if (widok === 'w-blad') void opiszWskazanieRdzenia();
 }
 
-/* Wariant błędu nazywa serwer, którego powłoka nie doprosiła: bez tego
-   Operator nie wie, czy zawiódł adres, czy sieć. Poza powłoką wskazania nie ma. */
+// Wariant błędu nazywa serwer, którego powłoka nie doprosiła; poza powłoką wskazania nie ma.
 async function opiszWskazanieRdzenia(): Promise<void> {
-  if (!isTauri()) return;
+  if (!powlokaStoi()) return;
   const lid = document.querySelector<HTMLElement>('.we-panel[data-widok="w-blad"] .we-lid');
   if (lid === null) return;
   lid.dataset.lidPierwotny ??= lid.textContent ?? '';
-  try {
-    const wskazanie = await invoke<WskazanieRdzenia>(POLECENIE_WSKAZANIA_RDZENIA);
-    const zdanie = wskazanie.adres === null
-      ? 'Powłoka nie ma wskazania rdzenia.'
-      : `Rdzeń wskazany: ${wskazanie.adres}.`;
-    lid.textContent = `${lid.dataset.lidPierwotny} ${zdanie}`;
-  } catch (blad) {
-    console.warn('[wejście] powłoka nie oddała wskazania rdzenia', blad);
-  }
+  const wskazanie = await wskazanieRdzenia();
+  if (wskazanie === null) return;
+  const stan = await stanRdzenia();
+  const zdanie = wskazanie.adres === null
+    ? 'Powłoka nie ma wskazania rdzenia.'
+    : `Rdzeń wskazany: ${wskazanie.adres}. ${stan?.opis ?? ''}`.trim();
+  lid.textContent = `${lid.dataset.lidPierwotny} ${zdanie}`;
 }
 
-/*
-Ponowienie z wariantu błędu. Wskazanie wpisane w pole adresu idzie do powłoki,
-która sprawdza łączność i zapisuje je trwale; wskazanie przyjęte wchodzi w stronę
-dopiero przy wczytaniu, bo powłoka podaje je skryptem wstępnym okna. Bez pola
-albo bez wpisu ponowienie łączy pod adres obowiązujący od razu, bez czekania
-na zaplanowane opóźnienie.
-*/
+/* Wskazanie wpisane w pole adresu idzie do powłoki, która sprawdza łączność
+   i zapisuje je trwale; bez wpisu ponowienie łączy pod adres obowiązujący. */
 function naPonowienie(zdarzenie: MouseEvent): void {
   const cel = zdarzenie.target;
   if (!(cel instanceof Element) || cel.closest('#btn-ponow') === null) return;
@@ -302,19 +270,19 @@ function naPonowienie(zdarzenie: MouseEvent): void {
     '.we-panel[data-widok="w-blad"] input[data-adres-rdzenia]',
   );
   const adres = pole?.value.trim() ?? '';
-  if (adres !== '' && isTauri()) {
-    void wskazRdzen(adres);
+  if (adres !== '' && powlokaStoi()) {
+    void przyjmijWskazanie(adres);
     return;
   }
   most.wznowPolaczenie();
 }
 
-async function wskazRdzen(adres: string): Promise<void> {
+async function przyjmijWskazanie(adres: string): Promise<void> {
   try {
-    await invoke<WskazanieRdzenia>(POLECENIE_WSKAZ_RDZEN, { adres });
+    await wskazRdzen(adres);
     globalThis.location.reload();
   } catch (blad) {
-    const odmowa = blad as Partial<OdmowaWskazania> | undefined;
+    const odmowa = blad as { zdanie?: string } | undefined;
     oglos('Wskazanie rdzenia', odmowa?.zdanie ?? 'Powłoka odrzuciła wskazanie rdzenia.', 'blad');
   }
 }
@@ -365,12 +333,14 @@ async function zaloguj(most: Kanal, panel: HTMLElement, widok: Widok): Promise<v
     method: AuthMethodKind.Password,
     login: ostatniLogin,
     secret: wartosc(`${przedrostek}-haslo`),
+    deviceId: urzadzenieTrwale(),
     keepSignedIn: trwalaSesja(panel),
   });
   if (!wynik.udany) {
     odmowaLogowania(wynik.blad);
     return;
   }
+  zapamietajMetody(wynik.wynik?.methods);
   await wejdz(most);
 }
 
@@ -380,16 +350,16 @@ async function zarejestruj(
   dokad: string,
   grupa: string | null,
 ): Promise<void> {
-  // Login zapamiętany przy rejestracji: droga przez kod aktywacji wchodzi do
-  // powłoki z pominięciem ekranu logowania, a pasek stanu nazywa Operatora.
+  // Droga przez kod aktywacji pomija ekran logowania, a pasek stanu nazywa Operatora.
   ostatniLogin = wartosc('rej-login');
   const wynik = await wywolaj(most, Command.AuthRegister, {
     login: ostatniLogin,
     email: wartosc('rej-email'),
     password: wartosc('rej-haslo'),
+    deviceId: urzadzenieTrwale(),
   });
   if (!wynik.udany) {
-    odmowa(panel, 'usterki.naglowekKonto', wynik.blad);
+    odmowaRejestracji(panel, wynik.blad);
     return;
   }
   /* `pendingVerification` fałszywe oznacza rejestrację bez listu z kodem —
@@ -404,10 +374,11 @@ async function zarejestruj(
 async function potwierdz(most: Kanal, panel: HTMLElement): Promise<void> {
   const wynik = await wywolaj(most, Command.AuthVerify, {
     token: zbierzKod(panel),
+    deviceId: urzadzenieTrwale(),
     keepSignedIn: trwalaSesja(panel),
   });
   if (!wynik.udany) {
-    odmowa(panel, 'usterki.naglowekKod', wynik.blad);
+    pokazOdmowe(panel, napis('usterki.naglowekKod'), wynik.blad);
     return;
   }
   await wejdz(most);
@@ -421,7 +392,7 @@ async function odzyskaj(
 ): Promise<void> {
   const wynik = await wywolaj(most, Command.AuthRecover, { email: wartosc('odz-email') });
   if (!wynik.udany) {
-    odmowa(panel, 'usterki.naglowekKod', wynik.blad);
+    pokazOdmowe(panel, napis('usterki.naglowekKod'), wynik.blad);
     return;
   }
   idz(dokad, grupa);
@@ -438,7 +409,7 @@ async function ustawHaslo(
     newPassword: wartosc('odz-haslo'),
   });
   if (!wynik.udany) {
-    odmowa(panel, 'usterki.naglowekHaslo', wynik.blad);
+    pokazOdmowe(panel, napis('usterki.naglowekHaslo'), wynik.blad);
     return;
   }
   // `auth.reset` unieważnia tokeny wydane wcześniej.
@@ -447,59 +418,23 @@ async function ustawHaslo(
   idz(dokad, grupa);
 }
 
-// Token sesji przejmuje z odpowiedzi rdzenia `pilnujTokenu` w warstwie protokołu.
+/* Wejście po wydaniu tokenu prowadzi przez etap przygotowania: dopiero jego
+   domknięcie odsłania powłokę, w której stoi wybór środowiska. */
 async function wejdz(most: Kanal): Promise<void> {
-  await Promise.all([
-    wywolaj(most, Command.EnvironmentList, {}),
-    wywolaj(most, Command.ModuleList, {}),
-    wywolaj(most, Command.SessionList, {}),
-  ]);
-  odslonPowloke();
-  await zwiazPowloke({ login: ostatniLogin, nazwaOkna: 'Danaco Console' }, most);
-  zwiazCentrum(most);
+  idz('przygotowanie', 'etap');
+  await przygotujSrodowisko(most, () => {
+    void otworzPowloke(most);
+  });
 }
 
-function odslonPowloke(): void {
+async function otworzPowloke(most: Kanal): Promise<void> {
+  if (powlokaOdsloniona) return;
+  powlokaOdsloniona = true;
+  await wywolaj(most, Command.EnvironmentList, { includeModules: true });
   document.querySelector('[data-rama-aplikacji]')?.removeAttribute('hidden');
   document.querySelector('[data-wejscie]')?.setAttribute('hidden', '');
-}
-
-// Adres niepotwierdzony to konto zatrzymane przed aktywacją, nie zła para login–hasło.
-function odmowaLogowania(blad: ErrorInfo | undefined): void {
-  if (powod(blad) === 'adres-niepotwierdzony') {
-    styk().dnPrzelaczWidok?.('kod', 'stan');
-    return;
-  }
-  styk().dnPrzelaczWidok?.('logowanie-blad', 'stan');
-}
-
-// Widok bez banera dostaje powiadomienie; wiązanie banera nie dostawia.
-function odmowa(panel: HTMLElement, naglowek: string, blad: ErrorInfo | undefined): void {
-  const klucz = powod(blad) === 'kolizja-danych' ? 'usterki.loginZajety' : '';
-  const glowa = klucz === '' ? napis(naglowek) : napis(`${klucz}.glowa`);
-  const tresc = klucz === '' ? napis('usterki.wiele') : napis(`${klucz}.tresc`);
-  if (!wpiszWBaner(panel, glowa, tresc)) styk().dnToast?.(glowa, tresc, 'blad');
-}
-
-function powod(blad: ErrorInfo | undefined): string {
-  const dane = blad?.details as { powod?: unknown } | undefined;
-  return typeof dane?.powod === 'string' ? dane.powod : '';
-}
-
-function wpiszWBaner(panel: HTMLElement, glowa: string, tresc: string): boolean {
-  const baner = panel.querySelector<HTMLElement>('.we-komunikaty .dn-alert');
-  const pole = baner?.querySelector<HTMLElement>('.dn-alert-tresc');
-  const czolo = pole?.querySelector('b');
-  if (baner == null || pole == null || czolo == null) return false;
-  baner.classList.remove('dn-alert--info', 'dn-alert--ostrzezenie', 'dn-alert--sukces');
-  baner.classList.add('dn-alert--blad');
-  baner.setAttribute('role', 'alert');
-  baner.setAttribute('data-usterka-formularza', '');
-  czolo.textContent = glowa;
-  const ostatni = pole.lastChild;
-  if (ostatni !== null && ostatni.nodeType === Node.TEXT_NODE) ostatni.textContent = tresc;
-  else pole.appendChild(document.createTextNode(tresc));
-  return true;
+  await zwiazPowloke({ login: ostatniLogin, nazwaOkna: 'Danaco Console' }, most);
+  zwiazCentrum(most);
 }
 
 function wartosc(id: string): string {
@@ -517,11 +452,4 @@ function zbierzKod(panel: HTMLElement): string {
   let kod = '';
   for (const pole of pola) kod += pole.value.trim();
   return kod;
-}
-
-function napis(sciezka: string): string {
-  const s = styk();
-  const katalog = s.DanacoNarzedzia?.zwiaz(s.DanacoWejscie?.tresci ?? {});
-  const wartoscNapisu = katalog?.tekst(sciezka);
-  return typeof wartoscNapisu === 'string' ? wartoscNapisu : '';
 }

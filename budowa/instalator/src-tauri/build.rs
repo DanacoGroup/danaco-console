@@ -6,11 +6,22 @@
 use std::io;
 use std::path::{Path, PathBuf};
 
+/// Zmienne niosące poświadczenia kanału wydań; te same nazwy czyta
+/// `option_env!` w `src/pobranie.rs`.
+const ZMIENNA_UZYTKOWNIKA: &str = "DANACO_KANAL_UZYTKOWNIK";
+const ZMIENNA_HASLA: &str = "DANACO_KANAL_HASLO";
+
 fn main() {
     let zrodlo = Path::new("../../../design/zasoby");
     let cel = Path::new("../interfejs/warstwa/zasoby");
 
     println!("cargo:rerun-if-changed={}", zrodlo.display());
+    /* Poświadczenia kanału wchodzą przez `option_env!` (`src/pobranie.rs`), a te
+       cargo czyta w chwili kompilacji. Bez tych dwóch wierszy budowa po zmianie
+       poświadczenia nie wznawia się i instalka wynosi hasło z budowy próbnej. */
+    for zmienna in [ZMIENNA_UZYTKOWNIKA, ZMIENNA_HASLA] {
+        println!("cargo:rerun-if-env-changed={zmienna}");
+    }
     osadz_warstwe(zrodlo, cel).unwrap_or_else(|blad| {
         panic!(
             "nie udało się osadzić warstwy projektowej z {} w {}: {blad}",

@@ -1,31 +1,11 @@
-/* Skrypt prowadzi mechanikę okna przepływu wejścia: ekran startowy, nawiązanie połączenia bez przycisku potwierdzenia, uwierzytelnienie oraz przejście do przygotowania środowiska pracy.
-   PRZEPŁYW WEJŚCIA — mechanika okna
-
-   Uruchomienie programu: po kliknięciu ikony na monitorze gra ekran startowy,
-   a okno stoi za nim niewidoczne. Dopiero koniec animacji je odsłania — tak
-   samo, jak powłoka w produkcie pokazuje okno dopiero po zdarzeniu
-   `ekran-startowy-koniec`.
-
-   Nawiązanie połączenia nie kończy się przyciskiem. Etapy zaznaczają się same,
-   a po ostatnim okno przechodzi dalej — nie ma tu czego wybierać, więc nie ma
-   czego klikać. Jedyną czynnością pozostaje zamknięcie programu.
-
-   Cel przejścia niesie znacznik panelu (`data-po-polaczeniu`), nie ten skrypt.
-
-   Zakładanie konta sprawdza się przed wysłaniem, nie po. Cztery rzeczy mogą
-   pójść źle i każda mówi, co zrobić: login zajęty, adres e-mail bez właściwej
-   budowy, hasło poniżej wymagań, hasła różne.
-
-   Usterki zbierają się w JEDEN komunikat. Cztery osobne banery zepchnęłyby
-   formularz poza okno, a użytkownik i tak czyta je jako jedną listę tego, co
-   ma poprawić. Komunikat staje nad formularzem, a pole, którego dotyczy, niesie
-   `aria-invalid` — czytnik ekranu dowiaduje się tego samego co oko.
-
-   Odsłony osiągalne adresem, do których przepływ sam nie doprowadzi:
-       ?rejestracja=login-zajety | email-bledny | haslo-slabe | hasla-rozne
-
-   Podgląd odtwarza całość na żądanie: „Odtwórz przebieg” zaczyna od animacji,
-   a nie od gotowego okna.
+/* Skrypt prowadzi mechanikę okna przepływu wejścia: ekran startowy, nawiązanie połączenia bez przycisku potwierdzenia, uwierzytelnienie i przejście do przygotowania środowiska.
+   Cel przejścia po połączeniu niesie znacznik panelu (`data-po-polaczeniu`).
+   Zakładanie konta sprawdza przed wysłaniem budowę adresu, siłę hasła i zgodność
+   haseł; login zajęty rozstrzyga rdzeń kodem `conflict`, progu prób tu nie ma.
+   Usterki zbierają się w JEDEN komunikat nad formularzem, a pole, którego
+   dotyczą, niesie `aria-invalid`.
+   Odsłony osiągalne adresem: ?rejestracja=login-zajety | email-bledny |
+   haslo-slabe | hasla-rozne
    ============================================================================ */
 (function () {
 'use strict';
@@ -235,8 +215,8 @@ function odliczaj() {
 }
 
 /* Co się dzieje po dojściu do zera, rozstrzyga odsłona, w której licznik stoi.
-   Wstrzymanie mija — okno wraca do logowania. Ważność kodu wygasa — to stan,
-   którego prototyp jeszcze nie ma, więc licznik staje i nic nie udaje. */
+   Ważność kodu wygasa — to stan, którego kompozycja nie ma, więc licznik staje
+   i nic nie udaje. */
 function poZerze(e) {
   var panel = e.closest('.we-panel');
   if (!panel) return;
@@ -249,65 +229,10 @@ function poZerze(e) {
     polacz();
     return;
   }
-  if (widok === 'logowanie-wstrzymane') { zuzytePrzyLogowaniu = 0; window.dnPrzelaczWidok('logowanie', 'stan'); }
-  else if (widok === 'odzyskiwanie-wstrzymane') { zuzyteWysylkiKodu = 0; window.dnPrzelaczWidok('odzyskiwanie-adres', 'stan'); }
 }
 
 setInterval(odliczaj, 1000);
 odliczaj();
-
-/* ── Liczniki prób ───────────────────────────────────────────────────────── */
-
-/* Pięć prób logowania i pięć wysłań kodu. Po piątej — wstrzymanie na godzinę.
-   Licznik żyje w oknie, bo w produkcie prowadzi go serwer: prototyp pokazuje
-   skutek, nie odtwarza reguły. */
-var DOZWOLONE_PROBY = 5;
-var zuzytePrzyLogowaniu = 0;
-var zuzyteWysylkiKodu = 0;
-
-function slownieProby(ile) {
-  return tekst('dostep.proby.' + ile);
-}
-
-/* Komunikat o nierozpoznanych danych mówi, ile prób zostało — a przy ostatniej
-   nazywa ją ostatnią, bo „pozostała jedna próba" i „to ostatnia próba" znaczą
-   to samo, ale drugie zdanie ostrzega mocniej. */
-function odswiezLicznikLogowania() {
-  var panel = document.querySelector('.we-panel[data-widok="logowanie-blad"]');
-  var alarm = panel && panel.querySelector('.dn-alert');
-  if (!alarm) return;
-  var zostalo = DOZWOLONE_PROBY - zuzytePrzyLogowaniu;
-  var b = alarm.querySelector('b');
-  var span = alarm.querySelector('span');
-  if (!b || !span) return;
-  if (zostalo <= 1) {
-    b.textContent = tekst('dostep.logowanieBlad.banerOstatnia.glowa');
-    span.lastChild.textContent = tekst('dostep.logowanieBlad.banerOstatnia.tresc');
-  } else {
-    b.textContent = tekst('dostep.logowanieBlad.baner.glowa');
-    span.lastChild.textContent = N.podstaw(tekst('dostep.logowanieBlad.baner.tresc'),
-      { pozostalo: slownieProby(zostalo) });
-  }
-}
-
-function policzProbe(rodzaj) {
-  if (rodzaj === 'logowanie') {
-    zuzytePrzyLogowaniu += 1;
-    if (zuzytePrzyLogowaniu >= DOZWOLONE_PROBY) {
-      window.dnPrzelaczWidok('logowanie-wstrzymane', 'stan');
-      return true;
-    }
-    odswiezLicznikLogowania();
-    window.dnPrzelaczWidok('logowanie-blad', 'stan');
-    return true;
-  }
-  zuzyteWysylkiKodu += 1;
-  if (zuzyteWysylkiKodu >= DOZWOLONE_PROBY) {
-    window.dnPrzelaczWidok('odzyskiwanie-wstrzymane', 'stan');
-    return true;
-  }
-  return false;
-}
 
 /* ── Zakładanie konta: sprawdzenie przed wysłaniem ───────────────────────── */
 
@@ -317,20 +242,14 @@ var FORMULARZE = [
   { widok: 'logowanie', naglowek: 'usterki.naglowekLogowanie', zbiorczyBrak: 'brakDanych',
     wymagane: [{ id: 'log-login', usterka: 'brakLoginu' }, { id: 'log-haslo', usterka: 'brakHasla' }] },
   { widok: 'logowanie-blad', naglowek: 'usterki.naglowekLogowanie', zbiorczyBrak: 'brakDanych',
-    licznik: 'logowanie',
     wymagane: [{ id: 'blad-login', usterka: 'brakLoginu' }, { id: 'blad-haslo', usterka: 'brakHasla' }] },
   { widok: 'odzyskiwanie-adres', naglowek: 'usterki.naglowekKod',
-    licznik: 'kod',
     wymagane: [{ id: 'odz-email', usterka: 'brakAdresu' }], email: 'odz-email' },
   { widok: 'rejestracja', naglowek: 'usterki.naglowekKonto',
     login: 'rej-login', email: 'rej-email', haslo: 'rej-haslo', haslo2: 'rej-haslo-2' },
   { widok: 'odzyskiwanie-haslo', naglowek: 'usterki.naglowekHaslo',
     haslo: 'odz-haslo', haslo2: 'odz-haslo-2' }
 ];
-
-/* Loginy zajęte. W produkcie odpowiada na to serwer; w podglądzie musi stać
-   nazwa, na której da się to zobaczyć — bez niej odsłona jest nieosiągalna. */
-var ZAJETE = ['operator', 'admin', 'danaco', 'konsola'];
 
 /* Każda usterka nazywa rzecz i mówi, co z nią zrobić. Kolejność jest
    kolejnością pól w formularzu — lista czyta się z góry na dół tak samo, jak
@@ -504,7 +423,6 @@ function sprawdz(f) {
   }
   puste.forEach(function (r) { braki.push(r.usterka); });
   if (braki.length) return braki;
-  if (login && ZAJETE.indexOf(login.value.trim().toLowerCase()) !== -1) braki.push('login-zajety');
   if (email && !adresPoprawny(email.value)) braki.push('email-bledny');
   if (haslo && !hasloSpelnia(haslo.value)) braki.push('haslo-slabe');
   if (haslo && haslo2 && haslo.value !== haslo2.value) braki.push('hasla-rozne');
@@ -528,14 +446,6 @@ FORMULARZE.forEach(function (f) {
         pokazUsterki(f, braki);
         return;
       }
-      wyczysc(f);
-      /* Dane kompletne, więc idzie próba. Odsłona nierozpoznanych danych jest
-         w prototypie odsłoną NIEUDANEJ próby — każde stąd wysłanie ją zużywa.
-         Wysłanie kodu zużywa jedną z pięciu dozwolonych wysyłek. */
-      if (f.licznik && policzProbe(f.licznik)) {
-        e.preventDefault();
-        e.stopPropagation();
-      }
     }, true);
   }
 
@@ -548,14 +458,6 @@ FORMULARZE.forEach(function (f) {
 });
 
 /* Odsłona wskazana adresem — żeby dało się obejrzeć komunikat bez wpisywania. */
-/* „Wyślij kod ponownie" to kolejna wysyłka, więc liczy się tak samo. */
-var ponowienia = document.querySelectorAll('.we-panel[data-widok="odzyskiwanie-kod"] .au-kod-stopka .au-link');
-for (var r = 0; r < ponowienia.length; r++) {
-  ponowienia[r].addEventListener('click', function (e) {
-    if (policzProbe('kod')) { e.preventDefault(); e.stopPropagation(); }
-  }, true);
-}
-
 var zAdresu = new URLSearchParams(location.search).get('rejestracja');
 if (zAdresu && USTERKI[zAdresu]) {
   var f = FORMULARZE.filter(function (x) { return x.widok === 'rejestracja'; })[0];

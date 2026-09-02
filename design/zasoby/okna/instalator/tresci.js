@@ -167,17 +167,13 @@ window.DanacoKreator.tresci = {
     },
     "pierwszeUruchomienie": {
       "naglowek": "Przy pierwszym uruchomieniu",
-      "tresc": "Pierwsze uruchomienie obejmuje utworzenie konta Operatora, wybór modeli oraz wprowadzenie kluczy dostępu do kont usług."
+      "tresc": "Program łączy się z serwerem wdrożenia, zakłada konto Operatora i potwierdza jego adres kodem z listu, po czym prowadzi do wyboru środowiska pracy."
     },
     "szczegoly": {
       "naglowek": "Szczegóły instalacji",
       "lokalizacja": { "etykieta": "Lokalizacja", "wartosc": "%LOCALAPPDATA%\\Programs\\Danaco Console" },
       "wersja": { "etykieta": "Wersja programu", "wartosc": "2.0.0" },
       "procesor": { "etykieta": "Procesor" }
-    },
-    "przewodnik": {
-      "etykieta": "Otwórz przewodnik konfiguracji",
-      "opis": "Przewodnik prowadzi przez ustawienia wymagane do rozpoczęcia pracy."
     },
     "odinstalowanie": "Program można odinstalować w Ustawieniach systemu Windows, w sekcji Aplikacje."
   },

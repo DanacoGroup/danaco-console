@@ -1,4 +1,4 @@
-/* Ekran szósty kreatora instalacji przedstawia wynik zakończonej instalacji programu oraz czynności dostępne po pierwszym uruchomieniu.
+/* Ekran szósty kreatora instalacji przedstawia wynik instalacji, jej szczegóły i zapowiedź pierwszego uruchomienia.
 
    Znak wyniku stoi przy tytule, bo to tytuł orzeka o wyniku instalacji; blok
    „przy pierwszym uruchomieniu" zapowiada przyszłe czynności i żadnego znaku
@@ -28,7 +28,6 @@ K.ekrany[6] = function () {
         { etykieta: tekst('krok6.szczegoly.procesor.etykieta'), wartosc: tekst('krok3.x64.nazwa'), dane: { 'podsumowanie-procesor': true } }
       ]
     }),
-    S.poleWyboru({ etykieta: 'krok6.przewodnik.etykieta', opis: 'krok6.przewodnik.opis', id: 'opis-przewodnik', zaznaczone: true }),
     S.frazaNawigacyjna({ klucz: 'krok6.odinstalowanie' })
   ]);
 };

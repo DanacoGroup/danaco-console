@@ -11,6 +11,7 @@ mod nastawy;
 mod okno;
 mod polecenia;
 mod rdzen;
+mod sekret;
 mod ustawienia;
 mod wskazanie;
 mod zamkniecie;

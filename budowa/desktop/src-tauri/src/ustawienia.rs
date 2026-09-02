@@ -6,6 +6,7 @@ use std::sync::{Arc, Mutex};
 
 use crate::dziennik;
 use crate::nastawy::{self, Nastawy};
+use crate::sekret;
 
 /// Port nasłuchu rdzenia. Musi być równy `PortDomyslny`
 /// z `server/internal/konfiguracja/ustawienia.go` (17870) — tamten plik jest
@@ -162,9 +163,12 @@ pub struct Ustawienia {
     host_ze_srodowiska: Option<String>,
     /// Schemat przypięty zmienną środowiska; brak = nastawy albo wpis instalki.
     schemat_ze_srodowiska: Option<Schemat>,
-    /// Sekret nawiązania gniazda wskazany zmienną środowiska; brak = rdzeń
-    /// sekretu nie sprawdza, bo nie ma z czym porównywać.
-    sekret_nawiazania: Option<String>,
+    /// Sekret nawiązania wskazany zmienną środowiska; brak = rdzeń zdalny go nie sprawdza.
+    sekret_ze_srodowiska: Option<String>,
+    /// Sekret wytworzony na to uruchomienie; idzie do rdzenia startowanego obok powłoki.
+    sekret_wytworzony: String,
+    /// Sekret rdzenia startowanego przez powłokę; wypełniany po jego starcie.
+    sekret_procesu: Arc<Mutex<Option<String>>>,
     /// Nastawy zapisane trwale — warstwa zmienialna w trakcie pracy okna.
     zapisane: Arc<Mutex<Nastawy>>,
 }
@@ -179,7 +183,9 @@ impl Ustawienia {
             schemat_ze_srodowiska: niepusta(ZMIENNA_SCHEMAT_RDZENIA)
                 .as_deref()
                 .and_then(Schemat::z_tekstu),
-            sekret_nawiazania: niepusta(ZMIENNA_SEKRET_NAWIAZANIA),
+            sekret_ze_srodowiska: niepusta(ZMIENNA_SEKRET_NAWIAZANIA),
+            sekret_wytworzony: sekret::wytworz(),
+            sekret_procesu: Arc::new(Mutex::new(None)),
             zapisane: Arc::new(Mutex::new(nastawy::czytaj())),
         };
         ostrzez_o_schemacie_nieznanym(ustawienia.schemat());
@@ -238,12 +244,29 @@ impl Ustawienia {
         self.wskazanie().map(|wskazane| wskazane.adres_http())
     }
 
-    /// Sekret nawiązania gniazda albo brak, gdy zmiennej nie wskazano.
-    /// Powłoka sama gniazda nie otwiera — otwiera je strona interfejsu — więc
-    /// sekret idzie do niej skryptem wstępnym okna, a stamtąd do rdzenia przy
-    /// uaktualnieniu gniazda.
+    /// Sekret podawany stronie interfejsu, bo gniazdo otwiera ona, nie powłoka.
+    /// Rdzeń startowany obok powłoki zna sekret wytworzony i on bije środowisko;
+    /// bez takiego rdzenia zostaje środowisko — sekretu zdalnego rdzenia powłoka
+    /// nie wymyśla.
     pub fn sekret_nawiazania(&self) -> Option<String> {
-        self.sekret_nawiazania.clone()
+        match self.sekret_procesu.lock() {
+            Ok(zamek) => zamek.clone().or_else(|| self.sekret_ze_srodowiska.clone()),
+            Err(_) => self.sekret_ze_srodowiska.clone(),
+        }
+    }
+
+    /// Sekret dla rdzenia startowanego obok: wartość ze środowiska, inaczej wytworzona.
+    pub fn sekret_dla_rdzenia(&self) -> String {
+        self.sekret_ze_srodowiska
+            .clone()
+            .unwrap_or_else(|| self.sekret_wytworzony.clone())
+    }
+
+    /// Odnotowuje sekret rdzenia wystartowanego przez powłokę.
+    pub fn odnotuj_proces_poboczny(&self, sekret: String) {
+        if let Ok(mut zamek) = self.sekret_procesu.lock() {
+            *zamek = Some(sekret);
+        }
     }
 
     /// Warstwa, z której pochodzi obowiązujące wskazanie hosta.

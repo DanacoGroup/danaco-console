@@ -69,7 +69,7 @@ func (a *adapterUwierzytelnienia) kontoPotwierdzone(ctx context.Context,
 		return nil
 	}
 	// Bramki nie zamyka potwierdzenie, gdy konto założono bez poczty — wejście idzie wtedy hasłem.
-	if _, bezPoczty := a.znacznikBezPoczty(ctx); bezPoczty {
+	if _, bezPoczty := a.znacznikBezPoczty(ctx, konto.Id); bezPoczty {
 		return nil
 	}
 	return bladBramkiZPowodem(shared.ErrorCodeNotAuthenticated, PowodAdresNiepotwierdzony,
@@ -394,7 +394,7 @@ func (a *adapterUwierzytelnienia) PotwierdzAdres(ctx context.Context,
 		return shared.AuthVerifyResponse{}, err
 	}
 	// Znacznik bramki bez poczty przestał być prawdą — bramkę trzyma odtąd sam wiersz konta.
-	a.zdejmijZnacznikBezPoczty(ctx)
+	a.zdejmijZnacznikBezPoczty(ctx, konto.Id)
 	sesja, err := a.zalozSesje(ctx, shared.AuthMethodKindPassword,
 		niepustyTekst(z.DeviceId), wartoscPrawdy(z.KeepSignedIn), konto.Id)
 	if err != nil {

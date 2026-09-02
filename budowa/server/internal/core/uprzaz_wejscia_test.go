@@ -408,10 +408,12 @@ func zarejestrujWlasciciela(t *testing.T, u uprzazWejscia) string {
 
 // znacznikWSejfie odpowiada, czy bramka pamięta, że powstała bez poczty, i jaki
 // adres wtedy zapamiętała, czytając sejf poświadczeń, gdzie ten stan leży.
+// Wskazaniem jest konto najstarsze — jedyne, jakie te sprawdziany zakładają.
 func znacznikWSejfie(t *testing.T, u uprzazWejscia) (string, bool) {
 	t.Helper()
 
-	return dane.NowySejfPlikowy(u.katalog).Odczytaj(u.zycie, bytZnacznikaBezPoczty)
+	konto := liczbaWierszy(t, u, `SELECT COALESCE(MIN(id), 0) FROM konto_wlasciciela`)
+	return dane.NowySejfPlikowy(u.katalog).Odczytaj(u.zycie, bytZnacznikaKonta(int64(konto)))
 }
 
 // ustawNadajnik zapisuje konto nadawcze platformy komendą `config.set` na

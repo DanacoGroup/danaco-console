@@ -1,5 +1,4 @@
-// Plik prowadzi obszar kompozycji Design Board, część RepozytoriumDesignu; zapis jest zawsze pełny, więc
-// ZapiszKompozycje usuwa warstwy kompozycji i wstawia przysłany komplet od nowa w jednej transakcji, wzorem ZapiszKroki.
+// Kompozycje Design Board: zapis jest zawsze pełny — ZapiszKompozycje podmienia komplet warstw w jednej transakcji.
 package dane
 
 import (
@@ -9,9 +8,7 @@ import (
 	"fmt"
 )
 
-// KompozycjaDesignu to wiersz tabeli `kompozycja_design` — kompozycja Design
-// Board bez warstw; warstwy leżą w osobnej tabeli, opisanej przez
-// `WarstwaKompozycji`.
+// KompozycjaDesignu to wiersz `kompozycja_design` bez warstw; warstwy leżą osobno, w `WarstwaKompozycji`.
 type KompozycjaDesignu struct {
 	ID             int64
 	Kod            string
@@ -20,9 +17,7 @@ type KompozycjaDesignu struct {
 	Zaktualizowano string
 }
 
-// WarstwaKompozycji to wiersz tabeli `warstwa_kompozycji_design`. ZasobID jest
-// identyfikatorem zewnętrznym zasobu (TEXT), nie kluczem obcym — warstwa może
-// wskazywać zasób usunięty z Assets Panel po zapisie kompozycji.
+// WarstwaKompozycji to wiersz `warstwa_kompozycji_design`; ZasobID to kod zasobu (TEXT), nie klucz obcy.
 type WarstwaKompozycji struct {
 	ID           int64
 	Kod          string
@@ -41,20 +36,20 @@ type WarstwaKompozycji struct {
 const (
 	kolumnyKompozycjiDesign = `id, identyfikator_zewnetrzny, okno, nazwa, zaktualizowano`
 
-	// Zapis zakłada kompozycję albo nadpisuje zastaną po identyfikatorze zewnętrznym; brak identyfikatora rozstrzyga wywołujący, nadając nowy przed wywołaniem.
 	zapiszKompozycjeDesign = `INSERT INTO kompozycja_design
-	                          (identyfikator_zewnetrzny, okno, nazwa, zaktualizowano)
-	                          VALUES (?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now'))
+	                          (identyfikator_zewnetrzny, okno, nazwa, zaktualizowano, konto_id)
+	                          VALUES (?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now'), ` + WskazanieKonta + `)
 	                          ON CONFLICT(identyfikator_zewnetrzny) DO UPDATE SET
 	                              nazwa = excluded.nazwa,
-	                              zaktualizowano = excluded.zaktualizowano`
+	                              zaktualizowano = excluded.zaktualizowano
+	                          WHERE ` + WarunekKonta
 
 	pobierzKompozycjeDesign = `SELECT ` + kolumnyKompozycjiDesign + ` FROM kompozycja_design
-	                           WHERE identyfikator_zewnetrzny = ?`
+	                           WHERE identyfikator_zewnetrzny = ? AND ` + WarunekKonta
 
 	// Wykaz kompozycji okna, od ostatnio zmienianej, żeby plansza porzucona najpóźniej stała na górze listy.
 	listaKompozycjiDesign = `SELECT ` + kolumnyKompozycjiDesign + ` FROM kompozycja_design
-	                         WHERE okno = ? ORDER BY zaktualizowano DESC, id DESC`
+	                         WHERE okno = ? AND ` + WarunekKonta + ` ORDER BY zaktualizowano DESC, id DESC`
 
 	usunWarstwyKompozycjiDesign = `DELETE FROM warstwa_kompozycji_design WHERE kompozycja_id = ?`
 
@@ -87,7 +82,7 @@ func (r *repozytoriumDesignu) ZapiszKompozycje(ctx context.Context,
 			return err
 		}
 		if _, err := zapis.ExecContext(ctx, kompozycja.Kod, kompozycja.Okno,
-			tekstDoKolumny(kompozycja.Nazwa)); err != nil {
+			tekstDoKolumny(kompozycja.Nazwa), KontoOperatora(ctx), KontoOperatora(ctx)); err != nil {
 			return fmt.Errorf("dane: nie można zapisać kompozycji design %q: %w", kompozycja.Kod, err)
 		}
 
@@ -96,7 +91,7 @@ func (r *repozytoriumDesignu) ZapiszKompozycje(ctx context.Context,
 		if err != nil {
 			return err
 		}
-		zapisana, err := odczytajKompozycjeDesign(odczyt.QueryRowContext(ctx, kompozycja.Kod))
+		zapisana, err := odczytajKompozycjeDesign(odczyt.QueryRowContext(ctx, kompozycja.Kod, KontoOperatora(ctx)))
 		if err != nil {
 			return fmt.Errorf("dane: nie można odczytać zapisanej kompozycji design %q: %w",
 				kompozycja.Kod, err)
@@ -141,15 +136,13 @@ func (r *repozytoriumDesignu) ZapiszKompozycje(ctx context.Context,
 	return r.Kompozycja(ctx, kompozycja.Kod)
 }
 
-// Kompozycja zwraca kompozycję Design Board o wskazanym kodzie. Brak wiersza
-// wraca jako ErrBrakWiersza — warstwa wyższa odróżnia „nie ma” od „odczyt się
-// nie powiódł”.
+// Kompozycja zwraca kompozycję Design Board po kodzie; brak wiersza wraca jako ErrBrakWiersza.
 func (r *repozytoriumDesignu) Kompozycja(ctx context.Context, kod string) (KompozycjaDesignu, error) {
 	polecenie, err := r.zapytania.przygotuj(ctx, pobierzKompozycjeDesign)
 	if err != nil {
 		return KompozycjaDesignu{}, err
 	}
-	kompozycja, err := odczytajKompozycjeDesign(polecenie.QueryRowContext(ctx, kod))
+	kompozycja, err := odczytajKompozycjeDesign(polecenie.QueryRowContext(ctx, kod, KontoOperatora(ctx)))
 	if errors.Is(err, sql.ErrNoRows) {
 		return KompozycjaDesignu{}, ErrBrakWiersza
 	}
@@ -165,7 +158,7 @@ func (r *repozytoriumDesignu) Kompozycje(ctx context.Context, okno string) ([]Ko
 	if err != nil {
 		return nil, err
 	}
-	wiersze, err := polecenie.QueryContext(ctx, okno)
+	wiersze, err := polecenie.QueryContext(ctx, okno, KontoOperatora(ctx))
 	if err != nil {
 		return nil, fmt.Errorf("dane: nie można odczytać kompozycji design okna %q: %w", okno, err)
 	}

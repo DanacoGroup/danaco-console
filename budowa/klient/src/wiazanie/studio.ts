@@ -49,6 +49,7 @@ import {
   zdejmijTrescPrzykladowaNarzedzi,
   zwiazNarzedzia,
 } from './studio-narzedzia.ts';
+import { zwiazKatalogOperacji } from './studio-katalog.ts';
 import { zdejmijTrescPrzykladowaStanu, zwiazStanOkna } from './studio-stan-okna.ts';
 import { zdejmijTrescPrzykladowaPlanu, zwiazPlan } from './studio-plan.ts';
 import { zdejmijTrescPrzykladowaPlikow, zwiazPliki } from './studio-pliki.ts';
@@ -955,6 +956,7 @@ function zwiazPanele(
     zwiazRepozytorium(kanal, idOkna, korzen),
     zwiazPliki(kanal, idOkna, korzen),
     zwiazNarzedzia(kanal, idOkna, idKarty, korzen),
+    zwiazKatalogOperacji(kanal, idOkna, korzen),
     zwiazStanOkna(kanal, idOkna, korzen),
     zwiazPodglad(kanal, idOkna, korzen),
     zwiazFormatowanie(kanal, idOkna, korzen),

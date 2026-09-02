@@ -1,6 +1,4 @@
-// Warstwa danych obsługuje zestawy żetonów systemu projektowego: tabele
-// zestaw_zetonow_design i zeton_design, z zapisem zestawu zawsze pełnym
-// w jednej transakcji.
+// Zestawy żetonów systemu projektowego (zestaw_zetonow_design, zeton_design); zapis zestawu jest zawsze pełny.
 package dane
 
 import (
@@ -10,8 +8,7 @@ import (
 	"fmt"
 )
 
-// ZestawZetonowDesignu to wiersz tabeli `zestaw_zetonow_design`. Żetony leżą
-// w osobnej tabeli i wchodzą osobnym odczytem — `Liczba` jest ich licznikiem.
+// ZestawZetonowDesignu to wiersz `zestaw_zetonow_design`; żetony wchodzą osobnym odczytem, `Liczba` je liczy.
 type ZestawZetonowDesignu struct {
 	ID             int64
 	Kod            string
@@ -22,8 +19,7 @@ type ZestawZetonowDesignu struct {
 	Zaktualizowano string
 }
 
-// ZetonDesignu to wiersz tabeli `zeton_design` — jedna rola systemu
-// projektowego wraz z jej wartością.
+// ZetonDesignu to wiersz `zeton_design` — jedna rola systemu projektowego wraz z jej wartością.
 type ZetonDesignu struct {
 	Nazwa      string
 	Rodzaj     string
@@ -39,22 +35,24 @@ const (
 	                                z.zaktualizowano`
 
 	zapiszZestawZetonowDesignu = `INSERT INTO zestaw_zetonow_design
-	                              (identyfikator_zewnetrzny, okno, nazwa, motyw, zaktualizowano)
-	                              VALUES (?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now'))
+	                              (identyfikator_zewnetrzny, okno, nazwa, motyw, zaktualizowano, konto_id)
+	                              VALUES (?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now'), ` + WskazanieKonta + `)
 	                              ON CONFLICT(identyfikator_zewnetrzny) DO UPDATE SET
 	                                  nazwa = excluded.nazwa,
 	                                  motyw = excluded.motyw,
-	                                  zaktualizowano = excluded.zaktualizowano`
+	                                  zaktualizowano = excluded.zaktualizowano
+	                              WHERE ` + WarunekKonta
 
 	pobierzZestawZetonowDesignu = `SELECT ` + kolumnyZestawuZetonowDesignu +
-		` FROM zestaw_zetonow_design z WHERE z.identyfikator_zewnetrzny = ?`
+		` FROM zestaw_zetonow_design z WHERE z.identyfikator_zewnetrzny = ? AND ` + WarunekKonta
 
 	listaZestawowZetonowDesignu = `SELECT ` + kolumnyZestawuZetonowDesignu +
-		` FROM zestaw_zetonow_design z WHERE z.okno = ?
-		  ORDER BY z.zaktualizowano DESC, z.id DESC`
+		` FROM zestaw_zetonow_design z WHERE z.okno = ? AND ` + WarunekKonta +
+		`  ORDER BY z.zaktualizowano DESC, z.id DESC`
 
 	listaZestawowZetonowDesignuJeden = `SELECT ` + kolumnyZestawuZetonowDesignu +
-		` FROM zestaw_zetonow_design z WHERE z.okno = ? AND z.identyfikator_zewnetrzny = ?`
+		` FROM zestaw_zetonow_design z WHERE z.okno = ? AND ` + WarunekKonta +
+		` AND z.identyfikator_zewnetrzny = ?`
 
 	usunZetonyZestawuDesignu = `DELETE FROM zeton_design WHERE zestaw_id = ?`
 
@@ -72,9 +70,7 @@ const (
 	                              FROM zeton_design WHERE zestaw_id = ? ORDER BY kolejnosc, nazwa`
 )
 
-// ZapiszZestawZetonowDesignu zakłada zestaw albo nadpisuje zastany po
-// identyfikatorze zewnętrznym i podmienia komplet jego żetonów w jednej
-// transakcji.
+// ZapiszZestawZetonowDesignu zakłada zestaw albo nadpisuje zastany po kodzie i podmienia komplet żetonów w transakcji.
 func (r *repozytoriumDesignu) ZapiszZestawZetonowDesignu(ctx context.Context,
 	zestaw ZestawZetonowDesignu, zetony []ZetonDesignu) (ZestawZetonowDesignu, error) {
 
@@ -94,16 +90,15 @@ func (r *repozytoriumDesignu) ZapiszZestawZetonowDesignu(ctx context.Context,
 			return err
 		}
 		if _, err := zapis.ExecContext(ctx, zestaw.Kod, zestaw.Okno, zestaw.Nazwa,
-			tekstDoKolumny(zestaw.Motyw)); err != nil {
+			tekstDoKolumny(zestaw.Motyw), KontoOperatora(ctx), KontoOperatora(ctx)); err != nil {
 			return fmt.Errorf("dane: nie można zapisać zestawu żetonów design %q: %w", zestaw.Kod, err)
 		}
 
-		// Zestaw mógł dopiero powstać w tej transakcji; klucz odczytujemy przed podmianą żetonów.
 		odczyt, err := r.zapytania.wTransakcji(ctx, transakcja, pobierzZestawZetonowDesignu)
 		if err != nil {
 			return err
 		}
-		zapisany, err := odczytajZestawZetonowDesignu(odczyt.QueryRowContext(ctx, zestaw.Kod))
+		zapisany, err := odczytajZestawZetonowDesignu(odczyt.QueryRowContext(ctx, zestaw.Kod, KontoOperatora(ctx)))
 		if err != nil {
 			return fmt.Errorf("dane: nie można odczytać zapisanego zestawu żetonów design %q: %w",
 				zestaw.Kod, err)
@@ -145,8 +140,7 @@ func (r *repozytoriumDesignu) ZapiszZestawZetonowDesignu(ctx context.Context,
 	return r.ZestawZetonowDesignuPoKodzie(ctx, zestaw.Kod)
 }
 
-// ZestawZetonowDesignuPoKodzie zwraca zestaw o wskazanym identyfikatorze
-// zewnętrznym. Brak wiersza wraca jako ErrBrakWiersza.
+// ZestawZetonowDesignuPoKodzie zwraca zestaw po kodzie; brak wiersza wraca jako ErrBrakWiersza.
 func (r *repozytoriumDesignu) ZestawZetonowDesignuPoKodzie(ctx context.Context,
 	kod string) (ZestawZetonowDesignu, error) {
 
@@ -154,7 +148,7 @@ func (r *repozytoriumDesignu) ZestawZetonowDesignuPoKodzie(ctx context.Context,
 	if err != nil {
 		return ZestawZetonowDesignu{}, err
 	}
-	zestaw, err := odczytajZestawZetonowDesignu(polecenie.QueryRowContext(ctx, kod))
+	zestaw, err := odczytajZestawZetonowDesignu(polecenie.QueryRowContext(ctx, kod, KontoOperatora(ctx)))
 	if errors.Is(err, sql.ErrNoRows) {
 		return ZestawZetonowDesignu{}, ErrBrakWiersza
 	}
@@ -165,13 +159,12 @@ func (r *repozytoriumDesignu) ZestawZetonowDesignuPoKodzie(ctx context.Context,
 	return zestaw, nil
 }
 
-// ZestawyZetonowDesignu zwraca zestawy okna, od ostatnio zmienianego;
-// wskazanie kodu zawęża wykaz do jednego zestawu.
+// ZestawyZetonowDesignu zwraca zestawy okna; wskazanie kodu zawęża wykaz do jednego zestawu.
 func (r *repozytoriumDesignu) ZestawyZetonowDesignu(ctx context.Context,
 	okno string, kod *string) ([]ZestawZetonowDesignu, error) {
 
 	zapytanie := listaZestawowZetonowDesignu
-	argumenty := []any{okno}
+	argumenty := []any{okno, KontoOperatora(ctx)}
 	if kod != nil && *kod != "" {
 		zapytanie = listaZestawowZetonowDesignuJeden
 		argumenty = append(argumenty, *kod)

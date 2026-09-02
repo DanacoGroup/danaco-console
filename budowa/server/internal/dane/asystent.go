@@ -1,5 +1,4 @@
-// Plik prowadzi obszar Assistant: definicję zlecenia asystenta wraz z kontraktem całego obszaru; dziennik działań
-// leży w asystent_dziennik.go, przyjęcie polecenia w asystent_polecenia.go, a interfejs w całości deklaruje wyłącznie ten plik.
+// Obszar Assistant: zlecenie asystenta wraz z kontraktem całego obszaru (dziennik i polecenia w osobnych plikach).
 package dane
 
 import (
@@ -30,28 +29,23 @@ type ZlecenieAsystenta struct {
 
 // RepozytoriumAsystenta jest kontraktem obszaru Assistant: zlecenia, dziennik działań i przyjęcie polecenia.
 type RepozytoriumAsystenta interface {
-	// --- agent A: zlecenie ---
 	ZapiszZlecenie(ctx context.Context, zlecenie ZlecenieAsystenta) (ZlecenieAsystenta, error)
 	Zlecenie(ctx context.Context, kod string) (ZlecenieAsystenta, error)
 	Zlecenia(ctx context.Context, okno string) ([]ZlecenieAsystenta, error)
 	UstawStanZlecenia(ctx context.Context, kod, stan string) (ZlecenieAsystenta, error)
-	// UstawPriorytetZlecenia zmienia kolejność obsługi zlecenia, osobno od zmiany stanu zlecenia.
 	UstawPriorytetZlecenia(ctx context.Context, kod string, priorytet int64) (ZlecenieAsystenta, error)
-	// ZakonczZlecenie domyka zlecenie po wykonaniu, ustawiając stan końcowy i wynik jednym zapisem.
 	ZakonczZlecenie(ctx context.Context, kod, stan, wynik string) (ZlecenieAsystenta, error)
 
-	// --- agent B: dziennik ---
 	ZapiszWpis(ctx context.Context, wpis WpisDziennikaAsystenta) (WpisDziennikaAsystenta, error)
 	Wpisy(ctx context.Context, okno string, limit int) ([]WpisDziennikaAsystenta, error)
 	WpisyZlecenia(ctx context.Context, kodZlecenia string) ([]WpisDziennikaAsystenta, error)
 	WpisDziennika(ctx context.Context, kod string) (WpisDziennikaAsystenta, error)
 	OznaczWpisDziennika(ctx context.Context, kod string, wazny bool, notatka *string) (WpisDziennikaAsystenta, error)
 
-	// --- agent C: polecenia ---
 	PrzyjmijPolecenie(ctx context.Context, zlecenie ZlecenieAsystenta,
 		wpis WpisDziennikaAsystenta) (ZlecenieAsystenta, WpisDziennikaAsystenta, error)
 
-	// Dalej stoi odczyt profilu asystenta: zakładania i wykazu tu nie ma, bo żadna komenda ich nie woła.
+	// Dalej stoi tylko odczyt profilu asystenta: zakładania i wykazu tu nie ma, bo żadna komenda ich nie woła.
 	Profil(ctx context.Context, kod string) (ProfilAsystenta, error)
 	ProfilDomyslny(ctx context.Context) (ProfilAsystenta, error)
 }
@@ -64,8 +58,8 @@ const (
 	zapiszZlecenieAsystenta = `INSERT INTO zlecenie_asystenta
 	                           (identyfikator_zewnetrzny, okno_kod, tytul, stan, droga,
 	                            etap_biezacy, liczba_etapow, priorytet, wynik, profil_kod,
-	                            utworzono, zaktualizowano)
-	                           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+	                            utworzono, zaktualizowano, konto_id)
+	                           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ` + WskazanieKonta + `)
 	                           ON CONFLICT(identyfikator_zewnetrzny) DO UPDATE SET
 	                               okno_kod = excluded.okno_kod,
 	                               tytul = excluded.tytul,
@@ -76,21 +70,22 @@ const (
 	                               priorytet = excluded.priorytet,
 	                               wynik = excluded.wynik,
 	                               profil_kod = excluded.profil_kod,
-	                               zaktualizowano = excluded.zaktualizowano`
+	                               zaktualizowano = excluded.zaktualizowano
+	                           WHERE ` + WarunekKonta
 
 	pobierzZlecenieAsystenta = `SELECT ` + kolumnyZleceniaAsystenta + ` FROM zlecenie_asystenta
-	                            WHERE identyfikator_zewnetrzny = ?`
+	                            WHERE identyfikator_zewnetrzny = ? AND ` + WarunekKonta
 
 	pobierzZleceniaOkna = `SELECT ` + kolumnyZleceniaAsystenta + ` FROM zlecenie_asystenta
-	                       WHERE okno_kod = ?
+	                       WHERE okno_kod = ? AND ` + WarunekKonta + `
 	                       ORDER BY zaktualizowano DESC, id DESC`
 
 	ustawStanZleceniaAsystenta = `UPDATE zlecenie_asystenta SET stan = ?, zaktualizowano = ?
-	                              WHERE identyfikator_zewnetrzny = ?`
+	                              WHERE identyfikator_zewnetrzny = ? AND ` + WarunekKonta
 	ustawPriorytetZleceniaAsystenta = `UPDATE zlecenie_asystenta SET priorytet = ?, zaktualizowano = ?
-	                                   WHERE identyfikator_zewnetrzny = ?`
+	                                   WHERE identyfikator_zewnetrzny = ? AND ` + WarunekKonta
 	zakonczZlecenieAsystenta = `UPDATE zlecenie_asystenta SET stan = ?, wynik = ?, zaktualizowano = ?
-	                            WHERE identyfikator_zewnetrzny = ?`
+	                            WHERE identyfikator_zewnetrzny = ? AND ` + WarunekKonta
 )
 
 type repozytoriumAsystenta struct {
@@ -102,9 +97,7 @@ func noweRepozytoriumAsystenta(z *zapytania, db *sql.DB) *repozytoriumAsystenta 
 	return &repozytoriumAsystenta{zapytania: z, db: db}
 }
 
-// ZapiszZlecenie zakłada wiersz zlecenia albo nadpisuje zastany po kodzie
-// zewnętrznym. `Utworzono` nie wchodzi do klauzuli UPDATE — zapis powtórny nie
-// ma prawa przesunąć chwili założenia zlecenia, tylko chwilę ostatniej zmiany.
+// ZapiszZlecenie zakłada wiersz zlecenia albo nadpisuje zastany po kodzie; `Utworzono` nie wchodzi do UPDATE.
 func (r *repozytoriumAsystenta) ZapiszZlecenie(ctx context.Context, zlecenie ZlecenieAsystenta) (ZlecenieAsystenta, error) {
 	if zlecenie.Kod == "" {
 		return ZlecenieAsystenta{}, fmt.Errorf("dane: zlecenie asystenta bez identyfikatora")
@@ -124,21 +117,21 @@ func (r *repozytoriumAsystenta) ZapiszZlecenie(ctx context.Context, zlecenie Zle
 	_, err = polecenie.ExecContext(ctx, zlecenie.Kod, zlecenie.OknoKod, tekstDoKolumny(zlecenie.Tytul),
 		zlecenie.Stan, zlecenie.Droga, liczbaDoKolumny(zlecenie.EtapBiezacy),
 		liczbaDoKolumny(zlecenie.LiczbaEtapow), liczbaDoKolumny(zlecenie.Priorytet),
-		tekstDoKolumny(zlecenie.Wynik), tekstDoKolumny(zlecenie.ProfilKod), utworzono, teraz)
+		tekstDoKolumny(zlecenie.Wynik), tekstDoKolumny(zlecenie.ProfilKod), utworzono, teraz,
+		KontoOperatora(ctx), KontoOperatora(ctx))
 	if err != nil {
 		return ZlecenieAsystenta{}, fmt.Errorf("dane: nie można zapisać zlecenia asystenta %q: %w", zlecenie.Kod, err)
 	}
 	return r.Zlecenie(ctx, zlecenie.Kod)
 }
 
-// Zlecenie zwraca zlecenie o wskazanym kodzie. Brak wiersza wraca jako
-// ErrBrakWiersza — warstwa wyższa odróżnia „nie ma” od „odczyt się nie powiódł”.
+// Zlecenie zwraca zlecenie po kodzie; brak wiersza wraca jako ErrBrakWiersza.
 func (r *repozytoriumAsystenta) Zlecenie(ctx context.Context, kod string) (ZlecenieAsystenta, error) {
 	polecenie, err := r.zapytania.przygotuj(ctx, pobierzZlecenieAsystenta)
 	if err != nil {
 		return ZlecenieAsystenta{}, err
 	}
-	zlecenie, err := odczytajZlecenieAsystenta(polecenie.QueryRowContext(ctx, kod))
+	zlecenie, err := odczytajZlecenieAsystenta(polecenie.QueryRowContext(ctx, kod, KontoOperatora(ctx)))
 	if errors.Is(err, sql.ErrNoRows) {
 		return ZlecenieAsystenta{}, ErrBrakWiersza
 	}
@@ -154,7 +147,7 @@ func (r *repozytoriumAsystenta) Zlecenia(ctx context.Context, okno string) ([]Zl
 	if err != nil {
 		return nil, err
 	}
-	wiersze, err := polecenie.QueryContext(ctx, okno)
+	wiersze, err := polecenie.QueryContext(ctx, okno, KontoOperatora(ctx))
 	if err != nil {
 		return nil, fmt.Errorf("dane: nie można odczytać zleceń okna %q: %w", okno, err)
 	}
@@ -174,15 +167,13 @@ func (r *repozytoriumAsystenta) Zlecenia(ctx context.Context, okno string) ([]Zl
 	return lista, nil
 }
 
-// UstawStanZlecenia zmienia stan zlecenia po kodzie zewnętrznym. Kod nieznany
-// wraca jako ErrBrakWiersza — cicha zgoda na zmianę stanu bytu, którego nie ma,
-// byłaby potwierdzeniem czynności, która się nie odbyła.
+// UstawStanZlecenia zmienia stan zlecenia po kodzie; kod nieznany wraca jako ErrBrakWiersza.
 func (r *repozytoriumAsystenta) UstawStanZlecenia(ctx context.Context, kod, stan string) (ZlecenieAsystenta, error) {
 	polecenie, err := r.zapytania.przygotuj(ctx, ustawStanZleceniaAsystenta)
 	if err != nil {
 		return ZlecenieAsystenta{}, err
 	}
-	wynik, err := polecenie.ExecContext(ctx, stan, time.Now().UnixMilli(), kod)
+	wynik, err := polecenie.ExecContext(ctx, stan, time.Now().UnixMilli(), kod, KontoOperatora(ctx))
 	if err != nil {
 		return ZlecenieAsystenta{}, fmt.Errorf("dane: nie można ustawić stanu zlecenia asystenta %q: %w", kod, err)
 	}
@@ -204,7 +195,7 @@ func (r *repozytoriumAsystenta) UstawPriorytetZlecenia(ctx context.Context,
 	if err != nil {
 		return ZlecenieAsystenta{}, err
 	}
-	wynik, err := polecenie.ExecContext(ctx, priorytet, time.Now().UnixMilli(), kod)
+	wynik, err := polecenie.ExecContext(ctx, priorytet, time.Now().UnixMilli(), kod, KontoOperatora(ctx))
 	if err != nil {
 		return ZlecenieAsystenta{}, fmt.Errorf("dane: nie można ustawić priorytetu zlecenia asystenta %q: %w", kod, err)
 	}
@@ -224,7 +215,7 @@ func (r *repozytoriumAsystenta) ZakonczZlecenie(ctx context.Context, kod, stan, 
 	if err != nil {
 		return ZlecenieAsystenta{}, err
 	}
-	wynikZapisu, err := polecenie.ExecContext(ctx, stan, wynik, time.Now().UnixMilli(), kod)
+	wynikZapisu, err := polecenie.ExecContext(ctx, stan, wynik, time.Now().UnixMilli(), kod, KontoOperatora(ctx))
 	if err != nil {
 		return ZlecenieAsystenta{}, fmt.Errorf("dane: nie można domknąć zlecenia asystenta %q: %w", kod, err)
 	}
@@ -238,7 +229,6 @@ func (r *repozytoriumAsystenta) ZakonczZlecenie(ctx context.Context, kod, stan, 
 	return r.Zlecenie(ctx, kod)
 }
 
-// odczytajZlecenieAsystenta składa strukturę zlecenia wprost z jednego wiersza wyniku zapytania do bazy SQL.
 func odczytajZlecenieAsystenta(wiersz skaner) (ZlecenieAsystenta, error) {
 	var zlecenie ZlecenieAsystenta
 	var tytul, wynik, profil sql.NullString

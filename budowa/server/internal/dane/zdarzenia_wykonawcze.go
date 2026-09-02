@@ -7,8 +7,6 @@ import (
 
 // Dziennik zdarzeń zaczepów i zamknięcia tur; zapis następuje po zdarzeniu.
 
-// ZdarzenieZaczepuWiersz jest jednym wierszem dziennika zdarzeń zaczepów tury
-// wykonawczej, zapisanym po fakcie.
 type ZdarzenieZaczepuWiersz struct {
 	ID           int64
 	Chwila       int64
@@ -25,8 +23,6 @@ type ZdarzenieZaczepuWiersz struct {
 	SesjaCLI     string
 }
 
-// ZamkniecieTuryWiersz jest zapisem zdarzenia `result`, które zamknęło turę,
-// wraz ze stanem wiadomości wyprowadzonym z tego zdarzenia.
 type ZamkniecieTuryWiersz struct {
 	Chwila             int64
 	OknoKod            string
@@ -43,8 +39,6 @@ type ZamkniecieTuryWiersz struct {
 	LinieNierozpoznane int
 }
 
-// PrzelaczenieKanaluWiersz jest śladem jednego przełączenia kanału: który kanał
-// odmówił, którym tura pojechała dalej i z jakiego powodu.
 type PrzelaczenieKanaluWiersz struct {
 	Chwila       int64
 	OknoKod      string
@@ -54,25 +48,18 @@ type PrzelaczenieKanaluWiersz struct {
 	Powod        string
 }
 
-// RepozytoriumZdarzenWykonawczych utrwala zdarzenia zaczepów, zamknięcia tur
-// i przełączenia kanałów — ślady wykonawcze tury.
 type RepozytoriumZdarzenWykonawczych interface {
-	// ZapiszZaczep dopisuje jedno zdarzenie zaczepu do dziennika.
 	ZapiszZaczep(ctx context.Context, z ZdarzenieZaczepuWiersz) error
-	// ZapiszZamkniecie utrwala zamknięcie tury; powtórny zapis nadpisuje wiersz.
 	ZapiszZamkniecie(ctx context.Context, z ZamkniecieTuryWiersz) error
-	// ZapiszPrzelaczenie utrwala wykonane przełączenie kanału.
 	ZapiszPrzelaczenie(ctx context.Context, z PrzelaczenieKanaluWiersz) error
-	// ZaczepyOkna zwraca zdarzenia zaczepów okna od najnowszych, do wskazanej
-	// granicy.
 	ZaczepyOkna(ctx context.Context, oknoKod string, granica int) ([]ZdarzenieZaczepuWiersz, error)
 }
 
 const (
 	zapiszZaczepSQL = `INSERT INTO dziennik_zdarzen
 		(chwila, okno_kod, wiadomosc_kod, rodzaj, zaczep_id, zaczep, zdarzenie,
-		 wynik, kod_wyjscia, tresc, ladunek, sesja_cli)
-		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+		 wynik, kod_wyjscia, tresc, ladunek, sesja_cli, konto_id)
+		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ` + WskazanieKonta + `)`
 
 	// INSERT OR REPLACE, bo `wiadomosc_kod` jest UNIQUE: gdyby tura z jakiegoś
 	// powodu domknęła się dwa razy, prawdą zostaje zamknięcie ostatnie.
@@ -87,12 +74,10 @@ const (
 
 	zaczepyOknaSQL = `SELECT id, chwila, okno_kod, wiadomosc_kod, rodzaj,
 		 zaczep_id, zaczep, zdarzenie, wynik, kod_wyjscia, tresc, ladunek, sesja_cli
-		FROM dziennik_zdarzen WHERE okno_kod = ?
+		FROM dziennik_zdarzen WHERE okno_kod = ? AND ` + WarunekKonta + `
 		ORDER BY chwila DESC, id DESC LIMIT ?`
 )
 
-// granicaZaczepowDomyslna ogranicza odczyt dziennika zdarzeń, gdy wywołanie
-// nie wskazuje własnej granicy wierszy.
 const granicaZaczepowDomyslna = 100
 
 type repozytoriumZdarzenWykonawczych struct {
@@ -114,7 +99,7 @@ func (r *repozytoriumZdarzenWykonawczych) ZapiszZaczep(ctx context.Context, z Zd
 	}
 	if _, err := polecenie.ExecContext(ctx, z.Chwila, z.OknoKod, z.WiadomoscKod,
 		z.Rodzaj, z.ZaczepID, z.Zaczep, z.Zdarzenie, z.Wynik, kodWyjscia,
-		z.Tresc, z.Ladunek, z.SesjaCLI); err != nil {
+		z.Tresc, z.Ladunek, z.SesjaCLI, KontoOperatora(ctx)); err != nil {
 		return fmt.Errorf("dane: nie można zapisać zdarzenia zaczepu %q: %w", z.Zaczep, err)
 	}
 	return nil
@@ -157,7 +142,7 @@ func (r *repozytoriumZdarzenWykonawczych) ZaczepyOkna(ctx context.Context, oknoK
 	if err != nil {
 		return nil, err
 	}
-	wiersze, err := polecenie.QueryContext(ctx, oknoKod, granica)
+	wiersze, err := polecenie.QueryContext(ctx, oknoKod, KontoOperatora(ctx), granica)
 	if err != nil {
 		return nil, fmt.Errorf("dane: nie można odczytać zdarzeń zaczepów okna %q: %w", oknoKod, err)
 	}

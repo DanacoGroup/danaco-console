@@ -110,8 +110,8 @@ function etapLaczeniaAktywny(): boolean {
   return document.querySelector('.we-scena[data-widok="laczenie"][data-widok-aktywny="tak"]') !== null;
 }
 
-function odegrajLaczenie(): void {
-  ustawWariant('w-laczenie');
+function odegrajLaczenie(wariant: 'w-laczenie' | 'w-token' = 'w-laczenie'): void {
+  ustawWariant(wariant);
   document
     .querySelector('[data-ekran-startowy]')
     ?.dispatchEvent(new CustomEvent('ekran-startowy-koniec', { bubbles: true }));
@@ -235,8 +235,15 @@ async function powitaj(most: Kanal | undefined): Promise<void> {
   }
   const wynik = await zadajPowitanie(most, tozsamoscKlienta(), tokenSesji() || undefined);
   powitanoRaz = true;
-  ustawWariant(wynik.udany ? 'w-laczenie' : 'w-blad');
   domknijEkranStartowy();
+  if (!wynik.udany) {
+    ustawWariant('w-blad');
+    return;
+  }
+  /* Okno staje w gnieździe później niż rusza przebieg łączenia, więc przebieg
+     nie zastaje panelu z celem przejścia. Wariant i sygnał końca ekranu idą
+     dopiero po powrocie powitania, kiedy panel stoi. */
+  odegrajLaczenie(wynik.wynik?.authenticated === true ? 'w-token' : 'w-laczenie');
 }
 
 function ustawWariant(widok: string): void {

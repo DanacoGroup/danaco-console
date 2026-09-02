@@ -32,6 +32,18 @@ import {
   zapiszUkladPaneli,
 } from './okna-robocze.ts';
 import { zapewnijSesje } from './sesja-biezaca.ts';
+import { zdejmijTrescPrzykladowaAutozapisu, zwiazAutozapis } from './studio-autozapis.ts';
+import {
+  zapiszDokumentZPostacia,
+  zdejmijTrescPrzykladowaFormatu,
+  zwiazFormatDokumentu,
+} from './studio-dokument.ts';
+import {
+  zdejmijTrescPrzykladowaFormatowania,
+  zwiazFormatowanie,
+} from './studio-formatowanie.ts';
+import { zdejmijTrescPrzykladowaStylow, zwiazStyle } from './studio-style.ts';
+import { zdejmijTrescPrzykladowaStruktur, zwiazStruktury } from './studio-struktury.ts';
 import {
   uruchomOperacjeDokumentu,
   zdejmijTrescPrzykladowaNarzedzi,
@@ -121,6 +133,15 @@ export function zwiazStudio(
   const wzorPozycji = zdejmijWzorPozycji(wezly.szyna);
   zdejmijTrescPrzykladowa(wezly, korzen);
   zdejmijCzynnosciWstazkiBezPokrycia(korzen);
+
+  // Biblioteka wiąże pasmo kart raz, przy wczytaniu skryptu; karta Studia
+  // wchodzi w dokument później, więc przełączanie panelu stoi tutaj.
+  korzen.addEventListener('click', (zdarzenie) => {
+    const cel = zdarzenie.target;
+    if (!(cel instanceof Element)) return;
+    const karta = cel.closest<HTMLElement>('.st-karty [role="tab"][data-karta]');
+    if (karta !== null) przelaczKarte(korzen, karta);
+  }, przy);
 
   const wpisy = new Map<string, HTMLElement>();
   const strumienie = new Map<string, StrumienOdpowiedzi>();
@@ -445,6 +466,11 @@ function zdejmijTrescPrzykladowa(wezly: WezlyStudia, korzen: Element): void {
   zdejmijTrescPrzykladowaNarzedzi(korzen);
   zdejmijTrescPrzykladowaPodgladu(korzen);
   zdejmijTrescPrzykladowaStanu(korzen);
+  zdejmijTrescPrzykladowaFormatowania(korzen);
+  zdejmijTrescPrzykladowaStylow(korzen);
+  zdejmijTrescPrzykladowaStruktur(korzen);
+  zdejmijTrescPrzykladowaFormatu(korzen);
+  zdejmijTrescPrzykladowaAutozapisu(korzen);
   // Pas stanu prototypu niesie miary cudzego dokumentu; okno bez dokumentu ma zero słów.
   odswiezPasStanu(wezly, null);
 }
@@ -531,7 +557,8 @@ async function opiszKanal(kanal: Kanal, nazwaSrodowiska: string, korzen: Element
 
 function opiszDokumentKarty(korzen: Element, dokument: StudioDocument | null): void {
   const nazwa = dokument?.title ?? 'Dokument bez nazwy';
-  const miejsca = '.st-wstazka-sesja span, .sta-okno-znacznik, .dn-karta--robocza .dn-karta-widoku-nazwa';
+  const miejsca = '.st-wstazka-sesja span, #panel-editor .sta-okno-znacznik,'
+    + ' .dn-karta--robocza .dn-karta-widoku-nazwa';
   for (const wezel of korzen.querySelectorAll(miejsca)) wezel.textContent = nazwa;
   // Znak dokumentu bieżącego niesie ikonę obok napisu, więc idzie w nim sam napis.
   const znak = korzen.querySelector('.sta-kom .sta-okno-belka .sta-chip[title="Dokument bieżący"]');
@@ -687,7 +714,18 @@ function naniesUkladKart(korzen: Element, sekcje: PanelSection[]): void {
     `.st-karty [role="tab"][data-karta="${otwarta.id}"]`,
   );
   if (karta === null || karta.getAttribute('aria-selected') === 'true') return;
-  karta.click();
+  przelaczKarte(korzen, karta);
+}
+
+function przelaczKarte(korzen: Element, wybrana: HTMLElement): void {
+  for (const karta of korzen.querySelectorAll<HTMLElement>('.st-karty [role="tab"][data-karta]')) {
+    const czynna = karta === wybrana;
+    karta.setAttribute('aria-selected', czynna ? 'true' : 'false');
+    karta.tabIndex = czynna ? 0 : -1;
+    const oznaczenie = karta.getAttribute('aria-controls') ?? '';
+    const panel = oznaczenie === '' ? null : korzen.querySelector<HTMLElement>(`#${oznaczenie}`);
+    if (panel !== null) panel.hidden = !czynna;
+  }
 }
 
 async function wypelnijSzyne(
@@ -776,14 +814,14 @@ async function zapiszDokument(
   wezly: WezlyStudia,
   poZapisie: (dokument: StudioDocument) => void,
 ): Promise<void> {
-  const wynik = await wywolaj(kanal, Command.StudioDocumentSave, {
-    documentId: idDokumentu,
-    content: wezly.kanwa.textContent ?? '',
-    createVersion: true,
-  });
-  if (!wynik.udany || wynik.wynik === undefined) return;
-  poZapisie(wynik.wynik.document);
-  odswiezPasStanu(wezly, wynik.wynik.document);
+  const zapisany = await zapiszDokumentZPostacia(
+    kanal,
+    idDokumentu,
+    wezly.kanwa.textContent ?? '',
+  );
+  if (zapisany === null) return;
+  poZapisie(zapisany);
+  odswiezPasStanu(wezly, zapisany);
 }
 
 function odswiezPasStanu(wezly: WezlyStudia, dokument: StudioDocument | null): void {
@@ -794,8 +832,6 @@ function odswiezPasStanu(wezly: WezlyStudia, dokument: StudioDocument | null): v
   if (wersja !== undefined) {
     wersja.textContent = dokument?.versionId === undefined ? '' : `wersja ${dokument.versionId}`;
   }
-  // Godzina zapisu samoczynnego nie ma w kontrakcie źródła.
-  pola.find((pole) => pole.textContent?.includes('zapisano') === true)?.remove();
 }
 
 function policzSlowa(tresc: string): number {
@@ -921,6 +957,11 @@ function zwiazPanele(
     zwiazNarzedzia(kanal, idOkna, idKarty, korzen),
     zwiazStanOkna(kanal, idOkna, korzen),
     zwiazPodglad(kanal, idOkna, korzen),
+    zwiazFormatowanie(kanal, idOkna, korzen),
+    zwiazStyle(kanal, idOkna, korzen),
+    zwiazStruktury(kanal, idOkna, korzen),
+    zwiazFormatDokumentu(kanal, idOkna, korzen),
+    zwiazAutozapis(kanal, idOkna, korzen),
   ];
   for (const odlacz of zwiazane) {
     if (odlacz !== null) odlaczenia.push(odlacz);

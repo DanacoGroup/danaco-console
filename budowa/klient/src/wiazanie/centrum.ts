@@ -60,9 +60,15 @@ import {
   zapomnijSesje,
 } from './sesja-biezaca.ts';
 import { zwiazStudio, zwolnijStudio } from './studio.ts';
+import { zwiazLibrary, zwolnijLibrary } from './library.ts';
+import { zwiazWorkspace, zwolnijWorkspace } from './workspace.ts';
+import { zwiazAgents, zwolnijAgents } from './agents.ts';
 import { zglosUchwyt } from './zdarzenia.ts';
 
 const KOD_MODULU_WYDANIA = 'studio';
+const KOD_MODULU_BIBLIOTEKI = 'library';
+const KOD_MODULU_WARSZTATU = 'workspace';
+const KOD_MODULU_EKSPERTOW = 'agents';
 
 const POWROT_NA_STRONE_GLOWNA =
   '[aria-label="Centrum dowodzenia"], .dn-karta-widoku--glowna, [data-wyjscie-modulu]';
@@ -206,6 +212,12 @@ export function zwiazCentrum(kanal: Kanal | undefined = globalThis.DanacoKanal):
       const idOkna = karta.idOknaKomunikacji;
       if (modul.code === KOD_MODULU_WYDANIA) {
         zwiazStudio(kanal, nazwaSrodowiska, idOkna, wnetrze.wezel);
+      } else if (modul.code === KOD_MODULU_BIBLIOTEKI) {
+        zwiazLibrary(kanal, nazwaSrodowiska, idOkna, wnetrze.wezel);
+      } else if (modul.code === KOD_MODULU_WARSZTATU) {
+        zwiazWorkspace(kanal, nazwaSrodowiska, idOkna, wnetrze.wezel);
+      } else if (modul.code === KOD_MODULU_EKSPERTOW) {
+        zwiazAgents(kanal, nazwaSrodowiska, idOkna, wnetrze.wezel);
       } else if (idOkna === '') {
         zwiazOkno(kanal, modul.code, nazwaSrodowiska, wnetrze.wezel);
       } else {
@@ -397,6 +409,9 @@ export function zwiazCentrum(kanal: Kanal | undefined = globalThis.DanacoKanal):
       const idKarty = wnetrze.dataset.karta ?? '';
       if (kartaOkna(idKarty) !== undefined) continue;
       zwolnijStudio(idKarty);
+      zwolnijLibrary(idKarty);
+      zwolnijWorkspace(idKarty);
+      zwolnijAgents(idKarty);
       wnetrze.remove();
     }
   };

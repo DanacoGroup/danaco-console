@@ -105,7 +105,7 @@ const (
 	// Bloki osierocone — wiszą na identyfikatorze wiadomości, której już nie ma
 	// (bez klucza obcego nie ma kaskady).
 	usunBlokiOsierocone = `DELETE FROM blok_wiadomosci
-	                       WHERE okno_kod = ?
+	                       WHERE okno_kod = ? AND ` + WarunekKonta + `
 	                         AND wiadomosc_kod NOT IN (
 	                             SELECT COALESCE(w.identyfikator_zewnetrzny, '')
 	                             FROM wiadomosc w
@@ -304,7 +304,8 @@ func wykonajUsuniecie(ctx context.Context, transakcja *sql.Tx,
 // sprzatnijBloki usuwa bloki wiadomości, których wypowiedzi już nie ma w tabeli
 // wiadomości, po usunięciu pozycji historii.
 func sprzatnijBloki(ctx context.Context, transakcja *sql.Tx, oknoKod string) error {
-	if _, err := transakcja.ExecContext(ctx, usunBlokiOsierocone, oknoKod, oknoKod); err != nil {
+	if _, err := transakcja.ExecContext(ctx, usunBlokiOsierocone, oknoKod,
+		KontoOperatora(ctx), oknoKod); err != nil {
 		return fmt.Errorf("dane: czyszczenie bloków okna %q: %w", oknoKod, err)
 	}
 	return nil

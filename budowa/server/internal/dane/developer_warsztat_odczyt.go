@@ -34,6 +34,7 @@ const (
 	pobierzKolekcjeApiDevelopera = `SELECT ` + kolumnyKolekcjiApiDevelopera + `
 	                                FROM developer_kolekcja_api
 	                                WHERE okno_kod = ? AND (? = '' OR kod = ?)
+	                                  AND ` + WarunekKonta + `
 	                                ORDER BY zmieniono DESC, id DESC`
 
 	kolumnyPolaczeniaDanychDevelopera = `kod, okno_kod, nazwa, silnik, host, port, baza,
@@ -41,10 +42,12 @@ const (
 
 	pobierzPolaczeniaDanychDevelopera = `SELECT ` + kolumnyPolaczeniaDanychDevelopera + `
 	                                     FROM developer_polaczenie_danych
-	                                     WHERE okno_kod = ? ORDER BY nazwa`
+	                                     WHERE okno_kod = ? AND ` + WarunekKonta + `
+	                                     ORDER BY nazwa`
 
 	pobierzPolaczenieDanychDevelopera = `SELECT ` + kolumnyPolaczeniaDanychDevelopera + `
-	                                     FROM developer_polaczenie_danych WHERE kod = ?`
+	                                     FROM developer_polaczenie_danych
+	                                     WHERE kod = ? AND ` + WarunekKonta
 
 	kolumnyZnaleziskaDevelopera = `z.kod, z.skan_kod, z.rodzaj, z.waga, z.tytul, z.opis,
 	                               z.sciezka, z.wiersz, z.regula, z.cve, z.pakiet, z.wersja_naprawy`
@@ -159,7 +162,7 @@ func (r *repozytoriumDevelopera) KolekcjeApi(ctx context.Context,
 	if err != nil {
 		return nil, err
 	}
-	wiersze, err := polecenie.QueryContext(ctx, oknoKod, kod, kod)
+	wiersze, err := polecenie.QueryContext(ctx, oknoKod, kod, kod, KontoOperatora(ctx))
 	if err != nil {
 		return nil, fmt.Errorf("dane: nie można odczytać kolekcji zapytań okna %q: %w", oknoKod, err)
 	}
@@ -186,7 +189,7 @@ func (r *repozytoriumDevelopera) PolaczeniaDanych(ctx context.Context,
 	if err != nil {
 		return nil, err
 	}
-	wiersze, err := polecenie.QueryContext(ctx, oknoKod)
+	wiersze, err := polecenie.QueryContext(ctx, oknoKod, KontoOperatora(ctx))
 	if err != nil {
 		return nil, fmt.Errorf("dane: nie można odczytać połączeń okna %q: %w", oknoKod, err)
 	}
@@ -212,7 +215,8 @@ func (r *repozytoriumDevelopera) PolaczenieDanychPoKodzie(ctx context.Context,
 	if err != nil {
 		return PolaczenieDanych{}, err
 	}
-	polaczenie, err := odczytajPolaczenieDanychDevelopera(polecenie.QueryRowContext(ctx, kod))
+	polaczenie, err := odczytajPolaczenieDanychDevelopera(
+		polecenie.QueryRowContext(ctx, kod, KontoOperatora(ctx)))
 	if errors.Is(err, sql.ErrNoRows) {
 		return PolaczenieDanych{}, ErrBrakWiersza
 	}
@@ -324,7 +328,8 @@ func odczytajPolaczenieDanychDevelopera(
 // pobierzWersjePoKodzie czyta jedną migawkę pliku po jej identyfikatorze
 // wiersza tabeli developer_wersja_pliku.
 const pobierzWersjePoKodzie = `SELECT ` + kolumnyWersjiPliku + `
-                               FROM developer_wersja_pliku WHERE kod = ?`
+                               FROM developer_wersja_pliku
+                               WHERE kod = ? AND ` + WarunekKonta
 
 // WersjaPoKodzie zwraca jedną migawkę treści pliku po jej identyfikatorze
 // wiersza w tabeli bazy danych.
@@ -333,7 +338,7 @@ func (r *repozytoriumDevelopera) WersjaPoKodzie(ctx context.Context, kod string)
 	if err != nil {
 		return WersjaPliku{}, err
 	}
-	wersja, err := odczytajWersjePliku(polecenie.QueryRowContext(ctx, kod))
+	wersja, err := odczytajWersjePliku(polecenie.QueryRowContext(ctx, kod, KontoOperatora(ctx)))
 	if errors.Is(err, sql.ErrNoRows) {
 		return WersjaPliku{}, ErrBrakWiersza
 	}

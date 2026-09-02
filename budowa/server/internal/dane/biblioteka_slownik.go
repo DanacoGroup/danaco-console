@@ -28,42 +28,55 @@ type RelacjaTezaurusaBiblioteki struct {
 }
 
 const (
-	zapiszEtykieteSlownika = `INSERT INTO etykieta_slownika_biblioteki (nazwa, barwa)
-	                          VALUES (?, ?)
+	// Etykieta przy zasobie własnej kolumny konta nie ma: granica dochodzi przez `plik_id`.
+	warunekKontaEtykietyPliku = `EXISTS (SELECT 1 FROM plik_biblioteki
+	                                      WHERE plik_biblioteki.id = etykieta_pliku_biblioteki.plik_id
+	                                        AND ` + WarunekKonta + `)`
+
+	zapiszEtykieteSlownika = `INSERT INTO etykieta_slownika_biblioteki (nazwa, barwa, konto_id)
+	                          VALUES (?, ?, ` + WskazanieKonta + `)
 	                          ON CONFLICT(nazwa) DO UPDATE SET
-	                              barwa = COALESCE(excluded.barwa, etykieta_slownika_biblioteki.barwa)`
+	                              barwa = COALESCE(excluded.barwa, etykieta_slownika_biblioteki.barwa)
+	                          WHERE ` + WarunekKonta
 
 	pobierzEtykieteSlownika = `SELECT s.nazwa, s.barwa, s.utworzono,
-	                                  (SELECT COUNT(*) FROM etykieta_pliku_biblioteki e
-	                                    WHERE e.etykieta = s.nazwa) AS uzycie
-	                           FROM etykieta_slownika_biblioteki s WHERE s.nazwa = ?`
+	                                  (SELECT COUNT(*) FROM etykieta_pliku_biblioteki
+	                                    WHERE etykieta_pliku_biblioteki.etykieta = s.nazwa
+	                                      AND ` + warunekKontaEtykietyPliku + `) AS uzycie
+	                           FROM etykieta_slownika_biblioteki s
+	                           WHERE s.nazwa = ? AND ` + WarunekKonta
 
 	// Wykaz słownika łączy dwa źródła: wpisy słownika i etykiety nadane przy
 	// zasobach. UNION zdejmuje powtórzenia, więc etykieta obecna w obu miejscach
 	// wychodzi raz.
 	wykazEtykietSlownika = `WITH nazwy AS (
 	                            SELECT nazwa FROM etykieta_slownika_biblioteki
+	                             WHERE ` + WarunekKonta + `
 	                            UNION
 	                            SELECT etykieta AS nazwa FROM etykieta_pliku_biblioteki
+	                             WHERE ` + warunekKontaEtykietyPliku + `
 	                        )
 	                        SELECT n.nazwa,
 	                               (SELECT barwa FROM etykieta_slownika_biblioteki s
-	                                 WHERE s.nazwa = n.nazwa) AS barwa,
+	                                 WHERE s.nazwa = n.nazwa AND ` + WarunekKonta + `) AS barwa,
 	                               COALESCE((SELECT utworzono FROM etykieta_slownika_biblioteki s
-	                                          WHERE s.nazwa = n.nazwa), '') AS utworzono,
-	                               (SELECT COUNT(*) FROM etykieta_pliku_biblioteki e
-	                                 WHERE e.etykieta = n.nazwa) AS uzycie
+	                                          WHERE s.nazwa = n.nazwa AND ` + WarunekKonta + `), '') AS utworzono,
+	                               (SELECT COUNT(*) FROM etykieta_pliku_biblioteki
+	                                 WHERE etykieta_pliku_biblioteki.etykieta = n.nazwa
+	                                   AND ` + warunekKontaEtykietyPliku + `) AS uzycie
 	                        FROM nazwy n`
 
 	przemianujEtykietePliku = `UPDATE OR REPLACE etykieta_pliku_biblioteki
-	                           SET etykieta = ? WHERE etykieta = ?`
+	                           SET etykieta = ? WHERE etykieta = ? AND ` + warunekKontaEtykietyPliku
 
 	przemianujEtykieteSlownika = `UPDATE OR REPLACE etykieta_slownika_biblioteki
-	                              SET nazwa = ? WHERE nazwa = ?`
+	                              SET nazwa = ? WHERE nazwa = ? AND ` + WarunekKonta
 
-	usunEtykietePlikow = `DELETE FROM etykieta_pliku_biblioteki WHERE etykieta = ?`
+	usunEtykietePlikow = `DELETE FROM etykieta_pliku_biblioteki
+	                      WHERE etykieta = ? AND ` + warunekKontaEtykietyPliku
 
-	usunEtykieteSlownikaZapis = `DELETE FROM etykieta_slownika_biblioteki WHERE nazwa = ?`
+	usunEtykieteSlownikaZapis = `DELETE FROM etykieta_slownika_biblioteki
+	                             WHERE nazwa = ? AND ` + WarunekKonta
 
 	wstawRelacjeTezaurusa = `INSERT INTO relacja_tezaurusa_biblioteki
 	                         (etykieta_zrodlowa, etykieta_docelowa, rodzaj)
@@ -93,9 +106,10 @@ func (r *repozytoriumBiblioteki) EtykietySlownika(ctx context.Context, fraza *st
 	}
 	warunek := strings.Join(warunki, " AND ")
 
+	wskazania := wskazaniaKonta(wykazEtykietSlownika, KontoOperatora(ctx))
 	zapytanie := wykazEtykietSlownika + ` WHERE ` + warunek + ` ORDER BY n.nazwa LIMIT ?`
 	wiersze, err := r.db.QueryContext(ctx, zapytanie,
-		append(append([]any{}, argumenty...), granicaWykazu(limit))...)
+		append(append(append([]any{}, wskazania...), argumenty...), granicaWykazu(limit))...)
 	if err != nil {
 		return nil, 0, fmt.Errorf("dane: nie można odczytać słownika etykiet: %w", err)
 	}
@@ -115,7 +129,8 @@ func (r *repozytoriumBiblioteki) EtykietySlownika(ctx context.Context, fraza *st
 
 	var lacznie int
 	zapytanieLiczby := `SELECT COUNT(*) FROM (` + wykazEtykietSlownika + ` WHERE ` + warunek + `)`
-	if err := r.db.QueryRowContext(ctx, zapytanieLiczby, argumenty...).Scan(&lacznie); err != nil {
+	if err := r.db.QueryRowContext(ctx, zapytanieLiczby,
+		append(append([]any{}, wskazania...), argumenty...)...).Scan(&lacznie); err != nil {
 		return nil, 0, fmt.Errorf("dane: nie można policzyć etykiet słownika: %w", err)
 	}
 	return lista, lacznie, nil
@@ -133,7 +148,7 @@ func (r *repozytoriumBiblioteki) EtykietaSlownika(ctx context.Context,
 	}
 	var etykieta EtykietaSlownikaBiblioteki
 	var barwa sql.NullString
-	err = polecenie.QueryRowContext(ctx, nazwa).
+	err = polecenie.QueryRowContext(ctx, KontoOperatora(ctx), nazwa, KontoOperatora(ctx)).
 		Scan(&etykieta.Nazwa, &barwa, &etykieta.Utworzono, &etykieta.LiczbaPlikow)
 	if errors.Is(err, sql.ErrNoRows) {
 		uzycie, err := r.uzycieEtykiety(ctx, nazwa)
@@ -164,9 +179,14 @@ func (r *repozytoriumBiblioteki) ZapiszEtykieteSlownika(ctx context.Context, naz
 	if err != nil {
 		return EtykietaSlownikaBiblioteki{}, err
 	}
-	if _, err := polecenie.ExecContext(ctx, nazwa, tekstDoKolumny(barwa)); err != nil {
+	wynik, err := polecenie.ExecContext(ctx, nazwa, tekstDoKolumny(barwa),
+		KontoOperatora(ctx), KontoOperatora(ctx))
+	if err != nil {
 		return EtykietaSlownikaBiblioteki{}, fmt.Errorf("dane: nie można zapisać etykiety %q: %w",
 			nazwa, err)
+	}
+	if err := sprawdzTrafienieZapisu(wynik, "etykieta słownika biblioteki", nazwa); err != nil {
+		return EtykietaSlownikaBiblioteki{}, err
 	}
 	return r.EtykietaSlownika(ctx, nazwa)
 }
@@ -182,7 +202,7 @@ func (r *repozytoriumBiblioteki) PrzemianujEtykiete(ctx context.Context, stara, 
 		if err != nil {
 			return err
 		}
-		wynik, err := przyZasobach.ExecContext(ctx, nowa, stara)
+		wynik, err := przyZasobach.ExecContext(ctx, nowa, stara, KontoOperatora(ctx))
 		if err != nil {
 			return fmt.Errorf("dane: nie można zmienić nazwy etykiety %q przy zasobach: %w", stara, err)
 		}
@@ -196,7 +216,7 @@ func (r *repozytoriumBiblioteki) PrzemianujEtykiete(ctx context.Context, stara, 
 		if err != nil {
 			return err
 		}
-		if _, err := wSlowniku.ExecContext(ctx, nowa, stara); err != nil {
+		if _, err := wSlowniku.ExecContext(ctx, nowa, stara, KontoOperatora(ctx)); err != nil {
 			return fmt.Errorf("dane: nie można zmienić nazwy etykiety %q w słowniku: %w", stara, err)
 		}
 		return nil
@@ -216,7 +236,7 @@ func (r *repozytoriumBiblioteki) UsunEtykieteZeSlownika(ctx context.Context, naz
 		if err != nil {
 			return err
 		}
-		wynik, err := przyZasobach.ExecContext(ctx, nazwa)
+		wynik, err := przyZasobach.ExecContext(ctx, nazwa, KontoOperatora(ctx))
 		if err != nil {
 			return fmt.Errorf("dane: nie można zdjąć etykiety %q z zasobów: %w", nazwa, err)
 		}
@@ -230,7 +250,7 @@ func (r *repozytoriumBiblioteki) UsunEtykieteZeSlownika(ctx context.Context, naz
 		if err != nil {
 			return err
 		}
-		if _, err := wSlowniku.ExecContext(ctx, nazwa); err != nil {
+		if _, err := wSlowniku.ExecContext(ctx, nazwa, KontoOperatora(ctx)); err != nil {
 			return fmt.Errorf("dane: nie można usunąć etykiety %q ze słownika: %w", nazwa, err)
 		}
 		return nil
@@ -292,11 +312,22 @@ func (r *repozytoriumBiblioteki) RelacjeTezaurusa(ctx context.Context) ([]Relacj
 func (r *repozytoriumBiblioteki) uzycieEtykiety(ctx context.Context, nazwa string) (int, error) {
 	var liczba int
 	err := r.db.QueryRowContext(ctx,
-		`SELECT COUNT(*) FROM etykieta_pliku_biblioteki WHERE etykieta = ?`, nazwa).Scan(&liczba)
+		`SELECT COUNT(*) FROM etykieta_pliku_biblioteki
+		  WHERE etykieta_pliku_biblioteki.etykieta = ? AND `+warunekKontaEtykietyPliku,
+		nazwa, KontoOperatora(ctx)).Scan(&liczba)
 	if err != nil {
 		return 0, fmt.Errorf("dane: nie można policzyć użycia etykiety %q: %w", nazwa, err)
 	}
 	return liczba, nil
+}
+
+// wskazaniaKonta powtarza wskazanie konta raz na każde wystąpienie warunku konta w zapytaniu.
+func wskazaniaKonta(zapytanie string, kontoID int64) []any {
+	lista := []any{}
+	for i := strings.Count(zapytanie, WarunekKonta); i > 0; i-- {
+		lista = append(lista, kontoID)
+	}
+	return lista
 }
 
 // odczytajEtykieteSlownika składa pozycję słownika etykiet wprost z jednego wiersza wyniku zapytania SQL.

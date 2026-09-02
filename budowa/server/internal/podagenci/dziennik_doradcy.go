@@ -8,6 +8,8 @@ import (
 	"errors"
 	"fmt"
 	"strings"
+
+	"danacoconsole/server/internal/dane"
 )
 
 // Stany wpisu dziennika, przepisane z CHECK-u tabeli: doradca odpowiedział albo
@@ -57,16 +59,16 @@ const (
 
 	zrodloKonsultacji  = ` FROM konsultacja_doradcy k`
 	pobierzKonsultacje = `SELECT ` + kolumnyKonsultacji + zrodloKonsultacji +
-		` WHERE k.identyfikator_zewnetrzny = ?`
+		` WHERE k.identyfikator_zewnetrzny = ? AND ` + dane.WarunekKonta
 	listaKonsultacji = `SELECT ` + kolumnyKonsultacji + zrodloKonsultacji +
-		` WHERE (? = '' OR k.okno_id = ?)
+		` WHERE (? = '' OR k.okno_id = ?) AND ` + dane.WarunekKonta + `
 		  ORDER BY k.utworzono DESC, k.id DESC
 		  LIMIT ?`
 	wstawKonsultacje = `INSERT INTO konsultacja_doradcy
 	                    (identyfikator_zewnetrzny, okno_id, pytajacy_kanal, doradca_kanal,
 	                     doradca_model, pytanie, rada, skrot, prowenancja, stan, powod,
-	                     utworzono)
-	                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+	                     utworzono, konto_id)
+	                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ` + dane.WskazanieKonta + `)`
 )
 
 // dziennikKonsultacji jest jedyną implementacją Dziennika; zgodność sprawdza
@@ -95,7 +97,7 @@ func (d *dziennikKonsultacji) Zapisz(ctx context.Context, wpis Konsultacja) (Kon
 		kolumnaNapisu(wpis.OknoId), wpis.Pytajacy, wpis.DoradcaKanal, wpis.DoradcaModel,
 		wpis.Pytanie, kolumnaNapisu(wpis.Rada), kolumnaNapisu(wpis.Skrot),
 		kolumnaNapisu(wpis.Prowenancja), wpis.Stan, kolumnaNapisu(wpis.Powod),
-		wpis.Utworzono); err != nil {
+		wpis.Utworzono, dane.KontoOperatora(ctx)); err != nil {
 
 		return Konsultacja{}, fmt.Errorf("podagenci: nie można zapisać konsultacji %q: %w",
 			wpis.Identyfikator, err)
@@ -110,7 +112,8 @@ func (d *dziennikKonsultacji) Wykaz(ctx context.Context, filtr FiltrKonsultacji)
 	if limit <= 0 {
 		limit = limitWykazuKonsultacji
 	}
-	wiersze, err := d.db.QueryContext(ctx, listaKonsultacji, filtr.OknoId, filtr.OknoId, limit)
+	wiersze, err := d.db.QueryContext(ctx, listaKonsultacji, filtr.OknoId, filtr.OknoId,
+		dane.KontoOperatora(ctx), limit)
 	if err != nil {
 		return nil, fmt.Errorf("podagenci: nie można odczytać dziennika konsultacji: %w", err)
 	}
@@ -133,7 +136,8 @@ func (d *dziennikKonsultacji) Wykaz(ctx context.Context, filtr FiltrKonsultacji)
 // wpisPoIdentyfikatorze odczytuje jeden wpis dziennika konsultacji po jego
 // tożsamości zewnętrznej wpisu.
 func (d *dziennikKonsultacji) wpisPoIdentyfikatorze(ctx context.Context, identyfikator string) (Konsultacja, error) {
-	wiersz := d.db.QueryRowContext(ctx, pobierzKonsultacje, identyfikator)
+	wiersz := d.db.QueryRowContext(ctx, pobierzKonsultacje, identyfikator,
+		dane.KontoOperatora(ctx))
 	wpis, err := odczytajKonsultacje(wiersz)
 	if err != nil {
 		return Konsultacja{}, fmt.Errorf("podagenci: nie można odczytać konsultacji %q: %w",

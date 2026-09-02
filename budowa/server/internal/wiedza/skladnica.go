@@ -8,6 +8,8 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+
+	"danacoconsole/server/internal/dane"
 )
 
 // Pozycja to jeden wiersz wskaźnika: fragment treści, jego pochodzenie
@@ -61,28 +63,39 @@ func (s *Skladnica) Zapisz(ctx context.Context, pozycje []Pozycja, chwila int64)
 	}
 	defer transakcja.Rollback()
 
+	// Więz UNIQUE (zakres, zrodlo_kod, kolejnosc, model) obejmuje całą tabelę: człon DO UPDATE bez zawężenia nadpisałby fragment konta cudzego.
 	polecenie, err := transakcja.PrepareContext(ctx, `
 		INSERT INTO fragment_wiedzy (zakres, zrodlo, zrodlo_kod, kolejnosc, tresc,
-		                             model, wymiar, wektor, utworzono)
-		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+		                             model, wymiar, wektor, utworzono, konto_id)
+		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, `+dane.WskazanieKonta+`)
 		ON CONFLICT(zakres, zrodlo_kod, kolejnosc, model) DO UPDATE SET
 		    zrodlo    = excluded.zrodlo,
 		    tresc     = excluded.tresc,
 		    wymiar    = excluded.wymiar,
 		    wektor    = excluded.wektor,
-		    utworzono = excluded.utworzono`)
+		    utworzono = excluded.utworzono
+		WHERE `+dane.WarunekKonta)
 	if err != nil {
 		return 0, fmt.Errorf("wskaźnik znaczenia: przygotowanie zapisu: %w", err)
 	}
 	defer polecenie.Close()
 
 	for _, pozycja := range pozycje {
-		_, err := polecenie.ExecContext(ctx, pozycja.Zakres, pozycja.Zrodlo, pozycja.ZrodloKod,
+		wynik, err := polecenie.ExecContext(ctx, pozycja.Zakres, pozycja.Zrodlo, pozycja.ZrodloKod,
 			pozycja.Kolejnosc, pozycja.Tresc, pozycja.Model, len(pozycja.Wektor),
-			NaBajty(pozycja.Wektor), chwila)
+			NaBajty(pozycja.Wektor), chwila, dane.KontoOperatora(ctx), dane.KontoOperatora(ctx))
 		if err != nil {
 			return 0, fmt.Errorf("wskaźnik znaczenia: zapis fragmentu %d źródła %s: %w",
 				pozycja.Kolejnosc, pozycja.Zrodlo, err)
+		}
+		zmienione, err := wynik.RowsAffected()
+		if err != nil {
+			return 0, fmt.Errorf("wskaźnik znaczenia: nieznany wynik zapisu fragmentu %d źródła %s: %w",
+				pozycja.Kolejnosc, pozycja.Zrodlo, err)
+		}
+		if zmienione == 0 {
+			return 0, fmt.Errorf("wskaźnik znaczenia: fragment %d źródła %s stoi na koncie innym: %w",
+				pozycja.Kolejnosc, pozycja.Zrodlo, dane.ErrKolizjaWiersza)
 		}
 	}
 	if err := transakcja.Commit(); err != nil {
@@ -98,7 +111,8 @@ func (s *Skladnica) UsunZrodlo(ctx context.Context, zakres, zrodloKod string) er
 		return brakSkladnicy()
 	}
 	_, err := s.baza.ExecContext(ctx,
-		`DELETE FROM fragment_wiedzy WHERE zakres = ? AND zrodlo_kod = ?`, zakres, zrodloKod)
+		`DELETE FROM fragment_wiedzy WHERE zakres = ? AND zrodlo_kod = ? AND `+dane.WarunekKonta,
+		zakres, zrodloKod, dane.KontoOperatora(ctx))
 	if err != nil {
 		return fmt.Errorf("wskaźnik znaczenia: usunięcie fragmentów źródła %s: %w", zrodloKod, err)
 	}
@@ -112,12 +126,14 @@ func (s *Skladnica) UsunZakres(ctx context.Context, zakresy []string) error {
 		return brakSkladnicy()
 	}
 	if len(zakresy) == 0 {
-		_, err := s.baza.ExecContext(ctx, `DELETE FROM fragment_wiedzy`)
+		_, err := s.baza.ExecContext(ctx, `DELETE FROM fragment_wiedzy WHERE `+dane.WarunekKonta,
+			dane.KontoOperatora(ctx))
 		return err
 	}
 	for _, zakres := range zakresy {
 		if _, err := s.baza.ExecContext(ctx,
-			`DELETE FROM fragment_wiedzy WHERE zakres = ?`, zakres); err != nil {
+			`DELETE FROM fragment_wiedzy WHERE zakres = ? AND `+dane.WarunekKonta,
+			zakres, dane.KontoOperatora(ctx)); err != nil {
 			return fmt.Errorf("wskaźnik znaczenia: czyszczenie zakresu %s: %w", zakres, err)
 		}
 	}
@@ -139,6 +155,8 @@ func (s *Skladnica) Pozycje(ctx context.Context, zakresy []string, model string)
 			argumenty = append(argumenty, zakres)
 		}
 	}
+	zapytanie += " AND " + dane.WarunekKonta
+	argumenty = append(argumenty, dane.KontoOperatora(ctx))
 	wiersze, err := s.baza.QueryContext(ctx, zapytanie, argumenty...)
 	if err != nil {
 		return nil, fmt.Errorf("wskaźnik znaczenia: odczyt wskaźnika: %w", err)
@@ -171,7 +189,8 @@ func (s *Skladnica) Policz(ctx context.Context, model string) (int, error) {
 	}
 	var ile int
 	err := s.baza.QueryRowContext(ctx,
-		`SELECT COUNT(*) FROM fragment_wiedzy WHERE model = ?`, model).Scan(&ile)
+		`SELECT COUNT(*) FROM fragment_wiedzy WHERE model = ? AND `+dane.WarunekKonta,
+		model, dane.KontoOperatora(ctx)).Scan(&ile)
 	if err != nil {
 		return 0, fmt.Errorf("wskaźnik znaczenia: rachunek pozycji: %w", err)
 	}

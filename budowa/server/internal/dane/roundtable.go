@@ -127,31 +127,35 @@ const (
 	                     prompt_systemowy, wyciszony, kolejnosc, kluczowy, waga, rola,
 	                     agent, awatar, opis_roli, liczba_probek, utworzono, zaktualizowano`
 
+	// Identyfikator zewnętrzny jest jednoznaczny w całej tabeli, więc gałąź konfliktu bez warunku konta nadpisałaby uczestnika konta cudzego.
 	zapiszUczestnikaDebaty = `INSERT INTO debata_uczestnik
 	                          (identyfikator_zewnetrzny, okno, kanal_modelu, nazwa_tozsamosci,
-	                           prompt_systemowy, wyciszony, kolejnosc)
-	                          VALUES (?, ?, ?, ?, ?, ?, ?)
+	                           prompt_systemowy, wyciszony, kolejnosc, konto_id)
+	                          VALUES (?, ?, ?, ?, ?, ?, ?, ` + WskazanieKonta + `)
 	                          ON CONFLICT(identyfikator_zewnetrzny) DO UPDATE SET
 	                              nazwa_tozsamosci = excluded.nazwa_tozsamosci,
 	                              prompt_systemowy = excluded.prompt_systemowy,
-	                              zaktualizowano = strftime('%Y-%m-%dT%H:%M:%fZ','now')`
+	                              zaktualizowano = strftime('%Y-%m-%dT%H:%M:%fZ','now')
+	                          WHERE ` + WarunekKonta
 
 	pobierzUczestnika = `SELECT ` + kolumnyUczestnika + `
-	                     FROM debata_uczestnik WHERE identyfikator_zewnetrzny = ?`
+	                     FROM debata_uczestnik WHERE identyfikator_zewnetrzny = ?
+	                       AND ` + WarunekKonta
 
 	pobierzUczestnikow = `SELECT ` + kolumnyUczestnika + `
-	                      FROM debata_uczestnik WHERE okno = ?
+	                      FROM debata_uczestnik WHERE okno = ? AND ` + WarunekKonta + `
 	                      ORDER BY kolejnosc ASC, id ASC`
 
 	ustawWyciszenieUczestnika = `UPDATE debata_uczestnik
 	                             SET wyciszony = ?,
 	                                 zaktualizowano = strftime('%Y-%m-%dT%H:%M:%fZ','now')
-	                             WHERE identyfikator_zewnetrzny = ?`
+	                             WHERE identyfikator_zewnetrzny = ? AND ` + WarunekKonta
 
 	ustawKolejnoscUczestnika = `UPDATE debata_uczestnik
 	                            SET kolejnosc = ?,
 	                                zaktualizowano = strftime('%Y-%m-%dT%H:%M:%fZ','now')
-	                            WHERE okno = ? AND identyfikator_zewnetrzny = ?`
+	                            WHERE okno = ? AND identyfikator_zewnetrzny = ?
+	                              AND ` + WarunekKonta
 )
 
 type repozytoriumRoundtable struct {
@@ -173,11 +177,15 @@ func (r *repozytoriumRoundtable) ZapiszUczestnika(ctx context.Context,
 	if err != nil {
 		return UczestnikDebaty{}, err
 	}
-	if _, err := polecenie.ExecContext(ctx, uczestnik.Kod, uczestnik.Okno, uczestnik.KanalModelu,
+	wynik, err := polecenie.ExecContext(ctx, uczestnik.Kod, uczestnik.Okno, uczestnik.KanalModelu,
 		uczestnik.NazwaTozsamosci, uczestnik.PromptSystemowy, uczestnik.Wyciszony,
-		uczestnik.Kolejnosc); err != nil {
+		uczestnik.Kolejnosc, KontoOperatora(ctx), KontoOperatora(ctx))
+	if err != nil {
 		return UczestnikDebaty{}, fmt.Errorf("dane: nie można zapisać uczestnika debaty %q: %w",
 			uczestnik.Kod, err)
+	}
+	if err := sprawdzTrafienieZapisu(wynik, "uczestnik debaty", uczestnik.Kod); err != nil {
+		return UczestnikDebaty{}, err
 	}
 	return r.Uczestnik(ctx, uczestnik.Kod)
 }
@@ -188,7 +196,7 @@ func (r *repozytoriumRoundtable) Uczestnik(ctx context.Context, kod string) (Ucz
 	if err != nil {
 		return UczestnikDebaty{}, err
 	}
-	uczestnik, err := odczytajUczestnika(polecenie.QueryRowContext(ctx, kod))
+	uczestnik, err := odczytajUczestnika(polecenie.QueryRowContext(ctx, kod, KontoOperatora(ctx)))
 	if errors.Is(err, sql.ErrNoRows) {
 		return UczestnikDebaty{}, ErrBrakWiersza
 	}
@@ -204,7 +212,7 @@ func (r *repozytoriumRoundtable) Uczestnicy(ctx context.Context, okno string) ([
 	if err != nil {
 		return nil, err
 	}
-	wiersze, err := polecenie.QueryContext(ctx, okno)
+	wiersze, err := polecenie.QueryContext(ctx, okno, KontoOperatora(ctx))
 	if err != nil {
 		return nil, fmt.Errorf("dane: nie można odczytać uczestników debaty okna %q: %w", okno, err)
 	}
@@ -227,7 +235,7 @@ func (r *repozytoriumRoundtable) UstawWyciszenie(ctx context.Context, kod string
 	if err != nil {
 		return err
 	}
-	wynik, err := polecenie.ExecContext(ctx, wyciszony, kod)
+	wynik, err := polecenie.ExecContext(ctx, wyciszony, kod, KontoOperatora(ctx))
 	if err != nil {
 		return fmt.Errorf("dane: nie można przestawić wyciszenia uczestnika %q: %w", kod, err)
 	}
@@ -244,7 +252,8 @@ func (r *repozytoriumRoundtable) UstawKolejnosc(ctx context.Context, okno string
 			return err
 		}
 		for pozycja, kod := range kody {
-			if _, err := polecenie.ExecContext(ctx, pozycja+1, okno, kod); err != nil {
+			if _, err := polecenie.ExecContext(ctx, pozycja+1, okno, kod,
+				KontoOperatora(ctx)); err != nil {
 				return fmt.Errorf("dane: nie można ustawić kolejności uczestnika %q: %w", kod, err)
 			}
 		}

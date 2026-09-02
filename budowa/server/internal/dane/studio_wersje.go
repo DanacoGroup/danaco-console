@@ -60,10 +60,13 @@ const (
 	                             autor = excluded.autor,
 	                             kamien_milowy = excluded.kamien_milowy,
 	                             galaz_id = excluded.galaz_id,
-	                             propozycja_id = excluded.propozycja_id`
+	                             propozycja_id = excluded.propozycja_id
+	                         WHERE EXISTS (SELECT 1 FROM dokument_studio
+	                                       WHERE dokument_studio.id = wersja_dokumentu_studio.dokument_id
+	                                         AND ` + WarunekKonta + `)`
 
 	pobierzWersjeDokumentu = `SELECT ` + kolumnyWersjiDokumentu + zrodloWersjiDokumentu +
-		` WHERE w.identyfikator_zewnetrzny = ?`
+		` WHERE w.identyfikator_zewnetrzny = ? AND ` + WarunekKonta
 
 	listaWersjiDokumentu = `SELECT ` + kolumnyWersjiDokumentu + zrodloWersjiDokumentu +
 		` WHERE w.dokument_id = ? ORDER BY w.utworzono DESC, w.id DESC`
@@ -71,7 +74,8 @@ const (
 	// Odczyt wewnątrz transakcji `PrzywrocWersje` — wymusza przynależność
 	// wersji do dokumentu (`dokument_id = ?`), więc przywrócenie wersji obcego
 	// dokumentu wraca jako brak wiersza, nie jako cudzy zapis.
-	pobierzIDDokumentuStudia = `SELECT id FROM dokument_studio WHERE identyfikator_zewnetrzny = ?`
+	pobierzIDDokumentuStudia = `SELECT id FROM dokument_studio
+	                            WHERE identyfikator_zewnetrzny = ? AND ` + WarunekKonta
 
 	pobierzTrescWersjiWDokumencie = `SELECT tresc, tresc_odwolanie FROM wersja_dokumentu_studio
 	                                 WHERE identyfikator_zewnetrzny = ? AND dokument_id = ?`
@@ -79,7 +83,7 @@ const (
 	przywrocDokumentStudia = `UPDATE dokument_studio
 	                          SET tresc = ?, tresc_odwolanie = ?, wersja_biezaca_id = ?,
 	                              zaktualizowano = strftime('%Y-%m-%dT%H:%M:%fZ','now')
-	                          WHERE id = ?`
+	                          WHERE id = ? AND ` + WarunekKonta
 )
 
 // ZapiszWersje zakłada wersję dokumentu w repozytorium sesji albo nadpisuje
@@ -95,14 +99,18 @@ func (r *repozytoriumStudia) ZapiszWersje(ctx context.Context, dokumentID int64,
 	if err != nil {
 		return WersjaDokumentu{}, err
 	}
-	_, err = polecenie.ExecContext(ctx, wersja.Kod, dokumentID, tekstDoKolumny(wersja.Etykieta),
+	wynik, err := polecenie.ExecContext(ctx, wersja.Kod, dokumentID, tekstDoKolumny(wersja.Etykieta),
 		tekstDoKolumny(wersja.Podsumowanie), tekstDoKolumny(wersja.SkrotTresci),
 		tekstDoKolumny(wersja.Tresc), tekstDoKolumny(wersja.TrescOdwolanie),
 		tekstDoKolumny(wersja.Autor), liczbaLogiczna(wersja.KamienMilowy),
-		tekstDoKolumny(wersja.GalazKod), tekstDoKolumny(wersja.PropozycjaKod))
+		tekstDoKolumny(wersja.GalazKod), tekstDoKolumny(wersja.PropozycjaKod),
+		KontoOperatora(ctx))
 	if err != nil {
 		return WersjaDokumentu{}, fmt.Errorf("dane: nie można zapisać wersji %q dokumentu studio %d: %w",
 			wersja.Kod, dokumentID, err)
+	}
+	if err := sprawdzTrafienieZapisu(wynik, "wersja dokumentu studio", wersja.Kod); err != nil {
+		return WersjaDokumentu{}, err
 	}
 	return r.Wersja(ctx, wersja.Kod)
 }
@@ -141,7 +149,7 @@ func (r *repozytoriumStudia) Wersja(ctx context.Context, kodWersji string) (Wers
 	if err != nil {
 		return WersjaDokumentu{}, err
 	}
-	wersja, err := odczytajWersjeDokumentu(polecenie.QueryRowContext(ctx, kodWersji))
+	wersja, err := odczytajWersjeDokumentu(polecenie.QueryRowContext(ctx, kodWersji, KontoOperatora(ctx)))
 	if errors.Is(err, sql.ErrNoRows) {
 		return WersjaDokumentu{}, ErrBrakWiersza
 	}
@@ -165,7 +173,8 @@ func (r *repozytoriumStudia) PrzywrocWersje(ctx context.Context, kodDokumentu,
 			return err
 		}
 		var dokumentID int64
-		err = poleceniePoDokumencie.QueryRowContext(ctx, kodDokumentu).Scan(&dokumentID)
+		err = poleceniePoDokumencie.QueryRowContext(ctx, kodDokumentu,
+			KontoOperatora(ctx)).Scan(&dokumentID)
 		if errors.Is(err, sql.ErrNoRows) {
 			return fmt.Errorf("%w: dokument studio %q", ErrBrakWiersza, kodDokumentu)
 		}
@@ -190,7 +199,8 @@ func (r *repozytoriumStudia) PrzywrocWersje(ctx context.Context, kodDokumentu,
 		if err != nil {
 			return err
 		}
-		_, err = polecenieAktualizacji.ExecContext(ctx, tresc, odwolanie, kodWersji, dokumentID)
+		_, err = polecenieAktualizacji.ExecContext(ctx, tresc, odwolanie, kodWersji, dokumentID,
+			KontoOperatora(ctx))
 		if err != nil {
 			return fmt.Errorf("dane: nie można przywrócić wersji %q dokumentu studio %q: %w",
 				kodWersji, kodDokumentu, err)

@@ -30,21 +30,28 @@ type KolekcjaBiblioteki struct {
 const (
 	kolumnyKolekcjiBiblioteki = `id, identyfikator_zewnetrzny, nazwa, opis, utworzono, zaktualizowano`
 
+	// Kod jest UNIQUE w całej tabeli — DO UPDATE bez warunku konta sięgnąłby cudzego wiersza.
 	zapiszKolekcjeBiblioteki = `INSERT INTO kolekcja_biblioteki
-	                            (identyfikator_zewnetrzny, nazwa, opis)
-	                            VALUES (?, ?, ?)
+	                            (identyfikator_zewnetrzny, nazwa, opis, konto_id)
+	                            VALUES (?, ?, ?, ` + WskazanieKonta + `)
 	                            ON CONFLICT(identyfikator_zewnetrzny) DO UPDATE SET
 	                                nazwa = excluded.nazwa,
 	                                opis = excluded.opis,
-	                                zaktualizowano = strftime('%Y-%m-%dT%H:%M:%fZ','now')`
+	                                zaktualizowano = strftime('%Y-%m-%dT%H:%M:%fZ','now')
+	                            WHERE ` + WarunekKonta
 
 	pobierzKolekcjeBiblioteki = `SELECT ` + kolumnyKolekcjiBiblioteki + ` FROM kolekcja_biblioteki
-	                             WHERE identyfikator_zewnetrzny = ?`
+	                             WHERE identyfikator_zewnetrzny = ? AND ` + WarunekKonta
 
 	listaKolekcjiBiblioteki = `SELECT ` + kolumnyKolekcjiBiblioteki + ` FROM kolekcja_biblioteki
+	                           WHERE ` + WarunekKonta + `
 	                           ORDER BY nazwa, id`
 
 	idPlikuBibliotekiPoKodzie = `SELECT id FROM plik_biblioteki WHERE identyfikator_zewnetrzny = ?`
+
+	// Kod pliku idzie wprost z żądania — bez konta sięgnąłby cudzego wiersza.
+	idPlikuBibliotekiPoKodzieWKoncie = `SELECT id FROM plik_biblioteki
+	                                    WHERE identyfikator_zewnetrzny = ? AND ` + WarunekKonta
 
 	wstawPrzypisanieKolekcji = `INSERT INTO przypisanie_kolekcji_biblioteki (kolekcja_id, plik_id)
 	                            VALUES (?, ?)
@@ -75,10 +82,14 @@ func (r *repozytoriumBiblioteki) UtworzKolekcje(ctx context.Context,
 	if err != nil {
 		return KolekcjaBiblioteki{}, err
 	}
-	_, err = polecenie.ExecContext(ctx, kolekcja.Kod, kolekcja.Nazwa, tekstDoKolumny(kolekcja.Opis))
+	wynik, err := polecenie.ExecContext(ctx, kolekcja.Kod, kolekcja.Nazwa,
+		tekstDoKolumny(kolekcja.Opis), KontoOperatora(ctx), KontoOperatora(ctx))
 	if err != nil {
 		return KolekcjaBiblioteki{}, fmt.Errorf("dane: nie można zapisać kolekcji biblioteki %q: %w",
 			kolekcja.Kod, err)
+	}
+	if err := sprawdzTrafienieZapisu(wynik, "kolekcja biblioteki", kolekcja.Kod); err != nil {
+		return KolekcjaBiblioteki{}, err
 	}
 	return r.kolekcjaPoKodzie(ctx, kolekcja.Kod)
 }
@@ -89,7 +100,7 @@ func (r *repozytoriumBiblioteki) Kolekcje(ctx context.Context) ([]KolekcjaBiblio
 	if err != nil {
 		return nil, err
 	}
-	wiersze, err := polecenie.QueryContext(ctx)
+	wiersze, err := polecenie.QueryContext(ctx, KontoOperatora(ctx))
 	if err != nil {
 		return nil, fmt.Errorf("dane: nie można odczytać kolekcji biblioteki: %w", err)
 	}
@@ -119,7 +130,7 @@ func (r *repozytoriumBiblioteki) PrzypiszDoKolekcji(ctx context.Context,
 		return nil, err
 	}
 
-	poszukiwaniePliku, err := r.zapytania.przygotuj(ctx, idPlikuBibliotekiPoKodzie)
+	poszukiwaniePliku, err := r.zapytania.przygotuj(ctx, idPlikuBibliotekiPoKodzieWKoncie)
 	if err != nil {
 		return nil, err
 	}
@@ -131,7 +142,7 @@ func (r *repozytoriumBiblioteki) PrzypiszDoKolekcji(ctx context.Context,
 	przypisane := []string{}
 	for _, kodPliku := range kodyPlikow {
 		var plikID int64
-		err := poszukiwaniePliku.QueryRowContext(ctx, kodPliku).Scan(&plikID)
+		err := poszukiwaniePliku.QueryRowContext(ctx, kodPliku, KontoOperatora(ctx)).Scan(&plikID)
 		if errors.Is(err, sql.ErrNoRows) {
 			continue
 		}
@@ -220,7 +231,7 @@ func (r *repozytoriumBiblioteki) kolekcjaPoKodzie(ctx context.Context, kod strin
 	if err != nil {
 		return KolekcjaBiblioteki{}, err
 	}
-	kolekcja, err := odczytajKolekcjeBiblioteki(polecenie.QueryRowContext(ctx, kod))
+	kolekcja, err := odczytajKolekcjeBiblioteki(polecenie.QueryRowContext(ctx, kod, KontoOperatora(ctx)))
 	if errors.Is(err, sql.ErrNoRows) {
 		return KolekcjaBiblioteki{}, ErrBrakWiersza
 	}

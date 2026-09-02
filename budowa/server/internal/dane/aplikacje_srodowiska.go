@@ -82,21 +82,26 @@ const (
 	kolumnyZmiennejSrodowiskaApp = `id, okno, srodowisko, nazwa, wartosc, odwolanie_sekretu,
 	                                zaktualizowano`
 
+	// Trójka okno-środowisko-nazwa jest UNIQUE w całej tabeli, więc warunek przy
+	// DO UPDATE zatrzymuje nadpisanie wiersza należącego do innego konta.
 	zapiszZmiennaSrodowiskaApp = `INSERT INTO zmienna_srodowiska_apps
-	                              (okno, srodowisko, nazwa, wartosc, odwolanie_sekretu)
-	                              VALUES (?, ?, ?, ?, ?)
+	                              (okno, srodowisko, nazwa, wartosc, odwolanie_sekretu, konto_id)
+	                              VALUES (?, ?, ?, ?, ?, ` + WskazanieKonta + `)
 	                              ON CONFLICT(okno, srodowisko, nazwa) DO UPDATE SET
 	                                  wartosc = excluded.wartosc,
 	                                  odwolanie_sekretu = excluded.odwolanie_sekretu,
-	                                  zaktualizowano = strftime('%Y-%m-%dT%H:%M:%fZ','now')`
+	                                  zaktualizowano = strftime('%Y-%m-%dT%H:%M:%fZ','now')
+	                              WHERE ` + WarunekKonta
 
 	pobierzZmiennaSrodowiskaApp = `SELECT ` + kolumnyZmiennejSrodowiskaApp + `
 	                               FROM zmienna_srodowiska_apps
-	                               WHERE okno = ? AND srodowisko = ? AND nazwa = ?`
+	                               WHERE okno = ? AND srodowisko = ? AND nazwa = ?
+	                                 AND ` + WarunekKonta
 
 	listaZmiennychSrodowiskaApp = `SELECT ` + kolumnyZmiennejSrodowiskaApp + `
 	                               FROM zmienna_srodowiska_apps
-	                               WHERE okno = ? AND srodowisko = ? ORDER BY nazwa`
+	                               WHERE okno = ? AND srodowisko = ? AND ` + WarunekKonta + `
+	                               ORDER BY nazwa`
 
 	zapiszSkalowanieApp = `INSERT INTO skalowanie_apps
 	                       (okno, srodowisko, instancje, min_instancji, maks_instancji, reguly)
@@ -205,11 +210,15 @@ func (r *repozytoriumAplikacji) ZapiszZmiennaSrodowiskaApp(ctx context.Context,
 	if err != nil {
 		return ZmiennaSrodowiskaApp{}, err
 	}
-	_, err = polecenie.ExecContext(ctx, zmienna.Okno, zmienna.Srodowisko, zmienna.Nazwa,
-		tekstDoKolumny(zmienna.Wartosc), tekstDoKolumny(zmienna.OdwolanieSekretu))
+	wynik, err := polecenie.ExecContext(ctx, zmienna.Okno, zmienna.Srodowisko, zmienna.Nazwa,
+		tekstDoKolumny(zmienna.Wartosc), tekstDoKolumny(zmienna.OdwolanieSekretu),
+		KontoOperatora(ctx), KontoOperatora(ctx))
 	if err != nil {
 		return ZmiennaSrodowiskaApp{}, fmt.Errorf("dane: nie można zapisać zmiennej %q: %w",
 			zmienna.Nazwa, err)
+	}
+	if err := sprawdzTrafienieZapisu(wynik, "zmienna środowiskowa", zmienna.Nazwa); err != nil {
+		return ZmiennaSrodowiskaApp{}, err
 	}
 
 	polecenieOdczytu, err := r.zapytania.przygotuj(ctx, pobierzZmiennaSrodowiskaApp)
@@ -217,7 +226,8 @@ func (r *repozytoriumAplikacji) ZapiszZmiennaSrodowiskaApp(ctx context.Context,
 		return ZmiennaSrodowiskaApp{}, err
 	}
 	zapisana, err := odczytajZmiennaSrodowiskaApp(
-		polecenieOdczytu.QueryRowContext(ctx, zmienna.Okno, zmienna.Srodowisko, zmienna.Nazwa))
+		polecenieOdczytu.QueryRowContext(ctx, zmienna.Okno, zmienna.Srodowisko, zmienna.Nazwa,
+			KontoOperatora(ctx)))
 	if err != nil {
 		return ZmiennaSrodowiskaApp{}, fmt.Errorf("dane: nieczytelna zmienna %q po zapisie: %w",
 			zmienna.Nazwa, err)
@@ -234,7 +244,7 @@ func (r *repozytoriumAplikacji) ZmienneSrodowiskaApp(ctx context.Context,
 	if err != nil {
 		return nil, err
 	}
-	wiersze, err := polecenie.QueryContext(ctx, okno, srodowisko)
+	wiersze, err := polecenie.QueryContext(ctx, okno, srodowisko, KontoOperatora(ctx))
 	if err != nil {
 		return nil, fmt.Errorf("dane: nie można odczytać zmiennych środowiska %q okna %q: %w",
 			srodowisko, okno, err)

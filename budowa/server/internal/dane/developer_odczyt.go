@@ -14,13 +14,13 @@ const (
 
 	pobierzOstatniaWersje = `SELECT ` + kolumnyWersjiPliku + `
 	                         FROM developer_wersja_pliku
-	                         WHERE okno_kod = ? AND sciezka = ?
+	                         WHERE okno_kod = ? AND sciezka = ? AND ` + WarunekKonta + `
 	                         ORDER BY utworzono DESC, id DESC
 	                         LIMIT 1`
 
 	pobierzWersjePliku = `SELECT ` + kolumnyWersjiPliku + `
 	                      FROM developer_wersja_pliku
-	                      WHERE okno_kod = ? AND sciezka = ?
+	                      WHERE okno_kod = ? AND sciezka = ? AND ` + WarunekKonta + `
 	                      ORDER BY utworzono DESC, id DESC
 	                      LIMIT CASE WHEN ? > 0 THEN ? ELSE -1 END`
 
@@ -51,7 +51,8 @@ func (r *repozytoriumDevelopera) OstatniaWersja(ctx context.Context,
 	if err != nil {
 		return WersjaPliku{}, err
 	}
-	wersja, err := odczytajWersjePliku(polecenie.QueryRowContext(ctx, oknoKod, sciezka))
+	wersja, err := odczytajWersjePliku(polecenie.QueryRowContext(ctx, oknoKod, sciezka,
+		KontoOperatora(ctx)))
 	if errors.Is(err, sql.ErrNoRows) {
 		return WersjaPliku{}, ErrBrakWiersza
 	}
@@ -70,7 +71,7 @@ func (r *repozytoriumDevelopera) Wersje(ctx context.Context,
 	if err != nil {
 		return nil, err
 	}
-	wiersze, err := polecenie.QueryContext(ctx, oknoKod, sciezka, limit, limit)
+	wiersze, err := polecenie.QueryContext(ctx, oknoKod, sciezka, KontoOperatora(ctx), limit, limit)
 	if err != nil {
 		return nil, fmt.Errorf("dane: nie można odczytać wersji pliku %q: %w", sciezka, err)
 	}

@@ -66,20 +66,24 @@ const (
 	                                 ORDER BY wersja ASC`
 
 	zapiszZdanieOdrebneDebaty = `INSERT INTO debata_zdanie_odrebne
-	                             (identyfikator_zewnetrzny, okno, stanowisko, uczestnik, tresc)
-	                             VALUES (?, ?, ?, ?, ?)
+	                             (identyfikator_zewnetrzny, okno, stanowisko, uczestnik, tresc,
+	                              konto_id)
+	                             VALUES (?, ?, ?, ?, ?, ` + WskazanieKonta + `)
 	                             ON CONFLICT(stanowisko, uczestnik) DO UPDATE SET
 	                                 tresc = excluded.tresc,
-	                                 utworzono = strftime('%Y-%m-%dT%H:%M:%fZ','now')`
+	                                 utworzono = strftime('%Y-%m-%dT%H:%M:%fZ','now')
+	                             WHERE ` + WarunekKonta
 
 	pobierzZdanieOdrebneDebaty = `SELECT identyfikator_zewnetrzny, okno, stanowisko, uczestnik,
 	                                     tresc, utworzono
 	                              FROM debata_zdanie_odrebne
-	                              WHERE stanowisko = ? AND uczestnik = ?`
+	                              WHERE stanowisko = ? AND uczestnik = ?
+	                                AND ` + WarunekKonta
 
 	pobierzZdaniaOdrebneDebaty = `SELECT identyfikator_zewnetrzny, okno, stanowisko, uczestnik,
 	                                     tresc, utworzono
-	                              FROM debata_zdanie_odrebne WHERE stanowisko = ? ORDER BY id ASC`
+	                              FROM debata_zdanie_odrebne WHERE stanowisko = ?
+	                                AND ` + WarunekKonta + ` ORDER BY id ASC`
 
 	zapiszPrzekazanieDebaty = `INSERT INTO debata_przekazanie
 	                           (identyfikator_zewnetrzny, okno, stanowisko, modul, artefakt)
@@ -135,19 +139,23 @@ func (r *repozytoriumRoundtable) ZapiszZdanieOdrebneDebaty(ctx context.Context,
 	if err != nil {
 		return ZdanieOdrebneDebaty{}, err
 	}
-	if _, err := polecenie.ExecContext(ctx, zdanie.Kod, zdanie.Okno, zdanie.Stanowisko,
-		zdanie.Uczestnik, zdanie.Tresc); err != nil {
+	wynik, err := polecenie.ExecContext(ctx, zdanie.Kod, zdanie.Okno, zdanie.Stanowisko,
+		zdanie.Uczestnik, zdanie.Tresc, KontoOperatora(ctx), KontoOperatora(ctx))
+	if err != nil {
 		return ZdanieOdrebneDebaty{}, fmt.Errorf("dane: nie można zapisać zdania odrębnego %q: %w",
 			zdanie.Kod, err)
+	}
+	if err := sprawdzTrafienieZapisu(wynik, "zdanie odrębne", zdanie.Kod); err != nil {
+		return ZdanieOdrebneDebaty{}, err
 	}
 	odczyt, err := r.zapytania.przygotuj(ctx, pobierzZdanieOdrebneDebaty)
 	if err != nil {
 		return ZdanieOdrebneDebaty{}, err
 	}
 	var zapisane ZdanieOdrebneDebaty
-	if err := odczyt.QueryRowContext(ctx, zdanie.Stanowisko, zdanie.Uczestnik).Scan(&zapisane.Kod,
-		&zapisane.Okno, &zapisane.Stanowisko, &zapisane.Uczestnik, &zapisane.Tresc,
-		&zapisane.Utworzono); err != nil {
+	wiersz := odczyt.QueryRowContext(ctx, zdanie.Stanowisko, zdanie.Uczestnik, KontoOperatora(ctx))
+	if err := wiersz.Scan(&zapisane.Kod, &zapisane.Okno, &zapisane.Stanowisko,
+		&zapisane.Uczestnik, &zapisane.Tresc, &zapisane.Utworzono); err != nil {
 		return ZdanieOdrebneDebaty{}, fmt.Errorf("dane: nieczytelny wiersz zdania odrębnego: %w", err)
 	}
 	return zapisane, nil
@@ -161,7 +169,7 @@ func (r *repozytoriumRoundtable) ZdaniaOdrebneDebaty(ctx context.Context,
 	if err != nil {
 		return nil, err
 	}
-	wiersze, err := polecenie.QueryContext(ctx, stanowisko)
+	wiersze, err := polecenie.QueryContext(ctx, stanowisko, KontoOperatora(ctx))
 	if err != nil {
 		return nil, fmt.Errorf("dane: nie można odczytać zdań odrębnych %q: %w", stanowisko, err)
 	}

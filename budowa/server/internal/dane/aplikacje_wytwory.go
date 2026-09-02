@@ -119,11 +119,12 @@ const (
 
 	wstawArtefaktApp = `INSERT INTO artefakt_apps
 	                    (identyfikator_zewnetrzny, okno, wdrozenie_kod, rodzaj, sciezka,
-	                     rozmiar, suma_kontrolna)
-	                    VALUES (?, ?, ?, ?, ?, ?, ?)`
+	                     rozmiar, suma_kontrolna, konto_id)
+	                    VALUES (?, ?, ?, ?, ?, ?, ?, ` + WskazanieKonta + `)`
 
 	listaArtefaktowApp = `SELECT ` + kolumnyArtefaktuApp + ` FROM artefakt_apps
 	                      WHERE okno = ? AND (? = '' OR wdrozenie_kod = ?)
+	                        AND ` + WarunekKonta + `
 	                      ORDER BY id DESC`
 
 	// Artefakt ostatniego wdrożenia udanego — domyślne wejście
@@ -132,10 +133,11 @@ const (
 	                             WHERE okno = ? AND wdrozenie_kod IN (
 	                                 SELECT kod FROM wdrozenie_apps
 	                                 WHERE okno = ? AND stan = 'succeeded')
+	                               AND ` + WarunekKonta + `
 	                             ORDER BY id DESC LIMIT 1`
 
 	pobierzArtefaktApp = `SELECT ` + kolumnyArtefaktuApp + ` FROM artefakt_apps
-	                      WHERE identyfikator_zewnetrzny = ?`
+	                      WHERE identyfikator_zewnetrzny = ? AND ` + WarunekKonta
 
 	kolumnyPakietuApp = `id, identyfikator_zewnetrzny, okno, manifest, artefakt_odwolanie,
 	                     format, sciezka, rozmiar, podpis, rozszerzenie_kod,
@@ -353,7 +355,8 @@ func (r *repozytoriumAplikacji) ZalozArtefaktApp(ctx context.Context, artefakt A
 	}
 	_, err = polecenie.ExecContext(ctx, artefakt.Kod, artefakt.Okno,
 		tekstDoKolumny(artefakt.WdrozenieKod), artefakt.Rodzaj, artefakt.Sciezka,
-		liczbaDoKolumny(artefakt.Rozmiar), tekstDoKolumny(artefakt.SumaKontrolna))
+		liczbaDoKolumny(artefakt.Rozmiar), tekstDoKolumny(artefakt.SumaKontrolna),
+		KontoOperatora(ctx))
 	if err != nil {
 		return ArtefaktApp{}, fmt.Errorf("dane: nie można zapisać artefaktu %q: %w", artefakt.Kod, err)
 	}
@@ -367,7 +370,7 @@ func (r *repozytoriumAplikacji) ArtefaktApp(ctx context.Context, kod string) (Ar
 	if err != nil {
 		return ArtefaktApp{}, err
 	}
-	artefakt, err := odczytajArtefaktApp(polecenie.QueryRowContext(ctx, kod))
+	artefakt, err := odczytajArtefaktApp(polecenie.QueryRowContext(ctx, kod, KontoOperatora(ctx)))
 	if err == sql.ErrNoRows {
 		return ArtefaktApp{}, ErrBrakWiersza
 	}
@@ -384,7 +387,7 @@ func (r *repozytoriumAplikacji) ArtefaktyApp(ctx context.Context, okno, wdrozeni
 	if err != nil {
 		return nil, err
 	}
-	wiersze, err := polecenie.QueryContext(ctx, okno, wdrozenie, wdrozenie)
+	wiersze, err := polecenie.QueryContext(ctx, okno, wdrozenie, wdrozenie, KontoOperatora(ctx))
 	if err != nil {
 		return nil, fmt.Errorf("dane: nie można odczytać artefaktów okna %q: %w", okno, err)
 	}
@@ -413,7 +416,8 @@ func (r *repozytoriumAplikacji) OstatniArtefaktUdanegoWdrozeniaApp(ctx context.C
 	if err != nil {
 		return ArtefaktApp{}, err
 	}
-	artefakt, err := odczytajArtefaktApp(polecenie.QueryRowContext(ctx, okno, okno))
+	artefakt, err := odczytajArtefaktApp(polecenie.QueryRowContext(ctx, okno, okno,
+		KontoOperatora(ctx)))
 	if err == sql.ErrNoRows {
 		return ArtefaktApp{}, ErrBrakWiersza
 	}

@@ -36,21 +36,22 @@ const (
 	ustawStanPlikuBiblioteki = `UPDATE plik_biblioteki
 	                            SET stan = ?,
 	                                zaktualizowano = strftime('%Y-%m-%dT%H:%M:%fZ','now')
-	                            WHERE identyfikator_zewnetrzny = ?`
+	                            WHERE identyfikator_zewnetrzny = ? AND ` + WarunekKonta
 
 	ustawSciezkePlikuBiblioteki = `UPDATE plik_biblioteki
 	                               SET sciezka_repozytorium = ?,
 	                                   zaktualizowano = strftime('%Y-%m-%dT%H:%M:%fZ','now')
-	                               WHERE identyfikator_zewnetrzny = ?`
+	                               WHERE identyfikator_zewnetrzny = ? AND ` + WarunekKonta
 
 	ustawNazwePlikuBiblioteki = `UPDATE plik_biblioteki
 	                             SET nazwa = ?,
 	                                 zaktualizowano = strftime('%Y-%m-%dT%H:%M:%fZ','now')
-	                             WHERE identyfikator_zewnetrzny = ?`
+	                             WHERE identyfikator_zewnetrzny = ? AND ` + WarunekKonta
 
 	policzWersjePlikuBiblioteki = `SELECT COUNT(*) FROM wersja_pliku_biblioteki WHERE plik_id = ?`
 
-	usunPlikBibliotekiTrwale = `DELETE FROM plik_biblioteki WHERE identyfikator_zewnetrzny = ?`
+	usunPlikBibliotekiTrwale = `DELETE FROM plik_biblioteki
+	                            WHERE identyfikator_zewnetrzny = ? AND ` + WarunekKonta
 
 	usunIndeksTresciPlikuBiblioteki = `DELETE FROM indeks_tresci_biblioteki WHERE rowid = ?`
 )
@@ -87,7 +88,7 @@ func (r *repozytoriumBiblioteki) PrzemianujPlik(ctx context.Context, kod,
 	if err != nil {
 		return PlikBiblioteki{}, err
 	}
-	if _, err := polecenie.ExecContext(ctx, nazwa, kod); err != nil {
+	if _, err := polecenie.ExecContext(ctx, nazwa, kod, KontoOperatora(ctx)); err != nil {
 		return PlikBiblioteki{}, fmt.Errorf("dane: nie można zmienić nazwy pliku %q: %w", kod, err)
 	}
 	return r.Plik(ctx, kod)
@@ -110,13 +111,13 @@ func (r *repozytoriumBiblioteki) UsunPliki(ctx context.Context, kody []string) (
 		if err != nil {
 			return err
 		}
-		poszukiwanie, err := r.zapytania.wTransakcji(ctx, transakcja, idPlikuBibliotekiPoKodzie)
+		poszukiwanie, err := r.zapytania.wTransakcji(ctx, transakcja, idPlikuBibliotekiPoKodzieWKoncie)
 		if err != nil {
 			return err
 		}
 		for _, kod := range kody {
 			var plikID int64
-			if err := poszukiwanie.QueryRowContext(ctx, kod).Scan(&plikID); err != nil {
+			if err := poszukiwanie.QueryRowContext(ctx, kod, KontoOperatora(ctx)).Scan(&plikID); err != nil {
 				// Zasób nieznany nie wywraca usunięcia pozostałych.
 				continue
 			}
@@ -128,7 +129,7 @@ func (r *repozytoriumBiblioteki) UsunPliki(ctx context.Context, kody []string) (
 			if _, err := czyszczenieIndeksu.ExecContext(ctx, plikID); err != nil {
 				return fmt.Errorf("dane: nie można zdjąć indeksu treści pliku %q: %w", kod, err)
 			}
-			wynik, err := usuwanie.ExecContext(ctx, kod)
+			wynik, err := usuwanie.ExecContext(ctx, kod, KontoOperatora(ctx))
 			if err != nil {
 				return fmt.Errorf("dane: nie można usunąć pliku %q: %w", kod, err)
 			}
@@ -155,7 +156,7 @@ func (r *repozytoriumBiblioteki) UsunPliki(ctx context.Context, kody []string) (
 func (r *repozytoriumBiblioteki) Statystyki(ctx context.Context, kolekcjaKod, projektID *string,
 	topN int) (StatystykiBiblioteki, error) {
 
-	zawezenie, argumenty := zawezenieStatystykBiblioteki(kolekcjaKod, projektID)
+	zawezenie, argumenty := zawezenieStatystykBiblioteki(ctx, kolekcjaKod, projektID)
 	if topN <= 0 {
 		topN = 20
 	}
@@ -241,9 +242,14 @@ func (r *repozytoriumBiblioteki) Statystyki(ctx context.Context, kolekcjaKod, pr
 // zawezenieStatystykBiblioteki składa warunek wspólny wszystkim agregatom
 // pulpitu. Nazwa tabeli stoi w warunku jawnie, bo część zapytań łączy tabele
 // i „stan" bez wskazania tabeli byłby wtedy dwuznaczny.
-func zawezenieStatystykBiblioteki(kolekcjaKod, projektID *string) (string, []any) {
-	warunki := []string{"1 = 1"}
-	argumenty := []any{}
+func zawezenieStatystykBiblioteki(ctx context.Context, kolekcjaKod,
+	projektID *string) (string, []any) {
+
+	// Warunek konta idzie podzapytaniem z osobną nazwą tabeli, bo część
+	// agregatów łączy `kolekcja_biblioteki`, która też ma kolumnę `konto_id`.
+	warunki := []string{`EXISTS (SELECT 1 FROM plik_biblioteki AS plik_konta
+	                     WHERE plik_konta.id = plik_biblioteki.id AND ` + WarunekKonta + `)`}
+	argumenty := []any{KontoOperatora(ctx)}
 	if projektID != nil && *projektID != "" {
 		warunki = append(warunki, "plik_biblioteki.projekt_id = ?")
 		argumenty = append(argumenty, *projektID)
@@ -294,7 +300,7 @@ func (r *repozytoriumBiblioteki) zmienPlikiZapytaniem(ctx context.Context, kody 
 	}
 	zmienione := []PlikBiblioteki{}
 	for _, kod := range kody {
-		wynik, err := polecenie.ExecContext(ctx, wartosc, kod)
+		wynik, err := polecenie.ExecContext(ctx, wartosc, kod, KontoOperatora(ctx))
 		if err != nil {
 			return nil, fmt.Errorf("dane: %s %q: %w", powod, kod, err)
 		}

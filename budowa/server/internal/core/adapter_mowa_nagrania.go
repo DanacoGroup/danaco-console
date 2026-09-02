@@ -172,6 +172,9 @@ func (a *adapterMowy) rozstrzygnijOdnosnikNagrania(ctx context.Context,
 			return wiersz.Sciezka, wiersz.TypTresci, nil
 		}
 	}
+	if a.wKataloguNagranPrzyjetych(odnosnik) {
+		return "", "", bladObcegoNagrania(odnosnik)
+	}
 
 	sciezka, err := filepath.Abs(odnosnik)
 	if err != nil {
@@ -198,6 +201,40 @@ func (a *adapterMowy) rozstrzygnijOdnosnikNagrania(ctx context.Context,
 			" nie ma rozszerzenia nagrania przyjmowanego przez serwer")
 	}
 	return sciezka, typTresciZeSciezki(sciezka), nil
+}
+
+// wKataloguNagranPrzyjetych mówi, czy odnośnik prowadzi pod katalog nagrań
+// przyjętych przez `speech.audio.upload`. Ten katalog jest wyłącznością
+// rejestru: bajty w nim leżące wydaje wyłącznie wiersz `nagranie_mowy` zawężony
+// do konta żądania, więc dojście plikowe musi go omijać. Poza nim leżą pliki
+// Operatora i nagrania syntezy, których rejestr nie prowadzi.
+func (a *adapterMowy) wKataloguNagranPrzyjetych(odnosnik string) bool {
+	podstawa := strings.TrimSpace(a.katalogDanych)
+	if podstawa == "" {
+		return false
+	}
+	korzen, err := filepath.Abs(filepath.Join(podstawa, katalogNagranMowy))
+	if err != nil {
+		return false
+	}
+	sciezka, err := filepath.Abs(strings.TrimSpace(odnosnik))
+	if err != nil {
+		return false
+	}
+	wzgledna, err := filepath.Rel(korzen, sciezka)
+	if err != nil {
+		return false
+	}
+	return wzgledna != ".." && !strings.HasPrefix(wzgledna, ".."+string(filepath.Separator))
+}
+
+// bladObcegoNagrania nazywa odmowę sięgnięcia po nagranie rejestru, którego
+// rejestr temu żądaniu nie wydał — wiersza nie ma albo należy do innego konta.
+func bladObcegoNagrania(odnosnik string) error {
+	return protocol.JakoError(protocol.NowyBlad(shared.ErrorCodePermissionDenied,
+		"nagrania mowy: nagranie "+odnosnik+" nie należy do konta tego żądania — "+
+			"nagrania przyjęte przez speech.audio.upload wydaje wyłącznie rejestr "+
+			"i wyłącznie właścicielowi wiersza"))
 }
 
 // katalogNagran zakłada, gdy trzeba, katalog na przyjęte nagrania. Pusty

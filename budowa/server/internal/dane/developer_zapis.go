@@ -12,8 +12,8 @@ import (
 
 const (
 	wstawWersjePliku = `INSERT INTO developer_wersja_pliku
-	                    (kod, okno_kod, sciezka, tresc, rozmiar)
-	                    VALUES (?, ?, ?, ?, ?)`
+	                    (kod, okno_kod, sciezka, tresc, rozmiar, konto_id)
+	                    VALUES (?, ?, ?, ?, ?, ` + WskazanieKonta + `)`
 
 	wstawPrzebiegBudowania = `INSERT INTO developer_budowanie
 	                          (kod, okno_kod, zadanie, argumenty, stan, kod_wyjscia, log, zakonczono)
@@ -51,7 +51,7 @@ func (r *repozytoriumDevelopera) ZapiszWersje(ctx context.Context, wersja Wersja
 		return err
 	}
 	if _, err := polecenie.ExecContext(ctx, wersja.Kod, wersja.OknoKod, wersja.Sciezka,
-		wersja.Tresc, wersja.Rozmiar); err != nil {
+		wersja.Tresc, wersja.Rozmiar, KontoOperatora(ctx)); err != nil {
 		return fmt.Errorf("dane: nie można zapisać wersji pliku %q: %w", wersja.Sciezka, err)
 	}
 	return nil

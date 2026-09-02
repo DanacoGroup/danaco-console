@@ -21,7 +21,7 @@ func (r *repozytoriumKont) Usun(ctx context.Context, id int64) ([]int64, error) 
 		if err != nil {
 			return err
 		}
-		wynik, err := polecenie.ExecContext(ctx, id)
+		wynik, err := polecenie.ExecContext(ctx, id, KontoOperatora(ctx))
 		if err != nil {
 			return fmt.Errorf("dane: nie można usunąć konta %d: %w", id, err)
 		}
@@ -44,7 +44,7 @@ func kanalyKontaWTransakcji(ctx context.Context, r *repozytoriumKont, transakcja
 	if err != nil {
 		return nil, err
 	}
-	wiersze, err := polecenie.QueryContext(ctx, id)
+	wiersze, err := polecenie.QueryContext(ctx, id, KontoOperatora(ctx))
 	if err != nil {
 		return nil, fmt.Errorf("dane: nie można odczytać kanałów konta %d: %w", id, err)
 	}

@@ -37,7 +37,8 @@ func (r *repozytoriumKonfiguracji) OdczytajOsi(ctx context.Context, poziom share
 	if err != nil {
 		return Ustawienie{}, false, err
 	}
-	wiersz := polecenie.QueryRowContext(ctx, kod, kluczZasiegu, kodOsi, kluczOsi, klucz)
+	wiersz := polecenie.QueryRowContext(ctx, kod, kluczZasiegu, kodOsi, kluczOsi, klucz,
+		KontoOperatora(ctx))
 	ustawienie, err := odczytajUstawienie(wiersz)
 	if errors.Is(err, sql.ErrNoRows) {
 		return Ustawienie{}, false, nil
@@ -61,7 +62,8 @@ func (r *repozytoriumKonfiguracji) ListaOsi(ctx context.Context, poziom shared.C
 	if err != nil {
 		return nil, err
 	}
-	wiersze, err := polecenie.QueryContext(ctx, kod, kluczZasiegu, kodOsi, kluczOsi)
+	wiersze, err := polecenie.QueryContext(ctx, kod, kluczZasiegu, kodOsi, kluczOsi,
+		KontoOperatora(ctx))
 	if err != nil {
 		return nil, fmt.Errorf("dane: nie można odczytać ustawień poziomu %q osi %q: %w",
 			kod, kodOsi, err)
@@ -96,7 +98,9 @@ func (r *repozytoriumKonfiguracji) UsunOsi(ctx context.Context, poziom shared.Co
 	if err != nil {
 		return err
 	}
-	if _, err := polecenie.ExecContext(ctx, kod, kluczZasiegu, kodOsi, kluczOsi, klucz); err != nil {
+	_, err = polecenie.ExecContext(ctx, kod, kluczZasiegu, kodOsi, kluczOsi, klucz,
+		KontoOperatora(ctx))
+	if err != nil {
 		return fmt.Errorf("dane: nie można usunąć ustawienia %q poziomu %q osi %q: %w",
 			klucz, kod, kodOsi, err)
 	}

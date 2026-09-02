@@ -114,31 +114,37 @@ func (r *repozytoriumStudia) ZapiszWpisKatalogowy(ctx context.Context,
 		wpis.Zasieg = tabela.domyslnyZasieg
 	}
 
-	kolumny := "identyfikator_zewnetrzny, nazwa, " + tabela.ladunek + ", zasieg, zasieg_id"
-	miejsca := "?, ?, ?, ?, ?"
+	kolumny := "identyfikator_zewnetrzny, nazwa, " + tabela.ladunek + ", zasieg, zasieg_id, konto_id"
+	miejsca := "?, ?, ?, ?, ?, " + WskazanieKonta
 	nadpisanie := "nazwa = excluded.nazwa, " + tabela.ladunek + " = excluded." + tabela.ladunek +
 		", zasieg = excluded.zasieg, zasieg_id = excluded.zasieg_id"
 	argumenty := []any{wpis.Kod, wpis.Nazwa, wpis.Ladunek, wpis.Zasieg, tekstDoKolumny(wpis.ZasiegID)}
 	if tabela.rodzaj != "" {
 		kolumny = "identyfikator_zewnetrzny, nazwa, " + tabela.rodzaj + ", " + tabela.ladunek +
-			", zasieg, zasieg_id"
-		miejsca = "?, ?, ?, ?, ?, ?"
+			", zasieg, zasieg_id, konto_id"
+		miejsca = "?, ?, ?, ?, ?, ?, " + WskazanieKonta
 		nadpisanie = "nazwa = excluded.nazwa, " + tabela.rodzaj + " = excluded." + tabela.rodzaj +
 			", " + tabela.ladunek + " = excluded." + tabela.ladunek +
 			", zasieg = excluded.zasieg, zasieg_id = excluded.zasieg_id"
 		argumenty = []any{wpis.Kod, wpis.Nazwa, wpis.Rodzaj, wpis.Ladunek, wpis.Zasieg,
 			tekstDoKolumny(wpis.ZasiegID)}
 	}
+	argumenty = append(argumenty, KontoOperatora(ctx), KontoOperatora(ctx))
 
 	zapytanie := "INSERT INTO " + tabela.tabela + " (" + kolumny + ") VALUES (" + miejsca + ")" +
-		" ON CONFLICT(identyfikator_zewnetrzny) DO UPDATE SET " + nadpisanie
+		" ON CONFLICT(identyfikator_zewnetrzny) DO UPDATE SET " + nadpisanie +
+		" WHERE " + WarunekKonta
 	polecenie, err := r.zapytania.przygotuj(ctx, zapytanie)
 	if err != nil {
 		return WpisKatalogowyStudia{}, err
 	}
-	if _, err := polecenie.ExecContext(ctx, argumenty...); err != nil {
+	wynik, err := polecenie.ExecContext(ctx, argumenty...)
+	if err != nil {
 		return WpisKatalogowyStudia{}, fmt.Errorf("dane: nie można zapisać wpisu %q w %s: %w",
 			wpis.Kod, tabela.tabela, err)
+	}
+	if err := sprawdzTrafienieZapisu(wynik, "wpis "+tabela.tabela, wpis.Kod); err != nil {
+		return WpisKatalogowyStudia{}, err
 	}
 	return r.WpisKatalogowy(ctx, tabela, wpis.Kod)
 }
@@ -149,12 +155,12 @@ func (r *repozytoriumStudia) WpisKatalogowy(ctx context.Context,
 	tabela opisTabeliKatalogu, kod string) (WpisKatalogowyStudia, error) {
 
 	zapytanie := "SELECT " + tabela.kolumnyOdczytu() + " FROM " + tabela.tabela +
-		" WHERE identyfikator_zewnetrzny = ?"
+		" WHERE identyfikator_zewnetrzny = ? AND " + WarunekKonta
 	polecenie, err := r.zapytania.przygotuj(ctx, zapytanie)
 	if err != nil {
 		return WpisKatalogowyStudia{}, err
 	}
-	wpis, err := odczytajWpisKatalogowy(polecenie.QueryRowContext(ctx, kod))
+	wpis, err := odczytajWpisKatalogowy(polecenie.QueryRowContext(ctx, kod, KontoOperatora(ctx)))
 	if errors.Is(err, sql.ErrNoRows) {
 		return WpisKatalogowyStudia{}, ErrBrakWiersza
 	}
@@ -176,12 +182,14 @@ func (r *repozytoriumStudia) WpisyKatalogowe(ctx context.Context,
 	// Zasięg pusty w kolumnie i zasięg podany to dwa różne wiersze, więc
 	// porównanie znosi NULL.
 	zapytanie := "SELECT " + tabela.kolumnyOdczytu() + " FROM " + tabela.tabela +
-		" WHERE zasieg = ? AND (zasieg_id IS ? OR zasieg_id = ?) ORDER BY nazwa, id"
+		" WHERE zasieg = ? AND (zasieg_id IS ? OR zasieg_id = ?) AND " + WarunekKonta +
+		" ORDER BY nazwa, id"
 	polecenie, err := r.zapytania.przygotuj(ctx, zapytanie)
 	if err != nil {
 		return nil, err
 	}
-	wiersze, err := polecenie.QueryContext(ctx, zasieg, tekstDoKolumny(zasiegID), tekstDoKolumny(zasiegID))
+	wiersze, err := polecenie.QueryContext(ctx, zasieg, tekstDoKolumny(zasiegID),
+		tekstDoKolumny(zasiegID), KontoOperatora(ctx))
 	if err != nil {
 		return nil, fmt.Errorf("dane: nie można odczytać wykazu z %s: %w", tabela.tabela, err)
 	}
@@ -206,12 +214,13 @@ func (r *repozytoriumStudia) WpisyKatalogowe(ctx context.Context,
 func (r *repozytoriumStudia) UsunWpisKatalogowy(ctx context.Context,
 	tabela opisTabeliKatalogu, kod string) (bool, error) {
 
-	zapytanie := "DELETE FROM " + tabela.tabela + " WHERE identyfikator_zewnetrzny = ?"
+	zapytanie := "DELETE FROM " + tabela.tabela +
+		" WHERE identyfikator_zewnetrzny = ? AND " + WarunekKonta
 	polecenie, err := r.zapytania.przygotuj(ctx, zapytanie)
 	if err != nil {
 		return false, err
 	}
-	wynik, err := polecenie.ExecContext(ctx, kod)
+	wynik, err := polecenie.ExecContext(ctx, kod, KontoOperatora(ctx))
 	if err != nil {
 		return false, fmt.Errorf("dane: nie można usunąć wpisu %q z %s: %w", kod, tabela.tabela, err)
 	}
@@ -241,17 +250,24 @@ const (
 	                         pola_json, fabryczny, utworzono`
 
 	zapiszSzablonStudia = `INSERT INTO szablon_studio
-	                       (identyfikator_zewnetrzny, nazwa, opis, format, tresc, pola_json, fabryczny)
-	                       VALUES (?, ?, ?, ?, ?, ?, ?)
+	                       (identyfikator_zewnetrzny, nazwa, opis, format, tresc, pola_json,
+	                        fabryczny, konto_id)
+	                       VALUES (?, ?, ?, ?, ?, ?, ?, ` + WskazanieKonta + `)
 	                       ON CONFLICT(identyfikator_zewnetrzny) DO UPDATE SET
 	                           nazwa = excluded.nazwa, opis = excluded.opis,
 	                           format = excluded.format, tresc = excluded.tresc,
-	                           pola_json = excluded.pola_json`
+	                           pola_json = excluded.pola_json
+	                       WHERE ` + WarunekKonta
 
+	// Szablon fabryczny zakłada migracja 131 i wskazania konta nie ma; zostaje
+	// widoczny dla każdego konta, bo jest wyposażeniem instalacji, nie pracą
+	// Operatora. Zawężenie obejmuje tylko szablony założone w module.
 	pobierzSzablonStudia = `SELECT ` + kolumnySzablonuStudia + ` FROM szablon_studio
-	                        WHERE identyfikator_zewnetrzny = ?`
+	                        WHERE identyfikator_zewnetrzny = ?
+	                          AND (fabryczny = 1 OR ` + WarunekKonta + `)`
 
 	listaSzablonowStudia = `SELECT ` + kolumnySzablonuStudia + ` FROM szablon_studio
+	                        WHERE fabryczny = 1 OR ` + WarunekKonta + `
 	                        ORDER BY fabryczny DESC, nazwa`
 )
 
@@ -267,11 +283,14 @@ func (r *repozytoriumStudia) ZapiszSzablon(ctx context.Context,
 	if err != nil {
 		return SzablonStudia{}, err
 	}
-	_, err = polecenie.ExecContext(ctx, szablon.Kod, szablon.Nazwa, tekstDoKolumny(szablon.Opis),
+	wynik, err := polecenie.ExecContext(ctx, szablon.Kod, szablon.Nazwa, tekstDoKolumny(szablon.Opis),
 		szablon.Format, szablon.Tresc, tekstDoKolumny(szablon.PolaJSON),
-		liczbaLogiczna(szablon.Fabryczny))
+		liczbaLogiczna(szablon.Fabryczny), KontoOperatora(ctx), KontoOperatora(ctx))
 	if err != nil {
 		return SzablonStudia{}, fmt.Errorf("dane: nie można zapisać szablonu %q: %w", szablon.Kod, err)
+	}
+	if err := sprawdzTrafienieZapisu(wynik, "szablon studio", szablon.Kod); err != nil {
+		return SzablonStudia{}, err
 	}
 	return r.Szablon(ctx, szablon.Kod)
 }
@@ -283,7 +302,7 @@ func (r *repozytoriumStudia) Szablon(ctx context.Context, kod string) (SzablonSt
 	if err != nil {
 		return SzablonStudia{}, err
 	}
-	szablon, err := odczytajSzablonStudia(polecenie.QueryRowContext(ctx, kod))
+	szablon, err := odczytajSzablonStudia(polecenie.QueryRowContext(ctx, kod, KontoOperatora(ctx)))
 	if errors.Is(err, sql.ErrNoRows) {
 		return SzablonStudia{}, ErrBrakWiersza
 	}
@@ -300,7 +319,7 @@ func (r *repozytoriumStudia) Szablony(ctx context.Context) ([]SzablonStudia, err
 	if err != nil {
 		return nil, err
 	}
-	wiersze, err := polecenie.QueryContext(ctx)
+	wiersze, err := polecenie.QueryContext(ctx, KontoOperatora(ctx))
 	if err != nil {
 		return nil, fmt.Errorf("dane: nie można odczytać szablonów studio: %w", err)
 	}
@@ -348,11 +367,14 @@ const (
 	                     ON CONFLICT(identyfikator_zewnetrzny) DO UPDATE SET
 	                         nazwa = excluded.nazwa,
 	                         wersja_biezaca_id = excluded.wersja_biezaca_id,
-	                         scalona = excluded.scalona`
+	                         scalona = excluded.scalona
+	                     WHERE EXISTS (SELECT 1 FROM dokument_studio
+	                                   WHERE dokument_studio.id = galaz_studio.dokument_id
+	                                     AND ` + WarunekKonta + `)`
 
 	pobierzGalazStudia = `SELECT ` + kolumnyGaleziStudia + ` FROM galaz_studio g
 	                      JOIN dokument_studio d ON d.id = g.dokument_id
-	                      WHERE g.identyfikator_zewnetrzny = ?`
+	                      WHERE g.identyfikator_zewnetrzny = ? AND ` + WarunekKonta
 
 	listaGaleziStudia = `SELECT ` + kolumnyGaleziStudia + ` FROM galaz_studio g
 	                     JOIN dokument_studio d ON d.id = g.dokument_id
@@ -371,10 +393,14 @@ func (r *repozytoriumStudia) ZapiszGalaz(ctx context.Context,
 	if err != nil {
 		return GalazStudia{}, err
 	}
-	_, err = polecenie.ExecContext(ctx, galaz.Kod, dokumentID, galaz.Nazwa, galaz.WersjaStartowaID,
-		tekstDoKolumny(galaz.WersjaBiezacaID), liczbaLogiczna(galaz.Scalona))
+	wynik, err := polecenie.ExecContext(ctx, galaz.Kod, dokumentID, galaz.Nazwa, galaz.WersjaStartowaID,
+		tekstDoKolumny(galaz.WersjaBiezacaID), liczbaLogiczna(galaz.Scalona),
+		KontoOperatora(ctx))
 	if err != nil {
 		return GalazStudia{}, fmt.Errorf("dane: nie można zapisać gałęzi %q: %w", galaz.Kod, err)
+	}
+	if err := sprawdzTrafienieZapisu(wynik, "gałąź studio", galaz.Kod); err != nil {
+		return GalazStudia{}, err
 	}
 	return r.Galaz(ctx, galaz.Kod)
 }
@@ -386,7 +412,7 @@ func (r *repozytoriumStudia) Galaz(ctx context.Context, kod string) (GalazStudia
 	if err != nil {
 		return GalazStudia{}, err
 	}
-	galaz, err := odczytajGalazStudia(polecenie.QueryRowContext(ctx, kod))
+	galaz, err := odczytajGalazStudia(polecenie.QueryRowContext(ctx, kod, KontoOperatora(ctx)))
 	if errors.Is(err, sql.ErrNoRows) {
 		return GalazStudia{}, ErrBrakWiersza
 	}
@@ -451,13 +477,14 @@ func (r *repozytoriumStudia) ZapiszOdwolanieWersji(ctx context.Context,
 		odwolanie.Zasieg = "session"
 	}
 	polecenie, err := r.zapytania.przygotuj(ctx,
-		`INSERT INTO odwolanie_wersji_studio (identyfikator_zewnetrzny, wersja_id, zasieg, wygasa)
-		 VALUES (?, ?, ?, ?)`)
+		`INSERT INTO odwolanie_wersji_studio
+		     (identyfikator_zewnetrzny, wersja_id, zasieg, wygasa, konto_id)
+		 VALUES (?, ?, ?, ?, `+WskazanieKonta+`)`)
 	if err != nil {
 		return OdwolanieWersji{}, err
 	}
 	_, err = polecenie.ExecContext(ctx, odwolanie.Kod, odwolanie.WersjaKod, odwolanie.Zasieg,
-		tekstDoKolumny(odwolanie.Wygasa))
+		tekstDoKolumny(odwolanie.Wygasa), KontoOperatora(ctx))
 	if err != nil {
 		return OdwolanieWersji{}, fmt.Errorf("dane: nie można zapisać odwołania %q: %w",
 			odwolanie.Kod, err)

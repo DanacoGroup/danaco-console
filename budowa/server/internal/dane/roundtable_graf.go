@@ -79,24 +79,33 @@ const (
 
 	zapiszWezelDebaty = `INSERT INTO debata_wezel
 	                     (identyfikator_zewnetrzny, okno, wypowiedz, uczestnik, tura,
-	                      akt_mowy, tresc, poparcie, kluczowy)
-	                     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`
+	                      akt_mowy, tresc, poparcie, kluczowy, konto_id)
+	                     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ` + WskazanieKonta + `)`
 
 	usunWezlyDebaty = `DELETE FROM debata_wezel
-	                   WHERE okno = ? AND (? = '' OR tura = ?)`
+	                   WHERE okno = ? AND (? = '' OR tura = ?) AND ` + WarunekKonta
 
-	usunKrawedzieDebaty = `DELETE FROM debata_krawedz WHERE okno = ?`
+	// Krawędź własnej kolumny konta nie ma: granica dochodzi do niej przez węzeł
+	// wskazany kolumną `wezel_zrodlowy`.
+	usunKrawedzieDebaty = `DELETE FROM debata_krawedz
+	                       WHERE okno = ?
+	                         AND EXISTS (SELECT 1 FROM debata_wezel
+	                                      WHERE debata_wezel.identyfikator_zewnetrzny
+	                                            = debata_krawedz.wezel_zrodlowy
+	                                        AND ` + WarunekKonta + `)`
 
 	pobierzWezelDebaty = `SELECT ` + kolumnyWezlaDebaty + `
-	                      FROM debata_wezel WHERE identyfikator_zewnetrzny = ?`
+	                      FROM debata_wezel
+	                      WHERE identyfikator_zewnetrzny = ? AND ` + WarunekKonta
 
 	pobierzWezlyDebaty = `SELECT ` + kolumnyWezlaDebaty + `
 	                      FROM debata_wezel
 	                      WHERE okno = ? AND (? = '' OR tura = ?) AND (? = 0 OR kluczowy = 1)
+	                        AND ` + WarunekKonta + `
 	                      ORDER BY id ASC`
 
 	oznaczWezelDebaty = `UPDATE debata_wezel SET kluczowy = ?
-	                     WHERE identyfikator_zewnetrzny = ?`
+	                     WHERE identyfikator_zewnetrzny = ? AND ` + WarunekKonta
 
 	zapiszKrawedzDebaty = `INSERT INTO debata_krawedz
 	                       (identyfikator_zewnetrzny, okno, wezel_zrodlowy, wezel_wskazany,
@@ -105,16 +114,30 @@ const (
 
 	pobierzKrawedzieDebaty = `SELECT identyfikator_zewnetrzny, okno, wezel_zrodlowy,
 	                                 wezel_wskazany, relacja, pewnosc
-	                          FROM debata_krawedz WHERE okno = ? ORDER BY id ASC`
+	                          FROM debata_krawedz
+	                          WHERE okno = ?
+	                            AND EXISTS (SELECT 1 FROM debata_wezel
+	                                         WHERE debata_wezel.identyfikator_zewnetrzny
+	                                               = debata_krawedz.wezel_zrodlowy
+	                                           AND ` + WarunekKonta + `)
+	                          ORDER BY id ASC`
 
 	zapiszOznaczenieBleduDebaty = `INSERT INTO debata_oznaczenie_bledu
 	                               (identyfikator_zewnetrzny, okno, wezel, kod, nazwa,
 	                                uzasadnienie, pewnosc)
 	                               VALUES (?, ?, ?, ?, ?, ?, ?)`
 
+	// Oznaczenie własnej kolumny konta nie ma: granica dochodzi do niego przez
+	// węzeł wskazany kolumną `wezel`.
 	pobierzOznaczeniaBledowDebaty = `SELECT identyfikator_zewnetrzny, okno, wezel, kod, nazwa,
 	                                        uzasadnienie, pewnosc
-	                                 FROM debata_oznaczenie_bledu WHERE okno = ? ORDER BY id ASC`
+	                                 FROM debata_oznaczenie_bledu
+	                                 WHERE okno = ?
+	                                   AND EXISTS (SELECT 1 FROM debata_wezel
+	                                                WHERE debata_wezel.identyfikator_zewnetrzny
+	                                                      = debata_oznaczenie_bledu.wezel
+	                                                  AND ` + WarunekKonta + `)
+	                                 ORDER BY id ASC`
 
 	// Brak wiersza zawężenia dla okna znaczy katalog w całości włączony, więc
 	// warunek pyta najpierw, czy okno w ogóle coś zawężało.
@@ -145,22 +168,24 @@ func (r *repozytoriumRoundtable) ZastapGrafDebaty(ctx context.Context, okno, tur
 		return err
 	}
 	return wTransakcji(ctx, r.db, func(transakcja *sql.Tx) error {
-		wyczysc, err := r.zapytania.wTransakcji(ctx, transakcja, usunWezlyDebaty)
-		if err != nil {
-			return err
-		}
-		if _, err := wyczysc.ExecContext(ctx, okno, tura, tura); err != nil {
-			return fmt.Errorf("dane: nie można wyczyścić grafu debaty okna %q: %w", okno, err)
-		}
 		// Krawędzie idą całym oknem, bo relacja łączy węzły z różnych tur, nie tylko z jednej.
+		// Giną przed węzłami: warunek konta dochodzi do krawędzi przez węzeł
+		// źródłowy, a po usunięciu węzłów nie ma już po czym dojść.
 		if tura == "" {
 			wyczyscKrawedzie, err := r.zapytania.wTransakcji(ctx, transakcja, usunKrawedzieDebaty)
 			if err != nil {
 				return err
 			}
-			if _, err := wyczyscKrawedzie.ExecContext(ctx, okno); err != nil {
+			if _, err := wyczyscKrawedzie.ExecContext(ctx, okno, KontoOperatora(ctx)); err != nil {
 				return fmt.Errorf("dane: nie można wyczyścić krawędzi debaty okna %q: %w", okno, err)
 			}
+		}
+		wyczysc, err := r.zapytania.wTransakcji(ctx, transakcja, usunWezlyDebaty)
+		if err != nil {
+			return err
+		}
+		if _, err := wyczysc.ExecContext(ctx, okno, tura, tura, KontoOperatora(ctx)); err != nil {
+			return fmt.Errorf("dane: nie można wyczyścić grafu debaty okna %q: %w", okno, err)
 		}
 		wstawWezel, err := r.zapytania.wTransakcji(ctx, transakcja, zapiszWezelDebaty)
 		if err != nil {
@@ -175,7 +200,7 @@ func (r *repozytoriumRoundtable) ZastapGrafDebaty(ctx context.Context, okno, tur
 			}
 			if _, err := wstawWezel.ExecContext(ctx, wezel.Kod, okno, wezel.Wypowiedz,
 				wezel.Uczestnik, wezel.Tura, wezel.AktMowy, wezel.Tresc, wezel.Poparcie,
-				wezel.Kluczowy); err != nil {
+				wezel.Kluczowy, KontoOperatora(ctx)); err != nil {
 				return fmt.Errorf("dane: nie można zapisać węzła grafu debaty %q: %w", wezel.Kod, err)
 			}
 		}
@@ -217,7 +242,7 @@ func (r *repozytoriumRoundtable) WezelDebatyPoKodzie(ctx context.Context, kod st
 	if err != nil {
 		return WezelDebaty{}, err
 	}
-	wezel, err := odczytajWezelDebaty(polecenie.QueryRowContext(ctx, kod))
+	wezel, err := odczytajWezelDebaty(polecenie.QueryRowContext(ctx, kod, KontoOperatora(ctx)))
 	if errors.Is(err, sql.ErrNoRows) {
 		return WezelDebaty{}, ErrBrakWiersza
 	}
@@ -240,7 +265,7 @@ func (r *repozytoriumRoundtable) WezlyDebaty(ctx context.Context, okno, tura str
 	if tylkoKluczowe {
 		zawezenie = 1
 	}
-	wiersze, err := polecenie.QueryContext(ctx, okno, tura, tura, zawezenie)
+	wiersze, err := polecenie.QueryContext(ctx, okno, tura, tura, zawezenie, KontoOperatora(ctx))
 	if err != nil {
 		return nil, fmt.Errorf("dane: nie można odczytać węzłów grafu debaty okna %q: %w", okno, err)
 	}
@@ -264,7 +289,7 @@ func (r *repozytoriumRoundtable) OznaczWezelDebaty(ctx context.Context, kod stri
 	if err != nil {
 		return err
 	}
-	wynik, err := polecenie.ExecContext(ctx, kluczowy, kod)
+	wynik, err := polecenie.ExecContext(ctx, kluczowy, kod, KontoOperatora(ctx))
 	if err != nil {
 		return fmt.Errorf("dane: nie można oznaczyć węzła grafu debaty %q: %w", kod, err)
 	}
@@ -278,7 +303,7 @@ func (r *repozytoriumRoundtable) KrawedzieDebaty(ctx context.Context, okno strin
 	if err != nil {
 		return nil, err
 	}
-	wiersze, err := polecenie.QueryContext(ctx, okno)
+	wiersze, err := polecenie.QueryContext(ctx, okno, KontoOperatora(ctx))
 	if err != nil {
 		return nil, fmt.Errorf("dane: nie można odczytać krawędzi grafu debaty okna %q: %w", okno, err)
 	}
@@ -322,7 +347,7 @@ func (r *repozytoriumRoundtable) OznaczeniaBledowDebaty(ctx context.Context,
 	if err != nil {
 		return nil, err
 	}
-	wiersze, err := polecenie.QueryContext(ctx, okno)
+	wiersze, err := polecenie.QueryContext(ctx, okno, KontoOperatora(ctx))
 	if err != nil {
 		return nil, fmt.Errorf("dane: nie można odczytać oznaczeń błędów okna %q: %w", okno, err)
 	}

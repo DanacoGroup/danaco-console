@@ -132,18 +132,25 @@ const (
 	                          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
 
 	znakowanieStudiaPobierz = `SELECT ` + kolumnyZnakowaniaStudia + zrodloZnakowaniaStudia +
-		` WHERE z.identyfikator_zewnetrzny = ?`
+		` WHERE z.identyfikator_zewnetrzny = ? AND ` + WarunekKonta
 
 	// Kolejność wystąpienia w treści, bo wykaz znakowań jest SPISEM DO PRZEJŚCIA:
 	// Operator skacze po nim od góry dokumentu do dołu i odhacza pozycje.
 	znakowaniaStudiaLista = `SELECT ` + kolumnyZnakowaniaStudia + zrodloZnakowaniaStudia +
 		` WHERE z.dokument_id = ? ORDER BY z.zakres_od, z.id`
 
-	znakowanieStudiaUsun = `DELETE FROM znakowanie_studio WHERE identyfikator_zewnetrzny = ?`
+	znakowanieStudiaUsun = `DELETE FROM znakowanie_studio
+	                        WHERE identyfikator_zewnetrzny = ?
+	                          AND EXISTS (SELECT 1 FROM dokument_studio
+	                                      WHERE dokument_studio.id = znakowanie_studio.dokument_id
+	                                        AND ` + WarunekKonta + `)`
 
 	znakowanieStudiaPrzestawStan = `UPDATE znakowanie_studio
 	                                SET stan = ?, zaktualizowano = strftime('%Y-%m-%dT%H:%M:%fZ','now')
-	                                WHERE identyfikator_zewnetrzny = ? AND stan = 'open'`
+	                                WHERE identyfikator_zewnetrzny = ? AND stan = 'open'
+	                                  AND EXISTS (SELECT 1 FROM dokument_studio
+	                                              WHERE dokument_studio.id = znakowanie_studio.dokument_id
+	                                                AND ` + WarunekKonta + `)`
 
 	// Liczba użyć liczy się w tym samym zapytaniu co wykaz rodzajów: pytanie
 	// „ile znakowań tego rodzaju stoi w dokumencie" pada zawsze razem z wykazem,
@@ -154,22 +161,33 @@ const (
 	                         LEFT JOIN znakowanie_studio z
 	                              ON z.znacznik_nazwa = r.nazwa
 	                             AND (? = 0 OR z.dokument_id = ?)
+	                             AND EXISTS (SELECT 1 FROM dokument_studio
+	                                         WHERE dokument_studio.id = z.dokument_id
+	                                           AND ` + WarunekKonta + `)
+	                         WHERE r.fabryczny = 1 OR ` + WarunekKonta + `
 	                         GROUP BY r.id ORDER BY r.fabryczny DESC, r.nazwa`
 
+	// Rodzaj fabryczny zakłada migracja 365 i wskazania konta nie ma; zostaje
+	// widoczny dla każdego konta, bo jest wyposażeniem instalacji, nie pracą
+	// Operatora. Zawężenie obejmuje tylko rodzaje założone w module.
 	rodzajZnacznikaPobierz = `SELECT nazwa, nazwa_widoczna, barwa, fabryczny, 0
-	                          FROM rodzaj_znacznika_studio WHERE nazwa = ?`
+	                          FROM rodzaj_znacznika_studio
+	                          WHERE nazwa = ? AND (fabryczny = 1 OR ` + WarunekKonta + `)`
 
-	rodzajZnacznikaZapisz = `INSERT INTO rodzaj_znacznika_studio (nazwa, nazwa_widoczna, barwa)
-	                         VALUES (?, ?, ?)
+	rodzajZnacznikaZapisz = `INSERT INTO rodzaj_znacznika_studio
+	                             (nazwa, nazwa_widoczna, barwa, konto_id)
+	                         VALUES (?, ?, ?, ` + WskazanieKonta + `)
 	                         ON CONFLICT(nazwa) DO UPDATE SET
 	                             nazwa_widoczna = excluded.nazwa_widoczna,
 	                             barwa = excluded.barwa,
-	                             zaktualizowano = strftime('%Y-%m-%dT%H:%M:%fZ','now')`
+	                             zaktualizowano = strftime('%Y-%m-%dT%H:%M:%fZ','now')
+	                         WHERE ` + WarunekKonta
 
 	// Warunek `fabryczny = 0` w poleceniu, nie w rdzeniu, byłby cichą odmową:
 	// rdzeń ma powiedzieć, DLACZEGO nie usunął. Dlatego polecenie usuwa bez
 	// warunku, a fabryczność sprawdza wołający i nazywa powód.
-	rodzajZnacznikaUsun = `DELETE FROM rodzaj_znacznika_studio WHERE nazwa = ?`
+	rodzajZnacznikaUsun = `DELETE FROM rodzaj_znacznika_studio
+	                       WHERE nazwa = ? AND ` + WarunekKonta
 
 	kolumnyZajeciaStudia = `j.id, j.identyfikator_zewnetrzny, d.identyfikator_zewnetrzny,
 	                        j.wykonawca_rodzaj, j.wykonawca_agent_kod, j.wykonawca_agent_nazwa,
@@ -193,13 +211,16 @@ const (
 	                               strftime('%Y-%m-%dT%H:%M:%fZ','now', ?))`
 
 	zajecieStudiaPobierz = `SELECT ` + kolumnyZajeciaStudia + zrodloZajeciaStudia +
-		` WHERE j.identyfikator_zewnetrzny = ?`
+		` WHERE j.identyfikator_zewnetrzny = ? AND ` + WarunekKonta
 
 	zajeciaStudiaLista = `SELECT ` + kolumnyZajeciaStudia + zrodloZajeciaStudia +
 		` WHERE j.dokument_id = ? ORDER BY j.zakres_od, j.id`
 
 	zajecieStudiaZwolnij = `DELETE FROM zajecie_fragmentu_studio
-	                        WHERE identyfikator_zewnetrzny = ?`
+	                        WHERE identyfikator_zewnetrzny = ?
+	                          AND EXISTS (SELECT 1 FROM dokument_studio
+	                                      WHERE dokument_studio.id = zajecie_fragmentu_studio.dokument_id
+	                                        AND ` + WarunekKonta + `)`
 
 	// Zwolnienie wszystkich zajęć wykonawcy oraz przemiecenie wygasłych jednym
 	// poleceniem, bo obie czynności usuwają wiersze tej samej tabeli po tym
@@ -245,7 +266,7 @@ const (
 		` WHERE w.dokument_id = ? ORDER BY w.utworzono DESC, w.id DESC`
 
 	wersjaSzereguPobierz = `SELECT ` + kolumnyWersjiSzeregu + zrodloWersjiSzeregu +
-		` WHERE w.identyfikator_zewnetrzny = ?`
+		` WHERE w.identyfikator_zewnetrzny = ? AND ` + WarunekKonta
 
 	// Wersja założycielska to najstarszy wiersz szeregu Operatora; szereg
 	// autozapisu odpada z rachunku, żeby powrót do stanu pierwotnego prowadził
@@ -312,7 +333,8 @@ func (r *repozytoriumStudia) Znakowanie(ctx context.Context, kod string) (Znakow
 	if err != nil {
 		return ZnakowanieStudia{}, err
 	}
-	znakowanie, err := odczytajZnakowanieStudia(polecenie.QueryRowContext(ctx, kod))
+	znakowanie, err := odczytajZnakowanieStudia(
+		polecenie.QueryRowContext(ctx, kod, KontoOperatora(ctx)))
 	if errors.Is(err, sql.ErrNoRows) {
 		return ZnakowanieStudia{}, ErrBrakWiersza
 	}
@@ -358,7 +380,7 @@ func (r *repozytoriumStudia) UsunZnakowanie(ctx context.Context, kod string) (bo
 	if err != nil {
 		return false, err
 	}
-	wynik, err := polecenie.ExecContext(ctx, kod)
+	wynik, err := polecenie.ExecContext(ctx, kod, KontoOperatora(ctx))
 	if err != nil {
 		return false, fmt.Errorf("dane: nie można zdjąć znakowania %q: %w", kod, err)
 	}
@@ -379,7 +401,7 @@ func (r *repozytoriumStudia) PrzestawStanZnakowania(ctx context.Context,
 	if err != nil {
 		return false, err
 	}
-	wynik, err := polecenie.ExecContext(ctx, stan, kod)
+	wynik, err := polecenie.ExecContext(ctx, stan, kod, KontoOperatora(ctx))
 	if err != nil {
 		return false, fmt.Errorf("dane: nie można rozstrzygnąć znakowania %q: %w", kod, err)
 	}
@@ -400,7 +422,8 @@ func (r *repozytoriumStudia) RodzajeZnacznika(ctx context.Context,
 	if err != nil {
 		return nil, err
 	}
-	wiersze, err := polecenie.QueryContext(ctx, dokumentID, dokumentID)
+	wiersze, err := polecenie.QueryContext(ctx, dokumentID, dokumentID,
+		KontoOperatora(ctx), KontoOperatora(ctx))
 	if err != nil {
 		return nil, fmt.Errorf("dane: nie można odczytać rodzajów znacznika: %w", err)
 	}
@@ -429,7 +452,8 @@ func (r *repozytoriumStudia) RodzajZnacznika(ctx context.Context,
 	if err != nil {
 		return RodzajZnacznikaStudia{}, err
 	}
-	rodzaj, err := odczytajRodzajZnacznikaStudia(polecenie.QueryRowContext(ctx, nazwa))
+	rodzaj, err := odczytajRodzajZnacznikaStudia(
+		polecenie.QueryRowContext(ctx, nazwa, KontoOperatora(ctx)))
 	if errors.Is(err, sql.ErrNoRows) {
 		return RodzajZnacznikaStudia{}, ErrBrakWiersza
 	}
@@ -455,11 +479,14 @@ func (r *repozytoriumStudia) ZapiszRodzajZnacznika(ctx context.Context,
 	if err != nil {
 		return RodzajZnacznikaStudia{}, err
 	}
-	if _, err := polecenie.ExecContext(ctx, rodzaj.Nazwa, rodzaj.NazwaWidoczna,
-		tekstDoKolumny(rodzaj.Barwa)); err != nil {
-
+	wynik, err := polecenie.ExecContext(ctx, rodzaj.Nazwa, rodzaj.NazwaWidoczna,
+		tekstDoKolumny(rodzaj.Barwa), KontoOperatora(ctx), KontoOperatora(ctx))
+	if err != nil {
 		return RodzajZnacznikaStudia{}, fmt.Errorf(
 			"dane: nie można zapisać rodzaju znacznika %q: %w", rodzaj.Nazwa, err)
+	}
+	if err := sprawdzTrafienieZapisu(wynik, "rodzaj znacznika studio", rodzaj.Nazwa); err != nil {
+		return RodzajZnacznikaStudia{}, err
 	}
 	return r.RodzajZnacznika(ctx, rodzaj.Nazwa)
 }
@@ -471,7 +498,7 @@ func (r *repozytoriumStudia) UsunRodzajZnacznika(ctx context.Context, nazwa stri
 	if err != nil {
 		return false, err
 	}
-	wynik, err := polecenie.ExecContext(ctx, nazwa)
+	wynik, err := polecenie.ExecContext(ctx, nazwa, KontoOperatora(ctx))
 	if err != nil {
 		return false, fmt.Errorf("dane: nie można usunąć rodzaju znacznika %q: %w", nazwa, err)
 	}
@@ -519,7 +546,7 @@ func (r *repozytoriumStudia) ZapiszZajecieFragmentu(ctx context.Context, dokumen
 		return ZajecieFragmentuStudia{}, err
 	}
 	zapisane, err := odczytajZajecieFragmentuStudia(
-		polecenieOdczytu.QueryRowContext(ctx, zajecie.Kod))
+		polecenieOdczytu.QueryRowContext(ctx, zajecie.Kod, KontoOperatora(ctx)))
 	if err != nil {
 		return ZajecieFragmentuStudia{}, fmt.Errorf(
 			"dane: nieczytelny wiersz zajęcia fragmentu %q: %w", zajecie.Kod, err)
@@ -564,7 +591,7 @@ func (r *repozytoriumStudia) ZwolnijZajecieFragmentu(ctx context.Context, kod st
 	if err != nil {
 		return false, err
 	}
-	wynik, err := polecenie.ExecContext(ctx, kod)
+	wynik, err := polecenie.ExecContext(ctx, kod, KontoOperatora(ctx))
 	if err != nil {
 		return false, fmt.Errorf("dane: nie można zwolnić zajęcia fragmentu %q: %w", kod, err)
 	}
@@ -740,7 +767,8 @@ func (r *repozytoriumStudia) WersjaSzeregu(ctx context.Context,
 	if err != nil {
 		return WersjaSzereguStudia{}, err
 	}
-	wersja, err := odczytajWersjeSzereguStudia(polecenie.QueryRowContext(ctx, kod))
+	wersja, err := odczytajWersjeSzereguStudia(
+		polecenie.QueryRowContext(ctx, kod, KontoOperatora(ctx)))
 	if errors.Is(err, sql.ErrNoRows) {
 		return WersjaSzereguStudia{}, ErrBrakWiersza
 	}

@@ -39,9 +39,10 @@ const (
 	zapiszSzablonPromptuDesignu = `INSERT INTO szablon_promptu_design
 	                               (identyfikator_zewnetrzny, okno, nazwa, temat, styl, kompozycja,
 	                                oswietlenie, paleta, proporcje_kadru, wykluczenia, ziarno,
-	                                warianty, silnik, kreatywnosc, zaktualizowano)
+	                                warianty, silnik, kreatywnosc, zaktualizowano, konto_id)
 	                               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
-	                                       strftime('%Y-%m-%dT%H:%M:%fZ','now'))
+	                                       strftime('%Y-%m-%dT%H:%M:%fZ','now'),
+	                                       ` + WskazanieKonta + `)
 	                               ON CONFLICT(identyfikator_zewnetrzny) DO UPDATE SET
 	                                   nazwa = excluded.nazwa,
 	                                   temat = excluded.temat,
@@ -55,13 +56,15 @@ const (
 	                                   warianty = excluded.warianty,
 	                                   silnik = excluded.silnik,
 	                                   kreatywnosc = excluded.kreatywnosc,
-	                                   zaktualizowano = excluded.zaktualizowano`
+	                                   zaktualizowano = excluded.zaktualizowano
+	                               WHERE ` + WarunekKonta
 
 	pobierzSzablonPromptuDesignu = `SELECT ` + kolumnySzablonuPromptuDesignu +
-		` FROM szablon_promptu_design WHERE identyfikator_zewnetrzny = ?`
+		` FROM szablon_promptu_design
+		  WHERE identyfikator_zewnetrzny = ? AND ` + WarunekKonta
 
 	listaSzablonowPromptuDesignu = `SELECT ` + kolumnySzablonuPromptuDesignu +
-		` FROM szablon_promptu_design WHERE okno = ?
+		` FROM szablon_promptu_design WHERE okno = ? AND ` + WarunekKonta + `
 		  ORDER BY zaktualizowano DESC, id DESC`
 
 	listaPromptowOknaDesignu = `SELECT ` + kolumnyPromptuDesign + ` FROM prompt_design
@@ -70,7 +73,8 @@ const (
 	liczbaPromptowOknaDesignu = `SELECT COUNT(*) FROM prompt_design WHERE okno = ?`
 
 	listaZasobowPromptuDesignu = `SELECT identyfikator_zewnetrzny FROM zasob_design
-	                              WHERE prompt_id = ? ORDER BY utworzono, id`
+	                              WHERE prompt_id = ? AND ` + WarunekKonta + `
+	                              ORDER BY utworzono, id`
 )
 
 // ZapiszSzablonPromptuDesignu zakłada szablon albo nadpisuje zastany po
@@ -105,21 +109,33 @@ func (r *repozytoriumDesignu) ZapiszSzablonPromptuDesignu(ctx context.Context,
 	if szablon.Kreatywnosc != nil {
 		kreatywnosc = *szablon.Kreatywnosc
 	}
-	_, err = polecenie.ExecContext(ctx, szablon.Kod, szablon.Okno, szablon.Nazwa, szablon.Temat,
+	wynik, err := polecenie.ExecContext(ctx, szablon.Kod, szablon.Okno, szablon.Nazwa, szablon.Temat,
 		tekstDoKolumny(szablon.Styl), tekstDoKolumny(szablon.Kompozycja),
 		tekstDoKolumny(szablon.Oswietlenie), tekstDoKolumny(szablon.Paleta),
 		tekstDoKolumny(szablon.Proporcje), tekstDoKolumny(szablon.Wykluczenia),
-		ziarno, warianty, tekstDoKolumny(szablon.Silnik), kreatywnosc)
+		ziarno, warianty, tekstDoKolumny(szablon.Silnik), kreatywnosc,
+		KontoOperatora(ctx), KontoOperatora(ctx))
 	if err != nil {
 		return SzablonPromptuDesignu{}, fmt.Errorf(
 			"dane: nie można zapisać szablonu promptu design %q: %w", szablon.Kod, err)
+	}
+	zmienione, err := wynik.RowsAffected()
+	if err != nil {
+		return SzablonPromptuDesignu{}, fmt.Errorf(
+			"dane: nieznana liczba zapisanych szablonów promptu design: %w", err)
+	}
+	if zmienione == 0 {
+		return SzablonPromptuDesignu{}, fmt.Errorf(
+			"dane: szablon promptu design %q należy do innego konta: %w",
+			szablon.Kod, ErrKolizjaWiersza)
 	}
 
 	polecenieOdczytu, err := r.zapytania.przygotuj(ctx, pobierzSzablonPromptuDesignu)
 	if err != nil {
 		return SzablonPromptuDesignu{}, err
 	}
-	zapisany, err := odczytajSzablonPromptuDesignu(polecenieOdczytu.QueryRowContext(ctx, szablon.Kod))
+	zapisany, err := odczytajSzablonPromptuDesignu(
+		polecenieOdczytu.QueryRowContext(ctx, szablon.Kod, KontoOperatora(ctx)))
 	if err != nil {
 		return SzablonPromptuDesignu{}, fmt.Errorf(
 			"dane: nieczytelny wiersz szablonu promptu design %q: %w", szablon.Kod, err)
@@ -136,7 +152,7 @@ func (r *repozytoriumDesignu) SzablonyPromptuDesignu(ctx context.Context,
 	if err != nil {
 		return nil, err
 	}
-	wiersze, err := polecenie.QueryContext(ctx, okno)
+	wiersze, err := polecenie.QueryContext(ctx, okno, KontoOperatora(ctx))
 	if err != nil {
 		return nil, fmt.Errorf("dane: nie można odczytać szablonów promptu design okna %q: %w", okno, err)
 	}
@@ -204,7 +220,7 @@ func (r *repozytoriumDesignu) ZasobyPromptuDesignu(ctx context.Context,
 	if err != nil {
 		return nil, err
 	}
-	wiersze, err := polecenie.QueryContext(ctx, promptID)
+	wiersze, err := polecenie.QueryContext(ctx, promptID, KontoOperatora(ctx))
 	if err != nil {
 		return nil, fmt.Errorf("dane: nie można odczytać zasobów promptu design %d: %w", promptID, err)
 	}

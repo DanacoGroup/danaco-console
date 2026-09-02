@@ -98,10 +98,11 @@ const (
 	// Zapis zakłada dokument albo nadpisuje zastany po identyfikatorze
 	// zewnętrznym — `document.open` wznawia sesję po `documentId`, więc drugi
 	// zapis tego samego dokumentu jest normalną ścieżką, nie usterką.
+	// Warunek konta przy nadpisaniu, bo UNIQUE stoi na całej tabeli.
 	zapiszDokumentStudia = `INSERT INTO dokument_studio
 	                        (identyfikator_zewnetrzny, okno, tytul, format, tresc,
-	                         tresc_odwolanie, plik_repozytorium_id, wersja_biezaca_id)
-	                        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+	                         tresc_odwolanie, plik_repozytorium_id, wersja_biezaca_id, konto_id)
+	                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ` + WskazanieKonta + `)
 	                        ON CONFLICT(identyfikator_zewnetrzny) DO UPDATE SET
 	                            okno = excluded.okno,
 	                            tytul = excluded.tytul,
@@ -110,13 +111,15 @@ const (
 	                            tresc_odwolanie = excluded.tresc_odwolanie,
 	                            plik_repozytorium_id = excluded.plik_repozytorium_id,
 	                            wersja_biezaca_id = excluded.wersja_biezaca_id,
-	                            zaktualizowano = strftime('%Y-%m-%dT%H:%M:%fZ','now')`
+	                            zaktualizowano = strftime('%Y-%m-%dT%H:%M:%fZ','now')
+	                        WHERE ` + WarunekKonta
 
 	pobierzDokumentStudia = `SELECT ` + kolumnyDokumentuStudia + ` FROM dokument_studio
-	                         WHERE identyfikator_zewnetrzny = ?`
+	                         WHERE identyfikator_zewnetrzny = ? AND ` + WarunekKonta
 
 	listaDokumentowStudia = `SELECT ` + kolumnyDokumentuStudia + ` FROM dokument_studio
-	                         WHERE okno = ? ORDER BY zaktualizowano DESC, id DESC`
+	                         WHERE okno = ? AND ` + WarunekKonta + `
+	                         ORDER BY zaktualizowano DESC, id DESC`
 )
 
 type repozytoriumStudia struct {
@@ -145,13 +148,17 @@ func (r *repozytoriumStudia) ZapiszDokument(ctx context.Context,
 	if err != nil {
 		return DokumentStudia{}, err
 	}
-	_, err = polecenie.ExecContext(ctx, dokument.Kod, dokument.Okno,
+	wynik, err := polecenie.ExecContext(ctx, dokument.Kod, dokument.Okno,
 		tekstDoKolumny(dokument.Tytul), string(dokument.Format),
 		tekstDoKolumny(dokument.Tresc), tekstDoKolumny(dokument.TrescOdwolanie),
-		tekstDoKolumny(dokument.PlikRepozytoriumID), tekstDoKolumny(dokument.WersjaBiezacaKod))
+		tekstDoKolumny(dokument.PlikRepozytoriumID), tekstDoKolumny(dokument.WersjaBiezacaKod),
+		KontoOperatora(ctx), KontoOperatora(ctx))
 	if err != nil {
 		return DokumentStudia{}, fmt.Errorf("dane: nie można zapisać dokumentu studio %q: %w",
 			dokument.Kod, err)
+	}
+	if err := sprawdzTrafienieZapisu(wynik, "dokument studio", dokument.Kod); err != nil {
+		return DokumentStudia{}, err
 	}
 	return r.Dokument(ctx, dokument.Kod)
 }
@@ -162,7 +169,7 @@ func (r *repozytoriumStudia) Dokument(ctx context.Context, kod string) (Dokument
 	if err != nil {
 		return DokumentStudia{}, err
 	}
-	dokument, err := odczytajDokumentStudia(polecenie.QueryRowContext(ctx, kod))
+	dokument, err := odczytajDokumentStudia(polecenie.QueryRowContext(ctx, kod, KontoOperatora(ctx)))
 	if errors.Is(err, sql.ErrNoRows) {
 		return DokumentStudia{}, ErrBrakWiersza
 	}
@@ -178,7 +185,7 @@ func (r *repozytoriumStudia) Dokumenty(ctx context.Context, okno string) ([]Doku
 	if err != nil {
 		return nil, err
 	}
-	wiersze, err := polecenie.QueryContext(ctx, okno)
+	wiersze, err := polecenie.QueryContext(ctx, okno, KontoOperatora(ctx))
 	if err != nil {
 		return nil, fmt.Errorf("dane: nie można odczytać dokumentów studio okna %q: %w", okno, err)
 	}

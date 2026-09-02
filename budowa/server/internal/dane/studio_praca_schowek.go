@@ -18,7 +18,8 @@ const (
 	// nie wskazuje wpisu. Przypięte NIE mają tu pierwszeństwa: przypięcie chroni
 	// wpis od wygaśnięcia, a nie czyni go ostatnio odłożonym.
 	wpisSchowkaNajswiezszy = `SELECT ` + kolumnyWpisuSchowka +
-		` FROM wpis_schowka ORDER BY utworzono DESC, id DESC LIMIT 1`
+		` FROM wpis_schowka WHERE ` + WarunekKonta + `
+		  ORDER BY utworzono DESC, id DESC LIMIT 1`
 )
 
 // DopiszWpisSchowkaStudia odkłada fragment dokumentu w historii schowka
@@ -44,7 +45,8 @@ func (r *repozytoriumStudia) DopiszWpisSchowkaStudia(ctx context.Context,
 		if err != nil {
 			return err
 		}
-		zastany, err := odczytajWpisSchowka(odczyt.QueryRowContext(ctx, wpis.Odcisk))
+		zastany, err := odczytajWpisSchowka(
+			odczyt.QueryRowContext(ctx, wpis.Odcisk, KontoOperatora(ctx)))
 		switch {
 		case errors.Is(err, sql.ErrNoRows):
 		case err != nil:
@@ -57,14 +59,15 @@ func (r *repozytoriumStudia) DopiszWpisSchowkaStudia(ctx context.Context,
 		if err != nil {
 			return err
 		}
-		_, err = zapis.ExecContext(ctx, wpis.Kod, wpis.Rodzaj, wpis.Tresc, wpis.Odcisk,
+		wynik, err := zapis.ExecContext(ctx, wpis.Kod, wpis.Rodzaj, wpis.Tresc, wpis.Odcisk,
 			tekstDoKolumny(wpis.Zajawka), wpis.RozmiarBajtow, liczbaLogiczna(wpis.Przypiety),
 			liczbaLogiczna(wpis.Wrazliwy), tekstDoKolumny(wpis.OknoZrodlowe), wpis.Utworzono,
-			liczbaDoKolumny(wpis.Uzyto), tekstDoKolumny(wpis.PostacJSON))
+			liczbaDoKolumny(wpis.Uzyto), tekstDoKolumny(wpis.PostacJSON), KontoOperatora(ctx),
+			KontoOperatora(ctx))
 		if err != nil {
 			return fmt.Errorf("dane: nie można zapisać wpisu schowka: %w", err)
 		}
-		return nil
+		return sprawdzTrafienieZapisu(wynik, "wpis schowka o odcisku", wpis.Odcisk)
 	})
 	if err != nil {
 		return WpisSchowka{}, false, err
@@ -73,7 +76,8 @@ func (r *repozytoriumStudia) DopiszWpisSchowkaStudia(ctx context.Context,
 	if err != nil {
 		return WpisSchowka{}, false, err
 	}
-	zapisany, err := odczytajWpisSchowka(polecenie.QueryRowContext(ctx, wpis.Odcisk))
+	zapisany, err := odczytajWpisSchowka(
+		polecenie.QueryRowContext(ctx, wpis.Odcisk, KontoOperatora(ctx)))
 	if err != nil {
 		return WpisSchowka{}, false, fmt.Errorf("dane: nieczytelny wiersz wpisu schowka: %w", err)
 	}
@@ -89,7 +93,7 @@ func (r *repozytoriumStudia) WpisSchowkaStudia(ctx context.Context,
 	if err != nil {
 		return WpisSchowka{}, err
 	}
-	wpis, err := odczytajWpisSchowka(polecenie.QueryRowContext(ctx, kod))
+	wpis, err := odczytajWpisSchowka(polecenie.QueryRowContext(ctx, kod, KontoOperatora(ctx)))
 	if errors.Is(err, sql.ErrNoRows) {
 		return WpisSchowka{}, ErrBrakWiersza
 	}
@@ -107,7 +111,7 @@ func (r *repozytoriumStudia) NajswiezszyWpisSchowkaStudia(ctx context.Context) (
 	if err != nil {
 		return WpisSchowka{}, err
 	}
-	wpis, err := odczytajWpisSchowka(polecenie.QueryRowContext(ctx))
+	wpis, err := odczytajWpisSchowka(polecenie.QueryRowContext(ctx, KontoOperatora(ctx)))
 	if errors.Is(err, sql.ErrNoRows) {
 		return WpisSchowka{}, ErrBrakWiersza
 	}
@@ -140,13 +144,14 @@ func (r *repozytoriumStudia) ZapiszNastaweZasieguStudia(ctx context.Context,
 	if err != nil {
 		return err
 	}
-	_, err = polecenie.ExecContext(ctx, poziom, ustawienie.KluczZasiegu, os, "",
-		ustawienie.Klucz, tekstDoKolumny(ustawienie.Wartosc), rodzaj)
+	wynik, err := polecenie.ExecContext(ctx, poziom, ustawienie.KluczZasiegu, os, "",
+		ustawienie.Klucz, tekstDoKolumny(ustawienie.Wartosc), rodzaj, KontoOperatora(ctx),
+		KontoOperatora(ctx))
 	if err != nil {
 		return fmt.Errorf("dane: nie można zapisać nastawy %q na poziomie %q: %w",
 			ustawienie.Klucz, poziom, err)
 	}
-	return nil
+	return sprawdzTrafienieZapisu(wynik, "nastawa zasięgu", ustawienie.Klucz)
 }
 
 // NastawaZasieguStudia oddaje wartość nastawy zapisaną NA WSKAZANYM poziomie —
@@ -168,7 +173,7 @@ func (r *repozytoriumStudia) NastawaZasieguStudia(ctx context.Context,
 		return Ustawienie{}, false, err
 	}
 	ustawienie, err := odczytajUstawienie(
-		polecenie.QueryRowContext(ctx, poziom, kluczZasiegu, os, "", klucz))
+		polecenie.QueryRowContext(ctx, poziom, kluczZasiegu, os, "", klucz, KontoOperatora(ctx)))
 	if errors.Is(err, sql.ErrNoRows) {
 		return Ustawienie{}, false, nil
 	}

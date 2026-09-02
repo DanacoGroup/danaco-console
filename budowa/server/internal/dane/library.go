@@ -159,12 +159,14 @@ const (
 	// pusty łańcuch nie przejdzie warunku CHECK kolumny, więc `ZapiszPlik`
 	// podstawia `aktywny` (`stanZapisu`) zamiast pozwolić bazie odmówić przy
 	// każdym wgraniu, które o stanie nie myśli.
+
+	// Kod jest UNIQUE w całej tabeli — DO UPDATE bez warunku konta sięgnąłby cudzego wiersza.
 	zapiszPlikBiblioteki = `INSERT INTO plik_biblioteki
 	                        (identyfikator_zewnetrzny, nazwa, sciezka, sciezka_repozytorium, stan,
 	                         mime_type, rozmiar_bajtow,
 	                         projekt_id, modul_zrodlowy_id, wersja_biezaca_id, suma_kontrolna,
-	                         tresc_odwolanie)
-	                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+	                         tresc_odwolanie, konto_id)
+	                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ` + WskazanieKonta + `)
 	                        ON CONFLICT(identyfikator_zewnetrzny) DO UPDATE SET
 	                            nazwa = excluded.nazwa,
 	                            sciezka = excluded.sciezka,
@@ -177,10 +179,11 @@ const (
 	                            wersja_biezaca_id = excluded.wersja_biezaca_id,
 	                            suma_kontrolna = excluded.suma_kontrolna,
 	                            tresc_odwolanie = excluded.tresc_odwolanie,
-	                            zaktualizowano = strftime('%Y-%m-%dT%H:%M:%fZ','now')`
+	                            zaktualizowano = strftime('%Y-%m-%dT%H:%M:%fZ','now')
+	                        WHERE ` + WarunekKonta
 
 	pobierzPlikBiblioteki = `SELECT ` + kolumnyPlikuBiblioteki + ` FROM plik_biblioteki
-	                         WHERE identyfikator_zewnetrzny = ?`
+	                         WHERE identyfikator_zewnetrzny = ? AND ` + WarunekKonta
 )
 
 type repozytoriumBiblioteki struct {
@@ -206,14 +209,17 @@ func (r *repozytoriumBiblioteki) ZapiszPlik(ctx context.Context, plik PlikBiblio
 	if err != nil {
 		return PlikBiblioteki{}, err
 	}
-	_, err = polecenie.ExecContext(ctx, plik.Kod, plik.Nazwa, tekstDoKolumny(plik.Sciezka),
+	wynik, err := polecenie.ExecContext(ctx, plik.Kod, plik.Nazwa, tekstDoKolumny(plik.Sciezka),
 		tekstDoKolumny(plik.SciezkaRepozytorium), stanZapisu(plik.Stan),
 		tekstDoKolumny(plik.MimeType), liczbaDoKolumny(plik.RozmiarBajtow),
 		tekstDoKolumny(plik.ProjektID), tekstDoKolumny(plik.ModulZrodlowyID),
 		liczbaDoKolumny(plik.WersjaBiezacaID), tekstDoKolumny(plik.SumaKontrolna),
-		tekstDoKolumny(plik.TrescOdwolanie))
+		tekstDoKolumny(plik.TrescOdwolanie), KontoOperatora(ctx), KontoOperatora(ctx))
 	if err != nil {
 		return PlikBiblioteki{}, fmt.Errorf("dane: nie można zapisać pliku biblioteki %q: %w", plik.Kod, err)
+	}
+	if err := sprawdzTrafienieZapisu(wynik, "plik biblioteki", plik.Kod); err != nil {
+		return PlikBiblioteki{}, err
 	}
 	return r.Plik(ctx, plik.Kod)
 }
@@ -225,7 +231,7 @@ func (r *repozytoriumBiblioteki) Plik(ctx context.Context, kod string) (PlikBibl
 	if err != nil {
 		return PlikBiblioteki{}, err
 	}
-	plik, err := odczytajPlikBiblioteki(polecenie.QueryRowContext(ctx, kod))
+	plik, err := odczytajPlikBiblioteki(polecenie.QueryRowContext(ctx, kod, KontoOperatora(ctx)))
 	if errors.Is(err, sql.ErrNoRows) {
 		return PlikBiblioteki{}, ErrBrakWiersza
 	}
@@ -238,7 +244,7 @@ func (r *repozytoriumBiblioteki) Plik(ctx context.Context, kod string) (PlikBibl
 // Pliki zwraca pliki spełniające filtr, posortowane od najnowszych, wraz
 // z całkowitą liczbą trafień sprzed obcięcia limitem (`LibraryFileListResponse.total`).
 func (r *repozytoriumBiblioteki) Pliki(ctx context.Context, filtr FiltrPlikow) ([]PlikBiblioteki, int, error) {
-	warunek, argumenty := warunkiFiltruPlikow(filtr)
+	warunek, argumenty := warunkiFiltruPlikow(ctx, filtr)
 	return r.pliki(ctx, warunek, argumenty, filtr.Limit, filtr.Offset)
 }
 
@@ -251,7 +257,7 @@ func (r *repozytoriumBiblioteki) Szukaj(ctx context.Context, fraza string,
 	// Fraza nie idzie przez FiltrPlikow.Fraza, bo tu nazwa i treść stoją w
 	// jednej alternatywie.
 	filtr.Fraza = nil
-	warunek, argumenty := warunkiFiltruPlikow(filtr)
+	warunek, argumenty := warunkiFiltruPlikow(ctx, filtr)
 	warunek += ` AND (nazwa LIKE ? OR ` + warunekTresciBiblioteki + `)`
 	argumenty = append(argumenty, "%"+fraza+"%", zapytanieTresci(fraza))
 	return r.pliki(ctx, warunek, argumenty, filtr.Limit, filtr.Offset)
@@ -259,9 +265,9 @@ func (r *repozytoriumBiblioteki) Szukaj(ctx context.Context, fraza string,
 
 // warunkiFiltruPlikow składa klauzulę WHERE i argumenty wspólne dla `Pliki`
 // i `Szukaj` — oba budują to samo zawężenie, różni je tylko obowiązkowość frazy.
-func warunkiFiltruPlikow(filtr FiltrPlikow) (string, []any) {
-	warunki := []string{"1 = 1"}
-	argumenty := []any{}
+func warunkiFiltruPlikow(ctx context.Context, filtr FiltrPlikow) (string, []any) {
+	warunki := []string{WarunekKonta}
+	argumenty := []any{KontoOperatora(ctx)}
 
 	if filtr.Fraza != nil && *filtr.Fraza != "" {
 		warunki = append(warunki, "nazwa LIKE ?")

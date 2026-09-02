@@ -34,12 +34,16 @@ const (
 	// Zasada bez progów nie jest wierszem, tylko jego brakiem: nastawa wyłączona usuwa wiersz zamiast zapisywać
 	// go pustym. Kod pusty (zakres global) porównuje się przez funkcję COALESCE, bo kolumna trzyma wtedy wartość NULL.
 	usunZasadePrzechowywania = `DELETE FROM zasada_przechowywania
-	                            WHERE zakres = ? AND COALESCE(zakres_kod, '') = ?`
+	                            WHERE zakres = ? AND COALESCE(zakres_kod, '') = ? AND ` + WarunekKonta
 
+	// Człon rozstrzygający kolizję wymienia kolumny wskaźnika jednoznacznego
+	// przebudowanego krokiem 485 — bez wskazania konta SQLite nie dopasuje go do
+	// żadnego więzu i zapytanie nie da się przygotować.
 	zapiszZasadePrzechowywania = `INSERT INTO zasada_przechowywania
-	                              (zakres, zakres_kod, dni_trzymania, pozycje_trzymane)
-	                              VALUES (?, ?, ?, ?)
-	                              ON CONFLICT (zakres, COALESCE(zakres_kod, '')) DO UPDATE SET
+	                              (zakres, zakres_kod, dni_trzymania, pozycje_trzymane, konto_id)
+	                              VALUES (?, ?, ?, ?, ` + WskazanieKonta + `)
+	                              ON CONFLICT (zakres, COALESCE(zakres_kod, ''), COALESCE(konto_id, 0))
+	                              DO UPDATE SET
 	                                  dni_trzymania = excluded.dni_trzymania,
 	                                  pozycje_trzymane = excluded.pozycje_trzymane,
 	                                  zaktualizowano = strftime('%Y-%m-%dT%H:%M:%fZ','now')`
@@ -47,12 +51,12 @@ const (
 	// Zakres rozstrzyga się od najwęższego do najszerszego: najpierw okno, potem sesja, na końcu zakres globalny.
 	zasadaOkna = `SELECT zakres, COALESCE(zakres_kod, ''), dni_trzymania, pozycje_trzymane
 	              FROM zasada_przechowywania
-	              WHERE (zakres = 'window' AND zakres_kod = ?)
+	              WHERE ` + WarunekKonta + ` AND ((zakres = 'window' AND zakres_kod = ?)
 	                 OR (zakres = 'session' AND zakres_kod = (
 	                         SELECT s.identyfikator_zewnetrzny
 	                         FROM okno_komunikacji o JOIN sesja s ON s.id = o.sesja_id
 	                         WHERE o.identyfikator_zewnetrzny = ?))
-	                 OR zakres = 'global'
+	                 OR zakres = 'global')
 	              ORDER BY CASE zakres WHEN 'window' THEN 0 WHEN 'session' THEN 1 ELSE 2 END
 	              LIMIT 1`
 	oknaZakresuSesji = `SELECT o.identyfikator_zewnetrzny
@@ -80,7 +84,8 @@ func (r *repozytoriumHistorii) ZapiszZasade(ctx context.Context,
 		return ZasadaPrzechowywania{}, err
 	}
 	_, err = polecenie.ExecContext(ctx, zasada.Zakres, kodZakresuDoKolumny(zasada),
-		progDoKolumny(zasada.DniTrzymania), progDoKolumny(zasada.PozycjeTrzymane))
+		progDoKolumny(zasada.DniTrzymania), progDoKolumny(zasada.PozycjeTrzymane),
+		KontoOperatora(ctx))
 	if err != nil {
 		return ZasadaPrzechowywania{}, fmt.Errorf(
 			"dane: nie można zapisać zasady przechowywania zakresu %q: %w", zasada.Zakres, err)
@@ -98,7 +103,8 @@ func (r *repozytoriumHistorii) zdejmijZasade(ctx context.Context,
 	if err != nil {
 		return ZasadaPrzechowywania{}, err
 	}
-	if _, err := polecenie.ExecContext(ctx, zasada.Zakres, zasada.ZakresKod); err != nil {
+	if _, err := polecenie.ExecContext(ctx, zasada.Zakres, zasada.ZakresKod,
+		KontoOperatora(ctx)); err != nil {
 		return ZasadaPrzechowywania{}, fmt.Errorf(
 			"dane: nie można zdjąć zasady przechowywania zakresu %q: %w", zasada.Zakres, err)
 	}
@@ -115,7 +121,7 @@ func (r *repozytoriumHistorii) ZasadaOkna(ctx context.Context,
 	}
 	var zasada ZasadaPrzechowywania
 	var dni, pozycje *int64
-	err = polecenie.QueryRowContext(ctx, oknoKod, oknoKod).
+	err = polecenie.QueryRowContext(ctx, KontoOperatora(ctx), oknoKod, oknoKod).
 		Scan(&zasada.Zakres, &zasada.ZakresKod, &dni, &pozycje)
 	if errors.Is(err, sql.ErrNoRows) {
 		return ZasadaPrzechowywania{}, false, nil

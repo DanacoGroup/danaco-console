@@ -36,21 +36,26 @@ const (
 	kolumnyNagraniaMowy = `identyfikator_zewnetrzny, sciezka, typ_tresci, rozmiar_bajtow,
 	                       dlugosc_ms, sesja_kod, okno_kod, trwale, utworzono, wygasa`
 
-	zapiszNagranieMowy = `INSERT INTO nagranie_mowy (` + kolumnyNagraniaMowy + `)
-	                      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+	// Więz UNIQUE na `sciezka` obejmuje całą tabelę, więc warunek konta
+	// w gałęzi DO UPDATE zostawia wiersz cudzego konta nietknięty.
+	zapiszNagranieMowy = `INSERT INTO nagranie_mowy (` + kolumnyNagraniaMowy + `, konto_id)
+	                      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ` + WskazanieKonta + `)
 	                      ON CONFLICT(sciezka) DO UPDATE SET
 	                          typ_tresci = excluded.typ_tresci,
 	                          rozmiar_bajtow = excluded.rozmiar_bajtow,
 	                          dlugosc_ms = excluded.dlugosc_ms,
 	                          trwale = excluded.trwale,
-	                          wygasa = excluded.wygasa`
+	                          wygasa = excluded.wygasa
+	                      WHERE ` + WarunekKonta
 
-	pobierzNagranieMowy = `SELECT ` + kolumnyNagraniaMowy + ` FROM nagranie_mowy WHERE sciezka = ?`
+	pobierzNagranieMowy = `SELECT ` + kolumnyNagraniaMowy + ` FROM nagranie_mowy
+	                       WHERE sciezka = ? AND ` + WarunekKonta
 
 	pobierzNagraniaMowyWygasle = `SELECT ` + kolumnyNagraniaMowy + ` FROM nagranie_mowy
-	                              WHERE trwale = 0 AND wygasa IS NOT NULL AND wygasa <= ?`
+	                              WHERE trwale = 0 AND wygasa IS NOT NULL AND wygasa <= ?
+	                                AND ` + WarunekKonta
 
-	usunNagranieMowy = `DELETE FROM nagranie_mowy WHERE sciezka = ?`
+	usunNagranieMowy = `DELETE FROM nagranie_mowy WHERE sciezka = ? AND ` + WarunekKonta
 )
 
 type repozytoriumNagranMowy struct {
@@ -74,13 +79,20 @@ func (r *repozytoriumNagranMowy) ZapiszNagranieMowy(ctx context.Context,
 	if err != nil {
 		return NagranieMowy{}, err
 	}
-	_, err = polecenie.ExecContext(ctx, nagranie.Kod, nagranie.Sciezka, nagranie.TypTresci,
+	wynik, err := polecenie.ExecContext(ctx, nagranie.Kod, nagranie.Sciezka, nagranie.TypTresci,
 		nagranie.RozmiarBajtow, liczbaDoKolumny(nagranie.DlugoscMs),
 		tekstDoKolumny(nagranie.SesjaKod), tekstDoKolumny(nagranie.OknoKod),
-		liczbaLogiczna(nagranie.Trwale), nagranie.Utworzono, liczbaDoKolumny(nagranie.Wygasa))
+		liczbaLogiczna(nagranie.Trwale), nagranie.Utworzono, liczbaDoKolumny(nagranie.Wygasa),
+		KontoOperatora(ctx), KontoOperatora(ctx))
 	if err != nil {
 		return NagranieMowy{}, fmt.Errorf("dane: nie można zapisać nagrania mowy %q: %w",
 			nagranie.Kod, err)
+	}
+	// Zero zmienionych wierszy znaczy ścieżkę zajętą przez wiersz konta obcego:
+	// gałąź DO UPDATE zawężona kontem go nie tknęła, a odczyt zwrotny oddałby
+	// „nie ma w rejestrze” zamiast powodu odmowy.
+	if err := sprawdzTrafienieZapisu(wynik, "nagranie mowy", nagranie.Sciezka); err != nil {
+		return NagranieMowy{}, err
 	}
 	return r.NagranieMowyPoSciezce(ctx, nagranie.Sciezka)
 }
@@ -94,7 +106,7 @@ func (r *repozytoriumNagranMowy) NagranieMowyPoSciezce(ctx context.Context,
 	if err != nil {
 		return NagranieMowy{}, err
 	}
-	nagranie, err := odczytajNagranieMowy(polecenie.QueryRowContext(ctx, sciezka))
+	nagranie, err := odczytajNagranieMowy(polecenie.QueryRowContext(ctx, sciezka, KontoOperatora(ctx)))
 	if errors.Is(err, sql.ErrNoRows) {
 		return NagranieMowy{}, fmt.Errorf("dane: nagranie mowy %q nie jest w rejestrze: %w",
 			sciezka, ErrBrakWiersza)
@@ -111,7 +123,7 @@ func (r *repozytoriumNagranMowy) NagraniaMowyWygasle(ctx context.Context,
 	if err != nil {
 		return nil, err
 	}
-	wiersze, err := polecenie.QueryContext(ctx, chwila)
+	wiersze, err := polecenie.QueryContext(ctx, chwila, KontoOperatora(ctx))
 	if err != nil {
 		return nil, fmt.Errorf("dane: nie można odczytać wygasłych nagrań mowy: %w", err)
 	}
@@ -137,7 +149,7 @@ func (r *repozytoriumNagranMowy) UsunNagranieMowy(ctx context.Context, sciezka s
 	if err != nil {
 		return err
 	}
-	if _, err := polecenie.ExecContext(ctx, sciezka); err != nil {
+	if _, err := polecenie.ExecContext(ctx, sciezka, KontoOperatora(ctx)); err != nil {
 		return fmt.Errorf("dane: nie można usunąć nagrania mowy %q z rejestru: %w", sciezka, err)
 	}
 	return nil

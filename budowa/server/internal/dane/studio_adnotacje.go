@@ -60,7 +60,7 @@ const (
 	pobierzKomentarzStudia = `SELECT ` + kolumnyKomentarzaStudia + `
 	                          FROM komentarz_studio k
 	                          JOIN dokument_studio d ON d.id = k.dokument_id
-	                          WHERE k.identyfikator_zewnetrzny = ?`
+	                          WHERE k.identyfikator_zewnetrzny = ? AND ` + WarunekKonta
 
 	listaKomentarzyStudia = `SELECT ` + kolumnyKomentarzaStudia + `
 	                         FROM komentarz_studio k
@@ -69,7 +69,10 @@ const (
 	                         ORDER BY k.zakres_od, k.fragment_numer, k.id`
 
 	rozstrzygnijKomentarzStudia = `UPDATE komentarz_studio SET rozwiazany = ?
-	                               WHERE identyfikator_zewnetrzny = ?`
+	                               WHERE identyfikator_zewnetrzny = ?
+	                                 AND EXISTS (SELECT 1 FROM dokument_studio
+	                                             WHERE dokument_studio.id = komentarz_studio.dokument_id
+	                                               AND ` + WarunekKonta + `)`
 
 	kolumnyZmianySledzonej = `z.id, z.identyfikator_zewnetrzny, d.identyfikator_zewnetrzny,
 	                          z.rodzaj, z.autor, z.zakres_od, z.zakres_do,
@@ -86,13 +89,16 @@ const (
 	                        WHERE z.dokument_id = ? ORDER BY z.zakres_od, z.id`
 
 	rozstrzygnijZmianeSledzona = `UPDATE zmiana_sledzona_studio SET decyzja = ?
-	                              WHERE identyfikator_zewnetrzny = ? AND decyzja = 'oczekuje'`
+	                              WHERE identyfikator_zewnetrzny = ? AND decyzja = 'oczekuje'
+	                                AND EXISTS (SELECT 1 FROM dokument_studio
+	                                            WHERE dokument_studio.id = zmiana_sledzona_studio.dokument_id
+	                                              AND ` + WarunekKonta + `)`
 
 	ustawSledzenieDokumentu = `UPDATE dokument_studio SET sledzenie_zmian = ?
-	                           WHERE identyfikator_zewnetrzny = ?`
+	                           WHERE identyfikator_zewnetrzny = ? AND ` + WarunekKonta
 
 	czytajSledzenieDokumentu = `SELECT sledzenie_zmian FROM dokument_studio
-	                            WHERE identyfikator_zewnetrzny = ?`
+	                            WHERE identyfikator_zewnetrzny = ? AND ` + WarunekKonta
 )
 
 // ZapiszKomentarz zakłada komentarz redakcyjny albo adnotację różnicy i zwraca jego pełny stan po zapisie.
@@ -125,7 +131,7 @@ func (r *repozytoriumStudia) Komentarz(ctx context.Context, kod string) (Komenta
 	if err != nil {
 		return KomentarzStudia{}, err
 	}
-	komentarz, err := odczytajKomentarzStudia(polecenie.QueryRowContext(ctx, kod))
+	komentarz, err := odczytajKomentarzStudia(polecenie.QueryRowContext(ctx, kod, KontoOperatora(ctx)))
 	if errors.Is(err, sql.ErrNoRows) {
 		return KomentarzStudia{}, ErrBrakWiersza
 	}
@@ -171,7 +177,7 @@ func (r *repozytoriumStudia) RozstrzygnijKomentarz(ctx context.Context,
 	if err != nil {
 		return KomentarzStudia{}, err
 	}
-	wynik, err := polecenie.ExecContext(ctx, liczbaLogiczna(rozwiazany), kod)
+	wynik, err := polecenie.ExecContext(ctx, liczbaLogiczna(rozwiazany), kod, KontoOperatora(ctx))
 	if err != nil {
 		return KomentarzStudia{}, fmt.Errorf("dane: nie można rozstrzygnąć komentarza studio %q: %w", kod, err)
 	}
@@ -248,7 +254,7 @@ func (r *repozytoriumStudia) RozstrzygnijZmianeSledzona(ctx context.Context,
 	if err != nil {
 		return false, err
 	}
-	wynik, err := polecenie.ExecContext(ctx, decyzja, kod)
+	wynik, err := polecenie.ExecContext(ctx, decyzja, kod, KontoOperatora(ctx))
 	if err != nil {
 		return false, fmt.Errorf("dane: nie można rozstrzygnąć zmiany śledzonej %q: %w", kod, err)
 	}
@@ -265,7 +271,7 @@ func (r *repozytoriumStudia) UstawSledzenie(ctx context.Context, kodDokumentu st
 	if err != nil {
 		return err
 	}
-	wynik, err := polecenie.ExecContext(ctx, liczbaLogiczna(czynne), kodDokumentu)
+	wynik, err := polecenie.ExecContext(ctx, liczbaLogiczna(czynne), kodDokumentu, KontoOperatora(ctx))
 	if err != nil {
 		return fmt.Errorf("dane: nie można przestawić śledzenia dokumentu %q: %w", kodDokumentu, err)
 	}
@@ -282,7 +288,7 @@ func (r *repozytoriumStudia) Sledzenie(ctx context.Context, kodDokumentu string)
 		return false, err
 	}
 	var czynne int
-	err = polecenie.QueryRowContext(ctx, kodDokumentu).Scan(&czynne)
+	err = polecenie.QueryRowContext(ctx, kodDokumentu, KontoOperatora(ctx)).Scan(&czynne)
 	if errors.Is(err, sql.ErrNoRows) {
 		return false, ErrBrakWiersza
 	}

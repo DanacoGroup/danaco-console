@@ -86,19 +86,28 @@ const (
 	                                    podpis_base64, klucz_base64, zaktualizowano
 	                             FROM podpis_rozszerzenia WHERE rozszerzenie_kod = ?`
 
+	// Więz UNIQUE na `odwolanie` obejmuje całą tabelę: człon DO UPDATE bez zawężenia nadpisałby referencję konta cudzego.
 	zapiszSekretRozszerzenia = `INSERT INTO sekret_rozszerzenia
-	                            (odwolanie, etykieta, sposob_logowania, wygasa, zaktualizowano)
-	                            VALUES (?, ?, ?, ?, ?)
+	                            (odwolanie, etykieta, sposob_logowania, wygasa, zaktualizowano,
+	                             konto_id)
+	                            VALUES (?, ?, ?, ?, ?, ` + WskazanieKonta + `)
 	                            ON CONFLICT(odwolanie) DO UPDATE SET
 	                                etykieta = IFNULL(excluded.etykieta, sekret_rozszerzenia.etykieta),
 	                                sposob_logowania = IFNULL(excluded.sposob_logowania,
 	                                                          sekret_rozszerzenia.sposob_logowania),
 	                                wygasa = IFNULL(excluded.wygasa, sekret_rozszerzenia.wygasa),
-	                                zaktualizowano = excluded.zaktualizowano`
+	                                zaktualizowano = excluded.zaktualizowano
+	                            WHERE ` + WarunekKonta
 
 	pobierzSekretRozszerzenia = `SELECT id, odwolanie, etykieta, sposob_logowania, wygasa,
 	                                    zaktualizowano
-	                             FROM sekret_rozszerzenia WHERE odwolanie = ?`
+	                             FROM sekret_rozszerzenia
+	                             WHERE odwolanie = ? AND ` + WarunekKonta
+
+	// Zakres współdzielenia wisi na sekrecie kluczem obcym; identyfikator do
+	// jego wymiany zdejmuje się odczytem zawężonym kontem żądania.
+	idSekretuRozszerzenia = `SELECT id FROM sekret_rozszerzenia
+	                         WHERE odwolanie = ? AND ` + WarunekKonta
 
 	// Zawężenie po terminie ważności: `expiringWithinDays` kontraktu przekłada
 	// się na górną granicę czasu, a wartość zerowa granicy wyłącza warunek.
@@ -106,6 +115,7 @@ const (
 	                                    zaktualizowano
 	                             FROM sekret_rozszerzenia
 	                             WHERE (? = 0 OR (wygasa IS NOT NULL AND wygasa <= ?))
+	                               AND ` + WarunekKonta + `
 	                             ORDER BY odwolanie`
 
 	usunUdostepnieniaSekretu = `DELETE FROM udostepnienie_sekretu_rozszerzenia WHERE sekret_id = ?`
@@ -117,6 +127,7 @@ const (
 	listaUdostepnienSekretu = `SELECT s.odwolanie, u.rodzaj, u.byt_kod
 	                           FROM udostepnienie_sekretu_rozszerzenia u
 	                           JOIN sekret_rozszerzenia s ON s.id = u.sekret_id
+	                           WHERE ` + WarunekKonta + `
 	                           ORDER BY u.byt_kod`
 )
 
@@ -260,18 +271,22 @@ func (r *repozytoriumRozszerzen) ZapiszSekretRozszerzenia(ctx context.Context,
 		if err != nil {
 			return err
 		}
-		if _, err := zapis.ExecContext(ctx, sekret.Odwolanie, tekstDoKolumny(sekret.Etykieta),
+		wynik, err := zapis.ExecContext(ctx, sekret.Odwolanie, tekstDoKolumny(sekret.Etykieta),
 			tekstDoKolumny(sekret.SposobLogowania), liczbaDoKolumny(sekret.Wygasa),
-			sekret.Zaktualizowano); err != nil {
+			sekret.Zaktualizowano, KontoOperatora(ctx), KontoOperatora(ctx))
+		if err != nil {
 			return fmt.Errorf("dane: nie można zapisać referencji %q: %w", sekret.Odwolanie, err)
+		}
+		if err := sprawdzTrafienieZapisu(wynik, "referencja sekretu", sekret.Odwolanie); err != nil {
+			return err
 		}
 		if !wymienZakres {
 			return nil
 		}
 
 		var sekretID int64
-		wiersz := transakcja.QueryRowContext(ctx,
-			`SELECT id FROM sekret_rozszerzenia WHERE odwolanie = ?`, sekret.Odwolanie)
+		wiersz := transakcja.QueryRowContext(ctx, idSekretuRozszerzenia,
+			sekret.Odwolanie, KontoOperatora(ctx))
 		if err := wiersz.Scan(&sekretID); err != nil {
 			return fmt.Errorf("dane: nie można odczytać id referencji %q: %w", sekret.Odwolanie, err)
 		}
@@ -320,7 +335,8 @@ func (r *repozytoriumRozszerzen) SekretRozszerzenia(ctx context.Context, odwolan
 	if err != nil {
 		return SekretRozszerzenia{}, err
 	}
-	sekret, err := odczytajSekretRozszerzenia(polecenie.QueryRowContext(ctx, odwolanie))
+	sekret, err := odczytajSekretRozszerzenia(polecenie.QueryRowContext(ctx, odwolanie,
+		KontoOperatora(ctx)))
 	if err == sql.ErrNoRows {
 		return SekretRozszerzenia{}, ErrBrakWiersza
 	}
@@ -343,7 +359,7 @@ func (r *repozytoriumRozszerzen) SekretyRozszerzen(ctx context.Context, doCzasu 
 	if err != nil {
 		return nil, err
 	}
-	wiersze, err := polecenie.QueryContext(ctx, doCzasu, doCzasu)
+	wiersze, err := polecenie.QueryContext(ctx, doCzasu, doCzasu, KontoOperatora(ctx))
 	if err != nil {
 		return nil, fmt.Errorf("dane: nie można odczytać referencji sekretów: %w", err)
 	}
@@ -381,7 +397,7 @@ func (r *repozytoriumRozszerzen) zakresySekretowRozszerzen(ctx context.Context) 
 	if err != nil {
 		return nil, nil, err
 	}
-	wiersze, err := polecenie.QueryContext(ctx)
+	wiersze, err := polecenie.QueryContext(ctx, KontoOperatora(ctx))
 	if err != nil {
 		return nil, nil, fmt.Errorf("dane: nie można odczytać zakresu referencji: %w", err)
 	}

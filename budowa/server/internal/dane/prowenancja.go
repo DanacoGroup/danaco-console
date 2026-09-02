@@ -171,9 +171,9 @@ func (r *repozytoriumProwenancji) ZapiszWywolanie(ctx context.Context,
 	if w.Ocena == "" {
 		w.Ocena = "bez_oceny"
 	}
-	_, err := r.db.ExecContext(ctx, `
-		INSERT INTO prowenancja_wywolanie (`+kolumnyWywolania+`)
-		VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
+	wynik, err := r.db.ExecContext(ctx, `
+		INSERT INTO prowenancja_wywolanie (`+kolumnyWywolania+`, konto_id)
+		VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,`+WskazanieKonta+`)
 		ON CONFLICT(kod) DO UPDATE SET
 			stan = excluded.stan, kod_bledu = excluded.kod_bledu,
 			koniec = excluded.koniec, opoznienie_ms = excluded.opoznienie_ms,
@@ -184,21 +184,27 @@ func (r *repozytoriumProwenancji) ZapiszWywolanie(ctx context.Context,
 			liczba_narzedzi = excluded.liczba_narzedzi,
 			liczba_podagentow = excluded.liczba_podagentow,
 			tresc_zapisana = excluded.tresc_zapisana, zredagowane = excluded.zredagowane,
-			prompt = excluded.prompt, odpowiedz = excluded.odpowiedz`,
+			prompt = excluded.prompt, odpowiedz = excluded.odpowiedz
+		WHERE `+WarunekKonta,
 		w.Kod, w.SladKod, w.RodzicKod, w.ProcesKod, w.SesjaKod, w.OknoKod, w.WiadomoscKod,
 		w.KanalKod, w.Dostawca, w.Model, w.KontoKod, w.ProjektKod, w.Srodowisko, w.Stan,
 		w.KodBledu, w.Poczatek, w.Koniec, w.OpoznienieMs, w.TokenyPromptu, w.TokenyOdpowiedzi,
 		w.TokenyCache, w.TokenyRazem, w.Koszt, w.Waluta, w.LiczbaNarzedzi, w.LiczbaPodagentow,
-		w.Ocena, w.OcenaNotatka, w.TrescZapisana, w.Zredagowane, w.Prompt, w.Odpowiedz)
+		w.Ocena, w.OcenaNotatka, w.TrescZapisana, w.Zredagowane, w.Prompt, w.Odpowiedz,
+		KontoOperatora(ctx), KontoOperatora(ctx))
 	if err != nil {
 		return WywolanieModelu{}, fmt.Errorf("dane: zapis wywołania %s: %w", w.Kod, err)
+	}
+	if err := sprawdzTrafienieZapisu(wynik, "wywołanie", w.Kod); err != nil {
+		return WywolanieModelu{}, err
 	}
 	return r.Wywolanie(ctx, w.Kod)
 }
 
 func (r *repozytoriumProwenancji) Wywolanie(ctx context.Context, kod string) (WywolanieModelu, error) {
 	wiersz := r.db.QueryRowContext(ctx,
-		`SELECT `+kolumnyWywolania+` FROM prowenancja_wywolanie WHERE kod = ?`, kod)
+		`SELECT `+kolumnyWywolania+` FROM prowenancja_wywolanie
+		   WHERE kod = ? AND `+WarunekKonta, kod, KontoOperatora(ctx))
 	w, err := r.odczytajWywolanie(wiersz)
 	if err == sql.ErrNoRows {
 		return WywolanieModelu{}, ErrBrakWiersza
@@ -211,13 +217,14 @@ func (r *repozytoriumProwenancji) Wywolanie(ctx context.Context, kod string) (Wy
 
 // warunkiSita składa listę warunków wraz z argumentami, wspólną dla wykazu i licznika
 // wszystkich pasujących, żeby licznik nie liczył po innym zawężeniu niż wykaz.
-func warunkiSita(sito SitoWywolan) ([]string, []any) {
+func warunkiSita(ctx context.Context, sito SitoWywolan) ([]string, []any) {
 	var warunki []string
 	var argumenty []any
 	dodaj := func(warunek string, wartosc any) {
 		warunki = append(warunki, warunek)
 		argumenty = append(argumenty, wartosc)
 	}
+	dodaj(WarunekKonta, KontoOperatora(ctx))
 	if sito.Od != nil {
 		dodaj("poczatek >= ?", *sito.Od)
 	}
@@ -251,7 +258,7 @@ func warunkiSita(sito SitoWywolan) ([]string, []any) {
 func (r *repozytoriumProwenancji) Wywolania(ctx context.Context,
 	sito SitoWywolan) ([]WywolanieModelu, int, error) {
 
-	warunki, argumenty := warunkiSita(sito)
+	warunki, argumenty := warunkiSita(ctx, sito)
 	gdzie := ""
 	if len(warunki) > 0 {
 		gdzie = " WHERE " + strings.Join(warunki, " AND ")
@@ -292,20 +299,40 @@ func (r *repozytoriumProwenancji) ZapiszOdcinek(ctx context.Context,
 	if strings.TrimSpace(o.Kod) == "" || strings.TrimSpace(o.WywolanieKod) == "" {
 		return OdcinekWywolania{}, fmt.Errorf("dane: odcinek bez kodu albo bez wywołania")
 	}
-	_, err := r.db.ExecContext(ctx, `
+	// Odcinek wisi na wywołaniu kolumną `wywolanie_kod`, a kod wywołania przychodzi
+	// z zadania, więc bez tego odczytu odcinek dopiąłby się do cudzego drzewa śladu.
+	var stoi int
+	err := r.db.QueryRowContext(ctx,
+		`SELECT 1 FROM prowenancja_wywolanie WHERE kod = ? AND `+WarunekKonta,
+		o.WywolanieKod, KontoOperatora(ctx)).Scan(&stoi)
+	if err == sql.ErrNoRows {
+		return OdcinekWywolania{}, fmt.Errorf("dane: wywołanie %s odcinka %s: %w",
+			o.WywolanieKod, o.Kod, ErrBrakWiersza)
+	}
+	if err != nil {
+		return OdcinekWywolania{}, fmt.Errorf("dane: odczyt wywołania %s odcinka %s: %w",
+			o.WywolanieKod, o.Kod, err)
+	}
+
+	wynik, err := r.db.ExecContext(ctx, `
 		INSERT INTO prowenancja_odcinek
 			(kod, wywolanie_kod, rodzic_kod, nazwa, rodzaj, poczatek, koniec, czas_ms,
-			 tokeny, koszt, stan, kod_bledu, trafienie_cache, atrybuty)
-		VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)
+			 tokeny, koszt, stan, kod_bledu, trafienie_cache, atrybuty, konto_id)
+		VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,`+WskazanieKonta+`)
 		ON CONFLICT(kod) DO UPDATE SET
 			koniec = excluded.koniec, czas_ms = excluded.czas_ms,
 			tokeny = excluded.tokeny, koszt = excluded.koszt,
 			stan = excluded.stan, kod_bledu = excluded.kod_bledu,
-			trafienie_cache = excluded.trafienie_cache, atrybuty = excluded.atrybuty`,
+			trafienie_cache = excluded.trafienie_cache, atrybuty = excluded.atrybuty
+		WHERE `+WarunekKonta,
 		o.Kod, o.WywolanieKod, o.RodzicKod, o.Nazwa, o.Rodzaj, o.Poczatek, o.Koniec,
-		o.CzasMs, o.Tokeny, o.Koszt, o.Stan, o.KodBledu, o.TrafienieCache, o.Atrybuty)
+		o.CzasMs, o.Tokeny, o.Koszt, o.Stan, o.KodBledu, o.TrafienieCache, o.Atrybuty,
+		KontoOperatora(ctx), KontoOperatora(ctx))
 	if err != nil {
 		return OdcinekWywolania{}, fmt.Errorf("dane: zapis odcinka %s: %w", o.Kod, err)
+	}
+	if err := sprawdzTrafienieZapisu(wynik, "odcinek", o.Kod); err != nil {
+		return OdcinekWywolania{}, err
 	}
 	return o, nil
 }
@@ -316,7 +343,12 @@ func (r *repozytoriumProwenancji) Odcinki(ctx context.Context,
 	wiersze, err := r.db.QueryContext(ctx, `
 		SELECT kod, wywolanie_kod, rodzic_kod, nazwa, rodzaj, poczatek, koniec, czas_ms,
 		       tokeny, koszt, stan, kod_bledu, trafienie_cache, atrybuty
-		  FROM prowenancja_odcinek WHERE wywolanie_kod = ? ORDER BY poczatek`, wywolanieKod)
+		  FROM prowenancja_odcinek
+		 WHERE wywolanie_kod = ?
+		   AND EXISTS (SELECT 1 FROM prowenancja_wywolanie
+		                WHERE prowenancja_wywolanie.kod = prowenancja_odcinek.wywolanie_kod
+		                  AND `+WarunekKonta+`)
+		 ORDER BY poczatek`, wywolanieKod, KontoOperatora(ctx))
 	if err != nil {
 		return nil, fmt.Errorf("dane: odcinki wywołania %s: %w", wywolanieKod, err)
 	}
@@ -339,8 +371,9 @@ func (r *repozytoriumProwenancji) OcenWywolanie(ctx context.Context,
 	kod, ocena string, notatka *string) (WywolanieModelu, error) {
 
 	wynik, err := r.db.ExecContext(ctx,
-		`UPDATE prowenancja_wywolanie SET ocena = ?, ocena_notatka = ? WHERE kod = ?`,
-		ocena, notatka, kod)
+		`UPDATE prowenancja_wywolanie SET ocena = ?, ocena_notatka = ?
+		   WHERE kod = ? AND `+WarunekKonta,
+		ocena, notatka, kod, KontoOperatora(ctx))
 	if err != nil {
 		return WywolanieModelu{}, fmt.Errorf("dane: ocena wywołania %s: %w", kod, err)
 	}
@@ -358,8 +391,8 @@ func (r *repozytoriumProwenancji) Zuzycie(ctx context.Context, wymiar string,
 		return nil, fmt.Errorf("dane: wymiar rozliczenia %q nie ma odpowiednika w schemacie", wymiar)
 	}
 
-	var warunki []string
-	var argumenty []any
+	warunki := []string{WarunekKonta}
+	argumenty := []any{KontoOperatora(ctx)}
 	if od != nil {
 		warunki = append(warunki, "poczatek >= ?")
 		argumenty = append(argumenty, *od)

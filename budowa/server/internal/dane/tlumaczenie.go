@@ -131,19 +131,23 @@ const (
 	kolumnyOknaTlumaczenia = `id, identyfikator_zewnetrzny, tekst_zrodlowy, tekst_zrodlowy_odwolanie,
 	                          jezyk_zrodlowy, liczba_segmentow, utworzono, zaktualizowano`
 
+	// Kolumna `identyfikator_zewnetrzny` jest unikalna w całej tabeli, więc kod
+	// okna cudzego konta trafia tu w konflikt. Warunek przy DO UPDATE zostawia
+	// wtedy wiersz nietknięty, a zapis kończy się ErrKolizjaWiersza.
 	zapiszOknoTlumaczenia = `INSERT INTO okno_tlumaczenia
 	                         (identyfikator_zewnetrzny, tekst_zrodlowy, tekst_zrodlowy_odwolanie,
-	                          jezyk_zrodlowy, liczba_segmentow, utworzono, zaktualizowano)
-	                         VALUES (?, ?, ?, ?, ?, ?, ?)
+	                          jezyk_zrodlowy, liczba_segmentow, utworzono, zaktualizowano, konto_id)
+	                         VALUES (?, ?, ?, ?, ?, ?, ?, ` + WskazanieKonta + `)
 	                         ON CONFLICT(identyfikator_zewnetrzny) DO UPDATE SET
 	                             tekst_zrodlowy = excluded.tekst_zrodlowy,
 	                             tekst_zrodlowy_odwolanie = excluded.tekst_zrodlowy_odwolanie,
 	                             jezyk_zrodlowy = excluded.jezyk_zrodlowy,
 	                             liczba_segmentow = excluded.liczba_segmentow,
-	                             zaktualizowano = excluded.zaktualizowano`
+	                             zaktualizowano = excluded.zaktualizowano
+	                         WHERE ` + WarunekKonta
 
 	pobierzOknoTlumaczenia = `SELECT ` + kolumnyOknaTlumaczenia + ` FROM okno_tlumaczenia
-	                          WHERE identyfikator_zewnetrzny = ?`
+	                          WHERE identyfikator_zewnetrzny = ? AND ` + WarunekKonta
 )
 
 type repozytoriumTlumaczen struct {
@@ -170,11 +174,15 @@ func (r *repozytoriumTlumaczen) ZapiszOkno(ctx context.Context, okno OknoTlumacz
 	if err != nil {
 		return OknoTlumaczenia{}, err
 	}
-	_, err = polecenie.ExecContext(ctx, okno.Kod, tekstDoKolumny(okno.TekstZrodlowy),
+	wynik, err := polecenie.ExecContext(ctx, okno.Kod, tekstDoKolumny(okno.TekstZrodlowy),
 		tekstDoKolumny(okno.TekstZrodlowyOdwolanie), tekstDoKolumny(okno.JezykZrodlowy),
-		liczbaDoKolumny(okno.LiczbaSegmentow), utworzono, teraz)
+		liczbaDoKolumny(okno.LiczbaSegmentow), utworzono, teraz,
+		KontoOperatora(ctx), KontoOperatora(ctx))
 	if err != nil {
 		return OknoTlumaczenia{}, fmt.Errorf("dane: nie można zapisać okna tłumaczenia %q: %w", okno.Kod, err)
+	}
+	if err := sprawdzTrafienieZapisu(wynik, "okno tłumaczenia", okno.Kod); err != nil {
+		return OknoTlumaczenia{}, err
 	}
 	return r.Okno(ctx, okno.Kod)
 }
@@ -186,7 +194,7 @@ func (r *repozytoriumTlumaczen) Okno(ctx context.Context, kod string) (OknoTluma
 	if err != nil {
 		return OknoTlumaczenia{}, err
 	}
-	okno, err := odczytajOknoTlumaczenia(polecenie.QueryRowContext(ctx, kod))
+	okno, err := odczytajOknoTlumaczenia(polecenie.QueryRowContext(ctx, kod, KontoOperatora(ctx)))
 	if errors.Is(err, sql.ErrNoRows) {
 		return OknoTlumaczenia{}, ErrBrakWiersza
 	}

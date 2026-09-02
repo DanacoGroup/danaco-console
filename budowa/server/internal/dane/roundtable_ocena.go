@@ -129,12 +129,13 @@ const (
 
 	zapiszWerdyktDebaty = `INSERT INTO debata_werdykt
 	                       (identyfikator_zewnetrzny, okno, rubryka, sedzia, wypowiedz, uczestnik,
-	                        punkty_json, wynik, uzasadnienie)
-	                       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`
+	                        punkty_json, wynik, uzasadnienie, konto_id)
+	                       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ` + WskazanieKonta + `)`
 
 	pobierzWerdyktyDebaty = `SELECT identyfikator_zewnetrzny, okno, rubryka, sedzia, wypowiedz,
 	                                uczestnik, punkty_json, wynik, uzasadnienie, utworzono
-	                         FROM debata_werdykt WHERE okno = ? ORDER BY id ASC`
+	                         FROM debata_werdykt WHERE okno = ? AND ` + WarunekKonta + `
+	                         ORDER BY id ASC`
 
 	kolumnyRankinguDebaty = `klucz_tozsamosci, nazwa, zakres, okno, algorytm, punktacja,
 	                         odchylenie, pojedynki, wygrane, zaktualizowano`
@@ -340,7 +341,7 @@ func (r *repozytoriumRoundtable) ZapiszWerdyktDebaty(ctx context.Context, werdyk
 	}
 	if _, err := polecenie.ExecContext(ctx, werdykt.Kod, werdykt.Okno, werdykt.Rubryka,
 		werdykt.Sedzia, werdykt.Wypowiedz, werdykt.Uczestnik, werdykt.PunktyJson, werdykt.Wynik,
-		werdykt.Uzasadnienie); err != nil {
+		werdykt.Uzasadnienie, KontoOperatora(ctx)); err != nil {
 		return fmt.Errorf("dane: nie można zapisać werdyktu %q: %w", werdykt.Kod, err)
 	}
 	return nil
@@ -354,7 +355,7 @@ func (r *repozytoriumRoundtable) WerdyktyDebaty(ctx context.Context,
 	if err != nil {
 		return nil, err
 	}
-	wiersze, err := polecenie.QueryContext(ctx, okno)
+	wiersze, err := polecenie.QueryContext(ctx, okno, KontoOperatora(ctx))
 	if err != nil {
 		return nil, fmt.Errorf("dane: nie można odczytać werdyktów okna %q: %w", okno, err)
 	}

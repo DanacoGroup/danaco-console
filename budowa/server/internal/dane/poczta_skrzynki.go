@@ -53,22 +53,26 @@ const (
 	// Domyślna idzie pierwsza, reszta po kodzie — wykaz ma ten sam porządek przy
 	// każdym odczycie, a ta, którą rdzeń weźmie bez wskazania, stoi na wierzchu.
 	wykazSkrzynekOperatora = `SELECT ` + kolumnySkrzynkiOperatora + `
-	                          FROM skrzynka_pocztowa ORDER BY domyslna DESC, kod`
+	                          FROM skrzynka_pocztowa WHERE ` + WarunekKonta + `
+	                          ORDER BY domyslna DESC, kod`
 
 	skrzynkaOperatoraPoKodzie = `SELECT ` + kolumnySkrzynkiOperatora + `
-	                             FROM skrzynka_pocztowa WHERE kod = ?`
+	                             FROM skrzynka_pocztowa
+	                             WHERE kod = ? AND ` + WarunekKonta
 
 	// Bez wskazanej domyślnej pierwszeństwo ma pozycja z tego samego porządku, co
 	// wykaz (`LIMIT 1`). Przy jednej podpiętej skrzynce jest to ona sama, więc nie
 	// trzeba jej osobno oznaczać.
 	skrzynkaOperatoraDomyslna = `SELECT ` + kolumnySkrzynkiOperatora + `
-	                             FROM skrzynka_pocztowa ORDER BY domyslna DESC, kod LIMIT 1`
+	                             FROM skrzynka_pocztowa WHERE ` + WarunekKonta + `
+	                             ORDER BY domyslna DESC, kod LIMIT 1`
 
+	// Więz UNIQUE na `kod` obejmuje całą tabelę: człon DO UPDATE bez zawężenia nadpisałby skrzynkę konta cudzego wraz z jej hasłem.
 	zapiszSkrzynkeOperatora = `INSERT INTO skrzynka_pocztowa
 	    (kod, adres, nazwa_wyswietlana, protokol, zrodlo, host_odbioru, port_odbioru,
 	     host_wysylki, port_wysylki, uzytkownik, haslo_odwolanie, szyfruj_odbior,
-	     szyfruj_wysylke, tls_weryfikacja, domyslna)
-	    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+	     szyfruj_wysylke, tls_weryfikacja, domyslna, konto_id)
+	    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ` + WskazanieKonta + `)
 	    ON CONFLICT(kod) DO UPDATE SET
 	        adres = excluded.adres,
 	        nazwa_wyswietlana = excluded.nazwa_wyswietlana,
@@ -83,14 +87,16 @@ const (
 	        szyfruj_odbior = excluded.szyfruj_odbior,
 	        szyfruj_wysylke = excluded.szyfruj_wysylke,
 	        tls_weryfikacja = excluded.tls_weryfikacja,
-	        domyslna = excluded.domyslna`
+	        domyslna = excluded.domyslna
+	    WHERE ` + WarunekKonta
 
 	// Zdjęcie domyślności z pozostałych. Indeks częściowy schematu dopuszcza jedną
 	// domyślną skrzynkę, więc nadanie domyślności nowej musi zdjąć ją starej
 	// w tej samej transakcji. Bez tego INSERT rozbiłby się o indeks.
-	zdejmijDomyslnoscSkrzynek = `UPDATE skrzynka_pocztowa SET domyslna = 0 WHERE kod <> ?`
+	zdejmijDomyslnoscSkrzynek = `UPDATE skrzynka_pocztowa SET domyslna = 0
+	                             WHERE kod <> ? AND ` + WarunekKonta
 
-	usunSkrzynkeOperatora = `DELETE FROM skrzynka_pocztowa WHERE kod = ?`
+	usunSkrzynkeOperatora = `DELETE FROM skrzynka_pocztowa WHERE kod = ? AND ` + WarunekKonta
 )
 
 // repozytoriumSkrzynek stoi na wspólnej pamięci zapytań zestawu i na uchwycie
@@ -116,7 +122,7 @@ func (r *repozytoriumSkrzynek) Skrzynki(ctx context.Context) ([]SkrzynkaOperator
 	if err != nil {
 		return nil, err
 	}
-	wiersze, err := polecenie.QueryContext(ctx)
+	wiersze, err := polecenie.QueryContext(ctx, KontoOperatora(ctx))
 	if err != nil {
 		return nil, fmt.Errorf("dane: nie można odczytać skrzynek Operatora: %w", err)
 	}
@@ -140,7 +146,7 @@ func (r *repozytoriumSkrzynek) Skrzynka(ctx context.Context, kod string) (Skrzyn
 	if err != nil {
 		return SkrzynkaOperatora{}, err
 	}
-	skrzynka, err := odczytajSkrzynkeOperatora(polecenie.QueryRowContext(ctx, kod))
+	skrzynka, err := odczytajSkrzynkeOperatora(polecenie.QueryRowContext(ctx, kod, KontoOperatora(ctx)))
 	if errors.Is(err, sql.ErrNoRows) {
 		return SkrzynkaOperatora{}, ErrBrakWiersza
 	}
@@ -152,7 +158,7 @@ func (r *repozytoriumSkrzynek) SkrzynkaDomyslna(ctx context.Context) (SkrzynkaOp
 	if err != nil {
 		return SkrzynkaOperatora{}, err
 	}
-	skrzynka, err := odczytajSkrzynkeOperatora(polecenie.QueryRowContext(ctx))
+	skrzynka, err := odczytajSkrzynkeOperatora(polecenie.QueryRowContext(ctx, KontoOperatora(ctx)))
 	if errors.Is(err, sql.ErrNoRows) {
 		return SkrzynkaOperatora{}, ErrBrakWiersza
 	}
@@ -165,20 +171,20 @@ func (r *repozytoriumSkrzynek) SkrzynkaDomyslna(ctx context.Context) (SkrzynkaOp
 func (r *repozytoriumSkrzynek) Zapisz(ctx context.Context, s SkrzynkaOperatora) (SkrzynkaOperatora, error) {
 	err := wTransakcji(ctx, r.db, func(tx *sql.Tx) error {
 		if s.Domyslna {
-			if _, err := tx.ExecContext(ctx, zdejmijDomyslnoscSkrzynek, s.Kod); err != nil {
+			if _, err := tx.ExecContext(ctx, zdejmijDomyslnoscSkrzynek, s.Kod, KontoOperatora(ctx)); err != nil {
 				return fmt.Errorf("dane: nie można zdjąć domyślności z pozostałych skrzynek: %w", err)
 			}
 		}
-		_, err := tx.ExecContext(ctx, zapiszSkrzynkeOperatora,
+		wynik, err := tx.ExecContext(ctx, zapiszSkrzynkeOperatora,
 			s.Kod, s.Adres, tekstDoKolumny(s.NazwaWyswietlana), s.Protokol, s.Zrodlo,
 			s.HostOdbioru, s.PortOdbioru, s.HostWysylki, s.PortWysylki, s.Uzytkownik,
 			tekstDoKolumny(s.HasloOdwolanie), liczbaLogiczna(s.SzyfrujOdbior),
 			liczbaLogiczna(s.SzyfrujWysylke), liczbaLogiczna(s.WeryfikujTLS),
-			liczbaLogiczna(s.Domyslna))
+			liczbaLogiczna(s.Domyslna), KontoOperatora(ctx), KontoOperatora(ctx))
 		if err != nil {
 			return fmt.Errorf("dane: nie można zapisać skrzynki %q: %w", s.Kod, err)
 		}
-		return nil
+		return sprawdzTrafienieZapisu(wynik, "skrzynka", s.Kod)
 	})
 	if err != nil {
 		return SkrzynkaOperatora{}, err
@@ -192,7 +198,7 @@ func (r *repozytoriumSkrzynek) Usun(ctx context.Context, kod string) (bool, erro
 	if err != nil {
 		return false, err
 	}
-	wynik, err := polecenie.ExecContext(ctx, kod)
+	wynik, err := polecenie.ExecContext(ctx, kod, KontoOperatora(ctx))
 	if err != nil {
 		return false, fmt.Errorf("dane: nie można odpiąć skrzynki %q: %w", kod, err)
 	}

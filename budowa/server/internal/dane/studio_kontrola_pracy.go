@@ -126,7 +126,7 @@ const (
 	                       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
 
 	blokadaStudiaPobierz = `SELECT ` + kolumnyBlokadyStudia + zrodloBlokadyStudia +
-		` WHERE b.identyfikator_zewnetrzny = ?`
+		` WHERE b.identyfikator_zewnetrzny = ? AND ` + WarunekKonta
 
 	// Kolejność po początku zakresu, bo tak czyta się wykaz blokad w dokumencie
 	// i tak liczy się bilans pominięć: od pierwszego fragmentu do ostatniego.
@@ -134,7 +134,10 @@ const (
 		` WHERE b.dokument_id = ? ORDER BY b.zakres_od, b.id`
 
 	blokadaStudiaUsun = `DELETE FROM blokada_fragmentu_studio
-	                     WHERE identyfikator_zewnetrzny = ?`
+	                     WHERE identyfikator_zewnetrzny = ?
+	                       AND EXISTS (SELECT 1 FROM dokument_studio
+	                                   WHERE dokument_studio.id = blokada_fragmentu_studio.dokument_id
+	                                     AND ` + WarunekKonta + `)`
 
 	// Przesunięcie zakresu po wpisie przed blokadą, tak by blokada nadal
 	// chroniła ten sam fragment dokumentu po edycji poprzedzającej jej
@@ -174,7 +177,7 @@ const (
 	                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
 
 	czynnoscStudiaPobierz = `SELECT ` + kolumnyCzynnosciStudia + zrodloCzynnosciStudia +
-		` WHERE c.identyfikator_zewnetrzny = ?`
+		` WHERE c.identyfikator_zewnetrzny = ? AND ` + WarunekKonta
 
 	// Od najświeższej: dziennik czyta się od ostatniego ruchu wstecz, tak jak
 	// go czyta Operator szukający tego, co właśnie zepsuł.
@@ -186,14 +189,19 @@ const (
 
 	czynnoscStudiaPrzestawStan = `UPDATE czynnosc_dokumentu_studio
 	                              SET stan = ?, zaktualizowano = strftime('%Y-%m-%dT%H:%M:%fZ','now')
-	                              WHERE identyfikator_zewnetrzny = ? AND stan = ?`
+	                              WHERE identyfikator_zewnetrzny = ? AND stan = ?
+	                                AND EXISTS (SELECT 1 FROM dokument_studio
+	                                            WHERE dokument_studio.id = czynnosc_dokumentu_studio.dokument_id
+	                                              AND ` + WarunekKonta + `)`
 
 	zaleznoscStudiaZapisz = `INSERT OR IGNORE INTO zaleznosc_czynnosci_studio
 	                         (czynnosc_id, podstawa_id, powod)
-	                         VALUES ((SELECT id FROM czynnosc_dokumentu_studio
-	                                  WHERE identyfikator_zewnetrzny = ?),
-	                                 (SELECT id FROM czynnosc_dokumentu_studio
-	                                  WHERE identyfikator_zewnetrzny = ?), ?)`
+	                         VALUES ((SELECT c.id FROM czynnosc_dokumentu_studio c
+	                                  JOIN dokument_studio d ON d.id = c.dokument_id
+	                                  WHERE c.identyfikator_zewnetrzny = ? AND ` + WarunekKonta + `),
+	                                 (SELECT c.id FROM czynnosc_dokumentu_studio c
+	                                  JOIN dokument_studio d ON d.id = c.dokument_id
+	                                  WHERE c.identyfikator_zewnetrzny = ? AND ` + WarunekKonta + `), ?)`
 
 	// Dwa kierunki jednej relacji. „Na czym ta czynność stoi" mówi, czego nie
 	// wolno cofnąć przed nią; „co stoi na niej" mówi, dlaczego jej samej cofnąć
@@ -226,7 +234,7 @@ const (
 	                     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
 
 	kopiaStudiaPobierz = `SELECT ` + kolumnyKopiiStudia + zrodloKopiiStudia +
-		` WHERE k.identyfikator_zewnetrzny = ?`
+		` WHERE k.identyfikator_zewnetrzny = ? AND ` + WarunekKonta
 
 	kopieStudiaLista = `SELECT ` + kolumnyKopiiStudia + zrodloKopiiStudia +
 		` WHERE k.dokument_id = ? ORDER BY k.utworzono DESC, k.id DESC`
@@ -235,7 +243,7 @@ const (
 	// zapytaniem Studio samo zgłasza „mam niezapisany dokument z godziny X",
 	// zamiast czekać, aż Operator się domyśli.
 	kopieStudiaNiezapisane = `SELECT ` + kolumnyKopiiStudia + zrodloKopiiStudia +
-		` WHERE k.zmiany_niezapisane = 1 AND (? = '' OR d.okno = ?)
+		` WHERE k.zmiany_niezapisane = 1 AND (? = '' OR d.okno = ?) AND ` + WarunekKonta + `
 		  ORDER BY k.utworzono DESC, k.id DESC`
 
 	// Przemiatanie kopii wygasłych dokumentu. Granice wygasania podaje
@@ -335,7 +343,8 @@ func (r *repozytoriumStudia) BlokadaFragmentu(ctx context.Context,
 	if err != nil {
 		return BlokadaFragmentuStudia{}, err
 	}
-	blokada, err := odczytajBlokadeFragmentuStudia(polecenie.QueryRowContext(ctx, kod))
+	blokada, err := odczytajBlokadeFragmentuStudia(
+		polecenie.QueryRowContext(ctx, kod, KontoOperatora(ctx)))
 	if errors.Is(err, sql.ErrNoRows) {
 		return BlokadaFragmentuStudia{}, ErrBrakWiersza
 	}
@@ -383,7 +392,7 @@ func (r *repozytoriumStudia) UsunBlokadeFragmentu(ctx context.Context, kod strin
 	if err != nil {
 		return false, err
 	}
-	wynik, err := polecenie.ExecContext(ctx, kod)
+	wynik, err := polecenie.ExecContext(ctx, kod, KontoOperatora(ctx))
 	if err != nil {
 		return false, fmt.Errorf("dane: nie można zdjąć blokady fragmentu %q: %w", kod, err)
 	}
@@ -548,7 +557,8 @@ func (r *repozytoriumStudia) CzynnoscDokumentu(ctx context.Context,
 	if err != nil {
 		return CzynnoscDokumentuStudia{}, err
 	}
-	czynnosc, err := odczytajCzynnoscDokumentuStudia(polecenie.QueryRowContext(ctx, kod))
+	czynnosc, err := odczytajCzynnoscDokumentuStudia(
+		polecenie.QueryRowContext(ctx, kod, KontoOperatora(ctx)))
 	if errors.Is(err, sql.ErrNoRows) {
 		return CzynnoscDokumentuStudia{}, ErrBrakWiersza
 	}
@@ -640,8 +650,8 @@ func (r *repozytoriumStudia) ZapiszZaleznoscCzynnosci(ctx context.Context,
 	if err != nil {
 		return err
 	}
-	if _, err := polecenie.ExecContext(ctx, czynnoscKod, podstawaKod,
-		tekstDoKolumny(powod)); err != nil {
+	if _, err := polecenie.ExecContext(ctx, czynnoscKod, KontoOperatora(ctx), podstawaKod,
+		KontoOperatora(ctx), tekstDoKolumny(powod)); err != nil {
 
 		return fmt.Errorf("dane: nie można zapisać zależności czynności %q od %q: %w",
 			czynnoscKod, podstawaKod, err)
@@ -661,7 +671,7 @@ func (r *repozytoriumStudia) PrzestawStanCzynnosci(ctx context.Context,
 	if err != nil {
 		return false, err
 	}
-	wynik, err := polecenie.ExecContext(ctx, stanNowy, kod, stanOczekiwany)
+	wynik, err := polecenie.ExecContext(ctx, stanNowy, kod, stanOczekiwany, KontoOperatora(ctx))
 	if err != nil {
 		return false, fmt.Errorf("dane: nie można przestawić stanu czynności %q: %w", kod, err)
 	}
@@ -709,7 +719,8 @@ func (r *repozytoriumStudia) KopiaZapasowa(ctx context.Context,
 	if err != nil {
 		return KopiaZapasowaStudia{}, err
 	}
-	kopia, err := odczytajKopieZapasowaStudia(polecenie.QueryRowContext(ctx, kod))
+	kopia, err := odczytajKopieZapasowaStudia(
+		polecenie.QueryRowContext(ctx, kod, KontoOperatora(ctx)))
 	if errors.Is(err, sql.ErrNoRows) {
 		return KopiaZapasowaStudia{}, ErrBrakWiersza
 	}
@@ -733,7 +744,7 @@ func (r *repozytoriumStudia) KopieZapasowe(ctx context.Context,
 func (r *repozytoriumStudia) KopieNiezapisane(ctx context.Context,
 	okno string) ([]KopiaZapasowaStudia, error) {
 
-	return r.kopieZapasoweStudia(ctx, kopieStudiaNiezapisane, okno, okno)
+	return r.kopieZapasoweStudia(ctx, kopieStudiaNiezapisane, okno, okno, KontoOperatora(ctx))
 }
 
 // kopieZapasoweStudia jest wspólnym odczytem wykazu kopii zapasowych,

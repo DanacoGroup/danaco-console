@@ -68,24 +68,30 @@ const (
 	listaRegul = `SELECT ` + kolumnyReguly + zrodloReguly +
 		` WHERE (? = 0 OR r.automatyka_id = ?) ORDER BY a.nazwa, r.id`
 
+	// Odwołanie jest UNIQUE w całej tabeli, więc warunek przy DO UPDATE
+	// zatrzymuje nadpisanie wiersza należącego do innego konta.
 	zapiszPoswiadczenieAutomatyki = `INSERT INTO poswiadczenie_automatyki
-	                                 (odwolanie, nazwa, zasieg, zasieg_id)
-	                                 VALUES (?, ?, ?, ?)
+	                                 (odwolanie, nazwa, zasieg, zasieg_id, konto_id)
+	                                 VALUES (?, ?, ?, ?, ` + WskazanieKonta + `)
 	                                 ON CONFLICT(odwolanie) DO UPDATE SET
 	                                     nazwa = excluded.nazwa,
 	                                     zasieg = excluded.zasieg,
 	                                     zasieg_id = excluded.zasieg_id,
-	                                     zaktualizowano = strftime('%Y-%m-%dT%H:%M:%fZ','now')`
+	                                     zaktualizowano = strftime('%Y-%m-%dT%H:%M:%fZ','now')
+	                                 WHERE ` + WarunekKonta
 
 	listaPoswiadczenAutomatyki = `SELECT odwolanie, nazwa, zasieg, zasieg_id, zaktualizowano
 	                              FROM poswiadczenie_automatyki
 	                              WHERE (? = '' OR zasieg = ?) AND (? = '' OR zasieg_id = ?)
+	                                AND ` + WarunekKonta + `
 	                              ORDER BY nazwa, odwolanie`
 
 	pobierzPoswiadczenieAutomatyki = `SELECT odwolanie, nazwa, zasieg, zasieg_id, zaktualizowano
-	                                  FROM poswiadczenie_automatyki WHERE odwolanie = ?`
+	                                  FROM poswiadczenie_automatyki
+	                                  WHERE odwolanie = ? AND ` + WarunekKonta
 
-	usunPoswiadczenieAutomatyki = `DELETE FROM poswiadczenie_automatyki WHERE odwolanie = ?`
+	usunPoswiadczenieAutomatyki = `DELETE FROM poswiadczenie_automatyki
+	                               WHERE odwolanie = ? AND ` + WarunekKonta
 
 	dopiszWpisAudytu = `INSERT INTO wpis_audytu_automatyki
 	                    (identyfikator_zewnetrzny, automatyka_id, wykonawca, czynnosc, szczegoly)
@@ -165,13 +171,20 @@ func (r *repozytoriumAutomatyk) ZapiszPoswiadczenieAutomatyki(ctx context.Contex
 	if err != nil {
 		return err
 	}
-	_, err = polecenie.ExecContext(ctx, poswiadczenie.Odwolanie, poswiadczenie.Nazwa,
-		tekstDoKolumny(poswiadczenie.Zasieg), tekstDoKolumny(poswiadczenie.ZasiegID))
+	wynik, err := polecenie.ExecContext(ctx, poswiadczenie.Odwolanie, poswiadczenie.Nazwa,
+		tekstDoKolumny(poswiadczenie.Zasieg), tekstDoKolumny(poswiadczenie.ZasiegID),
+		KontoOperatora(ctx), KontoOperatora(ctx))
+	// Trójka nazwa-zasięg-zasięg_id jest UNIQUE poza celem ON CONFLICT, więc
+	// nazwa zajęta przez inne konto rozbija wstawienie o wiąz, a nie o warunek.
+	if czyKolizja(err) {
+		return fmt.Errorf("dane: nazwa poświadczenia %q jest zajęta w tym zasięgu: %w",
+			poswiadczenie.Nazwa, ErrKolizjaWiersza)
+	}
 	if err != nil {
 		return fmt.Errorf("dane: nie można zapisać referencji poświadczenia %q: %w",
 			poswiadczenie.Nazwa, err)
 	}
-	return nil
+	return sprawdzTrafienieZapisu(wynik, "odwołanie poświadczenia", poswiadczenie.Odwolanie)
 }
 
 // PoswiadczeniaAutomatyki zwraca referencje poświadczeń w kolejności nazw wprost z bazy danych repozytorium.
@@ -182,7 +195,8 @@ func (r *repozytoriumAutomatyk) PoswiadczeniaAutomatyki(ctx context.Context,
 	if err != nil {
 		return nil, err
 	}
-	wiersze, err := polecenie.QueryContext(ctx, zasieg, zasieg, zasiegID, zasiegID)
+	wiersze, err := polecenie.QueryContext(ctx, zasieg, zasieg, zasiegID, zasiegID,
+		KontoOperatora(ctx))
 	if err != nil {
 		return nil, fmt.Errorf("dane: nie można odczytać referencji poświadczeń: %w", err)
 	}
@@ -207,7 +221,8 @@ func (r *repozytoriumAutomatyk) PoswiadczenieAutomatykiPoOdwolaniu(ctx context.C
 	if err != nil {
 		return PoswiadczenieAutomatyki{}, err
 	}
-	poswiadczenie, err := odczytajPoswiadczenieAutomatyki(polecenie.QueryRowContext(ctx, odwolanie))
+	poswiadczenie, err := odczytajPoswiadczenieAutomatyki(
+		polecenie.QueryRowContext(ctx, odwolanie, KontoOperatora(ctx)))
 	if errors.Is(err, sql.ErrNoRows) {
 		return PoswiadczenieAutomatyki{}, ErrBrakWiersza
 	}
@@ -226,7 +241,7 @@ func (r *repozytoriumAutomatyk) UsunPoswiadczenieAutomatyki(ctx context.Context,
 	if err != nil {
 		return false, err
 	}
-	wynik, err := polecenie.ExecContext(ctx, odwolanie)
+	wynik, err := polecenie.ExecContext(ctx, odwolanie, KontoOperatora(ctx))
 	if err != nil {
 		return false, fmt.Errorf("dane: nie można usunąć referencji %q: %w", odwolanie, err)
 	}

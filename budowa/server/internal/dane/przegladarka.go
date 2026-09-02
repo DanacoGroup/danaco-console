@@ -133,19 +133,21 @@ const (
 	// ON CONFLICT (w przeciwieństwie do `automatyka`).
 	zapiszMigawke = `INSERT INTO migawka_strony
 	                 (identyfikator_zewnetrzny, okno, url, tytul,
-	                  tekst_odwolanie, zrodlo_odwolanie, zrzut_odwolanie)
-	                 VALUES (?, ?, ?, ?, ?, ?, ?)`
+	                  tekst_odwolanie, zrodlo_odwolanie, zrzut_odwolanie, konto_id)
+	                 VALUES (?, ?, ?, ?, ?, ?, ?, ` + WskazanieKonta + `)`
 
 	pobierzMigawke = `SELECT ` + kolumnyMigawki + ` FROM migawka_strony
-	                  WHERE identyfikator_zewnetrzny = ?`
+	                  WHERE identyfikator_zewnetrzny = ? AND ` + WarunekKonta
 
 	// Kolejność zgodna z indeksem idx_migawka_strony_okno (okno, utworzono DESC, id) —
 	// najświeższy wiersz jest zarówno ostatnią migawką, jak i głową historii.
 	ostatniaMigawkaOkna = `SELECT ` + kolumnyMigawki + ` FROM migawka_strony
-	                       WHERE okno = ? ORDER BY utworzono DESC, id DESC LIMIT 1`
+	                       WHERE okno = ? AND ` + WarunekKonta + `
+	                       ORDER BY utworzono DESC, id DESC LIMIT 1`
 
 	historiaMigawekOkna = `SELECT ` + kolumnyMigawki + ` FROM migawka_strony
-	                       WHERE okno = ? ORDER BY utworzono DESC, id DESC LIMIT ?`
+	                       WHERE okno = ? AND ` + WarunekKonta + `
+	                       ORDER BY utworzono DESC, id DESC LIMIT ?`
 )
 
 type repozytoriumPrzegladania struct {
@@ -171,7 +173,8 @@ func (r *repozytoriumPrzegladania) ZapiszMigawke(ctx context.Context,
 	}
 	_, err = polecenie.ExecContext(ctx, migawka.Kod, migawka.Okno, migawka.Url,
 		tekstDoKolumny(migawka.Tytul), tekstDoKolumny(migawka.TekstOdwolanie),
-		tekstDoKolumny(migawka.ZrodloOdwolanie), tekstDoKolumny(migawka.ZrzutOdwolanie))
+		tekstDoKolumny(migawka.ZrodloOdwolanie), tekstDoKolumny(migawka.ZrzutOdwolanie),
+		KontoOperatora(ctx))
 	if err != nil {
 		return MigawkaStrony{}, fmt.Errorf("dane: nie można zapisać migawki %q: %w", migawka.Kod, err)
 	}
@@ -185,7 +188,7 @@ func (r *repozytoriumPrzegladania) Migawka(ctx context.Context, kod string) (Mig
 	if err != nil {
 		return MigawkaStrony{}, err
 	}
-	migawka, err := odczytajMigawke(polecenie.QueryRowContext(ctx, kod))
+	migawka, err := odczytajMigawke(polecenie.QueryRowContext(ctx, kod, KontoOperatora(ctx)))
 	if errors.Is(err, sql.ErrNoRows) {
 		return MigawkaStrony{}, ErrBrakWiersza
 	}
@@ -203,7 +206,7 @@ func (r *repozytoriumPrzegladania) OstatniaMigawka(ctx context.Context, okno str
 	if err != nil {
 		return MigawkaStrony{}, err
 	}
-	migawka, err := odczytajMigawke(polecenie.QueryRowContext(ctx, okno))
+	migawka, err := odczytajMigawke(polecenie.QueryRowContext(ctx, okno, KontoOperatora(ctx)))
 	if errors.Is(err, sql.ErrNoRows) {
 		return MigawkaStrony{}, ErrBrakWiersza
 	}
@@ -220,7 +223,7 @@ func (r *repozytoriumPrzegladania) Historia(ctx context.Context, okno string, li
 	if err != nil {
 		return nil, err
 	}
-	wiersze, err := polecenie.QueryContext(ctx, okno, granicaWykazu(limit))
+	wiersze, err := polecenie.QueryContext(ctx, okno, KontoOperatora(ctx), granicaWykazu(limit))
 	if err != nil {
 		return nil, fmt.Errorf("dane: nie można odczytać historii okna %q: %w", okno, err)
 	}

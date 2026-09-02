@@ -52,15 +52,17 @@ const (
 
 	zapiszUstalenieDebaty = `INSERT INTO debata_ustalenie
 	                         (identyfikator_zewnetrzny, okno, rodzaj, tura, wypowiedz, wezel,
-	                          uczestnik, tresc, pewnosc)
-	                         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`
+	                          uczestnik, tresc, pewnosc, konto_id)
+	                         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ` + WskazanieKonta + `)`
 
 	usunUstaleniaDebaty = `DELETE FROM debata_ustalenie
-	                       WHERE okno = ? AND rodzaj = ? AND (? = '' OR tura = ?)`
+	                       WHERE okno = ? AND rodzaj = ? AND (? = '' OR tura = ?)
+	                         AND ` + WarunekKonta
 
 	pobierzUstaleniaDebaty = `SELECT ` + kolumnyUstaleniaDebaty + `
 	                          FROM debata_ustalenie
 	                          WHERE okno = ? AND (? = '' OR rodzaj = ?) AND (? = '' OR tura = ?)
+	                            AND ` + WarunekKonta + `
 	                          ORDER BY id ASC`
 
 	kolumnyDowoduDebaty = `identyfikator_zewnetrzny, okno, tura, wypowiedz, twierdzenie,
@@ -90,7 +92,8 @@ func (r *repozytoriumRoundtable) ZastapUstaleniaDebaty(ctx context.Context,
 		if err != nil {
 			return err
 		}
-		if _, err := wyczysc.ExecContext(ctx, okno, rodzaj, tura, tura); err != nil {
+		if _, err := wyczysc.ExecContext(ctx, okno, rodzaj, tura, tura,
+			KontoOperatora(ctx)); err != nil {
 			return fmt.Errorf("dane: nie można wyczyścić ustaleń analizy okna %q: %w", okno, err)
 		}
 		wstaw, err := r.zapytania.wTransakcji(ctx, transakcja, zapiszUstalenieDebaty)
@@ -100,7 +103,7 @@ func (r *repozytoriumRoundtable) ZastapUstaleniaDebaty(ctx context.Context,
 		for _, ustalenie := range ustalenia {
 			if _, err := wstaw.ExecContext(ctx, ustalenie.Kod, okno, rodzaj, ustalenie.Tura,
 				ustalenie.Wypowiedz, ustalenie.Wezel, ustalenie.Uczestnik, ustalenie.Tresc,
-				ustalenie.Pewnosc); err != nil {
+				ustalenie.Pewnosc, KontoOperatora(ctx)); err != nil {
 				return fmt.Errorf("dane: nie można zapisać ustalenia analizy %q: %w",
 					ustalenie.Kod, err)
 			}
@@ -117,7 +120,8 @@ func (r *repozytoriumRoundtable) UstaleniaDebaty(ctx context.Context,
 	if err != nil {
 		return nil, err
 	}
-	wiersze, err := polecenie.QueryContext(ctx, okno, rodzaj, rodzaj, tura, tura)
+	wiersze, err := polecenie.QueryContext(ctx, okno, rodzaj, rodzaj, tura, tura,
+		KontoOperatora(ctx))
 	if err != nil {
 		return nil, fmt.Errorf("dane: nie można odczytać ustaleń analizy okna %q: %w", okno, err)
 	}

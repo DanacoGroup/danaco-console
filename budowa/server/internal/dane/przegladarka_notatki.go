@@ -33,17 +33,18 @@ const (
 
 	zapiszNotatkePrzegladania = `INSERT INTO notatka_przegladania
 	                 (identyfikator_zewnetrzny, okno, zrodlo_zewnetrzny_id, tresc, cytat,
-	                  klasyfikacja, watek, przypieta)
-	                 VALUES (?, ?, ?, ?, ?, ?, ?, ?)`
+	                  klasyfikacja, watek, przypieta, konto_id)
+	                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ` + WskazanieKonta + `)`
 
 	pobierzNotatkePrzegladania = `SELECT ` + kolumnyNotatki + ` FROM notatka_przegladania
-	                  WHERE identyfikator_zewnetrzny = ?`
+	                  WHERE identyfikator_zewnetrzny = ? AND ` + WarunekKonta
 
 	// Kolejność zgodna z indeksem idx_notatka_przegladania_okno (okno, utworzono DESC, id).
 	// Puste zawężenie do źródła wyłącza warunek — jedno zapytanie na oba
 	// warianty `browser.note.list`, bez sklejania SQL-a w locie.
 	listaNotatekOkna = `SELECT ` + kolumnyNotatki + ` FROM notatka_przegladania
-	                    WHERE okno = ? AND (? = '' OR zrodlo_zewnetrzny_id = ?)
+	                    WHERE okno = ? AND ` + WarunekKonta + `
+	                      AND (? = '' OR zrodlo_zewnetrzny_id = ?)
 	                      AND (? = '' OR watek = ?)
 	                      AND (? = '' OR klasyfikacja = ?)
 	                      AND (? = '' OR tresc LIKE ? OR IFNULL(cytat,'') LIKE ?)
@@ -58,7 +59,7 @@ const (
 	                                     watek = COALESCE(?, watek),
 	                                     przypieta = COALESCE(?, przypieta),
 	                                     zaktualizowano = strftime('%Y-%m-%dT%H:%M:%fZ','now')
-	                                 WHERE identyfikator_zewnetrzny = ?`
+	                                 WHERE identyfikator_zewnetrzny = ? AND ` + WarunekKonta
 )
 
 // FiltrNotatekPrzegladania zawęża wykaz notatek okna, obsługując pola żądania browser.note.list w całości.
@@ -95,7 +96,7 @@ func (r *repozytoriumPrzegladania) ZapiszNotatke(ctx context.Context,
 	_, err = polecenie.ExecContext(ctx, notatka.Kod, notatka.Okno,
 		tekstDoKolumny(notatka.ZrodloID), notatka.Tresc, tekstDoKolumny(notatka.Cytat),
 		tekstDoKolumny(notatka.Klasyfikacja), tekstDoKolumny(notatka.Watek),
-		liczbaLogiczna(notatka.Przypieta))
+		liczbaLogiczna(notatka.Przypieta), KontoOperatora(ctx))
 	if err != nil {
 		return NotatkaPrzegladania{}, fmt.Errorf("dane: nie można zapisać notatki %q: %w", notatka.Kod, err)
 	}
@@ -109,7 +110,7 @@ func (r *repozytoriumPrzegladania) pobierzNotatke(ctx context.Context, kod strin
 	if err != nil {
 		return NotatkaPrzegladania{}, err
 	}
-	notatka, err := odczytajNotatke(polecenie.QueryRowContext(ctx, kod))
+	notatka, err := odczytajNotatke(polecenie.QueryRowContext(ctx, kod, KontoOperatora(ctx)))
 	if errors.Is(err, sql.ErrNoRows) {
 		return NotatkaPrzegladania{}, ErrBrakWiersza
 	}
@@ -134,7 +135,7 @@ func (r *repozytoriumPrzegladania) Notatki(ctx context.Context,
 	if filtr.Szukaj != "" {
 		wzorzec = "%" + filtr.Szukaj + "%"
 	}
-	wiersze, err := polecenie.QueryContext(ctx, okno, filtr.ZrodloID, filtr.ZrodloID,
+	wiersze, err := polecenie.QueryContext(ctx, okno, KontoOperatora(ctx), filtr.ZrodloID, filtr.ZrodloID,
 		filtr.Watek, filtr.Watek, filtr.Klasyfikacja, filtr.Klasyfikacja,
 		filtr.Szukaj, wzorzec, wzorzec,
 		liczbaLogiczna(filtr.PrzypieteNaPoczatku), granicaWykazu(filtr.Limit))
@@ -209,7 +210,7 @@ func (r *repozytoriumPrzegladania) AktualizujNotatke(ctx context.Context,
 	wynik, err := polecenie.ExecContext(ctx, tekstDoKolumny(zmiana.Tresc),
 		tekstDoKolumny(zmiana.Cytat), tekstDoKolumny(zmiana.ZrodloID),
 		tekstDoKolumny(zmiana.Klasyfikacja), tekstDoKolumny(zmiana.Watek),
-		przypieta, zmiana.Kod)
+		przypieta, zmiana.Kod, KontoOperatora(ctx))
 	if err != nil {
 		return NotatkaPrzegladania{}, fmt.Errorf("dane: nie można zmienić notatki %q: %w", zmiana.Kod, err)
 	}

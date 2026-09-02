@@ -54,8 +54,11 @@ const (
 	kolumnyKontekstuPamieci = `identyfikator_zewnetrzny, nazwa, opis, profil_kod, poziomy_json,
 	                           wpisy_json, prompt_systemowy, czynny, utworzono, zaktualizowano`
 
-	zapiszKontekstPamieci = `INSERT INTO kontekst_pamieci (` + kolumnyKontekstuPamieci + `)
-	                         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+	// Kod kontekstu jest unikalny w całej tabeli, więc kod cudzego konta trafia
+	// w konflikt; warunek przy DO UPDATE zostawia wtedy wiersz nietknięty,
+	// a zapis kończy się ErrKolizjaWiersza.
+	zapiszKontekstPamieci = `INSERT INTO kontekst_pamieci (` + kolumnyKontekstuPamieci + `, konto_id)
+	                         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ` + WskazanieKonta + `)
 	                         ON CONFLICT(identyfikator_zewnetrzny) DO UPDATE SET
 	                             nazwa = excluded.nazwa,
 	                             opis = excluded.opis,
@@ -64,20 +67,34 @@ const (
 	                             wpisy_json = excluded.wpisy_json,
 	                             prompt_systemowy = excluded.prompt_systemowy,
 	                             czynny = excluded.czynny,
-	                             zaktualizowano = excluded.zaktualizowano`
+	                             zaktualizowano = excluded.zaktualizowano
+	                         WHERE ` + WarunekKonta
 
 	pobierzKontekstPamieci = `SELECT ` + kolumnyKontekstuPamieci +
-		` FROM kontekst_pamieci WHERE identyfikator_zewnetrzny = ?`
+		` FROM kontekst_pamieci WHERE identyfikator_zewnetrzny = ? AND ` + WarunekKonta
 
-	usunKontekstPamieci = `DELETE FROM kontekst_pamieci WHERE identyfikator_zewnetrzny = ?`
+	usunKontekstPamieci = `DELETE FROM kontekst_pamieci
+	                       WHERE identyfikator_zewnetrzny = ? AND ` + WarunekKonta
 
+	// Kod karty sesji jest kluczem głównym całej tabeli, więc karta cudzego konta
+	// trafia tu w konflikt. Nadpisywane jest wskazanie zastane, więc granica
+	// dochodzi do korzenia przez kod kontekstu stojący w wierszu przed zapisem,
+	// nie przez kod wskazywany żądaniem.
 	uaktywnijKontekstPamieci = `INSERT INTO kontekst_pamieci_czynny (sesja_kod, kontekst_kod, uaktywniono)
 	                            VALUES (?, ?, ?)
 	                            ON CONFLICT(sesja_kod) DO UPDATE SET
 	                                kontekst_kod = excluded.kontekst_kod,
-	                                uaktywniono = excluded.uaktywniono`
+	                                uaktywniono = excluded.uaktywniono
+	                            WHERE EXISTS (SELECT 1 FROM kontekst_pamieci
+	                                           WHERE identyfikator_zewnetrzny = kontekst_pamieci_czynny.kontekst_kod
+	                                             AND ` + WarunekKonta + `)`
 
-	pobierzCzynnyKontekstPamieci = `SELECT kontekst_kod FROM kontekst_pamieci_czynny WHERE sesja_kod = ?`
+	// Kontekst czynny karty własnej kolumny konta nie ma; granica dochodzi do
+	// niego złączeniem z kontekstem, w którym wskazanie konta stoi.
+	pobierzCzynnyKontekstPamieci = `SELECT c.kontekst_kod FROM kontekst_pamieci_czynny c
+	                                JOIN kontekst_pamieci k
+	                                  ON k.identyfikator_zewnetrzny = c.kontekst_kod
+	                                WHERE c.sesja_kod = ? AND ` + WarunekKonta
 
 	kolumnyZasadyRetencji = `identyfikator_zewnetrzny, zasieg, zasieg_kod, profil_kod,
 	                         dni_wygasania, wrazliwe_domyslnie, wzorce_json, czynna, zaktualizowano`
@@ -116,13 +133,17 @@ func (r *repozytoriumKontekstowPamieci) ZapiszKontekstPamieci(ctx context.Contex
 	if err != nil {
 		return KontekstPamieci{}, err
 	}
-	_, err = polecenie.ExecContext(ctx, kontekst.Kod, kontekst.Nazwa, tekstDoKolumny(kontekst.Opis),
+	wynik, err := polecenie.ExecContext(ctx, kontekst.Kod, kontekst.Nazwa, tekstDoKolumny(kontekst.Opis),
 		kontekst.ProfilKod, kontekst.PoziomyJSON, kontekst.WpisyJSON,
 		tekstDoKolumny(kontekst.PromptSystemowy), liczbaLogiczna(kontekst.Czynny),
-		kontekst.Utworzono, kontekst.Zaktualizowano)
+		kontekst.Utworzono, kontekst.Zaktualizowano,
+		KontoOperatora(ctx), KontoOperatora(ctx))
 	if err != nil {
 		return KontekstPamieci{}, fmt.Errorf("dane: nie można zapisać kontekstu pamięci %q: %w",
 			kontekst.Kod, err)
+	}
+	if err := sprawdzTrafienieZapisu(wynik, "kontekst pamięci", kontekst.Kod); err != nil {
+		return KontekstPamieci{}, err
 	}
 	return r.KontekstPamieciPoKodzie(ctx, kontekst.Kod)
 }
@@ -135,7 +156,7 @@ func (r *repozytoriumKontekstowPamieci) KontekstPamieciPoKodzie(ctx context.Cont
 	if err != nil {
 		return KontekstPamieci{}, err
 	}
-	kontekst, err := odczytajKontekstPamieci(polecenie.QueryRowContext(ctx, kod))
+	kontekst, err := odczytajKontekstPamieci(polecenie.QueryRowContext(ctx, kod, KontoOperatora(ctx)))
 	if errors.Is(err, sql.ErrNoRows) {
 		return KontekstPamieci{}, fmt.Errorf("dane: kontekst pamięci %q nie istnieje: %w",
 			kod, ErrBrakWiersza)
@@ -147,8 +168,8 @@ func (r *repozytoriumKontekstowPamieci) KontekstPamieciPoKodzie(ctx context.Cont
 func (r *repozytoriumKontekstowPamieci) KontekstyPamieci(ctx context.Context, profil string,
 	zWylaczonymi bool) ([]KontekstPamieci, error) {
 
-	warunki := []string{"1 = 1"}
-	argumenty := []any{}
+	warunki := []string{WarunekKonta}
+	argumenty := []any{KontoOperatora(ctx)}
 	if strings.TrimSpace(profil) != "" {
 		warunki = append(warunki, "profil_kod = ?")
 		argumenty = append(argumenty, profil)
@@ -187,7 +208,7 @@ func (r *repozytoriumKontekstowPamieci) UsunKontekstPamieci(ctx context.Context,
 	if err != nil {
 		return false, err
 	}
-	wynik, err := polecenie.ExecContext(ctx, kod)
+	wynik, err := polecenie.ExecContext(ctx, kod, KontoOperatora(ctx))
 	if err != nil {
 		return false, fmt.Errorf("dane: nie można usunąć kontekstu pamięci %q: %w", kod, err)
 	}
@@ -206,11 +227,12 @@ func (r *repozytoriumKontekstowPamieci) UaktywnijKontekstPamieci(ctx context.Con
 	if err != nil {
 		return err
 	}
-	if _, err := polecenie.ExecContext(ctx, sesja, kontekst, chwila); err != nil {
+	wynik, err := polecenie.ExecContext(ctx, sesja, kontekst, chwila, KontoOperatora(ctx))
+	if err != nil {
 		return fmt.Errorf("dane: nie można uaktywnić kontekstu pamięci %q w karcie %q: %w",
 			kontekst, sesja, err)
 	}
-	return nil
+	return sprawdzTrafienieZapisu(wynik, "kontekst czynny karty", sesja)
 }
 
 // CzynnyKontekstPamieci zwraca kontekst czynny karty sesji. Brak wskazania nie
@@ -226,7 +248,7 @@ func (r *repozytoriumKontekstowPamieci) CzynnyKontekstPamieci(ctx context.Contex
 		return "", err
 	}
 	var kod string
-	err = polecenie.QueryRowContext(ctx, sesja).Scan(&kod)
+	err = polecenie.QueryRowContext(ctx, sesja, KontoOperatora(ctx)).Scan(&kod)
 	if errors.Is(err, sql.ErrNoRows) {
 		return "", nil
 	}

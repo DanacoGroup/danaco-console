@@ -10,15 +10,16 @@ import (
 )
 
 const (
-	rodzajKontaPoId = `SELECT rodzaj FROM konto WHERE id = ?`
+	rodzajKontaPoId = `SELECT rodzaj FROM konto WHERE id = ? AND ` + WarunekKonta
 
-	poprzednieKontoDomyslne = `SELECT id FROM konto WHERE rodzaj = ? AND domyslne = 1`
+	poprzednieKontoDomyslne = `SELECT id FROM konto
+	                           WHERE rodzaj = ? AND domyslne = 1 AND ` + WarunekKonta
 
 	zdejmijOznaczenieDomyslnego = `UPDATE konto SET domyslne = 0, ` + znacznikZmiany + `
-	                               WHERE rodzaj = ? AND domyslne = 1`
+	                               WHERE rodzaj = ? AND domyslne = 1 AND ` + WarunekKonta
 
 	nadajOznaczenieDomyslnego = `UPDATE konto SET domyslne = 1, ` + znacznikZmiany + `
-	                             WHERE id = ?`
+	                             WHERE id = ? AND ` + WarunekKonta
 )
 
 // UstawDomyslne czyni wskazane konto domyślnym w obrębie jego rodzaju i zwraca
@@ -35,7 +36,8 @@ func (r *repozytoriumKont) UstawDomyslne(ctx context.Context, id int64) (*int64,
 		if err != nil {
 			return err
 		}
-		if err := wykonajWTransakcji(ctx, r, transakcja, zdejmijOznaczenieDomyslnego, rodzaj); err != nil {
+		if err := wykonajWTransakcji(ctx, r, transakcja, zdejmijOznaczenieDomyslnego, rodzaj,
+			KontoOperatora(ctx)); err != nil {
 			return fmt.Errorf("dane: nie można zdjąć oznaczenia konta domyślnego rodzaju %q: %w",
 				rodzaj, err)
 		}
@@ -43,7 +45,7 @@ func (r *repozytoriumKont) UstawDomyslne(ctx context.Context, id int64) (*int64,
 		if err != nil {
 			return err
 		}
-		wynik, err := polecenie.ExecContext(ctx, id)
+		wynik, err := polecenie.ExecContext(ctx, id, KontoOperatora(ctx))
 		if err != nil {
 			return fmt.Errorf("dane: nie można wskazać konta domyślnego %d: %w", id, err)
 		}
@@ -66,7 +68,7 @@ func rodzajKontaWTransakcji(ctx context.Context, r *repozytoriumKont, transakcja
 		return "", err
 	}
 	var rodzaj string
-	err = polecenie.QueryRowContext(ctx, id).Scan(&rodzaj)
+	err = polecenie.QueryRowContext(ctx, id, KontoOperatora(ctx)).Scan(&rodzaj)
 	if errors.Is(err, sql.ErrNoRows) {
 		return "", fmt.Errorf("%w: konto %d", ErrBrakWiersza, id)
 	}
@@ -84,7 +86,7 @@ func poprzednieDomyslneWTransakcji(ctx context.Context, r *repozytoriumKont, tra
 		return nil, err
 	}
 	var id int64
-	err = polecenie.QueryRowContext(ctx, rodzaj).Scan(&id)
+	err = polecenie.QueryRowContext(ctx, rodzaj, KontoOperatora(ctx)).Scan(&id)
 	if errors.Is(err, sql.ErrNoRows) {
 		return nil, nil
 	}

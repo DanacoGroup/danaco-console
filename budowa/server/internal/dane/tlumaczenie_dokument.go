@@ -52,23 +52,35 @@ func (r *repozytoriumTlumaczen) ZapiszDokument(ctx context.Context,
 		utworzono = teraz
 	}
 	err := wTransakcji(ctx, r.db, func(transakcja *sql.Tx) error {
-		if _, err := transakcja.ExecContext(ctx, `INSERT INTO dokument_tlumaczenia
+		// Kod dokumentu jest unikalny w całej tabeli, więc kod cudzego konta
+		// trafia w konflikt; warunek przy DO UPDATE zostawia wtedy wiersz
+		// nietknięty, a zapis kończy się ErrKolizjaWiersza.
+		wynik, err := transakcja.ExecContext(ctx, `INSERT INTO dokument_tlumaczenia
 			(identyfikator_zewnetrzny, okno_id, sciezka, format, liczba_stron, uzyto_ocr,
 			 utworzono, zaktualizowano)
 			VALUES (?, ?, ?, ?, ?, ?, ?, ?)
 			ON CONFLICT(identyfikator_zewnetrzny) DO UPDATE SET
 				sciezka = excluded.sciezka, format = excluded.format,
 				liczba_stron = excluded.liczba_stron, uzyto_ocr = excluded.uzyto_ocr,
-				zaktualizowano = excluded.zaktualizowano`,
+				zaktualizowano = excluded.zaktualizowano
+			WHERE EXISTS (SELECT 1 FROM okno_tlumaczenia
+			               WHERE okno_tlumaczenia.id = dokument_tlumaczenia.okno_id
+			                 AND `+WarunekKonta+`)`,
 			dokument.Kod, dokument.OknoID, dokument.Sciezka, dokument.Format,
 			liczbaDoKolumny(dokument.LiczbaStron), wartoscLogicznaDoKolumny(dokument.UzytoOcr),
-			utworzono, teraz); err != nil {
+			utworzono, teraz, KontoOperatora(ctx))
+		if err != nil {
 			return fmt.Errorf("dane: nie można zapisać dokumentu %q: %w", dokument.Kod, err)
+		}
+		if err := sprawdzTrafienieZapisu(wynik, "dokument tłumaczenia", dokument.Kod); err != nil {
+			return err
 		}
 		var dokumentID int64
 		if err := transakcja.QueryRowContext(ctx,
-			`SELECT id FROM dokument_tlumaczenia WHERE identyfikator_zewnetrzny = ?`,
-			dokument.Kod).Scan(&dokumentID); err != nil {
+			`SELECT d.id FROM dokument_tlumaczenia d
+			   JOIN okno_tlumaczenia o ON o.id = d.okno_id
+			  WHERE d.identyfikator_zewnetrzny = ? AND `+WarunekKonta,
+			dokument.Kod, KontoOperatora(ctx)).Scan(&dokumentID); err != nil {
 			return fmt.Errorf("dane: nie można odczytać dokumentu %q po zapisie: %w", dokument.Kod, err)
 		}
 		if _, err := transakcja.ExecContext(ctx,
@@ -103,7 +115,7 @@ func (r *repozytoriumTlumaczen) Dokument(ctx context.Context, kod string) (Dokum
 		        d.sciezka, d.format, d.liczba_stron, d.uzyto_ocr, d.utworzono, d.zaktualizowano
 		   FROM dokument_tlumaczenia d
 		   JOIN okno_tlumaczenia o ON o.id = d.okno_id
-		  WHERE d.identyfikator_zewnetrzny = ?`, kod).
+		  WHERE d.identyfikator_zewnetrzny = ? AND `+WarunekKonta, kod, KontoOperatora(ctx)).
 		Scan(&dokument.ID, &dokument.Kod, &dokument.OknoID, &dokument.OknoKod,
 			&dokument.Sciezka, &dokument.Format, &strony, &ocr,
 			&dokument.Utworzono, &dokument.Zaktualizowano)
@@ -124,8 +136,13 @@ func (r *repozytoriumTlumaczen) SegmentyDokumentu(ctx context.Context,
 	dokumentID int64) ([]SegmentDokumentu, error) {
 
 	wiersze, err := r.db.QueryContext(ctx,
-		`SELECT kolejnosc, tresc, sciezka_wezla, strona, styl
-		   FROM segment_dokumentu_tlumaczenia WHERE dokument_id = ? ORDER BY kolejnosc`, dokumentID)
+		`SELECT s.kolejnosc, s.tresc, s.sciezka_wezla, s.strona, s.styl
+		   FROM segment_dokumentu_tlumaczenia s
+		  WHERE s.dokument_id = ?
+		    AND EXISTS (SELECT 1 FROM dokument_tlumaczenia d
+		                  JOIN okno_tlumaczenia o ON o.id = d.okno_id
+		                 WHERE d.id = s.dokument_id AND `+WarunekKonta+`)
+		  ORDER BY s.kolejnosc`, dokumentID, KontoOperatora(ctx))
 	if err != nil {
 		return nil, fmt.Errorf("dane: nie można odczytać segmentów dokumentu %d: %w", dokumentID, err)
 	}
@@ -187,20 +204,33 @@ func (r *repozytoriumTlumaczen) ZapiszZasobLokalizacji(ctx context.Context,
 		utworzono = teraz
 	}
 	err := wTransakcji(ctx, r.db, func(transakcja *sql.Tx) error {
-		if _, err := transakcja.ExecContext(ctx, `INSERT INTO zasob_lokalizacji
+		// Kod zasobu jest unikalny w całej tabeli, więc kod cudzego konta trafia
+		// w konflikt; warunek przy DO UPDATE zostawia wtedy wiersz nietknięty,
+		// a zapis kończy się ErrKolizjaWiersza.
+		wynik, err := transakcja.ExecContext(ctx, `INSERT INTO zasob_lokalizacji
 			(identyfikator_zewnetrzny, okno_id, sciezka, format, jezyk_zrodlowy, utworzono, zaktualizowano)
 			VALUES (?, ?, ?, ?, ?, ?, ?)
 			ON CONFLICT(identyfikator_zewnetrzny) DO UPDATE SET
 				sciezka = excluded.sciezka, format = excluded.format,
-				jezyk_zrodlowy = excluded.jezyk_zrodlowy, zaktualizowano = excluded.zaktualizowano`,
+				jezyk_zrodlowy = excluded.jezyk_zrodlowy, zaktualizowano = excluded.zaktualizowano
+			WHERE EXISTS (SELECT 1 FROM okno_tlumaczenia
+			               WHERE okno_tlumaczenia.id = zasob_lokalizacji.okno_id
+			                 AND `+WarunekKonta+`)`,
 			zasob.Kod, zasob.OknoID, zasob.Sciezka, zasob.Format,
-			tekstDoKolumny(zasob.JezykZrodlowy), utworzono, teraz); err != nil {
+			tekstDoKolumny(zasob.JezykZrodlowy), utworzono, teraz,
+			KontoOperatora(ctx))
+		if err != nil {
 			return fmt.Errorf("dane: nie można zapisać zasobu lokalizacyjnego %q: %w", zasob.Kod, err)
+		}
+		if err := sprawdzTrafienieZapisu(wynik, "zasób lokalizacyjny", zasob.Kod); err != nil {
+			return err
 		}
 		var zasobID int64
 		if err := transakcja.QueryRowContext(ctx,
-			`SELECT id FROM zasob_lokalizacji WHERE identyfikator_zewnetrzny = ?`,
-			zasob.Kod).Scan(&zasobID); err != nil {
+			`SELECT z.id FROM zasob_lokalizacji z
+			   JOIN okno_tlumaczenia o ON o.id = z.okno_id
+			  WHERE z.identyfikator_zewnetrzny = ? AND `+WarunekKonta,
+			zasob.Kod, KontoOperatora(ctx)).Scan(&zasobID); err != nil {
 			return fmt.Errorf("dane: nie można odczytać zasobu %q po zapisie: %w", zasob.Kod, err)
 		}
 		if _, err := transakcja.ExecContext(ctx,
@@ -246,7 +276,7 @@ func (r *repozytoriumTlumaczen) ZasobLokalizacji(ctx context.Context,
 		        z.sciezka, z.format, z.jezyk_zrodlowy, z.utworzono, z.zaktualizowano
 		   FROM zasob_lokalizacji z
 		   JOIN okno_tlumaczenia o ON o.id = z.okno_id
-		  WHERE z.identyfikator_zewnetrzny = ?`, kod).
+		  WHERE z.identyfikator_zewnetrzny = ? AND `+WarunekKonta, kod, KontoOperatora(ctx)).
 		Scan(&zasob.ID, &zasob.Kod, &zasob.OknoID, &zasob.OknoKod, &zasob.Sciezka,
 			&zasob.Format, &jezyk, &zasob.Utworzono, &zasob.Zaktualizowano)
 	if errors.Is(err, sql.ErrNoRows) {
@@ -265,8 +295,14 @@ func (r *repozytoriumTlumaczen) KluczeLokalizacji(ctx context.Context,
 	zasobID int64) ([]KluczLokalizacji, error) {
 
 	wiersze, err := r.db.QueryContext(ctx,
-		`SELECT klucz, tresc, znaczniki, kontekst, zrzut_zasob_id, formy_mnogie, kolejnosc
-		   FROM klucz_lokalizacji WHERE zasob_id = ? ORDER BY kolejnosc`, zasobID)
+		`SELECT k.klucz, k.tresc, k.znaczniki, k.kontekst, k.zrzut_zasob_id,
+		        k.formy_mnogie, k.kolejnosc
+		   FROM klucz_lokalizacji k
+		  WHERE k.zasob_id = ?
+		    AND EXISTS (SELECT 1 FROM zasob_lokalizacji z
+		                  JOIN okno_tlumaczenia o ON o.id = z.okno_id
+		                 WHERE z.id = k.zasob_id AND `+WarunekKonta+`)
+		  ORDER BY k.kolejnosc`, zasobID, KontoOperatora(ctx))
 	if err != nil {
 		return nil, fmt.Errorf("dane: nie można odczytać kluczy zasobu %d: %w", zasobID, err)
 	}
@@ -297,21 +333,30 @@ func (r *repozytoriumTlumaczen) KluczeLokalizacji(ctx context.Context,
 func (r *repozytoriumTlumaczen) ZapiszKluczLokalizacji(ctx context.Context,
 	zasobID int64, klucz KluczLokalizacji) error {
 
-	_, err := r.db.ExecContext(ctx, `INSERT INTO klucz_lokalizacji
+	wynik, err := r.db.ExecContext(ctx, `INSERT INTO klucz_lokalizacji
 		(zasob_id, klucz, tresc, znaczniki, kontekst, zrzut_zasob_id, formy_mnogie, kolejnosc)
 		VALUES (?, ?, ?, ?, ?, ?, ?, ?)
 		ON CONFLICT(zasob_id, klucz) DO UPDATE SET
 			tresc = excluded.tresc, znaczniki = excluded.znaczniki,
 			kontekst = excluded.kontekst, zrzut_zasob_id = excluded.zrzut_zasob_id,
-			formy_mnogie = excluded.formy_mnogie`,
+			formy_mnogie = excluded.formy_mnogie
+		WHERE EXISTS (SELECT 1 FROM zasob_lokalizacji z
+		               JOIN okno_tlumaczenia o ON o.id = z.okno_id
+		              WHERE z.id = klucz_lokalizacji.zasob_id AND `+WarunekKonta+`)`,
 		zasobID, klucz.Klucz, klucz.Tresc, znacznikiDoKolumny(klucz.Znaczniki),
 		tekstDoKolumny(klucz.Kontekst), tekstDoKolumny(klucz.ZrzutZasobID),
-		tekstDoKolumny(klucz.FormyMnogie), klucz.Kolejnosc)
+		tekstDoKolumny(klucz.FormyMnogie), klucz.Kolejnosc, KontoOperatora(ctx))
 	if err != nil {
 		return fmt.Errorf("dane: nie można zapisać klucza %q: %w", klucz.Klucz, err)
 	}
-	return nil
+	return sprawdzTrafienieZapisu(wynik, "klucz lokalizacji", klucz.Klucz)
 }
+
+// Kwestia napisów wisi na oknie kolumną `okno_id` obowiązkową także wtedy, gdy
+// niesie panel, więc granica konta dochodzi do niej zawsze tą samą drogą.
+const warunekKontaKwestiiNapisow = ` AND EXISTS (SELECT 1 FROM okno_tlumaczenia
+                                                  WHERE okno_tlumaczenia.id = kwestia_napisow.okno_id
+                                                    AND ` + WarunekKonta + `)`
 
 // KwestiaNapisow to wiersz tabeli kwestii napisów, niosący czas początku i końca oraz
 // treść wypowiedzi.
@@ -336,7 +381,8 @@ func (r *repozytoriumTlumaczen) ZapiszKwestieNapisow(ctx context.Context,
 			argumenty = []any{panelID}
 		}
 		if _, err := transakcja.ExecContext(ctx,
-			`DELETE FROM kwestia_napisow WHERE `+warunek, argumenty...); err != nil {
+			`DELETE FROM kwestia_napisow WHERE `+warunek+warunekKontaKwestiiNapisow,
+			append(argumenty, KontoOperatora(ctx))...); err != nil {
 			return fmt.Errorf("dane: nie można zdjąć kwestii napisów: %w", err)
 		}
 		for numer, kwestia := range kwestie {
@@ -369,7 +415,8 @@ func (r *repozytoriumTlumaczen) KwestieNapisow(ctx context.Context,
 	}
 	wiersze, err := r.db.QueryContext(ctx,
 		`SELECT kolejnosc, poczatek_ms, koniec_ms, tresc, mowca
-		   FROM kwestia_napisow WHERE `+warunek+` ORDER BY kolejnosc`, argumenty...)
+		   FROM kwestia_napisow WHERE `+warunek+warunekKontaKwestiiNapisow+` ORDER BY kolejnosc`,
+		append(argumenty, KontoOperatora(ctx))...)
 	if err != nil {
 		return nil, fmt.Errorf("dane: nie można odczytać kwestii napisów: %w", err)
 	}

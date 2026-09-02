@@ -32,11 +32,14 @@ const (
 	                             stan, tekst, stron, uzyto_rozpoznania, pewnosc, powod_odmowy,
 	                             slowa_json, uklad_json, nastawy_json, utworzono`
 
+	// Warunek przy DO UPDATE odczytuje konto wiersza już stojącego: kolumna
+	// `identyfikator_zewnetrzny` ma UNIQUE na całej tabeli, więc bez niego kod
+	// podany przez jedno konto nadpisywałby pozycję drugiego.
 	zapiszPozycjeWczytywania = `INSERT INTO pozycja_wczytywania_studio
 	                            (identyfikator_zewnetrzny, okno, sciezka_zrodlowa, zasob_id, stan,
 	                             tekst, stron, uzyto_rozpoznania, pewnosc, powod_odmowy,
-	                             slowa_json, uklad_json, nastawy_json)
-	                            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+	                             slowa_json, uklad_json, nastawy_json, konto_id)
+	                            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ` + WskazanieKonta + `)
 	                            ON CONFLICT(identyfikator_zewnetrzny) DO UPDATE SET
 	                                stan = excluded.stan,
 	                                tekst = excluded.tekst,
@@ -46,19 +49,21 @@ const (
 	                                powod_odmowy = excluded.powod_odmowy,
 	                                slowa_json = excluded.slowa_json,
 	                                uklad_json = excluded.uklad_json,
-	                                nastawy_json = excluded.nastawy_json`
+	                                nastawy_json = excluded.nastawy_json
+	                            WHERE ` + WarunekKonta
 
 	pobierzPozycjeWczytywania = `SELECT ` + kolumnyPozycjiWczytywania + `
 	                             FROM pozycja_wczytywania_studio
-	                             WHERE identyfikator_zewnetrzny = ?`
+	                             WHERE identyfikator_zewnetrzny = ? AND ` + WarunekKonta
 
 	listaPozycjiWczytywania = `SELECT ` + kolumnyPozycjiWczytywania + `
 	                           FROM pozycja_wczytywania_studio
-	                           WHERE okno = ? ORDER BY id`
+	                           WHERE okno = ? AND ` + WarunekKonta + ` ORDER BY id`
 
 	listaPozycjiOczekujacych = `SELECT ` + kolumnyPozycjiWczytywania + `
 	                            FROM pozycja_wczytywania_studio
 	                            WHERE okno = ? AND stan IN ('oczekuje','ponowienie','przetwarzanie')
+	                              AND ` + WarunekKonta + `
 	                            ORDER BY id`
 )
 
@@ -76,15 +81,19 @@ func (r *repozytoriumStudia) ZapiszPozycjeWczytywania(ctx context.Context,
 	if err != nil {
 		return PozycjaWczytywania{}, err
 	}
-	_, err = polecenie.ExecContext(ctx, pozycja.Kod, pozycja.Okno,
+	wynik, err := polecenie.ExecContext(ctx, pozycja.Kod, pozycja.Okno,
 		tekstDoKolumny(pozycja.SciezkaZrodlowa), tekstDoKolumny(pozycja.ZasobID), pozycja.Stan,
 		tekstDoKolumny(pozycja.Tekst), liczbaDoKolumny(pozycja.Stron),
 		liczbaLogiczna(pozycja.UzytoRozpoznania), liczbaRzeczywistaDoKolumny(pozycja.Pewnosc),
 		tekstDoKolumny(pozycja.PowodOdmowy), tekstDoKolumny(pozycja.SlowaJSON),
-		tekstDoKolumny(pozycja.UkladJSON), tekstDoKolumny(pozycja.NastawyJSON))
+		tekstDoKolumny(pozycja.UkladJSON), tekstDoKolumny(pozycja.NastawyJSON),
+		KontoOperatora(ctx), KontoOperatora(ctx))
 	if err != nil {
 		return PozycjaWczytywania{}, fmt.Errorf("dane: nie można zapisać pozycji wczytywania %q: %w",
 			pozycja.Kod, err)
+	}
+	if err := sprawdzTrafienieZapisu(wynik, "pozycja wczytywania", pozycja.Kod); err != nil {
+		return PozycjaWczytywania{}, err
 	}
 	return r.PozycjaWczytywania(ctx, pozycja.Kod)
 }
@@ -97,7 +106,7 @@ func (r *repozytoriumStudia) PozycjaWczytywania(ctx context.Context,
 	if err != nil {
 		return PozycjaWczytywania{}, err
 	}
-	pozycja, err := odczytajPozycjeWczytywania(polecenie.QueryRowContext(ctx, kod))
+	pozycja, err := odczytajPozycjeWczytywania(polecenie.QueryRowContext(ctx, kod, KontoOperatora(ctx)))
 	if errors.Is(err, sql.ErrNoRows) {
 		return PozycjaWczytywania{}, ErrBrakWiersza
 	}
@@ -119,7 +128,7 @@ func (r *repozytoriumStudia) PozycjeWczytywania(ctx context.Context,
 	if err != nil {
 		return nil, err
 	}
-	wiersze, err := polecenie.QueryContext(ctx, okno)
+	wiersze, err := polecenie.QueryContext(ctx, okno, KontoOperatora(ctx))
 	if err != nil {
 		return nil, fmt.Errorf("dane: nie można odczytać kolejki wczytywania okna %q: %w", okno, err)
 	}

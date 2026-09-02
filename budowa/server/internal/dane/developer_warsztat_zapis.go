@@ -24,19 +24,26 @@ const (
 	usunPunktPrzerwaniaDevelopera = `DELETE FROM developer_punkt_przerwania
 	                                 WHERE okno_kod = ? AND sciezka = ? AND wiersz = ?`
 
+	// Warunek konta przy nadpisaniu jest konieczny, bo `kod` jest niepowtarzalny
+	// w całej tabeli, a nie w obrębie konta: bez niego zapis pod kodem cudzego
+	// wiersza nadpisałby pracę drugiego konta.
 	wstawKolekcjeApiDevelopera = `INSERT INTO developer_kolekcja_api
-	                              (kod, okno_kod, nazwa, zapytania, srodowiska, zmieniono)
-	                              VALUES (?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now'))
+	                              (kod, okno_kod, nazwa, zapytania, srodowiska, konto_id, zmieniono)
+	                              VALUES (?, ?, ?, ?, ?, ` + WskazanieKonta + `,
+	                                      strftime('%Y-%m-%dT%H:%M:%fZ','now'))
 	                              ON CONFLICT(kod) DO UPDATE SET
 	                                nazwa      = excluded.nazwa,
 	                                zapytania  = excluded.zapytania,
 	                                srodowiska = excluded.srodowiska,
-	                                zmieniono  = excluded.zmieniono`
+	                                zmieniono  = excluded.zmieniono
+	                              WHERE ` + WarunekKonta
 
 	wstawPolaczenieDanychDevelopera = `INSERT INTO developer_polaczenie_danych
 	                                   (kod, okno_kod, nazwa, silnik, host, port, baza,
-	                                    uzytkownik, poswiadczenie, tylko_odczyt, zmieniono)
+	                                    uzytkownik, poswiadczenie, tylko_odczyt, konto_id,
+	                                    zmieniono)
 	                                   VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
+	                                           ` + WskazanieKonta + `,
 	                                           strftime('%Y-%m-%dT%H:%M:%fZ','now'))
 	                                   ON CONFLICT(kod) DO UPDATE SET
 	                                     nazwa         = excluded.nazwa,
@@ -47,7 +54,8 @@ const (
 	                                     uzytkownik    = excluded.uzytkownik,
 	                                     poswiadczenie = excluded.poswiadczenie,
 	                                     tylko_odczyt  = excluded.tylko_odczyt,
-	                                     zmieniono     = excluded.zmieniono`
+	                                     zmieniono     = excluded.zmieniono
+	                                   WHERE ` + WarunekKonta
 
 	wstawSkanDevelopera = `INSERT INTO developer_skan
 	                       (kod, okno_kod, rodzaje, stan, znalezisk, zakonczono)
@@ -126,11 +134,12 @@ func (r *repozytoriumDevelopera) ZapiszKolekcjeApi(ctx context.Context, kolekcja
 	if zapytania == "" {
 		zapytania = "[]"
 	}
-	if _, err := polecenie.ExecContext(ctx, kolekcja.Kod, kolekcja.OknoKod, kolekcja.Nazwa,
-		zapytania, kolekcja.Srodowiska); err != nil {
+	wynik, err := polecenie.ExecContext(ctx, kolekcja.Kod, kolekcja.OknoKod, kolekcja.Nazwa,
+		zapytania, kolekcja.Srodowiska, KontoOperatora(ctx), KontoOperatora(ctx))
+	if err != nil {
 		return fmt.Errorf("dane: nie można zapisać kolekcji zapytań %q: %w", kolekcja.Nazwa, err)
 	}
-	return nil
+	return sprawdzTrafienieZapisu(wynik, "kolekcja zapytań", kolekcja.Kod)
 }
 
 // ZapiszPolaczenieDanych zakłada albo nadpisuje opis połączenia bazodanowego
@@ -145,13 +154,15 @@ func (r *repozytoriumDevelopera) ZapiszPolaczenieDanych(ctx context.Context,
 	if err != nil {
 		return err
 	}
-	if _, err := polecenie.ExecContext(ctx, polaczenie.Kod, polaczenie.OknoKod, polaczenie.Nazwa,
+	wynik, err := polecenie.ExecContext(ctx, polaczenie.Kod, polaczenie.OknoKod, polaczenie.Nazwa,
 		polaczenie.Silnik, polaczenie.Host, polaczenie.Port, polaczenie.Baza,
 		polaczenie.Uzytkownik, polaczenie.Poswiadczenie,
-		liczbaZPrawdy(polaczenie.TylkoOdczyt)); err != nil {
+		liczbaZPrawdy(polaczenie.TylkoOdczyt),
+		KontoOperatora(ctx), KontoOperatora(ctx))
+	if err != nil {
 		return fmt.Errorf("dane: nie można zapisać połączenia %q: %w", polaczenie.Nazwa, err)
 	}
-	return nil
+	return sprawdzTrafienieZapisu(wynik, "połączenie bazodanowe", polaczenie.Kod)
 }
 
 // ZapiszSkan zakłada nowy albo domyka istniejący przebieg skanowania

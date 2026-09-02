@@ -75,13 +75,15 @@ const (
 
 	usunWatekNotatek = `DELETE FROM watek_notatek_przegladania WHERE identyfikator_zewnetrzny = ?`
 
-	odepnijNotatkiWatku = `UPDATE notatka_przegladania SET watek = NULL WHERE watek = ?`
+	odepnijNotatkiWatku = `UPDATE notatka_przegladania SET watek = NULL
+	                       WHERE watek = ? AND ` + WarunekKonta
 
 	przypiszNotatkeDoWatku = `UPDATE notatka_przegladania SET watek = ?
-	                          WHERE identyfikator_zewnetrzny = ? AND okno = ?`
+	                          WHERE identyfikator_zewnetrzny = ? AND okno = ? AND ` + WarunekKonta
 
 	kodyNotatekWatku = `SELECT identyfikator_zewnetrzny FROM notatka_przegladania
-	                    WHERE watek = ? ORDER BY utworzono DESC, id DESC`
+	                    WHERE watek = ? AND ` + WarunekKonta + `
+	                    ORDER BY utworzono DESC, id DESC`
 )
 
 // ZapiszZestawZrodel zakłada zestaw tematyczny źródeł albo zmienia nazwę zestawu zapisanego wcześniej.
@@ -250,7 +252,7 @@ func (r *repozytoriumPrzegladania) UsunWatekNotatek(ctx context.Context, kod str
 	if err != nil {
 		return false, err
 	}
-	if _, err := odpiecie.ExecContext(ctx, kod); err != nil {
+	if _, err := odpiecie.ExecContext(ctx, kod, KontoOperatora(ctx)); err != nil {
 		return false, fmt.Errorf("dane: nie można odpiąć notatek wątku %q: %w", kod, err)
 	}
 	return r.usunWiersz(ctx, usunWatekNotatek, kod, "wątek notatek")
@@ -266,7 +268,7 @@ func (r *repozytoriumPrzegladania) PrzypiszNotatkeDoWatku(ctx context.Context, o
 	if watek != "" {
 		wartosc = watek
 	}
-	if _, err := polecenie.ExecContext(ctx, wartosc, notatka, okno); err != nil {
+	if _, err := polecenie.ExecContext(ctx, wartosc, notatka, okno, KontoOperatora(ctx)); err != nil {
 		return fmt.Errorf("dane: nie można przypisać notatki %q do wątku: %w", notatka, err)
 	}
 	return nil
@@ -274,17 +276,20 @@ func (r *repozytoriumPrzegladania) PrzypiszNotatkeDoWatku(ctx context.Context, o
 
 // KodyNotatekWatku oddaje skład wątku, czyli identyfikatory notatek do niego należących, liczone z kolumny.
 func (r *repozytoriumPrzegladania) KodyNotatekWatku(ctx context.Context, watek string) ([]string, error) {
-	return r.kody(ctx, kodyNotatekWatku, watek, "wątku notatek")
+	return r.kody(ctx, kodyNotatekWatku, watek, "wątku notatek", KontoOperatora(ctx))
 }
 
 // kody wykonuje odczyt jednej kolumny identyfikatorów. Pusty wykaz jest
 // prawidłowym składem: zestaw założony i jeszcze niezapełniony istnieje.
-func (r *repozytoriumPrzegladania) kody(ctx context.Context, zapytanie, wskazanie, nazwa string) ([]string, error) {
+// `dalsze` niesie argumenty warunku konta; skład zestawu źródeł ich nie ma.
+func (r *repozytoriumPrzegladania) kody(ctx context.Context, zapytanie, wskazanie, nazwa string,
+	dalsze ...any) ([]string, error) {
+
 	polecenie, err := r.zapytania.przygotuj(ctx, zapytanie)
 	if err != nil {
 		return nil, err
 	}
-	wiersze, err := polecenie.QueryContext(ctx, wskazanie)
+	wiersze, err := polecenie.QueryContext(ctx, append([]any{wskazanie}, dalsze...)...)
 	if err != nil {
 		return nil, fmt.Errorf("dane: nie można odczytać składu %s %q: %w", nazwa, wskazanie, err)
 	}

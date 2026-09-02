@@ -98,14 +98,14 @@ const (
 
 	zapiszWytwor = `INSERT INTO wytwor_przegladania
 	                (identyfikator_zewnetrzny, okno, rodzaj, tytul, tresc_odwolanie, typ_mime,
-	                 rozmiar_bajtow, url_zrodla, migawka_zewnetrzna_id)
-	                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`
+	                 rozmiar_bajtow, url_zrodla, migawka_zewnetrzna_id, konto_id)
+	                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ` + WskazanieKonta + `)`
 
 	pobierzWytwor = `SELECT ` + kolumnyWytworu + ` FROM wytwor_przegladania
-	                 WHERE identyfikator_zewnetrzny = ?`
+	                 WHERE identyfikator_zewnetrzny = ? AND ` + WarunekKonta
 
 	listaWytworow = `SELECT ` + kolumnyWytworu + ` FROM wytwor_przegladania
-	                 WHERE okno = ? AND (? = '' OR rodzaj = ?)
+	                 WHERE okno = ? AND (? = '' OR rodzaj = ?) AND ` + WarunekKonta + `
 	                 ORDER BY utworzono DESC, id DESC LIMIT ?`
 
 	kolumnyZrzutu = `id, identyfikator_zewnetrzny, okno, migawka_zewnetrzna_id, tresc_odwolanie,
@@ -113,17 +113,19 @@ const (
 
 	zapiszZrzut = `INSERT INTO zrzut_przegladania
 	               (identyfikator_zewnetrzny, okno, migawka_zewnetrzna_id, tresc_odwolanie,
-	                tryb, format, szerokosc, wysokosc, rozmiar_bajtow)
-	               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`
+	                tryb, format, szerokosc, wysokosc, rozmiar_bajtow, konto_id)
+	               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ` + WskazanieKonta + `)`
 
 	pobierzZrzut = `SELECT ` + kolumnyZrzutu + ` FROM zrzut_przegladania
-	                WHERE identyfikator_zewnetrzny = ?`
+	                WHERE identyfikator_zewnetrzny = ? AND ` + WarunekKonta
 
 	pobierzZrzutPoOdwolaniu = `SELECT ` + kolumnyZrzutu + ` FROM zrzut_przegladania
-	                           WHERE tresc_odwolanie = ? ORDER BY id DESC LIMIT 1`
+	                           WHERE tresc_odwolanie = ? AND ` + WarunekKonta + `
+	                           ORDER BY id DESC LIMIT 1`
 
 	pobierzZrzutMigawki = `SELECT ` + kolumnyZrzutu + ` FROM zrzut_przegladania
-	                       WHERE migawka_zewnetrzna_id = ? ORDER BY id DESC LIMIT 1`
+	                       WHERE migawka_zewnetrzna_id = ? AND ` + WarunekKonta + `
+	                       ORDER BY id DESC LIMIT 1`
 
 	kolumnyPobrania = `id, identyfikator_zewnetrzny, okno, url, nazwa_pliku, sciezka_docelowa,
 	                   typ_mime, stan, odebrano_bajtow, razem_bajtow, komunikat_bledu,
@@ -207,7 +209,7 @@ func (r *repozytoriumPrzegladania) ZapiszWytwor(ctx context.Context,
 	_, err = polecenie.ExecContext(ctx, wytwor.Kod, wytwor.Okno, wytwor.Rodzaj,
 		tekstDoKolumny(wytwor.Tytul), wytwor.TrescOdwolanie, tekstDoKolumny(wytwor.TypMime),
 		liczbaDoKolumny(wytwor.RozmiarBajtow), tekstDoKolumny(wytwor.UrlZrodla),
-		tekstDoKolumny(wytwor.MigawkaZewnetrznaID))
+		tekstDoKolumny(wytwor.MigawkaZewnetrznaID), KontoOperatora(ctx))
 	if err != nil {
 		return WytworPrzegladania{}, fmt.Errorf("dane: nie można zapisać wytworu %q: %w", wytwor.Kod, err)
 	}
@@ -221,7 +223,7 @@ func (r *repozytoriumPrzegladania) Wytwor(ctx context.Context, kod string) (Wytw
 	if err != nil {
 		return WytworPrzegladania{}, err
 	}
-	wytwor, err := odczytajWytwor(polecenie.QueryRowContext(ctx, kod))
+	wytwor, err := odczytajWytwor(polecenie.QueryRowContext(ctx, kod, KontoOperatora(ctx)))
 	if errors.Is(err, sql.ErrNoRows) {
 		return WytworPrzegladania{}, ErrBrakWiersza
 	}
@@ -238,7 +240,8 @@ func (r *repozytoriumPrzegladania) Wytwory(ctx context.Context, okno, rodzaj str
 	if err != nil {
 		return nil, err
 	}
-	wiersze, err := polecenie.QueryContext(ctx, okno, rodzaj, rodzaj, granicaWykazu(limit))
+	wiersze, err := polecenie.QueryContext(ctx, okno, rodzaj, rodzaj,
+		KontoOperatora(ctx), granicaWykazu(limit))
 	if err != nil {
 		return nil, fmt.Errorf("dane: nie można odczytać wytworów okna %q: %w", okno, err)
 	}
@@ -270,7 +273,8 @@ func (r *repozytoriumPrzegladania) ZapiszZrzut(ctx context.Context, zrzut ZrzutP
 	}
 	_, err = polecenie.ExecContext(ctx, zrzut.Kod, zrzut.Okno,
 		tekstDoKolumny(zrzut.MigawkaZewnetrznaID), zrzut.TrescOdwolanie, zrzut.Tryb,
-		zrzut.Format, zrzut.Szerokosc, zrzut.Wysokosc, liczbaDoKolumny(zrzut.RozmiarBajtow))
+		zrzut.Format, zrzut.Szerokosc, zrzut.Wysokosc, liczbaDoKolumny(zrzut.RozmiarBajtow),
+		KontoOperatora(ctx))
 	if err != nil {
 		return ZrzutPrzegladania{}, fmt.Errorf("dane: nie można zapisać zrzutu %q: %w", zrzut.Kod, err)
 	}
@@ -303,7 +307,7 @@ func (r *repozytoriumPrzegladania) jedenZrzut(ctx context.Context, zapytanie, ws
 	if err != nil {
 		return ZrzutPrzegladania{}, err
 	}
-	zrzut, err := odczytajZrzut(polecenie.QueryRowContext(ctx, wskazanie))
+	zrzut, err := odczytajZrzut(polecenie.QueryRowContext(ctx, wskazanie, KontoOperatora(ctx)))
 	if errors.Is(err, sql.ErrNoRows) {
 		return ZrzutPrzegladania{}, ErrBrakWiersza
 	}

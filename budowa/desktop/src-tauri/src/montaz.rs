@@ -3,6 +3,9 @@
 //! Wszystko, co powstaje w chwili startu, powstaje tutaj — punkt wejścia
 //! wyłącznie komponuje.
 
+use std::process::Child;
+use std::sync::Mutex;
+
 use tauri::{App, Manager};
 
 use crate::dziennik;
@@ -11,9 +14,16 @@ use crate::rdzen;
 use crate::ustawienia::Ustawienia;
 use crate::zasobnik;
 
+/// Proces poboczny rdzenia, gdy powłoka go wystartowała; zamknięcie powłoki go wygasza.
+pub struct ProcesRdzenia(pub Mutex<Option<Child>>);
+
 /// Składa powłokę: otwiera okno z wkompilowanym pakietem interfejsu i stawia ikonę zasobnika systemowego.
 pub fn zloz(aplikacja: &mut App) -> Result<(), Box<dyn std::error::Error>> {
     let ustawienia = aplikacja.state::<Ustawienia>().inner().clone();
+    /* Rdzeń obok powłoki staje przed oknem: sekret nawiązania wchodzi w stronę
+       skryptem wstępnym, więc musi być znany, zanim okno powstanie. */
+    let dziecko = rdzen::proces::uruchom_obok(&ustawienia);
+    aplikacja.manage(ProcesRdzenia(Mutex::new(dziecko)));
     dziennik::dopisz(&rdzen::opisz(&ustawienia).opis);
 
     okno::otworz(aplikacja.handle())?;

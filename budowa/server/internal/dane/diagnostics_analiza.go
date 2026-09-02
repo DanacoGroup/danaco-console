@@ -1,5 +1,4 @@
-// Odpowiedzialność pliku: analiza modułu Diagnostics wraz z rekomendacjami
-// z niej wyprowadzonymi — zapis migawki, odczyt migawki i wykaz rekomendacji.
+// Analiza modułu Diagnostics wraz z rekomendacjami z niej wyprowadzonymi: zapis, odczyt i wykaz.
 package dane
 
 import (
@@ -15,10 +14,10 @@ const (
 
 	wstawAnalize = `INSERT INTO diagnostyka_analiza
 	                (kod, okno_kod, zakres_od, zakres_do, podsumowanie, bledy,
-	                 porownana_kod, utworzono)
-	                VALUES (?, ?, ?, ?, ?, ?, ?, ?)`
+	                 porownana_kod, utworzono, konto_id)
+	                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ` + WskazanieKonta + `)`
 
-	pobierzAnalize = `SELECT ` + kolumnyAnalizy + ` FROM diagnostyka_analiza WHERE kod = ?`
+	pobierzAnalize = `SELECT ` + kolumnyAnalizy + ` FROM diagnostyka_analiza WHERE kod = ? AND ` + WarunekKonta
 
 	kolumnyRekomendacji = `kod, analiza_kod, blad_kod, tytul, szczegol, priorytet, stan,
 	                       sciezka, poprawka, utworzono`
@@ -32,6 +31,8 @@ const (
 	                       WHERE (? = '' OR analiza_kod = ?)
 	                         AND (? = '' OR stan = ?)
 	                         AND (? = '' OR priorytet = ?)
+	                         AND EXISTS (SELECT 1 FROM diagnostyka_analiza a
+	                                     WHERE a.kod = diagnostyka_rekomendacja.analiza_kod AND ` + WarunekKonta + `)
 	                       ORDER BY utworzono DESC, id DESC
 	                       LIMIT CASE WHEN ? > 0 THEN ? ELSE -1 END`
 )
@@ -48,7 +49,7 @@ func (r *repozytoriumDiagnostyki) ZapiszAnalize(ctx context.Context,
 		_, err = polecenie.ExecContext(ctx, analiza.Kod, tekstDoKolumny(analiza.OknoKod),
 			liczbaDoKolumny(analiza.ZakresOd), liczbaDoKolumny(analiza.ZakresDo),
 			tekstDoKolumny(analiza.Podsumowanie), tekstDoKolumny(analiza.Bledy),
-			tekstDoKolumny(analiza.PorownanaKod), analiza.Utworzono)
+			tekstDoKolumny(analiza.PorownanaKod), analiza.Utworzono, KontoOperatora(ctx))
 		if err != nil {
 			return fmt.Errorf("dane: nie można zapisać analizy %q: %w", analiza.Kod, err)
 		}
@@ -71,14 +72,13 @@ func (r *repozytoriumDiagnostyki) ZapiszAnalize(ctx context.Context,
 	})
 }
 
-// Analiza zwraca migawkę o wskazanym kodzie. Brak wiersza wraca jako
-// ErrBrakWiersza — rdzeń odróżnia „takiej analizy nie ma" od usterki odczytu.
+// Analiza zwraca migawkę po kodzie; brak wiersza wraca jako ErrBrakWiersza.
 func (r *repozytoriumDiagnostyki) Analiza(ctx context.Context, kod string) (AnalizaDiagnostyczna, error) {
 	polecenie, err := r.zapytania.przygotuj(ctx, pobierzAnalize)
 	if err != nil {
 		return AnalizaDiagnostyczna{}, err
 	}
-	analiza, err := odczytajAnalize(polecenie.QueryRowContext(ctx, kod))
+	analiza, err := odczytajAnalize(polecenie.QueryRowContext(ctx, kod, KontoOperatora(ctx)))
 	if errors.Is(err, sql.ErrNoRows) {
 		return AnalizaDiagnostyczna{}, ErrBrakWiersza
 	}
@@ -102,7 +102,7 @@ func (r *repozytoriumDiagnostyki) Rekomendacje(ctx context.Context,
 		granica = granicaDziennika
 	}
 	wiersze, err := polecenie.QueryContext(ctx, filtr.AnalizaKod, filtr.AnalizaKod,
-		stan, stan, priorytet, priorytet, granica, granica)
+		stan, stan, priorytet, priorytet, KontoOperatora(ctx), granica, granica)
 	if err != nil {
 		return nil, fmt.Errorf("dane: nie można odczytać rekomendacji: %w", err)
 	}

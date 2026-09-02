@@ -1,6 +1,4 @@
-// Odpowiedzialność pliku: zapis obszaru Terminal — założenie karty powłoki,
-// wpis procesu do dziennika, domknięcie procesu wynikiem oraz osierocenie
-// procesów zostawionych przez poprzedni bieg rdzenia.
+// Zapis obszaru Terminal: karta powłoki, wpis procesu, domknięcie procesu i osierocenie po biegu rdzenia.
 package dane
 
 import (
@@ -13,8 +11,8 @@ import (
 const (
 	wstawKarteTerminala = `INSERT INTO terminal_karta
 	                       (kod, okno_kod, powloka, tytul, katalog_roboczy, stan,
-	                        cel_zdalny, port_zdalny, host_kod)
-	                       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+	                        cel_zdalny, port_zdalny, host_kod, konto_id)
+	                       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ` + WskazanieKonta + `)
 	                       ON CONFLICT(kod) DO UPDATE SET
 	                         okno_kod        = excluded.okno_kod,
 	                         powloka         = excluded.powloka,
@@ -23,25 +21,25 @@ const (
 	                         stan            = excluded.stan,
 	                         cel_zdalny      = excluded.cel_zdalny,
 	                         port_zdalny     = excluded.port_zdalny,
-	                         host_kod        = excluded.host_kod`
+	                         host_kod        = excluded.host_kod
+	                       WHERE ` + WarunekKonta
 
 	wstawProcesTerminala = `INSERT INTO terminal_proces
 	                        (kod, karta_kod, okno_kod, pid, pid_nadrzedny, polecenie,
-	                         inicjator, stan, kod_wyjscia, zakonczono)
-	                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+	                         inicjator, stan, kod_wyjscia, zakonczono, konto_id)
+	                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ` + WskazanieKonta + `)
 	                        ON CONFLICT(kod) DO UPDATE SET
 	                          pid           = excluded.pid,
 	                          pid_nadrzedny = excluded.pid_nadrzedny,
 	                          stan          = excluded.stan,
 	                          kod_wyjscia   = excluded.kod_wyjscia,
-	                          zakonczono    = excluded.zakonczono`
+	                          zakonczono    = excluded.zakonczono
+	                        WHERE ` + WarunekKonta
 
-	// Domknięcie procesu nie rusza wiersza już domkniętego: powtórzone ubicie
-	// nie ma prawa nadpisać pierwszego, prawdziwego kodu wyjścia.
 	domknijProcesTerminala = `UPDATE terminal_proces
 	                          SET stan = ?, kod_wyjscia = ?,
 	                              zakonczono = strftime('%Y-%m-%dT%H:%M:%fZ','now')
-	                          WHERE kod = ? AND stan = 'running'`
+	                          WHERE kod = ? AND stan = 'running' AND ` + WarunekKonta
 
 	osierocProcesyTerminala = `UPDATE terminal_proces
 	                           SET stan = 'stopped',
@@ -49,9 +47,7 @@ const (
 	                           WHERE stan = 'running'`
 )
 
-// ZapiszKarte zakłada wiersz karty powłoki terminala w tabeli terminal_karta i przy
-// istniejącym kodzie odświeża jej profil, katalog roboczy oraz stan zamiast wstawiać
-// zduplikowany wiersz.
+// ZapiszKarte zakłada kartę powłoki terminala albo, przy istniejącym kodzie, odświeża jej profil i stan.
 func (r *repozytoriumTerminala) ZapiszKarte(ctx context.Context, karta KartaTerminala) error {
 	if karta.Kod == "" || karta.OknoKod == "" {
 		return fmt.Errorf("dane: karta terminala bez identyfikatora karty albo okna")
@@ -66,15 +62,14 @@ func (r *repozytoriumTerminala) ZapiszKarte(ctx context.Context, karta KartaTerm
 	}
 	if _, err := polecenie.ExecContext(ctx, karta.Kod, karta.OknoKod, karta.Powloka,
 		karta.Tytul, karta.KatalogRoboczy, stan,
-		karta.CelZdalny, karta.PortZdalny, karta.HostKod); err != nil {
+		karta.CelZdalny, karta.PortZdalny, karta.HostKod,
+		KontoOperatora(ctx), KontoOperatora(ctx)); err != nil {
 		return fmt.Errorf("dane: nie można zapisać karty terminala %q: %w", karta.Kod, err)
 	}
 	return nil
 }
 
-// ZapiszProces wpisuje proces terminala do dziennika procesów i przy istniejącym
-// kodzie procesu odświeża jego stan, kod wyjścia oraz chwilę zakończenia zamiast
-// zakładać nowy wiersz.
+// ZapiszProces wpisuje proces terminala albo, przy istniejącym kodzie, odświeża jego stan i kod wyjścia.
 func (r *repozytoriumTerminala) ZapiszProces(ctx context.Context, proces ProcesTerminala) error {
 	if proces.Kod == "" || proces.OknoKod == "" {
 		return fmt.Errorf("dane: proces terminala bez identyfikatora procesu albo okna")
@@ -93,14 +88,13 @@ func (r *repozytoriumTerminala) ZapiszProces(ctx context.Context, proces ProcesT
 	}
 	if _, err := polecenie.ExecContext(ctx, proces.Kod, proces.KartaKod, proces.OknoKod,
 		proces.Pid, proces.PidNadrzedny, proces.Polecenie, inicjator, stan,
-		proces.KodWyjscia, proces.Zakonczono); err != nil {
+		proces.KodWyjscia, proces.Zakonczono, KontoOperatora(ctx), KontoOperatora(ctx)); err != nil {
 		return fmt.Errorf("dane: nie można zapisać procesu %q: %w", proces.Kod, err)
 	}
 	return nil
 }
 
-// ZakonczProces domyka wiersz dziennika procesu terminala stanem końcowym i kodem
-// wyjścia, wskazując proces po jego identyfikatorze przekazanym w wywołaniu.
+// ZakonczProces domyka proces terminala stanem końcowym i kodem wyjścia, po jego identyfikatorze.
 func (r *repozytoriumTerminala) ZakonczProces(ctx context.Context, kod string,
 	stan shared.TerminalProcessStatus, kodWyjscia *int64) error {
 
@@ -111,15 +105,13 @@ func (r *repozytoriumTerminala) ZakonczProces(ctx context.Context, kod string,
 	if err != nil {
 		return err
 	}
-	if _, err := polecenie.ExecContext(ctx, stan, kodWyjscia, kod); err != nil {
+	if _, err := polecenie.ExecContext(ctx, stan, kodWyjscia, kod, KontoOperatora(ctx)); err != nil {
 		return fmt.Errorf("dane: nie można domknąć procesu %q: %w", kod, err)
 	}
 	return nil
 }
 
-// OsierociProcesy przestawia na stan zatrzymany wszystkie procesy terminala pozostałe
-// z poprzedniego uruchomienia rdzenia i zwraca liczbę wierszy zmienionych tym
-// poleceniem.
+// OsierociProcesy przestawia na stopped procesy pozostałe z poprzedniego biegu rdzenia i zwraca ich liczbę.
 func (r *repozytoriumTerminala) OsierociProcesy(ctx context.Context) (int64, error) {
 	polecenie, err := r.zapytania.przygotuj(ctx, osierocProcesyTerminala)
 	if err != nil {

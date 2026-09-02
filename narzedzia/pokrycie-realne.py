@@ -30,6 +30,11 @@ for p in osiag:
         rodziny_katalogowe.add(m.group(1))
     for m in re.finditer(r"zwiaz\([^)]*?,\s*'([a-z]+)',\s*'", tresc):
         rodziny_katalogowe.add(m.group(1))
+    # Katalog platformy iteruje wykaz rodzin i dyspozycjonuje każdą przez
+    # zwiazKatalogModulu; rodziny stoją w literałach ['rodzina', 'Nazwa'].
+    if 'zwiazKatalogModulu' in tresc:
+        for m in re.finditer(r"\[\s*'([a-z]+)'\s*,\s*'[^']+'\s*\]", tresc):
+            rodziny_katalogowe.add(m.group(1))
 for komenda in wszystkie:
     if komenda.split('.', 1)[0] in rodziny_katalogowe:
         wolane.add(komenda)

@@ -77,6 +77,7 @@ import {
   zwiazTlumaczenie,
   zwolnijKatalogModulu,
 } from './moduly-katalogowe.ts';
+import { otworzOperacjePlatformy } from './platforma-operacje.ts';
 import { zglosUchwyt } from './zdarzenia.ts';
 
 const KOD_MODULU_WYDANIA = 'studio';
@@ -138,7 +139,11 @@ export function zwiazCentrum(kanal: Kanal | undefined = globalThis.DanacoKanal):
       if (wezel === null) continue;
       zdarzenie.stopPropagation();
       zdarzenie.preventDefault();
-      zapowiedzOknoPlatformowe(droga, wezel);
+      if (droga.wybor === '#cd-konfiguracja' && kanal !== undefined) {
+        otworzOperacjePlatformy(kanal);
+      } else {
+        zapowiedzOknoPlatformowe(droga, wezel);
+      }
       return;
     }
   }, true);

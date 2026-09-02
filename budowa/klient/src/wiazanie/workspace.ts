@@ -1,8 +1,4 @@
-/**
- * Wiązanie karty WorkSpace z rdzeniem: wejście w moduł, projekt bieżący
- * i rozdział odpowiedzi po panelach prototypu.
- */
-
+// Wiązanie karty WorkSpace z rdzeniem: wejście w moduł, projekt bieżący, panele.
 import { Command, EventType, type WorkspaceProject } from '../../../shared/contract.ts';
 import type { Odsubskrybuj } from '../polaczenie/magistrala-zdarzen.ts';
 import { zglosUchwyt } from '../polaczenie/rozdzielacz-zdarzen.ts';

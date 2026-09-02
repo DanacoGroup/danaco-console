@@ -18,8 +18,19 @@ while stos:
     for q in importy(stos.pop()):
         if q not in osiag: osiag.add(q); stos.append(q)
 wolane = set()
+rodziny_katalogowe = set()
 for p in osiag:
     if pathlib.Path(p).name in ('contract.ts', 'contract.go'): continue
-    for m in re.finditer(r'Command\.(\w+)', pathlib.Path(p).read_text(encoding='utf-8', errors='replace')):
+    tresc = pathlib.Path(p).read_text(encoding='utf-8', errors='replace')
+    for m in re.finditer(r'Command\.(\w+)', tresc):
         if m.group(1) in stale: wolane.add(stale[m.group(1)])
+    # Katalog modułu dyspozycjonuje całą rodzinę dynamicznie z obiektu Command;
+    # wywołanie z osiągalnego pliku wiąże każdą komendę tej rodziny.
+    for m in re.finditer(r"zwiazKatalogModulu\([^)]*?,\s*'([a-z]+)'", tresc):
+        rodziny_katalogowe.add(m.group(1))
+    for m in re.finditer(r"zwiaz\([^)]*?,\s*'([a-z]+)',\s*'", tresc):
+        rodziny_katalogowe.add(m.group(1))
+for komenda in wszystkie:
+    if komenda.split('.', 1)[0] in rodziny_katalogowe:
+        wolane.add(komenda)
 print(f'{len(wolane)}/{len(wszystkie)}')

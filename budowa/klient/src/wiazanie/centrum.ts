@@ -66,6 +66,17 @@ import { zwiazAgents, zwolnijAgents } from './agents.ts';
 import { zwiazDesign, zwolnijDesign } from './design.ts';
 import { zwiazTerminal, zwolnijTerminal } from './terminal.ts';
 import { zwiazPrzegladarke, zwolnijPrzegladarke } from './browser.ts';
+import {
+  zwiazAplikacje,
+  zwiazAsystenta,
+  zwiazAutomatyzacje,
+  zwiazBadania,
+  zwiazDebate,
+  zwiazDevelopera,
+  zwiazDiagnostyke,
+  zwiazTlumaczenie,
+  zwolnijKatalogModulu,
+} from './moduly-katalogowe.ts';
 import { zglosUchwyt } from './zdarzenia.ts';
 
 const KOD_MODULU_WYDANIA = 'studio';
@@ -230,6 +241,22 @@ export function zwiazCentrum(kanal: Kanal | undefined = globalThis.DanacoKanal):
         zwiazTerminal(kanal, idOkna, wnetrze.wezel);
       } else if (modul.code === KOD_MODULU_PRZEGLADARKI) {
         zwiazPrzegladarke(kanal, idOkna, wnetrze.wezel);
+      } else if (modul.code === 'research') {
+        zwiazBadania(kanal, idOkna, wnetrze.wezel);
+      } else if (modul.code === 'translate') {
+        zwiazTlumaczenie(kanal, idOkna, wnetrze.wezel);
+      } else if (modul.code === 'developer') {
+        zwiazDevelopera(kanal, idOkna, wnetrze.wezel);
+      } else if (modul.code === 'roundtable') {
+        zwiazDebate(kanal, idOkna, wnetrze.wezel);
+      } else if (modul.code === 'apps') {
+        zwiazAplikacje(kanal, idOkna, wnetrze.wezel);
+      } else if (modul.code === 'automations') {
+        zwiazAutomatyzacje(kanal, idOkna, wnetrze.wezel);
+      } else if (modul.code === 'assistant') {
+        zwiazAsystenta(kanal, idOkna, wnetrze.wezel);
+      } else if (modul.code === 'diagnostics') {
+        zwiazDiagnostyke(kanal, idOkna, wnetrze.wezel);
       } else if (idOkna === '') {
         zwiazOkno(kanal, modul.code, nazwaSrodowiska, wnetrze.wezel);
       } else {
@@ -427,6 +454,7 @@ export function zwiazCentrum(kanal: Kanal | undefined = globalThis.DanacoKanal):
       zwolnijDesign(idKarty);
       zwolnijTerminal(idKarty);
       zwolnijPrzegladarke(idKarty);
+      zwolnijKatalogModulu(idKarty);
       wnetrze.remove();
     }
   };

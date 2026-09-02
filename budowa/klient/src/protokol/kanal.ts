@@ -88,8 +88,16 @@ export function utworzKanal(transport: Transport, sesja: Sesja): Kanal {
 
   /* Zerwane gniazdo nie przyniesie odpowiedzi na żądania, które na nim stały —
      rdzeń wiąże je z połączeniem, a nowe gniazdo o nich nie wie. */
+  let bylaLacznosc = false;
   transport.naStan((stan) => {
-    if (stan === 'polaczony') return;
+    if (stan === 'polaczony') {
+      bylaLacznosc = true;
+      return;
+    }
+    /* Stan przed pierwszym połączeniem nie jest zerwaniem: unieważnienie
+       zdejmowałoby wtedy powitanie wysłane w tej samej turze, zanim rdzeń
+       zdąży odpowiedzieć. */
+    if (!bylaLacznosc) return;
     korelacja.uniewaznijWszystkie(bladZerwania());
   });
 

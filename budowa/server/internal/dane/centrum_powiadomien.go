@@ -1,5 +1,4 @@
-// Plik prowadzi dostęp do rejestru centrum powiadomień: rejestr jest trwały, nie ulotny, zdarzenie zapisane tu
-// przeżywa zamknięcie okna i restart rdzenia; repozytorium nie zna kontraktu ani zdarzeń rozgłaszanych, czyta i zapisuje wyłącznie wiersze.
+// Trwały rejestr centrum powiadomień: zapis, odczyt i zmiana stanu wierszy zdarzeń.
 package dane
 
 import (
@@ -40,19 +39,13 @@ type FiltrCentrum struct {
 
 // RepozytoriumCentrumPowiadomien jest kontraktem rejestru centrum: zapis, odczyt i zmiana stanu zdarzeń.
 type RepozytoriumCentrumPowiadomien interface {
-	// Zapisz dopisuje zdarzenie i oddaje je z nadanym identyfikatorem.
 	Zapisz(ctx context.Context, zdarzenie ZdarzenieCentrum) (ZdarzenieCentrum, error)
-	// Wykaz oddaje zdarzenia od najnowszego, zawężone filtrem.
 	Wykaz(ctx context.Context, filtr FiltrCentrum) ([]ZdarzenieCentrum, error)
 	// Nowe liczy zdarzenia w stanie nowe w całym rejestrze, nie w widoku przefiltrowanym.
 	Nowe(ctx context.Context) (int, error)
-	// Odczytaj przenosi wskazane zdarzenia do stanu odczytane; wykaz pusty bierze wszystkie zdarzenia.
 	Odczytaj(ctx context.Context, identyfikatory []int64) (int, error)
-	// Zamknij przenosi jedno zdarzenie do stanu `obsluzone`.
 	Zamknij(ctx context.Context, id int64) (bool, error)
-	// Odloz przenosi jedno zdarzenie do stanu `odlozone` wraz z chwilą powrotu.
 	Odloz(ctx context.Context, id int64, doKiedy time.Time) (bool, error)
-	// Przywroc oddaje do stanu nowe zdarzenia, których chwila powrotu minęła.
 	Przywroc(ctx context.Context, teraz time.Time) (int, error)
 }
 
@@ -63,27 +56,27 @@ const (
 
 	zapiszZdarzenieCentrum = `INSERT INTO powiadomienie_centrum
 	    (klasa, waga, tresc, zrodlo_typ, zrodlo_id, srodowisko_kod, sesja_id, akcje,
-	     stan, kanal_dostarczenia, znacznik_czasu)
-	    VALUES (?, ?, ?, NULLIF(?,''), NULLIF(?,''), ?, ?, ?, 'nowe', ?, ?)`
+	     stan, kanal_dostarczenia, znacznik_czasu, konto_id)
+	    VALUES (?, ?, ?, NULLIF(?,''), NULLIF(?,''), ?, ?, ?, 'nowe', ?, ?, ` + WskazanieKonta + `)`
 
-	policzNoweCentrum = `SELECT COUNT(*) FROM powiadomienie_centrum WHERE stan = 'nowe'`
+	policzNoweCentrum = `SELECT COUNT(*) FROM powiadomienie_centrum WHERE stan = 'nowe' AND ` + WarunekKonta
 
 	// Zbiorcze oznaczenie odczytania zdarzeń centrum powiadomień; wykaz pusty bierze wszystkie zdarzenia nowe.
 	odczytajWszystkieCentrum = `UPDATE powiadomienie_centrum
 	                               SET stan = 'odczytane', odlozone_do = NULL
-	                             WHERE stan = 'nowe'`
+	                             WHERE stan = 'nowe' AND ` + WarunekKonta
 
 	zamknijZdarzenieCentrum = `UPDATE powiadomienie_centrum
 	                              SET stan = 'obsluzone', odlozone_do = NULL
-	                            WHERE id = ? AND stan <> 'obsluzone'`
+	                            WHERE id = ? AND stan <> 'obsluzone' AND ` + WarunekKonta
 
 	odlozZdarzenieCentrum = `UPDATE powiadomienie_centrum
 	                            SET stan = 'odlozone', odlozone_do = ?
-	                          WHERE id = ? AND stan <> 'obsluzone'`
+	                          WHERE id = ? AND stan <> 'obsluzone' AND ` + WarunekKonta
 
 	przywrocOdlozoneCentrum = `UPDATE powiadomienie_centrum
 	                              SET stan = 'nowe', odlozone_do = NULL
-	                            WHERE stan = 'odlozone' AND odlozone_do <= ?`
+	                            WHERE stan = 'odlozone' AND odlozone_do <= ? AND ` + WarunekKonta
 )
 
 type repozytoriumCentrumPowiadomien struct {
@@ -109,7 +102,7 @@ func (r *repozytoriumCentrumPowiadomien) Zapisz(ctx context.Context,
 	}
 	wynik, err := polecenie.ExecContext(ctx, zdarzenie.Klasa, zdarzenie.Waga, zdarzenie.Tresc,
 		zdarzenie.ZrodloTyp, zdarzenie.ZrodloID, zdarzenie.SrodowiskoKod, zdarzenie.SesjaID,
-		zdarzenie.Akcje, zdarzenie.Kanal, chwilaTekstem(zdarzenie.ZnacznikCzasu))
+		zdarzenie.Akcje, zdarzenie.Kanal, chwilaTekstem(zdarzenie.ZnacznikCzasu), KontoOperatora(ctx))
 	if err != nil {
 		return ZdarzenieCentrum{}, fmt.Errorf("dane: nie można zapisać zdarzenia centrum: %w", err)
 	}
@@ -135,6 +128,8 @@ func (r *repozytoriumCentrumPowiadomien) Wykaz(ctx context.Context,
 	}
 	warunki = append(warunki, wKolumnie("stan", len(stany)))
 	parametry = append(parametry, naArgumenty(stany)...)
+	warunki = append(warunki, WarunekKonta)
+	parametry = append(parametry, KontoOperatora(ctx))
 
 	if len(filtr.Klasy) > 0 {
 		warunki = append(warunki, wKolumnie("klasa", len(filtr.Klasy)))
@@ -191,7 +186,7 @@ func (r *repozytoriumCentrumPowiadomien) Nowe(ctx context.Context) (int, error) 
 		return 0, err
 	}
 	var ile int
-	if err := polecenie.QueryRowContext(ctx).Scan(&ile); err != nil {
+	if err := polecenie.QueryRowContext(ctx, KontoOperatora(ctx)).Scan(&ile); err != nil {
 		return 0, fmt.Errorf("dane: nie można policzyć zdarzeń nowych: %w", err)
 	}
 	return ile, nil
@@ -206,11 +201,12 @@ func (r *repozytoriumCentrumPowiadomien) Odczytaj(ctx context.Context,
 		polecenieSQL = `UPDATE powiadomienie_centrum
 		                   SET stan = 'odczytane', odlozone_do = NULL
 		                 WHERE stan IN ('nowe','odlozone') AND ` +
-			wKolumnie("id", len(identyfikatory))
+			wKolumnie("id", len(identyfikatory)) + ` AND ` + WarunekKonta
 		for _, numer := range identyfikatory {
 			parametry = append(parametry, numer)
 		}
 	}
+	parametry = append(parametry, KontoOperatora(ctx))
 	polecenie, err := r.zapytania.przygotuj(ctx, polecenieSQL)
 	if err != nil {
 		return 0, err
@@ -234,7 +230,7 @@ func (r *repozytoriumCentrumPowiadomien) Odloz(ctx context.Context, id int64,
 	if err != nil {
 		return false, err
 	}
-	wynik, err := polecenie.ExecContext(ctx, chwilaTekstem(doKiedy.UTC()), id)
+	wynik, err := polecenie.ExecContext(ctx, chwilaTekstem(doKiedy.UTC()), id, KontoOperatora(ctx))
 	if err != nil {
 		return false, fmt.Errorf("dane: nie można odłożyć zdarzenia centrum: %w", err)
 	}
@@ -249,7 +245,7 @@ func (r *repozytoriumCentrumPowiadomien) Przywroc(ctx context.Context,
 	if err != nil {
 		return 0, err
 	}
-	wynik, err := polecenie.ExecContext(ctx, chwilaTekstem(teraz.UTC()))
+	wynik, err := polecenie.ExecContext(ctx, chwilaTekstem(teraz.UTC()), KontoOperatora(ctx))
 	if err != nil {
 		return 0, fmt.Errorf("dane: nie można przywrócić zdarzeń odłożonych: %w", err)
 	}
@@ -263,7 +259,7 @@ func (r *repozytoriumCentrumPowiadomien) wykonajNaZdarzeniu(ctx context.Context,
 	if err != nil {
 		return 0, err
 	}
-	wynik, err := polecenie.ExecContext(ctx, id)
+	wynik, err := polecenie.ExecContext(ctx, id, KontoOperatora(ctx))
 	if err != nil {
 		return 0, fmt.Errorf("dane: nie można zmienić stanu zdarzenia centrum: %w", err)
 	}
@@ -285,7 +281,6 @@ func odczytajZdarzenieCentrum(wiersz skaner) (ZdarzenieCentrum, error) {
 	return zdarzenie, nil
 }
 
-// liczbaZmian oddaje liczbę wierszy zmienionych poleceniem zapisu wykonanym na bazie danych repozytorium.
 func liczbaZmian(wynik sql.Result) (int, error) {
 	ile, err := wynik.RowsAffected()
 	if err != nil {
@@ -294,12 +289,10 @@ func liczbaZmian(wynik sql.Result) (int, error) {
 	return int(ile), nil
 }
 
-// wKolumnie składa warunek kolumna IN o zadanej liczbie miejsc dla zapytania SQL wykonywanego na bazie.
 func wKolumnie(kolumna string, ile int) string {
 	return kolumna + " IN (" + strings.TrimSuffix(strings.Repeat("?,", ile), ",") + ")"
 }
 
-// naArgumenty przenosi wykaz napisów do argumentów zapytania SQL wykonywanego na bazie danych repozytorium.
 func naArgumenty(wartosci []string) []any {
 	argumenty := make([]any, 0, len(wartosci))
 	for _, wartosc := range wartosci {
@@ -308,7 +301,6 @@ func naArgumenty(wartosci []string) []any {
 	return argumenty
 }
 
-// chwilaTekstem zapisuje chwilę w postaci tekstowej używanej przez kolumny czasu tej bazy danych repozytorium.
 func chwilaTekstem(chwila time.Time) string {
 	return chwila.UTC().Format("2006-01-02T15:04:05.000Z")
 }

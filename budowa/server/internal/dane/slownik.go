@@ -30,8 +30,8 @@ const (
 
 	zapiszTerminSlownika = `INSERT INTO termin_slownika
 	                        (identyfikator_zewnetrzny, zrodlo, jezyk, cel,
-	                         nie_tlumaczyc, uwaga, stan, dziedzina, zaktualizowano)
-	                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+	                         nie_tlumaczyc, uwaga, stan, dziedzina, zaktualizowano, konto_id)
+	                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ` + WskazanieKonta + `)
 	                        ON CONFLICT(identyfikator_zewnetrzny) DO UPDATE SET
 	                            zrodlo = excluded.zrodlo,
 	                            jezyk = excluded.jezyk,
@@ -40,12 +40,14 @@ const (
 	                            uwaga = excluded.uwaga,
 	                            stan = excluded.stan,
 	                            dziedzina = excluded.dziedzina,
-	                            zaktualizowano = excluded.zaktualizowano`
+	                            zaktualizowano = excluded.zaktualizowano
+	                        WHERE ` + WarunekKonta
 
 	pobierzTerminSlownika = `SELECT ` + kolumnyTerminuSlownika + ` FROM termin_slownika
-	                         WHERE identyfikator_zewnetrzny = ?`
+	                         WHERE identyfikator_zewnetrzny = ? AND ` + WarunekKonta
 
 	listaTerminowSlownika = `SELECT ` + kolumnyTerminuSlownika + ` FROM termin_slownika
+	                         WHERE ` + WarunekKonta + `
 	                         ORDER BY jezyk, zrodlo`
 )
 
@@ -77,7 +79,8 @@ func (r *repozytoriumTlumaczen) ZapiszTerminy(ctx context.Context,
 			_, err := zapis.ExecContext(ctx, termin.Kod, termin.Zrodlo, termin.Jezyk,
 				tekstDoKolumny(termin.Cel), liczbaLogiczna(termin.NieTlumaczyc),
 				tekstDoKolumny(termin.Uwaga), tekstDoKolumny(termin.Stan),
-				tekstDoKolumny(termin.Dziedzina), zaktualizowano)
+				tekstDoKolumny(termin.Dziedzina), zaktualizowano,
+				KontoOperatora(ctx), KontoOperatora(ctx))
 			if err != nil {
 				return fmt.Errorf("dane: nie można zapisać terminu słownika %q: %w", termin.Kod, err)
 			}
@@ -100,15 +103,13 @@ func (r *repozytoriumTlumaczen) ZapiszTerminy(ctx context.Context,
 	return zapisane, nil
 }
 
-// Terminy zwraca cały słownik uporządkowany po języku i treści źródłowej —
-// obsługuje odczyt zasilający `glossary.apply` i `glossary.occurrences`,
-// którym trzeba przejrzeć wszystkie terminy naraz.
+// Terminy zwraca cały słownik po języku i treści źródłowej; zasila `glossary.apply` i `glossary.occurrences`.
 func (r *repozytoriumTlumaczen) Terminy(ctx context.Context) ([]TerminSlownika, error) {
 	polecenie, err := r.zapytania.przygotuj(ctx, listaTerminowSlownika)
 	if err != nil {
 		return nil, err
 	}
-	wiersze, err := polecenie.QueryContext(ctx)
+	wiersze, err := polecenie.QueryContext(ctx, KontoOperatora(ctx))
 	if err != nil {
 		return nil, fmt.Errorf("dane: nie można odczytać terminów słownika: %w", err)
 	}
@@ -128,15 +129,13 @@ func (r *repozytoriumTlumaczen) Terminy(ctx context.Context) ([]TerminSlownika, 
 	return lista, nil
 }
 
-// Termin zwraca termin słownika o wskazanym kodzie. Brak wiersza wraca jako
-// ErrBrakWiersza — warstwa wyższa odróżnia „nie ma” od „odczyt się nie
-// powiódł”.
+// Termin zwraca termin słownika po kodzie; brak wiersza wraca jako ErrBrakWiersza.
 func (r *repozytoriumTlumaczen) Termin(ctx context.Context, kod string) (TerminSlownika, error) {
 	polecenie, err := r.zapytania.przygotuj(ctx, pobierzTerminSlownika)
 	if err != nil {
 		return TerminSlownika{}, err
 	}
-	termin, err := odczytajTerminSlownika(polecenie.QueryRowContext(ctx, kod))
+	termin, err := odczytajTerminSlownika(polecenie.QueryRowContext(ctx, kod, KontoOperatora(ctx)))
 	if errors.Is(err, sql.ErrNoRows) {
 		return TerminSlownika{}, ErrBrakWiersza
 	}

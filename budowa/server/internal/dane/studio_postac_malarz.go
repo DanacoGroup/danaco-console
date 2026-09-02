@@ -1,5 +1,4 @@
-// Repozytorium przechowuje w tabeli `postac_malarza_studio` z migracji 368 postać
-// formatów skopiowaną malarzem formatów modułu Studio do naniesienia w innym miejscu.
+// Postać formatów skopiowana malarzem formatów modułu Studio (tabela `postac_malarza_studio`) do naniesienia gdzie indziej.
 package dane
 
 import (
@@ -10,22 +9,17 @@ import (
 	"strings"
 )
 
-// PostacMalarzaStudia to wiersz tabeli `postac_malarza_studio`, niosący postać
-// zabraną malarzem formatów wraz z chwilą wygaśnięcia.
+// PostacMalarzaStudia to wiersz `postac_malarza_studio` — postać zabrana malarzem formatów, wraz z chwilą wygaśnięcia.
 type PostacMalarzaStudia struct {
-	ID          int64
-	Kod         string
-	Okno        string
-	DokumentKod *string
-	// PostacZnakuJSON i PostacAkapituJSON niosą postać kontraktu w zapisie JSON, nie
-	// w osobnych kolumnach.
+	ID                int64
+	Kod               string
+	Okno              string
+	DokumentKod       *string
 	PostacZnakuJSON   *string
 	PostacAkapituJSON *string
 	StylNazwany       *string
 	Utworzono         string
-	// Wygasa jest chwilą, po której wpisu nie wolno nanieść; wartość pusta oznacza
-	// brak wygaśnięcia.
-	Wygasa *string
+	Wygasa            *string
 }
 
 const (
@@ -34,33 +28,22 @@ const (
 
 	malarzZapisz = `INSERT INTO postac_malarza_studio
 	                (identyfikator_zewnetrzny, okno, dokument_kod, postac_znaku_json,
-	                 postac_akapitu_json, styl_nazwany, wygasa)
-	                VALUES (?, ?, ?, ?, ?, ?, ?)`
+	                 postac_akapitu_json, styl_nazwany, wygasa, konto_id)
+	                VALUES (?, ?, ?, ?, ?, ?, ?, ` + WskazanieKonta + `)`
 
-	// Odczyt po uchwycie NIE pyta o okno: uchwyt jest identyfikatorem nadanym
-	// przez rdzeń i dowodzi sam z siebie. Warunek okna kazałby naniesieniu
-	// podawać okno drugi raz, a model, który pobrał postać jednym narzędziem,
-	// niesie do drugiego uchwyt, nie okno.
 	malarzPobierz = `SELECT ` + malarzKolumny + ` FROM postac_malarza_studio
-	                 WHERE identyfikator_zewnetrzny = ?`
+	                 WHERE identyfikator_zewnetrzny = ? AND ` + WarunekKonta
 
-	// Najświeższa postać okna — droga naniesienia bez podanego uchwytu
-	// („nanieś to, co ostatnio zabrałem"). Wygasłych nie oddaje.
 	malarzNajswiezsza = `SELECT ` + malarzKolumny + ` FROM postac_malarza_studio
-	                     WHERE okno = ?
+	                     WHERE okno = ? AND ` + WarunekKonta + `
 	                       AND (wygasa IS NULL OR wygasa > strftime('%Y-%m-%dT%H:%M:%fZ','now'))
 	                     ORDER BY utworzono DESC, id DESC LIMIT 1`
 
-	// Sprzątanie zdejmuje wpisy wygasłe. Idzie osobnym wywołaniem, nie w odczycie:
-	// odczyt kasujący wiersze byłby odczytem zmieniającym stan, a przy dwóch
-	// oknach pytających naraz jedno zabierałoby postać drugiemu.
 	malarzSprzataj = `DELETE FROM postac_malarza_studio
 	                  WHERE wygasa IS NOT NULL
-	                    AND wygasa <= strftime('%Y-%m-%dT%H:%M:%fZ','now')`
+	                    AND wygasa <= strftime('%Y-%m-%dT%H:%M:%fZ','now') AND ` + WarunekKonta
 )
 
-// MalarzFormatowStudia jest kontraktem warstwy danych, deklarującym zapis, odczyt
-// i sprzątanie postaci zabranej malarzem formatów.
 type MalarzFormatowStudia interface {
 	ZapiszPostacMalarza(ctx context.Context,
 		postac PostacMalarzaStudia) (PostacMalarzaStudia, error)
@@ -69,8 +52,7 @@ type MalarzFormatowStudia interface {
 	SprzatnijPostacieMalarza(ctx context.Context) (int, error)
 }
 
-// ZapiszPostacMalarza odkłada w tabeli `postac_malarza_studio` postać zabraną
-// malarzem formatów i oddaje ją zapisaną.
+// ZapiszPostacMalarza odkłada postać zabraną malarzem formatów i oddaje ją zapisaną.
 func (r *repozytoriumStudia) ZapiszPostacMalarza(ctx context.Context,
 	postac PostacMalarzaStudia) (PostacMalarzaStudia, error) {
 
@@ -78,7 +60,6 @@ func (r *repozytoriumStudia) ZapiszPostacMalarza(ctx context.Context,
 	if kod == "" {
 		return PostacMalarzaStudia{}, fmt.Errorf("dane: postać malarza bez identyfikatora")
 	}
-	// Postać bez żadnej z trzech treści nie jest postacią i nie zmienia stanu.
 	if postac.PostacZnakuJSON == nil && postac.PostacAkapituJSON == nil &&
 		postac.StylNazwany == nil {
 
@@ -93,7 +74,7 @@ func (r *repozytoriumStudia) ZapiszPostacMalarza(ctx context.Context,
 	if _, err := polecenie.ExecContext(ctx, kod, strings.TrimSpace(postac.Okno),
 		tekstDoKolumny(postac.DokumentKod), tekstDoKolumny(postac.PostacZnakuJSON),
 		tekstDoKolumny(postac.PostacAkapituJSON), tekstDoKolumny(postac.StylNazwany),
-		tekstDoKolumny(postac.Wygasa)); err != nil {
+		tekstDoKolumny(postac.Wygasa), KontoOperatora(ctx)); err != nil {
 
 		return PostacMalarzaStudia{}, fmt.Errorf(
 			"dane: nie można zapisać postaci malarza %q: %w", kod, err)
@@ -101,11 +82,7 @@ func (r *repozytoriumStudia) ZapiszPostacMalarza(ctx context.Context,
 	return r.PostacMalarza(ctx, kod)
 }
 
-// PostacMalarza oddaje postać o wskazanym uchwycie.
-//
-// Wpis wygasły jest tu BRAKIEM WIERSZA, nie wierszem z datą w przeszłości:
-// rdzeń ma powiedzieć „ta postać już nie obowiązuje", a nie nanieść postać,
-// której Operator nie pamięta.
+// PostacMalarza oddaje postać o wskazanym uchwycie; wpis wygasły jest tu brakiem wiersza, nie datą w przeszłości.
 func (r *repozytoriumStudia) PostacMalarza(ctx context.Context,
 	kod string) (PostacMalarzaStudia, error) {
 
@@ -113,7 +90,7 @@ func (r *repozytoriumStudia) PostacMalarza(ctx context.Context,
 	if err != nil {
 		return PostacMalarzaStudia{}, err
 	}
-	postac, err := malarzOdczytaj(polecenie.QueryRowContext(ctx, strings.TrimSpace(kod)))
+	postac, err := malarzOdczytaj(polecenie.QueryRowContext(ctx, strings.TrimSpace(kod), KontoOperatora(ctx)))
 	if errors.Is(err, sql.ErrNoRows) {
 		return PostacMalarzaStudia{}, ErrBrakWiersza
 	}
@@ -124,8 +101,7 @@ func (r *repozytoriumStudia) PostacMalarza(ctx context.Context,
 	return postac, nil
 }
 
-// NajswiezszaPostacMalarza oddaje ostatnią niewygasłą postać zabraną malarzem
-// formatów we wskazanym oknie.
+// NajswiezszaPostacMalarza oddaje ostatnią niewygasłą postać malarza we wskazanym oknie.
 func (r *repozytoriumStudia) NajswiezszaPostacMalarza(ctx context.Context,
 	okno string) (PostacMalarzaStudia, error) {
 
@@ -136,7 +112,7 @@ func (r *repozytoriumStudia) NajswiezszaPostacMalarza(ctx context.Context,
 	if err != nil {
 		return PostacMalarzaStudia{}, err
 	}
-	postac, err := malarzOdczytaj(polecenie.QueryRowContext(ctx, strings.TrimSpace(okno)))
+	postac, err := malarzOdczytaj(polecenie.QueryRowContext(ctx, strings.TrimSpace(okno), KontoOperatora(ctx)))
 	if errors.Is(err, sql.ErrNoRows) {
 		return PostacMalarzaStudia{}, ErrBrakWiersza
 	}
@@ -147,14 +123,13 @@ func (r *repozytoriumStudia) NajswiezszaPostacMalarza(ctx context.Context,
 	return postac, nil
 }
 
-// SprzatnijPostacieMalarza zdejmuje z tabeli `postac_malarza_studio` wpisy
-// wygasłe i oddaje liczbę zdjętych wierszy.
+// SprzatnijPostacieMalarza zdejmuje wpisy wygasłe i oddaje liczbę zdjętych wierszy.
 func (r *repozytoriumStudia) SprzatnijPostacieMalarza(ctx context.Context) (int, error) {
 	polecenie, err := r.zapytania.przygotuj(ctx, malarzSprzataj)
 	if err != nil {
 		return 0, err
 	}
-	wynik, err := polecenie.ExecContext(ctx)
+	wynik, err := polecenie.ExecContext(ctx, KontoOperatora(ctx))
 	if err != nil {
 		return 0, fmt.Errorf("dane: nie można zdjąć wygasłych postaci malarza: %w", err)
 	}
@@ -165,8 +140,6 @@ func (r *repozytoriumStudia) SprzatnijPostacieMalarza(ctx context.Context) (int,
 	return int(zdjete), nil
 }
 
-// malarzOdczytaj składa strukturę PostacMalarzaStudia z jednego wiersza wyniku
-// zapytania SQL do tabeli `postac_malarza_studio`.
 func malarzOdczytaj(wiersz interface{ Scan(...any) error }) (PostacMalarzaStudia, error) {
 	var postac PostacMalarzaStudia
 	var dokument, znak, akapit, styl, wygasa sql.NullString

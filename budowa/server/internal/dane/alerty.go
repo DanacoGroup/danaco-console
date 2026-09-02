@@ -97,20 +97,19 @@ const (
 	wstawReguleAlertu = `INSERT INTO regula_alertu
 	                     (identyfikator_zewnetrzny, nazwa, opis, rodzaj, miara, porownanie, prog,
 	                      okno_ms, waga, kanaly_json, zasieg, zasieg_kod, czynna, wyciszona_do,
-	                      eskalacja_po_ms, adres_zwrotny, utworzono, zaktualizowano)
-	                     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+	                      eskalacja_po_ms, adres_zwrotny, utworzono, zaktualizowano, konto_id)
+	                     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ` +
+		WskazanieKonta + `)`
 
 	aktualizujReguleAlertu = `UPDATE regula_alertu SET
 	                              nazwa = ?, opis = ?, rodzaj = ?, miara = ?, porownanie = ?, prog = ?,
 	                              okno_ms = ?, waga = ?, kanaly_json = ?, zasieg = ?, zasieg_kod = ?,
 	                              czynna = ?, wyciszona_do = ?, eskalacja_po_ms = ?, adres_zwrotny = ?,
 	                              zaktualizowano = ?
-	                          WHERE identyfikator_zewnetrzny = ?`
+	                          WHERE identyfikator_zewnetrzny = ? AND ` + WarunekKonta
 
-	pobierzReguleAlertu = `SELECT ` + kolumnyReguluAlertu +
-		` FROM regula_alertu r WHERE r.identyfikator_zewnetrzny = ?`
-
-	usunReguleAlertu = `DELETE FROM regula_alertu WHERE identyfikator_zewnetrzny = ?`
+	usunReguleAlertu = `DELETE FROM regula_alertu
+	                    WHERE identyfikator_zewnetrzny = ? AND ` + WarunekKonta
 
 	policzWyzwoleniaReguly = `SELECT COUNT(*) FROM wyzwolenie_alertu WHERE regula_kod = ?`
 
@@ -129,15 +128,28 @@ const (
 	                         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
 
 	odbijWyzwolenieReguly = `UPDATE regula_alertu SET ostatnie_wyzwolenie = ?
-	                         WHERE identyfikator_zewnetrzny = ?`
+	                         WHERE identyfikator_zewnetrzny = ? AND ` + WarunekKonta
+)
+
+// Wyzwolenie nie ma kolumny konto_id: konto sięga przez regułę wskazaną kodem
+// zewnętrznym, jednoznacznym w całej tabeli reguł (migracja 484).
+var (
+	warunekKontaReguly = strings.ReplaceAll(WarunekKonta, "konto_id", "r.konto_id")
+
+	kontoWyzwoleniaAlertu = ` regula_kod IN (SELECT k.identyfikator_zewnetrzny FROM regula_alertu k
+	                                         WHERE ` +
+		strings.ReplaceAll(WarunekKonta, "konto_id", "k.konto_id") + `)`
+
+	pobierzReguleAlertu = `SELECT ` + kolumnyReguluAlertu +
+		` FROM regula_alertu r WHERE r.identyfikator_zewnetrzny = ? AND ` + warunekKontaReguly
 
 	pobierzWyzwolenieAlertu = `SELECT ` + kolumnyWyzwoleniaAlertu +
-		` FROM wyzwolenie_alertu w WHERE w.identyfikator_zewnetrzny = ?`
+		` FROM wyzwolenie_alertu w WHERE w.identyfikator_zewnetrzny = ? AND ` + kontoWyzwoleniaAlertu
 
 	potwierdzWyzwolenieAlertu = `UPDATE wyzwolenie_alertu
 	                             SET stan = 'acknowledged', potwierdzono = ?,
 	                                 notatka = COALESCE(?, notatka)
-	                             WHERE identyfikator_zewnetrzny = ?`
+	                             WHERE identyfikator_zewnetrzny = ? AND ` + kontoWyzwoleniaAlertu
 )
 
 type repozytoriumAlertow struct {
@@ -165,7 +177,7 @@ func (r *repozytoriumAlertow) ZapiszRegule(ctx context.Context,
 		if err != nil {
 			return err
 		}
-		zastana, err := odczytajReguleAlertu(odczyt.QueryRowContext(ctx, regula.Kod))
+		zastana, err := odczytajReguleAlertu(odczyt.QueryRowContext(ctx, regula.Kod, KontoOperatora(ctx)))
 		switch {
 		case errors.Is(err, sql.ErrNoRows):
 			powstala = true
@@ -193,12 +205,24 @@ func (r *repozytoriumAlertow) ZapiszRegule(ctx context.Context,
 		var argumenty []any
 		if powstala {
 			argumenty = append([]any{regula.Kod}, wspolne...)
-			argumenty = append(argumenty, regula.Utworzono, liczbaDoKolumny(regula.Zaktualizowano))
+			argumenty = append(argumenty, regula.Utworzono,
+				liczbaDoKolumny(regula.Zaktualizowano), KontoOperatora(ctx))
 		} else {
-			argumenty = append(wspolne, liczbaDoKolumny(regula.Zaktualizowano), regula.Kod)
+			argumenty = append(wspolne, liczbaDoKolumny(regula.Zaktualizowano),
+				regula.Kod, KontoOperatora(ctx))
 		}
-		if _, err := zapis.ExecContext(ctx, argumenty...); err != nil {
+		wynik, err := zapis.ExecContext(ctx, argumenty...)
+		// Odczyt zawężony nie widzi reguły cudzego konta, więc zakładanie trafia
+		// na jednoznaczność kodu pilnowaną przez bazę.
+		if czyKolizja(err) {
+			return fmt.Errorf("dane: reguła alertu %q należy do innego konta: %w",
+				regula.Kod, ErrKolizjaWiersza)
+		}
+		if err != nil {
 			return fmt.Errorf("dane: nie można zapisać reguły alertu %q: %w", regula.Kod, err)
+		}
+		if zmienione, err := wynik.RowsAffected(); !powstala && err == nil && zmienione == 0 {
+			return fmt.Errorf("dane: reguła alertu %q nie istnieje: %w", regula.Kod, ErrBrakWiersza)
 		}
 		return nil
 	})
@@ -216,7 +240,7 @@ func (r *repozytoriumAlertow) Regula(ctx context.Context, kod string) (RegulaAle
 	if err != nil {
 		return RegulaAlertu{}, err
 	}
-	regula, err := odczytajReguleAlertu(polecenie.QueryRowContext(ctx, kod))
+	regula, err := odczytajReguleAlertu(polecenie.QueryRowContext(ctx, kod, KontoOperatora(ctx)))
 	if errors.Is(err, sql.ErrNoRows) {
 		return RegulaAlertu{}, fmt.Errorf("dane: reguła alertu %q nie istnieje: %w", kod, ErrBrakWiersza)
 	}
@@ -241,6 +265,8 @@ func (r *repozytoriumAlertow) Reguly(ctx context.Context, rodzaj, miara string,
 	if tylkoCzynne {
 		warunki = append(warunki, "r.czynna = 1")
 	}
+	warunki = append(warunki, warunekKontaReguly)
+	argumenty = append(argumenty, KontoOperatora(ctx))
 	tekst := `SELECT ` + kolumnyReguluAlertu + ` FROM regula_alertu r WHERE ` +
 		strings.Join(warunki, " AND ") + ` ORDER BY r.id`
 	if granica > 0 {
@@ -282,7 +308,7 @@ func (r *repozytoriumAlertow) UsunRegule(ctx context.Context, kod string) (int, 
 		if err != nil {
 			return err
 		}
-		wynik, err := kasowanie.ExecContext(ctx, kod)
+		wynik, err := kasowanie.ExecContext(ctx, kod, KontoOperatora(ctx))
 		if err != nil {
 			return fmt.Errorf("dane: nie można usunąć reguły alertu %q: %w", kod, err)
 		}
@@ -319,7 +345,7 @@ func (r *repozytoriumAlertow) ZapiszWyzwolenie(ctx context.Context,
 		if err != nil {
 			return err
 		}
-		if _, err := odbicie.ExecContext(ctx, w.Wyzwolono, w.RegulaKod); err != nil {
+		if _, err := odbicie.ExecContext(ctx, w.Wyzwolono, w.RegulaKod, KontoOperatora(ctx)); err != nil {
 			return fmt.Errorf("dane: nie można odnotować wyzwolenia reguły %q: %w", w.RegulaKod, err)
 		}
 		return nil
@@ -337,7 +363,7 @@ func (r *repozytoriumAlertow) Wyzwolenie(ctx context.Context, kod string) (Wyzwo
 	if err != nil {
 		return WyzwolenieAlertu{}, err
 	}
-	wyzwolenie, err := odczytajWyzwolenieAlertu(polecenie.QueryRowContext(ctx, kod))
+	wyzwolenie, err := odczytajWyzwolenieAlertu(polecenie.QueryRowContext(ctx, kod, KontoOperatora(ctx)))
 	if errors.Is(err, sql.ErrNoRows) {
 		return WyzwolenieAlertu{}, fmt.Errorf("dane: wyzwolenie alertu %q nie istnieje: %w",
 			kod, ErrBrakWiersza)
@@ -372,6 +398,8 @@ func (r *repozytoriumAlertow) Wyzwolenia(ctx context.Context,
 		warunki = append(warunki, "w.wyzwolono <= ?")
 		argumenty = append(argumenty, sito.DoCzasu)
 	}
+	warunki = append(warunki, kontoWyzwoleniaAlertu)
+	argumenty = append(argumenty, KontoOperatora(ctx))
 	gdzie := strings.Join(warunki, " AND ")
 
 	wszystkich := 0
@@ -416,7 +444,7 @@ func (r *repozytoriumAlertow) PotwierdzWyzwolenie(ctx context.Context, kod strin
 	if err != nil {
 		return WyzwolenieAlertu{}, err
 	}
-	wynik, err := polecenie.ExecContext(ctx, chwila, tekstDoKolumny(notatka), kod)
+	wynik, err := polecenie.ExecContext(ctx, chwila, tekstDoKolumny(notatka), kod, KontoOperatora(ctx))
 	if err != nil {
 		return WyzwolenieAlertu{}, fmt.Errorf("dane: nie można potwierdzić wyzwolenia %q: %w", kod, err)
 	}

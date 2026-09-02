@@ -6,6 +6,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"strings"
 )
 
 // WersjaArchitekturyApp to wiersz tabeli `wersja_architektury_apps` niosący migawkę układu komponentów.
@@ -38,16 +39,32 @@ const (
 	                                  liczba_komponentow = excluded.liczba_komponentow,
 	                                  roznica = excluded.roznica`
 
+	kolumnyAdnotacjiApp = `id, identyfikator_zewnetrzny, architektura_id, komponent_kod,
+	                       zaleznosc_z, zaleznosc_do, tresc, utworzono, zaktualizowano`
+
+	listaAdnotacjiApp = `SELECT ` + kolumnyAdnotacjiApp + `
+	                     FROM adnotacja_architektury_apps
+	                     WHERE architektura_id = ? ORDER BY id`
+)
+
+// Wersja i adnotacja własnej kolumny konta nie mają; granica idzie drogą po
+// `architektura_id` do `architektura_apps` (kolumna `konto_id` z migracji 484).
+var (
+	warunekKontaArchitekturyApp = strings.ReplaceAll(WarunekKonta, "konto_id", "a.konto_id")
+
 	listaWersjiArchitekturyApp = `SELECT w.wersja, a.identyfikator_zewnetrzny,
 	                                     w.liczba_komponentow, w.roznica, w.utworzono
 	                              FROM wersja_architektury_apps w
 	                              JOIN architektura_apps a ON a.id = w.architektura_id
-	                              WHERE w.architektura_id = ?
+	                              WHERE w.architektura_id = ? AND ` + warunekKontaArchitekturyApp + `
 	                              ORDER BY w.wersja DESC`
 
-	kolumnyAdnotacjiApp = `id, identyfikator_zewnetrzny, architektura_id, komponent_kod,
-	                       zaleznosc_z, zaleznosc_do, tresc, utworzono, zaktualizowano`
+	adnotacjaWKoncie = ` EXISTS (SELECT 1 FROM architektura_apps a
+	                             WHERE a.id = adnotacja_architektury_apps.architektura_id
+	                               AND ` + warunekKontaArchitekturyApp + `)`
 
+	// Identyfikator adnotacji jest jednoznaczny w całej tabeli — gałąź konfliktu bez
+	// warunku konta sięgnęłaby adnotacji konta cudzego.
 	zapiszAdnotacjeApp = `INSERT INTO adnotacja_architektury_apps
 	                      (identyfikator_zewnetrzny, architektura_id, komponent_kod,
 	                       zaleznosc_z, zaleznosc_do, tresc)
@@ -57,18 +74,14 @@ const (
 	                          zaleznosc_z = excluded.zaleznosc_z,
 	                          zaleznosc_do = excluded.zaleznosc_do,
 	                          tresc = excluded.tresc,
-	                          zaktualizowano = strftime('%Y-%m-%dT%H:%M:%fZ','now')`
+	                          zaktualizowano = strftime('%Y-%m-%dT%H:%M:%fZ','now')
+	                      WHERE ` + adnotacjaWKoncie
 
 	pobierzAdnotacjeApp = `SELECT ` + kolumnyAdnotacjiApp + `
 	                       FROM adnotacja_architektury_apps
-	                       WHERE identyfikator_zewnetrzny = ?`
-
-	listaAdnotacjiApp = `SELECT ` + kolumnyAdnotacjiApp + `
-	                     FROM adnotacja_architektury_apps
-	                     WHERE architektura_id = ? ORDER BY id`
+	                       WHERE identyfikator_zewnetrzny = ? AND ` + adnotacjaWKoncie
 )
 
-// WersjeArchitekturyApp zwraca całą historię wersji układu aplikacji, od wersji najnowszej do najstarszej.
 func (r *repozytoriumAplikacji) WersjeArchitekturyApp(ctx context.Context,
 	architekturaID int64) ([]WersjaArchitekturyApp, error) {
 
@@ -76,7 +89,7 @@ func (r *repozytoriumAplikacji) WersjeArchitekturyApp(ctx context.Context,
 	if err != nil {
 		return nil, err
 	}
-	wiersze, err := polecenie.QueryContext(ctx, architekturaID)
+	wiersze, err := polecenie.QueryContext(ctx, architekturaID, KontoOperatora(ctx))
 	if err != nil {
 		return nil, fmt.Errorf("dane: nie można odczytać wersji architektury %d: %w", architekturaID, err)
 	}
@@ -100,7 +113,6 @@ func (r *repozytoriumAplikacji) WersjeArchitekturyApp(ctx context.Context,
 	return lista, nil
 }
 
-// ZapiszAdnotacjeApp zapisuje notatkę projektową kanwy aplikacji metodą UPSERT po identyfikatorze notatki.
 func (r *repozytoriumAplikacji) ZapiszAdnotacjeApp(ctx context.Context,
 	adnotacja AdnotacjaArchitekturyApp) (AdnotacjaArchitekturyApp, error) {
 
@@ -114,23 +126,25 @@ func (r *repozytoriumAplikacji) ZapiszAdnotacjeApp(ctx context.Context,
 	if err != nil {
 		return AdnotacjaArchitekturyApp{}, err
 	}
-	_, err = polecenie.ExecContext(ctx, adnotacja.Kod, adnotacja.ArchitekturaID,
+	wynik, err := polecenie.ExecContext(ctx, adnotacja.Kod, adnotacja.ArchitekturaID,
 		tekstDoKolumny(adnotacja.KomponentKod), tekstDoKolumny(adnotacja.ZaleznoscZ),
-		tekstDoKolumny(adnotacja.ZaleznoscDo), adnotacja.Tresc)
+		tekstDoKolumny(adnotacja.ZaleznoscDo), adnotacja.Tresc, KontoOperatora(ctx))
 	if err != nil {
 		return AdnotacjaArchitekturyApp{}, fmt.Errorf("dane: nie można zapisać adnotacji %q: %w",
 			adnotacja.Kod, err)
 	}
+	if err := sprawdzTrafienieZapisu(wynik, "adnotacja architektury", adnotacja.Kod); err != nil {
+		return AdnotacjaArchitekturyApp{}, err
+	}
 	return r.AdnotacjaApp(ctx, adnotacja.Kod)
 }
 
-// AdnotacjaApp zwraca jedną wybraną notatkę projektową kanwy aplikacji po jej kodzie zewnętrznym w bazie.
 func (r *repozytoriumAplikacji) AdnotacjaApp(ctx context.Context, kod string) (AdnotacjaArchitekturyApp, error) {
 	polecenie, err := r.zapytania.przygotuj(ctx, pobierzAdnotacjeApp)
 	if err != nil {
 		return AdnotacjaArchitekturyApp{}, err
 	}
-	adnotacja, err := odczytajAdnotacjeApp(polecenie.QueryRowContext(ctx, kod))
+	adnotacja, err := odczytajAdnotacjeApp(polecenie.QueryRowContext(ctx, kod, KontoOperatora(ctx)))
 	if err == sql.ErrNoRows {
 		return AdnotacjaArchitekturyApp{}, ErrBrakWiersza
 	}
@@ -140,7 +154,6 @@ func (r *repozytoriumAplikacji) AdnotacjaApp(ctx context.Context, kod string) (A
 	return adnotacja, nil
 }
 
-// AdnotacjeApp zwraca wszystkie notatki architektury aplikacji w kolejności ich pierwotnego zapisu do bazy.
 func (r *repozytoriumAplikacji) AdnotacjeApp(ctx context.Context,
 	architekturaID int64) ([]AdnotacjaArchitekturyApp, error) {
 
@@ -168,7 +181,6 @@ func (r *repozytoriumAplikacji) AdnotacjeApp(ctx context.Context,
 	return lista, nil
 }
 
-// odczytajAdnotacjeApp składa notatkę projektową kanwy aplikacji wprost z jednego wiersza wyniku zapytania.
 func odczytajAdnotacjeApp(wiersz skaner) (AdnotacjaArchitekturyApp, error) {
 	var adnotacja AdnotacjaArchitekturyApp
 	var komponent, zaleznoscZ, zaleznoscDo sql.NullString

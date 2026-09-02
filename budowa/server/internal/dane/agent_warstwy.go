@@ -54,7 +54,7 @@ type RepozytoriumWarstwAgenta interface {
 }
 
 const (
-	numerAgentaPoKodzie = `SELECT id FROM agent WHERE kod = ?`
+	numerAgentaPoKodzie = `SELECT id FROM agent WHERE kod = ? AND ` + WarunekKonta
 
 	zapiszWarstweAgenta = `INSERT INTO agent_warstwa (agent_id, warstwa, tresc, tryb, aktywna)
 	                       VALUES (?, ?, ?, ?, ?)
@@ -65,16 +65,6 @@ const (
 	                           zaktualizowano = strftime('%Y-%m-%dT%H:%M:%fZ', 'now')`
 
 	usunWarstweAgenta = `DELETE FROM agent_warstwa WHERE agent_id = ? AND warstwa = ?`
-
-	// Porządek warstw idzie wg krytyczności, tak samo jak w warstwie nakładki: konstytucja stoi najwyżej, ekspertyza zadaniowa najniżej.
-	warstwyWszystkich = `SELECT a.kod, w.warstwa, w.tresc, w.tryb, w.aktywna, w.zaktualizowano
-	                       FROM agent_warstwa w JOIN agent a ON a.id = w.agent_id
-	                      ORDER BY a.kod, CASE w.warstwa
-	                                          WHEN 'constitution' THEN 1
-	                                          WHEN 'profile'      THEN 2
-	                                          WHEN 'expertise'    THEN 3
-	                                          ELSE 4
-	                                      END, w.warstwa`
 
 	warstwyAgenta = `SELECT warstwa, tresc, tryb, aktywna, zaktualizowano
 	                   FROM agent_warstwa WHERE agent_id = ?
@@ -88,12 +78,25 @@ const (
 	zapiszTozsamoscAgenta = `UPDATE agent
 	                            SET imie_wlasne = ?, favikon = ?,
 	                                zaktualizowano = strftime('%Y-%m-%dT%H:%M:%fZ', 'now')
-	                          WHERE kod = ?`
+	                          WHERE kod = ? AND ` + WarunekKonta
 
 	zapiszTrybNakladki = `UPDATE agent
 	                         SET tryb_nakladki = ?,
 	                             zaktualizowano = strftime('%Y-%m-%dT%H:%M:%fZ', 'now')
-	                       WHERE kod = ?`
+	                       WHERE kod = ? AND ` + WarunekKonta
+)
+
+var (
+	// Porządek warstw idzie wg krytyczności, tak samo jak w warstwie nakładki: konstytucja stoi najwyżej, ekspertyza zadaniowa najniżej.
+	warstwyWszystkich = `SELECT a.kod, w.warstwa, w.tresc, w.tryb, w.aktywna, w.zaktualizowano
+	                       FROM agent_warstwa w JOIN agent a ON a.id = w.agent_id
+	                      WHERE ` + warunekKontaEksperta + `
+	                      ORDER BY a.kod, CASE w.warstwa
+	                                          WHEN 'constitution' THEN 1
+	                                          WHEN 'profile'      THEN 2
+	                                          WHEN 'expertise'    THEN 3
+	                                          ELSE 4
+	                                      END, w.warstwa`
 )
 
 type repozytoriumWarstwAgenta struct {
@@ -201,7 +204,7 @@ func (r *repozytoriumWarstwAgenta) UstawTozsamosc(ctx context.Context,
 		return err
 	}
 	wynik, err := polecenie.ExecContext(ctx, strings.TrimSpace(imieWlasne),
-		strings.TrimSpace(favikon), kodAgenta)
+		strings.TrimSpace(favikon), kodAgenta, KontoOperatora(ctx))
 	if err != nil {
 		return fmt.Errorf("dane: nie można zapisać tożsamości eksperta %q: %w", kodAgenta, err)
 	}
@@ -210,7 +213,7 @@ func (r *repozytoriumWarstwAgenta) UstawTozsamosc(ctx context.Context,
 		return fmt.Errorf("dane: nie można ustalić skutku zapisu tożsamości eksperta %q: %w", kodAgenta, err)
 	}
 	if zmienione == 0 {
-		return fmt.Errorf("dane: ekspert %q nie istnieje: %w", kodAgenta, ErrBrakWiersza)
+		return odmowaEksperta(ctx, r.zapytania, kodAgenta)
 	}
 	return nil
 }
@@ -224,9 +227,9 @@ func (r *repozytoriumWarstwAgenta) numerAgenta(ctx context.Context, kodAgenta st
 		return 0, err
 	}
 	var numer int64
-	err = polecenie.QueryRowContext(ctx, kodAgenta).Scan(&numer)
+	err = polecenie.QueryRowContext(ctx, kodAgenta, KontoOperatora(ctx)).Scan(&numer)
 	if errors.Is(err, sql.ErrNoRows) {
-		return 0, fmt.Errorf("dane: ekspert %q nie istnieje: %w", kodAgenta, ErrBrakWiersza)
+		return 0, odmowaEksperta(ctx, r.zapytania, kodAgenta)
 	}
 	if err != nil {
 		return 0, fmt.Errorf("dane: nie można odczytać eksperta %q: %w", kodAgenta, err)
@@ -242,7 +245,7 @@ func (r *repozytoriumWarstwAgenta) WarstwyWszystkich(
 	if err != nil {
 		return nil, err
 	}
-	wiersze, err := polecenie.QueryContext(ctx)
+	wiersze, err := polecenie.QueryContext(ctx, KontoOperatora(ctx))
 	if err != nil {
 		return nil, fmt.Errorf("dane: nie można odczytać warstw ekspertów: %w", err)
 	}
@@ -275,7 +278,7 @@ func (r *repozytoriumWarstwAgenta) UstawTrybNakladki(ctx context.Context,
 	if err != nil {
 		return err
 	}
-	wynik, err := polecenie.ExecContext(ctx, strings.TrimSpace(tryb), kodAgenta)
+	wynik, err := polecenie.ExecContext(ctx, strings.TrimSpace(tryb), kodAgenta, KontoOperatora(ctx))
 	if err != nil {
 		return fmt.Errorf("dane: nie można zapisać trybu nakładki eksperta %q: %w", kodAgenta, err)
 	}
@@ -284,7 +287,7 @@ func (r *repozytoriumWarstwAgenta) UstawTrybNakladki(ctx context.Context,
 		return fmt.Errorf("dane: nie można ustalić skutku zapisu trybu eksperta %q: %w", kodAgenta, err)
 	}
 	if zmienione == 0 {
-		return fmt.Errorf("dane: ekspert %q nie istnieje: %w", kodAgenta, ErrBrakWiersza)
+		return odmowaEksperta(ctx, r.zapytania, kodAgenta)
 	}
 	return nil
 }

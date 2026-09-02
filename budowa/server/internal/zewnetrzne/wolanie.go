@@ -1,6 +1,4 @@
-// Pakiet zewnetrzne jest jedną drogą, którą rdzeń woła binarium arsenału:
-// ImageMagick, libvips, ffmpeg, tesseract, pandoc, poppler, 7z i każde
-// następne. Nie wie, co znaczy wyjście programu: oddaje bajty i kod wyjścia.
+// Pakiet zewnetrzne jest jedną drogą, którą rdzeń woła binaria arsenału; oddaje bajty i kod wyjścia, nie rozbiera wyjścia programu.
 package zewnetrzne
 
 import (
@@ -13,30 +11,18 @@ import (
 	"danacoconsole/server/internal/session"
 )
 
-// Narzedzie opisuje jedno binarium arsenału.
-//
-// `Nazwa` jest nazwą dla CZŁOWIEKA i wchodzi do treści odmowy — Operator ma
-// przeczytać „brakuje ImageMagick (convert)", a nie samą ścieżkę programu.
+// Nazwa jest nazwą dla Operatora i wchodzi do treści odmowy.
 type Narzedzie struct {
-	// Nazwa czytelna, na przykład "ImageMagick".
-	Nazwa string
-	// Program to nazwa binarium w PATH albo ścieżka bezwzględna.
+	Nazwa   string
 	Program string
-	// Pakiet podpowiada, czym je dociągnąć. Puste pomija podpowiedź.
-	Pakiet string
+	Pakiet  string
 }
 
-// Wynik niesie surowy rezultat jednego uruchomienia. Dwa strumienie
-// oddzielnie: na wyjściu stoi wynik pracy, na diagnostyce ostrzeżenia
-// programu.
 type Wynik struct {
 	Wyjscie     []byte
 	Diagnostyka string
 }
 
-// BrakNarzedzia mówi, że binarium nie stoi na maszynie. Osobny typ, bo to
-// odmowa innej klasy: brak, który Operator usuwa jedną instalacją, nie
-// usterka rdzenia.
 type BrakNarzedzia struct {
 	Narzedzie Narzedzie
 }
@@ -50,18 +36,12 @@ func (b *BrakNarzedzia) Error() string {
 	return zdanie
 }
 
-// Stoi sprawdza obecność binarium — w pakiecie produktu albo na ścieżce systemu.
-//
-// Sprawdzenie jest tanie i idzie przed uruchomieniem, bo odmowa „nie ma czym"
-// jest dla Operatora czymś innym niż „program wystartował i się wywrócił".
 func Stoi(n Narzedzie) bool {
 	_, jest := Odnajdz(n)
 	return jest
 }
 
-// Wolaj przeprowadza jedno uruchomienie narzędzia przez port session.Uruchamiacz.
-// Limit czasu jest obowiązkowy. Środowisko nie jest dziedziczone, bo
-// narzędzia arsenału są binariami samodzielnymi.
+// Środowisko nie jest dziedziczone: binaria arsenału są samodzielne.
 func Wolaj(ctx context.Context, u session.Uruchamiacz, okno session.Okno,
 	zasady session.Zasady, obszar session.Obszar,
 	n Narzedzie, argumenty []string, katalog string, limit time.Duration) (Wynik, error) {
@@ -81,7 +61,6 @@ func Wolaj(ctx context.Context, u session.Uruchamiacz, okno session.Okno,
 			"naprawa: podać dodatnią granicę czasu przy wywołaniu")
 	}
 
-	// Do uruchomienia idzie ścieżka odnaleziona, nie sama nazwa programu.
 	polecenie := session.Polecenie{
 		Program:   sciezka,
 		Argumenty: argumenty,
@@ -92,14 +71,13 @@ func Wolaj(ctx context.Context, u session.Uruchamiacz, okno session.Okno,
 		return Wynik{}, err
 	}
 
-	uchwyt, err := u.UruchomProces(okno, dopuszczone)
+	uchwyt, err := u.UruchomProces(ctx, okno, dopuszczone)
 	if err != nil {
 		return Wynik{}, errors.New("arsenał: nie można uruchomić " + n.Nazwa +
 			" (" + n.Program + ") w " + dopuszczone.Katalog + ": " + err.Error())
 	}
 	drzewo, err := session.PrzejmijDrzewo(uchwyt.Pid())
 	if err != nil {
-		// Proces biegnie, a uchwytu drzewa nie ma — trzeba go ubić od razu.
 		_ = uchwyt.Ubij()
 		_ = uchwyt.Czekaj()
 		return Wynik{}, errors.New("arsenał: nie można objąć drzewa procesu " +
@@ -110,9 +88,7 @@ func Wolaj(ctx context.Context, u session.Uruchamiacz, okno session.Okno,
 	return zbierz(ctx, n, uchwyt, drzewo, limit)
 }
 
-// zbierz prowadzi uruchomiony proces do końca: pompuje oba strumienie, czeka
-// z granicą czasu i ubija całe drzewo, gdy granica albo rdzeń każą przerwać.
-// Pompy ruszają przed czekaniem, żeby uniknąć zakleszczenia na buforze potoku.
+// Pompy ruszają przed czekaniem, inaczej bufor potoku zakleszcza proces.
 func zbierz(ctx context.Context, n Narzedzie, uchwyt session.UchwytProcesu,
 	drzewo *session.DrzewoProcesu, limit time.Duration) (Wynik, error) {
 
@@ -141,7 +117,6 @@ func zbierz(ctx context.Context, n Narzedzie, uchwyt session.UchwytProcesu,
 		bladZakonczenia = <-zakonczenie
 	}
 
-	// Odbiór z obu pomp po zakończeniu i bezwarunkowo, także przy przerwaniu.
 	wynik := Wynik{Wyjscie: <-wyjscie, Diagnostyka: string(<-diagnostyka)}
 
 	if powod != "" {
@@ -157,8 +132,6 @@ func zbierz(ctx context.Context, n Narzedzie, uchwyt session.UchwytProcesu,
 	return wynik, nil
 }
 
-// opisDiagnostyki dokłada do odmowy to, co program powiedział o sobie sam.
-// Diagnostyka bywa długa, więc bierze się jej początek.
 func opisDiagnostyki(diagnostyka string) string {
 	tresc := strings.TrimSpace(diagnostyka)
 	if tresc == "" {
@@ -170,8 +143,6 @@ func opisDiagnostyki(diagnostyka string) string {
 	return "; program powiedział: " + tresc
 }
 
-// czytajCalosc zbiera cały strumień procesu. Błąd odczytu oddaje to, co zdążyło
-// przyjść — tak samo jak w silniku mowy i w adapterze Developera.
 func czytajCalosc(zrodlo io.Reader) []byte {
 	if zrodlo == nil {
 		return nil

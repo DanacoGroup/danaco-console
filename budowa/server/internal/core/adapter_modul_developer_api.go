@@ -1,7 +1,5 @@
-// Moduł API Client obsługuje zakładkę Dev Tools komendami
-// `developer.api.request`, `developer.api.collection.save`,
-// `developer.api.collection.list` i `developer.api.openapi.import`, na
-// bibliotekach wkompilowanych w rdzeń, bez procesu potomnego.
+// Odpowiedzialność pliku: komendy API Client zakładki Dev Tools (developer.api.*),
+// wykonywane bibliotekami wkompilowanymi w rdzeń, bez procesu potomnego.
 package core
 
 import (
@@ -22,25 +20,14 @@ import (
 )
 
 const (
-	// przedrostekKolekcjiApi znakuje identyfikator kolekcji zapytań, nadawany
-	// przy zakładaniu nowej kolekcji albo przy imporcie z kontraktu OpenAPI.
 	przedrostekKolekcjiApi = "apic-"
-	// czasZapytaniaApi jest domyślną granicą czasu jednego zapytania HTTP,
-	// stosowaną, gdy żądanie nie wskazuje własnej granicy czasu.
-	czasZapytaniaApi = 30 * time.Second
-	// najdluzszeZapytanieApi jest granicą, której żądanie nie przekroczy nawet
-	// wtedy, gdy poprosi o więcej. Zapytanie wiszące pół godziny trzyma połączenie
-	// klienta i wątek rdzenia, a odpowiedź, na którą nikt już nie czeka, nie jest
-	// odpowiedzią.
+	czasZapytaniaApi       = 30 * time.Second
+	// Granica górna obowiązuje także żądanie proszące o więcej: zapytanie wiszące trzyma połączenie klienta i wątek rdzenia.
 	najdluzszeZapytanieApi = 5 * time.Minute
-	// najwiekszaOdpowiedzApi jest granicą treści wciąganej do odpowiedzi.
-	// Podgląd odpowiedzi w oknie i tak nie pokaże więcej, a plik stumegabajtowy
-	// wciągnięty do pamięci rdzenia byłby ceną bez odbiorcy.
+	// Podgląd odpowiedzi w oknie nie pokaże więcej niż ta granica treści.
 	najwiekszaOdpowiedzApi = 8 << 20
 )
 
-// WykonajZapytanieApi obsługuje `developer.api.request` i wykonuje zapytanie
-// HTTP po podstawieniu wartości środowiska w adresie, nagłówkach i treści.
 func (a *adapterDevelopera) WykonajZapytanieApi(ctx context.Context,
 	z shared.DeveloperApiRequestRequest) (shared.DeveloperApiRequestResponse, error) {
 
@@ -48,8 +35,7 @@ func (a *adapterDevelopera) WykonajZapytanieApi(ctx context.Context,
 	if err != nil {
 		return shared.DeveloperApiRequestResponse{}, err
 	}
-	// Zapytanie HTTP zmienia stan po drugiej stronie sieci, więc tryb
-	// planistyczny je wyklucza.
+	// Zapytanie HTTP zmienia stan po drugiej stronie sieci, więc tryb planistyczny je wyklucza.
 	if err := sprawdzZmianeSystemu(okno.TrybUprawnien, "wykonanie zapytania HTTP"); err != nil {
 		return shared.DeveloperApiRequestResponse{}, err
 	}
@@ -96,7 +82,7 @@ func (a *adapterDevelopera) WykonajZapytanieApi(ctx context.Context,
 	naglowkiZadania(zadanie, z.Headers, z.BodyKind, podstawienia)
 
 	poczatek := time.Now()
-	// Klient jest własny, nie domyślny: domyślny nie ma granicy czasu.
+	// Klient domyślny http nie ma granicy czasu.
 	klient := &http.Client{Timeout: granica}
 	odpowiedz, err := klient.Do(zadanie)
 	if err != nil {
@@ -130,10 +116,7 @@ func (a *adapterDevelopera) WykonajZapytanieApi(ctx context.Context,
 	return shared.DeveloperApiRequestResponse{Response: wynik}, nil
 }
 
-// naglowkiZadania wpisuje nagłówki żądania wraz z podstawieniami środowiska.
-//
-// Rodzaj treści (`bodyKind`) uzupełnia nagłówek `Content-Type` tylko wtedy, gdy
-// wołający sam go nie podał: nagłówek jawny jest zawsze mocniejszy od domysłu.
+// Rodzaj treści (`bodyKind`) uzupełnia `Content-Type` wyłącznie wtedy, gdy wołający go nie podał.
 func naglowkiZadania(zadanie *http.Request, surowe json.RawMessage, rodzajTresci *string,
 	podstawienia map[string]string) {
 
@@ -158,10 +141,7 @@ func naglowkiZadania(zadanie *http.Request, surowe json.RawMessage, rodzajTresci
 	}
 }
 
-// splaszczNaglowki sprowadza nagłówki odpowiedzi do mapy nazwa → wartość.
-// Nagłówek powtórzony kilka razy (np. `Set-Cookie`) zostaje sklejony przecinkiem,
-// bo kontrakt niesie mapę, a zgubienie drugiej wartości byłoby gorsze od jej
-// sklejenia.
+// Kontrakt niesie mapę, więc nagłówek powtórzony (np. `Set-Cookie`) jest sklejany przecinkiem.
 func splaszczNaglowki(naglowki http.Header) map[string]string {
 	wynik := make(map[string]string, len(naglowki))
 	for nazwa, wartosci := range naglowki {
@@ -170,8 +150,7 @@ func splaszczNaglowki(naglowki http.Header) map[string]string {
 	return wynik
 }
 
-// podstawWSzablonie zastępuje `{{nazwa}}` wartością środowiska; nazwa
-// nieznana zostaje w tekście nietknięta, zamiast zniknąć w pustym miejscu.
+// Nazwa nieznana środowisku zostaje w tekście nietknięta.
 func podstawWSzablonie(tresc string, podstawienia map[string]string) string {
 	if len(podstawienia) == 0 || !strings.Contains(tresc, "{{") {
 		return tresc
@@ -182,8 +161,6 @@ func podstawWSzablonie(tresc string, podstawienia map[string]string) string {
 	return tresc
 }
 
-// podstawieniaSrodowiska składa wartości wskazanego środowiska z kolekcji
-// zapytań okna, przeszukując wszystkie kolekcje po nazwie środowiska.
 func (a *adapterDevelopera) podstawieniaSrodowiska(ctx context.Context, oknoKod string,
 	srodowisko *string) (map[string]string, error) {
 
@@ -211,8 +188,6 @@ func (a *adapterDevelopera) podstawieniaSrodowiska(ctx context.Context, oknoKod 
 		"żadna kolekcja okna nie ma środowiska o nazwie " + szukane)
 }
 
-// ZapiszKolekcjeApi obsługuje `developer.api.collection.save` i zakłada
-// kolekcję zapytań nową albo zmienia zastaną, wraz ze środowiskami.
 func (a *adapterDevelopera) ZapiszKolekcjeApi(ctx context.Context,
 	z shared.DeveloperApiCollectionSaveRequest) (shared.DeveloperApiCollectionSaveResponse, error) {
 
@@ -248,8 +223,8 @@ func (a *adapterDevelopera) ZapiszKolekcjeApi(ctx context.Context,
 		wiersz.Srodowiska = wskaznikTekstu(string(z.Environments))
 	}
 	if err := a.repozytorium.ZapiszKolekcjeApi(ctx, wiersz); err != nil {
-		return shared.DeveloperApiCollectionSaveResponse{}, bladWykonaniaDevelopera(
-			"nie można zapisać kolekcji " + nazwa + ": " + err.Error())
+		return shared.DeveloperApiCollectionSaveResponse{}, bladZapisuDevelopera(err,
+			"nie można zapisać kolekcji "+nazwa+": "+err.Error())
 	}
 
 	zapisane, err := a.repozytorium.KolekcjeApi(ctx, okno.Id, kod)
@@ -262,8 +237,6 @@ func (a *adapterDevelopera) ZapiszKolekcjeApi(ctx context.Context,
 	}, nil
 }
 
-// WykazKolekcjiApi obsługuje `developer.api.collection.list` i oddaje
-// kolekcje zapytań okna, z możliwością zawężenia do jednej kolekcji.
 func (a *adapterDevelopera) WykazKolekcjiApi(ctx context.Context,
 	z shared.DeveloperApiCollectionListRequest) (shared.DeveloperApiCollectionListResponse, error) {
 
@@ -288,8 +261,6 @@ func (a *adapterDevelopera) WykazKolekcjiApi(ctx context.Context,
 	return shared.DeveloperApiCollectionListResponse{Collections: kolekcje}, nil
 }
 
-// kolekcjaKontraktu przekłada wiersz kolekcji z bazy danych na kształt
-// odpowiedzi zgodny z kontraktem, jaki widzi klient.
 func kolekcjaKontraktu(wiersz dane.KolekcjaApi) shared.ApiCollection {
 	kolekcja := shared.ApiCollection{
 		Id:        wiersz.Kod,
@@ -304,8 +275,6 @@ func kolekcjaKontraktu(wiersz dane.KolekcjaApi) shared.ApiCollection {
 	return kolekcja
 }
 
-// ImportujOpenapi obsługuje `developer.api.openapi.import` i wytwarza
-// kolekcję zapytań z kontraktu, wziętego z pliku repozytorium albo z adresu.
 func (a *adapterDevelopera) ImportujOpenapi(ctx context.Context,
 	z shared.DeveloperApiOpenapiImportRequest) (shared.DeveloperApiOpenapiImportResponse, error) {
 
@@ -356,8 +325,8 @@ func (a *adapterDevelopera) ImportujOpenapi(ctx context.Context,
 		}
 	}
 	if err := a.repozytorium.ZapiszKolekcjeApi(ctx, wiersz); err != nil {
-		return shared.DeveloperApiOpenapiImportResponse{}, bladWykonaniaDevelopera(
-			"nie można zapisać kolekcji z importu: " + err.Error())
+		return shared.DeveloperApiOpenapiImportResponse{}, bladZapisuDevelopera(err,
+			"nie można zapisać kolekcji z importu: "+err.Error())
 	}
 
 	zapisane, err := a.repozytorium.KolekcjeApi(ctx, okno.Id, wiersz.Kod)
@@ -371,8 +340,6 @@ func (a *adapterDevelopera) ImportujOpenapi(ctx context.Context,
 	}, nil
 }
 
-// wczytajKontraktOpenapi bierze kontrakt OpenAPI z pliku repozytorium albo
-// z adresu wskazanego w żądaniu i zwraca też źródło, z którego przyszedł.
 func (a *adapterDevelopera) wczytajKontraktOpenapi(ctx context.Context, oknoKod string,
 	z shared.DeveloperApiOpenapiImportRequest) (*openapi3.T, string, error) {
 
@@ -431,8 +398,6 @@ func (a *adapterDevelopera) wczytajKontraktOpenapi(ctx context.Context, oknoKod 
 	return dokument, adres, nil
 }
 
-// zapytanieZKontraktu jest jednym zapytaniem kolekcji wytworzonym ze ścieżki
-// kontraktu OpenAPI, gotowym do zapisu w polu `requests` kolekcji.
 type zapytanieZKontraktu struct {
 	Name    string            `json:"name"`
 	Method  string            `json:"method"`
@@ -442,8 +407,6 @@ type zapytanieZKontraktu struct {
 	Summary string            `json:"summary,omitempty"`
 }
 
-// zapytaniaZKontraktu przekłada ścieżki kontraktu na zapytania kolekcji,
-// w ustalonej kolejności ścieżki, a potem metody.
 func zapytaniaZKontraktu(dokument *openapi3.T) ([]zapytanieZKontraktu, string) {
 	adres := ""
 	if dokument.Servers != nil && len(dokument.Servers) > 0 {
@@ -494,8 +457,6 @@ func zapytaniaZKontraktu(dokument *openapi3.T) ([]zapytanieZKontraktu, string) {
 	return zapytania, adres
 }
 
-// nazwaZapytaniaKontraktu dobiera czytelną nazwę pozycji kolekcji z operacji
-// kontraktu: identyfikator operacji, potem streszczenie, potem metodę i ścieżkę.
 func nazwaZapytaniaKontraktu(czynnosc *openapi3.Operation, metoda, sciezka string) string {
 	if czynnosc.OperationID != "" {
 		return czynnosc.OperationID
@@ -506,8 +467,6 @@ func nazwaZapytaniaKontraktu(czynnosc *openapi3.Operation, metoda, sciezka strin
 	return metoda + " " + sciezka
 }
 
-// tytulKontraktu bierze nazwę kolekcji z tytułu kontraktu, a gdy go nie ma —
-// ze źródła, z którego kontrakt przyszedł.
 func tytulKontraktu(dokument *openapi3.T, zrodlo string) string {
 	if dokument.Info != nil && strings.TrimSpace(dokument.Info.Title) != "" {
 		return strings.TrimSpace(dokument.Info.Title)
@@ -515,8 +474,6 @@ func tytulKontraktu(dokument *openapi3.T, zrodlo string) string {
 	return "Kontrakt " + zrodlo
 }
 
-// tekstWskazaniaDevelopera oddaje treść wskaźnika tekstowego albo tekst
-// pusty, gdy wskaźnik jest nieustawiony.
 func tekstWskazaniaDevelopera(wskaznik *string) string {
 	if wskaznik == nil {
 		return ""

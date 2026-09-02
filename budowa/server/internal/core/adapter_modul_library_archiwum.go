@@ -724,7 +724,7 @@ func (a *adapterBiblioteki) odlozZasobBiblioteki(ctx context.Context, bajty []by
 		return "", bladBiblioteki(err)
 	}
 	a.zaindeksujTresc(ctx, plik)
-	a.zglosNasluchom(shared.LibraryWebhookEventFileAdded, plik.Kod)
+	a.zglosNasluchom(ctx, shared.LibraryWebhookEventFileAdded, plik.Kod)
 	return plik.Kod, nil
 }
 
@@ -750,7 +750,7 @@ func (a *adapterBiblioteki) dolozWersjeUtrwalenia(ctx context.Context, zasob dan
 	if err != nil {
 		return bladBiblioteki(err)
 	}
-	a.zglosNasluchom(shared.LibraryWebhookEventVersionAdded, zasob.Kod)
+	a.zglosNasluchom(ctx, shared.LibraryWebhookEventVersionAdded, zasob.Kod)
 	return nil
 }
 

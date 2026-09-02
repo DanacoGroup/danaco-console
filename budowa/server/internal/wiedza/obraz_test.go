@@ -1,6 +1,4 @@
-// Sprawdziany trwałości wyników osi obrazu: drugie zapytanie o ten sam obraz
-// czyta składnicę zamiast wołać pomocnika zewnętrznego, a zmiana modelu albo
-// zmiana samego obrazu unieważnia zapisany wynik i wymusza policzenie od nowa.
+// Sprawdziany trwałości wyników osi obrazu: drugie zapytanie czyta składnicę, zmiana modelu albo obrazu unieważnia zapisany wynik.
 package wiedza
 
 import (
@@ -17,16 +15,12 @@ import (
 	"danacoconsole/server/internal/store"
 )
 
-// atrapaPomocnikaObrazu udaje uruchamiacz procesów: zamiast startować
-// prawdziwego pomocnika Pythona, liczy wywołania i oddaje po kolei odpowiedzi
-// z zadanej kolejki, jedną na wywołanie. Droga wystarczająca do dowiedzenia,
-// że drugie zapytanie o ten sam obraz nie sięga po pomocnika w ogóle.
 type atrapaPomocnikaObrazu struct {
 	odpowiedzi []string
 	wolania    int
 }
 
-func (a *atrapaPomocnikaObrazu) UruchomProces(session.Okno,
+func (a *atrapaPomocnikaObrazu) UruchomProces(context.Context, session.Okno,
 	session.Polecenie) (session.UchwytProcesu, error) {
 
 	if a.wolania >= len(a.odpowiedzi) {
@@ -37,9 +31,7 @@ func (a *atrapaPomocnikaObrazu) UruchomProces(session.Okno,
 	return &uchwytAtrapyObrazu{wyjscie: strings.NewReader(odpowiedz)}, nil
 }
 
-// uchwytAtrapyObrazu wypełnia session.UchwytProcesu bez startowania realnego
-// procesu. PID stały i niedodatni sprawia, że drzewo procesu sesji nic nie
-// robi ani przy przejęciu, ani przy ewentualnym ubiciu.
+// PID stały i niedodatni: drzewo procesu sesji nie przejmuje ani nie ubija.
 type uchwytAtrapyObrazu struct {
 	wyjscie io.Reader
 }
@@ -51,16 +43,11 @@ func (u *uchwytAtrapyObrazu) Diagnostyka() io.Reader  { return strings.NewReader
 func (u *uchwytAtrapyObrazu) Czekaj() error           { return nil }
 func (u *uchwytAtrapyObrazu) Ubij() error             { return nil }
 
-// zapisNigdzie odrzuca każdy zapis — atrapa nie czyta wejścia procesu, tak jak
-// prawdziwy pomocnik czyta zlecenie z pliku, nie ze standardowego wejścia.
 type zapisNigdzie struct{}
 
 func (zapisNigdzie) Write(p []byte) (int, error) { return len(p), nil }
 func (zapisNigdzie) Close() error                { return nil }
 
-// skladnicaSprawdzianuObrazu zakłada bazę SQLite tymczasową, doprowadzoną do
-// bieżącego schematu tymi samymi migracjami co produkt — w tym migracją
-// tabeli podobienstwo_obrazu.
 func skladnicaSprawdzianuObrazu(t *testing.T) *Skladnica {
 	t.Helper()
 	baza, err := store.Otworz(filepath.Join(t.TempDir(), "dane.sqlite"))
@@ -71,8 +58,6 @@ func skladnicaSprawdzianuObrazu(t *testing.T) *Skladnica {
 	return NowaSkladnica(baza.DB)
 }
 
-// silnikObrazuSprawdzianu składa silnik z atrapą pomocnika, kolejką jej
-// odpowiedzi i trwałością nad bazą tymczasową.
 func silnikObrazuSprawdzianu(t *testing.T, model string,
 	odpowiedzi ...string) (*SilnikObrazu, *atrapaPomocnikaObrazu) {
 
@@ -84,8 +69,6 @@ func silnikObrazuSprawdzianu(t *testing.T, model string,
 	return silnik, atrapa
 }
 
-// plikSprawdzianu składa plik tymczasowy z podaną treścią — obraz.go nie
-// czyta bajtów pliku samo, więc treść umowna wystarcza za obraz.
 func plikSprawdzianu(t *testing.T, nazwa, tresc string) string {
 	t.Helper()
 	sciezka := filepath.Join(t.TempDir(), nazwa)
@@ -95,10 +78,7 @@ func plikSprawdzianu(t *testing.T, nazwa, tresc string) string {
 	return sciezka
 }
 
-// TestDopasujDrugieZapytanieOTenSamObrazNieWolaPomocnika jest sprawdzianem
-// odtwarzającym usterkę: przed naprawą pada, bo `Dopasuj` woła pomocnika przy
-// każdym wywołaniu; po naprawie drugie zapytanie o ten sam obraz i to samo
-// zdanie czyta wynik ze składnicy.
+// Przed naprawą sprawdzian pada: Dopasuj wołało pomocnika przy każdym wywołaniu.
 func TestDopasujDrugieZapytanieOTenSamObrazNieWolaPomocnika(t *testing.T) {
 	silnik, atrapa := silnikObrazuSprawdzianu(t, "model-sprawdzianu",
 		`{"ok":true,"model":"model-sprawdzianu","oceny":[0.42],"pominiete":[]}`)
@@ -132,10 +112,7 @@ func TestDopasujDrugieZapytanieOTenSamObrazNieWolaPomocnika(t *testing.T) {
 	}
 }
 
-// TestZmianaModeluObrazuWymuszaPonowneLiczenie pilnuje kryterium 2: wynik
-// policzony innym modelem opisuje podobieństwo w innej przestrzeni, więc
-// zmiana nastawy wiedza_model_obrazu ma unieważnić zapisany wynik, nie
-// pozwolić go ponownie użyć.
+// Kryterium 2: wynik innego modelu opisuje inną przestrzeń, więc zmiana wiedza_model_obrazu unieważnia zapis.
 func TestZmianaModeluObrazuWymuszaPonowneLiczenie(t *testing.T) {
 	silnik, atrapa := silnikObrazuSprawdzianu(t, "pierwszy-model",
 		`{"ok":true,"model":"pierwszy-model","oceny":[0.3],"pominiete":[]}`,
@@ -165,9 +142,6 @@ func TestZmianaModeluObrazuWymuszaPonowneLiczenie(t *testing.T) {
 	}
 }
 
-// TestZmianaObrazuWymuszaPonowneLiczenie pilnuje drugiego warunku
-// unieważnienia: zmiana bajtów obrazu ma unieważnić zapisany wynik, mimo że
-// ścieżka, model i pytanie zostają te same.
 func TestZmianaObrazuWymuszaPonowneLiczenie(t *testing.T) {
 	silnik, atrapa := silnikObrazuSprawdzianu(t, "model-sprawdzianu",
 		`{"ok":true,"model":"model-sprawdzianu","oceny":[0.1],"pominiete":[]}`,

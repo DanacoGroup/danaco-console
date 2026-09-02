@@ -16,14 +16,12 @@ import (
 	"danacoconsole/shared"
 )
 
-// sprawcaBiblioteki nazywa sprawcę czynności w dzienniku. Rdzeń nie zna dziś tożsamości wołającego na poziomie komendy, więc sprawca jest Operator: komendę wywołało okno, nie moduł ani model.
+// sprawcaBiblioteki nazywa sprawcę czynności w dzienniku; rdzeń nie zna tożsamości wołającego na poziomie komendy.
 const sprawcaBiblioteki = "Operator"
 
-// granicaZgloszeniaNasluchu jest krótka z zamysłu: zgłoszenie ma dolecieć albo
-// odpaść, a nie trzymać wątku rdzenia.
+// granicaZgloszeniaNasluchu: zgłoszenie ma dolecieć albo odpaść, a nie trzymać wątku rdzenia.
 const granicaZgloszeniaNasluchu = 10 * time.Second
 
-// odnotuj dopisuje zdarzenie do dziennika audytu repozytorium wraz ze sprawcą i czasem wykonania czynności.
 func (a *adapterBiblioteki) odnotuj(ctx context.Context, czynnosc shared.LibraryAuditAction,
 	kodPliku *string, opis string) {
 
@@ -40,7 +38,6 @@ func (a *adapterBiblioteki) odnotuj(ctx context.Context, czynnosc shared.Library
 	})
 }
 
-// DziennikAudytu obsługuje `library.audit.list`, zwracając wykaz zdarzeń zapisanych w dzienniku audytu.
 func (a *adapterBiblioteki) DziennikAudytu(ctx context.Context,
 	z shared.LibraryAuditListRequest) (shared.LibraryAuditListResponse, error) {
 
@@ -77,21 +74,21 @@ func (a *adapterBiblioteki) DziennikAudytu(ctx context.Context,
 	return shared.LibraryAuditListResponse{Entries: wpisy, Total: lacznie}, nil
 }
 
-// zglosNasluchom rozsyła zdarzenie repozytorium do nasłuchów zewnętrznych.
-//
-// Nasłuch wybiera się po zdarzeniu: nasłuch bez tego zdarzenia w wykazie nie
-// dostaje zgłoszenia, bo zapisany wykaz zdarzeń jest zgodą Operatora na to, co
-// wychodzi na zewnątrz.
-func (a *adapterBiblioteki) zglosNasluchom(zdarzenie shared.LibraryWebhookEvent, kodPliku string) {
+// zglosNasluchom rozsyła zdarzenie do nasłuchów, które zapisały to zdarzenie w wykazie — wykaz jest zgodą Operatora.
+// Praca w tle niesie konto zamawiającego (decyzja 34): kontekst tła powstaje z konta żądania.
+func (a *adapterBiblioteki) zglosNasluchom(ctx context.Context, zdarzenie shared.LibraryWebhookEvent,
+	kodPliku string) {
+
 	if a.repozytorium == nil {
 		return
 	}
-	// Odczyt idzie w tle razem z wysyłką: komenda nie ma czekać ani na bazę, ani na cudzy serwer.
 	go func() {
-		ctx, przerwij := context.WithTimeout(context.Background(), granicaZgloszeniaNasluchu)
+		tlo, przerwij := context.WithTimeout(
+			dane.ZKontemOperatora(context.Background(), dane.KontoOperatora(ctx)),
+			granicaZgloszeniaNasluchu)
 		defer przerwij()
 
-		nasluchy, err := a.repozytorium.Webhooki(ctx, true)
+		nasluchy, err := a.repozytorium.Webhooki(tlo, true)
 		if err != nil {
 			return
 		}
@@ -99,12 +96,11 @@ func (a *adapterBiblioteki) zglosNasluchom(zdarzenie shared.LibraryWebhookEvent,
 			if !nasluchObejmuje(nasluch.Zdarzenia, zdarzenie) {
 				continue
 			}
-			a.wyslijZgloszenie(ctx, nasluch, zdarzenie, kodPliku)
+			a.wyslijZgloszenie(tlo, nasluch, zdarzenie, kodPliku)
 		}
 	}()
 }
 
-// nasluchObejmuje mówi, czy nasłuch prosił o to zdarzenie, po zapisanym wykazie zdarzeń w jego rejestracji.
 func nasluchObejmuje(zdarzenia []string, zdarzenie shared.LibraryWebhookEvent) bool {
 	szukane := zdarzenieWebhookaBazy(zdarzenie)
 	for _, zapisane := range zdarzenia {
@@ -115,7 +111,6 @@ func nasluchObejmuje(zdarzenia []string, zdarzenie shared.LibraryWebhookEvent) b
 	return false
 }
 
-// wyslijZgloszenie wysyła jedno zgłoszenie i odnotowuje jego czas przy nasłuchu. Podpis idzie nagłówkiem HMAC-SHA256 po treści zgłoszenia, gdy nasłuch ma sekret, kryptografia ze standardowej biblioteki Go.
 func (a *adapterBiblioteki) wyslijZgloszenie(ctx context.Context, nasluch dane.WebhookBiblioteki,
 	zdarzenie shared.LibraryWebhookEvent, kodPliku string) {
 
@@ -144,21 +139,16 @@ func (a *adapterBiblioteki) wyslijZgloszenie(ctx context.Context, nasluch dane.W
 	}
 	_ = odpowiedz.Body.Close()
 
-	// Czas ostatniego zgłoszenia zapisuje się po locie udanym: kolumna ma mówić o dolocie, nie o próbie.
+	// Kolumna ostatnie_zgloszenie mówi o dolocie, nie o próbie.
 	chwila := time.Now().UTC().Format(formatZnacznikaBazy)
 	nasluch.OstatnieZgloszenie = &chwila
 	_, _ = a.repozytorium.ZapiszWebhook(ctx, nasluch)
 }
 
-// znacznikBibliotekiZChwili przekłada milisekundy epoki kontraktu na znacznik
-// czasu schematu — odwrotność `chwilaBazy`, potrzebna zawężeniom czasu
-// w dzienniku audytu.
 func znacznikBibliotekiZChwili(milisekundy int64) string {
 	return time.UnixMilli(milisekundy).UTC().Format(formatZnacznikaBazy)
 }
 
-// czynnoscAudytuBazy i czynnoscAudytuKontraktu przekładają wyliczenie czynności
-// w obie strony (odwzorowanie: `wpis_audytu_biblioteki.czynnosc`).
 func czynnoscAudytuBazy(czynnosc shared.LibraryAuditAction) string {
 	switch czynnosc {
 	case shared.LibraryAuditActionChange:
@@ -197,8 +187,6 @@ func czynnoscAudytuKontraktu(czynnosc string) shared.LibraryAuditAction {
 	}
 }
 
-// zdarzenieWebhookaBazy i zdarzenieWebhookaKontraktu przekładają zdarzenie
-// nasłuchu w obie strony (odwzorowanie: `zdarzenie_webhooka_biblioteki.zdarzenie`).
 func zdarzenieWebhookaBazy(zdarzenie shared.LibraryWebhookEvent) string {
 	switch zdarzenie {
 	case shared.LibraryWebhookEventFileChanged:
@@ -233,8 +221,7 @@ func zdarzenieWebhookaKontraktu(zdarzenie string) shared.LibraryWebhookEvent {
 	}
 }
 
-// wskazanieBiblioteki oddaje wskaźnik na łańcuch albo nic dla łańcucha pustego —
-// pola opcjonalne kontraktu mają nieść brak, a nie pusty napis.
+// wskazanieBiblioteki: pola opcjonalne kontraktu niosą brak, a nie pusty napis.
 func wskazanieBiblioteki(wartosc string) *string {
 	if strings.TrimSpace(wartosc) == "" {
 		return nil

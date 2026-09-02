@@ -1,7 +1,4 @@
-// Komendy `terminal.tunnel.open`, `.list` i `.close` — przekierowania portów
-// okna Session Manager. Tunel jest bytem długożyjącym prowadzonym jako proces
-// `ssh`, bo niesie uwierzytelnienie i szyfrowanie. Stan tunelu czyta się
-// z procesu, nie z zapisu.
+// Komendy terminal.tunnel.open, .list i .close: przekierowania portów prowadzone jako proces ssh; stan tunelu czyta się z procesu, nie z zapisu.
 package core
 
 import (
@@ -19,18 +16,11 @@ import (
 	"danacoconsole/shared"
 )
 
-// przedrostekTunelu znakuje identyfikator przekierowania portu w wykazie
-// tuneli czynnych jednego biegu rdzenia.
 const przedrostekTunelu = "ttun-"
 
-// czasNaNieudanyTunel jest chwilą, przez którą rdzeń czeka na samoistny koniec
-// procesu `ssh`. Nieudane przekierowanie kończy się w tym czasie z zapasem
-// (odmowa portu jest natychmiastowa), a udane biegnie dalej i odpowiedź wraca
-// bez dalszego czekania.
+// czasNaNieudanyTunel: odmowa portu przez ssh jest natychmiastowa, udane przekierowanie biegnie dalej.
 const czasNaNieudanyTunel = 900 * time.Millisecond
 
-// tunelZywy jest jednym biegnącym przekierowaniem wraz z uchwytami, bez których
-// nie da się go zamknąć.
 type tunelZywy struct {
 	kod       string
 	uchwyt    session.UchwytProcesu
@@ -40,8 +30,7 @@ type tunelZywy struct {
 	zamkniety bool
 }
 
-// rejestrTuneli trzyma tunele czynne jednego biegu rdzenia. Wiersz w bazie mówi,
-// że tunel był; uchwyt tutaj jest jedynym, czym da się go zamknąć.
+// Wiersz w bazie mówi, że tunel był; uchwyt tutaj jest jedynym, czym da się go zamknąć.
 type rejestrTuneli struct {
 	mu     sync.Mutex
 	tunele map[string]*tunelZywy
@@ -70,8 +59,6 @@ func (r *rejestrTuneli) zdejmij(kod string) {
 	delete(r.tunele, kod)
 }
 
-// zamknijWszystkie kończy tunele czynne przy zatrzymaniu rdzenia, żeby żaden
-// proces `ssh` nie biegł osierocony.
 func (r *rejestrTuneli) zamknijWszystkie() {
 	r.mu.Lock()
 	wykaz := make([]*tunelZywy, 0, len(r.tunele))
@@ -84,8 +71,6 @@ func (r *rejestrTuneli) zamknijWszystkie() {
 	}
 }
 
-// OtworzTunel obsługuje `terminal.tunnel.open`: zakłada przekierowanie portu
-// i wpisuje jego wiersz do rejestru.
 func (a *adapterTerminala) OtworzTunel(ctx context.Context,
 	z shared.TerminalTunnelOpenRequest) (shared.TerminalTunnelOpenResponse, error) {
 
@@ -102,8 +87,7 @@ func (a *adapterTerminala) OtworzTunel(ctx context.Context,
 	if err != nil {
 		return shared.TerminalTunnelOpenResponse{}, err
 	}
-	// Tunel otwiera połączenie z rdzenia — brama trybu uprawnień okna
-	// obowiązuje go jak polecenie.
+	// Tunel otwiera połączenie z rdzenia, więc brama trybu uprawnień okna obowiązuje go jak polecenie.
 	if err := sprawdzUprawnienie(okno.TrybUprawnien, shared.ProcessInitiatorOperator); err != nil {
 		return shared.TerminalTunnelOpenResponse{}, err
 	}
@@ -144,7 +128,7 @@ func (a *adapterTerminala) OtworzTunel(ctx context.Context,
 		return shared.TerminalTunnelOpenResponse{}, err
 	}
 
-	stan, powod := a.uruchomTunel(okno, wiersz.Kod, argumenty)
+	stan, powod := a.uruchomTunel(ctx, okno, wiersz.Kod, argumenty)
 	if err := dziennik.ZmienStanTunelu(ctx, wiersz.Kod, stan, powod,
 		stan != shared.TerminalTunnelStatusActive); err != nil {
 		return shared.TerminalTunnelOpenResponse{}, err
@@ -156,10 +140,7 @@ func (a *adapterTerminala) OtworzTunel(ctx context.Context,
 	return shared.TerminalTunnelOpenResponse{Tunnel: tunelKontraktu(zapisany)}, nil
 }
 
-// uruchomTunel startuje proces `ssh` i rozstrzyga jego stan początkowy
-// z samego procesu: krótkie czekanie łapie przekierowanie, którego nie udało
-// się założyć, i wtedy stanem jest `failed` wraz z powodem z diagnostyki.
-func (a *adapterTerminala) uruchomTunel(okno session.Okno, kod string,
+func (a *adapterTerminala) uruchomTunel(ctx context.Context, okno session.Okno, kod string,
 	argumenty []string) (shared.TerminalTunnelStatus, string) {
 
 	sciezka, jest := zewnetrzne.Odnajdz(narzedzieSSH)
@@ -176,7 +157,7 @@ func (a *adapterTerminala) uruchomTunel(okno session.Okno, kod string,
 	if err != nil {
 		return shared.TerminalTunnelStatusFailed, err.Error()
 	}
-	uchwyt, err := a.uruchamiacz.UruchomProces(okno, rozwinSrodowisko(dopuszczone))
+	uchwyt, err := a.uruchamiacz.UruchomProces(ctx, okno, rozwinSrodowisko(dopuszczone))
 	if err != nil {
 		return shared.TerminalTunnelStatusFailed, "nie można uruchomić programu ssh: " + err.Error()
 	}
@@ -189,8 +170,7 @@ func (a *adapterTerminala) uruchomTunel(okno session.Okno, kod string,
 
 	tunel := &tunelZywy{kod: kod, uchwyt: uchwyt, drzewo: drzewo, koniec: make(chan struct{})}
 	a.tunele.zapisz(tunel)
-	// Diagnostykę czyta osobna gorutyna: `ssh` piszący ostrzeżenia bez odbiorcy
-	// stanąłby na zapisie.
+	// ssh piszący ostrzeżenia bez odbiorcy stanąłby na zapisie.
 	diagnostyka := make(chan string, 1)
 	go func() { diagnostyka <- czytajDiagnostykeTunelu(uchwyt) }()
 	go a.dogladajTunel(tunel, diagnostyka)
@@ -207,11 +187,7 @@ func (a *adapterTerminala) uruchomTunel(okno session.Okno, kod string,
 	}
 }
 
-// dogladajTunel czeka na koniec procesu tunelu i domyka jego wiersz.
-//
-// Dogląd pracuje we własnej gorutynie i własnym kontekście: tunel przeżywa
-// żądanie, które go założyło, i ma być domknięty także wtedy, gdy padnie łącze
-// godzinę później.
+// Dogląd biegnie we własnym kontekście: tunel przeżywa żądanie, które go założyło.
 func (a *adapterTerminala) dogladajTunel(tunel *tunelZywy, diagnostyka <-chan string) {
 	blad := tunel.uchwyt.Czekaj()
 	tunel.powod = strings.TrimSpace(<-diagnostyka)
@@ -233,9 +209,6 @@ func (a *adapterTerminala) dogladajTunel(tunel *tunelZywy, diagnostyka <-chan st
 	_ = a.repozytorium.ZmienStanTunelu(context.Background(), tunel.kod, stan, tunel.powod, true)
 }
 
-// czytajDiagnostykeTunelu zbiera diagnostykę procesu do jego końca i przycina ją
-// do ostatniego wiersza — powodem niepowodzenia jest to, co `ssh` powiedział
-// na końcu, a nie cała jego gadatliwość.
 func czytajDiagnostykeTunelu(uchwyt session.UchwytProcesu) string {
 	bufor := make([]byte, 0, 4096)
 	czytnik := uchwyt.Diagnostyka()
@@ -256,8 +229,6 @@ func czytajDiagnostykeTunelu(uchwyt session.UchwytProcesu) string {
 	return strings.TrimSpace(wiersze[len(wiersze)-1])
 }
 
-// WykazTuneli obsługuje `terminal.tunnel.list`: oddaje wykaz tuneli czynnych
-// i domkniętych bieżącego okna.
 func (a *adapterTerminala) WykazTuneli(ctx context.Context,
 	z shared.TerminalTunnelListRequest) (shared.TerminalTunnelListResponse, error) {
 
@@ -280,8 +251,6 @@ func (a *adapterTerminala) WykazTuneli(ctx context.Context,
 	return shared.TerminalTunnelListResponse{Tunnels: wykaz, Total: len(wykaz)}, nil
 }
 
-// ZamknijTunel obsługuje `terminal.tunnel.close`: kończy proces tunelu
-// i domyka jego wiersz w rejestrze.
 func (a *adapterTerminala) ZamknijTunel(ctx context.Context,
 	z shared.TerminalTunnelCloseRequest) (shared.TerminalTunnelCloseResponse, error) {
 
@@ -306,15 +275,12 @@ func (a *adapterTerminala) ZamknijTunel(ctx context.Context,
 			return shared.TerminalTunnelCloseResponse{}, bladWykonaniaTerminala(
 				"nie można zakończyć procesu tunelu " + kod + ": " + err.Error())
 		}
-		// Krótkie czekanie na dogląd sprawia, że odpowiedź nie mówi „active”
-		// o tunelu właśnie zamkniętym.
+		// Krótkie czekanie na dogląd: odpowiedź nie mówi active o tunelu właśnie zamkniętym.
 		select {
 		case <-tunel.koniec:
 		case <-time.After(czasNaDomkniecie):
 		}
 	} else {
-		// Tunelu nie ma w rejestrze żywym: zakończył się sam albo pochodzi
-		// z poprzedniego biegu rdzenia.
 		if err := dziennik.ZmienStanTunelu(ctx, kod,
 			shared.TerminalTunnelStatusInactive, "", true); err != nil {
 			return shared.TerminalTunnelCloseResponse{}, err
@@ -327,8 +293,6 @@ func (a *adapterTerminala) ZamknijTunel(ctx context.Context,
 	return shared.TerminalTunnelCloseResponse{Tunnel: tunelKontraktu(zamkniety)}, nil
 }
 
-// celTunelu ustala adres celu, wpis książki adresowej, ścieżkę klucza
-// prywatnego oraz port celu przekierowania.
 func (a *adapterTerminala) celTunelu(ctx context.Context,
 	z shared.TerminalTunnelOpenRequest) (string, string, string, int, error) {
 
@@ -348,17 +312,13 @@ func (a *adapterTerminala) celTunelu(ctx context.Context,
 	return pomocnicza.celZdalny, pomocnicza.hostKod, pomocnicza.kluczSciezka, pomocnicza.portZdalny, nil
 }
 
-// argumentyTunelu składa wiersz wywołania `ssh` właściwy rodzajowi żądanego
-// przekierowania portu tunelu.
 func argumentyTunelu(z shared.TerminalTunnelOpenRequest, cel, kluczSciezka string,
 	portCelu, portLokalny int) ([]string, error) {
 
 	argumenty := []string{"-N", "-T",
-		// Bez pytań interaktywnych: rdzeń nie ma komu je zadać, a czekający
-		// `ssh` wyglądałby jak tunel.
+		// Bez pytań interaktywnych: rdzeń nie ma komu ich zadać.
 		"-o", "BatchMode=yes",
-		// Nieudane przekierowanie ma kończyć proces, nie zostawiać połączenie
-		// z zamkniętym portem.
+		// Nieudane przekierowanie ma kończyć proces ssh (ExitOnForwardFailure).
 		"-o", "ExitOnForwardFailure=yes",
 	}
 	if portCelu > 0 {
@@ -385,8 +345,7 @@ func argumentyTunelu(z shared.TerminalTunnelOpenRequest, cel, kluczSciezka strin
 		argumenty = append(argumenty, przelacznik,
 			strconv.Itoa(portLokalny)+":"+hostDocelowy+":"+strconv.Itoa(*z.RemotePort))
 	case shared.TerminalTunnelKindDynamic:
-		// Przekierowanie dynamiczne nie ma drugiej strony: cel wybiera każde
-		// połączenie osobno.
+		// Przekierowanie dynamiczne nie ma drugiej strony.
 		argumenty = append(argumenty, "-D", strconv.Itoa(portLokalny))
 	default:
 		return nil, bladZadaniaTerminala("rodzaj przekierowania " + string(z.Kind) +
@@ -395,9 +354,6 @@ func argumentyTunelu(z shared.TerminalTunnelOpenRequest, cel, kluczSciezka strin
 	return append(argumenty, cel), nil
 }
 
-// portLokalnyTunelu bierze port z żądania albo wskazuje wolny. Wolny port
-// wybiera system, nie licznik rdzenia — nasłuch na porcie zerowym oddaje port,
-// o którym jądro wie, że jest wolny w tej chwili.
 func portLokalnyTunelu(wskazany *int) (int, error) {
 	if wskazany != nil && *wskazany > 0 {
 		if *wskazany > 65535 {
@@ -413,9 +369,7 @@ func portLokalnyTunelu(wskazany *int) (int, error) {
 	return nasluch.Addr().(*net.TCPAddr).Port, nil
 }
 
-// tunelKontraktu przekłada wiersz tunelu na byt kontraktu. Liczników
-// `bytesIn` i `bytesOut` nie wypełnia, bo rdzeń nie stoi w torze bajtów —
-// przenosi je `ssh` we własnym procesie.
+// Liczników bytesIn i bytesOut rdzeń nie wypełnia: bajty przenosi ssh we własnym procesie.
 func tunelKontraktu(w dane.TunelTerminala) shared.TerminalTunnel {
 	tunel := shared.TerminalTunnel{
 		Id:         w.Kod,

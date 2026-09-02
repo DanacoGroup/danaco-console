@@ -164,7 +164,7 @@ func (a *adapterBiblioteki) przeliczRegule(ctx context.Context, regula dane.Regu
 		if _, err := a.repozytorium.PrzypiszRegula(ctx, *regula.KolekcjaDocelowaKod, trafione); err != nil {
 			return 0, bladBiblioteki(err)
 		}
-		a.zglosNasluchom(shared.LibraryWebhookEventRuleFired, trafione[0])
+		a.zglosNasluchom(ctx, shared.LibraryWebhookEventRuleFired, trafione[0])
 	}
 	// Czas przeliczenia zapisuje się przy regule, żeby wykaz mówił, kiedy pracowała.
 	regula.OstatniePrzeliczenie = wskazanieBiblioteki(terazZnacznikBiblioteki())

@@ -1,6 +1,5 @@
-// Plik zawiera graf argumentów debaty: węzły, krawędzie, katalog błędów logicznych oraz
-// oznaczenia postawione na węzłach. Uzasadnienie trwałości grafu i zachowania oznaczeń
-// niesie rozdział roundtable_graf.go dokumentacji architektury.
+// Odpowiedzialność pliku: graf argumentów debaty — węzły, krawędzie, katalog błędów
+// logicznych i oznaczenia na węzłach.
 package dane
 
 import (
@@ -10,8 +9,6 @@ import (
 	"fmt"
 )
 
-// WezelDebaty odwzorowuje jednostkę argumentacyjną wydobytą z wypowiedzi uczestnika
-// debaty, wraz z aktem mowy i poziomem poparcia.
 type WezelDebaty struct {
 	Kod       string
 	Okno      string
@@ -25,8 +22,6 @@ type WezelDebaty struct {
 	Utworzono string
 }
 
-// KrawedzDebaty odwzorowuje relację między dwoma węzłami grafu argumentów wraz z jej
-// rodzajem i pewnością wykrycia.
 type KrawedzDebaty struct {
 	Kod           string
 	Okno          string
@@ -36,8 +31,6 @@ type KrawedzDebaty struct {
 	Pewnosc       float64
 }
 
-// DefinicjaBleduDebaty to pozycja katalogu błędów logicznych wraz z informacją, czy
-// okno debaty ją aktualnie wykrywa.
 type DefinicjaBleduDebaty struct {
 	Kod       string
 	Nazwa     string
@@ -45,8 +38,6 @@ type DefinicjaBleduDebaty struct {
 	Wykrywany bool
 }
 
-// OznaczenieBleduDebaty odwzorowuje błąd logiczny rozpoznany na węźle grafu wraz
-// z uzasadnieniem i pewnością rozpoznania.
 type OznaczenieBleduDebaty struct {
 	Kod          string
 	Okno         string
@@ -57,8 +48,6 @@ type OznaczenieBleduDebaty struct {
 	Pewnosc      float64
 }
 
-// RepozytoriumDebatyGrafu jest częścią kontraktu obszaru odpowiadającą za graf
-// argumentów i katalog błędów.
 type RepozytoriumDebatyGrafu interface {
 	ZastapGrafDebaty(ctx context.Context, okno, tura string,
 		wezly []WezelDebaty, krawedzie []KrawedzDebaty) error
@@ -85,8 +74,7 @@ const (
 	usunWezlyDebaty = `DELETE FROM debata_wezel
 	                   WHERE okno = ? AND (? = '' OR tura = ?) AND ` + WarunekKonta
 
-	// Krawędź własnej kolumny konta nie ma: granica dochodzi do niej przez węzeł
-	// wskazany kolumną `wezel_zrodlowy`.
+	// Krawędź własnej kolumny konta nie ma: granica dochodzi przez węzeł `wezel_zrodlowy`.
 	usunKrawedzieDebaty = `DELETE FROM debata_krawedz
 	                       WHERE okno = ?
 	                         AND EXISTS (SELECT 1 FROM debata_wezel
@@ -127,8 +115,6 @@ const (
 	                                uzasadnienie, pewnosc)
 	                               VALUES (?, ?, ?, ?, ?, ?, ?)`
 
-	// Oznaczenie własnej kolumny konta nie ma: granica dochodzi do niego przez
-	// węzeł wskazany kolumną `wezel`.
 	pobierzOznaczeniaBledowDebaty = `SELECT identyfikator_zewnetrzny, okno, wezel, kod, nazwa,
 	                                        uzasadnienie, pewnosc
 	                                 FROM debata_oznaczenie_bledu
@@ -139,27 +125,28 @@ const (
 	                                                  AND ` + WarunekKonta + `)
 	                                 ORDER BY id ASC`
 
-	// Brak wiersza zawężenia dla okna znaczy katalog w całości włączony, więc
-	// warunek pyta najpierw, czy okno w ogóle coś zawężało.
+	// Brak wiersza zawężenia dla okna w koncie znaczy katalog w całości włączony; `debata_katalog_bledu` jest słownikiem wspólnym instalacji.
 	pobierzKatalogBledowDebaty = `SELECT k.kod, k.nazwa, k.opis,
 	                                     CASE WHEN NOT EXISTS (SELECT 1 FROM debata_katalog_okna
-	                                                            WHERE okno = ?)
+	                                                            WHERE okno = ? AND ` + WarunekKonta + `)
 	                                          THEN 1
 	                                          WHEN EXISTS (SELECT 1 FROM debata_katalog_okna
-	                                                        WHERE okno = ? AND kod = k.kod)
+	                                                        WHERE okno = ? AND kod = k.kod
+	                                                          AND ` + WarunekKonta + `)
 	                                          THEN 1 ELSE 0 END
 	                                FROM debata_katalog_bledu k
 	                               ORDER BY k.id ASC`
 
-	usunKatalogOknaDebaty = `DELETE FROM debata_katalog_okna WHERE okno = ?`
+	usunKatalogOknaDebaty = `DELETE FROM debata_katalog_okna WHERE okno = ? AND ` + WarunekKonta
 
-	zapiszKatalogOknaDebaty = `INSERT INTO debata_katalog_okna (okno, kod) VALUES (?, ?)
-	                           ON CONFLICT(okno, kod) DO NOTHING`
+	// Para (okno, kod) jest jednoznaczna w całej tabeli: gałąź konfliktu bez warunku konta sięgałaby wiersza konta cudzego.
+	zapiszKatalogOknaDebaty = `INSERT INTO debata_katalog_okna (okno, kod, konto_id)
+	                           VALUES (?, ?, ` + WskazanieKonta + `)
+	                           ON CONFLICT(okno, kod) DO UPDATE SET kod = excluded.kod
+	                           WHERE ` + WarunekKonta
 )
 
-// ZastapGrafDebaty wymienia graf okna albo jednej tury w jednej transakcji. Oznaczenia
-// kluczowe przechodzą przez zastąpienie po treści węzła, żeby ponowne wydobycie
-// argumentów nie kasowało wyboru operatora.
+// Oznaczenia kluczowe przechodzą przez zastąpienie po treści węzła: ponowne wydobycie argumentów nie kasuje wyboru Operatora.
 func (r *repozytoriumRoundtable) ZastapGrafDebaty(ctx context.Context, okno, tura string,
 	wezly []WezelDebaty, krawedzie []KrawedzDebaty) error {
 
@@ -168,9 +155,7 @@ func (r *repozytoriumRoundtable) ZastapGrafDebaty(ctx context.Context, okno, tur
 		return err
 	}
 	return wTransakcji(ctx, r.db, func(transakcja *sql.Tx) error {
-		// Krawędzie idą całym oknem, bo relacja łączy węzły z różnych tur, nie tylko z jednej.
-		// Giną przed węzłami: warunek konta dochodzi do krawędzi przez węzeł
-		// źródłowy, a po usunięciu węzłów nie ma już po czym dojść.
+		// Krawędzie giną przed węzłami: warunek konta dochodzi do nich przez węzeł źródłowy.
 		if tura == "" {
 			wyczyscKrawedzie, err := r.zapytania.wTransakcji(ctx, transakcja, usunKrawedzieDebaty)
 			if err != nil {
@@ -219,8 +204,6 @@ func (r *repozytoriumRoundtable) ZastapGrafDebaty(ctx context.Context, okno, tur
 	})
 }
 
-// trescKluczowychDebaty zbiera treści węzłów oznaczonych jako kluczowe, żeby
-// zastąpienie grafu nie zgubiło wyboru Operatora.
 func (r *repozytoriumRoundtable) trescKluczowychDebaty(ctx context.Context,
 	okno, tura string) (map[string]bool, error) {
 
@@ -235,8 +218,6 @@ func (r *repozytoriumRoundtable) trescKluczowychDebaty(ctx context.Context,
 	return kluczowe, nil
 }
 
-// WezelDebatyPoKodzie zwraca jeden węzeł grafu wskazany kodem zewnętrznym, albo błąd
-// ErrBrakWiersza, gdy nie istnieje.
 func (r *repozytoriumRoundtable) WezelDebatyPoKodzie(ctx context.Context, kod string) (WezelDebaty, error) {
 	polecenie, err := r.zapytania.przygotuj(ctx, pobierzWezelDebaty)
 	if err != nil {
@@ -252,8 +233,6 @@ func (r *repozytoriumRoundtable) WezelDebatyPoKodzie(ctx context.Context, kod st
 	return wezel, nil
 }
 
-// WezlyDebaty zwraca węzły okna, opcjonalnie zawężone do wskazanej tury oraz wyłącznie
-// do węzłów oznaczonych jako kluczowe.
 func (r *repozytoriumRoundtable) WezlyDebaty(ctx context.Context, okno, tura string,
 	tylkoKluczowe bool) ([]WezelDebaty, error) {
 
@@ -282,8 +261,6 @@ func (r *repozytoriumRoundtable) WezlyDebaty(ctx context.Context, okno, tura str
 	return wezly, wiersze.Err()
 }
 
-// OznaczWezelDebaty stawia albo zdejmuje oznaczenie argumentu kluczowego na węźle
-// wskazanym kodem zewnętrznym.
 func (r *repozytoriumRoundtable) OznaczWezelDebaty(ctx context.Context, kod string, kluczowy bool) error {
 	polecenie, err := r.zapytania.przygotuj(ctx, oznaczWezelDebaty)
 	if err != nil {
@@ -296,8 +273,6 @@ func (r *repozytoriumRoundtable) OznaczWezelDebaty(ctx context.Context, kod stri
 	return trafienieDebaty(wynik)
 }
 
-// KrawedzieDebaty zwraca wszystkie krawędzie grafu argumentów wskazanego okna,
-// uporządkowane według kolejności zapisu.
 func (r *repozytoriumRoundtable) KrawedzieDebaty(ctx context.Context, okno string) ([]KrawedzDebaty, error) {
 	polecenie, err := r.zapytania.przygotuj(ctx, pobierzKrawedzieDebaty)
 	if err != nil {
@@ -321,8 +296,6 @@ func (r *repozytoriumRoundtable) KrawedzieDebaty(ctx context.Context, okno strin
 	return krawedzie, wiersze.Err()
 }
 
-// ZapiszOznaczenieBleduDebaty dopisuje błąd logiczny rozpoznany na węźle grafu wraz
-// z jego uzasadnieniem i pewnością.
 func (r *repozytoriumRoundtable) ZapiszOznaczenieBleduDebaty(ctx context.Context,
 	oznaczenie OznaczenieBleduDebaty) error {
 
@@ -338,8 +311,6 @@ func (r *repozytoriumRoundtable) ZapiszOznaczenieBleduDebaty(ctx context.Context
 	return nil
 }
 
-// OznaczeniaBledowDebaty zwraca wszystkie oznaczenia błędów logicznych postawione
-// w oknie debaty, uporządkowane według zapisu.
 func (r *repozytoriumRoundtable) OznaczeniaBledowDebaty(ctx context.Context,
 	okno string) ([]OznaczenieBleduDebaty, error) {
 
@@ -366,7 +337,6 @@ func (r *repozytoriumRoundtable) OznaczeniaBledowDebaty(ctx context.Context,
 	return oznaczenia, wiersze.Err()
 }
 
-// KatalogBledowDebaty zwraca katalog wraz z zakresem wykrywania w oknie.
 // Okno puste oddaje katalog wnoszony migracją, w całości włączony.
 func (r *repozytoriumRoundtable) KatalogBledowDebaty(ctx context.Context,
 	okno string) ([]DefinicjaBleduDebaty, error) {
@@ -375,7 +345,7 @@ func (r *repozytoriumRoundtable) KatalogBledowDebaty(ctx context.Context,
 	if err != nil {
 		return nil, err
 	}
-	wiersze, err := polecenie.QueryContext(ctx, okno, okno)
+	wiersze, err := polecenie.QueryContext(ctx, okno, KontoOperatora(ctx), okno, KontoOperatora(ctx))
 	if err != nil {
 		return nil, fmt.Errorf("dane: nie można odczytać katalogu błędów: %w", err)
 	}
@@ -393,8 +363,7 @@ func (r *repozytoriumRoundtable) KatalogBledowDebaty(ctx context.Context,
 	return katalog, wiersze.Err()
 }
 
-// UstawKatalogBledowDebaty zapisuje zakres wykrywania dla okna. Wykaz pusty
-// wraca do stanu „wykrywaj wszystko": okno bez zawężenia nie ma wiersza.
+// Wykaz pusty wraca do stanu „wykrywaj wszystko": okno bez zawężenia nie ma wiersza.
 func (r *repozytoriumRoundtable) UstawKatalogBledowDebaty(ctx context.Context,
 	okno string, kody []string) error {
 
@@ -403,7 +372,7 @@ func (r *repozytoriumRoundtable) UstawKatalogBledowDebaty(ctx context.Context,
 		if err != nil {
 			return err
 		}
-		if _, err := wyczysc.ExecContext(ctx, okno); err != nil {
+		if _, err := wyczysc.ExecContext(ctx, okno, KontoOperatora(ctx)); err != nil {
 			return fmt.Errorf("dane: nie można wyczyścić katalogu błędów okna %q: %w", okno, err)
 		}
 		wstaw, err := r.zapytania.wTransakcji(ctx, transakcja, zapiszKatalogOknaDebaty)
@@ -411,17 +380,19 @@ func (r *repozytoriumRoundtable) UstawKatalogBledowDebaty(ctx context.Context,
 			return err
 		}
 		for _, kod := range kody {
-			if _, err := wstaw.ExecContext(ctx, okno, kod); err != nil {
+			wynik, err := wstaw.ExecContext(ctx, okno, kod, KontoOperatora(ctx), KontoOperatora(ctx))
+			if err != nil {
 				return fmt.Errorf("dane: nie można zapisać zakresu katalogu błędów okna %q: %w",
 					okno, err)
+			}
+			if err := sprawdzTrafienieZapisu(wynik, "zakres katalogu błędów okna "+okno, kod); err != nil {
+				return err
 			}
 		}
 		return nil
 	})
 }
 
-// odczytajWezelDebaty składa strukturę WezelDebaty z jednego wiersza wyniku zapytania,
-// niezależnie od jego źródła.
 func odczytajWezelDebaty(wiersz interface{ Scan(...any) error }) (WezelDebaty, error) {
 	var wezel WezelDebaty
 	err := wiersz.Scan(&wezel.Kod, &wezel.Okno, &wezel.Wypowiedz, &wezel.Uczestnik, &wezel.Tura,

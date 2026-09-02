@@ -1,6 +1,5 @@
-// Plik utrzymuje trwałość katalogu rozszerzeń w tabeli rozszerzenie wraz
-// z rodziną extension.*, oddzielony od poziomu eksperta, mostu MCP i konektora
-// eksperta, bez pobierania ani uruchamiania zadeklarowanego źródła.
+// Plik utrzymuje trwałość katalogu rozszerzeń w tabeli rozszerzenie wraz z rodziną
+// extension.*, bez pobierania ani uruchamiania zadeklarowanego źródła.
 package dane
 
 import (
@@ -14,20 +13,16 @@ import (
 	"danacoconsole/shared"
 )
 
-// Rozszerzenie to wiersz tabeli rozszerzenie z dwoma identyfikatorami:
-// Identyfikator odpowiada polu Extension.id, a Kod polu Extension.code,
-// kodowi trwałemu między wydaniami.
 type Rozszerzenie struct {
-	ID            int64
-	Identyfikator string
-	Kod           string
-	Rodzaj        string
-	Nazwa         string
-	Opis          *string
-	Wersja        *string
-	Zainstalowane bool
-	Wlaczone      bool
-	// PunktDostepuID i PunktDostepuKod wskazują punkt dostępu: klucz wewnętrzny oraz jego kod trwały.
+	ID              int64
+	Identyfikator   string
+	Kod             string
+	Rodzaj          string
+	Nazwa           string
+	Opis            *string
+	Wersja          *string
+	Zainstalowane   bool
+	Wlaczone        bool
 	PunktDostepuID  *int64
 	PunktDostepuKod *string
 	// ZrodloDeklarowane to napis podany w install.source. Nikt go nie pobiera.
@@ -38,19 +33,12 @@ type Rozszerzenie struct {
 	Zaktualizowano    int64
 }
 
-// FiltrRozszerzen zawęża wykaz rozszerzeń i obsługuje oba pola zawężające
-// polecenia extension.list: rodzaj pozycji oraz ograniczenie do zainstalowanych.
 type FiltrRozszerzen struct {
-	// Rodzaj pusty znaczy „wszystkie rodzaje".
-	Rodzaj string
-	// TylkoZainstalowane odpowiada polu installedOnly; domyślnie pokazuje też pozycje odinstalowane.
+	Rodzaj             string
 	TylkoZainstalowane bool
 }
 
-// ZmianaRozszerzenia niesie pola zapisu polecenia extension.configure; wskaźnik
-// pusty w polu znaczy brak zmiany tego pola, a nie wyczyszczenie wartości.
 type ZmianaRozszerzenia struct {
-	// Nazwa, Opis i Wersja to metryki zmieniane publikacją pakietu oraz przypięciem wersji w managerze.
 	Nazwa             *string
 	Opis              *string
 	Wersja            *string
@@ -62,15 +50,10 @@ type ZmianaRozszerzenia struct {
 	Konfiguracja      *string
 }
 
-// RepozytoriumRozszerzen jest kontraktem katalogu rozszerzeń obejmującym
-// cykl życia, warstwę protokołu, integracje zewnętrzne oraz warstwę zaufania pozycji.
 type RepozytoriumRozszerzen interface {
 	Rozszerzenia(ctx context.Context, filtr FiltrRozszerzen) ([]Rozszerzenie, error)
-	// Rozszerzenie odczytuje pozycję po Extension.id.
 	Rozszerzenie(ctx context.Context, identyfikator string) (Rozszerzenie, error)
-	// RozszerzeniePoKodzie odczytuje pozycję po Extension.code; brak wraca jako ErrBrakWiersza.
 	RozszerzeniePoKodzie(ctx context.Context, kod string) (Rozszerzenie, error)
-	// ZalozRozszerzenie wstawia pozycję katalogu; czas zmiany podaje warstwa wyższa w milisekundach epoki.
 	ZalozRozszerzenie(ctx context.Context, rozszerzenie Rozszerzenie) (Rozszerzenie, error)
 	ZmienRozszerzenie(ctx context.Context, identyfikator string,
 		zmiana ZmianaRozszerzenia, teraz int64) (Rozszerzenie, error)
@@ -132,26 +115,22 @@ const (
 	                              ON p.id = r.punkt_dostepu_id`
 
 	pobierzRozszerzenie = `SELECT ` + kolumnyRozszerzenia + zrodloRozszerzenia +
-		` WHERE r.identyfikator_zewnetrzny = ?`
+		` WHERE r.identyfikator_zewnetrzny = ? AND ` + WarunekKonta
 
-	rozszerzeniePoKodzie = `SELECT ` + kolumnyRozszerzenia + zrodloRozszerzenia + ` WHERE r.kod = ?`
+	rozszerzeniePoKodzie = `SELECT ` + kolumnyRozszerzenia + zrodloRozszerzenia +
+		` WHERE r.kod = ? AND ` + WarunekKonta
 
-	// Jedno zapytanie obsługuje cztery warianty żądania: puste zawężenie rodzaju
-	// wyłącza pierwszy warunek, a zamknięty parametr installedOnly wyłącza drugi.
-	// Porządek wynika z indeksu wykazu.
 	listaRozszerzen = `SELECT ` + kolumnyRozszerzenia + zrodloRozszerzenia +
 		` WHERE (? = '' OR r.rodzaj = ?) AND (? = 0 OR r.zainstalowane = 1)
+		    AND ` + WarunekKonta + `
 		  ORDER BY r.rodzaj, r.nazwa, r.id`
 
 	wstawRozszerzenie = `INSERT INTO rozszerzenie
 	                     (identyfikator_zewnetrzny, kod, rodzaj, nazwa, opis, wersja,
 	                      zainstalowane, wlaczone, punkt_dostepu_id, zrodlo_deklarowane,
-	                      zrodlo_pochodzenia, konfiguracja, zaktualizowano)
-	                     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+	                      zrodlo_pochodzenia, konfiguracja, zaktualizowano, konto_id)
+	                     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ` + WskazanieKonta + `)`
 
-	// Zmiana idzie jednym poleceniem: NULL w argumencie zostawia kolumnę bez
-	// zmiany. Dzięki temu „pola pominięte zostają bez zmian" jest własnością
-	// zapytania, a nie kolejnością gałęzi w Go.
 	zmienRozszerzenie = `UPDATE rozszerzenie SET
 	                        nazwa              = COALESCE(?, nazwa),
 	                        opis               = COALESCE(?, opis),
@@ -163,21 +142,16 @@ const (
 	                        zrodlo_pochodzenia = COALESCE(?, zrodlo_pochodzenia),
 	                        konfiguracja       = COALESCE(?, konfiguracja),
 	                        zaktualizowano     = ?
-	                     WHERE identyfikator_zewnetrzny = ?`
+	                     WHERE identyfikator_zewnetrzny = ? AND ` + WarunekKonta
 )
 
 type repozytoriumRozszerzen struct {
 	zapytania *zapytania
-	// baza jest połączeniem potrzebnym transakcjom wielotabelowym repozytorium.
-	baza *sql.DB
+	baza      *sql.DB
 }
 
-// Zgodność implementacji z kontraktem sprawdzana jest przy kompilacji, a nie
-// dopiero przy złożeniu zestawu repozytoriów.
 var _ RepozytoriumRozszerzen = (*repozytoriumRozszerzen)(nil)
 
-// Rozszerzenia oddaje repozytorium katalogu rozszerzeń złożone nad
-// współdzieloną pamięcią zapytań zestawu, bez własnego stanu poza wskaźnikiem na tę pamięć.
 func (z *Zestaw) Rozszerzenia() RepozytoriumRozszerzen {
 	if z == nil || z.zapytania == nil {
 		return nil
@@ -185,8 +159,6 @@ func (z *Zestaw) Rozszerzenia() RepozytoriumRozszerzen {
 	return &repozytoriumRozszerzen{zapytania: z.zapytania, baza: z.baza}
 }
 
-// Rozszerzenia zwraca wykaz pozycji katalogu w stałej kolejności wyświetlania,
-// zawężony filtrem rodzaju i stanu instalacji.
 func (r *repozytoriumRozszerzen) Rozszerzenia(ctx context.Context,
 	filtr FiltrRozszerzen) ([]Rozszerzenie, error) {
 
@@ -195,7 +167,7 @@ func (r *repozytoriumRozszerzen) Rozszerzenia(ctx context.Context,
 		return nil, err
 	}
 	wiersze, err := polecenie.QueryContext(ctx, KontoOperatora(ctx), filtr.Rodzaj, filtr.Rodzaj,
-		liczbaLogiczna(filtr.TylkoZainstalowane))
+		liczbaLogiczna(filtr.TylkoZainstalowane), KontoOperatora(ctx))
 	if err != nil {
 		return nil, fmt.Errorf("dane: nie można odczytać katalogu rozszerzeń: %w", err)
 	}
@@ -215,24 +187,18 @@ func (r *repozytoriumRozszerzen) Rozszerzenia(ctx context.Context,
 	return katalog, nil
 }
 
-// Rozszerzenie zwraca pozycję o wskazanym `Extension.id`. Brak wiersza wraca
-// jako ErrBrakWiersza — warstwa wyższa odróżnia „nie ma" od „odczyt padł".
 func (r *repozytoriumRozszerzen) Rozszerzenie(ctx context.Context,
 	identyfikator string) (Rozszerzenie, error) {
 
 	return r.jednaPozycja(ctx, pobierzRozszerzenie, identyfikator, "rozszerzenie")
 }
 
-// RozszerzeniePoKodzie zwraca pozycję katalogu o wskazanym Extension.code,
-// kodzie trwałym między wydaniami pakietu.
 func (r *repozytoriumRozszerzen) RozszerzeniePoKodzie(ctx context.Context,
 	kod string) (Rozszerzenie, error) {
 
 	return r.jednaPozycja(ctx, rozszerzeniePoKodzie, kod, "rozszerzenie o kodzie")
 }
 
-// jednaPozycja odczytuje jeden wiersz katalogu wskazanym zapytaniem i ujednolica
-// obsługę braku wiersza dla obu punktów odczytu.
 func (r *repozytoriumRozszerzen) jednaPozycja(ctx context.Context,
 	zapytanie, wskazanie, nazwaBytu string) (Rozszerzenie, error) {
 
@@ -240,7 +206,8 @@ func (r *repozytoriumRozszerzen) jednaPozycja(ctx context.Context,
 	if err != nil {
 		return Rozszerzenie{}, err
 	}
-	pozycja, err := odczytajRozszerzenie(polecenie.QueryRowContext(ctx, KontoOperatora(ctx), wskazanie))
+	pozycja, err := odczytajRozszerzenie(polecenie.QueryRowContext(ctx, KontoOperatora(ctx), wskazanie,
+		KontoOperatora(ctx)))
 	if errors.Is(err, sql.ErrNoRows) {
 		return Rozszerzenie{}, fmt.Errorf("dane: %s %q nie istnieje: %w",
 			nazwaBytu, wskazanie, ErrBrakWiersza)
@@ -252,8 +219,6 @@ func (r *repozytoriumRozszerzen) jednaPozycja(ctx context.Context,
 	return pozycja, nil
 }
 
-// ZalozRozszerzenie wstawia nową pozycję katalogu, sprawdza jej wymagane pola
-// i oddaje zapisany wiersz po odczycie.
 func (r *repozytoriumRozszerzen) ZalozRozszerzenie(ctx context.Context,
 	rozszerzenie Rozszerzenie) (Rozszerzenie, error) {
 
@@ -280,7 +245,7 @@ func (r *repozytoriumRozszerzen) ZalozRozszerzenie(ctx context.Context,
 		tekstDoKolumny(rozszerzenie.Wersja), liczbaLogiczna(rozszerzenie.Zainstalowane),
 		liczbaLogiczna(rozszerzenie.Wlaczone), liczbaDoKolumny(rozszerzenie.PunktDostepuID),
 		rozszerzenie.ZrodloDeklarowane, zrodloPochodzeniaKolumny(rozszerzenie.ZrodloPochodzenia),
-		konfiguracja, rozszerzenie.Zaktualizowano); err != nil {
+		konfiguracja, rozszerzenie.Zaktualizowano, KontoOperatora(ctx)); err != nil {
 
 		return Rozszerzenie{}, fmt.Errorf("dane: nie można założyć rozszerzenia %q: %w",
 			rozszerzenie.Kod, err)
@@ -288,8 +253,6 @@ func (r *repozytoriumRozszerzen) ZalozRozszerzenie(ctx context.Context,
 	return r.Rozszerzenie(ctx, rozszerzenie.Identyfikator)
 }
 
-// ZmienRozszerzenie zmienia wyłącznie pola wskazane w żądaniu, pozostałe
-// zostawiając bez zmiany, i oddaje wiersz po zapisie.
 func (r *repozytoriumRozszerzen) ZmienRozszerzenie(ctx context.Context, identyfikator string,
 	zmiana ZmianaRozszerzenia, teraz int64) (Rozszerzenie, error) {
 
@@ -312,20 +275,23 @@ func (r *repozytoriumRozszerzen) ZmienRozszerzenie(ctx context.Context, identyfi
 	if zmiana.Wlaczone != nil {
 		wlaczone = liczbaLogiczna(*zmiana.Wlaczone)
 	}
-	if _, err := polecenie.ExecContext(ctx,
+	wynik, err := polecenie.ExecContext(ctx,
 		tekstDoKolumny(zmiana.Nazwa), tekstDoKolumny(zmiana.Opis), tekstDoKolumny(zmiana.Wersja),
 		zainstalowane, wlaczone,
 		liczbaDoKolumny(zmiana.PunktDostepuID), tekstDoKolumny(zmiana.ZrodloDeklarowane),
-		tekstDoKolumny(zmiana.ZrodloPochodzenia), konfiguracja, teraz, identyfikator); err != nil {
-
+		tekstDoKolumny(zmiana.ZrodloPochodzenia), konfiguracja, teraz, identyfikator,
+		KontoOperatora(ctx))
+	if err != nil {
 		return Rozszerzenie{}, fmt.Errorf("dane: nie można zmienić rozszerzenia %q: %w",
 			identyfikator, err)
+	}
+	if err := sprawdzTrafienieZapisu(wynik, "rozszerzenie", identyfikator); err != nil {
+		return Rozszerzenie{}, err
 	}
 	return r.Rozszerzenie(ctx, identyfikator)
 }
 
-// konfiguracjaRozszerzenia sprawdza, że konfiguracja jest poprawnym JSON-em,
-// i zamienia brak na pusty obiekt — kolumna jest NOT NULL DEFAULT '{}'.
+// Kolumna konfiguracja jest NOT NULL DEFAULT '{}'; brak treści wchodzi jako pusty obiekt.
 func konfiguracjaRozszerzenia(tresc, wskazanie string) (string, error) {
 	if tresc == "" {
 		return "{}", nil
@@ -336,8 +302,6 @@ func konfiguracjaRozszerzenia(tresc, wskazanie string) (string, error) {
 	return tresc, nil
 }
 
-// zmienionaKonfiguracjaRozszerzenia przekłada wskaźnik zmiany na argument
-// zapytania: nil znaczy „bez zmiany" i zostawia kolumnę nietkniętą przez COALESCE.
 func zmienionaKonfiguracjaRozszerzenia(tresc *string, wskazanie string) (any, error) {
 	if tresc == nil {
 		return nil, nil
@@ -349,8 +313,6 @@ func zmienionaKonfiguracjaRozszerzenia(tresc *string, wskazanie string) (any, er
 	return sprawdzona, nil
 }
 
-// zrodloPochodzeniaKolumny pilnuje, żeby kolumna zrodlo_pochodzenia nigdy
-// nie dostała pustki: nieustawiona wartość czyta się jako personal.
 func zrodloPochodzeniaKolumny(zrodlo string) string {
 	if strings.TrimSpace(zrodlo) == "" {
 		return shared.ExtensionOriginPersonal

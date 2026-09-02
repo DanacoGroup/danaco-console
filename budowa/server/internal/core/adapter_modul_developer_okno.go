@@ -1,19 +1,20 @@
-// Odpowiedzialność pliku: obszar modułu Developer — okno komunikacji, jego katalogi
-// robocze, sprawdzenie ścieżki wobec obszaru oraz brama trybu uprawnień i kody odmów.
+// Odpowiedzialność pliku: obszar modułu Developer — okno komunikacji, katalogi robocze,
+// sprawdzenie ścieżki wobec obszaru, brama trybu uprawnień i kody odmów.
 package core
 
 import (
+	"errors"
 	"path/filepath"
 	"runtime"
 	"strings"
 
+	"danacoconsole/server/internal/dane"
 	"danacoconsole/server/internal/konfig"
 	"danacoconsole/server/internal/protocol"
 	"danacoconsole/server/internal/session"
 	"danacoconsole/shared"
 )
 
-// oknoDevelopera zwraca okno komunikacji, w którym pracuje moduł Developer wskazanej sesji Operatora produktu.
 func (a *adapterDevelopera) oknoDevelopera(oknoKod string) (session.Okno, error) {
 	kod := strings.TrimSpace(oknoKod)
 	if kod == "" {
@@ -31,8 +32,6 @@ func (a *adapterDevelopera) oknoDevelopera(oknoKod string) (session.Okno, error)
 	return okno, nil
 }
 
-// korzenieOkna zwraca katalogi robocze okna w postaci bezwzględnej; okno bez własnych
-// katalogów dostaje katalog ustalony przez rozstrzygacz, a w jego braku wynik jest pusty.
 func (a *adapterDevelopera) korzenieOkna(okno session.Okno) []string {
 	korzenie := make([]string, 0, len(okno.KatalogiRobocze)+1)
 	for _, katalog := range okno.KatalogiRobocze {
@@ -53,7 +52,6 @@ func (a *adapterDevelopera) korzenieOkna(okno session.Okno) []string {
 	return []string{zastepczy}
 }
 
-// obszarDevelopera składa obszar izolacji okna z jego pierwszego katalogu roboczego bieżącej sesji Operatora.
 func (a *adapterDevelopera) obszarDevelopera(okno session.Okno) session.Obszar {
 	if a.katalog == nil {
 		return session.Obszar{IdOkna: okno.Id}
@@ -61,8 +59,6 @@ func (a *adapterDevelopera) obszarDevelopera(okno session.Okno) session.Obszar {
 	return ObszarOkna(a.katalog.Ustal(konfig.Kontekst{Okno: okno.Id}, okno.IdSesji), okno.Id)
 }
 
-// sciezkaWObszarze przekłada wskazanie klienta na ścieżkę bezwzględną i pilnuje, żeby leżała
-// wewnątrz któregoś z katalogów roboczych okna, wybieranego po kolejności istnienia.
 func sciezkaWObszarze(korzenie []string, wskazanie string, istnieje func(string) bool) (string, error) {
 	tresc := strings.TrimSpace(wskazanie)
 	if tresc == "" {
@@ -86,7 +82,6 @@ func sciezkaWObszarze(korzenie []string, wskazanie string, istnieje func(string)
 	return wObszarze(korzenie, filepath.Join(korzenie[0], tresc))
 }
 
-// wObszarze przepuszcza ścieżkę leżącą w którymś z korzeni obszaru i odmawia pozostałym ścieżkom klienta.
 func wObszarze(korzenie []string, sciezka string) (string, error) {
 	for _, korzen := range korzenie {
 		if wewnatrzKatalogu(korzen, sciezka) {
@@ -98,7 +93,6 @@ func wObszarze(korzenie []string, sciezka string) (string, error) {
 			strings.Join(korzenie, ", ")+")"))
 }
 
-// wewnatrzKatalogu mówi, czy ścieżka leży w katalogu albo nim jest, po porównaniu znormalizowanych postaci.
 func wewnatrzKatalogu(korzen, sciezka string) bool {
 	k, s := znormalizuj(korzen), znormalizuj(sciezka)
 	if k == "" || s == "" {
@@ -110,7 +104,6 @@ func wewnatrzKatalogu(korzen, sciezka string) bool {
 	return strings.HasPrefix(s, k+string(filepath.Separator))
 }
 
-// znormalizuj sprowadza ścieżkę do postaci porównywalnej na danym systemie operacyjnym maszyny budującej.
 func znormalizuj(sciezka string) string {
 	czysta := filepath.Clean(strings.TrimSpace(sciezka))
 	if czysta == "." {
@@ -122,8 +115,7 @@ func znormalizuj(sciezka string) string {
 	return czysta
 }
 
-// oczyscKorzen sprowadza katalog roboczy do postaci bezwzględnej i czystej; katalog względny
-// jest odrzucany, bo obszar izolacji liczony względem katalogu procesu znaczyłby co innego po każdym uruchomieniu.
+// Katalog względny odpada: obszar liczony od katalogu procesu znaczyłby co innego po każdym uruchomieniu.
 func oczyscKorzen(katalog string) string {
 	tresc := strings.TrimSpace(katalog)
 	if tresc == "" || !filepath.IsAbs(tresc) {
@@ -132,8 +124,7 @@ func oczyscKorzen(katalog string) string {
 	return filepath.Clean(tresc)
 }
 
-// sprawdzZmianeSystemu jest bramą trybu uprawnień okna dla czynności zmieniającej stan
-// systemu; tryb planistyczny wyklucza zapis, repozytorium i budowanie, pozostałe je przepuszczają.
+// Tryb planistyczny (plan) wyklucza zapis, repozytorium i budowanie; pozostałe tryby je przepuszczają.
 func sprawdzZmianeSystemu(tryb shared.PermissionMode, czynnosc string) error {
 	if tryb != shared.PermissionModePlan {
 		return nil
@@ -143,22 +134,26 @@ func sprawdzZmianeSystemu(tryb shared.PermissionMode, czynnosc string) error {
 			"który wyklucza zmiany w systemie"))
 }
 
-// bladZadaniaDevelopera znakuje wadę żądania kodem kontraktu modułu Developer platformy produktu Danaco.
 func bladZadaniaDevelopera(powod string) error {
 	return protocol.JakoError(protocol.NowyBlad(shared.ErrorCodeValidationFailed, "moduł Developer: "+powod))
 }
 
-// bladZasobuDevelopera znakuje brak pliku, katalogu albo przebiegu budowania wskazanego okna komunikacji.
 func bladZasobuDevelopera(powod string) error {
 	return protocol.JakoError(protocol.NowyBlad(shared.ErrorCodeNotFound, "moduł Developer: "+powod))
 }
 
-// bladDostepuDevelopera znakuje zatrzymanie przez granicę obszaru okna, kodem innym niż wada samego żądania.
 func bladDostepuDevelopera(powod string) error {
 	return protocol.JakoError(protocol.NowyBlad(shared.ErrorCodePermissionDenied, "moduł Developer: "+powod))
 }
 
-// bladWykonaniaDevelopera znakuje niepowodzenie czynności na dysku albo w uruchomionym procesie systemowym.
 func bladWykonaniaDevelopera(powod string) error {
 	return protocol.JakoError(protocol.NowyBlad(shared.ErrorCodeInternalError, "moduł Developer: "+powod))
+}
+
+// Kolizja wiersza jest odmową kontraktu (conflict); internal_error klient ponawia (KodyPonawialne).
+func bladZapisuDevelopera(err error, powod string) error {
+	if errors.Is(err, dane.ErrKolizjaWiersza) {
+		return protocol.JakoError(protocol.NowyBlad(shared.ErrorCodeConflict, "moduł Developer: "+powod))
+	}
+	return bladWykonaniaDevelopera(powod)
 }

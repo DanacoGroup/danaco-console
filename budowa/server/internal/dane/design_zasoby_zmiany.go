@@ -1,15 +1,14 @@
-// Warstwa danych obsługuje zmiany zasobu Assets Panel niewyrażalne pełnym
-// zapisem wiersza: oznaczenie ulubionego i usunięcie zasobu, każde jednym
-// poleceniem SQL bez transakcji.
+// Odpowiedzialność pliku: zmiany zasobu Assets Panel jednym poleceniem SQL —
+// oznaczenie ulubionego i usunięcie zasobu, każde w granicy konta.
 package dane
 
 import (
 	"context"
+	"database/sql"
+	"errors"
 	"fmt"
 )
 
-// UstawUlubionyZasobu przestawia oznaczenie ulubionego zasobu wskazanego
-// kluczem wiersza; brak wiersza do zmiany nie jest tu błędem.
 func (r *repozytoriumDesignu) UstawUlubionyZasobu(ctx context.Context,
 	zasobID int64, ulubiony bool) error {
 
@@ -17,14 +16,15 @@ func (r *repozytoriumDesignu) UstawUlubionyZasobu(ctx context.Context,
 	if err != nil {
 		return err
 	}
-	if _, err := polecenie.ExecContext(ctx, liczbaLogiczna(ulubiony), zasobID); err != nil {
+	wynik, err := polecenie.ExecContext(ctx, liczbaLogiczna(ulubiony), zasobID, KontoOperatora(ctx))
+	if err != nil {
 		return fmt.Errorf("dane: nie można przestawić ulubionego zasobu design %d: %w", zasobID, err)
 	}
-	return nil
+	return r.trafienieZasobuDesign(ctx, wynik, zastanyZasobDesignPoId, zasobID,
+		fmt.Sprint(zasobID))
 }
 
-// UsunZasob usuwa zasób o wskazanym identyfikatorze zewnętrznym i zwraca, czy
-// jakikolwiek wiersz naprawdę zniknął.
+// UsunZasob oddaje, czy wiersz zniknął; brak wiersza nie jest odmową, wiersz cudzego konta jest.
 func (r *repozytoriumDesignu) UsunZasob(ctx context.Context, kod string) (bool, error) {
 	if kod == "" {
 		return false, fmt.Errorf("dane: usunięcie zasobu design bez identyfikatora")
@@ -33,14 +33,40 @@ func (r *repozytoriumDesignu) UsunZasob(ctx context.Context, kod string) (bool, 
 	if err != nil {
 		return false, err
 	}
-	wynik, err := polecenie.ExecContext(ctx, kod)
+	wynik, err := polecenie.ExecContext(ctx, kod, KontoOperatora(ctx))
 	if err != nil {
 		return false, fmt.Errorf("dane: nie można usunąć zasobu design %q: %w", kod, err)
 	}
-	// Sterownik SQLite zna liczbę zmienionych wierszy; brak jej wartości jest tu błędem.
-	wierszy, err := wynik.RowsAffected()
-	if err != nil {
-		return false, fmt.Errorf("dane: nieznany skutek usunięcia zasobu design %q: %w", kod, err)
+	err = r.trafienieZasobuDesign(ctx, wynik, zastanyZasobDesignPoKodzie, kod, kod)
+	if errors.Is(err, ErrBrakWiersza) {
+		return false, nil
 	}
-	return wierszy > 0, nil
+	return err == nil, err
+}
+
+// trafienieZasobuDesign odróżnia zero zmienionych wierszy przy wierszu cudzego konta
+// (ErrKolizjaWiersza) od zera przy braku wiersza (ErrBrakWiersza).
+func (r *repozytoriumDesignu) trafienieZasobuDesign(ctx context.Context, wynik sql.Result,
+	zastany string, klucz any, wskazanie string) error {
+
+	zmienione, err := wynik.RowsAffected()
+	if err != nil {
+		return fmt.Errorf("dane: nieznany skutek zapisu zasobu design %q: %w", wskazanie, err)
+	}
+	if zmienione > 0 {
+		return nil
+	}
+	sonda, err := r.zapytania.przygotuj(ctx, zastany)
+	if err != nil {
+		return err
+	}
+	var jeden int
+	err = sonda.QueryRowContext(ctx, klucz).Scan(&jeden)
+	if errors.Is(err, sql.ErrNoRows) {
+		return fmt.Errorf("dane: zasób design %q nie istnieje: %w", wskazanie, ErrBrakWiersza)
+	}
+	if err != nil {
+		return fmt.Errorf("dane: nie można sprawdzić zasobu design %q: %w", wskazanie, err)
+	}
+	return sprawdzTrafienieZapisu(wynik, "zasób design", wskazanie)
 }

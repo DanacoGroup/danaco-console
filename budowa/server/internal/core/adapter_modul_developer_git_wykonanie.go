@@ -1,6 +1,4 @@
-// Odpowiedzialność pliku: uruchomienie gita przez port warstwy kanału
-// session.Uruchamiacz i złożenie wyniku czynności wraz ze stanem repozytorium.
-// Konflikt scalenia czy brak gałęzi są wynikami czynności, nie awariami.
+// Odpowiedzialność pliku: uruchomienie gita przez port session.Uruchamiacz i złożenie wyniku czynności ze stanem repozytorium.
 package core
 
 import (
@@ -13,12 +11,8 @@ import (
 	"danacoconsole/shared"
 )
 
-// programGita jest jedynym programem, który ten moduł uruchamia dla Git
-// Panelu, portem session.Uruchamiacz.
 const programGita = "git"
 
-// wykonajGit uruchamia jedną czynność repozytorium i składa jej wynik
-// wraz ze stanem repozytorium po wykonaniu.
 func (a *adapterDevelopera) wykonajGit(ctx context.Context, okno session.Okno,
 	czynnosc shared.GitActionKind, argumenty []string, granica time.Duration) (shared.GitActionResult, error) {
 
@@ -50,17 +44,13 @@ func (a *adapterDevelopera) wykonajGit(ctx context.Context, okno session.Okno,
 	return wynik, nil
 }
 
-// wynikGita niesie surowy rezultat jednego uruchomienia gita: powodzenie,
-// treść wyjścia i powód niepowodzenia.
 type wynikGita struct {
 	udane bool
 	tresc string
 	powod string
 }
 
-// uruchomGit startuje gita, zbiera całe wyjście i czeka na zakończenie,
-// synchronicznie. Granica czasu pilnuje, żeby git czekający na hasło do
-// repozytorium zdalnego nie zatrzymał obsługiwacza na zawsze.
+// Granica czasu: git czekający na hasło repozytorium zdalnego nie może zatrzymać obsługiwacza.
 func (a *adapterDevelopera) uruchomGit(ctx context.Context, okno session.Okno,
 	argumenty []string, granica time.Duration) (wynikGita, error) {
 
@@ -71,7 +61,7 @@ func (a *adapterDevelopera) uruchomGit(ctx context.Context, okno session.Okno,
 	if err != nil {
 		return wynikGita{}, err
 	}
-	uchwyt, err := a.uruchamiacz.UruchomProces(okno, polecenie)
+	uchwyt, err := a.uruchamiacz.UruchomProces(ctx, okno, polecenie)
 	if err != nil {
 		return wynikGita{}, bladWykonaniaDevelopera(
 			"nie można uruchomić polecenia git w " + polecenie.Katalog + ": " + err.Error())
@@ -112,9 +102,6 @@ func (a *adapterDevelopera) uruchomGit(ctx context.Context, okno session.Okno,
 	return wynikGita{udane: bladZakonczenia == nil && powod == "", tresc: tresc, powod: powod}, nil
 }
 
-// polecenieDopuszczoneDevelopera składa polecenie i przepuszcza je przez
-// egzekutor izolacji okna. Naruszenie izolacji wraca jako odmowa uprawnienia,
-// nie jako usterka wykonania.
 func (a *adapterDevelopera) polecenieDopuszczoneDevelopera(okno session.Okno, program string,
 	argumenty []string) (session.Polecenie, error) {
 
@@ -140,9 +127,6 @@ func (a *adapterDevelopera) polecenieDopuszczoneDevelopera(okno session.Okno, pr
 	return dopuszczone, nil
 }
 
-// czytajDoKonca zbiera cały strumień procesu. Wyjście gita jest krótkie, więc
-// idzie w całości do wyniku czynności. Błąd odczytu zostawia to, co zdążyło
-// przyjść: urwane wyjście gita niesie więcej niż jego brak.
 func czytajDoKonca(zrodlo io.Reader) string {
 	if zrodlo == nil {
 		return ""

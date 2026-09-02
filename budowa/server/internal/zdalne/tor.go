@@ -4,19 +4,20 @@
 package zdalne
 
 import (
+	"context"
 	"fmt"
 	"os/exec"
 	"strings"
 )
 
 // Funkcja Przeloz przekłada polecenie procesu okna na gotowe wywołanie SSH do hosta wykonania tego okna.
-func Przeloz(idOkna string, p Polecenie) (Uruchomienie, error) {
+func Przeloz(ctx context.Context, idOkna string, p Polecenie) (Uruchomienie, error) {
 	if strings.TrimSpace(p.Program) == "" {
 		return Uruchomienie{}, fmt.Errorf("zdalne: polecenie okna %s nie niesie programu, "+
 			"więc nie ma czego uruchomić na hoście zdalnym", idOkna)
 	}
 
-	nazwa, err := hostOkna(idOkna)
+	nazwa, err := hostOkna(ctx, idOkna)
 	if err != nil {
 		return Uruchomienie{}, err
 	}
@@ -27,7 +28,7 @@ func Przeloz(idOkna string, p Polecenie) (Uruchomienie, error) {
 			"polem „Host wykonania”", idOkna)
 	}
 
-	host, err := hostZRejestru(nazwa)
+	host, err := hostZRejestru(ctx, nazwa)
 	if err != nil {
 		return Uruchomienie{}, err
 	}

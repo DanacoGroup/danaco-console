@@ -7,7 +7,6 @@ import (
 	"fmt"
 )
 
-// UstalenieDebaty to jedno ustalenie analizy zapisu debaty, wraz z rodzajem analizy i turą, której dotyczy.
 type UstalenieDebaty struct {
 	Kod       string
 	Okno      string
@@ -21,8 +20,6 @@ type UstalenieDebaty struct {
 	Utworzono string
 }
 
-// DowodDebaty to pozycja rejestru dowodów: twierdzenie wraz z tym, czym je
-// poparto — albo z odnotowanym brakiem poparcia.
 type DowodDebaty struct {
 	Kod         string
 	Okno        string
@@ -35,8 +32,6 @@ type DowodDebaty struct {
 	Utworzono   string
 }
 
-// RepozytoriumDebatyAnalizy jest częścią kontraktu obszaru odpowiadającą za
-// wyniki analizy zapisu debaty.
 type RepozytoriumDebatyAnalizy interface {
 	ZastapUstaleniaDebaty(ctx context.Context, okno, rodzaj, tura string,
 		ustalenia []UstalenieDebaty) error
@@ -68,22 +63,32 @@ const (
 	kolumnyDowoduDebaty = `identyfikator_zewnetrzny, okno, tura, wypowiedz, twierdzenie,
 	                       zrodlo, adres, poparte, utworzono`
 
+	// debata_dowod nie ma konto_id (migracja 193, krok 484 ją pominął): granica idzie przez
+	// wypowiedź do tury, której konto_id wiąże niekwalifikowaną nazwę warunku.
+	granicaWypowiedziDowodu = `EXISTS (SELECT 1 FROM debata_wypowiedz w
+	                                    JOIN debata_tura t ON t.id = w.tura_id
+	                                    WHERE w.identyfikator_zewnetrzny = `
+
 	zapiszDowodDebaty = `INSERT INTO debata_dowod
 	                     (identyfikator_zewnetrzny, okno, tura, wypowiedz, twierdzenie,
 	                      zrodlo, adres, poparte)
-	                     VALUES (?, ?, ?, ?, ?, ?, ?, ?)`
+	                     SELECT ?, ?, ?, ?, ?, ?, ?, ?
+	                     WHERE ` + granicaWypowiedziDowodu + `? AND ` + WarunekKonta + `)`
 
-	usunDowodyDebaty = `DELETE FROM debata_dowod WHERE okno = ? AND (? = '' OR tura = ?)`
+	usunDowodyDebaty = `DELETE FROM debata_dowod
+	                    WHERE okno = ? AND (? = '' OR tura = ?)
+	                      AND ` + granicaWypowiedziDowodu + `debata_dowod.wypowiedz
+	                                                          AND ` + WarunekKonta + `)`
 
 	pobierzDowodyDebaty = `SELECT ` + kolumnyDowoduDebaty + `
 	                       FROM debata_dowod
 	                       WHERE okno = ? AND (? = '' OR tura = ?) AND (? = 0 OR poparte = 0)
+	                         AND ` + granicaWypowiedziDowodu + `debata_dowod.wypowiedz
+	                                                             AND ` + WarunekKonta + `)
 	                       ORDER BY id ASC`
 )
 
-// ZastapUstaleniaDebaty wymienia ustalenia jednego rodzaju analizy. Ponowny
-// przebieg zastępuje poprzedni wynik, bo dwa przebiegi tej samej analizy na tym
-// samym zapisie nie są dwoma ustaleniami, tylko jednym powtórzonym.
+// Ponowny przebieg tej samej analizy na tym samym zapisie jest jednym ustaleniem powtórzonym, nie dwoma.
 func (r *repozytoriumRoundtable) ZastapUstaleniaDebaty(ctx context.Context,
 	okno, rodzaj, tura string, ustalenia []UstalenieDebaty) error {
 
@@ -112,7 +117,6 @@ func (r *repozytoriumRoundtable) ZastapUstaleniaDebaty(ctx context.Context,
 	})
 }
 
-// UstaleniaDebaty zwraca ustalenia analizy okna; rodzaj analizy i tura puste nie zawężają wyniku odczytu.
 func (r *repozytoriumRoundtable) UstaleniaDebaty(ctx context.Context,
 	okno, rodzaj, tura string) ([]UstalenieDebaty, error) {
 
@@ -140,7 +144,8 @@ func (r *repozytoriumRoundtable) UstaleniaDebaty(ctx context.Context,
 	return ustalenia, wiersze.Err()
 }
 
-// ZastapDowodyDebaty wymienia cały rejestr dowodów okna albo jednej wskazanej tury tej debaty operacyjnej.
+// ZastapDowodyDebaty wymienia rejestr dowodów okna albo jednej tury; pozycja bez wypowiedzi
+// konta zamawiającego kończy się ErrKolizjaWiersza.
 func (r *repozytoriumRoundtable) ZastapDowodyDebaty(ctx context.Context,
 	okno, tura string, dowody []DowodDebaty) error {
 
@@ -149,7 +154,7 @@ func (r *repozytoriumRoundtable) ZastapDowodyDebaty(ctx context.Context,
 		if err != nil {
 			return err
 		}
-		if _, err := wyczysc.ExecContext(ctx, okno, tura, tura); err != nil {
+		if _, err := wyczysc.ExecContext(ctx, okno, tura, tura, KontoOperatora(ctx)); err != nil {
 			return fmt.Errorf("dane: nie można wyczyścić rejestru dowodów okna %q: %w", okno, err)
 		}
 		wstaw, err := r.zapytania.wTransakcji(ctx, transakcja, zapiszDowodDebaty)
@@ -157,18 +162,21 @@ func (r *repozytoriumRoundtable) ZastapDowodyDebaty(ctx context.Context,
 			return err
 		}
 		for _, dowod := range dowody {
-			if _, err := wstaw.ExecContext(ctx, dowod.Kod, okno, dowod.Tura, dowod.Wypowiedz,
-				dowod.Twierdzenie, dowod.Zrodlo, dowod.Adres, dowod.Poparte); err != nil {
+			wynik, err := wstaw.ExecContext(ctx, dowod.Kod, okno, dowod.Tura, dowod.Wypowiedz,
+				dowod.Twierdzenie, dowod.Zrodlo, dowod.Adres, dowod.Poparte,
+				dowod.Wypowiedz, KontoOperatora(ctx))
+			if err != nil {
 				return fmt.Errorf("dane: nie można zapisać pozycji rejestru dowodów %q: %w",
 					dowod.Kod, err)
+			}
+			if err := sprawdzTrafienieZapisu(wynik, "wypowiedź dowodu", dowod.Wypowiedz); err != nil {
+				return err
 			}
 		}
 		return nil
 	})
 }
 
-// DowodyDebaty zwraca rejestr dowodów; zawężenie do niepopartych wyciąga na
-// wierzch twierdzenia bez źródła.
 func (r *repozytoriumRoundtable) DowodyDebaty(ctx context.Context, okno, tura string,
 	tylkoNiepoparte bool) ([]DowodDebaty, error) {
 
@@ -180,7 +188,7 @@ func (r *repozytoriumRoundtable) DowodyDebaty(ctx context.Context, okno, tura st
 	if tylkoNiepoparte {
 		zawezenie = 1
 	}
-	wiersze, err := polecenie.QueryContext(ctx, okno, tura, tura, zawezenie)
+	wiersze, err := polecenie.QueryContext(ctx, okno, tura, tura, zawezenie, KontoOperatora(ctx))
 	if err != nil {
 		return nil, fmt.Errorf("dane: nie można odczytać rejestru dowodów okna %q: %w", okno, err)
 	}

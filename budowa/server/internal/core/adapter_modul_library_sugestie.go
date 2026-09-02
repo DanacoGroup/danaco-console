@@ -251,7 +251,7 @@ func (a *adapterBiblioteki) RozstrzygnijSugestie(ctx context.Context,
 			return shared.LibrarySuggestionApplyResponse{}, err
 		}
 		pliki = append(pliki, plik)
-		a.zglosNasluchom(shared.LibraryWebhookEventFileChanged, kod)
+		a.zglosNasluchom(ctx, shared.LibraryWebhookEventFileChanged, kod)
 	}
 	a.odnotuj(ctx, shared.LibraryAuditActionChange, nil,
 		"przyjęcie sugestii: "+strconv.Itoa(przyjete))

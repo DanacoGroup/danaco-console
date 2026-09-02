@@ -1,6 +1,9 @@
 package session
 
-import "io"
+import (
+	"context"
+	"io"
+)
 
 // UchwytProcesu jest uchwytem procesu już uruchomionego przez warstwę kanału, a pakiet session dokłada do niego objęcie drzewa potomstwa i pętlę koordynator-wykonawca.
 type UchwytProcesu interface {
@@ -20,5 +23,5 @@ type UchwytProcesu interface {
 
 // Uruchamiacz startuje proces okna według podanego polecenia, jest implementowany przez warstwę kanału modelu, a pakiet session zna wyłącznie ten interfejs.
 type Uruchamiacz interface {
-	UruchomProces(o Okno, p Polecenie) (UchwytProcesu, error)
+	UruchomProces(ctx context.Context, o Okno, p Polecenie) (UchwytProcesu, error)
 }

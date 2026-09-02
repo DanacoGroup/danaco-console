@@ -71,7 +71,7 @@ func (a *adapterBiblioteki) ZapiszOpis(ctx context.Context,
 		return shared.LibraryMetadataSetResponse{}, err
 	}
 	a.odnotuj(ctx, shared.LibraryAuditActionChange, &plik.Kod, "zapis opisu zasobu")
-	a.zglosNasluchom(shared.LibraryWebhookEventFileChanged, plik.Kod)
+	a.zglosNasluchom(ctx, shared.LibraryWebhookEventFileChanged, plik.Kod)
 	return shared.LibraryMetadataSetResponse{
 		Metadata: opisKontraktuBiblioteki(plik.Kod, zapisany), File: kontrakt,
 	}, nil

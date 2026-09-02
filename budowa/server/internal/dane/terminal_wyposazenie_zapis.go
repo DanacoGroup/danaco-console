@@ -11,9 +11,7 @@ import (
 )
 
 const (
-	// Warunek przy DO UPDATE odczytuje konto wiersza już stojącego: kolumna `kod`
-	// ma UNIQUE na całej tabeli, więc bez niego kod podany przez jedno konto
-	// nadpisywałby wpis drugiego.
+	// UNIQUE na `kod` obejmuje całą tabelę, więc człon DO UPDATE niesie warunek konta.
 	wstawHostaTerminala = `INSERT INTO terminal_host
 	                       (kod, nazwa, cel, port, grupa, katalog_roboczy, klucz_kod,
 	                        host_posredni_kod, notatka, konto_id)
@@ -32,8 +30,6 @@ const (
 
 	usunHostaTerminala = `DELETE FROM terminal_host WHERE kod = ? AND ` + WarunekKonta
 
-	// Odpięcie klucza czyta wpisy przed zmianą, żeby oddać ich kody; sama zmiana
-	// idzie osobnym poleceniem w tej samej transakcji.
 	hostyPoKluczuTerminala = `SELECT kod FROM terminal_host
 	                          WHERE klucz_kod = ? AND ` + WarunekKonta
 
@@ -43,8 +39,8 @@ const (
 	                         WHERE klucz_kod = ? AND ` + WarunekKonta
 
 	wstawSkryptTerminala = `INSERT INTO terminal_skrypt
-	                        (kod, nazwa, rodzaj, powloka, tresc, znaczniki, alias, wersja)
-	                        VALUES (?, ?, ?, ?, ?, ?, ?, 1)`
+	                        (kod, nazwa, rodzaj, powloka, tresc, znaczniki, alias, wersja, konto_id)
+	                        VALUES (?, ?, ?, ?, ?, ?, ?, 1, ` + WskazanieKonta + `)`
 
 	podmienSkryptTerminala = `UPDATE terminal_skrypt
 	                          SET nazwa          = ?,
@@ -55,15 +51,15 @@ const (
 	                              alias          = ?,
 	                              wersja         = wersja + 1,
 	                              zaktualizowano = strftime('%Y-%m-%dT%H:%M:%fZ','now')
-	                          WHERE kod = ?`
+	                          WHERE kod = ? AND ` + WarunekKonta
 
-	wersjaSkryptuTerminala = `SELECT wersja FROM terminal_skrypt WHERE kod = ?`
+	wersjaSkryptuTerminala = `SELECT wersja FROM terminal_skrypt WHERE kod = ? AND ` + WarunekKonta
 
 	wstawWersjeSkryptuTerminala = `INSERT INTO terminal_skrypt_wersja (skrypt_kod, wersja, tresc)
 	                               VALUES (?, ?, ?)
 	                               ON CONFLICT(skrypt_kod, wersja) DO UPDATE SET tresc = excluded.tresc`
 
-	usunSkryptTerminala = `DELETE FROM terminal_skrypt WHERE kod = ?`
+	usunSkryptTerminala = `DELETE FROM terminal_skrypt WHERE kod = ? AND ` + WarunekKonta
 
 	wstawKluczTerminala = `INSERT INTO terminal_klucz
 	                       (kod, nazwa, rodzaj, odcisk, klucz_jawny, sciezka, haslo, konto_id)
@@ -81,21 +77,21 @@ const (
 
 	wstawTunelTerminala = `INSERT INTO terminal_tunel
 	                       (kod, okno_kod, rodzaj, host_kod, cel, port_lokalny,
-	                        host_docelowy, port_docelowy, stan, powod)
-	                       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+	                        host_docelowy, port_docelowy, stan, powod, konto_id)
+	                       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ` + WskazanieKonta + `)
 	                       ON CONFLICT(kod) DO UPDATE SET
 	                         port_lokalny = excluded.port_lokalny,
 	                         stan         = excluded.stan,
-	                         powod        = excluded.powod`
+	                         powod        = excluded.powod
+	                       WHERE ` + WarunekKonta
 
-	// Zamknięcie znaczy chwilę tylko wtedy, gdy tunel faktycznie się domyka;
-	// przestawienie stanu bez zamknięcia zostawia kolumnę `zamknieto` nietkniętą.
+	// Przestawienie stanu bez zamknięcia zostawia kolumnę `zamknieto` nietkniętą.
 	zmienStanTuneluTerminala = `UPDATE terminal_tunel
 	                            SET stan = ?, powod = ?,
 	                                zamknieto = CASE WHEN ? = 1
 	                                            THEN strftime('%Y-%m-%dT%H:%M:%fZ','now')
 	                                            ELSE zamknieto END
-	                            WHERE kod = ?`
+	                            WHERE kod = ? AND ` + WarunekKonta
 
 	osierocTuneleTerminala = `UPDATE terminal_tunel
 	                          SET stan = 'inactive',
@@ -105,21 +101,23 @@ const (
 
 	wstawObserwacjeTerminala = `INSERT INTO terminal_obserwacja
 	                            (kod, okno_kod, karta_kod, wzorzec, polecenie, tlumienie,
-	                             rekurencyjnie, stan, powod)
-	                            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+	                             rekurencyjnie, stan, powod, konto_id)
+	                            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ` + WskazanieKonta + `)
 	                            ON CONFLICT(kod) DO UPDATE SET
 	                              wzorzec   = excluded.wzorzec,
 	                              polecenie = excluded.polecenie,
 	                              tlumienie = excluded.tlumienie,
 	                              stan      = excluded.stan,
-	                              powod     = excluded.powod`
+	                              powod     = excluded.powod
+	                            WHERE ` + WarunekKonta
 
-	zmienStanObserwacjiTerminala = `UPDATE terminal_obserwacja SET stan = ?, powod = ? WHERE kod = ?`
+	zmienStanObserwacjiTerminala = `UPDATE terminal_obserwacja SET stan = ?, powod = ?
+	                                WHERE kod = ? AND ` + WarunekKonta
 
 	odnotujWyzwolenieTerminala = `UPDATE terminal_obserwacja
 	                              SET licznik = licznik + 1,
 	                                  wyzwolono = strftime('%Y-%m-%dT%H:%M:%fZ','now')
-	                              WHERE kod = ?`
+	                              WHERE kod = ? AND ` + WarunekKonta
 
 	osierocObserwacjeTerminala = `UPDATE terminal_obserwacja
 	                              SET stan = 'stopped',
@@ -127,7 +125,6 @@ const (
 	                              WHERE stan = 'active'`
 )
 
-// ZapiszHosta zakłada wpis książki hostów po jego kodzie albo podmienia istniejący wpis danymi żądania.
 func (r *repozytoriumTerminala) ZapiszHosta(ctx context.Context, host HostTerminala) error {
 	if host.Kod == "" || host.Nazwa == "" || host.Cel == "" {
 		return fmt.Errorf("dane: wpis hosta bez identyfikatora, nazwy albo adresu celu")
@@ -145,14 +142,11 @@ func (r *repozytoriumTerminala) ZapiszHosta(ctx context.Context, host HostTermin
 	return sprawdzTrafienieZapisu(wynik, "wpis hosta", host.Kod)
 }
 
-// UsunHosta zdejmuje wpis książki hostów po kodzie. Fałsz znaczy, że takiego wpisu nie było w książce.
 func (r *repozytoriumTerminala) UsunHosta(ctx context.Context, kod string) (bool, error) {
 	return r.usunWpisTerminala(ctx, usunHostaTerminala, kod, "wpisu hosta", KontoOperatora(ctx))
 }
 
-// OdepnijKlucz zdejmuje wskazanie klucza z wpisów, które go używały, i oddaje
-// ich kody. Odczyt i zmiana idą jedną transakcją: między nimi nie ma prawa
-// wejść zapis, po którym oddany wykaz przestałby odpowiadać stanowi bazy.
+// Odczyt i zmiana idą jedną transakcją, żeby oddany wykaz odpowiadał stanowi bazy.
 func (r *repozytoriumTerminala) OdepnijKlucz(ctx context.Context, kluczKod string) ([]string, error) {
 	if kluczKod == "" {
 		return nil, nil
@@ -187,8 +181,6 @@ func (r *repozytoriumTerminala) OdepnijKlucz(ctx context.Context, kluczKod strin
 	return kody, nil
 }
 
-// ZapiszSkrypt zakłada pozycję biblioteki albo dokłada jej kolejną wersję. Numer
-// wersji nadaje baza wyrażeniem wersja + 1 wykonanym w tej samej transakcji.
 func (r *repozytoriumTerminala) ZapiszSkrypt(ctx context.Context,
 	skrypt SkryptTerminala) (int64, bool, error) {
 
@@ -204,7 +196,7 @@ func (r *repozytoriumTerminala) ZapiszSkrypt(ctx context.Context,
 	err := wTransakcji(ctx, r.db, func(transakcja *sql.Tx) error {
 		wynik, err := transakcja.ExecContext(ctx, podmienSkryptTerminala,
 			skrypt.Nazwa, rodzaj, skrypt.Powloka, skrypt.Tresc, skrypt.Znaczniki,
-			skrypt.Alias, skrypt.Kod)
+			skrypt.Alias, skrypt.Kod, KontoOperatora(ctx))
 		if err != nil {
 			return fmt.Errorf("dane: nie można zapisać pozycji biblioteki %q: %w", skrypt.Kod, err)
 		}
@@ -213,15 +205,21 @@ func (r *repozytoriumTerminala) ZapiszSkrypt(ctx context.Context,
 			return fmt.Errorf("dane: nie można policzyć zmienionych wierszy biblioteki: %w", err)
 		}
 		if zmienione == 0 {
-			if _, err := transakcja.ExecContext(ctx, wstawSkryptTerminala,
+			// UNIQUE na `kod` obejmuje całą tabelę: kod zajęty przez inne konto rozbija wstawienie.
+			_, err := transakcja.ExecContext(ctx, wstawSkryptTerminala,
 				skrypt.Kod, skrypt.Nazwa, rodzaj, skrypt.Powloka, skrypt.Tresc,
-				skrypt.Znaczniki, skrypt.Alias); err != nil {
+				skrypt.Znaczniki, skrypt.Alias, KontoOperatora(ctx))
+			if czyKolizja(err) {
+				return fmt.Errorf("dane: pozycja biblioteki %q koliduje z istniejącą: %w",
+					skrypt.Kod, ErrKolizjaWiersza)
+			}
+			if err != nil {
 				return fmt.Errorf("dane: nie można założyć pozycji biblioteki %q: %w", skrypt.Kod, err)
 			}
 			powstala = true
 		}
-		if err := transakcja.QueryRowContext(ctx, wersjaSkryptuTerminala, skrypt.Kod).
-			Scan(&wersja); err != nil {
+		if err := transakcja.QueryRowContext(ctx, wersjaSkryptuTerminala, skrypt.Kod,
+			KontoOperatora(ctx)).Scan(&wersja); err != nil {
 			return fmt.Errorf("dane: nie można odczytać wersji pozycji %q: %w", skrypt.Kod, err)
 		}
 		if _, err := transakcja.ExecContext(ctx, wstawWersjeSkryptuTerminala,
@@ -236,13 +234,11 @@ func (r *repozytoriumTerminala) ZapiszSkrypt(ctx context.Context,
 	return wersja, powstala, nil
 }
 
-// UsunSkrypt usuwa pozycję biblioteki wraz ze wszystkimi jej wersjami
-// (kasowanie kaskadowe, migracja 247).
+// Wersje pozycji znikają kasowaniem kaskadowym (migracja 247).
 func (r *repozytoriumTerminala) UsunSkrypt(ctx context.Context, kod string) (bool, error) {
-	return r.usunWpisTerminala(ctx, usunSkryptTerminala, kod, "pozycji biblioteki")
+	return r.usunWpisTerminala(ctx, usunSkryptTerminala, kod, "pozycji biblioteki", KontoOperatora(ctx))
 }
 
-// ZapiszKlucz wciąga klucz SSH do wykazu kluczy terminala albo odświeża jego wpis po jego kodzie klucza.
 func (r *repozytoriumTerminala) ZapiszKlucz(ctx context.Context, klucz KluczTerminala) error {
 	if klucz.Kod == "" || klucz.Nazwa == "" || klucz.Sciezka == "" {
 		return fmt.Errorf("dane: wpis klucza bez identyfikatora, nazwy albo ścieżki")
@@ -260,13 +256,11 @@ func (r *repozytoriumTerminala) ZapiszKlucz(ctx context.Context, klucz KluczTerm
 	return sprawdzTrafienieZapisu(wynik, "klucz", klucz.Kod)
 }
 
-// UsunKlucz zdejmuje klucz z wykazu. Pliki klucza na dysku to osobna czynność
-// rdzenia — baza ich nie tyka.
+// Pliki klucza na dysku zdejmuje osobna czynność rdzenia, nie baza.
 func (r *repozytoriumTerminala) UsunKlucz(ctx context.Context, kod string) (bool, error) {
 	return r.usunWpisTerminala(ctx, usunKluczTerminala, kod, "klucza", KontoOperatora(ctx))
 }
 
-// ZapiszTunel zakłada wiersz tunelu terminala albo odświeża jego stan po kodzie tego wskazanego tunelu.
 func (r *repozytoriumTerminala) ZapiszTunel(ctx context.Context, tunel TunelTerminala) error {
 	if tunel.Kod == "" || tunel.OknoKod == "" {
 		return fmt.Errorf("dane: tunel bez identyfikatora albo okna")
@@ -279,15 +273,15 @@ func (r *repozytoriumTerminala) ZapiszTunel(ctx context.Context, tunel TunelTerm
 	if err != nil {
 		return err
 	}
-	if _, err := polecenie.ExecContext(ctx, tunel.Kod, tunel.OknoKod, tunel.Rodzaj,
+	wynik, err := polecenie.ExecContext(ctx, tunel.Kod, tunel.OknoKod, tunel.Rodzaj,
 		tunel.HostKod, tunel.Cel, tunel.PortLokalny, tunel.HostDocelowy,
-		tunel.PortDocelowy, stan, tunel.Powod); err != nil {
+		tunel.PortDocelowy, stan, tunel.Powod, KontoOperatora(ctx), KontoOperatora(ctx))
+	if err != nil {
 		return fmt.Errorf("dane: nie można zapisać tunelu %q: %w", tunel.Kod, err)
 	}
-	return nil
+	return sprawdzTrafienieZapisu(wynik, "tunel", tunel.Kod)
 }
 
-// ZmienStanTunelu przestawia stan tunelu wraz z powodem zmiany oraz znacznikiem chwili jego zamknięcia.
 func (r *repozytoriumTerminala) ZmienStanTunelu(ctx context.Context, kod string,
 	stan shared.TerminalTunnelStatus, powod string, zamkniety bool) error {
 
@@ -302,18 +296,17 @@ func (r *repozytoriumTerminala) ZmienStanTunelu(ctx context.Context, kod string,
 	if zamkniety {
 		znacznik = 1
 	}
-	if _, err := polecenie.ExecContext(ctx, stan, powod, znacznik, kod); err != nil {
+	wynik, err := polecenie.ExecContext(ctx, stan, powod, znacznik, kod, KontoOperatora(ctx))
+	if err != nil {
 		return fmt.Errorf("dane: nie można przestawić stanu tunelu %q: %w", kod, err)
 	}
-	return nil
+	return trafienieWpisuTerminala(wynik, "tunel", kod)
 }
 
-// OsierocTunele przestawia wszystkie tunele poprzedniego biegu rdzenia na stan inactive po ponownym starcie.
 func (r *repozytoriumTerminala) OsierocTunele(ctx context.Context) (int64, error) {
 	return r.osierocWpisyTerminala(ctx, osierocTuneleTerminala, "tuneli")
 }
 
-// ZapiszObserwacje zakłada obserwację plików terminala albo odświeża jej wpis po kodzie tej obserwacji.
 func (r *repozytoriumTerminala) ZapiszObserwacje(ctx context.Context, obserwacja ObserwacjaTerminala) error {
 	if obserwacja.Kod == "" || obserwacja.KartaKod == "" {
 		return fmt.Errorf("dane: obserwacja bez identyfikatora albo karty")
@@ -326,15 +319,16 @@ func (r *repozytoriumTerminala) ZapiszObserwacje(ctx context.Context, obserwacja
 	if err != nil {
 		return err
 	}
-	if _, err := polecenie.ExecContext(ctx, obserwacja.Kod, obserwacja.OknoKod,
+	wynik, err := polecenie.ExecContext(ctx, obserwacja.Kod, obserwacja.OknoKod,
 		obserwacja.KartaKod, obserwacja.Wzorzec, obserwacja.Polecenie,
-		obserwacja.Tlumienie, obserwacja.Rekurencyjnie, stan, obserwacja.Powod); err != nil {
+		obserwacja.Tlumienie, obserwacja.Rekurencyjnie, stan, obserwacja.Powod,
+		KontoOperatora(ctx), KontoOperatora(ctx))
+	if err != nil {
 		return fmt.Errorf("dane: nie można zapisać obserwacji %q: %w", obserwacja.Kod, err)
 	}
-	return nil
+	return sprawdzTrafienieZapisu(wynik, "obserwacja", obserwacja.Kod)
 }
 
-// ZmienStanObserwacji przestawia stan obserwacji plików terminala wraz z podanym powodem tej samej zmiany.
 func (r *repozytoriumTerminala) ZmienStanObserwacji(ctx context.Context, kod string,
 	stan shared.TerminalWatchStatus, powod string) error {
 
@@ -345,13 +339,13 @@ func (r *repozytoriumTerminala) ZmienStanObserwacji(ctx context.Context, kod str
 	if err != nil {
 		return err
 	}
-	if _, err := polecenie.ExecContext(ctx, stan, powod, kod); err != nil {
+	wynik, err := polecenie.ExecContext(ctx, stan, powod, kod, KontoOperatora(ctx))
+	if err != nil {
 		return fmt.Errorf("dane: nie można przestawić stanu obserwacji %q: %w", kod, err)
 	}
-	return nil
+	return trafienieWpisuTerminala(wynik, "obserwacja", kod)
 }
 
-// OdnotujWyzwolenie podnosi licznik wyzwoleń obserwacji plików i zapisuje chwilę ostatniego wyzwolenia.
 func (r *repozytoriumTerminala) OdnotujWyzwolenie(ctx context.Context, kod string) error {
 	if kod == "" {
 		return fmt.Errorf("dane: odnotowanie wyzwolenia bez identyfikatora obserwacji")
@@ -360,20 +354,18 @@ func (r *repozytoriumTerminala) OdnotujWyzwolenie(ctx context.Context, kod strin
 	if err != nil {
 		return err
 	}
-	if _, err := polecenie.ExecContext(ctx, kod); err != nil {
+	wynik, err := polecenie.ExecContext(ctx, kod, KontoOperatora(ctx))
+	if err != nil {
 		return fmt.Errorf("dane: nie można odnotować wyzwolenia obserwacji %q: %w", kod, err)
 	}
-	return nil
+	return trafienieWpisuTerminala(wynik, "obserwacja", kod)
 }
 
-// OsierocObserwacje przestawia obserwacje poprzedniego biegu rdzenia na stan stopped po ponownym starcie.
 func (r *repozytoriumTerminala) OsierocObserwacje(ctx context.Context) (int64, error) {
 	return r.osierocWpisyTerminala(ctx, osierocObserwacjeTerminala, "obserwacji")
 }
 
-// usunWpisTerminala wykonuje kasowanie po kodzie i oddaje prawdę o skutku: czy wiersz naprawdę zniknął.
-// Dalsze argumenty idą za kodem w kolejności zapytania; tabela z granicą konta
-// dokłada tu wynik KontoOperatora, tabela bez granicy nie dokłada niczego.
+// Dalsze argumenty idą za kodem w kolejności zapytania; tabela z granicą konta dokłada wynik KontoOperatora.
 func (r *repozytoriumTerminala) usunWpisTerminala(ctx context.Context,
 	zapytanie, kod, czego string, dalsze ...any) (bool, error) {
 
@@ -395,7 +387,17 @@ func (r *repozytoriumTerminala) usunWpisTerminala(ctx context.Context,
 	return usuniete > 0, nil
 }
 
-// osierocWpisyTerminala wykonuje jedno osierocenie zapytaniem i oddaje liczbę wierszy, których dotknęło.
+func trafienieWpisuTerminala(wynik sql.Result, czego, kod string) error {
+	zmienione, err := wynik.RowsAffected()
+	if err != nil {
+		return fmt.Errorf("dane: nieznana liczba zmienionych wierszy (%s %q): %w", czego, kod, err)
+	}
+	if zmienione == 0 {
+		return fmt.Errorf("dane: %s %q: %w", czego, kod, ErrBrakWiersza)
+	}
+	return nil
+}
+
 func (r *repozytoriumTerminala) osierocWpisyTerminala(ctx context.Context,
 	zapytanie, czego string) (int64, error) {
 

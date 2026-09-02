@@ -1,6 +1,5 @@
-// Plik obsługuje segmentację modułu Translate: zestawy reguł podziału w tabelach
-// zestaw_regul_segmentacji i regula_segmentacji oraz trwałe segmenty okna w
-// tabeli segment_okna_tlumaczenia, wprowadzone migracją 161.
+// Plik obsługuje segmentację modułu Translate: zestawy reguł podziału (zestaw_regul_segmentacji,
+// regula_segmentacji) oraz trwałe segmenty okna (segment_okna_tlumaczenia), wprowadzone migracją 161.
 package dane
 
 import (
@@ -12,8 +11,7 @@ import (
 	"time"
 )
 
-// ZestawRegulSegmentacji to wiersz `zestaw_regul_segmentacji`. `Srx` niesie
-// treść pliku SRX w całości — standard branżowy, którego rdzeń nie rozkłada.
+// `Srx` niesie treść pliku SRX w całości — standard branżowy, którego rdzeń nie rozkłada.
 type ZestawRegulSegmentacji struct {
 	ID             int64
 	Kod            string
@@ -24,8 +22,6 @@ type ZestawRegulSegmentacji struct {
 	Zaktualizowano int64
 }
 
-// RegulaSegmentacji to wiersz `regula_segmentacji` — para wzorców i
-// rozstrzygnięcie, czy ich zderzenie jest granicą zdania.
 type RegulaSegmentacji struct {
 	Kolejnosc int64
 	Przed     string
@@ -33,16 +29,18 @@ type RegulaSegmentacji struct {
 	Lamie     bool
 }
 
-// ZestawyRegulSegmentacji oddaje zestawy wraz z regułami, zawężone językiem
-// (puste zawężenie oddaje komplet).
+// warunekOknaSegmentu prowadzi segment do konta przez okno_tlumaczenia (konto_id od migracji 484).
+const warunekOknaSegmentu = `EXISTS (SELECT 1 FROM okno_tlumaczenia
+	WHERE okno_tlumaczenia.id = segment_okna_tlumaczenia.okno_id AND ` + WarunekKonta + `)`
+
 func (r *repozytoriumTlumaczen) ZestawyRegulSegmentacji(ctx context.Context,
 	jezyk string) ([]ZestawRegulSegmentacji, error) {
 
 	zapytanie := `SELECT id, identyfikator_zewnetrzny, nazwa, jezyk, srx, zaktualizowano
-	                FROM zestaw_regul_segmentacji`
-	argumenty := []any{}
+	                FROM zestaw_regul_segmentacji WHERE ` + WarunekKonta
+	argumenty := []any{KontoOperatora(ctx)}
 	if strings.TrimSpace(jezyk) != "" {
-		zapytanie += " WHERE jezyk = ?"
+		zapytanie += " AND jezyk = ?"
 		argumenty = append(argumenty, jezyk)
 	}
 	zapytanie += " ORDER BY nazwa"
@@ -78,8 +76,6 @@ func (r *repozytoriumTlumaczen) ZestawyRegulSegmentacji(ctx context.Context,
 	return zestawy, nil
 }
 
-// regulySegmentacji doczytuje reguły jednego zestawu z bazy danych w kolejności
-// zapisanej, porządkując wynik według pola kolejnosc.
 func (r *repozytoriumTlumaczen) regulySegmentacji(ctx context.Context,
 	zestawID int64) ([]RegulaSegmentacji, error) {
 
@@ -104,8 +100,8 @@ func (r *repozytoriumTlumaczen) regulySegmentacji(ctx context.Context,
 	return reguly, wiersze.Err()
 }
 
-// ZapiszZestawRegulSegmentacji zakłada zestaw albo nadpisuje zastany po kodzie
-// i wymienia jego reguły w całości — kontrakt nadsyła wykaz reguł kompletem.
+// Kontrakt nadsyła wykaz reguł kompletem, więc reguły idą na wymianę w całości.
+// Warunek przy DO UPDATE zostawia zestaw cudzego konta nietknięty; zapis kończy się ErrKolizjaWiersza.
 func (r *repozytoriumTlumaczen) ZapiszZestawRegulSegmentacji(ctx context.Context,
 	zestaw ZestawRegulSegmentacji) (ZestawRegulSegmentacji, error) {
 
@@ -114,20 +110,25 @@ func (r *repozytoriumTlumaczen) ZapiszZestawRegulSegmentacji(ctx context.Context
 	}
 	teraz := time.Now().UnixMilli()
 	err := wTransakcji(ctx, r.db, func(transakcja *sql.Tx) error {
-		if _, err := transakcja.ExecContext(ctx, `INSERT INTO zestaw_regul_segmentacji
-			(identyfikator_zewnetrzny, nazwa, jezyk, srx, zaktualizowano)
-			VALUES (?, ?, ?, ?, ?)
+		wynik, err := transakcja.ExecContext(ctx, `INSERT INTO zestaw_regul_segmentacji
+			(identyfikator_zewnetrzny, nazwa, jezyk, srx, zaktualizowano, konto_id)
+			VALUES (?, ?, ?, ?, ?, `+WskazanieKonta+`)
 			ON CONFLICT(identyfikator_zewnetrzny) DO UPDATE SET
 				nazwa = excluded.nazwa, jezyk = excluded.jezyk, srx = excluded.srx,
-				zaktualizowano = excluded.zaktualizowano`,
+				zaktualizowano = excluded.zaktualizowano
+			WHERE `+WarunekKonta,
 			zestaw.Kod, zestaw.Nazwa, tekstDoKolumny(zestaw.Jezyk),
-			tekstDoKolumny(zestaw.Srx), teraz); err != nil {
+			tekstDoKolumny(zestaw.Srx), teraz, KontoOperatora(ctx), KontoOperatora(ctx))
+		if err != nil {
 			return fmt.Errorf("dane: nie można zapisać zestawu reguł segmentacji %q: %w", zestaw.Kod, err)
+		}
+		if err := sprawdzTrafienieZapisu(wynik, "zestaw reguł segmentacji", zestaw.Kod); err != nil {
+			return err
 		}
 		var zestawID int64
 		if err := transakcja.QueryRowContext(ctx,
-			`SELECT id FROM zestaw_regul_segmentacji WHERE identyfikator_zewnetrzny = ?`,
-			zestaw.Kod).Scan(&zestawID); err != nil {
+			`SELECT id FROM zestaw_regul_segmentacji WHERE identyfikator_zewnetrzny = ? AND `+WarunekKonta,
+			zestaw.Kod, KontoOperatora(ctx)).Scan(&zestawID); err != nil {
 			return fmt.Errorf("dane: nie można odczytać zestawu reguł segmentacji %q: %w", zestaw.Kod, err)
 		}
 		if _, err := transakcja.ExecContext(ctx,
@@ -150,8 +151,6 @@ func (r *repozytoriumTlumaczen) ZapiszZestawRegulSegmentacji(ctx context.Context
 	return r.ZestawRegulSegmentacji(ctx, zestaw.Kod)
 }
 
-// ZestawRegulSegmentacji oddaje jeden zestaw reguł segmentacji wraz z jego
-// regułami, odnaleziony po identyfikatorze zewnętrznym zestawu.
 func (r *repozytoriumTlumaczen) ZestawRegulSegmentacji(ctx context.Context,
 	kod string) (ZestawRegulSegmentacji, error) {
 
@@ -159,7 +158,8 @@ func (r *repozytoriumTlumaczen) ZestawRegulSegmentacji(ctx context.Context,
 	var jezyk, srx sql.NullString
 	err := r.db.QueryRowContext(ctx,
 		`SELECT id, identyfikator_zewnetrzny, nazwa, jezyk, srx, zaktualizowano
-		   FROM zestaw_regul_segmentacji WHERE identyfikator_zewnetrzny = ?`, kod).
+		   FROM zestaw_regul_segmentacji WHERE identyfikator_zewnetrzny = ? AND `+WarunekKonta,
+		kod, KontoOperatora(ctx)).
 		Scan(&zestaw.ID, &zestaw.Kod, &zestaw.Nazwa, &jezyk, &srx, &zestaw.Zaktualizowano)
 	if errors.Is(err, sql.ErrNoRows) {
 		return ZestawRegulSegmentacji{}, ErrBrakWiersza
@@ -177,11 +177,11 @@ func (r *repozytoriumTlumaczen) ZestawRegulSegmentacji(ctx context.Context,
 	return zestaw, nil
 }
 
-// SegmentyOkna oddaje trwały podział okna. Pusty wykaz znaczy „okna nikt jeszcze
-// nie dzielił ręcznie" — podział wynika wtedy z tekstu źródłowego.
 func (r *repozytoriumTlumaczen) SegmentyOkna(ctx context.Context, oknoID int64) ([]string, error) {
 	wiersze, err := r.db.QueryContext(ctx,
-		`SELECT tresc FROM segment_okna_tlumaczenia WHERE okno_id = ? ORDER BY kolejnosc`, oknoID)
+		`SELECT tresc FROM segment_okna_tlumaczenia
+		  WHERE okno_id = ? AND `+warunekOknaSegmentu+` ORDER BY kolejnosc`,
+		oknoID, KontoOperatora(ctx))
 	if err != nil {
 		return nil, fmt.Errorf("dane: nie można odczytać segmentów okna %d: %w", oknoID, err)
 	}
@@ -198,21 +198,27 @@ func (r *repozytoriumTlumaczen) SegmentyOkna(ctx context.Context, oknoID int64) 
 	return segmenty, wiersze.Err()
 }
 
-// UstawSegmentyOkna wymienia cały trwały podział okna jedną transakcją,
-// ponieważ scalenie segmentów przesuwa numerację kolejnych wpisów.
+// Jedna transakcja: scalenie segmentów przesuwa numerację kolejnych wpisów.
 func (r *repozytoriumTlumaczen) UstawSegmentyOkna(ctx context.Context,
 	oknoID int64, segmenty []string) error {
 
 	return wTransakcji(ctx, r.db, func(transakcja *sql.Tx) error {
 		if _, err := transakcja.ExecContext(ctx,
-			`DELETE FROM segment_okna_tlumaczenia WHERE okno_id = ?`, oknoID); err != nil {
+			`DELETE FROM segment_okna_tlumaczenia WHERE okno_id = ? AND `+warunekOknaSegmentu,
+			oknoID, KontoOperatora(ctx)); err != nil {
 			return fmt.Errorf("dane: nie można zdjąć segmentów okna %d: %w", oknoID, err)
 		}
 		for numer, tresc := range segmenty {
-			if _, err := transakcja.ExecContext(ctx,
-				`INSERT INTO segment_okna_tlumaczenia (okno_id, kolejnosc, tresc) VALUES (?, ?, ?)`,
-				oknoID, numer, tresc); err != nil {
+			wynik, err := transakcja.ExecContext(ctx,
+				`INSERT INTO segment_okna_tlumaczenia (okno_id, kolejnosc, tresc)
+				 SELECT ?, ?, ? WHERE EXISTS (SELECT 1 FROM okno_tlumaczenia
+				                              WHERE okno_tlumaczenia.id = ? AND `+WarunekKonta+`)`,
+				oknoID, numer, tresc, oknoID, KontoOperatora(ctx))
+			if err != nil {
 				return fmt.Errorf("dane: nie można zapisać segmentu %d okna %d: %w", numer, oknoID, err)
+			}
+			if err := sprawdzTrafienieZapisu(wynik, "okno tłumaczenia", fmt.Sprintf("%d", oknoID)); err != nil {
+				return err
 			}
 		}
 		return nil

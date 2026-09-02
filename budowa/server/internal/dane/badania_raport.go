@@ -9,7 +9,6 @@ import (
 	"fmt"
 )
 
-// RaportBadania to wiersz tabeli raport_badania: raport bez sekcji, oddawanych osobno metodą Sekcje raportu.
 type RaportBadania struct {
 	ID             int64
 	Kod            string
@@ -19,8 +18,6 @@ type RaportBadania struct {
 	Zaktualizowano string
 }
 
-// SekcjaRaportu to wiersz `sekcja_raportu_badania`; treść niesie para
-// `Tresc`/`TrescOdwolanie` — tekst wprost albo odwołanie do zasobu.
 type SekcjaRaportu struct {
 	ID             int64
 	Kod            string
@@ -33,8 +30,6 @@ type SekcjaRaportu struct {
 	Utworzono      string
 }
 
-// EksportRaportu to wiersz `eksport_raportu_badania` — trwały ślad wyniku
-// eksportu. `RaportKod` jest kodem zewnętrznym raportu.
 type EksportRaportu struct {
 	ID               int64
 	Kod              string
@@ -44,9 +39,8 @@ type EksportRaportu struct {
 	PlikBibliotekiID *string
 	SciezkaWyniku    *string
 	RozmiarBajtow    *int64
-	// Cel jest miejscem docelowym eksportu: pobranie, Library, Studio albo Roundtable.
-	Cel       string
-	Utworzono string
+	Cel              string
+	Utworzono        string
 }
 
 const (
@@ -83,14 +77,19 @@ const (
 	                                        sciezka_docelowa, plik_biblioteki_id, sciezka_wyniku,
 	                                        rozmiar_bajtow, utworzono
 	                                FROM eksport_raportu_badania WHERE identyfikator_zewnetrzny = ?`
-	ustawPrzestrzenBadania = `INSERT INTO przestrzen_badania (id, zakres, zaktualizowano)
-	                          VALUES (1, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now'))
+	// Tabela przestrzen_badania niesie CHECK(id = 1) (migracja 049): jeden wiersz
+	// na instalację, więc konto młodsze dostaje odmowę, nie własny wiersz.
+	ustawPrzestrzenBadania = `INSERT INTO przestrzen_badania (id, zakres, zaktualizowano, konto_id)
+	                          VALUES (1, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now'), ` + WskazanieKonta + `)
 	                          ON CONFLICT(id) DO UPDATE SET
-	                              zakres = excluded.zakres, zaktualizowano = excluded.zaktualizowano`
-	usunEtapyPrzestrzeniBadania     = `DELETE FROM etap_przestrzeni_badania`
-	wstawEtapPrzestrzeniBadania     = `INSERT INTO etap_przestrzeni_badania (kolejnosc, etap) VALUES (?, ?)`
-	pobierzZakresPrzestrzeniBadania = `SELECT zakres FROM przestrzen_badania WHERE id = 1`
-	listaEtapowPrzestrzeniBadania   = `SELECT etap FROM etap_przestrzeni_badania ORDER BY kolejnosc`
+	                              zakres = excluded.zakres, zaktualizowano = excluded.zaktualizowano
+	                          WHERE ` + WarunekKonta
+	usunEtapyPrzestrzeniBadania = `DELETE FROM etap_przestrzeni_badania WHERE ` + WarunekKonta
+	wstawEtapPrzestrzeniBadania = `INSERT INTO etap_przestrzeni_badania (kolejnosc, etap, konto_id)
+	                               VALUES (?, ?, ` + WskazanieKonta + `)`
+	pobierzZakresPrzestrzeniBadania = `SELECT zakres FROM przestrzen_badania WHERE id = 1 AND ` + WarunekKonta
+	listaEtapowPrzestrzeniBadania   = `SELECT etap FROM etap_przestrzeni_badania
+	                                   WHERE ` + WarunekKonta + ` ORDER BY kolejnosc`
 )
 
 // ZapiszRaport zakłada albo nadpisuje raport po kodzie i podmienia komplet jego sekcji w jednej transakcji.
@@ -132,7 +131,6 @@ func (r *repozytoriumBadan) ZapiszRaport(ctx context.Context, raport RaportBadan
 	return r.Raport(ctx, raport.Kod)
 }
 
-// zapiszSekcjeRaportu wstawia sekcje raportu i ich powiązania z ustaleniami badania w jednej transakcji.
 func zapiszSekcjeRaportu(ctx context.Context, z *zapytania, transakcja *sql.Tx, raportID int64, kodRaportu string, sekcje []SekcjaRaportu) error {
 	wstawienie, err := z.wTransakcji(ctx, transakcja, wstawSekcjeRaportuBadania)
 	if err != nil {
@@ -195,7 +193,6 @@ func (r *repozytoriumBadan) Raport(ctx context.Context, kod string) (RaportBadan
 	return raport, nil
 }
 
-// odczytajRaportBadania składa całą strukturę raportu badania z jednego wiersza wyniku danego zapytania.
 func odczytajRaportBadania(wiersz skaner) (RaportBadania, error) {
 	var raport RaportBadania
 	err := wiersz.Scan(&raport.ID, &raport.Kod, &raport.Okno, &raport.Tytul,
@@ -309,7 +306,6 @@ func (r *repozytoriumBadan) ZapiszEksport(ctx context.Context, eksport EksportRa
 	return zapisany, nil
 }
 
-// odczytajEksportRaportu składa strukturę eksportu z jednego wiersza; RaportKod wywołujący uzupełnia sam.
 func odczytajEksportRaportu(wiersz skaner) (EksportRaportu, error) {
 	var eksport EksportRaportu
 	var raportID int64
@@ -334,14 +330,18 @@ func (r *repozytoriumBadan) UstawPrzestrzen(ctx context.Context, zakres string, 
 		if err != nil {
 			return err
 		}
-		if _, err := zapis.ExecContext(ctx, zakres); err != nil {
+		wynik, err := zapis.ExecContext(ctx, zakres, KontoOperatora(ctx), KontoOperatora(ctx))
+		if err != nil {
 			return fmt.Errorf("dane: nie można zapisać przestrzeni badania: %w", err)
+		}
+		if err := sprawdzTrafienieZapisu(wynik, "przestrzeń badania", "1"); err != nil {
+			return err
 		}
 		czyszczenie, err := r.zapytania.wTransakcji(ctx, transakcja, usunEtapyPrzestrzeniBadania)
 		if err != nil {
 			return err
 		}
-		if _, err := czyszczenie.ExecContext(ctx); err != nil {
+		if _, err := czyszczenie.ExecContext(ctx, KontoOperatora(ctx)); err != nil {
 			return fmt.Errorf("dane: nie można wyczyścić etapów przestrzeni badania: %w", err)
 		}
 		wstawienie, err := r.zapytania.wTransakcji(ctx, transakcja, wstawEtapPrzestrzeniBadania)
@@ -349,7 +349,7 @@ func (r *repozytoriumBadan) UstawPrzestrzen(ctx context.Context, zakres string, 
 			return err
 		}
 		for indeks, etap := range etapy {
-			if _, err := wstawienie.ExecContext(ctx, indeks+1, etap); err != nil {
+			if _, err := wstawienie.ExecContext(ctx, indeks+1, etap, KontoOperatora(ctx)); err != nil {
 				return fmt.Errorf("dane: nie można zapisać etapu %q przestrzeni badania: %w", etap, err)
 			}
 		}
@@ -369,7 +369,7 @@ func (r *repozytoriumBadan) Przestrzen(ctx context.Context) (string, []string, e
 		return "", nil, err
 	}
 	var zakres string
-	err = polecenie.QueryRowContext(ctx).Scan(&zakres)
+	err = polecenie.QueryRowContext(ctx, KontoOperatora(ctx)).Scan(&zakres)
 	if errors.Is(err, sql.ErrNoRows) {
 		return "", []string{}, nil
 	}
@@ -380,7 +380,7 @@ func (r *repozytoriumBadan) Przestrzen(ctx context.Context) (string, []string, e
 	if err != nil {
 		return "", nil, err
 	}
-	wiersze, err := listaEtapow.QueryContext(ctx)
+	wiersze, err := listaEtapow.QueryContext(ctx, KontoOperatora(ctx))
 	if err != nil {
 		return "", nil, fmt.Errorf("dane: nie można odczytać etapów przestrzeni badania: %w", err)
 	}

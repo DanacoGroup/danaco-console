@@ -1,6 +1,5 @@
 // Odpowiedzialność pliku: konfiguracja dostępu sesji do pamięci (tabela
-// `konfiguracja_pamieci_sesji`). Pamięć zostaje na poziomie sesji;
-// brak wiersza oznacza ustawienie domyślne, nie odmowę dostępu.
+// `konfiguracja_pamieci_sesji`); brak wiersza oznacza ustawienie domyślne.
 package dane
 
 import (
@@ -11,8 +10,6 @@ import (
 	"strings"
 )
 
-// KonfiguracjaPamieci opisuje, z których poziomów pamięci korzysta sesja
-// i czy wolno jej pamięć zapisywać.
 type KonfiguracjaPamieci struct {
 	SesjaID         int64
 	PoziomyWlaczone []PoziomPamieci
@@ -20,20 +17,29 @@ type KonfiguracjaPamieci struct {
 	Zaktualizowano  string
 }
 
-const (
+// Tabela `sesja` konta nie niesie: granica dochodzi przez `karta_sesji.konto_id` (migracja 407), aliasem z sesje.go.
+var (
+	warunekKontaSesjiPamieci = `EXISTS (SELECT 1 FROM sesja s JOIN karta_sesji k ON k.id = s.karta_sesji_id
+	                                     WHERE s.id = konfiguracja_pamieci_sesji.sesja_id
+	                                       AND ` + warunekKontaKartySesji + `)`
+
 	zapiszKonfiguracjePamieci = `INSERT INTO konfiguracja_pamieci_sesji
 	                             (sesja_id, poziomy_wlaczone, zapis_wlaczony)
-	                             VALUES (?, ?, ?)
+	                             SELECT ?, ?, ?
+	                              WHERE EXISTS (SELECT 1 FROM sesja s
+	                                             JOIN karta_sesji k ON k.id = s.karta_sesji_id
+	                                            WHERE s.id = ? AND ` + warunekKontaKartySesji + `)
 	                             ON CONFLICT(sesja_id) DO UPDATE SET
 	                                 poziomy_wlaczone = excluded.poziomy_wlaczone,
 	                                 zapis_wlaczony = excluded.zapis_wlaczony,
-	                                 zaktualizowano = strftime('%Y-%m-%dT%H:%M:%fZ','now')`
+	                                 zaktualizowano = strftime('%Y-%m-%dT%H:%M:%fZ','now')
+	                             WHERE ` + warunekKontaSesjiPamieci
 
 	pobierzKonfiguracjePamieci = `SELECT sesja_id, poziomy_wlaczone, zapis_wlaczony, zaktualizowano
-	                              FROM konfiguracja_pamieci_sesji WHERE sesja_id = ?`
+	                              FROM konfiguracja_pamieci_sesji
+	                              WHERE sesja_id = ? AND ` + warunekKontaSesjiPamieci
 )
 
-// UstawKonfiguracjeSesji zapisuje konfigurację pamięci sesji wraz z listą jej aktywnych poziomów zapisu.
 func (r *repozytoriumPamieci) UstawKonfiguracjeSesji(ctx context.Context,
 	konfiguracja KonfiguracjaPamieci) error {
 
@@ -41,17 +47,18 @@ func (r *repozytoriumPamieci) UstawKonfiguracjeSesji(ctx context.Context,
 	if err != nil {
 		return err
 	}
-	_, err = polecenie.ExecContext(ctx, konfiguracja.SesjaID,
-		zlozPoziomy(konfiguracja.PoziomyWlaczone), liczbaLogiczna(konfiguracja.ZapisWlaczony))
+	wynik, err := polecenie.ExecContext(ctx, konfiguracja.SesjaID,
+		zlozPoziomy(konfiguracja.PoziomyWlaczone), liczbaLogiczna(konfiguracja.ZapisWlaczony),
+		konfiguracja.SesjaID, KontoOperatora(ctx), KontoOperatora(ctx))
 	if err != nil {
 		return fmt.Errorf("dane: nie można zapisać konfiguracji pamięci sesji %d: %w",
 			konfiguracja.SesjaID, err)
 	}
-	return nil
+	return sprawdzTrafienieZapisu(wynik, "konfiguracja pamięci sesji",
+		fmt.Sprintf("%d", konfiguracja.SesjaID))
 }
 
-// KonfiguracjaSesji zwraca konfigurację pamięci sesji. Drugi wynik mówi, czy
-// Operator ją w ogóle ustawił.
+// KonfiguracjaSesji zwraca konfigurację pamięci sesji; drugi wynik mówi, czy Operator ją ustawił.
 func (r *repozytoriumPamieci) KonfiguracjaSesji(ctx context.Context,
 	sesjaID int64) (KonfiguracjaPamieci, bool, error) {
 
@@ -62,8 +69,8 @@ func (r *repozytoriumPamieci) KonfiguracjaSesji(ctx context.Context,
 	var konfiguracja KonfiguracjaPamieci
 	var poziomy string
 	var zapis int
-	err = polecenie.QueryRowContext(ctx, sesjaID).Scan(&konfiguracja.SesjaID, &poziomy, &zapis,
-		&konfiguracja.Zaktualizowano)
+	err = polecenie.QueryRowContext(ctx, sesjaID, KontoOperatora(ctx)).Scan(&konfiguracja.SesjaID,
+		&poziomy, &zapis, &konfiguracja.Zaktualizowano)
 	if errors.Is(err, sql.ErrNoRows) {
 		return KonfiguracjaPamieci{}, false, nil
 	}
@@ -76,7 +83,6 @@ func (r *repozytoriumPamieci) KonfiguracjaSesji(ctx context.Context,
 	return konfiguracja, true, nil
 }
 
-// zlozPoziomy zapisuje listę poziomów pamięci jako pojedynczą wartość tekstową kolumny w bazie danych.
 func zlozPoziomy(poziomy []PoziomPamieci) string {
 	nazwy := make([]string, 0, len(poziomy))
 	for _, poziom := range poziomy {
@@ -87,7 +93,6 @@ func zlozPoziomy(poziomy []PoziomPamieci) string {
 	return strings.Join(nazwy, ",")
 }
 
-// rozlozPoziomy odczytuje listę poziomów pamięci z wartości tekstowej kolumny zapisanej w bazie danych.
 func rozlozPoziomy(wartosc string) []PoziomPamieci {
 	poziomy := []PoziomPamieci{}
 	for _, nazwa := range strings.Split(wartosc, ",") {

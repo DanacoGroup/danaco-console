@@ -2,9 +2,12 @@
 package zdalne
 
 import (
+	"context"
 	"database/sql"
 	"fmt"
 	"strings"
+
+	"danacoconsole/server/internal/dane"
 )
 
 // Host to wiersz tabeli hostów zdalnych, potrzebny torowi do zbudowania połączenia SSH z daną zdalną maszyną.
@@ -30,12 +33,12 @@ func (h Host) AdresPolaczenia() string {
 }
 
 // Funkcja hostOkna czyta nazwę hosta wykonania obowiązującą dla danego okna, po dwóch poziomach zasięgu.
-func hostOkna(idOkna string) (string, error) {
+func hostOkna(ctx context.Context, idOkna string) (string, error) {
 	db := baza()
 	if db == nil {
 		return "", odmowaBrakuZasilenia()
 	}
-	const zapytanie = `
+	zapytanie := `
 		SELECT COALESCE(u.wartosc, '')
 		  FROM ustawienie u
 		  JOIN poziom_zasiegu p ON p.id = u.poziom_zasiegu_id
@@ -44,10 +47,11 @@ func hostOkna(idOkna string) (string, error) {
 		   AND TRIM(COALESCE(u.wartosc, '')) <> ''
 		   AND ((p.kod = 'okno' AND u.klucz_zasiegu = ?)
 		     OR (p.kod = 'globalny' AND u.klucz_zasiegu = ''))
+		   AND ` + strings.ReplaceAll(dane.WarunekKonta, "konto_id", "u.konto_id") + `
 		 ORDER BY p.pierwszenstwo DESC
 		 LIMIT 1`
 	var nazwa string
-	err := db.QueryRow(zapytanie, idOkna).Scan(&nazwa)
+	err := db.QueryRowContext(ctx, zapytanie, idOkna, dane.KontoOperatora(ctx)).Scan(&nazwa)
 	if err == sql.ErrNoRows {
 		return "", nil
 	}
@@ -60,16 +64,16 @@ func hostOkna(idOkna string) (string, error) {
 // hostZRejestru czyta wiersz hosta o podanej nazwie. Brak wiersza i brak zgody
 // są odmowami trójczęściowymi — każda nazywa dokładnie ten ruch Operatora,
 // który ją zdejmuje (instrukcja Danaco przy migracji 088).
-func hostZRejestru(nazwa string) (Host, error) {
+func hostZRejestru(ctx context.Context, nazwa string) (Host, error) {
 	db := baza()
 	if db == nil {
 		return Host{}, odmowaBrakuZasilenia()
 	}
 	const zapytanie = `SELECT id, nazwa, adres, uzytkownik, port, zgoda, klucz_hosta
-	                     FROM host_zdalny WHERE nazwa = ?`
+	                     FROM host_zdalny WHERE nazwa = ? AND ` + dane.WarunekKonta
 	var h Host
 	var zgoda int
-	err := db.QueryRow(zapytanie, nazwa).Scan(&h.Id, &h.Nazwa, &h.Adres, &h.Uzytkownik,
+	err := db.QueryRowContext(ctx, zapytanie, nazwa, dane.KontoOperatora(ctx)).Scan(&h.Id, &h.Nazwa, &h.Adres, &h.Uzytkownik,
 		&h.Port, &zgoda, &h.KluczHosta)
 	if err == sql.ErrNoRows {
 		return Host{}, fmt.Errorf("zdalne: połączenie z hostem %q nie zostało nawiązane, "+

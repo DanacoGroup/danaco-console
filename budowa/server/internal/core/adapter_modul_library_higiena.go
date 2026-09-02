@@ -302,7 +302,7 @@ func (a *adapterBiblioteki) PolaczDuplikaty(ctx context.Context,
 	}
 	a.odnotuj(ctx, shared.LibraryAuditActionChange, &docelowy.Kod,
 		"scalenie duplikatów: wchłonięto "+strconv.Itoa(wchloniete))
-	a.zglosNasluchom(shared.LibraryWebhookEventFileChanged, docelowy.Kod)
+	a.zglosNasluchom(ctx, shared.LibraryWebhookEventFileChanged, docelowy.Kod)
 	return shared.LibraryDuplicateMergeResponse{
 		File: kontrakt, MergedCount: wchloniete,
 		CarriedTags: przeniesioneEtykiety, CarriedVersions: wersjePrzeniesione,
@@ -386,7 +386,7 @@ func (a *adapterBiblioteki) NormalizujNazwy(ctx context.Context,
 					return shared.LibraryNameNormalizeResponse{}, bladBiblioteki(err)
 				}
 				wynik.Applied = true
-				a.zglosNasluchom(shared.LibraryWebhookEventFileChanged, zasob.Kod)
+				a.zglosNasluchom(ctx, shared.LibraryWebhookEventFileChanged, zasob.Kod)
 			}
 		}
 		wyniki = append(wyniki, wynik)

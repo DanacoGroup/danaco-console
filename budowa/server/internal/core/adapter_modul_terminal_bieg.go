@@ -1,6 +1,4 @@
-// Odpowiedzialność pliku: bieg procesu terminala od startu do domknięcia —
-// uruchomienie, przejęcie drzewa potomstwa, pompa wyjścia, granica czasu
-// i zapis wyniku. Obserwator zakończenia pracuje poza żądaniem, zdarzeniem.
+// Odpowiedzialność pliku: bieg procesu terminala od startu do domknięcia.
 package core
 
 import (
@@ -16,8 +14,6 @@ import (
 	"danacoconsole/shared"
 )
 
-// uruchom startuje proces przez port warstwy kanału, obejmuje go drzewem
-// potomstwa i podpina pompę wyjścia.
 func (a *adapterTerminala) uruchom(ctx context.Context, karta *kartaTerminala, okno session.Okno,
 	polecenie session.Polecenie, tresc string, inicjator shared.ProcessInitiator) (*procesTerminala, error) {
 
@@ -25,14 +21,13 @@ func (a *adapterTerminala) uruchom(ctx context.Context, karta *kartaTerminala, o
 		return nil, protocol.JakoError(protocol.NowyBlad(shared.ErrorCodeInternalError,
 			"moduł Terminal: serwer nie ma uruchamiacza procesów"))
 	}
-	uchwyt, err := a.uruchamiacz.UruchomProces(okno, polecenie)
+	uchwyt, err := a.uruchamiacz.UruchomProces(ctx, okno, polecenie)
 	if err != nil {
 		return nil, protocol.JakoError(protocol.NowyBlad(shared.ErrorCodeChannelUnavailable,
 			"moduł Terminal: nie można uruchomić polecenia w powłoce "+string(karta.powloka)+": "+err.Error()))
 	}
 	drzewo, err := session.PrzejmijDrzewo(uchwyt.Pid())
 	if err != nil {
-		// Proces już biegnie, a uchwytu drzewa nie ma — zostawienie znaczyłoby sierotę.
 		_ = uchwyt.Ubij()
 		_ = uchwyt.Czekaj()
 		return nil, protocol.JakoError(protocol.NowyBlad(shared.ErrorCodeInternalError,
@@ -66,9 +61,6 @@ func (a *adapterTerminala) uruchom(ctx context.Context, karta *kartaTerminala, o
 	return proces, nil
 }
 
-// pilnujZakonczenia czeka na koniec procesu we własnej gorutynie, domyka jego
-// stan i rozgłasza zmianę. Granica czasu większa od zera ubija drzewo procesu
-// po jej upływie.
 func (a *adapterTerminala) pilnujZakonczenia(proces *procesTerminala, granica time.Duration) {
 	zakonczenie := make(chan error, 1)
 	go func() { zakonczenie <- proces.uchwyt.Czekaj() }()
@@ -93,8 +85,6 @@ func (a *adapterTerminala) pilnujZakonczenia(proces *procesTerminala, granica ti
 	}()
 }
 
-// domknij ustala stan końcowy procesu, odkłada go do dziennika, zamyka strumień
-// wyjścia i rozgłasza zmianę.
 func (a *adapterTerminala) domknij(proces *procesTerminala, blad error, powod string) {
 	stan, kodWyjscia := wynikZakonczenia(blad)
 	if !proces.Domknij(stan, kodWyjscia) {
@@ -111,8 +101,6 @@ func (a *adapterTerminala) domknij(proces *procesTerminala, blad error, powod st
 	a.rozglos(proces.kontekst, shared.ChangeKindUpdated, proces)
 }
 
-// wynikZakonczenia przekłada wynik oczekiwania na stan i kod wyjścia. Kod
-// różny od zera jest wynikiem polecenia, nie usterką rdzenia.
 func wynikZakonczenia(blad error) (shared.TerminalProcessStatus, *int) {
 	if blad == nil {
 		zero := 0
@@ -130,8 +118,6 @@ func wynikZakonczenia(blad error) (shared.TerminalProcessStatus, *int) {
 	return shared.TerminalProcessStatusFailed, nil
 }
 
-// zapiszProces odkłada uruchomiony proces do dziennika. Nieudany zapis nie
-// zatrzymuje procesu, który już biegnie.
 func (a *adapterTerminala) zapiszProces(ctx context.Context, proces *procesTerminala) {
 	if a.repozytorium == nil {
 		return
@@ -149,8 +135,6 @@ func (a *adapterTerminala) zapiszProces(ctx context.Context, proces *procesTermi
 	})
 }
 
-// rozglos oddaje zmianę procesu obsługiwaczowi, który rozsyła
-// `terminal.process.changed`. Brak podpięcia nie zmienia pracy modułu.
 func (a *adapterTerminala) rozglos(ctx context.Context, zmiana shared.ChangeKind, proces *procesTerminala) {
 	if a.zmiana == nil {
 		return
@@ -158,8 +142,6 @@ func (a *adapterTerminala) rozglos(ctx context.Context, zmiana shared.ChangeKind
 	a.zmiana(ctx, zmiana, procesKontraktu(proces))
 }
 
-// CzekajNaKoniec czeka na domknięcie procesu nie dłużej niż podany czas,
-// po jego upływie oddając ostatni znany stan.
 func (p *procesTerminala) CzekajNaKoniec(najdluzej time.Duration) {
 	select {
 	case <-p.koniec:
@@ -167,8 +149,6 @@ func (p *procesTerminala) CzekajNaKoniec(najdluzej time.Duration) {
 	}
 }
 
-// granicaCzasu czyta granicę z żądania; wartość niedodatnia oddaje granicę
-// domyślną (`granicaCzasuDomyslna`).
 func granicaCzasu(milisekundy *int) time.Duration {
 	if milisekundy == nil || *milisekundy <= 0 {
 		return granicaCzasuDomyslna
@@ -176,8 +156,6 @@ func granicaCzasu(milisekundy *int) time.Duration {
 	return time.Duration(*milisekundy) * time.Millisecond
 }
 
-// inicjatorZadania czyta inicjatora z żądania; brak wskazania znaczy Operatora,
-// wartość domyślną inicjatora poleceń terminala.
 func inicjatorZadania(inicjator *shared.ProcessInitiator) shared.ProcessInitiator {
 	if inicjator == nil || *inicjator == "" {
 		return shared.ProcessInitiatorOperator

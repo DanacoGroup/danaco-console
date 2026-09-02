@@ -1,7 +1,5 @@
-// Warstwa zaufania rozszerzeń: uprawnienia w tabeli uprawnienie_rozszerzenia,
-// podpis pozycji w tabeli podpis_rozszerzenia oraz referencje sekretów ze
-// zakresem współdzielenia w tabelach sekret_rozszerzenia i
-// udostepnienie_sekretu_rozszerzenia.
+// Warstwa zaufania rozszerzeń: uprawnienia, podpis pozycji oraz referencje sekretów
+// z zakresem współdzielenia (sekret_rozszerzenia, udostepnienie_sekretu_rozszerzenia).
 package dane
 
 import (
@@ -10,9 +8,7 @@ import (
 	"fmt"
 )
 
-// UprawnienieRozszerzenia to wiersz tabeli `uprawnienie_rozszerzenia`.
-// Kolumna `Nadane` rozróżnia wiersz deklaracji manifestu od wiersza nadania
-// przez Operatora, zapisanych w tej samej tabeli.
+// Nadane rozróżnia wiersz deklaracji manifestu od wiersza nadania przez Operatora w tej samej tabeli.
 type UprawnienieRozszerzenia struct {
 	ID              int64
 	RozszerzenieKod string
@@ -25,9 +21,6 @@ type UprawnienieRozszerzenia struct {
 	Nadano          *int64
 }
 
-// PodpisRozszerzenia to wiersz tabeli `podpis_rozszerzenia`: przechowuje
-// algorytm, sumę kontrolną, wydawcę oraz podpis i klucz zakodowane w formacie
-// Base64 wraz z chwilą ostatniej aktualizacji.
 type PodpisRozszerzenia struct {
 	RozszerzenieKod string
 	Algorytm        *string
@@ -38,8 +31,6 @@ type PodpisRozszerzenia struct {
 	Zaktualizowano  int64
 }
 
-// SekretRozszerzenia to wiersz tabeli `sekret_rozszerzenia` wraz z zakresem
-// współdzielenia — kontrakt oddaje referencję zawsze razem z nim.
 type SekretRozszerzenia struct {
 	ID              int64
 	Odwolanie       string
@@ -53,22 +44,25 @@ type SekretRozszerzenia struct {
 
 const (
 	usunUprawnieniaRozszerzenia = `DELETE FROM uprawnienie_rozszerzenia
-	                               WHERE rozszerzenie_kod = ? AND nadane = ?`
+	                               WHERE rozszerzenie_kod = ? AND nadane = ? AND ` + WarunekKonta
 
+	// Więz UNIQUE obejmuje całą tabelę: człon DO UPDATE bez zawężenia nadpisałby uprawnienie konta cudzego.
 	wstawUprawnienieRozszerzenia = `INSERT INTO uprawnienie_rozszerzenia
 	                                (rozszerzenie_kod, zakres, byt, tryb, objasnienie,
-	                                 nadane, agent_kod, nadano)
-	                                VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+	                                 nadane, agent_kod, nadano, konto_id)
+	                                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ` + WskazanieKonta + `)
 	                                ON CONFLICT(rozszerzenie_kod, zakres, byt, nadane, agent_kod)
 	                                DO UPDATE SET
 	                                    tryb = excluded.tryb,
 	                                    objasnienie = excluded.objasnienie,
-	                                    nadano = excluded.nadano`
+	                                    nadano = excluded.nadano
+	                                WHERE ` + WarunekKonta
 
 	listaUprawnienRozszerzenia = `SELECT id, rozszerzenie_kod, zakres, byt, tryb, objasnienie,
 	                                     nadane, agent_kod, nadano
 	                              FROM uprawnienie_rozszerzenia
-	                              WHERE rozszerzenie_kod = ? ORDER BY nadane, zakres, id`
+	                              WHERE rozszerzenie_kod = ? AND ` + WarunekKonta + `
+	                              ORDER BY nadane, zakres, id`
 
 	zapiszPodpisRozszerzenia = `INSERT INTO podpis_rozszerzenia
 	                            (rozszerzenie_kod, algorytm, suma_kontrolna, wydawca,
@@ -104,13 +98,11 @@ const (
 	                             FROM sekret_rozszerzenia
 	                             WHERE odwolanie = ? AND ` + WarunekKonta
 
-	// Zakres współdzielenia wisi na sekrecie kluczem obcym; identyfikator do
-	// jego wymiany zdejmuje się odczytem zawężonym kontem żądania.
+	// Zakres współdzielenia wisi na sekrecie kluczem obcym; identyfikator zdejmuje odczyt zawężony kontem.
 	idSekretuRozszerzenia = `SELECT id FROM sekret_rozszerzenia
 	                         WHERE odwolanie = ? AND ` + WarunekKonta
 
-	// Zawężenie po terminie ważności: `expiringWithinDays` kontraktu przekłada
-	// się na górną granicę czasu, a wartość zerowa granicy wyłącza warunek.
+	// `expiringWithinDays` kontraktu przekłada się na górną granicę czasu; zero wyłącza warunek.
 	listaSekretowRozszerzenia = `SELECT id, odwolanie, etykieta, sposob_logowania, wygasa,
 	                                    zaktualizowano
 	                             FROM sekret_rozszerzenia
@@ -131,9 +123,6 @@ const (
 	                           ORDER BY u.byt_kod`
 )
 
-// ZapiszUprawnieniaRozszerzenia wymienia komplet uprawnień jednej strony,
-// deklarowanych albo nadanych: usuwa poprzedni zestaw i zapisuje przekazany,
-// więc zdjęte uprawnienie znika zamiast pozostawać w tabeli.
 func (r *repozytoriumRozszerzen) ZapiszUprawnieniaRozszerzenia(ctx context.Context,
 	rozszerzenie string, nadane bool, uprawnienia []UprawnienieRozszerzenia) error {
 
@@ -145,7 +134,8 @@ func (r *repozytoriumRozszerzen) ZapiszUprawnieniaRozszerzenia(ctx context.Conte
 		if err != nil {
 			return err
 		}
-		if _, err := czyszczenie.ExecContext(ctx, rozszerzenie, liczbaLogiczna(nadane)); err != nil {
+		if _, err := czyszczenie.ExecContext(ctx, rozszerzenie, liczbaLogiczna(nadane),
+			KontoOperatora(ctx)); err != nil {
 			return fmt.Errorf("dane: nie można wyczyścić uprawnień pozycji %q: %w", rozszerzenie, err)
 		}
 		wstawienie, err := r.zapytania.wTransakcji(ctx, transakcja, wstawUprawnienieRozszerzenia)
@@ -153,21 +143,23 @@ func (r *repozytoriumRozszerzen) ZapiszUprawnieniaRozszerzenia(ctx context.Conte
 			return err
 		}
 		for _, uprawnienie := range uprawnienia {
-			_, err := wstawienie.ExecContext(ctx, rozszerzenie, uprawnienie.Zakres,
+			wynik, err := wstawienie.ExecContext(ctx, rozszerzenie, uprawnienie.Zakres,
 				tekstDoKolumny(uprawnienie.Byt), tekstDoKolumny(uprawnienie.Tryb),
 				tekstDoKolumny(uprawnienie.Objasnienie), liczbaLogiczna(nadane),
-				tekstDoKolumny(uprawnienie.AgentKod), liczbaDoKolumny(uprawnienie.Nadano))
+				tekstDoKolumny(uprawnienie.AgentKod), liczbaDoKolumny(uprawnienie.Nadano),
+				KontoOperatora(ctx), KontoOperatora(ctx))
 			if err != nil {
 				return fmt.Errorf("dane: nie można zapisać uprawnienia %q pozycji %q: %w",
 					uprawnienie.Zakres, rozszerzenie, err)
+			}
+			if err := sprawdzTrafienieZapisu(wynik, "uprawnienie rozszerzenia", uprawnienie.Zakres); err != nil {
+				return err
 			}
 		}
 		return nil
 	})
 }
 
-// UprawnieniaRozszerzenia zwraca uprawnienia pozycji — obie strony naraz;
-// warstwa wyższa rozdziela je po kolumnie `Nadane`.
 func (r *repozytoriumRozszerzen) UprawnieniaRozszerzenia(ctx context.Context,
 	rozszerzenie string) ([]UprawnienieRozszerzenia, error) {
 
@@ -175,7 +167,7 @@ func (r *repozytoriumRozszerzen) UprawnieniaRozszerzenia(ctx context.Context,
 	if err != nil {
 		return nil, err
 	}
-	wiersze, err := polecenie.QueryContext(ctx, rozszerzenie)
+	wiersze, err := polecenie.QueryContext(ctx, rozszerzenie, KontoOperatora(ctx))
 	if err != nil {
 		return nil, fmt.Errorf("dane: nie można odczytać uprawnień pozycji %q: %w", rozszerzenie, err)
 	}
@@ -206,8 +198,6 @@ func (r *repozytoriumRozszerzen) UprawnieniaRozszerzenia(ctx context.Context,
 	return lista, nil
 }
 
-// ZapiszPodpisRozszerzenia utrwala podpis pozycji katalogu wraz z materiałem
-// źródłowym potrzebnym do jego ponownej weryfikacji w przyszłości.
 func (r *repozytoriumRozszerzen) ZapiszPodpisRozszerzenia(ctx context.Context,
 	podpis PodpisRozszerzenia) error {
 
@@ -229,8 +219,6 @@ func (r *repozytoriumRozszerzen) ZapiszPodpisRozszerzenia(ctx context.Context,
 	return nil
 }
 
-// PodpisRozszerzenia zwraca podpis zapisany dla pozycji katalogu; gdy podpisu
-// brak, funkcja zwraca błąd ErrBrakWiersza.
 func (r *repozytoriumRozszerzen) PodpisRozszerzenia(ctx context.Context,
 	rozszerzenie string) (PodpisRozszerzenia, error) {
 
@@ -257,9 +245,7 @@ func (r *repozytoriumRozszerzen) PodpisRozszerzenia(ctx context.Context,
 	return podpis, nil
 }
 
-// ZapiszSekretRozszerzenia zapisuje referencję sekretu wraz z zakresem
-// współdzielenia; zakres wymieniany jest w całości, bo kontrakt nadsyła oba
-// wykazy w komplecie.
+// Zakres współdzielenia wymienia się w całości, bo kontrakt nadsyła oba wykazy w komplecie.
 func (r *repozytoriumRozszerzen) ZapiszSekretRozszerzenia(ctx context.Context,
 	sekret SekretRozszerzenia, wymienZakres bool) (SekretRozszerzenia, error) {
 
@@ -328,8 +314,6 @@ func (r *repozytoriumRozszerzen) ZapiszSekretRozszerzenia(ctx context.Context,
 	return r.SekretRozszerzenia(ctx, sekret.Odwolanie)
 }
 
-// SekretRozszerzenia zwraca jedną referencję sekretu wraz z pełnym zakresem
-// jej współdzielenia między rozszerzeniami i rolami.
 func (r *repozytoriumRozszerzen) SekretRozszerzenia(ctx context.Context, odwolanie string) (SekretRozszerzenia, error) {
 	polecenie, err := r.zapytania.przygotuj(ctx, pobierzSekretRozszerzenia)
 	if err != nil {
@@ -352,8 +336,6 @@ func (r *repozytoriumRozszerzen) SekretRozszerzenia(ctx context.Context, odwolan
 	return sekret, nil
 }
 
-// SekretyRozszerzen zwraca referencje sekretów; granica czasu zeruje warunek
-// wygaśnięcia, gdy wynosi zero.
 func (r *repozytoriumRozszerzen) SekretyRozszerzen(ctx context.Context, doCzasu int64) ([]SekretRozszerzenia, error) {
 	polecenie, err := r.zapytania.przygotuj(ctx, listaSekretowRozszerzenia)
 	if err != nil {
@@ -387,9 +369,6 @@ func (r *repozytoriumRozszerzen) SekretyRozszerzen(ctx context.Context, doCzasu 
 	return lista, nil
 }
 
-// zakresySekretowRozszerzen zwraca dwie mapy: odwołanie sekretu na listę
-// kodów pozycji oraz odwołanie na listę kodów ról, odczytane jednym
-// zapytaniem obejmującym cały rejestr.
 func (r *repozytoriumRozszerzen) zakresySekretowRozszerzen(ctx context.Context) (
 	map[string][]string, map[string][]string, error) {
 
@@ -422,8 +401,6 @@ func (r *repozytoriumRozszerzen) zakresySekretowRozszerzen(ctx context.Context) 
 	return rozszerzenia, role, nil
 }
 
-// odczytajSekretRozszerzenia składa referencję z jednego wiersza wyniku; zakres
-// współdzielenia dokłada wołający z osobnego zapytania.
 func odczytajSekretRozszerzenia(wiersz skaner) (SekretRozszerzenia, error) {
 	var sekret SekretRozszerzenia
 	var etykieta, sposob sql.NullString

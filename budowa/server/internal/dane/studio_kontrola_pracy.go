@@ -1,7 +1,5 @@
-// Odpowiedzialność pliku: warstwa danych odcinka kontroli pracy modułu Studio —
-// blokady fragmentów (migracja 363), odwracalny dziennik czynności wraz
-// z zależnościami (migracja 364) oraz kopie zapasowe i nastawy pracy okna
-// (migracja 366).
+// Warstwa danych odcinka kontroli pracy modułu Studio: blokady fragmentów (migracja 363),
+// dziennik czynności z zależnościami (migracja 364), kopie zapasowe i nastawy pracy (migracja 366).
 package dane
 
 import (
@@ -11,9 +9,6 @@ import (
 	"fmt"
 )
 
-// BlokadaFragmentuStudia to wiersz tabeli `blokada_fragmentu_studio`, niosący
-// zakres chronionego fragmentu dokumentu wraz z zasięgiem, powodem założenia
-// i licznikiem przesunięć.
 type BlokadaFragmentuStudia struct {
 	ID              int64
 	Kod             string
@@ -32,8 +27,6 @@ type BlokadaFragmentuStudia struct {
 	Utworzono       string
 }
 
-// BlokadaSzablonuStudia to wiersz tabeli `blokada_szablonu_studio` — blokada
-// WZORCOWA, kopiowana do każdego dokumentu zakładanego z szablonu.
 type BlokadaSzablonuStudia struct {
 	Kod        string
 	SzablonKod string
@@ -44,9 +37,6 @@ type BlokadaSzablonuStudia struct {
 	Zasieg     string
 }
 
-// CzynnoscDokumentuStudia to wiersz tabeli `czynnosc_dokumentu_studio`, niosący
-// jeden odwracalny wpis dziennika wraz z wycinkiem dokumentu objętym
-// czynnością, jej autorem i stanem.
 type CzynnoscDokumentuStudia struct {
 	ID               int64
 	Kod              string
@@ -67,15 +57,10 @@ type CzynnoscDokumentuStudia struct {
 	ZadanieKod       *string
 	Stan             string
 	Utworzono        string
-	// PodstawyKody i StojaceNaNiej wypełnia odczyt zależności; puste znaczy
-	// czynność samodzielną.
-	PodstawyKody  []string
-	StojaceNaNiej []string
+	PodstawyKody     []string
+	StojaceNaNiej    []string
 }
 
-// KopiaZapasowaStudia to wiersz tabeli `kopia_zapasowa_studio`, niosący jedną
-// kopię dokumentu wraz z wynikiem zapisu — udanym albo nieudanym — i powodem
-// założenia.
 type KopiaZapasowaStudia struct {
 	ID                 int64
 	Kod                string
@@ -91,8 +76,6 @@ type KopiaZapasowaStudia struct {
 	Utworzono          string
 }
 
-// NastawaPracyStudia to wiersz tabeli `nastawa_pracy_studio` — autozapis,
-// wygasanie kopii i nastawy widoku, pamiętane przy dokumencie albo przy oknie.
 type NastawaPracyStudia struct {
 	ID                       int64
 	Okno                     string
@@ -128,8 +111,6 @@ const (
 	blokadaStudiaPobierz = `SELECT ` + kolumnyBlokadyStudia + zrodloBlokadyStudia +
 		` WHERE b.identyfikator_zewnetrzny = ? AND ` + WarunekKonta
 
-	// Kolejność po początku zakresu, bo tak czyta się wykaz blokad w dokumencie
-	// i tak liczy się bilans pominięć: od pierwszego fragmentu do ostatniego.
 	blokadyStudiaLista = `SELECT ` + kolumnyBlokadyStudia + zrodloBlokadyStudia +
 		` WHERE b.dokument_id = ? ORDER BY b.zakres_od, b.id`
 
@@ -139,24 +120,29 @@ const (
 	                                   WHERE dokument_studio.id = blokada_fragmentu_studio.dokument_id
 	                                     AND ` + WarunekKonta + `)`
 
-	// Przesunięcie zakresu po wpisie przed blokadą, tak by blokada nadal
-	// chroniła ten sam fragment dokumentu po edycji poprzedzającej jej
-	// położenie. Kolumna `przesuniecia` liczy wykonane przesunięcia.
 	blokadyStudiaPrzesun = `UPDATE blokada_fragmentu_studio
 	                        SET zakres_od = zakres_od + ?, zakres_do = zakres_do + ?,
 	                            przesuniecia = przesuniecia + 1,
 	                            zaktualizowano = strftime('%Y-%m-%dT%H:%M:%fZ','now')
 	                        WHERE dokument_id = ? AND zakres_od >= ?`
 
+	// Szablon fabryczny jest wyposażeniem instalacji i jego blokady wzorcowe
+	// czyta każde konto, tak jak sam szablon (pobierzSzablonStudia).
 	blokadySzablonuLista = `SELECT identyfikator_zewnetrzny, szablon_kod, nazwa, powod,
 	                               zakres_od, zakres_do, zasieg
 	                        FROM blokada_szablonu_studio
-	                        WHERE szablon_kod = ? ORDER BY zakres_od, id`
+	                        WHERE szablon_kod = ?
+	                          AND EXISTS (SELECT 1 FROM szablon_studio s
+	                                      WHERE s.identyfikator_zewnetrzny = blokada_szablonu_studio.szablon_kod
+	                                        AND (s.fabryczny = 1 OR ` + WarunekKonta + `))
+	                        ORDER BY zakres_od, id`
 
 	blokadaSzablonuZapisz = `INSERT INTO blokada_szablonu_studio
 	                         (identyfikator_zewnetrzny, szablon_kod, nazwa, powod,
 	                          zakres_od, zakres_do, zasieg)
-	                         VALUES (?, ?, ?, ?, ?, ?, ?)`
+	                         SELECT ?, ?, ?, ?, ?, ?, ?
+	                          WHERE EXISTS (SELECT 1 FROM szablon_studio s
+	                                        WHERE s.identyfikator_zewnetrzny = ? AND ` + WarunekKonta + `)`
 
 	kolumnyCzynnosciStudia = `c.id, c.identyfikator_zewnetrzny, d.identyfikator_zewnetrzny,
 	                          c.kolejnosc, c.rodzaj, c.autor_rodzaj, c.autor_agent_kod,
@@ -179,8 +165,6 @@ const (
 	czynnoscStudiaPobierz = `SELECT ` + kolumnyCzynnosciStudia + zrodloCzynnosciStudia +
 		` WHERE c.identyfikator_zewnetrzny = ? AND ` + WarunekKonta
 
-	// Od najświeższej: dziennik czyta się od ostatniego ruchu wstecz, tak jak
-	// go czyta Operator szukający tego, co właśnie zepsuł.
 	czynnosciStudiaLista = `SELECT ` + kolumnyCzynnosciStudia + zrodloCzynnosciStudia +
 		` WHERE c.dokument_id = ? ORDER BY c.kolejnosc DESC, c.id DESC`
 
@@ -203,9 +187,6 @@ const (
 	                                  JOIN dokument_studio d ON d.id = c.dokument_id
 	                                  WHERE c.identyfikator_zewnetrzny = ? AND ` + WarunekKonta + `), ?)`
 
-	// Dwa kierunki jednej relacji. „Na czym ta czynność stoi" mówi, czego nie
-	// wolno cofnąć przed nią; „co stoi na niej" mówi, dlaczego jej samej cofnąć
-	// nie można — i to jest treść odmowy nazywającej zależność.
 	zaleznosciStudiaPodstawy = `SELECT p.identyfikator_zewnetrzny
 	                            FROM zaleznosc_czynnosci_studio z
 	                            JOIN czynnosc_dokumentu_studio c ON c.id = z.czynnosc_id
@@ -239,16 +220,11 @@ const (
 	kopieStudiaLista = `SELECT ` + kolumnyKopiiStudia + zrodloKopiiStudia +
 		` WHERE k.dokument_id = ? ORDER BY k.utworzono DESC, k.id DESC`
 
-	// Kopie niosące zmiany niezapisane, po WSZYSTKICH dokumentach okna. Tym
-	// zapytaniem Studio samo zgłasza „mam niezapisany dokument z godziny X",
-	// zamiast czekać, aż Operator się domyśli.
 	kopieStudiaNiezapisane = `SELECT ` + kolumnyKopiiStudia + zrodloKopiiStudia +
 		` WHERE k.zmiany_niezapisane = 1 AND (? = '' OR d.okno = ?) AND ` + WarunekKonta + `
 		  ORDER BY k.utworzono DESC, k.id DESC`
 
-	// Przemiatanie kopii wygasłych dokumentu. Granice wygasania podaje
-	// wołający zgodnie z nastawą Operatora. Kopia nieudana nie wygasa razem
-	// z udanymi i pozostaje wierszem do czasu przejrzenia.
+	// Kopia nieudana i kopia ze zmianami niezapisanymi nie wygasają.
 	kopieStudiaPrzemiec = `DELETE FROM kopia_zapasowa_studio
 	                       WHERE dokument_id = ? AND udalo_sie = 1 AND zmiany_niezapisane = 0
 	                         AND (utworzono < strftime('%Y-%m-%dT%H:%M:%fZ','now', ?)
@@ -270,9 +246,8 @@ const (
 	                           FROM nastawa_pracy_studio
 	                           WHERE okno = ? AND dokument_id IS NULL`
 
-	// Dwa polecenia zapisu, nie jedno z warunkiem: więz UNIQUE stoi na dwóch
-	// indeksach częściowych (osobno dla wiersza dokumentu i wiersza okna),
-	// a `ON CONFLICT` w SQLite wskazuje jeden zbiór kolumn.
+	// Więz UNIQUE stoi na dwóch indeksach częściowych (wiersz dokumentu, wiersz okna),
+	// a ON CONFLICT w SQLite wskazuje jeden zbiór kolumn.
 	nastawaPracyZalozDokument = `INSERT INTO nastawa_pracy_studio (okno, dokument_id)
 	                             SELECT ?, ? WHERE NOT EXISTS
 	                                 (SELECT 1 FROM nastawa_pracy_studio
@@ -291,9 +266,7 @@ const (
 	                                   zaktualizowano = strftime('%Y-%m-%dT%H:%M:%fZ','now')
 	                               WHERE id = ?`
 
-	// Skutek zapisu odkłada się osobnym poleceniem, bo pisze go inna czynność
-	// niż nastawy: nastawy stawia Operator, skutek — sam zapis. Jedno polecenie
-	// kazałoby autozapisowi przepisywać nastawy, których nie zmieniał.
+	// Skutek zapisu idzie osobnym poleceniem, bo pisze go autozapis, nie Operator.
 	nastawaPracyZapiszSkutek = `UPDATE nastawa_pracy_studio SET
 	                                ostatni_zapis = ?, ostatni_zapis_nieudany = ?,
 	                                ostatni_powod_niepowodzenia = ?,
@@ -303,9 +276,6 @@ const (
 
 // ── Blokady fragmentów ──────────────────────────────────────────────────────
 
-// ZapiszBlokadeFragmentu zakłada blokadę fragmentu dokumentu, uzupełniając
-// zasięg i rodzaj założyciela wartościami domyślnymi, gdy wołający ich nie
-// poda, i oddaje zapisany wiersz.
 func (r *repozytoriumStudia) ZapiszBlokadeFragmentu(ctx context.Context, dokumentID int64,
 	blokada BlokadaFragmentuStudia) (BlokadaFragmentuStudia, error) {
 
@@ -334,8 +304,6 @@ func (r *repozytoriumStudia) ZapiszBlokadeFragmentu(ctx context.Context, dokumen
 	return r.BlokadaFragmentu(ctx, blokada.Kod)
 }
 
-// BlokadaFragmentu oddaje blokadę fragmentu o wskazanym kodzie zewnętrznym
-// albo błąd ErrBrakWiersza, gdy blokada o tym kodzie nie istnieje.
 func (r *repozytoriumStudia) BlokadaFragmentu(ctx context.Context,
 	kod string) (BlokadaFragmentuStudia, error) {
 
@@ -355,9 +323,6 @@ func (r *repozytoriumStudia) BlokadaFragmentu(ctx context.Context,
 	return blokada, nil
 }
 
-// BlokadyFragmentow oddaje wszystkie blokady wskazanego dokumentu,
-// uporządkowane według położenia zakresu w treści, od pierwszego fragmentu
-// do ostatniego.
 func (r *repozytoriumStudia) BlokadyFragmentow(ctx context.Context,
 	dokumentID int64) ([]BlokadaFragmentuStudia, error) {
 
@@ -385,8 +350,6 @@ func (r *repozytoriumStudia) BlokadyFragmentow(ctx context.Context,
 	return lista, nil
 }
 
-// UsunBlokadeFragmentu zdejmuje blokadę o wskazanym kodzie zewnętrznym
-// i oddaje wartość logiczną mówiącą, czy blokada o tym kodzie istniała.
 func (r *repozytoriumStudia) UsunBlokadeFragmentu(ctx context.Context, kod string) (bool, error) {
 	polecenie, err := r.zapytania.przygotuj(ctx, blokadaStudiaUsun)
 	if err != nil {
@@ -403,9 +366,6 @@ func (r *repozytoriumStudia) UsunBlokadeFragmentu(ctx context.Context, kod strin
 	return zdjete > 0, nil
 }
 
-// PrzesunBlokadyFragmentow przesuwa zakresy blokad leżących za punktem edycji
-// o różnicę długości. Blokada leżąca przed punktem edycji oraz blokada,
-// w której środek trafiła edycja, zostają nietknięte.
 func (r *repozytoriumStudia) PrzesunBlokadyFragmentow(ctx context.Context,
 	dokumentID int64, odPozycji int64, przesuniecie int64) error {
 
@@ -425,8 +385,6 @@ func (r *repozytoriumStudia) PrzesunBlokadyFragmentow(ctx context.Context,
 	return nil
 }
 
-// ZapiszBlokadeSzablonu zakłada blokadę wzorcową szablonu pisma, kopiowaną
-// później do każdego dokumentu zakładanego z tego szablonu.
 func (r *repozytoriumStudia) ZapiszBlokadeSzablonu(ctx context.Context,
 	blokada BlokadaSzablonuStudia) error {
 
@@ -440,16 +398,15 @@ func (r *repozytoriumStudia) ZapiszBlokadeSzablonu(ctx context.Context,
 	if err != nil {
 		return err
 	}
-	_, err = polecenie.ExecContext(ctx, blokada.Kod, blokada.SzablonKod, blokada.Nazwa,
-		tekstDoKolumny(blokada.Powod), blokada.ZakresOd, blokada.ZakresDo, blokada.Zasieg)
+	wynik, err := polecenie.ExecContext(ctx, blokada.Kod, blokada.SzablonKod, blokada.Nazwa,
+		tekstDoKolumny(blokada.Powod), blokada.ZakresOd, blokada.ZakresDo, blokada.Zasieg,
+		blokada.SzablonKod, KontoOperatora(ctx))
 	if err != nil {
 		return fmt.Errorf("dane: nie można zapisać blokady szablonu %q: %w", blokada.Kod, err)
 	}
-	return nil
+	return sprawdzTrafienieZapisu(wynik, "szablon", blokada.SzablonKod)
 }
 
-// BlokadySzablonu oddaje wykaz blokad wzorcowych wskazanego szablonu pisma,
-// uporządkowany według położenia zakresu w treści.
 func (r *repozytoriumStudia) BlokadySzablonu(ctx context.Context,
 	szablonKod string) ([]BlokadaSzablonuStudia, error) {
 
@@ -457,7 +414,7 @@ func (r *repozytoriumStudia) BlokadySzablonu(ctx context.Context,
 	if err != nil {
 		return nil, err
 	}
-	wiersze, err := polecenie.QueryContext(ctx, szablonKod)
+	wiersze, err := polecenie.QueryContext(ctx, szablonKod, KontoOperatora(ctx))
 	if err != nil {
 		return nil, fmt.Errorf("dane: nie można odczytać blokad szablonu %q: %w", szablonKod, err)
 	}
@@ -483,9 +440,6 @@ func (r *repozytoriumStudia) BlokadySzablonu(ctx context.Context,
 
 // ── Dziennik czynności ──────────────────────────────────────────────────────
 
-// ZapiszCzynnoscDokumentu odkłada wpis dziennika czynności dokumentu i oddaje
-// go wraz z kolejnością nadaną przez bazę, nie przez wołającego, wraz
-// z zapisanymi zależnościami od czynności podstawowych.
 func (r *repozytoriumStudia) ZapiszCzynnoscDokumentu(ctx context.Context, dokumentID int64,
 	czynnosc CzynnoscDokumentuStudia) (CzynnoscDokumentuStudia, error) {
 
@@ -521,8 +475,6 @@ func (r *repozytoriumStudia) ZapiszCzynnoscDokumentu(ctx context.Context, dokume
 		return CzynnoscDokumentuStudia{}, fmt.Errorf(
 			"dane: nie można zapisać czynności dokumentu %q: %w", czynnosc.Kod, err)
 	}
-	// Zależności zapisuje się po wierszu czynności — wiążą się po
-	// identyfikatorze już zapisanym w tabeli.
 	for _, podstawa := range czynnosc.PodstawyKody {
 		if err := r.ZapiszZaleznoscCzynnosci(ctx, czynnosc.Kod, podstawa, nil); err != nil {
 			return CzynnoscDokumentuStudia{}, err
@@ -531,8 +483,6 @@ func (r *repozytoriumStudia) ZapiszCzynnoscDokumentu(ctx context.Context, dokume
 	return r.CzynnoscDokumentu(ctx, czynnosc.Kod)
 }
 
-// nastepnaKolejnoscCzynnosciStudia liczy numer porządkowy następnej czynności
-// dziennika wskazanego dokumentu na podstawie najwyższej kolejności zapisanej.
 func (r *repozytoriumStudia) nastepnaKolejnoscCzynnosciStudia(ctx context.Context,
 	dokumentID int64) (int64, error) {
 
@@ -548,8 +498,6 @@ func (r *repozytoriumStudia) nastepnaKolejnoscCzynnosciStudia(ctx context.Contex
 	return kolejnosc, nil
 }
 
-// CzynnoscDokumentu oddaje wpis dziennika czynności o wskazanym kodzie
-// zewnętrznym, bez wypełnionych zależności od innych czynności.
 func (r *repozytoriumStudia) CzynnoscDokumentu(ctx context.Context,
 	kod string) (CzynnoscDokumentuStudia, error) {
 
@@ -569,9 +517,6 @@ func (r *repozytoriumStudia) CzynnoscDokumentu(ctx context.Context,
 	return czynnosc, nil
 }
 
-// CzynnosciDokumentu oddaje dziennik dokumentu od najświeższego wpisu, wraz
-// z obu kierunkami zależności wypełnionymi jednym wspólnym zapytaniem dla
-// całego dokumentu, nie zapytaniem osobnym na każdy wpis.
 func (r *repozytoriumStudia) CzynnosciDokumentu(ctx context.Context,
 	dokumentID int64) ([]CzynnoscDokumentuStudia, error) {
 
@@ -608,8 +553,6 @@ func (r *repozytoriumStudia) CzynnosciDokumentu(ctx context.Context,
 	return lista, nil
 }
 
-// zaleznosciCzynnosciStudia oddaje dwie mapy: „co stoi na tej czynności" oraz
-// „na czym ta czynność stoi".
 func (r *repozytoriumStudia) zaleznosciCzynnosciStudia(ctx context.Context,
 	dokumentID int64) (map[string][]string, map[string][]string, error) {
 
@@ -638,8 +581,6 @@ func (r *repozytoriumStudia) zaleznosciCzynnosciStudia(ctx context.Context,
 	return naNiej, podstawy, nil
 }
 
-// ZapiszZaleznoscCzynnosci zapisuje, że wskazana czynność stoi na podstawie
-// innej czynności, pomijając zapis, gdy oba kody są puste albo równe.
 func (r *repozytoriumStudia) ZapiszZaleznoscCzynnosci(ctx context.Context,
 	czynnoscKod, podstawaKod string, powod *string) error {
 
@@ -659,11 +600,7 @@ func (r *repozytoriumStudia) ZapiszZaleznoscCzynnosci(ctx context.Context,
 	return nil
 }
 
-// PrzestawStanCzynnosci przestawia stan wpisu dziennika i mówi, czy przestawił.
-//
-// Stan oczekiwany jest częścią warunku, żeby cofnięcie czynności już cofniętej
-// oddało `false` zamiast cicho przejść — Operator musi wiedzieć, że drugi ruch
-// nie zrobił nic.
+// Stan oczekiwany stoi w warunku: cofnięcie czynności już cofniętej oddaje false.
 func (r *repozytoriumStudia) PrzestawStanCzynnosci(ctx context.Context,
 	kod, stanOczekiwany, stanNowy string) (bool, error) {
 
@@ -684,8 +621,6 @@ func (r *repozytoriumStudia) PrzestawStanCzynnosci(ctx context.Context,
 
 // ── Kopie zapasowe ──────────────────────────────────────────────────────────
 
-// ZapiszKopieZapasowa odkłada kopię zapasową dokumentu, także nieudaną,
-// uzupełniając powód założenia wartością domyślną, gdy wołający jej nie poda.
 func (r *repozytoriumStudia) ZapiszKopieZapasowa(ctx context.Context, dokumentID int64,
 	kopia KopiaZapasowaStudia) (KopiaZapasowaStudia, error) {
 
@@ -710,8 +645,6 @@ func (r *repozytoriumStudia) ZapiszKopieZapasowa(ctx context.Context, dokumentID
 	return r.KopiaZapasowa(ctx, kopia.Kod)
 }
 
-// KopiaZapasowa oddaje kopię zapasową o wskazanym kodzie zewnętrznym albo
-// błąd ErrBrakWiersza, gdy kopia o tym kodzie nie istnieje.
 func (r *repozytoriumStudia) KopiaZapasowa(ctx context.Context,
 	kod string) (KopiaZapasowaStudia, error) {
 
@@ -731,24 +664,18 @@ func (r *repozytoriumStudia) KopiaZapasowa(ctx context.Context,
 	return kopia, nil
 }
 
-// KopieZapasowe oddaje wszystkie kopie zapasowe wskazanego dokumentu,
-// uporządkowane od najświeższej do najstarszej.
 func (r *repozytoriumStudia) KopieZapasowe(ctx context.Context,
 	dokumentID int64) ([]KopiaZapasowaStudia, error) {
 
 	return r.kopieZapasoweStudia(ctx, kopieStudiaLista, dokumentID)
 }
 
-// KopieNiezapisane oddaje kopie niosące zmiany niezapisane. Okno puste znaczy
-// wszystkie okna — po tym Studio zgłasza przywrócenie po nagłym zamknięciu.
 func (r *repozytoriumStudia) KopieNiezapisane(ctx context.Context,
 	okno string) ([]KopiaZapasowaStudia, error) {
 
 	return r.kopieZapasoweStudia(ctx, kopieStudiaNiezapisane, okno, okno, KontoOperatora(ctx))
 }
 
-// kopieZapasoweStudia jest wspólnym odczytem wykazu kopii zapasowych,
-// dzielonym przez KopieZapasowe i KopieNiezapisane pod różnym poleceniem SQL.
 func (r *repozytoriumStudia) kopieZapasoweStudia(ctx context.Context,
 	polecenieSQL string, argumenty ...any) ([]KopiaZapasowaStudia, error) {
 
@@ -776,8 +703,6 @@ func (r *repozytoriumStudia) kopieZapasoweStudia(ctx context.Context,
 	return lista, nil
 }
 
-// PrzemiecKopieZapasowe usuwa kopie wygasłe wedle nastawy Operatora i oddaje,
-// ile ich zdjęto. Kopia nieudana i kopia niosąca zmiany niezapisane zostają.
 func (r *repozytoriumStudia) PrzemiecKopieZapasowe(ctx context.Context, dokumentID int64,
 	ileZachowac, wygasanieGodzin int64) (int64, error) {
 
@@ -791,8 +716,7 @@ func (r *repozytoriumStudia) PrzemiecKopieZapasowe(ctx context.Context, dokument
 	if err != nil {
 		return 0, err
 	}
-	// Modyfikator SQLite ma postać „-168 hours" — `strftime` przyjmuje liczbę
-	// i jednostkę jednym napisem.
+	// Modyfikator strftime w SQLite ma postać „-168 hours".
 	granica := fmt.Sprintf("-%d hours", wygasanieGodzin)
 	wynik, err := polecenie.ExecContext(ctx, dokumentID, granica, dokumentID, ileZachowac)
 	if err != nil {
@@ -809,9 +733,7 @@ func (r *repozytoriumStudia) PrzemiecKopieZapasowe(ctx context.Context, dokument
 
 // ── Nastawy pracy: autozapis i wygasanie kopii ──────────────────────────────
 
-// NastawaPracy oddaje nastawy pracy dla pary okno-dokument albo dla samego
-// okna, zakładając wiersz z wartościami domyślnymi, gdy go jeszcze nie ma.
-// Wiersz zakłada się przy odczycie, nie przy zapisie.
+// Wiersz nastaw zakłada się przy odczycie, nie przy zapisie.
 func (r *repozytoriumStudia) NastawaPracy(ctx context.Context, okno string,
 	dokumentID *int64) (NastawaPracyStudia, error) {
 
@@ -840,8 +762,6 @@ func (r *repozytoriumStudia) NastawaPracy(ctx context.Context, okno string,
 	return nastawa, nil
 }
 
-// zalozNastaweStudia zakłada wiersz nastaw pracy dla pary okno-dokument albo
-// dla samego okna, jeśli taki wiersz jeszcze nie istnieje.
 func (r *repozytoriumStudia) zalozNastaweStudia(ctx context.Context, okno string,
 	dokumentID *int64) error {
 
@@ -860,8 +780,6 @@ func (r *repozytoriumStudia) zalozNastaweStudia(ctx context.Context, okno string
 	return nil
 }
 
-// ZapiszNastaweAutozapisu zapisuje nastawy autozapisu oraz reguły wygasania
-// kopii zapasowych dla wskazanego wiersza nastaw pracy okna.
 func (r *repozytoriumStudia) ZapiszNastaweAutozapisu(ctx context.Context,
 	nastawa NastawaPracyStudia) error {
 
@@ -883,9 +801,6 @@ func (r *repozytoriumStudia) ZapiszNastaweAutozapisu(ctx context.Context,
 	return nil
 }
 
-// ZapiszSkutekAutozapisu odkłada wynik zapisu samoczynnego dokumentu, także
-// nieudany, osobnym poleceniem od zapisu nastaw Operatora, tak by
-// niepowodzenie zapisu zostawiło nazwany, widoczny ślad.
 func (r *repozytoriumStudia) ZapiszSkutekAutozapisu(ctx context.Context, nastawaID int64,
 	chwila *string, nieudany bool, powod *string) error {
 

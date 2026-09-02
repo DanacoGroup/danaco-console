@@ -1,6 +1,5 @@
-// Repozytorium ogłasza SzablonWarsztatuStudia jako wiersz tabeli `szablon_studio`
-// wzbogacony migracją 367 o kategorię, postać wzorcową, miniaturę, źródło pliku,
-// dokument źródłowy, czas zmiany oraz usunięcie szablonu własnego.
+// Warsztat szablonów Studia: wiersz tabeli `szablon_studio` w pełnym kształcie
+// z migracji 367, z granicą konta z migracji 484.
 package dane
 
 import (
@@ -10,20 +9,14 @@ import (
 	"fmt"
 )
 
-// SzablonWarsztatuStudia to wiersz tabeli `szablon_studio` widziany w pełni —
-// wraz z kolumnami warsztatu szablonów dobudowanymi migracją 367.
 type SzablonWarsztatuStudia struct {
-	ID     int64
-	Kod    string
-	Nazwa  string
-	Opis   *string
-	Format string
-	Tresc  string
-	// PolaJSON niesie wykaz pól do wypełnienia w kształcie
-	// `shared.StudioTemplateFieldSpec[]`.
-	PolaJSON *string
-	// PostacJSON niesie postać wzorcową w tym samym kształcie, co postać
-	// dokumentu, bez przekładu.
+	ID                  int64
+	Kod                 string
+	Nazwa               string
+	Opis                *string
+	Format              string
+	Tresc               string
+	PolaJSON            *string
 	PostacJSON          *string
 	Kategoria           *string
 	MiniaturaZasobKod   *string
@@ -34,9 +27,6 @@ type SzablonWarsztatuStudia struct {
 	Zaktualizowano      *string
 }
 
-// WarsztatSzablonowStudia jest kontraktem tej warstwy. Rdzeń bierze go
-// rzutowaniem, więc repozytorium bez tych kolumn nazywa brak wprost, zamiast
-// wywracać montaż.
 type WarsztatSzablonowStudia interface {
 	ZapiszSzablonWarsztatu(ctx context.Context,
 		szablon SzablonWarsztatuStudia) (SzablonWarsztatuStudia, error)
@@ -51,14 +41,14 @@ const (
 	                          zrodlo_pliku, dokument_zrodlowy_kod, fabryczny,
 	                          utworzono, zaktualizowano`
 
-	// Zapis jest upsertem po kluczu zewnętrznym, tym samym, którym jedzie zapis
-	// z `studio_katalogi.go`, do tabeli `szablon_studio`.
+	// Klucz `identyfikator_zewnetrzny` jest jeden na całą tabelę, więc kod szablonu
+	// cudzego konta trafia w konflikt; warunek przy DO UPDATE zostawia wiersz nietknięty.
 	wejscieZapiszSzablon = `INSERT INTO szablon_studio
 	                        (identyfikator_zewnetrzny, nazwa, opis, format, tresc, pola_json,
 	                         postac_json, kategoria, miniatura_zasob_kod, zrodlo_pliku,
-	                         dokument_zrodlowy_kod, fabryczny, zaktualizowano)
+	                         dokument_zrodlowy_kod, fabryczny, zaktualizowano, konto_id)
 	                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
-	                                strftime('%Y-%m-%dT%H:%M:%fZ','now'))
+	                                strftime('%Y-%m-%dT%H:%M:%fZ','now'), ` + WskazanieKonta + `)
 	                        ON CONFLICT(identyfikator_zewnetrzny) DO UPDATE SET
 	                            nazwa = excluded.nazwa,
 	                            opis = excluded.opis,
@@ -70,24 +60,27 @@ const (
 	                            miniatura_zasob_kod = excluded.miniatura_zasob_kod,
 	                            zrodlo_pliku = excluded.zrodlo_pliku,
 	                            dokument_zrodlowy_kod = excluded.dokument_zrodlowy_kod,
-	                            zaktualizowano = strftime('%Y-%m-%dT%H:%M:%fZ','now')`
+	                            zaktualizowano = strftime('%Y-%m-%dT%H:%M:%fZ','now')
+	                        WHERE ` + WarunekKonta
 
+	// Szablon fabryczny zakłada migracja 131 bez wskazania konta i jest wyposażeniem
+	// instalacji widocznym dla każdego konta; zawężenie obejmuje szablony własne.
 	wejsciePobierzSzablon = `SELECT ` + wejscieKolumnySzablonu + ` FROM szablon_studio
-	                         WHERE identyfikator_zewnetrzny = ?`
+	                         WHERE identyfikator_zewnetrzny = ?
+	                           AND (fabryczny = 1 OR ` + WarunekKonta + `)`
 
 	wejscieListaSzablonow = `SELECT ` + wejscieKolumnySzablonu + ` FROM szablon_studio
 	                         WHERE (? = '' OR kategoria = ?)
+	                           AND (fabryczny = 1 OR ` + WarunekKonta + `)
 	                         ORDER BY fabryczny DESC, nazwa`
 
-	// Usunięcie obejmuje WYŁĄCZNIE szablon własny. Warunek stoi w zapytaniu,
-	// nie tylko w rdzeniu: szablon fabryczny usunięty inną drogą zabrałby
-	// Operatorowi wykaz, którego nie da się odtworzyć bez migracji.
+	// Warunek `fabryczny = 0` stoi w zapytaniu: szablonu fabrycznego nie da się
+	// odtworzyć bez migracji.
 	wejscieUsunSzablon = `DELETE FROM szablon_studio
-	                      WHERE identyfikator_zewnetrzny = ? AND fabryczny = 0`
+	                      WHERE identyfikator_zewnetrzny = ? AND fabryczny = 0
+	                        AND ` + WarunekKonta
 )
 
-// ZapiszSzablonWarsztatu zakłada szablon pisma albo nadpisuje zastany wraz
-// z postacią wzorcową i polami do wypełnienia.
 func (r *repozytoriumStudia) ZapiszSzablonWarsztatu(ctx context.Context,
 	szablon SzablonWarsztatuStudia) (SzablonWarsztatuStudia, error) {
 
@@ -101,20 +94,23 @@ func (r *repozytoriumStudia) ZapiszSzablonWarsztatu(ctx context.Context,
 	if err != nil {
 		return SzablonWarsztatuStudia{}, err
 	}
-	_, err = polecenie.ExecContext(ctx, szablon.Kod, szablon.Nazwa, tekstDoKolumny(szablon.Opis),
+	konto := KontoOperatora(ctx)
+	wynik, err := polecenie.ExecContext(ctx, szablon.Kod, szablon.Nazwa, tekstDoKolumny(szablon.Opis),
 		szablon.Format, szablon.Tresc, tekstDoKolumny(szablon.PolaJSON),
 		tekstDoKolumny(szablon.PostacJSON), tekstDoKolumny(szablon.Kategoria),
 		tekstDoKolumny(szablon.MiniaturaZasobKod), tekstDoKolumny(szablon.ZrodloPliku),
-		tekstDoKolumny(szablon.DokumentZrodlowyKod), liczbaLogiczna(szablon.Fabryczny))
+		tekstDoKolumny(szablon.DokumentZrodlowyKod), liczbaLogiczna(szablon.Fabryczny),
+		konto, konto)
 	if err != nil {
 		return SzablonWarsztatuStudia{}, fmt.Errorf("dane: nie można zapisać szablonu %q: %w",
 			szablon.Kod, err)
 	}
+	if err := sprawdzTrafienieZapisu(wynik, "szablon studio", szablon.Kod); err != nil {
+		return SzablonWarsztatuStudia{}, err
+	}
 	return r.SzablonWarsztatu(ctx, szablon.Kod)
 }
 
-// SzablonWarsztatu oddaje szablon warsztatu wraz z postacią wzorcową i polami
-// do wypełnienia z tabeli `szablon_studio`.
 func (r *repozytoriumStudia) SzablonWarsztatu(ctx context.Context,
 	kod string) (SzablonWarsztatuStudia, error) {
 
@@ -122,7 +118,7 @@ func (r *repozytoriumStudia) SzablonWarsztatu(ctx context.Context,
 	if err != nil {
 		return SzablonWarsztatuStudia{}, err
 	}
-	szablon, err := wejscieOdczytajSzablon(polecenie.QueryRowContext(ctx, kod))
+	szablon, err := wejscieOdczytajSzablon(polecenie.QueryRowContext(ctx, kod, KontoOperatora(ctx)))
 	if errors.Is(err, sql.ErrNoRows) {
 		return SzablonWarsztatuStudia{}, ErrBrakWiersza
 	}
@@ -132,8 +128,6 @@ func (r *repozytoriumStudia) SzablonWarsztatu(ctx context.Context,
 	return szablon, nil
 }
 
-// SzablonyWarsztatu oddaje wykaz szablonów, fabryczne na początku. Kategoria
-// pusta znaczy „wszystkie" — zawężenie jest zawężeniem Operatora, nie warunkiem.
 func (r *repozytoriumStudia) SzablonyWarsztatu(ctx context.Context,
 	kategoria string) ([]SzablonWarsztatuStudia, error) {
 
@@ -141,7 +135,7 @@ func (r *repozytoriumStudia) SzablonyWarsztatu(ctx context.Context,
 	if err != nil {
 		return nil, err
 	}
-	wiersze, err := polecenie.QueryContext(ctx, kategoria, kategoria)
+	wiersze, err := polecenie.QueryContext(ctx, kategoria, kategoria, KontoOperatora(ctx))
 	if err != nil {
 		return nil, fmt.Errorf("dane: nie można odczytać szablonów studio: %w", err)
 	}
@@ -161,14 +155,12 @@ func (r *repozytoriumStudia) SzablonyWarsztatu(ctx context.Context,
 	return lista, nil
 }
 
-// UsunSzablonWlasny usuwa szablon własny i mówi, czy wiersz zszedł. Fałsz przy
-// istniejącym szablonie znaczy szablon fabryczny — i tak to nazywa rdzeń.
 func (r *repozytoriumStudia) UsunSzablonWlasny(ctx context.Context, kod string) (bool, error) {
 	polecenie, err := r.zapytania.przygotuj(ctx, wejscieUsunSzablon)
 	if err != nil {
 		return false, err
 	}
-	wynik, err := polecenie.ExecContext(ctx, kod)
+	wynik, err := polecenie.ExecContext(ctx, kod, KontoOperatora(ctx))
 	if err != nil {
 		return false, fmt.Errorf("dane: nie można usunąć szablonu %q: %w", kod, err)
 	}

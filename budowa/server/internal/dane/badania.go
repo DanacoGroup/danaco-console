@@ -27,19 +27,16 @@ type ZrodloBadania struct {
 
 // RepozytoriumBadan jest kontraktem obszaru Research: źródła, ustalenia, raport, eksport i przestrzeń badania.
 type RepozytoriumBadan interface {
-	// źródła
 	ZapiszZrodlo(ctx context.Context, zrodlo ZrodloBadania) (ZrodloBadania, error)
 	Zrodlo(ctx context.Context, kod string) (ZrodloBadania, error)
 	Zrodla(ctx context.Context, okno string) ([]ZrodloBadania, error)
 
-	// ustalenia
 	ZapiszUstalenie(ctx context.Context, ustalenie UstalenieBadania,
 		kodyZrodel []string) (UstalenieBadania, error)
 	Ustalenie(ctx context.Context, kod string) (UstalenieBadania, error)
 	Ustalenia(ctx context.Context, okno string) ([]UstalenieBadania, error)
 	ZrodlaUstalenia(ctx context.Context, ustalenieID int64) ([]ZrodloBadania, error)
 
-	// raport, eksport, przestrzeń
 	ZapiszRaport(ctx context.Context, raport RaportBadania,
 		sekcje []SekcjaRaportu) (RaportBadania, error)
 	Raport(ctx context.Context, kod string) (RaportBadania, error)
@@ -48,7 +45,6 @@ type RepozytoriumBadan interface {
 	UstawPrzestrzen(ctx context.Context, zakres string, etapy []string) (string, []string, error)
 	Przestrzen(ctx context.Context) (string, []string, error)
 
-	// Dobudowa modułu: katalogowanie źródeł, lektura, adnotacje, kodowanie, sprzeczności i odkrywanie.
 	RepozytoriumBadanDobudowa
 }
 
@@ -58,21 +54,22 @@ const (
 
 	zapiszZrodloBadania = `INSERT INTO zrodlo_badania
 	                       (identyfikator_zewnetrzny, okno, tytul, rodzaj, adres,
-	                        pochodzenie, wiarygodnosc, plik_biblioteki_id)
-	                       VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+	                        pochodzenie, wiarygodnosc, plik_biblioteki_id, konto_id)
+	                       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ` + WskazanieKonta + `)
 	                       ON CONFLICT(identyfikator_zewnetrzny) DO UPDATE SET
 	                           tytul = excluded.tytul,
 	                           rodzaj = excluded.rodzaj,
 	                           adres = excluded.adres,
 	                           pochodzenie = excluded.pochodzenie,
 	                           wiarygodnosc = excluded.wiarygodnosc,
-	                           plik_biblioteki_id = excluded.plik_biblioteki_id`
+	                           plik_biblioteki_id = excluded.plik_biblioteki_id
+	                       WHERE ` + WarunekKonta
 
 	pobierzZrodloBadania = `SELECT ` + kolumnyZrodlaBadania + ` FROM zrodlo_badania
-	                        WHERE identyfikator_zewnetrzny = ?`
+	                        WHERE identyfikator_zewnetrzny = ? AND ` + WarunekKonta
 
 	pobierzZrodlaBadaniaOkna = `SELECT ` + kolumnyZrodlaBadania + ` FROM zrodlo_badania
-	                            WHERE okno = ?
+	                            WHERE okno = ? AND ` + WarunekKonta + `
 	                            ORDER BY pozyskano_o DESC, id DESC`
 )
 
@@ -85,9 +82,6 @@ func noweRepozytoriumBadan(z *zapytania, db *sql.DB) *repozytoriumBadan {
 	return &repozytoriumBadan{zapytania: z, db: db}
 }
 
-// ZapiszZrodlo zakłada wiersz źródła albo nadpisuje zastane i zwraca stan po
-// zapisie. Wiarygodność bierze wartość kontraktu (`ResearchCredibility`)
-// wprost, bez tłumaczenia.
 func (r *repozytoriumBadan) ZapiszZrodlo(ctx context.Context, zrodlo ZrodloBadania) (ZrodloBadania, error) {
 	if zrodlo.Kod == "" {
 		return ZrodloBadania{}, fmt.Errorf("dane: źródło badania bez identyfikatora")
@@ -110,23 +104,24 @@ func (r *repozytoriumBadan) ZapiszZrodlo(ctx context.Context, zrodlo ZrodloBadan
 	if err != nil {
 		return ZrodloBadania{}, err
 	}
-	_, err = polecenie.ExecContext(ctx, zrodlo.Kod, zrodlo.Okno, zrodlo.Tytul, rodzaj,
+	wynik, err := polecenie.ExecContext(ctx, zrodlo.Kod, zrodlo.Okno, zrodlo.Tytul, rodzaj,
 		tekstDoKolumny(zrodlo.Adres), tekstDoKolumny(zrodlo.Pochodzenie), wiarygodnosc,
-		tekstDoKolumny(zrodlo.PlikBibliotekiID))
+		tekstDoKolumny(zrodlo.PlikBibliotekiID), KontoOperatora(ctx), KontoOperatora(ctx))
 	if err != nil {
 		return ZrodloBadania{}, fmt.Errorf("dane: nie można zapisać źródła badania %q: %w", zrodlo.Kod, err)
+	}
+	if err := sprawdzTrafienieZapisu(wynik, "źródło badania", zrodlo.Kod); err != nil {
+		return ZrodloBadania{}, err
 	}
 	return r.Zrodlo(ctx, zrodlo.Kod)
 }
 
-// Zrodlo zwraca źródło o wskazanym kodzie. Brak wiersza wraca jako
-// ErrBrakWiersza — warstwa wyższa odróżnia „nie ma” od „odczyt się nie powiódł”.
 func (r *repozytoriumBadan) Zrodlo(ctx context.Context, kod string) (ZrodloBadania, error) {
 	polecenie, err := r.zapytania.przygotuj(ctx, pobierzZrodloBadania)
 	if err != nil {
 		return ZrodloBadania{}, err
 	}
-	zrodlo, err := odczytajZrodloBadania(polecenie.QueryRowContext(ctx, kod))
+	zrodlo, err := odczytajZrodloBadania(polecenie.QueryRowContext(ctx, kod, KontoOperatora(ctx)))
 	if errors.Is(err, sql.ErrNoRows) {
 		return ZrodloBadania{}, ErrBrakWiersza
 	}
@@ -136,13 +131,12 @@ func (r *repozytoriumBadan) Zrodlo(ctx context.Context, kod string) (ZrodloBadan
 	return zrodlo, nil
 }
 
-// Zrodla zwraca źródła okna badania, posortowane od najświeżej pozyskanych, wprost z bazy danych repozytorium.
 func (r *repozytoriumBadan) Zrodla(ctx context.Context, okno string) ([]ZrodloBadania, error) {
 	polecenie, err := r.zapytania.przygotuj(ctx, pobierzZrodlaBadaniaOkna)
 	if err != nil {
 		return nil, err
 	}
-	wiersze, err := polecenie.QueryContext(ctx, okno)
+	wiersze, err := polecenie.QueryContext(ctx, okno, KontoOperatora(ctx))
 	if err != nil {
 		return nil, fmt.Errorf("dane: nie można odczytać źródeł badania okna %q: %w", okno, err)
 	}
@@ -162,7 +156,6 @@ func (r *repozytoriumBadan) Zrodla(ctx context.Context, okno string) ([]ZrodloBa
 	return lista, nil
 }
 
-// odczytajZrodloBadania składa strukturę źródła badania wprost z jednego wiersza wyniku zapytania do bazy.
 func odczytajZrodloBadania(wiersz skaner) (ZrodloBadania, error) {
 	var zrodlo ZrodloBadania
 	var rodzaj, wiarygodnosc string

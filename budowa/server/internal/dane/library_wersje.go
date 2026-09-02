@@ -9,7 +9,6 @@ import (
 	"fmt"
 )
 
-// WersjaPlikuBiblioteki to wiersz tabeli `wersja_pliku_biblioteki`, niosący treść i sumę kontrolną wersji.
 type WersjaPlikuBiblioteki struct {
 	ID             int64
 	Kod            string
@@ -22,39 +21,42 @@ type WersjaPlikuBiblioteki struct {
 	Utworzono      string
 }
 
+// Tabela `wersja_pliku_biblioteki` nie niesie konta (migracja 484 dała je
+// korzeniowi `plik_biblioteki`); każde zapytanie o wersję sięga konta przez plik.
 const (
 	kolumnyWersji = `id, identyfikator_zewnetrzny, plik_id, etykieta, autor,
 	                 rozmiar_bajtow, suma_kontrolna, tresc_odwolanie, utworzono`
 
+	warunekKontaPlikuWersji = ` AND EXISTS (SELECT 1 FROM plik_biblioteki p
+	                      WHERE p.id = wersja_pliku_biblioteki.plik_id AND ` + WarunekKonta + `)`
+
 	wstawWersjePlikuBiblioteki = `INSERT INTO wersja_pliku_biblioteki
 	                    (identyfikator_zewnetrzny, plik_id, etykieta, autor,
 	                     rozmiar_bajtow, suma_kontrolna, tresc_odwolanie)
-	                    VALUES (?, ?, ?, ?, ?, ?, ?)`
+	                    SELECT ?, id, ?, ?, ?, ?, ? FROM plik_biblioteki
+	                     WHERE id = ? AND ` + WarunekKonta
 
 	pobierzWersjePlikuBiblioteki = `SELECT ` + kolumnyWersji + ` FROM wersja_pliku_biblioteki
-	                      WHERE identyfikator_zewnetrzny = ?`
+	                      WHERE identyfikator_zewnetrzny = ?` + warunekKontaPlikuWersji
 
 	listaWersjiPliku = `SELECT ` + kolumnyWersji + ` FROM wersja_pliku_biblioteki
-	                    WHERE plik_id = ? ORDER BY utworzono DESC, id DESC`
+	                    WHERE plik_id = ?` + warunekKontaPlikuWersji + `
+	                    ORDER BY utworzono DESC, id DESC`
 
-	// wersjaDoPrzywrocenia szuka wersji wyłącznie w obrębie wskazanego pliku —
-	// kod wersji z innego pliku nie nadpisze bieżącego wskaźnika przy pomyłce
-	// identyfikatora.
 	wersjaDoPrzywrocenia = `SELECT ` + kolumnyWersji + ` FROM wersja_pliku_biblioteki
-	                        WHERE identyfikator_zewnetrzny = ? AND plik_id = ?`
+	                        WHERE identyfikator_zewnetrzny = ? AND plik_id = ?` + warunekKontaPlikuWersji
 
 	przywrocBiezacaWersje = `UPDATE plik_biblioteki
 	                         SET wersja_biezaca_id = ?, suma_kontrolna = ?,
 	                             tresc_odwolanie = ?, rozmiar_bajtow = ?,
 	                             zaktualizowano = strftime('%Y-%m-%dT%H:%M:%fZ','now')
-	                         WHERE id = ?`
+	                         WHERE id = ? AND ` + WarunekKonta
 
-	kodPlikuPoId = `SELECT identyfikator_zewnetrzny FROM plik_biblioteki WHERE id = ?`
+	kodPlikuPoId = `SELECT identyfikator_zewnetrzny FROM plik_biblioteki WHERE id = ? AND ` + WarunekKonta
 )
 
-// ZapiszWersje dokłada wiersz historii wersji pliku. Nie przestawia wskaźnika
-// bieżącej wersji na pliku — robi to wyłącznie `PrzywrocWersje` albo zapis
-// pliku, żeby jedna droga zmiany „co jest bieżące" nie rozjechała się z drugą.
+// ZapiszWersje nie przestawia wskaźnika bieżącej wersji pliku — robi to
+// wyłącznie PrzywrocWersje albo DolozWersje.
 func (r *repozytoriumBiblioteki) ZapiszWersje(ctx context.Context, plikID int64, wersja WersjaPlikuBiblioteki) (WersjaPlikuBiblioteki, error) {
 	if wersja.Kod == "" || plikID == 0 {
 		return WersjaPlikuBiblioteki{}, fmt.Errorf("dane: wersja pliku bez identyfikatora albo bez pliku")
@@ -63,23 +65,26 @@ func (r *repozytoriumBiblioteki) ZapiszWersje(ctx context.Context, plikID int64,
 	if err != nil {
 		return WersjaPlikuBiblioteki{}, err
 	}
-	_, err = polecenie.ExecContext(ctx, wersja.Kod, plikID, tekstDoKolumny(wersja.Etykieta),
+	wynik, err := polecenie.ExecContext(ctx, wersja.Kod, tekstDoKolumny(wersja.Etykieta),
 		tekstDoKolumny(wersja.Autor), liczbaDoKolumny(wersja.RozmiarBajtow),
-		tekstDoKolumny(wersja.SumaKontrolna), tekstDoKolumny(wersja.TrescOdwolanie))
+		tekstDoKolumny(wersja.SumaKontrolna), tekstDoKolumny(wersja.TrescOdwolanie),
+		plikID, KontoOperatora(ctx))
 	if err != nil {
 		return WersjaPlikuBiblioteki{}, fmt.Errorf("dane: nie można zapisać wersji %q pliku %d: %w", wersja.Kod, plikID, err)
 	}
-	return r.jednaWersja(ctx, pobierzWersjePlikuBiblioteki, wersja.Kod, "wersja "+wersja.Kod)
+	if err := sprawdzTrafienieZapisu(wynik, "plik biblioteki", fmt.Sprint(plikID)); err != nil {
+		return WersjaPlikuBiblioteki{}, err
+	}
+	return r.jednaWersja(ctx, pobierzWersjePlikuBiblioteki, []any{wersja.Kod, KontoOperatora(ctx)},
+		"wersja "+wersja.Kod)
 }
 
-// Wersje zwraca wersje pliku od najnowszej — Versioning Panel pokazuje
-// historię odwróconą, żeby ostatnia zmiana była na wierzchu.
 func (r *repozytoriumBiblioteki) Wersje(ctx context.Context, plikID int64) ([]WersjaPlikuBiblioteki, error) {
 	polecenie, err := r.zapytania.przygotuj(ctx, listaWersjiPliku)
 	if err != nil {
 		return nil, err
 	}
-	wiersze, err := polecenie.QueryContext(ctx, plikID)
+	wiersze, err := polecenie.QueryContext(ctx, plikID, KontoOperatora(ctx))
 	if err != nil {
 		return nil, fmt.Errorf("dane: nie można odczytać wersji pliku %d: %w", plikID, err)
 	}
@@ -99,13 +104,11 @@ func (r *repozytoriumBiblioteki) Wersje(ctx context.Context, plikID int64) ([]We
 	return lista, nil
 }
 
-// PrzywrocWersje przestawia plik na wskazaną wersję historyczną: wskaźnik bieżącej wersji, sumę kontrolną,
-// odwołanie do treści i rozmiar.
 func (r *repozytoriumBiblioteki) PrzywrocWersje(ctx context.Context, plikID int64, kodWersji string) (PlikBiblioteki, error) {
 	if kodWersji == "" || plikID == 0 {
 		return PlikBiblioteki{}, fmt.Errorf("dane: przywrócenie wersji bez identyfikatora albo bez pliku")
 	}
-	wersja, err := r.jednaWersja(ctx, wersjaDoPrzywrocenia, []any{kodWersji, plikID},
+	wersja, err := r.jednaWersja(ctx, wersjaDoPrzywrocenia, []any{kodWersji, plikID, KontoOperatora(ctx)},
 		fmt.Sprintf("wersja %q pliku %d", kodWersji, plikID))
 	if err != nil {
 		return PlikBiblioteki{}, err
@@ -113,19 +116,14 @@ func (r *repozytoriumBiblioteki) PrzywrocWersje(ctx context.Context, plikID int6
 
 	var kodPliku string
 	err = wTransakcji(ctx, r.db, func(transakcja *sql.Tx) error {
-		aktualizuj, err := r.zapytania.wTransakcji(ctx, transakcja, przywrocBiezacaWersje)
-		if err != nil {
+		if err := r.przestawPlikNaWersje(ctx, transakcja, plikID, wersja.ID, wersja); err != nil {
 			return err
-		}
-		if _, err := aktualizuj.ExecContext(ctx, wersja.ID, tekstDoKolumny(wersja.SumaKontrolna),
-			tekstDoKolumny(wersja.TrescOdwolanie), liczbaDoKolumny(wersja.RozmiarBajtow), plikID); err != nil {
-			return fmt.Errorf("dane: nie można przywrócić wersji %q na pliku %d: %w", kodWersji, plikID, err)
 		}
 		kod, err := r.zapytania.wTransakcji(ctx, transakcja, kodPlikuPoId)
 		if err != nil {
 			return err
 		}
-		if err := kod.QueryRowContext(ctx, plikID).Scan(&kodPliku); err != nil {
+		if err := kod.QueryRowContext(ctx, plikID, KontoOperatora(ctx)).Scan(&kodPliku); err != nil {
 			return fmt.Errorf("dane: nie można odczytać kodu pliku %d po przywróceniu: %w", plikID, err)
 		}
 		return nil
@@ -136,8 +134,6 @@ func (r *repozytoriumBiblioteki) PrzywrocWersje(ctx context.Context, plikID int6
 	return r.Plik(ctx, kodPliku)
 }
 
-// jednaWersja wykonuje odczyt pojedynczego wiersza wersji, zasilany jednym
-// albo wieloma argumentami zapytania.
 func (r *repozytoriumBiblioteki) jednaWersja(ctx context.Context, zapytanie string, argumenty any, opis string) (WersjaPlikuBiblioteki, error) {
 	polecenie, err := r.zapytania.przygotuj(ctx, zapytanie)
 	if err != nil {
@@ -157,7 +153,6 @@ func (r *repozytoriumBiblioteki) jednaWersja(ctx context.Context, zapytanie stri
 	return wersja, nil
 }
 
-// odczytajWersje składa pełną strukturę wersji pliku z jednego wiersza wyniku zapytania do bazy danych.
 func odczytajWersje(wiersz skaner) (WersjaPlikuBiblioteki, error) {
 	var wersja WersjaPlikuBiblioteki
 	var etykieta, autor, sumaKontrolna, trescOdwolanie sql.NullString

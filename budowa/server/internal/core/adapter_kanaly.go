@@ -38,7 +38,7 @@ func (a *adapterKanalow) Dodaj(ctx context.Context, z shared.ChannelAddRequest) 
 		Dostawca:               dostawcaKanalu(z),
 		IdentyfikatorModelu:    wartoscTekstu(z.Model),
 		RodzajKanalu:           z.Kind,
-		KontoID:                kontoKanalu(z.Config),
+		KontoDostawcyID:        kontoKanalu(z.Config),
 		PoswiadczenieOdwolanie: odwolaniePoswiadczeniaKanalu(z.Config),
 		ParametryJSON:          parametryKanalu(z.Config),
 		Aktywny:                z.Enabled == nil || *z.Enabled,
@@ -73,7 +73,7 @@ func (a *adapterKanalow) Zmien(ctx context.Context, z shared.ChannelUpdateReques
 	if len(z.Config) > 0 {
 		kanal.ParametryJSON = parametryKanalu(z.Config)
 		kanal.PoswiadczenieOdwolanie = odwolaniePoswiadczeniaKanalu(z.Config)
-		kanal.KontoID = kontoKanalu(z.Config)
+		kanal.KontoDostawcyID = kontoKanalu(z.Config)
 	}
 	if err := a.repozytorium.Aktualizuj(ctx, kanal); err != nil {
 		return shared.ChannelUpdateResponse{}, err

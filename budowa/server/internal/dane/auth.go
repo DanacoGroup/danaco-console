@@ -95,20 +95,6 @@ type UrzadzenieKonta struct {
 	MaToken bool
 }
 
-/*
-warunekKontaBramki zawęża wiersz bramki do konta, które o niego pyta. Jest
-jeden na wszystkie tabele bramki, bo rozstrzygnięcie musi wypaść tak samo dla
-metody wejścia, sesji i drogi potwierdzenia — inaczej granica konta trzymałaby
-w jednym zapytaniu, a w sąsiednim nie.
-
-Obie strony porównania sprowadzają brak wskazania do konta najstarszego: wiersz
-bez `konto_id` powstał przed migracją 406 i nie ma jak wskazać konta wstecz,
-a żądanie bez rozpoznanego konta przychodzi z połączenia przed zalogowaniem.
-Instalacja jednokontowa rozstrzyga oba przypadki jednoznacznie.
-*/
-const warunekKontaBramki = `COALESCE(konto_id, (SELECT id FROM konto_wlasciciela ORDER BY id LIMIT 1))
-	                        = COALESCE(NULLIF(?, 0), (SELECT id FROM konto_wlasciciela ORDER BY id LIMIT 1))`
-
 const (
 	kolumnyMetodyUwierzytelnienia = `id, identyfikator_zewnetrzny, rodzaj, etykieta,
 	                                 urzadzenie_kod, nazwa_urzadzenia, kotwica,
@@ -116,27 +102,24 @@ const (
 	                                 utworzono, ostatnio_uzyto`
 
 	listaMetodUwierzytelnienia = `SELECT ` + kolumnyMetodyUwierzytelnienia +
-		` FROM metoda_uwierzytelnienia WHERE ` + warunekKontaBramki +
+		` FROM metoda_uwierzytelnienia WHERE ` + WarunekKonta +
 		` ORDER BY kotwica DESC, rodzaj, utworzono, id`
 
 	metodaUwierzytelnieniaPoKodzie = `SELECT ` + kolumnyMetodyUwierzytelnienia +
 		` FROM metoda_uwierzytelnienia
-		  WHERE identyfikator_zewnetrzny = ? AND ` + warunekKontaBramki
+		  WHERE identyfikator_zewnetrzny = ? AND ` + WarunekKonta
 
 	// Hasło wskazanego konta.
 	metodaUwierzytelnieniaKotwicaKonta = `SELECT ` + kolumnyMetodyUwierzytelnienia +
-		` FROM metoda_uwierzytelnienia WHERE kotwica = 1 AND ` + warunekKontaBramki
+		` FROM metoda_uwierzytelnienia WHERE kotwica = 1 AND ` + WarunekKonta
 
 	metodaUwierzytelnieniaUrzadzenia = `SELECT ` + kolumnyMetodyUwierzytelnienia +
 		` FROM metoda_uwierzytelnienia WHERE rodzaj = ? AND urzadzenie_kod = ?`
 
-	// Zero w kolumnie konta znaczyłoby konto o identyfikatorze zero, czyli
-	// żadne; wiersz z zerem byłby niewidoczny dla własnego właściciela, więc
-	// wskazanie puste wchodzi jako NULL, tak jak wiersz zastany.
 	wstawMetodeUwierzytelnienia = `INSERT INTO metoda_uwierzytelnienia
 	                               (identyfikator_zewnetrzny, rodzaj, etykieta, urzadzenie_kod,
 	                                nazwa_urzadzenia, kotwica, konto_id, sekret_odwolanie, utworzono)
-	                               VALUES (?, ?, ?, ?, ?, ?, NULLIF(?, 0), ?, ?)`
+	                               VALUES (?, ?, ?, ?, ?, ?, ` + WskazanieKonta + `, ?, ?)`
 
 	zapiszOdwolanieMetody = `UPDATE metoda_uwierzytelnienia SET sekret_odwolanie = ?
 	                         WHERE identyfikator_zewnetrzny = ?`
@@ -157,10 +140,10 @@ const (
 	                          WHERE cel = ? AND uzyte = 0 AND proby >= ?`
 
 	zamknijDrogiKonta = `UPDATE potwierdzenie_tozsamosci SET uzyte = 1
-	                     WHERE cel = ? AND uzyte = 0 AND ` + warunekKontaBramki
+	                     WHERE cel = ? AND uzyte = 0 AND ` + WarunekKonta
 
 	ostatniaDrogaKonta = `SELECT COALESCE(MAX(utworzono), 0) FROM potwierdzenie_tozsamosci
-	                      WHERE cel = ? AND ` + warunekKontaBramki
+	                      WHERE cel = ? AND ` + WarunekKonta
 )
 
 type repozytoriumUwierzytelnienia struct {

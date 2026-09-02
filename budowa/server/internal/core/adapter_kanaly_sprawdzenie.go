@@ -155,7 +155,7 @@ func rodzajPoswiadczeniaKanalu(kanal dane.Kanal) string {
 	if rodzaj, jest := parametry["credentialKind"].(string); jest && strings.TrimSpace(rodzaj) != "" {
 		return rodzaj
 	}
-	if kanal.KontoID != nil {
+	if kanal.KontoDostawcyID != nil {
 		return "konto rejestru kont"
 	}
 	return "klucz kanału API"
@@ -163,7 +163,7 @@ func rodzajPoswiadczeniaKanalu(kanal dane.Kanal) string {
 
 // zarzadcaPoswiadczeniaKanalu nazywa miejsce, w którym poświadczenie kanału mieszka: rejestr kont albo sejf rdzenia.
 func zarzadcaPoswiadczeniaKanalu(kanal dane.Kanal) string {
-	if kanal.KontoID != nil {
+	if kanal.KontoDostawcyID != nil {
 		return "rejestr kont platformy"
 	}
 	return "sejf poświadczeń serwera"

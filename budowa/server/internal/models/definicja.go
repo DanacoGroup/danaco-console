@@ -19,7 +19,7 @@ type Definicja struct {
 	Dostawca               string
 	Model                  string
 	Rodzaj                 string
-	KontoId                int64
+	KontoDostawcyId        int64
 	PoswiadczenieOdwolanie string
 	Parametry              map[string]any
 	Multimodalny           bool

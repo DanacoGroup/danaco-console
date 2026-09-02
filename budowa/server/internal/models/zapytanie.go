@@ -200,8 +200,8 @@ func (z Zapytanie) WybraneKonto(d Definicja) string {
 	if strings.TrimSpace(z.Konto) != "" {
 		return z.Konto
 	}
-	if d.KontoId != 0 {
-		return strconv.FormatInt(d.KontoId, 10)
+	if d.KontoDostawcyId != 0 {
+		return strconv.FormatInt(d.KontoDostawcyId, 10)
 	}
 	return ""
 }

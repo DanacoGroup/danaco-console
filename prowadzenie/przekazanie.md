@@ -222,6 +222,52 @@ z osobnym oznaczaniem **regresji**, weryfikacja adwersaryjna, synteza z bilansem
 Bilans ma odpowiedzieć na jedno pytanie: ile ustaleń pierwszego audytu naprawdę zniknęło,
 a ile tylko przemalowano.
 
+## 5.4 Audyt powtórny — wynik częściowy (przerwany limitem 2.09)
+
+Uruchomiony (`workflow-audyt-powtorny.js`), przerwany na fazie kategorii. Materiał
+w `~/robocze/przekazanie-2026-09-01/`: `audyt2-czesciowy.md` (czytelny),
+`audyt2-odbior-czesciowy.json`, `audyt2-kategorie-czesciowe.json`.
+
+**Odbiór napraw pierwszego audytu — komplet, 34/34:** usuniętych **31**,
+częściowych **3** (W20 — kafle MTAI z polskim `data-modul`; W23 — droga aktualizacji
+powłoki wciąż bez wołania w kliencie; W25 — brak podpisu, katalog Security RVA 0),
+pozornych **0**, regresji na starych **0**.
+
+**7 z 13 kategorii zamknięte** (sceptycy i synteza NIE ruszyli — ustalenia niżej są
+zgłoszeniami do sprawdzenia, nie zweryfikowanymi). Najcięższe, które **wymagają pracy**:
+
+- 🔴 **krytyczna** — `dane/auth.go:109`: granica konta objęła **4 tabele z 419**;
+  `warunekKontaBramki` działa na tabelach bramki, ale reszta danych (sesje, karty,
+  dokumenty, kolejki) nie jest kontowa — praca wszystkich kont wspólna. Zakres K1/W7
+  domknął bramkę, nie cały produkt. **To jest granica napraw z tej fali.**
+- 🔴 **krytyczna** — `core/adapter_modul_auth_pierwsze_uruchomienie.go:14`: znacznik
+  „bramka bez poczty" jest jeden na instalację, nie na konto.
+- 🔴 **krytyczna** — `store/migracje.go:74`: uzgodnienie sum po numerze (opisane w 5.0a);
+  do naprawy w kodzie, nie tylko na bazie.
+- 🔴 **REGRESJE po naprawach** (kilka wysokich): ping zrywa gniazdo serwera narzędzi
+  modelu po 35 s (`server/internal/narzedzia/polaczenie.go:117`); sekret nawiązania
+  wyklucza serwer narzędzi (`transport/nawiazanie.go:39`); `zloz.mjs` wymaga teraz
+  odpowiedzi kanału (HEAD ślepy dla pozycji za hasłem). Serwer narzędzi modelu to
+  wewnętrzne gniazdo rdzenia — te dwie regresje mogą zrywać tor AI.
+- 🆕 **wysoka** — `store/migracja_013_punkty_dostepu.sql:151`: każda instalacja niesie
+  w bazie trzy produkcyjne maszyny Danaco (adresy IP) — do wyjęcia z zaczynu.
+
+**Pierwsza rzecz następnej sesji:** dokończyć audyt powtórny
+(`Workflow({scriptPath: "…/audyt-powtorny.js", resumeFromRunId: "wf_dee871f1-61b"})`
+NIE zadziała między kontami — trzeba uruchomić na nowo), albo wprost zacząć od tych
+ustaleń, bo odbiór 34/34 już potwierdził, że nic z pierwszego audytu nie odżyło.
+
+## 5.5 Procesy i stan maszyny na koniec sesji
+
+- Podgląd `/tmp/rdzen-podglad` (port 17896 → 51.75.62.180) **działa i ma zostać** —
+  to nie usługa, ginie po restarcie maszyny (stawia go `wdrozenie.sh`).
+- Stray rdzenie testowe (`./rdzen`, `rdzen-e2e`) wygaszone.
+- Kopie baz przed ręcznymi zmianami: `/var/lib/danaco-console/danaco-console.db.bak-2026-09-01-2340`
+  (przed DDL 406/407), `~/robocze/podglad-dane/*.bak-2026-09-01-2345`, na serwerze
+  `*.bak-2026-09-01-2345` (Studio). Kopie binariów rdzenia: `danaco-console.bak-2026-09-01`.
+- Skrypty tej sesji w scratchpadzie (`wdrozenie.sh`, `vm-*.mjs`) — **znikają z sesją**;
+  `wdrozenie.sh` warto odtworzyć z opisu, jeśli trzeba wdrażać ponownie.
+
 ## 6. Co zostało
 
 Plan siedmiu etapów stoi w audycie, rozdział 4, każdy z wykazem czynności plik po pliku,

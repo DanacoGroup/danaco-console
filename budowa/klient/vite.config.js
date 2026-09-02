@@ -151,6 +151,32 @@ const WNETRZA_OKIEN = [
     otwarcie: '<main class="st-okno-robocze"',
     zamkniecie: '</main>',
   },
+  // Prototyp Designu nie ma znacznika `main`, więc blok bierze się od obszaru
+  // roboczego do jego znacznika zamykającego.
+  {
+    gniazdo: 'dn-tresc-design',
+    prototyp: '../../design/05-okna/moduly/design.html',
+    otwarcie: '<div class="sta-obszar"',
+    zamkniecie: '<!-- /sta-obszar -->',
+  },
+  {
+    gniazdo: 'dn-tresc-library',
+    prototyp: '../../design/05-okna/moduly/library.html',
+    otwarcie: '<div class="sta-obszar"',
+    zamkniecie: '<!-- /sta-obszar -->',
+  },
+  {
+    gniazdo: 'dn-tresc-workspace',
+    prototyp: '../../design/05-okna/moduly/workspace.html',
+    otwarcie: '<div class="sta-obszar"',
+    zamkniecie: '<!-- /sta-obszar -->',
+  },
+  {
+    gniazdo: 'dn-tresc-agents',
+    prototyp: '../../design/05-okna/moduly/agents.html',
+    otwarcie: '<div class="sta-obszar"',
+    zamkniecie: '<!-- /sta-obszar -->',
+  },
 ];
 
 function blokPrototypu(tresc, otwarcie, zamkniecie) {

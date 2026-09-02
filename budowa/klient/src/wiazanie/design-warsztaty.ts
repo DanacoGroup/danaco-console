@@ -248,7 +248,7 @@ async function wykonajCzynnosc(
     kontekst.kanal,
     czynnosc.komenda,
     zadanie as never,
-  ) as Wynik<unknown>;
+  ) as unknown as Wynik<unknown>;
   if (!wynik.udany || wynik.wynik === undefined) {
     oglos('Design', `${czynnosc.nazwa}: ${wynik.blad?.message ?? 'rdzeń odmówił bez opisu.'}`, 'blad');
     return;

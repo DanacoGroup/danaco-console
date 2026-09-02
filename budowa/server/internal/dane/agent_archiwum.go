@@ -20,20 +20,23 @@ type RepozytoriumArchiwumAgentow interface {
 }
 
 const (
+	// Kod eksperta idzie wprost z żądania; bez warunku konta zapis sięgnąłby wiersza konta cudzego.
 	zarchiwizujAgenta = `UPDATE agent
 	                     SET zarchiwizowano_o = strftime('%Y-%m-%dT%H:%M:%fZ', 'now'),
 	                         aktywny_przed_archiwum = aktywny,
 	                         aktywny = 0
-	                     WHERE kod = ? AND zarchiwizowano_o IS NULL`
+	                     WHERE kod = ? AND zarchiwizowano_o IS NULL
+	                       AND ` + WarunekKonta
 
 	przywrocAgentaZArchiwum = `UPDATE agent
 	                           SET zarchiwizowano_o = NULL,
 	                               aktywny = COALESCE(aktywny_przed_archiwum, 1),
 	                               aktywny_przed_archiwum = NULL
-	                           WHERE kod = ? AND zarchiwizowano_o IS NOT NULL`
+	                           WHERE kod = ? AND zarchiwizowano_o IS NOT NULL
+	                             AND ` + WarunekKonta
 
 	listaArchiwumAgentow = `SELECT ` + kolumnyAgenta + ` FROM agent
-	                        WHERE zarchiwizowano_o IS NOT NULL
+	                        WHERE zarchiwizowano_o IS NOT NULL AND ` + WarunekKonta + `
 	                        ORDER BY zarchiwizowano_o DESC, nazwa`
 )
 
@@ -59,7 +62,7 @@ func (r *repozytoriumWersjiAgenta) przestawArchiwum(ctx context.Context, zapytan
 	if err != nil {
 		return false, err
 	}
-	wynik, err := polecenie.ExecContext(ctx, kodAgenta)
+	wynik, err := polecenie.ExecContext(ctx, kodAgenta, KontoOperatora(ctx))
 	if err != nil {
 		return false, fmt.Errorf("dane: nie można %s eksperta %q: %w", czynnosc, kodAgenta, err)
 	}
@@ -77,7 +80,7 @@ func (r *repozytoriumWersjiAgenta) Archiwum(ctx context.Context) ([]Agent, error
 	if err != nil {
 		return nil, err
 	}
-	wiersze, err := polecenie.QueryContext(ctx)
+	wiersze, err := polecenie.QueryContext(ctx, KontoOperatora(ctx))
 	if err != nil {
 		return nil, fmt.Errorf("dane: nie można odczytać archiwum ekspertów: %w", err)
 	}

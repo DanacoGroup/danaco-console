@@ -9,9 +9,7 @@ import (
 	"time"
 )
 
-// SladImportuSlownika to wiersz `slad_importu_slownika` — ślad wyniku importu
-// glosariusza (translate.glossary.import): ile terminów weszło i z jakiej
-// ścieżki.
+// SladImportuSlownika to ślad wyniku importu glosariusza (translate.glossary.import): ile weszło i z jakiej ścieżki.
 type SladImportuSlownika struct {
 	ID                    int64
 	Kod                   string
@@ -20,10 +18,7 @@ type SladImportuSlownika struct {
 	Utworzono             int64
 }
 
-// SladEksportuSlownika to wiersz `slad_eksportu_slownika` — ślad wyniku
-// eksportu glosariusza (translate.glossary.export). `Sciezka` to ścieżka
-// docelowa zgłoszona w żądaniu, nie dowód powstania pliku (rdzeń nie ma
-// magazynu blobów).
+// SladEksportuSlownika to ślad wyniku eksportu glosariusza; `Sciezka` to ścieżka żądana, nie dowód powstania pliku.
 type SladEksportuSlownika struct {
 	ID                     int64
 	Kod                    string
@@ -35,25 +30,24 @@ type SladEksportuSlownika struct {
 const (
 	kolumnySladuImportuSlownika = `id, identyfikator_zewnetrzny, sciezka, liczba_zaimportowanych, utworzono`
 	zapiszSladImportuSlownika   = `INSERT INTO slad_importu_slownika
-	                               (identyfikator_zewnetrzny, sciezka, liczba_zaimportowanych, utworzono)
-	                               VALUES (?, ?, ?, ?)`
+	                               (identyfikator_zewnetrzny, sciezka, liczba_zaimportowanych, utworzono, konto_id)
+	                               VALUES (?, ?, ?, ?, ` + WskazanieKonta + `)`
 	pobierzSladImportuSlownika = `SELECT ` + kolumnySladuImportuSlownika + ` FROM slad_importu_slownika
-	                              WHERE identyfikator_zewnetrzny = ?`
+	                              WHERE identyfikator_zewnetrzny = ? AND ` + WarunekKonta
 	listaSladowImportuSlownika = `SELECT ` + kolumnySladuImportuSlownika + ` FROM slad_importu_slownika
-	                              ORDER BY utworzono DESC LIMIT ?`
+	                              WHERE ` + WarunekKonta + ` ORDER BY utworzono DESC LIMIT ?`
 
 	kolumnySladuEksportuSlownika = `id, identyfikator_zewnetrzny, sciezka, liczba_wyeksportowanych, utworzono`
 	zapiszSladEksportuSlownika   = `INSERT INTO slad_eksportu_slownika
-	                               (identyfikator_zewnetrzny, sciezka, liczba_wyeksportowanych, utworzono)
-	                               VALUES (?, ?, ?, ?)`
+	                               (identyfikator_zewnetrzny, sciezka, liczba_wyeksportowanych, utworzono, konto_id)
+	                               VALUES (?, ?, ?, ?, ` + WskazanieKonta + `)`
 	pobierzSladEksportuSlownika = `SELECT ` + kolumnySladuEksportuSlownika + ` FROM slad_eksportu_slownika
-	                               WHERE identyfikator_zewnetrzny = ?`
+	                               WHERE identyfikator_zewnetrzny = ? AND ` + WarunekKonta
 	listaSladowEksportuSlownika = `SELECT ` + kolumnySladuEksportuSlownika + ` FROM slad_eksportu_slownika
-	                               ORDER BY utworzono DESC LIMIT ?`
+	                               WHERE ` + WarunekKonta + ` ORDER BY utworzono DESC LIMIT ?`
 )
 
-// ZapiszImportSlownika dokłada ślad importu (historia, nic nie
-// nadpisuje) — każde wywołanie `glossary.import` to osobny fakt o wyniku.
+// ZapiszImportSlownika dokłada ślad importu — każde `glossary.import` to osobny fakt, nic się nie nadpisuje.
 func (r *repozytoriumTlumaczen) ZapiszImportSlownika(ctx context.Context, slad SladImportuSlownika) (SladImportuSlownika, error) {
 	if slad.Kod == "" {
 		return SladImportuSlownika{}, fmt.Errorf("dane: ślad importu słownika bez identyfikatora")
@@ -69,23 +63,21 @@ func (r *repozytoriumTlumaczen) ZapiszImportSlownika(ctx context.Context, slad S
 	if err != nil {
 		return SladImportuSlownika{}, err
 	}
-	if _, err := polecenie.ExecContext(ctx, slad.Kod, slad.Sciezka, slad.LiczbaZaimportowanych, teraz); err != nil {
+	if _, err := polecenie.ExecContext(ctx, slad.Kod, slad.Sciezka, slad.LiczbaZaimportowanych, teraz, KontoOperatora(ctx)); err != nil {
 		return SladImportuSlownika{}, fmt.Errorf("dane: nie można zapisać śladu importu słownika %q: %w", slad.Kod, err)
 	}
 	odczyt, err := r.zapytania.przygotuj(ctx, pobierzSladImportuSlownika)
 	if err != nil {
 		return SladImportuSlownika{}, err
 	}
-	zapisany, err := odczytajSladImportuSlownika(odczyt.QueryRowContext(ctx, slad.Kod))
+	zapisany, err := odczytajSladImportuSlownika(odczyt.QueryRowContext(ctx, slad.Kod, KontoOperatora(ctx)))
 	if err != nil {
 		return SladImportuSlownika{}, fmt.Errorf("dane: nie można odczytać zapisanego śladu importu słownika %q: %w", slad.Kod, err)
 	}
 	return zapisany, nil
 }
 
-// ZapiszEksportSlownika dokłada ślad eksportu — `Sciezka` to
-// ścieżka żądana z `TranslateGlossaryExportRequest.Path`, nie dowód powstania
-// pliku (rdzeń nie ma magazynu blobów).
+// ZapiszEksportSlownika dokłada ślad eksportu; `Sciezka` to ścieżka żądana, nie dowód powstania pliku.
 func (r *repozytoriumTlumaczen) ZapiszEksportSlownika(ctx context.Context, slad SladEksportuSlownika) (SladEksportuSlownika, error) {
 	if slad.Kod == "" {
 		return SladEksportuSlownika{}, fmt.Errorf("dane: ślad eksportu słownika bez identyfikatora")
@@ -101,14 +93,14 @@ func (r *repozytoriumTlumaczen) ZapiszEksportSlownika(ctx context.Context, slad 
 	if err != nil {
 		return SladEksportuSlownika{}, err
 	}
-	if _, err := polecenie.ExecContext(ctx, slad.Kod, slad.Sciezka, slad.LiczbaWyeksportowanych, teraz); err != nil {
+	if _, err := polecenie.ExecContext(ctx, slad.Kod, slad.Sciezka, slad.LiczbaWyeksportowanych, teraz, KontoOperatora(ctx)); err != nil {
 		return SladEksportuSlownika{}, fmt.Errorf("dane: nie można zapisać śladu eksportu słownika %q: %w", slad.Kod, err)
 	}
 	odczyt, err := r.zapytania.przygotuj(ctx, pobierzSladEksportuSlownika)
 	if err != nil {
 		return SladEksportuSlownika{}, err
 	}
-	zapisany, err := odczytajSladEksportuSlownika(odczyt.QueryRowContext(ctx, slad.Kod))
+	zapisany, err := odczytajSladEksportuSlownika(odczyt.QueryRowContext(ctx, slad.Kod, KontoOperatora(ctx)))
 	if err != nil {
 		return SladEksportuSlownika{}, fmt.Errorf("dane: nie można odczytać zapisanego śladu eksportu słownika %q: %w", slad.Kod, err)
 	}
@@ -121,7 +113,7 @@ func (r *repozytoriumTlumaczen) ImportySlownika(ctx context.Context, limit int) 
 	if err != nil {
 		return nil, err
 	}
-	wiersze, err := polecenie.QueryContext(ctx, limit)
+	wiersze, err := polecenie.QueryContext(ctx, KontoOperatora(ctx), limit)
 	if err != nil {
 		return nil, fmt.Errorf("dane: nie można odczytać śladów importu słownika: %w", err)
 	}
@@ -147,7 +139,7 @@ func (r *repozytoriumTlumaczen) EksportySlownika(ctx context.Context, limit int)
 	if err != nil {
 		return nil, err
 	}
-	wiersze, err := polecenie.QueryContext(ctx, limit)
+	wiersze, err := polecenie.QueryContext(ctx, KontoOperatora(ctx), limit)
 	if err != nil {
 		return nil, fmt.Errorf("dane: nie można odczytać śladów eksportu słownika: %w", err)
 	}
@@ -167,8 +159,6 @@ func (r *repozytoriumTlumaczen) EksportySlownika(ctx context.Context, limit int)
 	return lista, nil
 }
 
-// odczytajSladImportuSlownika składa strukturę z jednego wiersza wyniku. Brak
-// wiersza wraca jako ErrBrakWiersza.
 func odczytajSladImportuSlownika(wiersz skaner) (SladImportuSlownika, error) {
 	var slad SladImportuSlownika
 	err := wiersz.Scan(&slad.ID, &slad.Kod, &slad.Sciezka, &slad.LiczbaZaimportowanych, &slad.Utworzono)

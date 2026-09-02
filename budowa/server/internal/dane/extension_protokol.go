@@ -1,6 +1,4 @@
-// Rodzina extension.*: warstwa protokołu. Narzędzia odkryte u integracji,
-// dziennik ramek JSON-RPC, wywołania wraz z ich czasem oraz wyniki sprawdzeń
-// kondycji; wszystkie cztery byty powstają z pracy, nie z żądania odczytu.
+// Rodzina extension.* — warstwa protokołu: narzędzia integracji, ramki JSON-RPC, wywołania i wyniki kondycji.
 package dane
 
 import (
@@ -9,8 +7,7 @@ import (
 	"fmt"
 )
 
-// NarzedzieRozszerzenia to wiersz tabeli `narzedzie_rozszerzenia` — jeden wpis
-// jednego z trzech wykazów protokołu MCP.
+// NarzedzieRozszerzenia to jeden wpis jednego z trzech wykazów protokołu MCP.
 type NarzedzieRozszerzenia struct {
 	ID              int64
 	RozszerzenieKod string
@@ -23,8 +20,7 @@ type NarzedzieRozszerzenia struct {
 	WersjaProtokolu *string
 }
 
-// RamkaProtokolu to wiersz tabeli `ramka_protokolu_rozszerzenia`: jedna
-// ramka JSON-RPC odnotowana w dzienniku wywołania.
+// RamkaProtokolu to jedna ramka JSON-RPC odnotowana w dzienniku wywołania.
 type RamkaProtokolu struct {
 	ID              int64
 	Kod             string
@@ -37,8 +33,7 @@ type RamkaProtokolu struct {
 	Zaszlo          int64
 }
 
-// WywolanieRozszerzenia to wiersz tabeli `wywolanie_rozszerzenia`: jedno
-// wywołanie narzędzia integracji wraz z jego czasem i wynikiem.
+// WywolanieRozszerzenia to jedno wywołanie narzędzia integracji wraz z czasem i wynikiem.
 type WywolanieRozszerzenia struct {
 	ID              int64
 	RozszerzenieKod string
@@ -50,8 +45,7 @@ type WywolanieRozszerzenia struct {
 	Zaszlo          int64
 }
 
-// KondycjaRozszerzenia to wiersz tabeli `kondycja_rozszerzenia`: wynik
-// jednego sprawdzenia kondycji integracji.
+// KondycjaRozszerzenia to wynik jednego sprawdzenia kondycji integracji.
 type KondycjaRozszerzenia struct {
 	ID              int64
 	RozszerzenieKod string
@@ -98,44 +92,40 @@ const (
 
 	wstawWywolanieRozszerzenia = `INSERT INTO wywolanie_rozszerzenia
 	                              (rozszerzenie_kod, agent_kod, narzedzie, udane, czas_ms,
-	                               szczegol, zaszlo)
-	                              VALUES (?, ?, ?, ?, ?, ?, ?)`
+	                               szczegol, zaszlo, konto_id)
+	                              VALUES (?, ?, ?, ?, ?, ?, ?, ` + WskazanieKonta + `)`
 
-	// Metryka użycia liczy się z wierszy, nie z licznika: liczba wywołań,
-	// liczba niepowodzeń i średni czas w oknie czasu wymagają trzech różnych
-	// agregatów nad tym samym zbiorem.
+	// Metryka użycia liczy się z wierszy: liczba wywołań, niepowodzeń i średni czas to trzy agregaty nad jednym zbiorem.
 	metrykaWywolanRozszerzenia = `SELECT rozszerzenie_kod, COUNT(*),
 	                                     SUM(CASE WHEN udane = 0 THEN 1 ELSE 0 END),
 	                                     AVG(czas_ms)
 	                              FROM wywolanie_rozszerzenia
 	                              WHERE (? = '' OR rozszerzenie_kod = ?)
-	                                AND zaszlo >= ? AND zaszlo <= ?
+	                                AND zaszlo >= ? AND zaszlo <= ? AND ` + WarunekKonta + `
 	                              GROUP BY rozszerzenie_kod ORDER BY rozszerzenie_kod`
 
 	listaAudytuRozszerzenia = `SELECT rozszerzenie_kod, agent_kod, narzedzie, zaszlo
 	                           FROM wywolanie_rozszerzenia
 	                           WHERE (? = '' OR rozszerzenie_kod = ?)
-	                             AND (? = '' OR agent_kod = ?) AND zaszlo >= ?
+	                             AND (? = '' OR agent_kod = ?) AND zaszlo >= ? AND ` + WarunekKonta + `
 	                           ORDER BY zaszlo DESC, id DESC LIMIT ?`
 
 	policzAudytRozszerzenia = `SELECT COUNT(*) FROM wywolanie_rozszerzenia
 	                           WHERE (? = '' OR rozszerzenie_kod = ?)
-	                             AND (? = '' OR agent_kod = ?) AND zaszlo >= ?`
+	                             AND (? = '' OR agent_kod = ?) AND zaszlo >= ? AND ` + WarunekKonta
 
 	wstawKondycjeRozszerzenia = `INSERT INTO kondycja_rozszerzenia
 	                             (rozszerzenie_kod, stan, czas_ms, liczba_narzedzi,
-	                              blad_powitania, sprawdzono)
-	                             VALUES (?, ?, ?, ?, ?, ?)`
+	                              blad_powitania, sprawdzono, konto_id)
+	                             VALUES (?, ?, ?, ?, ?, ?, ` + WskazanieKonta + `)`
 
 	ostatniaKondycjaRozszerzenia = `SELECT id, rozszerzenie_kod, stan, czas_ms, liczba_narzedzi,
 	                                       blad_powitania, sprawdzono
-	                                FROM kondycja_rozszerzenia WHERE rozszerzenie_kod = ?
+	                                FROM kondycja_rozszerzenia WHERE rozszerzenie_kod = ? AND ` + WarunekKonta + `
 	                                ORDER BY sprawdzono DESC, id DESC LIMIT 1`
 )
 
-// ZapiszNarzedziaRozszerzenia wymienia komplet wpisów odkrytych u integracji.
-// Wymiana, nie dokładanie: serwer, który przestał udostępniać narzędzie, ma
-// przestać je pokazywać, a wpis pozostawiony byłby obietnicą bez pokrycia.
+// ZapiszNarzedziaRozszerzenia wymienia komplet wpisów odkrytych u integracji (wymiana, nie dokładanie).
 func (r *repozytoriumRozszerzen) ZapiszNarzedziaRozszerzenia(ctx context.Context,
 	rozszerzenie string, wpisy []NarzedzieRozszerzenia) error {
 
@@ -167,8 +157,7 @@ func (r *repozytoriumRozszerzen) ZapiszNarzedziaRozszerzenia(ctx context.Context
 	})
 }
 
-// NarzedziaRozszerzenia zwraca wpisy pozycji katalogu, opcjonalnie zawężone
-// do jednego rodzaju narzędzia.
+// NarzedziaRozszerzenia zwraca wpisy pozycji katalogu, opcjonalnie zawężone do jednego rodzaju.
 func (r *repozytoriumRozszerzen) NarzedziaRozszerzenia(ctx context.Context,
 	rozszerzenie, rodzaj string) ([]NarzedzieRozszerzenia, error) {
 
@@ -203,8 +192,7 @@ func (r *repozytoriumRozszerzen) NarzedziaRozszerzenia(ctx context.Context,
 	return lista, nil
 }
 
-// DopiszRamkeProtokolu odnotowuje jedną ramkę JSON-RPC w dzienniku
-// protokołu wskazanej pozycji katalogu.
+// DopiszRamkeProtokolu odnotowuje jedną ramkę JSON-RPC w dzienniku protokołu pozycji katalogu.
 func (r *repozytoriumRozszerzen) DopiszRamkeProtokolu(ctx context.Context, ramka RamkaProtokolu) error {
 	if ramka.Kod == "" || ramka.RozszerzenieKod == "" {
 		return fmt.Errorf("dane: ramka protokołu bez identyfikatora albo pozycji")
@@ -222,8 +210,7 @@ func (r *repozytoriumRozszerzen) DopiszRamkeProtokolu(ctx context.Context, ramka
 	return nil
 }
 
-// RamkiProtokolu zwraca stronę dziennika ramek protokołu wraz z liczbą
-// wszystkich pasujących wierszy dziennika.
+// RamkiProtokolu zwraca stronę dziennika ramek protokołu wraz z liczbą wszystkich pasujących wierszy.
 func (r *repozytoriumRozszerzen) RamkiProtokolu(ctx context.Context, rozszerzenie string,
 	od int64, granica int) ([]RamkaProtokolu, int, error) {
 
@@ -270,8 +257,7 @@ func (r *repozytoriumRozszerzen) RamkiProtokolu(ctx context.Context, rozszerzeni
 	return lista, razem, nil
 }
 
-// DopiszWywolanieRozszerzenia odnotowuje jedno wywołanie narzędzia
-// integracji wraz z jego wynikiem i czasem.
+// DopiszWywolanieRozszerzenia odnotowuje jedno wywołanie narzędzia integracji wraz z wynikiem i czasem.
 func (r *repozytoriumRozszerzen) DopiszWywolanieRozszerzenia(ctx context.Context,
 	wywolanie WywolanieRozszerzenia) error {
 
@@ -285,7 +271,7 @@ func (r *repozytoriumRozszerzen) DopiszWywolanieRozszerzenia(ctx context.Context
 	_, err = polecenie.ExecContext(ctx, wywolanie.RozszerzenieKod,
 		tekstDoKolumny(wywolanie.AgentKod), tekstDoKolumny(wywolanie.Narzedzie),
 		liczbaLogiczna(wywolanie.Udane), wywolanie.CzasMs,
-		tekstDoKolumny(wywolanie.Szczegol), wywolanie.Zaszlo)
+		tekstDoKolumny(wywolanie.Szczegol), wywolanie.Zaszlo, KontoOperatora(ctx))
 	if err != nil {
 		return fmt.Errorf("dane: nie można zapisać wywołania pozycji %q: %w",
 			wywolanie.RozszerzenieKod, err)
@@ -293,8 +279,7 @@ func (r *repozytoriumRozszerzen) DopiszWywolanieRozszerzenia(ctx context.Context
 	return nil
 }
 
-// MetrykaUzyciaRozszerzenia to policzony wynik jednego okna czasu: liczba
-// wywołań, niepowodzeń i średni czas.
+// MetrykaUzyciaRozszerzenia to policzony wynik jednego okna czasu: wywołania, niepowodzenia, średni czas.
 type MetrykaUzyciaRozszerzenia struct {
 	RozszerzenieKod string
 	Wywolan         int
@@ -302,8 +287,7 @@ type MetrykaUzyciaRozszerzenia struct {
 	SredniCzasMs    *int64
 }
 
-// MetrykiUzyciaRozszerzen liczy metryki użycia integracji w zadanym oknie
-// czasu, zgrupowane po pozycji katalogu.
+// MetrykiUzyciaRozszerzen liczy metryki użycia integracji w oknie czasu, zgrupowane po pozycji katalogu.
 func (r *repozytoriumRozszerzen) MetrykiUzyciaRozszerzen(ctx context.Context, rozszerzenie string,
 	od, do int64) ([]MetrykaUzyciaRozszerzenia, error) {
 
@@ -311,7 +295,7 @@ func (r *repozytoriumRozszerzen) MetrykiUzyciaRozszerzen(ctx context.Context, ro
 	if err != nil {
 		return nil, err
 	}
-	wiersze, err := polecenie.QueryContext(ctx, rozszerzenie, rozszerzenie, od, do)
+	wiersze, err := polecenie.QueryContext(ctx, rozszerzenie, rozszerzenie, od, do, KontoOperatora(ctx))
 	if err != nil {
 		return nil, fmt.Errorf("dane: nie można policzyć metryk użycia rozszerzeń: %w", err)
 	}
@@ -339,8 +323,7 @@ func (r *repozytoriumRozszerzen) MetrykiUzyciaRozszerzen(ctx context.Context, ro
 	return lista, nil
 }
 
-// AudytRozszerzen zwraca stronę wywołań widzianą od strony eksperta wraz
-// z liczbą wszystkich spełniających te same warunki.
+// AudytRozszerzen zwraca stronę wywołań od strony eksperta wraz z liczbą wszystkich pasujących.
 func (r *repozytoriumRozszerzen) AudytRozszerzen(ctx context.Context, rozszerzenie, agent string,
 	od int64, granica int) ([]WywolanieRozszerzenia, int, error) {
 
@@ -351,7 +334,8 @@ func (r *repozytoriumRozszerzen) AudytRozszerzen(ctx context.Context, rozszerzen
 	if err != nil {
 		return nil, 0, err
 	}
-	wiersze, err := polecenie.QueryContext(ctx, rozszerzenie, rozszerzenie, agent, agent, od, granica)
+	wiersze, err := polecenie.QueryContext(ctx, rozszerzenie, rozszerzenie, agent, agent, od,
+		KontoOperatora(ctx), granica)
 	if err != nil {
 		return nil, 0, fmt.Errorf("dane: nie można odczytać audytu rozszerzeń: %w", err)
 	}
@@ -377,15 +361,14 @@ func (r *repozytoriumRozszerzen) AudytRozszerzen(ctx context.Context, rozszerzen
 		return nil, 0, err
 	}
 	var razem int
-	if err := liczenie.QueryRowContext(ctx, rozszerzenie, rozszerzenie, agent, agent, od).
-		Scan(&razem); err != nil {
+	if err := liczenie.QueryRowContext(ctx, rozszerzenie, rozszerzenie, agent, agent, od,
+		KontoOperatora(ctx)).Scan(&razem); err != nil {
 		return nil, 0, fmt.Errorf("dane: nie można policzyć wpisów audytu: %w", err)
 	}
 	return lista, razem, nil
 }
 
-// DopiszKondycjeRozszerzenia odnotowuje wynik jednego sprawdzenia kondycji
-// integracji w dzienniku kondycji.
+// DopiszKondycjeRozszerzenia odnotowuje wynik jednego sprawdzenia kondycji integracji.
 func (r *repozytoriumRozszerzen) DopiszKondycjeRozszerzenia(ctx context.Context,
 	kondycja KondycjaRozszerzenia) error {
 
@@ -398,7 +381,7 @@ func (r *repozytoriumRozszerzen) DopiszKondycjeRozszerzenia(ctx context.Context,
 	}
 	_, err = polecenie.ExecContext(ctx, kondycja.RozszerzenieKod, kondycja.Stan,
 		liczbaDoKolumny(kondycja.CzasMs), liczbaDoKolumny(kondycja.LiczbaNarzedzi),
-		tekstDoKolumny(kondycja.BladPowitania), kondycja.Sprawdzono)
+		tekstDoKolumny(kondycja.BladPowitania), kondycja.Sprawdzono, KontoOperatora(ctx))
 	if err != nil {
 		return fmt.Errorf("dane: nie można zapisać kondycji pozycji %q: %w",
 			kondycja.RozszerzenieKod, err)
@@ -406,8 +389,6 @@ func (r *repozytoriumRozszerzen) DopiszKondycjeRozszerzenia(ctx context.Context,
 	return nil
 }
 
-// OstatniaKondycjaRozszerzenia zwraca najnowszy wynik sprawdzenia kondycji
-// wskazanej pozycji katalogu.
 func (r *repozytoriumRozszerzen) OstatniaKondycjaRozszerzenia(ctx context.Context,
 	rozszerzenie string) (KondycjaRozszerzenia, error) {
 
@@ -418,7 +399,7 @@ func (r *repozytoriumRozszerzen) OstatniaKondycjaRozszerzenia(ctx context.Contex
 	var kondycja KondycjaRozszerzenia
 	var czas, narzedzi sql.NullInt64
 	var blad sql.NullString
-	err = polecenie.QueryRowContext(ctx, rozszerzenie).Scan(&kondycja.ID, &kondycja.RozszerzenieKod,
+	err = polecenie.QueryRowContext(ctx, rozszerzenie, KontoOperatora(ctx)).Scan(&kondycja.ID, &kondycja.RozszerzenieKod,
 		&kondycja.Stan, &czas, &narzedzi, &blad, &kondycja.Sprawdzono)
 	if err == sql.ErrNoRows {
 		return KondycjaRozszerzenia{}, ErrBrakWiersza

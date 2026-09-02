@@ -1,5 +1,4 @@
-// Plik prowadzi dziennik audytu biblioteki: dziennik jest przyrostowy, więc jedyne operacje to dopisanie i odczyt,
-// a zasób wskazywany jest kodem zewnętrznym, nie kluczem obcym, żeby wpis przeżył trwałe usunięcie zasobu.
+// Dziennik audytu biblioteki: przyrostowy (dopisanie i odczyt); zasób wskazany kodem, nie kluczem obcym.
 package dane
 
 import (
@@ -35,11 +34,11 @@ const (
 	kolumnyWpisuAudytuBiblioteki = `id, identyfikator_zewnetrzny, plik_kod, czynnosc, sprawca, opis, chwila`
 
 	zapiszWpisAudytuBiblioteki = `INSERT INTO wpis_audytu_biblioteki
-	                              (identyfikator_zewnetrzny, plik_kod, czynnosc, sprawca, opis)
-	                              VALUES (?, ?, ?, ?, ?)`
+	                              (identyfikator_zewnetrzny, plik_kod, czynnosc, sprawca, opis, konto_id)
+	                              VALUES (?, ?, ?, ?, ?, ` + WskazanieKonta + `)`
 
 	pobierzWpisAudytuBiblioteki = `SELECT ` + kolumnyWpisuAudytuBiblioteki + `
-	                               FROM wpis_audytu_biblioteki WHERE identyfikator_zewnetrzny = ?`
+	                               FROM wpis_audytu_biblioteki WHERE identyfikator_zewnetrzny = ? AND ` + WarunekKonta
 )
 
 // ZapiszWpisAudytu dopisuje zdarzenie do dziennika audytu biblioteki wraz z jego pełną treścią zapisu.
@@ -57,7 +56,7 @@ func (r *repozytoriumBiblioteki) ZapiszWpisAudytu(ctx context.Context,
 		return WpisAudytuBiblioteki{}, err
 	}
 	_, err = polecenie.ExecContext(ctx, wpis.Kod, tekstDoKolumny(wpis.PlikKod), wpis.Czynnosc,
-		wpis.Sprawca, tekstDoKolumny(wpis.Opis))
+		wpis.Sprawca, tekstDoKolumny(wpis.Opis), KontoOperatora(ctx))
 	if err != nil {
 		return WpisAudytuBiblioteki{}, fmt.Errorf("dane: nie można zapisać wpisu audytu %q: %w",
 			wpis.Kod, err)
@@ -66,7 +65,7 @@ func (r *repozytoriumBiblioteki) ZapiszWpisAudytu(ctx context.Context,
 	if err != nil {
 		return WpisAudytuBiblioteki{}, err
 	}
-	zapisany, err := odczytajWpisAudytuBiblioteki(odczyt.QueryRowContext(ctx, wpis.Kod))
+	zapisany, err := odczytajWpisAudytuBiblioteki(odczyt.QueryRowContext(ctx, wpis.Kod, KontoOperatora(ctx)))
 	if err != nil {
 		return WpisAudytuBiblioteki{}, fmt.Errorf("dane: nieczytelny wpis audytu %q: %w", wpis.Kod, err)
 	}
@@ -77,8 +76,8 @@ func (r *repozytoriumBiblioteki) ZapiszWpisAudytu(ctx context.Context,
 func (r *repozytoriumBiblioteki) WpisyAudytu(ctx context.Context,
 	filtr FiltrAudytuBiblioteki) ([]WpisAudytuBiblioteki, int, error) {
 
-	warunki := []string{"1 = 1"}
-	argumenty := []any{}
+	warunki := []string{"1 = 1", WarunekKonta}
+	argumenty := []any{KontoOperatora(ctx)}
 	if filtr.PlikKod != nil && *filtr.PlikKod != "" {
 		warunki = append(warunki, "plik_kod = ?")
 		argumenty = append(argumenty, *filtr.PlikKod)

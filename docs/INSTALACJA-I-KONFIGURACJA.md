@@ -1690,8 +1690,13 @@ do WebSocket: parametrem `sekret` w adresie gniazda (klient składa go w `adresN
 `klient/src/polaczenie/adres-rdzenia.ts`, wartość bierze z powłoki) albo nagłówkiem `X-Danaco-Sekret`.
 Rdzeń czyta zmienną wprost ze środowiska procesu (warstwa transportu, nie nastawy bazy) i porównuje
 czasem stałym; niezgodność odrzuca nawiązanie przed otwarciem gniazda. Puste = bez sprawdzenia.
-Miejsce wpisu na serwerze: `/etc/danaco-console/srodowisko` (plik `EnvironmentFile` jednostki, prawa
-`0640`, `root:danaco-console`). Tę samą wartość musi nieść powłoka na urządzeniu Operatora
+Sekret obowiązuje gniazda bez potwierdzonego poświadczenia serwera narzędzi: serwer narzędzi
+przedstawia się poświadczeniem procesu rdzenia — parametrem `poswiadczenie` w adresie gniazda —
+które dostaje argumentem uruchomienia `--poswiadczenie` (`server/internal/narzedzia/wpiecie.go`),
+a sekretu powłoki nie zna. Gniazdo ze zgodnym poświadczeniem wchodzi bez sekretu; gniazdo, które
+przedstawiło się rodzajem albo poświadczeniem niezgodnym, odpada na poświadczeniu i drogi przez
+sekret już nie ma. Miejsce wpisu na serwerze: `/etc/danaco-console/srodowisko` (plik `EnvironmentFile`
+jednostki, prawa `0640`, `root:danaco-console`). Tę samą wartość musi nieść powłoka na urządzeniu Operatora
 (`ZMIENNA_SEKRET_NAWIAZANIA` w `desktop/src-tauri/src/ustawienia.rs`) — w instalkę sekretu się nie
 wpisuje, bo napis wkompilowany w plik wykonywalny czyta `strings`. Bez odpowiednika w wierszu poleceń.
 

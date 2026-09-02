@@ -34,9 +34,20 @@ const (
 
 // Metoda nawiaz przyjmuje żądanie uaktualnienia do WebSocket i prowadzi całe życie połączenia od rejestracji do wykreślenia.
 func (s *Serwer) nawiaz(w http.ResponseWriter, r *http.Request) {
-	// Sekret i granica rejestru rozstrzygają się przed uaktualnieniem gniazda:
-	// po uaktualnieniu odmowa nie ma już postaci kodu HTTP.
-	if !s.sekretZgodny(r) {
+	// Poświadczenie, sekret i granica rejestru rozstrzygają się przed
+	// uaktualnieniem gniazda: po uaktualnieniu odmowa nie ma już postaci kodu
+	// HTTP. Rodzaj i zasięg z zapytania wchodzą do tożsamości dopiero po
+	// sprawdzeniu poświadczenia.
+	poswiadczone, odmowa := s.poswiadczenieNarzedziZgodne(r)
+	if odmowa != "" {
+		s.ustawienia.Dziennik.Printf("transport: nawiązanie z %s odrzucone — %s", adresZdalny(r), odmowa)
+		http.Error(w, odmowa, http.StatusForbidden)
+		return
+	}
+	// Poświadczenie zastępuje sekret nawiązania: jest sekretem losowym tego
+	// procesu rdzenia, wydawanym serwerowi narzędzi argumentem uruchomienia,
+	// a sekretu powłoki serwer narzędzi nie zna.
+	if !poswiadczone && !s.sekretZgodny(r) {
 		s.ustawienia.Dziennik.Printf("transport: nawiązanie z %s odrzucone — sekret nawiązania niezgodny", adresZdalny(r))
 		http.Error(w, "sekret nawiązania niezgodny", http.StatusForbidden)
 		return
@@ -44,14 +55,6 @@ func (s *Serwer) nawiaz(w http.ResponseWriter, r *http.Request) {
 	if powod, pelno := s.brakMiejscaWRejestrze(); pelno {
 		s.ustawienia.Dziennik.Printf("transport: nawiązanie z %s odrzucone — %s", adresZdalny(r), powod)
 		http.Error(w, powod, http.StatusServiceUnavailable)
-		return
-	}
-	// Poświadczenie serwera narzędzi rozstrzyga się tu, przed uaktualnieniem:
-	// rodzaj i zasięg z zapytania wchodzą do tożsamości dopiero po sprawdzeniu.
-	poswiadczone, odmowa := s.poswiadczenieNarzedziZgodne(r)
-	if odmowa != "" {
-		s.ustawienia.Dziennik.Printf("transport: nawiązanie z %s odrzucone — %s", adresZdalny(r), odmowa)
-		http.Error(w, odmowa, http.StatusForbidden)
 		return
 	}
 	// Biblioteka gniazda przepuszcza żądanie bez nagłówka Origin, a proces
@@ -147,6 +150,12 @@ func (s *Serwer) brakMiejscaWRejestrze() (string, bool) {
 	}
 	niezwiazane := 0
 	for _, p := range stojace {
+		// Gniazdo z poświadczeniem serwera narzędzi bramki nie przechodzi
+		// i przejść nie ma czym: sesji bramki nie zakłada żadna jego droga.
+		// Liczone jako niezwiązane zajęłoby granicę samą swoją obecnością.
+		if p.Tozsamosc().PoswiadczenieSprawdzone {
+			continue
+		}
 		if !stan.PolaczenieZwiazane(p.Id()) {
 			niezwiazane++
 		}

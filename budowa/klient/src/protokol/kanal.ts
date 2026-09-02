@@ -94,9 +94,7 @@ export function utworzKanal(transport: Transport, sesja: Sesja): Kanal {
       bylaLacznosc = true;
       return;
     }
-    /* Stan przed pierwszym połączeniem nie jest zerwaniem: unieważnienie
-       zdejmowałoby wtedy powitanie wysłane w tej samej turze, zanim rdzeń
-       zdąży odpowiedzieć. */
+    // Stan przed pierwszym połączeniem nie jest zerwaniem: unieważnienie zdjęłoby powitanie tej samej tury.
     if (!bylaLacznosc) return;
     korelacja.uniewaznijWszystkie(bladZerwania());
   });

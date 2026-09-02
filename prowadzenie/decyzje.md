@@ -1718,3 +1718,56 @@ podlegają host, użytkownik, ścieżka klucza, polecenie startu i nazwa mostu.
 skasowany wiersz zostawia treść na zwolnionych stronach pliku bazy, czytelną
 zwykłym `grep`. Adres produkcyjny stoi odtąd w dwóch plikach źródła — w kroku
 013, którego nie wolno tknąć, i raz w kroku zdejmującym zaczyn.
+
+## 34. Praca w tle niesie konto zamawiającego, rejestry instalacji zostają wspólne
+
+**Rozstrzygnięcie Prowadzącego z upoważnienia Właściciela, 2 września 2026.**
+
+**Kontekst.** Konto Operatora wchodzi do kontekstu żądania raz, w `core/rdzen.go`,
+i warstwa danych bierze je z kontekstu. Trzy miejsca pracują poza turą i `KontoOperatora`
+daje tam zero: rejestrator bloków wiadomości (`core/rejestrator_blokow.go`), gorutyna
+nasłuchów biblioteki (`core/adapter_modul_library_audyt.go`) oraz rejestry czytane przy
+montażu rdzenia — rejestr kanałów (`models/zrodlo_bazy.go`) i rozstrzygacz ustawień
+(`core/montaz_zrodla.go`). Zawężenie ich odczytów zsunęłoby pracę na konto najstarsze,
+a brak zawężenia zostawia wiersze konta A w zasięgu konta B.
+
+**Rozważone warianty.**
+
+1. Zawęzić wszystko kontekstem zastanym. Odrzucone: kontekst montażu nie niesie konta,
+   więc zawężenie po cichu przypisuje pracę kontu najstarszemu.
+2. Zostawić te miejsca poza granicą i zapisać wyjątek. Odrzucone dla pracy w tle
+   zamawianej przez turę: konto jest o jedną linię od zapisu i da się je donieść.
+3. Praca w tle zamawiana przez turę dostaje kontekst `dane.ZKontemOperatora(życie,
+   dane.KontoOperatora(ctx))` w miejscu przekazania; rejestry instalacji zostają jedne
+   na proces, a granica dla nich stoi przy użyciu i przy wykazie.
+
+**Decyzja.** Wariant 3. Rejestr kanałów czyta komplet wierszy; użycie kanału po kodzie
+z żądania sprawdza najpierw własność kodu przez zawężone repozytorium `dane`, a wykaz
+kanałów oddaje wyłącznie kanały konta. Rozstrzygacz ustawień dostaje konto Operatora
+w `konfig.Kontekst` i podaje je źródłu odczytu; wywołanie bez żądania zostaje przy
+zerze, czyli przy koncie najstarszym, i jest to nazwane przy polu.
+
+**Konsekwencje.** Port `session.Uruchamiacz` i tor zdalny (`zdalne.Przeloz`) biorą
+kontekst żądania, bo wybór hosta wykonania i wiersz hosta należą do konta. Tabela
+`sesja` nie ma kolumny konta i sięga go przez `karta_sesji`. Każdy zapis do tabeli
+korzenia niesie `WskazanieKonta`; zawężony odczyt przy zapisie bez konta chowa kontu
+młodszemu jego własne wiersze.
+
+## 35. Plugin dyscypliny obowiązuje, udział komentarzy do 5%
+
+**Rozstrzygnięcie Właściciela, 2 września 2026.**
+
+**Kontekst.** Właściciel polecił stosować plugin `danaco-dyscyplina` i ustalił, że udział
+komentarzy w plikach o większej liczbie wierszy kodu nie przekracza 5%. Walidator
+pluginu liczył dotąd 20% od 40 wierszy kodu, a słownik metafor zawierał słowo „korzeń",
+które jest terminem schematu (`korzen_nadania`, `korzen_punktu_dostepu`).
+
+**Decyzja.** Walidator liczy udział komentarzy w wierszach: najwyżej 5% w pliku od 100
+wierszy kodu. Słowo „korzeń" schodzi ze słownika metafor. Plik dotknięty zmianą opuszcza
+teren bez naruszeń blokujących walidatora; komentarze niosące ograniczenie zewnętrzne
+skraca się, nie kasuje. Próg 100 wierszy jest wykładnią „większej liczby wierszy" przez
+Prowadzącego i podlega obaleniu przez Właściciela.
+
+**Konsekwencje.** Konfiguracja stoi w `validators/dyscyplina.config.json` pluginu
+(kopia sprzed zmiany obok, z przyrostkiem daty). Aktualizacja pluginu może ją nadpisać
+— po aktualizacji próg trzeba sprawdzić.

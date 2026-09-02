@@ -1,6 +1,4 @@
-// Plik definiuje architekturę produktu i jej komponenty: kontrakt
-// RepozytoriumAplikacji obszaru Apps, wspólny z aplikacje_warsztat.go i
-// aplikacje_wdrozenia.go.
+// Architektura produktu i jej komponenty; kontrakt RepozytoriumAplikacji obszaru Apps, wspólny z resztą modułu.
 package dane
 
 import (
@@ -12,8 +10,7 @@ import (
 	"danacoconsole/shared"
 )
 
-// ArchitekturaApp to wiersz tabeli `architektura_apps`. Kod jest
-// identyfikatorem, którym architektura wychodzi kontraktem (`AppArchitecture.id`).
+// ArchitekturaApp to wiersz `architektura_apps`; Kod odpowiada `AppArchitecture.id` kontraktu.
 type ArchitekturaApp struct {
 	ID                    int64
 	Kod                   string
@@ -24,13 +21,11 @@ type ArchitekturaApp struct {
 	ZastrzezeniaWalidacji []string
 	Utworzono             string
 	Zaktualizowano        string
-	// RoznicaWersji jest polem wyłącznie zapisu: różnica wobec poprzedniej
-	// wersji idzie do historii.
+	// RoznicaWersji jest polem wyłącznie zapisu — różnica wobec poprzedniej wersji idzie do historii.
 	RoznicaWersji *string
 }
 
-// KomponentArchitektury to wiersz tabeli `komponent_architektury_apps`.
-// Rodzaj jest wartością kontraktu (AppComponentKind), bez tłumaczenia.
+// KomponentArchitektury to wiersz `komponent_architektury_apps`; Rodzaj to wartość kontraktu AppComponentKind.
 type KomponentArchitektury struct {
 	ID            int64
 	KodZewnetrzny string
@@ -41,44 +36,31 @@ type KomponentArchitektury struct {
 	KontraktAPI   *string
 }
 
-// ZaleznoscKomponentu to jeden łuk grafu zależności między komponentami
-// jednej architektury — pole `AppComponent.DependsOn` kontraktu powstaje
-// z tych wierszy.
+// ZaleznoscKomponentu to jeden łuk grafu zależności między komponentami architektury (`AppComponent.DependsOn`).
 type ZaleznoscKomponentu struct {
 	KomponentZ  string
 	KomponentDo string
 }
 
-// RepozytoriumAplikacji jest kontraktem obszaru Apps: architektura,
-// warsztat, wdrożenia, produkt, środowiska i pozostałe zasoby modułu.
+// RepozytoriumAplikacji jest kontraktem obszaru Apps: architektura, warsztat, wdrożenia, produkt, środowiska.
 type RepozytoriumAplikacji interface {
-	// --- architektura ---
 	ZapiszArchitekture(ctx context.Context, architektura ArchitekturaApp,
 		komponenty []KomponentArchitektury, zaleznosci []ZaleznoscKomponentu) (ArchitekturaApp, error)
 	Architektura(ctx context.Context, kod string) (ArchitekturaApp, error)
-	// ArchitekturaOkna zwraca architekturę okna dla apps.architecture.get,
-	// po oknie, nie po kodzie.
 	ArchitekturaOkna(ctx context.Context, okno string) (ArchitekturaApp, error)
 	Komponenty(ctx context.Context, architekturaID int64) ([]KomponentArchitektury, error)
 	ZaleznosciKomponentow(ctx context.Context, architekturaID int64) ([]ZaleznoscKomponentu, error)
 
-	// --- warsztat ---
 	ZapiszPlikWarsztatu(ctx context.Context, plik PlikWarsztatu) (PlikWarsztatu, error)
 	PlikiWarsztatu(ctx context.Context, okno string) ([]PlikWarsztatu, error)
-	// PlikWarsztatu zwraca jeden plik po kluczu naturalnym, do rozróżnienia
-	// powstania od zmiany pliku.
 	PlikWarsztatu(ctx context.Context, okno string, warstwa shared.AppWorkspaceLayer,
 		sciezka string) (PlikWarsztatu, error)
 
-	// --- wdrożenia ---
 	ZapiszWdrozenie(ctx context.Context, wdrozenie WdrozenieApp) (WdrozenieApp, error)
 	Wdrozenie(ctx context.Context, kod string) (WdrozenieApp, error)
-	// Wdrozenia zwraca stronę wdrożeń okna oraz liczbę wszystkich
-	// spełniających te same warunki.
 	Wdrozenia(ctx context.Context, okno string, srodowisko *shared.AppDeployEnvironment,
 		limit int) ([]WdrozenieApp, int, error)
 
-	// --- produkt, etapy, kamienie milowe (aplikacje_produkt.go) ---
 	ZapiszProduktApp(ctx context.Context, produkt ProduktApp) (ProduktApp, error)
 	ProduktApp(ctx context.Context, okno string) (ProduktApp, error)
 	ZapiszEtapApp(ctx context.Context, etap EtapApp) (EtapApp, error)
@@ -89,13 +71,11 @@ type RepozytoriumAplikacji interface {
 	KamienieMiloweApp(ctx context.Context, okno string) ([]KamienMilowyApp, error)
 	UsunKamienMilowyApp(ctx context.Context, kod string) (bool, error)
 
-	// --- historia wersji i adnotacje (aplikacje_architektura_wersje.go) ---
 	WersjeArchitekturyApp(ctx context.Context, architekturaID int64) ([]WersjaArchitekturyApp, error)
 	ZapiszAdnotacjeApp(ctx context.Context, adnotacja AdnotacjaArchitekturyApp) (AdnotacjaArchitekturyApp, error)
 	AdnotacjaApp(ctx context.Context, kod string) (AdnotacjaArchitekturyApp, error)
 	AdnotacjeApp(ctx context.Context, architekturaID int64) ([]AdnotacjaArchitekturyApp, error)
 
-	// --- środowiska, zmienne, skalowanie, kondycja (aplikacje_srodowiska.go) ---
 	ZapiszSrodowiskoApp(ctx context.Context, srodowisko SrodowiskoApp) (SrodowiskoApp, error)
 	SrodowiskoApp(ctx context.Context, okno, kod string) (SrodowiskoApp, error)
 	SrodowiskaApp(ctx context.Context, okno string) ([]SrodowiskoApp, error)
@@ -106,7 +86,6 @@ type RepozytoriumAplikacji interface {
 	ZapiszKondycjeApp(ctx context.Context, kondycja KondycjaWdrozeniaApp) error
 	KondycjeApp(ctx context.Context, okno, srodowisko string, granica int) ([]KondycjaWdrozeniaApp, error)
 
-	// --- podgląd, motyw, dzienniki, artefakty, pakiety (aplikacje_wytwory.go) ---
 	ZapiszPodgladApp(ctx context.Context, podglad PodgladApp) error
 	PodgladApp(ctx context.Context, okno string) (PodgladApp, error)
 	ZapiszMotywApp(ctx context.Context, motyw MotywApp) (MotywApp, error)
@@ -128,24 +107,24 @@ const (
 	                          zastrzezenia_walidacji, utworzono, zaktualizowano`
 
 	pobierzArchitektureApp = `SELECT ` + kolumnyArchitekturyApp + ` FROM architektura_apps
-	                          WHERE identyfikator_zewnetrzny = ?`
+	                          WHERE identyfikator_zewnetrzny = ? AND ` + WarunekKonta
 
-	// Okno bierze architekturę najświeższą: w oknie może leżeć więcej niż
-	// jedna definicja, a ostatnio zapisana jest tą, którą pokazuje panel.
+	// Okno bierze architekturę najświeższą: ostatnio zapisana jest tą, którą pokazuje panel.
 	pobierzArchitektureOknaApp = `SELECT ` + kolumnyArchitekturyApp + ` FROM architektura_apps
-	                          WHERE okno = ?
+	                          WHERE okno = ? AND ` + WarunekKonta + `
 	                          ORDER BY zaktualizowano DESC, id DESC
 	                          LIMIT 1`
 
 	wstawArchitektureApp = `INSERT INTO architektura_apps
-	                        (identyfikator_zewnetrzny, okno, nazwa, szablon, wersja, zastrzezenia_walidacji)
-	                        VALUES (?, ?, ?, ?, ?, ?)
+	                        (identyfikator_zewnetrzny, okno, nazwa, szablon, wersja, zastrzezenia_walidacji, konto_id)
+	                        VALUES (?, ?, ?, ?, ?, ?, ` + WskazanieKonta + `)
 	                        ON CONFLICT(identyfikator_zewnetrzny) DO UPDATE SET
 	                            nazwa = excluded.nazwa,
 	                            szablon = excluded.szablon,
 	                            wersja = architektura_apps.wersja + 1,
 	                            zastrzezenia_walidacji = excluded.zastrzezenia_walidacji,
-	                            zaktualizowano = strftime('%Y-%m-%dT%H:%M:%fZ','now')`
+	                            zaktualizowano = strftime('%Y-%m-%dT%H:%M:%fZ','now')
+	                        WHERE ` + WarunekKonta
 
 	usunKomponentyArchitektury = `DELETE FROM komponent_architektury_apps WHERE architektura_id = ?`
 
@@ -179,9 +158,7 @@ func noweRepozytoriumAplikacji(z *zapytania, db *sql.DB) *repozytoriumAplikacji 
 	return &repozytoriumAplikacji{zapytania: z, db: db}
 }
 
-// ZapiszArchitekture zapisuje definicję architektury oraz wymienia komplet
-// jej komponentów i zależności w jednej transakcji, usuwając zastane i
-// wstawiając od nowa.
+// ZapiszArchitekture zapisuje definicję i wymienia komplet komponentów oraz zależności w jednej transakcji.
 func (r *repozytoriumAplikacji) ZapiszArchitekture(ctx context.Context, architektura ArchitekturaApp,
 	komponenty []KomponentArchitektury, zaleznosci []ZaleznoscKomponentu) (ArchitekturaApp, error) {
 
@@ -207,14 +184,15 @@ func (r *repozytoriumAplikacji) ZapiszArchitekture(ctx context.Context, architek
 		}
 		_, err = zapis.ExecContext(ctx, architektura.Kod, architektura.Okno,
 			tekstDoKolumny(architektura.Nazwa), szablon, wersja,
-			listaDoKolumny(architektura.ZastrzezeniaWalidacji))
+			listaDoKolumny(architektura.ZastrzezeniaWalidacji), KontoOperatora(ctx), KontoOperatora(ctx))
 		if err != nil {
 			return fmt.Errorf("dane: nie można zapisać architektury %q: %w", architektura.Kod, err)
 		}
 
 		var architekturaID int64
 		wiersz := transakcja.QueryRowContext(ctx,
-			`SELECT id FROM architektura_apps WHERE identyfikator_zewnetrzny = ?`, architektura.Kod)
+			`SELECT id FROM architektura_apps WHERE identyfikator_zewnetrzny = ? AND `+WarunekKonta,
+			architektura.Kod, KontoOperatora(ctx))
 		if err := wiersz.Scan(&architekturaID); err != nil {
 			return fmt.Errorf("dane: nie można odczytać id architektury %q: %w", architektura.Kod, err)
 		}
@@ -260,8 +238,6 @@ func (r *repozytoriumAplikacji) ZapiszArchitekture(ctx context.Context, architek
 			}
 		}
 
-		// Wiersz historii idzie tą samą transakcją co wymiana komponentów i
-		// niesie ich liczbę po zapisie.
 		var wersjaPoZapisie int
 		wiersz = transakcja.QueryRowContext(ctx,
 			`SELECT wersja FROM architektura_apps WHERE id = ?`, architekturaID)
@@ -285,14 +261,13 @@ func (r *repozytoriumAplikacji) ZapiszArchitekture(ctx context.Context, architek
 	return r.Architektura(ctx, architektura.Kod)
 }
 
-// Architektura zwraca architekturę o wskazanym kodzie. Brak wiersza wraca
-// jako ErrBrakWiersza — warstwa wyższa odróżnia „nie ma" od „odczyt się nie powiódł".
+// Architektura zwraca architekturę po kodzie; brak wiersza wraca jako ErrBrakWiersza.
 func (r *repozytoriumAplikacji) Architektura(ctx context.Context, kod string) (ArchitekturaApp, error) {
 	polecenie, err := r.zapytania.przygotuj(ctx, pobierzArchitektureApp)
 	if err != nil {
 		return ArchitekturaApp{}, err
 	}
-	architektura, err := odczytajArchitektureApp(polecenie.QueryRowContext(ctx, kod))
+	architektura, err := odczytajArchitektureApp(polecenie.QueryRowContext(ctx, kod, KontoOperatora(ctx)))
 	if err == sql.ErrNoRows {
 		return ArchitekturaApp{}, ErrBrakWiersza
 	}
@@ -302,15 +277,13 @@ func (r *repozytoriumAplikacji) Architektura(ctx context.Context, kod string) (A
 	return architektura, nil
 }
 
-// ArchitekturaOkna zwraca najświeższą architekturę okna. Okno bez ani
-// jednej architektury wraca jako ErrBrakWiersza, co jest stanem normalnym
-// świeżego okna.
+// ArchitekturaOkna zwraca najświeższą architekturę okna; okno bez architektury wraca jako ErrBrakWiersza.
 func (r *repozytoriumAplikacji) ArchitekturaOkna(ctx context.Context, okno string) (ArchitekturaApp, error) {
 	polecenie, err := r.zapytania.przygotuj(ctx, pobierzArchitektureOknaApp)
 	if err != nil {
 		return ArchitekturaApp{}, err
 	}
-	architektura, err := odczytajArchitektureApp(polecenie.QueryRowContext(ctx, okno))
+	architektura, err := odczytajArchitektureApp(polecenie.QueryRowContext(ctx, okno, KontoOperatora(ctx)))
 	if err == sql.ErrNoRows {
 		return ArchitekturaApp{}, ErrBrakWiersza
 	}
@@ -320,8 +293,7 @@ func (r *repozytoriumAplikacji) ArchitekturaOkna(ctx context.Context, okno strin
 	return architektura, nil
 }
 
-// Komponenty zwraca komponenty architektury w kolejności zapisu, od
-// pierwszego wstawionego do ostatniego.
+// Komponenty zwraca komponenty architektury w kolejności zapisu.
 func (r *repozytoriumAplikacji) Komponenty(ctx context.Context, architekturaID int64) ([]KomponentArchitektury, error) {
 	polecenie, err := r.zapytania.przygotuj(ctx, listaKomponentowArchitektury)
 	if err != nil {
@@ -353,8 +325,7 @@ func (r *repozytoriumAplikacji) Komponenty(ctx context.Context, architekturaID i
 	return lista, nil
 }
 
-// ZaleznosciKomponentow zwraca graf zależności między komponentami
-// architektury jako listę łuków źródło-cel.
+// ZaleznosciKomponentow zwraca graf zależności komponentów jako listę łuków źródło-cel.
 func (r *repozytoriumAplikacji) ZaleznosciKomponentow(ctx context.Context, architekturaID int64) ([]ZaleznoscKomponentu, error) {
 	polecenie, err := r.zapytania.przygotuj(ctx, listaZaleznosciKomponentow)
 	if err != nil {
@@ -380,8 +351,6 @@ func (r *repozytoriumAplikacji) ZaleznosciKomponentow(ctx context.Context, archi
 	return lista, nil
 }
 
-// odczytajArchitektureApp składa strukturę ArchitekturaApp z jednego wiersza
-// wyniku zapytania, zamieniając kolumny nullowalne na wskaźniki.
 func odczytajArchitektureApp(wiersz skaner) (ArchitekturaApp, error) {
 	var architektura ArchitekturaApp
 	var nazwa, zastrzezenia sql.NullString
@@ -396,9 +365,7 @@ func odczytajArchitektureApp(wiersz skaner) (ArchitekturaApp, error) {
 	return architektura, nil
 }
 
-// listaDoKolumny scala zastrzeżenia walidacji w jeden tekst rozdzielony
-// znakiem nowej linii — ten sam wzorzec co `argumenty` w `developer_budowanie`
-// (migracja 042); nikt nie filtruje ani nie sortuje po pojedynczym zastrzeżeniu.
+// listaDoKolumny scala listę w jeden tekst rozdzielony nową linią; nikt nie filtruje po pojedynczej pozycji.
 func listaDoKolumny(wartosci []string) any {
 	if len(wartosci) == 0 {
 		return nil
@@ -406,8 +373,7 @@ func listaDoKolumny(wartosci []string) any {
 	return strings.Join(wartosci, "\n")
 }
 
-// listaZKolumny odwraca listaDoKolumny, rozdzielając zapisany tekst z
-// powrotem na listę zastrzeżeń walidacji.
+// listaZKolumny odwraca listaDoKolumny, rozdzielając tekst z powrotem na listę.
 func listaZKolumny(kolumna sql.NullString) []string {
 	if !kolumna.Valid || kolumna.String == "" {
 		return nil

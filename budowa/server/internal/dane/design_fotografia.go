@@ -1,5 +1,4 @@
-// Plik prowadzi warsztat fotografii modułu Design: łańcuch edycji zasobu obrazowego i nastawy powtarzalne; ten plik
-// przechowuje to, czego kolumna wariantu zasobu nie niesie — czynność i jej nastawy, a nastawa jest zapisem JSON, nie wierszem na pole.
+// Warsztat fotografii modułu Design: łańcuch edycji zasobu obrazowego (czynności) i nastawy powtarzalne w JSON.
 package dane
 
 import (
@@ -9,8 +8,7 @@ import (
 	"fmt"
 )
 
-// CzynnoscFotografiiDesignu to wiersz tabeli `czynnosc_fotografii_design` —
-// jedno ogniwo łańcucha edycji zasobu.
+// CzynnoscFotografiiDesignu to jedno ogniwo łańcucha edycji zasobu.
 type CzynnoscFotografiiDesignu struct {
 	ID             int64
 	ZasobID        int64
@@ -21,8 +19,7 @@ type CzynnoscFotografiiDesignu struct {
 	Utworzono      string
 }
 
-// NastawaFotografiiDesignu to wiersz tabeli `nastawa_fotografii_design` — zestaw
-// czynności zapisany pod nazwą.
+// NastawaFotografiiDesignu to zestaw czynności zapisany pod nazwą.
 type NastawaFotografiiDesignu struct {
 	ID             int64
 	Kod            string
@@ -36,9 +33,7 @@ const (
 	kolumnyCzynnosciFotografiiDesignu = `id, zasob_id, zasob_zrodla_id, komenda, nastawy_json,
 	                                     policzone_przez, utworzono`
 
-	// Czynność ZAWSZE wstawia nowy wiersz: łańcuch edycji jest historią, a
-	// historia się nie nadpisuje. Ta sama czynność puszczona dwa razy na tym
-	// samym zasobie to dwa ogniwa i taka jest prawda o pracy Operatora.
+	// Czynność ZAWSZE wstawia nowy wiersz: łańcuch edycji jest historią i się nie nadpisuje.
 	zapiszCzynnoscFotografiiDesignu = `INSERT INTO czynnosc_fotografii_design
 	                                   (zasob_id, zasob_zrodla_id, komenda, nastawy_json,
 	                                    policzone_przez)
@@ -47,10 +42,7 @@ const (
 	listaCzynnosciFotografiiDesignu = `SELECT ` + kolumnyCzynnosciFotografiiDesignu +
 		` FROM czynnosc_fotografii_design WHERE zasob_id = ? ORDER BY id`
 
-	// Łańcuch wstecz: czynność, z której powstał wskazany zasób. Wiersz jest
-	// najwyżej jeden, ale zapytanie oddaje wykaz — ten sam zasób mógłby
-	// teoretycznie powstać dwiema drogami, a odczyt ma pokazać stan bazy, nie
-	// założenie o niej.
+	// Łańcuch wstecz: ostatnia czynność, z której powstał wskazany zasób.
 	czynnoscFotografiiDesignuZasobu = `SELECT ` + kolumnyCzynnosciFotografiiDesignu +
 		` FROM czynnosc_fotografii_design WHERE zasob_id = ? ORDER BY id DESC LIMIT 1`
 
@@ -59,18 +51,19 @@ const (
 
 	zapiszNastaweFotografiiDesignu = `INSERT INTO nastawa_fotografii_design
 	                                  (identyfikator_zewnetrzny, okno, nazwa, czynnosci_json,
-	                                   zaktualizowano)
-	                                  VALUES (?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now'))
+	                                   zaktualizowano, konto_id)
+	                                  VALUES (?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now'), ` + WskazanieKonta + `)
 	                                  ON CONFLICT(identyfikator_zewnetrzny) DO UPDATE SET
 	                                      nazwa = excluded.nazwa,
 	                                      czynnosci_json = excluded.czynnosci_json,
-	                                      zaktualizowano = excluded.zaktualizowano`
+	                                      zaktualizowano = excluded.zaktualizowano
+	                                  WHERE ` + WarunekKonta
 
 	pobierzNastaweFotografiiDesignu = `SELECT ` + kolumnyNastawyFotografiiDesignu +
-		` FROM nastawa_fotografii_design WHERE identyfikator_zewnetrzny = ?`
+		` FROM nastawa_fotografii_design WHERE identyfikator_zewnetrzny = ? AND ` + WarunekKonta
 
 	listaNastawFotografiiDesignu = `SELECT ` + kolumnyNastawyFotografiiDesignu +
-		` FROM nastawa_fotografii_design WHERE okno = ? ORDER BY nazwa, id`
+		` FROM nastawa_fotografii_design WHERE okno = ? AND ` + WarunekKonta + ` ORDER BY nazwa, id`
 )
 
 // ZapiszCzynnoscFotografiiDesignu dokłada ogniwo do łańcucha edycji; niepowodzenie zapisu jest błędem oddanym wołającemu, nie milczeniem.
@@ -130,9 +123,7 @@ func (r *repozytoriumDesignu) CzynnosciFotografiiDesignuZasobu(ctx context.Conte
 	return czynnosci, nil
 }
 
-// CzynnoscFotografiiDesignuWyniku oddaje czynność, z której powstał wskazany
-// zasób. Brak wiersza wraca jako ErrBrakWiersza — warstwa wyżej odróżnia „zasób
-// nie powstał z obróbki" od usterki odczytu.
+// CzynnoscFotografiiDesignuWyniku oddaje czynność, z której powstał zasób; brak wiersza wraca jako ErrBrakWiersza.
 func (r *repozytoriumDesignu) CzynnoscFotografiiDesignuWyniku(ctx context.Context,
 	zasobID int64) (CzynnoscFotografiiDesignu, error) {
 
@@ -151,8 +142,7 @@ func (r *repozytoriumDesignu) CzynnoscFotografiiDesignuWyniku(ctx context.Contex
 	return czynnosc, nil
 }
 
-// ZapiszNastaweFotografiiDesignu zakłada nastawę albo nadpisuje zastaną po
-// identyfikatorze zewnętrznym.
+// ZapiszNastaweFotografiiDesignu zakłada nastawę albo nadpisuje zastaną po kodzie.
 func (r *repozytoriumDesignu) ZapiszNastaweFotografiiDesignu(ctx context.Context,
 	nastawa NastawaFotografiiDesignu) (NastawaFotografiiDesignu, error) {
 
@@ -177,7 +167,7 @@ func (r *repozytoriumDesignu) ZapiszNastaweFotografiiDesignu(ctx context.Context
 		return NastawaFotografiiDesignu{}, err
 	}
 	if _, err := polecenie.ExecContext(ctx, nastawa.Kod, nastawa.Okno, nastawa.Nazwa,
-		nastawa.CzynnosciJSON); err != nil {
+		nastawa.CzynnosciJSON, KontoOperatora(ctx), KontoOperatora(ctx)); err != nil {
 
 		return NastawaFotografiiDesignu{}, fmt.Errorf(
 			"dane: nie można zapisać nastawy fotografii design %q: %w", nastawa.Kod, err)
@@ -193,7 +183,7 @@ func (r *repozytoriumDesignu) NastawaFotografiiDesignuPoKodzie(ctx context.Conte
 	if err != nil {
 		return NastawaFotografiiDesignu{}, err
 	}
-	nastawa, err := odczytajNastaweFotografiiDesignu(polecenie.QueryRowContext(ctx, kod))
+	nastawa, err := odczytajNastaweFotografiiDesignu(polecenie.QueryRowContext(ctx, kod, KontoOperatora(ctx)))
 	if errors.Is(err, sql.ErrNoRows) {
 		return NastawaFotografiiDesignu{}, ErrBrakWiersza
 	}
@@ -212,7 +202,7 @@ func (r *repozytoriumDesignu) NastawyFotografiiDesignu(ctx context.Context,
 	if err != nil {
 		return nil, err
 	}
-	wiersze, err := polecenie.QueryContext(ctx, okno)
+	wiersze, err := polecenie.QueryContext(ctx, okno, KontoOperatora(ctx))
 	if err != nil {
 		return nil, fmt.Errorf("dane: nie można odczytać nastaw fotografii design okna %q: %w",
 			okno, err)
@@ -233,7 +223,6 @@ func (r *repozytoriumDesignu) NastawyFotografiiDesignu(ctx context.Context,
 	return nastawy, nil
 }
 
-// odczytajCzynnoscFotografiiDesignu składa strukturę czynności wprost z jednego wiersza wyniku zapytania SQL.
 func odczytajCzynnoscFotografiiDesignu(wiersz skaner) (CzynnoscFotografiiDesignu, error) {
 	var czynnosc CzynnoscFotografiiDesignu
 	var zrodlo sql.NullInt64
@@ -252,7 +241,6 @@ func odczytajCzynnoscFotografiiDesignu(wiersz skaner) (CzynnoscFotografiiDesignu
 	return czynnosc, nil
 }
 
-// odczytajNastaweFotografiiDesignu składa strukturę nastawy wprost z jednego wiersza wyniku zapytania SQL.
 func odczytajNastaweFotografiiDesignu(wiersz skaner) (NastawaFotografiiDesignu, error) {
 	var nastawa NastawaFotografiiDesignu
 	err := wiersz.Scan(&nastawa.ID, &nastawa.Kod, &nastawa.Okno, &nastawa.Nazwa,

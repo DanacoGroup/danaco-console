@@ -1,6 +1,4 @@
-// Odpowiedzialność pliku: zapis obszaru Developer — założenie migawki pliku,
-// wpis przebiegu budowania, domknięcie przebiegu wynikiem oraz osierocenie
-// przebiegów zostawionych przez poprzedni bieg rdzenia.
+// Zapis obszaru Developer: migawka pliku, przebieg budowania, jego domknięcie i osierocenie po biegu rdzenia.
 package dane
 
 import (
@@ -16,22 +14,21 @@ const (
 	                    VALUES (?, ?, ?, ?, ?, ` + WskazanieKonta + `)`
 
 	wstawPrzebiegBudowania = `INSERT INTO developer_budowanie
-	                          (kod, okno_kod, zadanie, argumenty, stan, kod_wyjscia, log, zakonczono)
-	                          VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+	                          (kod, okno_kod, zadanie, argumenty, stan, kod_wyjscia, log, zakonczono, konto_id)
+	                          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ` + WskazanieKonta + `)
 	                          ON CONFLICT(kod) DO UPDATE SET
 	                            zadanie     = excluded.zadanie,
 	                            argumenty   = excluded.argumenty,
 	                            stan        = excluded.stan,
 	                            kod_wyjscia = excluded.kod_wyjscia,
 	                            log         = excluded.log,
-	                            zakonczono  = excluded.zakonczono`
+	                            zakonczono  = excluded.zakonczono
+	                          WHERE ` + WarunekKonta
 
-	// Domknięcie nie rusza wiersza już domkniętego: pierwszy prawdziwy kod
-	// wyjścia nie ma prawa zostać nadpisany przez późniejsze przerwanie.
 	domknijPrzebiegBudowania = `UPDATE developer_budowanie
 	                            SET stan = ?, kod_wyjscia = ?, log = ?,
 	                                zakonczono = strftime('%Y-%m-%dT%H:%M:%fZ','now')
-	                            WHERE kod = ? AND stan = 'running'`
+	                            WHERE kod = ? AND stan = 'running' AND ` + WarunekKonta
 
 	osierocPrzebiegiBudowania = `UPDATE developer_budowanie
 	                             SET stan = 'stopped',
@@ -39,9 +36,7 @@ const (
 	                             WHERE stan = 'running'`
 )
 
-// ZapiszWersje zakłada migawkę treści pliku. Migawka jest wpisem historii,
-// więc powstaje zawsze nowym wierszem — nadpisanie poprzedniej migawki
-// odebrałoby jej jedyny sens.
+// ZapiszWersje zakłada migawkę treści pliku — wpis historii, więc zawsze nowym wierszem.
 func (r *repozytoriumDevelopera) ZapiszWersje(ctx context.Context, wersja WersjaPliku) error {
 	if wersja.Kod == "" || wersja.OknoKod == "" || wersja.Sciezka == "" {
 		return fmt.Errorf("dane: wersja pliku bez identyfikatora, okna albo ścieżki")
@@ -57,8 +52,6 @@ func (r *repozytoriumDevelopera) ZapiszWersje(ctx context.Context, wersja Wersja
 	return nil
 }
 
-// ZapiszPrzebieg wpisuje nowy przebieg budowania albo odświeża stan
-// przebiegu istniejącego pod tym samym kodem.
 func (r *repozytoriumDevelopera) ZapiszPrzebieg(ctx context.Context, przebieg PrzebiegBudowania) error {
 	if przebieg.Kod == "" || przebieg.OknoKod == "" {
 		return fmt.Errorf("dane: przebieg budowania bez identyfikatora przebiegu albo okna")
@@ -73,14 +66,13 @@ func (r *repozytoriumDevelopera) ZapiszPrzebieg(ctx context.Context, przebieg Pr
 	}
 	if _, err := polecenie.ExecContext(ctx, przebieg.Kod, przebieg.OknoKod, przebieg.Zadanie,
 		przebieg.Argumenty, stan, przebieg.KodWyjscia, przebieg.Log,
-		przebieg.Zakonczono); err != nil {
+		przebieg.Zakonczono, KontoOperatora(ctx), KontoOperatora(ctx)); err != nil {
 		return fmt.Errorf("dane: nie można zapisać przebiegu budowania %q: %w", przebieg.Kod, err)
 	}
 	return nil
 }
 
-// ZakonczPrzebieg domyka wiersz przebiegu budowania stanem końcowym, kodem
-// wyjścia i ogonem dziennika zdarzeń.
+// ZakonczPrzebieg domyka przebieg budowania stanem końcowym, kodem wyjścia i ogonem dziennika.
 func (r *repozytoriumDevelopera) ZakonczPrzebieg(ctx context.Context, kod string,
 	stan shared.BuildStatus, kodWyjscia *int64, log string) error {
 
@@ -91,14 +83,13 @@ func (r *repozytoriumDevelopera) ZakonczPrzebieg(ctx context.Context, kod string
 	if err != nil {
 		return err
 	}
-	if _, err := polecenie.ExecContext(ctx, stan, kodWyjscia, log, kod); err != nil {
+	if _, err := polecenie.ExecContext(ctx, stan, kodWyjscia, log, kod, KontoOperatora(ctx)); err != nil {
 		return fmt.Errorf("dane: nie można domknąć przebiegu budowania %q: %w", kod, err)
 	}
 	return nil
 }
 
-// OsierocPrzebiegi przestawia przebiegi zostawione przez poprzedni bieg
-// rdzenia w stanie running na stopped.
+// OsierocPrzebiegi przestawia przebiegi zostawione w stanie running przez poprzedni bieg rdzenia na stopped.
 func (r *repozytoriumDevelopera) OsierocPrzebiegi(ctx context.Context) (int64, error) {
 	polecenie, err := r.zapytania.przygotuj(ctx, osierocPrzebiegiBudowania)
 	if err != nil {
@@ -108,7 +99,6 @@ func (r *repozytoriumDevelopera) OsierocPrzebiegi(ctx context.Context) (int64, e
 	if err != nil {
 		return 0, fmt.Errorf("dane: nie można osierocić przebiegów budowania: %w", err)
 	}
-	// Osierocenie już się wykonało; nieudany odczyt liczby wierszy znaczy niewiadomą, nie zero.
 	zmienione, err := wynik.RowsAffected()
 	if err != nil {
 		return 0, fmt.Errorf("dane: nie można odczytać liczby osieroconych przebiegów budowania: %w", err)

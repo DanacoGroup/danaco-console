@@ -1,7 +1,5 @@
-// Odpowiedzialność pliku: porządkowanie zebranego materiału — usunięcie
-// źródła, zmiana notatki oraz zestawy tematyczne źródeł i wątki tematyczne
-// notatek. Skład zestawu i wątku liczy się z kolumny przynależności, nie z
-// osobnej listy.
+// Porządkowanie zebranego materiału: zestawy tematyczne źródeł i wątki notatek;
+// skład zestawu i wątku liczy się z kolumny przynależności, nie z osobnej listy.
 package core
 
 import (
@@ -12,8 +10,6 @@ import (
 	"danacoconsole/shared"
 )
 
-// UsunZrodlo obsługuje `browser.source.remove`, usuwając źródło wraz z jego
-// przynależnością do zestawów tematycznych.
 func (a *adapterPrzegladarki) UsunZrodlo(ctx context.Context,
 	z shared.BrowserSourceRemoveRequest) (shared.BrowserSourceRemoveResponse, error) {
 
@@ -31,8 +27,6 @@ func (a *adapterPrzegladarki) UsunZrodlo(ctx context.Context,
 	return shared.BrowserSourceRemoveResponse{Removed: true}, nil
 }
 
-// ZmienNotatke obsługuje `browser.note.update`; pole nieobecne w żądaniu
-// zostaje bez zmiany, a nie jest czyszczone.
 func (a *adapterPrzegladarki) ZmienNotatke(ctx context.Context,
 	z shared.BrowserNoteUpdateRequest) (shared.BrowserNoteUpdateResponse, error) {
 
@@ -58,8 +52,6 @@ func (a *adapterPrzegladarki) ZmienNotatke(ctx context.Context,
 	return shared.BrowserNoteUpdateResponse{Note: notatkaKontraktu(zapisana)}, nil
 }
 
-// UstawZestawZrodel obsługuje `browser.source.group.set`, zakładając albo
-// zmieniając zestaw tematyczny źródeł okna.
 func (a *adapterPrzegladarki) UstawZestawZrodel(ctx context.Context,
 	z shared.BrowserSourceGroupSetRequest) (shared.BrowserSourceGroupSetResponse, error) {
 
@@ -95,7 +87,7 @@ func (a *adapterPrzegladarki) UstawZestawZrodel(ctx context.Context,
 	}
 	for _, zrodlo := range z.SourceIds {
 		if err := a.repozytorium.PrzypiszZrodloDoZestawu(ctx, z.WindowId, zrodlo, kod); err != nil {
-			return shared.BrowserSourceGroupSetResponse{}, bladPrzegladarki(err)
+			return shared.BrowserSourceGroupSetResponse{}, bladWierszaPrzegladania("źródła przeglądania", zrodlo, err)
 		}
 	}
 	sklad, err := a.repozytorium.KodyZrodelZestawu(ctx, kod)
@@ -105,8 +97,6 @@ func (a *adapterPrzegladarki) UstawZestawZrodel(ctx context.Context,
 	return shared.BrowserSourceGroupSetResponse{Group: zestawKontraktu(zapisany, sklad)}, nil
 }
 
-// WykazZestawowZrodel obsługuje `browser.source.group.list`, oddając zestawy
-// tematyczne źródeł okna wskazanego żądaniem.
 func (a *adapterPrzegladarki) WykazZestawowZrodel(ctx context.Context,
 	z shared.BrowserSourceGroupListRequest) (shared.BrowserSourceGroupListResponse, error) {
 
@@ -129,8 +119,6 @@ func (a *adapterPrzegladarki) WykazZestawowZrodel(ctx context.Context,
 	return shared.BrowserSourceGroupListResponse{Groups: zestawy}, nil
 }
 
-// UstawWatekNotatek obsługuje `browser.note.thread.set`, zakładając albo
-// zmieniając wątek tematyczny notatek okna.
 func (a *adapterPrzegladarki) UstawWatekNotatek(ctx context.Context,
 	z shared.BrowserNoteThreadSetRequest) (shared.BrowserNoteThreadSetResponse, error) {
 
@@ -176,8 +164,6 @@ func (a *adapterPrzegladarki) UstawWatekNotatek(ctx context.Context,
 	return shared.BrowserNoteThreadSetResponse{Thread: watekKontraktu(zapisany, sklad)}, nil
 }
 
-// WykazWatkowNotatek obsługuje `browser.note.thread.list`, oddając wątki
-// tematyczne notatek okna wskazanego żądaniem.
 func (a *adapterPrzegladarki) WykazWatkowNotatek(ctx context.Context,
 	z shared.BrowserNoteThreadListRequest) (shared.BrowserNoteThreadListResponse, error) {
 
@@ -200,8 +186,6 @@ func (a *adapterPrzegladarki) WykazWatkowNotatek(ctx context.Context,
 	return shared.BrowserNoteThreadListResponse{Threads: watki}, nil
 }
 
-// zestawKontraktu przekłada wiersz zestawu źródeł wraz z jego składem na byt
-// kontraktu zestawu tematycznego.
 func zestawKontraktu(w dane.ZestawZrodel, sklad []string) shared.BrowserSourceGroup {
 	zestaw := shared.BrowserSourceGroup{
 		Id:        w.Kod,
@@ -216,8 +200,6 @@ func zestawKontraktu(w dane.ZestawZrodel, sklad []string) shared.BrowserSourceGr
 	return zestaw
 }
 
-// watekKontraktu przekłada wiersz wątku notatek wraz z jego składem na byt
-// kontraktu wątku tematycznego.
 func watekKontraktu(w dane.WatekNotatek, sklad []string) shared.BrowserNoteThread {
 	watek := shared.BrowserNoteThread{
 		Id:        w.Kod,

@@ -57,7 +57,7 @@ func (a *adapterDevelopera) uruchomGit(ctx context.Context, okno session.Okno,
 	if a.uruchamiacz == nil {
 		return wynikGita{}, bladWykonaniaDevelopera("serwer nie ma uruchamiacza procesów")
 	}
-	polecenie, err := a.polecenieDopuszczoneDevelopera(okno, programGita, argumenty)
+	polecenie, err := a.polecenieDopuszczoneDevelopera(ctx, okno, programGita, argumenty)
 	if err != nil {
 		return wynikGita{}, err
 	}
@@ -102,8 +102,8 @@ func (a *adapterDevelopera) uruchomGit(ctx context.Context, okno session.Okno,
 	return wynikGita{udane: bladZakonczenia == nil && powod == "", tresc: tresc, powod: powod}, nil
 }
 
-func (a *adapterDevelopera) polecenieDopuszczoneDevelopera(okno session.Okno, program string,
-	argumenty []string) (session.Polecenie, error) {
+func (a *adapterDevelopera) polecenieDopuszczoneDevelopera(ctx context.Context, okno session.Okno,
+	program string, argumenty []string) (session.Polecenie, error) {
 
 	korzenie := a.korzenieOkna(okno)
 	if len(korzenie) == 0 {
@@ -118,7 +118,7 @@ func (a *adapterDevelopera) polecenieDopuszczoneDevelopera(okno session.Okno, pr
 	}
 	zasady := session.Zasady{}
 	if a.rozstrzygacz != nil {
-		zasady = ZasadyIzolacji(a.rozstrzygacz, konfigKontekstOkna(okno))
+		zasady = ZasadyIzolacji(a.rozstrzygacz, konfigKontekstOkna(ctx, okno))
 	}
 	dopuszczone, err := session.SprawdzPolecenie(zasady, a.obszarDevelopera(okno), polecenie)
 	if err != nil {

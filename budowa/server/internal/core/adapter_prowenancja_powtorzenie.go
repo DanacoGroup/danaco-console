@@ -12,18 +12,15 @@ import (
 	"danacoconsole/shared"
 )
 
-// przedrostekPowtorzenia znakuje wiersz śladu wywołania powtórzonego w tym dzienniku prowenancji rdzenia.
 const przedrostekPowtorzenia = "powtorzenie-"
 
-// ZKanalami wpina rejestr kanałów — jedyną drogę, którą rdzeń wykonuje
-// wywołanie modelu. Zależność opcjonalna: bez niej cztery komendy odczytu
-// pracują bez zmian, a powtórzenie odmawia, nazywając brak.
-func (a *adapterProwenancji) ZKanalami(kanaly *models.Rejestr) *adapterProwenancji {
-	a.kanaly = kanaly
+func (a *adapterProwenancji) ZKanalami(kanaly *models.Rejestr,
+	repozytorium dane.RepozytoriumKanalow) *adapterProwenancji {
+
+	a.kanaly, a.repozytoriumKanalow = kanaly, repozytorium
 	return a
 }
 
-// PowtorzWywolanie obsługuje provenance.call.replay, powtarzając wywołanie modelu i zestawiając wynik.
 func (a *adapterProwenancji) PowtorzWywolanie(ctx context.Context,
 	z shared.ProvenanceCallReplayRequest) (shared.ProvenanceCallReplayResponse, error) {
 
@@ -71,7 +68,7 @@ func (a *adapterProwenancji) PowtorzWywolanie(ctx context.Context,
 				"serwer nie dobiera kanału za Operatora, bo powtórzenie na innym kanale "+
 				"jest innym doświadczeniem niż to, które miało zostać powtórzone")
 	}
-	if _, jest := a.kanaly.Kanal(kanal); !jest {
+	if _, jest := kanalKonta(ctx, a.repozytoriumKanalow, a.kanaly, kanal); !jest {
 		return shared.ProvenanceCallReplayResponse{}, odmowaSladu(shared.ErrorCodeChannelUnavailable,
 			"kanału „"+kanal+"” nie ma w rejestrze kanałów serwera albo jest wyłączony")
 	}
@@ -154,9 +151,7 @@ func (a *adapterProwenancji) PowtorzWywolanie(ctx context.Context,
 	return shared.ProvenanceCallReplayResponse{Replay: wynik}, nil
 }
 
-// zasiegiPowtorzenia odtwarza kontekst pierwowzoru, żeby powtórzenie poszło
-// tam, gdzie poszło oryginalne wywołanie. Zasięg wzięty z powietrza dałby
-// wywołanie z innymi parametrami wykonania, czyli nieporównywalne.
+// Zasięg wzięty z powietrza dałby wywołanie z innymi parametrami wykonania, czyli nieporównywalne.
 func zasiegiPowtorzenia(pierwowzor dane.WywolanieModelu) models.Zasiegi {
 	return models.Zasiegi{
 		Srodowisko: wartoscTekstu(pierwowzor.Srodowisko),
@@ -166,8 +161,6 @@ func zasiegiPowtorzenia(pierwowzor dane.WywolanieModelu) models.Zasiegi {
 	}
 }
 
-// modelPowtorzenia rozstrzyga model zapisywany w śladzie powtórzenia: wskazany
-// w żądaniu, a w jego braku model pierwowzoru.
 func modelPowtorzenia(zadany *string, pierwowzor dane.WywolanieModelu) *string {
 	if model := strings.TrimSpace(wartoscTekstu(zadany)); model != "" {
 		kopia := model
@@ -176,7 +169,7 @@ func modelPowtorzenia(zadany *string, pierwowzor dane.WywolanieModelu) *string {
 	return pierwowzor.Model
 }
 
-// roznicaOdpowiedzi opisuje, czym odpowiedź powtórzenia różni się od pierwowzoru: zestawieniem długości i wspólnego przedrostka, nie różnicą wierszową, bo odpowiedzi bywają jednym akapitem.
+// Zestawienie długości i wspólnego przedrostka, nie różnica wierszowa.
 func roznicaOdpowiedzi(pierwotna, powtorzona string) string {
 	if pierwotna == powtorzona {
 		return ""

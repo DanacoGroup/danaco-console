@@ -31,10 +31,10 @@ func (a *adapterWiedzy) SzukajObrazu(ctx context.Context,
 				"z obrazami Operatora; naprawa: podać opis w polu `query`")
 	}
 
-	ustawienia := a.ustawienia()
+	ustawienia := a.ustawienia(ctx)
 	silnik := wiedza.NowySilnikObrazu(a.uruchamiacz, a.katalogDanych).
 		ZUstawieniami(ustawienia).ZeSkladnica(a.skladnica)
-	okno, zasady, obszar := a.zasiegPlatformy()
+	okno, zasady, obszar := a.zasiegPlatformy(ctx)
 	if err := silnik.Gotowy(ctx, okno, zasady, obszar, wiedza.LimitOsiObrazu); err != nil {
 		return shared.KnowledgeImageSearchResponse{}, bladWiedzy(err)
 	}

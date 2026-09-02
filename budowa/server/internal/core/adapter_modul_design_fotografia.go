@@ -1,6 +1,5 @@
-// Plik obsługuje trzynaście czynności warsztatu fotografii modułu Design, od kadrowania
-// po odcięcie tła i zaznaczanie obiektu. Wsad i łańcuch leżą w pliku fotografia_wsad,
-// rachunek na pikselach w plikach fotografia_rachunek i fotografia_maski.
+// Trzynaście czynności warsztatu fotografii modułu Design; wsad i łańcuch leżą w pliku
+// fotografia_wsad, rachunek na pikselach w plikach fotografia_rachunek i fotografia_maski.
 package core
 
 import (
@@ -19,12 +18,9 @@ import (
 	"danacoconsole/shared"
 )
 
-// formatWynikuFotografiiDesignu jest formatem wszystkich wyników warsztatu —
-// powód stoi w nagłówku pliku.
+// Jeden format wszystkich wyników warsztatu.
 const formatWynikuFotografiiDesignu = "png"
 
-// Kadruj kadruje zdjęcie do wskazanego prostokąta — obsługuje komendę design.photo.crop,
-// zapisując wynik jako nowy wariant źródła.
 func (a *adapterDesignu) Kadruj(ctx context.Context,
 	z shared.DesignPhotoCropRequest) (shared.DesignPhotoCropResponse, error) {
 
@@ -48,8 +44,6 @@ func (a *adapterDesignu) Kadruj(ctx context.Context,
 	}, nil
 }
 
-// Przeksztalc obraca, odbija i koryguje perspektywę zdjęcia — obsługuje komendę
-// design.photo.transform według nastaw podanych w żądaniu.
 func (a *adapterDesignu) Przeksztalc(ctx context.Context,
 	z shared.DesignPhotoTransformRequest) (shared.DesignPhotoTransformResponse, error) {
 
@@ -59,8 +53,7 @@ func (a *adapterDesignu) Przeksztalc(ctx context.Context,
 	}
 	// Żądanie bez ani jednej nastawy jest odmową, nie kopią.
 
-	// Zasób oddany jako przekształcony bez przekształcenia zajmowałby miejsce w magazynie
-	// i łańcuchu.
+	// Zasób przekształcony bez przekształcenia zajmowałby miejsce w magazynie i łańcuchu.
 	if (z.RotateDeg == nil || *z.RotateDeg == 0) &&
 		(z.FlipHorizontal == nil || !*z.FlipHorizontal) &&
 		(z.FlipVertical == nil || !*z.FlipVertical) &&
@@ -86,8 +79,6 @@ func (a *adapterDesignu) Przeksztalc(ctx context.Context,
 	}, nil
 }
 
-// PrzeliczRozdzielczosc przelicza rozdzielczość zdjęcia do wskazanych wymiarów —
-// obsługuje komendę design.photo.resample.
 func (a *adapterDesignu) PrzeliczRozdzielczosc(ctx context.Context,
 	z shared.DesignPhotoResampleRequest) (shared.DesignPhotoResampleResponse, error) {
 
@@ -127,8 +118,6 @@ func (a *adapterDesignu) PrzeliczRozdzielczosc(ctx context.Context,
 	}, nil
 }
 
-// Powieksz powiększa zdjęcie krotnie z wyostrzeniem — obsługuje komendę
-// design.photo.upscale, przyjmując krotność dwa, cztery albo osiem.
 func (a *adapterDesignu) Powieksz(ctx context.Context,
 	z shared.DesignPhotoUpscaleRequest) (shared.DesignPhotoUpscaleResponse, error) {
 
@@ -138,7 +127,7 @@ func (a *adapterDesignu) Powieksz(ctx context.Context,
 				"krotność pośrednia daje ten sam wynik co przeliczenie rozdzielczości "+
 				"(design.photo.resample)", z.Factor))
 	}
-	if err := a.sprawdzKanalObrazowyFotografiiDesignu(z.ChannelId); err != nil {
+	if err := a.sprawdzKanalObrazowyFotografiiDesignu(ctx, z.ChannelId); err != nil {
 		return shared.DesignPhotoUpscaleResponse{}, err
 	}
 	obraz, zrodlo, err := a.obrazZasobuPoKodzieDesignu(ctx, "design.photo.upscale", z.AssetId)
@@ -178,8 +167,6 @@ func (a *adapterDesignu) Powieksz(ctx context.Context,
 	}, nil
 }
 
-// PopraweJakosc poprawia jakość zdjęcia rachunkiem wkompilowanym — obsługuje komendę
-// design.photo.enhance, działając na zasobie wskazanym identyfikatorem.
 func (a *adapterDesignu) PopraweJakosc(ctx context.Context,
 	z shared.DesignPhotoEnhanceRequest) (shared.DesignPhotoEnhanceResponse, error) {
 
@@ -201,9 +188,7 @@ func (a *adapterDesignu) PopraweJakosc(ctx context.Context,
 	return shared.DesignPhotoEnhanceResponse{Asset: zasob, AppliedSteps: kroki}, nil
 }
 
-// SkorygujBarwe koryguje barwę zdjęcia — obsługuje komendę design.photo.color.correct.
-// Pole histogramShift jest pomiarem: rdzeń liczy średnią jasność źródła i wyniku i oddaje
-// różnicę.
+// Pole histogramShift jest pomiarem: różnica średniej jasności źródła i wyniku.
 func (a *adapterDesignu) SkorygujBarwe(ctx context.Context,
 	z shared.DesignPhotoColorCorrectRequest) (shared.DesignPhotoColorCorrectResponse, error) {
 
@@ -227,14 +212,11 @@ func (a *adapterDesignu) SkorygujBarwe(ctx context.Context,
 	}, nil
 }
 
-// sredniaJasnoscDesignu liczy średnią jasność obrazu w skali 0–255 — miara
-// pomiaru przesunięcia histogramu.
 func sredniaJasnoscDesignu(obraz image.Image) float64 {
 	granice := obraz.Bounds()
 	suma, punktow := 0.0, 0
-	// Próbkowanie co czwarty punkt: różnica od pełnej wartości to setne części jednostki.
+	// Próbkowanie co czwarty punkt: rachunek szesnaście razy tańszy, różnica w setnych jednostki.
 
-	// Rachunek jest wtedy szesnaście razy tańszy, a pomiar ma być pomiarem, nie kosztem.
 	for y := granice.Min.Y; y < granice.Max.Y; y += 4 {
 		for x := granice.Min.X; x < granice.Max.X; x += 4 {
 			r, g, b, _ := obraz.At(x, y).RGBA()
@@ -248,8 +230,6 @@ func sredniaJasnoscDesignu(obraz image.Image) float64 {
 	return suma / float64(punktow)
 }
 
-// NalozFiltr nakłada filtr obrazu z zadaną siłą — obsługuje komendę
-// design.photo.filter.apply, sprawdzając nazwę filtra przeciw wyliczeniu.
 func (a *adapterDesignu) NalozFiltr(ctx context.Context,
 	z shared.DesignPhotoFilterApplyRequest) (shared.DesignPhotoFilterApplyResponse, error) {
 
@@ -282,8 +262,6 @@ func (a *adapterDesignu) NalozFiltr(ctx context.Context,
 	return shared.DesignPhotoFilterApplyResponse{Asset: zasob}, nil
 }
 
-// Wyretuszuj retuszuje wskazane obszary zdjęcia — obsługuje komendę design.photo.retouch,
-// wypełniając każdy obszar treścią z jego otoczenia.
 func (a *adapterDesignu) Wyretuszuj(ctx context.Context,
 	z shared.DesignPhotoRetouchRequest) (shared.DesignPhotoRetouchResponse, error) {
 
@@ -319,8 +297,6 @@ func (a *adapterDesignu) Wyretuszuj(ctx context.Context,
 	}, nil
 }
 
-// Domaluj domalowuje obszar wskazany maską lub wykazem prostokątów — obsługuje komendę
-// design.photo.inpaint.
 func (a *adapterDesignu) Domaluj(ctx context.Context,
 	z shared.DesignPhotoInpaintRequest) (shared.DesignPhotoInpaintResponse, error) {
 
@@ -330,7 +306,7 @@ func (a *adapterDesignu) Domaluj(ctx context.Context,
 			"komenda design.photo.inpaint bez maski i bez obszarów: serwer nie zgaduje, który " +
 				"fragment zdjęcia domalować")
 	}
-	if err := a.sprawdzKanalObrazowyFotografiiDesignu(z.ChannelId); err != nil {
+	if err := a.sprawdzKanalObrazowyFotografiiDesignu(ctx, z.ChannelId); err != nil {
 		return shared.DesignPhotoInpaintResponse{}, err
 	}
 	obraz, zrodlo, err := a.obrazZasobuPoKodzieDesignu(ctx, "design.photo.inpaint", z.AssetId)
@@ -353,8 +329,6 @@ func (a *adapterDesignu) Domaluj(ctx context.Context,
 	if czyDrogaKanaluFotografiiDesignu(z.ChannelId) {
 		// Maska jedzie do kanału jako obraz, bo tak przyjmuje ją punkt końcowy edycji.
 
-		// Rdzeń zamienia policzoną maskę w obraz jednokanałowy tą samą drogą, którą
-		// zapisuje wyniki.
 		polecenie := "domaluj obszar wskazany maską tak, żeby wtopił się w otoczenie"
 		if z.Prompt != nil && strings.TrimSpace(*z.Prompt) != "" {
 			polecenie = strings.TrimSpace(*z.Prompt)
@@ -378,8 +352,6 @@ func (a *adapterDesignu) Domaluj(ctx context.Context,
 	return shared.DesignPhotoInpaintResponse{Asset: zasob, ComputedBy: droga}, nil
 }
 
-// RozszerzKadr rozszerza kadr poza pierwotną ramkę — obsługuje komendę
-// design.photo.expand, wypełniając nowy obszar treścią z brzegu obrazu.
 func (a *adapterDesignu) RozszerzKadr(ctx context.Context,
 	z shared.DesignPhotoExpandRequest) (shared.DesignPhotoExpandResponse, error) {
 
@@ -405,7 +377,7 @@ func (a *adapterDesignu) RozszerzKadr(ctx context.Context,
 		return shared.DesignPhotoExpandResponse{}, bladWskazaniaDesignu(
 			"komenda design.photo.expand z zerowym przyrostem po każdej stronie dałaby kopię źródła")
 	}
-	if err := a.sprawdzKanalObrazowyFotografiiDesignu(z.ChannelId); err != nil {
+	if err := a.sprawdzKanalObrazowyFotografiiDesignu(ctx, z.ChannelId); err != nil {
 		return shared.DesignPhotoExpandResponse{}, err
 	}
 	obraz, zrodlo, err := a.obrazZasobuPoKodzieDesignu(ctx, "design.photo.expand", z.AssetId)
@@ -422,11 +394,9 @@ func (a *adapterDesignu) RozszerzKadr(ctx context.Context,
 	droga := shared.DesignPhotoComputeRoute(shared.DesignPhotoComputeRouteRachunekRdzenia)
 	var wynik image.Image
 	if czyDrogaKanaluFotografiiDesignu(z.ChannelId) {
-		// Materiałem jest płótno powiększone z oryginałem w środku, a maską — same
-		// marginesy.
+		// Materiałem jest płótno powiększone z oryginałem w środku, maską same marginesy.
 
-		// Wysłanie samego oryginału kazałoby modelowi domyślać się, gdzie i ile
-		// dorysować.
+		// Sam oryginał kazałby modelowi domyślać się, gdzie i ile dorysować.
 		polecenie := "dorysuj brakujące części obrazu w obszarze wskazanym maską, " +
 			"kontynuując treść zdjęcia"
 		if z.Prompt != nil && strings.TrimSpace(*z.Prompt) != "" {
@@ -455,8 +425,6 @@ func (a *adapterDesignu) RozszerzKadr(ctx context.Context,
 	}, nil
 }
 
-// OdetnijTlo odcina tło zdjęcia i zostawia kanał krycia — obsługuje komendę
-// design.photo.background.remove.
 func (a *adapterDesignu) OdetnijTlo(ctx context.Context,
 	z shared.DesignPhotoBackgroundRemoveRequest) (shared.DesignPhotoBackgroundRemoveResponse, error) {
 
@@ -469,7 +437,7 @@ func (a *adapterDesignu) OdetnijTlo(ctx context.Context,
 		}
 		tolerancja = *z.Tolerance
 	}
-	if err := a.sprawdzKanalObrazowyFotografiiDesignu(z.ChannelId); err != nil {
+	if err := a.sprawdzKanalObrazowyFotografiiDesignu(ctx, z.ChannelId); err != nil {
 		return shared.DesignPhotoBackgroundRemoveResponse{}, err
 	}
 	obraz, zrodlo, err := a.obrazZasobuPoKodzieDesignu(ctx,
@@ -527,8 +495,6 @@ func (a *adapterDesignu) OdetnijTlo(ctx context.Context,
 	}, nil
 }
 
-// ZaznaczObiekt zaznacza obiekt wokół wskazanego punktu i oddaje maskę — obsługuje
-// komendę design.photo.select.object.
 func (a *adapterDesignu) ZaznaczObiekt(ctx context.Context,
 	z shared.DesignPhotoSelectObjectRequest) (shared.DesignPhotoSelectObjectResponse, error) {
 
@@ -566,9 +532,7 @@ func (a *adapterDesignu) ZaznaczObiekt(ctx context.Context,
 	}, nil
 }
 
-// UstawMaske zakłada maskę nieniszczącą — obsługuje komendę design.photo.mask.set.
-// Nieniszcząca znaczy, że źródło zostaje nietknięte, a maska wchodzi do wariantu i do
-// łańcucha edycji razem ze wskazaniem zasobu.
+// Nieniszcząca: źródło zostaje nietknięte, maska wchodzi do wariantu i łańcucha edycji.
 func (a *adapterDesignu) UstawMaske(ctx context.Context,
 	z shared.DesignPhotoMaskSetRequest) (shared.DesignPhotoMaskSetResponse, error) {
 
@@ -607,8 +571,6 @@ func (a *adapterDesignu) UstawMaske(ctx context.Context,
 	}, nil
 }
 
-// nalozMaskeNaObrazDesignu przepuszcza obraz przez maskę: jasność maski staje się kryciem
-// punktu, z opcjonalnym odwróceniem i miękkością krawędzi.
 func nalozMaskeNaObrazDesignu(obraz, maska image.Image, odwroc bool,
 	miekkosc float64) image.Image {
 
@@ -636,14 +598,11 @@ func nalozMaskeNaObrazDesignu(obraz, maska image.Image, odwroc bool,
 	return wynik
 }
 
-// sprawdzKanalObrazowyFotografiiDesignu sprawdza kanał wskazany przy czynności o
-// wariancie neuronowym. Wskazanie kanału, którego nie ma, jest odmową, nie ciszą, tą samą
-// drogą, co przy komendzie design.asset.generate.
-func (a *adapterDesignu) sprawdzKanalObrazowyFotografiiDesignu(kanal *string) error {
+func (a *adapterDesignu) sprawdzKanalObrazowyFotografiiDesignu(ctx context.Context, kanal *string) error {
 	if kanal == nil || strings.TrimSpace(*kanal) == "" {
 		return nil
 	}
-	if _, err := a.kanalObrazowyZadania(kanal, shared.DesignPrompt{
+	if _, err := a.kanalObrazowyZadania(ctx, kanal, shared.DesignPrompt{
 		Subject: "obróbka zdjęcia warsztatem fotografii",
 	}, 1); err != nil {
 		return err
@@ -651,21 +610,15 @@ func (a *adapterDesignu) sprawdzKanalObrazowyFotografiiDesignu(kanal *string) er
 	return nil
 }
 
-// czyDrogaKanaluFotografiiDesignu rozstrzyga, czy czynność idzie kanałem modelu.
-// Rozstrzyga wskazanie pola, nie dostępność kanału: gdy pole stoi, liczy kanał, gdy pole
-// jest pominięte, liczy rachunek wkompilowany.
 func czyDrogaKanaluFotografiiDesignu(kanal *string) bool {
 	return kanal != nil && strings.TrimSpace(*kanal) != ""
 }
 
-// obrazKanalemFotografiiDesignu wysyła materiał, a gdy czynność ma maskę także maskę, do
-// kanału obrazowego i oddaje obraz, który kanał policzył, sprowadzony do wymiaru, który
-// czynność obiecała.
 func (a *adapterDesignu) obrazKanalemFotografiiDesignu(ctx context.Context, komenda string,
 	kanal, okno *string, polecenie string, material, maska image.Image,
 	szerokosc, wysokosc int) (image.Image, error) {
 
-	wiersz, err := a.kanalObrazowyZadania(kanal, shared.DesignPrompt{Subject: polecenie}, 1)
+	wiersz, err := a.kanalObrazowyZadania(ctx, kanal, shared.DesignPrompt{Subject: polecenie}, 1)
 	if err != nil {
 		return nil, err
 	}
@@ -703,9 +656,7 @@ func (a *adapterDesignu) obrazKanalemFotografiiDesignu(ctx context.Context, kome
 	return sprowadzWynikKanaluFotografiiDesignu(wynik, szerokosc, wysokosc), nil
 }
 
-// sprowadzWynikKanaluFotografiiDesignu sprowadza obraz oddany przez kanał do
-// wymiaru zamówionego przez czynność. Wymiar zgodny zostawia obraz nietknięty —
-// przeliczenie „w tę samą rozdzielczość" byłoby stratą jakości bez powodu.
+// Wymiar zgodny zostawia obraz nietknięty — przeliczenie w tę samą rozdzielczość byłoby stratą jakości.
 func sprowadzWynikKanaluFotografiiDesignu(wynik image.Image,
 	szerokosc, wysokosc int) image.Image {
 
@@ -726,9 +677,6 @@ func sprowadzWynikKanaluFotografiiDesignu(wynik image.Image,
 	return imaging.Resize(wynik, szerokosc, wysokosc, imaging.Lanczos)
 }
 
-// zapiszWariantFotografiiDesignu utrwala wynik obróbki jako wariant źródła i dokłada
-// ogniwo do łańcucha edycji, tą samą kolejnością zapisu, co przy wniesieniu i przy
-// generowaniu zasobu.
 func (a *adapterDesignu) zapiszWariantFotografiiDesignu(ctx context.Context,
 	zrodlo dane.ZasobDesignu, okno *string, komenda, opis string, obraz image.Image,
 	nastawy any, droga *shared.DesignPhotoComputeRoute) (shared.DesignAsset, error) {
@@ -743,8 +691,6 @@ func (a *adapterDesignu) zapiszWariantFotografiiDesignu(ctx context.Context,
 	if err != nil {
 		return shared.DesignAsset{}, err
 	}
-
-	// Wariant wskazuje źródło.
 
 	// Po tym łańcuch edycji da się przejść wstecz do zdjęcia wniesionego pierwotnie.
 	zapisany.WariantZasobuID = &zrodlo.Kod

@@ -1,6 +1,5 @@
-// Odpowiedzialność pliku: przekład wierszy obszaru Roundtable na byty kontraktu
-// i odmowy modułu opatrzone kodami błędu kontraktu. Kody rozróżniają brak
-// danych, byt nieistniejący i usterkę rdzenia — każdy okno pokazuje inaczej.
+// Przekład wierszy obszaru Roundtable na byty kontraktu i odmowy modułu z kodami
+// kontraktu: brak danych, byt nieistniejący i usterkę rdzenia okno pokazuje inaczej.
 package core
 
 import (
@@ -13,9 +12,7 @@ import (
 	"danacoconsole/shared"
 )
 
-// uczestnikKontraktu przekłada wiersz składu na uczestnika kontraktu. Rola
-// pusta nie wychodzi jako pusty napis, bo RoundtableParticipantRole jest
-// wyliczeniem zamkniętym — uczestnik bez wskazanej roli oddaje pole nieobecne.
+// RoundtableParticipantRole jest wyliczeniem zamkniętym: rola pusta wychodzi jako pole nieobecne.
 func uczestnikKontraktu(u dane.UczestnikDebaty) shared.RoundtableParticipant {
 	wyciszony, kolejnosc, kluczowy, waga := u.Wyciszony, u.Kolejnosc, u.Kluczowy, u.Waga
 	uczestnik := shared.RoundtableParticipant{
@@ -43,7 +40,6 @@ func uczestnikKontraktu(u dane.UczestnikDebaty) shared.RoundtableParticipant {
 	return uczestnik
 }
 
-// uczestnicyKontraktu przekłada cały skład debaty na wykaz uczestników kontraktu, wiersz po wierszu składu.
 func uczestnicyKontraktu(uczestnicy []dane.UczestnikDebaty) []shared.RoundtableParticipant {
 	wykaz := make([]shared.RoundtableParticipant, 0, len(uczestnicy))
 	for _, uczestnik := range uczestnicy {
@@ -52,7 +48,6 @@ func uczestnicyKontraktu(uczestnicy []dane.UczestnikDebaty) []shared.RoundtableP
 	return wykaz
 }
 
-// kodyUczestnikow wyciąga identyfikatory adresatów tury z wykazu uczestników debaty złożonych w oknie.
 func kodyUczestnikow(uczestnicy []dane.UczestnikDebaty) []string {
 	kody := make([]string, 0, len(uczestnicy))
 	for _, uczestnik := range uczestnicy {
@@ -61,9 +56,7 @@ func kodyUczestnikow(uczestnicy []dane.UczestnikDebaty) []string {
 	return kody
 }
 
-// turaKontraktu przekłada wiersz tury na turę kontraktu. Granice zerowe nie
-// wychodzą jako zero, tylko jako pole nieobecne, bo zero w polu kontraktu
-// klient odczytałby jako zakaz mówienia.
+// Granice zerowe wychodzą jako pole nieobecne: zero klient odczytałby jako zakaz mówienia.
 func turaKontraktu(t dane.TuraDebaty) shared.RoundtableTurn {
 	pytanie, anonimowa, granica := t.Pytanie, t.Anonimowa, t.GranicaTur
 	tura := shared.RoundtableTurn{
@@ -98,9 +91,7 @@ func turaKontraktu(t dane.TuraDebaty) shared.RoundtableTurn {
 	return tura
 }
 
-// wypowiedzKontraktu przekłada wiersz wypowiedzi na wypowiedź kontraktu.
-// Pewność ujemna znaczy nie deklarowano i wtedy pole nie wychodzi, bo zero
-// jest deklaracją odrębną od braku pytania o pewność.
+// Pewność ujemna znaczy „nie deklarowano”; zero jest deklaracją odrębną od braku pytania.
 func wypowiedzKontraktu(w dane.WypowiedzDebaty) shared.RoundtableStatement {
 	redakcja := w.Redakcja
 	wypowiedz := shared.RoundtableStatement{
@@ -122,7 +113,6 @@ func wypowiedzKontraktu(w dane.WypowiedzDebaty) shared.RoundtableStatement {
 	return wypowiedz
 }
 
-// stanowiskoKontraktu przekłada wiersz stanowiska wraz z turami, które objęło, na byt kontraktu konsensusu.
 func stanowiskoKontraktu(s dane.StanowiskoDebaty, kody []string) shared.RoundtableConsensus {
 	wersja, zaakceptowane := s.Wersja, s.Zaakceptowane
 	if len(kody) == 0 {
@@ -136,7 +126,6 @@ func stanowiskoKontraktu(s dane.StanowiskoDebaty, kody []string) shared.Roundtab
 	}
 }
 
-// rozdzielWiersze rozbija wykaz zapisany w jednej kolumnie tekstu na osobne pozycje wykazu wynikowego.
 func rozdzielWiersze(zapis string) []string {
 	if strings.TrimSpace(zapis) == "" {
 		return nil
@@ -151,31 +140,29 @@ func rozdzielWiersze(zapis string) []string {
 	return wykaz
 }
 
-// itoaRundy zapisuje numer tury dziesiętnie, wygodnym zapisem tekstowym do treści komunikatu odmowy okna.
 func itoaRundy(liczba int) string {
 	return strconv.Itoa(liczba)
 }
 
-// bladDebaty znakuje usterkę kodem kontraktu. Błąd, któremu kod już nadano,
-// przechodzi tędy bez zmiany — dopiero usterka bez kodu staje się usterką
-// wewnętrzną rdzenia.
 func bladDebaty(err error) error {
 	if err == nil {
 		return nil
 	}
+	if errors.Is(err, dane.ErrKolizjaWiersza) {
+		return protocol.JakoError(protocol.BladZeZrodla(shared.ErrorCodeConflict, err))
+	}
+	if errors.Is(err, dane.ErrBrakWiersza) {
+		return protocol.JakoError(protocol.BladZeZrodla(shared.ErrorCodeNotFound, err))
+	}
 	return protocol.JakoError(protocol.BladZeZrodla(shared.ErrorCodeInternalError, err))
 }
 
-// bladWskazaniaDebaty nazywa brak danych w żądaniu — to błąd Operatora, nie
-// rdzenia, więc kod odmowy jest inny niż przy usterce.
 func bladWskazaniaDebaty(powod string) error {
 	return protocol.JakoError(protocol.NowyBlad(shared.ErrorCodeValidationFailed,
 		"moduł Roundtable: "+powod))
 }
 
-// odmowaTuryDebatyWBiegu odmawia otwarcia kolejnej tury oknu, w którym
-// uczestnicy jeszcze mówią. Przerwanie tury jest osobną decyzją moderatora,
-// nie skutkiem ubocznym otwarcia następnej.
+// Przerwanie tury jest osobną decyzją moderatora, nie skutkiem ubocznym otwarcia następnej.
 func odmowaTuryDebatyWBiegu(okno string) error {
 	return protocol.JakoError(protocol.NowyBlad(shared.ErrorCodeConflict,
 		"moduł Roundtable: okno "+okno+" prowadzi turę i nie otworzy kolejnej. "+
@@ -184,20 +171,17 @@ func odmowaTuryDebatyWBiegu(okno string) error {
 			"(roundtable.moderator.direct), co przerywa ją jawnie."))
 }
 
-// bladBrakuKanalow odmawia uruchomienia debaty bez rejestru kanałów. Debata bez
-// wykonawcy nie ma prawa udawać, że uczestnicy odpowiedzieli.
+// Debata bez wykonawcy nie ma prawa udawać, że uczestnicy odpowiedzieli.
 func bladBrakuKanalow() error {
 	return protocol.JakoError(protocol.NowyBlad(shared.ErrorCodeChannelUnavailable,
 		"moduł Roundtable: serwer nie ma rejestru kanałów modelu — uczestnicy nie mają czym odpowiedzieć"))
 }
 
-// bladNieznanegoKanalu odmawia dodania uczestnika na kanale spoza rejestru kanałów modelu rdzenia platformy.
 func bladNieznanegoKanalu(kod string) error {
 	return protocol.JakoError(protocol.NowyBlad(shared.ErrorCodeNotFound,
 		"moduł Roundtable: kanał "+kod+" nie istnieje w rejestrze albo jest nieczynny"))
 }
 
-// bladNieznanejTury odróżnia stan tury nieistniejącej od stanu odczytu nieudanego z bazy danych rdzenia.
 func bladNieznanejTury(kod string, err error) error {
 	if errors.Is(err, dane.ErrBrakWiersza) {
 		return protocol.JakoError(protocol.NowyBlad(shared.ErrorCodeNotFound,
@@ -206,7 +190,6 @@ func bladNieznanejTury(kod string, err error) error {
 	return bladDebaty(err)
 }
 
-// bladNieznanegoUczestnika odróżnia stan uczestnika nieistniejącego od usterki odczytu wiersza z bazy.
 func bladNieznanegoUczestnika(kod string, err error) error {
 	if errors.Is(err, dane.ErrBrakWiersza) {
 		return protocol.JakoError(protocol.NowyBlad(shared.ErrorCodeNotFound,

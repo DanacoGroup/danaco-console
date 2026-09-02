@@ -1,6 +1,5 @@
-// Adapter rodziny component.* obsługuje komponenty własne Strefy 2 Strony
-// głównej: kafle, których pole targetId wskazuje byt magazynu modułowego.
-// Komenda create zakłada ten byt; update i delete magazynu nie tykają.
+// Rodzina component.*: kafle Strefy 2 Strony głównej, których targetId wskazuje byt
+// magazynu modułowego. Komenda create zakłada ten byt; update i delete magazynu nie tykają.
 package core
 
 import (
@@ -15,24 +14,16 @@ import (
 	"danacoconsole/shared"
 )
 
-// przedrostekKomponentu nadaje identyfikator kaflowi Strefy 2. Byt docelowy
-// dostaje osobny przedrostek właściwy swojemu magazynowi modułowemu.
 const przedrostekKomponentu = "komp-"
 
-// adapterKomponentow wypełnia port Komponenty. Rejestr jest zależnością
-// obowiązkową; trzy repozytoria modułowe są zależnościami component.create
-// i mogą być puste.
 type adapterKomponentow struct {
 	rejestr    dane.RepozytoriumKomponentow
 	projekty   dane.RepozytoriumPrzestrzeniRoboczej
 	agenci     dane.RepozytoriumAgentow
 	automatyki dane.RepozytoriumAutomatyk
-	// teraz oddaje czas w milisekundach epoki wspólny dla obu kolumn czasu.
-	teraz func() int64
+	teraz      func() int64
 }
 
-// nowyAdapterKomponentow wiąże adapter z rejestrem komponentów i zegarem
-// oddającym bieżący czas w milisekundach epoki.
 func nowyAdapterKomponentow(rejestr dane.RepozytoriumKomponentow) *adapterKomponentow {
 	return &adapterKomponentow{
 		rejestr: rejestr,
@@ -40,9 +31,7 @@ func nowyAdapterKomponentow(rejestr dane.RepozytoriumKomponentow) *adapterKompon
 	}
 }
 
-// ZMagazynamiModulow oddaje adapterowi trzy magazyny, w których `component.create`
-// zakłada byt docelowy. Profile asystenta nie mają w warstwie danych drogi
-// zapisu, więc nie ma ich też w tej sygnaturze.
+// Profile asystenta nie mają w warstwie danych drogi zapisu, więc nie ma ich w sygnaturze.
 func (a *adapterKomponentow) ZMagazynamiModulow(projekty dane.RepozytoriumPrzestrzeniRoboczej,
 	agenci dane.RepozytoriumAgentow, automatyki dane.RepozytoriumAutomatyk) *adapterKomponentow {
 
@@ -52,8 +41,6 @@ func (a *adapterKomponentow) ZMagazynamiModulow(projekty dane.RepozytoriumPrzest
 	return a
 }
 
-// Wykaz obsługuje `component.list`. Brak zawężenia rodzajem oddaje wszystkie
-// cztery rodzaje; `includeDisabled` pominięte znaczy „tylko czynne”.
 func (a *adapterKomponentow) Wykaz(ctx context.Context,
 	z shared.ComponentListRequest) (shared.ComponentListResponse, error) {
 
@@ -79,8 +66,6 @@ func (a *adapterKomponentow) Wykaz(ctx context.Context,
 	return shared.ComponentListResponse{Components: komponenty}, nil
 }
 
-// Utworz obsługuje `component.create`: zakłada byt w magazynie właściwym
-// rodzajowi, a potem kafel wskazujący na ten byt.
 func (a *adapterKomponentow) Utworz(ctx context.Context,
 	z shared.ComponentCreateRequest) (shared.ComponentCreateResponse, error) {
 
@@ -117,8 +102,6 @@ func (a *adapterKomponentow) Utworz(ctx context.Context,
 	return shared.ComponentCreateResponse{Component: komponentKontraktu(zalozony)}, nil
 }
 
-// Zmien obsługuje component.update. Zmienia wyłącznie kafel, nie byt magazynu
-// modułowego, który reprezentuje.
 func (a *adapterKomponentow) Zmien(ctx context.Context,
 	z shared.ComponentUpdateRequest) (shared.ComponentUpdateResponse, error) {
 
@@ -143,9 +126,7 @@ func (a *adapterKomponentow) Zmien(ctx context.Context,
 	return shared.ComponentUpdateResponse{Component: komponentKontraktu(zmieniony)}, nil
 }
 
-// Usun obsługuje component.delete. Zdejmuje kafel; bytu magazynu modułowego
-// nie tyka. Komponent, którego nie ma, jest odmową z powodem, nie odpowiedzią
-// deleted: false udającą wykonaną czynność.
+// Komponent, którego nie ma, jest odmową z powodem, nie odpowiedzią deleted: false.
 func (a *adapterKomponentow) Usun(ctx context.Context,
 	z shared.ComponentDeleteRequest) (shared.ComponentDeleteResponse, error) {
 
@@ -165,9 +146,7 @@ func (a *adapterKomponentow) Usun(ctx context.Context,
 	return shared.ComponentDeleteResponse{Deleted: true}, nil
 }
 
-// Przypisz obsługuje component.assign: zapamiętuje na wierszu komponentu,
-// na którym poziomie zasięgu ten komponent obowiązuje. Przyjmowanych jest
-// pięć poziomów zasięgu; pozostałe idą odmową validation_failed.
+// component.assign przyjmuje pięć poziomów zasięgu; pozostałe idą odmową validation_failed.
 func (a *adapterKomponentow) Przypisz(ctx context.Context,
 	z shared.ComponentAssignRequest) (shared.ComponentAssignResponse, error) {
 
@@ -201,8 +180,6 @@ func (a *adapterKomponentow) Przypisz(ctx context.Context,
 	}, nil
 }
 
-// zalozBytModulowy zakłada byt w magazynie właściwym rodzajowi i oddaje jego
-// identyfikator zewnętrzny. Rodzaj assistant zakładania odmawia.
 func (a *adapterKomponentow) zalozBytModulowy(ctx context.Context, rodzaj, nazwa string,
 	opis *string) (string, error) {
 
@@ -249,8 +226,6 @@ func (a *adapterKomponentow) zalozBytModulowy(ctx context.Context, rodzaj, nazwa
 	return "", bladNieznanegoRodzajuKomponentu(rodzaj)
 }
 
-// komponentKontraktu przekłada wiersz rejestru komponentów na kształt kontraktu
-// niesiony odpowiedziami rodziny component.*.
 func komponentKontraktu(k dane.Komponent) shared.Component {
 	komponent := shared.Component{
 		Id:        k.Kod,
@@ -268,9 +243,7 @@ func komponentKontraktu(k dane.Komponent) shared.Component {
 	return komponent
 }
 
-// rodzajKomponentu przepuszcza wyłącznie cztery wartości `ComponentKind`.
-// Kolumna `komponent.rodzaj` niesie wartość kontraktu wprost, więc przekładu
-// tu nie ma — jest sprawdzenie.
+// Kolumna `komponent.rodzaj` niesie wartość kontraktu wprost — sprawdzenie, nie przekład.
 func rodzajKomponentu(rodzaj string) (string, error) {
 	switch rodzaj {
 	case shared.ComponentKindAutomations, shared.ComponentKindAgents,
@@ -280,9 +253,7 @@ func rodzajKomponentu(rodzaj string) (string, error) {
 	return "", bladNieznanegoRodzajuKomponentu(rodzaj)
 }
 
-// poziomPrzypisania przekłada poziom kontraktu na kod kolumny poziom_zasiegu.kod
-// słownikiem platformy i przepuszcza wyłącznie pięć poziomów przyjmowanych
-// przez component.assign.
+// Poziom kontraktu przekłada się na kod kolumny poziom_zasiegu.kod słownikiem platformy.
 func poziomPrzypisania(poziom shared.ConfigScope) (string, error) {
 	switch poziom {
 	case shared.ConfigScopeGlobal, shared.ConfigScopeEnvironment, shared.ConfigScopeProject,
@@ -298,8 +269,6 @@ func poziomPrzypisania(poziom shared.ConfigScope) (string, error) {
 		" nie jest wymieniony w opisie component.assign; przyjmowane są global, environment, project, session i window")
 }
 
-// sprawdzRejestr odmawia czynności kodem internal_error, gdy rejestr
-// komponentów nie został wpięty do adaptera.
 func (a *adapterKomponentow) sprawdzRejestr() error {
 	if a == nil || a.rejestr == nil {
 		return protocol.JakoError(protocol.NowyBlad(shared.ErrorCodeInternalError,
@@ -308,40 +277,34 @@ func (a *adapterKomponentow) sprawdzRejestr() error {
 	return nil
 }
 
-// bladKomponentu przekłada niepowodzenie warstwy danych na odmowę kontraktu.
-// Brak wiersza jest `not_found`, reszta — `internal_error`.
 func bladKomponentu(err error) error {
 	if errors.Is(err, dane.ErrBrakWiersza) {
 		return protocol.JakoError(protocol.NowyBlad(shared.ErrorCodeNotFound,
+			"komponenty własne: "+err.Error()))
+	}
+	if errors.Is(err, dane.ErrKolizjaWiersza) {
+		return protocol.JakoError(protocol.NowyBlad(shared.ErrorCodeConflict,
 			"komponenty własne: "+err.Error()))
 	}
 	return protocol.JakoError(protocol.NowyBlad(shared.ErrorCodeInternalError,
 		"komponenty własne: "+err.Error()))
 }
 
-// bladWskazaniaKomponentu odmawia żądaniu niezgodnemu z kontraktem kodem
-// validation_failed niosącym podany powód.
 func bladWskazaniaKomponentu(powod string) error {
 	return protocol.JakoError(protocol.NowyBlad(shared.ErrorCodeValidationFailed,
 		"komponenty własne: "+powod))
 }
 
-// bladNieznanegoRodzajuKomponentu odmawia rodzajowi spoza wyliczenia kontraktu
-// kodem validation_failed.
 func bladNieznanegoRodzajuKomponentu(rodzaj string) error {
 	return bladWskazaniaKomponentu("rodzaj komponentu " + rodzaj + " nie należy do kontraktu")
 }
 
-// bladNieznanegoKomponentu odmawia czynności na kaflu komponentu, którego
-// w rejestrze nie ma, kodem not_found niosącym jego identyfikator.
 func bladNieznanegoKomponentu(kod string) error {
 	return protocol.JakoError(protocol.NowyBlad(shared.ErrorCodeNotFound,
 		"komponenty własne: komponent "+kod+" nie istnieje"))
 }
 
-// bladBrakuMagazynuKomponentu odmawia założeniu komponentu rodzaju, którego
-// magazynu nie ma albo nie wpięto. Kod `conflict`: żądanie jest poprawne, lecz
-// stan platformy wyklucza czynność.
+// Kod `conflict`: żądanie jest poprawne, lecz stan platformy wyklucza czynność.
 func bladBrakuMagazynuKomponentu(rodzaj, powod string) error {
 	return protocol.JakoError(protocol.NowyBlad(shared.ErrorCodeConflict,
 		"komponenty własne: komponentu rodzaju "+rodzaj+" nie da się założyć — "+powod))

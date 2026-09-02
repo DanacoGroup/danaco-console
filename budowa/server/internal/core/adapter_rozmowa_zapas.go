@@ -7,12 +7,20 @@ import (
 	"fmt"
 	"strings"
 
+	"danacoconsole/server/internal/dane"
 	"danacoconsole/server/internal/models"
 )
 
 // parametrKanaluZapasowego jest kluczem parametru wiersza rejestru kanałów
 // wskazującego kanał zapasowy. Wartość danych, nie stała polityki.
 const parametrKanaluZapasowego = "kanal_zapasowy"
+
+// ZRepozytoriumKanalow wpina zawężone repozytorium kanałów, które rozstrzyga
+// własność kodu kanału przy przełączeniu na zapas.
+func (a *adapterRozmowy) ZRepozytoriumKanalow(kanaly dane.RepozytoriumKanalow) *adapterRozmowy {
+	a.repozytoriumKanalow = kanaly
+	return a
+}
 
 // zapasMozliwy mówi, czy odmowę kanału wolno spróbować naprawić zapasem,
 // według trzech warunków granic uczciwości opisanych osobno.
@@ -26,7 +34,7 @@ func zapasMozliwy(kontekst context.Context, przyczyna error, tekstPoszedl, zamkn
 func (a *adapterRozmowy) pojedzZapasem(kontekst context.Context, zapytanie models.Zapytanie,
 	ujscie models.Ujscie, przyczyna error) (error, bool) {
 
-	kanal, jest := a.kanaly.Kanal(zapytanie.Kanal)
+	kanal, jest := kanalKonta(kontekst, a.repozytoriumKanalow, a.kanaly, zapytanie.Kanal)
 	if !jest {
 		return przyczyna, false
 	}
@@ -34,7 +42,7 @@ func (a *adapterRozmowy) pojedzZapasem(kontekst context.Context, zapytanie model
 	if zapas == "" || zapas == zapytanie.Kanal {
 		return przyczyna, false
 	}
-	if _, czynny := a.kanaly.Kanal(zapas); !czynny {
+	if _, czynny := kanalKonta(kontekst, a.repozytoriumKanalow, a.kanaly, zapas); !czynny {
 		// Zapas wskazany, ale nieczynny: mówimy o tym w błędzie tury, zamiast milczeć.
 		return fmt.Errorf("%w; kanał zapasowy %q nie stoi w rejestrze albo jest nieczynny", przyczyna, zapas), false
 	}

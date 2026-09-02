@@ -1,7 +1,5 @@
-// Plik obsługuje design.asset.generate: składa polecenie z promptu, wywołuje
-// kanał obrazowy, utrwala bajty obrazu w magazynie treści i dopiero potem
-// zakłada wiersz zasobu. Każdy brak kończy komendę odmową, nigdy obrazem
-// zastępczym.
+// design.asset.generate: polecenie z promptu, wywołanie kanału obrazowego, bajty do magazynu
+// treści, dopiero potem wiersz zasobu. Każdy brak kończy komendę odmową, nigdy obrazem zastępczym.
 package core
 
 import (
@@ -23,30 +21,18 @@ import (
 )
 
 const (
-	// limitPobraniaObrazu ogranicza bajty wciągane spod adresu dostawcy, żeby
-	// odpowiedź bez końca nie wyczerpała pamięci procesu podczas pobierania obrazu.
+	// Odpowiedź bez końca nie może wyczerpać pamięci procesu.
 	limitPobraniaObrazu = 64 << 20
-	// limitCzasuPobraniaObrazu ogranicza czas pobrania obrazu spod adresu
-	// dostawcy; czas samego generowania ustala kanał obrazowy parametrem limit_sekund.
+	// Czas samego generowania ustala kanał obrazowy parametrem limit_sekund.
 	limitCzasuPobraniaObrazu = 120 * time.Second
 )
 
-// szczegolyOdmowyGenerowania niesie w error.details treść złożonego polecenia,
-// liczbę zamówionych wariantów i wykaz braków tego wywołania jako dane
-// diagnostyczne dla Operatora.
 type szczegolyOdmowyGenerowania struct {
-	// Polecenie jest promptem strukturalnym złożonym w jeden tekst.
-	Polecenie string `json:"polecenie"`
-	// Wariantow niesie liczbę zamówionych wariantów.
-	Wariantow int `json:"wariantow"`
-	// Brakujace wymienia braki tego wywołania, żeby okno mogło je wypisać bez
-	// rozbioru zdania odmowy.
+	Polecenie string   `json:"polecenie"`
+	Wariantow int      `json:"wariantow"`
 	Brakujace []string `json:"brakujace"`
 }
 
-// bladOdmowyGenerowania składa odmowę design.asset.generate wraz ze
-// szczegółami ocalonymi z promptu; niepowodzenie zapisu szczegółów nie
-// zmienia treści odmowy.
 func bladOdmowyGenerowania(kod shared.ErrorCode, tresc string,
 	p shared.DesignPrompt, wariantow int, brakujace ...string) error {
 
@@ -62,9 +48,6 @@ func bladOdmowyGenerowania(kod shared.ErrorCode, tresc string,
 	return protocol.JakoError(blad)
 }
 
-// GenerujZasob obsługuje design.asset.generate: sprawdza żądanie, wywołuje
-// kanał obrazowy i zakłada wiersz zasobu dla każdego wariantu. Wariant
-// nieudany przerywa całość; zasoby już utrwalone zostają w bazie i magazynie.
 func (a *adapterDesignu) GenerujZasob(ctx context.Context,
 	z shared.DesignAssetGenerateRequest) (shared.DesignAssetGenerateResponse, error) {
 
@@ -81,7 +64,7 @@ func (a *adapterDesignu) GenerujZasob(ctx context.Context,
 		wariantow = *z.Prompt.Variants
 	}
 
-	kanal, err := a.kanalObrazowyZadania(z.ChannelId, z.Prompt, wariantow)
+	kanal, err := a.kanalObrazowyZadania(ctx, z.ChannelId, z.Prompt, wariantow)
 	if err != nil {
 		return shared.DesignAssetGenerateResponse{}, err
 	}
@@ -106,8 +89,7 @@ func (a *adapterDesignu) GenerujZasob(ctx context.Context,
 	polecenie := zlozPolecenieObrazu(z.Prompt)
 	rodzaj := shared.DesignAssetKindImage
 	if z.Kind != nil && strings.TrimSpace(string(*z.Kind)) != "" {
-		// Sprawdzenie rodzaju stoi przed wywołaniem kanału, żeby odmowa nie
-		// kosztowała generowania.
+		// Sprawdzenie rodzaju stoi przed wywołaniem kanału, żeby odmowa nie kosztowała generowania.
 		if err := sprawdzRodzajZasobu("design.asset.generate", *z.Kind); err != nil {
 			return shared.DesignAssetGenerateResponse{}, err
 		}
@@ -116,8 +98,6 @@ func (a *adapterDesignu) GenerujZasob(ctx context.Context,
 
 	zasoby := make([]shared.DesignAsset, 0, wariantow)
 	for numer := 1; numer <= wariantow; numer++ {
-		// Każdy wariant jest osobnym wywołaniem kanału; fragment niesie jeden
-		// obraz na wywołanie.
 		bajty, typTresci, err := a.wytworzObraz(ctx, kanal, z.WindowId, polecenie, nil)
 		if err != nil {
 			return shared.DesignAssetGenerateResponse{}, err
@@ -136,8 +116,6 @@ func (a *adapterDesignu) GenerujZasob(ctx context.Context,
 	return shared.DesignAssetGenerateResponse{Assets: zasoby}, nil
 }
 
-// zalozZasobZBajtow utrwala bajty jednego wariantu w magazynie treści, mierzy
-// format i wymiary obrazu i zakłada jego wiersz zasobu w bazie danych.
 func (a *adapterDesignu) zalozZasobZBajtow(ctx context.Context,
 	z shared.DesignAssetGenerateRequest, rodzaj, polecenie string, numer, wariantow int,
 	bajty []byte, typTresci string, pien *string, promptID *int64) (shared.DesignAsset, error) {
@@ -178,8 +156,6 @@ func (a *adapterDesignu) zalozZasobZBajtow(ctx context.Context,
 	return zasobKontraktu(zapisany, etykiety), nil
 }
 
-// promptDoZapisuDesignu przekłada prompt kontraktu na wiersz prompt_design
-// wraz z oknem i kanałem wydania; identyfikator żądania nadpisuje wiersz zastany.
 func promptDoZapisuDesignu(p shared.DesignPrompt, okno, kanal string) dane.PromptDesignu {
 	kod := nowyIdentyfikator(przedrostekPromptuDesign)
 	if p.Id != nil && strings.TrimSpace(*p.Id) != "" {
@@ -208,9 +184,6 @@ func promptDoZapisuDesignu(p shared.DesignPrompt, okno, kanal string) dane.Promp
 	}
 }
 
-// wytworzObraz wykonuje jedno wywołanie kanału obrazowego i oddaje bajty
-// obrazu wraz z typem treści, zbierając wyłącznie fragment obrazu z odpowiedzi
-// kanału.
 func (a *adapterDesignu) wytworzObraz(ctx context.Context,
 	kanal models.Definicja, okno, polecenie string,
 	obrazy []models.ObrazWejsciowy) ([]byte, string, error) {
@@ -220,8 +193,6 @@ func (a *adapterDesignu) wytworzObraz(ctx context.Context,
 		if f.Kind != shared.ChunkKindImage || len(f.Data) == 0 {
 			return nil
 		}
-		// Pierwszy obraz wygrywa: fragment niesie jeden obraz, należący do
-		// zamówionego wariantu.
 		if tresc.Base64 != "" || tresc.Adres != "" {
 			return nil
 		}
@@ -234,8 +205,7 @@ func (a *adapterDesignu) wytworzObraz(ctx context.Context,
 		Kanal:           kanal.Identyfikator(),
 		ObrazyWejsciowe: obrazy,
 	}
-	// Zdanie błędu pochodzi od kanału, który zna powód swojej odmowy
-	// dokładniej niż ten moduł.
+	// Zdanie błędu pochodzi od kanału, który zna powód odmowy dokładniej niż moduł.
 	if err := a.kanaly.Wyslij(ctx, zapytanie, ujscie); err != nil {
 		return nil, "", protocol.JakoError(protocol.BladZeZrodla(
 			shared.ErrorCodeChannelUnavailable,
@@ -264,8 +234,7 @@ func (a *adapterDesignu) wytworzObraz(ctx context.Context,
 	return pobierzObrazSpodAdresu(ctx, tresc.Adres, tresc.TypTresci)
 }
 
-// pobierzObrazSpodAdresu wciąga bajty obrazu spod odsyłacza dostawcy, ponieważ
-// odsyłacz wygasa i sam nie może zostać zapisany jako trwała treść zasobu.
+// Odsyłacz dostawcy wygasa, więc nie może zostać zapisany jako trwała treść zasobu.
 func pobierzObrazSpodAdresu(ctx context.Context, adres, typTresci string) ([]byte, string, error) {
 	odmowa := func(powod string) error {
 		return protocol.JakoError(protocol.NowyBlad(shared.ErrorCodeChannelUnavailable,
@@ -298,12 +267,9 @@ func pobierzObrazSpodAdresu(ctx context.Context, adres, typTresci string) ([]byt
 	return bajty, typTresci, nil
 }
 
-// nazwaWariantu składa etykietę zasobu z treści polecenia, skracając ją do stu
-// dwudziestu znaków i dopisując numer wariantu, gdy wariantów jest więcej niż jeden.
 func nazwaWariantu(polecenie string, numer, wariantow int) string {
 	nazwa := strings.TrimSpace(polecenie)
-	// Granica liczona w znakach, nie w bajtach, żeby cięcie nie rozłupało
-	// litery polskiej.
+	// Granica w znakach, nie bajtach: cięcie nie może rozłupać litery polskiej.
 	const granica = 120
 	if znaki := []rune(nazwa); len(znaki) > granica {
 		nazwa = strings.TrimSpace(string(znaki[:granica])) + "…"
@@ -314,8 +280,6 @@ func nazwaWariantu(polecenie string, numer, wariantow int) string {
 	return nazwa
 }
 
-// formatZTypuTresci wyciąga nazwę formatu z typu treści odpowiedzi kanału
-// obrazowego; wartość spoza rodziny image/ nie jest formatem obrazu.
 func formatZTypuTresci(typTresci string) *string {
 	typTresci = strings.TrimSpace(strings.ToLower(typTresci))
 	if typTresci == "" {

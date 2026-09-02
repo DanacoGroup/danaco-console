@@ -9,6 +9,7 @@ import (
 	"sync"
 	"time"
 
+	"danacoconsole/server/internal/dane"
 	"danacoconsole/server/internal/models"
 	"danacoconsole/server/internal/protocol"
 	"danacoconsole/server/internal/session"
@@ -16,25 +17,27 @@ import (
 )
 
 type adapterRozmowy struct {
-	nadzorca         *session.Nadzorca
-	kanaly           *models.Rejestr
-	nadajnik         Nadajnik
-	dziennik         *dziennikRozmowy
-	zycie            context.Context
-	petla            *session.Petla
-	tozsamosc        Tozsamosc
-	agenci           ZrodloTozsamosciAgenta
-	dolozeniaSesji   DolozeniaNarzedziSesji
-	zgloszoneZestawy sync.Map
-	katalog          *KatalogRoboczy
-	mosty            *mostyOkna
-	ciaglosc         CiagloscRozmowy
-	wykonanie        ParametryWykonania
-	konfiguracja     CzytelnikKonfiguracjiSesji
-	zdarzenia        *zdarzeniaWykonawcze
-	bloki            *rejestratorBlokow
-	zalaczniki       *magazynTresciBiblioteki
-	tor              *torStrumieni
+	nadzorca *session.Nadzorca
+	kanaly   *models.Rejestr
+	// repozytoriumKanalow rozstrzyga własność kanału z żądania (decyzja 34).
+	repozytoriumKanalow dane.RepozytoriumKanalow
+	nadajnik            Nadajnik
+	dziennik            *dziennikRozmowy
+	zycie               context.Context
+	petla               *session.Petla
+	tozsamosc           Tozsamosc
+	agenci              ZrodloTozsamosciAgenta
+	dolozeniaSesji      DolozeniaNarzedziSesji
+	zgloszoneZestawy    sync.Map
+	katalog             *KatalogRoboczy
+	mosty               *mostyOkna
+	ciaglosc            CiagloscRozmowy
+	wykonanie           ParametryWykonania
+	konfiguracja        CzytelnikKonfiguracjiSesji
+	zdarzenia           *zdarzeniaWykonawcze
+	bloki               *rejestratorBlokow
+	zalaczniki          *magazynTresciBiblioteki
+	tor                 *torStrumieni
 
 	mu       sync.Mutex
 	biegnace map[string]*biegTury

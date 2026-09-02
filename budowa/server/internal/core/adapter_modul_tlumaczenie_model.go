@@ -10,16 +10,18 @@ import (
 	"danacoconsole/shared"
 )
 
-// ZWyjsciem wpina szynę zdarzeń rdzenia — most, którym moduł rozgłasza translate.translation.changed po zmianie treści panelu.
 func (a *adapterTlumaczenia) ZWyjsciem(wyjscie *emiter) *adapterTlumaczenia {
 	a.wyjscie = wyjscie
 	return a
 }
 
-// kanalZadania rozstrzyga, którym kanałem pójdzie operacja modelu, na podstawie wskazania Operatora, z odmową wprost przy kanale nieznanym, wyłączonym albo bez zbudowanego adaptera.
-func (a *adapterTlumaczenia) kanalZadania(wskazany *string) (string, error) {
+func (a *adapterTlumaczenia) kanalZadania(ctx context.Context, wskazany *string) (string, error) {
 	if a.kanaly == nil {
 		return "", bladBrakuKanalowTlumaczenia()
+	}
+	kluczeKonta, err := kluczeKanalowKonta(ctx, a.repozytoriumKanalow)
+	if err != nil {
+		return "", err
 	}
 	kod := ""
 	if wskazany != nil {
@@ -27,7 +29,7 @@ func (a *adapterTlumaczenia) kanalZadania(wskazany *string) (string, error) {
 	}
 	// Brak wskazania jest wskazaniem na kanał domyślny, drogą sprzed pola channelId.
 	if kod == "" {
-		domyslny, ok := a.domyslnyKanalModelu()
+		domyslny, ok := a.domyslnyKanalModelu(kluczeKonta)
 		if !ok {
 			return "", bladBrakuKanalowTlumaczenia()
 		}
@@ -37,6 +39,9 @@ func (a *adapterTlumaczenia) kanalZadania(wskazany *string) (string, error) {
 	// Wykaz niesie też wiersze nieczynne, więc odróżnia brak kanału od kanału wyłączonego.
 	for _, wiersz := range a.kanaly.Wykaz() {
 		if wiersz.Identyfikator() != kod && strings.TrimSpace(wiersz.Kod) != kod {
+			continue
+		}
+		if _, wlasny := kluczeKonta[wiersz.Kod]; !wlasny {
 			continue
 		}
 		if !wiersz.Aktywny {
@@ -59,24 +64,23 @@ func (a *adapterTlumaczenia) kanalZadania(wskazany *string) (string, error) {
 			"(channel.list) albo pominąć pole channelId, żeby jechać kanałem domyślnym"))
 }
 
-// domyslnyKanalModelu ustala domyślny czynny kanał modelu: pierwszy wiersz rejestru czynny i gotowy do pracy, droga dla żądań bez channelId.
-func (a *adapterTlumaczenia) domyslnyKanalModelu() (string, bool) {
+func (a *adapterTlumaczenia) domyslnyKanalModelu(kluczeKonta map[string]struct{}) (string, bool) {
 	if a.kanaly == nil {
 		return "", false
 	}
-	czynne := a.kanaly.Kontrakt(true)
-	if len(czynne) == 0 {
-		return "", false
+	for _, kanal := range a.kanaly.Kontrakt(true) {
+		if _, wlasny := kluczeKonta[kanal.Id]; wlasny {
+			return kanal.Id, true
+		}
 	}
-	return czynne[0].Id, true
+	return "", false
 }
 
-// przetlumaczModelem woła model, żeby przełożyć tekst źródłowy na język docelowy panelu, stosując słownik Operatora w poleceniu i po odpowiedzi, oraz oddaje sam przekład.
 func (a *adapterTlumaczenia) przetlumaczModelem(ctx context.Context,
 	oknoKod, jezykDocelowy string, ton *string, tekstZrodlowy string,
 	wskazanyKanal *string) (string, error) {
 
-	kanal, err := a.kanalZadania(wskazanyKanal)
+	kanal, err := a.kanalZadania(ctx, wskazanyKanal)
 	if err != nil {
 		return "", err
 	}
@@ -98,11 +102,10 @@ func (a *adapterTlumaczenia) przetlumaczModelem(ctx context.Context,
 	return przeklad, nil
 }
 
-// przetlumaczZwrotnieModelem woła model o przekład panelu z powrotem na język źródłowy okna, obsługując backtranslation.run bez udziału słownika.
 func (a *adapterTlumaczenia) przetlumaczZwrotnieModelem(ctx context.Context,
 	oknoKod, jezykZrodlowy, tekstPanelu string, wskazanyKanal *string) (string, error) {
 
-	kanal, err := a.kanalZadania(wskazanyKanal)
+	kanal, err := a.kanalZadania(ctx, wskazanyKanal)
 	if err != nil {
 		return "", err
 	}
@@ -118,11 +121,10 @@ func (a *adapterTlumaczenia) przetlumaczZwrotnieModelem(ctx context.Context,
 	return zwrotne, nil
 }
 
-// rozpoznajJezykModelem pyta model o język tekstu i oddaje surową, przyciętą odpowiedź; pusta odpowiedź modelu jest odmową.
 func (a *adapterTlumaczenia) rozpoznajJezykModelem(ctx context.Context, tekst string) (string, error) {
-	kanal, ok := a.domyslnyKanalModelu()
-	if !ok {
-		return "", bladBrakuKanalowTlumaczenia()
+	kanal, err := a.kanalZadania(ctx, nil)
+	if err != nil {
+		return "", err
 	}
 	// Rozpoznanie języka nie należy do żadnego okna: żądanie source.detect niesie sam tekst.
 	odpowiedz, err := a.zapytajModel(ctx, "", kanal, polecenieRozpoznaniaJezyka(tekst))
@@ -136,15 +138,12 @@ func (a *adapterTlumaczenia) rozpoznajJezykModelem(ctx context.Context, tekst st
 	return odpowiedz, nil
 }
 
-// rozglosZmianePanelu rozgłasza translate.translation.changed po zmianie treści panelu, bez identyfikatora sesji, bo schemat okna tłumaczenia jej nie wiąże.
+// Zdarzenie idzie bez identyfikatora sesji, bo schemat okna tłumaczenia jej nie wiąże.
 func (a *adapterTlumaczenia) rozglosZmianePanelu(ctx context.Context, zmiana shared.ChangeKind, panel dane.PanelTlumaczenia) {
 	a.wyjscie.wyslijDoKonta(ctx, shared.EventTranslateTranslationChanged, "",
 		shared.TranslateTranslationChangedEvent{Change: zmiana, Panel: zlozPanelTlumaczenia(panel)})
 }
 
-// polecenieRozpoznaniaJezyka składa treść wywołania modelu dla rozpoznania
-// języka. Prompt zawęża odpowiedź do samej nazwy języka, żeby pole `Language`
-// kontraktu nie niosło całego zdania modelu.
 func polecenieRozpoznaniaJezyka(tekst string) string {
 	return "Rozpoznaj język poniższego tekstu. Odpowiedz wyłącznie nazwą języka " +
 		"(albo kodem ISO 639-1), bez zdania, bez komentarza.\n\nTekst:\n" + tekst

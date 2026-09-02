@@ -1,7 +1,5 @@
-// Plik obsługuje translate.proofread.run, translate.proofread.apply i
-// translate.consistency.check: korektę języka regułami wbudowanymi i słownikami
-// zewnętrznymi oraz sprawdzenie spójności segmentów i terminów między panelami
-// okna.
+// translate.proofread.run, translate.proofread.apply i translate.consistency.check: korekta
+// regułami wbudowanymi i słownikami zewnętrznymi oraz spójność segmentów i terminów między panelami.
 package core
 
 import (
@@ -14,18 +12,12 @@ import (
 	"danacoconsole/shared"
 )
 
-// przedrostekUstaleniaKorekty znakuje identyfikator ustalenia korekty: kod
-// z tym przedrostkiem odróżnia zapis korekty od innych bytów bazy, gdy
-// proofread.apply adresuje go w żądaniu.
 const przedrostekUstaleniaKorekty = "kor-"
 
-// dlugieZdanie jest progiem czytelności: zdanie dłuższe od tylu znaków czyta
-// się z wysiłkiem w każdym języku, na który ten moduł tłumaczy.
+// Zdanie dłuższe od tylu znaków czyta się z wysiłkiem w każdym języku, na który moduł tłumaczy.
 const dlugieZdanie = 120
 
-// SprawdzKorekte obsługuje `translate.proofread.run`. Zapisuje ustalenia
-// w bazie, bo `proofread.apply` adresuje je identyfikatorem w osobnym
-// wywołaniu.
+// Ustalenia zapisują się w bazie, bo `proofread.apply` adresuje je identyfikatorem w osobnym wywołaniu.
 func (a *adapterTlumaczenia) SprawdzKorekte(ctx context.Context,
 	z shared.TranslateProofreadRunRequest) (shared.TranslateProofreadRunResponse, error) {
 
@@ -102,8 +94,7 @@ func (a *adapterTlumaczenia) SprawdzKorekte(ctx context.Context,
 		}
 	}
 
-	// Silniki zewnętrzne uzupełniają reguły wbudowane zakresem gramatyki
-	// i pisowni, nie dublują ich.
+	// Silniki zewnętrzne uzupełniają reguły wbudowane zakresem gramatyki i pisowni, nie dublują ich.
 	zewnetrzneUstalenia, err := a.ustaleniaSilnikow(ctx, panel.Jezyk, tresc)
 	if err != nil {
 		return shared.TranslateProofreadRunResponse{}, err
@@ -128,8 +119,6 @@ func (a *adapterTlumaczenia) SprawdzKorekte(ctx context.Context,
 	}, nil
 }
 
-// zamienCudzyslowy zamienia cudzysłowy proste na drukarskie parami: pierwszy
-// otwierający, drugi zamykający.
 func zamienCudzyslowy(tekst string) string {
 	var b strings.Builder
 	otwarty := false
@@ -148,8 +137,6 @@ func zamienCudzyslowy(tekst string) string {
 	return b.String()
 }
 
-// slowoPowtorzone wskazuje pierwsze słowo powtórzone bezpośrednio po sobie —
-// usterka, którą oko przeskakuje, a reguła wyłapuje bez wątpliwości.
 func slowoPowtorzone(zdanie string) string {
 	slowa := strings.Fields(strings.ToLower(zdanie))
 	for i := 1; i < len(slowa); i++ {
@@ -160,8 +147,6 @@ func slowoPowtorzone(zdanie string) string {
 	return ""
 }
 
-// miaryCzytelnosci liczy trzy miary, których żadna nie wymaga słownika:
-// średnią długość zdania, średnią długość słowa i liczbę zdań.
 func miaryCzytelnosci(tresc string) []shared.ReadabilityScore {
 	zdania := podzielNaZdania(tresc)
 	slowa := strings.Fields(tresc)
@@ -185,8 +170,7 @@ func miaryCzytelnosci(tresc string) []shared.ReadabilityScore {
 	}
 }
 
-// zlozUstaleniaKorekty przekłada wiersze ustaleń na byty kontraktu. Ustalenia
-// rozstrzygnięte nie wychodzą — Operator odpowiedział na nie raz.
+// Ustalenia rozstrzygnięte nie wychodzą — Operator odpowiedział na nie raz.
 func zlozUstaleniaKorekty(ustalenia []dane.UstalenieKorekty) []shared.ProofreadFinding {
 	wykaz := []shared.ProofreadFinding{}
 	for _, ustalenie := range ustalenia {
@@ -206,9 +190,6 @@ func zlozUstaleniaKorekty(ustalenia []dane.UstalenieKorekty) []shared.ProofreadF
 	return wykaz
 }
 
-// ZastosujKorekte obsługuje `translate.proofread.apply`. Wstawia propozycje
-// wskazanych ustaleń w treść panelu — albo, gdy Operator zażądał oddalenia,
-// znakuje je jako odrzucone bez ruszania treści.
 func (a *adapterTlumaczenia) ZastosujKorekte(ctx context.Context,
 	z shared.TranslateProofreadApplyRequest) (shared.TranslateProofreadApplyResponse, error) {
 
@@ -240,7 +221,7 @@ func (a *adapterTlumaczenia) ZastosujKorekte(ctx context.Context,
 		}
 		if odrzuca {
 			if err := a.repozytorium.RozstrzygnijUstalenieKorekty(ctx, kod, true); err != nil {
-				return shared.TranslateProofreadApplyResponse{}, bladTlumaczenia(err)
+				return shared.TranslateProofreadApplyResponse{}, bladNieznanegoUstaleniaKorekty(kod, err)
 			}
 			zastosowane++
 			continue
@@ -249,11 +230,10 @@ func (a *adapterTlumaczenia) ZastosujKorekte(ctx context.Context,
 			return shared.TranslateProofreadApplyResponse{}, bladWskazaniaTlumaczenia(
 				"ustalenie " + kod + " nie niesie propozycji poprawki — nie ma czego wstawić")
 		}
-		// Propozycja to cała treść po poprawce, nie łata; ustalenia
-		// działają na treści już zmienionej.
+		// Propozycja to cała treść po poprawce, nie łata; ustalenia działają na treści już zmienionej.
 		tresc = *ustalenie.Propozycja
 		if err := a.repozytorium.RozstrzygnijUstalenieKorekty(ctx, kod, false); err != nil {
-			return shared.TranslateProofreadApplyResponse{}, bladTlumaczenia(err)
+			return shared.TranslateProofreadApplyResponse{}, bladNieznanegoUstaleniaKorekty(kod, err)
 		}
 		zastosowane++
 	}
@@ -280,9 +260,6 @@ func (a *adapterTlumaczenia) ZastosujKorekte(ctx context.Context,
 	}, nil
 }
 
-// SprawdzSpojnosc obsługuje `translate.consistency.check`: wykrywa segmenty
-// przełożone niejednolicie w obrębie języka oraz terminy odbiegające od
-// słownika Operatora.
 func (a *adapterTlumaczenia) SprawdzSpojnosc(ctx context.Context,
 	z shared.TranslateConsistencyCheckRequest) (shared.TranslateConsistencyCheckResponse, error) {
 
@@ -298,8 +275,7 @@ func (a *adapterTlumaczenia) SprawdzSpojnosc(ctx context.Context,
 
 	ustalenia := []shared.ConsistencyFinding{}
 
-	// Pary są brane z pamięci tłumaczeń, bo tam leży treść zatwierdzona,
-	// nie bieżący szkic panelu.
+	// Pary są brane z pamięci tłumaczeń: tam leży treść zatwierdzona, nie bieżący szkic panelu.
 	for _, panel := range panele {
 		if wskazany != "" && panel.Kod != wskazany {
 			continue
@@ -329,8 +305,6 @@ func (a *adapterTlumaczenia) SprawdzSpojnosc(ctx context.Context,
 		}
 	}
 
-	// Niespójność terminu: treść panelu odbiega od odpowiednika ustalonego
-	// w słowniku Operatora.
 	terminy, err := a.repozytorium.Terminy(ctx)
 	if err != nil {
 		return shared.TranslateConsistencyCheckResponse{}, bladTlumaczenia(err)
@@ -350,8 +324,6 @@ func (a *adapterTlumaczenia) SprawdzSpojnosc(ctx context.Context,
 			if strings.Contains(*panel.Tresc, *termin.Cel) {
 				continue
 			}
-			// Termin źródłowy pozostał w przekładzie zamiast odpowiednika
-			// ze słownika.
 			if strings.Contains(strings.ToLower(*panel.Tresc), strings.ToLower(termin.Zrodlo)) {
 				panelePominiete = append(panelePominiete, panel.Kod)
 			}
@@ -373,8 +345,7 @@ func (a *adapterTlumaczenia) SprawdzSpojnosc(ctx context.Context,
 	return shared.TranslateConsistencyCheckResponse{Findings: ustalenia}, nil
 }
 
-// uporzadkowaneWarianty daje wykaz powtarzalny — zbiór w Go nie ma kolejności,
-// a odpowiedź komendy ma być ta sama przy tym samym stanie danych.
+// Zbiór w Go nie ma kolejności, a odpowiedź komendy ma być ta sama przy tym samym stanie danych.
 func uporzadkowaneWarianty(zbior map[string]struct{}) []string {
 	wykaz := make([]string, 0, len(zbior))
 	for wariant := range zbior {

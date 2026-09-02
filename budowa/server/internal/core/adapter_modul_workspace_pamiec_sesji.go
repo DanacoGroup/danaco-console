@@ -11,9 +11,7 @@ import (
 	"danacoconsole/shared"
 )
 
-// poziomyPamieciKontraktu przekłada wyliczenie kontraktu na wartości kolumny
-// konfiguracja_pamieci_sesji.poziomy_wlaczone, wiążąc dwa istniejące słowniki
-// zamiast zakładać trzeci spis poziomów.
+// Wiąże dwa istniejące słowniki zamiast zakładać trzeci spis poziomów.
 var poziomyPamieciKontraktu = map[shared.ConfigScope]dane.PoziomPamieci{
 	shared.ConfigScopeGlobal:      "globalna",
 	shared.ConfigScopeEnvironment: "srodowisko",
@@ -22,8 +20,7 @@ var poziomyPamieciKontraktu = map[shared.ConfigScope]dane.PoziomPamieci{
 	shared.ConfigScopeSession:     "sesja",
 }
 
-// kolejnoscPoziomowPamieci trzyma poziomy od najszerszego do najwęższego.
-// Wynik komendy wychodzi w tym porządku niezależnie od kolejności żądania.
+// Wynik komendy wychodzi od najszerszego do najwęższego niezależnie od kolejności żądania.
 var kolejnoscPoziomowPamieci = []shared.ConfigScope{
 	shared.ConfigScopeGlobal,
 	shared.ConfigScopeEnvironment,
@@ -32,8 +29,6 @@ var kolejnoscPoziomowPamieci = []shared.ConfigScope{
 	shared.ConfigScopeSession,
 }
 
-// PrzestawPamiecSesji przestawia poziomy pamięci włączone dla karty sesji
-// oraz zgodę na zapis pamięci. Pole niewskazane zostawia stan bez zmian.
 func (a *adapterPamieciPrzestrzeni) PrzestawPamiecSesji(ctx context.Context,
 	z shared.MemoryToggleRequest) (shared.MemoryToggleResponse, error) {
 
@@ -68,6 +63,10 @@ func (a *adapterPamieciPrzestrzeni) PrzestawPamiecSesji(ctx context.Context,
 		konfiguracja.ZapisWlaczony = *z.WriteEnabled
 	}
 	if err := a.pamiec.UstawKonfiguracjeSesji(ctx, konfiguracja); err != nil {
+		if errors.Is(err, dane.ErrKolizjaWiersza) {
+			return shared.MemoryToggleResponse{}, protocol.JakoError(protocol.NowyBlad(
+				shared.ErrorCodeConflict, "moduł Workspace: karta sesji "+z.SessionId+" należy do innego konta"))
+		}
 		return shared.MemoryToggleResponse{}, err
 	}
 	poziomy, err := poziomyPamieciWyniku(konfiguracja.PoziomyWlaczone)
@@ -77,8 +76,6 @@ func (a *adapterPamieciPrzestrzeni) PrzestawPamiecSesji(ctx context.Context,
 	return shared.MemoryToggleResponse{Levels: poziomy, WriteEnabled: konfiguracja.ZapisWlaczony}, nil
 }
 
-// konfiguracjaPamieciSesji zwraca stan zastany albo stan domyślny karty, która
-// pamięci jeszcze nie przestawiała.
 func (a *adapterPamieciPrzestrzeni) konfiguracjaPamieciSesji(ctx context.Context,
 	sesjaID int64) (dane.KonfiguracjaPamieci, error) {
 
@@ -101,8 +98,6 @@ func (a *adapterPamieciPrzestrzeni) konfiguracjaPamieciSesji(ctx context.Context
 	}, nil
 }
 
-// poziomyPamieciZadania przekłada poziomy żądania na wartości kolumny. Poziom
-// zasięgu, którego obszar pamięci nie zna, kończy komendę odmową.
 func poziomyPamieciZadania(zadane []shared.ConfigScope) ([]dane.PoziomPamieci, error) {
 	wybrane := map[shared.ConfigScope]bool{}
 	for _, poziom := range zadane {
@@ -120,10 +115,7 @@ func poziomyPamieciZadania(zadane []shared.ConfigScope) ([]dane.PoziomPamieci, e
 	return poziomy, nil
 }
 
-// poziomyPamieciWyniku przekłada wartości kolumny z powrotem na wyliczenie
-// kontraktu. Wartość, której przekład nie zna, kończy komendę odmową:
-// pominięcie jej po cichu oddałoby wykaz mówiący, że poziom jest wyłączony,
-// podczas gdy w bazie stoi włączony.
+// Wartość nieznana kończy komendę odmową: pominięta po cichu udawałaby poziom wyłączony.
 func poziomyPamieciWyniku(zapisane []dane.PoziomPamieci) ([]shared.ConfigScope, error) {
 	wykaz := map[dane.PoziomPamieci]bool{}
 	for _, poziom := range zapisane {

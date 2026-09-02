@@ -76,9 +76,9 @@ func (a *adapterWiedzy) Wskaznik(ctx context.Context,
 	if err != nil {
 		return shared.KnowledgeIndexResponse{}, err
 	}
-	ustawienia := a.ustawienia()
+	ustawienia := a.ustawienia(ctx)
 	silnik := a.silnik(ustawienia)
-	okno, zasady, obszar := a.zasiegPlatformy()
+	okno, zasady, obszar := a.zasiegPlatformy(ctx)
 
 	if err := silnik.Gotowy(ctx, okno, zasady, obszar, wiedza.LimitBudowania); err != nil {
 		return shared.KnowledgeIndexResponse{}, bladWiedzy(err)
@@ -169,9 +169,9 @@ func (a *adapterWiedzy) Szukaj(ctx context.Context,
 		return shared.KnowledgeSearchResponse{}, err
 	}
 
-	ustawienia := a.ustawienia()
+	ustawienia := a.ustawienia(ctx)
 	silnik := a.silnik(ustawienia)
-	okno, zasady, obszar := a.zasiegPlatformy()
+	okno, zasady, obszar := a.zasiegPlatformy(ctx)
 
 	wektory, err := silnik.Osadz(ctx, okno, zasady, obszar,
 		[]string{pytanie}, wiedza.LimitZapytania)
@@ -278,17 +278,18 @@ func zakresyZadania(zakres *shared.KnowledgeScope) ([]string, error) {
 	}
 }
 
-func (a *adapterWiedzy) ustawienia() wiedza.Ustawienia {
+func (a *adapterWiedzy) ustawienia(ctx context.Context) wiedza.Ustawienia {
 	komplet := wiedza.UstawieniaDomyslne()
 	if a.rozstrzygacz == nil {
 		return komplet
 	}
+	kontekst := konfig.Kontekst{KontoOperatora: dane.KontoOperatora(ctx)}
 	for _, klucz := range []string{wiedza.KluczProgram, wiedza.KluczModel,
 		wiedza.KluczKatalogModeli, wiedza.KluczDlugoscFragmentu,
 		wiedza.KluczModelPrzesiewu, wiedza.KluczKatalogPrzesiewu,
 		wiedza.KluczModelObrazu, wiedza.KluczKatalogObrazu} {
 
-		wynik := a.rozstrzygacz.Rozstrzygnij(konfig.Kontekst{}, klucz)
+		wynik := a.rozstrzygacz.Rozstrzygnij(kontekst, klucz)
 		if wynik.Pochodzenie == konfig.PochodzenieNieznane {
 			continue
 		}
@@ -303,17 +304,18 @@ func (a *adapterWiedzy) silnik(ustawienia wiedza.Ustawienia) *wiedza.Silnik {
 	return wiedza.NowySilnik(a.uruchamiacz, a.katalogDanych).ZUstawieniami(ustawienia)
 }
 
-func (a *adapterWiedzy) zasiegPlatformy() (session.Okno, session.Zasady, session.Obszar) {
+func (a *adapterWiedzy) zasiegPlatformy(ctx context.Context) (session.Okno, session.Zasady, session.Obszar) {
 	okno := session.Okno{Ustawienia: session.Ustawienia{
 		SrodowiskoWykonania: shared.ExecutionEnvCore,
 	}}
+	kontekst := konfig.Kontekst{KontoOperatora: dane.KontoOperatora(ctx)}
 	zasady := session.Zasady{}
 	if a.rozstrzygacz != nil {
-		zasady = ZasadyIzolacji(a.rozstrzygacz, konfig.Kontekst{})
+		zasady = ZasadyIzolacji(a.rozstrzygacz, kontekst)
 	}
 	obszar := session.Obszar{}
 	if a.katalog != nil {
-		obszar = ObszarOkna(a.katalog.Ustal(konfig.Kontekst{}, ""), "")
+		obszar = ObszarOkna(a.katalog.Ustal(kontekst, ""), "")
 	}
 	return okno, zasady, obszar
 }

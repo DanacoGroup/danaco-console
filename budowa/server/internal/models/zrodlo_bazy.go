@@ -7,9 +7,8 @@ import (
 	"fmt"
 )
 
-// zapytanieOKanaly czyta rejestr kanałów wprost z tabeli kanal_modelu.
-// Kolejność wiersza rozstrzyga kolumna kolejnosc, a przy jej równości kod —
-// wykaz kanałów jest wtedy powtarzalny między uruchomieniami.
+// Rejestr jest jeden na proces, więc odczyt idzie bez warunku konta (decyzja 34);
+// własność kodu rozstrzyga przy użyciu i wykazie zawężone repozytorium dane.
 const zapytanieOKanaly = `
 SELECT id, kod, nazwa, dostawca, identyfikator_modelu, rodzaj_kanalu,
        COALESCE(konto_dostawcy_id, 0), COALESCE(poswiadczenie_odwolanie, ''),

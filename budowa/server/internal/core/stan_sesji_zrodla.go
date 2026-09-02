@@ -20,12 +20,36 @@ type zrodloNadan interface {
 	NadaniaOkna(ctx context.Context, idOkna string) []string
 }
 
-// zrodlaObecnosciZBazy wypełnia oba porty repozytoriami warstwy danych, albo zwraca porty puste dla zestawu pustego.
-func zrodlaObecnosciZBazy(zestaw *dane.Zestaw) (zrodloOsadzenia, zrodloNadan) {
+// zrodloKontaSesji odnajduje kontekst konta, do którego należy sesja; rozgłoszenie
+// bez żądania nie zna konta z góry i idzie po kontach po kolei (decyzja 34).
+type zrodloKontaSesji interface {
+	KontekstSesji(ctx context.Context, idSesji string) context.Context
+}
+
+// zrodlaObecnosciZBazy wypełnia porty repozytoriami warstwy danych, albo zwraca porty puste dla zestawu pustego.
+func zrodlaObecnosciZBazy(zestaw *dane.Zestaw) (zrodloOsadzenia, zrodloNadan, zrodloKontaSesji) {
 	if zestaw == nil {
-		return nil, nil
+		return nil, nil, nil
 	}
-	return osadzenieZBazy{zestaw: zestaw}, nadaniaZBazy{zestaw: zestaw}
+	return osadzenieZBazy{zestaw: zestaw}, nadaniaZBazy{zestaw: zestaw}, kontaSesjiZBazy{zestaw: zestaw}
+}
+
+// kontaSesjiZBazy szuka sesji pod każdym kontem właściciela; kontekst bez wskazania wraca, gdy żadne konto sesji nie zna.
+type kontaSesjiZBazy struct {
+	zestaw *dane.Zestaw
+}
+
+func (k kontaSesjiZBazy) KontekstSesji(ctx context.Context, idSesji string) context.Context {
+	konteksty, err := kontekstyKont(ctx, k.zestaw.KontoWlasciciela)
+	if err != nil {
+		return ctx
+	}
+	for _, kontekstKonta := range konteksty {
+		if _, err := k.zestaw.Sesje.PoIdentyfikatorze(kontekstKonta, idSesji); err == nil {
+			return kontekstKonta
+		}
+	}
+	return ctx
 }
 
 // osadzenieZBazy czyta łańcuch srodowisko-karta_sesji-sesja, implementując port zrodloOsadzenia bazą danych.

@@ -19,26 +19,18 @@ import (
 )
 
 const (
-	// celSondyWewnetrznejBaza mierzy czas obiegu magazynu stanu rdzenia, wykonując prawdziwe zapytanie do bazy.
-	celSondyWewnetrznejBaza = "database"
-	// celSondyWewnetrznejWykonanie mierzy stan samego procesu rdzenia, czytając jego liczniki wykonania w danej chwili.
+	celSondyWewnetrznejBaza      = "database"
 	celSondyWewnetrznejWykonanie = "runtime"
 
-	// progOslabieniaSondy — odpowiedź wolniejsza niż połowa limitu czasu jest
-	// odpowiedzią, ale nie taką, żeby nazwać ją pełną sprawnością. Stąd stan
-	// pośredni: `degraded` liczy się w dostępności jako połowa udanego.
+	// Odpowiedź wolniejsza niż połowa limitu daje stan `degraded`, liczony w dostępności jako połowa udanego.
 	progOslabieniaSondy = 0.5
 
-	// granicaSondyProgramu domyka czas jednego uruchomienia programu sondy, licząc od startu procesu do jego zakończenia.
 	granicaSondyProgramu = 60 * time.Second
 
-	// trescSondySilnika jest zapytaniem sondy `modelCall`. Krótkie z zamysłu:
-	// sonda ma zmierzyć, czy kanał odpowiada, a nie wygenerować treść, za którą
-	// Operator zapłaci przy każdym przebiegu.
+	// Zapytanie sondy modelCall jest krótkie z zamysłu: Operator płaci za każdy przebieg.
 	trescSondySilnika = "ping"
 )
 
-// zmierz wykonuje jeden pomiar wskazanej sondy i oddaje jego wynik; metoda nie zwraca błędu, bo niepowodzenie pomiaru jest wynikiem pomiaru.
 func (a *adapterKondycji) zmierz(ctx context.Context, sonda dane.SondaKondycji) dane.WynikSondyKondycji {
 	limit := limitCzasuSondy(sonda)
 	pomiar, odwolaj := context.WithTimeout(ctx, limit)
@@ -69,7 +61,6 @@ func (a *adapterKondycji) zmierz(ctx context.Context, sonda dane.SondaKondycji) 
 	return wynik
 }
 
-// limitCzasuSondy rozstrzyga granicę czasu jednego przebiegu sondy wskazanego rodzaju, czytając ją z konfiguracji.
 func limitCzasuSondy(sonda dane.SondaKondycji) time.Duration {
 	if sonda.LimitCzasuMs == nil || *sonda.LimitCzasuMs <= 0 {
 		return domyslnyLimitCzasuSondy
@@ -81,9 +72,7 @@ func limitCzasuSondy(sonda dane.SondaKondycji) time.Duration {
 	return limit
 }
 
-// ustawStanSondy zapisuje stan wraz z jego uzasadnieniem. Uzasadnienie idzie
-// zawsze, także przy powodzeniu: wiersz serii bez zdania o tym, co zmierzono,
-// jest liczbą bez świadka.
+// Uzasadnienie idzie też przy powodzeniu: wiersz serii bez zdania o pomiarze jest liczbą bez świadka.
 func ustawStanSondy(wynik *dane.WynikSondyKondycji, stan shared.HealthProbeStatus, szczegol string) {
 	wynik.Stan = string(stan)
 	if strings.TrimSpace(szczegol) != "" {
@@ -92,9 +81,7 @@ func ustawStanSondy(wynik *dane.WynikSondyKondycji, stan shared.HealthProbeStatu
 	}
 }
 
-// oslabPrzyPowolnejOdpowiedzi obniża stan udany do pośredniego, gdy odpowiedź
-// zajęła więcej niż połowę limitu. Stan nieudany zostaje nieudany — powolna
-// awaria jest awarią.
+// Stan nieudany zostaje nieudany — powolna awaria jest awarią.
 func oslabPrzyPowolnejOdpowiedzi(wynik *dane.WynikSondyKondycji, czas int64, limit time.Duration) {
 	if wynik.Stan != shared.HealthProbeStatusUp {
 		return
@@ -111,7 +98,6 @@ func oslabPrzyPowolnejOdpowiedzi(wynik *dane.WynikSondyKondycji, czas int64, lim
 	wynik.Szczegol = &opis
 }
 
-// zmierzHttp wysyła żądanie pod adres sondy; klient jest budowany na jeden przebieg i nie chodzi za przekierowaniami dalej niż pięć razy.
 func (a *adapterKondycji) zmierzHttp(ctx context.Context, sonda dane.SondaKondycji,
 	limit time.Duration, wynik *dane.WynikSondyKondycji) {
 
@@ -169,7 +155,6 @@ func (a *adapterKondycji) zmierzHttp(ctx context.Context, sonda dane.SondaKondyc
 			", a sonda oczekiwała "+strconv.FormatInt(oczekiwany, 10))
 }
 
-// zmierzGniazdo otwiera połączenie z gniazdem sondy i patrzy, czy się w ogóle udało je otworzyć na czas.
 func zmierzGniazdo(sonda dane.SondaKondycji, limit time.Duration, wynik *dane.WynikSondyKondycji) {
 	adres := strings.TrimSpace(sonda.Cel)
 	if !strings.Contains(adres, ":") {
@@ -187,7 +172,6 @@ func zmierzGniazdo(sonda dane.SondaKondycji, limit time.Duration, wynik *dane.Wy
 	ustawStanSondy(wynik, shared.HealthProbeStatusUp, "gniazdo przyjęło połączenie")
 }
 
-// zmierzWnetrze mierzy sam rdzeń: database odpytuje bazę stanu prawdziwym zapytaniem, runtime czyta liczniki procesu, a cel spoza tych dwóch kończy się stanem nie wiem.
 func (a *adapterKondycji) zmierzWnetrze(ctx context.Context, sonda dane.SondaKondycji,
 	wynik *dane.WynikSondyKondycji) {
 
@@ -219,7 +203,6 @@ func (a *adapterKondycji) zmierzWnetrze(ctx context.Context, sonda dane.SondaKon
 	}
 }
 
-// zmierzProgram uruchamia program sondy i patrzy na jego kod wyjścia, idąc tą samą drogą co każde inne wołanie arsenału: przez port uruchamiacza i bramę izolacji.
 func (a *adapterKondycji) zmierzProgram(ctx context.Context, sonda dane.SondaKondycji,
 	wynik *dane.WynikSondyKondycji) {
 
@@ -251,7 +234,6 @@ func (a *adapterKondycji) zmierzProgram(ctx context.Context, sonda dane.SondaKon
 		"program „"+czesci[0]+"” zakończył się powodzeniem")
 }
 
-// zmierzKanal wysyła krótkie zapytanie kanałem modelu i czeka na jego odpowiedź w granicy czasu sondy.
 func (a *adapterKondycji) zmierzKanal(ctx context.Context, sonda dane.SondaKondycji,
 	wynik *dane.WynikSondyKondycji) {
 
@@ -261,7 +243,7 @@ func (a *adapterKondycji) zmierzKanal(ctx context.Context, sonda dane.SondaKondy
 		return
 	}
 	kod := strings.TrimSpace(sonda.Cel)
-	if _, jest := a.kanaly.Kanal(kod); !jest {
+	if _, jest := kanalKonta(ctx, a.repozytoriumKanalow, a.kanaly, kod); !jest {
 		ustawStanSondy(wynik, shared.HealthProbeStatusDown,
 			"kanału „"+kod+"” nie ma w rejestrze kanałów serwera")
 		return
@@ -295,9 +277,7 @@ func (a *adapterKondycji) zmierzKanal(ctx context.Context, sonda dane.SondaKondy
 	ustawStanSondy(wynik, shared.HealthProbeStatusUp, "kanał „"+kod+"” odpowiedział treścią")
 }
 
-// zasiegKondycji składa trójkę okno–zasady–obszar dla wołania programu sondy.
-// Ta sama droga i ten sam powód, co przy narzędziach obrazu: żądanie niesie
-// sondę, a nie okno rozmowy, więc adresem jest najszerszy poziom zasięgu.
+// Żądanie niesie sondę, nie okno rozmowy, więc adresem jest najszerszy poziom zasięgu.
 func (a *adapterKondycji) zasiegKondycji() (session.Okno, session.Zasady, session.Obszar) {
 	okno := session.Okno{Ustawienia: session.Ustawienia{
 		SrodowiskoWykonania: shared.ExecutionEnvCore,

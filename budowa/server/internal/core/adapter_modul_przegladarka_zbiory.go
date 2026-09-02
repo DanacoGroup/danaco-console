@@ -11,15 +11,12 @@ import (
 	"danacoconsole/shared"
 )
 
-// Przedrostki identyfikatorów nadawanych przez rdzeń — źródło i notatka nie przychodzą od
-// klienta z własnym identyfikatorem, więc rdzeń nadaje je tak samo jak innym bytom.
 const (
 	przedrostekZrodlaPrzegladania  = "src-"
 	przedrostekNotatkiPrzegladania = "note-"
 )
 
-// DodajZrodlo zapisuje stronę w wykazie źródeł okna; zapis jest idempotentny wobec
-// identyfikatora zewnętrznego — powtórne wywołanie z tym samym kodem nadpisuje wiersz, nie dubluje go.
+// Zapis jest idempotentny wobec identyfikatora zewnętrznego: powtórzenie nadpisuje wiersz, nie dubluje.
 func (a *adapterPrzegladarki) DodajZrodlo(ctx context.Context, z shared.BrowserSourceAddRequest) (shared.BrowserSourceAddResponse, error) {
 	if brak := brakiZrodlaPrzegladania(z); brak != "" {
 		return shared.BrowserSourceAddResponse{}, bladWskazaniaPrzegladarki(brak)
@@ -36,13 +33,11 @@ func (a *adapterPrzegladarki) DodajZrodlo(ctx context.Context, z shared.BrowserS
 	}
 	zapisane, err := a.repozytorium.ZapiszZrodlo(ctx, zrodlo)
 	if err != nil {
-		return shared.BrowserSourceAddResponse{}, fmt.Errorf("core: nie można dodać źródła przeglądania: %w", err)
+		return shared.BrowserSourceAddResponse{}, bladPrzegladarki(err)
 	}
 	return shared.BrowserSourceAddResponse{Source: zrodloKontraktu(zapisane)}, nil
 }
 
-// DodajNotatke zapisuje notatkę Operatora, opcjonalnie powiązaną ze źródłem
-// i cytatem fragmentu strony.
 func (a *adapterPrzegladarki) DodajNotatke(ctx context.Context, z shared.BrowserNoteAddRequest) (shared.BrowserNoteAddResponse, error) {
 	if brak := brakiNotatkiPrzegladania(z); brak != "" {
 		return shared.BrowserNoteAddResponse{}, bladWskazaniaPrzegladarki(brak)
@@ -69,8 +64,6 @@ func (a *adapterPrzegladarki) DodajNotatke(ctx context.Context, z shared.Browser
 	return shared.BrowserNoteAddResponse{Note: notatkaKontraktu(zapisana)}, nil
 }
 
-// brakiZrodlaPrzegladania i brakiNotatkiPrzegladania nazywają pole, które przyszło puste,
-// zamiast ogólnikowej odmowy — Operator ma się dowiedzieć, co dopisać do żądania.
 func brakiZrodlaPrzegladania(z shared.BrowserSourceAddRequest) string {
 	var puste []string
 	if strings.TrimSpace(z.WindowId) == "" {
@@ -99,7 +92,6 @@ func brakiNotatkiPrzegladania(z shared.BrowserNoteAddRequest) string {
 	return "notatka przeglądania z pustymi polami: " + strings.Join(puste, ", ")
 }
 
-// zrodloKontraktu przekłada wiersz źródła bazy danych na byt kontraktu `BrowserSource` odpowiedzi żądania.
 func zrodloKontraktu(z dane.ZrodloPrzegladania) shared.BrowserSource {
 	zrodlo := shared.BrowserSource{
 		Id:         z.Kod,
@@ -117,7 +109,6 @@ func zrodloKontraktu(z dane.ZrodloPrzegladania) shared.BrowserSource {
 	return zrodlo
 }
 
-// notatkaKontraktu przekłada wiersz notatki bazy danych na byt kontraktu `BrowserNote` odpowiedzi żądania.
 func notatkaKontraktu(n dane.NotatkaPrzegladania) shared.BrowserNote {
 	notatka := shared.BrowserNote{
 		Id:        n.Kod,
@@ -140,9 +131,7 @@ func notatkaKontraktu(n dane.NotatkaPrzegladania) shared.BrowserNote {
 	return notatka
 }
 
-// wartoscLogiczna odczytuje wskaźnik logiczny żądania — brak pola znaczy
-// „nie zaznaczono", nie „fałsz jawnie wybrany", ale obie sytuacje niosą tę
-// samą wartość w kolumnie NOT NULL tabeli.
+// Brak pola i fałsz jawny niosą tę samą wartość w kolumnie NOT NULL tabeli.
 func wartoscLogiczna(w *bool) bool {
 	return w != nil && *w
 }

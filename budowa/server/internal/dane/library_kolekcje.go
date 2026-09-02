@@ -1,6 +1,5 @@
-// Odpowiedzialność pliku: kolekcje zasobów, przypisania plików do kolekcji i etykiety pliku (tabele
-// `kolekcja_biblioteki`, `przypisanie_kolekcji_biblioteki`, `etykieta_pliku_biblioteki`) — obszar Tags
-// & Collections modułu Library.
+// Kolekcje zasobów, przypisania plików do kolekcji i etykiety pliku (tabele `kolekcja_biblioteki`,
+// `przypisanie_kolekcji_biblioteki`, `etykieta_pliku_biblioteki`) — obszar Tags & Collections modułu Library.
 package dane
 
 import (
@@ -10,15 +9,11 @@ import (
 	"fmt"
 )
 
-// KolekcjaBiblioteki to wiersz tabeli `kolekcja_biblioteki`. Kod jest
-// identyfikatorem, którym kolekcja wychodzi kontraktem
-// (`LibraryCollectionCreateResponse.collectionId`).
 type KolekcjaBiblioteki struct {
-	ID    int64
-	Kod   string
-	Nazwa string
-	Opis  *string
-	// RodzicKod i RegulaKod wypełnia wyłącznie odczyt pełny kolekcji swobodnej i korzeniowej domyślnie.
+	ID        int64
+	Kod       string
+	Nazwa     string
+	Opis      *string
 	RodzicKod *string
 	RegulaKod *string
 	// LiczbaPlikow jest wyliczeniem odczytu, nie kolumną; liczy przypisania w chwili pytania.
@@ -47,8 +42,6 @@ const (
 	                           WHERE ` + WarunekKonta + `
 	                           ORDER BY nazwa, id`
 
-	idPlikuBibliotekiPoKodzie = `SELECT id FROM plik_biblioteki WHERE identyfikator_zewnetrzny = ?`
-
 	// Kod pliku idzie wprost z żądania — bez konta sięgnąłby cudzego wiersza.
 	idPlikuBibliotekiPoKodzieWKoncie = `SELECT id FROM plik_biblioteki
 	                                    WHERE identyfikator_zewnetrzny = ? AND ` + WarunekKonta
@@ -67,8 +60,6 @@ const (
 	                     WHERE plik_id = ? ORDER BY etykieta`
 )
 
-// UtworzKolekcje zakłada kolekcję albo nadpisuje zastaną i zwraca stan po
-// zapisie — obsługuje `library.collection.create`.
 func (r *repozytoriumBiblioteki) UtworzKolekcje(ctx context.Context,
 	kolekcja KolekcjaBiblioteki) (KolekcjaBiblioteki, error) {
 
@@ -94,7 +85,6 @@ func (r *repozytoriumBiblioteki) UtworzKolekcje(ctx context.Context,
 	return r.kolekcjaPoKodzie(ctx, kolekcja.Kod)
 }
 
-// Kolekcje zwraca wszystkie kolekcje biblioteki, uporządkowane alfabetycznie rosnąco po ich pełnej nazwie.
 func (r *repozytoriumBiblioteki) Kolekcje(ctx context.Context) ([]KolekcjaBiblioteki, error) {
 	polecenie, err := r.zapytania.przygotuj(ctx, listaKolekcjiBiblioteki)
 	if err != nil {
@@ -120,8 +110,6 @@ func (r *repozytoriumBiblioteki) Kolekcje(ctx context.Context) ([]KolekcjaBiblio
 	return lista, nil
 }
 
-// PrzypiszDoKolekcji przypisuje pliki do kolekcji i oddaje kody plików faktycznie przypisanych, pomijając
-// plik, którego nie ma.
 func (r *repozytoriumBiblioteki) PrzypiszDoKolekcji(ctx context.Context,
 	kodKolekcji string, kodyPlikow []string) ([]string, error) {
 
@@ -158,9 +146,7 @@ func (r *repozytoriumBiblioteki) PrzypiszDoKolekcji(ctx context.Context,
 	return przypisane, nil
 }
 
-// UstawEtykiety podmienia komplet etykiet pliku, bo `library.tag.set` nadsyła
-// zawsze pełny zestaw, nie różnicę. Usunięcie i wstawienie zachodzi w jednej
-// transakcji — plik nie zostaje przejściowo bez etykiet przy błędzie w trakcie.
+// `library.tag.set` nadsyła pełny zestaw; usunięcie i wstawienie w jednej transakcji, by plik nie został bez etykiet.
 func (r *repozytoriumBiblioteki) UstawEtykiety(ctx context.Context,
 	kodPliku string, etykiety []string) ([]string, error) {
 
@@ -198,7 +184,6 @@ func (r *repozytoriumBiblioteki) UstawEtykiety(ctx context.Context,
 	return r.Etykiety(ctx, plik.ID)
 }
 
-// Etykiety zwraca etykiety przypisane danemu plikowi biblioteki w porządku alfabetycznym rosnącym po treści.
 func (r *repozytoriumBiblioteki) Etykiety(ctx context.Context, plikID int64) ([]string, error) {
 	polecenie, err := r.zapytania.przygotuj(ctx, listaEtykietPliku)
 	if err != nil {
@@ -224,8 +209,6 @@ func (r *repozytoriumBiblioteki) Etykiety(ctx context.Context, plikID int64) ([]
 	return lista, nil
 }
 
-// kolekcjaPoKodzie zwraca kolekcję o wskazanym kodzie. Brak wiersza wraca jako
-// ErrBrakWiersza — wspólne dla `UtworzKolekcje` i `PrzypiszDoKolekcji`.
 func (r *repozytoriumBiblioteki) kolekcjaPoKodzie(ctx context.Context, kod string) (KolekcjaBiblioteki, error) {
 	polecenie, err := r.zapytania.przygotuj(ctx, pobierzKolekcjeBiblioteki)
 	if err != nil {
@@ -241,7 +224,6 @@ func (r *repozytoriumBiblioteki) kolekcjaPoKodzie(ctx context.Context, kod strin
 	return kolekcja, nil
 }
 
-// odczytajKolekcjeBiblioteki składa pełną strukturę kolekcji z jednego wiersza wyniku zapytania do bazy.
 func odczytajKolekcjeBiblioteki(wiersz skaner) (KolekcjaBiblioteki, error) {
 	var kolekcja KolekcjaBiblioteki
 	var opis sql.NullString

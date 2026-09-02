@@ -186,7 +186,7 @@ func (a *adapterDevelopera) UruchomDebugowanie(ctx context.Context,
 		return shared.DeveloperDebugSessionStartResponse{}, bladWykonaniaDevelopera(
 			"nie można założyć nasłuchu dla adaptera debugowania: " + err.Error())
 	}
-	polecenie, err := a.polecenieDopuszczoneDevelopera(okno, narzedzieDelve.Program,
+	polecenie, err := a.polecenieDopuszczoneDevelopera(ctx, okno, narzedzieDelve.Program,
 		[]string{"dap", "--client-addr=" + nasluch.Addr().String()})
 	if err != nil {
 		_ = nasluch.Close()

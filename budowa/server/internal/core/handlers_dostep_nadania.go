@@ -11,32 +11,23 @@ import (
 	"danacoconsole/shared"
 )
 
-// przedrostekNadania znakuje identyfikator nadania nadany przez rdzeń,
-// odróżniając go od identyfikatorów innych bytów obszaru dostępów.
 const przedrostekNadania = "nd-"
 
-// Zgodność adaptera z portem NadaniaDostepu sprawdzana jest przy kompilacji,
-// bez osobnego testu zgodności typów.
 var _ NadaniaDostepu = (*adapterNadanDostepu)(nil)
 
-// adapterNadanDostepu wypełnia port NadaniaDostepu tabelą `nadanie_dostepu`,
-// korzystając z repozytoriów nadań, okien i punktów.
 type adapterNadanDostepu struct {
 	nadania dane.RepozytoriumNadan
 	okna    dane.RepozytoriumOkien
 	punkty  dane.RepozytoriumPunktowDostepu
 }
 
-// nowyAdapterNadanDostepu wiąże port z trzema repozytoriami: nadania niosą
-// numery wierszy okna i punktu, a kontrakt — ich identyfikatory trwałe.
+// Nadania niosą numery wierszy okna i punktu, a kontrakt — ich identyfikatory trwałe.
 func nowyAdapterNadanDostepu(nadania dane.RepozytoriumNadan, okna dane.RepozytoriumOkien,
 	punkty dane.RepozytoriumPunktowDostepu) *adapterNadanDostepu {
 
 	return &adapterNadanDostepu{nadania: nadania, okna: okna, punkty: punkty}
 }
 
-// Dodaj nadaje oknu dostęp do punktu i oddaje zbiór nadań okna po zapisie,
-// z zachowaniem granicy korzeni punktu.
 func (a *adapterNadanDostepu) Dodaj(ctx context.Context,
 	z shared.AccessGrantAddRequest) (shared.AccessGrantAddResponse, error) {
 
@@ -68,8 +59,6 @@ func (a *adapterNadanDostepu) Dodaj(ctx context.Context,
 	return shared.AccessGrantAddResponse{Grant: zeZbioru(zbior, identyfikator), Grants: zbior}, nil
 }
 
-// Wykaz zwraca nadania okna w kolejności zbioru, pustym wykazem, gdy okno nie
-// ma żadnego nadania w rejestrze.
 func (a *adapterNadanDostepu) Wykaz(ctx context.Context,
 	z shared.AccessGrantListRequest) (shared.AccessGrantListResponse, error) {
 
@@ -98,8 +87,6 @@ func (a *adapterNadanDostepu) Wykaz(ctx context.Context,
 	return shared.AccessGrantListResponse{Grants: nadania}, nil
 }
 
-// Zmien zapisuje tryb, korzenie, kolejność albo oznaczenie głównego i oddaje
-// zbiór nadań okna po zapisie.
 func (a *adapterNadanDostepu) Zmien(ctx context.Context,
 	z shared.AccessGrantUpdateRequest) (shared.AccessGrantUpdateResponse, error) {
 
@@ -116,7 +103,7 @@ func (a *adapterNadanDostepu) Zmien(ctx context.Context,
 	}
 	if z.Primary != nil && *z.Primary {
 		if err := a.nadania.OznaczGlowne(ctx, nadanie.ID); err != nil {
-			return shared.AccessGrantUpdateResponse{}, err
+			return shared.AccessGrantUpdateResponse{}, bladNadania(err)
 		}
 	}
 	okno, err := a.okna.Pobierz(ctx, nadanie.OknoKomunikacjiID)
@@ -130,8 +117,7 @@ func (a *adapterNadanDostepu) Zmien(ctx context.Context,
 	return shared.AccessGrantUpdateResponse{Grant: zeZbioru(zbior, z.GrantId), Grants: zbior}, nil
 }
 
-// Usun odbiera oknu nadanie. Nadanie nieznane nie jest błędem — wynik mówi
-// wtedy, że nic nie odebrano.
+// Nadanie nieznane nie jest błędem — wynik mówi, że nic nie odebrano.
 func (a *adapterNadanDostepu) Usun(ctx context.Context,
 	z shared.AccessGrantRemoveRequest) (shared.AccessGrantRemoveResponse, error) {
 
@@ -150,7 +136,7 @@ func (a *adapterNadanDostepu) Usun(ctx context.Context,
 		if brakWiersza(err) {
 			return pusty, nil
 		}
-		return shared.AccessGrantRemoveResponse{}, err
+		return shared.AccessGrantRemoveResponse{}, bladNadania(err)
 	}
 	okno, err := a.okna.Pobierz(ctx, nadanie.OknoKomunikacjiID)
 	if err != nil {
@@ -163,17 +149,20 @@ func (a *adapterNadanDostepu) Usun(ctx context.Context,
 	return shared.AccessGrantRemoveResponse{Removed: true, Grants: zbior}, nil
 }
 
-// gotowy odpowiada, czy adapter ma komplet trzech repozytoriów: nadań, okien
-// i punktów, potrzebnych do zapisu.
 func (a *adapterNadanDostepu) gotowy() bool {
 	return a != nil && a.nadania != nil && a.okna != nil && a.punkty != nil
 }
 
-// bladNadania przekłada odmowę granicy korzeni na kod kontraktu. Pozostałe
-// błędy przechodzą nietknięte — są awarią zapisu, nie pomyłką wskazania.
+// Pozostałe błędy przechodzą nietknięte — są awarią zapisu, nie pomyłką wskazania.
 func bladNadania(err error) error {
 	if errors.Is(err, dane.ErrPozaKorzeniami) {
 		return protocol.JakoError(protocol.NowyBlad(shared.ErrorCodeValidationFailed, err.Error()))
+	}
+	if errors.Is(err, dane.ErrKolizjaWiersza) {
+		return protocol.JakoError(protocol.NowyBlad(shared.ErrorCodeConflict, err.Error()))
+	}
+	if errors.Is(err, dane.ErrBrakWiersza) {
+		return protocol.JakoError(protocol.NowyBlad(shared.ErrorCodeNotFound, err.Error()))
 	}
 	return err
 }

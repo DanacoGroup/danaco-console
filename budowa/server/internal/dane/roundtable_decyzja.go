@@ -27,8 +27,7 @@ type KryteriumMacierzyDebaty struct {
 	Kolejnosc int
 }
 
-// WariantMacierzyDebaty to wariant wraz z ocenami w kryteriach, zapisanymi jako
-// mapa „kryterium → ocena".
+// WariantMacierzyDebaty to wariant wraz z ocenami w kryteriach, zapisanymi jako mapa „kryterium → ocena".
 type WariantMacierzyDebaty struct {
 	Kod       string
 	Macierz   string
@@ -45,11 +44,12 @@ type RepozytoriumDebatyDecyzji interface {
 }
 
 const (
-	zapiszMacierzDebaty = `INSERT INTO debata_macierz (identyfikator_zewnetrzny, okno, nazwa)
-	                       VALUES (?, ?, ?)
+	zapiszMacierzDebaty = `INSERT INTO debata_macierz (identyfikator_zewnetrzny, okno, nazwa, konto_id)
+	                       VALUES (?, ?, ?, ` + WskazanieKonta + `)
 	                       ON CONFLICT(identyfikator_zewnetrzny) DO UPDATE SET
 	                           nazwa = excluded.nazwa,
-	                           zaktualizowano = strftime('%Y-%m-%dT%H:%M:%fZ','now')`
+	                           zaktualizowano = strftime('%Y-%m-%dT%H:%M:%fZ','now')
+	                       WHERE ` + WarunekKonta
 
 	usunKryteriaMacierzyDebaty = `DELETE FROM debata_macierz_kryterium WHERE macierz = ?`
 	usunWariantyMacierzyDebaty = `DELETE FROM debata_macierz_wariant WHERE macierz = ?`
@@ -63,10 +63,10 @@ const (
 	                               VALUES (?, ?, ?, ?, ?)`
 
 	pobierzMacierzDebaty = `SELECT identyfikator_zewnetrzny, okno, nazwa, zaktualizowano
-	                        FROM debata_macierz WHERE identyfikator_zewnetrzny = ?`
+	                        FROM debata_macierz WHERE identyfikator_zewnetrzny = ? AND ` + WarunekKonta
 
 	pobierzOstatniaMacierzDebaty = `SELECT identyfikator_zewnetrzny, okno, nazwa, zaktualizowano
-	                                FROM debata_macierz WHERE okno = ? ORDER BY id DESC LIMIT 1`
+	                                FROM debata_macierz WHERE okno = ? AND ` + WarunekKonta + ` ORDER BY id DESC LIMIT 1`
 
 	pobierzKryteriaMacierzyDebaty = `SELECT identyfikator_zewnetrzny, macierz, nazwa, waga, kolejnosc
 	                                 FROM debata_macierz_kryterium WHERE macierz = ?
@@ -78,9 +78,7 @@ const (
 	                                 ORDER BY kolejnosc ASC, id ASC`
 )
 
-// ZapiszMacierzDebaty zakłada albo zmienia macierz wraz z całą zawartością
-// w jednej transakcji: macierz z nowymi kryteriami i starymi wariantami byłaby
-// tabelą, w której kolumny nie odpowiadają wierszom.
+// ZapiszMacierzDebaty zakłada albo zmienia macierz wraz z całą zawartością w jednej transakcji.
 func (r *repozytoriumRoundtable) ZapiszMacierzDebaty(ctx context.Context,
 	macierz MacierzDebaty) (MacierzDebaty, error) {
 
@@ -89,7 +87,8 @@ func (r *repozytoriumRoundtable) ZapiszMacierzDebaty(ctx context.Context,
 		if err != nil {
 			return err
 		}
-		if _, err := naglowek.ExecContext(ctx, macierz.Kod, macierz.Okno, macierz.Nazwa); err != nil {
+		if _, err := naglowek.ExecContext(ctx, macierz.Kod, macierz.Okno, macierz.Nazwa,
+			KontoOperatora(ctx), KontoOperatora(ctx)); err != nil {
 			return fmt.Errorf("dane: nie można zapisać macierzy decyzyjnej %q: %w", macierz.Kod, err)
 		}
 		for _, polecenieUsuwajace := range []string{usunKryteriaMacierzyDebaty, usunWariantyMacierzyDebaty} {
@@ -139,7 +138,7 @@ func (r *repozytoriumRoundtable) MacierzDebatyPoKodzie(ctx context.Context,
 	if err != nil {
 		return MacierzDebaty{}, err
 	}
-	return r.zlozMacierzDebaty(ctx, polecenie.QueryRowContext(ctx, kod))
+	return r.zlozMacierzDebaty(ctx, polecenie.QueryRowContext(ctx, kod, KontoOperatora(ctx)))
 }
 
 // OstatniaMacierzDebaty zwraca ostatnio założoną macierz decyzyjną danego okna operacyjnego tej debaty.
@@ -150,10 +149,9 @@ func (r *repozytoriumRoundtable) OstatniaMacierzDebaty(ctx context.Context,
 	if err != nil {
 		return MacierzDebaty{}, err
 	}
-	return r.zlozMacierzDebaty(ctx, polecenie.QueryRowContext(ctx, okno))
+	return r.zlozMacierzDebaty(ctx, polecenie.QueryRowContext(ctx, okno, KontoOperatora(ctx)))
 }
 
-// zlozMacierzDebaty czyta nagłówek macierzy decyzyjnej i dobiera do niego pełną zawartość jej kryteriów.
 func (r *repozytoriumRoundtable) zlozMacierzDebaty(ctx context.Context,
 	wiersz *sql.Row) (MacierzDebaty, error) {
 

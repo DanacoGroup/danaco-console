@@ -16,16 +16,12 @@ import (
 // rozjechały, kompilacja stanie tutaj.
 var _ Ustawienia = (*adapterUstawienOsi)(nil)
 
-// adapterUstawienOsi wypełnia port Ustawienia, dodając obsługę osi
-// rozstrzygania obok poziomu zasięgu przy odczycie i zapisie konfiguracji.
 type adapterUstawienOsi struct {
 	podstawa     *adapterUstawien
 	repozytorium dane.RepozytoriumKonfiguracjiOsi
 	rozstrzygacz *konfig.Rozstrzygacz
 }
 
-// nowyAdapterUstawienOsi wiąże port z repozytorium świadomym osi oraz
-// z rozstrzygaczem ośmiu poziomów zasięgu.
 func nowyAdapterUstawienOsi(repozytorium dane.RepozytoriumKonfiguracjiOsi,
 	rozstrzygacz *konfig.Rozstrzygacz) *adapterUstawienOsi {
 
@@ -36,15 +32,13 @@ func nowyAdapterUstawienOsi(repozytorium dane.RepozytoriumKonfiguracjiOsi,
 	}
 }
 
-// Odczytaj zwraca wpisy poziomu na wskazanej osi, a bez wskazania poziomu —
-// politykę efektywną liczoną z uwzględnieniem osi.
 func (a *adapterUstawienOsi) Odczytaj(ctx context.Context, z shared.ConfigGetRequest) (shared.ConfigGetResponse, error) {
 	os, bytOsi := osZadania(z.Axis, z.AxisId)
 	if osPlatformy(os, bytOsi) {
 		return a.podstawa.Odczytaj(ctx, z)
 	}
 	if z.Scope == nil {
-		kontekst := kontekstOsi(z.ScopeId, os, bytOsi)
+		kontekst := kontekstOsi(ctx, z.ScopeId, os, bytOsi)
 		return shared.ConfigGetResponse{
 			Entries: a.rozstrzygacz.PolitykaEfektywna(kontekst).WpisyKontraktu(),
 		}, nil
@@ -56,8 +50,6 @@ func (a *adapterUstawienOsi) Odczytaj(ctx context.Context, z shared.ConfigGetReq
 	return shared.ConfigGetResponse{Entries: wpisyOsi(ustawienia, z.Key)}, nil
 }
 
-// Zapisz ustawia wartość konfiguracji pod adresem złożonym z poziomu zasięgu
-// i osi rozstrzygania, po sprawdzeniu klucza względem katalogu ustawień.
 func (a *adapterUstawienOsi) Zapisz(ctx context.Context, z shared.ConfigSetRequest) (shared.ConfigSetResponse, error) {
 	// Klucz spoza katalogu odpada tutaj, przed rozdziałem zapisu na osie.
 	if err := sprawdzKluczKatalogu(a.rozstrzygacz, z.Key); err != nil {
@@ -79,8 +71,6 @@ func (a *adapterUstawienOsi) Zapisz(ctx context.Context, z shared.ConfigSetReque
 	return shared.ConfigSetResponse{Entry: wpisOsi(ustawienie)}, nil
 }
 
-// Przywroc usuwa ustawienia spod adresu złożonego. Brak zapisu znaczy wartość
-// poziomu szerszego, a w ostateczności wartość domyślną.
 func (a *adapterUstawienOsi) Przywroc(ctx context.Context, z shared.ConfigResetRequest) (shared.ConfigResetResponse, error) {
 	os, bytOsi := osZadania(z.Axis, z.AxisId)
 	if osPlatformy(os, bytOsi) {
@@ -100,8 +90,6 @@ func (a *adapterUstawienOsi) Przywroc(ctx context.Context, z shared.ConfigResetR
 	return shared.ConfigResetResponse{Entries: wpisy}, nil
 }
 
-// osZadania odczytuje oś rozstrzygania oraz jej byt z pól opcjonalnych
-// żądania konfiguracji; oś pominięta w żądaniu oznacza platformę.
 func osZadania(os *shared.ConfigAxis, bytOsi *string) (shared.ConfigAxis, string) {
 	if os == nil {
 		return konfig.OsPlatformy, ""
@@ -109,16 +97,12 @@ func osZadania(os *shared.ConfigAxis, bytOsi *string) (shared.ConfigAxis, string
 	return konfig.OsLubPlatforma(*os), wartoscTekstu(bytOsi)
 }
 
-// osPlatformy odpowiada, czy adres opisuje oś platformy — czyli drogę sprzed
-// wprowadzenia osi, obsługiwaną przez adapter podstawowy bez zmiany.
 func osPlatformy(os shared.ConfigAxis, bytOsi string) bool {
 	return konfig.OsLubPlatforma(os) == konfig.OsPlatformy || bytOsi == ""
 }
 
-// kontekstOsi buduje kontekst rozstrzygania dla osi modelu albo konta. Wskazany
-// byt poziomu trafia na poziom okna — najwęższy z ośmiu.
-func kontekstOsi(idBytu *string, os shared.ConfigAxis, bytOsi string) konfig.Kontekst {
-	kontekst := kontekstZasiegu(idBytu)
+func kontekstOsi(ctx context.Context, idBytu *string, os shared.ConfigAxis, bytOsi string) konfig.Kontekst {
+	kontekst := kontekstZasiegu(ctx, idBytu)
 	switch konfig.OsLubPlatforma(os) {
 	case konfig.OsModelu:
 		kontekst.Model = bytOsi
@@ -128,8 +112,6 @@ func kontekstOsi(idBytu *string, os shared.ConfigAxis, bytOsi string) konfig.Kon
 	return kontekst
 }
 
-// ustawienieZWpisu przenosi wpis pakietu konfiguracji na wiersz repozytorium
-// ustawień, zachowując poziom zasięgu, oś oraz rodzaj wartości.
 func ustawienieZWpisu(wpis konfig.Wpis) dane.Ustawienie {
 	wartosc := wpis.Wartosc
 	return dane.Ustawienie{
@@ -139,8 +121,6 @@ func ustawienieZWpisu(wpis konfig.Wpis) dane.Ustawienie {
 	}
 }
 
-// wpisyOsi przekłada wiersze repozytorium na wpisy kontraktu, zawężając je
-// kluczem, gdy klucz wskazano.
 func wpisyOsi(ustawienia []dane.Ustawienie, klucz *string) []shared.ConfigEntry {
 	wpisy := make([]shared.ConfigEntry, 0, len(ustawienia))
 	for _, ustawienie := range ustawienia {
@@ -152,8 +132,6 @@ func wpisyOsi(ustawienia []dane.Ustawienie, klucz *string) []shared.ConfigEntry 
 	return wpisy
 }
 
-// wpisOsi przekłada jeden wiersz na wpis kontraktu. Kodowanie wartości i zapis
-// osi w kopercie należą do pakietu konfig — tutaj nie ma drugiego przekładu.
 func wpisOsi(u dane.Ustawienie) shared.ConfigEntry {
 	return konfig.Wynik{
 		Klucz:        u.Klucz,
@@ -166,8 +144,6 @@ func wpisOsi(u dane.Ustawienie) shared.ConfigEntry {
 	}.WpisKontraktu()
 }
 
-// bladZapisuOsi odmawia zapisu pod adresem spoza kontraktu. To odmowa
-// merytoryczna dotycząca jednego wywołania, nie awaria rdzenia.
 func bladZapisuOsi(klucz string, adres konfig.Adres) error {
 	return protocol.JakoError(protocol.NowyBlad(shared.ErrorCodeValidationFailed,
 		"konfiguracja: klucza "+klucz+" nie da się zapisać na poziomie "+

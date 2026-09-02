@@ -16,13 +16,8 @@ import (
 // odczyty jednej wartości, nie dwie wartości.
 const kluczPulapuKosztu = "pulap_kosztu_usd"
 
-// wymiarZuzyciaAlertow jest osią, po której grupuje się ślad wywołań na
-// potrzeby miar. Kanał, bo każde wywołanie ma kanał; sumy po wszystkich
-// wierszach dają wartość globalną, a rozbicie zostaje na przyszłe zawężenie
-// reguły do zasięgu.
 const wymiarZuzyciaAlertow = "channel"
 
-// sprawdzMiareReguly odbija miarę spoza wyliczenia kontraktu oraz miarę, której źródła rdzeń nie ma wpiętego — reguła bez źródła przechodziłaby ewaluację w ciszy i wyglądała na czynną.
 func (a *adapterAlertow) sprawdzMiareReguly(miara shared.AlertMetric) error {
 	switch miara {
 	case shared.AlertMetricErrorCount:
@@ -56,7 +51,6 @@ func (a *adapterAlertow) sprawdzMiareReguly(miara shared.AlertMetric) error {
 	}
 }
 
-// przelicz ewaluuje wszystkie reguły czynne i zapisuje wyzwolenia tych, które przekroczyły próg; metoda nie zwraca błędu, bo niepowodzenie nie ma prawa odebrać wykazu wyzwoleń wcześniejszych.
 func (a *adapterAlertow) przelicz(ctx context.Context) {
 	reguly, err := a.repozytorium.Reguly(ctx, "", "", true, 0)
 	if err != nil {
@@ -68,7 +62,6 @@ func (a *adapterAlertow) przelicz(ctx context.Context) {
 	}
 }
 
-// przeliczRegule wykonuje jeden pomiar i, gdy próg został przekroczony, zapisuje wyzwolenie; wyciszenie i powtórzenie sprawdza się przed pomiarem, żeby reguła nie zawołała dwa razy za to samo.
 func (a *adapterAlertow) przeliczRegule(ctx context.Context, regula dane.RegulaAlertu, teraz int64) {
 	if regula.WyciszonaDo != nil && *regula.WyciszonaDo > teraz {
 		return
@@ -111,7 +104,6 @@ func (a *adapterAlertow) przeliczRegule(ctx context.Context, regula dane.RegulaA
 	a.wniesDoCentrum(ctx, zapisane)
 }
 
-// wniesDoCentrum zapisuje wyzwolony alert w rejestrze centrum powiadomień jedną klasą blad; niepowodzenie zapisu nie przerywa niczego, bo alarm już został zapisany i rozgłoszony.
 func (a *adapterAlertow) wniesDoCentrum(ctx context.Context, w dane.WyzwolenieAlertu) {
 	if a.centrum == nil {
 		return
@@ -122,9 +114,6 @@ func (a *adapterAlertow) wniesDoCentrum(ctx context.Context, w dane.WyzwolenieAl
 	})
 }
 
-// rozglosWyzwolenie nadaje zdarzenie `alert.triggered`. Zdarzenie jest drogą
-// alertu do okien — bez niego Operator dowiedziałby się o wyzwoleniu dopiero
-// przy następnym otwarciu wykazu.
 func (a *adapterAlertow) rozglosWyzwolenie(ctx context.Context, w dane.WyzwolenieAlertu, regula dane.RegulaAlertu) {
 	if a.nadajnik == nil {
 		return
@@ -132,9 +121,6 @@ func (a *adapterAlertow) rozglosWyzwolenie(ctx context.Context, w dane.Wyzwoleni
 	a.nadajnik.wyzwolenieAlertu(ctx, wyzwolenieKontraktu(w), regulaKontraktu(regula))
 }
 
-// zmierzMiare wykonuje pomiar jednej miary w oknie czasu reguły. Drugi zwracany
-// wynik mówi, czy pomiar się odbył — miara, której nie zmierzono, nie wyzwala
-// niczego, bo nie ma wartości do porównania z progiem.
 func (a *adapterAlertow) zmierzMiare(ctx context.Context, regula dane.RegulaAlertu,
 	teraz int64) (float64, bool) {
 
@@ -174,10 +160,6 @@ func (a *adapterAlertow) zmierzMiare(ctx context.Context, regula dane.RegulaAler
 	}
 }
 
-// zmierzZeSladu liczy miary pochodzące ze śladu wywołań modelu.
-//
-// Jeden odczyt na miarę, nie pięć: sumy po wymiarze niosą komplet potrzebnych
-// składników, a drugie zapytanie o ten sam okres dałoby liczby z innej chwili.
 func (a *adapterAlertow) zmierzZeSladu(ctx context.Context, miara shared.AlertMetric,
 	od, do int64) (float64, bool) {
 
@@ -227,12 +209,11 @@ func (a *adapterAlertow) zmierzZeSladu(ctx context.Context, miara shared.AlertMe
 	}
 }
 
-// pulapKosztu odczytuje nastawę pułapu kosztu z konfiguracji obowiązującej ocenę reguły alertu tej maszyny.
-func (a *adapterAlertow) pulapKosztu(_ context.Context) float64 {
+func (a *adapterAlertow) pulapKosztu(ctx context.Context) float64 {
 	if a.rozstrzygacz == nil {
 		return 0
 	}
-	wynik := a.rozstrzygacz.Rozstrzygnij(konfig.Kontekst{}, kluczPulapuKosztu)
+	wynik := a.rozstrzygacz.Rozstrzygnij(konfig.Kontekst{KontoOperatora: dane.KontoOperatora(ctx)}, kluczPulapuKosztu)
 	pulap, err := strconv.ParseFloat(strings.TrimSpace(wynik.Wartosc), 64)
 	if err != nil {
 		return 0
@@ -240,7 +221,6 @@ func (a *adapterAlertow) pulapKosztu(_ context.Context) float64 {
 	return pulap
 }
 
-// przekroczonoProg rozstrzyga, czy zmierzona wartość wyzwala regułę; brak progu znaczy każda wartość niezerowa, a brak porównania znaczy więcej niż.
 func przekroczonoProg(wartosc float64, regula dane.RegulaAlertu) bool {
 	if regula.Prog == nil {
 		return wartosc > 0

@@ -16,11 +16,6 @@ import (
 // systemowe. Odpowiada kolumnie `ustawienie.klucz`.
 const kluczInstrukcjiProjektu = "workspace.instrukcje"
 
-// ZapiszInstrukcje zapisuje instrukcje na wskazanym poziomie zasięgu i zwraca
-// warstwę obowiązującą po zapisie.
-//
-// Brak wskazania poziomu znaczy poziom projektu — instrukcje obowiązują
-// domyślnie w zakresie projektu.
 func (a *adapterPrzestrzeniRoboczej) ZapiszInstrukcje(ctx context.Context,
 	z shared.WorkspaceInstructionsSetRequest) (shared.WorkspaceInstructionsSetResponse, error) {
 
@@ -53,13 +48,10 @@ func (a *adapterPrzestrzeniRoboczej) ZapiszInstrukcje(ctx context.Context,
 		shared.ChangeKindUpdated, shared.WorkspaceEntityKindInstructions, projekt.Kod,
 		"instrukcje projektu zapisane na poziomie "+string(poziom))
 	return shared.WorkspaceInstructionsSetResponse{
-		Instructions: a.instrukcjeObowiazujace(projekt.Kod, poziom, bytPoziomu, tresc),
+		Instructions: a.instrukcjeObowiazujace(ctx, projekt.Kod, poziom, bytPoziomu, tresc),
 	}, nil
 }
 
-// adresInstrukcji wskazuje miejsce zapisu: poziom zasięgu wraz z bytem tego
-// poziomu. Poziom pominięty znaczy projekt, a byt pominięty na poziomie
-// projektu — projekt z żądania. Poziom globalny bytu nie ma.
 func adresInstrukcji(z shared.WorkspaceInstructionsSetRequest, idProjektu string) (shared.ConfigScope, string) {
 	poziom := shared.ConfigScope(shared.ConfigScopeProject)
 	if z.Scope != nil && *z.Scope != "" {
@@ -74,8 +66,7 @@ func adresInstrukcji(z shared.WorkspaceInstructionsSetRequest, idProjektu string
 	return poziom, ""
 }
 
-// instrukcjeObowiazujace rozstrzyga warstwę instrukcji obowiązującą w projekcie. Kontekst niesie poziom projektu, a gdy zapis poszedł na węższy — także jego byt. Brak rozstrzygacza nie jest błędem: wynik schodzi wtedy na treść zapisaną.
-func (a *adapterPrzestrzeniRoboczej) instrukcjeObowiazujace(idProjektu string,
+func (a *adapterPrzestrzeniRoboczej) instrukcjeObowiazujace(ctx context.Context, idProjektu string,
 	poziom shared.ConfigScope, bytPoziomu, zapisana string) shared.WorkspaceInstructions {
 
 	instrukcje := shared.WorkspaceInstructions{
@@ -86,7 +77,7 @@ func (a *adapterPrzestrzeniRoboczej) instrukcjeObowiazujace(idProjektu string,
 		instrukcje.ScopeId = &bytPoziomu
 	}
 	if a.rozstrzygacz != nil {
-		wynik := a.rozstrzygacz.Rozstrzygnij(kontekstInstrukcji(idProjektu, poziom, bytPoziomu),
+		wynik := a.rozstrzygacz.Rozstrzygnij(kontekstInstrukcji(ctx, idProjektu, poziom, bytPoziomu),
 			kluczInstrukcjiProjektu)
 		if wynik.Pochodzenie == konfig.PochodzenieZapis {
 			instrukcje.Content, instrukcje.Scope = wynik.Wartosc, wynik.Poziom
@@ -103,10 +94,10 @@ func (a *adapterPrzestrzeniRoboczej) instrukcjeObowiazujace(idProjektu string,
 	return instrukcje
 }
 
-// kontekstInstrukcji buduje kontekst rozstrzygania: projekt zawsze, a byt
-// poziomu węższego wtedy, gdy zapis właśnie na nim osiadł.
-func kontekstInstrukcji(idProjektu string, poziom shared.ConfigScope, bytPoziomu string) konfig.Kontekst {
-	kontekst := konfig.Kontekst{Projekt: idProjektu}
+func kontekstInstrukcji(ctx context.Context, idProjektu string, poziom shared.ConfigScope,
+	bytPoziomu string) konfig.Kontekst {
+
+	kontekst := konfig.Kontekst{Projekt: idProjektu, KontoOperatora: dane.KontoOperatora(ctx)}
 	switch poziom {
 	case shared.ConfigScopeSession:
 		kontekst.KartaSesji = bytPoziomu
@@ -124,8 +115,6 @@ func kontekstInstrukcji(idProjektu string, poziom shared.ConfigScope, bytPoziomu
 	return kontekst
 }
 
-// odciskTresci liczy skrót SHA-256 instrukcji. Służy rozpoznaniu zmiany treści
-// przez interfejs — niczego nie dopuszcza i niczego nie blokuje.
 func odciskTresci(tresc string) string {
 	if tresc == "" {
 		return ""

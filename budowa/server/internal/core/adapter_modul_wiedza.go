@@ -26,33 +26,17 @@ const domyslnaLiczbaTrafien = 10
 // fragmentów po 700 znaków to już 70 tysięcy znaków odpowiedzi.
 const granicaTrafien = 100
 
-// adapterWiedzy wypełnia port Wiedza: łączy silnik osadzeń, składnicę
-// wektorów oraz repozytoria treści biblioteki i historii pod jedną bramą
-// izolacji zasięgu platformy.
 type adapterWiedzy struct {
-	// uruchamiacz jest jedyną drogą uruchomienia pomocnika osadzeń w drzewie
-	// procesów izolacji.
-	uruchamiacz session.Uruchamiacz
-	// katalogDanych wskazuje katalog danych, w którym leżą baza, sejf
-	// poświadczeń i wagi pomocnika.
+	uruchamiacz   session.Uruchamiacz
 	katalogDanych string
-	// rozstrzygacz i katalog składają zasady izolacji oraz obszar zasięgu
-	// platformy.
-	rozstrzygacz *konfig.Rozstrzygacz
-	katalog      *KatalogRoboczy
-	// skladnica trzyma wektory przy bazie rdzenia; brak miejsca zapisu
-	// adapter nazywa odmową wprost.
-	skladnica *wiedza.Skladnica
-	// biblioteka i historia to źródła treści, czytane przez repozytoria, nie
-	// własnym zapytaniem SQL.
-	biblioteka dane.RepozytoriumBiblioteki
-	historia   dane.RepozytoriumHistorii
-	// teraz oddaje czas w milisekundach epoki — jeden zegar na byt.
-	teraz func() int64
+	rozstrzygacz  *konfig.Rozstrzygacz
+	katalog       *KatalogRoboczy
+	skladnica     *wiedza.Skladnica
+	biblioteka    dane.RepozytoriumBiblioteki
+	historia      dane.RepozytoriumHistorii
+	teraz         func() int64
 }
 
-// nowyAdapterWiedzy wiąże port z uruchamiaczem procesów i katalogiem danych,
-// ustawiając zegar systemowy jako źródło znacznika czasu zapisu wektorów.
 func nowyAdapterWiedzy(uruchamiacz session.Uruchamiacz, katalogDanych string) *adapterWiedzy {
 	return &adapterWiedzy{
 		uruchamiacz:   uruchamiacz,
@@ -61,9 +45,6 @@ func nowyAdapterWiedzy(uruchamiacz session.Uruchamiacz, katalogDanych string) *a
 	}
 }
 
-// skladnicaWiedzy składa trwałość wskaźnika nad bazą montażu; montaż bez bazy
-// oddaje składnicę pustą, która odmawia zdaniem nazywającym brak, zamiast
-// udawać działanie.
 func skladnicaWiedzy(m Montaz) *wiedza.Skladnica {
 	if m.Baza == nil {
 		return nil
@@ -71,22 +52,16 @@ func skladnicaWiedzy(m Montaz) *wiedza.Skladnica {
 	return wiedza.NowaSkladnica(m.Baza.DB)
 }
 
-// ZIzolacja podpina rozstrzygacz zasięgu i ustalacz katalogu roboczego,
-// którymi adapter składa trójkę izolacji platformy przy każdym wywołaniu portu.
 func (a *adapterWiedzy) ZIzolacja(rozstrzygacz *konfig.Rozstrzygacz, katalog *KatalogRoboczy) *adapterWiedzy {
 	a.rozstrzygacz, a.katalog = rozstrzygacz, katalog
 	return a
 }
 
-// ZeSkladnica podpina trwałość wskaźnika nad bazą rdzenia, bez której adapter
-// nie ma miejsca do zapisu wektorów wskaźnika znaczenia.
 func (a *adapterWiedzy) ZeSkladnica(s *wiedza.Skladnica) *adapterWiedzy {
 	a.skladnica = s
 	return a
 }
 
-// ZeZrodlami podpina repozytoria biblioteki i historii, z których adapter
-// czyta treść Operatora budowaną we wskaźniku znaczenia.
 func (a *adapterWiedzy) ZeZrodlami(biblioteka dane.RepozytoriumBiblioteki,
 	historia dane.RepozytoriumHistorii) *adapterWiedzy {
 
@@ -94,9 +69,6 @@ func (a *adapterWiedzy) ZeZrodlami(biblioteka dane.RepozytoriumBiblioteki,
 	return a
 }
 
-// Wskaznik obsługuje `knowledge.index`: sprawdza gotowość silnika, zanim
-// odczyta treść, aby uniknąć podziału całej biblioteki na fragmenty przed
-// stwierdzeniem, że nie ma czym liczyć.
 func (a *adapterWiedzy) Wskaznik(ctx context.Context,
 	z shared.KnowledgeIndexRequest) (shared.KnowledgeIndexResponse, error) {
 
@@ -138,9 +110,6 @@ func (a *adapterWiedzy) Wskaznik(ctx context.Context,
 	return shared.KnowledgeIndexResponse{Indexed: wniesione, Total: wszystkie, Model: &model}, nil
 }
 
-// wniesDokumenty dzieli treść dokumentów na fragmenty, osadza je i zapisuje
-// pojedynczo, dokument po dokumencie, żeby przerwanie w połowie przebiegu
-// zostawiło wskaźnik niepełny, ale spójny.
 func (a *adapterWiedzy) wniesDokumenty(ctx context.Context, silnik *wiedza.Silnik,
 	okno session.Okno, zasady session.Zasady, obszar session.Obszar,
 	ustawienia wiedza.Ustawienia, dokumenty []dokumentWiedzy) (int, error) {
@@ -186,9 +155,6 @@ func (a *adapterWiedzy) wniesDokumenty(ctx context.Context, silnik *wiedza.Silni
 	return wniesione, nil
 }
 
-// Szukaj obsługuje `knowledge.search`: osadza pytanie tym samym modelem co
-// dokumenty, zawęża odczyt wskaźnika po nazwie modelu i oddaje wynik pusty
-// jako odpowiedź, nie jako odmowę.
 func (a *adapterWiedzy) Szukaj(ctx context.Context,
 	z shared.KnowledgeSearchRequest) (shared.KnowledgeSearchResponse, error) {
 
@@ -231,9 +197,6 @@ func (a *adapterWiedzy) Szukaj(ctx context.Context,
 	return odpowiedzSzukania(trafienia, false), nil
 }
 
-// zPrzesiewem przeprowadza drugi przebieg wyszukiwania: bierze kandydatów
-// pierwszego przebiegu i oddaje ich w kolejności ułożonej przez krzyżowy
-// koder, gdy żądanie poprosiło o przesiew.
 func (a *adapterWiedzy) zPrzesiewem(ctx context.Context, okno session.Okno,
 	zasady session.Zasady, obszar session.Obszar, ustawienia wiedza.Ustawienia,
 	pytanie string, wektorPytania []float32, pozycje []wiedza.Pozycja,
@@ -258,8 +221,6 @@ func (a *adapterWiedzy) zPrzesiewem(ctx context.Context, okno session.Okno,
 	return odpowiedzSzukania(wiedza.PoPrzesiewie(kandydaci, oceny, granica), true), nil
 }
 
-// odpowiedzSzukania składa odpowiedź kontraktu z wykazu trafień; pole
-// `reranked` wchodzi zawsze, gdy przesiew się odbył, także przy wykazie pustym.
 func odpowiedzSzukania(trafienia []wiedza.Trafienie, przesiane bool) shared.KnowledgeSearchResponse {
 	wyniki := make([]shared.KnowledgeHit, 0, len(trafienia))
 	for _, trafienie := range trafienia {
@@ -273,16 +234,10 @@ func odpowiedzSzukania(trafienia []wiedza.Trafienie, przesiane bool) shared.Know
 	return odpowiedz
 }
 
-// przesiewZadany czyta wskazanie żądania. Brak pola znaczy pierwszy przebieg
-// sam — przesiew kosztuje wczytanie drugiego modelu, więc wchodzi wyłącznie na
-// wyraźne żądanie.
 func przesiewZadany(rerank *bool) bool {
 	return rerank != nil && *rerank
 }
 
-// przelozTrafienie składa pozycję kontraktu zawsze ze wskazaniem źródła.
-// Kod źródła pusty oddaje `sourceId` niewypełnione — pole jest opcjonalne
-// i pusty napis udawałby identyfikator, którego nie ma.
 func przelozTrafienie(trafienie wiedza.Trafienie) shared.KnowledgeHit {
 	trafnosc := wiedza.WSetnych(trafienie.Podobienst)
 	pozycja := shared.KnowledgeHit{
@@ -297,8 +252,6 @@ func przelozTrafienie(trafienie wiedza.Trafienie) shared.KnowledgeHit {
 	return pozycja
 }
 
-// granicaZadania rozstrzyga liczbę oddawanych fragmentów, biorąc wartość
-// domyślną albo żądaną, obciętą do granicy technicznej wskaźnika.
 func granicaZadania(limit *int) int {
 	if limit == nil || *limit <= 0 {
 		return domyslnaLiczbaTrafien
@@ -309,8 +262,6 @@ func granicaZadania(limit *int) int {
 	return *limit
 }
 
-// zakresyZadania rozwija wskazanie kontraktu na wykaz zakresów wskaźnika;
-// brak wskazania bierze bibliotekę, a `all` rozwija się na trzy zakresy razem.
 func zakresyZadania(zakres *shared.KnowledgeScope) ([]string, error) {
 	if zakres == nil {
 		return []string{shared.KnowledgeScopeLibrary}, nil
@@ -327,8 +278,6 @@ func zakresyZadania(zakres *shared.KnowledgeScope) ([]string, error) {
 	}
 }
 
-// ustawienia składa komplet nastaw z konfiguracji zasięgu platformy.
-// Klucz bez rozstrzygnięcia zostaje przy wartości domyślnej.
 func (a *adapterWiedzy) ustawienia() wiedza.Ustawienia {
 	komplet := wiedza.UstawieniaDomyslne()
 	if a.rozstrzygacz == nil {
@@ -354,8 +303,6 @@ func (a *adapterWiedzy) silnik(ustawienia wiedza.Ustawienia) *wiedza.Silnik {
 	return wiedza.NowySilnik(a.uruchamiacz, a.katalogDanych).ZUstawieniami(ustawienia)
 }
 
-// zasiegPlatformy składa trójkę okno–zasady–obszar dla zasięgu platformy.
-// Rozstrzygnięcie i jego uzasadnienie stoją w nagłówku pliku.
 func (a *adapterWiedzy) zasiegPlatformy() (session.Okno, session.Zasady, session.Obszar) {
 	okno := session.Okno{Ustawienia: session.Ustawienia{
 		SrodowiskoWykonania: shared.ExecutionEnvCore,
@@ -382,17 +329,16 @@ func bladWiedzy(err error) error {
 	if errors.Is(err, session.ErrIzolacja) {
 		return odmowaWiedzy(shared.ErrorCodePermissionDenied, err.Error())
 	}
+	if errors.Is(err, dane.ErrKolizjaWiersza) {
+		return odmowaWiedzy(shared.ErrorCodeConflict, err.Error())
+	}
 	return odmowaWiedzy(shared.ErrorCodeInternalError, err.Error())
 }
 
-// bladZadaniaWiedzy znakuje wadę żądania kodem kontraktu odrzucenia
-// walidacji, wspólnym dla wszystkich komend rodziny `knowledge.*`.
 func bladZadaniaWiedzy(powod string) error {
 	return odmowaWiedzy(shared.ErrorCodeValidationFailed, powod)
 }
 
-// odmowaWiedzy składa odmowę obszaru. Przedrostek nazywa obszar, żeby czytający
-// wiedział, kto odmówił, zanim przeczyta dlaczego.
 func odmowaWiedzy(kod shared.ErrorCode, powod string) error {
 	return protocol.JakoError(protocol.NowyBlad(kod, "wyszukiwanie po znaczeniu: "+powod))
 }

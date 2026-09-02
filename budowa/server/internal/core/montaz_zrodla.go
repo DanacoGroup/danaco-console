@@ -17,15 +17,10 @@ import (
 	"danacoconsole/shared"
 )
 
-// rejestrKanalow buduje rejestr kanałów z wierszy tabeli rejestru
-// i wnosi do niego kanał główny. Niepowodzenie pierwszego odczytu nie
-// przerywa startu — rejestr odbuduje się przy pierwszej zmianie wiersza.
 func rejestrKanalow(kontekst context.Context, m Montaz, repozytoria *dane.Zestaw,
 	przejmowanie *przejmowanieProcesow, zdarzenia *zdarzeniaWykonawcze) *models.Rejestr {
 	rejestr := models.NowyRejestr(models.NoweZrodloBazy(m.Baza.DB), models.FabrykiWbudowane())
-	// Kanał główny obsługuje oba rodzaje procesu lokalnego, „cli" i „lokalny".
 
-	// Rodzaj „sdk" nie ma tu fabryki: bez dostawcy SDK nie ma jak działać.
 	fabrykaProcesu := fabrykaKanaluGlownego(pulaKont(kontekst, m, repozytoria), przejmowanie,
 		zdarzenia, nazwaKontaZKatalogu(kontekst, repozytoria))
 	rejestr.UstawFabryke(models.AdapterCLI, fabrykaProcesu)
@@ -36,14 +31,9 @@ func rejestrKanalow(kontekst context.Context, m Montaz, repozytoria *dane.Zestaw
 	return rejestr
 }
 
-// rodzajKanaluLokalny jest wartością kolumny kanal_modelu.rodzaj_kanalu dla
-// kanału procesu lokalnego (KnownChannelKinds). Jest wartością
-// danych, nie nazwą typu — kanał tego rodzaju to wiersz, nie gałąź w kodzie.
+// rodzajKanaluLokalny jest wartością kolumny kanal_modelu.rodzaj_kanalu (KnownChannelKinds).
 const rodzajKanaluLokalny = "lokalny"
 
-// nazwaKontaZKatalogu tłumaczy wskazanie konta na kod (nazwę) konta puli.
-// Katalog pusty zostawia wskazanie bez tłumaczenia — tura powie wtedy, że
-// konta nie zna.
 func nazwaKontaZKatalogu(kontekst context.Context, repozytoria *dane.Zestaw) func(string) string {
 	if repozytoria == nil || repozytoria.Konta == nil {
 		return nil
@@ -62,17 +52,13 @@ func nazwaKontaZKatalogu(kontekst context.Context, repozytoria *dane.Zestaw) fun
 	}
 }
 
-// pulaKont bierze konta rotacji z katalogu kont, źródła pierwszego; katalog
-// profili na dysku zostaje ścieżką zapasową, gdy kont w katalogu nie ma.
 func pulaKont(kontekst context.Context, m Montaz, repozytoria *dane.Zestaw) *injection.PulaKont {
 	if repozytoria != nil && repozytoria.Konta != nil {
 		konta, err := repozytoria.Konta.KontaRotacji(kontekst, shared.AccountKindCli)
 		if err != nil && m.Dziennik != nil {
 			m.Dziennik.Printf("katalog kont: %v", err)
 		}
-		// Katalog kont jest źródłem pierwszym, gdy repozytorium istnieje.
 
-		// Pula zawsze wpina źródło i utrwalacz, także gdy wystartowała pusta.
 		pula := injection.NowaPula(naPuleKont(konta)...)
 		wyposazPuleKont(kontekst, pula, m, repozytoria.Konta)
 		return pula
@@ -87,8 +73,6 @@ func pulaKont(kontekst context.Context, m Montaz, repozytoria *dane.Zestaw) *inj
 	return injection.NowaPula(konta...)
 }
 
-// wyposazPuleKont wpina w pulę trwałość wyczerpania i odświeżanie z katalogu,
-// żeby limit przeżył restart, a zmiana kont dotarła do rotacji bez niego.
 func wyposazPuleKont(kontekst context.Context, pula *injection.PulaKont, m Montaz,
 	repo dane.RepozytoriumKont) {
 
@@ -118,9 +102,6 @@ func wyposazPuleKont(kontekst context.Context, pula *injection.PulaKont, m Monta
 	})
 }
 
-// naPuleKont przekłada wiersze katalogu na konta puli rotacji. Konto bez
-// katalogu konfiguracji do puli nie wchodzi, a stan wyczerpania jedzie
-// w polu WyczerpaneDo, żeby pula odtworzyła limit po restarcie.
 func naPuleKont(konta []dane.Konto) []injection.Konto {
 	pula := make([]injection.Konto, 0, len(konta))
 	for _, konto := range konta {
@@ -141,16 +122,14 @@ func naPuleKont(konta []dane.Konto) []injection.Konto {
 	return pula
 }
 
-// zrodloUstawienOsiZBazy podaje rozstrzygaczowi wiersze spod adresu złożonego:
-// poziom zasięgu razem z osią rozstrzygania (migracja 012). Błąd
-// odczytu nie zatrzymuje rozstrzygania — ustawienia bez zapisu schodzą na
-// wartości domyślne.
+// Adres złożony poziom×oś od migracji 012; błąd odczytu nie zatrzymuje rozstrzygania,
+// konto idzie z kontekstu rozstrzygania (ustawienie.konto_id od migracji 484).
 func zrodloUstawienOsiZBazy(kontekst context.Context,
 	repozytorium dane.RepozytoriumKonfiguracjiOsi) konfig.Zrodlo {
 
-	return konfig.NoweZrodloZOdczytuOsi(func(adres konfig.Adres) ([]konfig.Wpis, error) {
-		ustawienia, err := repozytorium.ListaOsi(kontekst, adres.Poziom, adres.KluczZasiegu,
-			adres.Os, adres.KluczOsi)
+	return konfig.NoweZrodloZOdczytuOsi(func(konto int64, adres konfig.Adres) ([]konfig.Wpis, error) {
+		ustawienia, err := repozytorium.ListaOsi(dane.ZKontemOperatora(kontekst, konto),
+			adres.Poziom, adres.KluczZasiegu, adres.Os, adres.KluczOsi)
 		if err != nil {
 			return nil, err
 		}
@@ -166,15 +145,11 @@ func zrodloUstawienOsiZBazy(kontekst context.Context,
 	})
 }
 
-// katalogUstawienZBazy podaje rejestrowi definicji pozycje katalogu ustawień,
-// czytane spod repozytorium bazy zamiast z wykazu wbudowanego w rdzeń.
 type katalogUstawienZBazy struct {
 	kontekst     context.Context
 	repozytorium dane.RepozytoriumKatalogUstawien
 }
 
-// Definicje zwraca pozycje aktywne katalogu — rejestr definicji nie zna wierszy
-// wygaszonych, bo nie ma czego dla nich rozstrzygać.
 func (k katalogUstawienZBazy) Definicje() ([]shared.SettingDefinition, error) {
 	if k.repozytorium == nil {
 		return nil, nil
@@ -182,8 +157,6 @@ func (k katalogUstawienZBazy) Definicje() ([]shared.SettingDefinition, error) {
 	return k.repozytorium.Definicje(k.kontekst, true)
 }
 
-// rejestrUstawien buduje rejestr definicji z katalogu ustawień: katalog pusty
-// albo niedostępny daje rejestr wbudowany, dokładany definicjami roboczymi.
 func rejestrUstawien(kontekst context.Context, repozytoria *dane.Zestaw,
 	dziennik *log.Logger) *konfig.Rejestr {
 
@@ -198,9 +171,6 @@ func rejestrUstawien(kontekst context.Context, repozytoria *dane.Zestaw,
 	return rejestr
 }
 
-// rejestrAkcji buduje katalog akcji z wierszy tabeli `akcja`.
-// Niepowodzenie pierwszego odczytu nie przerywa startu — rejestr odbuduje się
-// przy pierwszym odczycie katalogu.
 func rejestrAkcji(kontekst context.Context, repozytoria *dane.Zestaw, dziennik *log.Logger) *RejestrAkcji {
 	rejestr := NowyRejestrAkcji(ZrodloAkcjiZRepozytorium(repozytoria.Akcje))
 	if err := rejestr.Odswiez(kontekst); err != nil && dziennik != nil {

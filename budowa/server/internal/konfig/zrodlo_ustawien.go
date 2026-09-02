@@ -29,7 +29,7 @@ func (w Wpis) Adres() Adres {
 // trwałości przez ten interfejs. Zwrócony błąd nie zatrzymuje
 // rozstrzygania.
 type Zrodlo interface {
-	Wpisy(adresy []Adres) ([]Wpis, error)
+	Wpisy(konto int64, adresy []Adres) ([]Wpis, error)
 }
 
 // kluczWpisu jednoznacznie wskazuje wiersz ustawienia — odpowiednik więzu

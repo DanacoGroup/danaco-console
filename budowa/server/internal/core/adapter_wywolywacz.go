@@ -13,7 +13,6 @@ import (
 )
 
 const (
-	// kluczSkrotuWywolywacza to nastawa niosąca zapis skrótu globalnego w konfiguracji tego Operatora rdzenia.
 	kluczSkrotuWywolywacza = "wywolywacz_skrot_globalny"
 
 	// zdolnoscSkrotuGlobalnego to nazwa zdolności deklarowanej przez powłokę
@@ -21,18 +20,15 @@ const (
 	zdolnoscSkrotuGlobalnego = "launcher.hotkey"
 )
 
-// zdolnosciKlientow zapamiętuje, co klienci zadeklarowali w powitaniu; rejestr jest w pamięci i żyje tyle, co rdzeń, bo deklaracja dotyczy połączenia, nie Operatora.
 type zdolnosciKlientow struct {
 	zamek sync.RWMutex
 	wpisy map[string][]string
 }
 
-// noweZdolnosciKlientow zakłada pusty rejestr deklaracji zdolności klientów przy starcie tego rdzenia.
 func noweZdolnosciKlientow() *zdolnosciKlientow {
 	return &zdolnosciKlientow{wpisy: map[string][]string{}}
 }
 
-// zapamietaj odkłada deklarację jednego klienta w rejestrze zdolności tego bieżącego połączenia rdzenia.
 func (z *zdolnosciKlientow) zapamietaj(klient string, zdolnosci []string) {
 	if z == nil || strings.TrimSpace(klient) == "" {
 		return
@@ -48,7 +44,6 @@ func (z *zdolnosciKlientow) zapamietaj(klient string, zdolnosci []string) {
 	z.wpisy[klient] = kopia
 }
 
-// ktokolwiekDeklaruje mówi, czy którykolwiek ze znanych klientów zadeklarował wskazaną zdolność w powitaniu.
 func (z *zdolnosciKlientow) ktokolwiekDeklaruje(zdolnosc string) bool {
 	if z == nil {
 		return false
@@ -65,14 +60,12 @@ func (z *zdolnosciKlientow) ktokolwiekDeklaruje(zdolnosc string) bool {
 	return false
 }
 
-// adapterWywolywacza wypełnia port Wywolywacz magazynem nastaw i rejestrem deklaracji tych klientów rdzenia.
 type adapterWywolywacza struct {
 	konfiguracja dane.RepozytoriumKonfiguracji
 	rozstrzygacz *konfig.Rozstrzygacz
 	zdolnosci    *zdolnosciKlientow
 }
 
-// nowyAdapterWywolywacza wiąże port z magazynem nastaw i rejestrem deklaracji klientów przy tym montażu.
 func nowyAdapterWywolywacza(konfiguracja dane.RepozytoriumKonfiguracji,
 	rozstrzygacz *konfig.Rozstrzygacz, zdolnosci *zdolnosciKlientow) *adapterWywolywacza {
 
@@ -81,11 +74,10 @@ func nowyAdapterWywolywacza(konfiguracja dane.RepozytoriumKonfiguracji,
 	}
 }
 
-// SkrotWywolywacza obsługuje launcher.hotkey.get, oddając nastawę skrótu wraz z jej pełną wykonalnością.
-func (a *adapterWywolywacza) SkrotWywolywacza(_ context.Context,
+func (a *adapterWywolywacza) SkrotWywolywacza(ctx context.Context,
 	_ shared.LauncherHotkeyGetRequest) (shared.LauncherHotkeyGetResponse, error) {
 
-	skrot := a.odczytajSkrot()
+	skrot := a.odczytajSkrot(ctx)
 	wspierany := a.zdolnosci.ktokolwiekDeklaruje(zdolnoscSkrotuGlobalnego)
 
 	odpowiedz := shared.LauncherHotkeyGetResponse{
@@ -109,7 +101,6 @@ func (a *adapterWywolywacza) SkrotWywolywacza(_ context.Context,
 	return odpowiedz, nil
 }
 
-// ZapiszSkrotWywolywacza obsługuje launcher.hotkey.set, zapisując nastawę niezależnie od jej rejestracji.
 func (a *adapterWywolywacza) ZapiszSkrotWywolywacza(ctx context.Context,
 	z shared.LauncherHotkeySetRequest) (shared.LauncherHotkeySetResponse, error) {
 
@@ -162,16 +153,14 @@ func (a *adapterWywolywacza) ZapiszSkrotWywolywacza(ctx context.Context,
 	return odpowiedz, nil
 }
 
-// odczytajSkrot oddaje nastawę obowiązującą po rozstrzygnięciu poziomów zasięgu tej całej konfiguracji.
-func (a *adapterWywolywacza) odczytajSkrot() string {
+func (a *adapterWywolywacza) odczytajSkrot(ctx context.Context) string {
 	if a.rozstrzygacz == nil {
 		return ""
 	}
-	return strings.TrimSpace(
-		a.rozstrzygacz.Rozstrzygnij(konfig.Kontekst{}, kluczSkrotuWywolywacza).Wartosc)
+	return strings.TrimSpace(a.rozstrzygacz.Rozstrzygnij(
+		konfig.Kontekst{KontoOperatora: dane.KontoOperatora(ctx)}, kluczSkrotuWywolywacza).Wartosc)
 }
 
-// sprawdzZapisSkrotu odbija zapis, którego powłoka nie zrozumie: odrzuca zapis bez klawisza głównego albo z samymi modyfikatorami, a resztę przepuszcza, bo to powłoka jest tu autorytetem.
 func sprawdzZapisSkrotu(skrot string) error {
 	czlony := strings.Split(skrot, "+")
 	modyfikatory := map[string]struct{}{

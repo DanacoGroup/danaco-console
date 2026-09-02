@@ -6,14 +6,11 @@ import (
 	"encoding/json"
 	"time"
 
+	"danacoconsole/server/internal/dane"
 	"danacoconsole/server/internal/konfig"
 	"danacoconsole/shared"
 )
 
-// KonfiguracjaObowiazujaca rozstrzyga obszary po wszystkich adresach kontekstu
-// i zwraca konfigurację wraz z pochodzeniem każdego obszaru. Brak zapisu na
-// każdym z adresów daje obszar pusty o pochodzeniu „wartość domyślna”, nie
-// odmowę.
 func (a *adapterUstawienOsi) KonfiguracjaObowiazujaca(ctx context.Context,
 	z shared.ConfigEffectiveGetRequest) (shared.ConfigEffectiveGetResponse, error) {
 
@@ -21,7 +18,7 @@ func (a *adapterUstawienOsi) KonfiguracjaObowiazujaca(ctx context.Context,
 	if err != nil {
 		return shared.ConfigEffectiveGetResponse{}, err
 	}
-	tresci, pochodzenie, err := a.rozstrzygnijObszary(ctx, kontekstKonfiguracjiSesji(z), obszary)
+	tresci, pochodzenie, err := a.rozstrzygnijObszary(ctx, kontekstKonfiguracjiSesji(ctx, z), obszary)
 	if err != nil {
 		return shared.ConfigEffectiveGetResponse{}, err
 	}
@@ -42,14 +39,13 @@ func (a *adapterUstawienOsi) KonfiguracjaObowiazujaca(ctx context.Context,
 	return shared.ConfigEffectiveGetResponse{Effective: obowiazujaca}, nil
 }
 
-// KonfiguracjaSesjiOkna rozstrzyga konfigurację obowiązującą dla okna i jego sesji po wszystkich adresach zasięgu, pomijając osie modelu i konta jako wynik tej konfiguracji. Brak zapisu na adresie daje konfigurację pustą, nie odmowę.
 func (a *adapterUstawienOsi) KonfiguracjaSesjiOkna(ctx context.Context,
 	idOkna, idSesji string) (shared.SessionConfig, error) {
 
 	if a == nil {
 		return shared.SessionConfig{}, nil
 	}
-	kontekst := konfig.Kontekst{Okno: idOkna, KartaSesji: idSesji}
+	kontekst := konfig.Kontekst{Okno: idOkna, KartaSesji: idSesji, KontoOperatora: dane.KontoOperatora(ctx)}
 	tresci, _, err := a.rozstrzygnijObszary(ctx, kontekst, obszaryKontraktu)
 	if err != nil {
 		return shared.SessionConfig{}, err
@@ -57,8 +53,6 @@ func (a *adapterUstawienOsi) KonfiguracjaSesjiOkna(ctx context.Context,
 	return zlozKonfiguracje(tresci)
 }
 
-// rozstrzygnijObszary czyta adresy kontekstu od najwęższego i przypisuje
-// obszarowi treść z pierwszego adresu, pod którym obszar jest zapisany.
 func (a *adapterUstawienOsi) rozstrzygnijObszary(ctx context.Context, kontekst konfig.Kontekst,
 	obszary []shared.SessionConfigArea) (map[shared.SessionConfigArea]json.RawMessage,
 	map[shared.SessionConfigArea]konfig.Adres, error) {
@@ -85,11 +79,11 @@ func (a *adapterUstawienOsi) rozstrzygnijObszary(ctx context.Context, kontekst k
 	return tresci, pochodzenie, nil
 }
 
-// kontekstKonfiguracjiSesji buduje kontekst rozstrzygania z pól żądania: okno i karta sesji wchodzą wprost, wskazany byt poziomu ląduje na swoim poziomie, a oś modelu albo konta na swojej osi.
-func kontekstKonfiguracjiSesji(z shared.ConfigEffectiveGetRequest) konfig.Kontekst {
+func kontekstKonfiguracjiSesji(ctx context.Context, z shared.ConfigEffectiveGetRequest) konfig.Kontekst {
 	kontekst := konfig.Kontekst{
-		Okno:       wartoscTekstu(z.WindowId),
-		KartaSesji: wartoscTekstu(z.SessionId),
+		Okno:           wartoscTekstu(z.WindowId),
+		KartaSesji:     wartoscTekstu(z.SessionId),
+		KontoOperatora: dane.KontoOperatora(ctx),
 	}
 	if z.Scope != nil {
 		ustawBytPoziomu(&kontekst, *z.Scope, wartoscTekstu(z.ScopeId))
@@ -128,9 +122,6 @@ func ustawBytPoziomu(kontekst *konfig.Kontekst, poziom shared.ConfigScope, byt s
 	}
 }
 
-// pochodzeniaObszarow opisuje, skąd wzięty jest każdy żądany obszar. Obszar
-// bez zapisu na żadnym adresie pochodzi z wartości domyślnej kontraktu —
-// to jest odpowiedź pełna, nie brak odpowiedzi.
 func pochodzeniaObszarow(obszary []shared.SessionConfigArea,
 	pochodzenie map[shared.SessionConfigArea]konfig.Adres) []shared.SessionConfigOrigin {
 
@@ -157,9 +148,6 @@ func pochodzeniaObszarow(obszary []shared.SessionConfigArea,
 	return wykaz
 }
 
-// rozstrzygniecieKatalogu zestawia katalog ustawiony z katalogiem, który
-// wynika z konfiguracji. Katalog wskazany przez Operatora obowiązuje; jego brak
-// oddaje pole katalogowi zastępczemu i mówi o tym wprost, zamiast milczeć.
 func rozstrzygniecieKatalogu(k shared.SessionConfig) shared.WorkingDirectoryResolution {
 	rozstrzygniecie := shared.WorkingDirectoryResolution{
 		Reason: shared.WorkingDirectoryDegradationNone,

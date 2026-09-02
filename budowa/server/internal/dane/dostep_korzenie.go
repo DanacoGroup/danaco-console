@@ -10,46 +10,53 @@ import (
 	"strings"
 )
 
-// ErrPozaKorzeniami oznacza próbę nadania dostępu do ścieżki spoza obszaru
-// punktu. Warstwa wyższa odróżnia ten przypadek przez errors.Is, nie przez treść
-// komunikatu — to odmowa merytoryczna, nie awaria zapisu.
+// ErrPozaKorzeniami odróżnia warstwa wyższa przez errors.Is, nie przez treść komunikatu.
 var ErrPozaKorzeniami = errors.New("dane: ścieżka poza korzeniami punktu dostępu")
 
-const (
-	usunKorzeniePunktu = `DELETE FROM korzen_punktu_dostepu WHERE punkt_dostepu_id = ?`
+// Tabele korzeni konta nie niosą (krok 484 dodał `konto_id` punktowi, nie jego korzeniom):
+// granica dochodzi przez `punkt_dostepu.konto_id`, a dla korzenia nadania przez nadanie i jego okno.
+var (
+	kontoKorzeniaPunktu = `EXISTS (SELECT 1 FROM punkt_dostepu
+	                                WHERE punkt_dostepu.id = korzen_punktu_dostepu.punkt_dostepu_id
+	                                  AND ` + WarunekKonta + `)`
+
+	kontoKorzeniaNadania = `EXISTS (SELECT 1 FROM nadanie_dostepu
+	                                 WHERE nadanie_dostepu.id = korzen_nadania.nadanie_dostepu_id
+	                                   AND ` + kontoNadania + `)`
+
+	usunKorzeniePunktu = `DELETE FROM korzen_punktu_dostepu
+	                      WHERE punkt_dostepu_id = ? AND ` + kontoKorzeniaPunktu
 
 	wstawKorzenPunktu = `INSERT INTO korzen_punktu_dostepu (punkt_dostepu_id, sciezka, kolejnosc)
-	                     VALUES (?, ?, ?)`
+	                     SELECT ?, ?, ?
+	                      WHERE EXISTS (SELECT 1 FROM punkt_dostepu WHERE id = ? AND ` + WarunekKonta + `)`
 
-	// Korzeń własnego wskazania konta nie niesie, a identyfikator punktu przychodzi
-	// tu również wprost z żądania, nie tylko z punktu odczytanego już zawężonym zapytaniem.
 	listaKorzeniPunktu = `SELECT sciezka FROM korzen_punktu_dostepu
-	                      WHERE punkt_dostepu_id = ?
-	                        AND EXISTS (SELECT 1 FROM punkt_dostepu
-	                                     WHERE punkt_dostepu.id = korzen_punktu_dostepu.punkt_dostepu_id
-	                                       AND ` + WarunekKonta + `)
+	                      WHERE punkt_dostepu_id = ? AND ` + kontoKorzeniaPunktu + `
 	                      ORDER BY kolejnosc, id`
 
-	usunKorzenieNadania = `DELETE FROM korzen_nadania WHERE nadanie_dostepu_id = ?`
+	usunKorzenieNadania = `DELETE FROM korzen_nadania
+	                       WHERE nadanie_dostepu_id = ? AND ` + kontoKorzeniaNadania
 
 	wstawKorzenNadania = `INSERT INTO korzen_nadania (nadanie_dostepu_id, sciezka, kolejnosc)
-	                      VALUES (?, ?, ?)`
+	                      SELECT ?, ?, ?
+	                       WHERE EXISTS (SELECT 1 FROM nadanie_dostepu
+	                                      WHERE id = ? AND ` + kontoNadania + `)`
 
 	listaKorzeniNadania = `SELECT sciezka FROM korzen_nadania
-	                       WHERE nadanie_dostepu_id = ? ORDER BY kolejnosc, id`
+	                       WHERE nadanie_dostepu_id = ? AND ` + kontoKorzeniaNadania + `
+	                       ORDER BY kolejnosc, id`
 )
 
-// zapiszKorzenie wymienia listę korzeni w tabeli podrzędnej. Wywoływane wyłącznie
-// wewnątrz transakcji zapisu właściciela — inaczej właściciel i jego korzenie
-// mogłyby się rozjechać.
 func zapiszKorzenie(ctx context.Context, z *zapytania, transakcja *sql.Tx,
 	kasowanieSQL, wstawianieSQL string, wlascicielID int64, korzenie []string, opis string) error {
 
+	konto := KontoOperatora(ctx)
 	kasowanie, err := z.wTransakcji(ctx, transakcja, kasowanieSQL)
 	if err != nil {
 		return err
 	}
-	if _, err := kasowanie.ExecContext(ctx, wlascicielID); err != nil {
+	if _, err := kasowanie.ExecContext(ctx, wlascicielID, konto); err != nil {
 		return fmt.Errorf("dane: nie można wyczyścić korzeni %s %d: %w", opis, wlascicielID, err)
 	}
 	wstawianie, err := z.wTransakcji(ctx, transakcja, wstawianieSQL)
@@ -58,17 +65,19 @@ func zapiszKorzenie(ctx context.Context, z *zapytania, transakcja *sql.Tx,
 	}
 	kolejnosc := 0
 	for _, sciezka := range uporzadkujKorzenie(korzenie) {
-		if _, err := wstawianie.ExecContext(ctx, wlascicielID, sciezka, kolejnosc); err != nil {
+		wynik, err := wstawianie.ExecContext(ctx, wlascicielID, sciezka, kolejnosc, wlascicielID, konto)
+		if err != nil {
 			return fmt.Errorf("dane: nie można zapisać korzenia %q %s %d: %w",
 				sciezka, opis, wlascicielID, err)
+		}
+		if err := sprawdzTrafienieZapisu(wynik, "korzeń "+opis, fmt.Sprintf("%d", wlascicielID)); err != nil {
+			return err
 		}
 		kolejnosc++
 	}
 	return nil
 }
 
-// wczytajKorzenie zwraca listę korzeni jednego właściciela w zapisanej kolejności wpisów w tabeli bazy danych.
-// Dalsze argumenty wypełniają zawężenie konta wpisane w zapytanie: korzeń punktu je ma, korzeń nadania nie.
 func wczytajKorzenie(ctx context.Context, z *zapytania, zapytanie string,
 	wlascicielID int64, opis string, dalszeArgumenty ...any) ([]string, error) {
 
@@ -96,9 +105,6 @@ func wczytajKorzenie(ctx context.Context, z *zapytania, zapytanie string,
 	return lista, nil
 }
 
-// uporzadkujKorzenie odrzuca wpisy puste i powtórzone, zachowując kolejność
-// podaną przez Operatora — kolejność korzeni ma znaczenie przy przekazaniu ich
-// mostowi.
 func uporzadkujKorzenie(korzenie []string) []string {
 	wynik := make([]string, 0, len(korzenie))
 	widziane := map[string]struct{}{}
@@ -116,9 +122,7 @@ func uporzadkujKorzenie(korzenie []string) []string {
 	return wynik
 }
 
-// sprawdzZawezenieKorzeni pilnuje, żeby korzenie nadania mieściły się w obszarze
-// wyznaczonym korzeniami punktu. Komunikat nazywa samą ścieżkę odrzuconą: jego treść
-// wychodzi kontraktem jako `validation_failed`, więc wykaz korzeni wydałby ścieżki dyskowe punktu.
+// Komunikat niesie samą ścieżkę odrzuconą: treść wychodzi kontraktem jako `validation_failed`.
 func sprawdzZawezenieKorzeni(korzeniePunktu, korzenieNadania []string) error {
 	if len(korzeniePunktu) == 0 {
 		return nil
@@ -132,7 +136,6 @@ func sprawdzZawezenieKorzeni(korzeniePunktu, korzenieNadania []string) error {
 	return nil
 }
 
-// wKtorymkolwiekKorzeniu rozstrzyga, czy podana ścieżka mieści się w którymkolwiek z przekazanych korzeni punktu dostępu.
 func wKtorymkolwiekKorzeniu(korzenie []string, sciezka string) bool {
 	for _, korzen := range korzenie {
 		if wKorzeniu(korzen, sciezka) {
@@ -142,9 +145,7 @@ func wKtorymkolwiekKorzeniu(korzenie []string, sciezka string) bool {
 	return false
 }
 
-// wKorzeniu porównuje ścieżkę z korzeniem po ujednoliceniu separatora. Wielkość
-// liter zostaje znacząca: maszyny mostu pracują na systemie plików rozróżniającym
-// wielkość liter, a zrównanie liter przepuściłoby ścieżkę spoza obszaru.
+// Wielkość liter zostaje znacząca: maszyny mostu pracują na systemie plików, który ją rozróżnia.
 func wKorzeniu(korzen, sciezka string) bool {
 	k := normalizujKorzen(korzen)
 	s := normalizujKorzen(sciezka)
@@ -154,8 +155,6 @@ func wKorzeniu(korzen, sciezka string) bool {
 	return s == k || strings.HasPrefix(s, k+"/")
 }
 
-// normalizujKorzen ujednolica separator i obcina separator końcowy, żeby
-// `/opt/danaco` i `/opt/danaco/` znaczyły to samo.
 func normalizujKorzen(sciezka string) string {
 	ujednolicona := strings.ReplaceAll(strings.TrimSpace(sciezka), `\`, "/")
 	obcieta := strings.TrimRight(ujednolicona, "/")

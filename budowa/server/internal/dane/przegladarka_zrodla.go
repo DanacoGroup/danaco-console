@@ -1,4 +1,4 @@
-// Odpowiedzialność pliku: źródła zebrane w toku przeglądania, wiersze tabeli zrodlo_przegladania, trwałość szuflady Sources okna operacyjnego.
+// Odpowiedzialność pliku: źródła zebrane w toku przeglądania (tabela zrodlo_przegladania), szuflada Sources okna.
 package dane
 
 import (
@@ -8,7 +8,6 @@ import (
 	"fmt"
 )
 
-// ZrodloPrzegladania to wiersz tabeli zrodlo_przegladania, niosący adres, tytuł i przynależność do zestawu tematycznego.
 type ZrodloPrzegladania struct {
 	ID                  int64
 	Kod                 string
@@ -26,49 +25,43 @@ const (
 	kolumnyZrodlaPrzegladania = `id, identyfikator_zewnetrzny, okno, url, tytul,
 	                             migawka_zewnetrzna_id, kluczowe, grupa, utworzono`
 
+	// UNIQUE na identyfikatorze obejmuje całą tabelę: człon DO UPDATE bez zawężenia nadpisałby źródło konta cudzego.
 	zapiszZrodloPrzegladania = `INSERT INTO zrodlo_przegladania
 	                            (identyfikator_zewnetrzny, okno, url, tytul,
-	                             migawka_zewnetrzna_id, kluczowe, grupa)
-	                            VALUES (?, ?, ?, ?, ?, ?, ?)
+	                             migawka_zewnetrzna_id, kluczowe, grupa, konto_id)
+	                            VALUES (?, ?, ?, ?, ?, ?, ?, ` + WskazanieKonta + `)
 	                            ON CONFLICT(identyfikator_zewnetrzny) DO UPDATE SET
 	                                okno = excluded.okno,
 	                                url = excluded.url,
 	                                tytul = excluded.tytul,
 	                                migawka_zewnetrzna_id = excluded.migawka_zewnetrzna_id,
 	                                kluczowe = excluded.kluczowe,
-	                                grupa = excluded.grupa`
+	                                grupa = excluded.grupa
+	                            WHERE ` + WarunekKonta
 
 	pobierzZrodloPrzegladania = `SELECT ` + kolumnyZrodlaPrzegladania + `
-	                             FROM zrodlo_przegladania WHERE identyfikator_zewnetrzny = ?`
+	                             FROM zrodlo_przegladania
+	                             WHERE identyfikator_zewnetrzny = ? AND ` + WarunekKonta
 
-	// Jedno zapytanie na wszystkie zawężenia, zamiast sklejania SQL-a w locie, trzyma jeden plan zapytania w pamięci podręcznej.
 	listaZrodelPrzegladania = `SELECT ` + kolumnyZrodlaPrzegladania + `
 	                           FROM zrodlo_przegladania
 	                           WHERE okno = ? AND (? = 0 OR kluczowe = 1)
 	                             AND (? = '' OR grupa = ?)
 	                             AND (? = '' OR url LIKE ? OR IFNULL(tytul,'') LIKE ?)
+	                             AND ` + WarunekKonta + `
 	                           ORDER BY utworzono DESC, id DESC LIMIT ?`
 )
 
-// FiltrZrodelPrzegladania zawęża wykaz źródeł okna — obsługuje pola żądania
-// `browser.source.list`. Filtr zamiast trzech argumentów, bo kontrakt może
-// dołożyć kolejne zawężenie, a wtedy zmieniałby się każdy wołający.
+// FiltrZrodelPrzegladania niesie pola żądania `browser.source.list`.
 type FiltrZrodelPrzegladania struct {
-	// Okno operacyjne, którego wykaz dotyczy — pole wymagane kontraktem.
-	Okno string
-	// TylkoKluczowe odsiewa źródła nieoznaczone jako kluczowe.
+	Okno          string
 	TylkoKluczowe bool
-	// Zestaw zawęża wykaz do jednego zestawu tematycznego źródeł.
-	Zestaw string
-	// Szukaj przegląda adres i tytuł naraz — Operator pamięta jedno z dwojga.
-	Szukaj string
+	Zestaw        string
+	Szukaj        string
 	// Limit 0 lub ujemny znaczy wykaz pełny, nie wykaz pusty.
 	Limit int
 }
 
-// ZapiszZrodlo zakłada źródło albo nadpisuje zastane (dopasowane po kodzie
-// zewnętrznym) i zwraca stan po zapisie — `browser.source.add` jest
-// idempotentne wobec ponownego wywołania z tym samym `Id`.
 func (r *repozytoriumPrzegladania) ZapiszZrodlo(ctx context.Context, zrodlo ZrodloPrzegladania) (ZrodloPrzegladania, error) {
 	if zrodlo.Kod == "" || zrodlo.Okno == "" || zrodlo.Url == "" {
 		return ZrodloPrzegladania{}, fmt.Errorf("dane: źródło przeglądania bez identyfikatora, okna albo adresu")
@@ -77,22 +70,25 @@ func (r *repozytoriumPrzegladania) ZapiszZrodlo(ctx context.Context, zrodlo Zrod
 	if err != nil {
 		return ZrodloPrzegladania{}, err
 	}
-	_, err = polecenie.ExecContext(ctx, zrodlo.Kod, zrodlo.Okno, zrodlo.Url,
+	wynik, err := polecenie.ExecContext(ctx, zrodlo.Kod, zrodlo.Okno, zrodlo.Url,
 		tekstDoKolumny(zrodlo.Tytul), tekstDoKolumny(zrodlo.MigawkaZewnetrznaID),
-		liczbaLogiczna(zrodlo.Kluczowe), tekstDoKolumny(zrodlo.Grupa))
+		liczbaLogiczna(zrodlo.Kluczowe), tekstDoKolumny(zrodlo.Grupa),
+		KontoOperatora(ctx), KontoOperatora(ctx))
 	if err != nil {
 		return ZrodloPrzegladania{}, fmt.Errorf("dane: nie można zapisać źródła przeglądania %q: %w", zrodlo.Kod, err)
+	}
+	if err := sprawdzTrafienieZapisu(wynik, "źródło przeglądania", zrodlo.Kod); err != nil {
+		return ZrodloPrzegladania{}, err
 	}
 	return r.jednoZrodlo(ctx, zrodlo.Kod)
 }
 
-// jednoZrodlo odczytuje pojedynczy wiersz źródła po kodzie zewnętrznym, zwracając ErrBrakWiersza przy braku wiersza.
 func (r *repozytoriumPrzegladania) jednoZrodlo(ctx context.Context, kod string) (ZrodloPrzegladania, error) {
 	polecenie, err := r.zapytania.przygotuj(ctx, pobierzZrodloPrzegladania)
 	if err != nil {
 		return ZrodloPrzegladania{}, err
 	}
-	zrodlo, err := odczytajZrodloPrzegladania(polecenie.QueryRowContext(ctx, kod))
+	zrodlo, err := odczytajZrodloPrzegladania(polecenie.QueryRowContext(ctx, kod, KontoOperatora(ctx)))
 	if errors.Is(err, sql.ErrNoRows) {
 		return ZrodloPrzegladania{}, ErrBrakWiersza
 	}
@@ -102,7 +98,6 @@ func (r *repozytoriumPrzegladania) jednoZrodlo(ctx context.Context, kod string) 
 	return zrodlo, nil
 }
 
-// Zrodla zwraca źródła okna od najnowszego, ewentualnie zawężone filtrem; wykaz pusty jest wynikiem prawidłowym, nie brakiem wiersza.
 func (r *repozytoriumPrzegladania) Zrodla(ctx context.Context,
 	filtr FiltrZrodelPrzegladania) ([]ZrodloPrzegladania, error) {
 
@@ -117,7 +112,7 @@ func (r *repozytoriumPrzegladania) Zrodla(ctx context.Context,
 	}
 	wiersze, err := polecenie.QueryContext(ctx, okno,
 		liczbaLogiczna(filtr.TylkoKluczowe), filtr.Zestaw, filtr.Zestaw,
-		filtr.Szukaj, wzorzec, wzorzec, granicaWykazu(filtr.Limit))
+		filtr.Szukaj, wzorzec, wzorzec, KontoOperatora(ctx), granicaWykazu(filtr.Limit))
 	if err != nil {
 		return nil, fmt.Errorf("dane: nie można odczytać źródeł przeglądania okna %q: %w", okno, err)
 	}
@@ -137,7 +132,6 @@ func (r *repozytoriumPrzegladania) Zrodla(ctx context.Context,
 	return lista, nil
 }
 
-// odczytajZrodloPrzegladania składa strukturę źródła z jednego wiersza wyniku zapytania, kolumna po kolumnie.
 func odczytajZrodloPrzegladania(wiersz skaner) (ZrodloPrzegladania, error) {
 	var zrodlo ZrodloPrzegladania
 	var tytul, migawkaZewnetrznaID, grupa sql.NullString

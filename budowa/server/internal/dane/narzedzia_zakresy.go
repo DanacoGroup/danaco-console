@@ -9,8 +9,6 @@ import (
 	"strings"
 )
 
-// ZakresNarzedzia to wiersz `narzedzie_zakres_profilu` wraz z zużyciem limitu
-// policzonym dla bieżącego okna czasu.
 type ZakresNarzedzia struct {
 	ProfilKod       string
 	NazwaPelna      string
@@ -19,21 +17,15 @@ type ZakresNarzedzia struct {
 	LimitWywolan    int
 	OknoSekund      int
 	ZuzyteWywolania int
-	// Dopuszczone niesie dopuszczalne wartości argumentów, po jednej pozycji.
-	Dopuszczone    []string
-	Uzasadnienie   string
-	Zaktualizowano string
+	Dopuszczone     []string
+	Uzasadnienie    string
+	Zaktualizowano  string
 }
 
-// RepozytoriumZakresowNarzedzi jest kontraktem zakresów narzędzi profilu asystenta i ich bieżącego zużycia.
 type RepozytoriumZakresowNarzedzi interface {
-	// ZakresyProfilu oddaje zakresy zapisane dla profilu; nazwa pusta zwraca komplet zakresów.
 	ZakresyProfilu(ctx context.Context, kodProfilu, nazwaPelna string) ([]ZakresNarzedzia, error)
-	// ZuzycieProfilu oddaje liczbę wywołań w bieżącym oknie czasu, po nazwie pełnej pozycji.
 	ZuzycieProfilu(ctx context.Context, kodProfilu, kodSesji string) (map[string]int, error)
-	// ZapiszZakresNarzedzia zakłada albo zmienia zakres i oddaje go po zapisie.
 	ZapiszZakresNarzedzia(ctx context.Context, zakres ZakresNarzedzia) (ZakresNarzedzia, error)
-	// OdnotujWywolanieNarzedzia dopisuje jedno wywołanie do rachunku limitu.
 	OdnotujWywolanieNarzedzia(ctx context.Context, kodProfilu, nazwaPelna, kodSesji string) error
 }
 
@@ -41,11 +33,13 @@ const (
 	kolumnyZakresuNarzedzia = `z.nazwa_pelna, z.dostepne, z.potwierdzenie, z.limit_wywolan,
 	                           z.okno_sekund, z.dopuszczone, z.uzasadnienie, z.zaktualizowano`
 
+	// Zakres i wywołanie nie niosą konta (migracja 484); granica idzie przez profil_asystenta.
 	zakresyNarzedziProfilu = `SELECT ` + kolumnyZakresuNarzedzia + `
 	                            FROM narzedzie_zakres_profilu z
 	                            JOIN profil_asystenta p ON p.id = z.profil_id
 	                           WHERE p.identyfikator_zewnetrzny = ?
 	                             AND (? = '' OR z.nazwa_pelna = ?)
+	                             AND ` + WarunekKonta + `
 	                           ORDER BY z.nazwa_pelna`
 
 	zapiszZakresNarzedziaProfilu = `INSERT INTO narzedzie_zakres_profilu
@@ -61,9 +55,6 @@ const (
 	        uzasadnienie = excluded.uzasadnienie,
 	        zaktualizowano = strftime('%Y-%m-%dT%H:%M:%fZ','now')`
 
-	// Zużycie liczy się w oknie czasu wyznaczonym przez sam zakres, więc okno
-	// wchodzi do zapytania z kolumny, a nie z parametru — dwa zakresy tej samej
-	// pozycji mieć nie mogą różnych okien, ale dwie pozycje mogą.
 	zuzycieZakresowNarzedzi = `SELECT z.nazwa_pelna, COUNT(w.id)
 	                             FROM narzedzie_zakres_profilu z
 	                             JOIN profil_asystenta p ON p.id = z.profil_id
@@ -74,22 +65,22 @@ const (
 	                                                              '-' || z.okno_sekund || ' seconds')
 	                                   AND (? = '' OR w.sesja_kod = ?)
 	                            WHERE p.identyfikator_zewnetrzny = ?
+	                              AND ` + WarunekKonta + `
 	                            GROUP BY z.nazwa_pelna`
 
 	wstawWywolanieNarzedzia = `INSERT INTO narzedzie_wywolanie (profil_id, nazwa_pelna, sesja_kod)
 	                           VALUES (?, ?, ?)`
 
-	// Sprzątanie idzie po najdłuższym oknie zapisanym dla tej pozycji, żeby nie
-	// zabrać wierszy, które ten sam zakres jeszcze liczy.
 	sprzatnijWywolaniaNarzedzia = `DELETE FROM narzedzie_wywolanie
 	                                WHERE profil_id = ? AND nazwa_pelna = ?
 	                                  AND wykonano < strftime('%Y-%m-%dT%H:%M:%fZ','now', '-' ||
 	                                      (SELECT COALESCE(MAX(okno_sekund), 3600)
 	                                         FROM narzedzie_zakres_profilu
 	                                        WHERE profil_id = ? AND nazwa_pelna = ?) || ' seconds')`
+
+	numerProfiluAsystenta = `SELECT id FROM profil_asystenta WHERE identyfikator_zewnetrzny = ? AND ` + WarunekKonta
 )
 
-// repozytoriumZakresowNarzedzi obsługuje zakresy narzędzi profilu asystenta zapisane w bazie danych rdzenia.
 type repozytoriumZakresowNarzedzi struct {
 	zapytania *zapytania
 	db        *sql.DB
@@ -97,20 +88,17 @@ type repozytoriumZakresowNarzedzi struct {
 
 var _ RepozytoriumZakresowNarzedzi = (*repozytoriumZakresowNarzedzi)(nil)
 
-// noweRepozytoriumZakresowNarzedzi wiąże zakresy narzędzi profilu z bazą danych całego tego zestawu repozytoriów.
 func noweRepozytoriumZakresowNarzedzi(z *zapytania, db *sql.DB) *repozytoriumZakresowNarzedzi {
 	return &repozytoriumZakresowNarzedzi{zapytania: z, db: db}
 }
 
-// numerProfiluZakresu przekłada kod profilu asystenta na klucz jego wiersza zapisany w bazie danych rdzenia.
 func (r *repozytoriumZakresowNarzedzi) numerProfiluZakresu(ctx context.Context, kod string) (int64, error) {
-	polecenie, err := r.zapytania.przygotuj(ctx,
-		`SELECT id FROM profil_asystenta WHERE identyfikator_zewnetrzny = ?`)
+	polecenie, err := r.zapytania.przygotuj(ctx, numerProfiluAsystenta)
 	if err != nil {
 		return 0, err
 	}
 	var id int64
-	switch err := polecenie.QueryRowContext(ctx, kod).Scan(&id); {
+	switch err := polecenie.QueryRowContext(ctx, kod, KontoOperatora(ctx)).Scan(&id); {
 	case err == sql.ErrNoRows:
 		return 0, ErrBrakWiersza
 	case err != nil:
@@ -119,7 +107,7 @@ func (r *repozytoriumZakresowNarzedzi) numerProfiluZakresu(ctx context.Context, 
 	return id, nil
 }
 
-// ZakresyProfilu oddaje zakresy narzędzi profilu wraz z ich bieżącym zużyciem ustalonego limitu wywołań.
+// ZakresyProfilu oddaje zakresy zapisane dla profilu; nazwa pusta zwraca komplet zakresów.
 func (r *repozytoriumZakresowNarzedzi) ZakresyProfilu(ctx context.Context,
 	kodProfilu, nazwaPelna string) ([]ZakresNarzedzia, error) {
 
@@ -127,7 +115,7 @@ func (r *repozytoriumZakresowNarzedzi) ZakresyProfilu(ctx context.Context,
 	if err != nil {
 		return nil, err
 	}
-	wiersze, err := polecenie.QueryContext(ctx, kodProfilu, nazwaPelna, nazwaPelna)
+	wiersze, err := polecenie.QueryContext(ctx, kodProfilu, nazwaPelna, nazwaPelna, KontoOperatora(ctx))
 	if err != nil {
 		return nil, fmt.Errorf("dane: nie można odczytać zakresów narzędzi profilu %q: %w", kodProfilu, err)
 	}
@@ -152,9 +140,7 @@ func (r *repozytoriumZakresowNarzedzi) ZakresyProfilu(ctx context.Context,
 	return zakresy, nil
 }
 
-// ZuzycieProfilu dolicza do zakresów liczbę wywołań w bieżącym oknie czasu.
-// Metoda osobna od odczytu, bo zużycie liczy się dla wskazanej karty sesji albo
-// dla wszystkich — a to jest pytanie wołającego, nie własność zakresu.
+// ZuzycieProfilu oddaje liczbę wywołań w bieżącym oknie czasu; kod sesji pusty liczy wszystkie karty.
 func (r *repozytoriumZakresowNarzedzi) ZuzycieProfilu(ctx context.Context,
 	kodProfilu, kodSesji string) (map[string]int, error) {
 
@@ -162,7 +148,7 @@ func (r *repozytoriumZakresowNarzedzi) ZuzycieProfilu(ctx context.Context,
 	if err != nil {
 		return nil, err
 	}
-	wiersze, err := polecenie.QueryContext(ctx, kodSesji, kodSesji, kodProfilu)
+	wiersze, err := polecenie.QueryContext(ctx, kodSesji, kodSesji, kodProfilu, KontoOperatora(ctx))
 	if err != nil {
 		return nil, fmt.Errorf("dane: nie można policzyć zużycia limitów profilu %q: %w", kodProfilu, err)
 	}
@@ -179,7 +165,7 @@ func (r *repozytoriumZakresowNarzedzi) ZuzycieProfilu(ctx context.Context,
 	return zuzycie, wiersze.Err()
 }
 
-// ZapiszZakresNarzedzia zakłada albo zmienia zakres pozycji katalogu narzędzi danego profilu asystenta.
+// ZapiszZakresNarzedzia zakłada albo zmienia zakres i oddaje go po zapisie.
 func (r *repozytoriumZakresowNarzedzi) ZapiszZakresNarzedzia(ctx context.Context,
 	zakres ZakresNarzedzia) (ZakresNarzedzia, error) {
 
@@ -208,8 +194,7 @@ func (r *repozytoriumZakresowNarzedzi) ZapiszZakresNarzedzia(ctx context.Context
 	return zapisane[0], nil
 }
 
-// OdnotujWywolanieNarzedzia dopisuje jedno wywołanie i sprząta wiersze spoza
-// okna. Bez tego zapisu limit byłby liczbą, której nikt nie zużywa.
+// OdnotujWywolanieNarzedzia dopisuje jedno wywołanie do rachunku limitu i sprząta wiersze spoza okna.
 func (r *repozytoriumZakresowNarzedzi) OdnotujWywolanieNarzedzia(ctx context.Context,
 	kodProfilu, nazwaPelna, kodSesji string) error {
 
@@ -234,8 +219,6 @@ func (r *repozytoriumZakresowNarzedzi) OdnotujWywolanieNarzedzia(ctx context.Con
 	return nil
 }
 
-// wartosciDopuszczoneZakresu rozbiera kolumnę na wycinek. Kolumna pusta znaczy
-// brak zawężenia i daje wycinek pusty, nie wycinek z jednym pustym napisem.
 func wartosciDopuszczoneZakresu(tresc string) []string {
 	przyciety := strings.TrimSpace(tresc)
 	if przyciety == "" {
@@ -251,9 +234,7 @@ func wartosciDopuszczoneZakresu(tresc string) []string {
 	return wynik
 }
 
-// wskaznikTekstuZakresu zamienia pusty napis na brak wartości: kolumna
-// `sesja_kod` niesie NULL dla wywołania spoza karty sesji, a pusty napis byłby
-// drugim sposobem powiedzenia tej samej rzeczy.
+// Kolumna `sesja_kod` niesie NULL dla wywołania spoza karty sesji (migracja 278).
 func wskaznikTekstuZakresu(wartosc string) *string {
 	if strings.TrimSpace(wartosc) == "" {
 		return nil

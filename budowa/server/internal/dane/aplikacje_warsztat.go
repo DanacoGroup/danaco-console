@@ -1,5 +1,5 @@
-// Plik prowadzi obszar Apps — plik warsztatu, trwałość okna Workspace modułu Apps; zapis jest operacją UPSERT po
-// kluczu okna, warstwy i ścieżki, więc tabela ma jeden wiersz na tę trójkę, a historii wersji nie prowadzi.
+// Plik warsztatu okna Workspace modułu Apps: tabela `plik_warsztatu_apps` trzyma jeden wiersz
+// na trójkę okno, warstwa, ścieżka; historii wersji nie prowadzi.
 package dane
 
 import (
@@ -11,8 +11,6 @@ import (
 	"danacoconsole/shared"
 )
 
-// PlikWarsztatu to wiersz tabeli `plik_warsztatu_apps` — bieżąca treść pliku
-// warstwy frontendu albo backendu produktu w oknie Apps.
 type PlikWarsztatu struct {
 	ID             int64
 	Okno           string
@@ -29,7 +27,6 @@ const (
 	kolumnyPlikuWarsztatu = `id, okno, warstwa, sciezka, tresc, rozmiar, komponent_id,
 	                         utworzono, zaktualizowano`
 
-	// UPSERT po kluczu okna, warstwy i ścieżki: zapis nadpisuje stan bieżący pliku warstwy, nie zakłada nowego wiersza historii.
 	zapiszPlikWarsztatuApps = `INSERT INTO plik_warsztatu_apps
 	                    (okno, warstwa, sciezka, tresc, rozmiar, komponent_id, konto_id)
 	                    VALUES (?, ?, ?, ?, ?, ?, ` + WskazanieKonta + `)
@@ -50,9 +47,6 @@ const (
 	                    ORDER BY warstwa, sciezka`
 )
 
-// ZapiszPlikWarsztatu zapisuje plik warstwy frontendu albo backendu produktu
-// jako stan bieżący (UPSERT po okno+warstwa+ścieżka) i zwraca wiersz po
-// zapisie, z rozmiarem i znacznikiem czasu policzonymi przez bazę.
 func (r *repozytoriumAplikacji) ZapiszPlikWarsztatu(ctx context.Context, plik PlikWarsztatu) (PlikWarsztatu, error) {
 	if plik.Okno == "" || plik.Sciezka == "" {
 		return PlikWarsztatu{}, fmt.Errorf("dane: plik warsztatu bez okna albo bez ścieżki")
@@ -80,8 +74,6 @@ func (r *repozytoriumAplikacji) ZapiszPlikWarsztatu(ctx context.Context, plik Pl
 	return r.jedenPlikWarsztatu(ctx, plik.Okno, plik.Warstwa, plik.Sciezka)
 }
 
-// PlikiWarsztatu zwraca wszystkie pliki warsztatu okna, obu warstw razem —
-// Workspace rozdziela je po stronie widoku po kolumnie `Warstwa`.
 func (r *repozytoriumAplikacji) PlikiWarsztatu(ctx context.Context, okno string) ([]PlikWarsztatu, error) {
 	polecenie, err := r.zapytania.przygotuj(ctx, listaPlikowWarsztatuApps)
 	if err != nil {
@@ -107,15 +99,12 @@ func (r *repozytoriumAplikacji) PlikiWarsztatu(ctx context.Context, okno string)
 	return lista, nil
 }
 
-// PlikWarsztatu oddaje na zewnątrz odczyt po kluczu naturalnym, wołając ten sam odczyt, którym repozytorium zwraca stan po zapisie.
 func (r *repozytoriumAplikacji) PlikWarsztatu(ctx context.Context, okno string,
 	warstwa shared.AppWorkspaceLayer, sciezka string) (PlikWarsztatu, error) {
 
 	return r.jedenPlikWarsztatu(ctx, okno, warstwa, sciezka)
 }
 
-// jedenPlikWarsztatu odczytuje wiersz po kluczu naturalnym — używane po
-// zapisie, żeby zwrócić stan policzony przez bazę (rozmiar, zaktualizowano).
 func (r *repozytoriumAplikacji) jedenPlikWarsztatu(ctx context.Context, okno string,
 	warstwa shared.AppWorkspaceLayer, sciezka string) (PlikWarsztatu, error) {
 
@@ -134,7 +123,6 @@ func (r *repozytoriumAplikacji) jedenPlikWarsztatu(ctx context.Context, okno str
 	return plik, nil
 }
 
-// odczytajPlikWarsztatu składa strukturę pliku warsztatu wprost z jednego wiersza wyniku zapytania SQL.
 func odczytajPlikWarsztatu(wiersz skaner) (PlikWarsztatu, error) {
 	var plik PlikWarsztatu
 	var warstwa string

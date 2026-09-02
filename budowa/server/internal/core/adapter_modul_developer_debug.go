@@ -1,7 +1,4 @@
-// Adapter obsługuje pięć komend okna Run & Debug: start sesji, sterowanie
-// krokami, punkt przerwania, odczyt zakresu i obliczenie wyrażenia. Punkt
-// przerwania jest trwały i leży w bazie, sesja jest żywa i istnieje
-// wyłącznie w pamięci rdzenia.
+// Adapter pięciu komend okna Run & Debug; punkt przerwania jest trwały w bazie, sesja żyje wyłącznie w pamięci rdzenia.
 package core
 
 import (
@@ -19,21 +16,13 @@ import (
 )
 
 const (
-	// przedrostekSesjiDebugowania znakuje identyfikator sesji Run & Debug,
-	// aby dziennik zdarzeń rdzenia odróżniał go od innych rodzajów identyfikatorów.
 	przedrostekSesjiDebugowania = "dbg-"
-	// przedrostekPunktuPrzerwania znakuje identyfikator punktu przerwania,
-	// aby dziennik zdarzeń rdzenia odróżniał go od innych rodzajów identyfikatorów.
 	przedrostekPunktuPrzerwania = "bpt-"
 )
 
-// czasPolaczeniaAdaptera jest granicą czekania na telefon od adaptera
-// debugowania. Adapter startuje w ułamku sekundy; granica jest tu po to, żeby
-// adapter, który się wywrócił, nie zawiesił okna na zawsze.
+// czasPolaczeniaAdaptera: adapter, który się wywrócił, nie może zawiesić okna.
 const czasPolaczeniaAdaptera = 20 * time.Second
 
-// sesjaDebugowania jest jednym biegiem debuggera wraz z uchwytami, bez których
-// nie da się go zatrzymać.
 type sesjaDebugowania struct {
 	kod     string
 	oknoKod string
@@ -43,8 +32,7 @@ type sesjaDebugowania struct {
 	klient  *klientDap
 	uchwyt  session.UchwytProcesu
 	drzewo  *session.DrzewoProcesu
-	// polaczenie niesie protokół z adapterem; Delve mówi wyłącznie po TCP,
-	// oba domyka się z sesją.
+	// Delve mówi wyłącznie po TCP; połączenie domyka się z sesją.
 	polaczenie net.Conn
 	nasluch    net.Listener
 
@@ -54,8 +42,6 @@ type sesjaDebugowania struct {
 	powodZatrzymania *string
 }
 
-// Migawka oddaje stan sesji odporny na równoległą zmianę: stan zmienia
-// obserwator zdarzeń, a czyta go obsługiwacz komendy.
 func (s *sesjaDebugowania) Migawka() shared.DebugSession {
 	s.mu.Lock()
 	defer s.mu.Unlock()
@@ -74,8 +60,6 @@ func (s *sesjaDebugowania) Migawka() shared.DebugSession {
 	return opis
 }
 
-// rejestrSesjiDebugowania trzyma sesje czynne jednego biegu rdzenia, chronione
-// przed równoczesnym dostępem z obsługiwacza komend i obserwatora zdarzeń.
 type rejestrSesjiDebugowania struct {
 	mu    sync.Mutex
 	sesje map[string]*sesjaDebugowania
@@ -98,8 +82,6 @@ func (r *rejestrSesjiDebugowania) Sesja(kod string) (*sesjaDebugowania, bool) {
 	return sesja, jest
 }
 
-// SesjeOkna oddaje sesje czynne w oknie. Pyta o to start, który ma zamknąć
-// poprzedni bieg, zanim otworzy następny.
 func (r *rejestrSesjiDebugowania) SesjeOkna(oknoKod string) []*sesjaDebugowania {
 	r.mu.Lock()
 	defer r.mu.Unlock()
@@ -118,8 +100,6 @@ func (r *rejestrSesjiDebugowania) Usun(kod string) {
 	delete(r.sesje, kod)
 }
 
-// Zamknij kończy sesje czynne w chwili zatrzymania rdzenia, aby żaden proces
-// debugowany nie został osierocony po zakończeniu rdzenia.
 func (r *rejestrSesjiDebugowania) Zamknij() {
 	if r == nil {
 		return
@@ -136,9 +116,7 @@ func (r *rejestrSesjiDebugowania) Zamknij() {
 	}
 }
 
-// Zakoncz zamyka rozmowę z adapterem i ubija całe drzewo jego procesów.
-// Debugger uruchamia proces debugowany jako potomka, więc ubicie samego adaptera
-// zostawiłoby program przy życiu — i przy zajętym porcie albo pliku.
+// Debugger uruchamia proces debugowany jako potomka: ubicie samego adaptera zostawiłoby program przy życiu.
 func (s *sesjaDebugowania) Zakoncz() {
 	if s.klient != nil {
 		_, _ = s.klient.Wolaj("disconnect", map[string]any{"terminateDebuggee": true})
@@ -161,8 +139,6 @@ func (s *sesjaDebugowania) Zakoncz() {
 	s.mu.Unlock()
 }
 
-// UruchomDebugowanie obsługuje `developer.debug.session.start`, zamykając
-// sesję poprzednią, jeśli okno miało już jedną czynną.
 func (a *adapterDevelopera) UruchomDebugowanie(ctx context.Context,
 	z shared.DeveloperDebugSessionStartRequest) (shared.DeveloperDebugSessionStartResponse, error) {
 
@@ -179,8 +155,7 @@ func (a *adapterDevelopera) UruchomDebugowanie(ctx context.Context,
 			"okno " + z.WindowId + " nie ma katalogu roboczego, więc nie ma czego debugować")
 	}
 
-	// Na okno przypada jedna sesja naraz: dwie wpisywałyby się na przemian
-	// w jeden stos i panel.
+	// Na okno przypada jedna sesja naraz.
 	for _, poprzednia := range a.sesjeDebugowania.SesjeOkna(okno.Id) {
 		poprzednia.Zakoncz()
 		a.sesjeDebugowania.Usun(poprzednia.kod)
@@ -205,8 +180,7 @@ func (a *adapterDevelopera) UruchomDebugowanie(ctx context.Context,
 				" nie jest zainstalowany po stronie serwera")
 	}
 
-	// Nasłuch zakłada rdzeń, adapter dzwoni do niego; port wybiera jądro,
-	// sesje nie zderzą się o numer.
+	// Nasłuch zakłada rdzeń, adapter dzwoni do niego; port wybiera jądro.
 	nasluch, err := net.Listen("tcp", "127.0.0.1:0")
 	if err != nil {
 		return shared.DeveloperDebugSessionStartResponse{}, bladWykonaniaDevelopera(
@@ -223,7 +197,7 @@ func (a *adapterDevelopera) UruchomDebugowanie(ctx context.Context,
 		return shared.DeveloperDebugSessionStartResponse{}, bladWykonaniaDevelopera(
 			"serwer nie ma uruchamiacza procesów")
 	}
-	uchwyt, err := a.uruchamiacz.UruchomProces(okno, polecenie)
+	uchwyt, err := a.uruchamiacz.UruchomProces(ctx, okno, polecenie)
 	if err != nil {
 		_ = nasluch.Close()
 		return shared.DeveloperDebugSessionStartResponse{}, bladZasobuDevelopera(
@@ -239,8 +213,7 @@ func (a *adapterDevelopera) UruchomDebugowanie(ctx context.Context,
 			"nie można objąć drzewa procesu debugowania: " + err.Error())
 	}
 
-	// Adapter, który nie zadzwonił, najczęściej nie wystartował; odmowa niesie
-	// wtedy jego diagnostykę.
+	// Adapter, który nie zadzwonił, nie wystartował; odmowa niesie jego diagnostykę.
 	if err := nasluch.(*net.TCPListener).SetDeadline(
 		time.Now().Add(czasPolaczeniaAdaptera)); err != nil {
 		_ = nasluch.Close()
@@ -280,8 +253,6 @@ func (a *adapterDevelopera) UruchomDebugowanie(ctx context.Context,
 	return shared.DeveloperDebugSessionStartResponse{Session: sesja.Migawka()}, nil
 }
 
-// rozpocznijRozmoweZAdapterem prowadzi sekwencję startową protokołu:
-// `initialize`, `launch`, punkty przerwania, `configurationDone`.
 func (a *adapterDevelopera) rozpocznijRozmoweZAdapterem(ctx context.Context,
 	sesja *sesjaDebugowania, okno session.Okno, program string,
 	z shared.DeveloperDebugSessionStartRequest) error {
@@ -322,9 +293,7 @@ func (a *adapterDevelopera) rozpocznijRozmoweZAdapterem(ctx context.Context,
 	return nil
 }
 
-// podajPunktyAdapterowi wysyła komplet punktów okna, plik po pliku. Protokół
-// zna wyłącznie cały wykaz punktów pliku naraz, a nie pojedyncze dodanie, więc
-// każde ustawienie zastępuje wykaz pliku w całości i punkty grupuje się po plikach.
+// Protokół DAP zna wyłącznie cały wykaz punktów pliku naraz, więc każde ustawienie zastępuje wykaz pliku.
 func (a *adapterDevelopera) podajPunktyAdapterowi(ctx context.Context,
 	sesja *sesjaDebugowania, oknoKod string) error {
 
@@ -342,16 +311,13 @@ func (a *adapterDevelopera) podajPunktyAdapterowi(ctx context.Context,
 	for sciezka, zestaw := range wedlugPlikow {
 		if _, err := sesja.klient.Wolaj("setBreakpoints",
 			zadanieUstawieniaPunktow(sciezka, zestaw)); err != nil {
-			// Plik nieznany adapterowi nie zatrzymuje startu sesji: punkt bywa
-			// postawiony poza tym biegiem.
+			// Plik nieznany adapterowi nie zatrzymuje startu sesji.
 			continue
 		}
 	}
 	return nil
 }
 
-// zadanieUstawieniaPunktow składa argumenty `setBreakpoints` dla jednego pliku
-// z kompletu punktów przerwania zgrupowanych po ścieżce.
 func zadanieUstawieniaPunktow(sciezka string, punkty []dane.PunktPrzerwania) map[string]any {
 	wykaz := make([]map[string]any, 0, len(punkty))
 	for _, punkt := range punkty {
@@ -373,10 +339,7 @@ func zadanieUstawieniaPunktow(sciezka string, punkty []dane.PunktPrzerwania) map
 	}
 }
 
-// pilnujZdarzenDebugowania przepisuje zdarzenia adaptera na stan sesji.
-//
-// Obserwator pracuje poza żądaniem: program zatrzymuje się na punkcie wtedy,
-// gdy do niego dojdzie, a nie wtedy, gdy ktoś o to zapyta.
+// Obserwator pracuje poza żądaniem: program zatrzymuje się na punkcie, gdy do niego dojdzie.
 func (a *adapterDevelopera) pilnujZdarzenDebugowania(sesja *sesjaDebugowania) {
 	for zdarzenie := range sesja.klient.Zdarzenia() {
 		switch zdarzenie.Event {
@@ -404,15 +367,12 @@ func (a *adapterDevelopera) pilnujZdarzenDebugowania(sesja *sesjaDebugowania) {
 			sesja.mu.Unlock()
 		}
 	}
-	// Kanał zamknięty znaczy adaptera, który przestał mówić: sesja jest
-	// skończona niezależnie.
+	// Kanał zamknięty znaczy adapter, który przestał mówić.
 	sesja.mu.Lock()
 	sesja.stan = shared.DebugStatusTerminated
 	sesja.mu.Unlock()
 }
 
-// SterujDebugowaniem obsługuje `developer.debug.session.control`, tłumacząc
-// krok kontraktu na komendę protokołu i uaktualniając stan sesji.
 func (a *adapterDevelopera) SterujDebugowaniem(_ context.Context,
 	z shared.DeveloperDebugSessionControlRequest) (shared.DeveloperDebugSessionControlResponse, error) {
 
@@ -450,8 +410,6 @@ func (a *adapterDevelopera) SterujDebugowaniem(_ context.Context,
 	return shared.DeveloperDebugSessionControlResponse{Session: sesja.Migawka()}, nil
 }
 
-// komendaKrokuDebugowania przekłada krok kontraktu na komendę protokołu
-// obsługiwaną przez adapter debugowania.
 func komendaKrokuDebugowania(krok shared.DebugStepKind) (string, bool) {
 	switch krok {
 	case shared.DebugStepKindContinue:
@@ -471,8 +429,6 @@ func komendaKrokuDebugowania(krok shared.DebugStepKind) (string, bool) {
 	}
 }
 
-// numerWatku ustala wątek kroku: wskazany w żądaniu, a gdy go nie ma — ten,
-// na którym program się zatrzymał.
 func numerWatku(zadany *string, sesja *sesjaDebugowania) (int, bool) {
 	wskazanie := ""
 	if zadany != nil {
@@ -492,11 +448,7 @@ func numerWatku(zadany *string, sesja *sesjaDebugowania) (int, bool) {
 	return numer, true
 }
 
-// UstawPunktPrzerwania obsługuje `developer.breakpoint.set`.
-//
-// Odpowiedź niesie KOMPLET punktów okna, nie sam punkt zmieniony: margines Code
-// Editora rysuje wszystkie naraz, a odpowiedź z jednym punktem kazałaby oknu
-// zgadywać, co stało się z pozostałymi.
+// Odpowiedź niesie komplet punktów okna: margines Code Editora rysuje wszystkie naraz.
 func (a *adapterDevelopera) UstawPunktPrzerwania(ctx context.Context,
 	z shared.DeveloperBreakpointSetRequest) (shared.DeveloperBreakpointSetResponse, error) {
 
@@ -549,8 +501,6 @@ func (a *adapterDevelopera) UstawPunktPrzerwania(ctx context.Context,
 			"nie można odczytać punktów przerwania okna: " + err.Error())
 	}
 
-	// Sesja czynna dostaje zmieniony wykaz od razu; punkt nieznany adapterowi
-	// jest znacznikiem w oknie.
 	a.dosleZmienionePunkty(okno.Id, sciezka, punkty)
 
 	wykaz := make([]shared.Breakpoint, 0, len(punkty))
@@ -569,8 +519,6 @@ func (a *adapterDevelopera) UstawPunktPrzerwania(ctx context.Context,
 	return shared.DeveloperBreakpointSetResponse{Breakpoints: wykaz}, nil
 }
 
-// dosleZmienionePunkty podaje sesjom czynnym w oknie nowy wykaz punktów pliku,
-// żeby zmiana marginesu edytora dotarła do procesu debugowanego bez opóźnienia.
 func (a *adapterDevelopera) dosleZmienionePunkty(oknoKod, sciezka string,
 	punkty []dane.PunktPrzerwania) {
 
@@ -585,9 +533,7 @@ func (a *adapterDevelopera) dosleZmienionePunkty(oknoKod, sciezka string,
 	}
 }
 
-// ZakresDebugowania obsługuje `developer.debug.scope.get`. Jedna komenda oddaje
-// ramki, zakresy i zmienne naraz, ponieważ okno rysuje stos wywołań i drzewo
-// zmiennych w tej samej chwili; trzy osobne odpytania dałyby trzy różne stany.
+// Jedna komenda oddaje ramki, zakresy i zmienne naraz: okno rysuje stos i drzewo zmiennych w tej samej chwili.
 func (a *adapterDevelopera) ZakresDebugowania(_ context.Context,
 	z shared.DeveloperDebugScopeGetRequest) (shared.DeveloperDebugScopeGetResponse, error) {
 
@@ -596,8 +542,6 @@ func (a *adapterDevelopera) ZakresDebugowania(_ context.Context,
 		return shared.DeveloperDebugScopeGetResponse{}, err
 	}
 
-	// Odpytanie o zmienne po odwołaniu jest osobną drogą: rozwija gałąź drzewa
-	// bez przerysowania stosu.
 	if z.VariablesRef != nil && strings.TrimSpace(*z.VariablesRef) != "" {
 		zmienne, err := zmienneZOdwolania(sesja, *z.VariablesRef)
 		if err != nil {
@@ -668,8 +612,6 @@ func (a *adapterDevelopera) ZakresDebugowania(_ context.Context,
 	}, nil
 }
 
-// zakresyRamki odczytuje zakresy wybranej ramki wraz z ich zmiennymi,
-// pomijając rozwinięcie zakresów kosztownych obliczeniowo.
 func zakresyRamki(sesja *sesjaDebugowania, ramka string) ([]shared.DebugScope, []shared.DebugVariable) {
 	zakresy := make([]shared.DebugScope, 0, 4)
 	zmienne := make([]shared.DebugVariable, 0, 16)
@@ -700,8 +642,7 @@ func zakresyRamki(sesja *sesjaDebugowania, ramka string) ([]shared.DebugScope, [
 			VariablesRef: odwolanie,
 			FrameId:      wskaznikTekstu(ramka),
 		})
-		// Zakres kosztowny zostaje bez rozwinięcia: wciągnięcie go wstrzymywałoby
-		// odpowiedź na każdym kroku.
+		// Zakres kosztowny zostaje bez rozwinięcia: wstrzymywałby odpowiedź na każdym kroku.
 		if zakres.Expensive {
 			continue
 		}
@@ -712,8 +653,6 @@ func zakresyRamki(sesja *sesjaDebugowania, ramka string) ([]shared.DebugScope, [
 	return zakresy, zmienne
 }
 
-// zmienneZOdwolania odczytuje zmienne spod jednego odwołania adaptera,
-// znakując wartości proste jako edytowalne w miejscu.
 func zmienneZOdwolania(sesja *sesjaDebugowania, odwolanie string) ([]shared.DebugVariable, error) {
 	numer, err := strconv.Atoi(strings.TrimSpace(odwolanie))
 	if err != nil {
@@ -741,8 +680,7 @@ func zmienneZOdwolania(sesja *sesjaDebugowania, odwolanie string) ([]shared.Debu
 		}
 		if zmienna.VariablesReference > 0 {
 			opis.VariablesRef = wskaznikTekstu(strconv.Itoa(zmienna.VariablesReference))
-			// Zmienna z odwołaniem ma zawartość do rozwinięcia, więc edycja
-			// w miejscu jej nie dotyczy.
+			// Zmienna z odwołaniem ma zawartość do rozwinięcia; edycja w miejscu jej nie dotyczy.
 		} else {
 			opis.Editable = wskaznikPrawdy(true)
 		}
@@ -751,9 +689,7 @@ func zmienneZOdwolania(sesja *sesjaDebugowania, odwolanie string) ([]shared.Debu
 	return zmienne, nil
 }
 
-// ObliczWyrazenie obsługuje `developer.debug.evaluate`. Ta sama komenda służy
-// konsoli debugowania i edycji wartości w trakcie zatrzymania: `assignTo`
-// zamienia pytanie w przypisanie i idzie tą samą drogą protokołu.
+// assignTo zamienia pytanie w przypisanie tą samą drogą protokołu.
 func (a *adapterDevelopera) ObliczWyrazenie(_ context.Context,
 	z shared.DeveloperDebugEvaluateRequest) (shared.DeveloperDebugEvaluateResponse, error) {
 
@@ -801,8 +737,6 @@ func (a *adapterDevelopera) ObliczWyrazenie(_ context.Context,
 	return wynik, nil
 }
 
-// sesjaDebugowaniaZadania odnajduje sesję wskazaną w żądaniu i zgłasza błąd,
-// gdy sesja o podanym kodzie nie jest czynna.
 func (a *adapterDevelopera) sesjaDebugowaniaZadania(kod string) (*sesjaDebugowania, error) {
 	wskazanie := strings.TrimSpace(kod)
 	if wskazanie == "" {

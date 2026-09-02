@@ -11,9 +11,7 @@ import (
 	"danacoconsole/shared"
 )
 
-// Nadanie to wiersz tabeli `nadanie_dostepu` wraz z listą korzeni. Lista pusta
-// znaczy „komplet korzeni punktu", zgodnie z opisem pola `roots` struktury
-// AccessGrant kontraktu.
+// Lista korzeni pusta znaczy „komplet korzeni punktu" — opis pola `roots` struktury AccessGrant kontraktu.
 type Nadanie struct {
 	ID                int64
 	OknoKomunikacjiID int64
@@ -28,7 +26,6 @@ type Nadanie struct {
 	Utworzono               string
 }
 
-// RepozytoriumNadan jest kontraktem obszaru nadań dostępu, określającym operacje dostępne na tabeli nadań.
 type RepozytoriumNadan interface {
 	ListaOkna(ctx context.Context, oknoID int64, tylkoAktywne bool) ([]Nadanie, error)
 	Pobierz(ctx context.Context, id int64) (Nadanie, error)
@@ -39,18 +36,31 @@ type RepozytoriumNadan interface {
 	Usun(ctx context.Context, id int64) error
 }
 
-const (
+// Tabele `nadanie_dostepu` i `okno_komunikacji` konta nie niosą (krok 484 ich nie
+// objął): granica dochodzi do nadania przez okno → sesja → `karta_sesji.konto_id` (migracja 407).
+var (
+	lancuchKontaOknaNadania = ` FROM okno_komunikacji o
+	                            JOIN sesja s ON s.id = o.sesja_id
+	                            JOIN karta_sesji k ON k.id = s.karta_sesji_id
+	                            WHERE o.id = `
+
+	kontoNadania = `EXISTS (SELECT 1` + lancuchKontaOknaNadania + `nadanie_dostepu.okno_komunikacji_id
+	                          AND ` + warunekKontaKartySesji + `)`
+
+	kontoOknaNadan = `EXISTS (SELECT 1` + lancuchKontaOknaNadania + `? AND ` + warunekKontaKartySesji + `)`
+
 	kolumnyNadania = `id, okno_komunikacji_id, punkt_dostepu_id, tryb, kolejnosc, glowne,
 	                  aktywne, identyfikator_zewnetrzny, utworzono`
 
 	listaNadanOkna = `SELECT ` + kolumnyNadania + ` FROM nadanie_dostepu
-	                  WHERE okno_komunikacji_id = ? AND (? = 0 OR aktywne = 1)
+	                  WHERE okno_komunikacji_id = ? AND (? = 0 OR aktywne = 1) AND ` + kontoNadania + `
 	                  ORDER BY kolejnosc, id`
 
-	pobierzNadanie = `SELECT ` + kolumnyNadania + ` FROM nadanie_dostepu WHERE id = ?`
+	pobierzNadanie = `SELECT ` + kolumnyNadania + ` FROM nadanie_dostepu
+	                  WHERE id = ? AND ` + kontoNadania
 
 	nadaniePoIdentyfikatorze = `SELECT ` + kolumnyNadania + ` FROM nadanie_dostepu
-	                            WHERE identyfikator_zewnetrzny = ?`
+	                            WHERE identyfikator_zewnetrzny = ? AND ` + kontoNadania
 )
 
 type repozytoriumNadan struct {
@@ -58,17 +68,12 @@ type repozytoriumNadan struct {
 	db        *sql.DB
 }
 
-// Zgodność implementacji z kontraktem sprawdzana jest przy kompilacji, a nie
-// dopiero przy złożeniu zestawu repozytoriów.
 var _ RepozytoriumNadan = (*repozytoriumNadan)(nil)
 
-// noweRepozytoriumNadan zakłada repozytorium nadań dostępu na przekazanym połączeniu z bazą danych SQL.
 func noweRepozytoriumNadan(z *zapytania, db *sql.DB) *repozytoriumNadan {
 	return &repozytoriumNadan{zapytania: z, db: db}
 }
 
-// ListaOkna zwraca zbiór nadań jednego okna w kolejności zapisanej przez
-// Operatora. Zbiór pusty nie jest błędem.
 func (r *repozytoriumNadan) ListaOkna(ctx context.Context, oknoID int64,
 	tylkoAktywne bool) ([]Nadanie, error) {
 
@@ -76,7 +81,7 @@ func (r *repozytoriumNadan) ListaOkna(ctx context.Context, oknoID int64,
 	if err != nil {
 		return nil, err
 	}
-	wiersze, err := polecenie.QueryContext(ctx, oknoID, liczbaLogiczna(tylkoAktywne))
+	wiersze, err := polecenie.QueryContext(ctx, oknoID, liczbaLogiczna(tylkoAktywne), KontoOperatora(ctx))
 	if err != nil {
 		return nil, fmt.Errorf("dane: nie można odczytać nadań okna %d: %w", oknoID, err)
 	}
@@ -101,17 +106,14 @@ func (r *repozytoriumNadan) ListaOkna(ctx context.Context, oknoID int64,
 	return lista, nil
 }
 
-// Pobierz zwraca nadanie dostępu wskazane kluczem głównym wiersza tabeli nadania dostępu w bazie danych.
 func (r *repozytoriumNadan) Pobierz(ctx context.Context, id int64) (Nadanie, error) {
 	return r.jedno(ctx, pobierzNadanie, fmt.Sprintf("%d", id), id)
 }
 
-// PoIdentyfikatorze zwraca nadanie dostępu wskazane identyfikatorem tekstowym nadania po stronie rdzenia.
 func (r *repozytoriumNadan) PoIdentyfikatorze(ctx context.Context, identyfikator string) (Nadanie, error) {
 	return r.jedno(ctx, nadaniePoIdentyfikatorze, fmt.Sprintf("%q", identyfikator), identyfikator)
 }
 
-// jedno odczytuje pojedyncze nadanie dostępu wraz z przypisanymi mu korzeniami zapisanego punktu dostępu.
 func (r *repozytoriumNadan) jedno(ctx context.Context, zapytanie, opis string,
 	argument any) (Nadanie, error) {
 
@@ -119,7 +121,7 @@ func (r *repozytoriumNadan) jedno(ctx context.Context, zapytanie, opis string,
 	if err != nil {
 		return Nadanie{}, err
 	}
-	nadanie, err := odczytajNadanie(polecenie.QueryRowContext(ctx, argument))
+	nadanie, err := odczytajNadanie(polecenie.QueryRowContext(ctx, argument, KontoOperatora(ctx)))
 	if errors.Is(err, sql.ErrNoRows) {
 		return Nadanie{}, fmt.Errorf("dane: nadanie dostępu %s nie istnieje: %w", opis, ErrBrakWiersza)
 	}
@@ -132,13 +134,10 @@ func (r *repozytoriumNadan) jedno(ctx context.Context, zapytanie, opis string,
 	return nadanie, nil
 }
 
-// korzenieNadania zwraca zawężenie korzeni punktu dostępu, jakie zostało zapisane przy konkretnym nadaniu.
 func (r *repozytoriumNadan) korzenieNadania(ctx context.Context, nadanieID int64) ([]string, error) {
-	return wczytajKorzenie(ctx, r.zapytania, listaKorzeniNadania, nadanieID, "nadania")
+	return wczytajKorzenie(ctx, r.zapytania, listaKorzeniNadania, nadanieID, "nadania", KontoOperatora(ctx))
 }
 
-// odczytajNadanie składa strukturę z jednego wiersza wyniku. Korzenie dokłada
-// repozytorium — leżą w tabeli podrzędnej.
 func odczytajNadanie(wiersz skaner) (Nadanie, error) {
 	var nadanie Nadanie
 	var identyfikator sql.NullString

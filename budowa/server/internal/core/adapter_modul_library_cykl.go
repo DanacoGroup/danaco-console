@@ -39,7 +39,7 @@ func (a *adapterBiblioteki) PrzeniesZasoby(ctx context.Context,
 	for _, plik := range pliki {
 		a.odnotuj(ctx, shared.LibraryAuditActionChange, wskazanieBiblioteki(plik.Id),
 			"przeniesienie pod ścieżkę "+sciezka)
-		a.zglosNasluchom(shared.LibraryWebhookEventFileChanged, plik.Id)
+		a.zglosNasluchom(ctx, shared.LibraryWebhookEventFileChanged, plik.Id)
 	}
 	return shared.LibraryFileMoveResponse{MovedCount: len(pliki), Files: pliki}, nil
 }
@@ -60,7 +60,7 @@ func (a *adapterBiblioteki) ZarchiwizujZasoby(ctx context.Context,
 	}
 	for _, plik := range pliki {
 		a.odnotuj(ctx, shared.LibraryAuditActionArchive, wskazanieBiblioteki(plik.Id), opis)
-		a.zglosNasluchom(shared.LibraryWebhookEventFileArchived, plik.Id)
+		a.zglosNasluchom(ctx, shared.LibraryWebhookEventFileArchived, plik.Id)
 	}
 	return shared.LibraryFileArchiveResponse{ArchivedCount: len(pliki), Files: pliki}, nil
 }
@@ -77,7 +77,7 @@ func (a *adapterBiblioteki) PrzywrocZasoby(ctx context.Context,
 	for _, plik := range pliki {
 		a.odnotuj(ctx, shared.LibraryAuditActionRestore, wskazanieBiblioteki(plik.Id),
 			"przywrócenie z archiwum")
-		a.zglosNasluchom(shared.LibraryWebhookEventFileRestored, plik.Id)
+		a.zglosNasluchom(ctx, shared.LibraryWebhookEventFileRestored, plik.Id)
 	}
 	return shared.LibraryFileRestoreResponse{RestoredCount: len(pliki), Files: pliki}, nil
 }

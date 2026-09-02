@@ -1,6 +1,5 @@
-// Warstwa danych obsługuje zasoby wizualne obszaru Assets Panel modułu
-// Design: tabele zasob_design i etykieta_zasobu_design, stronicowanie
-// wyników, filtrowanie po etykietach i zarządzanie etykietami zasobu.
+// Odpowiedzialność pliku: zasoby Assets Panel modułu Design — tabele zasob_design
+// i etykieta_zasobu_design, stronicowanie, filtr po etykietach, etykiety zasobu.
 package dane
 
 import (
@@ -11,19 +10,16 @@ import (
 	"strings"
 )
 
-// ZasobDesignu to wiersz tabeli `zasob_design`. PromptID niesie wskaźnik, bo
-// `prompt_id` dopuszcza NULL (ON DELETE SET NULL) — zasób przeżywa usunięcie
-// promptu, z którego powstał.
+// PromptID jest wskaźnikiem, bo `prompt_id` dopuszcza NULL (ON DELETE SET NULL).
 type ZasobDesignu struct {
-	ID       int64
-	Kod      string
-	Okno     string
-	Nazwa    *string
-	Rodzaj   string
-	Format   *string
-	URI      *string
-	PromptID *int64
-	// PromptKod niesie identyfikator zewnętrzny promptu, PromptID jest kluczem wiersza.
+	ID              int64
+	Kod             string
+	Okno            string
+	Nazwa           *string
+	Rodzaj          string
+	Format          *string
+	URI             *string
+	PromptID        *int64
 	PromptKod       *string
 	WariantZasobuID *string
 	Ulubiony        bool
@@ -32,10 +28,7 @@ type ZasobDesignu struct {
 	Utworzono       string
 }
 
-// FiltrZasobow niesie dokładnie to, czego wymaga `design.asset.list`
-// (`DesignAssetListRequest`): okno, rodzaj, etykiety (koniunkcja), wyłącznie
-// ulubione i granicę strony. Brak okna znaczy „wszystkie okna” — pole jest
-// opcjonalne w żądaniu.
+// FiltrZasobow odpowiada `DesignAssetListRequest`; brak okna znaczy wszystkie okna.
 type FiltrZasobow struct {
 	Okno          *string
 	Rodzaj        *string
@@ -52,9 +45,8 @@ const (
 	                       z.wariant_zasobu_id, z.ulubiony,
 	                       z.szerokosc, z.wysokosc, z.utworzono`
 
-	// Zapis zakłada zasób albo nadpisuje zastany po identyfikatorze
-	// zewnętrznym — regeneracja tego samego wariantu (np. ponowny odczyt po
-	// zakończeniu procesu generowania) jest normalną ścieżką, nie usterką.
+	// Ponowny zapis tego samego kodu jest zwykłą ścieżką regeneracji wariantu; WHERE przy DO UPDATE
+	// zostawia wiersz cudzego konta nietknięty i zapis kończy się ErrKolizjaWiersza.
 	zapiszZasobDesign = `INSERT INTO zasob_design
 	                     (identyfikator_zewnetrzny, okno, nazwa, rodzaj, format, uri,
 	                      prompt_id, wariant_zasobu_id, ulubiony, szerokosc, wysokosc, konto_id)
@@ -84,18 +76,16 @@ const (
 	listaEtykietZasobuDesign = `SELECT etykieta FROM etykieta_zasobu_design
 	                            WHERE zasob_id = ? ORDER BY etykieta`
 
-	// Oznaczenie ulubionego w zasobie jest zapisem jednej kolumny bazy; reszta
-	// wiersza zostaje przy tej operacji nietknięta.
-	ustawUlubionyZasobuDesign = `UPDATE zasob_design SET ulubiony = ? WHERE id = ?`
+	ustawUlubionyZasobuDesign = `UPDATE zasob_design SET ulubiony = ? WHERE id = ? AND ` + WarunekKonta
 
-	// Zapytanie usuwa zasób po identyfikatorze zewnętrznym; powiązane etykiety
-	// usuwają się kaskadowo przez ON DELETE CASCADE kolumny zasob_id.
-	usunZasobDesign = `DELETE FROM zasob_design WHERE identyfikator_zewnetrzny = ?`
+	// Etykiety zasobu schodzą kaskadą (ON DELETE CASCADE kolumny zasob_id).
+	usunZasobDesign = `DELETE FROM zasob_design WHERE identyfikator_zewnetrzny = ? AND ` + WarunekKonta
+
+	// Sondy bez warunku konta odróżniają wiersz cudzego konta (kolizja) od braku wiersza.
+	zastanyZasobDesignPoId     = `SELECT 1 FROM zasob_design WHERE id = ?`
+	zastanyZasobDesignPoKodzie = `SELECT 1 FROM zasob_design WHERE identyfikator_zewnetrzny = ?`
 )
 
-// ZapiszZasob zakłada zasób albo nadpisuje zastany po identyfikatorze
-// zewnętrznym i zwraca stan po zapisie — obsługuje część zasobową
-// `design.asset.generate`.
 func (r *repozytoriumDesignu) ZapiszZasob(ctx context.Context, zasob ZasobDesignu) (ZasobDesignu, error) {
 	if zasob.Kod == "" {
 		return ZasobDesignu{}, fmt.Errorf("dane: zasob design bez identyfikatora")
@@ -110,7 +100,7 @@ func (r *repozytoriumDesignu) ZapiszZasob(ctx context.Context, zasob ZasobDesign
 	if err != nil {
 		return ZasobDesignu{}, err
 	}
-	// Szerokosc i Wysokosc niesie kontrakt jako *int, kolumna wymaga *int64.
+	// Kontrakt niesie wymiary jako *int, kolumna wymaga int64.
 	var szerokosc, wysokosc any
 	if zasob.Szerokosc != nil {
 		szerokosc = int64(*zasob.Szerokosc)
@@ -129,20 +119,12 @@ func (r *repozytoriumDesignu) ZapiszZasob(ctx context.Context, zasob ZasobDesign
 	if err != nil {
 		return ZasobDesignu{}, fmt.Errorf("dane: nie można zapisać zasobu design %q: %w", zasob.Kod, err)
 	}
-	zmienione, err := wynik.RowsAffected()
-	if err != nil {
-		return ZasobDesignu{}, fmt.Errorf("dane: nieznana liczba zapisanych zasobów design: %w", err)
-	}
-	if zmienione == 0 {
-		return ZasobDesignu{}, fmt.Errorf("dane: zasób design %q należy do innego konta: %w",
-			zasob.Kod, ErrKolizjaWiersza)
+	if err := sprawdzTrafienieZapisu(wynik, "zasób design", zasob.Kod); err != nil {
+		return ZasobDesignu{}, err
 	}
 	return r.Zasob(ctx, zasob.Kod)
 }
 
-// Zasoby zwraca stronę zasobów spełniających filtr (od najnowszych) oraz
-// liczbę wszystkich zasobów spełniających ten sam filtr, bez przycięcia
-// limitem — druga wartość zasila `DesignAssetListResponse.Total`.
 func (r *repozytoriumDesignu) Zasoby(ctx context.Context, filtr FiltrZasobow) ([]ZasobDesignu, int, error) {
 	warunki, argumenty := warunkiFiltruZasobow(ctx, filtr)
 
@@ -182,10 +164,7 @@ func (r *repozytoriumDesignu) Zasoby(ctx context.Context, filtr FiltrZasobow) ([
 	return lista, razem, nil
 }
 
-// warunkiFiltruZasobow składa klauzulę WHERE i listę argumentów wspólną dla
-// stronicowanego odczytu i liczenia całości — dwa zapytania muszą widzieć
-// dokładnie te same warunki, inaczej Total i długość strony rozjadą się
-// pozornie losowo.
+// Strona i `Total` muszą iść po tych samych warunkach, inaczej rozjadą się pozornie losowo.
 func warunkiFiltruZasobow(ctx context.Context, filtr FiltrZasobow) (string, []any) {
 	warunki := []string{WarunekKonta}
 	argumenty := []any{KontoOperatora(ctx)}
@@ -202,7 +181,7 @@ func warunkiFiltruZasobow(ctx context.Context, filtr FiltrZasobow) (string, []an
 		warunki = append(warunki, "z.ulubiony = 1")
 	}
 	if len(filtr.Etykiety) > 0 {
-		// Zasób musi nieść wszystkie wskazane etykiety — filtr jest koniunkcją, nie sumą zbiorów.
+		// Filtr etykiet jest koniunkcją, nie sumą zbiorów.
 		zaslepki := strings.TrimSuffix(strings.Repeat("?,", len(filtr.Etykiety)), ",")
 		warunki = append(warunki, fmt.Sprintf(
 			`z.id IN (SELECT zasob_id FROM etykieta_zasobu_design
@@ -218,8 +197,6 @@ func warunkiFiltruZasobow(ctx context.Context, filtr FiltrZasobow) (string, []an
 	return " WHERE " + strings.Join(warunki, " AND "), argumenty
 }
 
-// UstawEtykietyZasobu zastępuje komplet etykiet zasobu nadesłanym zestawem
-// w jednej transakcji, usuwając zastane i wstawiając nowe etykiety.
 func (r *repozytoriumDesignu) UstawEtykietyZasobu(ctx context.Context,
 	zasobID int64, etykiety []string) error {
 
@@ -248,8 +225,6 @@ func (r *repozytoriumDesignu) UstawEtykietyZasobu(ctx context.Context,
 	})
 }
 
-// EtykietyZasobu zwraca etykiety zasobu wskazanego kluczem wiersza w porządku
-// alfabetycznym, odczytane z tabeli etykieta_zasobu_design.
 func (r *repozytoriumDesignu) EtykietyZasobu(ctx context.Context, zasobID int64) ([]string, error) {
 	polecenie, err := r.zapytania.przygotuj(ctx, listaEtykietZasobuDesign)
 	if err != nil {
@@ -275,10 +250,6 @@ func (r *repozytoriumDesignu) EtykietyZasobu(ctx context.Context, zasobID int64)
 	return lista, nil
 }
 
-// Zasob zwraca zasób o wskazanym identyfikatorze zewnętrznym (tym z
-// kontraktu, nie kluczu wiersza). Brak wiersza wraca jako ErrBrakWiersza —
-// warstwa wyższa odróżnia „nie ma” od „odczyt się nie powiódł”, bo tylko
-// pierwsze z tego jest odmową kontraktu.
 func (r *repozytoriumDesignu) Zasob(ctx context.Context, kod string) (ZasobDesignu, error) {
 	polecenie, err := r.zapytania.przygotuj(ctx, pobierzZasobDesign)
 	if err != nil {
@@ -294,8 +265,6 @@ func (r *repozytoriumDesignu) Zasob(ctx context.Context, kod string) (ZasobDesig
 	return zasob, nil
 }
 
-// odczytajZasobDesign składa strukturę ZasobDesignu z jednego wiersza wyniku
-// zapytania, w tym pola dopuszczające wartość pustą.
 func odczytajZasobDesign(wiersz skaner) (ZasobDesignu, error) {
 	var zasob ZasobDesignu
 	var nazwa, format, uri, promptKod, wariantZasobuID sql.NullString

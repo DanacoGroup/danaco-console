@@ -8,9 +8,7 @@ import (
 	"fmt"
 )
 
-// UczestnikDebaty to wiersz tabeli `debata_uczestnik`. Ten sam kanał modelu
-// może wystąpić dwukrotnie pod odrębnymi tożsamościami, więc jednoznaczny jest
-// wyłącznie Kod — nie para (Okno, KanalModelu).
+// Ten sam kanał modelu może wystąpić dwukrotnie pod odrębnymi tożsamościami: jednoznaczny jest wyłącznie Kod.
 type UczestnikDebaty struct {
 	Kod             string
 	Okno            string
@@ -19,31 +17,28 @@ type UczestnikDebaty struct {
 	PromptSystemowy *string
 	Wyciszony       bool
 	Kolejnosc       int
-	// Pola z migracji 190 — tożsamość i pozycja uczestnika w naradzie.
-	Kluczowy     bool
-	Waga         float64
-	Rola         string
-	Agent        *string
-	Awatar       *string
-	OpisRoli     *string
-	LiczbaProbek int
+	Kluczowy        bool
+	Waga            float64
+	Rola            string
+	Agent           *string
+	Awatar          *string
+	OpisRoli        *string
+	LiczbaProbek    int
 
 	Utworzono      string
 	Zaktualizowano string
 }
 
-// TuraDebaty to wiersz tabeli `debata_tura`. Format i Stan niosą wartości
-// kontraktu wprost (RoundtableFormat, RoundtableTurnStatus).
+// Format i Stan niosą wartości kontraktu wprost (RoundtableFormat, RoundtableTurnStatus).
 type TuraDebaty struct {
-	Kod         string
-	Okno        string
-	Numer       int
-	Zagadnienie *string
-	Pytanie     string
-	Format      string
-	Stan        string
-	GranicaTur  int
-	// Pola z migracji 191 — wariant tury, wątek boczny i granice tury.
+	Kod            string
+	Okno           string
+	Numer          int
+	Zagadnienie    *string
+	Pytanie        string
+	Format         string
+	Stan           string
+	GranicaTur     int
 	TuraNadrzedna  string
 	GranicaCzasuMs int
 	GranicaZnakow  int
@@ -53,14 +48,12 @@ type TuraDebaty struct {
 	Zamknieto  *string
 }
 
-// WypowiedzDebaty to wiersz tabeli `debata_wypowiedz`. Uczestnik jest kodem,
-// nie kluczem obcym — moderator wypowiada się w turze, a uczestnikiem nie jest.
+// Uczestnik jest kodem, nie kluczem obcym: moderator wypowiada się w turze, a uczestnikiem nie jest.
 type WypowiedzDebaty struct {
-	Kod       string
-	TuraKod   string
-	Uczestnik string
-	Tresc     string
-	// Pewność ujemna znaczy nie deklarowano, pusty akt mowy znaczy jeszcze nieklasyfikowany.
+	Kod         string
+	TuraKod     string
+	Uczestnik   string
+	Tresc       string
 	OdpowiedzNa string
 	AktMowy     string
 	Pewnosc     float64
@@ -69,7 +62,7 @@ type WypowiedzDebaty struct {
 	Utworzono string
 }
 
-// StanowiskoDebaty to wiersz tabeli debata_stanowisko; pusta Tura znaczy stanowisko całej debaty, nie jednej tury.
+// Pusta Tura znaczy stanowisko całej debaty, nie jednej tury.
 type StanowiskoDebaty struct {
 	Kod            string
 	Okno           string
@@ -77,17 +70,14 @@ type StanowiskoDebaty struct {
 	Tresc          *string
 	Wersja         int
 	Zaktualizowano string
-	// Pola z migracji 198 — stanowisko redagowane przez Operatora wraz
-	// z zapisem decyzji.
-	Redagowane    bool
-	Zaakceptowane bool
-	Kontekst      *string
-	Warianty      *string
-	Konsekwencje  *string
-	Tury          string
+	Redagowane     bool
+	Zaakceptowane  bool
+	Kontekst       *string
+	Warianty       *string
+	Konsekwencje   *string
+	Tury           string
 }
 
-// RepozytoriumRoundtable jest kontraktem obszaru Roundtable, złożonym z części: rdzeń debaty tu, zdolności dobudowane we własnych plikach.
 type RepozytoriumRoundtable interface {
 	RepozytoriumDebatySkladu
 	RepozytoriumDebatyGrafu
@@ -102,7 +92,6 @@ type RepozytoriumRoundtable interface {
 	Uczestnik(ctx context.Context, kod string) (UczestnikDebaty, error)
 	Uczestnicy(ctx context.Context, okno string) ([]UczestnikDebaty, error)
 	UstawWyciszenie(ctx context.Context, kod string, wyciszony bool) error
-	// UstawKolejnosc zapisuje kolejność głosu w jednej transakcji, jednym ruchem moderatora.
 	UstawKolejnosc(ctx context.Context, okno string, kody []string) error
 
 	ZalozTure(ctx context.Context, tura TuraDebaty) (TuraDebaty, error)
@@ -127,7 +116,7 @@ const (
 	                     prompt_systemowy, wyciszony, kolejnosc, kluczowy, waga, rola,
 	                     agent, awatar, opis_roli, liczba_probek, utworzono, zaktualizowano`
 
-	// Identyfikator zewnętrzny jest jednoznaczny w całej tabeli, więc gałąź konfliktu bez warunku konta nadpisałaby uczestnika konta cudzego.
+	// Identyfikator zewnętrzny jest jednoznaczny w całej tabeli: gałąź konfliktu bez warunku konta sięgałaby uczestnika konta cudzego.
 	zapiszUczestnikaDebaty = `INSERT INTO debata_uczestnik
 	                          (identyfikator_zewnetrzny, okno, kanal_modelu, nazwa_tozsamosci,
 	                           prompt_systemowy, wyciszony, kolejnosc, konto_id)
@@ -167,9 +156,7 @@ func noweRepozytoriumRoundtable(z *zapytania, db *sql.DB) *repozytoriumRoundtabl
 	return &repozytoriumRoundtable{zapytania: z, db: db}
 }
 
-// ZapiszUczestnika dopisuje uczestnika albo odświeża jego tożsamość. Kolejność
-// i wyciszenie zostają nietknięte: ustawia je moderator, a powtórny zapis
-// tożsamości nie ma prawa cofnąć jego decyzji.
+// Kolejność i wyciszenie zostają nietknięte: ustawia je moderator, a powtórny zapis tożsamości ich nie cofa.
 func (r *repozytoriumRoundtable) ZapiszUczestnika(ctx context.Context,
 	uczestnik UczestnikDebaty) (UczestnikDebaty, error) {
 
@@ -190,7 +177,6 @@ func (r *repozytoriumRoundtable) ZapiszUczestnika(ctx context.Context,
 	return r.Uczestnik(ctx, uczestnik.Kod)
 }
 
-// Uczestnik zwraca uczestnika po kodzie zewnętrznym; brak wiersza wraca jako ErrBrakWiersza tej debaty.
 func (r *repozytoriumRoundtable) Uczestnik(ctx context.Context, kod string) (UczestnikDebaty, error) {
 	polecenie, err := r.zapytania.przygotuj(ctx, pobierzUczestnika)
 	if err != nil {
@@ -206,7 +192,6 @@ func (r *repozytoriumRoundtable) Uczestnik(ctx context.Context, kod string) (Ucz
 	return uczestnik, nil
 }
 
-// Uczestnicy zwraca cały skład debaty danego okna operacyjnego, w kolejności głosu ustalonej przez moderatora.
 func (r *repozytoriumRoundtable) Uczestnicy(ctx context.Context, okno string) ([]UczestnikDebaty, error) {
 	polecenie, err := r.zapytania.przygotuj(ctx, pobierzUczestnikow)
 	if err != nil {
@@ -229,7 +214,6 @@ func (r *repozytoriumRoundtable) Uczestnicy(ctx context.Context, okno string) ([
 	return uczestnicy, wiersze.Err()
 }
 
-// UstawWyciszenie przestawia wyciszenie wskazanego uczestnika debaty w bieżącej turze tej rozmowy okna.
 func (r *repozytoriumRoundtable) UstawWyciszenie(ctx context.Context, kod string, wyciszony bool) error {
 	polecenie, err := r.zapytania.przygotuj(ctx, ustawWyciszenieUczestnika)
 	if err != nil {
@@ -242,9 +226,7 @@ func (r *repozytoriumRoundtable) UstawWyciszenie(ctx context.Context, kod string
 	return trafienieDebaty(wynik)
 }
 
-// UstawKolejnosc zapisuje kolejność głosu wskazaną przez moderatora. Uczestnik
-// spoza wskazania zachowuje swoją pozycję — moderator ustawia porządek części
-// składu równie dobrze jak całego.
+// Uczestnik spoza wskazania zachowuje pozycję: moderator ustawia porządek części składu równie dobrze jak całego.
 func (r *repozytoriumRoundtable) UstawKolejnosc(ctx context.Context, okno string, kody []string) error {
 	return wTransakcji(ctx, r.db, func(transakcja *sql.Tx) error {
 		polecenie, err := r.zapytania.wTransakcji(ctx, transakcja, ustawKolejnoscUczestnika)
@@ -252,16 +234,18 @@ func (r *repozytoriumRoundtable) UstawKolejnosc(ctx context.Context, okno string
 			return err
 		}
 		for pozycja, kod := range kody {
-			if _, err := polecenie.ExecContext(ctx, pozycja+1, okno, kod,
-				KontoOperatora(ctx)); err != nil {
+			wynik, err := polecenie.ExecContext(ctx, pozycja+1, okno, kod, KontoOperatora(ctx))
+			if err != nil {
 				return fmt.Errorf("dane: nie można ustawić kolejności uczestnika %q: %w", kod, err)
+			}
+			if err := trafienieDebaty(wynik); err != nil {
+				return fmt.Errorf("dane: uczestnik %q nie stoi w oknie %q: %w", kod, okno, err)
 			}
 		}
 		return nil
 	})
 }
 
-// odczytajUczestnika składa uczestnika debaty z jednego wiersza wyniku zapytania, kolumna po kolumnie.
 func odczytajUczestnika(wiersz interface{ Scan(...any) error }) (UczestnikDebaty, error) {
 	var uczestnik UczestnikDebaty
 	err := wiersz.Scan(&uczestnik.Kod, &uczestnik.Okno, &uczestnik.KanalModelu,
@@ -272,11 +256,10 @@ func odczytajUczestnika(wiersz interface{ Scan(...any) error }) (UczestnikDebaty
 	return uczestnik, err
 }
 
-// trafienieDebaty odróżnia zapis, który nic nie zmienił, od zapisu udanego, żeby przestawienie nieistniejącego bytu nie kończyło się cicho.
 func trafienieDebaty(wynik sql.Result) error {
 	zmienione, err := wynik.RowsAffected()
 	if err != nil {
-		return nil // sterownik bez licznika — brak liczby nie jest błędem zapisu
+		return nil
 	}
 	if zmienione == 0 {
 		return ErrBrakWiersza

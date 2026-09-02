@@ -13,20 +13,15 @@ import (
 	"danacoconsole/shared"
 )
 
-// uruchamiaczNieruszany jest atrapą portu session.Uruchamiacz dla pomiarów
-// odmów zapadających przed startem procesu.
 type uruchamiaczNieruszany struct{ t *testing.T }
 
-func (u uruchamiaczNieruszany) UruchomProces(session.Okno,
+func (u uruchamiaczNieruszany) UruchomProces(context.Context, session.Okno,
 	session.Polecenie) (session.UchwytProcesu, error) {
 	u.t.Fatal("mimo braku programu warstwy uruchomiono proces — odmowa miała " +
 		"zapaść przed startem")
 	return nil, nil
 }
 
-// odetnijProgramyWarstw wymusza brak programów obu warstw skanera i potwierdza,
-// że wymuszenie zadziałało — pomiar na maszynie, na której program dalej widać,
-// mierzyłby inną drogę i meldował ją jako wynik.
 func odetnijProgramyWarstw(t *testing.T) {
 	t.Helper()
 	t.Setenv("PATH", t.TempDir())
@@ -40,9 +35,6 @@ func odetnijProgramyWarstw(t *testing.T) {
 	}
 }
 
-// czlonyOdmowyBrakuSane to trzy rzeczy, które odmowa braku programu SANE musi
-// nazwać naraz — czym rdzeń skanuje, czym brak naprawić i którą drogą materiał
-// wchodzi mimo braku. Ten sam komplet niesie droga WIA w `bladWarstwyWia`.
 func czlonyOdmowyBrakuSane() []string {
 	return []string{narzedzieSkanera.Program, narzedzieSkanera.Pakiet,
 		"studio.ingest.queue.add"}

@@ -54,7 +54,7 @@ func Uruchom(ctx context.Context, u session.Uruchamiacz, okno session.Okno,
 		return Wynik{}, err
 	}
 
-	uchwyt, err := u.UruchomProces(okno, dopuszczone)
+	uchwyt, err := u.UruchomProces(ctx, okno, dopuszczone)
 	if err != nil {
 		return Wynik{}, errors.New("silnik mowy: nie można uruchomić pomocnika " +
 			p.Program + " w " + dopuszczone.Katalog + ": " + err.Error())

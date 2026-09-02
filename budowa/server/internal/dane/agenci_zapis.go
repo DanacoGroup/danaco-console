@@ -6,6 +6,7 @@ import (
 	"context"
 	"database/sql"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"strings"
 
@@ -15,17 +16,17 @@ import (
 const (
 	wstawAgenta = `INSERT INTO agent
 	               (kod, nazwa, opis, instrukcje_systemowe, kanal_kod, model, transport,
-	                parametry_json, wersja, aktywny, widocznosc)
-	               VALUES (?, ?, ?, ?, ?, ?, ?, ?, 1, ?, ?)`
+	                parametry_json, wersja, aktywny, widocznosc, konto_id)
+	               VALUES (?, ?, ?, ?, ?, ?, ?, ?, 1, ?, ?, ` + WskazanieKonta + `)`
 
 	aktualizujAgenta = `UPDATE agent
 	                    SET nazwa = ?, opis = ?, instrukcje_systemowe = ?, kanal_kod = ?, model = ?,
 	                        transport = ?, parametry_json = ?, aktywny = ?, widocznosc = ?,
 	                        wersja = wersja + 1,
 	                        zaktualizowano = strftime('%Y-%m-%dT%H:%M:%fZ', 'now')
-	                    WHERE kod = ?`
+	                    WHERE kod = ? AND ` + WarunekKonta
 
-	usunAgenta = `DELETE FROM agent WHERE kod = ?`
+	usunAgenta = `DELETE FROM agent WHERE kod = ? AND ` + WarunekKonta
 
 	// Poziomy pamięci zapisuje się kompletem, nie po jednym: żądanie niesie
 	// zbiór, więc zdjęcie wszystkich i wstawienie podanych zapisuje zbiór pusty
@@ -44,8 +45,6 @@ var grupyUprawnienWyjsciowe = []string{
 	shared.AgentPermissionGroupIntegrations,
 }
 
-// Dodaj zakłada eksperta wraz z wyjściowym kompletem uprawnień i oddaje go
-// w postaci odczytanej z bazy — z nadanym numerem wiersza i znacznikami czasu.
 func (r *repozytoriumAgentow) Dodaj(ctx context.Context, agent Agent) (Agent, error) {
 	parametry, err := parametryAgenta(agent)
 	if err != nil {
@@ -62,7 +61,7 @@ func (r *repozytoriumAgentow) Dodaj(ctx context.Context, agent Agent) (Agent, er
 		wynik, err := polecenie.ExecContext(ctx, agent.Kod, agent.Nazwa, agent.Opis,
 			agent.InstrukcjeSystemowe, tekstDoKolumny(agent.KanalKod), tekstDoKolumny(agent.Model),
 			tekstDoKolumny(agent.Transport), parametry, liczbaLogiczna(agent.Aktywny),
-			widocznoscKolumny(agent.Widocznosc))
+			widocznoscKolumny(agent.Widocznosc), KontoOperatora(ctx))
 		if err != nil {
 			return fmt.Errorf("dane: nie można założyć eksperta %q: %w", agent.Kod, err)
 		}
@@ -81,8 +80,6 @@ func (r *repozytoriumAgentow) Dodaj(ctx context.Context, agent Agent) (Agent, er
 	return r.PoKodzie(ctx, agent.Kod)
 }
 
-// Aktualizuj zapisuje zmienioną tożsamość i podnosi licznik wersji. Kod
-// eksperta pozostaje stały — jest jego identyfikatorem w projektach i oknach.
 func (r *repozytoriumAgentow) Aktualizuj(ctx context.Context, agent Agent) (Agent, error) {
 	parametry, err := parametryAgenta(agent)
 	if err != nil {
@@ -94,25 +91,29 @@ func (r *repozytoriumAgentow) Aktualizuj(ctx context.Context, agent Agent) (Agen
 	}
 	wynik, err := polecenie.ExecContext(ctx, agent.Nazwa, agent.Opis, agent.InstrukcjeSystemowe,
 		tekstDoKolumny(agent.KanalKod), tekstDoKolumny(agent.Model), tekstDoKolumny(agent.Transport),
-		parametry, liczbaLogiczna(agent.Aktywny), widocznoscKolumny(agent.Widocznosc), agent.Kod)
+		parametry, liczbaLogiczna(agent.Aktywny), widocznoscKolumny(agent.Widocznosc), agent.Kod,
+		KontoOperatora(ctx))
 	if err != nil {
 		return Agent{}, fmt.Errorf("dane: nie można zapisać eksperta %q: %w", agent.Kod, err)
 	}
-	if err := sprawdzTrafienie(wynik, "agent", agent.ID); err != nil {
-		return Agent{}, err
+	zmienione, err := wynik.RowsAffected()
+	if err != nil {
+		return Agent{}, fmt.Errorf("dane: nieznana liczba zapisanych ekspertów %q: %w", agent.Kod, err)
+	}
+	if zmienione == 0 {
+		return Agent{}, odmowaEksperta(ctx, r.zapytania, agent.Kod)
 	}
 	return r.PoKodzie(ctx, agent.Kod)
 }
 
 // Usun kasuje eksperta wraz z powiązaniami — klucze obce tabel podrzędnych mają
 // klauzulę ON DELETE CASCADE.
-// Brak wiersza nie jest błędem: wynik `false` mówi, że nie było czego usuwać.
 func (r *repozytoriumAgentow) Usun(ctx context.Context, kod string) (bool, error) {
 	polecenie, err := r.zapytania.przygotuj(ctx, usunAgenta)
 	if err != nil {
 		return false, err
 	}
-	wynik, err := polecenie.ExecContext(ctx, kod)
+	wynik, err := polecenie.ExecContext(ctx, kod, KontoOperatora(ctx))
 	if err != nil {
 		return false, fmt.Errorf("dane: nie można usunąć eksperta %q: %w", kod, err)
 	}
@@ -120,10 +121,14 @@ func (r *repozytoriumAgentow) Usun(ctx context.Context, kod string) (bool, error
 	if err != nil {
 		return false, fmt.Errorf("dane: nieznana liczba usuniętych ekspertów %q: %w", kod, err)
 	}
+	if liczba == 0 {
+		if err := odmowaEksperta(ctx, r.zapytania, kod); errors.Is(err, ErrKolizjaWiersza) {
+			return false, err
+		}
+	}
 	return liczba > 0, nil
 }
 
-// zasiejUprawnienia wpisuje wyjściowy komplet czterech grup zakresu uprawnień dla nowo założonego eksperta.
 func (r *repozytoriumAgentow) zasiejUprawnienia(ctx context.Context, transakcja *sql.Tx, agentID int64) error {
 	polecenie, err := r.zapytania.wTransakcji(ctx, transakcja, zapiszUprawnienieAgenta)
 	if err != nil {
@@ -137,7 +142,6 @@ func (r *repozytoriumAgentow) zasiejUprawnienia(ctx context.Context, transakcja 
 	return nil
 }
 
-// UstawPoziomyPamieci zastępuje komplet poziomów pamięci eksperta; wycinek pusty zapisuje pamięć wyłączoną, licznika wersji tożsamości nie podnosi.
 func (r *repozytoriumAgentow) UstawPoziomyPamieci(ctx context.Context,
 	kodAgenta string, poziomy []string) (Agent, error) {
 
@@ -154,9 +158,6 @@ func (r *repozytoriumAgentow) UstawPoziomyPamieci(ctx context.Context,
 	return r.PoKodzie(ctx, kodAgenta)
 }
 
-// zapiszPoziomy zdejmuje zastane poziomy i wstawia podane. Powtórzenie w wejściu
-// nie jest odmową — klucz główny (agent_id, poziom) je pochłania, a żądanie
-// z dwoma takimi samymi poziomami znaczy dokładnie to samo co z jednym.
 func (r *repozytoriumAgentow) zapiszPoziomy(ctx context.Context, transakcja *sql.Tx,
 	agentID int64, poziomy []string) error {
 
@@ -187,7 +188,6 @@ func (r *repozytoriumAgentow) zapiszPoziomy(ctx context.Context, transakcja *sql
 	return nil
 }
 
-// widocznoscKolumny pilnuje, żeby kolumna widoczności nigdy nie dostała pustki: wartość nieustawiona czyta się jako global.
 func widocznoscKolumny(widocznosc string) string {
 	if strings.TrimSpace(widocznosc) == "" {
 		return shared.AgentVisibilityGlobal
@@ -195,8 +195,6 @@ func widocznoscKolumny(widocznosc string) string {
 	return widocznosc
 }
 
-// parametryAgenta pilnuje, żeby kolumna parametrów wywołania niosła poprawny
-// JSON. Pusta wartość znaczy brak parametrów, nie błąd.
 func parametryAgenta(agent Agent) (string, error) {
 	parametry := strings.TrimSpace(agent.ParametryJSON)
 	if parametry == "" {

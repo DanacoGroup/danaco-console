@@ -8,9 +8,6 @@ import (
 	"fmt"
 )
 
-// SzablonPromptuDesignu to wiersz tabeli `szablon_promptu_design`. Pola promptu
-// powtarzają `PromptDesignu`, bo opisują ten sam kształt kontraktu; wskaźnik
-// znaczy „nieustawione", nie „puste".
 type SzablonPromptuDesignu struct {
 	ID             int64
 	Kod            string
@@ -68,17 +65,17 @@ const (
 		  ORDER BY zaktualizowano DESC, id DESC`
 
 	listaPromptowOknaDesignu = `SELECT ` + kolumnyPromptuDesign + ` FROM prompt_design
-	                            WHERE okno = ? ORDER BY utworzono DESC, id DESC LIMIT ?`
+	                            WHERE okno = ? AND ` + WarunekKonta + `
+	                            ORDER BY utworzono DESC, id DESC LIMIT ?`
 
-	liczbaPromptowOknaDesignu = `SELECT COUNT(*) FROM prompt_design WHERE okno = ?`
+	liczbaPromptowOknaDesignu = `SELECT COUNT(*) FROM prompt_design
+	                             WHERE okno = ? AND ` + WarunekKonta
 
 	listaZasobowPromptuDesignu = `SELECT identyfikator_zewnetrzny FROM zasob_design
 	                              WHERE prompt_id = ? AND ` + WarunekKonta + `
 	                              ORDER BY utworzono, id`
 )
 
-// ZapiszSzablonPromptuDesignu zakłada szablon albo nadpisuje zastany po
-// identyfikatorze zewnętrznym i oddaje stan po zapisie.
 func (r *repozytoriumDesignu) ZapiszSzablonPromptuDesignu(ctx context.Context,
 	szablon SzablonPromptuDesignu) (SzablonPromptuDesignu, error) {
 
@@ -119,15 +116,8 @@ func (r *repozytoriumDesignu) ZapiszSzablonPromptuDesignu(ctx context.Context,
 		return SzablonPromptuDesignu{}, fmt.Errorf(
 			"dane: nie można zapisać szablonu promptu design %q: %w", szablon.Kod, err)
 	}
-	zmienione, err := wynik.RowsAffected()
-	if err != nil {
-		return SzablonPromptuDesignu{}, fmt.Errorf(
-			"dane: nieznana liczba zapisanych szablonów promptu design: %w", err)
-	}
-	if zmienione == 0 {
-		return SzablonPromptuDesignu{}, fmt.Errorf(
-			"dane: szablon promptu design %q należy do innego konta: %w",
-			szablon.Kod, ErrKolizjaWiersza)
+	if err := sprawdzTrafienieZapisu(wynik, "szablon promptu design", szablon.Kod); err != nil {
+		return SzablonPromptuDesignu{}, err
 	}
 
 	polecenieOdczytu, err := r.zapytania.przygotuj(ctx, pobierzSzablonPromptuDesignu)
@@ -143,8 +133,6 @@ func (r *repozytoriumDesignu) ZapiszSzablonPromptuDesignu(ctx context.Context,
 	return zapisany, nil
 }
 
-// SzablonyPromptuDesignu zwraca szablony promptu przypisane do okna, uporządkowane od
-// ostatnio zmienianego.
 func (r *repozytoriumDesignu) SzablonyPromptuDesignu(ctx context.Context,
 	okno string) ([]SzablonPromptuDesignu, error) {
 
@@ -172,9 +160,7 @@ func (r *repozytoriumDesignu) SzablonyPromptuDesignu(ctx context.Context,
 	return lista, nil
 }
 
-// PromptyOknaDesignu zwraca prompty wydane w oknie (od najświeższego) wraz
-// z liczbą wszystkich promptów okna — wykaz bywa przycięty limitem, a licznik
-// nie, więc panel pokazuje „X z Y" bez drugiego zapytania.
+// Kontrakt oddaje wykaz przycięty limitem razem z liczbą wszystkich promptów okna.
 func (r *repozytoriumDesignu) PromptyOknaDesignu(ctx context.Context,
 	okno string, limit int) ([]PromptDesignu, int, error) {
 
@@ -182,7 +168,7 @@ func (r *repozytoriumDesignu) PromptyOknaDesignu(ctx context.Context,
 	if err != nil {
 		return nil, 0, err
 	}
-	wiersze, err := polecenie.QueryContext(ctx, okno, granicaWykazu(limit))
+	wiersze, err := polecenie.QueryContext(ctx, okno, KontoOperatora(ctx), granicaWykazu(limit))
 	if err != nil {
 		return nil, 0, fmt.Errorf("dane: nie można odczytać promptów design okna %q: %w", okno, err)
 	}
@@ -205,14 +191,12 @@ func (r *repozytoriumDesignu) PromptyOknaDesignu(ctx context.Context,
 		return nil, 0, err
 	}
 	var razem int
-	if err := polecenieLiczby.QueryRowContext(ctx, okno).Scan(&razem); err != nil {
+	if err := polecenieLiczby.QueryRowContext(ctx, okno, KontoOperatora(ctx)).Scan(&razem); err != nil {
 		return nil, 0, fmt.Errorf("dane: nie można policzyć promptów design okna %q: %w", okno, err)
 	}
 	return lista, razem, nil
 }
 
-// ZasobyPromptuDesignu zwraca identyfikatory zewnętrzne zasobów powstałych
-// z promptu, w kolejności powstawania.
 func (r *repozytoriumDesignu) ZasobyPromptuDesignu(ctx context.Context,
 	promptID int64) ([]string, error) {
 
@@ -240,8 +224,6 @@ func (r *repozytoriumDesignu) ZasobyPromptuDesignu(ctx context.Context,
 	return lista, nil
 }
 
-// odczytajSzablonPromptuDesignu składa strukturę SzablonPromptuDesignu z jednego wiersza
-// wyniku zapytania SQL.
 func odczytajSzablonPromptuDesignu(wiersz skaner) (SzablonPromptuDesignu, error) {
 	var szablon SzablonPromptuDesignu
 	var styl, kompozycja, oswietlenie, paleta, proporcje, wykluczenia, silnik sql.NullString

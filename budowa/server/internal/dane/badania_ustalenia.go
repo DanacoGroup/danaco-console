@@ -11,9 +11,6 @@ import (
 	"danacoconsole/shared"
 )
 
-// UstalenieBadania to wiersz tabeli `ustalenie_badania`. Powiązane źródła nie
-// są polem tej struktury — leżą w osobnej tabeli złącznikowej i zwraca je
-// `ZrodlaUstalenia`.
 type UstalenieBadania struct {
 	ID             int64
 	Kod            string
@@ -29,8 +26,7 @@ const (
 	kolumnyUstaleniaBadania = `id, identyfikator_zewnetrzny, okno, tresc, tresc_odwolanie,
 	                           stan, utworzono, zaktualizowano`
 
-	// Więz UNIQUE na `identyfikator_zewnetrzny` obejmuje całą tabelę, więc
-	// warunek konta w gałęzi DO UPDATE zostawia wiersz cudzy nietknięty.
+	// Więz UNIQUE na `identyfikator_zewnetrzny` obejmuje całą tabelę; warunek konta w DO UPDATE chroni wiersz cudzy.
 	zapiszUstalenieBadania = `INSERT INTO ustalenie_badania
 	                          (identyfikator_zewnetrzny, okno, tresc, tresc_odwolanie, stan, konto_id)
 	                          VALUES (?, ?, ?, ?, ?, ` + WskazanieKonta + `)
@@ -51,9 +47,9 @@ const (
 	// Klucz `ustalenie_id` pochodzi z odczytu zawężonego kontem.
 	usunZrodlaUstalenia = `DELETE FROM zrodlo_ustalenia_badania WHERE ustalenie_id = ?`
 
-	// idZrodlaPoKodzie odnajduje wiersz źródła po kodzie zewnętrznym — powiązanie
-	// w tabeli złącznikowej trzyma klucz liczbowy, kontrakt oddaje kod tekstowy.
-	idZrodlaPoKodzie = `SELECT id FROM zrodlo_badania WHERE identyfikator_zewnetrzny = ?`
+	// Tabela złącznikowa trzyma klucz liczbowy źródła, kontrakt oddaje kod tekstowy.
+	idZrodlaPoKodzie = `SELECT id FROM zrodlo_badania
+	                    WHERE identyfikator_zewnetrzny = ? AND ` + WarunekKonta
 
 	wstawZrodloUstalenia = `INSERT INTO zrodlo_ustalenia_badania (ustalenie_id, zrodlo_id)
 	                        VALUES (?, ?)
@@ -64,11 +60,11 @@ const (
 	                              SELECT zrodlo_id FROM zrodlo_ustalenia_badania
 	                              WHERE ustalenie_id = ?
 	                          )
+	                            AND ` + WarunekKonta + `
 	                          ORDER BY pozyskano_o DESC, id DESC`
 )
 
-// ZapiszUstalenie zakłada wiersz ustalenia albo nadpisuje zastany, po czym wymienia komplet powiązań ze źródłami
-// w jednej transakcji; kod źródła bez odpowiadającego wiersza jest pomijany, nie wywraca zapisu ustalenia.
+// Kod źródła bez wiersza w granicy konta jest pomijany, nie wywraca zapisu ustalenia.
 func (r *repozytoriumBadan) ZapiszUstalenie(ctx context.Context, ustalenie UstalenieBadania,
 	kodyZrodel []string) (UstalenieBadania, error) {
 
@@ -95,8 +91,6 @@ func (r *repozytoriumBadan) ZapiszUstalenie(ctx context.Context, ustalenie Ustal
 		if err != nil {
 			return fmt.Errorf("dane: nie można zapisać ustalenia badania %q: %w", ustalenie.Kod, err)
 		}
-		// Kod zewnętrzny zajęty przez wiersz konta obcego daje zero zmienionych
-		// wierszy; dalszy odczyt oddałby „brak wiersza” zamiast powodu odmowy.
 		if err := sprawdzTrafienieZapisu(wynik, "ustalenie badania", ustalenie.Kod); err != nil {
 			return err
 		}
@@ -125,9 +119,8 @@ func (r *repozytoriumBadan) ZapiszUstalenie(ctx context.Context, ustalenie Ustal
 		}
 		for _, kodZrodla := range kodyZrodel {
 			var zrodloID int64
-			err := wyszukanie.QueryRowContext(ctx, kodZrodla).Scan(&zrodloID)
+			err := wyszukanie.QueryRowContext(ctx, kodZrodla, KontoOperatora(ctx)).Scan(&zrodloID)
 			if errors.Is(err, sql.ErrNoRows) {
-				// Kod bez wiersza — pomijany, nie wywraca zapisu ustalenia.
 				continue
 			}
 			if err != nil {
@@ -147,10 +140,7 @@ func (r *repozytoriumBadan) ZapiszUstalenie(ctx context.Context, ustalenie Ustal
 	return r.Ustalenie(ctx, ustalenie.Kod)
 }
 
-// identyfikatorUstalenia odczytuje klucz liczbowy ustalenia w obrębie
-// bieżącej transakcji — insert/update powyżej nie zwraca go wprost przy
-// konflikcie (ON CONFLICT DO UPDATE nie niesie LastInsertId na wierszu
-// istniejącym).
+// ON CONFLICT DO UPDATE nie niesie LastInsertId na wierszu istniejącym, stąd osobny odczyt klucza w transakcji.
 func (r *repozytoriumBadan) identyfikatorUstalenia(ctx context.Context, transakcja *sql.Tx, kod string) (int64, error) {
 	odczyt, err := r.zapytania.wTransakcji(ctx, transakcja,
 		`SELECT id FROM ustalenie_badania WHERE identyfikator_zewnetrzny = ? AND `+WarunekKonta)
@@ -164,7 +154,6 @@ func (r *repozytoriumBadan) identyfikatorUstalenia(ctx context.Context, transakc
 	return id, nil
 }
 
-// Ustalenie zwraca ustalenie badania o wskazanym kodzie zewnętrznym; brak wiersza wraca jako ErrBrakWiersza.
 func (r *repozytoriumBadan) Ustalenie(ctx context.Context, kod string) (UstalenieBadania, error) {
 	polecenie, err := r.zapytania.przygotuj(ctx, pobierzUstalenieBadania)
 	if err != nil {
@@ -180,7 +169,6 @@ func (r *repozytoriumBadan) Ustalenie(ctx context.Context, kod string) (Ustaleni
 	return ustalenie, nil
 }
 
-// Ustalenia zwraca ustalenia badania okna, posortowane od ostatnio zmienionych, wprost z bazy danych repozytorium.
 func (r *repozytoriumBadan) Ustalenia(ctx context.Context, okno string) ([]UstalenieBadania, error) {
 	polecenie, err := r.zapytania.przygotuj(ctx, pobierzUstaleniaBadaniaOkna)
 	if err != nil {
@@ -206,14 +194,12 @@ func (r *repozytoriumBadan) Ustalenia(ctx context.Context, okno string) ([]Ustal
 	return lista, nil
 }
 
-// ZrodlaUstalenia zwraca źródła powiązane z ustaleniem — komplet wynikły
-// z ostatniego `ZapiszUstalenie`, bez kodów pominiętych przy zapisie.
 func (r *repozytoriumBadan) ZrodlaUstalenia(ctx context.Context, ustalenieID int64) ([]ZrodloBadania, error) {
 	polecenie, err := r.zapytania.przygotuj(ctx, pobierzZrodlaUstalenia)
 	if err != nil {
 		return nil, err
 	}
-	wiersze, err := polecenie.QueryContext(ctx, ustalenieID)
+	wiersze, err := polecenie.QueryContext(ctx, ustalenieID, KontoOperatora(ctx))
 	if err != nil {
 		return nil, fmt.Errorf("dane: nie można odczytać źródeł ustalenia %d: %w", ustalenieID, err)
 	}
@@ -233,7 +219,6 @@ func (r *repozytoriumBadan) ZrodlaUstalenia(ctx context.Context, ustalenieID int
 	return lista, nil
 }
 
-// odczytajUstalenieBadania składa strukturę ustalenia wprost z jednego wiersza wyniku zapytania do bazy.
 func odczytajUstalenieBadania(wiersz skaner) (UstalenieBadania, error) {
 	var ustalenie UstalenieBadania
 	var tresc, trescOdwolanie sql.NullString

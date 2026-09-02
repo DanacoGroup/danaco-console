@@ -1,5 +1,5 @@
-// Plik prowadzi słownik etykiet biblioteki i tezaurus relacji między etykietami; etykieta żyje w dwóch miejscach
-// naraz — jedna tabela mówi, kto ją nosi, słownik mówi, że istnieje, jaką ma barwę i od kiedy, a wykaz składa się z sumy obu źródeł.
+// Odpowiedzialność pliku: słownik etykiet biblioteki (`etykieta_slownika_biblioteki`) i tezaurus
+// relacji między etykietami (`relacja_tezaurusa_biblioteki`).
 package dane
 
 import (
@@ -10,8 +10,6 @@ import (
 	"strings"
 )
 
-// EtykietaSlownikaBiblioteki to pozycja słownika etykiet wraz z licznikiem
-// użycia liczonym z przypisań przy zasobach.
 type EtykietaSlownikaBiblioteki struct {
 	Nazwa        string
 	Barwa        *string
@@ -19,7 +17,6 @@ type EtykietaSlownikaBiblioteki struct {
 	Utworzono    string
 }
 
-// RelacjaTezaurusaBiblioteki to jedna krawędź tezaurusa łącząca dwie etykiety w słowniku tej biblioteki.
 type RelacjaTezaurusaBiblioteki struct {
 	Zrodlo    string
 	Cel       string
@@ -46,9 +43,7 @@ const (
 	                           FROM etykieta_slownika_biblioteki s
 	                           WHERE s.nazwa = ? AND ` + WarunekKonta
 
-	// Wykaz słownika łączy dwa źródła: wpisy słownika i etykiety nadane przy
-	// zasobach. UNION zdejmuje powtórzenia, więc etykieta obecna w obu miejscach
-	// wychodzi raz.
+	// Wykaz łączy wpisy słownika i etykiety nadane przy zasobach; UNION zdejmuje powtórzenia.
 	wykazEtykietSlownika = `WITH nazwy AS (
 	                            SELECT nazwa FROM etykieta_slownika_biblioteki
 	                             WHERE ` + WarunekKonta + `
@@ -69,8 +64,12 @@ const (
 	przemianujEtykietePliku = `UPDATE OR REPLACE etykieta_pliku_biblioteki
 	                           SET etykieta = ? WHERE etykieta = ? AND ` + warunekKontaEtykietyPliku
 
-	przemianujEtykieteSlownika = `UPDATE OR REPLACE etykieta_slownika_biblioteki
+	// Nazwa jest kluczem głównym całej tabeli: OR REPLACE kasowałby wpis konta cudzego, więc kolizja wraca błędem.
+	przemianujEtykieteSlownika = `UPDATE etykieta_slownika_biblioteki
 	                              SET nazwa = ? WHERE nazwa = ? AND ` + WarunekKonta
+
+	wpisSlownikaWKoncie = `SELECT 1 FROM etykieta_slownika_biblioteki
+	                       WHERE nazwa = ? AND ` + WarunekKonta
 
 	usunEtykietePlikow = `DELETE FROM etykieta_pliku_biblioteki
 	                      WHERE etykieta = ? AND ` + warunekKontaEtykietyPliku
@@ -91,7 +90,6 @@ const (
 	                         ORDER BY etykieta_zrodlowa, rodzaj, etykieta_docelowa`
 )
 
-// EtykietySlownika zwraca cały słownik etykiet wraz z licznikiem ich użycia z bazy danych repozytorium.
 func (r *repozytoriumBiblioteki) EtykietySlownika(ctx context.Context, fraza *string,
 	tylkoNieuzywane bool, limit int) ([]EtykietaSlownikaBiblioteki, int, error) {
 
@@ -136,9 +134,7 @@ func (r *repozytoriumBiblioteki) EtykietySlownika(ctx context.Context, fraza *st
 	return lista, lacznie, nil
 }
 
-// EtykietaSlownika zwraca jedną pozycję słownika. Etykieta nosząca zasoby, ale
-// bez wpisu słownikowego, wraca z licznikiem i pustym czasem założenia — bo
-// istnieje mimo braku wiersza.
+// Etykieta nosząca zasoby bez wpisu słownikowego wraca z licznikiem i pustym czasem założenia.
 func (r *repozytoriumBiblioteki) EtykietaSlownika(ctx context.Context,
 	nazwa string) (EtykietaSlownikaBiblioteki, error) {
 
@@ -168,7 +164,6 @@ func (r *repozytoriumBiblioteki) EtykietaSlownika(ctx context.Context,
 	return etykieta, nil
 }
 
-// ZapiszEtykieteSlownika zakłada wpis słownika etykiet albo zmienia barwę zastanego wpisu w bazie danych.
 func (r *repozytoriumBiblioteki) ZapiszEtykieteSlownika(ctx context.Context, nazwa string,
 	barwa *string) (EtykietaSlownikaBiblioteki, error) {
 
@@ -191,7 +186,7 @@ func (r *repozytoriumBiblioteki) ZapiszEtykieteSlownika(ctx context.Context, naz
 	return r.EtykietaSlownika(ctx, nazwa)
 }
 
-// PrzemianujEtykiete zmienia nazwę etykiety w całym repozytorium, przy zasobach i w słowniku, i zwraca liczbę zasobów, których zmiana dotknęła.
+// Wpis docelowy stojący już w koncie zostaje, a wpis źródłowy schodzi: `library.tag.merge` celuje w nazwę istniejącą.
 func (r *repozytoriumBiblioteki) PrzemianujEtykiete(ctx context.Context, stara, nowa string) (int, error) {
 	if strings.TrimSpace(stara) == "" || strings.TrimSpace(nowa) == "" {
 		return 0, fmt.Errorf("dane: zmiana nazwy etykiety bez wskazania nazw")
@@ -212,14 +207,7 @@ func (r *repozytoriumBiblioteki) PrzemianujEtykiete(ctx context.Context, stara, 
 		}
 		dotkniete = int(liczba)
 
-		wSlowniku, err := r.zapytania.wTransakcji(ctx, transakcja, przemianujEtykieteSlownika)
-		if err != nil {
-			return err
-		}
-		if _, err := wSlowniku.ExecContext(ctx, nowa, stara, KontoOperatora(ctx)); err != nil {
-			return fmt.Errorf("dane: nie można zmienić nazwy etykiety %q w słowniku: %w", stara, err)
-		}
-		return nil
+		return r.przemianujWpisSlownika(ctx, transakcja, stara, nowa)
 	})
 	if err != nil {
 		return 0, err
@@ -227,8 +215,41 @@ func (r *repozytoriumBiblioteki) PrzemianujEtykiete(ctx context.Context, stara, 
 	return dotkniete, nil
 }
 
-// UsunEtykieteZeSlownika zdejmuje etykietę ze słownika i ze wszystkich zasobów.
-// Zwraca liczbę zasobów, z których etykietę zdjęto.
+func (r *repozytoriumBiblioteki) przemianujWpisSlownika(ctx context.Context, transakcja *sql.Tx,
+	stara, nowa string) error {
+
+	docelowy, err := r.zapytania.wTransakcji(ctx, transakcja, wpisSlownikaWKoncie)
+	if err != nil {
+		return err
+	}
+	var jeden int
+	err = docelowy.QueryRowContext(ctx, nowa, KontoOperatora(ctx)).Scan(&jeden)
+	if err != nil && !errors.Is(err, sql.ErrNoRows) {
+		return fmt.Errorf("dane: nieczytelny wpis słownika %q: %w", nowa, err)
+	}
+	if err == nil {
+		zrodlowy, err := r.zapytania.wTransakcji(ctx, transakcja, usunEtykieteSlownikaZapis)
+		if err != nil {
+			return err
+		}
+		if _, err := zrodlowy.ExecContext(ctx, stara, KontoOperatora(ctx)); err != nil {
+			return fmt.Errorf("dane: nie można usunąć etykiety %q ze słownika: %w", stara, err)
+		}
+		return nil
+	}
+	wSlowniku, err := r.zapytania.wTransakcji(ctx, transakcja, przemianujEtykieteSlownika)
+	if err != nil {
+		return err
+	}
+	if _, err := wSlowniku.ExecContext(ctx, nowa, stara, KontoOperatora(ctx)); err != nil {
+		if czyKolizja(err) {
+			return fmt.Errorf("dane: etykieta %q należy do słownika innego konta: %w", nowa, ErrKolizjaWiersza)
+		}
+		return fmt.Errorf("dane: nie można zmienić nazwy etykiety %q w słowniku: %w", stara, err)
+	}
+	return nil
+}
+
 func (r *repozytoriumBiblioteki) UsunEtykieteZeSlownika(ctx context.Context, nazwa string) (int, error) {
 	zdjete := 0
 	err := wTransakcji(ctx, r.db, func(transakcja *sql.Tx) error {
@@ -261,8 +282,6 @@ func (r *repozytoriumBiblioteki) UsunEtykieteZeSlownika(ctx context.Context, naz
 	return zdjete, nil
 }
 
-// UstawRelacjeTezaurusa ustanawia albo zdejmuje krawędź tezaurusa i mówi, czy
-// relacja stoi po wykonaniu.
 func (r *repozytoriumBiblioteki) UstawRelacjeTezaurusa(ctx context.Context,
 	zrodlo, cel, rodzaj string, zdejmij bool) (bool, error) {
 
@@ -281,7 +300,6 @@ func (r *repozytoriumBiblioteki) UstawRelacjeTezaurusa(ctx context.Context,
 	return !zdejmij, nil
 }
 
-// RelacjeTezaurusa zwraca wszystkie krawędzie tezaurusa etykiet wprost z bazy danych repozytorium biblioteki.
 func (r *repozytoriumBiblioteki) RelacjeTezaurusa(ctx context.Context) ([]RelacjaTezaurusaBiblioteki, error) {
 	polecenie, err := r.zapytania.przygotuj(ctx, wykazRelacjiTezaurusa)
 	if err != nil {
@@ -308,7 +326,6 @@ func (r *repozytoriumBiblioteki) RelacjeTezaurusa(ctx context.Context) ([]Relacj
 	return lista, nil
 }
 
-// uzycieEtykiety liczy zasoby noszące etykietę wprost z tabeli etykiet przypisanych plikom biblioteki.
 func (r *repozytoriumBiblioteki) uzycieEtykiety(ctx context.Context, nazwa string) (int, error) {
 	var liczba int
 	err := r.db.QueryRowContext(ctx,
@@ -321,7 +338,6 @@ func (r *repozytoriumBiblioteki) uzycieEtykiety(ctx context.Context, nazwa strin
 	return liczba, nil
 }
 
-// wskazaniaKonta powtarza wskazanie konta raz na każde wystąpienie warunku konta w zapytaniu.
 func wskazaniaKonta(zapytanie string, kontoID int64) []any {
 	lista := []any{}
 	for i := strings.Count(zapytanie, WarunekKonta); i > 0; i-- {
@@ -330,7 +346,6 @@ func wskazaniaKonta(zapytanie string, kontoID int64) []any {
 	return lista
 }
 
-// odczytajEtykieteSlownika składa pozycję słownika etykiet wprost z jednego wiersza wyniku zapytania SQL.
 func odczytajEtykieteSlownika(wiersz skaner) (EtykietaSlownikaBiblioteki, error) {
 	var etykieta EtykietaSlownikaBiblioteki
 	var barwa sql.NullString

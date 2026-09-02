@@ -1,4 +1,4 @@
-// Rejestrator bloków wiadomości zapisuje nietekstowe fragmenty strumienia do tabeli blok_wiadomosci w trakcie tury, pomijając tekst, który domyka dziennik rozmowy. Awaria zapisu nie przerywa tury — okno schodzi z rejestracji do końca życia procesu.
+// Rejestrator bloków wiadomości zapisuje nietekstowe fragmenty strumienia do tabeli blok_wiadomosci w trakcie tury; awaria zapisu zdejmuje okno z rejestracji do końca życia procesu.
 package core
 
 import (
@@ -12,7 +12,6 @@ import (
 	"danacoconsole/shared"
 )
 
-// rejestratorBlokow zapisuje bloki strumienia przez repozytorium warstwy danych, pomijając fragmenty tekstowe i fragmenty bez wiadomości.
 type rejestratorBlokow struct {
 	zycie    context.Context
 	bloki    dane.RepozytoriumBlokow
@@ -22,9 +21,6 @@ type rejestratorBlokow struct {
 	zdegradowane map[string]struct{}
 }
 
-// nowyRejestratorBlokow wiąże rejestrator z repozytorium bloków. Puste
-// repozytorium daje rejestrator bierny — rdzeń bez bazy prowadzi rozmowę
-// bez zapisu bloków, tak jak bez zapisu wiadomości.
 func nowyRejestratorBlokow(zycie context.Context, bloki dane.RepozytoriumBlokow,
 	dziennik *log.Logger) *rejestratorBlokow {
 
@@ -37,10 +33,9 @@ func nowyRejestratorBlokow(zycie context.Context, bloki dane.RepozytoriumBlokow,
 	}
 }
 
-// Zanotuj zapisuje jeden fragment strumienia jako blok wiadomości. Fragment
-// tekstowy i fragment bez wiadomości przechodzą bez śladu — pierwszy ma swoją
-// prawdę w `wiadomosc.tresc`, drugi nie ma czego wskazać.
-func (r *rejestratorBlokow) Zanotuj(f models.Fragment) {
+// Zanotuj pomija fragment tekstowy, bo jego treść niesie `wiadomosc.tresc`.
+// Zapis idzie na kontekście życia procesu z kontem tury (decyzja 34).
+func (r *rejestratorBlokow) Zanotuj(ctx context.Context, f models.Fragment) {
 	if r == nil || r.bloki == nil {
 		return
 	}
@@ -58,12 +53,12 @@ func (r *rejestratorBlokow) Zanotuj(f models.Fragment) {
 		Tresc:        models.TrescFragmentu(f),
 		Ladunek:      f.Data,
 	}
-	if err := r.bloki.Dopisz(r.zycie, blok); err != nil {
+	zapis := dane.ZKontemOperatora(r.zycie, dane.KontoOperatora(ctx))
+	if err := r.bloki.Dopisz(zapis, blok); err != nil {
 		r.zdegraduj(f.WindowId, err)
 	}
 }
 
-// czyZdegradowane mówi, czy okno wypadło z rejestracji bloków po wcześniejszej awarii ich zapisu do repozytorium.
 func (r *rejestratorBlokow) czyZdegradowane(idOkna string) bool {
 	r.mu.Lock()
 	defer r.mu.Unlock()
@@ -71,8 +66,7 @@ func (r *rejestratorBlokow) czyZdegradowane(idOkna string) bool {
 	return zdegradowane
 }
 
-// zdegraduj wyłącza rejestrację bloków okna i zgłasza to raz do dziennika
-// rdzenia — powtarzanie wpisu przy każdym fragmencie zaśmiecałoby ślad.
+// zdegraduj zgłasza okno do dziennika raz; wpis przy każdym fragmencie zaśmiecałby ślad.
 func (r *rejestratorBlokow) zdegraduj(idOkna string, przyczyna error) {
 	r.mu.Lock()
 	_, juz := r.zdegradowane[idOkna]

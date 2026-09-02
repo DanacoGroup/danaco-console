@@ -1,7 +1,5 @@
 // Odpowiedzialność pliku: dobudowa obszaru Research po stronie danych — byty
-// krążące wokół ustalenia: adnotacje lektury, klasyfikacja i kotwica
-// ustalenia, książka kodów i macierz, sprzeczności, weryfikacje, wątki oraz
-// ślad prowenancji.
+// krążące wokół ustalenia: adnotacje, kodowanie, sprzeczności, wątki, prowenancja.
 package dane
 
 import (
@@ -12,9 +10,6 @@ import (
 	"strings"
 )
 
-// KotwicaBadania wskazuje miejsce w źródle: stronę z przesunięciem, selektor
-// dokumentu albo znacznik czasu transkryptu. Jeden typ dla adnotacji
-// i ustalenia — to samo wskazanie, a nie dwa zbieżne.
 type KotwicaBadania struct {
 	Rodzaj   string
 	Strona   *int64
@@ -24,8 +19,6 @@ type KotwicaBadania struct {
 	CzasMs   *int64
 }
 
-// AdnotacjaBadania to wiersz `adnotacja_badania`, niosący cytat, komentarz,
-// kolor, kotwicę w źródle i kod ustalenia, do którego adnotacja należy.
 type AdnotacjaBadania struct {
 	Kod          string
 	ZrodloKod    string
@@ -39,8 +32,6 @@ type AdnotacjaBadania struct {
 	Utworzono    string
 }
 
-// SzczegolyUstaleniaBadania to cechy ustalenia dobudowane migracją 150: klasyfikacja,
-// waga, notatka robocza, wymóg potwierdzenia, kotwica i adnotacja źródłowa.
 type SzczegolyUstaleniaBadania struct {
 	Rodzaj             string
 	Waga               string
@@ -50,8 +41,6 @@ type SzczegolyUstaleniaBadania struct {
 	Kotwica            KotwicaBadania
 }
 
-// KodBadania to wiersz `kod_badania` — pozycja książki kodów, niosąca nazwę,
-// opis, kod nadrzędny w hierarchii i liczbę wystąpień wśród ustaleń.
 type KodBadania struct {
 	Kod         string
 	Okno        string
@@ -61,8 +50,6 @@ type KodBadania struct {
 	Wystapienia int
 }
 
-// KomorkaMacierzyBadania to jedno pole macierzy kod × źródło, niosące liczbę
-// ustaleń tego kodu w tym źródle wraz z ich kodami.
 type KomorkaMacierzyBadania struct {
 	KodKodu       string
 	ZrodloKod     string
@@ -70,8 +57,6 @@ type KomorkaMacierzyBadania struct {
 	UstalenieKody []string
 }
 
-// SprzecznoscBadania to wiersz `sprzecznosc_badania` wraz z ustaleniami,
-// niosący streszczenie rozbieżności, jej rozstrzygnięcie i uzasadnienie.
 type SprzecznoscBadania struct {
 	Kod                 string
 	Okno                string
@@ -83,8 +68,6 @@ type SprzecznoscBadania struct {
 	UstalenieKody       []string
 }
 
-// WatekBadania to wiersz `watek_ustalen_badania` wraz z ustaleniami wątku,
-// niosący nazwę i znamię, czy wątek powstał klastrowaniem samoczynnym.
 type WatekBadania struct {
 	Kod           string
 	Nazwa         string
@@ -92,8 +75,6 @@ type WatekBadania struct {
 	UstalenieKody []string
 }
 
-// WpisProwenancjiBadania to wiersz `prowenancja_badania`, niosący czynność,
-// aktora, chwilę zdarzenia i wskazanie źródła, którego czynność dotyczyła.
 type WpisProwenancjiBadania struct {
 	UstalenieKod string
 	OCzasie      string
@@ -105,8 +86,6 @@ type WpisProwenancjiBadania struct {
 
 // ── Adnotacje lektury ──────────────────────────────────────────────────────
 
-// ZapiszAdnotacje zakłada adnotację albo nadpisuje zastaną o tym samym
-// kodzie, przyjmując rodzaj kotwicy „page", gdy wołający go nie poda.
 func (r *repozytoriumBadan) ZapiszAdnotacje(ctx context.Context,
 	a AdnotacjaBadania) (AdnotacjaBadania, error) {
 
@@ -118,11 +97,12 @@ func (r *repozytoriumBadan) ZapiszAdnotacje(ctx context.Context,
 	if rodzajKotwicy == "" {
 		rodzajKotwicy = "page"
 	}
-	err = r.wykonajBadania(ctx, `INSERT INTO adnotacja_badania
+	err = r.zapiszWGranicyBadania(ctx, `INSERT INTO adnotacja_badania
 	    (identyfikator_zewnetrzny, zrodlo_id, rodzaj, cytat, komentarz, kolor,
 	     kotwica_rodzaj, kotwica_strona, kotwica_od, kotwica_do, kotwica_selektor,
 	     kotwica_czas_ms, ustalenie_kod)
-	    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+	    SELECT ?, id, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
+	      FROM zrodlo_badania WHERE id = ? AND `+WarunekKonta+`
 	    ON CONFLICT(identyfikator_zewnetrzny) DO UPDATE SET
 	        rodzaj = excluded.rodzaj, cytat = excluded.cytat,
 	        komentarz = excluded.komentarz, kolor = excluded.kolor,
@@ -131,29 +111,32 @@ func (r *repozytoriumBadan) ZapiszAdnotacje(ctx context.Context,
 	        kotwica_od = excluded.kotwica_od, kotwica_do = excluded.kotwica_do,
 	        kotwica_selektor = excluded.kotwica_selektor,
 	        kotwica_czas_ms = excluded.kotwica_czas_ms,
-	        ustalenie_kod = excluded.ustalenie_kod`,
-		a.Kod, id, a.Rodzaj, tekstDoKolumny(a.Cytat), tekstDoKolumny(a.Komentarz),
+	        ustalenie_kod = excluded.ustalenie_kod
+	    WHERE `+warunekZrodlaAdnotacji, "adnotacja badania", a.Kod,
+		a.Kod, a.Rodzaj, tekstDoKolumny(a.Cytat), tekstDoKolumny(a.Komentarz),
 		tekstDoKolumny(a.Kolor), rodzajKotwicy, liczbaDoKolumny(a.Kotwica.Strona),
 		liczbaDoKolumny(a.Kotwica.Od), liczbaDoKolumny(a.Kotwica.Do),
 		tekstDoKolumny(a.Kotwica.Selektor), liczbaDoKolumny(a.Kotwica.CzasMs),
-		tekstDoKolumny(a.UstalenieKod))
+		tekstDoKolumny(a.UstalenieKod), id, KontoOperatora(ctx), KontoOperatora(ctx))
 	if err != nil {
 		return AdnotacjaBadania{}, err
 	}
 	return r.Adnotacja(ctx, a.Kod)
 }
 
-// zapytanieAdnotacjiBadania składa odczyt adnotacji z tytułem źródła — wypis kontraktu
-// (`ResearchExcerpt`) niesie tytuł, więc odczyt bierze go jednym złączeniem
-// zamiast drugiego zapytania na każdą adnotację.
+// Wypis kontraktu `ResearchExcerpt` niesie tytuł źródła, więc odczyt adnotacji
+// bierze go jednym złączeniem.
 const zapytanieAdnotacjiBadania = `SELECT a.identyfikator_zewnetrzny, z.identyfikator_zewnetrzny, z.tytul,
 	        a.rodzaj, a.cytat, a.komentarz, a.kolor, a.kotwica_rodzaj, a.kotwica_strona,
 	        a.kotwica_od, a.kotwica_do, a.kotwica_selektor, a.kotwica_czas_ms,
 	        a.ustalenie_kod, a.utworzono
 	   FROM adnotacja_badania a JOIN zrodlo_badania z ON z.id = a.zrodlo_id `
 
-// odczytajAdnotacjeBadania składa strukturę adnotacji wraz z kotwicą
-// z jednego wiersza wyniku zapytania `zapytanieAdnotacjiBadania`.
+// warunekZrodlaAdnotacji sięga konta przez `zrodlo_badania` (konto_id od migracji 484);
+// nazwy stoją niekwalifikowane, bo ten sam warunek stoi w DO UPDATE bez aliasu.
+const warunekZrodlaAdnotacji = `EXISTS (SELECT 1 FROM zrodlo_badania w
+	        WHERE w.id = zrodlo_id AND ` + WarunekKonta + `)`
+
 func odczytajAdnotacjeBadania(wiersz skaner) (AdnotacjaBadania, error) {
 	var a AdnotacjaBadania
 	var cytat, komentarz, kolor, selektor, ustalenie sql.NullString
@@ -175,15 +158,13 @@ func odczytajAdnotacjeBadania(wiersz skaner) (AdnotacjaBadania, error) {
 	return a, nil
 }
 
-// Adnotacja oddaje jedną adnotację po kodzie zewnętrznym albo błąd
-// ErrBrakWiersza, gdy adnotacja o tym kodzie nie istnieje.
 func (r *repozytoriumBadan) Adnotacja(ctx context.Context, kod string) (AdnotacjaBadania, error) {
 	polecenie, err := r.zapytania.przygotuj(ctx,
-		zapytanieAdnotacjiBadania+`WHERE a.identyfikator_zewnetrzny = ?`)
+		zapytanieAdnotacjiBadania+`WHERE a.identyfikator_zewnetrzny = ? AND `+warunekZrodlaAdnotacji)
 	if err != nil {
 		return AdnotacjaBadania{}, err
 	}
-	a, err := odczytajAdnotacjeBadania(polecenie.QueryRowContext(ctx, kod))
+	a, err := odczytajAdnotacjeBadania(polecenie.QueryRowContext(ctx, kod, KontoOperatora(ctx)))
 	if errors.Is(err, sql.ErrNoRows) {
 		return AdnotacjaBadania{}, ErrBrakWiersza
 	}
@@ -198,8 +179,8 @@ func (r *repozytoriumBadan) Adnotacja(ctx context.Context, kod string) (Adnotacj
 func (r *repozytoriumBadan) Adnotacje(ctx context.Context, kodZrodla, okno, rodzaj string,
 	limit int) ([]AdnotacjaBadania, error) {
 
-	warunki := []string{"1 = 1"}
-	argumenty := []any{}
+	warunki := []string{warunekZrodlaAdnotacji}
+	argumenty := []any{KontoOperatora(ctx)}
 	if strings.TrimSpace(kodZrodla) != "" {
 		warunki = append(warunki, "z.identyfikator_zewnetrzny = ?")
 		argumenty = append(argumenty, kodZrodla)
@@ -239,11 +220,11 @@ func (r *repozytoriumBadan) Adnotacje(ctx context.Context, kodZrodla, okno, rodz
 // ma odróżnić „nie było czego zdjąć" od „zdjęto".
 func (r *repozytoriumBadan) UsunAdnotacje(ctx context.Context, kod string) error {
 	polecenie, err := r.zapytania.przygotuj(ctx,
-		`DELETE FROM adnotacja_badania WHERE identyfikator_zewnetrzny = ?`)
+		`DELETE FROM adnotacja_badania WHERE identyfikator_zewnetrzny = ? AND `+warunekZrodlaAdnotacji)
 	if err != nil {
 		return err
 	}
-	wynik, err := polecenie.ExecContext(ctx, kod)
+	wynik, err := polecenie.ExecContext(ctx, kod, KontoOperatora(ctx))
 	if err != nil {
 		return fmt.Errorf("dane: nie można usunąć adnotacji %q: %w", kod, err)
 	}
@@ -285,8 +266,6 @@ func (r *repozytoriumBadan) UstawSzczegolyUstalenia(ctx context.Context, kod str
 		KontoOperatora(ctx))
 }
 
-// SzczegolyUstaleniaBadania oddaje cechy dobudowane ustalenia migracją 150:
-// klasyfikację, wagę, notatkę roboczą, wymóg potwierdzenia i kotwicę.
 func (r *repozytoriumBadan) SzczegolyUstaleniaBadania(ctx context.Context, kod string) (SzczegolyUstaleniaBadania, error) {
 	polecenie, err := r.zapytania.przygotuj(ctx, `SELECT rodzaj, waga, notatka, wymaga_potwierdzenia,
 	        adnotacja_kod, kotwica_rodzaj, kotwica_strona, kotwica_od, kotwica_do,
@@ -349,8 +328,6 @@ func (r *repozytoriumBadan) UsunUstalenie(ctx context.Context, kod string) (int,
 	return odwiazane, err
 }
 
-// PrzeniesZrodlaUstalen przepina źródła ustaleń scalanych na ustalenie docelowe
-// i zdejmuje ustalenia scalone. Zwraca liczbę przepiętych wiązań.
 func (r *repozytoriumBadan) PrzeniesZrodlaUstalen(ctx context.Context, kodyUstalen []string,
 	kodDocelowy string) (int, error) {
 
@@ -406,8 +383,6 @@ func (r *repozytoriumBadan) PrzeniesZrodlaUstalen(ctx context.Context, kodyUstal
 
 // ── Książka kodów i macierz ────────────────────────────────────────────────
 
-// ZapiszKsiazkeKodow zakłada albo nadpisuje pozycje książki kodów okna,
-// pomijając pozycje bez kodu zewnętrznego albo bez nazwy.
 func (r *repozytoriumBadan) ZapiszKsiazkeKodow(ctx context.Context, okno string,
 	kody []KodBadania) ([]KodBadania, error) {
 
@@ -415,13 +390,15 @@ func (r *repozytoriumBadan) ZapiszKsiazkeKodow(ctx context.Context, okno string,
 		if strings.TrimSpace(kod.Kod) == "" || strings.TrimSpace(kod.Nazwa) == "" {
 			continue
 		}
-		err := r.wykonajBadania(ctx, `INSERT INTO kod_badania
-		    (identyfikator_zewnetrzny, okno, nazwa, opis, nadrzedny_kod)
-		    VALUES (?, ?, ?, ?, ?)
+		err := r.zapiszWGranicyBadania(ctx, `INSERT INTO kod_badania
+		    (identyfikator_zewnetrzny, okno, nazwa, opis, nadrzedny_kod, konto_id)
+		    VALUES (?, ?, ?, ?, ?, `+WskazanieKonta+`)
 		    ON CONFLICT(identyfikator_zewnetrzny) DO UPDATE SET
 		        nazwa = excluded.nazwa, opis = excluded.opis,
-		        nadrzedny_kod = excluded.nadrzedny_kod`,
-			kod.Kod, okno, kod.Nazwa, tekstDoKolumny(kod.Opis), tekstDoKolumny(kod.Nadrzedny))
+		        nadrzedny_kod = excluded.nadrzedny_kod
+		    WHERE `+WarunekKonta, "kod badania", kod.Kod,
+			kod.Kod, okno, kod.Nazwa, tekstDoKolumny(kod.Opis), tekstDoKolumny(kod.Nadrzedny),
+			KontoOperatora(ctx), KontoOperatora(ctx))
 		if err != nil {
 			return nil, err
 		}
@@ -429,17 +406,14 @@ func (r *repozytoriumBadan) ZapiszKsiazkeKodow(ctx context.Context, okno string,
 	return r.KsiazkaKodow(ctx, okno)
 }
 
-// KsiazkaKodow oddaje pozycje książki kodów okna wraz z liczbą wystąpień
-// każdego kodu wśród ustaleń, uporządkowane według nazwy.
 func (r *repozytoriumBadan) KsiazkaKodow(ctx context.Context, okno string) ([]KodBadania, error) {
-	// Liczba wystąpień idzie po ustaleniach konta żądania — książka kodów jest
-	// wspólna, przypisania do niej nie są.
 	wiersze, err := r.pytajBadania(ctx, `SELECT k.identyfikator_zewnetrzny, k.nazwa, k.opis, k.nadrzedny_kod,
 	        (SELECT COUNT(*) FROM kod_ustalenia_badania ku
 	          WHERE ku.kod_id = k.id
 	            AND EXISTS (SELECT 1 FROM ustalenie_badania w
 	                         WHERE w.id = ku.ustalenie_id AND `+WarunekKonta+`))
-	   FROM kod_badania k WHERE k.okno = ? ORDER BY k.nazwa`, KontoOperatora(ctx), okno)
+	   FROM kod_badania k WHERE k.okno = ? AND `+WarunekKonta+` ORDER BY k.nazwa`,
+		KontoOperatora(ctx), okno, KontoOperatora(ctx))
 	if err != nil {
 		return nil, err
 	}
@@ -459,8 +433,6 @@ func (r *repozytoriumBadan) KsiazkaKodow(ctx context.Context, okno string) ([]Ko
 	return lista, wiersze.Err()
 }
 
-// UstawKodyUstalenia wymienia w całości kody przypisane ustaleniu, zdejmując
-// wiązania zastane i zakładając wiązania podane w jednej transakcji.
 func (r *repozytoriumBadan) UstawKodyUstalenia(ctx context.Context, kodUstalenia string,
 	kodyKodow []string) error {
 
@@ -479,12 +451,12 @@ func (r *repozytoriumBadan) UstawKodyUstalenia(ctx context.Context, kodUstalenia
 		}
 		wstawienie, err := r.zapytania.wTransakcji(ctx, t,
 			`INSERT OR IGNORE INTO kod_ustalenia_badania (ustalenie_id, kod_id)
-			 SELECT ?, id FROM kod_badania WHERE identyfikator_zewnetrzny = ?`)
+			 SELECT ?, id FROM kod_badania WHERE identyfikator_zewnetrzny = ? AND `+WarunekKonta)
 		if err != nil {
 			return err
 		}
 		for _, kod := range kodyKodow {
-			if _, err := wstawienie.ExecContext(ctx, id, kod); err != nil {
+			if _, err := wstawienie.ExecContext(ctx, id, kod, KontoOperatora(ctx)); err != nil {
 				return fmt.Errorf("dane: nie można przypisać kodu %q: %w", kod, err)
 			}
 		}
@@ -492,8 +464,6 @@ func (r *repozytoriumBadan) UstawKodyUstalenia(ctx context.Context, kodUstalenia
 	})
 }
 
-// KodyUstalenia oddaje pozycje książki kodów przypisane wskazanemu ustaleniu,
-// uporządkowane według nazwy kodu.
 func (r *repozytoriumBadan) KodyUstalenia(ctx context.Context, kodUstalenia string) ([]KodBadania, error) {
 	// Warunek konta idzie podzapytaniem, bo `kod_badania` niesie własną kolumnę
 	// `konto_id` i nazwa niekwalifikowana w złączeniu byłaby dwuznaczna.
@@ -523,9 +493,8 @@ func (r *repozytoriumBadan) KodyUstalenia(ctx context.Context, kodUstalenia stri
 	return lista, wiersze.Err()
 }
 
-// MacierzKodow zlicza wystąpienia każdego kodu w każdym źródle okna — komórka
-// macierzy kod × źródło. Liczenie idzie zapytaniem, a nie pętlą po ustaleniach:
-// baza ma indeksy, a pętla miałaby tyle zapytań, ile par.
+// MacierzKodow liczy zapytaniem, nie pętlą po ustaleniach: baza ma indeksy,
+// a pętla miałaby tyle zapytań, ile par kod × źródło.
 func (r *repozytoriumBadan) MacierzKodow(ctx context.Context, okno string) ([]KomorkaMacierzyBadania, error) {
 	wiersze, err := r.pytajBadania(ctx, `SELECT k.identyfikator_zewnetrzny, z.identyfikator_zewnetrzny,
 	        COUNT(DISTINCT u.id), GROUP_CONCAT(DISTINCT u.identyfikator_zewnetrzny)
@@ -562,40 +531,44 @@ func (r *repozytoriumBadan) MacierzKodow(ctx context.Context, okno string) ([]Ko
 
 // ── Sprzeczności ───────────────────────────────────────────────────────────
 
-// ZapiszSprzecznosc zakłada sprzeczność albo nadpisuje zastaną, wymieniając
-// przy podanej liście przypisane ustalenia w jednej transakcji.
 func (r *repozytoriumBadan) ZapiszSprzecznosc(ctx context.Context,
 	s SprzecznoscBadania) (SprzecznoscBadania, error) {
 
 	err := wTransakcji(ctx, r.db, func(t *sql.Tx) error {
 		zapis, err := r.zapytania.wTransakcji(ctx, t, `INSERT INTO sprzecznosc_badania
 		    (identyfikator_zewnetrzny, okno, streszczenie, roznica_liczbowa,
-		     rozstrzygnieta, ustalenie_rozstrzygajace, uzasadnienie)
-		    VALUES (?, ?, ?, ?, ?, ?, ?)
+		     rozstrzygnieta, ustalenie_rozstrzygajace, uzasadnienie, konto_id)
+		    VALUES (?, ?, ?, ?, ?, ?, ?, `+WskazanieKonta+`)
 		    ON CONFLICT(identyfikator_zewnetrzny) DO UPDATE SET
 		        streszczenie = excluded.streszczenie,
 		        roznica_liczbowa = excluded.roznica_liczbowa,
 		        rozstrzygnieta = excluded.rozstrzygnieta,
 		        ustalenie_rozstrzygajace = excluded.ustalenie_rozstrzygajace,
-		        uzasadnienie = excluded.uzasadnienie`)
+		        uzasadnienie = excluded.uzasadnienie
+		    WHERE `+WarunekKonta)
 		if err != nil {
 			return err
 		}
-		if _, err := zapis.ExecContext(ctx, s.Kod, s.Okno, s.Streszczenie,
+		wynik, err := zapis.ExecContext(ctx, s.Kod, s.Okno, s.Streszczenie,
 			tekstDoKolumny(s.RoznicaLiczbowa), wartoscCalkowitaBadania(s.Rozstrzygnieta),
-			tekstDoKolumny(s.UstalenieRozstrzyga), tekstDoKolumny(s.Uzasadnienie)); err != nil {
+			tekstDoKolumny(s.UstalenieRozstrzyga), tekstDoKolumny(s.Uzasadnienie),
+			KontoOperatora(ctx), KontoOperatora(ctx))
+		if err != nil {
 			return fmt.Errorf("dane: nie można zapisać sprzeczności %q: %w", s.Kod, err)
+		}
+		if err := sprawdzTrafienieZapisu(wynik, "sprzeczność badania", s.Kod); err != nil {
+			return err
 		}
 		if s.UstalenieKody == nil {
 			return nil
 		}
 		wskazanie, err := r.zapytania.wTransakcji(ctx, t,
-			`SELECT id FROM sprzecznosc_badania WHERE identyfikator_zewnetrzny = ?`)
+			`SELECT id FROM sprzecznosc_badania WHERE identyfikator_zewnetrzny = ? AND `+WarunekKonta)
 		if err != nil {
 			return err
 		}
 		var id int64
-		if err := wskazanie.QueryRowContext(ctx, s.Kod).Scan(&id); err != nil {
+		if err := wskazanie.QueryRowContext(ctx, s.Kod, KontoOperatora(ctx)).Scan(&id); err != nil {
 			return fmt.Errorf("dane: nie można odnaleźć sprzeczności %q: %w", s.Kod, err)
 		}
 		czyszczenie, err := r.zapytania.wTransakcji(ctx, t,
@@ -625,16 +598,14 @@ func (r *repozytoriumBadan) ZapiszSprzecznosc(ctx context.Context,
 	return r.Sprzecznosc(ctx, s.Kod)
 }
 
-// Sprzecznosc oddaje jedną sprzeczność po kodzie zewnętrznym wraz z kodami
-// ustaleń, których dotyczy, albo błąd ErrBrakWiersza, gdy nie istnieje.
 func (r *repozytoriumBadan) Sprzecznosc(ctx context.Context, kod string) (SprzecznoscBadania, error) {
 	polecenie, err := r.zapytania.przygotuj(ctx, `SELECT identyfikator_zewnetrzny, okno, streszczenie,
 	        roznica_liczbowa, rozstrzygnieta, ustalenie_rozstrzygajace, uzasadnienie
-	    FROM sprzecznosc_badania WHERE identyfikator_zewnetrzny = ?`)
+	    FROM sprzecznosc_badania WHERE identyfikator_zewnetrzny = ? AND `+WarunekKonta)
 	if err != nil {
 		return SprzecznoscBadania{}, err
 	}
-	s, err := odczytajSprzecznoscBadania(polecenie.QueryRowContext(ctx, kod))
+	s, err := odczytajSprzecznoscBadania(polecenie.QueryRowContext(ctx, kod, KontoOperatora(ctx)))
 	if errors.Is(err, sql.ErrNoRows) {
 		return SprzecznoscBadania{}, ErrBrakWiersza
 	}
@@ -649,12 +620,11 @@ func (r *repozytoriumBadan) Sprzecznosc(ctx context.Context, kod string) (Sprzec
 	return s, nil
 }
 
-// Sprzecznosci oddaje sprzeczności okna badania od najświeższej, każdą wraz
-// z kodami ustaleń, których dotyczy.
 func (r *repozytoriumBadan) Sprzecznosci(ctx context.Context, okno string) ([]SprzecznoscBadania, error) {
 	wiersze, err := r.pytajBadania(ctx, `SELECT identyfikator_zewnetrzny, okno, streszczenie,
 	        roznica_liczbowa, rozstrzygnieta, ustalenie_rozstrzygajace, uzasadnienie
-	    FROM sprzecznosc_badania WHERE okno = ? ORDER BY utworzono DESC, id DESC`, okno)
+	    FROM sprzecznosc_badania WHERE okno = ? AND `+WarunekKonta+`
+	    ORDER BY utworzono DESC, id DESC`, okno, KontoOperatora(ctx))
 	if err != nil {
 		return nil, err
 	}
@@ -681,21 +651,19 @@ func (r *repozytoriumBadan) Sprzecznosci(ctx context.Context, okno string) ([]Sp
 	return lista, nil
 }
 
-// ustaleniaSprzecznosci oddaje kody ustaleń objętych sprzecznością o wskazanym
-// kodzie, uporządkowane rosnąco.
 func (r *repozytoriumBadan) ustaleniaSprzecznosci(ctx context.Context, kod string) ([]string, error) {
 	wiersze, err := r.pytajBadania(ctx, `SELECT us.ustalenie_kod
 	   FROM ustalenie_sprzecznosci_badania us
 	   JOIN sprzecznosc_badania s ON s.id = us.sprzecznosc_id
-	  WHERE s.identyfikator_zewnetrzny = ? ORDER BY us.ustalenie_kod`, kod)
+	  WHERE s.identyfikator_zewnetrzny = ?
+	    AND EXISTS (SELECT 1 FROM sprzecznosc_badania w WHERE w.id = s.id AND `+WarunekKonta+`)
+	  ORDER BY us.ustalenie_kod`, kod, KontoOperatora(ctx))
 	if err != nil {
 		return nil, err
 	}
 	return napisyZWierszyBadania(wiersze)
 }
 
-// odczytajSprzecznoscBadania składa strukturę sprzeczności z jednego wiersza
-// wyniku, zostawiając listę kodów ustaleń do wypełnienia osobnym zapytaniem.
 func odczytajSprzecznoscBadania(wiersz skaner) (SprzecznoscBadania, error) {
 	var s SprzecznoscBadania
 	var roznica, rozstrzygajace, uzasadnienie sql.NullString
@@ -715,8 +683,6 @@ func odczytajSprzecznoscBadania(wiersz skaner) (SprzecznoscBadania, error) {
 
 // ── Weryfikacja twierdzenia ────────────────────────────────────────────────
 
-// ZapiszWeryfikacje utrwala wynik sprawdzenia twierdzenia i oddaje chwilę
-// zapisu znaczoną zegarem bazy, nadpisując weryfikację zastaną ustalenia.
 func (r *repozytoriumBadan) ZapiszWeryfikacje(ctx context.Context, kodUstalenia,
 	werdykt, uzasadnienie string) (string, error) {
 
@@ -755,15 +721,16 @@ func (r *repozytoriumBadan) ZapiszWatki(ctx context.Context, okno string,
 
 	err := wTransakcji(ctx, r.db, func(t *sql.Tx) error {
 		czyszczenie, err := r.zapytania.wTransakcji(ctx, t,
-			`DELETE FROM watek_ustalen_badania WHERE okno = ?`)
+			`DELETE FROM watek_ustalen_badania WHERE okno = ? AND `+WarunekKonta)
 		if err != nil {
 			return err
 		}
-		if _, err := czyszczenie.ExecContext(ctx, okno); err != nil {
+		if _, err := czyszczenie.ExecContext(ctx, okno, KontoOperatora(ctx)); err != nil {
 			return fmt.Errorf("dane: nie można wyczyścić wątków okna %q: %w", okno, err)
 		}
 		zapis, err := r.zapytania.wTransakcji(ctx, t, `INSERT INTO watek_ustalen_badania
-		    (identyfikator_zewnetrzny, okno, nazwa, automatyczny) VALUES (?, ?, ?, ?)`)
+		    (identyfikator_zewnetrzny, okno, nazwa, automatyczny, konto_id)
+		    VALUES (?, ?, ?, ?, `+WskazanieKonta+`)`)
 		if err != nil {
 			return err
 		}
@@ -774,7 +741,7 @@ func (r *repozytoriumBadan) ZapiszWatki(ctx context.Context, okno string,
 		}
 		for _, watek := range watki {
 			wynik, err := zapis.ExecContext(ctx, watek.Kod, okno, watek.Nazwa,
-				wartoscCalkowitaBadania(watek.Automatyczny))
+				wartoscCalkowitaBadania(watek.Automatyczny), KontoOperatora(ctx))
 			if err != nil {
 				return fmt.Errorf("dane: nie można zapisać wątku %q: %w", watek.Kod, err)
 			}
@@ -806,18 +773,18 @@ func (r *repozytoriumBadan) ZapiszProwenancje(ctx context.Context, w WpisProwena
 		aktor = "operator"
 	}
 	return r.wykonajBadania(ctx, `INSERT INTO prowenancja_badania
-	    (ustalenie_kod, aktor, czynnosc, zrodlo_kod, kotwica_strona)
-	    VALUES (?, ?, ?, ?, ?)`,
-		w.UstalenieKod, aktor, w.Czynnosc, tekstDoKolumny(w.ZrodloKod), liczbaDoKolumny(w.Strona))
+	    (ustalenie_kod, aktor, czynnosc, zrodlo_kod, kotwica_strona, konto_id)
+	    VALUES (?, ?, ?, ?, ?, `+WskazanieKonta+`)`,
+		w.UstalenieKod, aktor, w.Czynnosc, tekstDoKolumny(w.ZrodloKod), liczbaDoKolumny(w.Strona),
+		KontoOperatora(ctx))
 }
 
-// Prowenancja oddaje ślad wskazanego ustalenia w kolejności zdarzeń, od
-// najstarszego do najświeższego.
 func (r *repozytoriumBadan) Prowenancja(ctx context.Context,
 	kodUstalenia string) ([]WpisProwenancjiBadania, error) {
 
 	wiersze, err := r.pytajBadania(ctx, `SELECT ustalenie_kod, o_czasie, aktor, czynnosc, zrodlo_kod, kotwica_strona
-	    FROM prowenancja_badania WHERE ustalenie_kod = ? ORDER BY o_czasie, id`, kodUstalenia)
+	    FROM prowenancja_badania WHERE ustalenie_kod = ? AND `+WarunekKonta+`
+	    ORDER BY o_czasie, id`, kodUstalenia, KontoOperatora(ctx))
 	if err != nil {
 		return nil, err
 	}

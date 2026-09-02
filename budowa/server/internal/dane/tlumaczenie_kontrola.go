@@ -1,6 +1,5 @@
-// Faseta kontroli modułu Translate: wykaz terminów zawężony, profile
-// kontroli jakości, obieg zatwierdzeń panelu i ustalenia korekty językowej —
-// trzy byty odpowiadające na pytanie, czy przekład wolno wypuścić.
+// Faseta kontroli modułu Translate: wykaz terminów zawężony, profile QA,
+// obieg zatwierdzeń panelu i ustalenia korekty językowej.
 package dane
 
 import (
@@ -8,12 +7,11 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"strconv"
 	"strings"
 	"time"
 )
 
-// FiltrTerminow zawęża wykaz terminów słownika po języku, dziedzinie,
-// stanie i frazie; pola puste nie zawężają wyniku.
 type FiltrTerminow struct {
 	Jezyk     string
 	Dziedzina string
@@ -23,13 +21,11 @@ type FiltrTerminow struct {
 	Offset    int
 }
 
-// TerminyZawezone oddaje wykaz terminów słownika dopasowanych filtrem wraz
-// z liczbą wszystkich pasujących wierszy.
 func (r *repozytoriumTlumaczen) TerminyZawezone(ctx context.Context,
 	filtr FiltrTerminow) ([]TerminSlownika, int, error) {
 
-	warunki := []string{}
-	argumenty := []any{}
+	warunki := []string{WarunekKonta}
+	argumenty := []any{KontoOperatora(ctx)}
 	if strings.TrimSpace(filtr.Jezyk) != "" {
 		warunki = append(warunki, "jezyk = ?")
 		argumenty = append(argumenty, filtr.Jezyk)
@@ -46,10 +42,7 @@ func (r *repozytoriumTlumaczen) TerminyZawezone(ctx context.Context,
 		warunki = append(warunki, "(zrodlo LIKE ? OR cel LIKE ?)")
 		argumenty = append(argumenty, "%"+fraza+"%", "%"+fraza+"%")
 	}
-	warunek := ""
-	if len(warunki) > 0 {
-		warunek = " WHERE " + strings.Join(warunki, " AND ")
-	}
+	warunek := " WHERE " + strings.Join(warunki, " AND ")
 
 	var razem int
 	if err := r.db.QueryRowContext(ctx,
@@ -84,8 +77,6 @@ func (r *repozytoriumTlumaczen) TerminyZawezone(ctx context.Context,
 	return lista, razem, wiersze.Err()
 }
 
-// ProfilQa to wiersz `profil_qa` wraz z kontrolami — profil bez kontroli nie
-// jest profilem, więc oba byty chodzą razem.
 type ProfilQa struct {
 	ID             int64
 	Kod            string
@@ -97,21 +88,17 @@ type ProfilQa struct {
 	Zaktualizowano int64
 }
 
-// KontrolaProfiluQa to wiersz tabeli `profil_qa_kontrola`: pojedyncza
-// kontrola jakości wchodząca w skład profilu, wraz z wagą i stanem włączenia.
 type KontrolaProfiluQa struct {
 	Rodzaj   string
 	Waga     string
 	Wlaczona bool
 }
 
-// ProfileQa oddaje profile kontroli jakości zawężone zasięgiem wraz z ich
-// kontrolami; pusty zasięg oddaje komplet profili.
 func (r *repozytoriumTlumaczen) ProfileQa(ctx context.Context,
 	zasieg, zasiegID string) ([]ProfilQa, error) {
 
-	warunki := []string{}
-	argumenty := []any{}
+	warunki := []string{WarunekKonta}
+	argumenty := []any{KontoOperatora(ctx)}
 	if strings.TrimSpace(zasieg) != "" {
 		warunki = append(warunki, "zasieg = ?")
 		argumenty = append(argumenty, zasieg)
@@ -121,11 +108,7 @@ func (r *repozytoriumTlumaczen) ProfileQa(ctx context.Context,
 		argumenty = append(argumenty, zasiegID)
 	}
 	zapytanie := `SELECT id, identyfikator_zewnetrzny, nazwa, opis, zasieg, zasieg_id, zaktualizowano
-	                FROM profil_qa`
-	if len(warunki) > 0 {
-		zapytanie += " WHERE " + strings.Join(warunki, " AND ")
-	}
-	zapytanie += " ORDER BY nazwa"
+	                FROM profil_qa WHERE ` + strings.Join(warunki, " AND ") + ` ORDER BY nazwa`
 
 	wiersze, err := r.db.QueryContext(ctx, zapytanie, argumenty...)
 	if err != nil {
@@ -158,8 +141,6 @@ func (r *repozytoriumTlumaczen) ProfileQa(ctx context.Context,
 	return profile, nil
 }
 
-// kontroleProfiluQa doczytuje kontrole jednego profilu kontroli jakości,
-// uporządkowane według rodzaju kontroli.
 func (r *repozytoriumTlumaczen) kontroleProfiluQa(ctx context.Context,
 	profilID int64) ([]KontrolaProfiluQa, error) {
 
@@ -184,14 +165,13 @@ func (r *repozytoriumTlumaczen) kontroleProfiluQa(ctx context.Context,
 	return kontrole, wiersze.Err()
 }
 
-// ProfilQaPoKodzie oddaje jeden profil kontroli jakości po kodzie
-// zewnętrznym, wraz z pełnym wykazem jego kontroli.
 func (r *repozytoriumTlumaczen) ProfilQaPoKodzie(ctx context.Context, kod string) (ProfilQa, error) {
 	var profil ProfilQa
 	var opis, zasiegID sql.NullString
 	err := r.db.QueryRowContext(ctx,
 		`SELECT id, identyfikator_zewnetrzny, nazwa, opis, zasieg, zasieg_id, zaktualizowano
-		   FROM profil_qa WHERE identyfikator_zewnetrzny = ?`, kod).
+		   FROM profil_qa WHERE identyfikator_zewnetrzny = ? AND `+WarunekKonta,
+		kod, KontoOperatora(ctx)).
 		Scan(&profil.ID, &profil.Kod, &profil.Nazwa, &opis, &profil.Zasieg, &zasiegID,
 			&profil.Zaktualizowano)
 	if errors.Is(err, sql.ErrNoRows) {
@@ -210,27 +190,33 @@ func (r *repozytoriumTlumaczen) ProfilQaPoKodzie(ctx context.Context, kod string
 	return profil, nil
 }
 
-// ZapiszProfilQa zakłada profil albo nadpisuje zastany i wymienia jego kontrole
-// w całości — kontrakt nadsyła wykaz kontroli kompletem.
 func (r *repozytoriumTlumaczen) ZapiszProfilQa(ctx context.Context, profil ProfilQa) (ProfilQa, error) {
 	if strings.TrimSpace(profil.Kod) == "" {
 		return ProfilQa{}, fmt.Errorf("dane: profil kontroli jakości bez identyfikatora")
 	}
 	teraz := time.Now().UnixMilli()
 	err := wTransakcji(ctx, r.db, func(transakcja *sql.Tx) error {
-		if _, err := transakcja.ExecContext(ctx, `INSERT INTO profil_qa
-			(identyfikator_zewnetrzny, nazwa, opis, zasieg, zasieg_id, zaktualizowano)
-			VALUES (?, ?, ?, ?, ?, ?)
+		// Kod profilu jest unikalny w całej tabeli; warunek przy DO UPDATE zostawia
+		// wiersz cudzego konta nietknięty, a zapis kończy się ErrKolizjaWiersza.
+		wynik, err := transakcja.ExecContext(ctx, `INSERT INTO profil_qa
+			(identyfikator_zewnetrzny, nazwa, opis, zasieg, zasieg_id, zaktualizowano, konto_id)
+			VALUES (?, ?, ?, ?, ?, ?, `+WskazanieKonta+`)
 			ON CONFLICT(identyfikator_zewnetrzny) DO UPDATE SET
 				nazwa = excluded.nazwa, opis = excluded.opis, zasieg = excluded.zasieg,
-				zasieg_id = excluded.zasieg_id, zaktualizowano = excluded.zaktualizowano`,
+				zasieg_id = excluded.zasieg_id, zaktualizowano = excluded.zaktualizowano
+			WHERE `+WarunekKonta,
 			profil.Kod, profil.Nazwa, tekstDoKolumny(profil.Opis), profil.Zasieg,
-			tekstDoKolumny(profil.ZasiegID), teraz); err != nil {
+			tekstDoKolumny(profil.ZasiegID), teraz, KontoOperatora(ctx), KontoOperatora(ctx))
+		if err != nil {
 			return fmt.Errorf("dane: nie można zapisać profilu kontroli jakości %q: %w", profil.Kod, err)
+		}
+		if err := sprawdzTrafienieZapisu(wynik, "profil kontroli jakości", profil.Kod); err != nil {
+			return err
 		}
 		var profilID int64
 		if err := transakcja.QueryRowContext(ctx,
-			`SELECT id FROM profil_qa WHERE identyfikator_zewnetrzny = ?`, profil.Kod).
+			`SELECT id FROM profil_qa WHERE identyfikator_zewnetrzny = ? AND `+WarunekKonta,
+			profil.Kod, KontoOperatora(ctx)).
 			Scan(&profilID); err != nil {
 			return fmt.Errorf("dane: nie można odczytać profilu %q po zapisie: %w", profil.Kod, err)
 		}
@@ -254,11 +240,11 @@ func (r *repozytoriumTlumaczen) ZapiszProfilQa(ctx context.Context, profil Profi
 	return r.ProfilQaPoKodzie(ctx, profil.Kod)
 }
 
-// UsunProfilQa kasuje profil kontroli jakości wraz z jego kontrolami; klucz
-// obcy kaskadowy zdejmuje wiersze zależne.
+// Klucz obcy kaskadowy profil_qa_kontrola zdejmuje kontrole razem z profilem.
 func (r *repozytoriumTlumaczen) UsunProfilQa(ctx context.Context, kod string) (bool, error) {
 	wynik, err := r.db.ExecContext(ctx,
-		`DELETE FROM profil_qa WHERE identyfikator_zewnetrzny = ?`, kod)
+		`DELETE FROM profil_qa WHERE identyfikator_zewnetrzny = ? AND `+WarunekKonta,
+		kod, KontoOperatora(ctx))
 	if err != nil {
 		return false, fmt.Errorf("dane: nie można usunąć profilu kontroli jakości %q: %w", kod, err)
 	}
@@ -269,8 +255,6 @@ func (r *repozytoriumTlumaczen) UsunProfilQa(ctx context.Context, kod string) (b
 	return zeszlo > 0, nil
 }
 
-// ZatwierdzeniePanelu to wiersz tabeli `zatwierdzenie_panelu`: jeden krok
-// obiegu zatwierdzeń panelu tłumaczenia.
 type ZatwierdzeniePanelu struct {
 	Kod       string
 	PanelID   int64
@@ -281,9 +265,8 @@ type ZatwierdzeniePanelu struct {
 	Utworzono int64
 }
 
-// ZapiszZatwierdzenie dokłada krok obiegu i przestawia migawkę panelu w jednej
-// transakcji — inaczej wiersz obiegu i stan panelu rozjechałyby się przy awarii
-// między dwoma zapisami.
+// Krok obiegu i migawka panelu idą jedną transakcją, bo awaria między dwoma
+// zapisami rozjechałaby wiersz obiegu i stan panelu.
 func (r *repozytoriumTlumaczen) ZapiszZatwierdzenie(ctx context.Context,
 	zapis ZatwierdzeniePanelu) (ZatwierdzeniePanelu, error) {
 
@@ -292,19 +275,31 @@ func (r *repozytoriumTlumaczen) ZapiszZatwierdzenie(ctx context.Context,
 		zapis.Utworzono = teraz
 	}
 	err := wTransakcji(ctx, r.db, func(transakcja *sql.Tx) error {
-		if _, err := transakcja.ExecContext(ctx, `INSERT INTO zatwierdzenie_panelu
+		wynik, err := transakcja.ExecContext(ctx, `INSERT INTO zatwierdzenie_panelu
 			(identyfikator_zewnetrzny, panel_id, etap, autor, uwaga, utworzono)
-			VALUES (?, ?, ?, ?, ?, ?)`,
+			SELECT ?, ?, ?, ?, ?, ?
+			 WHERE EXISTS (SELECT 1 FROM panel_tlumaczenia p
+			                 JOIN okno_tlumaczenia o ON o.id = p.okno_id
+			                WHERE p.id = ? AND `+WarunekKonta+`)`,
 			zapis.Kod, zapis.PanelID, zapis.Etap, zapis.Autor,
-			tekstDoKolumny(zapis.Uwaga), zapis.Utworzono); err != nil {
+			tekstDoKolumny(zapis.Uwaga), zapis.Utworzono, zapis.PanelID, KontoOperatora(ctx))
+		if err != nil {
 			return fmt.Errorf("dane: nie można zapisać zatwierdzenia panelu: %w", err)
 		}
-		if _, err := transakcja.ExecContext(ctx, `UPDATE panel_tlumaczenia
+		if err := sprawdzTrafienieZapisu(wynik, "panel tłumaczenia",
+			strconv.FormatInt(zapis.PanelID, 10)); err != nil {
+			return err
+		}
+		wynik, err = transakcja.ExecContext(ctx, `UPDATE panel_tlumaczenia
 			SET etap_zatwierdzenia = ?, zatwierdzil = ?, zatwierdzono = ?, zaktualizowano = ?
-			WHERE id = ?`, zapis.Etap, zapis.Autor, zapis.Utworzono, teraz, zapis.PanelID); err != nil {
+			WHERE id = ?
+			  AND EXISTS (SELECT 1 FROM okno_tlumaczenia o
+			               WHERE o.id = panel_tlumaczenia.okno_id AND `+WarunekKonta+`)`,
+			zapis.Etap, zapis.Autor, zapis.Utworzono, teraz, zapis.PanelID, KontoOperatora(ctx))
+		if err != nil {
 			return fmt.Errorf("dane: nie można przestawić etapu panelu: %w", err)
 		}
-		return nil
+		return sprawdzTrafienieZapisu(wynik, "panel tłumaczenia", strconv.FormatInt(zapis.PanelID, 10))
 	})
 	if err != nil {
 		return ZatwierdzeniePanelu{}, err
@@ -312,22 +307,22 @@ func (r *repozytoriumTlumaczen) ZapiszZatwierdzenie(ctx context.Context,
 	return zapis, nil
 }
 
-// Zatwierdzenia oddaje obieg zatwierdzeń panelu albo, gdy `panelID` jest
-// zerem, obieg zatwierdzeń wszystkich paneli okna.
 func (r *repozytoriumTlumaczen) Zatwierdzenia(ctx context.Context,
 	panelID, oknoID int64) ([]ZatwierdzeniePanelu, error) {
 
 	zapytanie := `SELECT z.identyfikator_zewnetrzny, z.panel_id, p.identyfikator_zewnetrzny,
 	                     z.etap, z.autor, z.uwaga, z.utworzono
 	                FROM zatwierdzenie_panelu z
-	                JOIN panel_tlumaczenia p ON p.id = z.panel_id`
-	argumenty := []any{}
+	                JOIN panel_tlumaczenia p ON p.id = z.panel_id
+	                JOIN okno_tlumaczenia o ON o.id = p.okno_id
+	               WHERE ` + WarunekKonta
+	argumenty := []any{KontoOperatora(ctx)}
 	switch {
 	case panelID > 0:
-		zapytanie += " WHERE z.panel_id = ?"
+		zapytanie += " AND z.panel_id = ?"
 		argumenty = append(argumenty, panelID)
 	case oknoID > 0:
-		zapytanie += " WHERE p.okno_id = ?"
+		zapytanie += " AND p.okno_id = ?"
 		argumenty = append(argumenty, oknoID)
 	}
 	zapytanie += " ORDER BY z.utworzono DESC, z.id DESC"
@@ -352,8 +347,12 @@ func (r *repozytoriumTlumaczen) Zatwierdzenia(ctx context.Context,
 	return zapisy, wiersze.Err()
 }
 
-// UstalenieKorekty to wiersz `ustalenie_korekty` — jedno zastrzeżenie korekty
-// językowej wobec treści panelu.
+// warunekKontaUstalenia prowadzi wiersz ustalenie_korekty do konta drogą
+// panel_tlumaczenia -> okno_tlumaczenia (konto_id od migracji 484).
+const warunekKontaUstalenia = `EXISTS (SELECT 1 FROM panel_tlumaczenia p
+	                                   JOIN okno_tlumaczenia o ON o.id = p.okno_id
+	                                  WHERE p.id = ustalenie_korekty.panel_id AND ` + WarunekKonta + `)`
+
 type UstalenieKorekty struct {
 	Kod         string
 	PanelID     int64
@@ -367,42 +366,48 @@ type UstalenieKorekty struct {
 	Utworzono   int64
 }
 
-// ZapiszUstaleniaKorekty wymienia otwarte ustalenia panelu na nadesłane.
-// Ustalenia rozstrzygnięte (zastosowane albo odrzucone) zostają — kolejny
-// przebieg nie ma prawa skasować odpowiedzi Operatora.
+// Ustalenia rozstrzygnięte zostają: kolejny przebieg nie kasuje odpowiedzi Operatora.
 func (r *repozytoriumTlumaczen) ZapiszUstaleniaKorekty(ctx context.Context,
 	panelID int64, ustalenia []UstalenieKorekty) error {
 
 	return wTransakcji(ctx, r.db, func(transakcja *sql.Tx) error {
 		if _, err := transakcja.ExecContext(ctx,
 			`DELETE FROM ustalenie_korekty
-			  WHERE panel_id = ? AND zastosowano IS NULL AND odrzucono IS NULL`, panelID); err != nil {
+			  WHERE panel_id = ? AND zastosowano IS NULL AND odrzucono IS NULL
+			    AND `+warunekKontaUstalenia, panelID, KontoOperatora(ctx)); err != nil {
 			return fmt.Errorf("dane: nie można zdjąć otwartych ustaleń korekty: %w", err)
 		}
 		for _, ustalenie := range ustalenia {
-			if _, err := transakcja.ExecContext(ctx, `INSERT INTO ustalenie_korekty
+			wynik, err := transakcja.ExecContext(ctx, `INSERT INTO ustalenie_korekty
 				(identyfikator_zewnetrzny, panel_id, rodzaj, waga, segment, szczegol,
 				 propozycja, utworzono)
-				VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+				SELECT ?, ?, ?, ?, ?, ?, ?, ?
+				 WHERE EXISTS (SELECT 1 FROM panel_tlumaczenia p
+				                 JOIN okno_tlumaczenia o ON o.id = p.okno_id
+				                WHERE p.id = ? AND `+WarunekKonta+`)`,
 				ustalenie.Kod, panelID, ustalenie.Rodzaj, ustalenie.Waga,
 				tekstDoKolumny(ustalenie.Segment), ustalenie.Szczegol,
-				tekstDoKolumny(ustalenie.Propozycja), ustalenie.Utworzono); err != nil {
+				tekstDoKolumny(ustalenie.Propozycja), ustalenie.Utworzono,
+				panelID, KontoOperatora(ctx))
+			if err != nil {
 				return fmt.Errorf("dane: nie można zapisać ustalenia korekty: %w", err)
+			}
+			if err := sprawdzTrafienieZapisu(wynik, "ustalenie korekty", ustalenie.Kod); err != nil {
+				return err
 			}
 		}
 		return nil
 	})
 }
 
-// UstaleniaKorekty oddaje wszystkie ustalenia korekty panelu, rozstrzygnięte
-// i otwarte, w kolejności od najnowszego.
 func (r *repozytoriumTlumaczen) UstaleniaKorekty(ctx context.Context,
 	panelID int64) ([]UstalenieKorekty, error) {
 
 	wiersze, err := r.db.QueryContext(ctx,
 		`SELECT identyfikator_zewnetrzny, panel_id, rodzaj, waga, segment, szczegol,
 		        propozycja, zastosowano, odrzucono, utworzono
-		   FROM ustalenie_korekty WHERE panel_id = ? ORDER BY utworzono DESC, id DESC`, panelID)
+		   FROM ustalenie_korekty WHERE panel_id = ? AND `+warunekKontaUstalenia+`
+		  ORDER BY utworzono DESC, id DESC`, panelID, KontoOperatora(ctx))
 	if err != nil {
 		return nil, fmt.Errorf("dane: nie można odczytać ustaleń korekty: %w", err)
 	}
@@ -419,15 +424,14 @@ func (r *repozytoriumTlumaczen) UstaleniaKorekty(ctx context.Context,
 	return ustalenia, wiersze.Err()
 }
 
-// UstalenieKorektyPoKodzie oddaje jedno ustalenie korekty po kodzie
-// zewnętrznym, jednoznacznie identyfikującym wiersz.
 func (r *repozytoriumTlumaczen) UstalenieKorektyPoKodzie(ctx context.Context,
 	kod string) (UstalenieKorekty, error) {
 
 	wiersz := r.db.QueryRowContext(ctx,
 		`SELECT identyfikator_zewnetrzny, panel_id, rodzaj, waga, segment, szczegol,
 		        propozycja, zastosowano, odrzucono, utworzono
-		   FROM ustalenie_korekty WHERE identyfikator_zewnetrzny = ?`, kod)
+		   FROM ustalenie_korekty WHERE identyfikator_zewnetrzny = ? AND `+warunekKontaUstalenia,
+		kod, KontoOperatora(ctx))
 	ustalenie, err := odczytajUstalenieKorekty(wiersz)
 	if errors.Is(err, sql.ErrNoRows) {
 		return UstalenieKorekty{}, ErrBrakWiersza
@@ -435,8 +439,6 @@ func (r *repozytoriumTlumaczen) UstalenieKorektyPoKodzie(ctx context.Context,
 	return ustalenie, err
 }
 
-// odczytajUstalenieKorekty odczytuje pojedynczą strukturę UstalenieKorekty
-// z jednego wiersza wyniku zapytania SQL.
 func odczytajUstalenieKorekty(wiersz skaner) (UstalenieKorekty, error) {
 	var ustalenie UstalenieKorekty
 	var segment, propozycja sql.NullString
@@ -453,9 +455,7 @@ func odczytajUstalenieKorekty(wiersz skaner) (UstalenieKorekty, error) {
 	return ustalenie, nil
 }
 
-// RozstrzygnijUstalenieKorekty znakuje ustalenie jako zastosowane albo
-// odrzucone. Rozstrzygnięcie jest chwilą, nie wartością logiczną: „kiedy" niesie
-// więcej niż „czy", a „czy" da się z „kiedy" odczytać.
+// Rozstrzygnięcie zapisuje chwilę, nie wartość logiczną.
 func (r *repozytoriumTlumaczen) RozstrzygnijUstalenieKorekty(ctx context.Context,
 	kod string, odrzucone bool) error {
 
@@ -463,11 +463,28 @@ func (r *repozytoriumTlumaczen) RozstrzygnijUstalenieKorekty(ctx context.Context
 	if odrzucone {
 		kolumna = "odrzucono"
 	}
-	_, err := r.db.ExecContext(ctx,
-		`UPDATE ustalenie_korekty SET `+kolumna+` = ? WHERE identyfikator_zewnetrzny = ?`,
-		time.Now().UnixMilli(), kod)
+	wynik, err := r.db.ExecContext(ctx,
+		`UPDATE ustalenie_korekty SET `+kolumna+` = ?
+		  WHERE identyfikator_zewnetrzny = ? AND `+warunekKontaUstalenia,
+		time.Now().UnixMilli(), kod, KontoOperatora(ctx))
 	if err != nil {
 		return fmt.Errorf("dane: nie można rozstrzygnąć ustalenia korekty %q: %w", kod, err)
 	}
-	return nil
+	zmienione, err := wynik.RowsAffected()
+	if err != nil {
+		return fmt.Errorf("dane: nieznany skutek rozstrzygnięcia ustalenia korekty %q: %w", kod, err)
+	}
+	if zmienione > 0 {
+		return nil
+	}
+	var stoi int
+	err = r.db.QueryRowContext(ctx,
+		`SELECT 1 FROM ustalenie_korekty WHERE identyfikator_zewnetrzny = ?`, kod).Scan(&stoi)
+	if errors.Is(err, sql.ErrNoRows) {
+		return ErrBrakWiersza
+	}
+	if err != nil {
+		return fmt.Errorf("dane: nie można odczytać ustalenia korekty %q: %w", kod, err)
+	}
+	return fmt.Errorf("dane: ustalenie korekty %q należy do innego konta: %w", kod, ErrKolizjaWiersza)
 }

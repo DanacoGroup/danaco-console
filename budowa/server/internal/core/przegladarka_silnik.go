@@ -1,6 +1,4 @@
-// Silnik przeglądarki modułu Browser: uruchomienie Chromium bez okna i rozmowa
-// z nim protokołem Chrome DevTools, dla wszystkiego, co wymaga wykonania
-// strony, nie tylko pobrania jej dokumentu.
+// Silnik przeglądarki modułu Browser: Chromium bez okna i rozmowa z nim protokołem Chrome DevTools.
 package core
 
 import (
@@ -24,9 +22,7 @@ import (
 	"danacoconsole/shared"
 )
 
-// narzedzieChromium opisuje silnik przeglądarki. Program bywa pod dwiema
-// nazwami zależnie od dystrybucji, więc deklaracja wybiera tę, która na tej
-// maszynie naprawdę stoi.
+// narzedzieChromium wybiera nazwę programu obecną w tej dystrybucji.
 func narzedzieChromium() zewnetrzne.Narzedzie {
 	for _, program := range []string{"chromium-browser", "chromium", "google-chrome"} {
 		kandydat := zewnetrzne.Narzedzie{Nazwa: "Chromium", Program: program, Pakiet: "chromium-browser"}
@@ -38,24 +34,17 @@ func narzedzieChromium() zewnetrzne.Narzedzie {
 }
 
 const (
-	// granicaOtwarciaStrony obejmuje start przeglądarki, przejście pod adres
-	// i zebranie wyniku. Hojna, bo obejmuje uruchomienie procesu; skończona, bo
-	// strona wisząca w nieskończoność jest zjawiskiem codziennym.
+	// granicaOtwarciaStrony obejmuje start przeglądarki, przejście pod adres i zebranie wyniku.
 	granicaOtwarciaStrony = 90 * time.Second
-	// granicaWywolaniaCdp jest granicą jednej odpowiedzi protokołu. Zrzut całej
-	// strony bywa wolny, ale nie trwa minutami.
+	// granicaWywolaniaCdp jest granicą jednej odpowiedzi protokołu.
 	granicaWywolaniaCdp = 45 * time.Second
-	// granicaStartuSilnika jest czasem, w którym przeglądarka ma zgłosić
-	// gotowość swojego punktu diagnostycznego.
+	// granicaStartuSilnika jest czasem na zgłoszenie punktu diagnostycznego przeglądarki.
 	granicaStartuSilnika = 30 * time.Second
-	// granicaOdczytuCdp jest górnym rozmiarem jednej odpowiedzi protokołu.
-	// Zrzut całej długiej strony w PNG idzie w megabajty, a odpowiedź obcięta
-	// byłaby obrazem uszkodzonym podanym jako zrzut.
+	// granicaOdczytuCdp jest górnym rozmiarem jednej odpowiedzi protokołu; zrzut PNG długiej strony idzie w megabajty.
 	granicaOdczytuCdp = 256 << 20
 )
 
-// nastawyStrony opisują, w jakich warunkach strona ma zostać otwarta.
-// Wartości zerowe znaczą „jak domyślnie", nie „zero pikseli".
+// nastawyStrony: wartości zerowe znaczą wartości domyślne.
 type nastawyStrony struct {
 	Url            string
 	Szerokosc      int
@@ -68,8 +57,6 @@ type nastawyStrony struct {
 	LimitCzasu     time.Duration
 }
 
-// wynikOtwarcia niesie to, co dała jedna wizyta na stronie: adres, tytuł,
-// tekst, treść HTML i wymiary strony wyrenderowanej.
 type wynikOtwarcia struct {
 	Url       string
 	Tytul     string
@@ -79,26 +66,18 @@ type wynikOtwarcia struct {
 	Wysokosc  int
 }
 
-// zdarzenieCdp jest jednym powiadomieniem przeglądarki: nazwą metody
-// i surowymi parametrami. Rozbiór zostawiony czytelnikowi — rejestr sieciowy
-// i konsola czytają z tego strumienia inne pola.
 type zdarzenieCdp struct {
 	Metoda     string
 	Parametry  json.RawMessage
 	Odnotowano time.Time
 }
 
-// silnikPrzegladarki startuje przeglądarkę i prowadzi z nią rozmowę; nie
-// pamięta niczego między wywołaniami, bo każda czynność otwiera własną sesję
-// i gasi ją po sobie.
 type silnikPrzegladarki struct {
 	uruchamiacz  session.Uruchamiacz
 	rozstrzygacz *konfig.Rozstrzygacz
 	katalog      *KatalogRoboczy
 }
 
-// sesjaStrony jest jedną żywą stroną: procesem przeglądarki, połączeniem
-// protokołu i zebranymi po drodze zdarzeniami.
 type sesjaStrony struct {
 	polaczenie *websocket.Conn
 	adresPunkt string
@@ -117,9 +96,6 @@ type sesjaStrony struct {
 	czytanieSkonczone chan struct{}
 }
 
-// dostepny mówi, czy silnik ma czym wystartować przeglądarkę. Odmowa nazywająca
-// brak jest tu potrzebna wcześnie: komenda, która i tak nie ruszy, ma powiedzieć
-// dlaczego, zanim zacznie cokolwiek zapisywać.
 func (s *silnikPrzegladarki) dostepny() error {
 	if s == nil || s.uruchamiacz == nil {
 		return errors.New("serwer nie ma uruchamiacza procesów — silnik przeglądarki nie ma czym wystartować; " +
@@ -132,8 +108,6 @@ func (s *silnikPrzegladarki) dostepny() error {
 	return nil
 }
 
-// zasiegSilnika składa okno, zasady izolacji i obszar — tak samo jak robią to
-// pozostałe rodziny wołające programy (wzór: `adapter_narzedzia_archiwum.go`).
 func (s *silnikPrzegladarki) zasiegSilnika() (session.Okno, session.Zasady, session.Obszar) {
 	okno := session.Okno{Ustawienia: session.Ustawienia{
 		SrodowiskoWykonania: shared.ExecutionEnvCore,
@@ -149,9 +123,7 @@ func (s *silnikPrzegladarki) zasiegSilnika() (session.Okno, session.Zasady, sess
 	return okno, zasady, obszar
 }
 
-// otworz startuje przeglądarkę, przechodzi pod wskazany adres i oddaje sesję
-// gotową do dalszych pytań. Wołający ZAWSZE zamyka sesję — inaczej proces
-// przeglądarki zostaje na maszynie.
+// otworz oddaje sesję, którą wołający zawsze zamyka; inaczej proces przeglądarki zostaje na maszynie.
 func (s *silnikPrzegladarki) otworz(ctx context.Context, nastawy nastawyStrony) (*sesjaStrony, wynikOtwarcia, error) {
 	if err := s.dostepny(); err != nil {
 		return nil, wynikOtwarcia{}, err
@@ -181,8 +153,7 @@ func (s *silnikPrzegladarki) otworz(ctx context.Context, nastawy nastawyStrony) 
 		"--disable-gpu",
 		"--hide-scrollbars",
 		"--disable-dev-shm-usage",
-		// Wykaz jest wyłączony świadomie: sesja ma być każdorazowo czysta, bez
-		// okien powitalnych.
+		// Sesja każdorazowo czysta, bez okien powitalnych.
 		"--no-first-run",
 		"--no-default-browser-check",
 		"--disable-background-networking",
@@ -209,7 +180,7 @@ func (s *silnikPrzegladarki) otworz(ctx context.Context, nastawy nastawyStrony) 
 		_ = os.RemoveAll(profil)
 		return nil, wynikOtwarcia{}, err
 	}
-	uchwyt, err := s.uruchamiacz.UruchomProces(okno, dopuszczone)
+	uchwyt, err := s.uruchamiacz.UruchomProces(ctx, okno, dopuszczone)
 	if err != nil {
 		_ = os.RemoveAll(profil)
 		return nil, wynikOtwarcia{}, fmt.Errorf("silnik przeglądarki: nie można uruchomić Chromium: %w", err)
@@ -221,8 +192,7 @@ func (s *silnikPrzegladarki) otworz(ctx context.Context, nastawy nastawyStrony) 
 		_ = os.RemoveAll(profil)
 		return nil, wynikOtwarcia{}, fmt.Errorf("silnik przeglądarki: nie można objąć drzewa procesów Chromium: %w", err)
 	}
-	// Strumienie idą do kosza, ale pompowane muszą być: pełny bufor zatrzymałby
-	// zapis Chromium.
+	// Strumienie idą do kosza, ale pompowane: pełny bufor zatrzymałby zapis Chromium.
 	go pochlonStrumien(uchwyt)
 
 	sprzatanie := func() {
@@ -252,8 +222,6 @@ func (s *silnikPrzegladarki) otworz(ctx context.Context, nastawy nastawyStrony) 
 	return sesja, wynik, nil
 }
 
-// wymiaryOkna oddaje rozmiar widoku, w którym strona ma zostać wyrenderowana,
-// uwzględniając żądaną orientację ekranu.
 func wymiaryOkna(nastawy nastawyStrony) (int, int) {
 	szerokosc, wysokosc := nastawy.Szerokosc, nastawy.Wysokosc
 	if szerokosc <= 0 {
@@ -271,8 +239,7 @@ func wymiaryOkna(nastawy nastawyStrony) (int, int) {
 	return szerokosc, wysokosc
 }
 
-// wolnyPort rezerwuje port punktu diagnostycznego. Wybór przez system zamiast
-// stałej: dwie sesje przeglądania biegnące równolegle nie mają się bić o numer.
+// Port wybiera system: dwie sesje równoległe nie biją się o numer.
 func wolnyPort() (int, error) {
 	nasluch, err := net.Listen("tcp", "127.0.0.1:0")
 	if err != nil {
@@ -282,8 +249,6 @@ func wolnyPort() (int, error) {
 	return nasluch.Addr().(*net.TCPAddr).Port, nil
 }
 
-// pochlonStrumien opróżnia strumienie procesu przeglądarki, żeby zapełniony
-// bufor nie zatrzymał jego pracy.
 func pochlonStrumien(uchwyt session.UchwytProcesu) {
 	bufor := make([]byte, 4096)
 	czytaj := func(strumien interface{ Read([]byte) (int, error) }) {
@@ -300,8 +265,6 @@ func pochlonStrumien(uchwyt session.UchwytProcesu) {
 	czytaj(uchwyt.Diagnostyka())
 }
 
-// poczekajNaSilnik czeka, aż punkt diagnostyczny przeglądarki odpowie,
-// odpytując go w pętli aż do upływu limitu czasu.
 func poczekajNaSilnik(ctx context.Context, adresPunktu string, limit time.Duration) error {
 	koniec := time.Now().Add(limit)
 	for {
@@ -328,8 +291,6 @@ func poczekajNaSilnik(ctx context.Context, adresPunktu string, limit time.Durati
 	}
 }
 
-// celStrony jest odpowiedzią punktu diagnostycznego o nowo otwartej karcie:
-// jej identyfikator, adres protokołu i adres URL strony.
 type celStrony struct {
 	Id       string `json:"id"`
 	Adres    string `json:"webSocketDebuggerUrl"`
@@ -337,8 +298,6 @@ type celStrony struct {
 	AdresUrl string `json:"url"`
 }
 
-// polaczZeStrona zakłada nową kartę w przeglądarce i łączy się z nią protokołem
-// Chrome DevTools przez gniazdo WebSocket.
 func polaczZeStrona(ctx context.Context, adresPunktu string, sprzatanie func()) (*sesjaStrony, error) {
 	zadanie, err := http.NewRequestWithContext(ctx, http.MethodPut, adresPunktu+"/json/new?about:blank", nil)
 	if err != nil {
@@ -375,8 +334,6 @@ func polaczZeStrona(ctx context.Context, adresPunktu string, sprzatanie func()) 
 	return sesja, nil
 }
 
-// kopertaCdp jest jedną wiadomością protokołu — odpowiedzią na wywołanie albo
-// powiadomieniem o zdarzeniu.
 type kopertaCdp struct {
 	Id        int64           `json:"id"`
 	Metoda    string          `json:"method"`
@@ -389,8 +346,6 @@ type kopertaCdp struct {
 	} `json:"error"`
 }
 
-// czytaj pompuje wiadomości protokołu: odpowiedzi trafiają do czekających
-// wywołań, powiadomienia — do wykazu zdarzeń sesji.
 func (s *sesjaStrony) czytaj() {
 	defer close(s.czytanieSkonczone)
 	for {
@@ -425,8 +380,6 @@ func (s *sesjaStrony) czytaj() {
 	}
 }
 
-// wywolaj wysyła jedno polecenie protokołu i czeka na jego odpowiedź albo na
-// upływ granicy czasu wywołania.
 func (s *sesjaStrony) wywolaj(ctx context.Context, metoda string, parametry map[string]any) (json.RawMessage, error) {
 	s.zamek.Lock()
 	s.numer++
@@ -465,8 +418,7 @@ func (s *sesjaStrony) wywolaj(ctx context.Context, metoda string, parametry map[
 	}
 }
 
-// Zdarzenia oddaje kopię zebranych powiadomień. Kopia, a nie wykaz wprost:
-// czytelnik przegląda je w swoim tempie, a pompa dopisuje kolejne.
+// Zdarzenia oddaje kopię: pompa dopisuje kolejne w trakcie czytania.
 func (s *sesjaStrony) Zdarzenia() []zdarzenieCdp {
 	s.zamekZdarzen.Lock()
 	defer s.zamekZdarzen.Unlock()
@@ -475,8 +427,6 @@ func (s *sesjaStrony) Zdarzenia() []zdarzenieCdp {
 	return kopia
 }
 
-// Zamknij gasi kartę, połączenie i cały proces przeglądarki wraz z drzewem
-// procesów, które rozgałęził Chromium.
 func (s *sesjaStrony) Zamknij() {
 	if s == nil {
 		return
@@ -491,8 +441,6 @@ func (s *sesjaStrony) Zamknij() {
 	}
 }
 
-// przejdz przechodzi pod adres, czeka na wczytanie dwustopniowo i zbiera
-// migawkę treści strony wyrenderowanej.
 func (s *sesjaStrony) przejdz(ctx context.Context, nastawy nastawyStrony,
 	limit time.Duration, szerokosc, wysokosc int) (wynikOtwarcia, error) {
 
@@ -559,8 +507,6 @@ func (s *sesjaStrony) przejdz(ctx context.Context, nastawy nastawyStrony,
 	return wynik, nil
 }
 
-// poczekajNaWczytanie czeka na zdarzenie wczytania strony, a potem daje jej
-// chwilę na osiadanie, w której skrypty dopisują treść.
 func (s *sesjaStrony) poczekajNaWczytanie(ctx context.Context, warunek string) {
 	oczekiwane := "Page.loadEventFired"
 	if strings.EqualFold(warunek, "domContentLoaded") {
@@ -582,9 +528,7 @@ func (s *sesjaStrony) poczekajNaWczytanie(ctx context.Context, warunek string) {
 	}
 }
 
-// oceń wykonuje wyrażenie w kontekście strony i oddaje jego wartość.
-// Nazwa metody mówi wprost, co się dzieje: rdzeń nie „pyta strony", tylko
-// URUCHAMIA na niej wyrażenie — i tylko takie, które sam napisał.
+// ocen uruchamia na stronie wyłącznie wyrażenia napisane przez rdzeń.
 func (s *sesjaStrony) ocenNaStronie(ctx context.Context, wyrazenie string) (json.RawMessage, error) {
 	wynik, err := s.wywolaj(ctx, "Runtime.evaluate", map[string]any{
 		"expression": wyrazenie, "returnByValue": true, "awaitPromise": true,
@@ -612,9 +556,6 @@ func (s *sesjaStrony) ocenNaStronie(ctx context.Context, wyrazenie string) (json
 	return odpowiedz.Wynik.Wartosc, nil
 }
 
-// zrzut wykonuje zrzut strony i oddaje jego bajty w zapisie base64 protokołu.
-// Tryb rozstrzyga, co znaczy „strona": widok, całość przewijana, prostokąt albo
-// pojedynczy element wskazany selektorem.
 func (s *sesjaStrony) zrzut(ctx context.Context, tryb, format, selektor string, jakosc int,
 	x, y, szerokosc, wysokosc int, wymiarStrony [2]int) (string, int, int, error) {
 
@@ -676,8 +617,6 @@ func (s *sesjaStrony) zrzut(ctx context.Context, tryb, format, selektor string, 
 	return odpowiedz.Dane, szerokoscZrzutu, wysokoscZrzutu, nil
 }
 
-// ramkaElementu mierzy położenie i rozmiar elementu wskazanego selektorem,
-// licząc przewinięcie strony do współrzędnych okna.
 func (s *sesjaStrony) ramkaElementu(ctx context.Context, selektor string) ([4]float64, error) {
 	wyrazenie := `(() => { const e = document.querySelector(` + strconv.Quote(selektor) + `);
 		if (!e) return null; const r = e.getBoundingClientRect();

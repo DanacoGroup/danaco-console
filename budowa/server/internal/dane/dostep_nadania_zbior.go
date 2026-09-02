@@ -9,17 +9,17 @@ import (
 	"fmt"
 )
 
-// miejsceWZbiorze ustala kolejność nowego nadania w zbiorze oraz rozstrzyga, czy zostaje ono nadaniem głównym okna.
 func (r *repozytoriumNadan) miejsceWZbiorze(ctx context.Context, transakcja *sql.Tx,
 	nadanie Nadanie) (int, bool, error) {
 
+	konto := KontoOperatora(ctx)
 	kolejnosc := nadanie.Kolejnosc
 	if kolejnosc <= 0 {
 		polecenie, err := r.zapytania.wTransakcji(ctx, transakcja, nastepnaKolejnoscNadania)
 		if err != nil {
 			return 0, false, err
 		}
-		if err := polecenie.QueryRowContext(ctx, nadanie.OknoKomunikacjiID).Scan(&kolejnosc); err != nil {
+		if err := polecenie.QueryRowContext(ctx, nadanie.OknoKomunikacjiID, konto).Scan(&kolejnosc); err != nil {
 			return 0, false, fmt.Errorf("dane: nie można ustalić kolejności nadania okna %d: %w",
 				nadanie.OknoKomunikacjiID, err)
 		}
@@ -32,16 +32,15 @@ func (r *repozytoriumNadan) miejsceWZbiorze(ctx context.Context, transakcja *sql
 		return 0, false, err
 	}
 	var liczba int
-	if err := polecenie.QueryRowContext(ctx, nadanie.OknoKomunikacjiID).Scan(&liczba); err != nil {
+	if err := polecenie.QueryRowContext(ctx, nadanie.OknoKomunikacjiID, konto).Scan(&liczba); err != nil {
 		return 0, false, fmt.Errorf("dane: nie można policzyć nadań okna %d: %w",
 			nadanie.OknoKomunikacjiID, err)
 	}
 	return kolejnosc, liczba == 0, nil
 }
 
-// zdejmijGlowne kasuje oznaczenie głównego z pozostałych nadań okna. Wywoływane
-// przed nadaniem oznaczenia nowemu wierszowi — indeks częściowy bazy dopuszcza
-// najwyżej jedno główne nadanie okna.
+// zdejmijGlowne kasuje oznaczenie głównego z pozostałych nadań okna przed nadaniem
+// go nowemu wierszowi — indeks częściowy bazy dopuszcza najwyżej jedno główne nadanie okna.
 func (r *repozytoriumNadan) zdejmijGlowne(ctx context.Context, transakcja *sql.Tx,
 	oknoID, pomijaneID int64) error {
 
@@ -49,14 +48,12 @@ func (r *repozytoriumNadan) zdejmijGlowne(ctx context.Context, transakcja *sql.T
 	if err != nil {
 		return err
 	}
-	if _, err := polecenie.ExecContext(ctx, oknoID, pomijaneID); err != nil {
+	if _, err := polecenie.ExecContext(ctx, oknoID, pomijaneID, KontoOperatora(ctx)); err != nil {
 		return fmt.Errorf("dane: nie można zdjąć oznaczenia głównego nadania okna %d: %w", oknoID, err)
 	}
 	return nil
 }
 
-// oknoNadania odczytuje okno, do którego należy nadanie. Brak wiersza jest
-// sygnałem ErrBrakWiersza, nie awarią odczytu.
 func (r *repozytoriumNadan) oknoNadania(ctx context.Context, transakcja *sql.Tx,
 	id int64) (int64, error) {
 
@@ -65,7 +62,7 @@ func (r *repozytoriumNadan) oknoNadania(ctx context.Context, transakcja *sql.Tx,
 		return 0, err
 	}
 	var oknoID int64
-	err = polecenie.QueryRowContext(ctx, id).Scan(&oknoID)
+	err = polecenie.QueryRowContext(ctx, id, KontoOperatora(ctx)).Scan(&oknoID)
 	if err == sql.ErrNoRows {
 		return 0, fmt.Errorf("dane: nadanie dostępu %d nie istnieje: %w", id, ErrBrakWiersza)
 	}
@@ -75,14 +72,14 @@ func (r *repozytoriumNadan) oknoNadania(ctx context.Context, transakcja *sql.Tx,
 	return oknoID, nil
 }
 
-// sprawdzKorzenie pilnuje, żeby zawężenie korzeni nadania mieściło się w obszarze
-// punktu. Lista pusta znaczy „komplet korzeni punktu" i nie wymaga sprawdzenia.
+// sprawdzKorzenie pilnuje, żeby punkt należał do konta żądania, a zawężenie korzeni
+// nadania mieściło się w obszarze punktu. Lista pusta znaczy „komplet korzeni punktu".
 func (r *repozytoriumNadan) sprawdzKorzenie(ctx context.Context, nadanie Nadanie) error {
-	if len(uporzadkujKorzenie(nadanie.Korzenie)) == 0 {
-		return nil
-	}
 	if err := r.sprawdzPunktKonta(ctx, nadanie.PunktDostepuID); err != nil {
 		return err
+	}
+	if len(uporzadkujKorzenie(nadanie.Korzenie)) == 0 {
+		return nil
 	}
 	korzeniePunktu, err := wczytajKorzenie(ctx, r.zapytania, listaKorzeniPunktu,
 		nadanie.PunktDostepuID, "punktu dostępu", KontoOperatora(ctx))
@@ -92,9 +89,8 @@ func (r *repozytoriumNadan) sprawdzKorzenie(ctx context.Context, nadanie Nadanie
 	return sprawdzZawezenieKorzeni(korzeniePunktu, nadanie.Korzenie)
 }
 
-// sprawdzPunktKonta rozstrzyga, czy punkt wskazany przez nadanie należy do konta
-// żądania. Punkt spoza konta jest brakiem wiersza, nie awarią odczytu — inaczej
-// odpowiedź potwierdzałaby jego istnienie.
+// sprawdzPunktKonta oddaje punkt spoza konta jako brak wiersza, nie awarię —
+// odpowiedź nie ma potwierdzać istnienia cudzego punktu.
 func (r *repozytoriumNadan) sprawdzPunktKonta(ctx context.Context, punktID int64) error {
 	polecenie, err := r.zapytania.przygotuj(ctx, punktDostepuKonta)
 	if err != nil {

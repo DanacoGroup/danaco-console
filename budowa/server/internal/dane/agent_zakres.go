@@ -7,74 +7,40 @@ package dane
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"fmt"
 	"sort"
 	"strings"
 )
 
-// PrzelacznikIzolacjiAgenta to jeden z ośmiu zakresów izolacji technicznej
-// zapisany przy ekspercie jako jego wartość wyjściowa.
 type PrzelacznikIzolacjiAgenta struct {
-	// Zakres niesie wartość wyliczenia `IsolationTechnicalScope` kontraktu.
-	Zakres string
-	// Odciety mówi, czy zakres jest odcinany. Fałsz jest stanem wyjściowym.
+	Zakres  string
 	Odciety bool
 }
 
-// PrzypisanieEksperta to jedno przypisanie widziane od strony eksperta: projekt
-// modułu Workspace albo rola środowiska MultitaskingAI.
 type PrzypisanieEksperta struct {
-	AgentKod string
-	// Rodzaj niesie wartość wyliczenia `AgentAssignmentKind`: `project` albo
-	// `role`.
-	Rodzaj string
-	// CelKod jest kodem projektu albo identyfikatorem stanowiska obsady biegu.
-	CelKod string
-	// CelNazwa jest nazwą projektu albo biegu; pusta oznacza byt bez nazwy
-	// własnej.
-	CelNazwa string
-	// Rola niesie rolę eksperta w projekcie albo wcielenie roli w biegu.
-	Rola string
-	// DomyslnyWykonawca dotyczy wyłącznie przypisania do projektu.
+	AgentKod          string
+	Rodzaj            string
+	CelKod            string
+	CelNazwa          string
+	Rola              string
 	DomyslnyWykonawca bool
 	Przypisano        string
 }
 
-// RepozytoriumZakresuAgenta jest kontraktem zakresu działania eksperta:
-// modułów, izolacji, granicy podagentów, uprawnień, konektorów i przypisań.
 type RepozytoriumZakresuAgenta interface {
-	// ModulyAgenta oddaje kody modułów zastosowania; pusty wycinek znaczy brak
-	// ograniczenia.
 	ModulyAgenta(ctx context.Context, kodAgenta string) ([]string, error)
-	// UstawModulyAgenta zastępuje komplet modułów zastosowania; wycinek pusty
-	// zdejmuje ograniczenie.
 	UstawModulyAgenta(ctx context.Context, kodAgenta string, kody []string) error
-	// IzolacjaAgenta oddaje zapisane przełączniki izolacji; komplet ośmiu
-	// zakresów składa warstwa wyższa.
 	IzolacjaAgenta(ctx context.Context, kodAgenta string) ([]PrzelacznikIzolacjiAgenta, error)
-	// UstawIzolacjeAgenta zapisuje wskazane przełączniki; zakres pominięty
-	// w wycinku zostaje bez zmiany.
 	UstawIzolacjeAgenta(ctx context.Context, kodAgenta string, przelaczniki []PrzelacznikIzolacjiAgenta) error
-	// GranicaPodagentow oddaje górną liczbę podagentów eksperta; zero znaczy
-	// Subagent Network wyłączony.
 	GranicaPodagentow(ctx context.Context, kodAgenta string) (int, error)
-	// UstawGranicePodagentow zapisuje tę granicę.
 	UstawGranicePodagentow(ctx context.Context, kodAgenta string, granica int) error
-	// UsunUprawnieniaAgenta zdejmuje wpisy uprawnień i oddaje liczbę zdjętych,
-	// zawężone grupą i zakresem.
 	UsunUprawnieniaAgenta(ctx context.Context, kodAgenta, grupa, zakres string) (int, error)
-	// KonektoryAgenta oddaje konektory eksperta wraz z kodem punktu dostępu.
 	KonektoryAgenta(ctx context.Context, kodAgenta string) ([]KonektorAgenta, []string, error)
-	// UsunKonektorAgenta odłącza konektor od eksperta.
 	UsunKonektorAgenta(ctx context.Context, kodAgenta, kodKonektora string) (bool, error)
-	// ZapiszKonektorAgenta zmienia punkt dostępu, konfigurację i stan czynności
-	// konektora eksperta.
 	ZapiszKonektorAgenta(ctx context.Context, kodAgenta, kodKonektora string,
 		punktID *int64, konfiguracja *string, aktywny *bool) (KonektorAgenta, string, error)
-	// UsunUmiejetnoscAgenta zdejmuje umiejętność z definicji eksperta.
 	UsunUmiejetnoscAgenta(ctx context.Context, kodAgenta, kodUmiejetnosci string) (bool, error)
-	// PrzypisaniaEkspertow oddaje przypisania, zawężone kodem eksperta
-	// i rodzajem, gdy podane.
 	PrzypisaniaEkspertow(ctx context.Context, kodAgenta, rodzaj string) ([]PrzypisanieEksperta, error)
 }
 
@@ -83,30 +49,20 @@ const (
 	                           k.punkt_dostepu_id, k.konfiguracja, k.aktywny, k.utworzono,
 	                           COALESCE(p.kod, '')`
 
-	modulyZakresuAgenta = `SELECT m.kod_modulu FROM agent_modul_zastosowania m
-	                         JOIN agent a ON a.id = m.agent_id
-	                        WHERE a.kod = ? ORDER BY m.kod_modulu`
-
 	czyscModulyZakresuAgenta = `DELETE FROM agent_modul_zastosowania WHERE agent_id = ?`
 
 	wstawModulZakresuAgenta = `INSERT INTO agent_modul_zastosowania (agent_id, kod_modulu)
 	                           VALUES (?, ?) ON CONFLICT(agent_id, kod_modulu) DO NOTHING`
 
-	izolacjaZakresuAgenta = `SELECT i.zakres, i.odciety FROM agent_izolacja_techniczna i
-	                           JOIN agent a ON a.id = i.agent_id
-	                          WHERE a.kod = ? ORDER BY i.zakres`
+	numerEksperta = `SELECT id FROM agent WHERE kod = ? AND ` + WarunekKonta
 
-	zapiszIzolacjeZakresuAgenta = `INSERT INTO agent_izolacja_techniczna (agent_id, zakres, odciety)
-	                               VALUES (?, ?, ?)
-	                               ON CONFLICT(agent_id, zakres) DO UPDATE SET
-	                                   odciety = excluded.odciety,
-	                                   zapisano = strftime('%Y-%m-%dT%H:%M:%fZ','now')`
+	ekspertIstnieje = `SELECT 1 FROM agent WHERE kod = ?`
 
-	granicaPodagentowAgenta = `SELECT limit_podagentow FROM agent WHERE kod = ?`
+	granicaPodagentowAgenta = `SELECT limit_podagentow FROM agent WHERE kod = ? AND ` + WarunekKonta
 
 	zapiszGranicePodagentow = `UPDATE agent SET limit_podagentow = ?,
 	                               zaktualizowano = strftime('%Y-%m-%dT%H:%M:%fZ','now')
-	                            WHERE kod = ?`
+	                            WHERE kod = ? AND ` + WarunekKonta
 
 	usunUprawnieniaZakresuAgenta = `DELETE FROM agent_uprawnienie
 	                                 WHERE agent_id = ?
@@ -119,43 +75,68 @@ const (
 	                                      WHERE ` + WarunekKonta + `) p
 	                                 ON p.id = k.punkt_dostepu_id`
 
+	usunKonektorZakresuAgenta = `DELETE FROM agent_konektor
+	                              WHERE kod = ? AND agent_id = (SELECT id FROM agent
+	                                                            WHERE kod = ? AND ` + WarunekKonta + `)`
+
+	usunUmiejetnoscZakresuAgenta = `DELETE FROM agent_umiejetnosc
+	                                 WHERE kod = ? AND agent_id = (SELECT id FROM agent
+	                                                               WHERE kod = ? AND ` + WarunekKonta + `)`
+)
+
+var (
+	warunekKontaEksperta = strings.ReplaceAll(WarunekKonta, "konto_id", "a.konto_id")
+	warunekKontaProjektu = strings.ReplaceAll(WarunekKonta, "konto_id", "p.konto_id")
+
+	modulyZakresuAgenta = `SELECT m.kod_modulu FROM agent_modul_zastosowania m
+	                         JOIN agent a ON a.id = m.agent_id
+	                        WHERE a.kod = ? AND ` + warunekKontaEksperta + `
+	                        ORDER BY m.kod_modulu`
+
+	izolacjaZakresuAgenta = `SELECT i.zakres, i.odciety FROM agent_izolacja_techniczna i
+	                           JOIN agent a ON a.id = i.agent_id
+	                          WHERE a.kod = ? AND ` + warunekKontaEksperta + `
+	                          ORDER BY i.zakres`
+
+	// agent_izolacja_techniczna nie ma konto_id; granica idzie przez korzeń agent.
+	zapiszIzolacjeZakresuAgenta = `INSERT INTO agent_izolacja_techniczna (agent_id, zakres, odciety)
+	                               VALUES (?, ?, ?)
+	                               ON CONFLICT(agent_id, zakres) DO UPDATE SET
+	                                   odciety = excluded.odciety,
+	                                   zapisano = strftime('%Y-%m-%dT%H:%M:%fZ','now')
+	                               WHERE EXISTS (SELECT 1 FROM agent a
+	                                             WHERE a.id = agent_izolacja_techniczna.agent_id
+	                                               AND ` + warunekKontaEksperta + `)`
+
 	konektoryZakresuAgenta = `SELECT ` + kolumnyKonektoraZakresu + `
 	                            FROM agent_konektor k
 	                            JOIN agent a ON a.id = k.agent_id` + punktKonektoraZakresu + `
-	                           WHERE a.kod = ? ORDER BY k.utworzono, k.id`
+	                           WHERE a.kod = ? AND ` + warunekKontaEksperta + `
+	                           ORDER BY k.utworzono, k.id`
 
 	konektorZakresuPoKodzie = `SELECT ` + kolumnyKonektoraZakresu + `
 	                             FROM agent_konektor k
 	                             JOIN agent a ON a.id = k.agent_id` + punktKonektoraZakresu + `
-	                            WHERE k.kod = ? AND a.kod = ?`
+	                            WHERE k.kod = ? AND a.kod = ? AND ` + warunekKontaEksperta
 
-	usunKonektorZakresuAgenta = `DELETE FROM agent_konektor
-	                              WHERE kod = ? AND agent_id = (SELECT id FROM agent WHERE kod = ?)`
-
-	usunUmiejetnoscZakresuAgenta = `DELETE FROM agent_umiejetnosc
-	                                 WHERE kod = ? AND agent_id = (SELECT id FROM agent WHERE kod = ?)`
-
-	// Przypisanie do projektu: zapytanie czyta Agent Managera modułu Workspace,
-	// zapisany migracją 035, wraz z rolą i domyślnym wykonawcą.
+	// Przypisanie do projektu: Agent Manager modułu Workspace (migracja 035); projekt niesie konto_id od migracji 484.
 	przypisaniaProjektoweEkspertow = `SELECT pa.agent_kod, p.kod, p.nazwa,
 	                                         COALESCE(pa.rola, ''), pa.domyslny_wykonawca, pa.przypisano
 	                                    FROM przypisanie_agenta_projektu pa
 	                                    JOIN projekt p ON p.id = pa.projekt_id
-	                                   WHERE (? = '' OR pa.agent_kod = ?)
+	                                   WHERE (? = '' OR pa.agent_kod = ?) AND ` + warunekKontaProjektu + `
 	                                   ORDER BY pa.przypisano, p.kod`
 
 	// Przypisanie do roli: stanowisko obsady biegu orkiestracji (migracja 077).
-	// Celem jest stanowisko, bo to ono niesie rolę i miejsce w zespole.
 	przypisaniaRolowaEkspertow = `SELECT a.kod, o.id, COALESCE(b.nazwa, ''), o.rola, o.utworzono
 	                                FROM obsada_biegu o
 	                                JOIN agent a ON a.id = o.agent_id
 	                                LEFT JOIN bieg_orkiestracji b ON b.id = o.bieg_id
 	                               WHERE o.agent_id IS NOT NULL AND (? = '' OR a.kod = ?)
+	                                 AND ` + warunekKontaEksperta + `
 	                               ORDER BY o.utworzono, o.id`
 )
 
-// repozytoriumZakresuAgenta obsługuje zakres działania eksperta, wiążąc
-// pamięć przygotowanych zapytań z bazą danych repozytorium.
 type repozytoriumZakresuAgenta struct {
 	zapytania *zapytania
 	db        *sql.DB
@@ -163,38 +144,48 @@ type repozytoriumZakresuAgenta struct {
 
 var _ RepozytoriumZakresuAgenta = (*repozytoriumZakresuAgenta)(nil)
 
-// noweRepozytoriumZakresuAgenta wiąże zakres działania eksperta z bazą danych
-// i pamięcią przygotowanych zapytań.
 func noweRepozytoriumZakresuAgenta(z *zapytania, db *sql.DB) *repozytoriumZakresuAgenta {
 	return &repozytoriumZakresuAgenta{zapytania: z, db: db}
 }
 
-// numerEkspertaZakresu przekłada kod eksperta na klucz wiersza. Kod nieznany
-// wraca jako ErrBrakWiersza — warstwa wyższa odróżnia „takiego eksperta nie ma"
-// od „odczyt się nie powiódł".
+// numerEkspertaZakresu przekłada kod eksperta na klucz wiersza konta Operatora.
 func (r *repozytoriumZakresuAgenta) numerEkspertaZakresu(ctx context.Context, kod string) (int64, error) {
-	polecenie, err := r.zapytania.przygotuj(ctx, `SELECT id FROM agent WHERE kod = ?`)
+	polecenie, err := r.zapytania.przygotuj(ctx, numerEksperta)
 	if err != nil {
 		return 0, err
 	}
 	var id int64
-	switch err := polecenie.QueryRowContext(ctx, kod).Scan(&id); {
+	switch err := polecenie.QueryRowContext(ctx, kod, KontoOperatora(ctx)).Scan(&id); {
 	case err == sql.ErrNoRows:
-		return 0, ErrBrakWiersza
+		return 0, odmowaEksperta(ctx, r.zapytania, kod)
 	case err != nil:
 		return 0, fmt.Errorf("dane: nie można odczytać eksperta %q: %w", kod, err)
 	}
 	return id, nil
 }
 
-// ModulyAgenta oddaje kody modułów zastosowania wskazanego eksperta,
-// uporządkowane alfabetycznie według kodu modułu.
+// odmowaEksperta odróżnia eksperta innego konta (ErrKolizjaWiersza) od kodu nieznanego (ErrBrakWiersza).
+func odmowaEksperta(ctx context.Context, z *zapytania, kod string) error {
+	polecenie, err := z.przygotuj(ctx, ekspertIstnieje)
+	if err != nil {
+		return err
+	}
+	var jest int
+	switch err := polecenie.QueryRowContext(ctx, kod).Scan(&jest); {
+	case err == sql.ErrNoRows:
+		return ErrBrakWiersza
+	case err != nil:
+		return fmt.Errorf("dane: nie można sprawdzić eksperta %q: %w", kod, err)
+	}
+	return fmt.Errorf("dane: ekspert %q należy do innego konta: %w", kod, ErrKolizjaWiersza)
+}
+
 func (r *repozytoriumZakresuAgenta) ModulyAgenta(ctx context.Context, kodAgenta string) ([]string, error) {
 	polecenie, err := r.zapytania.przygotuj(ctx, modulyZakresuAgenta)
 	if err != nil {
 		return nil, err
 	}
-	wiersze, err := polecenie.QueryContext(ctx, kodAgenta)
+	wiersze, err := polecenie.QueryContext(ctx, kodAgenta, KontoOperatora(ctx))
 	if err != nil {
 		return nil, fmt.Errorf("dane: nie można odczytać modułów eksperta %q: %w", kodAgenta, err)
 	}
@@ -244,8 +235,6 @@ func (r *repozytoriumZakresuAgenta) UstawModulyAgenta(ctx context.Context,
 	return nil
 }
 
-// IzolacjaAgenta oddaje zapisane przełączniki izolacji technicznej wskazanego
-// eksperta, uporządkowane po zakresie.
 func (r *repozytoriumZakresuAgenta) IzolacjaAgenta(ctx context.Context,
 	kodAgenta string) ([]PrzelacznikIzolacjiAgenta, error) {
 
@@ -253,7 +242,7 @@ func (r *repozytoriumZakresuAgenta) IzolacjaAgenta(ctx context.Context,
 	if err != nil {
 		return nil, err
 	}
-	wiersze, err := polecenie.QueryContext(ctx, kodAgenta)
+	wiersze, err := polecenie.QueryContext(ctx, kodAgenta, KontoOperatora(ctx))
 	if err != nil {
 		return nil, fmt.Errorf("dane: nie można odczytać izolacji eksperta %q: %w", kodAgenta, err)
 	}
@@ -271,8 +260,6 @@ func (r *repozytoriumZakresuAgenta) IzolacjaAgenta(ctx context.Context,
 	return przelaczniki, wiersze.Err()
 }
 
-// UstawIzolacjeAgenta zapisuje wskazane przełączniki izolacji technicznej
-// eksperta w jednej transakcji.
 func (r *repozytoriumZakresuAgenta) UstawIzolacjeAgenta(ctx context.Context,
 	kodAgenta string, przelaczniki []PrzelacznikIzolacjiAgenta) error {
 
@@ -291,9 +278,13 @@ func (r *repozytoriumZakresuAgenta) UstawIzolacjeAgenta(ctx context.Context,
 		if zakres == "" {
 			continue
 		}
-		if _, err := transakcja.ExecContext(ctx, zapiszIzolacjeZakresuAgenta,
-			id, zakres, liczbaLogiczna(przelacznik.Odciety)); err != nil {
+		wynik, err := transakcja.ExecContext(ctx, zapiszIzolacjeZakresuAgenta,
+			id, zakres, liczbaLogiczna(przelacznik.Odciety), KontoOperatora(ctx))
+		if err != nil {
 			return fmt.Errorf("dane: nie można zapisać zakresu %q eksperta %q: %w", zakres, kodAgenta, err)
+		}
+		if err := sprawdzTrafienieZapisu(wynik, "zakres izolacji eksperta", zakres); err != nil {
+			return err
 		}
 	}
 	if err := transakcja.Commit(); err != nil {
@@ -302,15 +293,13 @@ func (r *repozytoriumZakresuAgenta) UstawIzolacjeAgenta(ctx context.Context,
 	return nil
 }
 
-// GranicaPodagentow oddaje górną liczbę jednoczesnych podagentów wskazanego
-// eksperta zapisaną przy nim.
 func (r *repozytoriumZakresuAgenta) GranicaPodagentow(ctx context.Context, kodAgenta string) (int, error) {
 	polecenie, err := r.zapytania.przygotuj(ctx, granicaPodagentowAgenta)
 	if err != nil {
 		return 0, err
 	}
 	var granica int
-	switch err := polecenie.QueryRowContext(ctx, kodAgenta).Scan(&granica); {
+	switch err := polecenie.QueryRowContext(ctx, kodAgenta, KontoOperatora(ctx)).Scan(&granica); {
 	case err == sql.ErrNoRows:
 		return 0, ErrBrakWiersza
 	case err != nil:
@@ -319,8 +308,6 @@ func (r *repozytoriumZakresuAgenta) GranicaPodagentow(ctx context.Context, kodAg
 	return granica, nil
 }
 
-// UstawGranicePodagentow zapisuje granicę Subagent Network eksperta i mówi,
-// czy wiersz eksperta istniał.
 func (r *repozytoriumZakresuAgenta) UstawGranicePodagentow(ctx context.Context,
 	kodAgenta string, granica int) error {
 
@@ -328,18 +315,17 @@ func (r *repozytoriumZakresuAgenta) UstawGranicePodagentow(ctx context.Context,
 	if err != nil {
 		return err
 	}
-	wynik, err := polecenie.ExecContext(ctx, granica, kodAgenta)
+	wynik, err := polecenie.ExecContext(ctx, granica, kodAgenta, KontoOperatora(ctx))
 	if err != nil {
 		return fmt.Errorf("dane: nie można zapisać granicy podagentów eksperta %q: %w", kodAgenta, err)
 	}
 	zmienione, err := wynik.RowsAffected()
 	if err == nil && zmienione == 0 {
-		return ErrBrakWiersza
+		return odmowaEksperta(ctx, r.zapytania, kodAgenta)
 	}
 	return nil
 }
 
-// UsunUprawnieniaAgenta zdejmuje wpisy uprawnień i oddaje liczbę zdjętych.
 // Zero nie jest odmową: znaczy, że zawężeń nie było.
 func (r *repozytoriumZakresuAgenta) UsunUprawnieniaAgenta(ctx context.Context,
 	kodAgenta, grupa, zakres string) (int, error) {
@@ -363,9 +349,6 @@ func (r *repozytoriumZakresuAgenta) UsunUprawnieniaAgenta(ctx context.Context,
 	return int(zdjete), nil
 }
 
-// KonektoryAgenta oddaje konektory eksperta wraz z kodami punktów dostępu.
-// Dwa wycinki tej samej długości: kontrakt niesie kod punktu, a nie jego numer
-// wiersza, więc odczyt bierze go złączeniem zamiast zostawiać wołającemu.
 func (r *repozytoriumZakresuAgenta) KonektoryAgenta(ctx context.Context,
 	kodAgenta string) ([]KonektorAgenta, []string, error) {
 
@@ -373,7 +356,7 @@ func (r *repozytoriumZakresuAgenta) KonektoryAgenta(ctx context.Context,
 	if err != nil {
 		return nil, nil, err
 	}
-	wiersze, err := polecenie.QueryContext(ctx, KontoOperatora(ctx), kodAgenta)
+	wiersze, err := polecenie.QueryContext(ctx, KontoOperatora(ctx), kodAgenta, KontoOperatora(ctx))
 	if err != nil {
 		return nil, nil, fmt.Errorf("dane: nie można odczytać konektorów eksperta %q: %w", kodAgenta, err)
 	}
@@ -391,14 +374,10 @@ func (r *repozytoriumZakresuAgenta) KonektoryAgenta(ctx context.Context,
 	return konektory, punkty, wiersze.Err()
 }
 
-// czytelnikWierszaZakresu obejmuje `*sql.Row` i `*sql.Rows` jedną nazwą, żeby
-// odczyt konektora stał w jednym miejscu dla obu dróg.
 type czytelnikWierszaZakresu interface {
 	Scan(cele ...any) error
 }
 
-// odczytajKonektorZakresu składa strukturę konektora wraz z kodem punktu
-// dostępu z jednego wiersza wyniku.
 func odczytajKonektorZakresu(zrodlo czytelnikWierszaZakresu) (KonektorAgenta, string, error) {
 	var wpis KonektorAgenta
 	var punkt sql.NullInt64
@@ -426,7 +405,7 @@ func (r *repozytoriumZakresuAgenta) UsunKonektorAgenta(ctx context.Context,
 	if err != nil {
 		return false, err
 	}
-	wynik, err := polecenie.ExecContext(ctx, kodKonektora, kodAgenta)
+	wynik, err := polecenie.ExecContext(ctx, kodKonektora, kodAgenta, KontoOperatora(ctx))
 	if err != nil {
 		return false, fmt.Errorf("dane: nie można odłączyć konektora %q: %w", kodKonektora, err)
 	}
@@ -434,7 +413,19 @@ func (r *repozytoriumZakresuAgenta) UsunKonektorAgenta(ctx context.Context,
 	if err != nil {
 		return false, fmt.Errorf("dane: nie można policzyć odłączeń konektora %q: %w", kodKonektora, err)
 	}
-	return zdjete > 0, nil
+	return zdjete > 0, r.kolizjaEksperta(ctx, zdjete, kodAgenta)
+}
+
+// kolizjaEksperta oddaje ErrKolizjaWiersza, gdy zapis niczego nie zdjął, a ekspert o tym kodzie stoi na innym koncie; brak eksperta nie jest tu odmową.
+func (r *repozytoriumZakresuAgenta) kolizjaEksperta(ctx context.Context, zdjete int64, kodAgenta string) error {
+	if zdjete > 0 {
+		return nil
+	}
+	err := odmowaEksperta(ctx, r.zapytania, kodAgenta)
+	if errors.Is(err, ErrBrakWiersza) {
+		return nil
+	}
+	return err
 }
 
 // ZapiszKonektorAgenta zmienia konfigurację instancji konektora. Wskaźnik pusty
@@ -472,8 +463,6 @@ func (r *repozytoriumZakresuAgenta) ZapiszKonektorAgenta(ctx context.Context,
 	return r.konektorZakresu(ctx, kodAgenta, kodKonektora)
 }
 
-// konektorZakresu odczytuje jeden konektor wskazanego eksperta wraz z kodem
-// punktu dostępu, po kodzie konektora.
 func (r *repozytoriumZakresuAgenta) konektorZakresu(ctx context.Context,
 	kodAgenta, kodKonektora string) (KonektorAgenta, string, error) {
 
@@ -482,11 +471,9 @@ func (r *repozytoriumZakresuAgenta) konektorZakresu(ctx context.Context,
 		return KonektorAgenta{}, "", err
 	}
 	return odczytajKonektorZakresu(polecenie.QueryRowContext(ctx, KontoOperatora(ctx),
-		kodKonektora, kodAgenta))
+		kodKonektora, kodAgenta, KontoOperatora(ctx)))
 }
 
-// UsunUmiejetnoscAgenta zdejmuje umiejętność z definicji wskazanego eksperta
-// i mówi, czy umiejętność istniała.
 func (r *repozytoriumZakresuAgenta) UsunUmiejetnoscAgenta(ctx context.Context,
 	kodAgenta, kodUmiejetnosci string) (bool, error) {
 
@@ -494,7 +481,7 @@ func (r *repozytoriumZakresuAgenta) UsunUmiejetnoscAgenta(ctx context.Context,
 	if err != nil {
 		return false, err
 	}
-	wynik, err := polecenie.ExecContext(ctx, kodUmiejetnosci, kodAgenta)
+	wynik, err := polecenie.ExecContext(ctx, kodUmiejetnosci, kodAgenta, KontoOperatora(ctx))
 	if err != nil {
 		return false, fmt.Errorf("dane: nie można zdjąć umiejętności %q: %w", kodUmiejetnosci, err)
 	}
@@ -502,11 +489,9 @@ func (r *repozytoriumZakresuAgenta) UsunUmiejetnoscAgenta(ctx context.Context,
 	if err != nil {
 		return false, fmt.Errorf("dane: nie można policzyć zdjęć umiejętności %q: %w", kodUmiejetnosci, err)
 	}
-	return zdjete > 0, nil
+	return zdjete > 0, r.kolizjaEksperta(ctx, zdjete, kodAgenta)
 }
 
-// PrzypisaniaEkspertow oddaje przypisania widziane od strony eksperta,
-// złożone z dwóch osobnych zapytań o inne źródła zamiast zapytania z UNION.
 func (r *repozytoriumZakresuAgenta) PrzypisaniaEkspertow(ctx context.Context,
 	kodAgenta, rodzaj string) ([]PrzypisanieEksperta, error) {
 
@@ -539,8 +524,6 @@ const (
 	RodzajPrzypisaniaRola    = "role"
 )
 
-// przypisaniaProjektowe czyta przypisania eksperta do projektów zapisane
-// przez Agent Managera modułu Workspace.
 func (r *repozytoriumZakresuAgenta) przypisaniaProjektowe(ctx context.Context,
 	kodAgenta string) ([]PrzypisanieEksperta, error) {
 
@@ -548,7 +531,7 @@ func (r *repozytoriumZakresuAgenta) przypisaniaProjektowe(ctx context.Context,
 	if err != nil {
 		return nil, err
 	}
-	wiersze, err := polecenie.QueryContext(ctx, kodAgenta, kodAgenta)
+	wiersze, err := polecenie.QueryContext(ctx, kodAgenta, kodAgenta, KontoOperatora(ctx))
 	if err != nil {
 		return nil, fmt.Errorf("dane: nie można odczytać przypisań projektowych: %w", err)
 	}
@@ -567,8 +550,6 @@ func (r *repozytoriumZakresuAgenta) przypisaniaProjektowe(ctx context.Context,
 	return wynik, wiersze.Err()
 }
 
-// przypisaniaRolowe czyta przypisania eksperta do ról zapisane w obsadzie
-// biegu orkiestracji wraz z nazwą biegu.
 func (r *repozytoriumZakresuAgenta) przypisaniaRolowe(ctx context.Context,
 	kodAgenta string) ([]PrzypisanieEksperta, error) {
 
@@ -576,7 +557,7 @@ func (r *repozytoriumZakresuAgenta) przypisaniaRolowe(ctx context.Context,
 	if err != nil {
 		return nil, err
 	}
-	wiersze, err := polecenie.QueryContext(ctx, kodAgenta, kodAgenta)
+	wiersze, err := polecenie.QueryContext(ctx, kodAgenta, kodAgenta, KontoOperatora(ctx))
 	if err != nil {
 		return nil, fmt.Errorf("dane: nie można odczytać przypisań rolowych: %w", err)
 	}

@@ -1,11 +1,10 @@
-// Odpowiedzialność pliku: wypełnienie komendy `knowledge.image.search` — osi
-// obrazu rodziny `knowledge.*`. Obrazy bierze się z biblioteki, nie
-// z przestrzeni roboczej, po rodzaju treści zapisanym przy wgraniu, nie po
-// rozszerzeniu nazwy pliku.
+// Wypełnienie komendy knowledge.image.search: obrazy bierze się z biblioteki po rodzaju
+// treści zapisanym przy wgraniu, nie po rozszerzeniu nazwy pliku.
 package core
 
 import (
 	"context"
+	"errors"
 	"log"
 	"strings"
 
@@ -15,20 +14,13 @@ import (
 )
 
 const (
-	// domyslnaLiczbaObrazow wchodzi, gdy żądanie nie poda `limit`, mniej niż
-	// fragmentów tekstu, bo obraz jest wskazaniem pliku, nie podstawą odpowiedzi.
-	domyslnaLiczbaObrazow = 5
-	// granicaLiczbyObrazow chroni przed żądaniem, które chce całą bibliotekę
-	// obrazów naraz, jednym przebiegiem wyszukiwania.
-	granicaLiczbyObrazow = 50
-	// przedrostekRodzajuObrazu rozpoznaje rodzaj treści będący obrazem, po
-	// prefiksie MIME zapisanym przy wgraniu pliku do biblioteki.
+	// domyslnaLiczbaObrazow jest niższa niż dla fragmentów tekstu: obraz wskazuje plik, nie niesie odpowiedzi.
+	domyslnaLiczbaObrazow    = 5
+	granicaLiczbyObrazow     = 50
 	przedrostekRodzajuObrazu = "image/"
 )
 
-// SzukajObrazu obsługuje `knowledge.image.search`. Kolejność kroków jest ta
-// sama co przy budowaniu wskaźnika: najpierw pytanie o gotowość modelu,
-// dopiero potem odczyt biblioteki. Wynik pusty jest odpowiedzią, nie odmową.
+// Kolejność jak przy budowie wskaźnika: gotowość modelu przed odczytem biblioteki.
 func (a *adapterWiedzy) SzukajObrazu(ctx context.Context,
 	z shared.KnowledgeImageSearchRequest) (shared.KnowledgeImageSearchResponse, error) {
 
@@ -71,6 +63,9 @@ func (a *adapterWiedzy) SzukajObrazu(ctx context.Context,
 	}
 	oceny, _, err := silnik.Dopasuj(ctx, okno, zasady, obszar, pytanie, sciezki,
 		wiedza.LimitOsiObrazu)
+	if errors.Is(err, dane.ErrKolizjaWiersza) {
+		return shared.KnowledgeImageSearchResponse{}, odmowaWiedzy(shared.ErrorCodeConflict, err.Error())
+	}
 	if err != nil {
 		return shared.KnowledgeImageSearchResponse{}, bladWiedzy(err)
 	}
@@ -86,9 +81,6 @@ func (a *adapterWiedzy) SzukajObrazu(ctx context.Context,
 	}, nil
 }
 
-// obrazyBiblioteki wybiera z repozytorium wiedzy pliki będące obrazami. Plik
-// bez odwołania do bajtów jest pomijany. Drugi wynik mówi, czy biblioteka
-// niosła więcej obrazów niż sufit GranicaObrazow wpuścił do porównania.
 func (a *adapterWiedzy) obrazyBiblioteki(ctx context.Context,
 	projekt *string) ([]wiedza.Obraz, bool, error) {
 
@@ -127,8 +119,7 @@ func (a *adapterWiedzy) obrazyBiblioteki(ctx context.Context,
 	return obrazy, obciete, nil
 }
 
-// przelozObraz składa pozycję kontraktu ze wskazaniem źródła. Ścieżka na dysku
-// do odpowiedzi nie wchodzi, wynosiłaby wołającemu układ dysku Operatora.
+// Ścieżka na dysku nie wchodzi do odpowiedzi: wynosiłaby układ dysku Operatora.
 func przelozObraz(obraz wiedza.Obraz) shared.KnowledgeImageHit {
 	trafnosc := wiedza.WSetnych(obraz.Podobienst)
 	pozycja := shared.KnowledgeImageHit{Source: obraz.Zrodlo, Score: &trafnosc}
@@ -141,8 +132,6 @@ func przelozObraz(obraz wiedza.Obraz) shared.KnowledgeImageHit {
 	return pozycja
 }
 
-// granicaObrazowZadania rozstrzyga liczbę oddawanych obrazów, między
-// domyślną a górnym sufitem chroniącym przed pełnym przebiegiem biblioteki.
 func granicaObrazowZadania(limit *int) int {
 	if limit == nil || *limit <= 0 {
 		return domyslnaLiczbaObrazow

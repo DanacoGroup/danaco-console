@@ -9,6 +9,7 @@ import (
 	"strconv"
 	"strings"
 
+	"danacoconsole/server/internal/dane"
 	"danacoconsole/server/internal/mowa"
 )
 
@@ -37,7 +38,7 @@ func PrzeniesPlik(kontekst context.Context, nazwaHosta, idOkna string,
 	if err := odmowDzwieku(sciezkaLokalna, sciezkaZdalna); err != nil {
 		return err
 	}
-	host, err := hostZRejestru(nazwaHosta)
+	host, err := hostZRejestru(kontekst, nazwaHosta)
 	if err != nil {
 		return err
 	}
@@ -64,7 +65,7 @@ func PrzeniesPlik(kontekst context.Context, nazwaHosta, idOkna string,
 		return fmt.Errorf("zdalne: przeniesienie %s → %s nie powiodło się: %w (%s)",
 			zrodlo, cel, err, strings.TrimSpace(string(wyjscie)))
 	}
-	return odnotujPrzeniesienie(host, idOkna, kierunek, zrodlo, cel, rozmiar(sciezkaLokalna))
+	return odnotujPrzeniesienie(kontekst, host, idOkna, kierunek, zrodlo, cel, rozmiar(sciezkaLokalna))
 }
 
 // odmowDzwieku egzekwuje regułę o nagraniach — po obu końcach
@@ -112,15 +113,16 @@ func rozmiar(sciezka string) int64 {
 
 // odnotujPrzeniesienie zapisuje wiersz prowenancji przenosin. Zapis następuje
 // po ruchu bajtów i niczego nie steruje — to dziennik, nie kolejka.
-func odnotujPrzeniesienie(h Host, idOkna string, kierunek Kierunek, zrodlo, cel string, bajty int64) error {
+func odnotujPrzeniesienie(kontekst context.Context, h Host, idOkna string, kierunek Kierunek,
+	zrodlo, cel string, bajty int64) error {
 	db := baza()
 	if db == nil {
 		return odmowaBrakuZasilenia()
 	}
-	_, err := db.Exec(`INSERT INTO zdalne_przeniesienie
-	                   (host_id, okno_id, kierunek, sciezka_zrodlowa, sciezka_docelowa, rozmiar)
-	                   VALUES (?, ?, ?, ?, ?, ?)`,
-		h.Id, idOkna, string(kierunek), zrodlo, cel, bajty)
+	_, err := db.ExecContext(kontekst, `INSERT INTO zdalne_przeniesienie
+	                   (host_id, okno_id, kierunek, sciezka_zrodlowa, sciezka_docelowa, rozmiar, konto_id)
+	                   VALUES (?, ?, ?, ?, ?, ?, `+dane.WskazanieKonta+`)`,
+		h.Id, idOkna, string(kierunek), zrodlo, cel, bajty, dane.KontoOperatora(kontekst))
 	if err != nil {
 		return fmt.Errorf("zdalne: plik przeniesiony, ale zapis prowenancji przenosin "+
 			"nie powiódł się: %w", err)

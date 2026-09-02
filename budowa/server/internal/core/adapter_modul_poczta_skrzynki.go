@@ -12,12 +12,10 @@ import (
 
 	"danacoconsole/server/internal/dane"
 	"danacoconsole/server/internal/poczta"
+	"danacoconsole/server/internal/protocol"
 	"danacoconsole/shared"
 )
 
-// Podepnij zapisuje skrzynkę i odkłada jej sekret w sejfie — obsługuje
-// `mail.account.add`. Pierwsza podpięta skrzynka jest domyślna, bez osobnego
-// pytania.
 func (a *adapterPoczty) Podepnij(ctx context.Context,
 	z shared.MailAccountAddRequest) (shared.MailAccountAddResponse, error) {
 
@@ -32,8 +30,6 @@ func (a *adapterPoczty) Podepnij(ctx context.Context,
 	}
 	host := strings.TrimSpace(wartoscLubPustka(z.IncomingHost))
 	if host == "" {
-		// Zgadywanie hosta po domenie adresu byłoby zmyśleniem nastawy, trafnym
-		// tylko u części dostawców.
 		return shared.MailAccountAddResponse{}, bladWskazaniaPoczty(
 			"komenda mail.account.add bez serwera poczty przychodzącej dla " + adres +
 				" — serwer nie zgaduje hosta dostawcy; podpowiedzi z urządzenia oddaje mail.account.discover")
@@ -71,6 +67,10 @@ func (a *adapterPoczty) Podepnij(ctx context.Context,
 		Domyslna:       len(istniejace) == 0,
 	}
 	zapisana, err := a.skrzynki.Zapisz(ctx, wiersz)
+	if errors.Is(err, dane.ErrKolizjaWiersza) {
+		return shared.MailAccountAddResponse{}, protocol.JakoError(protocol.BladZeZrodla(
+			shared.ErrorCodeConflict, fmt.Errorf("moduł poczty: %w", err)))
+	}
 	if err != nil {
 		return shared.MailAccountAddResponse{}, bladPoczty(err)
 	}
@@ -82,9 +82,6 @@ func (a *adapterPoczty) Podepnij(ctx context.Context,
 	}, nil
 }
 
-// Odepnij usuwa skrzynkę z platformy i kasuje jej sekret — obsługuje
-// `mail.account.remove`. Skrzynki u dostawcy nie tyka: rdzeń nie zna komendy,
-// którą kasuje się cudze konto pocztowe.
 func (a *adapterPoczty) Odepnij(ctx context.Context,
 	z shared.MailAccountRemoveRequest) (shared.MailAccountRemoveResponse, error) {
 
@@ -102,15 +99,11 @@ func (a *adapterPoczty) Odepnij(ctx context.Context,
 		return shared.MailAccountRemoveResponse{}, bladPoczty(err)
 	}
 	if odpiete {
-		// Sekret ginie razem z wierszem, nie zostaje hasłem do zapomnianej skrzynki.
 		usunPoswiadczenie(ctx, a.sejf, przedrostekBytuSejfuPoczty+kod)
 	}
 	return shared.MailAccountRemoveResponse{Removed: odpiete}, nil
 }
 
-// Rozpoznaj czyta nastawy klientów poczty zainstalowanych na urządzeniu —
-// obsługuje `mail.account.discover`. Niczego nie podpina i po żadne hasło
-// nie sięga.
 func (a *adapterPoczty) Rozpoznaj(_ context.Context,
 	_ shared.MailAccountDiscoverRequest) (shared.MailAccountDiscoverResponse, error) {
 
@@ -127,8 +120,6 @@ func (a *adapterPoczty) Rozpoznaj(_ context.Context,
 	return shared.MailAccountDiscoverResponse{Accounts: skrzynki, Total: len(skrzynki)}, nil
 }
 
-// czySzyfrowanyPort rozstrzyga tryb gniazda po numerze portu, tym samym
-// przydziałem IANA, którym kieruje się `Podepnij`. Port zerowy znaczy szyfrowanie.
 func czySzyfrowanyPort(port int, szyfrowane ...int) bool {
 	if port <= 0 {
 		return true
@@ -141,8 +132,6 @@ func czySzyfrowanyPort(port int, szyfrowane ...int) bool {
 	return false
 }
 
-// kodSkrzynki oddaje kod skrzynki o tym adresie, jeśli już jest podpięta,
-// żeby ponowne podpięcie poprawiło nastawy, a nie założyło drugiego wiersza.
 func kodSkrzynki(istniejace []dane.SkrzynkaOperatora, adres string) string {
 	for _, w := range istniejace {
 		if strings.EqualFold(w.Adres, adres) {
@@ -152,8 +141,6 @@ func kodSkrzynki(istniejace []dane.SkrzynkaOperatora, adres string) string {
 	return nowyIdentyfikator(przedrostekSkrzynki)
 }
 
-// protokolSkrzynki bierze protokół żądania, a przy jego braku IMAP, tak jak
-// stanowi kontrakt: brak pola bierze wartość imap.
 func protokolSkrzynki(wskazany *shared.MailProtocol) string {
 	if wskazany != nil && strings.TrimSpace(string(*wskazany)) != "" {
 		return string(*wskazany)

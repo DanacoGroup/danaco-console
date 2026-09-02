@@ -3,10 +3,11 @@ package dane
 
 import (
 	"context"
+	"database/sql"
+	"errors"
 	"fmt"
 )
 
-// WersjaStanowiskaDebaty to jedna redakcja stanowiska końcowego, zapisana osobno od poprzednich redakcji.
 type WersjaStanowiskaDebaty struct {
 	Kod        string
 	Stanowisko string
@@ -15,7 +16,6 @@ type WersjaStanowiskaDebaty struct {
 	Utworzono  string
 }
 
-// ZdanieOdrebneDebaty to zdanie uczestnika, który nie dołączył do wypracowanego konsensusu tej debaty.
 type ZdanieOdrebneDebaty struct {
 	Kod        string
 	Okno       string
@@ -25,7 +25,6 @@ type ZdanieOdrebneDebaty struct {
 	Utworzono  string
 }
 
-// PrzekazanieDebaty to ślad przekazania stanowiska do modułu docelowego, wraz z chwilą tego przekazania.
 type PrzekazanieDebaty struct {
 	Kod        string
 	Okno       string
@@ -35,8 +34,6 @@ type PrzekazanieDebaty struct {
 	Utworzono  string
 }
 
-// RepozytoriumDebatyKonsensusu jest częścią kontraktu obszaru odpowiadającą za
-// stanowisko końcowe poza samą jego treścią.
 type RepozytoriumDebatyKonsensusu interface {
 	StanowiskoPoKodzie(ctx context.Context, kod string) (StanowiskoDebaty, error)
 	RedagujStanowisko(ctx context.Context, stanowisko StanowiskoDebaty) (StanowiskoDebaty, error)
@@ -52,18 +49,25 @@ type RepozytoriumDebatyKonsensusu interface {
 }
 
 const (
-	// Powtórny zapis tej samej wersji nie jest błędem: stanowisko odczytywane
-	// wielokrotnie bez zmiany treści nie podbija licznika, więc wersja bieżąca
-	// bywa zapisywana ponownie. Wpis zostaje ten, który był pierwszy.
+	// Wersja i przekazanie nie mają własnego konta: granica dochodzi przez korzeń debata_stanowisko (konto_id od migracji 484).
+	// Powtórny zapis tej samej wersji nie jest błędem — stanowisko odczytane bez zmiany treści nie podbija licznika.
 	zapiszWersjeStanowiskaDebaty = `INSERT INTO debata_stanowisko_wersja
 	                                (identyfikator_zewnetrzny, stanowisko, wersja, tresc)
-	                                VALUES (?, ?, ?, ?)
+	                                SELECT ?, ?, ?, ? FROM debata_stanowisko
+	                                 WHERE identyfikator_zewnetrzny = ? AND ` + WarunekKonta + `
 	                                ON CONFLICT(stanowisko, wersja) DO NOTHING`
 
 	pobierzWersjeStanowiskaDebaty = `SELECT identyfikator_zewnetrzny, stanowisko, wersja, tresc,
 	                                        utworzono
 	                                 FROM debata_stanowisko_wersja WHERE stanowisko = ?
+	                                   AND EXISTS (SELECT 1 FROM debata_stanowisko
+	                                                WHERE debata_stanowisko.identyfikator_zewnetrzny
+	                                                        = debata_stanowisko_wersja.stanowisko
+	                                                  AND ` + WarunekKonta + `)
 	                                 ORDER BY wersja ASC`
+
+	granicaStanowiskaDebaty = `SELECT ` + WarunekKonta + ` FROM debata_stanowisko
+	                           WHERE identyfikator_zewnetrzny = ?`
 
 	zapiszZdanieOdrebneDebaty = `INSERT INTO debata_zdanie_odrebne
 	                             (identyfikator_zewnetrzny, okno, stanowisko, uczestnik, tresc,
@@ -87,10 +91,10 @@ const (
 
 	zapiszPrzekazanieDebaty = `INSERT INTO debata_przekazanie
 	                           (identyfikator_zewnetrzny, okno, stanowisko, modul, artefakt)
-	                           VALUES (?, ?, ?, ?, ?)`
+	                           SELECT ?, ?, ?, ?, ? FROM debata_stanowisko
+	                            WHERE identyfikator_zewnetrzny = ? AND ` + WarunekKonta
 )
 
-// ZapiszWersjeStanowiskaDebaty utrwala jedną redakcję stanowiska jako osobny wpis w dzienniku redakcji.
 func (r *repozytoriumRoundtable) ZapiszWersjeStanowiskaDebaty(ctx context.Context,
 	wersja WersjaStanowiskaDebaty) error {
 
@@ -98,14 +102,14 @@ func (r *repozytoriumRoundtable) ZapiszWersjeStanowiskaDebaty(ctx context.Contex
 	if err != nil {
 		return err
 	}
-	if _, err := polecenie.ExecContext(ctx, wersja.Kod, wersja.Stanowisko, wersja.Wersja,
-		wersja.Tresc); err != nil {
+	wynik, err := polecenie.ExecContext(ctx, wersja.Kod, wersja.Stanowisko, wersja.Wersja,
+		wersja.Tresc, wersja.Stanowisko, KontoOperatora(ctx))
+	if err != nil {
 		return fmt.Errorf("dane: nie można zapisać wersji stanowiska %q: %w", wersja.Stanowisko, err)
 	}
-	return nil
+	return r.trafienieStanowiska(ctx, wynik, wersja.Stanowisko)
 }
 
-// WersjeStanowiskaDebaty zwraca wszystkie redakcje stanowiska od najstarszej do najnowszej jej wersji.
 func (r *repozytoriumRoundtable) WersjeStanowiskaDebaty(ctx context.Context,
 	stanowisko string) ([]WersjaStanowiskaDebaty, error) {
 
@@ -113,7 +117,7 @@ func (r *repozytoriumRoundtable) WersjeStanowiskaDebaty(ctx context.Context,
 	if err != nil {
 		return nil, err
 	}
-	wiersze, err := polecenie.QueryContext(ctx, stanowisko)
+	wiersze, err := polecenie.QueryContext(ctx, stanowisko, KontoOperatora(ctx))
 	if err != nil {
 		return nil, fmt.Errorf("dane: nie można odczytać wersji stanowiska %q: %w", stanowisko, err)
 	}
@@ -131,7 +135,6 @@ func (r *repozytoriumRoundtable) WersjeStanowiskaDebaty(ctx context.Context,
 	return wersje, wiersze.Err()
 }
 
-// ZapiszZdanieOdrebneDebaty utrwala zdanie odrębne uczestnika, który nie dołączył do tego konsensusu debaty.
 func (r *repozytoriumRoundtable) ZapiszZdanieOdrebneDebaty(ctx context.Context,
 	zdanie ZdanieOdrebneDebaty) (ZdanieOdrebneDebaty, error) {
 
@@ -161,7 +164,6 @@ func (r *repozytoriumRoundtable) ZapiszZdanieOdrebneDebaty(ctx context.Context,
 	return zapisane, nil
 }
 
-// ZdaniaOdrebneDebaty zwraca zdania odrębne podpisane wobec stanowiska, w kolejności ich zapisania w bazie.
 func (r *repozytoriumRoundtable) ZdaniaOdrebneDebaty(ctx context.Context,
 	stanowisko string) ([]ZdanieOdrebneDebaty, error) {
 
@@ -187,7 +189,6 @@ func (r *repozytoriumRoundtable) ZdaniaOdrebneDebaty(ctx context.Context,
 	return zdania, wiersze.Err()
 }
 
-// ZapiszPrzekazanieDebaty odnotowuje przekazanie stanowiska do wskazanego modułu docelowego tej debaty.
 func (r *repozytoriumRoundtable) ZapiszPrzekazanieDebaty(ctx context.Context,
 	przekazanie PrzekazanieDebaty) error {
 
@@ -195,10 +196,42 @@ func (r *repozytoriumRoundtable) ZapiszPrzekazanieDebaty(ctx context.Context,
 	if err != nil {
 		return err
 	}
-	if _, err := polecenie.ExecContext(ctx, przekazanie.Kod, przekazanie.Okno,
-		przekazanie.Stanowisko, przekazanie.Modul, przekazanie.Artefakt); err != nil {
+	wynik, err := polecenie.ExecContext(ctx, przekazanie.Kod, przekazanie.Okno,
+		przekazanie.Stanowisko, przekazanie.Modul, przekazanie.Artefakt,
+		przekazanie.Stanowisko, KontoOperatora(ctx))
+	if err != nil {
 		return fmt.Errorf("dane: nie można zapisać przekazania stanowiska %q: %w",
 			przekazanie.Kod, err)
+	}
+	return r.trafienieStanowiska(ctx, wynik, przekazanie.Stanowisko)
+}
+
+// Zero zmienionych wierszy przy zapisie dziecka stanowiska ma trzy powody: powtórka wersji (DO NOTHING),
+// brak korzenia (ErrBrakWiersza) albo korzeń konta cudzego (ErrKolizjaWiersza); rozstrzyga odczyt korzenia.
+func (r *repozytoriumRoundtable) trafienieStanowiska(ctx context.Context, wynik sql.Result,
+	stanowisko string) error {
+
+	zmienione, err := wynik.RowsAffected()
+	if err != nil {
+		return fmt.Errorf("dane: nieznana liczba zapisanych wierszy stanowiska %q: %w", stanowisko, err)
+	}
+	if zmienione > 0 {
+		return nil
+	}
+	odczyt, err := r.zapytania.przygotuj(ctx, granicaStanowiskaDebaty)
+	if err != nil {
+		return err
+	}
+	var wGranicyKonta bool
+	err = odczyt.QueryRowContext(ctx, KontoOperatora(ctx), stanowisko).Scan(&wGranicyKonta)
+	if errors.Is(err, sql.ErrNoRows) {
+		return ErrBrakWiersza
+	}
+	if err != nil {
+		return fmt.Errorf("dane: nie można odczytać stanowiska %q: %w", stanowisko, err)
+	}
+	if !wGranicyKonta {
+		return fmt.Errorf("dane: stanowisko %q należy do innego konta: %w", stanowisko, ErrKolizjaWiersza)
 	}
 	return nil
 }

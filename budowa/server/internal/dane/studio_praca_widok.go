@@ -30,6 +30,11 @@ type NastawaWidokuStudia struct {
 	PrzybornikWidoczny       bool
 }
 
+// warunekDokumentuNastawy prowadzi do konta przez dokument_studio (konto_id od migracji 484);
+// nastawa_pracy_studio nie ma własnego konto_id, a wiersz samego okna nie ma drogi do konta.
+const warunekDokumentuNastawy = `EXISTS (SELECT 1 FROM dokument_studio
+	WHERE dokument_studio.id = nastawa_pracy_studio.dokument_id AND ` + WarunekKonta + `)`
+
 const (
 	kolumnyWidokuStudia = `id, okno, dokument_id, tryb_powierzchni, kierunek_podzialu,
 	                       granica_podzialu, tryb_widoku, skala_procent, skala_nastawa,
@@ -39,7 +44,7 @@ const (
 
 	widokStudiaPobierzDokument = `SELECT ` + kolumnyWidokuStudia + `
 	                              FROM nastawa_pracy_studio
-	                              WHERE okno = ? AND dokument_id = ?`
+	                              WHERE okno = ? AND dokument_id = ? AND ` + warunekDokumentuNastawy
 
 	widokStudiaPobierzOkno = `SELECT ` + kolumnyWidokuStudia + `
 	                          FROM nastawa_pracy_studio
@@ -53,7 +58,9 @@ const (
 	                         przewijanie = ?, podswietlenie_zmian_modelu = ?,
 	                         przybornik_widoczny = ?,
 	                         zaktualizowano = strftime('%Y-%m-%dT%H:%M:%fZ','now')
-	                     WHERE id = ?`
+	                     WHERE id = ? AND (dokument_id IS NULL OR ` + warunekDokumentuNastawy + `)`
+
+	widokStudiaIstnieje = `SELECT 1 FROM nastawa_pracy_studio WHERE id = ?`
 )
 
 // NastawaWidoku oddaje kolumny widoku wiersza nastaw pracy dla pary okna i dokumentu albo dla samego okna, nie zakładając wiersza.
@@ -65,7 +72,7 @@ func (r *repozytoriumStudia) NastawaWidoku(ctx context.Context, okno string,
 	}
 	polecenieSQL, argumenty := widokStudiaPobierzOkno, []any{okno}
 	if dokumentID != nil {
-		polecenieSQL, argumenty = widokStudiaPobierzDokument, []any{okno, *dokumentID}
+		polecenieSQL, argumenty = widokStudiaPobierzDokument, []any{okno, *dokumentID, KontoOperatora(ctx)}
 	}
 	polecenie, err := r.zapytania.przygotuj(ctx, polecenieSQL)
 	if err != nil {
@@ -93,17 +100,32 @@ func (r *repozytoriumStudia) ZapiszNastaweWidoku(ctx context.Context,
 	if err != nil {
 		return err
 	}
-	_, err = polecenie.ExecContext(ctx, nastawa.TrybPowierzchni, nastawa.KierunekPodzialu,
+	wynik, err := polecenie.ExecContext(ctx, nastawa.TrybPowierzchni, nastawa.KierunekPodzialu,
 		nastawa.GranicaPodzialu, nastawa.TrybWidoku, nastawa.SkalaProcent, nastawa.SkalaNastawa,
 		liczbaLogiczna(nastawa.LinijkiWidoczne), nastawa.LinijkaJednostka,
 		liczbaLogiczna(nastawa.GranicaMarginesu), liczbaLogiczna(nastawa.ZnakiFormatowania),
 		nastawa.StronWRzedzie, liczbaLogiczna(nastawa.WidokRozkladowki), nastawa.Przewijanie,
 		liczbaLogiczna(nastawa.PodswietlenieZmianModelu),
-		liczbaLogiczna(nastawa.PrzybornikWidoczny), nastawa.ID)
+		liczbaLogiczna(nastawa.PrzybornikWidoczny), nastawa.ID, KontoOperatora(ctx))
 	if err != nil {
 		return fmt.Errorf("dane: nie można zapisać nastaw widoku %d: %w", nastawa.ID, err)
 	}
-	return nil
+	zmienione, err := wynik.RowsAffected()
+	if err != nil {
+		return fmt.Errorf("dane: nieznany skutek zapisu nastaw widoku %d: %w", nastawa.ID, err)
+	}
+	if zmienione > 0 {
+		return nil
+	}
+	var jest int
+	err = r.db.QueryRowContext(ctx, widokStudiaIstnieje, nastawa.ID).Scan(&jest)
+	if errors.Is(err, sql.ErrNoRows) {
+		return ErrBrakWiersza
+	}
+	if err != nil {
+		return fmt.Errorf("dane: nieczytelny wiersz nastaw widoku %d: %w", nastawa.ID, err)
+	}
+	return fmt.Errorf("dane: nastawa widoku %d należy do innego konta: %w", nastawa.ID, ErrKolizjaWiersza)
 }
 
 func odczytajNastaweWidokuStudia(wiersz skaner) (NastawaWidokuStudia, error) {

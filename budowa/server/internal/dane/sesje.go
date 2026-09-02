@@ -6,6 +6,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"strings"
 
 	"danacoconsole/shared"
 )
@@ -24,7 +25,6 @@ type Sesja struct {
 	Zakonczono              *string
 }
 
-// RepozytoriumSesji jest kontraktem obszaru sesji dla warstw wyższych, wraz z odczytem, zapisem i zmianą stanu.
 type RepozytoriumSesji interface {
 	Utworz(ctx context.Context, sesja Sesja) (int64, error)
 	Pobierz(ctx context.Context, id int64) (Sesja, error)
@@ -43,14 +43,24 @@ const (
 	wstawSesje = `INSERT INTO sesja (karta_sesji_id, tytul, projekt, stan, identyfikator_zewnetrzny)
 	              VALUES (?, ?, ?, ?, ?)`
 
-	pobierzSesje = `SELECT ` + kolumnySesji + ` FROM sesja WHERE id = ?`
+	sesjaIstnieje = `SELECT 1 FROM sesja WHERE id = ?`
+)
+
+// Tabela sesja nie ma kolumny konto_id: konto sięga się przez karta_sesji (migracja 407).
+var (
+	warunekKontaKartySesji = strings.ReplaceAll(WarunekKonta, "konto_id", "k.konto_id")
+
+	sesjaKonta = ` EXISTS (SELECT 1 FROM karta_sesji k
+	                       WHERE k.id = sesja.karta_sesji_id AND ` + warunekKontaKartySesji + `)`
+
+	pobierzSesje = `SELECT ` + kolumnySesji + ` FROM sesja WHERE id = ? AND` + sesjaKonta
 
 	sesjaPoIdentyfikatorze = `SELECT ` + kolumnySesji + ` FROM sesja
-	                          WHERE identyfikator_zewnetrzny = ?`
+	                          WHERE identyfikator_zewnetrzny = ? AND` + sesjaKonta
 
 	// Sesje w koszu nie wchodzą do wykazu sesji żywych; ten jeden warunek zdejmuje je z wykazu, archiwum i odtworzenia rejestru.
 	listaSesji = `SELECT ` + kolumnySesji + ` FROM sesja
-	              WHERE (? = 0 OR karta_sesji_id = ?) AND usunieto_o IS NULL
+	              WHERE (? = 0 OR karta_sesji_id = ?) AND usunieto_o IS NULL AND` + sesjaKonta + `
 	              ORDER BY id`
 
 	zmienStanSesji = `UPDATE sesja
@@ -59,9 +69,9 @@ const (
 	                      zakonczono = CASE WHEN ? IN ('zakonczona','archiwalna')
 	                                        THEN strftime('%Y-%m-%dT%H:%M:%fZ','now')
 	                                        ELSE zakonczono END
-	                  WHERE id = ?`
+	                  WHERE id = ? AND` + sesjaKonta
 
-	usunSesje = `DELETE FROM sesja WHERE id = ?`
+	usunSesje = `DELETE FROM sesja WHERE id = ? AND` + sesjaKonta
 )
 
 type repozytoriumSesji struct {
@@ -72,7 +82,6 @@ func noweRepozytoriumSesji(z *zapytania) *repozytoriumSesji {
 	return &repozytoriumSesji{zapytania: z}
 }
 
-// Utworz zakłada nową sesję w bazie danych rdzenia i zwraca jej nadany identyfikator wewnętrzny klucza.
 func (r *repozytoriumSesji) Utworz(ctx context.Context, sesja Sesja) (int64, error) {
 	stan, err := stanSesjiNaBaze(sesja.Stan)
 	if err != nil {
@@ -90,41 +99,37 @@ func (r *repozytoriumSesji) Utworz(ctx context.Context, sesja Sesja) (int64, err
 	return wynik.LastInsertId()
 }
 
-// Pobierz zwraca sesję o wskazanym identyfikatorze wewnętrznym klucza, wraz z jej pełną zapisaną treścią.
 func (r *repozytoriumSesji) Pobierz(ctx context.Context, id int64) (Sesja, error) {
 	polecenie, err := r.zapytania.przygotuj(ctx, pobierzSesje)
 	if err != nil {
 		return Sesja{}, err
 	}
-	sesja, err := odczytajSesje(polecenie.QueryRowContext(ctx, id))
+	sesja, err := odczytajSesje(polecenie.QueryRowContext(ctx, id, KontoOperatora(ctx)))
 	if errors.Is(err, sql.ErrNoRows) {
 		return Sesja{}, fmt.Errorf("dane: sesja %d nie istnieje", id)
 	}
 	return sesja, err
 }
 
-// PoIdentyfikatorze zwraca sesję po identyfikatorze nadanym przez rdzeń. Jest to
-// jedyna droga odnalezienia wiersza sesji po restarcie procesu — rdzeń zna
-// wyłącznie identyfikator tekstowy, nie klucz główny wiersza.
+// PoIdentyfikatorze jest jedyną drogą odnalezienia wiersza po restarcie procesu: rdzeń zna wyłącznie identyfikator tekstowy, nie klucz główny.
 func (r *repozytoriumSesji) PoIdentyfikatorze(ctx context.Context, identyfikator string) (Sesja, error) {
 	polecenie, err := r.zapytania.przygotuj(ctx, sesjaPoIdentyfikatorze)
 	if err != nil {
 		return Sesja{}, err
 	}
-	sesja, err := odczytajSesje(polecenie.QueryRowContext(ctx, identyfikator))
+	sesja, err := odczytajSesje(polecenie.QueryRowContext(ctx, identyfikator, KontoOperatora(ctx)))
 	if errors.Is(err, sql.ErrNoRows) {
 		return Sesja{}, fmt.Errorf("%w: sesja %q", ErrBrakWiersza, identyfikator)
 	}
 	return sesja, err
 }
 
-// Lista zwraca sesje wskazanej karty sesji operacyjnej; wartość zero oznacza sesje wszystkich kart sesji.
 func (r *repozytoriumSesji) Lista(ctx context.Context, kartaSesjiID int64) ([]Sesja, error) {
 	polecenie, err := r.zapytania.przygotuj(ctx, listaSesji)
 	if err != nil {
 		return nil, err
 	}
-	wiersze, err := polecenie.QueryContext(ctx, kartaSesjiID, kartaSesjiID)
+	wiersze, err := polecenie.QueryContext(ctx, kartaSesjiID, kartaSesjiID, KontoOperatora(ctx))
 	if err != nil {
 		return nil, fmt.Errorf("dane: nie można odczytać listy sesji: %w", err)
 	}
@@ -144,7 +149,6 @@ func (r *repozytoriumSesji) Lista(ctx context.Context, kartaSesjiID int64) ([]Se
 	return lista, nil
 }
 
-// ZmienStan zapisuje nowy stan wskazanej sesji; stan końcowy dodatkowo odnotowuje czas zakończenia tej sesji.
 func (r *repozytoriumSesji) ZmienStan(ctx context.Context, id int64, stan shared.SessionStatus) error {
 	kolumna, err := stanSesjiNaBaze(stan)
 	if err != nil {
@@ -154,11 +158,11 @@ func (r *repozytoriumSesji) ZmienStan(ctx context.Context, id int64, stan shared
 	if err != nil {
 		return err
 	}
-	wynik, err := polecenie.ExecContext(ctx, kolumna, kolumna, id)
+	wynik, err := polecenie.ExecContext(ctx, kolumna, kolumna, id, KontoOperatora(ctx))
 	if err != nil {
 		return fmt.Errorf("dane: nie można zmienić stanu sesji %d: %w", id, err)
 	}
-	return sprawdzTrafienie(wynik, "sesja", id)
+	return r.trafienieSesji(ctx, wynik, id)
 }
 
 // Usun kasuje sesję wraz z oknami i wiadomościami kaskadą schematu; torem produktu jest jednak kosz, nie usunięcie wprost.
@@ -167,14 +171,36 @@ func (r *repozytoriumSesji) Usun(ctx context.Context, id int64) error {
 	if err != nil {
 		return err
 	}
-	wynik, err := polecenie.ExecContext(ctx, id)
+	wynik, err := polecenie.ExecContext(ctx, id, KontoOperatora(ctx))
 	if err != nil {
 		return fmt.Errorf("dane: nie można usunąć sesji %d: %w", id, err)
 	}
-	return sprawdzTrafienie(wynik, "sesja", id)
+	return r.trafienieSesji(ctx, wynik, id)
 }
 
-// odczytajSesje składa strukturę sesji operacyjnej z jednego wiersza wyniku tego zapytania, kolumna po kolumnie.
+// trafienieSesji przy zerze zmienionych wierszy odróżnia sesję innego konta (ErrKolizjaWiersza) od sesji nieistniejącej (ErrBrakWiersza).
+func (r *repozytoriumSesji) trafienieSesji(ctx context.Context, wynik sql.Result, id int64) error {
+	zmienione, err := wynik.RowsAffected()
+	if err != nil {
+		return fmt.Errorf("dane: nieznana liczba zmienionych wierszy sesji %d: %w", id, err)
+	}
+	if zmienione > 0 {
+		return nil
+	}
+	polecenie, err := r.zapytania.przygotuj(ctx, sesjaIstnieje)
+	if err != nil {
+		return err
+	}
+	var jest int
+	switch err := polecenie.QueryRowContext(ctx, id).Scan(&jest); {
+	case errors.Is(err, sql.ErrNoRows):
+		return fmt.Errorf("%w: sesja %d", ErrBrakWiersza, id)
+	case err != nil:
+		return fmt.Errorf("dane: nie można sprawdzić sesji %d: %w", id, err)
+	}
+	return fmt.Errorf("dane: sesja %d należy do innego konta: %w", id, ErrKolizjaWiersza)
+}
+
 func odczytajSesje(wiersz skaner) (Sesja, error) {
 	var sesja Sesja
 	var projekt, zakonczono, identyfikator sql.NullString

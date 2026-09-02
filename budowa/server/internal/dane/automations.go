@@ -9,8 +9,6 @@ import (
 	"fmt"
 )
 
-// Automatyka to wiersz tabeli `automatyka`. Kod jest identyfikatorem, którym
-// automatyka wychodzi kontraktem (`AutomationWorkflow.id`).
 type Automatyka struct {
 	ID             int64
 	Kod            string
@@ -28,7 +26,6 @@ type Automatyka struct {
 	RegulaBudzetu      *string
 }
 
-// RepozytoriumAutomatyk jest kontraktem obszaru Automations: definicje, kroki, harmonogram i przebiegi automatyk.
 type RepozytoriumAutomatyk interface {
 	ZapiszAutomatyke(ctx context.Context, automatyka Automatyka) (Automatyka, error)
 	Automatyka(ctx context.Context, kod string) (Automatyka, error)
@@ -55,7 +52,6 @@ type RepozytoriumAutomatyk interface {
 	UstawKolejnoscPozycji(ctx context.Context, pozycjaID int64, kolejnosc int) error
 	PrzeniesPozycje(ctx context.Context, pozycjaID, kolejkaDocelowaID int64) error
 
-	// Historia wersji definicji, publikacja, udostępnienie i budżety czasu automatyki, w osobnym pliku.
 	ZapiszWersjeAutomatyki(ctx context.Context, wersja WersjaAutomatyki) error
 	WersjeAutomatyki(ctx context.Context, automatykaID int64, limit int) ([]WersjaAutomatyki, error)
 	WersjaAutomatykiNumer(ctx context.Context, automatykaID int64, numer int) (WersjaAutomatyki, error)
@@ -64,8 +60,6 @@ type RepozytoriumAutomatyk interface {
 	UstawBudzetyAutomatyki(ctx context.Context, automatykaID int64,
 		budzetPrzebiegu, budzetKroku int, regula *string) error
 
-	// Etykiety, zmienne przepływu, mapowania i adnotacje kanwy
-	// (`automations_kanwa.go`, migracje 261-264).
 	UstawEtykietyAutomatyki(ctx context.Context, automatykaID int64, etykiety []string) error
 	EtykietyAutomatyki(ctx context.Context, automatykaID int64) ([]string, error)
 	ZapiszZmienneAutomatyki(ctx context.Context, automatykaID int64, zmienne []ZmiennaAutomatyki) error
@@ -76,14 +70,12 @@ type RepozytoriumAutomatyk interface {
 	ZapiszPolozeniaKrokow(ctx context.Context, automatykaID int64, polozenia []AdnotacjaKroku) error
 	AdnotacjeKrokow(ctx context.Context, automatykaID int64) ([]AdnotacjaKroku, error)
 
-	// Biblioteka szablonów przepływów (`automations_szablony.go`, migracje 265-266).
 	ZapiszSzablonAutomatyki(ctx context.Context, szablon SzablonAutomatyki,
 		parametry []ParametrSzablonu) (SzablonAutomatyki, error)
 	SzablonAutomatyki(ctx context.Context, kod string) (SzablonAutomatyki, error)
 	SzablonyAutomatyki(ctx context.Context, limit int) ([]SzablonAutomatyki, error)
 	ParametrySzablonuAutomatyki(ctx context.Context, szablonID int64) ([]ParametrSzablonu, error)
 
-	// Trwały zapis przebiegu automatyki: log, kroki wraz z ładunkami, punkty wznowienia, w osobnym pliku.
 	DopiszLogPrzebiegu(ctx context.Context, wpis WpisLoguPrzebiegu) error
 	LogPrzebiegu(ctx context.Context, przebiegID int64, poziom, krokKod string,
 		limit int) ([]WpisLoguPrzebiegu, error)
@@ -94,7 +86,6 @@ type RepozytoriumAutomatyk interface {
 	PunktyWznowienia(ctx context.Context, przebiegID int64) ([]PunktWznowienia, error)
 	PunktWznowieniaPoKodzie(ctx context.Context, kod string) (PunktWznowienia, error)
 
-	// Reguły alarmowania, skarbiec referencji i dziennik audytu automatyki, w osobnym pliku repozytorium.
 	ZapiszRegulealarmowania(ctx context.Context, regula RegulaAlarmowania) (RegulaAlarmowania, error)
 	RegulyAlarmowania(ctx context.Context, automatykaID int64) ([]RegulaAlarmowania, error)
 	ZapiszPoswiadczenieAutomatyki(ctx context.Context, poswiadczenie PoswiadczenieAutomatyki) error
@@ -105,7 +96,6 @@ type RepozytoriumAutomatyk interface {
 	AudytAutomatyki(ctx context.Context, automatykaID int64, od, do string,
 		limit int) ([]WpisAudytuAutomatyki, error)
 
-	// Harmonogram po własnym identyfikatorze, okna wykonania, nadzór obecności i historia wyzwoleń.
 	HarmonogramPoKodzie(ctx context.Context, kod string) (Harmonogram, error)
 	Harmonogramy(ctx context.Context, tylkoCzynne bool) ([]Harmonogram, error)
 	ZapiszOknaWykonania(ctx context.Context, harmonogramID int64, okna []OknoWykonania) error
@@ -124,25 +114,26 @@ const (
 	                     utworzono, zaktualizowano, wersja_opublikowana, udostepniona,
 	                     budzet_przebiegu_sekundy, budzet_kroku_sekundy, regula_budzetu`
 
-	// Zapis podnosi wersję definicji przy każdej zmianie — panel akcji Workflow
-	// Buildera ma pozycję „Wersje” i musi mieć co pokazać.
+	// UNIQUE na identyfikatorze obejmuje całą tabelę, więc człon DO UPDATE niesie warunek konta.
 	zapiszAutomatyke = `INSERT INTO automatyka
-	                    (identyfikator_zewnetrzny, nazwa, opis, czynna)
-	                    VALUES (?, ?, ?, ?)
+	                    (identyfikator_zewnetrzny, nazwa, opis, czynna, konto_id)
+	                    VALUES (?, ?, ?, ?, ` + WskazanieKonta + `)
 	                    ON CONFLICT(identyfikator_zewnetrzny) DO UPDATE SET
 	                        nazwa = excluded.nazwa,
 	                        opis = excluded.opis,
 	                        czynna = excluded.czynna,
 	                        wersja = automatyka.wersja + 1,
-	                        zaktualizowano = strftime('%Y-%m-%dT%H:%M:%fZ','now')`
+	                        zaktualizowano = strftime('%Y-%m-%dT%H:%M:%fZ','now')
+	                    WHERE ` + WarunekKonta
 
 	pobierzAutomatyke = `SELECT ` + kolumnyAutomatyki + ` FROM automatyka
-	                     WHERE identyfikator_zewnetrzny = ?`
+	                     WHERE identyfikator_zewnetrzny = ? AND ` + WarunekKonta
 
-	pobierzAutomatykePoID = `SELECT ` + kolumnyAutomatyki + ` FROM automatyka WHERE id = ?`
+	pobierzAutomatykePoID = `SELECT ` + kolumnyAutomatyki + ` FROM automatyka
+	                         WHERE id = ? AND ` + WarunekKonta
 
 	listaAutomatyk = `SELECT ` + kolumnyAutomatyki + ` FROM automatyka
-	                  WHERE (? = 0 OR czynna = 1)
+	                  WHERE (? = 0 OR czynna = 1) AND ` + WarunekKonta + `
 	                  ORDER BY nazwa, id LIMIT ?`
 )
 
@@ -155,8 +146,6 @@ func noweRepozytoriumAutomatyk(z *zapytania, db *sql.DB) *repozytoriumAutomatyk 
 	return &repozytoriumAutomatyk{zapytania: z, db: db}
 }
 
-// ZapiszAutomatyke zakłada automatykę albo nadpisuje zastaną i zwraca stan po
-// zapisie wraz z podniesioną wersją definicji.
 func (r *repozytoriumAutomatyk) ZapiszAutomatyke(ctx context.Context,
 	automatyka Automatyka) (Automatyka, error) {
 
@@ -170,22 +159,24 @@ func (r *repozytoriumAutomatyk) ZapiszAutomatyke(ctx context.Context,
 	if err != nil {
 		return Automatyka{}, err
 	}
-	_, err = polecenie.ExecContext(ctx, automatyka.Kod, automatyka.Nazwa,
-		tekstDoKolumny(automatyka.Opis), liczbaLogiczna(automatyka.Czynna))
+	wynik, err := polecenie.ExecContext(ctx, automatyka.Kod, automatyka.Nazwa,
+		tekstDoKolumny(automatyka.Opis), liczbaLogiczna(automatyka.Czynna),
+		KontoOperatora(ctx), KontoOperatora(ctx))
 	if err != nil {
 		return Automatyka{}, fmt.Errorf("dane: nie można zapisać automatyki %q: %w", automatyka.Kod, err)
+	}
+	if err := sprawdzTrafienieZapisu(wynik, "automatyka", automatyka.Kod); err != nil {
+		return Automatyka{}, err
 	}
 	return r.Automatyka(ctx, automatyka.Kod)
 }
 
-// Automatyka zwraca definicję o wskazanym kodzie. Brak wiersza wraca jako
-// ErrBrakWiersza — warstwa wyższa odróżnia „nie ma” od „odczyt się nie powiódł”.
 func (r *repozytoriumAutomatyk) Automatyka(ctx context.Context, kod string) (Automatyka, error) {
 	polecenie, err := r.zapytania.przygotuj(ctx, pobierzAutomatyke)
 	if err != nil {
 		return Automatyka{}, err
 	}
-	automatyka, err := odczytajAutomatyke(polecenie.QueryRowContext(ctx, kod))
+	automatyka, err := odczytajAutomatyke(polecenie.QueryRowContext(ctx, kod, KontoOperatora(ctx)))
 	if errors.Is(err, sql.ErrNoRows) {
 		return Automatyka{}, ErrBrakWiersza
 	}
@@ -195,15 +186,12 @@ func (r *repozytoriumAutomatyk) Automatyka(ctx context.Context, kod string) (Aut
 	return automatyka, nil
 }
 
-// AutomatykaPoID zwraca definicję po kluczu wiersza. Służy budzikowi
-// harmonogramu, który zna automatykę przez klucz obcy harmonogramu
-// (`harmonogram_automatyki.automatyka_id`), a nie przez identyfikator zewnętrzny.
 func (r *repozytoriumAutomatyk) AutomatykaPoID(ctx context.Context, id int64) (Automatyka, error) {
 	polecenie, err := r.zapytania.przygotuj(ctx, pobierzAutomatykePoID)
 	if err != nil {
 		return Automatyka{}, err
 	}
-	automatyka, err := odczytajAutomatyke(polecenie.QueryRowContext(ctx, id))
+	automatyka, err := odczytajAutomatyke(polecenie.QueryRowContext(ctx, id, KontoOperatora(ctx)))
 	if errors.Is(err, sql.ErrNoRows) {
 		return Automatyka{}, ErrBrakWiersza
 	}
@@ -213,8 +201,6 @@ func (r *repozytoriumAutomatyk) AutomatykaPoID(ctx context.Context, id int64) (A
 	return automatyka, nil
 }
 
-// Automatyki zwraca definicje uporządkowane po nazwie — w takiej kolejności
-// pokazuje je wykaz Workflow Buildera.
 func (r *repozytoriumAutomatyk) Automatyki(ctx context.Context,
 	tylkoCzynne bool, limit int) ([]Automatyka, error) {
 
@@ -222,7 +208,8 @@ func (r *repozytoriumAutomatyk) Automatyki(ctx context.Context,
 	if err != nil {
 		return nil, err
 	}
-	wiersze, err := polecenie.QueryContext(ctx, liczbaLogiczna(tylkoCzynne), granicaWykazu(limit))
+	wiersze, err := polecenie.QueryContext(ctx, liczbaLogiczna(tylkoCzynne),
+		KontoOperatora(ctx), granicaWykazu(limit))
 	if err != nil {
 		return nil, fmt.Errorf("dane: nie można odczytać automatyk: %w", err)
 	}
@@ -242,7 +229,6 @@ func (r *repozytoriumAutomatyk) Automatyki(ctx context.Context,
 	return lista, nil
 }
 
-// odczytajAutomatyke składa strukturę automatyki wprost z jednego wiersza wyniku zapytania do bazy SQL.
 func odczytajAutomatyke(wiersz skaner) (Automatyka, error) {
 	var automatyka Automatyka
 	var opis, regula sql.NullString

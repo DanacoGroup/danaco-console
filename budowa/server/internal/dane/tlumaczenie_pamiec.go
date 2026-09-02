@@ -1,6 +1,5 @@
-// Repozytorium przechowuje pamięć tłumaczeń modułu Translate w kształcie
-// kontraktu `TranslationMemoryEntry`, w tabeli `pamiec_tlumaczen` z migracji
-// 160, oraz politykę pamięci okna w tabeli `polityka_pamieci_okna`.
+// Pamięć tłumaczeń modułu Translate (`pamiec_tlumaczen`, migracja 160) i polityka
+// pamięci okna (`polityka_pamieci_okna`, dziecko `okno_tlumaczenia`).
 package dane
 
 import (
@@ -12,9 +11,6 @@ import (
 	"time"
 )
 
-// WpisPamieciTlumaczenPelny to wiersz `pamiec_tlumaczen` ze wszystkimi polami,
-// których żąda kontrakt. `PanelKod` doczytywany jest złączeniem — kontrakt
-// oddaje identyfikator zewnętrzny panelu, nie klucz wewnętrzny.
 type WpisPamieciTlumaczenPelny struct {
 	ID                int64
 	Kod               string
@@ -33,8 +29,7 @@ type WpisPamieciTlumaczenPelny struct {
 	Zaktualizowano    int64
 }
 
-// FiltrPamieciTlumaczen zawęża wykaz pamięci. Pola puste nie zawężają niczego —
-// puste zawężenie jest brakiem zawężenia, nie zawężeniem do pustki.
+// Pole puste filtru nie zawęża wykazu.
 type FiltrPamieciTlumaczen struct {
 	Jezyk   string
 	Fraza   string
@@ -44,9 +39,6 @@ type FiltrPamieciTlumaczen struct {
 	Offset  int
 }
 
-// PolitykaPamieciOkna to wiersz `polityka_pamieci_okna` — nastawa, wedle której
-// okno sięga do pamięci: zasięg par, próg dopasowania w procentach, wymóg
-// zgodności kontekstu i zgoda na tłumaczenie wstępne.
 type PolitykaPamieciOkna struct {
 	OknoID               int64
 	Zasieg               string
@@ -63,8 +55,11 @@ const kolumnyWpisuPamieciTlumaczen = `w.id, w.identyfikator_zewnetrzny, w.panel_
 const zrodloWpisuPamieciTlumaczen = ` FROM pamiec_tlumaczen w
 	LEFT JOIN panel_tlumaczenia p ON p.id = w.panel_id`
 
-// warunkiPamieci składa część zapytania WHERE wraz z argumentami, wedle
-// zawężeń przekazanego filtru pamięci.
+// Tabela `polityka_pamieci_okna` własnej kolumny konta nie ma; granica idzie
+// drogą po `okno_id` do `okno_tlumaczenia` (konto_id z migracji 484).
+const warunekOknaPolitykiPamieci = `EXISTS (SELECT 1 FROM okno_tlumaczenia
+	WHERE okno_tlumaczenia.id = polityka_pamieci_okna.okno_id AND ` + WarunekKonta + `)`
+
 func warunkiPamieci(filtr FiltrPamieciTlumaczen) (string, []any) {
 	warunki := []string{}
 	argumenty := []any{}
@@ -81,8 +76,7 @@ func warunkiPamieci(filtr FiltrPamieciTlumaczen) (string, []any) {
 		argumenty = append(argumenty, filtr.Zasieg)
 	}
 	if fraza := strings.TrimSpace(filtr.Fraza); fraza != "" {
-		// Dopasowanie w dowolnym miejscu obu segmentów, zgodnie z kontraktem
-		// pola `query`.
+		// Kontrakt pola `query`: dopasowanie w dowolnym miejscu obu segmentów.
 		warunki = append(warunki, "(w.segment_zrodlowy LIKE ? OR w.segment_docelowy LIKE ?)")
 		wzorzec := "%" + fraza + "%"
 		argumenty = append(argumenty, wzorzec, wzorzec)
@@ -93,9 +87,7 @@ func warunkiPamieci(filtr FiltrPamieciTlumaczen) (string, []any) {
 	return " WHERE " + strings.Join(warunki, " AND "), argumenty
 }
 
-// WpisyPamieci oddaje wykaz par wraz z liczbą wszystkich pasujących. Liczba
-// całkowita liczona jest bez limitu — inaczej klient nie odróżniłby „to
-// wszystko" od „to pierwsza strona".
+// Liczba wszystkich pasujących par liczona jest bez limitu, wymóg kontraktu wykazu.
 func (r *repozytoriumTlumaczen) WpisyPamieci(ctx context.Context,
 	filtr FiltrPamieciTlumaczen) ([]WpisPamieciTlumaczenPelny, int, error) {
 
@@ -135,8 +127,6 @@ func (r *repozytoriumTlumaczen) WpisyPamieci(ctx context.Context,
 	return lista, razem, wiersze.Err()
 }
 
-// odczytajWpisPamieciPelny składa strukturę WpisPamieciTlumaczenPelny
-// z jednego wiersza wyniku zapytania.
 func odczytajWpisPamieciPelny(wiersz skaner) (WpisPamieciTlumaczenPelny, error) {
 	var wpis WpisPamieciTlumaczenPelny
 	var panelID sql.NullInt64
@@ -157,8 +147,6 @@ func odczytajWpisPamieciPelny(wiersz skaner) (WpisPamieciTlumaczenPelny, error) 
 	return wpis, nil
 }
 
-// WpisPamieci oddaje jedną parę pamięci tłumaczeń modułu Translate po jej
-// kodzie zewnętrznym, z tabeli `pamiec_tlumaczen`.
 func (r *repozytoriumTlumaczen) WpisPamieci(ctx context.Context,
 	kod string) (WpisPamieciTlumaczenPelny, error) {
 
@@ -174,9 +162,6 @@ func (r *repozytoriumTlumaczen) WpisPamieci(ctx context.Context,
 	return wpis, nil
 }
 
-// ZapiszWpisPamieci zakłada parę albo nadpisuje zastaną po kodzie zewnętrznym.
-// Chwila założenia nie przesuwa się przy nadpisaniu — para wniesiona rok temu
-// i poprawiona dziś zostaje parą sprzed roku.
 func (r *repozytoriumTlumaczen) ZapiszWpisPamieci(ctx context.Context,
 	wpis WpisPamieciTlumaczenPelny) (WpisPamieciTlumaczenPelny, error) {
 
@@ -219,9 +204,6 @@ func (r *repozytoriumTlumaczen) ZapiszWpisPamieci(ctx context.Context,
 	return r.WpisPamieci(ctx, wpis.Kod)
 }
 
-// UsunWpisPamieci kasuje parę po kodzie. Wartość logiczna mówi, czy coś realnie
-// zeszło — kasowanie pary, której nie ma, nie jest usterką, ale nie jest też
-// usunięciem.
 func (r *repozytoriumTlumaczen) UsunWpisPamieci(ctx context.Context, kod string) (bool, error) {
 	wynik, err := r.db.ExecContext(ctx,
 		`DELETE FROM pamiec_tlumaczen WHERE identyfikator_zewnetrzny = ?`, kod)
@@ -235,9 +217,7 @@ func (r *repozytoriumTlumaczen) UsunWpisPamieci(ctx context.Context, kod string)
 	return zeszlo > 0, nil
 }
 
-// UsunWpisyPamieci kasuje wskazane pary w jednej transakcji i oddaje liczbę
-// wierszy, które realnie zeszły. Utrzymanie pamięci (`memory.maintain`) kasuje
-// dziesiątki par naraz — pojedyncze wywołania byłyby dziesiątkami transakcji.
+// `memory.maintain` kasuje dziesiątki par naraz, stąd jedna transakcja.
 func (r *repozytoriumTlumaczen) UsunWpisyPamieci(ctx context.Context, kody []string) (int, error) {
 	if len(kody) == 0 {
 		return 0, nil
@@ -264,8 +244,6 @@ func (r *repozytoriumTlumaczen) UsunWpisyPamieci(ctx context.Context, kody []str
 	return zeszlo, err
 }
 
-// PolitykaPamieci oddaje politykę okna. Brak wiersza wraca jako ErrBrakWiersza:
-// „polityki nie ustawiono" to nie to samo, co polityka wyzerowana.
 func (r *repozytoriumTlumaczen) PolitykaPamieci(ctx context.Context,
 	oknoID int64) (PolitykaPamieciOkna, error) {
 
@@ -273,7 +251,7 @@ func (r *repozytoriumTlumaczen) PolitykaPamieci(ctx context.Context,
 	var kontekst, wstepne int64
 	err := r.db.QueryRowContext(ctx,
 		`SELECT okno_id, zasieg, prog, dopasowanie_kontekstu, wstepne_tlumaczenie, zaktualizowano
-		   FROM polityka_pamieci_okna WHERE okno_id = ?`, oknoID).
+		   FROM polityka_pamieci_okna WHERE okno_id = ? AND `+warunekOknaPolitykiPamieci, oknoID, KontoOperatora(ctx)).
 		Scan(&polityka.OknoID, &polityka.Zasieg, &polityka.Prog, &kontekst, &wstepne,
 			&polityka.Zaktualizowano)
 	if errors.Is(err, sql.ErrNoRows) {
@@ -287,13 +265,11 @@ func (r *repozytoriumTlumaczen) PolitykaPamieci(ctx context.Context,
 	return polityka, nil
 }
 
-// ZapiszPolitykePamieci zakłada politykę pamięci okna albo nadpisuje politykę
-// zastaną dla wskazanego okna tłumaczenia.
 func (r *repozytoriumTlumaczen) ZapiszPolitykePamieci(ctx context.Context,
 	polityka PolitykaPamieciOkna) (PolitykaPamieciOkna, error) {
 
 	teraz := time.Now().UnixMilli()
-	_, err := r.db.ExecContext(ctx, `INSERT INTO polityka_pamieci_okna
+	wynik, err := r.db.ExecContext(ctx, `INSERT INTO polityka_pamieci_okna
 		(okno_id, zasieg, prog, dopasowanie_kontekstu, wstepne_tlumaczenie, zaktualizowano)
 		VALUES (?, ?, ?, ?, ?, ?)
 		ON CONFLICT(okno_id) DO UPDATE SET
@@ -301,19 +277,23 @@ func (r *repozytoriumTlumaczen) ZapiszPolitykePamieci(ctx context.Context,
 			prog = excluded.prog,
 			dopasowanie_kontekstu = excluded.dopasowanie_kontekstu,
 			wstepne_tlumaczenie = excluded.wstepne_tlumaczenie,
-			zaktualizowano = excluded.zaktualizowano`,
+			zaktualizowano = excluded.zaktualizowano
+		WHERE `+warunekOknaPolitykiPamieci,
 		polityka.OknoID, polityka.Zasieg, polityka.Prog,
 		wartoscLogicznaDoKolumny(polityka.DopasowanieKontekstu),
-		wartoscLogicznaDoKolumny(polityka.WstepneTlumaczenie), teraz)
+		wartoscLogicznaDoKolumny(polityka.WstepneTlumaczenie), teraz, KontoOperatora(ctx))
 	if err != nil {
 		return PolitykaPamieciOkna{}, fmt.Errorf("dane: nie można zapisać polityki pamięci okna %d: %w",
 			polityka.OknoID, err)
 	}
+	if err := sprawdzTrafienieZapisu(wynik, "polityka pamięci okna",
+		fmt.Sprintf("%d", polityka.OknoID)); err != nil {
+		return PolitykaPamieciOkna{}, err
+	}
 	return r.PolitykaPamieci(ctx, polityka.OknoID)
 }
 
-// wartoscLogicznaDoKolumny przekłada `bool` na kolumnę INTEGER z warunkiem
-// CHECK na 0 albo 1 — schemat modułu Translate nie zna typu logicznego.
+// Kolumny logiczne modułu Translate są INTEGER z CHECK na 0 albo 1 (migracja 160).
 func wartoscLogicznaDoKolumny(wartosc bool) int64 {
 	if wartosc {
 		return 1

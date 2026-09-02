@@ -10,7 +10,6 @@ import (
 	"strings"
 )
 
-// RegulaBiblioteki to wiersz tabeli `regula_biblioteki`, warunek przeliczany przez rdzeń na wykaz zasobów.
 type RegulaBiblioteki struct {
 	ID                   int64
 	Kod                  string
@@ -28,11 +27,12 @@ const (
 	kolumnyRegulyBiblioteki = `id, identyfikator_zewnetrzny, rodzaj, nazwa, warunek, kolekcja_docelowa_kod,
 	                 sciezka_obserwowana, czynna, ostatnie_przeliczenie, utworzono`
 
+	// Identyfikator zewnętrzny jest jednoznaczny w całej tabeli: gałąź konfliktu bez warunku konta sięgałaby reguły konta cudzego.
 	zapiszReguleBiblioteki = `INSERT INTO regula_biblioteki
 	                          (identyfikator_zewnetrzny, rodzaj, nazwa, warunek,
 	                           kolekcja_docelowa_kod, sciezka_obserwowana, czynna,
-	                           ostatnie_przeliczenie)
-	                          VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+	                           ostatnie_przeliczenie, konto_id)
+	                          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ` + WskazanieKonta + `)
 	                          ON CONFLICT(identyfikator_zewnetrzny) DO UPDATE SET
 	                              rodzaj = excluded.rodzaj,
 	                              nazwa = excluded.nazwa,
@@ -40,22 +40,26 @@ const (
 	                              kolekcja_docelowa_kod = excluded.kolekcja_docelowa_kod,
 	                              sciezka_obserwowana = excluded.sciezka_obserwowana,
 	                              czynna = excluded.czynna,
-	                              ostatnie_przeliczenie = excluded.ostatnie_przeliczenie`
+	                              ostatnie_przeliczenie = excluded.ostatnie_przeliczenie
+	                          WHERE ` + WarunekKonta
 
 	pobierzReguleBiblioteki = `SELECT ` + kolumnyRegulyBiblioteki + ` FROM regula_biblioteki
-	                 WHERE identyfikator_zewnetrzny = ?`
+	                 WHERE identyfikator_zewnetrzny = ? AND ` + WarunekKonta
 
-	usunReguleBiblioteki = `DELETE FROM regula_biblioteki WHERE identyfikator_zewnetrzny = ?`
+	usunReguleBiblioteki = `DELETE FROM regula_biblioteki
+	                        WHERE identyfikator_zewnetrzny = ? AND ` + WarunekKonta
 
-	// Wykaz kolekcji niesie licznik zasobów liczony z przypisań oraz kod
-	// kolekcji nadrzędnej — kontrakt wskazuje rodzica kodem, nie numerem wiersza.
+	// Kontrakt wskazuje rodzica kodem, nie numerem wiersza; przypisanie własnej kolumny konta nie ma i granica dochodzi przez `plik_id`.
 	wykazKolekcjiBiblioteki = `SELECT k.id, k.identyfikator_zewnetrzny, k.nazwa, k.opis,
 	                                  k.utworzono, k.zaktualizowano,
 	                                  (SELECT r.identyfikator_zewnetrzny FROM kolekcja_biblioteki r
 	                                    WHERE r.id = k.rodzic_id) AS rodzic_kod,
 	                                  k.regula_kod,
 	                                  (SELECT COUNT(*) FROM przypisanie_kolekcji_biblioteki p
-	                                    WHERE p.kolekcja_id = k.id) AS liczba_plikow
+	                                    WHERE p.kolekcja_id = k.id
+	                                      AND EXISTS (SELECT 1 FROM plik_biblioteki
+	                                                   WHERE plik_biblioteki.id = p.plik_id
+	                                                     AND ` + WarunekKonta + `)) AS liczba_plikow
 	                           FROM kolekcja_biblioteki k`
 
 	wstawPrzypisanieRegulyBiblioteki = `INSERT INTO przypisanie_kolekcji_biblioteki (kolekcja_id, plik_id, zrodlo)
@@ -64,10 +68,10 @@ const (
 
 	usunPrzypisaniaRegulyBiblioteki = `DELETE FROM przypisanie_kolekcji_biblioteki
 	                         WHERE zrodlo = 'regula' AND kolekcja_id =
-	                             (SELECT id FROM kolekcja_biblioteki WHERE identyfikator_zewnetrzny = ?)`
+	                             (SELECT id FROM kolekcja_biblioteki
+	                               WHERE identyfikator_zewnetrzny = ? AND ` + WarunekKonta + `)`
 )
 
-// ZapiszRegule zakłada regułę biblioteki albo nadpisuje zastaną tym samym identyfikatorem zewnętrznym.
 func (r *repozytoriumBiblioteki) ZapiszRegule(ctx context.Context,
 	regula RegulaBiblioteki) (RegulaBiblioteki, error) {
 
@@ -85,22 +89,25 @@ func (r *repozytoriumBiblioteki) ZapiszRegule(ctx context.Context,
 	if err != nil {
 		return RegulaBiblioteki{}, err
 	}
-	_, err = polecenie.ExecContext(ctx, regula.Kod, regula.Rodzaj, regula.Nazwa, warunek,
+	wynik, err := polecenie.ExecContext(ctx, regula.Kod, regula.Rodzaj, regula.Nazwa, warunek,
 		tekstDoKolumny(regula.KolekcjaDocelowaKod), tekstDoKolumny(regula.SciezkaObserwowana),
-		liczbaLogiczna(regula.Czynna), tekstDoKolumny(regula.OstatniePrzeliczenie))
+		liczbaLogiczna(regula.Czynna), tekstDoKolumny(regula.OstatniePrzeliczenie),
+		KontoOperatora(ctx), KontoOperatora(ctx))
 	if err != nil {
 		return RegulaBiblioteki{}, fmt.Errorf("dane: nie można zapisać reguły %q: %w", regula.Kod, err)
+	}
+	if err := sprawdzTrafienieZapisu(wynik, "reguła biblioteki", regula.Kod); err != nil {
+		return RegulaBiblioteki{}, err
 	}
 	return r.Regula(ctx, regula.Kod)
 }
 
-// Regula zwraca regułę biblioteki o wskazanym kodzie zewnętrznym; brak wiersza wraca jako ErrBrakWiersza.
 func (r *repozytoriumBiblioteki) Regula(ctx context.Context, kod string) (RegulaBiblioteki, error) {
 	polecenie, err := r.zapytania.przygotuj(ctx, pobierzReguleBiblioteki)
 	if err != nil {
 		return RegulaBiblioteki{}, err
 	}
-	regula, err := odczytajReguleBiblioteki(polecenie.QueryRowContext(ctx, kod))
+	regula, err := odczytajReguleBiblioteki(polecenie.QueryRowContext(ctx, kod, KontoOperatora(ctx)))
 	if errors.Is(err, sql.ErrNoRows) {
 		return RegulaBiblioteki{}, ErrBrakWiersza
 	}
@@ -110,12 +117,11 @@ func (r *repozytoriumBiblioteki) Regula(ctx context.Context, kod string) (Regula
 	return regula, nil
 }
 
-// Reguly zwraca reguły biblioteki uporządkowane po nazwie, zawężone opcjonalnie rodzajem reguły i czynnością.
 func (r *repozytoriumBiblioteki) Reguly(ctx context.Context, rodzaj *string,
 	tylkoCzynne bool) ([]RegulaBiblioteki, error) {
 
-	warunki := []string{"1 = 1"}
-	argumenty := []any{}
+	warunki := []string{WarunekKonta}
+	argumenty := []any{KontoOperatora(ctx)}
 	if rodzaj != nil && *rodzaj != "" {
 		warunki = append(warunki, "rodzaj = ?")
 		argumenty = append(argumenty, *rodzaj)
@@ -146,14 +152,13 @@ func (r *repozytoriumBiblioteki) Reguly(ctx context.Context, rodzaj *string,
 	return lista, nil
 }
 
-// UsunRegule zdejmuje regułę. Przypisania zasobów zostają — zdejmuje je osobno
-// `OdepnijPrzypisaniaReguly`, bo kontrakt czyni to wyborem Operatora.
+// Przypisania zasobów zostają: kontrakt czyni ich zdjęcie wyborem Operatora (`OdepnijPrzypisaniaReguly`).
 func (r *repozytoriumBiblioteki) UsunRegule(ctx context.Context, kod string) (bool, error) {
 	polecenie, err := r.zapytania.przygotuj(ctx, usunReguleBiblioteki)
 	if err != nil {
 		return false, err
 	}
-	wynik, err := polecenie.ExecContext(ctx, kod)
+	wynik, err := polecenie.ExecContext(ctx, kod, KontoOperatora(ctx))
 	if err != nil {
 		return false, fmt.Errorf("dane: nie można usunąć reguły %q: %w", kod, err)
 	}
@@ -164,7 +169,6 @@ func (r *repozytoriumBiblioteki) UsunRegule(ctx context.Context, kod string) (bo
 	return zdjete > 0, nil
 }
 
-// PrzypiszRegula wpisuje zasoby wskazane kodami do kolekcji ze znacznikiem pochodzenia `regula` w bazie.
 func (r *repozytoriumBiblioteki) PrzypiszRegula(ctx context.Context, kodKolekcji string,
 	kodyPlikow []string) (int, error) {
 
@@ -172,7 +176,7 @@ func (r *repozytoriumBiblioteki) PrzypiszRegula(ctx context.Context, kodKolekcji
 	if err != nil {
 		return 0, err
 	}
-	poszukiwanie, err := r.zapytania.przygotuj(ctx, idPlikuBibliotekiPoKodzie)
+	poszukiwanie, err := r.zapytania.przygotuj(ctx, idPlikuBibliotekiPoKodzieWKoncie)
 	if err != nil {
 		return 0, err
 	}
@@ -183,7 +187,7 @@ func (r *repozytoriumBiblioteki) PrzypiszRegula(ctx context.Context, kodKolekcji
 	przypisane := 0
 	for _, kodPliku := range kodyPlikow {
 		var plikID int64
-		err := poszukiwanie.QueryRowContext(ctx, kodPliku).Scan(&plikID)
+		err := poszukiwanie.QueryRowContext(ctx, kodPliku, KontoOperatora(ctx)).Scan(&plikID)
 		if errors.Is(err, sql.ErrNoRows) {
 			continue
 		}
@@ -198,8 +202,7 @@ func (r *repozytoriumBiblioteki) PrzypiszRegula(ctx context.Context, kodKolekcji
 	return przypisane, nil
 }
 
-// OdepnijPrzypisaniaReguly zdejmuje z kolekcji wyłącznie zasoby wciągnięte
-// regułą; przypisanie ręczne Operatora zostaje nietknięte.
+// Przypisanie ręczne Operatora zostaje nietknięte: schodzą wyłącznie zasoby wciągnięte regułą.
 func (r *repozytoriumBiblioteki) OdepnijPrzypisaniaReguly(ctx context.Context,
 	kodKolekcji string) (int, error) {
 
@@ -207,7 +210,7 @@ func (r *repozytoriumBiblioteki) OdepnijPrzypisaniaReguly(ctx context.Context,
 	if err != nil {
 		return 0, err
 	}
-	wynik, err := polecenie.ExecContext(ctx, kodKolekcji)
+	wynik, err := polecenie.ExecContext(ctx, kodKolekcji, KontoOperatora(ctx))
 	if err != nil {
 		return 0, fmt.Errorf("dane: nie można zdjąć przypisań reguły kolekcji %q: %w", kodKolekcji, err)
 	}
@@ -218,13 +221,11 @@ func (r *repozytoriumBiblioteki) OdepnijPrzypisaniaReguly(ctx context.Context,
 	return int(zdjete), nil
 }
 
-// KolekcjeWykaz zwraca kolekcje w postaci pełnej — z rodzicem, regułą
-// i licznikiem zasobów — zawężone kolekcją nadrzędną i frazą nazwy.
 func (r *repozytoriumBiblioteki) KolekcjeWykaz(ctx context.Context, rodzicKod, fraza *string,
 	limit int) ([]KolekcjaBiblioteki, int, error) {
 
-	warunki := []string{"1 = 1"}
-	argumenty := []any{}
+	warunki := []string{WarunekKonta}
+	argumenty := []any{KontoOperatora(ctx)}
 	if rodzicKod != nil && *rodzicKod != "" {
 		warunki = append(warunki, `k.rodzic_id = (SELECT id FROM kolekcja_biblioteki
 		                                           WHERE identyfikator_zewnetrzny = ?)`)
@@ -238,7 +239,7 @@ func (r *repozytoriumBiblioteki) KolekcjeWykaz(ctx context.Context, rodzicKod, f
 
 	zapytanie := wykazKolekcjiBiblioteki + ` WHERE ` + warunek + ` ORDER BY k.nazwa, k.id LIMIT ?`
 	wiersze, err := r.db.QueryContext(ctx, zapytanie,
-		append(append([]any{}, argumenty...), granicaWykazu(limit))...)
+		append(append([]any{KontoOperatora(ctx)}, argumenty...), granicaWykazu(limit))...)
 	if err != nil {
 		return nil, 0, fmt.Errorf("dane: nie można odczytać wykazu kolekcji: %w", err)
 	}
@@ -264,7 +265,6 @@ func (r *repozytoriumBiblioteki) KolekcjeWykaz(ctx context.Context, rodzicKod, f
 	return lista, lacznie, nil
 }
 
-// odczytajReguleBiblioteki składa regułę biblioteki z jednego wiersza wyniku zapytania SQL bazy danych.
 func odczytajReguleBiblioteki(wiersz skaner) (RegulaBiblioteki, error) {
 	var regula RegulaBiblioteki
 	var kolekcja, sciezka, przeliczenie sql.NullString
@@ -281,7 +281,6 @@ func odczytajReguleBiblioteki(wiersz skaner) (RegulaBiblioteki, error) {
 	return regula, nil
 }
 
-// odczytajKolekcjePelnaBiblioteki składa kolekcję biblioteki wraz z rodzicem, regułą i licznikiem zasobów.
 func odczytajKolekcjePelnaBiblioteki(wiersz skaner) (KolekcjaBiblioteki, error) {
 	var kolekcja KolekcjaBiblioteki
 	var opis, rodzic, regula sql.NullString

@@ -15,16 +15,12 @@ import (
 	"danacoconsole/shared"
 )
 
-// czasNaDomknieciePrzebiegu jest chwilą, przez którą komenda przerwania czeka
-// na obserwatora. Krótka z zamysłem: odpowiedź ma być szybka, a stan końcowy
-// i tak dojdzie zdarzeniem `developer.build.changed`.
+// czasNaDomknieciePrzebiegu ogranicza czekanie komendy przerwania; stan końcowy dochodzi zdarzeniem developer.build.changed.
 const czasNaDomknieciePrzebiegu = 750 * time.Millisecond
 
-// najdluzszyWierszLogu chroni przed wyjściem bez znaku końca wiersza — paskiem
-// postępu, który potrafi rosnąć w nieskończoność.
+// najdluzszyWierszLogu tnie wyjście bez znaku końca wiersza (pasek postępu).
 const najdluzszyWierszLogu = 64 * 1024
 
-// uruchomBudowanie startuje przebieg i podpina pompy logu oraz obserwatora zakończenia procesu budowania.
 func (a *adapterDevelopera) uruchomBudowanie(ctx context.Context, okno session.Okno,
 	polecenie session.Polecenie, zadanie string, argumenty []string) (*przebiegBudowania, error) {
 
@@ -48,7 +44,7 @@ func (a *adapterDevelopera) uruchomBudowanie(ctx context.Context, okno session.O
 			"w oknie " + okno.Id + " trwa już budowanie — przerwij je, zanim uruchomisz następne")
 	}
 
-	uchwyt, err := a.uruchamiacz.UruchomProces(okno, polecenie)
+	uchwyt, err := a.uruchamiacz.UruchomProces(ctx, okno, polecenie)
 	if err != nil {
 		a.rejestr.Zwolnij(przebieg)
 		return nil, bladWykonaniaDevelopera(
@@ -56,7 +52,6 @@ func (a *adapterDevelopera) uruchomBudowanie(ctx context.Context, okno session.O
 	}
 	drzewo, err := session.PrzejmijDrzewo(uchwyt.Pid())
 	if err != nil {
-		// Proces już biegnie, a uchwytu drzewa nie ma — zostawienie go byłoby sierotą poza rejestrem.
 		_ = uchwyt.Ubij()
 		_ = uchwyt.Czekaj()
 		a.rejestr.Zwolnij(przebieg)
@@ -75,7 +70,6 @@ func (a *adapterDevelopera) uruchomBudowanie(ctx context.Context, okno session.O
 	return przebieg, nil
 }
 
-// pompujLog czyta strumień procesu wierszami i rozsyła je zdarzeniem przyrostu logu przebiegu budowania.
 func (a *adapterDevelopera) pompujLog(przebieg *przebiegBudowania, zrodlo io.Reader,
 	gotowe chan<- struct{}) {
 
@@ -91,14 +85,11 @@ func (a *adapterDevelopera) pompujLog(przebieg *przebiegBudowania, zrodlo io.Rea
 			a.rozglosBudowanie(przebieg.kontekst, shared.ChangeKindUpdated, przebieg, wiersz)
 		}
 		if err != nil {
-			// Koniec potoku jest normalnym końcem odczytu; przebieg domknie czekający na zakończenie procesu.
 			return
 		}
 	}
 }
 
-// czytajWiersz zwraca jeden wiersz bez znaków końca. Wiersz dłuższy od granicy
-// zostaje oddany w kawałkach zamiast rosnąć w pamięci bez końca.
 func czytajWiersz(czytnik *bufio.Reader) (string, error) {
 	var budowany strings.Builder
 	for {
@@ -113,9 +104,7 @@ func czytajWiersz(czytnik *bufio.Reader) (string, error) {
 	}
 }
 
-// pilnujBudowania czeka na zakończenie procesu i domyka przebieg. Czekanie na
-// pompy logu jest konieczne: wiersz odczytany po rozgłoszeniu stanu końcowego
-// dotarłby do Build Output po zamknięciu przebiegu i zostałby odrzucony.
+// Pompy logu kończą przed rozgłoszeniem stanu końcowego: wiersz po zamknięciu przebiegu Build Output odrzuca.
 func (a *adapterDevelopera) pilnujBudowania(przebieg *przebiegBudowania, gotowe <-chan struct{}) {
 	blad := przebieg.uchwyt.Czekaj()
 	<-gotowe
@@ -136,8 +125,6 @@ func (a *adapterDevelopera) pilnujBudowania(przebieg *przebiegBudowania, gotowe 
 	a.rozglosBudowanie(przebieg.kontekst, shared.ChangeKindUpdated, przebieg, podsumowaniePrzebiegu(stan, kodWyjscia))
 }
 
-// wynikBudowania przekłada wynik oczekiwania na stan i kod wyjścia. Kod różny
-// od zera jest wynikiem budowania, nie usterką rdzenia.
 func wynikBudowania(blad error) (shared.BuildStatus, *int) {
 	if blad == nil {
 		zero := 0
@@ -147,7 +134,6 @@ func wynikBudowania(blad error) (shared.BuildStatus, *int) {
 	if errors.As(blad, &zakonczenie) {
 		kod := zakonczenie.ExitCode()
 		if kod < 0 {
-			// Kod ujemny znaczy zakończenie sygnałem: budowanie przerwano z zewnątrz, nie zawiodło samo.
 			return shared.BuildStatusStopped, nil
 		}
 		return shared.BuildStatusFailed, &kod
@@ -155,7 +141,6 @@ func wynikBudowania(blad error) (shared.BuildStatus, *int) {
 	return shared.BuildStatusFailed, nil
 }
 
-// CzekajNaKoniec czeka na domknięcie przebiegu nie dłużej niż podany czas, oddając stan po jego upływie.
 func (p *przebiegBudowania) CzekajNaKoniec(najdluzej time.Duration) {
 	select {
 	case <-p.koniec:
@@ -163,8 +148,6 @@ func (p *przebiegBudowania) CzekajNaKoniec(najdluzej time.Duration) {
 	}
 }
 
-// zapiszPrzebieg odkłada uruchomiony przebieg do dziennika. Nieudany zapis nie
-// zatrzymuje budowania, które już biegnie.
 func (a *adapterDevelopera) zapiszPrzebieg(ctx context.Context, przebieg *przebiegBudowania) {
 	if a.repozytorium == nil {
 		return
@@ -178,8 +161,6 @@ func (a *adapterDevelopera) zapiszPrzebieg(ctx context.Context, przebieg *przebi
 	})
 }
 
-// rozglosBudowanie oddaje przyrost obsługiwaczowi, który rozsyła
-// `developer.build.changed`. Brak podpięcia nie zmienia pracy modułu.
 func (a *adapterDevelopera) rozglosBudowanie(ctx context.Context, zmiana shared.ChangeKind, przebieg *przebiegBudowania,
 	wiersz string) {
 

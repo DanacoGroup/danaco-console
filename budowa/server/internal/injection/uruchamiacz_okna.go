@@ -25,8 +25,8 @@ func UruchamiaczOkien() session.Uruchamiacz {
 
 // UruchomProces startuje proces okna i oddaje jego uchwyt sesji, jako korzeń
 // własnego drzewa procesów.
-func (u uruchamiaczOkien) UruchomProces(o session.Okno, p session.Polecenie) (session.UchwytProcesu, error) {
-	rozruch, err := rozruchWedlugZasiegu(o, p)
+func (u uruchamiaczOkien) UruchomProces(ctx context.Context, o session.Okno, p session.Polecenie) (session.UchwytProcesu, error) {
+	rozruch, err := rozruchWedlugZasiegu(ctx, o, p)
 	if err != nil {
 		return nil, err
 	}
@@ -35,13 +35,13 @@ func (u uruchamiaczOkien) UruchomProces(o session.Okno, p session.Polecenie) (se
 
 // rozruchWedlugZasiegu odpowiada na jedno pytanie: jaki proces uruchomić na
 // hoście rdzenia, żeby praca działa się tam, gdzie wskazał Operator.
-func rozruchWedlugZasiegu(o session.Okno, p session.Polecenie) (Rozruch, error) {
+func rozruchWedlugZasiegu(ctx context.Context, o session.Okno, p session.Polecenie) (Rozruch, error) {
 	switch o.SrodowiskoWykonania {
 	case shared.ExecutionEnvCore:
 		return rozruchMiejscowy(p), nil
 
 	case shared.ExecutionEnvRemote:
-		return rozruchZdalny(o, p)
+		return rozruchZdalny(ctx, o, p)
 
 	case shared.ExecutionEnvLocal:
 		odnotujZasiegRaz(o, "", "injection: okno %s ma zasięg wykonania %q; toru zwrotnego "+
@@ -79,8 +79,8 @@ func rozruchMiejscowy(p session.Polecenie) Rozruch {
 
 // rozruchZdalny prowadzi polecenie okna torem SSH pakietu zdalne, dziedzicząc
 // środowisko rdzenia dla własnej konfiguracji.
-func rozruchZdalny(o session.Okno, p session.Polecenie) (Rozruch, error) {
-	uruchomienie, err := zdalne.Przeloz(o.Id, zdalne.Polecenie{
+func rozruchZdalny(ctx context.Context, o session.Okno, p session.Polecenie) (Rozruch, error) {
+	uruchomienie, err := zdalne.Przeloz(ctx, o.Id, zdalne.Polecenie{
 		Program:    p.Program,
 		Argumenty:  p.Argumenty,
 		Katalog:    p.Katalog,

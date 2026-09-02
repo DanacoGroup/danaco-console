@@ -9,10 +9,8 @@ import (
 	"fmt"
 )
 
-// ProfilDrukuDesignu to wiersz tabeli `profil_druku_design`. Pola opcjonalne
-// niosą wskaźnik: brak spadu znaczy „bierz domyślny rdzenia", a spad zerowy
-// znaczy „drukuj bez spadu" — to dwa różne rozstrzygnięcia i dwa różne wyniki
-// w drukarni.
+// ProfilDrukuDesignu to wiersz tabeli `profil_druku_design`. Brak spadu znaczy
+// „bierz domyślny rdzenia", spad zerowy „drukuj bez spadu".
 type ProfilDrukuDesignu struct {
 	ID                 int64
 	Kod                string
@@ -31,8 +29,7 @@ type ProfilDrukuDesignu struct {
 	Zaktualizowano     string
 }
 
-// LicencjaZasobuDesignu to wiersz tabeli `licencja_zasobu_design` — zapis
-// pochodzenia i warunków użycia materiału wciągniętego z zewnątrz.
+// LicencjaZasobuDesignu to wiersz tabeli `licencja_zasobu_design`.
 type LicencjaZasobuDesignu struct {
 	ID                     int64
 	ZasobID                int64
@@ -53,9 +50,10 @@ const (
 	zapiszProfilDrukuDesignu = `INSERT INTO profil_druku_design
 	                            (identyfikator_zewnetrzny, okno, nazwa, przestrzen_barw, norma,
 	                             spad_mm, znaczniki_ciecia, znaczniki_pasowania, pasek_barw,
-	                             rozdzielczosc, profil_icc, nadruk_czerni, nosnik, zaktualizowano)
+	                             rozdzielczosc, profil_icc, nadruk_czerni, nosnik, zaktualizowano,
+	                             konto_id)
 	                            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
-	                                    strftime('%Y-%m-%dT%H:%M:%fZ','now'))
+	                                    strftime('%Y-%m-%dT%H:%M:%fZ','now'), ` + WskazanieKonta + `)
 	                            ON CONFLICT(identyfikator_zewnetrzny) DO UPDATE SET
 	                                nazwa = excluded.nazwa,
 	                                przestrzen_barw = excluded.przestrzen_barw,
@@ -68,32 +66,42 @@ const (
 	                                profil_icc = excluded.profil_icc,
 	                                nadruk_czerni = excluded.nadruk_czerni,
 	                                nosnik = excluded.nosnik,
-	                                zaktualizowano = excluded.zaktualizowano`
+	                                zaktualizowano = excluded.zaktualizowano
+	                            WHERE ` + WarunekKonta
 
 	pobierzProfilDrukuDesignu = `SELECT ` + kolumnyProfiluDrukuDesignu +
-		` FROM profil_druku_design WHERE identyfikator_zewnetrzny = ?`
+		` FROM profil_druku_design WHERE identyfikator_zewnetrzny = ? AND ` + WarunekKonta
 
 	listaProfiliDrukuDesignu = `SELECT ` + kolumnyProfiluDrukuDesignu +
-		` FROM profil_druku_design WHERE okno = ? ORDER BY zaktualizowano DESC, id DESC`
+		` FROM profil_druku_design WHERE okno = ? AND ` + WarunekKonta +
+		` ORDER BY zaktualizowano DESC, id DESC`
+
+	// Licencja własnej kolumny konta nie ma: granica dochodzi przez `zasob_id`
+	// do korzenia zasob_design (migracja 484).
+	zasobDesignWGranicyKonta = `EXISTS (SELECT 1 FROM zasob_design
+	                                     WHERE zasob_design.id = licencja_zasobu_design.zasob_id
+	                                       AND ` + WarunekKonta + `)`
 
 	zapiszLicencjeZasobuDesignu = `INSERT INTO licencja_zasobu_design
 	                               (zasob_id, dostawca, identyfikator_u_dostawcy, licencja,
 	                                autor, odsylacz)
-	                               VALUES (?, ?, ?, ?, ?, ?)
+	                               SELECT ?, ?, ?, ?, ?, ?
+	                                WHERE EXISTS (SELECT 1 FROM zasob_design
+	                                               WHERE zasob_design.id = ? AND ` + WarunekKonta + `)
 	                               ON CONFLICT(zasob_id) DO UPDATE SET
 	                                   dostawca = excluded.dostawca,
 	                                   identyfikator_u_dostawcy = excluded.identyfikator_u_dostawcy,
 	                                   licencja = excluded.licencja,
 	                                   autor = excluded.autor,
-	                                   odsylacz = excluded.odsylacz`
+	                                   odsylacz = excluded.odsylacz
+	                               WHERE ` + zasobDesignWGranicyKonta
 
 	pobierzLicencjeZasobuDesignu = `SELECT id, zasob_id, dostawca, identyfikator_u_dostawcy,
 	                                       licencja, autor, odsylacz, utworzono
-	                                FROM licencja_zasobu_design WHERE zasob_id = ?`
+	                                FROM licencja_zasobu_design
+	                                WHERE zasob_id = ? AND ` + zasobDesignWGranicyKonta
 )
 
-// ZapiszProfilDrukuDesignu zakłada profil albo nadpisuje zastany po
-// identyfikatorze zewnętrznym i oddaje stan po zapisie.
 func (r *repozytoriumDesignu) ZapiszProfilDrukuDesignu(ctx context.Context,
 	profil ProfilDrukuDesignu) (ProfilDrukuDesignu, error) {
 
@@ -111,21 +119,22 @@ func (r *repozytoriumDesignu) ZapiszProfilDrukuDesignu(ctx context.Context,
 	if profil.SpadMm != nil {
 		spad = *profil.SpadMm
 	}
-	_, err = polecenie.ExecContext(ctx, profil.Kod, profil.Okno, tekstDoKolumny(profil.Nazwa),
+	wynik, err := polecenie.ExecContext(ctx, profil.Kod, profil.Okno, tekstDoKolumny(profil.Nazwa),
 		profil.PrzestrzenBarw, tekstDoKolumny(profil.Norma), spad,
 		liczbaLogiczna(profil.ZnacznikiCiecia), liczbaLogiczna(profil.ZnacznikiPasowania),
 		liczbaLogiczna(profil.PasekBarw), liczbaDoKolumny(profil.Rozdzielczosc),
 		tekstDoKolumny(profil.ProfilICC), liczbaLogiczna(profil.NadrukCzerni),
-		tekstDoKolumny(profil.Nosnik))
+		tekstDoKolumny(profil.Nosnik), KontoOperatora(ctx), KontoOperatora(ctx))
 	if err != nil {
 		return ProfilDrukuDesignu{}, fmt.Errorf("dane: nie można zapisać profilu druku design %q: %w",
 			profil.Kod, err)
 	}
+	if err := sprawdzTrafienieZapisu(wynik, "profil druku design", profil.Kod); err != nil {
+		return ProfilDrukuDesignu{}, err
+	}
 	return r.ProfilDrukuDesignuPoKodzie(ctx, profil.Kod)
 }
 
-// ProfilDrukuDesignuPoKodzie zwraca profil o wskazanym kodzie. Brak wiersza
-// wraca jako ErrBrakWiersza.
 func (r *repozytoriumDesignu) ProfilDrukuDesignuPoKodzie(ctx context.Context,
 	kod string) (ProfilDrukuDesignu, error) {
 
@@ -133,7 +142,7 @@ func (r *repozytoriumDesignu) ProfilDrukuDesignuPoKodzie(ctx context.Context,
 	if err != nil {
 		return ProfilDrukuDesignu{}, err
 	}
-	profil, err := odczytajProfilDrukuDesignu(polecenie.QueryRowContext(ctx, kod))
+	profil, err := odczytajProfilDrukuDesignu(polecenie.QueryRowContext(ctx, kod, KontoOperatora(ctx)))
 	if errors.Is(err, sql.ErrNoRows) {
 		return ProfilDrukuDesignu{}, ErrBrakWiersza
 	}
@@ -144,7 +153,6 @@ func (r *repozytoriumDesignu) ProfilDrukuDesignuPoKodzie(ctx context.Context,
 	return profil, nil
 }
 
-// ProfileDrukuDesignu zwraca profile druku okna, od ostatnio zmienianego, wprost z bazy danych repozytorium.
 func (r *repozytoriumDesignu) ProfileDrukuDesignu(ctx context.Context,
 	okno string) ([]ProfilDrukuDesignu, error) {
 
@@ -152,7 +160,7 @@ func (r *repozytoriumDesignu) ProfileDrukuDesignu(ctx context.Context,
 	if err != nil {
 		return nil, err
 	}
-	wiersze, err := polecenie.QueryContext(ctx, okno)
+	wiersze, err := polecenie.QueryContext(ctx, okno, KontoOperatora(ctx))
 	if err != nil {
 		return nil, fmt.Errorf("dane: nie można odczytać profili druku design okna %q: %w", okno, err)
 	}
@@ -173,8 +181,6 @@ func (r *repozytoriumDesignu) ProfileDrukuDesignu(ctx context.Context,
 	return lista, nil
 }
 
-// ZapiszLicencjeZasobuDesignu utrwala pochodzenie i warunki użycia materiału
-// wciągniętego z katalogu zewnętrznego.
 func (r *repozytoriumDesignu) ZapiszLicencjeZasobuDesignu(ctx context.Context,
 	licencja LicencjaZasobuDesignu) error {
 
@@ -185,19 +191,19 @@ func (r *repozytoriumDesignu) ZapiszLicencjeZasobuDesignu(ctx context.Context,
 	if err != nil {
 		return err
 	}
-	_, err = polecenie.ExecContext(ctx, licencja.ZasobID, licencja.Dostawca,
+	wynik, err := polecenie.ExecContext(ctx, licencja.ZasobID, licencja.Dostawca,
 		licencja.IdentyfikatorUDostawcy, tekstDoKolumny(licencja.Licencja),
-		tekstDoKolumny(licencja.Autor), tekstDoKolumny(licencja.Odsylacz))
+		tekstDoKolumny(licencja.Autor), tekstDoKolumny(licencja.Odsylacz),
+		licencja.ZasobID, KontoOperatora(ctx), KontoOperatora(ctx))
 	if err != nil {
 		return fmt.Errorf("dane: nie można zapisać licencji zasobu design %d: %w",
 			licencja.ZasobID, err)
 	}
-	return nil
+	return sprawdzTrafienieZapisu(wynik, "licencja zasobu design", fmt.Sprint(licencja.ZasobID))
 }
 
-// LicencjaZasobuDesignuPoZasobie zwraca licencję zasobu. Brak wiersza wraca
-// jako ErrBrakWiersza — zasób bez licencji to zasób, który nie przyszedł
-// z katalogu zewnętrznego, a to stan poprawny.
+// LicencjaZasobuDesignuPoZasobie oddaje ErrBrakWiersza także dla zasobu spoza
+// katalogu zewnętrznego — brak licencji jest stanem poprawnym.
 func (r *repozytoriumDesignu) LicencjaZasobuDesignuPoZasobie(ctx context.Context,
 	zasobID int64) (LicencjaZasobuDesignu, error) {
 
@@ -207,7 +213,7 @@ func (r *repozytoriumDesignu) LicencjaZasobuDesignuPoZasobie(ctx context.Context
 	}
 	var licencja LicencjaZasobuDesignu
 	var tresc, autor, odsylacz sql.NullString
-	err = polecenie.QueryRowContext(ctx, zasobID).Scan(&licencja.ID, &licencja.ZasobID,
+	err = polecenie.QueryRowContext(ctx, zasobID, KontoOperatora(ctx)).Scan(&licencja.ID, &licencja.ZasobID,
 		&licencja.Dostawca, &licencja.IdentyfikatorUDostawcy, &tresc, &autor, &odsylacz,
 		&licencja.Utworzono)
 	if errors.Is(err, sql.ErrNoRows) {
@@ -223,7 +229,6 @@ func (r *repozytoriumDesignu) LicencjaZasobuDesignuPoZasobie(ctx context.Context
 	return licencja, nil
 }
 
-// odczytajProfilDrukuDesignu składa strukturę profilu wprost z jednego wiersza wyniku zapytania do bazy.
 func odczytajProfilDrukuDesignu(wiersz skaner) (ProfilDrukuDesignu, error) {
 	var profil ProfilDrukuDesignu
 	var nazwa, norma, profilICC, nosnik sql.NullString

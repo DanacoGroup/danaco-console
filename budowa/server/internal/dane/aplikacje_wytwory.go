@@ -9,8 +9,6 @@ import (
 	"fmt"
 )
 
-// PodgladApp to wiersz tabeli podglad_apps: jeden serwer podglądu na okno,
-// wraz z adresem i stanem pracy.
 type PodgladApp struct {
 	Okno       string
 	Warstwa    string
@@ -20,16 +18,12 @@ type PodgladApp struct {
 	Zatrzymano *int64
 }
 
-// MotywApp to wiersz tabeli motyw_apps: motyw produktu ustawiony dla okna,
-// zapisany w postaci tekstu JSON.
 type MotywApp struct {
 	Okno           string
 	Tresc          string
 	Zaktualizowano string
 }
 
-// WierszDziennikaApp to wiersz tabeli wiersz_dziennika_apps: jeden wpis
-// dziennika usługi albo przebiegu wdrożenia.
 type WierszDziennikaApp struct {
 	ID           int64
 	Okno         string
@@ -39,8 +33,6 @@ type WierszDziennikaApp struct {
 	Tresc        string
 }
 
-// ArtefaktApp to wiersz tabeli artefakt_apps: plik powstały z budowania,
-// wraz z sumą kontrolną i rozmiarem.
 type ArtefaktApp struct {
 	ID            int64
 	Kod           string
@@ -53,8 +45,6 @@ type ArtefaktApp struct {
 	Utworzono     string
 }
 
-// PakietApp to wiersz tabeli pakiet_apps: paczka rozszerzenia złożona z
-// manifestu, artefaktu i podpisu.
 type PakietApp struct {
 	ID                int64
 	Kod               string
@@ -71,48 +61,52 @@ type PakietApp struct {
 }
 
 const (
-	zapiszPodgladApp = `INSERT INTO podglad_apps (okno, warstwa, adres, stan, rozpoczeto, zatrzymano)
-	                    VALUES (?, ?, ?, ?, ?, ?)
+	zapiszPodgladApp = `INSERT INTO podglad_apps (okno, warstwa, adres, stan, rozpoczeto, zatrzymano, konto_id)
+	                    VALUES (?, ?, ?, ?, ?, ?, ` + WskazanieKonta + `)
 	                    ON CONFLICT(okno) DO UPDATE SET
 	                        warstwa = excluded.warstwa,
 	                        adres = excluded.adres,
 	                        stan = excluded.stan,
 	                        rozpoczeto = excluded.rozpoczeto,
-	                        zatrzymano = excluded.zatrzymano`
+	                        zatrzymano = excluded.zatrzymano
+	                    WHERE ` + WarunekKonta
 
 	pobierzPodgladApp = `SELECT okno, warstwa, adres, stan, rozpoczeto, zatrzymano
-	                     FROM podglad_apps WHERE okno = ?`
+	                     FROM podglad_apps WHERE okno = ? AND ` + WarunekKonta
 
-	zapiszMotywApp = `INSERT INTO motyw_apps (okno, tresc) VALUES (?, ?)
+	zapiszMotywApp = `INSERT INTO motyw_apps (okno, tresc, konto_id) VALUES (?, ?, ` + WskazanieKonta + `)
 	                  ON CONFLICT(okno) DO UPDATE SET
 	                      tresc = excluded.tresc,
-	                      zaktualizowano = strftime('%Y-%m-%dT%H:%M:%fZ','now')`
+	                      zaktualizowano = strftime('%Y-%m-%dT%H:%M:%fZ','now')
+	                  WHERE ` + WarunekKonta
 
-	pobierzMotywApp = `SELECT okno, tresc, zaktualizowano FROM motyw_apps WHERE okno = ?`
+	pobierzMotywApp = `SELECT okno, tresc, zaktualizowano FROM motyw_apps
+	                   WHERE okno = ? AND ` + WarunekKonta
 
 	wstawWierszDziennikaApp = `INSERT INTO wiersz_dziennika_apps
-	                           (okno, wdrozenie_kod, komponent_kod, chwila, tresc)
-	                           VALUES (?, ?, ?, ?, ?)`
+	                           (okno, wdrozenie_kod, komponent_kod, chwila, tresc, konto_id)
+	                           VALUES (?, ?, ?, ?, ?, ` + WskazanieKonta + `)`
 
-	// Dziennik usług: zawężenie po oknie i — gdy wskazano — po komponencie.
-	// Warunek komponentu jest napisany tak, żeby brak wskazania przepuszczał
-	// wszystko: jedno zapytanie zamiast dwóch bliźniaczych.
+	// Warunek komponentu przepuszcza wszystko przy braku wskazania: jedno zapytanie zamiast dwóch bliźniaczych.
 	listaDziennikaUslugiApp = `SELECT id, okno, wdrozenie_kod, komponent_kod, chwila, tresc
 	                           FROM wiersz_dziennika_apps
 	                           WHERE okno = ? AND chwila >= ?
 	                             AND (? = '' OR komponent_kod = ?)
+	                             AND ` + WarunekKonta + `
 	                           ORDER BY chwila, id LIMIT ?`
 
 	listaDziennikaWdrozeniaApp = `SELECT id, okno, wdrozenie_kod, komponent_kod, chwila, tresc
 	                              FROM wiersz_dziennika_apps
 	                              WHERE wdrozenie_kod = ? AND chwila >= ?
+	                                AND ` + WarunekKonta + `
 	                              ORDER BY chwila, id LIMIT ?`
 
 	policzDziennikUslugiApp = `SELECT COUNT(*) FROM wiersz_dziennika_apps
-	                           WHERE okno = ? AND chwila >= ? AND (? = '' OR komponent_kod = ?)`
+	                           WHERE okno = ? AND chwila >= ? AND (? = '' OR komponent_kod = ?)
+	                             AND ` + WarunekKonta
 
 	policzDziennikWdrozeniaApp = `SELECT COUNT(*) FROM wiersz_dziennika_apps
-	                              WHERE wdrozenie_kod = ? AND chwila >= ?`
+	                              WHERE wdrozenie_kod = ? AND chwila >= ? AND ` + WarunekKonta
 
 	kolumnyArtefaktuApp = `id, identyfikator_zewnetrzny, okno, wdrozenie_kod, rodzaj,
 	                       sciezka, rozmiar, suma_kontrolna, utworzono`
@@ -145,8 +139,8 @@ const (
 
 	zapiszPakietApp = `INSERT INTO pakiet_apps
 	                   (identyfikator_zewnetrzny, okno, manifest, artefakt_odwolanie, format,
-	                    sciezka, rozmiar, podpis, rozszerzenie_kod)
-	                   VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+	                    sciezka, rozmiar, podpis, rozszerzenie_kod, konto_id)
+	                   VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ` + WskazanieKonta + `)
 	                   ON CONFLICT(identyfikator_zewnetrzny) DO UPDATE SET
 	                       manifest = IFNULL(excluded.manifest, pakiet_apps.manifest),
 	                       artefakt_odwolanie = IFNULL(excluded.artefakt_odwolanie,
@@ -157,17 +151,16 @@ const (
 	                       podpis = IFNULL(excluded.podpis, pakiet_apps.podpis),
 	                       rozszerzenie_kod = IFNULL(excluded.rozszerzenie_kod,
 	                                                 pakiet_apps.rozszerzenie_kod),
-	                       zaktualizowano = strftime('%Y-%m-%dT%H:%M:%fZ','now')`
+	                       zaktualizowano = strftime('%Y-%m-%dT%H:%M:%fZ','now')
+	                   WHERE ` + WarunekKonta
 
 	pobierzPakietApp = `SELECT ` + kolumnyPakietuApp + ` FROM pakiet_apps
-	                    WHERE identyfikator_zewnetrzny = ?`
+	                    WHERE identyfikator_zewnetrzny = ? AND ` + WarunekKonta
 
 	listaPakietowApp = `SELECT ` + kolumnyPakietuApp + ` FROM pakiet_apps
-	                    WHERE okno = ? ORDER BY id`
+	                    WHERE okno = ? AND ` + WarunekKonta + ` ORDER BY id`
 )
 
-// ZapiszPodgladApp utrwala stan serwera podglądu okna, nadpisując zastany
-// wiersz tego samego okna produktu.
 func (r *repozytoriumAplikacji) ZapiszPodgladApp(ctx context.Context, podglad PodgladApp) error {
 	if podglad.Okno == "" {
 		return fmt.Errorf("dane: podgląd aplikacji bez okna")
@@ -176,16 +169,15 @@ func (r *repozytoriumAplikacji) ZapiszPodgladApp(ctx context.Context, podglad Po
 	if err != nil {
 		return err
 	}
-	_, err = polecenie.ExecContext(ctx, podglad.Okno, podglad.Warstwa, podglad.Adres,
-		podglad.Stan, podglad.Rozpoczeto, liczbaDoKolumny(podglad.Zatrzymano))
+	wynik, err := polecenie.ExecContext(ctx, podglad.Okno, podglad.Warstwa, podglad.Adres,
+		podglad.Stan, podglad.Rozpoczeto, liczbaDoKolumny(podglad.Zatrzymano),
+		KontoOperatora(ctx), KontoOperatora(ctx))
 	if err != nil {
 		return fmt.Errorf("dane: nie można zapisać podglądu okna %q: %w", podglad.Okno, err)
 	}
-	return nil
+	return sprawdzTrafienieZapisu(wynik, "podgląd okna", podglad.Okno)
 }
 
-// PodgladApp zwraca stan serwera podglądu okna, zwracając błąd
-// ErrBrakWiersza, gdy podgląd nie istnieje.
 func (r *repozytoriumAplikacji) PodgladApp(ctx context.Context, okno string) (PodgladApp, error) {
 	polecenie, err := r.zapytania.przygotuj(ctx, pobierzPodgladApp)
 	if err != nil {
@@ -193,7 +185,7 @@ func (r *repozytoriumAplikacji) PodgladApp(ctx context.Context, okno string) (Po
 	}
 	var podglad PodgladApp
 	var zatrzymano sql.NullInt64
-	err = polecenie.QueryRowContext(ctx, okno).Scan(&podglad.Okno, &podglad.Warstwa,
+	err = polecenie.QueryRowContext(ctx, okno, KontoOperatora(ctx)).Scan(&podglad.Okno, &podglad.Warstwa,
 		&podglad.Adres, &podglad.Stan, &podglad.Rozpoczeto, &zatrzymano)
 	if err == sql.ErrNoRows {
 		return PodgladApp{}, ErrBrakWiersza
@@ -205,8 +197,6 @@ func (r *repozytoriumAplikacji) PodgladApp(ctx context.Context, okno string) (Po
 	return podglad, nil
 }
 
-// ZapiszMotywApp utrwala motyw produktu okna, nadpisując zastany zapis
-// tego samego okna aplikacji Apps.
 func (r *repozytoriumAplikacji) ZapiszMotywApp(ctx context.Context, motyw MotywApp) (MotywApp, error) {
 	if motyw.Okno == "" {
 		return MotywApp{}, fmt.Errorf("dane: motyw aplikacji bez okna")
@@ -218,21 +208,23 @@ func (r *repozytoriumAplikacji) ZapiszMotywApp(ctx context.Context, motyw MotywA
 	if err != nil {
 		return MotywApp{}, err
 	}
-	if _, err := polecenie.ExecContext(ctx, motyw.Okno, motyw.Tresc); err != nil {
+	wynik, err := polecenie.ExecContext(ctx, motyw.Okno, motyw.Tresc, KontoOperatora(ctx), KontoOperatora(ctx))
+	if err != nil {
 		return MotywApp{}, fmt.Errorf("dane: nie można zapisać motywu okna %q: %w", motyw.Okno, err)
+	}
+	if err := sprawdzTrafienieZapisu(wynik, "motyw okna", motyw.Okno); err != nil {
+		return MotywApp{}, err
 	}
 	return r.MotywApp(ctx, motyw.Okno)
 }
 
-// MotywApp zwraca motyw produktu okna; brak wraca jako ErrBrakWiersza, gdy
-// motyw nie był jeszcze ustawiony.
 func (r *repozytoriumAplikacji) MotywApp(ctx context.Context, okno string) (MotywApp, error) {
 	polecenie, err := r.zapytania.przygotuj(ctx, pobierzMotywApp)
 	if err != nil {
 		return MotywApp{}, err
 	}
 	var motyw MotywApp
-	err = polecenie.QueryRowContext(ctx, okno).Scan(&motyw.Okno, &motyw.Tresc, &motyw.Zaktualizowano)
+	err = polecenie.QueryRowContext(ctx, okno, KontoOperatora(ctx)).Scan(&motyw.Okno, &motyw.Tresc, &motyw.Zaktualizowano)
 	if err == sql.ErrNoRows {
 		return MotywApp{}, ErrBrakWiersza
 	}
@@ -242,8 +234,6 @@ func (r *repozytoriumAplikacji) MotywApp(ctx context.Context, okno string) (Moty
 	return motyw, nil
 }
 
-// DopiszWierszDziennikaApp dopisuje jeden wiersz dziennika modułu, wiążąc
-// go opcjonalnie z wdrożeniem i komponentem.
 func (r *repozytoriumAplikacji) DopiszWierszDziennikaApp(ctx context.Context, wiersz WierszDziennikaApp) error {
 	if wiersz.Okno == "" {
 		return fmt.Errorf("dane: wiersz dziennika aplikacji bez okna")
@@ -253,7 +243,7 @@ func (r *repozytoriumAplikacji) DopiszWierszDziennikaApp(ctx context.Context, wi
 		return err
 	}
 	_, err = polecenie.ExecContext(ctx, wiersz.Okno, tekstDoKolumny(wiersz.WdrozenieKod),
-		tekstDoKolumny(wiersz.KomponentKod), wiersz.Chwila, wiersz.Tresc)
+		tekstDoKolumny(wiersz.KomponentKod), wiersz.Chwila, wiersz.Tresc, KontoOperatora(ctx))
 	if err != nil {
 		return fmt.Errorf("dane: nie można dopisać wiersza dziennika okna %q: %w", wiersz.Okno, err)
 	}
@@ -267,35 +257,33 @@ func (r *repozytoriumAplikacji) DziennikUslugiApp(ctx context.Context, okno, kom
 	od int64, granica int) ([]WierszDziennikaApp, int, error) {
 
 	lista, err := r.wierszeDziennikaApp(ctx, listaDziennikaUslugiApp,
-		okno, od, komponent, komponent, granica)
+		okno, od, komponent, komponent, KontoOperatora(ctx), granica)
 	if err != nil {
 		return nil, 0, err
 	}
-	razem, err := r.policzDziennikApp(ctx, policzDziennikUslugiApp, okno, od, komponent, komponent)
+	razem, err := r.policzDziennikApp(ctx, policzDziennikUslugiApp, okno, od, komponent, komponent,
+		KontoOperatora(ctx))
 	if err != nil {
 		return nil, 0, err
 	}
 	return lista, razem, nil
 }
 
-// DziennikWdrozeniaApp zwraca stronę dziennika jednego przebiegu wdrożenia
-// wraz z liczbą wszystkich jego wierszy.
 func (r *repozytoriumAplikacji) DziennikWdrozeniaApp(ctx context.Context, wdrozenie string,
 	od int64, granica int) ([]WierszDziennikaApp, int, error) {
 
-	lista, err := r.wierszeDziennikaApp(ctx, listaDziennikaWdrozeniaApp, wdrozenie, od, granica)
+	lista, err := r.wierszeDziennikaApp(ctx, listaDziennikaWdrozeniaApp, wdrozenie, od,
+		KontoOperatora(ctx), granica)
 	if err != nil {
 		return nil, 0, err
 	}
-	razem, err := r.policzDziennikApp(ctx, policzDziennikWdrozeniaApp, wdrozenie, od)
+	razem, err := r.policzDziennikApp(ctx, policzDziennikWdrozeniaApp, wdrozenie, od, KontoOperatora(ctx))
 	if err != nil {
 		return nil, 0, err
 	}
 	return lista, razem, nil
 }
 
-// wierszeDziennikaApp jest wspólnym odczytem obu dzienników — różnią się
-// wyłącznie zapytaniem i jego argumentami.
 func (r *repozytoriumAplikacji) wierszeDziennikaApp(ctx context.Context, zapytanie string,
 	argumenty ...any) ([]WierszDziennikaApp, error) {
 
@@ -327,8 +315,6 @@ func (r *repozytoriumAplikacji) wierszeDziennikaApp(ctx context.Context, zapytan
 	return lista, nil
 }
 
-// policzDziennikApp liczy wiersze dziennika spełniające warunki odczytu,
-// wspólne dla dziennika usługi i wdrożenia.
 func (r *repozytoriumAplikacji) policzDziennikApp(ctx context.Context, zapytanie string,
 	argumenty ...any) (int, error) {
 
@@ -363,8 +349,6 @@ func (r *repozytoriumAplikacji) ZalozArtefaktApp(ctx context.Context, artefakt A
 	return r.ArtefaktApp(ctx, artefakt.Kod)
 }
 
-// ArtefaktApp zwraca jeden artefakt po kodzie zewnętrznym, zwracając błąd
-// ErrBrakWiersza, gdy artefakt nie istnieje.
 func (r *repozytoriumAplikacji) ArtefaktApp(ctx context.Context, kod string) (ArtefaktApp, error) {
 	polecenie, err := r.zapytania.przygotuj(ctx, pobierzArtefaktApp)
 	if err != nil {
@@ -380,8 +364,6 @@ func (r *repozytoriumAplikacji) ArtefaktApp(ctx context.Context, kod string) (Ar
 	return artefakt, nil
 }
 
-// ArtefaktyApp zwraca artefakty okna, od najnowszego; puste wdrożenie nie
-// zawęża wykazu do jednego przebiegu.
 func (r *repozytoriumAplikacji) ArtefaktyApp(ctx context.Context, okno, wdrozenie string) ([]ArtefaktApp, error) {
 	polecenie, err := r.zapytania.przygotuj(ctx, listaArtefaktowApp)
 	if err != nil {
@@ -407,8 +389,6 @@ func (r *repozytoriumAplikacji) ArtefaktyApp(ctx context.Context, okno, wdrozeni
 	return lista, nil
 }
 
-// OstatniArtefaktUdanegoWdrozeniaApp zwraca artefakt, który `apps.package.build`
-// bierze, gdy żądanie nie wskazuje własnego.
 func (r *repozytoriumAplikacji) OstatniArtefaktUdanegoWdrozeniaApp(ctx context.Context,
 	okno string) (ArtefaktApp, error) {
 
@@ -439,28 +419,35 @@ func (r *repozytoriumAplikacji) ZapiszPakietApp(ctx context.Context, pakiet Paki
 	if pakiet.Format == "" {
 		pakiet.Format = "zip"
 	}
+	if pakiet.ArtefaktOdwolanie != nil && *pakiet.ArtefaktOdwolanie != "" {
+		if _, err := r.ArtefaktApp(ctx, *pakiet.ArtefaktOdwolanie); err != nil {
+			return PakietApp{}, fmt.Errorf("dane: artefakt %q pakietu %q: %w",
+				*pakiet.ArtefaktOdwolanie, pakiet.Kod, err)
+		}
+	}
 	polecenie, err := r.zapytania.przygotuj(ctx, zapiszPakietApp)
 	if err != nil {
 		return PakietApp{}, err
 	}
-	_, err = polecenie.ExecContext(ctx, pakiet.Kod, pakiet.Okno, tekstDoKolumny(pakiet.Manifest),
+	wynik, err := polecenie.ExecContext(ctx, pakiet.Kod, pakiet.Okno, tekstDoKolumny(pakiet.Manifest),
 		tekstDoKolumny(pakiet.ArtefaktOdwolanie), pakiet.Format, tekstDoKolumny(pakiet.Sciezka),
 		liczbaDoKolumny(pakiet.Rozmiar), tekstDoKolumny(pakiet.Podpis),
-		tekstDoKolumny(pakiet.RozszerzenieKod))
+		tekstDoKolumny(pakiet.RozszerzenieKod), KontoOperatora(ctx), KontoOperatora(ctx))
 	if err != nil {
 		return PakietApp{}, fmt.Errorf("dane: nie można zapisać pakietu %q: %w", pakiet.Kod, err)
+	}
+	if err := sprawdzTrafienieZapisu(wynik, "pakiet", pakiet.Kod); err != nil {
+		return PakietApp{}, err
 	}
 	return r.PakietApp(ctx, pakiet.Kod)
 }
 
-// PakietApp zwraca jeden pakiet po kodzie zewnętrznym, zwracając błąd
-// ErrBrakWiersza, gdy pakiet nie istnieje.
 func (r *repozytoriumAplikacji) PakietApp(ctx context.Context, kod string) (PakietApp, error) {
 	polecenie, err := r.zapytania.przygotuj(ctx, pobierzPakietApp)
 	if err != nil {
 		return PakietApp{}, err
 	}
-	pakiet, err := odczytajPakietApp(polecenie.QueryRowContext(ctx, kod))
+	pakiet, err := odczytajPakietApp(polecenie.QueryRowContext(ctx, kod, KontoOperatora(ctx)))
 	if err == sql.ErrNoRows {
 		return PakietApp{}, ErrBrakWiersza
 	}
@@ -477,7 +464,7 @@ func (r *repozytoriumAplikacji) PakietyApp(ctx context.Context, okno string) ([]
 	if err != nil {
 		return nil, err
 	}
-	wiersze, err := polecenie.QueryContext(ctx, okno)
+	wiersze, err := polecenie.QueryContext(ctx, okno, KontoOperatora(ctx))
 	if err != nil {
 		return nil, fmt.Errorf("dane: nie można odczytać pakietów okna %q: %w", okno, err)
 	}
@@ -497,8 +484,6 @@ func (r *repozytoriumAplikacji) PakietyApp(ctx context.Context, okno string) ([]
 	return lista, nil
 }
 
-// odczytajPakietApp składa pakiet z jednego wiersza wyniku zapytania,
-// zamieniając kolumny nullowalne na wskaźniki.
 func odczytajPakietApp(wiersz skaner) (PakietApp, error) {
 	var pakiet PakietApp
 	var manifest, artefakt, sciezka, podpis, rozszerzenie sql.NullString
@@ -518,8 +503,6 @@ func odczytajPakietApp(wiersz skaner) (PakietApp, error) {
 	return pakiet, nil
 }
 
-// odczytajArtefaktApp składa artefakt z jednego wiersza wyniku zapytania,
-// zamieniając kolumny nullowalne na wskaźniki.
 func odczytajArtefaktApp(wiersz skaner) (ArtefaktApp, error) {
 	var artefakt ArtefaktApp
 	var wdrozenie, suma sql.NullString

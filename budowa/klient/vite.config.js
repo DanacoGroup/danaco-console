@@ -160,6 +160,18 @@ const WNETRZA_OKIEN = [
     zamkniecie: '<!-- /sta-obszar -->',
   },
   {
+    gniazdo: 'dn-tresc-terminal',
+    prototyp: '../../design/05-okna/moduly/terminal.html',
+    otwarcie: '<div class="sta-obszar"',
+    zamkniecie: '<!-- /sta-obszar -->',
+  },
+  {
+    gniazdo: 'dn-tresc-browser',
+    prototyp: '../../design/05-okna/moduly/browser.html',
+    otwarcie: '<div class="sta-obszar"',
+    zamkniecie: '<!-- /sta-obszar -->',
+  },
+  {
     gniazdo: 'dn-tresc-library',
     prototyp: '../../design/05-okna/moduly/library.html',
     otwarcie: '<div class="sta-obszar"',

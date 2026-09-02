@@ -1,5 +1,4 @@
-// Odpowiedzialność pliku: rejestr komponentów własnych Strefy 2 Strony głównej
-// (tabela `komponent`) — trwałość rodziny `component.*`.
+// Rejestr komponentów własnych Strefy 2 Strony głównej (tabela `komponent`) — trwałość rodziny `component.*`.
 package dane
 
 import (
@@ -10,9 +9,7 @@ import (
 	"fmt"
 )
 
-// Komponent to wiersz tabeli `komponent`. `Kod` jest identyfikatorem trwałym
-// i odpowiada polu `Component.id` kontraktu, a `BytDocelowy` — polu
-// `Component.targetId`.
+// Komponent to wiersz `komponent`; `Kod` odpowiada `Component.id`, a `BytDocelowy` — `Component.targetId`.
 type Komponent struct {
 	ID             int64
 	Kod            string
@@ -28,16 +25,13 @@ type Komponent struct {
 	Zaktualizowano int64
 }
 
-// FiltrKomponentow zawęża wykaz komponentów — obsługuje oba pola żądania listy komponentów strefy głównej.
+// FiltrKomponentow zawęża wykaz komponentów; Rodzaj pusty znaczy „wszystkie”, DolaczWylaczone otwiera na niczynne.
 type FiltrKomponentow struct {
-	// Rodzaj pusty znaczy „wszystkie rodzaje”.
-	Rodzaj string
-	// DolaczWylaczone otwiera wykaz na komponenty niczynne; domyślnie pozostaje zamknięty.
+	Rodzaj          string
 	DolaczWylaczone bool
 }
 
-// ZmianaKomponentu niesie pola `component.update`. Wskaźnik pusty znaczy „bez
-// zmiany”, zgodnie ze zdaniem kontraktu „pola pominięte zostają bez zmian”.
+// ZmianaKomponentu niesie pola `component.update`; wskaźnik pusty znaczy „bez zmiany”.
 type ZmianaKomponentu struct {
 	Nazwa        *string
 	Opis         *string
@@ -50,10 +44,8 @@ type RepozytoriumKomponentow interface {
 	ZalozKomponent(ctx context.Context, komponent Komponent) (Komponent, error)
 	Komponent(ctx context.Context, kod string) (Komponent, error)
 	Komponenty(ctx context.Context, filtr FiltrKomponentow) ([]Komponent, error)
-	// ZmienKomponent i PrzypiszKomponent biorą czas zmiany od warstwy wyższej, w milisekundach epoki.
 	ZmienKomponent(ctx context.Context, kod string, zmiana ZmianaKomponentu, teraz int64) (Komponent, error)
 	UsunKomponent(ctx context.Context, kod string) (bool, error)
-	// PrzypiszKomponent zapisuje parę poziomu zasięgu i klucza zasięgu; drugi wynik mówi, czy coś zmienił.
 	PrzypiszKomponent(ctx context.Context, kod, poziom, kluczZasiegu string, teraz int64) (Komponent, bool, error)
 }
 
@@ -66,45 +58,39 @@ const (
 
 	wstawKomponent = `INSERT INTO komponent
 	                  (identyfikator_zewnetrzny, rodzaj, nazwa, opis, byt_docelowy,
-	                   czynny, konfiguracja, utworzono, zaktualizowano)
-	                  VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`
+	                   czynny, konfiguracja, utworzono, zaktualizowano, konto_id)
+	                  VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ` + WskazanieKonta + `)`
 
 	pobierzKomponent = `SELECT ` + kolumnyKomponentu + zrodloKomponentu +
-		` WHERE k.identyfikator_zewnetrzny = ?`
+		` WHERE k.identyfikator_zewnetrzny = ? AND ` + WarunekKonta
 
-	// Jedno zapytanie na cztery warianty żądania: puste zawężenie rodzaju wyłącza pierwszy warunek, a otwarty
-	// parametr włączenia nieaktywnych — drugi.
+	// Jedno zapytanie na cztery warianty żądania: puste zawężenie rodzaju wyłącza pierwszy warunek.
 	listaKomponentow = `SELECT ` + kolumnyKomponentu + zrodloKomponentu +
-		` WHERE (? = '' OR k.rodzaj = ?) AND (? = 1 OR k.czynny = 1)
+		` WHERE (? = '' OR k.rodzaj = ?) AND (? = 1 OR k.czynny = 1) AND ` + WarunekKonta + `
 		  ORDER BY k.rodzaj, k.nazwa, k.id`
 
-	// Zmiana idzie jednym poleceniem: NULL w argumencie zostawia kolumnę bez
-	// zmiany. Dzięki temu „pola pominięte zostają bez zmian” jest własnością
-	// zapytania, a nie kolejnością gałęzi w Go.
+	// NULL w argumencie zostawia kolumnę bez zmiany — „pola pominięte zostają bez zmian" jest własnością zapytania.
 	zmienKomponent = `UPDATE komponent SET
 	                     nazwa          = COALESCE(?, nazwa),
 	                     opis           = CASE WHEN ? = 1 THEN ? ELSE opis END,
 	                     czynny         = COALESCE(?, czynny),
 	                     konfiguracja   = COALESCE(?, konfiguracja),
 	                     zaktualizowano = ?
-	                  WHERE identyfikator_zewnetrzny = ?`
+	                  WHERE identyfikator_zewnetrzny = ? AND ` + WarunekKonta
 
 	przypiszKomponent = `UPDATE komponent SET
 	                        poziom_zasiegu_id = (SELECT id FROM poziom_zasiegu WHERE kod = ?),
 	                        klucz_zasiegu     = ?,
 	                        zaktualizowano    = ?
-	                     WHERE identyfikator_zewnetrzny = ?`
+	                     WHERE identyfikator_zewnetrzny = ? AND ` + WarunekKonta
 
-	usunKomponent = `DELETE FROM komponent WHERE identyfikator_zewnetrzny = ?`
+	usunKomponent = `DELETE FROM komponent WHERE identyfikator_zewnetrzny = ? AND ` + WarunekKonta
 )
 
-// repozytoriumKomponentow nie trzyma `*sql.DB` obok pamięci zapytań, bo żaden
-// zapis tego rejestru nie obejmuje drugiej tabeli.
 type repozytoriumKomponentow struct {
 	zapytania *zapytania
 }
 
-// noweRepozytoriumKomponentow zakłada rejestr komponentów nad współdzieloną pamięcią zapytań tego zestawu.
 func noweRepozytoriumKomponentow(zapytania *zapytania) RepozytoriumKomponentow {
 	if zapytania == nil {
 		return nil
@@ -112,9 +98,7 @@ func noweRepozytoriumKomponentow(zapytania *zapytania) RepozytoriumKomponentow {
 	return &repozytoriumKomponentow{zapytania: zapytania}
 }
 
-// ZalozKomponent wstawia kafel Strefy 2. Czas utworzenia i zmiany podaje
-// warstwa wyższa w milisekundach epoki — kolumna niesie wartość kontraktu bez
-// przekładu, więc baza nie wstawia własnego „teraz”.
+// ZalozKomponent wstawia kafel Strefy 2; czas podaje warstwa wyższa w ms epoki, baza nie wstawia własnego „teraz".
 func (r *repozytoriumKomponentow) ZalozKomponent(ctx context.Context,
 	komponent Komponent) (Komponent, error) {
 
@@ -135,21 +119,20 @@ func (r *repozytoriumKomponentow) ZalozKomponent(ctx context.Context,
 	if _, err := polecenie.ExecContext(ctx, komponent.Kod, komponent.Rodzaj, komponent.Nazwa,
 		tekstDoKolumny(komponent.Opis), tekstDoKolumny(komponent.BytDocelowy),
 		liczbaLogiczna(komponent.Czynny), konfiguracja,
-		komponent.Utworzono, komponent.Zaktualizowano); err != nil {
+		komponent.Utworzono, komponent.Zaktualizowano, KontoOperatora(ctx)); err != nil {
 
 		return Komponent{}, fmt.Errorf("dane: nie można założyć komponentu %q: %w", komponent.Kod, err)
 	}
 	return r.Komponent(ctx, komponent.Kod)
 }
 
-// Komponent zwraca kafel o wskazanym identyfikatorze. Brak wiersza wraca jako
-// ErrBrakWiersza — warstwa wyższa odróżnia „nie ma” od „odczyt padł”.
+// Komponent zwraca kafel po kodzie; brak wiersza wraca jako ErrBrakWiersza.
 func (r *repozytoriumKomponentow) Komponent(ctx context.Context, kod string) (Komponent, error) {
 	polecenie, err := r.zapytania.przygotuj(ctx, pobierzKomponent)
 	if err != nil {
 		return Komponent{}, err
 	}
-	komponent, err := odczytajKomponent(polecenie.QueryRowContext(ctx, kod))
+	komponent, err := odczytajKomponent(polecenie.QueryRowContext(ctx, kod, KontoOperatora(ctx)))
 	if errors.Is(err, sql.ErrNoRows) {
 		return Komponent{}, fmt.Errorf("dane: komponent %q nie istnieje: %w", kod, ErrBrakWiersza)
 	}
@@ -159,7 +142,6 @@ func (r *repozytoriumKomponentow) Komponent(ctx context.Context, kod string) (Ko
 	return komponent, nil
 }
 
-// Komponenty zwraca wykaz komponentów w kolejności wyświetlania ustalonej indeksem tabeli bazy danych.
 func (r *repozytoriumKomponentow) Komponenty(ctx context.Context,
 	filtr FiltrKomponentow) ([]Komponent, error) {
 
@@ -168,7 +150,7 @@ func (r *repozytoriumKomponentow) Komponenty(ctx context.Context,
 		return nil, err
 	}
 	wiersze, err := polecenie.QueryContext(ctx, filtr.Rodzaj, filtr.Rodzaj,
-		liczbaLogiczna(filtr.DolaczWylaczone))
+		liczbaLogiczna(filtr.DolaczWylaczone), KontoOperatora(ctx))
 	if err != nil {
 		return nil, fmt.Errorf("dane: nie można odczytać wykazu komponentów: %w", err)
 	}
@@ -188,13 +170,10 @@ func (r *repozytoriumKomponentow) Komponenty(ctx context.Context,
 	return komponenty, nil
 }
 
-// ZmienKomponent zmienia wyłącznie pola wskazane w żądaniu. Opis ma osobny
-// przełącznik, bo jego zmianą może być wyczyszczenie do NULL — COALESCE sam
-// nie odróżniłby „bez zmiany” od „wyczyść”.
+// ZmienKomponent zmienia tylko pola wskazane w żądaniu; opis ma osobny przełącznik (jego zmianą bywa wyczyszczenie).
 func (r *repozytoriumKomponentow) ZmienKomponent(ctx context.Context, kod string,
 	zmiana ZmianaKomponentu, teraz int64) (Komponent, error) {
 
-	// Odczyt przed zapisem, żeby zmiana komponentu nieistniejącego wróciła jako błąd braku wiersza.
 	if _, err := r.Komponent(ctx, kod); err != nil {
 		return Komponent{}, err
 	}
@@ -213,21 +192,20 @@ func (r *repozytoriumKomponentow) ZmienKomponent(ctx context.Context, kod string
 	zmianaOpisu := liczbaLogiczna(zmiana.Opis != nil)
 	if _, err := polecenie.ExecContext(ctx, tekstDoKolumny(zmiana.Nazwa),
 		zmianaOpisu, tekstDoKolumny(zmiana.Opis), czynny, konfiguracja,
-		teraz, kod); err != nil {
+		teraz, kod, KontoOperatora(ctx)); err != nil {
 
 		return Komponent{}, fmt.Errorf("dane: nie można zmienić komponentu %q: %w", kod, err)
 	}
 	return r.Komponent(ctx, kod)
 }
 
-// UsunKomponent zdejmuje kafel Strefy 2. Bytu magazynu modułowego nie tyka —
-// uzasadnienie stoi przy uchwycie `component.delete` (`handlers_komponenty.go`).
+// UsunKomponent zdejmuje kafel Strefy 2; bytu magazynu modułowego nie tyka.
 func (r *repozytoriumKomponentow) UsunKomponent(ctx context.Context, kod string) (bool, error) {
 	polecenie, err := r.zapytania.przygotuj(ctx, usunKomponent)
 	if err != nil {
 		return false, err
 	}
-	wynik, err := polecenie.ExecContext(ctx, kod)
+	wynik, err := polecenie.ExecContext(ctx, kod, KontoOperatora(ctx))
 	if err != nil {
 		return false, fmt.Errorf("dane: nie można usunąć komponentu %q: %w", kod, err)
 	}
@@ -238,10 +216,7 @@ func (r *repozytoriumKomponentow) UsunKomponent(ctx context.Context, kod string)
 	return usuniete > 0, nil
 }
 
-// PrzypiszKomponent zapisuje parę (poziom zasięgu, klucz zasięgu). Powtórzenie
-// tego samego przypisania niczego nie zmienia i wraca jako `false` — to jedyny
-// przypadek, w którym `component.assign` może uczciwie oddać `assigned: false`
-// bez odmowy.
+// PrzypiszKomponent zapisuje parę (poziom zasięgu, klucz); powtórzenie niczego nie zmienia i wraca jako `false`.
 func (r *repozytoriumKomponentow) PrzypiszKomponent(ctx context.Context,
 	kod, poziom, kluczZasiegu string, teraz int64) (Komponent, bool, error) {
 
@@ -259,7 +234,7 @@ func (r *repozytoriumKomponentow) PrzypiszKomponent(ctx context.Context,
 		return Komponent{}, false, err
 	}
 	if _, err := polecenie.ExecContext(ctx, poziom, kluczZasiegu,
-		teraz, kod); err != nil {
+		teraz, kod, KontoOperatora(ctx)); err != nil {
 
 		return Komponent{}, false, fmt.Errorf("dane: nie można przypisać komponentu %q: %w", kod, err)
 	}
@@ -267,7 +242,6 @@ func (r *repozytoriumKomponentow) PrzypiszKomponent(ctx context.Context,
 	if err != nil {
 		return Komponent{}, false, err
 	}
-	// Poziom spoza słownika dałby podzapytanie puste, więc kolumna zostałaby pusta bez zgłoszonego skutku.
 	if przypisany.PoziomZasiegu == nil {
 		return Komponent{}, false,
 			fmt.Errorf("dane: poziom zasięgu %q nie istnieje w słowniku", poziom)
@@ -275,8 +249,6 @@ func (r *repozytoriumKomponentow) PrzypiszKomponent(ctx context.Context,
 	return przypisany, true, nil
 }
 
-// konfiguracjaKomponentu sprawdza, że konfiguracja jest poprawnym JSON-em, i
-// zamienia brak na pusty obiekt — kolumna jest NOT NULL DEFAULT '{}'.
 func konfiguracjaKomponentu(tresc, kod string) (string, error) {
 	if tresc == "" {
 		return "{}", nil
@@ -287,8 +259,6 @@ func konfiguracjaKomponentu(tresc, kod string) (string, error) {
 	return tresc, nil
 }
 
-// zmienionaKonfiguracja przekłada wskaźnik zmiany na argument zapytania: nil
-// znaczy „bez zmiany” i zostawia kolumnę nietkniętą przez COALESCE.
 func zmienionaKonfiguracja(tresc *string, kod string) (any, error) {
 	if tresc == nil {
 		return nil, nil

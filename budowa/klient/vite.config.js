@@ -1,8 +1,4 @@
-// Nastawa budowania pakietu klienta.
-//
-// Skrypty biblioteki są funkcjami domkniętymi, nie modułami ECMAScript, więc
-// Vite ich nie pakuje. Wtyczka `kopiaSkryptowBiblioteki` przenosi je do
-// `dist/zasoby/` z zachowaniem ścieżki względnej.
+// Skrypty biblioteki nie są modułami ECMAScript, więc Vite ich nie pakuje.
 
 import { readFileSync } from 'node:fs';
 import { copyFileSync, mkdirSync } from 'node:fs';
@@ -11,19 +7,15 @@ import { fileURLToPath } from 'node:url';
 
 const katalogKlienta = new URL('.', import.meta.url).pathname;
 
-// Arkusze i wygenerowany kontrakt leżą poza katalogiem klienta; serwer poglądowy
-// potrzebuje zgody na ich odczyt.
 const katalogRepozytorium = new URL('../../', import.meta.url).pathname;
 
 const KATALOG_ZASOBOW = new URL('../../design/zasoby/', import.meta.url);
 
-// Pliki biblioteki kopiowane do wydania; ścieżki względne wobec KATALOG_ZASOBOW.
 const PLIKI_BIBLIOTEKI = [
   'wspolne.js',
   'narzedzia-okien.js',
   'ekran-startowy.js',
   'powloka.js',
-  'prototyp.js',
   'menu.js',
   'okna-modalne.js',
   'rama.js',
@@ -95,16 +87,13 @@ const PLIKI_BIBLIOTEKI = [
   'okna/instalator.js',
   'kreator.css',
   'okna/przeplyw-wejscia.js',
-  /* `okna/centrum-wejscie.js` do wydania nie wchodzi: przenosi przeglądarkę na
-     osobny plik prototypu, a produkt zmienia wnętrze okna w miejscu.
-     `okna/centrum-dowodzenia.js` też nie: zachowania Centrum niesie
-     `src/wiazanie/centrum.ts`, a skrypt prototypu przełączał stan funkcji
-     globalnych bez wywołania rdzenia. */
+  /* Poza wydaniem zostają `okna/centrum-wejscie.js`, `okna/centrum-dowodzenia.js`
+     i `prototyp.js`: przełączały stan funkcji globalnych bez wywołania rdzenia,
+     a zachowania okna niosą `src/wiazanie/centrum.ts` i `podstawa-okna.ts`. */
   'okna/centrum-obszar.js',
   'okna/centrum-dymki.js',
 ];
 
-/** Kopiuje skrypty biblioteki do `dist/zasoby/` po zamknięciu paczki, zachowując ich ścieżkę względną. */
 function kopiaSkryptowBiblioteki() {
   return {
     name: 'kopia-skryptow-biblioteki',
@@ -120,15 +109,10 @@ function kopiaSkryptowBiblioteki() {
   };
 }
 
-/* Data składania pakietu. Katalog wydań stanowi, że wydania różni data, nie
-   numer — sam numer w stopce nie nazywa więc, które wydanie Operator ma przed
-   sobą. Wartość wchodzi przy budowaniu, bo w przeglądarce nie ma jej skąd wziąć. */
+// Wydania różni data, nie numer; w przeglądarce nie ma jej skąd wziąć.
 const DATA_SKLADANIA = new Date().toISOString().slice(0, 10);
 
 
-// Wnętrza okien biorą się z prototypów Właściciela w `design/05-okna/`.
-// `zasoby/powloka.js` skleja powłokę wokół szablonu `#dn-tresc-okna`; szablon
-// `#dn-tresc-studio` stoi obok i wchodzi na jego miejsce przy otwarciu modułu.
 const WNETRZA_OKIEN = [
   {
     gniazdo: 'dn-tresc-okna',
@@ -136,9 +120,7 @@ const WNETRZA_OKIEN = [
     otwarcie: '<div class="dn-obszar">',
     zamkniecie: '<!-- /dn-obszar -->',
   },
-  /* Przedsionek ma osobny prototyp na każde środowisko, bo kafle niosą własne
-     znaki modułów. Jeden prototyp na wszystkie środowiska zostawiłby moduły
-     spoza TalkIn bez kafla — a moduł bez kafla znika Operatorowi z drogi. */
+  // Osobny prototyp na środowisko, bo kafle niosą własne znaki modułów.
   {
     gniazdo: 'dn-tresc-przedsionek-talkin',
     prototyp: '../../design/05-okna/srodowiska/talkin-przedsionek.html',
@@ -171,7 +153,6 @@ const WNETRZA_OKIEN = [
   },
 ];
 
-/** Wycina z prototypu blok między znacznikami i oddaje go wraz z zamknięciem. */
 function blokPrototypu(tresc, otwarcie, zamkniecie) {
   const poczatek = tresc.indexOf(otwarcie);
   if (poczatek < 0) return null;
@@ -181,9 +162,7 @@ function blokPrototypu(tresc, otwarcie, zamkniecie) {
   return tresc.slice(poczatek, koniec + zamkniecie.length);
 }
 
-/* Bloki bez znacznika zamykającego domyka się liczeniem otwarć i zamknięć
-   elementu. Prototypy platformowe nie niosą komentarza zamykającego, a stały
-   znacznik końca ramy zabrałby ze sobą zamknięcia elementów nadrzędnych. */
+// Prototyp bez komentarza zamykającego domyka się liczeniem otwarć elementu.
 function blokZbalansowany(tresc, poczatek) {
   const znacznik = /<(\/?)div\b[^>]*>/g;
   znacznik.lastIndex = poczatek;
@@ -197,16 +176,12 @@ function blokZbalansowany(tresc, poczatek) {
   return null;
 }
 
-/* Reguły stojące w prototypie, a nie w arkuszach warstwy projektowej. Wnętrze
-   okna bez nich składa się bez układu, więc jadą do dokumentu razem z treścią.
-   Klasy prototypów są przedrostkowane osobno dla każdego okna, więc reguły
-   zebrane z wielu plików nie nachodzą na siebie. */
+// Reguły stoją w prototypie, nie w arkuszach; bez nich wnętrze traci układ.
 function stylWpisany(tresc) {
   const dopasowanie = /<style[^>]*>([\s\S]*?)<\/style>/.exec(tresc);
   return dopasowanie === null ? '' : dopasowanie[1].trim();
 }
 
-/** Wstawia wnętrza okien z prototypów w puste szablony dokumentu klienta. */
 function wnetrzaOkienZPrototypow() {
   return {
     name: 'wnetrza-okien-z-prototypow',
@@ -242,9 +217,7 @@ export default {
     __DATA_SKLADANIA__: JSON.stringify(DATA_SKLADANIA),
   },
 
-  /* Ścieżki względne, bo pakiet jest oddawany dwiema drogami: rdzeń serwuje go
-     spod korzenia nasłuchu, a powłoka Tauri wczytuje z własnego protokołu.
-     Ścieżka bezwzględna wiązałaby pakiet z jednym z tych dwóch miejsc. */
+  // Pakiet idzie dwiema drogami: nasłuchem rdzenia i protokołem powłoki Tauri.
   base: './',
 
   plugins: [kopiaSkryptowBiblioteki(), wnetrzaOkienZPrototypow()],
@@ -252,9 +225,7 @@ export default {
   build: {
     outDir: 'dist',
     emptyOutDir: true,
-    /* Kroje idą plikami, nie treścią wplecioną w arkusz: wpisany krój rośnie
-       w każdym pakiecie o pełny rozmiar podzbioru, a przeglądarka nie może go
-       pominąć na podstawie zakresu znaków. */
+    // Krój wpisany w arkusz rośnie o pełny podzbiór i nie da się go pominąć.
     assetsInlineLimit: 0,
   },
 

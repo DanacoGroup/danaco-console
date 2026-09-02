@@ -15,9 +15,8 @@ import (
 )
 
 const (
-	// Nastawy wybudzania. Nazwy kluczy są nastawami konfiguracji, nie polami
-	// kontraktu: kontrakt niesie strukturę `WakeWordConfig`, a konfiguracja
-	// trzyma jej pola osobno, bo osobno się je rozstrzyga po poziomach.
+	// Klucze są nastawami konfiguracji, nie polami kontraktu: kontrakt niesie `WakeWordConfig`
+	// w całości, a konfiguracja rozstrzyga jej pola osobno po poziomach.
 	kluczFrazyWybudzajacej = "mowa_fraza_wybudzajaca"
 	kluczTrybuNasluchu     = "mowa_tryb_nasluchu"
 	kluczProguDetekcji     = "mowa_prog_detekcji"
@@ -26,18 +25,14 @@ const (
 	przedrostekNasluchu = "nasluch-"
 )
 
-// rejestrNasluchow trzyma nasłuchy czynne — po jednym na okno.
-//
 // Rejestr jest w pamięci, nie w bazie: nasłuch żyje tyle, co połączenie karty,
-// a wiersz w bazie przeżyłby restart rdzenia i obiecywał nasłuch, którego po
-// tamtej stronie już nie ma.
+// a wiersz w bazie przeżyłby restart rdzenia i obiecywał nasłuch, którego nie ma.
 type rejestrNasluchow struct {
 	zamek    sync.Mutex
 	wgOkna   map[string]nasluchMowy
 	wgKlucza map[string]string
 }
 
-// nasluchMowy jest jednym czynnym nasłuchem: niesie kod, okno, sesję, tryb, język i znacznik startu jego rozpoczęcia.
 type nasluchMowy struct {
 	Kod    string
 	Okno   string
@@ -47,7 +42,6 @@ type nasluchMowy struct {
 	Ruszyl int64
 }
 
-// nowyRejestrNasluchow zakłada pusty rejestr z osobnymi mapami po oknie i po kodzie nasłuchu, gotowy na pierwszy wpis.
 func nowyRejestrNasluchow() *rejestrNasluchow {
 	return &rejestrNasluchow{
 		wgOkna:   map[string]nasluchMowy{},
@@ -55,8 +49,6 @@ func nowyRejestrNasluchow() *rejestrNasluchow {
 	}
 }
 
-// zaloz wpisuje nasłuch okna, zastępując zastany. Dwa nasłuchy jednego okna
-// byłyby dwiema transkrypcjami tej samej mowy.
 func (r *rejestrNasluchow) zaloz(n nasluchMowy) {
 	r.zamek.Lock()
 	defer r.zamek.Unlock()
@@ -67,9 +59,7 @@ func (r *rejestrNasluchow) zaloz(n nasluchMowy) {
 	r.wgKlucza[n.Kod] = n.Okno
 }
 
-// zdejmij usuwa nasłuch po identyfikatorze albo po oknie i mówi, czy w ogóle
-// był. Zatrzymanie nasłuchu, którego nie ma, nie jest błędem — tak stanowi
-// kontrakt.
+// Zatrzymanie nasłuchu, którego nie ma, nie jest błędem — tak stanowi kontrakt.
 func (r *rejestrNasluchow) zdejmij(kod, okno string) bool {
 	r.zamek.Lock()
 	defer r.zamek.Unlock()
@@ -94,7 +84,6 @@ func (r *rejestrNasluchow) zdejmij(kod, okno string) bool {
 	return true
 }
 
-// nasluchOkna oddaje nasłuch czynny wskazanego okna wraz z informacją, czy taki nasłuch w ogóle istnieje.
 func (r *rejestrNasluchow) nasluchOkna(okno string) (nasluchMowy, bool) {
 	r.zamek.Lock()
 	defer r.zamek.Unlock()
@@ -102,11 +91,10 @@ func (r *rejestrNasluchow) nasluchOkna(okno string) (nasluchMowy, bool) {
 	return nasluch, jest
 }
 
-// NastawaWybudzania obsługuje `speech.wake.get`, oddając nastawę wybudzania wraz z informacją o jej wykonalności.
 func (a *adapterMowy) NastawaWybudzania(ctx context.Context,
 	z shared.SpeechWakeGetRequest) (shared.SpeechWakeGetResponse, error) {
 
-	nastawa := a.odczytajNastaweWybudzania(z.Scope, z.ScopeId)
+	nastawa := a.odczytajNastaweWybudzania(ctx, z.Scope, z.ScopeId)
 	gotowosc, err := a.Gotowosc(ctx, shared.SpeechAvailabilityGetRequest{})
 	if err != nil {
 		// Niepowodzenie sprawdzenia silnika nie dowodzi niewykonalności — oddaje powód, nie rozstrzygnięcie.
@@ -129,7 +117,6 @@ func (a *adapterMowy) NastawaWybudzania(ctx context.Context,
 	return shared.SpeechWakeGetResponse{Config: nastawa, Available: true}, nil
 }
 
-// ZapiszNastaweWybudzania obsługuje `speech.wake.set`: pola pominięte zostają bez zmian, zapisywane są wyłącznie te, które przyszły.
 func (a *adapterMowy) ZapiszNastaweWybudzania(ctx context.Context,
 	z shared.SpeechWakeSetRequest) (shared.SpeechWakeSetResponse, error) {
 
@@ -182,11 +169,10 @@ func (a *adapterMowy) ZapiszNastaweWybudzania(ctx context.Context,
 	}
 
 	return shared.SpeechWakeSetResponse{
-		Config: a.odczytajNastaweWybudzania(z.Scope, z.ScopeId),
+		Config: a.odczytajNastaweWybudzania(ctx, z.Scope, z.ScopeId),
 	}, nil
 }
 
-// UruchomNasluch obsługuje `speech.listen.start`, zakładając nasłuch okna i oddając jego identyfikator.
 func (a *adapterMowy) UruchomNasluch(ctx context.Context,
 	z shared.SpeechListenStartRequest) (shared.SpeechListenStartResponse, error) {
 
@@ -199,7 +185,7 @@ func (a *adapterMowy) UruchomNasluch(ctx context.Context,
 			"serwer nie ma rejestru nasłuchów")
 	}
 
-	nastawa := a.odczytajNastaweWybudzania(nil, nil)
+	nastawa := a.odczytajNastaweWybudzania(ctx, nil, nil)
 	tryb := nastawa.Mode
 	if z.Mode != nil && strings.TrimSpace(string(*z.Mode)) != "" {
 		if err := sprawdzTrybNasluchu(*z.Mode); err != nil {
@@ -233,7 +219,6 @@ func (a *adapterMowy) UruchomNasluch(ctx context.Context,
 	return shared.SpeechListenStartResponse{Listening: true, ListenerId: nasluch.Kod}, nil
 }
 
-// ZatrzymajNasluch obsługuje `speech.listen.stop`, zamykając nasłuch okna bez traktowania jego braku jako błędu.
 func (a *adapterMowy) ZatrzymajNasluch(_ context.Context,
 	z shared.SpeechListenStopRequest) (shared.SpeechListenStopResponse, error) {
 
@@ -245,8 +230,6 @@ func (a *adapterMowy) ZatrzymajNasluch(_ context.Context,
 	return shared.SpeechListenStopResponse{Stopped: zdjeto}, nil
 }
 
-// ogloszOdcinekNasluchu rozpoznaje odcinek przysłany przez okno z czynnym nasłuchem i ogłasza wynik zdarzeniami rodziny; wołane z `speech.audio.upload`, gdy nadejdą kolejne bajty nagrania.
-// istnieje.
 func (a *adapterMowy) ogloszOdcinekNasluchu(ctx context.Context, okno, odnosnik string) {
 	if a.nasluchy == nil || a.nadajnik == nil || strings.TrimSpace(okno) == "" {
 		return
@@ -273,8 +256,7 @@ func (a *adapterMowy) ogloszOdcinekNasluchu(ctx context.Context, okno, odnosnik 
 	a.nadajnik.czesciowaTranskrypcja(ctx, nasluch, tekst, wynik.Confidence)
 
 	// Fraza wybudzająca jest rozpoznawana na tekście, nie osobnym modelem słowa kluczowego.
-	// to, co robi.
-	nastawa := a.odczytajNastaweWybudzania(nil, nil)
+	nastawa := a.odczytajNastaweWybudzania(ctx, nil, nil)
 	fraza := strings.TrimSpace(nastawa.Phrase)
 	if fraza == "" || nasluch.Tryb == shared.ListenModePushToTalk {
 		return
@@ -284,8 +266,7 @@ func (a *adapterMowy) ogloszOdcinekNasluchu(ctx context.Context, okno, odnosnik 
 	}
 }
 
-// odczytajNastaweWybudzania składa nastawę obowiązującą po rozstrzygnięciu poziomów zasięgu konfiguracji.
-func (a *adapterMowy) odczytajNastaweWybudzania(poziom *shared.ConfigScope,
+func (a *adapterMowy) odczytajNastaweWybudzania(ctx context.Context, poziom *shared.ConfigScope,
 	kluczZasiegu *string) shared.WakeWordConfig {
 
 	nastawa := shared.WakeWordConfig{
@@ -298,7 +279,7 @@ func (a *adapterMowy) odczytajNastaweWybudzania(poziom *shared.ConfigScope,
 	if a.rozstrzygacz == nil {
 		return nastawa
 	}
-	kontekst := kontekstZasieguMowy()
+	kontekst := kontekstZasieguMowy(ctx)
 	_ = kluczZasiegu
 
 	nastawa.Phrase = strings.TrimSpace(
@@ -320,7 +301,6 @@ func (a *adapterMowy) odczytajNastaweWybudzania(poziom *shared.ConfigScope,
 	return nastawa
 }
 
-// zapiszNastaweMowy odkłada jedną nastawę na wskazanym poziomie zasięgu, tą samą drogą co pozostałe nastawy konfiguracji.
 func (a *adapterMowy) zapiszNastaweMowy(ctx context.Context, poziom, kluczZasiegu,
 	klucz, wartosc string) error {
 
@@ -340,7 +320,6 @@ func (a *adapterMowy) zapiszNastaweMowy(ctx context.Context, poziom, kluczZasieg
 	return nil
 }
 
-// sprawdzTrybNasluchu odbija tryb spoza wyliczenia kontraktu, chroniąc rejestr przed wartością nierozpoznawalną.
 func sprawdzTrybNasluchu(tryb shared.ListenMode) error {
 	switch tryb {
 	case shared.ListenModePushToTalk, shared.ListenModeWakeWord, shared.ListenModeContinuous:
@@ -351,14 +330,10 @@ func sprawdzTrybNasluchu(tryb shared.ListenMode) error {
 	}
 }
 
-// kontekstZasieguMowy oddaje adres najszerszego poziomu zasięgu. Rodzina
-// `speech.*` jest zdolnością platformy, nie okna — ta sama droga, co przy
-// składaniu zasad izolacji silnika mowy.
-func kontekstZasieguMowy() konfig.Kontekst {
-	return konfig.Kontekst{}
+func kontekstZasieguMowy(ctx context.Context) konfig.Kontekst {
+	return konfig.Kontekst{KontoOperatora: dane.KontoOperatora(ctx)}
 }
 
-// czesciowaTranskrypcja rozgłasza `speech.listen.partial` z rozpoznanym dotąd tekstem odcinka nasłuchu.
 func (e *emiter) czesciowaTranskrypcja(ctx context.Context, n nasluchMowy, tekst string, pewnosc *int) {
 	// `final` jest prawdą, bo odcinek został rozpoznany w całości, a nie jako strumień w locie.
 	e.wyslijDoKonta(ctx, shared.EventSpeechListenPartial, n.Sesja, shared.SpeechListenPartialEvent{
@@ -367,7 +342,6 @@ func (e *emiter) czesciowaTranskrypcja(ctx context.Context, n nasluchMowy, tekst
 	})
 }
 
-// wykrycieFrazyWybudzajacej rozgłasza `speech.wake.detected`, gdy w rozpoznanym tekście padła fraza wybudzająca.
 func (e *emiter) wykrycieFrazyWybudzajacej(ctx context.Context, n nasluchMowy, fraza string) {
 	e.wyslijDoKonta(ctx, shared.EventSpeechWakeDetected, n.Sesja, shared.SpeechWakeDetectedEvent{
 		ListenerId: n.Kod, WindowId: n.Okno, Phrase: fraza,
@@ -375,6 +349,5 @@ func (e *emiter) wykrycieFrazyWybudzajacej(ctx context.Context, n nasluchMowy, f
 	})
 }
 
-// _ trzyma import pakietu `mowa` przy życiu dla czytelnika: nastawy tego pliku
-// opisują ten sam silnik, którym idzie transkrypcja odcinka nasłuchu.
+// _ trzyma import pakietu `mowa`: nastawy tego pliku opisują silnik transkrypcji odcinka.
 var _ = mowa.FormatyNagran

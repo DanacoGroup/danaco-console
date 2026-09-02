@@ -15,27 +15,17 @@ import (
 	"danacoconsole/shared"
 )
 
-// adapterZakresuEksperta wypełnia port ZakresEksperta obsługujący dwanaście
-// komend zakresu działania eksperta.
 type adapterZakresuEksperta struct {
-	zakres     dane.RepozytoriumZakresuAgenta
-	biblioteka dane.RepozytoriumAgentow
-	historia   dane.RepozytoriumWersjiAgenta
-	// moduly jest katalogiem modułów platformy; służy sprawdzeniu wskazania
-	// w ustawieniu modułów.
-	moduly dane.RepozytoriumModulow
-	// punkty są katalogiem punktów dostępu; konektor rodzaju `mcp` wskazuje
-	// most z tego katalogu.
-	punkty dane.RepozytoriumPunktowDostepu
-	// rozstrzygacz odpowiada na pytanie o politykę izolacji w oknie; niewpięty
-	// daje wartość wyjściową.
+	zakres       dane.RepozytoriumZakresuAgenta
+	biblioteka   dane.RepozytoriumAgentow
+	historia     dane.RepozytoriumWersjiAgenta
+	moduly       dane.RepozytoriumModulow
+	punkty       dane.RepozytoriumPunktowDostepu
 	rozstrzygacz *konfig.Rozstrzygacz
 }
 
 var _ ZakresEksperta = (*adapterZakresuEksperta)(nil)
 
-// NowyPortZakresuEksperta wiąże port z repozytoriami zakresu działania oraz
-// z rozstrzygaczem izolacji.
 func NowyPortZakresuEksperta(zakres dane.RepozytoriumZakresuAgenta,
 	biblioteka dane.RepozytoriumAgentow, historia dane.RepozytoriumWersjiAgenta,
 	moduly dane.RepozytoriumModulow, punkty dane.RepozytoriumPunktowDostepu,
@@ -44,8 +34,6 @@ func NowyPortZakresuEksperta(zakres dane.RepozytoriumZakresuAgenta,
 	return &adapterZakresuEksperta{zakres: zakres, biblioteka: biblioteka, historia: historia,
 		moduly: moduly, punkty: punkty, rozstrzygacz: rozstrzygacz}
 }
-
-// ── agent.skill.remove ───────────────────────────────────────────────────────
 
 // UsunUmiejetnosc zdejmuje umiejętność z definicji eksperta. Brak przypisania
 // znaczy definicję bez niego, nie błąd — tak stanowi kontrakt.
@@ -65,11 +53,6 @@ func (a *adapterZakresuEksperta) UsunUmiejetnosc(ctx context.Context,
 	return shared.AgentSkillRemoveResponse{Agent: ekspert}, nil
 }
 
-// ── agent.connector.list ─────────────────────────────────────────────────────
-
-// WykazKonektorow oddaje konektory eksperta wraz z ich definicją. Bez tej
-// komendy `Agent.connectorIds` niesie same identyfikatory i okno nie zna ani
-// nazwy, ani rodzaju, ani punktu dostępu.
 func (a *adapterZakresuEksperta) WykazKonektorow(ctx context.Context,
 	z shared.AgentConnectorListRequest) (shared.AgentConnectorListResponse, error) {
 
@@ -87,11 +70,6 @@ func (a *adapterZakresuEksperta) WykazKonektorow(ctx context.Context,
 	return shared.AgentConnectorListResponse{Connectors: konektory}, nil
 }
 
-// ── agent.connector.remove ───────────────────────────────────────────────────
-
-// UsunKonektor odłącza konektor od eksperta. Zakres wykorzystania zapisany
-// w uprawnieniach zostaje, na wypadek ponownego podłączenia tego samego
-// rozszerzenia.
 func (a *adapterZakresuEksperta) UsunKonektor(ctx context.Context,
 	z shared.AgentConnectorRemoveRequest) (shared.AgentConnectorRemoveResponse, error) {
 
@@ -108,10 +86,6 @@ func (a *adapterZakresuEksperta) UsunKonektor(ctx context.Context,
 	return shared.AgentConnectorRemoveResponse{Agent: ekspert}, nil
 }
 
-// ── agent.connector.configure ────────────────────────────────────────────────
-
-// KonfigurujKonektor zapisuje konfigurację instancji konektora: adres serwera
-// i parametry połączenia właściwe temu egzemplarzowi rozszerzenia.
 func (a *adapterZakresuEksperta) KonfigurujKonektor(ctx context.Context,
 	z shared.AgentConnectorConfigureRequest) (shared.AgentConnectorConfigureResponse, error) {
 
@@ -143,8 +117,6 @@ func (a *adapterZakresuEksperta) KonfigurujKonektor(ctx context.Context,
 	return shared.AgentConnectorConfigureResponse{Connector: konektorKontraktu(zapisany, kodPunktu)}, nil
 }
 
-// punktZakresu przekłada kod punktu dostępu na numer wiersza. Kod pusty zdejmuje
-// wskazanie mostu — konfiguracja instancji ma prawo je odebrać.
 func (a *adapterZakresuEksperta) punktZakresu(ctx context.Context, kod string) (*int64, error) {
 	if kod == "" {
 		return nil, nil
@@ -160,11 +132,6 @@ func (a *adapterZakresuEksperta) punktZakresu(ctx context.Context, kod string) (
 	return &numer, nil
 }
 
-// ── agent.version.get ────────────────────────────────────────────────────────
-
-// PodgladWersji oddaje tożsamość utrwaloną w jednej wersji eksperta. Bez niej
-// przywrócenie byłoby jedynym sposobem zobaczenia, co w wersji stało — czyli
-// obejrzenie historii wymagałoby jej zmiany.
 func (a *adapterZakresuEksperta) PodgladWersji(ctx context.Context,
 	z shared.AgentVersionGetRequest) (shared.AgentVersionGetResponse, error) {
 
@@ -191,9 +158,6 @@ func (a *adapterZakresuEksperta) PodgladWersji(ctx context.Context,
 		bladZadaniaEksperta("wersja " + z.VersionId + " nie należy do historii tego eksperta")
 }
 
-// migawkaWersjiKontraktu składa tożsamość utrwaloną w wersji. Pole layers
-// zostaje puste i to jest odpowiedź, nie brak, bo warstwy bieżące nie są
-// migawką historii.
 func migawkaWersjiKontraktu(w dane.WersjaAgenta) shared.AgentVersionSnapshot {
 	return shared.AgentVersionSnapshot{
 		Name:         w.Nazwa,
@@ -207,11 +171,6 @@ func migawkaWersjiKontraktu(w dane.WersjaAgenta) shared.AgentVersionSnapshot {
 	}
 }
 
-// ── agent.assignment.list ────────────────────────────────────────────────────
-
-// WykazPrzypisan oddaje przypisania eksperta: projekty i role. Bez tej komendy
-// biblioteka nie ma skąd wziąć liczby — `workspace.agent.assign` zapisuje
-// przynależność, ale nikt nie odczytuje jej OD STRONY EKSPERTA.
 func (a *adapterZakresuEksperta) WykazPrzypisan(ctx context.Context,
 	z shared.AgentAssignmentListRequest) (shared.AgentAssignmentListResponse, error) {
 
@@ -251,11 +210,6 @@ func (a *adapterZakresuEksperta) WykazPrzypisan(ctx context.Context,
 	return shared.AgentAssignmentListResponse{Assignments: przypisania, Total: len(przypisania)}, nil
 }
 
-// ── agent.modules.set ────────────────────────────────────────────────────────
-
-// UstawModuly zapisuje moduły zastosowania eksperta. Lista pusta znaczy brak
-// ograniczenia i jest stanem wyjściowym, nie żądaniem odebrania ekspertowi
-// wszystkiego.
 func (a *adapterZakresuEksperta) UstawModuly(ctx context.Context,
 	z shared.AgentModulesSetRequest) (shared.AgentModulesSetResponse, error) {
 
@@ -276,9 +230,6 @@ func (a *adapterZakresuEksperta) UstawModuly(ctx context.Context,
 	return shared.AgentModulesSetResponse{Agent: ekspert}, nil
 }
 
-// kodyModulowZadania sprawdza wskazania wobec katalogu modułów platformy.
-// Kod spoza katalogu jest odmawiany, bo zawężenie do nieistniejącego modułu
-// nie zawęża niczego.
 func (a *adapterZakresuEksperta) kodyModulowZadania(ctx context.Context,
 	wskazania []string) ([]string, error) {
 
@@ -311,8 +262,6 @@ func (a *adapterZakresuEksperta) kodyModulowZadania(ctx context.Context,
 	return kody, nil
 }
 
-// ── agent.isolation.get / agent.isolation.set ────────────────────────────────
-
 // OdczytajIzolacje oddaje osiem zakresów izolacji technicznej eksperta.
 // Komplet ośmiu wychodzi ZAWSZE, także gdy żaden nie został zmieniony —
 // stanem wyjściowym jest `isolated: false` dla każdego zakresu.
@@ -332,9 +281,6 @@ func (a *adapterZakresuEksperta) OdczytajIzolacje(ctx context.Context,
 	}, nil
 }
 
-// ZapiszIzolacje zapisuje wskazane zakresy izolacji technicznej jako wartość
-// wyjściową właściwą temu ekspertowi. Zakres pominięty w wykazie zostaje bez
-// zmiany — okno przestawia jeden suwak, a nie komplet ośmiu.
 func (a *adapterZakresuEksperta) ZapiszIzolacje(ctx context.Context,
 	z shared.AgentIsolationSetRequest) (shared.AgentIsolationSetResponse, error) {
 
@@ -362,8 +308,6 @@ func (a *adapterZakresuEksperta) ZapiszIzolacje(ctx context.Context,
 	return shared.AgentIsolationSetResponse{Switches: przelacznikiEksperta(zapisane)}, nil
 }
 
-// zapisaneZakresyEksperta czyta zapisane przełączniki izolacji jako mapę
-// zakresu na stan odcięcia eksperta.
 func (a *adapterZakresuEksperta) zapisaneZakresyEksperta(ctx context.Context,
 	kodAgenta string) (map[string]bool, error) {
 
@@ -395,8 +339,6 @@ func przelacznikiEksperta(zapisane map[string]bool) []shared.IsolationTechnicalS
 	return przelaczniki
 }
 
-// zakresTechnicznyZnany sprawdza wskazanie wobec ośmiu zakresów izolacji
-// technicznej tego kontraktu platformy.
 func zakresTechnicznyZnany(zakres shared.IsolationTechnicalScope) bool {
 	for _, pozycja := range punktyTechniczne {
 		if pozycja.zakres == zakres {
@@ -406,10 +348,6 @@ func zakresTechnicznyZnany(zakres shared.IsolationTechnicalScope) bool {
 	return false
 }
 
-// ── agent.subagent.set ───────────────────────────────────────────────────────
-
-// UstawPodagentow zapisuje dostępność Subagent Network i górną liczbę
-// jednoczesnych podagentów eksperta.
 func (a *adapterZakresuEksperta) UstawPodagentow(ctx context.Context,
 	z shared.AgentSubagentSetRequest) (shared.AgentSubagentSetResponse, error) {
 
@@ -445,10 +383,6 @@ func (a *adapterZakresuEksperta) UstawPodagentow(ctx context.Context,
 	return shared.AgentSubagentSetResponse{Agent: ekspert}, nil
 }
 
-// ── agent.permission.remove ──────────────────────────────────────────────────
-
-// UsunUprawnienie zdejmuje wpisy uprawnień, przywracając stan bez ustawienia
-// jako wartość domyślną. Grupa pominięta zdejmuje wpisy wszystkich grup naraz.
 func (a *adapterZakresuEksperta) UsunUprawnienie(ctx context.Context,
 	z shared.AgentPermissionRemoveRequest) (shared.AgentPermissionRemoveResponse, error) {
 
@@ -492,11 +426,6 @@ func uprawnieniaEfektywne(wpisy []shared.AgentPermission) []shared.AgentPermissi
 	return wpisy
 }
 
-// ── agent.policy.get ─────────────────────────────────────────────────────────
-
-// PolitykaEksperta zwraca politykę efektywną: wynikowy zestaw ustawień po
-// uwzględnieniu czterech grup zakresu. Transparentność, nie bramka — komenda
-// niczego nie zapisuje i niczego nie rozstrzyga.
 func (a *adapterZakresuEksperta) PolitykaEksperta(ctx context.Context,
 	z shared.AgentPolicyGetRequest) (shared.AgentPolicyGetResponse, error) {
 
@@ -523,7 +452,7 @@ func (a *adapterZakresuEksperta) PolitykaEksperta(ctx context.Context,
 	// Dziedziczenie liczy się wyłącznie na żądanie okna; bez wskazania okna
 	// wraca sama wartość wyjściowa.
 	if idOkna := strings.TrimSpace(wartoscTekstu(z.WindowId)); idOkna != "" && a.rozstrzygacz != nil {
-		nadpisujacy := a.nadpiszZasiegiem(idOkna, polityka.TechnicalSwitches)
+		nadpisujacy := a.nadpiszZasiegiem(ctx, idOkna, polityka.TechnicalSwitches)
 		if nadpisujacy != nil {
 			polityka.OverriddenBy = nadpisujacy
 		}
@@ -531,13 +460,10 @@ func (a *adapterZakresuEksperta) PolitykaEksperta(ctx context.Context,
 	return shared.AgentPolicyGetResponse{Policy: polityka}, nil
 }
 
-// nadpiszZasiegiem nakłada na przełączniki eksperta reguły zapisane na
-// poziomach zasięgu i oddaje poziom, który nadpisał wartość wyjściową
-// eksperta.
-func (a *adapterZakresuEksperta) nadpiszZasiegiem(idOkna string,
+func (a *adapterZakresuEksperta) nadpiszZasiegiem(ctx context.Context, idOkna string,
 	przelaczniki []shared.IsolationTechnicalSwitch) *shared.ConfigScope {
 
-	kontekst := konfig.Kontekst{Okno: idOkna}
+	kontekst := konfig.Kontekst{Okno: idOkna, KontoOperatora: dane.KontoOperatora(ctx)}
 	var nadpisujacy *shared.ConfigScope
 	for numer, pozycja := range punktyTechniczne {
 		if numer >= len(przelaczniki) {
@@ -554,10 +480,6 @@ func (a *adapterZakresuEksperta) nadpiszZasiegiem(idOkna string,
 	return nadpisujacy
 }
 
-// ── wspólne ──────────────────────────────────────────────────────────────────
-
-// ekspertZakresu dobiera eksperta w kształcie kontraktu wraz z posortowanymi
-// kodami jego modułów zastosowania.
 func (a *adapterZakresuEksperta) ekspertZakresu(ctx context.Context, kod string) (shared.Agent, error) {
 	if a.biblioteka == nil {
 		return shared.Agent{}, bladBrakuKatalogu("ekspertów")
@@ -571,8 +493,6 @@ func (a *adapterZakresuEksperta) ekspertZakresu(ctx context.Context, kod string)
 	return ekspert, nil
 }
 
-// EkspertPoZmianie oddaje eksperta rozgłoszeniu po komendach, których wynik
-// eksperta nie niesie wprost.
 func (a *adapterZakresuEksperta) EkspertPoZmianie(ctx context.Context,
 	idEksperta string) (shared.Agent, error) {
 

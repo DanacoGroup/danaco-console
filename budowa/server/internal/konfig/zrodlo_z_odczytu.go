@@ -5,7 +5,7 @@ import "errors"
 // odczytAdresu zwraca ustawienia zapisane pod adresem złożonym: poziom zasięgu
 // razem z osią rozstrzygania. Taki kształt ma odczyt warstwy trwałości —
 // metoda ListaOsi repozytorium konfiguracji.
-type odczytAdresu func(adres Adres) ([]Wpis, error)
+type odczytAdresu func(konto int64, adres Adres) ([]Wpis, error)
 
 // zrodloZOdczytu składa źródło całej przestrzeni poziom × oś z funkcji
 // odczytu, wywoływanej osobno dla każdego adresu.
@@ -24,14 +24,14 @@ func NoweZrodloZOdczytuOsi(odczyt odczytAdresu) *zrodloZOdczytu {
 // Niepowodzenie odczytu jednego poziomu nie przerywa pozostałych: zebrane wpisy
 // wracają w komplecie, a błędy idą obok nich jako informacja diagnostyczna.
 // Rozstrzyganie wykona się na tym, co udało się odczytać.
-func (z *zrodloZOdczytu) Wpisy(adresy []Adres) ([]Wpis, error) {
+func (z *zrodloZOdczytu) Wpisy(konto int64, adresy []Adres) ([]Wpis, error) {
 	if z == nil || z.odczytOsi == nil {
 		return nil, nil
 	}
 	zebrane := make([]Wpis, 0, len(adresy))
 	var bledy []error
 	for _, adres := range adresy {
-		wpisy, err := z.wpisyAdresu(adres)
+		wpisy, err := z.wpisyAdresu(konto, adres)
 		if err != nil {
 			bledy = append(bledy, err)
 		}
@@ -48,6 +48,6 @@ func (z *zrodloZOdczytu) Wpisy(adresy []Adres) ([]Wpis, error) {
 
 // wpisyAdresu czyta jeden adres złożony: poziom zasięgu razem z osią,
 // wywołując funkcję odczytu przekazaną przy budowie źródła.
-func (z *zrodloZOdczytu) wpisyAdresu(adres Adres) ([]Wpis, error) {
-	return z.odczytOsi(adres)
+func (z *zrodloZOdczytu) wpisyAdresu(konto int64, adres Adres) ([]Wpis, error) {
+	return z.odczytOsi(konto, adres)
 }

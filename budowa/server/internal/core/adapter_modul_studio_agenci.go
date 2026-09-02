@@ -14,12 +14,8 @@ import (
 	"danacoconsole/shared"
 )
 
-// agenciWaznoscDomyslna to czas, po którym zajęcie fragmentu wygasa samo, gdy
-// wykonawca nie podał własnego.
 const agenciWaznoscDomyslna = 90
 
-// ZajmijFragment obsługuje studio.agents.claim: zajmuje fragment dokumentu dla
-// wykonawcy na czas wskazany albo na czas domyślny.
 func (a *adapterStudia) ZajmijFragment(ctx context.Context,
 	z shared.StudioAgentsClaimRequest) (shared.StudioAgentsClaimResponse, error) {
 
@@ -127,8 +123,6 @@ func (a *adapterStudia) ZajmijFragment(ctx context.Context,
 	return shared.StudioAgentsClaimResponse{Claimed: true, Slot: &zlozone}, nil
 }
 
-// ZwolnijFragment obsługuje studio.agents.release: zwalnia fragment trzymany
-// przez wskazanego wykonawcę.
 func (a *adapterStudia) ZwolnijFragment(ctx context.Context,
 	z shared.StudioAgentsReleaseRequest) (shared.StudioAgentsReleaseResponse, error) {
 
@@ -177,9 +171,6 @@ func (a *adapterStudia) ZwolnijFragment(ctx context.Context,
 	return shared.StudioAgentsReleaseResponse{Released: int(zwolnionych), Slots: wykaz}, nil
 }
 
-// ZajeciaWykonawcow obsługuje studio.agents.slots.list. Wykazu nie przemiata:
-// zajęcie wygasłe ma dać się zobaczyć na żądanie Operatora, bo po nim widać
-// agenta ubitego w pół pracy.
 func (a *adapterStudia) ZajeciaWykonawcow(ctx context.Context,
 	z shared.StudioAgentsSlotsListRequest) (shared.StudioAgentsSlotsListResponse, error) {
 
@@ -215,9 +206,6 @@ func (a *adapterStudia) ZajeciaWykonawcow(ctx context.Context,
 	return odpowiedz, nil
 }
 
-// SpieciaWykonawcowDokumentu obsługuje studio.agents.conflicts.list. Rdzeń
-// niesie prawdę o tym, co się stało: czyja zmiana weszła, czyja została
-// odłożona i dlaczego.
 func (a *adapterStudia) SpieciaWykonawcowDokumentu(ctx context.Context,
 	z shared.StudioAgentsConflictsListRequest) (shared.StudioAgentsConflictsListResponse, error) {
 
@@ -257,8 +245,6 @@ func (a *adapterStudia) SpieciaWykonawcowDokumentu(ctx context.Context,
 	return odpowiedz, nil
 }
 
-// NastawyWykonawcow obsługuje studio.agents.settings.get: oddaje nastawy
-// pętli wykonawczej obowiązujące w danym kontekście.
 func (a *adapterStudia) NastawyWykonawcow(ctx context.Context,
 	z shared.StudioAgentsSettingsGetRequest) (shared.StudioAgentsSettingsGetResponse, error) {
 
@@ -269,8 +255,6 @@ func (a *adapterStudia) NastawyWykonawcow(ctx context.Context,
 	return shared.StudioAgentsSettingsGetResponse{Settings: nastawy}, nil
 }
 
-// UstawNastawyWykonawcow obsługuje studio.agents.settings.set: zapisuje
-// nastawę na wskazanym poziomie i rozgłasza jej zmianę.
 func (a *adapterStudia) UstawNastawyWykonawcow(ctx context.Context,
 	z shared.StudioAgentsSettingsSetRequest) (shared.StudioAgentsSettingsSetResponse, error) {
 
@@ -352,10 +336,6 @@ func (a *adapterStudia) UstawNastawyWykonawcow(ctx context.Context,
 	return shared.StudioAgentsSettingsSetResponse{Settings: nastawy}, nil
 }
 
-// ── Wspólne ─────────────────────────────────────────────────────────────────
-
-// agenciNastawy oddaje nastawy obowiązujące w kontekście okna, dokumentu
-// i karty sesji, idąc poziomami od węższego do szerszego.
 func (a *adapterStudia) agenciNastawy(ctx context.Context,
 	okno, dokumentKod, kartaSesji *string) (shared.StudioAgentSettings, error) {
 
@@ -368,7 +348,8 @@ func (a *adapterStudia) agenciNastawy(ctx context.Context,
 		oknoNastaw = dokument.Okno
 	}
 	if a.rozstrzygacz != nil {
-		kontekst := konfig.Kontekst{Okno: oknoNastaw, KartaSesji: wartoscTekstu(kartaSesji)}
+		kontekst := konfig.Kontekst{Okno: oknoNastaw, KartaSesji: wartoscTekstu(kartaSesji),
+			KontoOperatora: dane.KontoOperatora(ctx)}
 		nastawy := shared.StudioAgentSettings{
 			ExecutionLoopEnabled: agenciCzytajLogiczny(a.rozstrzygacz, kontekst,
 				kluczPetliWykonawczej),
@@ -409,8 +390,6 @@ func (a *adapterStudia) agenciNastawy(ctx context.Context,
 	return a.agenciNastawyZasiegu(ctx, shared.ConfigScopeGlobal, "")
 }
 
-// agenciNastawyZasiegu czyta nastawy zapisane na wskazanym poziomie zasięgu,
-// bez sięgania po poziomy pozostałe.
 func (a *adapterStudia) agenciNastawyZasiegu(ctx context.Context, zasieg shared.ConfigScope,
 	bytZasiegu string) (shared.StudioAgentSettings, error) {
 
@@ -505,8 +484,6 @@ func agenciCzytajLiczbe(rozstrzygacz *konfig.Rozstrzygacz, kontekst konfig.Konte
 	return &liczba
 }
 
-// agenciZapisLogiczny składa wartość nastawy logicznej, gotową do zapisu
-// w bazowej tabeli ustawień platformy.
 func agenciZapisLogiczny(wskazanie *bool) *string {
 	if wskazanie == nil {
 		return nil
@@ -518,8 +495,6 @@ func agenciZapisLogiczny(wskazanie *bool) *string {
 	return &wartosc
 }
 
-// agenciZapisLiczby składa wartość nastawy liczbowej, gotową do zapisu
-// w bazowej tabeli ustawień platformy.
 func agenciZapisLiczby(wskazanie *int) *string {
 	if wskazanie == nil {
 		return nil
@@ -528,8 +503,6 @@ func agenciZapisLiczby(wskazanie *int) *string {
 	return &wartosc
 }
 
-// agenciSprawdzNastaweSpiecia odbija nastawę spięcia spoza wyliczenia
-// kontraktu, dopuszczając wyłącznie wartości kontraktowi znane.
 func agenciSprawdzNastaweSpiecia(nastawa shared.StudioAgentConflictPolicy) error {
 	for _, dozwolona := range shared.WartosciStudioAgentConflictPolicy() {
 		if nastawa == dozwolona {
@@ -544,21 +517,15 @@ func agenciSprawdzNastaweSpiecia(nastawa shared.StudioAgentConflictPolicy) error
 		"” nie jest znana — wolno: " + strings.Join(nazwy, ", "))
 }
 
-// agenciToSamRek mówi, czy zajęcie należy do tej samej ręki. Wykonawca
-// przedłużający własne zajęcie nie zderza się sam ze sobą.
 func agenciToSamRek(zajecie dane.ZajecieFragmentuStudia, wykonawca kontrolaWykonawca) bool {
 	return wartoscTekstu(zajecie.AgentKod) == wartoscTekstu(wykonawca.AgentKod) &&
 		wartoscTekstu(zajecie.PodagentKod) == wartoscTekstu(wykonawca.PodagentKod)
 }
 
-// agenciKluczReki składa klucz tożsamości wykonawcy, używany do liczenia,
-// ilu wykonawców pracuje naraz.
 func agenciKluczReki(wykonawca kontrolaWykonawca) string {
 	return wartoscTekstu(wykonawca.AgentKod) + "\x00" + wartoscTekstu(wykonawca.PodagentKod)
 }
 
-// agenciCzynniWykonawcy zbiera tożsamości wykonawców, którzy obecnie trzymają
-// fragmenty tego dokumentu.
 func agenciCzynniWykonawcy(zajecia []dane.ZajecieFragmentuStudia) map[string]bool {
 	czynni := map[string]bool{}
 	for _, zajete := range zajecia {
@@ -570,8 +537,6 @@ func agenciCzynniWykonawcy(zajecia []dane.ZajecieFragmentuStudia) map[string]boo
 	return czynni
 }
 
-// agenciNazwaZajecia nazywa wykonawcę trzymającego fragment — nazwa widoczna
-// przed kodem, bo Operator czyta nazwę, a nie identyfikator.
 func agenciNazwaZajecia(zajecie dane.ZajecieFragmentuStudia) string {
 	if zajecie.AgentNazwa != nil && *zajecie.AgentNazwa != "" {
 		if zajecie.AgentKod != nil && *zajecie.AgentKod != "" {
@@ -588,9 +553,6 @@ func agenciNazwaZajecia(zajecie dane.ZajecieFragmentuStudia) string {
 	return "wykonawca nienazwany"
 }
 
-// agenciZlozZajecie składa zajęcie kontraktu z wiersza warstwy danych.
-// Zajęcie wygasłe wychodzi w stanie „idle”, nie „working”, bo pokazanie go
-// jako pracującego byłoby nieprawdą.
 func agenciZlozZajecie(wiersz dane.ZajecieFragmentuStudia) shared.StudioAgentSlot {
 	od, do := int(wiersz.ZakresOd), int(wiersz.ZakresDo)
 	zajeto := chwilaBazy(wiersz.Zajeto)
@@ -620,8 +582,6 @@ func agenciZlozZajecie(wiersz dane.ZajecieFragmentuStudia) shared.StudioAgentSlo
 	return zajecie
 }
 
-// agenciZlozSpiecie składa spięcie kontraktu z wiersza warstwy danych,
-// przenosząc jego pola do postaci odpowiedzi.
 func agenciZlozSpiecie(wiersz dane.SpiecieWykonawcowStudia) shared.StudioAgentConflict {
 	return shared.StudioAgentConflict{
 		Id:         wiersz.Kod,

@@ -15,7 +15,6 @@ import (
 // Zgodność adaptera z portem sprawdzana jest przy kompilacji, bez próby wykonania kodu rdzenia platformy.
 var _ Tozsamosc = (*adapterTozsamosci)(nil)
 
-// adapterTozsamosci wypełnia port Tozsamosc tabelami kategorii tożsamości i dokumentu tożsamości modelu.
 type adapterTozsamosci struct {
 	repozytorium dane.RepozytoriumTozsamosci
 	skladacz     *SkladaczTozsamosci
@@ -23,8 +22,6 @@ type adapterTozsamosci struct {
 	osie         *wskazanieOsiOkna
 }
 
-// nowyAdapterTozsamosci wiąże port z repozytorium, składaczem nakładki
-// i rozstrzygaczem klucza `tozsamosc.tryb_domyslny`.
 func nowyAdapterTozsamosci(repozytorium dane.RepozytoriumTozsamosci,
 	rozstrzygacz *konfig.Rozstrzygacz) *adapterTozsamosci {
 
@@ -35,9 +32,6 @@ func nowyAdapterTozsamosci(repozytorium dane.RepozytoriumTozsamosci,
 	}
 }
 
-// ZOknami wpina odczyt osi okna: model i konto, dla których liczona jest
-// nakładka okna rozmowy. Bez tego wpięcia nakładkę liczy się dla osi podanej
-// wprost w żądaniu.
 func (a *adapterTozsamosci) ZOknami(okna dane.RepozytoriumOkien,
 	kanaly dane.RepozytoriumKanalow) *adapterTozsamosci {
 
@@ -45,7 +39,6 @@ func (a *adapterTozsamosci) ZOknami(okna dane.RepozytoriumOkien,
 	return a
 }
 
-// Kategorie zwraca katalog kategorii zasad tożsamości, zawężony warstwą nakładki modelu w tej rozmowie.
 func (a *adapterTozsamosci) Kategorie(ctx context.Context,
 	z shared.IdentityCategoryListRequest) (shared.IdentityCategoryListResponse, error) {
 
@@ -67,7 +60,6 @@ func (a *adapterTozsamosci) Kategorie(ctx context.Context,
 	return shared.IdentityCategoryListResponse{Categories: kategorie}, nil
 }
 
-// Dokumenty zwraca zapisy treści tożsamości zawężone kategorią zasad i wskazaną osią modelu platformy.
 func (a *adapterTozsamosci) Dokumenty(ctx context.Context,
 	z shared.IdentityDocumentGetRequest) (shared.IdentityDocumentGetResponse, error) {
 
@@ -92,9 +84,6 @@ func (a *adapterTozsamosci) Dokumenty(ctx context.Context,
 	return shared.IdentityDocumentGetResponse{Documents: dokumenty}, nil
 }
 
-// Zapisz utrwala treść kategorii dla wskazanej osi wraz z trybem podania.
-// Odcisk treści liczony jest tym samym skrótem, co odcisk promptu — po nim
-// poznaje się, że nakładka nie zmieniła się mimo zapisu.
 func (a *adapterTozsamosci) Zapisz(ctx context.Context,
 	z shared.IdentityDocumentSetRequest) (shared.IdentityDocumentSetResponse, error) {
 
@@ -122,9 +111,6 @@ func (a *adapterTozsamosci) Zapisz(ctx context.Context,
 	return shared.IdentityDocumentSetResponse{Document: dokumentKontraktu(zapisany)}, nil
 }
 
-// Usun kasuje zapis treści. Brak zapisu znaczy treść z osi szerszej,
-// więc usunięcie zapisu, którego nie ma, nie jest błędem; brak wpiętego
-// katalogu jest odmową.
 func (a *adapterTozsamosci) Usun(ctx context.Context,
 	z shared.IdentityDocumentRemoveRequest) (shared.IdentityDocumentRemoveResponse, error) {
 
@@ -142,8 +128,6 @@ func (a *adapterTozsamosci) Usun(ctx context.Context,
 	return shared.IdentityDocumentRemoveResponse{Removed: usuniete}, nil
 }
 
-// Obowiazujaca zwraca nakładkę obowiązującą: tryb, warstwy wg krytyczności,
-// złożony prompt i wykaz kategorii obowiązkowych bez treści.
 func (a *adapterTozsamosci) Obowiazujaca(ctx context.Context,
 	z shared.IdentityEffectiveGetRequest) (shared.IdentityEffectiveGetResponse, error) {
 
@@ -154,12 +138,10 @@ func (a *adapterTozsamosci) Obowiazujaca(ctx context.Context,
 	if err != nil {
 		return shared.IdentityEffectiveGetResponse{}, err
 	}
-	zapytanie.TrybDomyslny = a.trybDomyslny(zapytanie)
+	zapytanie.TrybDomyslny = a.trybDomyslny(ctx, zapytanie)
 	return a.skladacz.Zloz(ctx, zapytanie)
 }
 
-// trybZapisu rozstrzyga tryb podania zapisywanej treści: wskazany w żądaniu,
-// a w jego braku — proponowany przez kategorię katalogu.
 func (a *adapterTozsamosci) trybZapisu(wskazany *shared.IdentityMode,
 	kategorii shared.IdentityMode) shared.IdentityMode {
 
@@ -169,20 +151,15 @@ func (a *adapterTozsamosci) trybZapisu(wskazany *shared.IdentityMode,
 	return trybLubDomyslny(kategorii, shared.IdentityModeZASTAP)
 }
 
-// trybDomyslny odczytuje klucz `tozsamosc.tryb_domyslny` w kontekście osi.
-// Brak rozstrzygacza i brak zapisu dają tryb ZASTAP.
-func (a *adapterTozsamosci) trybDomyslny(z ZapytanieTozsamosci) shared.IdentityMode {
+func (a *adapterTozsamosci) trybDomyslny(ctx context.Context, z ZapytanieTozsamosci) shared.IdentityMode {
 	if a.rozstrzygacz == nil {
 		return shared.IdentityModeZASTAP
 	}
-	kontekst := konfig.Kontekst{Model: z.Model, Konto: z.Konto}
+	kontekst := konfig.Kontekst{Model: z.Model, Konto: z.Konto, KontoOperatora: dane.KontoOperatora(ctx)}
 	wynik := a.rozstrzygacz.Rozstrzygnij(kontekst, KluczTozsamoscTrybDomyslny)
 	return trybLubDomyslny(shared.IdentityMode(wynik.Wartosc), shared.IdentityModeZASTAP)
 }
 
-// zapytanieOsi ustala, dla czego liczona jest nakładka. Wskazanie okna ma
-// pierwszeństwo, bo okno zna i model, i konto naraz; bez okna obowiązuje oś
-// podana wprost w żądaniu.
 func (a *adapterTozsamosci) zapytanieOsi(ctx context.Context,
 	z shared.IdentityEffectiveGetRequest) (ZapytanieTozsamosci, error) {
 

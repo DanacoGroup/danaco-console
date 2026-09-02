@@ -7,10 +7,6 @@ import (
 	"danacoconsole/shared"
 )
 
-// Rozstrzygacz zasięgu jest najgęstszą logiką pakietu: mierzy regułę pierwszeństwa w całości.
-
-// kontekstPelny wypełnia byt każdego poziomu i obu osi. Kontekst uboższy pomija
-// poziomy bez bytu, więc pełny jest jedynym, na którym widać całą kolejność.
 func kontekstPelny() Kontekst {
 	return Kontekst{
 		Srodowisko:  "srodowisko-talkin",
@@ -59,7 +55,6 @@ func TestPoziomyIdaOdNajwezszegoDoNajszerszego(t *testing.T) {
 	}
 }
 
-// TestOsieIdaOdKontaDoPlatformy utrwala kolejność osi w ramach poziomu: konto, potem model, potem platforma.
 func TestOsieIdaOdKontaDoPlatformy(t *testing.T) {
 	oczekiwane := []Os{OsKonta, OsModelu, OsPlatformy}
 	if len(osieOdNajwezszej) != len(oczekiwane) {
@@ -72,8 +67,6 @@ func TestOsieIdaOdKontaDoPlatformy(t *testing.T) {
 	}
 }
 
-// TestOsPustaZnaczyPlatforme pilnuje reguły, która przewija się przez cały
-// pakiet: brak wskazania osi nigdy nie jest błędem.
 func TestOsPustaZnaczyPlatforme(t *testing.T) {
 	if OsLubPlatforma("") != OsPlatformy {
 		t.Error("oś pusta nie została odczytana jako platforma")
@@ -91,7 +84,6 @@ func TestOsPustaZnaczyPlatforme(t *testing.T) {
 	}
 }
 
-// TestZnanyPoziomObejmujeKomplet sprawdza, że zbiór poziomów znanych obejmuje cały wykaz kontraktu wprost.
 func TestZnanyPoziomObejmujeKomplet(t *testing.T) {
 	for _, poziom := range poziomyOdNajwezszego {
 		if !Znany(poziom) {
@@ -106,9 +98,6 @@ func TestZnanyPoziomObejmujeKomplet(t *testing.T) {
 	}
 }
 
-// TestPoziomBezBytuJestPomijany sprawdza, na czym stoi schodzenie w górę:
-// poziom, którego byt jest pusty, nie dotyczy wywołania. Globalny i aplikacja
-// obowiązują zawsze i bytu nie mają.
 func TestPoziomBezBytuJestPomijany(t *testing.T) {
 	pusty := Kontekst{}
 
@@ -137,8 +126,6 @@ func TestPoziomBezBytuJestPomijany(t *testing.T) {
 	}
 }
 
-// TestAdresyPustegoKontekstuToDwaPoziomyPlatformy mierzy dolny kraniec: nic nie
-// wskazano, więc zostają wyłącznie poziomy bezwarunkowe na osi tła.
 func TestAdresyPustegoKontekstuToDwaPoziomyPlatformy(t *testing.T) {
 	adresy := Kontekst{}.Adresy()
 	oczekiwane := []Adres{
@@ -155,9 +142,6 @@ func TestAdresyPustegoKontekstuToDwaPoziomyPlatformy(t *testing.T) {
 	}
 }
 
-// TestAdresyIdaPoziomamiAWRamachPoziomuOsiami jest sprawdzianem samej reguły
-// pierwszeństwa, zdjętym z kontekstu pełnego: dziewięć poziomów razy trzy osie,
-// oś zmienia się szybciej niż poziom.
 func TestAdresyIdaPoziomamiAWRamachPoziomuOsiami(t *testing.T) {
 	adresy := kontekstPelny().Adresy()
 
@@ -181,8 +165,6 @@ func TestAdresyIdaPoziomamiAWRamachPoziomuOsiami(t *testing.T) {
 	}
 }
 
-// TestOsBezBytuJestPomijana sprawdza drugą stronę tej samej reguły: kontekst bez
-// modelu i bez konta daje wyłącznie oś platformy.
 func TestOsBezBytuJestPomijana(t *testing.T) {
 	kontekst := kontekstPelny()
 	kontekst.Model = ""
@@ -202,8 +184,6 @@ func TestOsBezBytuJestPomijana(t *testing.T) {
 	}
 }
 
-// TestNajwezszyZapisWygrywa przechodzi całą drabinę: ustawienie zapisane na
-// każdym poziomie naraz, a potem zdejmowane po jednym, aż do wartości domyślnej.
 func TestNajwezszyZapisWygrywa(t *testing.T) {
 	const klucz = kluczTrybUprawnien
 
@@ -212,7 +192,6 @@ func TestNajwezszyZapisWygrywa(t *testing.T) {
 	kontekst.Model = ""
 	kontekst.Konto = ""
 
-	// Zapis na każdym poziomie, wartością nazywającą swój poziom.
 	for _, poziom := range poziomyOdNajwezszego {
 		kluczZasiegu, _ := kontekst.Adres(poziom)
 		zrodlo.Ustaw(poziom, kluczZasiegu, klucz, string(poziom), RodzajTekst)
@@ -232,12 +211,10 @@ func TestNajwezszyZapisWygrywa(t *testing.T) {
 			t.Errorf("poziom %q oddał pochodzenie %q", poziom, wynik.Pochodzenie)
 		}
 
-		// Zdjęcie zwycięzcy oddaje głos poziomowi szerszemu.
 		kluczZasiegu, _ := kontekst.Adres(poziom)
 		zrodlo.Usun(poziom, kluczZasiegu, klucz)
 	}
 
-	// Po zdjęciu wszystkich zapisów zostaje wartość domyślna z rejestru.
 	wynik := rozstrzygacz.Rozstrzygnij(kontekst, klucz)
 	if wynik.Poziom != PoziomBrak {
 		t.Errorf("po zdjęciu wszystkich zapisów wygrał poziom %q", wynik.Poziom)
@@ -247,22 +224,17 @@ func TestNajwezszyZapisWygrywa(t *testing.T) {
 	}
 }
 
-// TestPoziomBijeOsNiezaleznieOdSzerokosci sprawdza, że ustawienie zapisane per
-// konto na poziomie globalnym NIE bije ustawienia zapisanego na osi platformy
-// w oknie komunikacji.
 func TestPoziomBijeOsNiezaleznieOdSzerokosci(t *testing.T) {
 	const klucz = kluczTrybUprawnien
 
 	zrodlo := NoweZrodloPamieciowe()
 	kontekst := kontekstPelny()
 
-	// Poziom najszerszy z bytem, oś najwęższa.
 	zrodlo.ustawWOsi(Adres{
 		Poziom: shared.ConfigScopeGlobal,
 		Os:     OsKonta, KluczOsi: kontekst.Konto,
 	}, klucz, "zapis konta na poziomie globalnym", RodzajTekst)
 
-	// Poziom najwęższy, oś najszersza.
 	zrodlo.ustawWOsi(Adres{
 		Poziom: shared.ConfigScopeWindow, KluczZasiegu: kontekst.Okno,
 		Os: OsPlatformy,
@@ -281,9 +253,6 @@ func TestPoziomBijeOsNiezaleznieOdSzerokosci(t *testing.T) {
 	}
 }
 
-// TestOsRozstrzygaWRamachJednegoPoziomu sprawdza drugie piętro reguły: przy
-// równym poziomie wygrywa oś węższa — konto przed modelem, model przed
-// platformą.
 func TestOsRozstrzygaWRamachJednegoPoziomu(t *testing.T) {
 	const klucz = kluczTrybUprawnien
 	kontekst := kontekstPelny()
@@ -342,9 +311,6 @@ func TestZapisPozaKontekstemNieWchodzi(t *testing.T) {
 	}
 }
 
-// TestKluczSpozaRejestruNieJestBledem sprawdza regułę fail-open pakietu: odczyt
-// nigdy nie odmawia. Klucz bez definicji i bez zapisu daje wartość pustą
-// oznaczoną wprost jako nieznana — czym innym niż wartość domyślna.
 func TestKluczSpozaRejestruNieJestBledem(t *testing.T) {
 	wynik := Nowy(nil, nil).Rozstrzygnij(Kontekst{}, "klucz.spoza.rejestru")
 
@@ -359,8 +325,6 @@ func TestKluczSpozaRejestruNieJestBledem(t *testing.T) {
 	}
 }
 
-// TestKluczSpozaRejestruZZapisemWraca sprawdza, że rejestr nie jest bramą:
-// klucz bez definicji, ale z zapisem, wraca z zapisu.
 func TestKluczSpozaRejestruZZapisemWraca(t *testing.T) {
 	const klucz = "klucz.spoza.rejestru"
 
@@ -376,17 +340,13 @@ func TestKluczSpozaRejestruZZapisemWraca(t *testing.T) {
 	}
 }
 
-// zrodloWadliwe zwraca wpisy razem z błędem naraz: tak wygląda odczyt częściowy z warstwy trwałości bazy.
 type zrodloWadliwe struct {
 	wpisy []Wpis
 	blad  error
 }
 
-func (z zrodloWadliwe) Wpisy([]Adres) ([]Wpis, error) { return z.wpisy, z.blad }
+func (z zrodloWadliwe) Wpisy(int64, []Adres) ([]Wpis, error) { return z.wpisy, z.blad }
 
-// TestBladZrodlaNieZatrzymujeRozstrzygania pilnuje zasady nadrzędnej pakietu:
-// żadna ścieżka nie odmawia rozstrzygnięcia. Wpisy odczytane mimo błędu wchodzą
-// do wyniku, reszta schodzi na wartość domyślną.
 func TestBladZrodlaNieZatrzymujeRozstrzygania(t *testing.T) {
 	const klucz = kluczTrybUprawnien
 
@@ -412,7 +372,6 @@ func TestBladZrodlaNieZatrzymujeRozstrzygania(t *testing.T) {
 	}
 }
 
-// TestWpisBezKluczaJestPomijany sprawdza odporność rozstrzygania na wiersz uszkodzony brakiem klucza wpisu.
 func TestWpisBezKluczaJestPomijany(t *testing.T) {
 	zrodlo := zrodloWadliwe{wpisy: []Wpis{
 		{Poziom: shared.ConfigScopeGlobal, Os: OsPlatformy, Klucz: "", Wartosc: "bez klucza"},
@@ -424,9 +383,6 @@ func TestWpisBezKluczaJestPomijany(t *testing.T) {
 	}
 }
 
-// TestOdbiornikZerowyRozstrzygaDomyslnie pilnuje obietnicy z opisu: rozstrzygacz
-// powstaje zawsze, a niekompletne zależności dają politykę domyślną, nie odmowę
-// startu.
 func TestOdbiornikZerowyRozstrzygaDomyslnie(t *testing.T) {
 	var zerowy *Rozstrzygacz
 	wynik := zerowy.Rozstrzygnij(Kontekst{}, kluczTrybUprawnien)

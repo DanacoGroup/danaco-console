@@ -59,7 +59,7 @@ func (z *zrodloPamieciowe) Usun(poziom Poziom, kluczZasiegu, klucz string) {
 
 // Wpisy zwraca zapisy spod adresów wskazanych na liście, pomijając wpisy
 // zapisane pod adresami spoza niej.
-func (z *zrodloPamieciowe) Wpisy(adresy []Adres) ([]Wpis, error) {
+func (z *zrodloPamieciowe) Wpisy(_ int64, adresy []Adres) ([]Wpis, error) {
 	if z == nil {
 		return nil, nil
 	}

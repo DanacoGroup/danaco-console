@@ -18,34 +18,20 @@ import (
 )
 
 const (
-	// katalogNagranMowy to podkatalog katalogu danych rdzenia, w którym lądują
-	// bajty przyjęte od okna. Obok niego leży `synteza-mowy` — oba są
-	// nagraniami i oba odsłuchuje ta sama komenda.
 	katalogNagranMowy = "nagrania-mowy"
 
 	przedrostekNagraniaMowy = "nagranie-"
 
-	// granicaNagraniaBajtow domyka jedno przyjęcie. Dwadzieścia pięć megabajtów
-	// to około pół godziny mowy w Opusie — więcej niż każde polecenie głosowe
-	// i każde dyktowanie, a mniej niż wielkość, przy której zapis w pamięci
-	// wywraca proces.
+	// Dwadzieścia pięć megabajtów to około pół godziny mowy w Opusie.
 	granicaNagraniaBajtow = 25 * 1024 * 1024
 
-	// zycieNagraniaTymczasowego mówi, jak długo żyje nagranie, które nie ma
-	// przeżyć transkrypcji. Godzina, a nie minuta: transkrypcja bywa
-	// w kolejce, a nagranie skasowane przed nią zamieniłoby zlecenie
-	// w odmowę „pliku nie ma".
 	zycieNagraniaTymczasowego = time.Hour
 
-	// kluczZapisuNagran to nastawa mówiąca, czy nagrania poleceń mają być
-	// zapisywane trwale (Activity Feed). Kontrakt `speech.audio.upload` odsyła
-	// do niej wprost przy pustym polu `retain`.
+	// kluczZapisuNagran: kontrakt `speech.audio.upload` odsyła do tej nastawy przy pustym
+	// polu `retain`.
 	kluczZapisuNagran = "mowa_zapis_nagran"
 )
 
-// PrzyjmijNagranie obsługuje `speech.audio.upload`: przyjmuje bajty nagrania
-// zakodowane base64, utrwala je w magazynie i zakłada wiersz rejestru
-// nagrań mowy.
 func (a *adapterMowy) PrzyjmijNagranie(ctx context.Context,
 	z shared.SpeechAudioUploadRequest) (shared.SpeechAudioUploadResponse, error) {
 
@@ -90,7 +76,7 @@ func (a *adapterMowy) PrzyjmijNagranie(ctx context.Context,
 	}
 
 	teraz := time.Now()
-	trwale := a.czyZapisywacNagrania(z.Retain)
+	trwale := a.czyZapisywacNagrania(ctx, z.Retain)
 	wiersz := dane.NagranieMowy{
 		Kod:           kod,
 		Sciezka:       sciezka,
@@ -114,7 +100,6 @@ func (a *adapterMowy) PrzyjmijNagranie(ctx context.Context,
 	// Sprzątanie idzie przy okazji przyjęcia — jedyna pewna chwila na to.
 	a.posprzatajNagrania(ctx, teraz.UnixMilli())
 
-	// Odcinek nasłuchu idzie od razu do rozpoznania tą samą komendą.
 	if z.WindowId != nil {
 		a.ogloszOdcinekNasluchu(ctx, *z.WindowId, zapisane.Sciezka)
 	}
@@ -127,9 +112,6 @@ func (a *adapterMowy) PrzyjmijNagranie(ctx context.Context,
 	return odpowiedz, nil
 }
 
-// OddajNagranie obsługuje `speech.audio.fetch`. Wycinka czasowego rdzeń nie
-// wykonuje: żądanie z polami `rangeStartMs` i `rangeEndMs` kończy się odmową
-// nazywającą powód, nie całym nagraniem podanym jako wycinek.
 func (a *adapterMowy) OddajNagranie(ctx context.Context,
 	z shared.SpeechAudioFetchRequest) (shared.SpeechAudioFetchResponse, error) {
 
@@ -159,10 +141,6 @@ func (a *adapterMowy) OddajNagranie(ctx context.Context,
 	}, nil
 }
 
-// rozstrzygnijOdnosnikNagrania sprawdza, czy odnośnik wolno odsłuchać, i oddaje
-// ścieżkę wraz z typem treści. Dwie drogi są zamknięte: wiersz rejestru nagrań
-// albo plik pod katalogiem danych rdzenia; ścieżka spoza obu jest odmową
-// uprawnienia.
 func (a *adapterMowy) rozstrzygnijOdnosnikNagrania(ctx context.Context,
 	odnosnik string) (string, string, error) {
 
@@ -203,11 +181,8 @@ func (a *adapterMowy) rozstrzygnijOdnosnikNagrania(ctx context.Context,
 	return sciezka, typTresciZeSciezki(sciezka), nil
 }
 
-// wKataloguNagranPrzyjetych mówi, czy odnośnik prowadzi pod katalog nagrań
-// przyjętych przez `speech.audio.upload`. Ten katalog jest wyłącznością
-// rejestru: bajty w nim leżące wydaje wyłącznie wiersz `nagranie_mowy` zawężony
-// do konta żądania, więc dojście plikowe musi go omijać. Poza nim leżą pliki
-// Operatora i nagrania syntezy, których rejestr nie prowadzi.
+// Katalog nagrań przyjętych jest wyłącznością rejestru: bajty spod niego wydaje wyłącznie
+// wiersz `nagranie_mowy` zawężony do konta żądania (migracja 484).
 func (a *adapterMowy) wKataloguNagranPrzyjetych(odnosnik string) bool {
 	podstawa := strings.TrimSpace(a.katalogDanych)
 	if podstawa == "" {
@@ -228,8 +203,6 @@ func (a *adapterMowy) wKataloguNagranPrzyjetych(odnosnik string) bool {
 	return wzgledna != ".." && !strings.HasPrefix(wzgledna, ".."+string(filepath.Separator))
 }
 
-// bladObcegoNagrania nazywa odmowę sięgnięcia po nagranie rejestru, którego
-// rejestr temu żądaniu nie wydał — wiersza nie ma albo należy do innego konta.
 func bladObcegoNagrania(odnosnik string) error {
 	return protocol.JakoError(protocol.NowyBlad(shared.ErrorCodePermissionDenied,
 		"nagrania mowy: nagranie "+odnosnik+" nie należy do konta tego żądania — "+
@@ -237,9 +210,6 @@ func bladObcegoNagrania(odnosnik string) error {
 			"i wyłącznie właścicielowi wiersza"))
 }
 
-// katalogNagran zakłada, gdy trzeba, katalog na przyjęte nagrania. Pusty
-// katalog danych jest odmową, a nie powodem do wybrania czegoś z własnej
-// głowy, tak samo jak przy syntezie mowy.
 func (a *adapterMowy) katalogNagran() (string, error) {
 	podstawa := strings.TrimSpace(a.katalogDanych)
 	if podstawa == "" {
@@ -254,18 +224,14 @@ func (a *adapterMowy) katalogNagran() (string, error) {
 	return katalog, nil
 }
 
-// czyZapisywacNagrania rozstrzyga trwałość nagrania: pole żądania, a w jego
-// braku nastawa `mowa_zapis_nagran`. Nastawa nierozstrzygnięta znaczy „nie
-// zapisuj trwale" — zapis nagrania głosu jest decyzją, którą Operator podejmuje
-// jawnie, a nie domyślnie.
-func (a *adapterMowy) czyZapisywacNagrania(zZadania *bool) bool {
+func (a *adapterMowy) czyZapisywacNagrania(ctx context.Context, zZadania *bool) bool {
 	if zZadania != nil {
 		return *zZadania
 	}
 	if a.rozstrzygacz == nil {
 		return false
 	}
-	wynik := a.rozstrzygacz.Rozstrzygnij(kontekstZasieguMowy(), kluczZapisuNagran)
+	wynik := a.rozstrzygacz.Rozstrzygnij(kontekstZasieguMowy(ctx), kluczZapisuNagran)
 	switch strings.ToLower(strings.TrimSpace(wynik.Wartosc)) {
 	case "1", "true", "tak":
 		return true
@@ -274,11 +240,6 @@ func (a *adapterMowy) czyZapisywacNagrania(zZadania *bool) bool {
 	}
 }
 
-// posprzatajNagrania kasuje nagrania, których czas minął — bajty i wiersz.
-//
-// Niepowodzenie sprzątania nie przewraca przyjęcia: nagranie właśnie legło na
-// dysku i jest Operatorowi potrzebne teraz, a stare pliki poczekają do
-// następnego razu.
 func (a *adapterMowy) posprzatajNagrania(ctx context.Context, teraz int64) {
 	if a.nagrania == nil {
 		return
@@ -293,9 +254,7 @@ func (a *adapterMowy) posprzatajNagrania(ctx context.Context, teraz int64) {
 	}
 }
 
-// typyTresciNagran wiąże typ treści przysłany przez okno z rozszerzeniem
-// pliku, które przyjmuje silnik mowy. Zbiór jest zamknięty i pokrywa się
-// z `mowa.FormatyNagran`.
+// Zbiór zamknięty, pokrywa się z `mowa.FormatyNagran`.
 var typyTresciNagran = map[string]string{
 	"audio/wav":              ".wav",
 	"audio/x-wav":            ".wav",
@@ -310,10 +269,7 @@ var typyTresciNagran = map[string]string{
 	"audio/webm;codecs=opus": ".webm",
 }
 
-// rozszerzenieNagrania przekłada typ treści na rozszerzenie pliku.
-//
-// Parametry typu (`;codecs=opus`) odcina się przed dopasowaniem: przeglądarka
-// dokłada je sama, a rodzaj kontenera rozstrzyga człon przed średnikiem.
+// Parametry typu (`;codecs=opus`) odcina się przed dopasowaniem — dokłada je przeglądarka.
 func rozszerzenieNagrania(typTresci string) (string, error) {
 	klucz := strings.ToLower(strings.TrimSpace(typTresci))
 	if klucz == "" {
@@ -332,8 +288,6 @@ func rozszerzenieNagrania(typTresci string) (string, error) {
 		"” — serwer przyjmuje: audio/wav, audio/ogg, audio/mp4, audio/webm")
 }
 
-// typTresciZeSciezki odgaduje typ treści z rozszerzenia pliku. Używane wyłącznie
-// dla nagrań spoza rejestru (synteza mowy), które własnego typu nie niosą.
 func typTresciZeSciezki(sciezka string) string {
 	switch strings.ToLower(filepath.Ext(sciezka)) {
 	case ".wav":
@@ -349,22 +303,16 @@ func typTresciZeSciezki(sciezka string) string {
 	}
 }
 
-// bladWskazaniaNagrania nazywa niepoprawne żądanie rodziny nagrań: brak
-// bajtów, zły format albo odnośnik, którego rdzeń nie rozpoznaje.
 func bladWskazaniaNagrania(powod string) error {
 	return protocol.JakoError(protocol.NowyBlad(shared.ErrorCodeValidationFailed,
 		"nagrania mowy: "+powod))
 }
 
-// bladZapleczaNagran nazywa brak po stronie rdzenia: nie wpięty rejestr
-// nagrań, brak katalogu danych albo usterka zapisu na dysku.
 func bladZapleczaNagran(powod string) error {
 	return protocol.JakoError(protocol.NowyBlad(shared.ErrorCodeInternalError,
 		"nagrania mowy: "+powod))
 }
 
-// bladWycinkaNagrania nazywa odmowę wycięcia fragmentu — rdzeń oddaje
-// wyłącznie nagranie w całości, nigdy zakresu czasowego.
 func bladWycinkaNagrania() error {
 	return protocol.JakoError(protocol.NowyBlad(shared.ErrorCodeValidationFailed,
 		"nagrania mowy: serwer nie wycina fragmentu nagrania — wycięcie z zapisu "+

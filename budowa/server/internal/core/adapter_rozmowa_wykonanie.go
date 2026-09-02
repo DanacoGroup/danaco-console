@@ -54,9 +54,10 @@ func (p *wykonanieZKonfiguracji) Ustal(kontekst context.Context, okno session.Ok
 		return wykonanie{}
 	}
 	zasieg := konfig.Kontekst{
-		Okno:       okno.Id,
-		KartaSesji: okno.IdSesji,
-		Model:      okno.KanalModelu,
+		Okno:           okno.Id,
+		KartaSesji:     okno.IdSesji,
+		Model:          okno.KanalModelu,
+		KontoOperatora: dane.KontoOperatora(kontekst),
 	}
 	return wykonanie{
 		Naklad:         p.wartosc(zasieg, konfig.KluczNakladRozumowania),

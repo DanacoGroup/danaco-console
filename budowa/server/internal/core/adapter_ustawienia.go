@@ -28,7 +28,7 @@ func nowyAdapterUstawien(repozytorium dane.RepozytoriumKonfiguracji, rozstrzygac
 func (a *adapterUstawien) Odczytaj(ctx context.Context, z shared.ConfigGetRequest) (shared.ConfigGetResponse, error) {
 	if z.Scope == nil {
 		return shared.ConfigGetResponse{
-			Entries: a.rozstrzygacz.PolitykaEfektywna(kontekstZasiegu(z.ScopeId)).WpisyKontraktu(),
+			Entries: a.rozstrzygacz.PolitykaEfektywna(kontekstZasiegu(ctx, z.ScopeId)).WpisyKontraktu(),
 		}, nil
 	}
 	wpisy, err := a.repozytorium.ListaPoziomu(ctx, *z.Scope, wartoscTekstu(z.ScopeId))
@@ -71,8 +71,8 @@ func (a *adapterUstawien) Przywroc(ctx context.Context, z shared.ConfigResetRequ
 
 // kontekstZasiegu buduje kontekst rozstrzygania. Wskazany byt trafia na poziom
 // okna — najwęższy z dziewięciu; jego brak daje kontekst globalny.
-func kontekstZasiegu(idBytu *string) konfig.Kontekst {
-	return konfig.Kontekst{Okno: wartoscTekstu(idBytu)}
+func kontekstZasiegu(ctx context.Context, idBytu *string) konfig.Kontekst {
+	return konfig.Kontekst{Okno: wartoscTekstu(idBytu), KontoOperatora: dane.KontoOperatora(ctx)}
 }
 
 // wpisyKontraktu przekłada wiersze repozytorium na wpisy kontraktu, zawężając

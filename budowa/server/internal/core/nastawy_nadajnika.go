@@ -7,6 +7,7 @@ import (
 	"strconv"
 	"strings"
 
+	"danacoconsole/server/internal/dane"
 	"danacoconsole/server/internal/konfig"
 	"danacoconsole/server/internal/nadajnik"
 )
@@ -36,8 +37,7 @@ func (a *adapterUstawienOsi) Nastawa(ctx context.Context, klucz string) string {
 	if a == nil || a.rozstrzygacz == nil {
 		return ""
 	}
-	_ = ctx
-	return strings.TrimSpace(a.rozstrzygacz.Rozstrzygnij(konfig.Kontekst{}, klucz).Wartosc)
+	return strings.TrimSpace(a.rozstrzygacz.Rozstrzygnij(konfig.Kontekst{KontoOperatora: dane.KontoOperatora(ctx)}, klucz).Wartosc)
 }
 
 // kontoNadawcze nakłada nastawy Operatora na konto nadawcze podane przy starcie.

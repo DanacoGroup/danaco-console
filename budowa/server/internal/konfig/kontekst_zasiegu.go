@@ -2,10 +2,7 @@ package konfig
 
 import "danacoconsole/shared"
 
-// Kontekst wskazuje byt obowiązujący na każdym z dziewięciu poziomów zasięgu
-// w chwili rozstrzygania. Pole puste oznacza, że poziom nie dotyczy wywołania
-// i rozstrzyganie schodzi na poziom szerszy. Poziomy globalny i aplikacja
-// mają klucz pusty.
+// Kontekst wskazuje byt każdego z dziewięciu poziomów zasięgu; pole puste pomija poziom.
 type Kontekst struct {
 	Srodowisko  string // srodowisko.id
 	Modul       string // modul.id
@@ -19,6 +16,11 @@ type Kontekst struct {
 	// i schodzi na oś platformy.
 	Model string // kanal_modelu.kod albo identyfikator modelu
 	Konto string // konto.id
+
+	// KontoOperatora zawęża zapisy do konta Operatora (ustawienie.konto_id, migracja 484);
+	// Konto wyżej to konto dostawcy na osi. Zero znaczy konto najstarsze — tak wołają
+	// montaż i nastawy startowe.
+	KontoOperatora int64
 }
 
 // Adres wskazuje jedno miejsce zapisu ustawienia: poziom zasięgu wraz z bytem

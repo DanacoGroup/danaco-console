@@ -81,7 +81,7 @@ func (r *Rozstrzygacz) zapisy(kontekst Kontekst) (map[kluczWpisu]Wpis, error) {
 	if r == nil || r.zrodlo == nil {
 		return indeks, nil
 	}
-	wpisy, err := r.zrodlo.Wpisy(kontekst.Adresy())
+	wpisy, err := r.zrodlo.Wpisy(kontekst.KontoOperatora, kontekst.Adresy())
 	for _, wpis := range wpisy {
 		if wpis.Klucz == "" {
 			continue

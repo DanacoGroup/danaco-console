@@ -6,6 +6,7 @@ import (
 	"context"
 	"strings"
 
+	"danacoconsole/server/internal/dane"
 	"danacoconsole/server/internal/konfig"
 )
 
@@ -23,9 +24,8 @@ func (a *adapterUstawienOsi) WymogLogowania(ctx context.Context) (bool, bool) {
 	if a == nil || a.rozstrzygacz == nil {
 		return false, false
 	}
-	// Rozstrzygacz czyta źródło przy każdym wywołaniu — to sedno drogi na żywo.
-	_ = ctx
-	wynik := a.rozstrzygacz.Rozstrzygnij(konfig.Kontekst{}, konfig.KluczWymogLogowania)
+	wynik := a.rozstrzygacz.Rozstrzygnij(konfig.Kontekst{KontoOperatora: dane.KontoOperatora(ctx)},
+		konfig.KluczWymogLogowania)
 	return wartoscWymoguLogowania(wynik.Wartosc)
 }
 

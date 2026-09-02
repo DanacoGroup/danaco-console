@@ -1,10 +1,5 @@
-/**
- * Wiązanie panelu podglądu Studia z rdzeniem. Znacznik należy do Właściciela —
- * ten plik wypełnia stojące węzły, a kartki stron powiela z wzoru zdjętego
- * z treści przykładowej. Render oddaje strony jako zasoby magazynu, a kartka
- * prototypu nie niesie węzła zdolnego unieść obraz strony, więc podgląd
- * pokazuje liczbę i numerację stron, nie ich układ.
- */
+// Panel podglądu Studia: render oddaje strony jako zasoby magazynu, a kartka
+// prototypu nie uniesie obrazu strony — panel pokazuje liczbę i numerację stron.
 import {
   AssetContentDisposition,
   Command,
@@ -19,14 +14,13 @@ import {
   type StudioViewSetRequest,
   type StudioViewSettings,
 } from '../../../shared/contract.ts';
+import type { Odsubskrybuj } from '../polaczenie/magistrala-zdarzen.ts';
 import type { Kanal } from '../protokol/kanal.ts';
 import { wywolaj } from '../protokol/wywolanie.ts';
 
-/** Klasy przycisku w znaczniku prototypu: wciśnięty niesie zarys, spoczywający postać duchową. */
 const KLASA_WCISNIETY = 'dn-btn--zarys';
 const KLASA_SPOCZYNKU = 'dn-btn--duch';
 
-/** Węzły panelu podglądu, na których wiązanie pracuje; przyciski są opcjonalne, bo ich brak nie odbiera panelowi obszaru stron. */
 interface WezlyPodgladu {
   podglad: HTMLElement;
   format: HTMLElement | null;
@@ -38,30 +32,20 @@ interface WezlyPodgladu {
   biblioteka: HTMLElement | null;
 }
 
-/** Stan wejściowy panelu: dokument okna, profil wydania i nastawy widoku — czym rdzeń opisuje podgląd przed pierwszym renderem. */
 interface StanPodgladu {
   dokument: StudioDocument | null;
   profil: StudioExportProfile | null;
   ustawienia: StudioViewSettings | null;
 }
 
-/**
- * Wzór kartki zdjęty przy pierwszym montażu karty. Każda karta niesie ten sam
- * znacznik, a obszar stron opróżniony wzoru już nie oddaje, więc zdjęcie stoi
- * raz dla wszystkich kart.
- */
+// Wzór kartki zdjęty raz: obszar stron opróżniony wzoru już nie oddaje.
 let wzorKartki: HTMLElement | null = null;
 
-/**
- * Zdejmuje kartkę przykładową obszaru stron, zabierając z niej wzór kartki.
- * Woła się przy montażu okna, przed powstaniem stanowiska: kartka prototypu
- * niesie cudzy dokument. Zwraca prawdę, gdy panel stał w dokumencie.
- */
+// Woła się przy montażu okna: kartka prototypu niesie cudzy dokument.
 export function zdejmijTrescPrzykladowaPodgladu(korzen: ParentNode): boolean {
   return przygotujPanel(korzen) !== null;
 }
 
-/** Zbiera węzły panelu i opróżnia obszar stron z kartki przykładowej; pustka znaczy panel poza kartą albo znacznik bez kartki wzorcowej. */
 function przygotujPanel(korzen: ParentNode): { wezly: WezlyPodgladu; wzorStrony: HTMLElement } | null {
   const znalezione = zbierzWezly(korzen);
   if (znalezione === null) return null;
@@ -71,20 +55,21 @@ function przygotujPanel(korzen: ParentNode): { wezly: WezlyPodgladu; wzorStrony:
   return { wezly: znalezione, wzorStrony: wzorKartki };
 }
 
-/**
- * Wiąże panel podglądu karty Studia z rdzeniem; węzły idą od korzenia karty.
- * Zwraca prawdę, gdy znacznik panelu stał i wiązanie zostało założone. Panel
- * nie zgłasza nasłuchów kanału, więc nie ma czego odłączać.
- */
-export function zwiazPodglad(kanal: Kanal, idOkna: string, korzen: ParentNode): boolean {
+export function zwiazPodglad(
+  kanal: Kanal,
+  idOkna: string,
+  korzen: ParentNode,
+): Odsubskrybuj | null {
   const przygotowany = przygotujPanel(korzen);
-  if (przygotowany === null) return false;
+  if (przygotowany === null) return null;
+  // Nasłuchy panelu schodzą razem z kartą, zdjęte sterownikiem przerwania.
+  const sterowanie = new AbortController();
+  const przy = { signal: sterowanie.signal };
   const wezly: WezlyPodgladu = przygotowany.wezly;
   const wzorStrony: HTMLElement = przygotowany.wzorStrony;
 
   const formaty = Object.values(StudioExportFormat);
-  // Nastawa własna odpada ze zbioru skal: znaczy wartość wpisaną przez
-  // Operatora, a panel nie ma pola, w które dałoby się ją wpisać.
+  // Nastawa własna odpada ze zbioru skal: panel nie ma pola na jej wpisanie.
   const skale = Object.values(StudioZoomPreset).filter((pozycja) => pozycja !== StudioZoomPreset.Custom);
 
   let format: StudioExportFormat | null = null;
@@ -93,7 +78,6 @@ export function zwiazPodglad(kanal: Kanal, idOkna: string, korzen: ParentNode): 
   let dokument: StudioDocument | null = null;
   let numerRenderu = 0;
 
-  /** Woła render w formacie czynnym i wymienia kartki; odpowiedź spóźniona wobec kolejnej odpada. */
   function przerysuj(): void {
     if (dokument === null || format === null) return;
     const numer = (numerRenderu += 1);
@@ -109,10 +93,9 @@ export function zwiazPodglad(kanal: Kanal, idOkna: string, korzen: ParentNode): 
     });
   }
 
-  /** Przestawia nastawy widoku i nanosi na przyciski nastawy zwrócone przez rdzeń. */
   function przestaw(zmiana: StudioViewSetRequest): void {
     void ustawWidok(kanal, { ...zmiana, windowId: idOkna, documentId: dokument?.id }).then((ustawienia) => {
-      // Odmowa rdzenia zostawia przyciski nietknięte: nastawa poprzednia obowiązuje dalej.
+      // Odmowa rdzenia zostawia nastawę poprzednią w mocy.
       if (ustawienia !== null) nanies(wezly, ustawienia);
     });
   }
@@ -122,34 +105,34 @@ export function zwiazPodglad(kanal: Kanal, idOkna: string, korzen: ParentNode): 
     format = nastepna(formaty, format);
     opiszFormat(wezly.format, format);
     przerysuj();
-  });
+  }, przy);
 
   wezly.strona?.addEventListener('click', () => {
     przestaw({ scrollMode: StudioScrollMode.Page });
-  });
+  }, przy);
 
   wezly.ciagly?.addEventListener('click', () => {
     przestaw({ scrollMode: StudioScrollMode.Continuous });
-  });
+  }, przy);
 
   wezly.skala?.addEventListener('click', () => {
     nastawaSkali = nastepna(skale, nastawaSkali);
     przestaw({ zoomPreset: nastawaSkali });
-  });
+  }, przy);
 
   wezly.podziel?.addEventListener('click', () => {
     przestaw({ surfaceMode: StudioSurfaceMode.Split });
-  });
+  }, przy);
 
   wezly.eksport?.addEventListener('click', () => {
     if (dokument === null || format === null) return;
     void wydaj(kanal, dokument.id, format, idProfilu);
-  });
+  }, przy);
 
   wezly.biblioteka?.addEventListener('click', () => {
     if (dokument === null || format === null) return;
     void przekazDoBiblioteki(kanal, dokument, format, idProfilu);
-  });
+  }, przy);
 
   void wczytajStan(kanal, idOkna).then((stan) => {
     dokument = stan.dokument;
@@ -162,10 +145,11 @@ export function zwiazPodglad(kanal: Kanal, idOkna: string, korzen: ParentNode): 
     przerysuj();
   });
 
-  return true;
+  return () => {
+    sterowanie.abort();
+  };
 }
 
-/** Odczytuje dokument otwarty w oknie, pierwszy profil wydania i nastawy widoku; odmowa rdzenia oddaje pustkę na każdym z trzech pól. */
 async function wczytajStan(kanal: Kanal, idOkna: string): Promise<StanPodgladu> {
   const otwarty = await wywolaj(kanal, Command.StudioDocumentOpen, { windowId: idOkna });
   const dokument = otwarty.udany && otwarty.wynik !== undefined ? otwarty.wynik.document : null;
@@ -176,7 +160,6 @@ async function wczytajStan(kanal: Kanal, idOkna: string): Promise<StanPodgladu> 
   return { dokument, profil, ustawienia };
 }
 
-/** Woła render podglądu i zwraca po kartce na każdy zasób strony; odmowa rdzenia oddaje wykaz pusty. */
 async function zbudujStrony(
   kanal: Kanal,
   wzor: HTMLElement,
@@ -184,13 +167,11 @@ async function zbudujStrony(
 ): Promise<HTMLElement[]> {
   const wynik = await wywolaj(kanal, Command.StudioPreviewRender, zadanie);
   if (!wynik.udany || wynik.wynik === undefined) return [];
-  // Numeracja idzie porządkiem zasobów przesuniętym o pierwszą stronę żądania:
-  // odpowiedź renderu nie niesie numeru strony osobnym polem.
+  // Numeracja idzie porządkiem zasobów: odpowiedź renderu nie niesie numeru strony.
   const pierwsza = zadanie.pageFrom ?? 1;
   return wynik.wynik.pageAssetIds.map((_zasob, miejsce) => zbudujStrone(wzor, pierwsza + miejsce));
 }
 
-/** Klon kartki opisany numerem strony. */
 function zbudujStrone(wzor: HTMLElement, numer: number): HTMLElement {
   const kartka = wzor.cloneNode(true) as HTMLElement;
   const podpis = kartka.querySelector('.dn-kartka-numer');
@@ -198,13 +179,11 @@ function zbudujStrone(wzor: HTMLElement, numer: number): HTMLElement {
   return kartka;
 }
 
-/** Przestawia nastawy widoku okna i oddaje nastawy po zmianie; odmowa rdzenia oddaje pustkę i zostawia przyciski w stanie poprzednim. */
 async function ustawWidok(kanal: Kanal, zadanie: StudioViewSetRequest): Promise<StudioViewSettings | null> {
   const wynik = await wywolaj(kanal, Command.StudioViewSet, zadanie);
   return wynik.udany && wynik.wynik !== undefined ? wynik.wynik.settings : null;
 }
 
-/** Wydaje dokument do formatu czynnego; profil idzie w żądaniu, bo wydanie PDF z paginacją i stopką wymaga ustawień strony. */
 async function wydaj(
   kanal: Kanal,
   idDokumentu: string,
@@ -219,7 +198,7 @@ async function wydaj(
   return wynik.udany && wynik.wynik !== undefined ? wynik.wynik.result : null;
 }
 
-/** Przekazuje wydanie do Biblioteki dwoma krokami kontraktu: wydanie dokumentu, potem wgranie bajtów wziętych z magazynu. Bajty idą przez magazyn, bo ścieżka wydania jest ścieżką w systemie plików rdzenia i klient jej nie odczyta. */
+/* Bajty idą przez magazyn, bo ścieżka wydania jest ścieżką w systemie plików rdzenia. */
 async function przekazDoBiblioteki(
   kanal: Kanal,
   dokument: StudioDocument,
@@ -244,28 +223,25 @@ async function przekazDoBiblioteki(
   });
 }
 
-/** Nazwa pliku wydania: nazwa spod ścieżki rdzenia, a gdy rdzeń miejsca nie wskazał — tytuł dokumentu z rozszerzeniem formatu. Dokument bez tytułu nie ma z czego wziąć nazwy i do Biblioteki nie idzie. */
 function nazwaWydania(wydanie: StudioExportResult, tytul: string | undefined): string {
   const spodSciezki = wydanie.path?.split(/[\\/]/u).pop();
   if (spodSciezki !== undefined && spodSciezki !== '') return spodSciezki;
   return tytul === undefined || tytul === '' ? '' : `${tytul}.${wydanie.format}`;
 }
 
-/** Nanosi nastawy widoku na przyciski: tryb przewijania jako wciśnięcie, skalę jako podpis. */
 function nanies(wezly: WezlyPodgladu, ustawienia: StudioViewSettings | null): void {
   oznaczTryb(wezly.strona, ustawienia?.scrollMode === StudioScrollMode.Page);
   oznaczTryb(wezly.ciagly, ustawienia?.scrollMode === StudioScrollMode.Continuous);
   opiszSkale(wezly.skala, ustawienia?.zoomPercent);
 }
 
-/** Nadaje przyciskowi postać wciśniętą albo spoczywającą w brzmieniu klas prototypu. */
 function oznaczTryb(przycisk: HTMLElement | null, wcisniety: boolean): void {
   if (przycisk === null) return;
   przycisk.classList.toggle(KLASA_WCISNIETY, wcisniety);
   przycisk.classList.toggle(KLASA_SPOCZYNKU, !wcisniety);
 }
 
-/** Wpisuje skalę widoku w podpis przycisku; brak skali w nastawach zdejmuje przycisk, bo procent zmyślony mówi o wydruku nieprawdę. */
+/* Brak skali zdejmuje przycisk: procent zmyślony mówi o wydruku nieprawdę. */
 function opiszSkale(przycisk: HTMLElement | null, procent: number | undefined): void {
   if (przycisk === null) return;
   if (procent === undefined) {
@@ -275,17 +251,12 @@ function opiszSkale(przycisk: HTMLElement | null, procent: number | undefined): 
   przycisk.textContent = `${procent}% ▾`;
 }
 
-/** Wpisuje format czynny w podpis przycisku wyboru formatu, w brzmieniu podpisu prototypu. */
 function opiszFormat(przycisk: HTMLElement | null, format: StudioExportFormat): void {
   if (przycisk === null) return;
   przycisk.textContent = `Format: ${format.toUpperCase()} ▾`;
 }
 
-/**
- * Format renderu wzięty z odpowiedzi rdzenia: z profilu wydania, a bez profilu
- * z formatu samego dokumentu. Pustka znaczy dokument, którego formatu zbiór
- * wydania kontraktu nie niesie.
- */
+/* Format renderu z profilu wydania, a bez profilu z formatu dokumentu. */
 function formatRenderu(
   formaty: StudioExportFormat[],
   profil: StudioExportProfile | null,
@@ -295,20 +266,19 @@ function formatRenderu(
   return zProfilu ?? formaty.find((pozycja) => pozycja === dokument?.format) ?? null;
 }
 
-/** Zdejmuje przyciski wydania; bez formatu wziętego z rdzenia panel nie ma czym renderować ani co wydać. */
 function zdejmijWydanie(wezly: WezlyPodgladu): void {
   wezly.format?.remove();
   wezly.eksport?.remove();
   wezly.biblioteka?.remove();
 }
 
-/** Kolejna pozycja zbioru kontraktu po pozycji czynnej; pozycja spoza zbioru bierze pozycję pierwszą. Kliknięcie obchodzi zbiór, bo prototyp nie niesie węzła listy rozwijanej, a wiązanie węzłów nie buduje. */
+/* Kliknięcie obchodzi zbiór: prototyp nie niesie węzła listy rozwijanej. */
 function nastepna<T>(zbior: readonly T[], czynna: T | undefined): T {
   const miejsce = czynna === undefined ? -1 : zbior.indexOf(czynna);
   return zbior[(miejsce + 1) % zbior.length];
 }
 
-/** Zdejmuje wzór kartki z treści przykładowej wraz z tytułem i akapitem: render oddaje wyłącznie zasoby stron, więc tekstu na kartce nie ma z czego wziąć. */
+/* Render oddaje wyłącznie zasoby stron, więc tekstu na kartce nie ma skąd wziąć. */
 function zdejmijWzorStrony(podglad: HTMLElement): HTMLElement | null {
   const kartka = podglad.querySelector('.dn-kartka');
   if (!(kartka instanceof HTMLElement)) return null;
@@ -317,7 +287,6 @@ function zdejmijWzorStrony(podglad: HTMLElement): HTMLElement | null {
   return kartka.cloneNode(true) as HTMLElement;
 }
 
-/** Wskazuje węzły panelu podglądu od korzenia karty; pustka znaczy, że panel nie stoi w karcie. */
 function zbierzWezly(korzen: ParentNode): WezlyPodgladu | null {
   const panel = korzen.querySelector('#panel-preview');
   if (panel === null) return null;
@@ -338,7 +307,6 @@ function zbierzWezly(korzen: ParentNode): WezlyPodgladu | null {
   };
 }
 
-/** Przyciski stojące wprost w wierszu panelu, w porządku znacznika. */
 function przyciski(panel: Element, wybor: string): HTMLElement[] {
   const wiersz = panel.querySelector(wybor);
   if (wiersz === null) return [];

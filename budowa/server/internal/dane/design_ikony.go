@@ -1,5 +1,4 @@
-// Plik prowadzi obszar ikon własnych modułu Design, część RepozytoriumDesignu; w bazie leżą wyłącznie ikony
-// narysowane albo wytworzone kanałem modelu, katalog ikon otwartoźródłowych jest wkompilowany w binarium, a etykiety podmieniają się kompletem.
+// Ikony własne modułu Design wraz z etykietami; katalog otwartoźródłowy jest wkompilowany.
 package dane
 
 import (
@@ -31,21 +30,22 @@ const (
 
 	zapiszIkoneDesignuSQL = `INSERT INTO ikona_design
 	                         (identyfikator_zewnetrzny, okno, nazwa, zestaw, svg, siatka,
-	                          grubosc_obrysu, zaktualizowano)
-	                         VALUES (?, ?, ?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now'))
+	                          grubosc_obrysu, zaktualizowano, konto_id)
+	                         VALUES (?, ?, ?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now'), ` + WskazanieKonta + `)
 	                         ON CONFLICT(identyfikator_zewnetrzny) DO UPDATE SET
 	                             nazwa = excluded.nazwa,
 	                             zestaw = excluded.zestaw,
 	                             svg = excluded.svg,
 	                             siatka = excluded.siatka,
 	                             grubosc_obrysu = excluded.grubosc_obrysu,
-	                             zaktualizowano = excluded.zaktualizowano`
+	                             zaktualizowano = excluded.zaktualizowano
+	                         WHERE ` + WarunekKonta
 
 	pobierzIkoneDesignu = `SELECT ` + kolumnyIkonyDesignu + ` FROM ikona_design i
-	                       WHERE i.identyfikator_zewnetrzny = ?`
+	                       WHERE i.identyfikator_zewnetrzny = ? AND ` + WarunekKonta
 
 	listaIkonDesignuOkna = `SELECT ` + kolumnyIkonyDesignu + ` FROM ikona_design i
-	                        WHERE i.okno = ? ORDER BY i.zaktualizowano DESC, i.id DESC`
+	                        WHERE i.okno = ? AND ` + WarunekKonta + ` ORDER BY i.zaktualizowano DESC, i.id DESC`
 
 	usunEtykietyIkonyDesignu = `DELETE FROM etykieta_ikony_design WHERE ikona_id = ?`
 
@@ -80,16 +80,16 @@ func (r *repozytoriumDesignu) ZapiszIkoneDesignu(ctx context.Context,
 		}
 		if _, err := zapis.ExecContext(ctx, ikona.Kod, ikona.Okno, ikona.Nazwa,
 			tekstDoKolumny(ikona.Zestaw), ikona.SVG, liczbaDoKolumny(ikona.Siatka),
-			liczbaRzeczywistaDoKolumny(ikona.GruboscObrysu)); err != nil {
+			liczbaRzeczywistaDoKolumny(ikona.GruboscObrysu), KontoOperatora(ctx),
+			KontoOperatora(ctx)); err != nil {
 			return fmt.Errorf("dane: nie można zapisać ikony design %q: %w", ikona.Kod, err)
 		}
 
-		// Klucz wiersza wchodzi dopiero po zapisie, bo ikona mogła powstać dopiero w tej transakcji.
 		odczyt, err := r.zapytania.wTransakcji(ctx, transakcja, pobierzIkoneDesignu)
 		if err != nil {
 			return err
 		}
-		zapisana, err := odczytajIkoneDesignu(odczyt.QueryRowContext(ctx, ikona.Kod))
+		zapisana, err := odczytajIkoneDesignu(odczyt.QueryRowContext(ctx, ikona.Kod, KontoOperatora(ctx)))
 		if err != nil {
 			return fmt.Errorf("dane: nie można odczytać zapisanej ikony design %q: %w", ikona.Kod, err)
 		}
@@ -124,8 +124,6 @@ func (r *repozytoriumDesignu) ZapiszIkoneDesignu(ctx context.Context,
 	return r.IkonaDesignuPoKodzie(ctx, ikona.Kod)
 }
 
-// IkonaDesignuPoKodzie zwraca ikonę o wskazanym identyfikatorze zewnętrznym
-// wraz z etykietami. Brak wiersza wraca jako ErrBrakWiersza.
 func (r *repozytoriumDesignu) IkonaDesignuPoKodzie(ctx context.Context,
 	kod string) (IkonaDesignu, error) {
 
@@ -133,7 +131,7 @@ func (r *repozytoriumDesignu) IkonaDesignuPoKodzie(ctx context.Context,
 	if err != nil {
 		return IkonaDesignu{}, err
 	}
-	ikona, err := odczytajIkoneDesignu(polecenie.QueryRowContext(ctx, kod))
+	ikona, err := odczytajIkoneDesignu(polecenie.QueryRowContext(ctx, kod, KontoOperatora(ctx)))
 	if errors.Is(err, sql.ErrNoRows) {
 		return IkonaDesignu{}, ErrBrakWiersza
 	}
@@ -156,7 +154,7 @@ func (r *repozytoriumDesignu) IkonyDesignuOkna(ctx context.Context,
 	if err != nil {
 		return nil, err
 	}
-	wiersze, err := polecenie.QueryContext(ctx, okno)
+	wiersze, err := polecenie.QueryContext(ctx, okno, KontoOperatora(ctx))
 	if err != nil {
 		return nil, fmt.Errorf("dane: nie można odczytać ikon design okna %q: %w", okno, err)
 	}
@@ -184,7 +182,6 @@ func (r *repozytoriumDesignu) IkonyDesignuOkna(ctx context.Context,
 	return lista, nil
 }
 
-// etykietyIkonyDesignu czyta wszystkie etykiety jednej ikony wprost z bazy danych repozytorium designu.
 func (r *repozytoriumDesignu) etykietyIkonyDesignu(ctx context.Context,
 	ikonaID int64) ([]string, error) {
 

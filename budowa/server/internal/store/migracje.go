@@ -38,7 +38,6 @@ type kluczNaruszenia struct {
 	NumerKlucza   int64
 }
 
-// zrodloWierszy obejmuje pulę połączeń i transakcję kroku — więzy sprawdzane są z obu.
 type zrodloWierszy interface {
 	Query(zapytanie string, argumenty ...any) (*sql.Rows, error)
 }
@@ -262,6 +261,28 @@ func (b *Baza) zastosujMigracje(krok migracja, zastaneNaruszenia map[kluczNarusz
 		}
 	}()
 
+	// Przemianowanie tabeli zastępczej na nazwę pierwotną każe SQLite sparsować
+	// cały schemat, niespójny póki tabela pierwotna nie stoi; pragma to znosi.
+	var przemianowanieZastane int
+	if err := polaczenie.QueryRowContext(zycie, "PRAGMA legacy_alter_table").Scan(&przemianowanieZastane); err != nil {
+		return nil, fmt.Errorf("store: nie można odczytać trybu przemianowania tabel przed migracją %03d: %w",
+			krok.Wersja, err)
+	}
+	if _, err := polaczenie.ExecContext(zycie, "PRAGMA legacy_alter_table = on"); err != nil {
+		return nil, fmt.Errorf("store: nie można włączyć trybu przemianowania tabel na czas migracji %03d: %w",
+			krok.Wersja, err)
+	}
+	defer func() {
+		polecenie := fmt.Sprintf("PRAGMA legacy_alter_table = %d", przemianowanieZastane)
+		if _, err := polaczenie.ExecContext(zycie, polecenie); err != nil {
+			odrzucPolaczenie(polaczenie)
+			if blad == nil {
+				blad = fmt.Errorf("store: nie można przywrócić trybu przemianowania tabel po migracji %03d: %w",
+					krok.Wersja, err)
+			}
+		}
+	}()
+
 	transakcja, err := polaczenie.BeginTx(zycie, nil)
 	if err != nil {
 		return nil, fmt.Errorf("store: nie można otworzyć transakcji migracji %03d: %w", krok.Wersja, err)
@@ -311,9 +332,8 @@ func (b *Baza) zastaneNaruszeniaWiezow() (map[kluczNaruszenia]int, error) {
 
 // sprawdzWiezyPoKroku wykazuje, że krok wykonany bez więzów nie zostawił wiersza
 // wskazującego na rodzica, którego nie ma. Odmowa pada przed zatwierdzeniem, bo
-// po zatwierdzeniu wycofanie nie jest możliwe. Stan zmierzony po kroku wraca do
-// wołającego: krok, który zastaną sierotę skasował, obniża odniesienie krokowi
-// następnemu, a odniesienie zdjęte raz na przejazd podnosiłoby mu próg.
+// po nim wycofanie nie jest możliwe. Stan po kroku wraca do wołającego: krok,
+// który zastaną sierotę skasował, obniża odniesienie krokowi następnemu.
 func sprawdzWiezyPoKroku(transakcja *sql.Tx, krok migracja,
 	zastane map[kluczNaruszenia]int) (map[kluczNaruszenia]int, error) {
 
@@ -334,7 +354,6 @@ func sprawdzWiezyPoKroku(transakcja *sql.Tx, krok migracja,
 	return po, nil
 }
 
-// policzNaruszeniaWiezow zwraca liczbę wierszy bez wskazywanego rodzica w rozbiciu na więzy.
 func policzNaruszeniaWiezow(zrodlo zrodloWierszy) (map[kluczNaruszenia]int, error) {
 	wiersze, err := zrodlo.Query("PRAGMA foreign_key_check")
 	if err != nil {
@@ -357,7 +376,6 @@ func policzNaruszeniaWiezow(zrodlo zrodloWierszy) (map[kluczNaruszenia]int, erro
 	return policzone, nil
 }
 
-// opiszNaruszenia zwraca liczbę wierszy bez rodzica i nazwy tabel, w których stoją.
 func opiszNaruszenia(policzone map[kluczNaruszenia]int) (int, string) {
 	wierszy := 0
 	tabele := make([]string, 0, len(policzone))

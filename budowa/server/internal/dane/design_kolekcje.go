@@ -1,5 +1,4 @@
-// Plik prowadzi obszar kolekcji zasobów modułu Design, część RepozytoriumDesignu; przypisanie jest dokładką albo
-// odjęciem, nigdy zastąpieniem — inaczej niż etykiety, które podmieniają komplet, bo kolekcja bywa duża.
+// Kolekcje zasobów modułu Design: przypisanie jest dokładką albo odjęciem, nigdy podmianą kompletu.
 package dane
 
 import (
@@ -9,9 +8,7 @@ import (
 	"fmt"
 )
 
-// KolekcjaDesignu to wiersz tabeli `kolekcja_design`. Zasoby leżą w osobnej
-// tabeli i wchodzą tu przy odczycie — `Zasoby` niesie ich identyfikatory
-// zewnętrzne w kolejności przypisania, a `Liczba` jest licznikiem pozycji.
+// KolekcjaDesignu to wiersz `kolekcja_design`; `Zasoby` niesie identyfikatory pozycji w kolejności przypisania.
 type KolekcjaDesignu struct {
 	ID             int64
 	Kod            string
@@ -30,23 +27,24 @@ const (
 	                          k.zaktualizowano`
 
 	zapiszKolekcjeDesignu = `INSERT INTO kolekcja_design
-	                         (identyfikator_zewnetrzny, okno, nazwa, opis, zaktualizowano)
-	                         VALUES (?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now'))
+	                         (identyfikator_zewnetrzny, okno, nazwa, opis, zaktualizowano, konto_id)
+	                         VALUES (?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now'), ` + WskazanieKonta + `)
 	                         ON CONFLICT(identyfikator_zewnetrzny) DO UPDATE SET
 	                             nazwa = excluded.nazwa,
 	                             opis = excluded.opis,
-	                             zaktualizowano = excluded.zaktualizowano`
+	                             zaktualizowano = excluded.zaktualizowano
+	                         WHERE ` + WarunekKonta
 
 	pobierzKolekcjeDesignu = `SELECT ` + kolumnyKolekcjiDesignu + ` FROM kolekcja_design k
-	                          WHERE k.identyfikator_zewnetrzny = ?`
+	                          WHERE k.identyfikator_zewnetrzny = ? AND ` + WarunekKonta
 
 	listaKolekcjiDesignu = `SELECT ` + kolumnyKolekcjiDesignu + ` FROM kolekcja_design k
-	                        WHERE k.okno = ?
+	                        WHERE k.okno = ? AND ` + WarunekKonta + `
 	                        ORDER BY k.zaktualizowano DESC, k.id DESC`
 
 	// Zawężenie do kolekcji zawierających wskazany zasób, po jego identyfikatorze zewnętrznym w żądaniu okna.
 	listaKolekcjiDesignuZZasobem = `SELECT ` + kolumnyKolekcjiDesignu + ` FROM kolekcja_design k
-	                                WHERE k.okno = ?
+	                                WHERE k.okno = ? AND ` + WarunekKonta + `
 	                                  AND EXISTS (SELECT 1 FROM pozycja_kolekcji_design p
 	                                               WHERE p.kolekcja_id = k.id AND p.zasob_id = ?)
 	                                ORDER BY k.zaktualizowano DESC, k.id DESC`
@@ -68,8 +66,7 @@ const (
 	                               WHERE kolekcja_id = ? ORDER BY kolejnosc, rowid`
 )
 
-// ZapiszKolekcjeDesignu zakłada kolekcję albo nadpisuje zastaną po
-// identyfikatorze zewnętrznym i oddaje stan po zapisie.
+// ZapiszKolekcjeDesignu zakłada kolekcję albo nadpisuje zastaną po kodzie i oddaje stan po zapisie.
 func (r *repozytoriumDesignu) ZapiszKolekcjeDesignu(ctx context.Context,
 	kolekcja KolekcjaDesignu) (KolekcjaDesignu, error) {
 
@@ -87,15 +84,14 @@ func (r *repozytoriumDesignu) ZapiszKolekcjeDesignu(ctx context.Context,
 		return KolekcjaDesignu{}, err
 	}
 	if _, err := polecenie.ExecContext(ctx, kolekcja.Kod, kolekcja.Okno, kolekcja.Nazwa,
-		tekstDoKolumny(kolekcja.Opis)); err != nil {
+		tekstDoKolumny(kolekcja.Opis), KontoOperatora(ctx), KontoOperatora(ctx)); err != nil {
 		return KolekcjaDesignu{}, fmt.Errorf("dane: nie można zapisać kolekcji design %q: %w",
 			kolekcja.Kod, err)
 	}
 	return r.KolekcjaDesignuPoKodzie(ctx, kolekcja.Kod)
 }
 
-// KolekcjaDesignuPoKodzie zwraca kolekcję o wskazanym identyfikatorze
-// zewnętrznym wraz z jej zasobami. Brak wiersza wraca jako ErrBrakWiersza.
+// KolekcjaDesignuPoKodzie zwraca kolekcję po kodzie wraz z zasobami; brak wiersza wraca jako ErrBrakWiersza.
 func (r *repozytoriumDesignu) KolekcjaDesignuPoKodzie(ctx context.Context,
 	kod string) (KolekcjaDesignu, error) {
 
@@ -103,7 +99,7 @@ func (r *repozytoriumDesignu) KolekcjaDesignuPoKodzie(ctx context.Context,
 	if err != nil {
 		return KolekcjaDesignu{}, err
 	}
-	kolekcja, err := odczytajKolekcjeDesignu(polecenie.QueryRowContext(ctx, kod))
+	kolekcja, err := odczytajKolekcjeDesignu(polecenie.QueryRowContext(ctx, kod, KontoOperatora(ctx)))
 	if errors.Is(err, sql.ErrNoRows) {
 		return KolekcjaDesignu{}, ErrBrakWiersza
 	}
@@ -118,13 +114,12 @@ func (r *repozytoriumDesignu) KolekcjaDesignuPoKodzie(ctx context.Context,
 	return kolekcja, nil
 }
 
-// KolekcjeDesignu zwraca kolekcje okna, od ostatnio zmienianej, wraz z ich
-// zasobami. Wskazanie zasobu zawęża wykaz do kolekcji, które go zawierają.
+// KolekcjeDesignu zwraca kolekcje okna wraz z zasobami; wskazanie zasobu zawęża wykaz do kolekcji z tym zasobem.
 func (r *repozytoriumDesignu) KolekcjeDesignu(ctx context.Context,
 	okno string, zasob *string) ([]KolekcjaDesignu, error) {
 
 	zapytanie := listaKolekcjiDesignu
-	argumenty := []any{okno}
+	argumenty := []any{okno, KontoOperatora(ctx)}
 	if zasob != nil && *zasob != "" {
 		zapytanie = listaKolekcjiDesignuZZasobem
 		argumenty = append(argumenty, *zasob)
@@ -183,7 +178,6 @@ func (r *repozytoriumDesignu) ZmienPrzypisaniaKolekcjiDesignu(ctx context.Contex
 			if zdejmij {
 				wynik, err = polecenie.ExecContext(ctx, kolekcjaID, zasob)
 			} else {
-				// Trzeci argument powtarza klucz kolekcji: podzapytanie wyliczające kolejność ma własne wiązanie.
 				wynik, err = polecenie.ExecContext(ctx, kolekcjaID, zasob, kolekcjaID)
 			}
 			if err != nil {

@@ -14,16 +14,12 @@ import (
 )
 
 const (
-	// czasNaglowkaZadania ogranicza czas na przysłanie nagłówków żądania. Bez
-	// niego proces przysyłający nagłówki po bajcie trzyma gniazdo bez końca.
+	// Bez granicy proces przysyłający nagłówki po bajcie trzyma gniazdo bez końca.
 	czasNaglowkaZadania = 10 * time.Second
-	// czasBezczynnosciHttp zamyka bezczynne połączenie HTTP z podtrzymaniem.
-	// Gniazda WebSocket granica nie dotyczy: po uaktualnieniu połączenie
-	// przestaje być połączeniem HTTP, a bezczynne gniazdo rozstrzyga ping.
+	// Gniazda WebSocket granica nie dotyczy: bezczynne gniazdo rozstrzyga ping.
 	czasBezczynnosciHttp = 2 * time.Minute
 )
 
-// Serwer jest nasłuchem rdzenia: przyjmuje połączenia WebSocket, serwuje pliki klienta i realizuje interfejs Rozglosnik.
 type Serwer struct {
 	ustawienia    Ustawienia
 	rejestrKomend *protocol.RejestrKomend
@@ -41,8 +37,6 @@ type Serwer struct {
 	zakonczone chan struct{}
 }
 
-// Nowy buduje serwer transportu. Zbiór znanych komend pochodzi w całości
-// z kontraktu — transport nie zna ani jednego literału nazwy.
 func Nowy(ustawienia Ustawienia) *Serwer {
 	return &Serwer{
 		ustawienia:    ustawienia.zNormalizowane(),
@@ -52,28 +46,23 @@ func Nowy(ustawienia Ustawienia) *Serwer {
 	}
 }
 
-// PodlaczRdzen wskazuje realizację obsługi komend. Wywołanie przed startem
-// nasłuchu i w jego trakcie jest równoważne: dopóki rdzeń nie jest podłączony,
-// komendy dostają odpowiedź `*.unknown`, a połączenia żyją.
+// Bez podłączonego rdzenia komendy dostają odpowiedź `*.unknown`, a połączenia żyją.
 func (s *Serwer) PodlaczRdzen(rdzen Rdzen) {
 	s.zamekRdzenia.Lock()
 	s.rdzen = rdzen
 	s.zamekRdzenia.Unlock()
 }
 
-// Metoda rdzenPodlaczony odczytuje bieżącą realizację obsługi komend podłączoną obecnie do tego serwera.
 func (s *Serwer) rdzenPodlaczony() Rdzen {
 	s.zamekRdzenia.RLock()
 	defer s.zamekRdzenia.RUnlock()
 	return s.rdzen
 }
 
-// Uruchom otwiera nasłuch i przechodzi do obsługi w tle. Błąd wraca wyłącznie
-// z zajęcia portu; dalsze usterki pojedynczych połączeń nie zatrzymują serwera.
+// Błąd wraca wyłącznie z zajęcia portu; usterki połączeń nie zatrzymują serwera.
 func (s *Serwer) Uruchom(kontekst context.Context) error {
 	s.kontekst, s.zakoncz = context.WithCancel(kontekst)
 
-	// Niekompletna para TLS zatrzymuje start celowo, jako jedyne miejsce, gdzie start się tu nie udaje.
 	if err := s.ustawienia.sprawdzTLS(); err != nil {
 		s.zakoncz()
 		return err
@@ -85,11 +74,7 @@ func (s *Serwer) Uruchom(kontekst context.Context) error {
 		return fmt.Errorf("transport: nasłuch %s: %w", s.ustawienia.adresNasluchu(), err)
 	}
 	s.nasluch = nasluch
-	// Granice czasu stoją na nasłuchu, nie na nastawie: bez nich jedno
-	// niedokończone żądanie trzyma gniazdo systemowe do końca życia procesu,
-	// a uzgodnienie WebSocket zaczyna się od zwykłych nagłówków HTTP.
-	// Czas odczytu całego żądania granicy nie ma — po uaktualnieniu gniazdo
-	// czyta komunikaty przez cały czas sesji.
+	// Czas odczytu całego żądania granicy nie ma: gniazdo czyta przez całą sesję.
 	s.serwerHttp = &http.Server{
 		Handler:           s.trasy(),
 		ReadHeaderTimeout: czasNaglowkaZadania,
@@ -109,10 +94,6 @@ func (s *Serwer) Uruchom(kontekst context.Context) error {
 	return nil
 }
 
-// obsluguj prowadzi nasłuch warstwą właściwą dla nastaw: TLS, gdy para plików
-// jest wskazana, otwartym tekstem w przeciwnym razie. Rozstrzygnięcie stoi tutaj,
-// a nie w Uruchom, żeby po starcie została jedna droga wyjścia i jeden zapis
-// dziennika.
 func (s *Serwer) obsluguj(nasluch net.Listener) error {
 	if s.ustawienia.zTLS() {
 		return s.serwerHttp.ServeTLS(nasluch, s.ustawienia.CertyfikatTLS, s.ustawienia.KluczTLS)
@@ -120,9 +101,6 @@ func (s *Serwer) obsluguj(nasluch net.Listener) error {
 	return s.serwerHttp.Serve(nasluch)
 }
 
-// Sluchaj otwiera nasłuch i oddaje sterowanie dopiero po zamknięciu kontekstu.
-// Jest postacią blokującą Uruchom — dla warstwy składającej, która prowadzi
-// nasłuch jako jedno zadanie o czasie życia procesu.
 func (s *Serwer) Sluchaj(kontekst context.Context) error {
 	if err := s.Uruchom(kontekst); err != nil {
 		return err
@@ -131,7 +109,6 @@ func (s *Serwer) Sluchaj(kontekst context.Context) error {
 	return s.Zamknij()
 }
 
-// Metoda trasy składa mapę ścieżek serwera: kanał WebSocket oraz pliki klienta pod pozostałymi ścieżkami.
 func (s *Serwer) trasy() http.Handler {
 	trasy := http.NewServeMux()
 	trasy.HandleFunc(s.ustawienia.SciezkaGniazda, s.nawiaz)
@@ -139,8 +116,6 @@ func (s *Serwer) trasy() http.Handler {
 	return trasy
 }
 
-// Adres zwraca rzeczywisty adres nasłuchu — po starcie z portem dowolnym jest
-// jedynym sposobem poznania numeru portu.
 func (s *Serwer) Adres() string {
 	if s.nasluch == nil {
 		return s.ustawienia.adresNasluchu()
@@ -148,9 +123,7 @@ func (s *Serwer) Adres() string {
 	return s.nasluch.Addr().String()
 }
 
-// Zamknij kończy nasłuch, rozłącza urządzenia i czeka na dokończenie obsługi
-// żądań już przyjętych. Kolejność jest istotna: najpierw zamyka się wejście,
-// potem czeka na pracę w biegu — inaczej wynik pracy nie miałby dokąd wrócić.
+// Najpierw zamyka się wejście, potem czeka na pracę w biegu.
 func (s *Serwer) Zamknij() error {
 	if s.zakoncz != nil {
 		s.zakoncz()

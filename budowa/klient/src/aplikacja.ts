@@ -100,10 +100,8 @@ pilnujTokenu(kanal);
 
 /*
 Powitanie idzie na każdym gnieździe od nowa: rdzeń wiąże sesję bramki
-z połączeniem w powitaniu, więc po uśpieniu maszyny, restarcie rdzenia albo
-mignięciu sieci komenda bez ponowienia wraca odmową `not_authenticated`.
-Do powrotu odpowiedzi kolejka wychodząca stoi wstrzymana — inaczej komendy
-odłożone na czas zerwania wyszłyby przed uwierzytelnieniem.
+z połączeniem właśnie w powitaniu, więc komenda bez ponowienia wraca odmową
+`not_authenticated`. Do powrotu odpowiedzi kolejka wychodząca stoi wstrzymana.
 */
 transport.naStan((stan) => {
   /* Stan `laczenie` to pierwsza próba, przed którą żadnego połączenia nie było:

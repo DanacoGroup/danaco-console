@@ -15,19 +15,14 @@ import (
 )
 
 const (
-	// odstepPingu jest odstępem między pingami kanału. Gniazdo, po którego
-	// drugiej stronie nie ma już nikogo (uśpiony laptop, zerwana sieć), nie
-	// zgłasza tego odczytem — bez pingu trzymałoby dwie gorutyny i wpis
-	// w rejestrze przez całe życie procesu.
-	odstepPingu = 20 * time.Second
-	// czasNaOdpowiedzPingu jest granicą czekania na odpowiedź. Przekroczenie
-	// znaczy urządzenie nieodpowiadające, nie urządzenie wolne.
+	// Gniazdo bez nikogo po drugiej stronie nie zgłasza tego odczytem.
+	odstepPingu          = 20 * time.Second
 	czasNaOdpowiedzPingu = 10 * time.Second
+	// Bieg na każdy komunikat rośnie bez granicy; zajęta wstrzymuje odczyt.
+	biegiNaPolaczenie = 32
 )
 
-// petlaPingu pilnuje, czy po drugiej stronie gniazda ktoś jeszcze jest, i zamyka
-// połączenie po pierwszym pingu bez odpowiedzi. Biegnie obok pętli odbioru, bo
-// odpowiedź na ping czyta właśnie ta pętla.
+// petlaPingu biegnie obok pętli odbioru, bo odpowiedź na ping czyta właśnie ta pętla.
 func (p *Polaczenie) petlaPingu() {
 	tykanie := time.NewTicker(odstepPingu)
 	defer tykanie.Stop()
@@ -47,7 +42,6 @@ func (p *Polaczenie) petlaPingu() {
 	}
 }
 
-// Metoda petlaOdbioru czyta komunikaty urządzenia i kieruje je do rdzenia w kontekście serwera, nie połączenia.
 func (p *Polaczenie) petlaOdbioru(kontekstRdzenia context.Context, zrodloRdzenia func() Rdzen, rejestr *protocol.RejestrKomend, praca *sync.WaitGroup, dopuszczenie dopuszczenieBramki) {
 	if dopuszczenie.wymagana && !p.przeszlaPrzezBramke() {
 		p.gniazdo.SetReadLimit(LimitOdczytuPrzedBramka)
@@ -55,7 +49,6 @@ func (p *Polaczenie) petlaOdbioru(kontekstRdzenia context.Context, zrodloRdzenia
 	for {
 		_, dane, err := p.gniazdo.Read(p.kontekst)
 		if err != nil {
-			// Powód bierze się z błędu, nie ze stałej, bo linia dziennika ma nazwać, co naprawdę zaszło.
 			p.Zamknij(powodRozlaczenia(err))
 			return
 		}
@@ -63,7 +56,6 @@ func (p *Polaczenie) petlaOdbioru(kontekstRdzenia context.Context, zrodloRdzenia
 	}
 }
 
-// Funkcja powodRozlaczenia nazywa koniec odczytu i nie zmyśla winnego, niosąc prawdziwy powód rozłączenia gniazda.
 func powodRozlaczenia(err error) string {
 	if status := websocket.CloseStatus(err); status != -1 {
 		return fmt.Sprintf("kanał zamknięty przez urządzenie (kod %d)", status)
@@ -74,7 +66,6 @@ func powodRozlaczenia(err error) string {
 	return "odczyt przerwany: " + err.Error()
 }
 
-// Metoda przedstawZPowitania wyjmuje identyfikator klienta z ładunku powitania i dokłada go do tożsamości połączenia.
 func (p *Polaczenie) przedstawZPowitania(zadanie protocol.Request) {
 	if zadanie.Komenda != shared.CommandConnectionHello {
 		return
@@ -86,7 +77,6 @@ func (p *Polaczenie) przedstawZPowitania(zadanie protocol.Request) {
 	p.PrzedstawKlienta(powitanie.ClientId)
 }
 
-// Metoda przyjmij rozpoznaje komunikat i oddaje go rdzeniowi, uruchamiając obsługę każdego żądania osobnym biegiem.
 func (p *Polaczenie) przyjmij(kontekstRdzenia context.Context, zrodloRdzenia func() Rdzen, rejestr *protocol.RejestrKomend, praca *sync.WaitGroup, dopuszczenie dopuszczenieBramki, dane []byte) {
 	zadanie, err := protocol.OdkodujZadanie(dane, rejestr)
 	if err != nil {
@@ -97,14 +87,17 @@ func (p *Polaczenie) przyjmij(kontekstRdzenia context.Context, zrodloRdzenia fun
 		return
 	}
 	p.przedstawZPowitania(zadanie)
-	// Rdzeń pobierany dopiero tutaj, przy obsłudze komunikatu, odzwierciedla stan po podłączeniu rdzenia.
 	rdzen := zrodloRdzenia()
 	if rdzen != nil && !p.dopuscZadanie(rdzen, dopuszczenie, zadanie) {
+		return
+	}
+	if !p.zajmijBieg() {
 		return
 	}
 	praca.Add(1)
 	go func() {
 		defer praca.Done()
+		defer p.zwolnijBieg()
 		odpowiedz := wykonajBezpiecznie(kontekstRdzenia, rdzen, zadanie, p, dopuszczenie, p.dziennik)
 		if odpowiedz.Type == "" {
 			return
@@ -115,10 +108,21 @@ func (p *Polaczenie) przyjmij(kontekstRdzenia context.Context, zrodloRdzenia fun
 	}()
 }
 
-// dopuscZadanie rozstrzyga bramkę przed powołaniem biegu obsługi. Bieg powołany
-// przed sprawdzeniem jest pracą rdzenia wykonaną na rzecz gniazda, które bramki
-// nie przeszło — przy ramce do 16 MiB i biegu na każdy komunikat wystarcza to do
-// zajęcia maszyny bez jednego logowania.
+// zajmijBieg czeka w pętli odbioru celowo: wstrzymany odczyt dławi nadawcę.
+func (p *Polaczenie) zajmijBieg() bool {
+	select {
+	case p.biegi <- struct{}{}:
+		return true
+	case <-p.kontekst.Done():
+		return false
+	}
+}
+
+func (p *Polaczenie) zwolnijBieg() {
+	<-p.biegi
+}
+
+// dopuscZadanie rozstrzyga bramkę przed powołaniem biegu obsługi.
 func (p *Polaczenie) dopuscZadanie(rdzen Rdzen, dopuszczenie dopuszczenieBramki, zadanie protocol.Request) bool {
 	if dopuszczenie.przepusc(rdzen, zadanie.Komenda, p) {
 		if _, wejscie := komendyWejscia[zadanie.Komenda]; dopuszczenie.wymagana && !wejscie {
@@ -134,9 +138,7 @@ func (p *Polaczenie) dopuscZadanie(rdzen Rdzen, dopuszczenie dopuszczenieBramki,
 		}
 		return false
 	}
-	// Gniazdo wykonywało już komendy, więc odmowa znaczy sesję unieważnioną albo
-	// wygasłą. Dostęp odbiera się wtedy razem z kanałem: sesja zamknięta gdzie
-	// indziej ma zerwać to gniazdo, a nie czekać na jego kolejną komendę.
+	// Odmowa po komendach spoza wejścia znaczy sesję unieważnioną.
 	if err := p.wyslijWprost(odmowaBezBramki(zadanie)); err != nil {
 		p.dziennik.Printf("transport: odmowa bramki do %s nieodesłana: %v", p.id, err)
 	}

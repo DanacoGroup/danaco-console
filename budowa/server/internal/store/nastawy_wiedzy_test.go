@@ -1,4 +1,4 @@
-package store
+package store_test
 
 import (
 	"testing"
@@ -8,7 +8,7 @@ import (
 
 // TestNastawyWiedzyWskazujaWagiStojace sprawdza, że nastawy wskaźnika znaczenia i stałe pakietu wskazują te same wagi.
 func TestNastawyWiedzyWskazujaWagiStojace(t *testing.T) {
-	baza := swiezaBaza(t)
+	baza := swiezaBazaWiedzy(t)
 
 	oczekiwane := map[string]string{
 		wiedza.KluczModel:         wiedza.ModelDomyslny,

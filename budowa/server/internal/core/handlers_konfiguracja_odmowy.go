@@ -20,6 +20,10 @@ func bladWskazania(err error, byt, identyfikator string) error {
 		return protocol.JakoError(protocol.NowyBlad(shared.ErrorCodeNotFound,
 			byt+" "+identyfikator+" nie istnieje"))
 	}
+	if errors.Is(err, dane.ErrKolizjaWiersza) {
+		return protocol.JakoError(protocol.NowyBlad(shared.ErrorCodeConflict,
+			byt+" "+identyfikator+" należy do innego konta"))
+	}
 	return err
 }
 

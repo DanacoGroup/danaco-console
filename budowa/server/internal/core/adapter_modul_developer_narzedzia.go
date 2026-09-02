@@ -14,8 +14,6 @@ import (
 	"danacoconsole/shared"
 )
 
-// Programy warsztatu deweloperskiego. Nazwa czytelna wchodzi do treści odmowy,
-// a podpowiedź instalacyjna mówi Operatorowi serwera, czym brak uzupełnić.
 var (
 	narzedzieGofmt = zewnetrzne.Narzedzie{
 		Nazwa: "gofmt", Program: "gofmt", Pakiet: "golang"}
@@ -55,17 +53,13 @@ var (
 		Nazwa: "typos", Program: "typos", Pakiet: "cargo install typos-cli"}
 	narzedzieStylelint = zewnetrzne.Narzedzie{
 		Nazwa: "Stylelint", Program: "stylelint", Pakiet: "npm i -g stylelint"}
-	// narzedzieSerweraTypeScript jest zadeklarowane, lecz rdzeń nie ma czym go
-	// zapytać pojedynczym wywołaniem — program mówi wyłącznie sesją LSP, nie
-	// wierszem poleceń; powód stoi przy serwerJezykaPliku.
+	// Program mówi wyłącznie sesją LSP, nie wierszem poleceń; powód stoi przy serwerJezykaPliku.
 	narzedzieSerweraTypeScript = zewnetrzne.Narzedzie{
 		Nazwa: "serwer języka TypeScript", Program: "typescript-language-server",
 		Pakiet: "npm i -g typescript-language-server typescript"}
 )
 
-// narzedziaWarsztatuDevelopera oddaje komplet programów warsztatu w kolejności
-// ustalonej. Kolejność jest ustalona, żeby dwa kolejne odczyty dawały ten sam
-// wykaz — Dev Tools ma się różnić wtedy, gdy zmienił się stan serwera.
+// Kolejność ustalona: dwa odczyty mają dać ten sam wykaz.
 func narzedziaWarsztatuDevelopera() []zewnetrzne.Narzedzie {
 	return []zewnetrzne.Narzedzie{
 		narzedzieAstGrep,
@@ -88,9 +82,7 @@ func narzedziaWarsztatuDevelopera() []zewnetrzne.Narzedzie {
 	}
 }
 
-// narzedzieWarsztatuPoNazwie odnajduje deklarację po nazwie programu albo po
-// nazwie czytelnej. Klient pyta nazwą programu (`gopls`), lecz Operator czyta
-// nazwę czytelną (`Delve`) — obie mają trafiać w ten sam wiersz.
+// Klient pyta nazwą programu (`gopls`), Operator czyta nazwę czytelną (`Delve`).
 func narzedzieWarsztatuPoNazwie(wskazanie string) (zewnetrzne.Narzedzie, bool) {
 	szukane := strings.ToLower(strings.TrimSpace(wskazanie))
 	if szukane == "" {
@@ -106,9 +98,6 @@ func narzedzieWarsztatuPoNazwie(wskazanie string) (zewnetrzne.Narzedzie, bool) {
 	return zewnetrzne.Narzedzie{Nazwa: wskazanie, Program: wskazanie}, true
 }
 
-// SprawdzWarsztat obsługuje developer.toolchain.check. Pusty wykaz w żądaniu
-// znaczy powiedz o wszystkim, co znasz — Dev Tools otwiera zakładkę bez
-// wiedzy o tym, czego szukać, i to rdzeń ma ten wykaz.
 func (a *adapterDevelopera) SprawdzWarsztat(_ context.Context,
 	z shared.DeveloperToolchainCheckRequest) (shared.DeveloperToolchainCheckResponse, error) {
 
@@ -137,9 +126,7 @@ func (a *adapterDevelopera) SprawdzWarsztat(_ context.Context,
 	return shared.DeveloperToolchainCheckResponse{Programs: wykaz}, nil
 }
 
-// wersjaProgramuWarsztatu pyta program o jego wersję. Jedyne miejsce modułu,
-// w którym wywołanie idzie poza port uruchamiacza, bo pytanie o wersję nie
-// należy do żadnego okna.
+// Jedyne wywołanie modułu poza portem uruchamiacza: pytanie o wersję nie należy do żadnego okna.
 func wersjaProgramuWarsztatu(sciezka string) string {
 	ctx, przerwij := context.WithTimeout(context.Background(), 3*time.Second)
 	defer przerwij()
@@ -156,7 +143,6 @@ func wersjaProgramuWarsztatu(sciezka string) string {
 	return ""
 }
 
-// pierwszyWierszWersji bierze pierwszy niepusty wiersz odpowiedzi programu, pomijając wiersze puste na wejściu.
 func pierwszyWierszWersji(wyjscie string) string {
 	for _, wiersz := range strings.Split(wyjscie, "\n") {
 		if tresc := strings.TrimSpace(wiersz); tresc != "" {
@@ -166,23 +152,18 @@ func pierwszyWierszWersji(wyjscie string) string {
 	return ""
 }
 
-// wolajNarzedzieWarsztatu uruchamia program warsztatu w obszarze okna, portem
-// session.Uruchamiacz, tą samą bramą izolacji co budowanie i git.
 func (a *adapterDevelopera) wolajNarzedzieWarsztatu(ctx context.Context, okno session.Okno,
 	narzedzie zewnetrzne.Narzedzie, argumenty []string, katalog string,
 	limit time.Duration) (zewnetrzne.Wynik, error) {
 
 	zasady := session.Zasady{}
 	if a.rozstrzygacz != nil {
-		zasady = ZasadyIzolacji(a.rozstrzygacz, konfigKontekstOkna(okno))
+		zasady = ZasadyIzolacji(a.rozstrzygacz, konfigKontekstOkna(ctx, okno))
 	}
 	return zewnetrzne.Wolaj(ctx, a.uruchamiacz, okno, zasady, a.obszarDevelopera(okno),
 		narzedzie, argumenty, katalog, limit)
 }
 
-// brakNarzedziaWarsztatu rozpoznaje odmowę nie ma czym. Rodziny funkcji
-// rozróżniają ją od awarii osobnym polem kontraktu, bo brak programu nie
-// jest odmową całej komendy — odpowiedź wraca pusta i jawnie to mówi.
 func brakNarzedziaWarsztatu(err error) bool {
 	var brak *zewnetrzne.BrakNarzedzia
 	return err != nil && errors.As(err, &brak)

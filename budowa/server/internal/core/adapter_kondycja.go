@@ -1,6 +1,5 @@
 // Rodzina health.* — definicje sond kondycji, ich przebiegi, seria wyników
-// i dostępność liczona z tej serii, zawsze z wykonanego pomiaru, nigdy
-// z licznika.
+// i dostępność liczona z wykonanego pomiaru, nigdy z licznika.
 package core
 
 import (
@@ -17,50 +16,36 @@ import (
 	"danacoconsole/shared"
 )
 
-// przedrostekSondyKondycji i przedrostekWynikuKondycji znakują identyfikatory
-// nadawane przez rdzeń przy zapisie sondy i wyniku pomiaru.
 const (
 	przedrostekSondyKondycji  = "sonda-"
 	przedrostekWynikuKondycji = "pomiar-"
 
-	// domyslnyLimitCzasuSondy jest brany, gdy definicja nie stawia własnego.
-	// Pięć sekund to granica, po której odpowiedź i tak jest bezużyteczna dla
-	// tego, kto na nią czeka.
+	// Po pięciu sekundach odpowiedź jest bezużyteczna dla czekającego.
 	domyslnyLimitCzasuSondy = 5 * time.Second
 
-	// gornyLimitCzasuSondy zamyka limit podany w definicji. Sonda z limitem
-	// godzinnym zablokowałaby wywołanie `health.probe.run` na godzinę.
+	// Limit z definicji ma pułap: sonda z limitem godzinnym blokowałaby health.probe.run.
 	gornyLimitCzasuSondy = 2 * time.Minute
 
-	// domyslnyCelDostepnosci jest brany, gdy ani sonda, ani żądanie nie podają
-	// celu. Nie jest to pomiar, tylko punkt odniesienia dla budżetu błędów,
-	// więc wolno mu mieć wartość domyślną.
+	// Cel jest punktem odniesienia budżetu błędów, nie pomiarem, więc ma wartość domyślną.
 	domyslnyCelDostepnosci = 99.0
 
-	// domyslnyZakresDostepnosci obejmuje dobę wstecz, gdy żądanie nie stawia
-	// własnych granic czasu wyliczenia dostępności.
 	domyslnyZakresDostepnosci = 24 * time.Hour
 )
 
-// adapterKondycji wypełnia port Kondycja. Trzy zależności ponad repozytorium —
-// uruchamiacz procesów, rejestr kanałów i izolacja — obsługują trzy rodzaje
-// pomiaru. Brak którejkolwiek nie psuje montażu, tylko jeden rodzaj sondy.
 type adapterKondycji struct {
 	repozytorium dane.RepozytoriumKondycji
 	uruchamiacz  session.Uruchamiacz
 	rozstrzygacz *konfig.Rozstrzygacz
 	katalog      *KatalogRoboczy
 	kanaly       *models.Rejestr
+	// repozytoriumKanalow rozstrzyga własność kanału sondy (decyzja 34).
+	repozytoriumKanalow dane.RepozytoriumKanalow
 }
 
-// nowyAdapterKondycji wiąże port z magazynem sond — repozytorium
-// przechowującym definicje i wyniki pomiarów.
 func nowyAdapterKondycji(repozytorium dane.RepozytoriumKondycji) *adapterKondycji {
 	return &adapterKondycji{repozytorium: repozytorium}
 }
 
-// ZArsenalem wpina drogę startu procesu dla sond rodzaju command, uruchamianych
-// przez uprząż arsenału.
 func (a *adapterKondycji) ZArsenalem(uruchamiacz session.Uruchamiacz,
 	rozstrzygacz *konfig.Rozstrzygacz, katalog *KatalogRoboczy) *adapterKondycji {
 
@@ -70,15 +55,13 @@ func (a *adapterKondycji) ZArsenalem(uruchamiacz session.Uruchamiacz,
 	return a
 }
 
-// ZKanalami wpina rejestr kanałów dla sond rodzaju modelCall, mierzących
-// dostępność modelu językowego.
-func (a *adapterKondycji) ZKanalami(kanaly *models.Rejestr) *adapterKondycji {
-	a.kanaly = kanaly
+func (a *adapterKondycji) ZKanalami(kanaly *models.Rejestr,
+	repozytorium dane.RepozytoriumKanalow) *adapterKondycji {
+
+	a.kanaly, a.repozytoriumKanalow = kanaly, repozytorium
 	return a
 }
 
-// ZapiszSonde obsługuje health.probe.save — zapis definicji sondy kondycji,
-// nową albo istniejącą w magazynie.
 func (a *adapterKondycji) ZapiszSonde(ctx context.Context,
 	z shared.HealthProbeSaveRequest) (shared.HealthProbeSaveResponse, error) {
 
@@ -129,8 +112,6 @@ func (a *adapterKondycji) ZapiszSonde(ctx context.Context,
 	}, nil
 }
 
-// WykazSond obsługuje health.probe.list — wykaz zdefiniowanych sond kondycji
-// z zastosowanym sitem żądania.
 func (a *adapterKondycji) WykazSond(ctx context.Context,
 	z shared.HealthProbeListRequest) (shared.HealthProbeListResponse, error) {
 
@@ -155,8 +136,6 @@ func (a *adapterKondycji) WykazSond(ctx context.Context,
 	return shared.HealthProbeListResponse{Probes: wykaz, Total: &liczba}, nil
 }
 
-// UsunSonde obsługuje health.probe.remove — usunięcie definicji sondy wraz
-// z całą serią jej wyników pomiarów.
 func (a *adapterKondycji) UsunSonde(ctx context.Context,
 	z shared.HealthProbeRemoveRequest) (shared.HealthProbeRemoveResponse, error) {
 
@@ -175,9 +154,7 @@ func (a *adapterKondycji) UsunSonde(ctx context.Context,
 	}, nil
 }
 
-// WykonajSonde obsługuje health.probe.run — pomiar na żądanie. Wynik
-// zapisuje się zawsze, także przy porażce sondy, bo pomiar niezapisany byłby
-// pomiarem, którego dostępność nie zobaczy.
+// Wynik zapisuje się także przy porażce sondy — pomiar niezapisany nie wejdzie do dostępności.
 func (a *adapterKondycji) WykonajSonde(ctx context.Context,
 	z shared.HealthProbeRunRequest) (shared.HealthProbeRunResponse, error) {
 
@@ -208,8 +185,6 @@ func (a *adapterKondycji) WykonajSonde(ctx context.Context,
 	}, nil
 }
 
-// WykazWynikow obsługuje health.result.list — odczyt serii pomiarów
-// z zastosowanym sitem żądania modelu.
 func (a *adapterKondycji) WykazWynikow(ctx context.Context,
 	z shared.HealthResultListRequest) (shared.HealthResultListResponse, error) {
 
@@ -239,9 +214,7 @@ func (a *adapterKondycji) WykazWynikow(ctx context.Context,
 	}, nil
 }
 
-// Dostepnosc obsługuje health.uptime.get. Dostępność liczy się z serii
-// pomiarów, po jednej sondzie naraz; wynik degraded liczy się jako połowa
-// udanego.
+// Dostępność liczy się z serii pomiarów po jednej sondzie; degraded liczy się jako połowa udanego.
 func (a *adapterKondycji) Dostepnosc(ctx context.Context,
 	z shared.HealthUptimeGetRequest) (shared.HealthUptimeGetResponse, error) {
 
@@ -278,8 +251,6 @@ func (a *adapterKondycji) Dostepnosc(ctx context.Context,
 	}, nil
 }
 
-// sondyDoLiczenia zwraca sondy objęte wyliczeniem dostępności: jedną wskazaną
-// albo wszystkie zdefiniowane.
 func (a *adapterKondycji) sondyDoLiczenia(ctx context.Context, kod string) ([]dane.SondaKondycji, error) {
 	if strings.TrimSpace(kod) != "" {
 		sonda, err := a.repozytorium.Sonda(ctx, strings.TrimSpace(kod))
@@ -298,9 +269,7 @@ func (a *adapterKondycji) sondyDoLiczenia(ctx context.Context, kod string) ([]da
 	return sondy, nil
 }
 
-// policzDostepnosc liczy dostępność i budżet błędów jednej sondy z serii jej
-// pomiarów. Seria pusta daje dostępność pustą, a nie sto procent, bo brak
-// pomiarów nie jest dowodem sprawności.
+// Seria pusta daje dostępność pustą, nie sto procent: brak pomiarów nie dowodzi sprawności.
 func policzDostepnosc(sonda dane.SondaKondycji, wyniki []dane.WynikSondyKondycji,
 	odCzasu, doCzasu int64, celZadania *float64) shared.HealthUptime {
 
@@ -367,8 +336,6 @@ func policzDostepnosc(sonda dane.SondaKondycji, wyniki []dane.WynikSondyKondycji
 	return dostepnosc
 }
 
-// sondaKontraktu przekłada wiersz repozytorium na sondę kontraktu, wypełniając
-// pola odpowiedzi komendy.
 func sondaKontraktu(s dane.SondaKondycji) shared.HealthProbe {
 	sonda := shared.HealthProbe{
 		Id: s.Kod, Name: s.Nazwa, Kind: shared.HealthProbeKind(s.Rodzaj), Target: s.Cel,
@@ -387,8 +354,6 @@ func sondaKontraktu(s dane.SondaKondycji) shared.HealthProbe {
 	return sonda
 }
 
-// wynikKontraktu przekłada wiersz serii pomiarów na wynik kontraktu,
-// wypełniając pola odpowiedzi komendy.
 func wynikKontraktu(w dane.WynikSondyKondycji) shared.HealthProbeResult {
 	wynik := shared.HealthProbeResult{
 		Id: w.Kod, ProbeId: w.SondaKod, Status: shared.HealthProbeStatus(w.Stan),
@@ -405,9 +370,7 @@ func wynikKontraktu(w dane.WynikSondyKondycji) shared.HealthProbeResult {
 	return wynik
 }
 
-// sprawdzRodzajSondy odbija rodzaj spoza wyliczenia kontraktu. Rodzaj nieznany
-// zapisany do bazy dałby sondę, której przebieg zawsze kończy się `unknown` —
-// czyli sondę udającą, że mierzy.
+// Rodzaj nieznany zapisany do bazy dałby sondę zawsze kończącą się `unknown`.
 func sprawdzRodzajSondy(rodzaj shared.HealthProbeKind) error {
 	switch rodzaj {
 	case shared.HealthProbeKindHttp, shared.HealthProbeKindTcp, shared.HealthProbeKindCommand,
@@ -419,14 +382,10 @@ func sprawdzRodzajSondy(rodzaj shared.HealthProbeKind) error {
 	}
 }
 
-// terazWMilisekundachKondycji oddaje bieżącą chwilę w milisekundach epoki,
-// jednostce zapisu kolumn czasu.
 func terazWMilisekundachKondycji() int64 {
 	return time.Now().UnixMilli()
 }
 
-// liczbaCalkowitaZeWskaznikaKondycji rozszerza wskaźnik na int do int64
-// wymaganego przez kolumnę bazy.
 func liczbaCalkowitaZeWskaznikaKondycji(wartosc *int) *int64 {
 	if wartosc == nil {
 		return nil
@@ -435,8 +394,6 @@ func liczbaCalkowitaZeWskaznikaKondycji(wartosc *int) *int64 {
 	return &rozszerzona
 }
 
-// wartoscLiczbyDlugiej oddaje wartość wskaźnika na int64 albo zero, gdy
-// żądanie pola nie podało wcale.
 func wartoscLiczbyDlugiej(wartosc *int64) int64 {
 	if wartosc == nil {
 		return 0
@@ -444,29 +401,21 @@ func wartoscLiczbyDlugiej(wartosc *int64) int64 {
 	return *wartosc
 }
 
-// bladZapleczaKondycji nazywa brak magazynu sond po stronie rdzenia —
-// repozytorium niewpięte przy montażu.
 func bladZapleczaKondycji() error {
 	return protocol.JakoError(protocol.NowyBlad(shared.ErrorCodeInternalError,
 		"kondycja: serwer nie ma wpiętego magazynu sond — naprawa: podpiąć "+
 			"repozytorium kondycji przy składaniu serwera"))
 }
 
-// bladWskazaniaKondycji nazywa niepoprawne żądanie modelu, na przykład sondę
-// bez nazwy albo bez celu pomiaru.
 func bladWskazaniaKondycji(powod string) error {
 	return protocol.JakoError(protocol.NowyBlad(shared.ErrorCodeValidationFailed, "kondycja: "+powod))
 }
 
-// bladNieznanejSondy nazywa wskazanie sondy kondycji, której nie ma
-// w magazynie definicji sond kondycji.
 func bladNieznanejSondy(kod string) error {
 	return protocol.JakoError(protocol.NowyBlad(shared.ErrorCodeNotFound,
 		"kondycja: nie ma sondy o identyfikatorze "+strings.TrimSpace(kod)))
 }
 
-// bladMagazynuKondycji nazywa niepowodzenie zapisu albo odczytu w repozytorium
-// kondycji danego rdzenia.
 func bladMagazynuKondycji(err error) error {
 	return protocol.JakoError(protocol.NowyBlad(shared.ErrorCodeInternalError,
 		"kondycja: "+err.Error()))

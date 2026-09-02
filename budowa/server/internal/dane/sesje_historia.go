@@ -7,16 +7,16 @@ import (
 
 // Polecenia historii sesji. Osobno od sesje.go, bo dotyczą czynności Operatora
 // na wykazie sesji, a nie cyklu życia sesji w pracy bieżącej.
-const (
+var (
 	zmienTytulSesji = `UPDATE sesja
 	                   SET tytul = ?,
 	                       zaktualizowano = strftime('%Y-%m-%dT%H:%M:%fZ','now')
-	                   WHERE id = ?`
+	                   WHERE id = ? AND` + sesjaKonta
 
 	zmienProjektSesji = `UPDATE sesja
 	                     SET projekt = ?,
 	                         zaktualizowano = strftime('%Y-%m-%dT%H:%M:%fZ','now')
-	                     WHERE id = ?`
+	                     WHERE id = ? AND` + sesjaKonta
 )
 
 // ZmienTytul zmienia nazwę sesji w historii.
@@ -31,11 +31,11 @@ func (r *repozytoriumSesji) ZmienTytul(ctx context.Context, id int64, tytul stri
 	if err != nil {
 		return err
 	}
-	wynik, err := polecenie.ExecContext(ctx, tytul, id)
+	wynik, err := polecenie.ExecContext(ctx, tytul, id, KontoOperatora(ctx))
 	if err != nil {
 		return fmt.Errorf("dane: nie można zmienić nazwy sesji %d: %w", id, err)
 	}
-	return sprawdzTrafienie(wynik, "sesja", id)
+	return r.trafienieSesji(ctx, wynik, id)
 }
 
 // ZmienProjekt wiąże sesję z projektem albo wyjmuje ją z projektu.
@@ -47,11 +47,12 @@ func (r *repozytoriumSesji) ZmienProjekt(ctx context.Context, id int64, projekt 
 	if err != nil {
 		return err
 	}
-	wynik, err := polecenie.ExecContext(ctx, tekstDoKolumny(wskaznikTekstuLubNil(projekt)), id)
+	wynik, err := polecenie.ExecContext(ctx, tekstDoKolumny(wskaznikTekstuLubNil(projekt)), id,
+		KontoOperatora(ctx))
 	if err != nil {
 		return fmt.Errorf("dane: nie można zmienić projektu sesji %d: %w", id, err)
 	}
-	return sprawdzTrafienie(wynik, "sesja", id)
+	return r.trafienieSesji(ctx, wynik, id)
 }
 
 // wskaznikTekstuLubNil zamienia napis pusty na brak wartości, ponieważ

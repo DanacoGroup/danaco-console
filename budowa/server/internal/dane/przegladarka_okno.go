@@ -11,7 +11,7 @@ import (
 // osobne przebiegi dałyby ten sam wynik trzema odczytami.
 const sladOkna = `SELECT
 	EXISTS(SELECT 1 FROM migawka_strony WHERE okno = ? AND ` + WarunekKonta + `)
-	OR EXISTS(SELECT 1 FROM zrodlo_przegladania WHERE okno = ?)
+	OR EXISTS(SELECT 1 FROM zrodlo_przegladania WHERE okno = ? AND ` + WarunekKonta + `)
 	OR EXISTS(SELECT 1 FROM notatka_przegladania WHERE okno = ? AND ` + WarunekKonta + `)`
 
 // OknoZnane mówi, czy moduł Browser zetknął się kiedykolwiek ze wskazanym
@@ -27,7 +27,7 @@ func (r *repozytoriumPrzegladania) OknoZnane(ctx context.Context, okno string) (
 	}
 	var znane bool
 	konto := KontoOperatora(ctx)
-	if err := polecenie.QueryRowContext(ctx, okno, konto, okno, okno, konto).Scan(&znane); err != nil {
+	if err := polecenie.QueryRowContext(ctx, okno, konto, okno, konto, okno, konto).Scan(&znane); err != nil {
 		return false, fmt.Errorf("dane: nie można sprawdzić okna przeglądania %q: %w", okno, err)
 	}
 	return znane, nil

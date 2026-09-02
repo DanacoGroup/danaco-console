@@ -1,7 +1,5 @@
-// Odpowiedzialność pliku: wywołania kanału modelu, które NIE są głosem
-// uczestnika — analiza zapisu, werdykt sędziego i powtórzenie wypowiedzi.
-// Wynik nie jest niczyim głosem, więc nie wchodzi do transkryptu jako
-// wypowiedź i nie idzie strumieniem.
+// Wywołania kanału modelu, które nie są głosem uczestnika: analiza zapisu, werdykt
+// sędziego i powtórzenie wypowiedzi. Wynik nie wchodzi do transkryptu i nie idzie strumieniem.
 package core
 
 import (
@@ -13,7 +11,6 @@ import (
 	"danacoconsole/shared"
 )
 
-// wywolajModelDebaty prowadzi jedno wywołanie kanału i oddaje całą odpowiedź.
 // Ujście zbiera tekst zamiast go rozgłaszać: odbiorcą jest rdzeń, nie okno.
 func (a *adapterDebaty) wywolajModelDebaty(ctx context.Context,
 	okno, kanal, promptSystemowy, tresc string) (string, error) {
@@ -25,7 +22,7 @@ func (a *adapterDebaty) wywolajModelDebaty(ctx context.Context,
 	if kanal == "" {
 		return "", bladWskazaniaDebaty("wywołanie modelu bez wskazania kanału")
 	}
-	if _, jest := a.kanaly.Kanal(kanal); !jest {
+	if _, jest := kanalKonta(ctx, a.repozytoriumKanalow, a.kanaly, kanal); !jest {
 		return "", bladNieznanegoKanalu(kanal)
 	}
 
@@ -49,9 +46,7 @@ func (a *adapterDebaty) wywolajModelDebaty(ctx context.Context,
 	return odpowiedz.String(), nil
 }
 
-// kanalAnalizy rozstrzyga, który kanał wykonuje pracę nad zapisem debaty.
-// Kolejność jest rozmyślna: wskazanie z żądania, potem kanał pierwszego
-// uczestnika składu.
+// Kolejność rozmyślna: wskazanie z żądania, potem kanał pierwszego uczestnika składu.
 func (a *adapterDebaty) kanalAnalizy(ctx context.Context, okno string, wskazany *string) (string, error) {
 	if kanal := strings.TrimSpace(wartoscTekstu(wskazany)); kanal != "" {
 		return kanal, nil
@@ -68,8 +63,6 @@ func (a *adapterDebaty) kanalAnalizy(ctx context.Context, okno string, wskazany 
 	return uczestnicy[0].KanalModelu, nil
 }
 
-// trescPonownegoGlosu wywołuje kanał uczestnika po raz drugi nad tym samym
-// pytaniem tury i oddaje samą treść.
 func (a *adapterDebaty) trescPonownegoGlosu(ctx context.Context, tura dane.TuraDebaty,
 	uczestnik dane.UczestnikDebaty, kodWypowiedzi string) string {
 
@@ -87,8 +80,6 @@ func (a *adapterDebaty) trescPonownegoGlosu(ctx context.Context, tura dane.TuraD
 	return tresc.String()
 }
 
-// zapisDebatyDoAnalizy składa materiał, nad którym pracuje model: tura po
-// turze, mówca po mówcy. Wskazanie tury zawęża materiał do niej jednej.
 func (a *adapterDebaty) zapisDebatyDoAnalizy(ctx context.Context,
 	okno, turaKod string) (string, []dane.WypowiedzDebaty, error) {
 
@@ -120,9 +111,7 @@ func (a *adapterDebaty) zapisDebatyDoAnalizy(ctx context.Context,
 	return strings.TrimSpace(zapis.String()), istotne, nil
 }
 
-// wierszeOdpowiedzi rozbija odpowiedź modelu na pozycje wykazu. Model
-// poproszony o wykaz oddaje go zwykle wierszami, czasem z myślnikiem albo
-// numerem na początku.
+// Model poproszony o wykaz oddaje go wierszami, czasem z myślnikiem albo numerem na początku.
 func wierszeOdpowiedzi(odpowiedz string) []string {
 	pozycje := make([]string, 0, 8)
 	for _, wiersz := range strings.Split(odpowiedz, "\n") {
@@ -145,8 +134,7 @@ func wierszeOdpowiedzi(odpowiedz string) []string {
 	return pozycje
 }
 
-// zdejmijNumerPozycji usuwa wiodący numer wykazu („1.", „2)"). Ciąg cyfr, po
-// którym nie ma kropki ani nawiasu, zostaje: bywa treścią.
+// Ciąg cyfr bez kropki ani nawiasu zostaje: bywa treścią.
 func zdejmijNumerPozycji(wiersz string) string {
 	koniec := 0
 	for koniec < len(wiersz) && wiersz[koniec] >= '0' && wiersz[koniec] <= '9' {

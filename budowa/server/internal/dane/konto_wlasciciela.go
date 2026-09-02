@@ -9,18 +9,13 @@ import (
 	"fmt"
 )
 
-// Cele drogi potwierdzenia. Są dwa i nie rosną: adres potwierdza się przy
-// rejestracji, a konto odzyskuje po utracie hasła.
 const (
 	CelWeryfikacja = "weryfikacja"
 	CelOdzyskanie  = "odzyskanie"
 )
 
-// KontoWlasciciela to wiersz tabeli `konto_wlasciciela`. Kont jest tyle, ilu
-// użytkowników: jednoznaczność pilnują wskaźniki na loginie i adresie, nie
-// identyfikator wiersza (migracja 406, `decyzje.md` poz. 22).
+// Jednoznaczności pilnują wskaźniki na loginie i adresie, nie identyfikator wiersza (migracja 406, `decyzje.md` poz. 22).
 type KontoWlasciciela struct {
-	// Id wiersza konta. Zero znaczy konto jeszcze niezapisane.
 	Id           int64
 	Login        string
 	Email        string
@@ -28,64 +23,45 @@ type KontoWlasciciela struct {
 	Utworzono    int64
 }
 
-// PotwierdzenieTozsamosci to jednorazowa droga wysłana listem: skrót materiału,
-// cel, czas wygaśnięcia i znacznik użycia.
 type PotwierdzenieTozsamosci struct {
 	Skrot     string
 	Cel       string
 	Wygasa    int64
 	Uzyte     bool
 	Utworzono int64
-	// KontoId wskazuje konto, do którego droga prowadzi. Bez tego wskazania
-	// potwierdzenie adresu przy dwóch kontach naraz otwierałoby konto najstarsze,
-	// nie to, na które poszedł list.
+	// Bez wskazania konta potwierdzenie adresu przy dwóch kontach naraz otwierałoby konto najstarsze.
 	KontoId int64
 }
 
-// RepozytoriumKontaWlasciciela jest kontraktem trwałości rejestracji.
-//
-// Byt jest odrębny od katalogu metod wejścia, bo odpowiada na inne pytanie:
-// katalog metod mówi, CZYM otworzyć bramkę, konto mówi, CZYJA ona jest.
+// Byt odrębny od katalogu metod wejścia: katalog mówi, CZYM otworzyć bramkę, konto — CZYJA ona jest.
 type RepozytoriumKontaWlasciciela interface {
-	// Konto zwraca konto założone najwcześniej; brak wiersza znaczy platformę przed rejestracją.
 	Konto(ctx context.Context) (KontoWlasciciela, error)
-	// KontoPoTozsamosci odnajduje konto po loginie albo adresie, bez względu na
-	// wielkość liter. Brak wiersza znaczy tożsamość nieznaną, nie platformę pustą.
 	KontoPoTozsamosci(ctx context.Context, wskazanie string) (KontoWlasciciela, error)
-	// KontoPoId odnajduje konto wskazane identyfikatorem. Droga potwierdzenia
-	// niesie identyfikator konta, do którego prowadzi, i tylko po nim wolno
-	// sięgnąć po konto — inaczej list otwierałby konto najstarsze.
 	KontoPoId(ctx context.Context, kontoId int64) (KontoWlasciciela, error)
-	// ZalozKonto zapisuje konto i zwraca jego identyfikator; zajęty login albo adres daje ErrKolizjaWiersza.
+	// Praca procesu bez zamawiającego idzie po kontach po kolei (decyzja 34).
+	Konta(ctx context.Context) ([]KontoWlasciciela, error)
 	ZalozKonto(ctx context.Context, konto KontoWlasciciela) (int64, error)
-	// PotwierdzKonto przenosi wskazane konto ze stanu niepotwierdzonego do potwierdzonego.
 	PotwierdzKonto(ctx context.Context, kontoId int64) error
-	// UsunKonto kasuje wskazane konto — istnieje wyłącznie po to, by cofnąć nieudaną rejestrację.
 	UsunKonto(ctx context.Context, kontoId int64) error
 
-	// ZalozPotwierdzenie zapisuje skrót drogi potwierdzenia wraz z celem
-	// i czasem wygaśnięcia.
 	ZalozPotwierdzenie(ctx context.Context, p PotwierdzenieTozsamosci) error
-	// PotwierdzeniePoSkrocie zwraca drogę rozpoznaną skrótem; brak wiersza znaczy drogę nieznaną.
 	PotwierdzeniePoSkrocie(ctx context.Context, skrot string) (PotwierdzenieTozsamosci, error)
-	// ZuzyjPotwierdzenie zamyka drogę po użyciu; drugi wynik mówi, czy wiersz dało się zamknąć.
 	ZuzyjPotwierdzenie(ctx context.Context, skrot string, teraz int64) (bool, error)
 }
 
 const (
 	kolumnyKontaWlasciciela = `id, login, email, potwierdzone, utworzono`
 
-	// Konto najstarsze, gdy pyta się bez wskazania tożsamości — kolejność po
-	// identyfikatorze, bo znacznik czasu dwóch kont założonych w tej samej
-	// milisekundzie nie rozstrzyga.
+	// Kolejność po identyfikatorze: znacznik czasu dwóch kont z tej samej milisekundy nie rozstrzyga.
 	kontoWlascicielaWiersz = `SELECT ` + kolumnyKontaWlasciciela +
 		` FROM konto_wlasciciela ORDER BY id LIMIT 1`
 
 	kontoWlascicielaPoId = `SELECT ` + kolumnyKontaWlasciciela +
 		` FROM konto_wlasciciela WHERE id = ?`
 
-	// Jedno zapytanie na login i na adres: okno logowania przyjmuje oba w tym
-	// samym polu i nie rozstrzyga, które podano.
+	kontaWlasciciela = `SELECT ` + kolumnyKontaWlasciciela + ` FROM konto_wlasciciela ORDER BY id`
+
+	// Okno logowania przyjmuje login i adres w tym samym polu i nie rozstrzyga, które podano.
 	kontoWlascicielaPoTozsamosci = `SELECT ` + kolumnyKontaWlasciciela +
 		` FROM konto_wlasciciela
 		  WHERE login = ? COLLATE NOCASE OR email = ? COLLATE NOCASE
@@ -107,9 +83,7 @@ const (
 	                                           COALESCE(konto_id, 0)
 	                                    FROM potwierdzenie_tozsamosci WHERE skrot = ?`
 
-	// Zamknięcie drogi jest warunkowe: `uzyte = 0` w klauzuli WHERE sprawia, że
-	// dwa równoległe żądania z tym samym materiałem dają jedno zamknięcie i jedno
-	// zero zmienionych wierszy. Niepodzielność stoi w bazie, nie w kodzie.
+	// Warunek `uzyte = 0` w WHERE: dwa równoległe żądania dają jedno zamknięcie; niepodzielność stoi w bazie.
 	zuzyjPotwierdzenieTozsamosci = `UPDATE potwierdzenie_tozsamosci
 	                                SET uzyte = 1
 	                                WHERE skrot = ? AND uzyte = 0 AND wygasa > ?`
@@ -119,16 +93,12 @@ type repozytoriumKontaWlasciciela struct {
 	zapytania *zapytania
 }
 
-// Zgodność implementacji repozytorium konta właściciela z kontraktem jest sprawdzana przy kompilacji pakietu.
 var _ RepozytoriumKontaWlasciciela = (*repozytoriumKontaWlasciciela)(nil)
 
 func noweRepozytoriumKontaWlasciciela(z *zapytania) *repozytoriumKontaWlasciciela {
 	return &repozytoriumKontaWlasciciela{zapytania: z}
 }
 
-// odczytajKontoWlasciciela rozbiera wiersz konta z gotowego zapytania; wspólne dla odczytu
-// bez wskazania tożsamości i z jej wskazaniem, żeby dwie ścieżki nie rozjechały
-// się w kolejności kolumn.
 func odczytajKontoWlasciciela(wiersz *sql.Row) (KontoWlasciciela, error) {
 	var konto KontoWlasciciela
 	var potwierdzone int64
@@ -143,8 +113,7 @@ func odczytajKontoWlasciciela(wiersz *sql.Row) (KontoWlasciciela, error) {
 	return konto, nil
 }
 
-// Konto zwraca konto założone najwcześniej. Służy pytaniu „czy platforma ma
-// w ogóle konto", nie wskazaniu, czyja jest bieżąca sesja.
+// Służy pytaniu „czy platforma ma w ogóle konto”, nie wskazaniu, czyja jest bieżąca sesja.
 func (r *repozytoriumKontaWlasciciela) Konto(ctx context.Context) (KontoWlasciciela, error) {
 	polecenie, err := r.zapytania.przygotuj(ctx, kontoWlascicielaWiersz)
 	if err != nil {
@@ -153,7 +122,6 @@ func (r *repozytoriumKontaWlasciciela) Konto(ctx context.Context) (KontoWlascici
 	return odczytajKontoWlasciciela(polecenie.QueryRowContext(ctx))
 }
 
-// KontoPoTozsamosci odnajduje konto po loginie albo adresie e-mail.
 func (r *repozytoriumKontaWlasciciela) KontoPoTozsamosci(ctx context.Context,
 	wskazanie string) (KontoWlasciciela, error) {
 
@@ -164,7 +132,6 @@ func (r *repozytoriumKontaWlasciciela) KontoPoTozsamosci(ctx context.Context,
 	return odczytajKontoWlasciciela(polecenie.QueryRowContext(ctx, wskazanie, wskazanie))
 }
 
-// KontoPoId odnajduje konto wskazane identyfikatorem drogi potwierdzenia.
 func (r *repozytoriumKontaWlasciciela) KontoPoId(ctx context.Context,
 	kontoId int64) (KontoWlasciciela, error) {
 
@@ -175,8 +142,33 @@ func (r *repozytoriumKontaWlasciciela) KontoPoId(ctx context.Context,
 	return odczytajKontoWlasciciela(polecenie.QueryRowContext(ctx, kontoId))
 }
 
-// ZalozKonto zapisuje konto i zwraca jego identyfikator. Kolizja znaczy zajęty
-// login albo zajęty adres — pilnują tego wskaźniki jednoznaczności, nie kod.
+func (r *repozytoriumKontaWlasciciela) Konta(ctx context.Context) ([]KontoWlasciciela, error) {
+	polecenie, err := r.zapytania.przygotuj(ctx, kontaWlasciciela)
+	if err != nil {
+		return nil, err
+	}
+	wiersze, err := polecenie.QueryContext(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("dane: nie można odczytać kont: %w", err)
+	}
+	defer wiersze.Close()
+	konta := []KontoWlasciciela{}
+	for wiersze.Next() {
+		var konto KontoWlasciciela
+		var potwierdzone int64
+		if err := wiersze.Scan(&konto.Id, &konto.Login, &konto.Email, &potwierdzone,
+			&konto.Utworzono); err != nil {
+			return nil, fmt.Errorf("dane: nie można odczytać konta: %w", err)
+		}
+		konto.Potwierdzone = potwierdzone != 0
+		konta = append(konta, konto)
+	}
+	if err := wiersze.Err(); err != nil {
+		return nil, fmt.Errorf("dane: przerwany odczyt kont: %w", err)
+	}
+	return konta, nil
+}
+
 func (r *repozytoriumKontaWlasciciela) ZalozKonto(ctx context.Context,
 	konto KontoWlasciciela) (int64, error) {
 
@@ -199,7 +191,6 @@ func (r *repozytoriumKontaWlasciciela) ZalozKonto(ctx context.Context,
 	return id, nil
 }
 
-// PotwierdzKonto przenosi konto właściciela do stanu potwierdzonego po weryfikacji adresu rejestracji.
 func (r *repozytoriumKontaWlasciciela) PotwierdzKonto(ctx context.Context, kontoId int64) error {
 	polecenie, err := r.zapytania.przygotuj(ctx, potwierdzKontoWlasciciela)
 	if err != nil {
@@ -211,7 +202,6 @@ func (r *repozytoriumKontaWlasciciela) PotwierdzKonto(ctx context.Context, konto
 	return nil
 }
 
-// UsunKonto kasuje konto właściciela — droga cofnięcia nieudanej rejestracji platformy bez potwierdzenia.
 func (r *repozytoriumKontaWlasciciela) UsunKonto(ctx context.Context, kontoId int64) error {
 	polecenie, err := r.zapytania.przygotuj(ctx, usunKontoWlasciciela)
 	if err != nil {
@@ -223,7 +213,6 @@ func (r *repozytoriumKontaWlasciciela) UsunKonto(ctx context.Context, kontoId in
 	return nil
 }
 
-// ZalozPotwierdzenie zapisuje skrót drogi potwierdzenia tożsamości wraz z terminem jego ważności czasowej.
 func (r *repozytoriumKontaWlasciciela) ZalozPotwierdzenie(ctx context.Context,
 	p PotwierdzenieTozsamosci) error {
 
@@ -237,7 +226,6 @@ func (r *repozytoriumKontaWlasciciela) ZalozPotwierdzenie(ctx context.Context,
 	return nil
 }
 
-// PotwierdzeniePoSkrocie zwraca drogę potwierdzenia tożsamości rozpoznaną jej skrótem zapisanym w bazie.
 func (r *repozytoriumKontaWlasciciela) PotwierdzeniePoSkrocie(ctx context.Context,
 	skrot string) (PotwierdzenieTozsamosci, error) {
 
@@ -261,7 +249,6 @@ func (r *repozytoriumKontaWlasciciela) PotwierdzeniePoSkrocie(ctx context.Contex
 	return p, nil
 }
 
-// ZuzyjPotwierdzenie zamyka drogę potwierdzenia tożsamości natychmiast po jej pierwszym wykorzystaniu.
 func (r *repozytoriumKontaWlasciciela) ZuzyjPotwierdzenie(ctx context.Context,
 	skrot string, teraz int64) (bool, error) {
 

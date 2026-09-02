@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 
+	"danacoconsole/server/internal/dane"
 	"danacoconsole/server/internal/protocol"
 	"danacoconsole/shared"
 )
@@ -26,6 +27,12 @@ func porazka(err error) protocol.Odpowiedz {
 	}
 	if errors.Is(err, context.Canceled) || errors.Is(err, context.DeadlineExceeded) {
 		return protocol.PorazkaKodem(shared.ErrorCodeChannelUnavailable, err.Error())
+	}
+	if errors.Is(err, dane.ErrKolizjaWiersza) {
+		return protocol.Porazka(protocol.BladZeZrodla(shared.ErrorCodeConflict, err))
+	}
+	if errors.Is(err, dane.ErrBrakWiersza) {
+		return protocol.Porazka(protocol.BladZeZrodla(shared.ErrorCodeNotFound, err))
 	}
 	return protocol.Porazka(protocol.BladZeZrodla(shared.ErrorCodeInternalError, err))
 }

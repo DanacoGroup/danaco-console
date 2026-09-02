@@ -8,7 +8,6 @@ import (
 	"danacoconsole/shared"
 )
 
-// rejestrObecnosci składa żywy stan sesji trwających na rdzeniu dla kontrolki powrotu na stronie głównej. Rejestr niczego nie posiada — składa odpis kontraktu z czterech źródeł: nadzorcy, pętli, warstwy danych i telemetrii.
 type rejestrObecnosci struct {
 	kontekst  context.Context
 	nadzorca  *session.Nadzorca
@@ -16,13 +15,12 @@ type rejestrObecnosci struct {
 	czynnosc  *pamiecCzynnosci
 	osadzenie zrodloOsadzenia
 	nadania   zrodloNadan
+	konta     zrodloKontaSesji
 	strumien  zrodloStrumienia
 	nadawca   *emiter
 }
 
-// nowyRejestrObecnosci wiąże składacz z nadzorcą i rejestrem biegów. Kontekst
-// służy odczytom wykonywanym poza obsługą komendy — zdarzenie nie ma własnego
-// żądania, więc nie ma też jego kontekstu.
+// Kontekst służy odczytom poza obsługą komendy — zdarzenie nie ma własnego żądania.
 func nowyRejestrObecnosci(kontekst context.Context, nadzorca *session.Nadzorca,
 	biegi *rejestrBiegow) *rejestrObecnosci {
 
@@ -40,20 +38,26 @@ func nowyRejestrObecnosci(kontekst context.Context, nadzorca *session.Nadzorca,
 	return rejestr
 }
 
-// ZeZrodlami dokłada osadzenie sesji w środowisku i nadania dostępu okien, potrzebne do złożenia pełnego odpisu.
-func (r *rejestrObecnosci) ZeZrodlami(osadzenie zrodloOsadzenia, nadania zrodloNadan) *rejestrObecnosci {
-	r.osadzenie, r.nadania = osadzenie, nadania
+func (r *rejestrObecnosci) ZeZrodlami(osadzenie zrodloOsadzenia, nadania zrodloNadan,
+	konta zrodloKontaSesji) *rejestrObecnosci {
+
+	r.osadzenie, r.nadania, r.konta = osadzenie, nadania, konta
 	return r
 }
 
-// ZeStrumieniem dokłada wiedzę o turze trwającej w oknie. Bez niej odpis mówi
-// o zerze okien strumieniujących, a nie o braku sesji.
+// kontekstSesji oddaje kontekst życia rdzenia z kontem sesji dla odczytów bez żądania (decyzja 34).
+func (r *rejestrObecnosci) kontekstSesji(idSesji string) context.Context {
+	if r.konta == nil {
+		return r.kontekst
+	}
+	return r.konta.KontekstSesji(r.kontekst, idSesji)
+}
+
 func (r *rejestrObecnosci) ZeStrumieniem(strumien zrodloStrumienia) *rejestrObecnosci {
 	r.strumien = strumien
 	return r
 }
 
-// Odpisy zwracają żywy stan wszystkich sesji czynnych, uporządkowany po identyfikatorze. Przy okazji jednego pełnego przejścia rejestr wykreśla ślady okien już zamkniętych, których nie ma w rejestrze nadzorcy.
 func (r *rejestrObecnosci) Odpisy(ctx context.Context) []shared.SessionPresence {
 	if r == nil || r.nadzorca == nil {
 		return nil
@@ -76,9 +80,7 @@ func (r *rejestrObecnosci) Odpisy(ctx context.Context) []shared.SessionPresence 
 	return wykaz
 }
 
-// Odpis zwraca żywy stan jednej sesji. Sesja nieznana rejestrowi nadzorcy daje
-// fałsz: wiersz w bazie bez bytu żywego znaczy sesję do odtworzenia, a nie
-// sesję trwającą w tle.
+// Wiersz w bazie bez bytu żywego znaczy sesję do odtworzenia, nie sesję trwającą w tle.
 func (r *rejestrObecnosci) Odpis(ctx context.Context, idSesji string) (shared.SessionPresence, bool) {
 	if r == nil || r.nadzorca == nil || idSesji == "" {
 		return shared.SessionPresence{}, false
@@ -90,7 +92,6 @@ func (r *rejestrObecnosci) Odpis(ctx context.Context, idSesji string) (shared.Se
 	return r.zloz(ctx, sesja), true
 }
 
-// zloz składa odpis jednej sesji ze wszystkich czterech źródeł: nadzorcy, pętli, warstwy danych i telemetrii.
 func (r *rejestrObecnosci) zloz(ctx context.Context, sesja session.Sesja) shared.SessionPresence {
 	odpis := shared.SessionPresence{
 		SessionId:      sesja.Id,
@@ -125,9 +126,7 @@ func (r *rejestrObecnosci) zloz(ctx context.Context, sesja session.Sesja) shared
 	return odpis
 }
 
-// naniesOgnisko wskazuje okno, do którego prowadzi powrót, i moduł, w którym to
-// okno pracuje. Sesja bez otwartych okien zostaje bez wskazania — powrót
-// prowadzi wtedy do samej karty.
+// Sesja bez otwartych okien zostaje bez wskazania — powrót prowadzi do samej karty.
 func naniesOgnisko(odpis *shared.SessionPresence, ognisko session.Okno) {
 	if ognisko.Id == "" {
 		return
@@ -140,8 +139,7 @@ func naniesOgnisko(odpis *shared.SessionPresence, ognisko session.Okno) {
 	}
 }
 
-// oknaOtwarte zwraca okna sesji przyjmujące pracę. Okno zamknięte nie należy do
-// obrazu sesji trwającej w tle.
+// Okno zamknięte nie należy do obrazu sesji trwającej w tle.
 func (r *rejestrObecnosci) oknaOtwarte(idSesji string) []session.Okno {
 	if r.nadzorca == nil {
 		return nil
@@ -159,7 +157,6 @@ func (r *rejestrObecnosci) oknaOtwarte(idSesji string) []session.Okno {
 	return otwarte
 }
 
-// nadaniaOkna odczytuje nadania dostępu okna przez port. Brak podłączonego portu daje wykaz pusty, nie odmowę.
 func (r *rejestrObecnosci) nadaniaOkna(ctx context.Context, idOkna string) []string {
 	if r.nadania == nil {
 		return nil
@@ -167,7 +164,6 @@ func (r *rejestrObecnosci) nadaniaOkna(ctx context.Context, idOkna string) []str
 	return r.nadania.NadaniaOkna(ctx, idOkna)
 }
 
-// kodSrodowiska odczytuje osadzenie sesji przez port, zwracając pusty napis, gdy port nie jest podłączony.
 func (r *rejestrObecnosci) kodSrodowiska(ctx context.Context, idSesji string) string {
 	if r.osadzenie == nil {
 		return ""

@@ -4,14 +4,13 @@ package core
 
 import (
 	"context"
+	"errors"
 	"strings"
 
 	"danacoconsole/server/internal/dane"
 	"danacoconsole/shared"
 )
 
-// SprawdzJakosc obsługuje `translate.quality.check` i liczy niezgodności rodzaju `placeholder`
-// oraz `length`; pozostałe rodzaje liczy `zbadajPanel` przy porównaniu ze źródłem.
 func (a *adapterTlumaczenia) SprawdzJakosc(ctx context.Context,
 	z shared.TranslateQualityCheckRequest) (shared.TranslateQualityCheckResponse, error) {
 
@@ -40,8 +39,6 @@ func (a *adapterTlumaczenia) SprawdzJakosc(ctx context.Context,
 	}, nil
 }
 
-// sprawdzZnaczniki liczy niezgodności rodzaju `placeholder`: znaczniki podstawienia w treści
-// panelu, które się nie domykają albo domykają nawias bez wcześniejszego otwarcia.
 func sprawdzZnaczniki(panel dane.PanelTlumaczenia) []dane.NiezgodnoscTlumaczenia {
 	if panel.Tresc == nil {
 		return nil
@@ -66,7 +63,6 @@ func sprawdzZnaczniki(panel dane.PanelTlumaczenia) []dane.NiezgodnoscTlumaczenia
 	return wynik
 }
 
-// niezgodnoscZnacznika składa jeden wiersz niezgodności rodzaju `placeholder` do zapisu przy panelu tłumaczenia.
 func niezgodnoscZnacznika(szczegol string) dane.NiezgodnoscTlumaczenia {
 	s := szczegol
 	return dane.NiezgodnoscTlumaczenia{
@@ -75,8 +71,6 @@ func niezgodnoscZnacznika(szczegol string) dane.NiezgodnoscTlumaczenia {
 	}
 }
 
-// sprawdzDlugosc liczy niezgodność rodzaju `length`: panel oznaczony jako gotowy, którego
-// treść jest pusta albo samą białą spacją.
 func sprawdzDlugosc(panel dane.PanelTlumaczenia) []dane.NiezgodnoscTlumaczenia {
 	if panel.Stan != string(shared.TranslationStatusReady) {
 		return nil
@@ -91,8 +85,6 @@ func sprawdzDlugosc(panel dane.PanelTlumaczenia) []dane.NiezgodnoscTlumaczenia {
 	}}
 }
 
-// zdaniaNiezgodnosci składa niezgodności w wykaz zdań, bo kontrakt kontroli oddaje wykaz
-// tekstów, a nie strukturę pól niezgodności.
 func zdaniaNiezgodnosci(niezgodnosci []dane.NiezgodnoscTlumaczenia) []string {
 	wynik := make([]string, 0, len(niezgodnosci))
 	for _, n := range niezgodnosci {
@@ -108,7 +100,6 @@ func zdaniaNiezgodnosci(niezgodnosci []dane.NiezgodnoscTlumaczenia) []string {
 	return wynik
 }
 
-// opisyNiezgodnosci przekłada wiersze repozytorium na byty kontraktu niezgodności danego panelu tłumaczenia.
 func opisyNiezgodnosci(niezgodnosci []dane.NiezgodnoscTlumaczenia) []shared.TranslationIssue {
 	wynik := make([]shared.TranslationIssue, 0, len(niezgodnosci))
 	for _, n := range niezgodnosci {
@@ -121,8 +112,7 @@ func opisyNiezgodnosci(niezgodnosci []dane.NiezgodnoscTlumaczenia) []shared.Tran
 	return wynik
 }
 
-// UstawTon obsługuje `translate.panel.tone.set` i zmienia kolumnę tonu panelu; panel nieznany
-// wraca odmową, nie cichą zgodą.
+// Panel nieznany wraca odmową, nie cichą zgodą.
 func (a *adapterTlumaczenia) UstawTon(ctx context.Context,
 	z shared.TranslatePanelToneSetRequest) (shared.TranslatePanelToneSetResponse, error) {
 
@@ -135,7 +125,7 @@ func (a *adapterTlumaczenia) UstawTon(ctx context.Context,
 
 	panel, err := a.repozytorium.UstawTon(ctx, z.PanelId, z.Tone)
 	if err != nil {
-		if err == dane.ErrBrakWiersza {
+		if errors.Is(err, dane.ErrBrakWiersza) {
 			return shared.TranslatePanelToneSetResponse{}, bladNieznanegoPanelu(z.PanelId, err)
 		}
 		return shared.TranslatePanelToneSetResponse{}, bladTlumaczenia(err)

@@ -9,32 +9,58 @@ import (
 	"danacoconsole/server/internal/session"
 )
 
-// odtworzStanZBazy odtwarza w rejestrze rdzenia sesje i okna zapisane w bazie po restarcie, pod tymi samymi identyfikatorami zewnętrznymi, bez uruchamiania procesów okien.
 func odtworzStanZBazy(kontekst context.Context, repozytoria *dane.Zestaw,
 	nadzorca *session.Nadzorca, dziennik *log.Logger) {
 
 	if repozytoria == nil || nadzorca == nil {
 		return
 	}
-	sesje, err := repozytoria.Sesje.Lista(kontekst, 0)
+	konteksty, err := kontekstyKont(kontekst, repozytoria.KontoWlasciciela)
 	if err != nil {
-		odnotujOdtworzenie(dziennik, "odtworzenie sesji z bazy: %v", err)
+		odnotujOdtworzenie(dziennik, "konta właściciela przy odtwarzaniu: %v", err)
 		return
 	}
-	moduly, kanaly, err := slownikiOkna(kontekst, repozytoria)
-	if err != nil {
-		// Brak słowników nie przerywa odtwarzania: okno wraca bez kodu modułu i kanału.
-		odnotujOdtworzenie(dziennik, "słowniki okien przy odtwarzaniu: %v", err)
-		moduly, kanaly = map[int64]string{}, map[int64]string{}
-	}
-	for _, wiersz := range sesje {
-		wniesSesjeDoRejestru(kontekst, repozytoria, nadzorca, dziennik, wiersz, moduly, kanaly)
+	for _, kontekstKonta := range konteksty {
+		sesje, err := repozytoria.Sesje.Lista(kontekstKonta, 0)
+		if err != nil {
+			odnotujOdtworzenie(dziennik, "odtworzenie sesji z bazy: %v", err)
+			continue
+		}
+		moduly, kanaly, err := slownikiOkna(kontekstKonta, repozytoria)
+		if err != nil {
+			// Brak słowników nie przerywa odtwarzania: okno wraca bez kodu modułu i kanału.
+			odnotujOdtworzenie(dziennik, "słowniki okien przy odtwarzaniu: %v", err)
+			moduly, kanaly = map[int64]string{}, map[int64]string{}
+		}
+		for _, wiersz := range sesje {
+			wniesSesjeDoRejestru(kontekstKonta, repozytoria, nadzorca, dziennik, wiersz, moduly, kanaly)
+		}
 	}
 }
 
-// wniesSesjeDoRejestru odtwarza w rejestrze jedną sesję wraz z jej oknami.
-// Wiersz bez identyfikatora rdzenia zostaje pominięty — powstał wprost w bazie
-// i klient nie ma w co trafić. Zwraca, czy sesja weszła do rejestru.
+// Praca procesu bez zamawiającego nie podszywa się pod konto — idzie po kontach
+// właściciela po kolei (decyzja 34); pusta tabela daje jeden kontekst bez wskazania.
+func kontekstyKont(kontekst context.Context,
+	konta dane.RepozytoriumKontaWlasciciela) ([]context.Context, error) {
+
+	if konta == nil {
+		return []context.Context{kontekst}, nil
+	}
+	wiersze, err := konta.Konta(kontekst)
+	if err != nil {
+		return nil, err
+	}
+	if len(wiersze) == 0 {
+		return []context.Context{kontekst}, nil
+	}
+	konteksty := make([]context.Context, 0, len(wiersze))
+	for _, konto := range wiersze {
+		konteksty = append(konteksty, dane.ZKontemOperatora(kontekst, konto.Id))
+	}
+	return konteksty, nil
+}
+
+// Wiersz bez identyfikatora rdzenia powstał wprost w bazie i klient nie ma w co trafić.
 func wniesSesjeDoRejestru(kontekst context.Context, repozytoria *dane.Zestaw,
 	nadzorca *session.Nadzorca, dziennik *log.Logger, wiersz dane.Sesja,
 	moduly, kanaly map[int64]string) bool {
@@ -50,9 +76,7 @@ func wniesSesjeDoRejestru(kontekst context.Context, repozytoria *dane.Zestaw,
 	sesja := session.Sesja{
 		Id: *wiersz.IdentyfikatorZewnetrzny, Tytul: wiersz.Tytul,
 		IdProjektu: wartoscTekstu(wiersz.Projekt), Stan: wiersz.Stan,
-		/* Znaczniki czasu przenoszone z bazy: bez nich sesja odtworzona wchodzi
-		   do rejestru z chwilą zerową i okno pokazuje Operatorowi rok pierwszy
-		   zamiast dnia, w którym pracę zaczął. */
+		// Bez znaczników z bazy sesja odtworzona pokazałaby Operatorowi rok pierwszy zamiast dnia startu pracy.
 		Utworzono:      chwilaZBazy(wiersz.Utworzono),
 		Zaktualizowano: chwilaZBazy(wiersz.Zaktualizowano),
 	}
@@ -60,7 +84,6 @@ func wniesSesjeDoRejestru(kontekst context.Context, repozytoria *dane.Zestaw,
 	return true
 }
 
-// odtworzSesjePoIdentyfikatorze wnosi do rejestru jedną sesję odczytaną z bazy po identyfikatorze rdzenia, tą samą drogą, którą wnosi start rdzenia.
 func odtworzSesjePoIdentyfikatorze(kontekst context.Context, repozytoria *dane.Zestaw,
 	nadzorca *session.Nadzorca, dziennik *log.Logger, identyfikator string) bool {
 
@@ -80,9 +103,6 @@ func odtworzSesjePoIdentyfikatorze(kontekst context.Context, repozytoria *dane.Z
 	return wniesSesjeDoRejestru(kontekst, repozytoria, nadzorca, dziennik, wiersz, moduly, kanaly)
 }
 
-// oknaOdtworzone przekłada wiersze okien na byty rejestru. Wiersz bez
-// identyfikatora rdzenia zostaje pominięty — powstał wprost w bazie i nie ma
-// odpowiednika, w który klient mógłby trafić.
 func oknaOdtworzone(wiersze []dane.Okno, idSesji string,
 	moduly, kanaly map[int64]string) []session.Okno {
 
@@ -102,8 +122,7 @@ func oknaOdtworzone(wiersze []dane.Okno, idSesji string,
 				TrybUprawnien:       o.TrybUprawnien,
 				RolaOkna:            o.RolaOkna,
 				Tytul:               wartoscTekstu(o.Tytul),
-				// Bez tego wybór eksperta przeżywa zapis, ale nie restart
-				// rdzenia — okno wraca wtedy na model surowy.
+				// Bez tego wybór eksperta przeżywa zapis, ale nie restart rdzenia.
 				Agent: wartoscTekstu(o.AgentKod),
 			},
 			Utworzono: teraz, Zaktualizowano: teraz,
@@ -112,7 +131,6 @@ func oknaOdtworzone(wiersze []dane.Okno, idSesji string,
 	return okna
 }
 
-// odnotujOdtworzenie zapisuje w dzienniku rdzenia niepowodzenie odczytu napotkane podczas odtwarzania stanu z bazy po restarcie.
 func odnotujOdtworzenie(dziennik *log.Logger, wzor string, argumenty ...any) {
 	if dziennik == nil {
 		return
@@ -120,13 +138,6 @@ func odnotujOdtworzenie(dziennik *log.Logger, wzor string, argumenty ...any) {
 	dziennik.Printf(wzor, argumenty...)
 }
 
-/*
-chwilaZBazy odczytuje znacznik czasu zapisany w bazie napisem.
-
-Postać zapisu to RFC 3339 (`2026-08-29T20:02:04.260Z`). Napis nieczytelny daje
-chwilę zerową — tak samo, jak działo się przed przeniesieniem znaczników; lepsza
-jest jedna wartość pusta niż zatrzymanie odtworzenia całej sesji.
-*/
 func chwilaZBazy(zapis string) time.Time {
 	if zapis == "" {
 		return time.Time{}

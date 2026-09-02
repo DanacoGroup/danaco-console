@@ -60,7 +60,8 @@ func zlozRozmowe(s skladRozmowy) (*adapterRozmowy, *session.Petla) {
 		ZMostami(noweMostyOkna(s.repozytoria.Nadania, s.repozytoria.PunktyDostepu, s.repozytoria.Okna).
 			ZDziennikiem(s.montaz.Dziennik)).
 		// Rozstrzygacz podaje nakład rozumowania i kanał zapasowy; rejestr tłumaczy kod na model.
-		ZParametramiWykonania(noweWykonanieZKonfiguracji(s.rozstrzygacz, s.repozytoria.Kanaly))
+		ZParametramiWykonania(noweWykonanieZKonfiguracji(s.rozstrzygacz, s.repozytoria.Kanaly)).
+		ZRepozytoriumKanalow(s.repozytoria.Kanaly)
 
 	// Czytelnik konfiguracji sesji tłumaczy obszary na wejście modelu; port pusty nie blokuje tury.
 	if s.ustawienia != nil {

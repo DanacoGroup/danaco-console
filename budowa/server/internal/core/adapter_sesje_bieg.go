@@ -18,13 +18,13 @@ func (a *adapterSesji) ZZatrzymaniemTur(przerwij PrzerwanieTury) *adapterSesji {
 // Odwrotność Zamknij: sesja wraca do pracy bieżącej. Stan trafia też do bazy,
 // żeby wznowienie przeżyło restart rdzenia — inaczej sesja wróciłaby po starcie
 // jako zakończona, choć Operator ją wznowił.
-func (a *adapterSesji) Wznow(_ context.Context, z shared.SessionResumeRequest) (shared.SessionResumeResponse, error) {
+func (a *adapterSesji) Wznow(ctx context.Context, z shared.SessionResumeRequest) (shared.SessionResumeResponse, error) {
 	sesja, otwarte, err := a.nadzorca.Rejestr().WznowSesje(z.SessionId)
 	if err != nil {
 		return shared.SessionResumeResponse{}, bladSesji(err)
 	}
-	a.trwalosc.StanOkien(identyfikatoryOkienSesji(otwarte), shared.WindowStatusOpen)
-	a.trwalosc.StanSesji(sesja.Id, sesja.Stan)
+	a.trwalosc.StanOkien(ctx, identyfikatoryOkienSesji(otwarte), shared.WindowStatusOpen)
+	a.trwalosc.StanSesji(ctx, sesja.Id, sesja.Stan)
 	return shared.SessionResumeResponse{
 		Session: sesjaKontraktu(sesja),
 		Windows: oknaKontraktu(otwarte),

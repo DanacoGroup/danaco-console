@@ -29,15 +29,17 @@ const (
 )
 
 type adapterTlumaczenia struct {
-	repozytorium     dane.RepozytoriumTlumaczen
-	kanaly           *models.Rejestr
-	wyjscie          *emiter
-	biblioteka       dane.RepozytoriumBiblioteki
-	magazynWytworow  *magazynTresciBiblioteki
-	uruchamiacz      session.Uruchamiacz
-	rozstrzygaczMowy *konfig.Rozstrzygacz
-	katalogIzolacji  *KatalogRoboczy
-	katalogDanych    string
+	repozytorium dane.RepozytoriumTlumaczen
+	kanaly       *models.Rejestr
+	// repozytoriumKanalow rozstrzyga własność kanału z żądania (decyzja 34).
+	repozytoriumKanalow dane.RepozytoriumKanalow
+	wyjscie             *emiter
+	biblioteka          dane.RepozytoriumBiblioteki
+	magazynWytworow     *magazynTresciBiblioteki
+	uruchamiacz         session.Uruchamiacz
+	rozstrzygaczMowy    *konfig.Rozstrzygacz
+	katalogIzolacji     *KatalogRoboczy
+	katalogDanych       string
 }
 
 var (
@@ -63,8 +65,10 @@ func nowyAdapterTlumaczenia(repozytorium dane.RepozytoriumTlumaczen) *adapterTlu
 	return &adapterTlumaczenia{repozytorium: repozytorium}
 }
 
-func (a *adapterTlumaczenia) ZKanalami(kanaly *models.Rejestr) *adapterTlumaczenia {
-	a.kanaly = kanaly
+func (a *adapterTlumaczenia) ZKanalami(kanaly *models.Rejestr,
+	repozytorium dane.RepozytoriumKanalow) *adapterTlumaczenia {
+
+	a.kanaly, a.repozytoriumKanalow = kanaly, repozytorium
 	return a
 }
 
@@ -273,6 +277,14 @@ func bladNieznanegoPanelu(kod string, err error) error {
 	if errors.Is(err, dane.ErrBrakWiersza) {
 		return protocol.JakoError(protocol.NowyBlad(shared.ErrorCodeNotFound,
 			"moduł Translate: nie ma panelu tłumaczenia o identyfikatorze "+kod))
+	}
+	return bladTlumaczenia(err)
+}
+
+func bladNieznanegoUstaleniaKorekty(kod string, err error) error {
+	if errors.Is(err, dane.ErrBrakWiersza) {
+		return protocol.JakoError(protocol.NowyBlad(shared.ErrorCodeNotFound,
+			"moduł Translate: nie ma ustalenia korekty o identyfikatorze "+kod))
 	}
 	return bladTlumaczenia(err)
 }

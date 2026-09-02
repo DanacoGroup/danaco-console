@@ -22,7 +22,9 @@ const przedrostekTunelu = "ttun-"
 const czasNaNieudanyTunel = 900 * time.Millisecond
 
 type tunelZywy struct {
-	kod       string
+	kod string
+	// konto zamawiającego idzie do zapisu stanu po końcu żądania (decyzja 34).
+	konto     int64
 	uchwyt    session.UchwytProcesu
 	drzewo    *session.DrzewoProcesu
 	koniec    chan struct{}
@@ -168,7 +170,8 @@ func (a *adapterTerminala) uruchomTunel(ctx context.Context, okno session.Okno, 
 		return shared.TerminalTunnelStatusFailed, "nie można objąć drzewa procesu tunelu: " + err.Error()
 	}
 
-	tunel := &tunelZywy{kod: kod, uchwyt: uchwyt, drzewo: drzewo, koniec: make(chan struct{})}
+	tunel := &tunelZywy{kod: kod, konto: dane.KontoOperatora(ctx), uchwyt: uchwyt, drzewo: drzewo,
+		koniec: make(chan struct{})}
 	a.tunele.zapisz(tunel)
 	// ssh piszący ostrzeżenia bez odbiorcy stanąłby na zapisie.
 	diagnostyka := make(chan string, 1)
@@ -206,7 +209,8 @@ func (a *adapterTerminala) dogladajTunel(tunel *tunelZywy, diagnostyka <-chan st
 		// Tunel zamknięty poleceniem Operatora nie jest tunelem, który zawiódł.
 		stan, tunel.powod = shared.TerminalTunnelStatusInactive, ""
 	}
-	_ = a.repozytorium.ZmienStanTunelu(context.Background(), tunel.kod, stan, tunel.powod, true)
+	_ = a.repozytorium.ZmienStanTunelu(dane.ZKontemOperatora(context.Background(), tunel.konto),
+		tunel.kod, stan, tunel.powod, true)
 }
 
 func czytajDiagnostykeTunelu(uchwyt session.UchwytProcesu) string {

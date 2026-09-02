@@ -9,13 +9,11 @@ import (
 
 // Domknięcie łańcucha telemetrii: nasłuch wzbogaca telemetrię i rozgłasza zmianę sesji.
 
-// nadajnikZObecnoscia jest szyną zdarzeń widzianą przez telemetrię postępu, wzbogaconą o stan biegu i obecność sesji.
 type nadajnikZObecnoscia struct {
 	nadajnik Nadajnik
 	obecnosc *rejestrObecnosci
 }
 
-// OwinNadajnik zakłada nasłuch obecności na nadajnik transportu i zapamiętuje go jako drogę rozgłaszania. Brak rejestru albo brak nadajnika zwraca nadajnik bez zmiany.
 func (r *rejestrObecnosci) OwinNadajnik(nadajnik Nadajnik) Nadajnik {
 	if r == nil || nadajnik == nil {
 		return nadajnik
@@ -24,7 +22,7 @@ func (r *rejestrObecnosci) OwinNadajnik(nadajnik Nadajnik) Nadajnik {
 	return nadajnikZObecnoscia{nadajnik: nadajnik, obecnosc: r}
 }
 
-// Rozglos przepuszcza komunikat, wzbogacając wyłącznie telemetrię postępu. Komunikat niebędący postępem i postęp nieczytelny idą dalej nietknięte — nasłuch nie ma prawa zgubić ani opóźnić komunikatu właściwego.
+// Nasłuch nie ma prawa zgubić ani opóźnić komunikatu właściwego: wzbogaca wyłącznie telemetrię postępu.
 func (n nadajnikZObecnoscia) Rozglos(konto string, k protocol.Koperta) {
 	if k.Type != shared.EventProgressChanged {
 		n.nadajnik.Rozglos(konto, k)
@@ -42,7 +40,6 @@ func (n nadajnikZObecnoscia) Rozglos(konto string, k protocol.Koperta) {
 	n.obecnosc.rozglosStanOkna(konto, idOkna)
 }
 
-// postepZKoperty rozpakowuje telemetrię postępu wraz z oknem, którego dotyczy. Proces bez okna jest poprawną telemetrią (kolejka założona przed pierwszą wiadomością), ale nie mówi nic o oknie sesji — więc dla obecności milczy.
 func postepZKoperty(k protocol.Koperta) (shared.ProgressChangedEvent, string, bool) {
 	var postep shared.ProgressChangedEvent
 	if err := protocol.LadunekDo(k, &postep); err != nil {
@@ -54,7 +51,6 @@ func postepZKoperty(k protocol.Koperta) (shared.ProgressChangedEvent, string, bo
 	return postep, *postep.WindowId, true
 }
 
-// zBiegiem dokłada do telemetrii stan biegu naprawczego okna koordynatora. Okno bez biegu zostawia kopertę bez zmiany, tak samo jak niepowodzenie spakowania — telemetria ma dojść nawet wtedy, gdy wzbogacenie się nie uda.
 func (r *rejestrObecnosci) zBiegiem(k protocol.Koperta, postep shared.ProgressChangedEvent,
 	idOkna string) protocol.Koperta {
 
@@ -70,7 +66,6 @@ func (r *rejestrObecnosci) zBiegiem(k protocol.Koperta, postep shared.ProgressCh
 	return wzbogacona
 }
 
-// przyjmijPostep odnotowuje punkt pracy okna i rozgłasza żywy stan sesji wyłącznie wtedy, gdy zmienił się stan pracy. Kolejny etap tej samej tury niczego nie rozgłasza.
 func (r *rejestrObecnosci) przyjmijPostep(konto, idSesji, idOkna string, stan shared.ProgressStatus) {
 	if !r.czynnosc.Odnotuj(idSesji, idOkna, stan) {
 		return
@@ -78,7 +73,6 @@ func (r *rejestrObecnosci) przyjmijPostep(konto, idSesji, idOkna string, stan sh
 	r.rozglos(konto, idSesji)
 }
 
-// biegZmieniony jest odbiorcą zmian rejestru biegów. Zmiana licznika obiegów, braku postępu albo zatrzymania biegu zmienia to, co kontrolka ma pokazać, więc idzie tą samą drogą co zmiana stanu pracy okna.
 func (r *rejestrObecnosci) biegZmieniony(bieg shared.LoopState) {
 	// Rejestr biegów nie zna zamawiającego, więc zmiana biegu idzie do wszystkich połączeń rdzenia.
 	r.rozglos("", r.sesjaOkna("", bieg.CoordinatorWindowId))
@@ -86,7 +80,6 @@ func (r *rejestrObecnosci) biegZmieniony(bieg shared.LoopState) {
 	r.rozglosStanOkna("", bieg.CoordinatorWindowId)
 }
 
-// rozglosStanOkna rozgłasza window.state.changed — zmianę stanu okna operacyjnego wspólną każdemu oknu, niosącą parametry okna, stan procesu, turę strumienia i bieg naprawczy. Okno nieznane rejestrowi albo brak nadajnika kończy rozgłoszenie bez błędu.
 func (r *rejestrObecnosci) rozglosStanOkna(konto, idOkna string) {
 	if r == nil || r.nadawca == nil || r.nadzorca == nil || idOkna == "" {
 		return
@@ -113,7 +106,6 @@ func (r *rejestrObecnosci) rozglosStanOkna(konto, idOkna string) {
 	})
 }
 
-// stanProcesuOkna przekłada obecność procesu okna na stan telemetrii postępu tak samo jak `adapterNawigacji.stanProcesu`: okno bez procesu oczekuje, proces żywy pracuje, proces zamknięty jest zatrzymany.
 func (r *rejestrObecnosci) stanProcesuOkna(idOkna string) shared.ProgressStatus {
 	if r.nadzorca == nil {
 		return shared.ProgressStatusPending
@@ -129,7 +121,7 @@ func (r *rejestrObecnosci) stanProcesuOkna(idOkna string) shared.ProgressStatus 
 	}
 }
 
-// rozglos wypuszcza `session.changed` z żywym stanem sesji. Zdarzenie niesie sesję i jej obecność razem, bo kontrakt nie ma osobnego nośnika obecności — nośnikiem zmiany jest zdarzenie właściwe zmienionemu obszarowi.
+// Kontrakt nie ma osobnego nośnika obecności — nośnikiem zmiany jest zdarzenie właściwe obszarowi.
 func (r *rejestrObecnosci) rozglos(konto, idSesji string) {
 	if r == nil || r.nadawca == nil || r.nadzorca == nil || idSesji == "" {
 		return
@@ -138,7 +130,7 @@ func (r *rejestrObecnosci) rozglos(konto, idSesji string) {
 	if err != nil {
 		return
 	}
-	odpis, jest := r.Odpis(r.kontekst, idSesji)
+	odpis, jest := r.Odpis(r.kontekstSesji(idSesji), idSesji)
 	if !jest {
 		return
 	}
@@ -152,7 +144,6 @@ func (r *rejestrObecnosci) rozglos(konto, idSesji string) {
 	r.nadawca.wyslijNaKonto(konto, shared.EventSessionChanged, idSesji, zdarzenie)
 }
 
-// sesjaOkna rozstrzyga sesję komunikatu: wskazaną wprost, a bez wskazania — wyczytaną z okna. Telemetria bywa uboższa od koperty, a kontrolka i tak musi wiedzieć, której sesji dotyczy punkt pracy.
 func (r *rejestrObecnosci) sesjaOkna(idSesji, idOkna string) string {
 	if idSesji != "" || r.nadzorca == nil || idOkna == "" {
 		return idSesji

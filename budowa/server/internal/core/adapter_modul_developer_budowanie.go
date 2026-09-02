@@ -30,7 +30,7 @@ func (a *adapterDevelopera) Budowanie(ctx context.Context,
 		return shared.DeveloperBuildRunResponse{}, err
 	}
 	argumenty := append(wiodace, parametryZadania(z.Arguments)...)
-	polecenie, err := a.polecenieDopuszczoneDevelopera(okno, program, argumenty)
+	polecenie, err := a.polecenieDopuszczoneDevelopera(ctx, okno, program, argumenty)
 	if err != nil {
 		return shared.DeveloperBuildRunResponse{}, err
 	}

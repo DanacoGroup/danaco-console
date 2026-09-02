@@ -13,27 +13,19 @@ import (
 	"danacoconsole/shared"
 )
 
-// przedrostekRozszerzenia nadaje tożsamość wierszowi katalogu (`Extension.id`). Kodem pozycji (`Extension.code`) rdzeń nie zarządza — ten przynosi żądanie i jest „stały między wydaniami", więc nie wolno go nadpisywać własnym kluczem.
 const przedrostekRozszerzenia = "rozsz-"
 
-// adapterRozszerzen wypełnia port Rozszerzenia. Rejestr jest zależnością obowiązkową. Katalog punktów dostępu i biblioteka ekspertów obsługują pojedyncze pola żądań i mogą być puste — wtedy żądanie niosące to pole odmawia z powodem.
 type adapterRozszerzen struct {
-	rejestr dane.RepozytoriumRozszerzen
-	punkty  dane.RepozytoriumPunktowDostepu
-	agenci  dane.RepozytoriumAgentow
-	// rozgloszenie rozgłasza zmianę katalogu; nil znaczy port bez nadajnika, komendy pracują bez zmian.
-	rozgloszenie *emiter
-	// teraz oddaje czas w milisekundach epoki, wydzielone w pole, by pochodził z jednego zegara.
-	teraz func() int64
-	// magazyn trzyma bajty paczek instalacji Personal i logi piaskownicy, wspólnie z wytworami Apps.
-	magazyn *magazynTresciBiblioteki
-	// katalogDanych jest korzeniem, względem którego liczone są odwołania magazynu.
+	rejestr       dane.RepozytoriumRozszerzen
+	punkty        dane.RepozytoriumPunktowDostepu
+	agenci        dane.RepozytoriumAgentow
+	rozgloszenie  *emiter
+	teraz         func() int64
+	magazyn       *magazynTresciBiblioteki
 	katalogDanych string
-	// sejf wydaje poświadczenie po kluczu jawnym; rodzina nigdy nie ogląda treści, sprawdza obecność.
-	sejf sejfKluczaWydawcy
+	sejf          sejfKluczaWydawcy
 }
 
-// ZMagazynemRozszerzen wpina katalog danych rdzenia: magazyn bajtów paczek i logów piaskownicy oraz sejf poświadczeń. Bez niego przesyłka paczki i piaskownica odmawiają z powodem, zamiast meldować wytwór bez bajtów.
 func (a *adapterRozszerzen) ZMagazynemRozszerzen(katalogDanych string) *adapterRozszerzen {
 	a.katalogDanych = katalogDanych
 	a.magazyn = magazynWytworowApp(katalogDanych)
@@ -41,7 +33,6 @@ func (a *adapterRozszerzen) ZMagazynemRozszerzen(katalogDanych string) *adapterR
 	return a
 }
 
-// nowyAdapterRozszerzen wiąże nowy adapter z katalogiem rozszerzeń i ustawia jego źródło czasu operacji.
 func nowyAdapterRozszerzen(rejestr dane.RepozytoriumRozszerzen) *adapterRozszerzen {
 	return &adapterRozszerzen{
 		rejestr: rejestr,
@@ -49,7 +40,7 @@ func nowyAdapterRozszerzen(rejestr dane.RepozytoriumRozszerzen) *adapterRozszerz
 	}
 }
 
-// ZKatalogiemDostepu oddaje adapterowi katalog punktów dostępu (`migracja_013_punkty_dostepu.sql`) i bibliotekę ekspertów (`migracja_037_agenci.sql`). Pierwszy sprawdza wskazanie mostu w `install` i `configure`, druga — wskazanie eksperta w `list`.
+// Katalog punktów dostępu (migracja 013) i biblioteka ekspertów (migracja 037) obsługują pojedyncze wskazania żądań.
 func (a *adapterRozszerzen) ZKatalogiemDostepu(punkty dane.RepozytoriumPunktowDostepu,
 	agenci dane.RepozytoriumAgentow) *adapterRozszerzen {
 
@@ -58,9 +49,6 @@ func (a *adapterRozszerzen) ZKatalogiemDostepu(punkty dane.RepozytoriumPunktowDo
 	return a
 }
 
-// ── extension.list ───────────────────────────────────────────────────────────
-
-// Wykaz obsługuje `extension.list`: oddaje katalog w kolejności wyświetlania. Pole agentId nie zawęża wykazu, tylko liczy przypisywalność pozycji do wskazanego eksperta; adapter sprawdza takiego eksperta i odmawia, gdy nie istnieje.
 func (a *adapterRozszerzen) Wykaz(ctx context.Context,
 	z shared.ExtensionListRequest) (shared.ExtensionListResponse, error) {
 
@@ -89,9 +77,6 @@ func (a *adapterRozszerzen) Wykaz(ctx context.Context,
 	return shared.ExtensionListResponse{Extensions: katalog}, nil
 }
 
-// ── extension.install ────────────────────────────────────────────────────────
-
-// Zainstaluj obsługuje `extension.install`, zakładając pozycję katalogu bez sięgania do sieci. Nazwą pozycji jest jej kod. Powtórna instalacja pozycji zainstalowanej jest odmową, instalacja odinstalowanej jest jej przywróceniem.
 func (a *adapterRozszerzen) Zainstaluj(ctx context.Context,
 	z shared.ExtensionInstallRequest) (shared.ExtensionInstallResponse, error) {
 
@@ -147,7 +132,7 @@ func (a *adapterRozszerzen) Zainstaluj(ctx context.Context,
 	return shared.ExtensionInstallResponse{Extension: pozycja}, nil
 }
 
-// przywroc obsługuje instalację kodu, który już stoi w katalogu. Rodzaj jest częścią tożsamości pozycji, więc ten sam kod zgłoszony pod innym rodzajem jest odmową, nie przepisaniem rodzaju.
+// Rodzaj jest częścią tożsamości pozycji: ten sam kod pod innym rodzajem jest inną pozycją.
 func (a *adapterRozszerzen) przywroc(ctx context.Context, zastane dane.Rozszerzenie,
 	rodzaj string, punkt *int64, zrodlo, pochodzenie string,
 	konfiguracja json.RawMessage) (shared.ExtensionInstallResponse, error) {
@@ -180,14 +165,10 @@ func (a *adapterRozszerzen) przywroc(ctx context.Context, zastane dane.Rozszerze
 		return shared.ExtensionInstallResponse{}, bladRozszerzenia(err)
 	}
 	pozycja := rozszerzenieKontraktu(przywrocone)
-	// Przywrócenie pozycji jest jej powrotem do katalogu, więc rozgłasza się jak utworzenie.
 	a.rozglosRozszerzenie(ctx, shared.ChangeKindCreated, pozycja)
 	return shared.ExtensionInstallResponse{Extension: pozycja}, nil
 }
 
-// ── extension.configure ──────────────────────────────────────────────────────
-
-// Skonfiguruj obsługuje `extension.configure`: zapisuje konfigurację pozycji i, gdy żądanie je niesie, wskazanie punktu dostępu. Konfiguracja jest wymagana i musi być poprawnym zapisem JSON, inaczej żądanie dostaje odmowę.
 func (a *adapterRozszerzen) Skonfiguruj(ctx context.Context,
 	z shared.ExtensionConfigureRequest) (shared.ExtensionConfigureResponse, error) {
 
@@ -221,9 +202,7 @@ func (a *adapterRozszerzen) Skonfiguruj(ctx context.Context,
 	return shared.ExtensionConfigureResponse{Extension: pozycja}, nil
 }
 
-// ── extension.toggle ─────────────────────────────────────────────────────────
-
-// Przestaw obsługuje `extension.toggle`. Pozycji niezainstalowanej nie da się włączyć: włączenie odinstalowanej byłoby znacznikiem bez pokrycia, więc odmowa idzie kodem konfliktu stanu.
+// Włączenie pozycji odinstalowanej byłoby znacznikiem bez pokrycia, więc odmawia.
 func (a *adapterRozszerzen) Przestaw(ctx context.Context,
 	z shared.ExtensionToggleRequest) (shared.ExtensionToggleResponse, error) {
 
@@ -252,9 +231,6 @@ func (a *adapterRozszerzen) Przestaw(ctx context.Context,
 	return shared.ExtensionToggleResponse{Extension: pozycja}, nil
 }
 
-// ── extension.uninstall ──────────────────────────────────────────────────────
-
-// Odinstaluj obsługuje `extension.uninstall`: zdejmuje znaczniki instalacji i włączenia, zostawiając pozycję w katalogu. Pozycja, której nie ma, jest odmową; pozycja już odinstalowana zwraca wynik bez zmiany.
 func (a *adapterRozszerzen) Odinstaluj(ctx context.Context,
 	z shared.ExtensionUninstallRequest) (shared.ExtensionUninstallResponse, error) {
 
@@ -284,9 +260,6 @@ func (a *adapterRozszerzen) Odinstaluj(ctx context.Context,
 	return shared.ExtensionUninstallResponse{Uninstalled: true}, nil
 }
 
-// ── wspólne ustalenia żądań ──────────────────────────────────────────────────
-
-// punktZadania przekłada wskazany punkt dostępu na jego klucz w katalogu; brak wskazania zostawia kolumnę bez zmiany. Punkt jest sprawdzany w katalogu, nie przyjmowany na słowo, bo zapis wskazania bez mostu dałby pozycję wskazującą donikąd.
 func (a *adapterRozszerzen) punktZadania(ctx context.Context, wskazanie *string) (*int64, error) {
 	kod := strings.TrimSpace(wartoscTekstu(wskazanie))
 	if kod == "" {
@@ -308,7 +281,6 @@ func (a *adapterRozszerzen) punktZadania(ctx context.Context, wskazanie *string)
 	return &klucz, nil
 }
 
-// sprawdzEksperta sprawdza wskazanego eksperta z `extension.list`. Wskazanie puste jest zgodne z kontraktem i nie robi nic.
 func (a *adapterRozszerzen) sprawdzEksperta(ctx context.Context, kod string) error {
 	kod = strings.TrimSpace(kod)
 	if kod == "" {
@@ -328,7 +300,6 @@ func (a *adapterRozszerzen) sprawdzEksperta(ctx context.Context, kod string) err
 	return nil
 }
 
-// rozszerzenieKontraktu przekłada wiersz katalogu bazy na kształt kontraktu przesyłany do klienta okna.
 func rozszerzenieKontraktu(r dane.Rozszerzenie) shared.Extension {
 	rozszerzenie := shared.Extension{
 		Id:            r.Identyfikator,
@@ -349,13 +320,12 @@ func rozszerzenieKontraktu(r dane.Rozszerzenie) shared.Extension {
 	return rozszerzenie
 }
 
-// zrodlaRozszerzenia wylicza dwa jedynie dopuszczalne źródła pochodzenia pozycji katalogu tego kontraktu.
 var zrodlaRozszerzenia = map[shared.ExtensionOrigin]struct{}{
 	shared.ExtensionOriginDanaco:   {},
 	shared.ExtensionOriginPersonal: {},
 }
 
-// zrodloPochodzenia czyta źródło z żądania. Pominięte znaczy `personal`, bo komendę woła Operator ze swojego urządzenia — pakiet serwera nie instaluje się przez WebSocket.
+// Pominięte źródło znaczy `personal`: komendę woła Operator ze swojego urządzenia.
 func zrodloPochodzenia(zrodlo *shared.ExtensionOrigin) (string, error) {
 	if zrodlo == nil {
 		return shared.ExtensionOriginPersonal, nil
@@ -367,7 +337,7 @@ func zrodloPochodzenia(zrodlo *shared.ExtensionOrigin) (string, error) {
 	return string(*zrodlo), nil
 }
 
-// pochodzenieKontraktu przekłada źródło z bazy. Wartość nierozpoznana czyta się jako `personal` — ogłoszenie „to część pakietu serwera" ma padać wyłącznie wtedy, gdy ktoś to zapisał.
+// Wartość nierozpoznana czyta się jako `personal`; ogłoszenie części pakietu serwera pada wyłącznie z zapisu.
 func pochodzenieKontraktu(zrodlo string) shared.ExtensionOrigin {
 	wartosc := shared.ExtensionOrigin(strings.TrimSpace(zrodlo))
 	if _, jest := zrodlaRozszerzenia[wartosc]; !jest {
@@ -376,7 +346,6 @@ func pochodzenieKontraktu(zrodlo string) shared.ExtensionOrigin {
 	return wartosc
 }
 
-// rodzajRozszerzenia przepuszcza wyłącznie cztery wartości `ExtensionKind`. Kolumna `rozszerzenie.rodzaj` niesie wartość kontraktu wprost, więc przekładu tu nie ma — jest sprawdzenie.
 func rodzajRozszerzenia(rodzaj string) (string, error) {
 	switch rodzaj {
 	case shared.ExtensionKindMcp, shared.ExtensionKindPlugin,
@@ -386,13 +355,12 @@ func rodzajRozszerzenia(rodzaj string) (string, error) {
 	return "", bladWskazaniaRozszerzenia("rodzaj rozszerzenia " + rodzaj + " nie należy do kontraktu")
 }
 
-// znacznikRozszerzenia oddaje wskaźnik na wartość logiczną. Pola `dane.ZmianaRozszerzenia` są wskaźnikami, bo nil znaczy tam „bez zmiany", a nie „fałsz".
+// Pola `dane.ZmianaRozszerzenia` są wskaźnikami: nil znaczy „bez zmiany”, nie „fałsz”.
 func znacznikRozszerzenia(wartosc bool) *bool {
 	kopia := wartosc
 	return &kopia
 }
 
-// sprawdzKatalog odmawia czynności, gdy katalog rozszerzeń nie został wpięty. Pięć komend ma wtedy odmówić głośno, a nie odpowiedzieć ciszą pustym wynikiem wyglądającym jak stan platformy.
 func (a *adapterRozszerzen) sprawdzKatalog() error {
 	if a == nil || a.rejestr == nil {
 		return protocol.JakoError(protocol.NowyBlad(shared.ErrorCodeInternalError,
@@ -401,24 +369,25 @@ func (a *adapterRozszerzen) sprawdzKatalog() error {
 	return nil
 }
 
-// bladRozszerzenia przekłada niepowodzenie warstwy danych na odmowę kontraktu. Brak wiersza jest `not_found`, reszta — `internal_error`. Kodu spoza zamkniętego katalogu kontraktu tu nie ma i być nie może.
 func bladRozszerzenia(err error) error {
 	if errors.Is(err, dane.ErrBrakWiersza) {
 		// Treść błędu warstwy danych mówi o wierszu tabeli; wołający pyta o wpis katalogu i tylko o nim ma usłyszeć.
 		return protocol.JakoError(protocol.NowyBlad(shared.ErrorCodeNotFound,
 			"katalog rozszerzeń: wskazanego wpisu nie ma w katalogu"))
 	}
+	if errors.Is(err, dane.ErrKolizjaWiersza) {
+		return protocol.JakoError(protocol.NowyBlad(shared.ErrorCodeConflict,
+			"katalog rozszerzeń: "+err.Error()))
+	}
 	return protocol.JakoError(protocol.NowyBlad(shared.ErrorCodeInternalError,
 		"katalog rozszerzeń: "+err.Error()))
 }
 
-// bladWskazaniaRozszerzenia odmawia żądaniu niezgodnemu z kontraktem tego katalogu rozszerzeń platformy.
 func bladWskazaniaRozszerzenia(powod string) error {
 	return protocol.JakoError(protocol.NowyBlad(shared.ErrorCodeValidationFailed,
 		"katalog rozszerzeń: "+powod))
 }
 
-// bladStanuRozszerzenia odmawia czynności, której stan tego katalogu rozszerzeń obecnie nie dopuszcza.
 func bladStanuRozszerzenia(powod string) error {
 	return protocol.JakoError(protocol.NowyBlad(shared.ErrorCodeConflict,
 		"katalog rozszerzeń: "+powod))

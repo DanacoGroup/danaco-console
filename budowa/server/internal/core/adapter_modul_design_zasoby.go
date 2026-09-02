@@ -24,7 +24,7 @@ func (a *adapterDesignu) UstawUlubionyZasob(ctx context.Context,
 		return shared.DesignAssetFavoriteSetResponse{}, bladNieznanegoZasobuDesignu(z.AssetId, err)
 	}
 	if err := a.repozytorium.UstawUlubionyZasobu(ctx, zasob.ID, z.Favorite); err != nil {
-		return shared.DesignAssetFavoriteSetResponse{}, bladDesignu(err)
+		return shared.DesignAssetFavoriteSetResponse{}, bladNieznanegoZasobuDesignu(z.AssetId, err)
 	}
 
 	poZmianie, err := a.repozytorium.Zasob(ctx, z.AssetId)

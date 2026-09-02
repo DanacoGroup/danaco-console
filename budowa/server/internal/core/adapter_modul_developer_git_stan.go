@@ -1,7 +1,5 @@
-// Odpowiedzialność pliku: stan repozytorium okna Git Panel — gałąź, ostatnie
-// zatwierdzenie, ścieżki zmienione i ścieżki z konfliktem. Stan doczytuje się
-// po każdej czynności, bo kontrakt daje jedną komendę bez osobnego odczytu
-// stanu.
+// Stan repozytorium okna Git Panel doczytywany po każdej czynności, bo kontrakt
+// daje jedną komendę bez osobnego odczytu stanu.
 package core
 
 import (
@@ -10,18 +8,15 @@ import (
 	"strings"
 	"time"
 
+	"danacoconsole/server/internal/dane"
 	"danacoconsole/server/internal/konfig"
 	"danacoconsole/server/internal/protocol"
 	"danacoconsole/server/internal/session"
 	"danacoconsole/shared"
 )
 
-// granicaOdczytuStanu jest krótka: odczyt stanu nie sięga do sieci, a klient
-// czeka na niego razem z wynikiem czynności.
 const granicaOdczytuStanu = 20 * time.Second
 
-// stanGita niesie migawkę pełnego stanu repozytorium Git po zakończeniu każdej
-// czynności komendy okna Git Panel modułu Developer.
 type stanGita struct {
 	galaz         string
 	zatwierdzenie string
@@ -30,9 +25,7 @@ type stanGita struct {
 	podsumowanie  string
 }
 
-// stanRepozytorium czyta gałąź, ostatnie zatwierdzenie i wykaz zmian.
-// Niepowodzenie któregokolwiek odczytu zostawia pole puste — czynność, która
-// się wykonała, nie ma prawa zostać unieważniona przez nieudany odczyt.
+// Czynność, która się wykonała, nie może zostać unieważniona przez nieudany odczyt stanu.
 func (a *adapterDevelopera) stanRepozytorium(ctx context.Context, okno session.Okno) stanGita {
 	stan := stanGita{}
 	if galaz, ok := a.odczytGita(ctx, okno, "rev-parse", "--abbrev-ref", "HEAD"); ok {
@@ -48,8 +41,6 @@ func (a *adapterDevelopera) stanRepozytorium(ctx context.Context, okno session.O
 	return stan
 }
 
-// odczytGita uruchamia odczytowe polecenie gita w repozytorium wskazanym oknem
-// i oddaje jego wyjście tekstowe bez zmian.
 func (a *adapterDevelopera) odczytGita(ctx context.Context, okno session.Okno,
 	argumenty ...string) (string, bool) {
 
@@ -60,9 +51,7 @@ func (a *adapterDevelopera) odczytGita(ctx context.Context, okno session.Okno,
 	return wynik.tresc, true
 }
 
-// rozbierzStatus czyta wyjście `git status --porcelain` na dwa wykazy.
-// Konflikt jest rozpoznawany po kodach obu stron indeksu — `UU`, `AA`, `DD`
-// oraz wszystkich parach z literą `U`.
+// Konflikt rozpoznaje się po kodach obu stron indeksu: `UU`, `AA`, `DD` i pary z literą `U`.
 func rozbierzStatus(wyjscie string) (zmienione, konflikty []string) {
 	zmienione = make([]string, 0, 16)
 	konflikty = make([]string, 0, 4)
@@ -72,7 +61,6 @@ func rozbierzStatus(wyjscie string) (zmienione, konflikty []string) {
 			continue
 		}
 		kod, sciezka := wiersz[:2], strings.TrimSpace(wiersz[3:])
-		// Zmiana nazwy ma postać „stara -> nowa”; do wykazu wchodzi nowa.
 		if miejsce := strings.LastIndex(sciezka, " -> "); miejsce >= 0 {
 			sciezka = sciezka[miejsce+4:]
 		}
@@ -89,8 +77,6 @@ func rozbierzStatus(wyjscie string) (zmienione, konflikty []string) {
 	return zmienione, konflikty
 }
 
-// czyKonflikt rozpoznaje parę kodów statusu porcelanowego gita oznaczającą
-// scalenie nierozstrzygnięte, wymagające decyzji Operatora.
 func czyKonflikt(kod string) bool {
 	if len(kod) < 2 {
 		return false
@@ -101,8 +87,6 @@ func czyKonflikt(kod string) bool {
 	return kod == "AA" || kod == "DD"
 }
 
-// podsumowanieStanu składa wiersz stanu doklejany do wyjścia czynności: gałąź,
-// ostatnie zatwierdzenie oraz liczby ścieżek zmienionych i konfliktowych.
 func podsumowanieStanu(stan stanGita) string {
 	czesci := make([]string, 0, 4)
 	if stan.galaz != "" {
@@ -118,8 +102,6 @@ func podsumowanieStanu(stan stanGita) string {
 	return "[stan repozytorium: " + strings.Join(czesci, ", ") + "]"
 }
 
-// pierwszyWiersz odcina wszystko po pierwszym znaku końca wiersza tekstu
-// wyjścia polecenia odczytu gita, zwracając sam pierwszy wiersz.
 func pierwszyWiersz(tresc string) string {
 	tresc = strings.TrimSpace(tresc)
 	if miejsce := strings.IndexAny(tresc, "\r\n"); miejsce >= 0 {
@@ -128,15 +110,11 @@ func pierwszyWiersz(tresc string) string {
 	return tresc
 }
 
-// konfigKontekstOkna składa kontekst rozstrzygania zasad izolacji dla okna
-// modułu Developer w rdzeniu, wraz z jego identyfikatorem.
-func konfigKontekstOkna(okno session.Okno) konfig.Kontekst {
-	return konfig.Kontekst{Okno: okno.Id}
+func konfigKontekstOkna(ctx context.Context, okno session.Okno) konfig.Kontekst {
+	return konfig.Kontekst{Okno: okno.Id, KontoOperatora: dane.KontoOperatora(ctx)}
 }
 
-// odmowaIzolacjiDevelopera znakuje naruszenie izolacji kodem uprawnienia.
-// Usterka innego rodzaju idzie dalej bez zmiany — kod `permission_denied` ma
-// znaczyć zatrzymanie przez izolację, a nie „coś się nie udało”.
+// Kod `permission_denied` znaczy zatrzymanie przez izolację; inna usterka idzie dalej bez zmiany.
 func odmowaIzolacjiDevelopera(err error) error {
 	if err == nil {
 		return nil

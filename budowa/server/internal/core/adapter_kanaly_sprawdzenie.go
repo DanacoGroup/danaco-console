@@ -15,25 +15,21 @@ import (
 )
 
 const (
-	// granicaSprawdzeniaKanalu domyka jedno sprawdzenie po piętnastu sekundach, bo dłuższe czekanie nie jest odpowiedzią przy przycisku.
+	// Dłuższe czekanie niż piętnaście sekund nie jest odpowiedzią przy przycisku.
 	granicaSprawdzeniaKanalu = 15 * time.Second
 
-	// trescSprawdzeniaKanalu jest krótkim zapytaniem sprawdzającym: pyta, czy kanał odpowiada, zamiast prosić o treść.
 	trescSprawdzeniaKanalu = "ping"
 )
 
-// sejfPoswiadczen jest tą częścią sejfu, której potrzebuje stan poświadczenia: samym pytaniem, czy pod odwołaniem coś leży.
 type sejfPoswiadczen interface {
 	Odczytaj(ctx context.Context, byt string) (string, bool)
 }
 
-// ZSejfem wpina sejf poświadczeń jako źródło stanu poświadczenia, nie jego treści, do adaptera kanałów rejestru modeli.
 func (a *adapterKanalow) ZSejfem(sejf sejfPoswiadczen) *adapterKanalow {
 	a.sejf = sejf
 	return a
 }
 
-// Sprawdz obsługuje channel.check: wysyła krótkie zapytanie sprawdzające tym samym rejestrem kanałów, którym jedzie okno rozmowy.
 func (a *adapterKanalow) Sprawdz(ctx context.Context,
 	z shared.ChannelCheckRequest) (shared.ChannelCheckResponse, error) {
 
@@ -49,8 +45,7 @@ func (a *adapterKanalow) Sprawdz(ctx context.Context,
 			Reachable: false, CheckedAt: chwila.UnixMilli(), Detail: &szczegol,
 		}, nil
 	}
-	if _, jest := a.rejestr.Kanal(kod); !jest {
-		// Kanał, którego nie ma w rejestrze, oddaje odpowiedź nie odpowiada, a nie odmowę sprawdzenia.
+	if _, jest := kanalKonta(ctx, a.repozytorium, a.rejestr, kod); !jest {
 		szczegol := "kanału nie ma w rejestrze kanałów serwera albo jest wyłączony"
 		return shared.ChannelCheckResponse{
 			Reachable: false, CheckedAt: chwila.UnixMilli(), Detail: &szczegol,
@@ -95,7 +90,6 @@ func (a *adapterKanalow) Sprawdz(ctx context.Context,
 	}, nil
 }
 
-// StanPoswiadczenia obsługuje channel.credential.status i oddaje wyłącznie stan poświadczenia kanału, nigdy jego treść.
 func (a *adapterKanalow) StanPoswiadczenia(ctx context.Context,
 	z shared.ChannelCredentialStatusRequest) (shared.ChannelCredentialStatusResponse, error) {
 
@@ -118,7 +112,7 @@ func (a *adapterKanalow) StanPoswiadczenia(ctx context.Context,
 	stan := shared.ChannelCredentialStatus{ChannelId: kod}
 	odwolanie := strings.TrimSpace(wartoscTekstu(kanal.PoswiadczenieOdwolanie))
 	if odwolanie == "" {
-		// Kanał bez odwołania nie wymaga uwierzytelnienia, na przykład model lokalny; to odpowiedź, nie brak.
+		// Kanał bez odwołania nie wymaga uwierzytelnienia (model lokalny); to odpowiedź, nie brak.
 		return shared.ChannelCredentialStatusResponse{Status: stan}, nil
 	}
 
@@ -129,24 +123,19 @@ func (a *adapterKanalow) StanPoswiadczenia(ctx context.Context,
 
 	if a.sejf != nil {
 		if wartosc, jest := a.sejf.Odczytaj(ctx, odwolanie); jest {
-			// Wartość służy wyłącznie do rozstrzygnięcia, czy jest niepusta, i nigdzie indziej nie wychodzi.
+			// Wartość służy wyłącznie rozstrzygnięciu, czy jest niepusta, i nigdzie nie wychodzi.
 			stan.Present = strings.TrimSpace(wartosc) != ""
 		}
 	}
 	if !stan.Present {
-		// Poświadczenie bywa też zmienną środowiskową maszyny rdzenia; odpowiedź podaje, gdzie rdzeń szukał.
 		zarzadca = zarzadcaPoswiadczeniaKanalu(kanal) + " (odwołanie: " + odwolanie + ")"
 		stan.ManagedBy = &zarzadca
 	}
 	return shared.ChannelCredentialStatusResponse{Status: stan}, nil
 }
 
-// przedrostekSprawdzeniaKanalu znakuje identyfikator wywołania sprawdzającego w rejestrze kanałów modeli.
 const przedrostekSprawdzeniaKanalu = "sprawdzenie-kanalu-"
 
-// rodzajPoswiadczeniaKanalu nazywa rodzaj poświadczenia na podstawie parametrów
-// wiersza. Kontrakt nie ma osobnego pola rodzaju przy zapisie kanału, więc
-// rodzaj bierze się z tego, co wiersz naprawdę niesie.
 func rodzajPoswiadczeniaKanalu(kanal dane.Kanal) string {
 	var parametry map[string]any
 	if len(kanal.ParametryJSON) > 0 {
@@ -161,7 +150,6 @@ func rodzajPoswiadczeniaKanalu(kanal dane.Kanal) string {
 	return "klucz kanału API"
 }
 
-// zarzadcaPoswiadczeniaKanalu nazywa miejsce, w którym poświadczenie kanału mieszka: rejestr kont albo sejf rdzenia.
 func zarzadcaPoswiadczeniaKanalu(kanal dane.Kanal) string {
 	if kanal.KontoDostawcyID != nil {
 		return "rejestr kont platformy"
@@ -169,17 +157,13 @@ func zarzadcaPoswiadczeniaKanalu(kanal dane.Kanal) string {
 	return "sejf poświadczeń serwera"
 }
 
-// bladWskazaniaKanalu nazywa niepoprawne żądanie czynności rejestru kanałów —
-// błąd Operatora, nie rdzenia.
 func bladWskazaniaKanalu(powod string) error {
 	return protocol.JakoError(protocol.NowyBlad(shared.ErrorCodeValidationFailed,
 		"kanały: "+powod))
 }
 
-// bladUsunieciaKanalu odróżnia kanał zajęty od awarii. Więz klucza obcego
-// znaczy, że na kanale wiszą okna albo zlecenia — to stan niewłaściwy do
-// wykonania czynności, nie usterka rdzenia, a odmowa musi nazwać kanał kodem,
-// którym wskazał go wołający, nie numerem wiersza z warstwy danych.
+// Więz klucza obcego znaczy okna albo zlecenia na kanale — stan do naprawy przez
+// Operatora, nie usterka rdzenia; odmowa nazywa kanał kodem wołającego.
 func bladUsunieciaKanalu(err error, kod string) error {
 	if err != nil && strings.Contains(err.Error(), "FOREIGN KEY") {
 		return protocol.JakoError(protocol.NowyBlad(shared.ErrorCodeConflict,
@@ -189,10 +173,8 @@ func bladUsunieciaKanalu(err error, kod string) error {
 	return err
 }
 
-// bladZapisuKanalu nazywa odmowę rejestru wprost. Wykaz rodzajów kanału stoi
-// w więzie kolumny `kanal_modelu.rodzaj_kanalu`, nie w kodzie — rodzaj spoza
-// wykazu wraca stamtąd surową treścią więzu, którą trzeba przełożyć na odmowę
-// żądania; inaczej wskazanie nie do przyjęcia wygląda jak awaria rdzenia.
+// Wykaz rodzajów kanału stoi w więzie kolumny `kanal_modelu.rodzaj_kanalu`;
+// rodzaj spoza wykazu wraca surową treścią więzu i wymaga przełożenia na odmowę.
 func bladZapisuKanalu(err error, rodzaj string) error {
 	if err != nil && strings.Contains(err.Error(), "rodzaj_kanalu") {
 		return bladWskazaniaKanalu("rodzaj kanału spoza wykazu rejestru: " +

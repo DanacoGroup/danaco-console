@@ -5,6 +5,7 @@
 package core
 
 import (
+	"context"
 	"strings"
 
 	"danacoconsole/server/internal/models"
@@ -14,7 +15,7 @@ import (
 // kanalObrazowyZadania rozstrzyga, którym kanałem pójdzie generowanie, i oddaje
 // jego wiersz. Brak wskazania bierze pierwszy czynny kanał obrazowy — tak
 // opisuje pole `channelId` kontrakt.
-func (a *adapterDesignu) kanalObrazowyZadania(wskazany *string,
+func (a *adapterDesignu) kanalObrazowyZadania(ctx context.Context, wskazany *string,
 	p shared.DesignPrompt, wariantow int) (models.Definicja, error) {
 
 	if a.kanaly == nil {
@@ -22,18 +23,25 @@ func (a *adapterDesignu) kanalObrazowyZadania(wskazany *string,
 			"rejestr kanałów modelu nie jest wpięty — nie ma czym wołać silnika obrazów",
 			p, wariantow, "wpięty rejestr kanałów modelu")
 	}
+	kluczeKonta, err := kluczeKanalowKonta(ctx, a.repozytoriumKanalow)
+	if err != nil {
+		return models.Definicja{}, err
+	}
 
 	kod := ""
 	if wskazany != nil {
 		kod = strings.TrimSpace(*wskazany)
 	}
 	if kod == "" {
-		return a.pierwszyKanalObrazowy(p, wariantow)
+		return a.pierwszyKanalObrazowy(kluczeKonta, p, wariantow)
 	}
 
 	// Wykaz, nie `Kontrakt(true)`, niesie też wiersze nieczynne.
 	for _, wiersz := range a.kanaly.Wykaz() {
 		if wiersz.Identyfikator() != kod && strings.TrimSpace(wiersz.Kod) != kod {
+			continue
+		}
+		if _, wlasny := kluczeKonta[wiersz.Kod]; !wlasny {
 			continue
 		}
 		// Rodzaj kanału sprawdza się przed czynnością włączenia.
@@ -69,11 +77,14 @@ func (a *adapterDesignu) kanalObrazowyZadania(wskazany *string,
 
 // pierwszyKanalObrazowy szuka domyślnego kanału obrazowego. Brak takiego
 // kanału jest brakiem konfiguracji, nie brakiem produktu.
-func (a *adapterDesignu) pierwszyKanalObrazowy(p shared.DesignPrompt,
-	wariantow int) (models.Definicja, error) {
+func (a *adapterDesignu) pierwszyKanalObrazowy(kluczeKonta map[string]struct{},
+	p shared.DesignPrompt, wariantow int) (models.Definicja, error) {
 
 	for _, wiersz := range a.kanaly.Wykaz() {
 		if !wiersz.Aktywny || wiersz.KluczAdaptera() != models.AdapterObrazy {
+			continue
+		}
+		if _, wlasny := kluczeKonta[wiersz.Kod]; !wlasny {
 			continue
 		}
 		if _, gotowy := a.kanaly.Kanal(wiersz.Identyfikator()); !gotowy {

@@ -123,8 +123,13 @@ a pozycje wykazu dostają `podpisany: true`.
   więc `zmierz.mjs --sprawdz` melduje „plików brakuje 2” i odmawia. Sumy tych
   dwóch pozycji są przepisane, nie zmierzone z pliku leżącego w drzewie.
 - Wystawiony plik kreatora nie pochodzi ze skryptu: pod nazwą instalatora leży
-  surowa binarka, nie pakiet NSIS. `instalka-kreatora-win-x64.sh` składa pakiet
-  właściwy — wymiana pliku w kanale wymaga wgrania.
+  surowa binarka, nie pakiet NSIS. Właściwy pakiet jest złożony skryptem
+  `instalka-kreatora-win-x64.sh` i leży w drzewie
+  (`budowa/wydania/2.0.0-2026-09-04/Danaco Console — Instalator_2.0.0_x64-setup.exe`,
+  6,3 MB, PE32+ GUI x86-64, suma `0ed2c332…`). Wykaz kieruje nadal na plik
+  opublikowany 1 września — przestawienie go przed wgraniem dałoby na stronie
+  „Pobierz" odnośnik do adresu, pod którym nic nie leży. Kolejność jest jedna:
+  najpierw wgranie, potem wykaz.
 - Pakiet serwera 2.0.0 jest złożony i leży w drzewie
   (`budowa/wydania/2.0.0-2026-09-04/danaco-console_2.0.0_amd64.deb`, 40,4 MB,
   suma w `wydania.json`); wykaz kieruje już na niego, nie na 1.0.0 z 18 sierpnia.

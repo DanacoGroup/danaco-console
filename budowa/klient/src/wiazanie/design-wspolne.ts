@@ -72,12 +72,26 @@ export function pusto(wezel: Element | null): void {
   wezel?.replaceChildren();
 }
 
+/* Rola pojemnika narzuca rolę dziecka: `listbox` żąda pozycji, `list` — elementu
+   wykazu. Zdanie niegotowości wchodzi więc w rolę, której pojemnik oczekuje. */
+const ROLA_PUSTKI: Readonly<Record<string, string>> = {
+  listbox: 'option',
+  list: 'listitem',
+  tablist: 'presentation',
+  menu: 'presentation',
+};
+
 // Prototyp nie ma węzła pustki, więc zdanie niegotowości wchodzi w akapit meta.
 export function nieGotowe(wezel: Element | null, zdanie: string = NIEGOTOWE): void {
   if (wezel === null) return;
   const napis = wezel.ownerDocument.createElement('div');
   napis.className = 'dn-meta';
   napis.textContent = zdanie;
+  const rolaDziecka = ROLA_PUSTKI[wezel.getAttribute('role') ?? ''];
+  if (rolaDziecka !== undefined) {
+    napis.setAttribute('role', rolaDziecka);
+    if (rolaDziecka === 'option') napis.setAttribute('aria-disabled', 'true');
+  }
   wezel.replaceChildren(napis);
 }
 

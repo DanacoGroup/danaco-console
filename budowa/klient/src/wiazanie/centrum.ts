@@ -28,6 +28,7 @@ import { zwiazDiagnostyke, zwolnijDiagnostyke } from './diagnostics.ts';
 import { zwiazDevelopera, zwolnijDevelopera } from './developer.ts';
 import { zwiazAplikacje, zwolnijAplikacje } from './apps.ts';
 import { zwiazAsystenta, zwolnijAsystenta } from './assistant.ts';
+import { zwiazAutomatyzacje, zwolnijAutomatyzacje } from './automations.ts';
 import { zwiazOkno, zwiazOknoStojace } from './okno-modulu.ts';
 import {
   nazwijKarte,
@@ -219,10 +220,6 @@ export function zwiazCentrum(kanal: Kanal | undefined = globalThis.DanacoKanal):
   let kartaBiezaca = '';
 
   const postawKarte = (karta: KartaRobocza, modul: Module): void => {
-    if (MODULY_ZAPOWIEDZIANE.has(modul.code)) {
-      zapowiedzModul(modul);
-      return;
-    }
     const wnetrze = wnetrzeKarty(wezly, karta.id, 'dn-tresc-' + modul.code);
     if (wnetrze === null) {
       zapowiedzModul(modul);
@@ -247,6 +244,8 @@ export function zwiazCentrum(kanal: Kanal | undefined = globalThis.DanacoKanal):
         zwiazDesign(kanal, nazwaSrodowiska, idOkna, wnetrze.wezel);
       } else if (modul.code === KOD_MODULU_TERMINALA) {
         zwiazTerminal(kanal, idOkna, wnetrze.wezel);
+      } else if (modul.code === 'automations') {
+        zwiazAutomatyzacje(kanal, nazwaSrodowiska, idOkna, wnetrze.wezel);
       } else if (modul.code === 'apps') {
         zwiazAplikacje(kanal, nazwaSrodowiska, idOkna, wnetrze.wezel);
       } else if (modul.code === 'assistant') {
@@ -467,6 +466,7 @@ export function zwiazCentrum(kanal: Kanal | undefined = globalThis.DanacoKanal):
       zwolnijDevelopera(idKarty);
       zwolnijAplikacje(idKarty);
       zwolnijAsystenta(idKarty);
+      zwolnijAutomatyzacje(idKarty);
       wnetrze.remove();
     }
   };
@@ -812,14 +812,6 @@ async function wczytajModuly(
 
 /* Komunikat nazywa niegotowość wprost i podaje opis modułu z rejestru:
    twierdzenie, że okno się otwiera, byłoby nieprawdą. */
-/* Moduły, których znacznik prototypu niesie rozmowę, wykaz i liczniki wymyślone
-   na pokaz, a wydanie nie ma czym ich zastąpić. Plan etapu 2 zna dwa stany okna
-   i tylko dwa: okno działa albo jest zapowiedziane. Operacje tych rodzin zostają
-   osiągalne katalogiem „Operacje platformy" w Centrum. */
-const MODULY_ZAPOWIEDZIANE = new Set([
-  'automations',
-]);
-
 function zapowiedzModul(modul: Module | undefined): void {
   if (modul === undefined) return;
   const opis = modul.description ?? '';

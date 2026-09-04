@@ -109,6 +109,14 @@ function zdejmijTrescPrzykladowa(korzen: Element): void {
   for (const wybor of ['.oc-wiersz', '.pm-wiersz', '[data-sciaga]', '.tt-karta']) {
     for (const wezel of korzen.querySelectorAll(wybor)) wezel.remove();
   }
+  /* Plan i pliki niosą w prototypie cudzą pracę wpisaną wprost — nazwę zlecenia
+     i wykaz plików wraz z wagą. Oba panele stoją ukryte, więc przejście po
+     oknach ich nie widzi, a rdzeń dla terminala żadnego z nich nie podaje. */
+  for (const identyfikator of ['panel-plan', 'panel-pliki']) {
+    const cialo = korzen.querySelector(`#${identyfikator} .sta-okno-tresc`);
+    if (cialo === null) continue;
+    postawStanPusty(cialo, 'Rdzeń nie podaje tego wykazu dla okna terminala.');
+  }
 }
 
 async function wypelnijKarty(kanal: Kanal, korzen: Element, idOkna: string): Promise<void> {

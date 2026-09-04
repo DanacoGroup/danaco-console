@@ -302,14 +302,22 @@ Sprawdzian końcowy: żaden ze wzorów wypełniacza — `raport-koncowy`, `euros
 błędów konsoli.
 
 **Dostępność.** Produkt zbadany `axe-core` w standardzie WCAG 2.0 A i AA, na
-szerokości 2560 px, po zalogowaniu: wejście — zero naruszeń, Centrum — zero,
-przedsionek TalkIn — zero, Studio — jedno. Naruszenie jest jedno i drobne:
-`<div class="sta-kom-kontekst" aria-label="Kontekst">` niesie `aria-label` na
-dzielniku bez roli, czego ARIA zabrania (`aria-prohibited-attr`, waga „serious").
-Poprawka to jeden atrybut — `role="group"` przy tym dzielniku albo zdjęcie
-`aria-label` — ale znacznik stoi w `design/05-okna/WZORZEC-STANOWISKA.html`
-i powielony jest w dziewiętnastu plikach prototypów, więc zmiana jest zbiorcza
-w warstwie projektowej i należy do Właściciela.
+szerokości 2560 px, po zalogowaniu. Stan końcowy: **zero naruszeń** w wejściu,
+Centrum, przedsionku i w każdym z dziewięciu okien modułowych.
+
+Po drodze zeszły trzy usterki. Przełączniki paneli dostawały `aria-checked`,
+którego zwykły przycisk nie przyjmuje — niosą teraz `aria-pressed`. Żetony
+warstwy w panelu instrukcji były klikalnymi `span`-ami bez roli i bez wejścia
+z klawiatury — mają rolę przycisku, `tabindex` i obsługę Enter oraz spacji.
+Przycisk trybu uprawnień Studia stał bez nazwy do czasu, aż stan okna nadał mu
+treść — niesie teraz stałe `aria-label`.
+
+Czwarta, `aria-prohibited-attr` na `<div class="sta-kom-kontekst" aria-label>`,
+pochodzi z `design/05-okna/WZORZEC-STANOWISKA.html` i jest powielona
+w dziewiętnastu plikach prototypów. Zmiana zbiorcza w warstwie projektowej
+należy do Właściciela, więc rola grupy dokładana jest tymczasowo z kodu, przy
+opisywaniu głowy karty. Gdy prototypy dostaną `role="group"` przy tym dzielniku
+albo stracą `aria-label`, ta linia w `centrum.ts` przestanie być potrzebna.
 
 Przemiatanie protokołem powtórzone po tych zmianach: 208 komend odczytu, 181
 odpowiedzi udanych, ani jednej odmowy `internal_error`. Jedyna pozycja bez

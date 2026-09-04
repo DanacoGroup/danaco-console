@@ -146,20 +146,24 @@ niemieszczących się w opracowaniu żadnego pojedynczego modułu. Sześć z dwu
 tego katalogu opisuje pojedyncze okno nakładkowe wywoływane spoza przepływu głównego,
 pozostałe sześć — mechanizmy i elementy wspólne wielu oknom naraz.
 
+Objętość jest zdjęta w chwili wpisu i służy oszacowaniu, ile materiału niesie
+opracowanie; edycja dokumentu jej nie przelicza, więc liczba bywa o kilka procent
+niższa od bieżącej. Rozstrzyga zawartość pliku, nie ta rubryka.
+
 | Dokument | Klasa | Przeznaczenie | Objętość (znaków) |
 |---|---|---|---|
 | [Strona główna i nawigacja](interfejs-uzytkownika/strona-glowna-i-nawigacja.md) | Specyfikacja docelowa | Szczegółowa specyfikacja strony głównej platformy (centrum dowodzenia) oraz nawigacji: układu kolumnowego, trzech stref wyboru, warstw widoczności i przepływu strona główna → środowisko → moduł. | 78 809 |
-| [Rama okna aplikacji — belka tytułowa, szyna nawigacji, pasek edycji, pasek stanu i specyfikacja menu rozwijanych](interfejs-uzytkownika/rama-okna.md) | Specyfikacja docelowa | Materiał źródłowy dla czterech pasów ramy obecnych w każdym oknie platformy: co zawierają, jak się zachowują, jakie niosą czynności i co kryje każde menu rozwijane. | 86 391 |
+| [Rama okna aplikacji — belka tytułowa, szyna nawigacji, pasek edycji, pasek stanu i specyfikacja menu rozwijanych](interfejs-uzytkownika/rama-okna.md) | Specyfikacja docelowa | Materiał źródłowy dla czterech pasów ramy obecnych w każdym oknie platformy: co zawierają, jak się zachowują, jakie niosą czynności i co kryje każde menu rozwijane. | 91 863 |
 | [Elementy okien przepływu głównego](interfejs-uzytkownika/elementy-okien.md) | Specyfikacja docelowa | Pełny inwentarz elementów każdego okna przepływu głównego bez własnego odrębnego opracowania — okna startowego, strony głównej i powłok czterech środowisk — wraz ze stanami. | 122 674 |
 | [Przepływ okien: od uruchomienia aplikacji do okna roboczego](interfejs-uzytkownika/przeplyw-okien.md) | Specyfikacja docelowa | Ciągły przebieg nawigacyjny od uruchomienia aplikacji do okna roboczego, złożony z opracowań źródłowych — bez wprowadzania nowych funkcji, modułów, okien ani mechanizmów. | 148 700 |
 | [System wizualny](interfejs-uzytkownika/system-wizualny.md) | Specyfikacja docelowa | System projektowy platformy na bazie przewodnika marki: tokeny kolorów w motywie jasnym i ciemnym, typografia, cienie, siatka kolumnowa, warstwy widoczności i ikonografia. | 73 855 |
 | [Katalog komponentów interfejsu](interfejs-uzytkownika/katalog-komponentow.md) | Specyfikacja docelowa | Jeden rejestr wszystkich komponentów interfejsu wielokrotnego użytku — elementów, które nie należą do jednego okna czy modułu, lecz powtarzają się w dziesiątkach miejsc platformy. | 184 751 |
 | [Okno Konfiguracji](interfejs-uzytkownika/konfiguracja.md) | Specyfikacja docelowa | Specyfikacja projektowa okna Konfiguracji — panelu programującego nakładkę na model bazowy: pola sterujące wywołaniem modelu, konfiguracja kanałów komunikacji i warstw widoczności. | 149 119 |
 | [Okno Ustawień (poziom aplikacji)](interfejs-uzytkownika/ustawienia.md) | Specyfikacja docelowa | Projekt okna Ustawień — okna poziomu aplikacji odrębnego od okna Konfiguracji — gromadzącego wszystko, co dotyczy Operatora: konto, uwierzytelnianie, wygląd, urządzenia, powiadomienia. | 124 861 |
-| [Okno historii sesji](interfejs-uzytkownika/okno-historii-sesji.md) | Specyfikacja docelowa | Kompletna budowa, zawartość i zachowanie okna historii sesji — nakładki okna ustawień otwartej na sekcji rejestru sesji — tak, aby deweloper zbudował je bez rozstrzygania niczego samodzielnie. | 44 364 |
-| [Okno nowego projektu](interfejs-uzytkownika/okno-nowego-projektu.md) | Specyfikacja docelowa | Kompletna budowa i przebieg okna zakładania projektu w przestrzeni Workspace środowiska, tak aby deweloper zbudował je bez rozstrzygania czegokolwiek samodzielnie. | 17 661 |
-| [Okno instalatora](interfejs-uzytkownika/okno-instalatora.md) | Specyfikacja docelowa | Kompletna budowa i przebieg okna instalatora aplikacji — okna przedaplikacyjnego prowadzącego przez sześć kroków od warunków licencji do pierwszego uruchomienia. | 63 758 |
-| [Okno instrukcji użytkowania — nakładka wywoływana z menu Pomoc](interfejs-uzytkownika/okno-instrukcji.md) | Specyfikacja docelowa | Pełny ciąg budowy okna nakładkowego „Instrukcja użytkowania”: układ, nawigacja po rozdziałach, dosłowna treść dziewięciu rozdziałów, makiety osadzone w treści i kryteria odbioru. | 76 283 |
+| [Okno historii sesji](interfejs-uzytkownika/okno-historii-sesji.md) | Specyfikacja docelowa | Kompletna budowa, zawartość i zachowanie okna historii sesji — nakładki okna ustawień otwartej na sekcji rejestru sesji — tak, aby deweloper zbudował je bez rozstrzygania niczego samodzielnie. | 86 592 |
+| [Okno nowego projektu](interfejs-uzytkownika/okno-nowego-projektu.md) | Specyfikacja docelowa | Kompletna budowa i przebieg okna zakładania projektu w przestrzeni Workspace środowiska, tak aby deweloper zbudował je bez rozstrzygania czegokolwiek samodzielnie. | 85 664 |
+| [Okno instalatora](interfejs-uzytkownika/okno-instalatora.md) | Specyfikacja docelowa | Kompletna budowa i przebieg okna instalatora aplikacji — okna przedaplikacyjnego prowadzącego przez sześć kroków od warunków licencji do pierwszego uruchomienia. | 86 055 |
+| [Okno instrukcji użytkowania — nakładka wywoływana z menu Pomoc](interfejs-uzytkownika/okno-instrukcji.md) | Specyfikacja docelowa | Pełny ciąg budowy okna nakładkowego „Instrukcja użytkowania”: układ, nawigacja po rozdziałach, dosłowna treść dziewięciu rozdziałów, makiety osadzone w treści i kryteria odbioru. | 88 966 |
 
 ### 1.5 moduly/
 

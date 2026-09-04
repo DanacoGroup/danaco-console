@@ -307,7 +307,7 @@ Centrum, przedsionku i w każdym z dziewięciu okien modułowych.
 
 Badanie objęło trzy przedsionki i wszystkie okna modułowe w każdym z nich.
 
-Po drodze zeszły cztery usterki. Przełączniki paneli dostawały `aria-checked`,
+Po drodze zeszły cztery usterki kodu. Przełączniki paneli dostawały `aria-checked`,
 którego zwykły przycisk nie przyjmuje — niosą teraz `aria-pressed`. Żetony
 warstwy w panelu instrukcji były klikalnymi `span`-ami bez roli i bez wejścia
 z klawiatury — mają rolę przycisku, `tabindex` i obsługę Enter oraz spacji.
@@ -316,7 +316,12 @@ treść — niesie teraz stałe `aria-label`. Zdanie niegotowości wchodziło w 
 o roli `listbox` jako zwykły dzielnik, zostawiając rolę bez wymaganych dzieci —
 wchodzi teraz w rolę, której pojemnik żąda.
 
-Czwarta, `aria-prohibited-attr` na `<div class="sta-kom-kontekst" aria-label>`,
+**Klawiatura.** Przejście klawiszem Tab po wejściu (14 skoków), Centrum (24),
+przedsionku (20) i Studiu (30): ani razu ognisko nie wypadło poza okno, nie
+stanęło na elemencie niewidocznym i nie zgubiło obrysu. Pułapki ogniska nie ma
+w żadnym z tych okien.
+
+Piąta, `aria-prohibited-attr` na `<div class="sta-kom-kontekst" aria-label>`,
 pochodzi z `design/05-okna/WZORZEC-STANOWISKA.html` i jest powielona
 w dziewiętnastu plikach prototypów. Zmiana zbiorcza w warstwie projektowej
 należy do Właściciela, więc rola grupy dokładana jest tymczasowo z kodu, przy

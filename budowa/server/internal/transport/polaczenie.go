@@ -21,6 +21,7 @@ var bladKolejkaPelna = errors.New("transport: kolejka wyjściowa pełna")
 const (
 	czasNaMiejsceWKolejce = 2 * time.Second
 	czasNaDosylke         = time.Second
+	czasNaZamkniecie      = 500 * time.Millisecond
 )
 
 type Polaczenie struct {
@@ -155,7 +156,14 @@ func (p *Polaczenie) ZamknijKodem(kod websocket.StatusCode, powod string) {
 	p.zamek.Unlock()
 
 	// Anulowanie kontekstu zamyka gniazdo TCP, a urządzenie dostałoby EOF zamiast kodu.
-	if err := p.gniazdo.Close(kod, powod); err != nil {
+	umowione := make(chan error, 1)
+	go func() { umowione <- p.gniazdo.Close(kod, powod) }()
+	select {
+	case err := <-umowione:
+		if err != nil {
+			_ = p.gniazdo.CloseNow()
+		}
+	case <-time.After(czasNaZamkniecie):
 		_ = p.gniazdo.CloseNow()
 	}
 	p.zakoncz()

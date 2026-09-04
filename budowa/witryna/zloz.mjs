@@ -56,7 +56,24 @@ if (!Array.isArray(wykaz.wydania)) {
 // jest rozjazdem wykazu z kanałem. Rozmiar sprawdzany jest przy okazji, bo
 // nagłówek `content-length` rozstrzyga, czy pod adresem leży ten plik, o którym
 // wykaz mówi, czy inny o tej samej nazwie.
+//
+// Samo 401 nie mówi jednak, CZY plik pod adresem leży — kanał odpowiada nim
+// także na ścieżkę pustą. Gdy środowisko niesie poświadczenia kanału (te same
+// zmienne, które czyta instalator), odbiór idzie powtórnie z nagłówkiem
+// uwierzytelnienia i pozycja za hasłem sprawdza się tak samo jak otwarta.
+// Bez poświadczeń pozycja wchodzi jako NIESPRAWDZONA i tak jest meldowana.
 const CZAS_ODBIORU_MS = 15000;
+
+const ZMIENNA_UZYTKOWNIKA = 'DANACO_KANAL_UZYTKOWNIK';
+const ZMIENNA_HASLA = 'DANACO_KANAL_HASLO';
+
+/** Nagłówek uwierzytelnienia kanału albo brak, gdy środowisko go nie niesie. */
+function naglowkiKanalu() {
+  const uzytkownik = process.env[ZMIENNA_UZYTKOWNIKA] ?? '';
+  const haslo = process.env[ZMIENNA_HASLA] ?? '';
+  if (uzytkownik === '' || haslo === '') return null;
+  return { Authorization: 'Basic ' + Buffer.from(`${uzytkownik}:${haslo}`).toString('base64') };
+}
 
 /** Pozycje wykazu niosące adres pliku, wraz z nazwą miejsca — nazwa miejsca
  *  wchodzi do odmowy, żeby było wiadomo, którą pozycję poprawić. Pozycje
@@ -93,10 +110,16 @@ async function odbiorKanalu(w) {
       zarzuty.push(`${gdzie}: adres „${p.plik}" jest nieczytelny`);
       continue;
     }
-    const dopuszczone = p.chronione_haslem === true ? [200, 401] : [200];
+    const zaHaslem = p.chronione_haslem === true;
+    const naglowki = zaHaslem ? naglowkiKanalu() : null;
+    const dopuszczone = zaHaslem && naglowki === null ? [200, 401] : [200];
     let odpowiedz;
     try {
-      odpowiedz = await fetch(adres, { method: 'HEAD', signal: AbortSignal.timeout(CZAS_ODBIORU_MS) });
+      odpowiedz = await fetch(adres, {
+        method: 'HEAD',
+        headers: naglowki ?? undefined,
+        signal: AbortSignal.timeout(CZAS_ODBIORU_MS),
+      });
     } catch (powod) {
       zarzuty.push(`${gdzie}: ${adres} — kanał nie odpowiedział (${powod.message})`);
       continue;
@@ -104,7 +127,7 @@ async function odbiorKanalu(w) {
     if (!dopuszczone.includes(odpowiedz.status)) {
       zarzuty.push(
         `${gdzie}: ${adres} — kod ${odpowiedz.status}, a umówione ${dopuszczone.join(' albo ')}` +
-          (p.chronione_haslem === true ? ' (pozycja deklaruje ścieżkę za hasłem)' : ''),
+          (zaHaslem ? ' (pozycja deklaruje ścieżkę za hasłem)' : ''),
       );
       continue;
     }
@@ -113,7 +136,11 @@ async function odbiorKanalu(w) {
       zarzuty.push(`${gdzie}: ${adres} — pod adresem leży ${dlugosc} B, a wykaz mówi o ${p.rozmiarBajty} B`);
       continue;
     }
-    console.log(`= odbiór ${gdzie}: ${odpowiedz.status} (${p.nazwaPliku ?? adres})`);
+    const uwaga =
+      zaHaslem && naglowki === null
+        ? ` — NIESPRAWDZONA: kanał zamknięty hasłem, a środowisko nie niesie ${ZMIENNA_UZYTKOWNIKA} i ${ZMIENNA_HASLA}`
+        : '';
+    console.log(`= odbiór ${gdzie}: ${odpowiedz.status} (${p.nazwaPliku ?? adres})${uwaga}`);
   }
   if (zarzuty.length > 0) {
     console.error(

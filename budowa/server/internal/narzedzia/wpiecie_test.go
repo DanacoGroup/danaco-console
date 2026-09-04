@@ -40,7 +40,7 @@ func korzenBudowy(t *testing.T) string {
 func powodBrakuBinarium(t *testing.T) string {
 	t.Helper()
 	t.Setenv("PATH", t.TempDir())
-	_, _, powod, jest := Wpis("okno-probne")
+	_, _, _, powod, jest := Wpis("okno-probne")
 	if jest {
 		t.Fatal("sprawdzian nie zmierzył odmowy: serwer narzędzi znalazł się" +
 			" mimo pustej ścieżki wyszukiwania")
@@ -100,13 +100,13 @@ func TestZniesioneSkryptyNieLezaWDrzewie(t *testing.T) {
 // TestWpisBezOknaOdmawiaZPowodem pilnuje drugiej odmowy tej samej funkcji:
 // okno bez identyfikatora nie daje wpisu i mówi, dlaczego.
 func TestWpisBezOknaOdmawiaZPowodem(t *testing.T) {
-	polecenie, argumenty, powod, jest := Wpis("")
+	polecenie, argumenty, srodowisko, powod, jest := Wpis("")
 	if jest {
 		t.Fatal("wpis powstał dla okna bez identyfikatora — nie miałby zasięgu")
 	}
-	if polecenie != "" || argumenty != nil {
-		t.Errorf("odmowa oddała polecenie %q i argumenty %v — miała oddać nic",
-			polecenie, argumenty)
+	if polecenie != "" || argumenty != nil || srodowisko != nil {
+		t.Errorf("odmowa oddała polecenie %q, argumenty %v i środowisko %v — miała oddać nic",
+			polecenie, argumenty, srodowisko)
 	}
 	if powod == "" {
 		t.Error("odmowa bez powodu — dziennik rdzenia nie miałby czego zameldować")

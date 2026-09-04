@@ -9,8 +9,8 @@
 -- wypowiedzi. Kontrola więzów tego nie wychwyciła, bo `foreign_key_check`
 -- sprawdza dane wierszy, a nie istnienie tabeli wskazanej.
 --
--- Naprawa przepisuje te tabele z klauzulą wskazującą tabelę istniejącą.
--- Kontrola przejazdu pilnuje liczebności każdej z nich.
+-- Naprawa przepisuje te tabele z klauzulą wskazującą tabelę istniejącą, wraz
+-- z ich wskaźnikami. Kontrola przejazdu pilnuje liczebności każdej z nich.
 
 CREATE TABLE IF NOT EXISTS kontrola_przejazdu (
     wersja  INTEGER NOT NULL,
@@ -54,6 +54,9 @@ SELECT 497, 'pozycja_kolejki',
 DROP TABLE pozycja_kolejki;
 ALTER TABLE pozycja_kolejki_prosta RENAME TO pozycja_kolejki;
 
+CREATE INDEX idx_pozycja_kolejki_kolejka ON pozycja_kolejki(kolejka_id, kolejnosc, id);
+CREATE INDEX idx_pozycja_kolejki_wykonawca ON pozycja_kolejki(okno_wykonawcy_id);
+
 -- ── dziennik akcji kolejki ──────────────────────────────────────────────────
 
 CREATE TABLE log_akcji_kolejki_prosta (
@@ -81,6 +84,9 @@ SELECT 497, 'log_akcji_kolejki',
 
 DROP TABLE log_akcji_kolejki;
 ALTER TABLE log_akcji_kolejki_prosta RENAME TO log_akcji_kolejki;
+
+CREATE INDEX idx_log_akcji_kolejki_kolejka ON log_akcji_kolejki(kolejka_id, id);
+CREATE INDEX idx_log_akcji_kolejki_pozycja ON log_akcji_kolejki(pozycja_kolejki_id);
 
 -- ── wypowiedź debaty ────────────────────────────────────────────────────────
 
@@ -112,6 +118,9 @@ SELECT 497, 'debata_wypowiedz',
 
 DROP TABLE debata_wypowiedz;
 ALTER TABLE debata_wypowiedz_prosta RENAME TO debata_wypowiedz;
+
+CREATE INDEX idx_debata_wypowiedz_tura ON debata_wypowiedz(tura_id, id);
+CREATE INDEX idx_debata_wypowiedz_uczestnik ON debata_wypowiedz(uczestnik, id);
 
 -- ── etykieta zasobu Designu ─────────────────────────────────────────────────
 

@@ -169,7 +169,7 @@ func NowePowiadomienia(db *sql.DB) RepozytoriumPowiadomien {
 const zapiszRejestracjePowiadomien = `
 	INSERT INTO urzadzenie_powiadomien (urzadzenie_id, kanal, klucz_kanalu, etykieta, aktywne, konto_id)
 	VALUES (?, ?, ?, ?, 1, ` + WskazanieKonta + `)
-	ON CONFLICT(urzadzenie_id, kanal, klucz_kanalu) DO UPDATE SET
+	ON CONFLICT(urzadzenie_id, kanal, klucz_kanalu, COALESCE(konto_id, 0)) DO UPDATE SET
 	    etykieta       = COALESCE(excluded.etykieta, urzadzenie_powiadomien.etykieta),
 	    aktywne        = 1,
 	    wyrejestrowano = NULL

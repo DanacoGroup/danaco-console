@@ -301,6 +301,16 @@ Sprawdzian końcowy: żaden ze wzorów wypełniacza — `raport-koncowy`, `euros
 „34 pliki", „Segment:" — nie występuje już w żadnym oknie modułowym, przy zerze
 błędów konsoli.
 
+**Dostępność.** Produkt zbadany `axe-core` w standardzie WCAG 2.0 A i AA, na
+szerokości 2560 px, po zalogowaniu: wejście — zero naruszeń, Centrum — zero,
+przedsionek TalkIn — zero, Studio — jedno. Naruszenie jest jedno i drobne:
+`<div class="sta-kom-kontekst" aria-label="Kontekst">` niesie `aria-label` na
+dzielniku bez roli, czego ARIA zabrania (`aria-prohibited-attr`, waga „serious").
+Poprawka to jeden atrybut — `role="group"` przy tym dzielniku albo zdjęcie
+`aria-label` — ale znacznik stoi w `design/05-okna/WZORZEC-STANOWISKA.html`
+i powielony jest w dziewiętnastu plikach prototypów, więc zmiana jest zbiorcza
+w warstwie projektowej i należy do Właściciela.
+
 Przemiatanie protokołem powtórzone po tych zmianach: 208 komend odczytu, 181
 odpowiedzi udanych, ani jednej odmowy `internal_error`. Jedyna pozycja bez
 odpowiedzi to `developer.lint.get` — nie zawiesza się, tylko uruchamia programy

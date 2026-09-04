@@ -14,7 +14,7 @@ import { zglosUchwyt } from '../polaczenie/rozdzielacz-zdarzen.ts';
 import type { Kanal } from '../protokol/kanal.ts';
 import { wywolaj } from '../protokol/wywolanie.ts';
 import { oglos } from './ogloszenie.ts';
-import { opiszNaglowek } from './okno-modulu.ts';
+import { opiszNaglowek, zdejmijTrescWspolna } from './okno-modulu.ts';
 import { zwiazKatalogModulu } from './katalog-modulu.ts';
 import { zwiazWytworyPrzegladania } from './browser-wytwory.ts';
 
@@ -113,10 +113,7 @@ function zdejmijTrescPrzykladowa(korzen: Element): void {
     for (const wezel of korzen.querySelectorAll(wybor)) wezel.remove();
   }
   // Rozmowa, żetony kontekstu i znacznik pracy też są wpisane wprost w prototyp.
-  korzen.querySelector('.sta-kom-historia')?.replaceChildren();
-  korzen.querySelector('.sta-kom-kontekst')?.replaceChildren();
-  korzen.querySelector('.sta-kontekst-akcji')?.replaceChildren();
-  korzen.querySelector('.sta-kom-stan')?.remove();
+  if (korzen instanceof HTMLElement) zdejmijTrescWspolna(korzen);
   korzen.querySelector('.sta-kom-monitor')?.remove();
 }
 

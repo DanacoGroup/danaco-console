@@ -51,7 +51,7 @@ type PozycjaKalendarzaWorkspace struct {
 	UidZewnetrzny        string
 }
 
-const (
+var (
 	kolumnyTablicyWorkspace = `t.projekt_id, p.kod, t.identyfikator_zewnetrzny, t.nazwa, t.scena,
 	                           t.utworzono, t.zaktualizowano`
 
@@ -65,10 +65,10 @@ const (
 	        zaktualizowano = strftime('%Y-%m-%dT%H:%M:%fZ','now')`
 
 	pobierzTabliceWorkspace = `SELECT ` + kolumnyTablicyWorkspace + zrodloTablicyWorkspace +
-		` WHERE t.identyfikator_zewnetrzny = ?`
+		` WHERE t.identyfikator_zewnetrzny = ? AND ` + warunekKontaProjektu
 
 	listaTablicWorkspace = `SELECT ` + kolumnyTablicyWorkspace + zrodloTablicyWorkspace +
-		` WHERE t.projekt_id = ? ORDER BY t.id`
+		` WHERE t.projekt_id = ? AND ` + warunekKontaProjektu + ` ORDER BY t.id`
 
 	zapiszWyciagWorkspace = `INSERT INTO wyciag_tekstu_projektu
 	    (projekt_id, plik, sposob, tresc, liczba_znakow, jezyki)
@@ -104,7 +104,7 @@ const (
 
 	ustawStanProjektuWorkspace = `UPDATE projekt SET stan = ?,
 	                              zaktualizowano = strftime('%Y-%m-%dT%H:%M:%fZ','now')
-	                              WHERE id = ?`
+	                              WHERE id = ? AND ` + WarunekKonta
 
 	odlaczAgentaWorkspace = `DELETE FROM przypisanie_agenta_projektu
 	                         WHERE projekt_id = ? AND agent_kod = ?`
@@ -140,7 +140,7 @@ func (r *repozytoriumPrzestrzeniRoboczej) TablicaWorkspace(ctx context.Context,
 	if err != nil {
 		return TablicaWorkspace{}, err
 	}
-	tablica, err := odczytajTabliceWorkspace(polecenie.QueryRowContext(ctx, identyfikator))
+	tablica, err := odczytajTabliceWorkspace(polecenie.QueryRowContext(ctx, identyfikator, KontoOperatora(ctx)))
 	if errors.Is(err, sql.ErrNoRows) {
 		return TablicaWorkspace{}, ErrBrakWiersza
 	}
@@ -160,7 +160,7 @@ func (r *repozytoriumPrzestrzeniRoboczej) TabliceWorkspace(ctx context.Context,
 	if err != nil {
 		return nil, err
 	}
-	wiersze, err := polecenie.QueryContext(ctx, projektID)
+	wiersze, err := polecenie.QueryContext(ctx, projektID, KontoOperatora(ctx))
 	if err != nil {
 		return nil, fmt.Errorf("dane: nie można odczytać tablic projektu %d: %w", projektID, err)
 	}
@@ -321,7 +321,7 @@ func (r *repozytoriumPrzestrzeniRoboczej) UstawStanProjektuWorkspace(ctx context
 	if err != nil {
 		return err
 	}
-	if _, err := polecenie.ExecContext(ctx, string(stan), projektID); err != nil {
+	if _, err := polecenie.ExecContext(ctx, string(stan), projektID, KontoOperatora(ctx)); err != nil {
 		return fmt.Errorf("dane: nie można zapisać stanu projektu %d: %w", projektID, err)
 	}
 	return nil

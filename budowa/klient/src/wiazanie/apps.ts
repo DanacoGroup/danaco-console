@@ -105,6 +105,10 @@ function niegotowe(cialo: Element | null, zdanie: string): void {
    pierwszym pytaniem rdzenia, żeby okno nie pokazywało cudzego badania. */
 function zdejmijTrescPrzykladowa(korzen: Element): void {
   niegotowe(panel(korzen, 'panel-deployment'), 'Wykaz czeka na odpowiedź rdzenia.');
+  /* Tytuły paneli niosą nazwę aplikacji wymyśloną na pokaz; rdzeń poda swoją. */
+  for (const tytul of korzen.querySelectorAll('.sta-okno-tytul b')) {
+    tytul.textContent = (tytul.textContent ?? '').split(' — ')[0] ?? '';
+  }
   niegotowe(panel(korzen, 'panel-builder'), 'Budowniczy czeka na wskazanie aplikacji.');
   niegotowe(panel(korzen, 'panel-architektura'), 'Rdzeń nie podaje architektury tej aplikacji.');
   niegotowe(panel(korzen, 'panel-frontend'), 'Rdzeń nie podaje warstwy widoku tej aplikacji.');

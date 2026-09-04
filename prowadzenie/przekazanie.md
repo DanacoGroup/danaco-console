@@ -205,6 +205,12 @@ przedtem ginęła po cichu — powrót ogniska z menu domykał pole wpisu zdarze
 `blur`, więc wpis rozstrzygał się wartością pustą i żadna komenda nie wychodziła.
 Ścieżka czeka teraz obrót pętli i odsłania panel, tak jak ścieżka zakładania.
 
+Przedsionek TalkIn wystawia sesje, które zwraca `environment.enter`, i zakłada
+z siebie projekt ze wskazaniem konta. Szyna sesji zwija się przy wąskim oknie,
+więc przejście przeglądarką prowadzi się na szerokości Właściciela (2560 px):
+przy domyślnej szerokości karty wiersze są w drzewie, ale poza widokiem, co
+łatwo wziąć za pusty wykaz.
+
 ## 6. Rozstrzygnięcia czekające na Właściciela
 
 Czynność, nie rozstrzygnięcie: zakup certyfikatu OV w Certum na dokumenty spółki

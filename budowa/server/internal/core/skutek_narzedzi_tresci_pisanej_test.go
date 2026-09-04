@@ -336,6 +336,11 @@ func TestWyciagnijTekstProstujeSkosPrzedRozpoznaniem(t *testing.T) {
 			t.Fatal("materiał pochylony nie różnicuje drogi z unpaperem od drogi bez niego — " +
 				"rozpoznanie czyta go bez obróbki; sprawdzian potrzebuje ostrzejszego skosu")
 		}
+	} else {
+		// Odmowa odniesienia dowodzi różnicy tylko wtedy, gdy odmówiła Z TEGO
+		// SAMEGO powodu (pusty odczyt) — inny powód zdjąłby cały pomiar różnicy
+		// przed/po do samej obecności słowa w przebiegu drugim.
+		odmowaBrakuZnakowRozpoznania(t, odpowiedzOdniesienia.Error)
 	}
 
 	var poObrobce shared.DocumentTextExtractResponse
@@ -395,6 +400,114 @@ func TestWyciagnijTekstOdmawiaJezykaNieniesionegoPrzezTesseracta(t *testing.T) {
 	}
 }
 
+// TestWyciagnijTekstOdmawiaCzlonuNieniesionegoWewnatrzWykazuZlozonego wykazuje
+// odmowę nazwaną, gdy wykaz złożony niesie jeden język, który maszyna ma,
+// i jeden, którego nie ma — jeden człon poprawny nie ma prawa przepuścić
+// całego wykazu obok weryfikacji.
+func TestWyciagnijTekstOdmawiaCzlonuNieniesionegoWewnatrzWykazuZlozonego(t *testing.T) {
+	pomijBezProgramu(t, narzedzieTesseract.Nazwa, narzedzieTesseract.Program)
+	zmontowany, zycie, _ := zmontujDoPomiaruSkutku(t)
+
+	const jezykNieniesiony = "xx"
+	sciezka := kartkaTekstu(t, "PROTOKOL ODBIORU")
+	blad := wykonajOdmowna(t, zmontowany, zycie, shared.CommandDocumentTextExtract,
+		shared.DocumentTextExtractRequest{
+			SourcePath: wskaznik(sciezka), Language: wskaznik("pol+" + jezykNieniesiony),
+		})
+	if blad.Code != shared.ErrorCodeValidationFailed {
+		t.Fatalf("odmowa człona nieniesionego wewnątrz wykazu złożonego niesie kod %q, oczekiwano %q",
+			blad.Code, shared.ErrorCodeValidationFailed)
+	}
+	if !strings.Contains(blad.Message, jezykNieniesiony) {
+		t.Fatalf("odmowa nie nazywa człona wewnątrz wykazu złożonego, którego maszyna nie niesie: %q",
+			blad.Message)
+	}
+}
+
+// TestWyciagnijTekstOdmawiaCzlonuPustegoWWykazieZlozonym wykazuje odmowę
+// nazwaną, gdy wykaz języków niesie człon pusty (krawędź złożenia znakiem
+// „+" albo jego powtórzenie) — odmowa ma wskazać złożenie wadliwe, nie kończyć
+// się zdaniem bez nazwanej przyczyny.
+func TestWyciagnijTekstOdmawiaCzlonuPustegoWWykazieZlozonym(t *testing.T) {
+	pomijBezProgramu(t, narzedzieTesseract.Nazwa, narzedzieTesseract.Program)
+	zmontowany, zycie, _ := zmontujDoPomiaruSkutku(t)
+
+	sciezka := kartkaTekstu(t, "PROTOKOL ODBIORU")
+	blad := wykonajOdmowna(t, zmontowany, zycie, shared.CommandDocumentTextExtract,
+		shared.DocumentTextExtractRequest{SourcePath: wskaznik(sciezka), Language: wskaznik("pl+")})
+	if blad.Code != shared.ErrorCodeValidationFailed {
+		t.Fatalf("odmowa człona pustego niesie kod %q, oczekiwano %q",
+			blad.Code, shared.ErrorCodeValidationFailed)
+	}
+	if !strings.Contains(blad.Message, "pusty") {
+		t.Fatalf("odmowa nie nazywa przyczyny (człon pusty w złożeniu): %q", blad.Message)
+	}
+}
+
+// TestWyciagnijTekstOdmawiaJezykaOsdMimoObecnosciWWykazie wykazuje, że „osd"
+// (dane orientacji i skryptu pisma, nie język rozpoznania) nie przechodzi
+// weryfikacji, mimo że --list-langs tej maszyny je niesie — inaczej
+// rozpoznanie ruszałoby z odczytem zmyślonym zamiast odmowy.
+func TestWyciagnijTekstOdmawiaJezykaOsdMimoObecnosciWWykazie(t *testing.T) {
+	pomijBezProgramu(t, narzedzieTesseract.Nazwa, narzedzieTesseract.Program)
+	zmontowany, zycie, _ := zmontujDoPomiaruSkutku(t)
+
+	sciezka := kartkaTekstu(t, "PROTOKOL ODBIORU")
+	blad := wykonajOdmowna(t, zmontowany, zycie, shared.CommandDocumentTextExtract,
+		shared.DocumentTextExtractRequest{SourcePath: wskaznik(sciezka), Language: wskaznik("osd")})
+	if blad.Code != shared.ErrorCodeValidationFailed {
+		t.Fatalf("odmowa języka osd niesie kod %q, oczekiwano %q",
+			blad.Code, shared.ErrorCodeValidationFailed)
+	}
+	if !strings.Contains(blad.Message, "osd") {
+		t.Fatalf("odmowa nie nazywa danych osd: %q", blad.Message)
+	}
+}
+
+// TestWyciagnijTekstOdmawiaGdyListLangsPusty wykazuje, że pusty odczyt
+// --list-langs (powodzenie procesu bez ani jednego wiersza) nie zamienia się
+// po cichu w pustą mapę odrzucającą każdy język, tylko w odmowę nazwaną wprost
+// — inaczej odmowa dalsza nazywałaby brak języka tam, gdzie przyczyną jest
+// nieczytelny odczyt wykazu.
+func TestWyciagnijTekstOdmawiaGdyListLangsPusty(t *testing.T) {
+	pomijBezProgramu(t, "ImageMagick", "magick")
+	podmienNarzedzieTesseracta(t, skryptListLangsTesseracta(t, ""))
+
+	zmontowany, zycie, _ := zmontujDoPomiaruSkutku(t)
+	sciezka := kartkaTekstu(t, "PROTOKOL ODBIORU")
+	blad := wykonajOdmowna(t, zmontowany, zycie, shared.CommandDocumentTextExtract,
+		shared.DocumentTextExtractRequest{SourcePath: wskaznik(sciezka), Language: wskaznik("pol")})
+	if blad.Code != shared.ErrorCodeInternalError {
+		t.Fatalf("odmowa listy pustej niesie kod %q, oczekiwano %q",
+			blad.Code, shared.ErrorCodeInternalError)
+	}
+	if !strings.Contains(blad.Message, "--list-langs") {
+		t.Fatalf("odmowa nie nazywa przyczyny (pusty odczyt --list-langs): %q", blad.Message)
+	}
+}
+
+// TestWyciagnijTekstOdmawiaGdyPierwszyWierszNieJestNaglowkiem wykazuje, że
+// pierwszy wiersz --list-langs zostaje odcięty jako nagłówek dopiero po
+// sprawdzeniu, że nim jest — inaczej wykaz jednowierszowy odciąłby jedyny
+// niesiony język i odmówiłby go z fałszywym powodem „nie niesie".
+func TestWyciagnijTekstOdmawiaGdyPierwszyWierszNieJestNaglowkiem(t *testing.T) {
+	pomijBezProgramu(t, "ImageMagick", "magick")
+	podmienNarzedzieTesseracta(t, skryptListLangsTesseracta(t, "pol\n"))
+
+	zmontowany, zycie, _ := zmontujDoPomiaruSkutku(t)
+	sciezka := kartkaTekstu(t, "PROTOKOL ODBIORU")
+	blad := wykonajOdmowna(t, zmontowany, zycie, shared.CommandDocumentTextExtract,
+		shared.DocumentTextExtractRequest{SourcePath: wskaznik(sciezka), Language: wskaznik("pol")})
+	if blad.Code != shared.ErrorCodeInternalError {
+		t.Fatalf("odmowa wykazu bez nagłówka niesie kod %q, oczekiwano %q",
+			blad.Code, shared.ErrorCodeInternalError)
+	}
+	if !strings.Contains(blad.Message, "nagłówkiem") {
+		t.Fatalf("odmowa nie nazywa przyczyny (pierwszy wiersz nie jest nagłówkiem wykazu): %q",
+			blad.Message)
+	}
+}
+
 // TestWyciagnijTekstOdmawiaObrobkiWstepnejBezUnpapera pilnuje, żeby brak
 // programu na maszynie dał odmowę nazwaną, nie cichy odczyt bez obróbki.
 // Brak jest wymuszony nastawą programu, nie stanem maszyny — inaczej ten
@@ -451,6 +564,11 @@ func TestWyciagnijTekstProstujeSkosPrzedRozpoznaniemNaDrodzePdf(t *testing.T) {
 			t.Fatal("materiał pochylony nie różnicuje drogi z unpaperem od drogi bez niego na PDF-ie — " +
 				"rozpoznanie czyta go bez obróbki; sprawdzian potrzebuje ostrzejszego skosu")
 		}
+	} else {
+		// Odmowa odniesienia dowodzi różnicy tylko wtedy, gdy odmówiła Z TEGO
+		// SAMEGO powodu (pusty odczyt) — inny powód zdjąłby cały pomiar różnicy
+		// przed/po do samej obecności słowa w przebiegu drugim.
+		odmowaBrakuZnakowRozpoznania(t, odpowiedzOdniesienia.Error)
 	}
 
 	var poObrobce shared.DocumentTextExtractResponse
@@ -619,6 +737,58 @@ func TestJezykKorektyNieZmyslaOdmianyKrajowej(t *testing.T) {
 }
 
 // ── Pomocnicy sprawdzianów ──────────────────────────────────────────────────
+
+// odmowaBrakuZnakowRozpoznania sprawdza, że odmowa przebiegu odniesienia jest
+// TĄ SAMĄ odmową, jakiej sprawdzian oczekuje przy odczycie pustym (nie ani
+// jednego znaku) — inny powód odmowy (np. brak programu) nie dowodziłby
+// różnicy przed/po obróbce, a sprawdzian potraktowałby go milcząco jak dowód.
+func odmowaBrakuZnakowRozpoznania(t *testing.T, blad *protocol.Blad) {
+	t.Helper()
+	if blad == nil {
+		t.Fatal("przebieg odniesienia nie niesie odmowy do sprawdzenia")
+	}
+	if !strings.Contains(blad.Message, "ani jednego znaku") {
+		t.Fatalf("przebieg odniesienia odmówił z innego powodu niż brak odczytanych znaków, "+
+			"więc nie dowodzi różnicy przed/po obróbce: kod=%s treść=%s", blad.Code, blad.Message)
+	}
+}
+
+// podmienNarzedzieTesseracta przestawia program wołany jako Tesseract OCR na
+// ścieżkę wskazaną (na przykład zastępczy skrypt) i przywraca narzędzie
+// zastane po sprawdzianie.
+func podmienNarzedzieTesseracta(t *testing.T, program string) {
+	t.Helper()
+	zastane := narzedzieTesseract
+	narzedzieTesseract = zewnetrzne.Narzedzie{
+		Nazwa: zastane.Nazwa, Program: program, Pakiet: zastane.Pakiet,
+	}
+	t.Cleanup(func() { narzedzieTesseract = zastane })
+}
+
+// skryptListLangsTesseracta pisze binarium zastępcze, które na wywołanie
+// --list-langs oddaje dokładnie wskazaną treść, a na każde inne wywołanie
+// kończy się niepowodzeniem — sprawdzianom weryfikacji wykazu języków
+// wystarcza to jedno polecenie, więc reszta zachowania Tesseracta jest zbędna.
+func skryptListLangsTesseracta(t *testing.T, wyjscieListLangs string) string {
+	t.Helper()
+
+	katalog := t.TempDir()
+	plikWyjscia := filepath.Join(katalog, "wyjscie-list-langs.txt")
+	if err := os.WriteFile(plikWyjscia, []byte(wyjscieListLangs), 0o600); err != nil {
+		t.Fatalf("nie można zapisać wyjścia zastępczego --list-langs: %v", err)
+	}
+	skrypt := "#!/bin/sh\n" +
+		"if [ \"$1\" = \"--list-langs\" ]; then\n" +
+		"  cat '" + plikWyjscia + "'\n" +
+		"  exit 0\n" +
+		"fi\n" +
+		"exit 1\n"
+	sciezka := filepath.Join(katalog, "tesseract-zastepczy.sh")
+	if err := os.WriteFile(sciezka, []byte(skrypt), 0o700); err != nil {
+		t.Fatalf("nie można zapisać skryptu zastępczego Tesseracta: %v", err)
+	}
+	return sciezka
+}
 
 // skanPochylony rysuje kartkę o znanej treści i pochyla ją o dwa stopnie —
 // skos, którego oko prawie nie widzi, a Tesseract nie czyta wcale, więc

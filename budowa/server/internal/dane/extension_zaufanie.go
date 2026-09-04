@@ -51,7 +51,8 @@ const (
 	                                (rozszerzenie_kod, zakres, byt, tryb, objasnienie,
 	                                 nadane, agent_kod, nadano, konto_id)
 	                                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ` + WskazanieKonta + `)
-	                                ON CONFLICT(rozszerzenie_kod, zakres, byt, nadane, agent_kod)
+	                                ON CONFLICT(rozszerzenie_kod, zakres, byt, nadane, agent_kod,
+	                                            COALESCE(konto_id, 0))
 	                                DO UPDATE SET
 	                                    tryb = excluded.tryb,
 	                                    objasnienie = excluded.objasnienie,
@@ -85,7 +86,7 @@ const (
 	                            (odwolanie, etykieta, sposob_logowania, wygasa, zaktualizowano,
 	                             konto_id)
 	                            VALUES (?, ?, ?, ?, ?, ` + WskazanieKonta + `)
-	                            ON CONFLICT(odwolanie) DO UPDATE SET
+	                            ON CONFLICT(odwolanie, COALESCE(konto_id, 0)) DO UPDATE SET
 	                                etykieta = IFNULL(excluded.etykieta, sekret_rozszerzenia.etykieta),
 	                                sposob_logowania = IFNULL(excluded.sposob_logowania,
 	                                                          sekret_rozszerzenia.sposob_logowania),

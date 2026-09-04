@@ -3,14 +3,20 @@
 import {
   Command,
   type AppDeployment,
+  type AppEndpoint,
+  type AppMilestone,
+  type AppRoute,
+  type AppStage,
 } from '../../../shared/contract.ts';
 import type { Odsubskrybuj } from '../polaczenie/magistrala-zdarzen.ts';
 import type { Kanal } from '../protokol/kanal.ts';
 import { wywolaj } from '../protokol/wywolanie.ts';
 import {
+  cialoPanelu,
   opiszNaglowek,
   zapewnijOknoModulu,
   zdejmijSterowanieWspolne,
+  wykazPanelu,
   zdejmijTrescWspolna,
 } from './okno-modulu.ts';
 import { zwiazKatalogModulu } from './katalog-modulu.ts';
@@ -55,7 +61,19 @@ export function zwiazAplikacje(
   let idOkna = idOknaStojacego;
   const odswiez = async (): Promise<void> => {
     if (idOkna === '') return;
-    await Promise.all([wypelnijWdrozenia(kanal, korzen, idOkna)]);
+    await Promise.all([      wypelnijWdrozenia(kanal, korzen, idOkna),
+      wykaz(kanal, korzen, idOkna, 'panel-plan', Command.AppsStageList,
+        'Rdzeń nie ma etapów tej aplikacji.',
+        (o) => (o.stages as AppStage[]).map((e) => [e.name, ''] as const)),
+      wykaz(kanal, korzen, idOkna, 'panel-zadania', Command.AppsMilestoneList,
+        'Rdzeń nie ma kamieni milowych tej aplikacji.',
+        (o) => (o.milestones as AppMilestone[]).map((k) => [k.name, ''] as const)),
+      wykaz(kanal, korzen, idOkna, 'panel-frontend', Command.AppsRouteList,
+        'Rdzeń nie ma dróg widoku tej aplikacji.',
+        (o) => (o.routes as AppRoute[]).map((d) => [d.path, d.viewName ?? ''] as const)),
+      wykaz(kanal, korzen, idOkna, 'panel-backend', Command.AppsEndpointList,
+        'Rdzeń nie ma końcówek tej aplikacji.',
+        (o) => (o.endpoints as AppEndpoint[]).map((k) => [k.path, k.method] as const))]);
   };
 
   void (async (): Promise<void> => {
@@ -133,6 +151,25 @@ async function wypelnijWdrozenia(kanal: Kanal, korzen: Element, idOkna: string):
     return;
   }
   cialo.replaceChildren(...wdrozenia.map((w) => pozycja(cialo, w.version ?? w.id, w.status)));
+}
+
+/* Panel wykazu bez własnego kształtu; okno puste znaczy komendę bez pola okna. */
+async function wykaz(
+  kanal: Kanal,
+  korzen: Element,
+  idOkna: string,
+  panelId: string,
+  komenda: Parameters<typeof wywolaj>[1],
+  pusty: string,
+  mapuj: (wynik: Record<string, unknown>) => readonly (readonly [string, string])[],
+): Promise<void> {
+  const cialo = cialoPanelu(korzen, panelId);
+  if (cialo === null) return;
+  const zadanie = idOkna === '' ? {} : { windowId: idOkna };
+  const odpowiedz = await wywolaj(kanal, komenda as never, zadanie as never);
+  const wynik = odpowiedz.wynik as Record<string, unknown> | undefined;
+  wykazPanelu(cialo, odpowiedz.udany, odpowiedz.blad?.message,
+    wynik === undefined ? undefined : [...mapuj(wynik)], pusty, (x) => x);
 }
 
 function pozycja(cialo: Element, tytul: string, podpis: string): HTMLElement {

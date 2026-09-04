@@ -2,16 +2,23 @@
 
 import {
   Command,
+  type ApiCollection,
+  type ContainerInfo,
+  type DataConnection,
+  type DependencyNode,
   type DeveloperBuild,
   type GitBranch,
+  type ScanFinding,
 } from '../../../shared/contract.ts';
 import type { Odsubskrybuj } from '../polaczenie/magistrala-zdarzen.ts';
 import type { Kanal } from '../protokol/kanal.ts';
 import { wywolaj } from '../protokol/wywolanie.ts';
 import {
+  cialoPanelu,
   opiszNaglowek,
   zapewnijOknoModulu,
   zdejmijSterowanieWspolne,
+  wykazPanelu,
   zdejmijTrescWspolna,
 } from './okno-modulu.ts';
 import { zwiazKatalogModulu } from './katalog-modulu.ts';
@@ -56,7 +63,23 @@ export function zwiazDevelopera(
   let idOkna = idOknaStojacego;
   const odswiez = async (): Promise<void> => {
     if (idOkna === '') return;
-    await Promise.all([wypelnijBudowania(kanal, korzen, idOkna), wypelnijGalezie(kanal, korzen, idOkna)]);
+    await Promise.all([      wypelnijBudowania(kanal, korzen, idOkna),
+      wypelnijGalezie(kanal, korzen, idOkna),
+      wykaz(kanal, korzen, idOkna, 'panel-drzewo', Command.DeveloperDependencyList,
+        'Rdzeń nie widzi zależności w katalogu roboczym.',
+        (o) => (o.dependencies as DependencyNode[]).map((d) => [d.name, d.version] as const)),
+      wykaz(kanal, korzen, idOkna, 'panel-terminal', Command.DeveloperContainerList,
+        'Żaden pojemnik nie stoi dla tego okna.',
+        (o) => (o.containers as ContainerInfo[]).map((c) => [c.name, c.status] as const)),
+      wykaz(kanal, korzen, idOkna, 'panel-artefakty', Command.DeveloperApiCollectionList,
+        'Rdzeń nie ma kolekcji zapytań dla tego okna.',
+        (o) => (o.collections as ApiCollection[]).map((k) => [k.name, ''] as const)),
+      wykaz(kanal, korzen, idOkna, 'panel-zadania', Command.DeveloperDataConnectionList,
+        'Rdzeń nie ma połączeń z bazami dla tego okna.',
+        (o) => (o.connections as DataConnection[]).map((p) => [p.name, p.engine] as const)),
+      wykaz(kanal, korzen, '', 'panel-plan', Command.DeveloperScanResultList,
+        'Rdzeń nie odnotował zgłoszeń przeglądu bezpieczeństwa.',
+        (o) => (o.findings as ScanFinding[]).map((z) => [z.title, z.severity] as const))]);
   };
 
   void (async (): Promise<void> => {
@@ -147,6 +170,25 @@ async function wypelnijGalezie(kanal: Kanal, korzen: Element, idOkna: string): P
     return;
   }
   cialo.replaceChildren(...galezie.map((g) => pozycja(cialo, g.name, g.remote ?? '')));
+}
+
+/* Panel wykazu bez własnego kształtu; okno puste znaczy komendę bez pola okna. */
+async function wykaz(
+  kanal: Kanal,
+  korzen: Element,
+  idOkna: string,
+  panelId: string,
+  komenda: Parameters<typeof wywolaj>[1],
+  pusty: string,
+  mapuj: (wynik: Record<string, unknown>) => readonly (readonly [string, string])[],
+): Promise<void> {
+  const cialo = cialoPanelu(korzen, panelId);
+  if (cialo === null) return;
+  const zadanie = idOkna === '' ? {} : { windowId: idOkna };
+  const odpowiedz = await wywolaj(kanal, komenda as never, zadanie as never);
+  const wynik = odpowiedz.wynik as Record<string, unknown> | undefined;
+  wykazPanelu(cialo, odpowiedz.udany, odpowiedz.blad?.message,
+    wynik === undefined ? undefined : [...mapuj(wynik)], pusty, (x) => x);
 }
 
 function pozycja(cialo: Element, tytul: string, podpis: string): HTMLElement {

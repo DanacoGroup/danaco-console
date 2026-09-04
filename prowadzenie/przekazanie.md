@@ -171,8 +171,11 @@ i konto SimplySign. Do zakupu wydania idą z `DANACO_PODPIS=pomijany`.
 
 Pozycje audytu bez rozstrzygnięcia: los kanału `/wydania/` za hasłem; kształt
 rodziny `project.*`; reguła wykazu narzędzi modelu; kolejność wpinania
-podgrup `studio.*`; los siedmiu okien platformowych; zgoda na naprawę migracji
-226, 269 i 378 nowym krokiem.
+podgrup `studio.*`; los siedmiu okien platformowych.
+
+Naprawa uszkodzeń po dawnych przebudowach (w tym kroku 269) weszła krokiem 497
+z upoważnienia „Rozstrzygaj za mnie" — zapis wypowiedzi debaty nie działał
+w ogóle, więc zwłoka kosztowałaby moduł, nie tylko porządek.
 
 ## 7. Czego nie wolno
 

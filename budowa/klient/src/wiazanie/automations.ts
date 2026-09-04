@@ -7,6 +7,7 @@ import {
   type AutomationSecretRef,
   type AutomationTemplate,
   type AutomationWorkflow,
+  type Queue,
 } from '../../../shared/contract.ts';
 import type { Odsubskrybuj } from '../polaczenie/magistrala-zdarzen.ts';
 import type { Kanal } from '../protokol/kanal.ts';
@@ -71,6 +72,9 @@ export function zwiazAutomatyzacje(
       wykaz(kanal, korzen, 'panel-scheduler', Command.AutomationSecretList,
         'Rdzeń nie ma poświadczeń automatyki.',
         (o) => (o.secrets as AutomationSecretRef[]).map((s) => [s.name, s.scope ?? ''] as const)),
+      wykaz(kanal, korzen, 'panel-queue', Command.QueueList,
+        'Żadna kolejka zadań nie stoi.',
+        (o) => (o.queues as Queue[]).map((k) => [k.name ?? k.id, k.status] as const)),
       wykaz(kanal, korzen, 'panel-artefakty', Command.AutomationAuditList,
         'Rdzeń nie odnotował czynności automatyk.',
         (o) => (o.entries as AutomationAuditEntry[]).map((w) => [w.action, w.actorId ?? ''] as const))]);

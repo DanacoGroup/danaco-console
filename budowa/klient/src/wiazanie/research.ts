@@ -16,9 +16,11 @@ import type { Kanal } from '../protokol/kanal.ts';
 import { wywolaj } from '../protokol/wywolanie.ts';
 import { oglos } from './ogloszenie.ts';
 import {
+  cialoPanelu,
   opiszNaglowek,
   zapewnijOknoModulu,
   zdejmijSterowanieWspolne,
+  wykazPanelu,
   zdejmijTrescWspolna,
 } from './okno-modulu.ts';
 import { zwiazKatalogModulu } from './katalog-modulu.ts';
@@ -70,6 +72,7 @@ export function zwiazBadania(
       wypelnijObserwacje(kanal, korzen, idOkna),
       wypelnijSzablony(kanal, korzen),
       wypelnijWydania(kanal, korzen, idOkna),
+      wykazPodagentow(kanal, korzen, idOkna),
     ]);
   };
 
@@ -234,6 +237,16 @@ async function wypelnijWydania(kanal: Kanal, korzen: Element, idOkna: string): P
     return;
   }
   cialo.replaceChildren(...wydania.map((w) => pozycja(cialo, w.format, w.target ?? '')));
+}
+
+/* Panel podagentów niesie w prototypie nazwy wymyślone; rdzeń poda swoje. */
+async function wykazPodagentow(kanal: Kanal, korzen: Element, idOkna: string): Promise<void> {
+  const cialo = cialoPanelu(korzen, 'panel-subagenci');
+  if (cialo === null) return;
+  const odpowiedz = await wywolaj(kanal, Command.SubagentList, { windowId: idOkna });
+  const wynik = odpowiedz.wynik;
+  wykazPanelu(cialo, odpowiedz.udany, odpowiedz.blad?.message, wynik?.subagents,
+    'Żaden podagent nie stoi w tym oknie.', (p) => [p.name ?? p.id, ''] as const);
 }
 
 function pozycja(cialo: Element, tytul: string, podpis: string): HTMLElement {

@@ -64,6 +64,7 @@ export function zwiazDebate(
     if (idOkna === '') return;
     await Promise.all([      wypelnijModele(kanal, korzen, idOkna),
       wypelnijArgumenty(kanal, korzen, idOkna),
+      wykazPodagentow(kanal, korzen, idOkna),
       wykaz(kanal, korzen, idOkna, 'panel-consensus', Command.RoundtableEvidenceList,
         'Żadna wypowiedź nie ma jeszcze dowodu.',
         (o) => (o.evidence as RoundtableEvidence[]).map((d) => [d.claim, ''] as const)),
@@ -187,6 +188,16 @@ async function wykaz(
   const wynik = odpowiedz.wynik as Record<string, unknown> | undefined;
   wykazPanelu(cialo, odpowiedz.udany, odpowiedz.blad?.message,
     wynik === undefined ? undefined : [...mapuj(wynik)], pusty, (x) => x);
+}
+
+/* Panel podagentów niesie w prototypie nazwy wymyślone; rdzeń poda swoje. */
+async function wykazPodagentow(kanal: Kanal, korzen: Element, idOkna: string): Promise<void> {
+  const cialo = cialoPanelu(korzen, 'panel-subagenci');
+  if (cialo === null) return;
+  const odpowiedz = await wywolaj(kanal, Command.SubagentList, { windowId: idOkna });
+  const wynik = odpowiedz.wynik;
+  wykazPanelu(cialo, odpowiedz.udany, odpowiedz.blad?.message, wynik?.subagents,
+    'Żaden podagent nie stoi w tym oknie.', (p) => [p.name ?? p.id, ''] as const);
 }
 
 function pozycja(cialo: Element, tytul: string, podpis: string): HTMLElement {

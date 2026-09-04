@@ -285,7 +285,15 @@ Tą samą metodą — odczytem `innerText` żywego okna, nie oglądaniem — spr
 zostały Centrum i przedsionek TalkIn. Oba są czyste: liczby modułów i sesji
 zgadzają się z odpowiedzią rdzenia, MultitaskingAI uczciwie pokazuje „0 modułów",
 a „pracuje" przy sesji bierze się z żywego stanu zwróconego przez `session.list`,
-nie ze znacznika. Wypełniacz siedział wyłącznie w oknach modułowych.
+nie ze znacznika. Wypełniacz siedział wyłącznie w oknach modułowych. Przejścia objęły przedsionki
+TalkIn, WorkSpace i CodeStudio — po naprawie żadne okno modułowe w żadnym z nich
+nie niesie nazwy ani liczby wziętej z prototypu.
+
+Przemiatanie protokołem powtórzone po tych zmianach: 208 komend odczytu, 181
+odpowiedzi udanych, ani jednej odmowy `internal_error`. Jedyna pozycja bez
+odpowiedzi to `developer.lint.get` — nie zawiesza się, tylko uruchamia programy
+analizy statycznej z granicą 180 sekund na przebieg, więc przekracza piętnastkę,
+którą daje sonda.
 
 Studio zdało ten sam sprawdzian bez zastrzeżeń i pokazuje przy okazji kształt
 docelowy: jego pasek nadawania niesie wartości rzeczywiste — „Ręczny · Kanał

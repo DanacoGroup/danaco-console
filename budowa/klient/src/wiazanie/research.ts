@@ -5,6 +5,7 @@ import {
   Command,
   ResearchSourceKind,
   type ResearchExcerpt,
+  type ResearchExportRecord,
   type ResearchFinding,
   type ResearchMonitor,
   type ResearchReportTemplate,
@@ -68,6 +69,7 @@ export function zwiazBadania(
       wypelnijWyciagi(kanal, korzen, idOkna),
       wypelnijObserwacje(kanal, korzen, idOkna),
       wypelnijSzablony(kanal, korzen),
+      wypelnijWydania(kanal, korzen, idOkna),
     ]);
   };
 
@@ -216,6 +218,22 @@ async function wypelnijSzablony(kanal: Kanal, korzen: Element): Promise<void> {
     return;
   }
   cialo.replaceChildren(...szablony.map((s) => pozycja(cialo, s.name, String(s.sectionTitles.length) + ' sekcji')));
+}
+
+async function wypelnijWydania(kanal: Kanal, korzen: Element, idOkna: string): Promise<void> {
+  const cialo = panel(korzen, 'panel-export');
+  if (cialo === null) return;
+  const odpowiedz = await wywolaj(kanal, Command.ResearchExportList, { windowId: idOkna });
+  if (!odpowiedz.udany || odpowiedz.wynik === undefined) {
+    niegotowe(cialo, odpowiedz.blad?.message ?? 'Wykaz wydań badania nie doszedł.');
+    return;
+  }
+  const wydania: ResearchExportRecord[] = odpowiedz.wynik.exports;
+  if (wydania.length === 0) {
+    niegotowe(cialo, 'Żadnego raportu jeszcze nie wydano.');
+    return;
+  }
+  cialo.replaceChildren(...wydania.map((w) => pozycja(cialo, w.format, w.target ?? '')));
 }
 
 function pozycja(cialo: Element, tytul: string, podpis: string): HTMLElement {

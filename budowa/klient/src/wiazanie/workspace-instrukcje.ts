@@ -58,6 +58,8 @@ export function zwiazInstrukcje(
   const przyciskWersji =
     przyciski.find((cel) => (cel.textContent ?? '').startsWith('Wersje')) ?? null;
   for (const przycisk of przyciski) if (przycisk !== przyciskWersji) przycisk.remove();
+  // Liczbę wersji podaje rdzeń po naciśnięciu; do tej chwili prototyp mówi „(4)".
+  if (przyciskWersji !== null) przyciskWersji.textContent = 'Wersje ▾';
 
   const oznaczNiezapisane = (stan: boolean): void => {
     if (niezapisane === null) return;

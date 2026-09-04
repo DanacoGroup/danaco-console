@@ -409,6 +409,40 @@ w ogóle, więc zwłoka kosztowałaby moduł, nie tylko porządek.
 
 ## 8. Maszyny
 
+### Przeniesienie maszyny budującej
+
+Maszyna budująca idzie do odłączenia. Wyjeżdża wszystko, czego nie da się
+odtworzyć instalacją — łącznie około 30 GB.
+
+| co | rozmiar | dlaczego nieodtwarzalne |
+|---|---|---|
+| `/opt/danaco-modele` | 17 GB | bez nich rdzeń melduje brak zależności zewnętrznych; moduły obrazu, mowy i wiedzy przestają działać |
+| `/opt/danaco-arsenal-windows` | 8,0 GB | zasoby składania wydania Windows |
+| `/opt/danaco` | 2,4 GB | program MCP `most-konsoli` (`mcp-danaco-pulpit-console`, most stdio wołany przez Console i Pilot po SSH) oraz silniki `rembg` i `twarze` |
+| `/opt/whisper-cpp` | 1,8 GB | silnik mowy |
+| `/opt/languagetool` | 392 MB | kontrola języka |
+| `/opt/danaco-arsenal` | 251 MB | głosy piper |
+| `/opt/danaco-ikony` | 138 MB | zestawy ikon |
+| `~/budowa` | 387 MB bez `target/` | repozytorium; **bez zdalnego**, więc kopią katalogu albo `git bundle --all` |
+| `~/robocze` | 168 MB | przekazania oraz `material/repo-2.0-historia.bundle` — 352 rewizje podejścia 2.0, których w `main` nie ma |
+| `~/.ssh` | 40 KB | klucze `danaco_operator`, `danaco_data`, `danaco_web` — jedyny dostęp do serwera wdrożenia |
+| `/etc/danaco`, `/etc/caddy` | 80 KB | nastawy pa11y, semgrep, vale oraz kierowanie podglądu na port 17896 |
+
+**Do rozstrzygnięcia.** `/srv/win-danaco/storage` (14 GB) — obraz dysku maszyny
+wirtualnej Windows do prób instalki. Odtwarzalny, ale kosztownie.
+
+**Nie jedzie, bo odtwarza się instalacją:** `/opt/rust`, `/opt/llvm-mingw`,
+`~/.cargo`, `~/.rustup`, `~/go`, `node_modules`, katalogi `target/` powłoki
+i instalatora, pamięci podręczne `go-build`, `sccache` i `cargo-xwin`.
+
+**Nie jedzie, bo nie jest danymi produktu:** neo4j, postgres i elasticsearch
+tej maszyny. Rdzeń stoi na SQLite; jedyne odwołanie do postgresa to adres
+`postgres://` składany przez moduł Developer dla połączeń Operatora.
+
+**Po przeniesieniu trzeba postawić na nowo:** rdzeń podglądu — to proces
+z `/tmp/rdzen-podglad`, nie usługa, więc ginie razem z maszyną.
+
+
 **Maszyna budująca** — ta. Podgląd budowy wychodzi pod `http://51.75.62.180/`,
 tylko port 80; Caddy kieruje na `127.0.0.1:17896`, gdzie stoi rdzeń podglądowy
 z `/tmp/rdzen-podglad`, katalogiem danych `~/robocze/podglad-dane` i pakietem

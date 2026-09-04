@@ -45,7 +45,8 @@ const (
 	zapiszZasobPamieci = `INSERT INTO zasob_pamieci
 	                      (poziom, klucz_zasiegu, klucz, tresc, tresc_odwolanie, waga, konto_id)
 	                      VALUES (?, ?, ?, ?, ?, ?, ` + WskazanieKonta + `)
-	                      ON CONFLICT(poziom, klucz_zasiegu, klucz) DO UPDATE SET
+	                      ON CONFLICT(poziom, klucz_zasiegu, klucz,
+	                                  COALESCE(konto_id, 0)) DO UPDATE SET
 	                          tresc = excluded.tresc,
 	                          tresc_odwolanie = excluded.tresc_odwolanie,
 	                          waga = excluded.waga,

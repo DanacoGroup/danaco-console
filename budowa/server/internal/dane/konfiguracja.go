@@ -46,7 +46,8 @@ const (
 	                     rodzaj_wartosci, konto_id)
 	                    VALUES ((SELECT id FROM poziom_zasiegu WHERE kod = ?), ?, ?, ?, ?, ?, ?,
 	                            ` + WskazanieKonta + `)
-	                    ON CONFLICT(poziom_zasiegu_id, klucz_zasiegu, os, klucz_osi, klucz) DO UPDATE SET
+	                    ON CONFLICT(poziom_zasiegu_id, klucz_zasiegu, os, klucz_osi, klucz,
+	                                COALESCE(konto_id, 0)) DO UPDATE SET
 	                        wartosc = excluded.wartosc,
 	                        rodzaj_wartosci = excluded.rodzaj_wartosci,
 	                        zaktualizowano = strftime('%Y-%m-%dT%H:%M:%fZ','now')

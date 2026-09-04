@@ -121,7 +121,8 @@ var (
 	                         (poziom_zasiegu_id, klucz_zasiegu, warstwa, konto_id)
 	                         VALUES ((SELECT id FROM poziom_zasiegu WHERE kod = ?), ?, ?,
 	                                 ` + WskazanieKonta + `)
-	                         ON CONFLICT(poziom_zasiegu_id, klucz_zasiegu) DO UPDATE SET
+	                         ON CONFLICT(poziom_zasiegu_id, klucz_zasiegu,
+	                                     COALESCE(konto_id, 0)) DO UPDATE SET
 	                             warstwa = excluded.warstwa,
 	                             zaktualizowano = strftime('%Y-%m-%dT%H:%M:%fZ','now')
 	                         WHERE ` + WarunekKonta

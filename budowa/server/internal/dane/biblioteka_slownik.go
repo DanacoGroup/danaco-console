@@ -32,7 +32,7 @@ const (
 
 	zapiszEtykieteSlownika = `INSERT INTO etykieta_slownika_biblioteki (nazwa, barwa, konto_id)
 	                          VALUES (?, ?, ` + WskazanieKonta + `)
-	                          ON CONFLICT(nazwa) DO UPDATE SET
+	                          ON CONFLICT(nazwa, COALESCE(konto_id, 0)) DO UPDATE SET
 	                              barwa = COALESCE(excluded.barwa, etykieta_slownika_biblioteki.barwa)
 	                          WHERE ` + WarunekKonta
 

@@ -21,6 +21,7 @@ import { miaraModulow, miaraSesji } from '../model/miary.ts';
 import { zwiazWyborModulu } from './wybor-modulu.ts';
 import { oglos } from './ogloszenie.ts';
 import { zwiazPowiadomienia } from './powiadomienia.ts';
+import { zwiazBadania, zwolnijBadania } from './research.ts';
 import { zwiazOkno, zwiazOknoStojace } from './okno-modulu.ts';
 import {
   nazwijKarte,
@@ -240,6 +241,8 @@ export function zwiazCentrum(kanal: Kanal | undefined = globalThis.DanacoKanal):
         zwiazDesign(kanal, nazwaSrodowiska, idOkna, wnetrze.wezel);
       } else if (modul.code === KOD_MODULU_TERMINALA) {
         zwiazTerminal(kanal, idOkna, wnetrze.wezel);
+      } else if (modul.code === 'research') {
+        zwiazBadania(kanal, nazwaSrodowiska, idOkna, wnetrze.wezel);
       } else if (modul.code === KOD_MODULU_PRZEGLADARKI) {
         zwiazPrzegladarke(kanal, nazwaSrodowiska, idOkna, wnetrze.wezel);
       } else if (idOkna === '') {
@@ -439,6 +442,7 @@ export function zwiazCentrum(kanal: Kanal | undefined = globalThis.DanacoKanal):
       zwolnijDesign(idKarty);
       zwolnijTerminal(idKarty);
       zwolnijPrzegladarke(idKarty);
+      zwolnijBadania(idKarty);
       wnetrze.remove();
     }
   };
@@ -789,7 +793,7 @@ async function wczytajModuly(
    i tylko dwa: okno działa albo jest zapowiedziane. Operacje tych rodzin zostają
    osiągalne katalogiem „Operacje platformy" w Centrum. */
 const MODULY_ZAPOWIEDZIANE = new Set([
-  'research', 'translate', 'developer', 'roundtable',
+  'translate', 'developer', 'roundtable',
   'apps', 'automations', 'assistant', 'diagnostics',
 ]);
 

@@ -135,16 +135,17 @@ func (r *repozytoriumBadan) ZapiszWersjeRaportu(ctx context.Context,
 	return r.WersjaRaportuBadania(ctx, w.Kod)
 }
 
-const zapytanieWersjiBadania = `SELECT w.identyfikator_zewnetrzny, r.identyfikator_zewnetrzny,
+var zapytanieWersjiBadania = `SELECT w.identyfikator_zewnetrzny, r.identyfikator_zewnetrzny,
 	        w.etykieta, w.migawka, w.liczba_sekcji, w.utworzono
-	   FROM wersja_raportu_badania w JOIN raport_badania r ON r.id = w.raport_id `
+	   FROM wersja_raportu_badania w JOIN raport_badania r ON r.id = w.raport_id
+	  WHERE ` + warunekKontaRaportu + ` AND `
 
 func (r *repozytoriumBadan) WersjaRaportuBadania(ctx context.Context, kod string) (WersjaRaportuBadania, error) {
-	polecenie, err := r.zapytania.przygotuj(ctx, zapytanieWersjiBadania+`WHERE w.identyfikator_zewnetrzny = ?`)
+	polecenie, err := r.zapytania.przygotuj(ctx, zapytanieWersjiBadania+`w.identyfikator_zewnetrzny = ?`)
 	if err != nil {
 		return WersjaRaportuBadania{}, err
 	}
-	w, err := odczytajWersjeRaportuBadania(polecenie.QueryRowContext(ctx, kod))
+	w, err := odczytajWersjeRaportuBadania(polecenie.QueryRowContext(ctx, KontoOperatora(ctx), kod))
 	if errors.Is(err, sql.ErrNoRows) {
 		return WersjaRaportuBadania{}, ErrBrakWiersza
 	}
@@ -162,8 +163,8 @@ func (r *repozytoriumBadan) WersjeRaportu(ctx context.Context, kodRaportu string
 		limit = 50
 	}
 	wiersze, err := r.pytajBadania(ctx, zapytanieWersjiBadania+
-		`WHERE r.identyfikator_zewnetrzny = ? ORDER BY w.utworzono DESC, w.id DESC LIMIT ?`,
-		kodRaportu, limit)
+		`r.identyfikator_zewnetrzny = ? ORDER BY w.utworzono DESC, w.id DESC LIMIT ?`,
+		KontoOperatora(ctx), kodRaportu, limit)
 	if err != nil {
 		return nil, err
 	}
@@ -230,13 +231,13 @@ func (r *repozytoriumBadan) KomentarzeRaportu(ctx context.Context, kodRaportu st
 	sqlTekst := `SELECT k.identyfikator_zewnetrzny, r.identyfikator_zewnetrzny, k.sekcja_kod,
 	        k.watek_kod, k.tresc, k.cytat, k.rozstrzygniety, k.utworzono
 	   FROM komentarz_raportu_badania k JOIN raport_badania r ON r.id = k.raport_id
-	  WHERE r.identyfikator_zewnetrzny = ?`
+	  WHERE ` + warunekKontaRaportu + ` AND r.identyfikator_zewnetrzny = ?`
 	if tylkoOtwarte {
 		sqlTekst += ` AND k.rozstrzygniety = 0`
 	}
 	sqlTekst += ` ORDER BY k.utworzono, k.id`
 
-	wiersze, err := r.pytajBadania(ctx, sqlTekst, kodRaportu)
+	wiersze, err := r.pytajBadania(ctx, sqlTekst, KontoOperatora(ctx), kodRaportu)
 	if err != nil {
 		return nil, err
 	}
@@ -293,8 +294,8 @@ func (r *repozytoriumBadan) UstawPrzypisyRaportu(ctx context.Context, kodRaportu
 	return r.wykonajBadania(ctx, `UPDATE raport_badania
 	    SET przypisy_umiejscowienie = ?, przypisy_skrocone = ?,
 	        zaktualizowano = strftime('%Y-%m-%dT%H:%M:%fZ','now')
-	    WHERE identyfikator_zewnetrzny = ?`,
-		umiejscowienie, wartoscCalkowitaBadania(skrocone), kodRaportu)
+	    WHERE identyfikator_zewnetrzny = ? AND `+WarunekKonta,
+		umiejscowienie, wartoscCalkowitaBadania(skrocone), kodRaportu, KontoOperatora(ctx))
 }
 
 // Eksporty oddaje ślad eksportów raportu po kodzie albo, gdy kod pusty, wszystkich eksportów okna.
@@ -302,7 +303,7 @@ func (r *repozytoriumBadan) Eksporty(ctx context.Context, kodRaportu, okno strin
 	limit int) ([]EksportRaportu, error) {
 
 	warunki := []string{"1 = 1"}
-	argumenty := []any{}
+	argumenty := []any{KontoOperatora(ctx)}
 	if strings.TrimSpace(kodRaportu) != "" {
 		warunki = append(warunki, "r.identyfikator_zewnetrzny = ?")
 		argumenty = append(argumenty, kodRaportu)
@@ -320,7 +321,7 @@ func (r *repozytoriumBadan) Eksporty(ctx context.Context, kodRaportu, okno strin
 	        e.format, e.cel, e.sciezka_docelowa, e.plik_biblioteki_id, e.sciezka_wyniku,
 	        e.rozmiar_bajtow, e.utworzono
 	   FROM eksport_raportu_badania e JOIN raport_badania r ON r.id = e.raport_id
-	  WHERE `+strings.Join(warunki, " AND ")+
+	  WHERE `+warunekKontaRaportu+` AND `+strings.Join(warunki, " AND ")+
 		` ORDER BY e.utworzono DESC, e.id DESC LIMIT ?`, argumenty...)
 	if err != nil {
 		return nil, err

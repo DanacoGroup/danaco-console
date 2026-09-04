@@ -2065,3 +2065,41 @@ schodzi. Szukanie wraca wtedy, gdy kontrakt dostanie komendę nazywającą jego 
 przełącznika, który zmienia samą klasę na znaczniku już stojącym — „Czynności
 sesji" i „Samouczek" wychodzą w nim jako bez skutku, choć działają. Wynik takiego
 przemiatania jest wykazem podejrzeń do sprawdzenia w źródle, nie wykazem usterek.
+
+## 47. Okna modułów przestają przedstawiać dane, których nie mają
+
+**Rzecz.** Przejście przeglądarką po dziewięciu modułach przedsionka TalkIn
+pokazało, że osiem z nich montuje znacznik prototypu razem z jego treścią
+przykładową. Library wystawiała „Materiały: 0" i obok sześć nieistniejących
+plików z autorami, datami i rozmiarami. Research niósł wymyśloną rozmowę
+z procentami i „22 ustalenia". Browser podawał ceny „Plan Standard 149 zł/mies.".
+Nagłówki twierdziły „ŚRODOWISKO WorkSpace" w sesji TalkIn. To ten sam kształt
+usterki, który plan etapu 2 wskazuje jako przyczynę upadku podejścia poprzedniego:
+dwa stany wykluczające się, oba wzięte znikąd.
+
+**Rozstrzygnięcie dwutorowe, bo dwie są przyczyny.**
+
+Moduły prowadzone samym katalogiem operacji — `research`, `translate`,
+`developer`, `roundtable`, `apps`, `automations`, `assistant`, `diagnostics` —
+nie wiązały ani rozmowy, ani żadnego panelu; okno stawało wyłącznie po to, żeby
+pokazać kształt. Plan zna dwa stany okna i tylko dwa, a rejestr potwierdza to
+w rozstrzygnięciu 25. Te moduły są odtąd **zapowiedziane**: wejście odpowiada
+nazwą, opisem i zdaniem „Okno tego modułu nie wchodzi do tego wydania", a okno
+nie powstaje. Ich operacje zostają osiągalne katalogiem „Operacje platformy"
+w Centrum, więc pokrycie kontraktu zostaje na 1086/1086.
+
+Moduły wiązane z rdzeniem — Studio, Library, Workspace, Agents, Browser, Design,
+Terminal — zostają otwarte, ale przestają zmyślać. Wspólne zdejmowanie treści
+obejmuje teraz żetony kontekstu, znacznik pracy i liczniki paneli; nagłówek bierze
+środowisko i kanał modelu z rdzenia, a pole bez pokrycia schodzi; wykaz Library
+odczytuje repozytorium przy wiązaniu, zamiast czekać na pierwszy ruch Operatora.
+Miejsce rozmowy mówi wprost, że nie jest związane z rdzeniem — wiadomość wysyła
+w tym wydaniu wyłącznie Studio.
+
+**Czego to nie obejmuje.** Wyborniki paska nadawania niosą dalej nazwy modeli
+i trybów zgód z prototypu. To wykaz możliwości, nie twierdzenie o stanie, a nad
+nim stoi zdanie o braku wiązania — zostają do czasu, aż pasek zacznie wybierać.
+
+**Konsekwencje.** Kryterium 6 bramki obejmuje odtąd wszystkie okna modułowe,
+nie tylko platformowe. Miara treści okna po naprawie: Library 1081 → 714 znaków,
+Browser 1962 → 1350, Workspace 1520 → 1391 — różnicę stanowiła treść zmyślona.

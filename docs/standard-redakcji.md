@@ -22,10 +22,11 @@ Udział komentarzy nie przekracza pięciu procent objętości pliku, a pojedyncz
 komentarz trzystu pięćdziesięciu znaków. Miarę egzekwuje walidator dyscypliny
 inżynierskiej i to on rozstrzyga; zapisy podające inną wartość są nieaktualne.
 
-Pliki migracji są poza zasięgiem redakcji. Rdzeń liczy sumę kontrolną migracji
-z całej treści pliku wraz z komentarzami i odmawia startu, gdy suma zapisana
-w bazie przestaje się zgadzać. Zmiana komentarza w migracji zatrzymuje więc
-każdą istniejącą bazę, choć schematu nie tyka.
+Pliki migracji podlegają redakcji komentarza. Rdzeń liczy sumę kontrolną
+z treści znormalizowanej — bez komentarzy, bez wierszy pustych i bez odstępu
+końcowego (`store.normalizujTrescMigracji`), więc zmiana samego komentarza nie
+rusza sumy i nie zatrzymuje bazy istniejącej. Sam schemat kroku już
+zastosowanego zostaje nietknięty: zmiana DDL zmienia sumę i jest odmową startu.
 
 Pliki wytworzone generatorem są poza zasięgiem redakcji. Ich treść powstaje
 z generatora, więc ręczna zmiana ginie przy następnym wytworzeniu, a do czasu

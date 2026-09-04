@@ -40,7 +40,7 @@ const (
 	// w gałęzi DO UPDATE zostawia wiersz cudzego konta nietknięty.
 	zapiszNagranieMowy = `INSERT INTO nagranie_mowy (` + kolumnyNagraniaMowy + `, konto_id)
 	                      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ` + WskazanieKonta + `)
-	                      ON CONFLICT(sciezka) DO UPDATE SET
+	                      ON CONFLICT(sciezka, COALESCE(konto_id, 0)) DO UPDATE SET
 	                          typ_tresci = excluded.typ_tresci,
 	                          rozmiar_bajtow = excluded.rozmiar_bajtow,
 	                          dlugosc_ms = excluded.dlugosc_ms,

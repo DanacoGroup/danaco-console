@@ -84,7 +84,7 @@ func (r *repozytoriumBadan) ZapiszWynikiOdkrycia(ctx context.Context, wyniki []W
 		    (klucz, okno, tytul, adres, autorzy, rok, dostawca, identyfikator, fragment,
 		     otwarty_dostep, duplikat, zrodlo_kod, konto_id)
 		    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, `+WskazanieKonta+`)
-		    ON CONFLICT(klucz) DO UPDATE SET
+		    ON CONFLICT(klucz, COALESCE(konto_id, 0)) DO UPDATE SET
 		        tytul = excluded.tytul, adres = excluded.adres, autorzy = excluded.autorzy,
 		        rok = excluded.rok, dostawca = excluded.dostawca,
 		        identyfikator = excluded.identyfikator, fragment = excluded.fragment,

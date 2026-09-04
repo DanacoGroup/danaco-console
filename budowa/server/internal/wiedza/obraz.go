@@ -374,7 +374,8 @@ func (s *SilnikObrazu) zapiszPodobienstwaDoSkladnicy(ctx context.Context,
 		INSERT INTO podobienstwo_obrazu (sciezka, odcisk, model, pytanie, podobienstwo,
 		                                 utworzono, konto_id)
 		VALUES (?, ?, ?, ?, ?, ?, `+dane.WskazanieKonta+`)
-		ON CONFLICT(sciezka, model, pytanie) DO UPDATE SET
+		ON CONFLICT(sciezka, model, pytanie,
+		            COALESCE(konto_id, 0)) DO UPDATE SET
 		    odcisk       = excluded.odcisk,
 		    podobienstwo = excluded.podobienstwo,
 		    utworzono    = excluded.utworzono

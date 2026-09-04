@@ -68,7 +68,8 @@ func (s *Skladnica) Zapisz(ctx context.Context, pozycje []Pozycja, chwila int64)
 		INSERT INTO fragment_wiedzy (zakres, zrodlo, zrodlo_kod, kolejnosc, tresc,
 		                             model, wymiar, wektor, utworzono, konto_id)
 		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, `+dane.WskazanieKonta+`)
-		ON CONFLICT(zakres, zrodlo_kod, kolejnosc, model) DO UPDATE SET
+		ON CONFLICT(zakres, zrodlo_kod, kolejnosc, model,
+		            COALESCE(konto_id, 0)) DO UPDATE SET
 		    zrodlo    = excluded.zrodlo,
 		    tresc     = excluded.tresc,
 		    wymiar    = excluded.wymiar,

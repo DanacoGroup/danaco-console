@@ -305,12 +305,16 @@ błędów konsoli.
 szerokości 2560 px, po zalogowaniu. Stan końcowy: **zero naruszeń** w wejściu,
 Centrum, przedsionku i w każdym z dziewięciu okien modułowych.
 
-Po drodze zeszły trzy usterki. Przełączniki paneli dostawały `aria-checked`,
+Badanie objęło trzy przedsionki i wszystkie okna modułowe w każdym z nich.
+
+Po drodze zeszły cztery usterki. Przełączniki paneli dostawały `aria-checked`,
 którego zwykły przycisk nie przyjmuje — niosą teraz `aria-pressed`. Żetony
 warstwy w panelu instrukcji były klikalnymi `span`-ami bez roli i bez wejścia
 z klawiatury — mają rolę przycisku, `tabindex` i obsługę Enter oraz spacji.
 Przycisk trybu uprawnień Studia stał bez nazwy do czasu, aż stan okna nadał mu
-treść — niesie teraz stałe `aria-label`.
+treść — niesie teraz stałe `aria-label`. Zdanie niegotowości wchodziło w pojemnik
+o roli `listbox` jako zwykły dzielnik, zostawiając rolę bez wymaganych dzieci —
+wchodzi teraz w rolę, której pojemnik żąda.
 
 Czwarta, `aria-prohibited-attr` na `<div class="sta-kom-kontekst" aria-label>`,
 pochodzi z `design/05-okna/WZORZEC-STANOWISKA.html` i jest powielona

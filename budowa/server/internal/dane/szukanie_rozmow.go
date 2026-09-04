@@ -36,7 +36,7 @@ const granicaSzukaniaDomyslna = 50
 
 // Sesje w koszu nie wracają w trafieniach — ta sama zasada, która kryje je
 // w wykazie sesji (dane/sesje.go).
-const szukajWiadomosci = `SELECT COALESCE(s.identyfikator_zewnetrzny, ''), s.tytul,
+var szukajWiadomosci = `SELECT COALESCE(s.identyfikator_zewnetrzny, ''), s.tytul,
                                  COALESCE(o.identyfikator_zewnetrzny, ''),
                                  COALESCE(w.identyfikator_zewnetrzny, ''),
                                  w.rola,
@@ -48,6 +48,7 @@ const szukajWiadomosci = `SELECT COALESCE(s.identyfikator_zewnetrzny, ''), s.tyt
                           JOIN sesja s             ON s.id = o.sesja_id
                           WHERE wiadomosc_szukanie MATCH ?
                             AND s.usunieto_o IS NULL
+                            AND ` + warunekKontaOkna("o") + `
                           ORDER BY rank
                           LIMIT ?`
 
@@ -74,7 +75,7 @@ func (r *repozytoriumSzukaniaRozmow) SzukajWiadomosci(ctx context.Context, fraza
 	if err != nil {
 		return nil, err
 	}
-	wiersze, err := polecenie.QueryContext(ctx, frazaFTS(fraza), granica)
+	wiersze, err := polecenie.QueryContext(ctx, frazaFTS(fraza), KontoOperatora(ctx), granica)
 	if err != nil {
 		return nil, fmt.Errorf("dane: szukanie %q nie powiodło się: %w", fraza, err)
 	}

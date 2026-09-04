@@ -8,28 +8,32 @@ import (
 	"fmt"
 )
 
-const (
+// Okno nie ma kolumny konto_id; własność sprawdza warunekKontaOkna.
+var (
 	// idOknaPoIdentyfikatorze odnajduje wewnętrzny identyfikator okna po jego
 	// identyfikatorze zewnętrznym — obie metody zapisu i odczytu więzi
 	// przyjmują identyfikatory zewnętrzne, tak jak kontrakt Mission Control.
-	idOknaPoIdentyfikatorze = `SELECT id FROM okno_komunikacji WHERE identyfikator_zewnetrzny = ?`
+	idOknaPoIdentyfikatorze = `SELECT id FROM okno_komunikacji
+	                           WHERE identyfikator_zewnetrzny = ? AND ` + kontoOknaWlasnego
 
 	ustawKoordynatoraOkna = `UPDATE okno_komunikacji
 	                         SET okno_koordynatora_id = ?,
 	                             zaktualizowano = strftime('%Y-%m-%dT%H:%M:%fZ','now')
-	                         WHERE id = ?`
+	                         WHERE id = ? AND ` + kontoOknaWlasnego
 
 	koordynatorOkna = `SELECT koordynator.identyfikator_zewnetrzny
 	                   FROM okno_komunikacji wykonawca
 	                   LEFT JOIN okno_komunikacji koordynator
 	                       ON koordynator.id = wykonawca.okno_koordynatora_id
-	                   WHERE wykonawca.identyfikator_zewnetrzny = ?`
+	                   WHERE wykonawca.identyfikator_zewnetrzny = ?
+	                     AND ` + warunekKontaOkna("wykonawca")
 
 	wykonawcyKoordynatora = `SELECT wykonawca.identyfikator_zewnetrzny
 	                         FROM okno_komunikacji wykonawca
 	                         JOIN okno_komunikacji koordynator
 	                             ON koordynator.id = wykonawca.okno_koordynatora_id
 	                         WHERE koordynator.identyfikator_zewnetrzny = ?
+	                           AND ` + warunekKontaOkna("wykonawca") + `
 	                         ORDER BY wykonawca.kolejnosc, wykonawca.id`
 )
 
@@ -42,7 +46,7 @@ func (r *repozytoriumPrzekazan) idOknaZewnetrzne(ctx context.Context, identyfika
 		return 0, err
 	}
 	var id int64
-	err = polecenie.QueryRowContext(ctx, identyfikator).Scan(&id)
+	err = polecenie.QueryRowContext(ctx, identyfikator, KontoOperatora(ctx)).Scan(&id)
 	if errors.Is(err, sql.ErrNoRows) {
 		return 0, fmt.Errorf("%w: okno %q", ErrBrakWiersza, identyfikator)
 	}
@@ -67,7 +71,7 @@ func (r *repozytoriumPrzekazan) UstawKoordynatora(ctx context.Context, oknoWykon
 	if err != nil {
 		return err
 	}
-	wynik, err := polecenie.ExecContext(ctx, idKoordynatora, idWykonawcy)
+	wynik, err := polecenie.ExecContext(ctx, idKoordynatora, idWykonawcy, KontoOperatora(ctx))
 	if err != nil {
 		return fmt.Errorf("dane: nie można zapisać koordynatora okna %q: %w", oknoWykonawcy, err)
 	}
@@ -83,7 +87,7 @@ func (r *repozytoriumPrzekazan) Koordynator(ctx context.Context, oknoWykonawcy s
 		return "", err
 	}
 	var koordynator sql.NullString
-	err = polecenie.QueryRowContext(ctx, oknoWykonawcy).Scan(&koordynator)
+	err = polecenie.QueryRowContext(ctx, oknoWykonawcy, KontoOperatora(ctx)).Scan(&koordynator)
 	if errors.Is(err, sql.ErrNoRows) {
 		return "", fmt.Errorf("%w: okno %q", ErrBrakWiersza, oknoWykonawcy)
 	}
@@ -102,7 +106,7 @@ func (r *repozytoriumPrzekazan) Wykonawcy(ctx context.Context, oknoKoordynatora 
 	if err != nil {
 		return nil, err
 	}
-	wiersze, err := polecenie.QueryContext(ctx, oknoKoordynatora)
+	wiersze, err := polecenie.QueryContext(ctx, oknoKoordynatora, KontoOperatora(ctx))
 	if err != nil {
 		return nil, fmt.Errorf("dane: nie można odczytać wykonawców okna %q: %w", oknoKoordynatora, err)
 	}

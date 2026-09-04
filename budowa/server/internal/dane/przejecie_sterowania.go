@@ -32,14 +32,15 @@ type RepozytoriumSteru interface {
 // albo zmieniła kształt, kompilacja stanie tutaj, a nie na martwej komendzie.
 var _ RepozytoriumSteru = (*repozytoriumPrzekazan)(nil)
 
-const pobierzSladySterowania = `SELECT log.id, ok.identyfikator_zewnetrzny, log.akcja_id, log.parametry,
-                                       log.wynik, log.utworzono
-                                FROM log_akcji_okna log
-                                JOIN okno_komunikacji ok ON ok.id = log.okno_komunikacji_id
-                                WHERE ok.identyfikator_zewnetrzny = ?
-                                  AND log.akcja_id IN (?, ?)
-                                ORDER BY log.utworzono DESC, log.id DESC
-                                LIMIT ?`
+var pobierzSladySterowania = `SELECT log.id, ok.identyfikator_zewnetrzny, log.akcja_id, log.parametry,
+                                     log.wynik, log.utworzono
+                              FROM log_akcji_okna log
+                              JOIN okno_komunikacji ok ON ok.id = log.okno_komunikacji_id
+                              WHERE ok.identyfikator_zewnetrzny = ?
+                                AND ` + warunekKontaOkna("ok") + `
+                                AND log.akcja_id IN (?, ?)
+                              ORDER BY log.utworzono DESC, log.id DESC
+                              LIMIT ?`
 
 // SladySterowania oddaje historię przejęć i oddań sterowania nad oknem.
 //
@@ -57,7 +58,7 @@ func (r *repozytoriumPrzekazan) SladySterowania(ctx context.Context, okno string
 	if err != nil {
 		return nil, err
 	}
-	wiersze, err := polecenie.QueryContext(ctx, okno,
+	wiersze, err := polecenie.QueryContext(ctx, okno, KontoOperatora(ctx),
 		AkcjaPrzejeciaSterowania, AkcjaOddaniaSterowania, limit)
 	if err != nil {
 		return nil, fmt.Errorf("dane: nie można odczytać śladu sterowania okna %q: %w", okno, err)

@@ -106,7 +106,8 @@ const (
 	                 (identyfikator_zewnetrzny, okno, url, selektor, interwal_sekund, prog_zmiany,
 	                  kanal_powiadomienia, wlaczony, stan, odniesienie_odwolanie,
 	                  odniesienie_dlugosc, sprawdzono, zmieniono)
-	                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+	                  konto_id)
+	                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ` + WskazanieKonta + `)
 	                 ON CONFLICT(identyfikator_zewnetrzny) DO UPDATE SET
 	                     okno = excluded.okno,
 	                     url = excluded.url,
@@ -119,40 +120,48 @@ const (
 	                     odniesienie_odwolanie = excluded.odniesienie_odwolanie,
 	                     odniesienie_dlugosc = excluded.odniesienie_dlugosc,
 	                     sprawdzono = excluded.sprawdzono,
-	                     zmieniono = excluded.zmieniono`
+	                     zmieniono = excluded.zmieniono
+	                 WHERE ` + WarunekKonta
 
 	pobierzMonitor = `SELECT ` + kolumnyMonitora + `
-	                  FROM monitor_przegladania WHERE identyfikator_zewnetrzny = ?`
+	                  FROM monitor_przegladania
+	                  WHERE identyfikator_zewnetrzny = ? AND ` + WarunekKonta
 
 	listaMonitorow = `SELECT ` + kolumnyMonitora + ` FROM monitor_przegladania
 	                  WHERE (? = '' OR okno = ?) AND (? = 0 OR wlaczony = 1)
+	                    AND ` + WarunekKonta + `
 	                  ORDER BY utworzono DESC, id DESC LIMIT ?`
 
-	usunMonitor = `DELETE FROM monitor_przegladania WHERE identyfikator_zewnetrzny = ?`
+	usunMonitor = `DELETE FROM monitor_przegladania
+	               WHERE identyfikator_zewnetrzny = ? AND ` + WarunekKonta
 
 	kolumnyKanaluObserwacji = `id, identyfikator_zewnetrzny, okno, url, tytul, postac,
 	                 interwal_sekund, pobrano, utworzono`
 
 	zapiszKanalObserwacji = `INSERT INTO kanal_przegladania
 	               (identyfikator_zewnetrzny, okno, url, tytul, postac, interwal_sekund, pobrano)
-	               VALUES (?, ?, ?, ?, ?, ?, ?)
+	                konto_id)
+	               VALUES (?, ?, ?, ?, ?, ?, ?, ` + WskazanieKonta + `)
 	               ON CONFLICT(okno, url) DO UPDATE SET
 	                   tytul = excluded.tytul,
 	                   postac = excluded.postac,
 	                   interwal_sekund = excluded.interwal_sekund,
-	                   pobrano = excluded.pobrano`
+	                   pobrano = excluded.pobrano
+	               WHERE ` + WarunekKonta
 
 	pobierzKanalObserwacji = `SELECT ` + kolumnyKanaluObserwacji + ` FROM kanal_przegladania
-	                WHERE identyfikator_zewnetrzny = ?`
+	                WHERE identyfikator_zewnetrzny = ? AND ` + WarunekKonta
 
 	pobierzKanalObserwacjiPoAdresie = `SELECT ` + kolumnyKanaluObserwacji + ` FROM kanal_przegladania
-	                         WHERE okno = ? AND url = ?`
+	                         WHERE okno = ? AND url = ? AND ` + WarunekKonta
 
 	listaKanalowObserwacji = `SELECT ` + kolumnyKanaluObserwacji + ` FROM kanal_przegladania
 	                WHERE (? = '' OR okno = ?) AND (? = '' OR identyfikator_zewnetrzny = ?)
+	                  AND ` + WarunekKonta + `
 	                ORDER BY utworzono DESC, id DESC LIMIT ?`
 
-	usunKanalObserwacji = `DELETE FROM kanal_przegladania WHERE identyfikator_zewnetrzny = ?`
+	usunKanalObserwacji = `DELETE FROM kanal_przegladania
+	                       WHERE identyfikator_zewnetrzny = ? AND ` + WarunekKonta
 
 	kolumnyWpisuKanalu = `id, identyfikator_zewnetrzny, kanal_zewnetrzny_id, url, tytul,
 	                      streszczenie, przeczytany, opublikowano, utworzono`
@@ -179,24 +188,28 @@ const (
 	zapiszPozycjeCzytania = `INSERT INTO pozycja_czytania_przegladania
 	                         (identyfikator_zewnetrzny, okno, url, tytul, notatka,
 	                          przeczytana, przypomnienie)
-	                         VALUES (?, ?, ?, ?, ?, ?, ?)
+	                          konto_id)
+	                         VALUES (?, ?, ?, ?, ?, ?, ?, ` + WskazanieKonta + `)
 	                         ON CONFLICT(identyfikator_zewnetrzny) DO UPDATE SET
 	                             url = excluded.url,
 	                             tytul = excluded.tytul,
 	                             notatka = excluded.notatka,
 	                             przeczytana = excluded.przeczytana,
-	                             przypomnienie = excluded.przypomnienie`
+	                             przypomnienie = excluded.przypomnienie
+	                         WHERE ` + WarunekKonta
 
 	pobierzPozycjeCzytania = `SELECT ` + kolumnyPozycjiCzytania + `
-	                          FROM pozycja_czytania_przegladania WHERE identyfikator_zewnetrzny = ?`
+	                          FROM pozycja_czytania_przegladania
+	                          WHERE identyfikator_zewnetrzny = ? AND ` + WarunekKonta
 
 	listaPozycjiCzytania = `SELECT ` + kolumnyPozycjiCzytania + `
 	                        FROM pozycja_czytania_przegladania
 	                        WHERE (? = '' OR okno = ?) AND (? = 0 OR przeczytana = 0)
+	                          AND ` + WarunekKonta + `
 	                        ORDER BY utworzono DESC, id DESC LIMIT ?`
 
 	usunPozycjeCzytania = `DELETE FROM pozycja_czytania_przegladania
-	                       WHERE identyfikator_zewnetrzny = ?`
+	                       WHERE identyfikator_zewnetrzny = ? AND ` + WarunekKonta
 
 	kolumnyZakladki = `id, identyfikator_zewnetrzny, okno, url, tytul, folder,
 	                   etykiety_json, notatka, utworzono`
@@ -247,7 +260,8 @@ func (r *repozytoriumPrzegladania) ZapiszMonitor(ctx context.Context,
 		tekstDoKolumny(monitor.Selektor), monitor.InterwalSekund, liczbaDoKolumny(monitor.ProgZmiany),
 		tekstDoKolumny(monitor.KanalPowiadomienia), liczbaLogiczna(monitor.Wlaczony), monitor.Stan,
 		tekstDoKolumny(monitor.OdniesienieOdwolanie), liczbaDoKolumny(monitor.OdniesienieDlugosc),
-		tekstDoKolumny(monitor.Sprawdzono), tekstDoKolumny(monitor.Zmieniono))
+		tekstDoKolumny(monitor.Sprawdzono), tekstDoKolumny(monitor.Zmieniono),
+		KontoOperatora(ctx), KontoOperatora(ctx))
 	if err != nil {
 		return MonitorPrzegladania{}, fmt.Errorf("dane: nie można zapisać monitora %q: %w", monitor.Kod, err)
 	}
@@ -261,7 +275,7 @@ func (r *repozytoriumPrzegladania) Monitor(ctx context.Context, kod string) (Mon
 	if err != nil {
 		return MonitorPrzegladania{}, err
 	}
-	monitor, err := odczytajMonitorPrzegladania(polecenie.QueryRowContext(ctx, kod))
+	monitor, err := odczytajMonitorPrzegladania(polecenie.QueryRowContext(ctx, kod, KontoOperatora(ctx)))
 	if errors.Is(err, sql.ErrNoRows) {
 		return MonitorPrzegladania{}, ErrBrakWiersza
 	}
@@ -281,7 +295,7 @@ func (r *repozytoriumPrzegladania) Monitory(ctx context.Context, okno string,
 		return nil, err
 	}
 	wiersze, err := polecenie.QueryContext(ctx, okno, okno,
-		liczbaLogiczna(tylkoWlaczone), granicaWykazu(limit))
+		liczbaLogiczna(tylkoWlaczone), KontoOperatora(ctx), granicaWykazu(limit))
 	if err != nil {
 		return nil, fmt.Errorf("dane: nie można odczytać monitorów: %w", err)
 	}
@@ -304,7 +318,7 @@ func (r *repozytoriumPrzegladania) Monitory(ctx context.Context, okno string,
 // UsunMonitor zdejmuje monitor wraz z jego odniesieniem do treści pilnowanej
 // strony i mówi, czy monitor o wskazanym kodzie istniał.
 func (r *repozytoriumPrzegladania) UsunMonitor(ctx context.Context, kod string) (bool, error) {
-	return r.usunWiersz(ctx, usunMonitor, kod, "monitor")
+	return r.usunWiersz(ctx, usunMonitor, kod, "monitor", KontoOperatora(ctx))
 }
 
 // ZapiszKanal zakłada subskrypcję albo odświeża zastaną, wskazaną parą
@@ -321,7 +335,8 @@ func (r *repozytoriumPrzegladania) ZapiszKanal(ctx context.Context,
 	}
 	_, err = polecenie.ExecContext(ctx, kanal.Kod, kanal.Okno, kanal.Url,
 		tekstDoKolumny(kanal.Tytul), tekstDoKolumny(kanal.Postac),
-		liczbaDoKolumny(kanal.InterwalSekund), tekstDoKolumny(kanal.Pobrano))
+		liczbaDoKolumny(kanal.InterwalSekund), tekstDoKolumny(kanal.Pobrano),
+		KontoOperatora(ctx), KontoOperatora(ctx))
 	if err != nil {
 		return KanalPrzegladania{}, fmt.Errorf("dane: nie można zapisać kanału %q: %w", kanal.Kod, err)
 	}
@@ -337,7 +352,7 @@ func (r *repozytoriumPrzegladania) Kanal(ctx context.Context, kod string) (Kanal
 	if err != nil {
 		return KanalPrzegladania{}, err
 	}
-	kanal, err := odczytajKanalObserwacji(polecenie.QueryRowContext(ctx, kod))
+	kanal, err := odczytajKanalObserwacji(polecenie.QueryRowContext(ctx, kod, KontoOperatora(ctx)))
 	if errors.Is(err, sql.ErrNoRows) {
 		return KanalPrzegladania{}, ErrBrakWiersza
 	}
@@ -354,7 +369,7 @@ func (r *repozytoriumPrzegladania) KanalPoAdresie(ctx context.Context, okno, url
 	if err != nil {
 		return KanalPrzegladania{}, err
 	}
-	kanal, err := odczytajKanalObserwacji(polecenie.QueryRowContext(ctx, okno, url))
+	kanal, err := odczytajKanalObserwacji(polecenie.QueryRowContext(ctx, okno, url, KontoOperatora(ctx)))
 	if errors.Is(err, sql.ErrNoRows) {
 		return KanalPrzegladania{}, ErrBrakWiersza
 	}
@@ -371,7 +386,8 @@ func (r *repozytoriumPrzegladania) Kanaly(ctx context.Context, okno, kod string,
 	if err != nil {
 		return nil, err
 	}
-	wiersze, err := polecenie.QueryContext(ctx, okno, okno, kod, kod, granicaWykazu(limit))
+	wiersze, err := polecenie.QueryContext(ctx, okno, okno, kod, kod,
+		KontoOperatora(ctx), granicaWykazu(limit))
 	if err != nil {
 		return nil, fmt.Errorf("dane: nie można odczytać kanałów: %w", err)
 	}
@@ -394,7 +410,7 @@ func (r *repozytoriumPrzegladania) Kanaly(ctx context.Context, okno, kod string,
 // UsunKanal zdejmuje subskrypcję o wskazanym kodzie i mówi, czy istniała;
 // wpisy kanału znikają kaskadą schematu bazy.
 func (r *repozytoriumPrzegladania) UsunKanal(ctx context.Context, kod string) (bool, error) {
-	return r.usunWiersz(ctx, usunKanalObserwacji, kod, "kanał")
+	return r.usunWiersz(ctx, usunKanalObserwacji, kod, "kanał", KontoOperatora(ctx))
 }
 
 // ZapiszWpisKanalu dopisuje wpis kanału albo odświeża zastany (para kanał +
@@ -481,7 +497,8 @@ func (r *repozytoriumPrzegladania) ZapiszPozycjeCzytania(ctx context.Context,
 	}
 	_, err = polecenie.ExecContext(ctx, pozycja.Kod, pozycja.Okno, pozycja.Url,
 		tekstDoKolumny(pozycja.Tytul), tekstDoKolumny(pozycja.Notatka),
-		liczbaLogiczna(pozycja.Przeczytana), tekstDoKolumny(pozycja.Przypomnienie))
+		liczbaLogiczna(pozycja.Przeczytana), tekstDoKolumny(pozycja.Przypomnienie),
+		KontoOperatora(ctx), KontoOperatora(ctx))
 	if err != nil {
 		return PozycjaCzytania{}, fmt.Errorf("dane: nie można zapisać pozycji czytania %q: %w", pozycja.Kod, err)
 	}
@@ -495,7 +512,7 @@ func (r *repozytoriumPrzegladania) PozycjaCzytania(ctx context.Context, kod stri
 	if err != nil {
 		return PozycjaCzytania{}, err
 	}
-	pozycja, err := odczytajPozycjeCzytania(polecenie.QueryRowContext(ctx, kod))
+	pozycja, err := odczytajPozycjeCzytania(polecenie.QueryRowContext(ctx, kod, KontoOperatora(ctx)))
 	if errors.Is(err, sql.ErrNoRows) {
 		return PozycjaCzytania{}, ErrBrakWiersza
 	}
@@ -515,7 +532,7 @@ func (r *repozytoriumPrzegladania) KolejkaCzytania(ctx context.Context, okno str
 		return nil, err
 	}
 	wiersze, err := polecenie.QueryContext(ctx, okno, okno,
-		liczbaLogiczna(tylkoNieprzeczytane), granicaWykazu(limit))
+		liczbaLogiczna(tylkoNieprzeczytane), KontoOperatora(ctx), granicaWykazu(limit))
 	if err != nil {
 		return nil, fmt.Errorf("dane: nie można odczytać kolejki czytania: %w", err)
 	}
@@ -538,7 +555,7 @@ func (r *repozytoriumPrzegladania) KolejkaCzytania(ctx context.Context, okno str
 // UsunPozycjeCzytania zdejmuje pozycję o wskazanym kodzie z kolejki czytania
 // i mówi, czy pozycja istniała.
 func (r *repozytoriumPrzegladania) UsunPozycjeCzytania(ctx context.Context, kod string) (bool, error) {
-	return r.usunWiersz(ctx, usunPozycjeCzytania, kod, "pozycja czytania")
+	return r.usunWiersz(ctx, usunPozycjeCzytania, kod, "pozycja czytania", KontoOperatora(ctx))
 }
 
 // ZapiszZakladke zakłada zakładkę albo nadpisuje zastaną o tym samym kodzie

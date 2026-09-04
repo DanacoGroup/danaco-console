@@ -187,6 +187,19 @@ Pełny wykaz: `audyt2-ustalenia-7-kategorii.json`.
 | 6. okno obecne nazywa swoją niegotowość | wykazane | `#cd-mobile` odpowiada zdaniem „To okno nie wchodzi do tego wydania" |
 | 7. przejście bez ślepego zaułka | wykazane | uruchomienie → bramka → logowanie → Centrum → przedsionek → Studio, zero błędów konsoli |
 
+Czego przy tym **nie** udało się rozstrzygnąć: okno główne powłoki nie zmapowało
+się na ekranie wirtualnym, choć dziennik powłoki notuje „okno otwarte", a klient
+nawiązał z rdzeniem (rdzeń odnotował przyłączenie). Okno wstaje ukryte i pokazuje
+je sama strona, `aplikacja.ts`, po zmontowaniu ekranu startowego. Dwie przyczyny
+tłumaczą to tak samo dobrze i tej maszyny nie da się między nimi rozstrzygnąć:
+silnik widoku nie wywołuje `requestAnimationFrame` w oknie nigdy niepokazanym
+albo `show()` na oknie bezramkowym nie mapuje się bez menedżera okien, a tej
+maszyny żaden nie ma i instalować nie wolno. Zapora czasu w `aplikacja.ts`
+obiecywała w komentarzu, że usterka montażu nie zostawi okna niewidocznym na
+zawsze, a wybierała tylko chwilę wywołania klatki — klatka została drogą pierwszą,
+zegar zapasową. Na Windows sprawę rozstrzyga pierwsze uruchomienie powłoki:
+gdyby okno nie wstało, wraca się do niego pozycją „Pokaż okno" w zasobniku.
+
 Kreator instalacji też przeszedł na tej maszynie, pod `xvfb-run`. Pięć kroków
 z sześciu wykonał do końca: odczytał parametry urządzenia (Ubuntu 26.4.0,
 Intel/AMD x64, 35,0 GB wolnego), wygasił „Dalej" do czasu akceptacji licencji,

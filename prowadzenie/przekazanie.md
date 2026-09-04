@@ -428,8 +428,29 @@ odtworzyć instalacją — łącznie około 30 GB.
 | `~/.ssh` | 40 KB | klucze `danaco_operator`, `danaco_data`, `danaco_web` — jedyny dostęp do serwera wdrożenia |
 | `/etc/danaco`, `/etc/caddy` | 80 KB | nastawy pa11y, semgrep, vale oraz kierowanie podglądu na port 17896 |
 
-**Do rozstrzygnięcia.** `/srv/win-danaco/storage` (14 GB) — obraz dysku maszyny
-wirtualnej Windows do prób instalki. Odtwarzalny, ale kosztownie.
+### Programy, których rdzeń wymaga
+
+Rdzeń sprawdza je przy starcie i melduje `zależności zewnętrzne: 55 z 55
+obecnych`. Wykaz wraz ze zdaniem, co bez którego przestaje działać, stoi
+w `server/internal/core/zaleznosci_zewnetrzne.go` — jedyne źródło prawdy.
+Leżą w czterech miejscach i każde przenosi się inaczej:
+
+| gdzie | ile | jak odtworzyć |
+|---|---|---|
+| `/usr/local/bin`, pięć własnych: `danaco-kody`, `danaco-komentarze`, `danaco-standard`, `danaco-terminy`, `danaco-twarze` | 24 KB | **wyłącznie kopią** — nie ma ich skąd zainstalować; `danaco-twarze` woła `/opt/danaco/silniki/twarze/bin/python` |
+| `/usr/local/bin`, 25 binariów: typst, rembg, realesrgan-ncnn-vulkan, semgrep, vale, piper, whisper-cli, ollama, golangci-lint, staticcheck, gopls, goimports, dlv, gotestsum, typos, ruff, sqlc, mockery, oapi-codegen, k6, mkcert, sccache, bun, temporal, cloudflared | 579 MB | instalacja z sieci |
+| `/usr/local/lib/node_modules` za 29 dowiązaniami z `bin` | 3,8 GB | `npm install -g`; wersje zdejmuje `npm ls -g --depth=0` |
+| `/usr/bin` z pakietów systemu | — | `apt install pandoc poppler-utils tesseract-ocr tesseract-ocr-pol tesseract-ocr-eng tesseract-ocr-osd libreoffice openjdk-25-jre-headless ffmpeg espeak-ng libimage-exiftool-perl 7zip hunspell shellcheck unpaper sane-utils cups-client picocom telnet nodejs python3 docker.io` |
+
+Nazwy pakietów odczytane `dpkg -S` z maszyny budującej, nie z pamięci.
+**`tesseract-ocr-pol` jest konieczny** — bez polskich danych językowych
+rozpoznanie pisma odmawia, a odmowa nazywa brakujący człon wprost.
+
+**Pułapka pakowania.** `/usr/local/bin` w 29 z 54 pozycji to dowiązania do
+`node_modules`. Spakowanie samego `bin` daje 8,6 MB martwych dowiązań zamiast
+579 MB programów.
+
+
 
 **Nie jedzie, bo odtwarza się instalacją:** `/opt/rust`, `/opt/llvm-mingw`,
 `~/.cargo`, `~/.rustup`, `~/go`, `node_modules`, katalogi `target/` powłoki

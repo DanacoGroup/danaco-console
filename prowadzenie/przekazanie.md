@@ -262,6 +262,11 @@ bramka logowania, logowanie kontem, menu aplikacji, Centrum dowodzenia ze
 dał zero i zero. Ekrany stoją w jednym drzewie, więc szukać pól widocznych
 (`offsetParent !== null`), nie pierwszych w DOM.
 
+Do Studia tą drogą nie doszedłem: przycisk szyny (`button[data-srodowisko]`)
+wybiera środowisko, a wejście prowadzi przez „Nowa sesja" z menu aplikacji, która
+dopiero pyta o środowisko. Pion do Studia jest wykazany protokołem (przebieg e2e:
+`window.create`, `studio.document.save`, odczyt zwrotny), nie klikaniem.
+
 **Przegląd odczytów na żywym rdzeniu.** Osobny rdzeń na własnym porcie i katalogu
 danych, po nim wywołanie każdej komendy wykazu i odczytu: 140 bez pól wymaganych
 i 68 zawężonych oknem albo sesją. Odmowa `internal_error` znaczy usterkę rdzenia,

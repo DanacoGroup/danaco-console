@@ -14,6 +14,7 @@ import { zglosUchwyt } from '../polaczenie/rozdzielacz-zdarzen.ts';
 import type { Kanal } from '../protokol/kanal.ts';
 import { wywolaj } from '../protokol/wywolanie.ts';
 import { oglos } from './ogloszenie.ts';
+import { opiszNaglowek } from './okno-modulu.ts';
 import { zwiazKatalogModulu } from './katalog-modulu.ts';
 import { zwiazWytworyPrzegladania } from './browser-wytwory.ts';
 
@@ -26,6 +27,7 @@ const WIAZANIA = new Map<string, WiazaniePrzegladarki>();
 
 export function zwiazPrzegladarke(
   kanal: Kanal,
+  nazwaSrodowiska: string,
   idOkna: string,
   wskazanieKorzenia: Element | string,
 ): boolean {
@@ -45,6 +47,7 @@ export function zwiazPrzegladarke(
   WIAZANIA.set(idKarty, { korzen, odlaczenia });
 
   zdejmijTrescPrzykladowa(korzen);
+  void opiszNaglowek(kanal, nazwaSrodowiska, korzen);
 
   void wypelnijKarty(kanal, korzen, idOkna);
   void wypelnijZrodla(kanal, korzen, idOkna);
@@ -109,6 +112,12 @@ function zdejmijTrescPrzykladowa(korzen: Element): void {
   for (const wybor of ['.br-karta', '.br-zrodlo', '.br-notatka', '.br-artefakt']) {
     for (const wezel of korzen.querySelectorAll(wybor)) wezel.remove();
   }
+  // Rozmowa, żetony kontekstu i znacznik pracy też są wpisane wprost w prototyp.
+  korzen.querySelector('.sta-kom-historia')?.replaceChildren();
+  korzen.querySelector('.sta-kom-kontekst')?.replaceChildren();
+  korzen.querySelector('.sta-kontekst-akcji')?.replaceChildren();
+  korzen.querySelector('.sta-kom-stan')?.remove();
+  korzen.querySelector('.sta-kom-monitor')?.remove();
 }
 
 async function wypelnijKarty(kanal: Kanal, korzen: Element, idOkna: string): Promise<void> {

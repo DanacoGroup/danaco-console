@@ -175,6 +175,9 @@ export function zwiazEksplorator(
     void odswiez();
   });
   void odswiezOkruszki(kanal, okruszki, kontekst);
+  /* Bez pierwszego odczytu wykaz stoi przy wierszach z prototypu do chwili,
+     w której Operator ruszy szukaniem albo zakładką. */
+  void odswiez();
 }
 
 function zwiazMenuSesji(

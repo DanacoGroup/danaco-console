@@ -18,15 +18,16 @@ const (
 	                       (kod, agent_id, nazwa, rodzaj, punkt_dostepu_id, konfiguracja, aktywny)
 	                       VALUES (?, ?, ?, ?, ?, ?, ?)`
 
-	konektorPoKodzie = `SELECT k.id, k.kod, k.agent_id, a.kod, k.nazwa, k.rodzaj,
-	                           k.punkt_dostepu_id, k.konfiguracja, k.aktywny, k.utworzono
-	                      FROM agent_konektor k JOIN agent a ON a.id = k.agent_id
-	                     WHERE k.kod = ?`
-
 	zapiszUprawnienieAgenta = `INSERT INTO agent_uprawnienie (agent_id, grupa, zakres, przyznane)
 	                           VALUES (?, ?, ?, ?)
 	                           ON CONFLICT(agent_id, grupa, zakres) DO UPDATE SET przyznane = excluded.przyznane`
 )
+
+// Konektor nie ma wskazania konta; granicę niesie korzeń `agent` po stronie złączenia.
+var konektorPoKodzie = `SELECT k.id, k.kod, k.agent_id, a.kod, k.nazwa, k.rodzaj,
+                               k.punkt_dostepu_id, k.konfiguracja, k.aktywny, k.utworzono
+                          FROM agent_konektor k JOIN agent a ON a.id = k.agent_id
+                         WHERE k.kod = ? AND ` + warunekKontaEksperta
 
 // DodajUmiejetnosc przypisuje ekspertowi umiejętność. Powtórzone przypisanie tej
 // samej umiejętności nie jest błędem — kończy się tym samym stanem.
@@ -101,7 +102,7 @@ func (r *repozytoriumAgentow) konektorPoKodzie(ctx context.Context, kod string) 
 	var wpis KonektorAgenta
 	var punkt sql.NullInt64
 	var aktywny int
-	err = polecenie.QueryRowContext(ctx, kod).Scan(&wpis.ID, &wpis.Kod, &wpis.AgentID, &wpis.AgentKod,
+	err = polecenie.QueryRowContext(ctx, kod, KontoOperatora(ctx)).Scan(&wpis.ID, &wpis.Kod, &wpis.AgentID, &wpis.AgentKod,
 		&wpis.Nazwa, &wpis.Rodzaj, &punkt, &wpis.Konfiguracja, &aktywny, &wpis.Utworzono)
 	if err != nil {
 		return KonektorAgenta{}, fmt.Errorf("dane: nie można odczytać konektora %q: %w", kod, err)

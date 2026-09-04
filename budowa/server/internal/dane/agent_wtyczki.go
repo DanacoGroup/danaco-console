@@ -27,20 +27,24 @@ const (
 	wstawWtyczkeAgenta = `INSERT INTO agent_wtyczka (kod, agent_id, nazwa, zrodlo, wersja, aktywna)
 	                      VALUES (?, ?, ?, ?, ?, 1)`
 
-	wtyczkaPoKodzie = `SELECT w.id, w.kod, a.kod, w.nazwa, w.zrodlo, w.wersja, w.aktywna, w.utworzono
-	                     FROM agent_wtyczka w JOIN agent a ON a.id = w.agent_id
-	                    WHERE w.kod = ?`
-
 	usunWtyczkeAgenta = `DELETE FROM agent_wtyczka WHERE kod = ? AND agent_id = ?`
-
-	wtyczkiWszystkich = `SELECT w.id, w.kod, a.kod, w.nazwa, w.zrodlo, w.wersja, w.aktywna, w.utworzono
-	                       FROM agent_wtyczka w JOIN agent a ON a.id = w.agent_id
-	                      ORDER BY a.kod, w.nazwa, w.kod`
 
 	wtyczkiAgenta = `SELECT w.id, w.kod, a.kod, w.nazwa, w.zrodlo, w.wersja, w.aktywna, w.utworzono
 	                   FROM agent_wtyczka w JOIN agent a ON a.id = w.agent_id
 	                  WHERE w.agent_id = ?
 	                  ORDER BY w.nazwa, w.kod`
+)
+
+// Wtyczka nie ma wskazania konta; granicę niesie korzeń `agent` po stronie złączenia.
+var (
+	wtyczkaPoKodzie = `SELECT w.id, w.kod, a.kod, w.nazwa, w.zrodlo, w.wersja, w.aktywna, w.utworzono
+	                     FROM agent_wtyczka w JOIN agent a ON a.id = w.agent_id
+	                    WHERE w.kod = ? AND ` + warunekKontaEksperta
+
+	wtyczkiWszystkich = `SELECT w.id, w.kod, a.kod, w.nazwa, w.zrodlo, w.wersja, w.aktywna, w.utworzono
+	                       FROM agent_wtyczka w JOIN agent a ON a.id = w.agent_id
+	                      WHERE ` + warunekKontaEksperta + `
+	                      ORDER BY a.kod, w.nazwa, w.kod`
 )
 
 // DodajWtyczke przypisuje ekspertowi wtyczkę i oddaje zapisany wiersz. Wstawienie
@@ -74,7 +78,7 @@ func (r *repozytoriumWarstwAgenta) DodajWtyczke(ctx context.Context, kodAgenta, 
 		if err != nil {
 			return err
 		}
-		zapisana, err = odczytajWtyczke(odczyt.QueryRowContext(ctx, kod))
+		zapisana, err = odczytajWtyczke(odczyt.QueryRowContext(ctx, kod, KontoOperatora(ctx)))
 		if err != nil {
 			return fmt.Errorf("dane: nie można odczytać wtyczki %q: %w", kod, err)
 		}
@@ -179,7 +183,7 @@ func (r *repozytoriumWarstwAgenta) WtyczkiWszystkich(
 	if err != nil {
 		return nil, err
 	}
-	wiersze, err := polecenie.QueryContext(ctx)
+	wiersze, err := polecenie.QueryContext(ctx, KontoOperatora(ctx))
 	if err != nil {
 		return nil, fmt.Errorf("dane: nie można odczytać wtyczek ekspertów: %w", err)
 	}

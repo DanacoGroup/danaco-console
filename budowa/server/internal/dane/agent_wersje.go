@@ -55,12 +55,14 @@ const (
 	                       parametry_json, imie_wlasne, favikon, ustawienia_json, tryb_nakladki,
 	                       aktywny, autor, powod, zapisano, widocznosc, poziomy_pamieci`
 
+	// Migawka nie ma własnego wskazania konta; granicę niesie korzeń `agent`.
 	historiaAgenta = `SELECT ` + kolumnyWersjiAgenta + ` FROM agent_wersja
-	                  WHERE agent_id = (SELECT id FROM agent WHERE kod = ?)
+	                  WHERE agent_id = (SELECT id FROM agent WHERE kod = ? AND ` + WarunekKonta + `)
 	                  ORDER BY numer DESC`
 
 	wersjaAgentaPoNumerze = `SELECT ` + kolumnyWersjiAgenta + ` FROM agent_wersja
-	                         WHERE agent_id = (SELECT id FROM agent WHERE kod = ?) AND numer = ?`
+	                         WHERE agent_id = (SELECT id FROM agent WHERE kod = ? AND ` + WarunekKonta + `)
+	                           AND numer = ?`
 
 	// Przywrócenie idzie jednym poleceniem z podniesieniem licznika wersji, tak samo jak zapis tożsamości.
 	przywrocTrescWersji = `UPDATE agent
@@ -70,15 +72,15 @@ const (
 	                           widocznosc = ?,
 	                           wersja = wersja + 1,
 	                           zaktualizowano = strftime('%Y-%m-%dT%H:%M:%fZ', 'now')
-	                       WHERE kod = ?`
+	                       WHERE kod = ? AND ` + WarunekKonta
 
 	// Wyzwalacz zakłada migawkę bez autora i powodu; ten zapis dokłada oba pola do wiersza świeżo powstałego.
 	oznaczWersjePrzywrocona = `UPDATE agent_wersja
 	                           SET autor = 'restore', powod = ?
-	                           WHERE agent_id = (SELECT id FROM agent WHERE kod = ?)
-	                             AND numer = (SELECT wersja FROM agent WHERE kod = ?)`
+	                           WHERE agent_id = (SELECT id FROM agent WHERE kod = ? AND ` + WarunekKonta + `)
+	                             AND numer = (SELECT wersja FROM agent WHERE kod = ? AND ` + WarunekKonta + `)`
 
-	numerWersjiBiezacej = `SELECT wersja FROM agent WHERE kod = ?`
+	numerWersjiBiezacej = `SELECT wersja FROM agent WHERE kod = ? AND ` + WarunekKonta
 )
 
 // repozytoriumWersjiAgenta obsługuje historię i archiwum eksperta —
@@ -107,7 +109,7 @@ func (r *repozytoriumWersjiAgenta) Wersje(ctx context.Context, kodAgenta string)
 	if err != nil {
 		return nil, err
 	}
-	wiersze, err := polecenie.QueryContext(ctx, kodAgenta)
+	wiersze, err := polecenie.QueryContext(ctx, kodAgenta, KontoOperatora(ctx))
 	if err != nil {
 		return nil, fmt.Errorf("dane: nie można odczytać historii eksperta %q: %w", kodAgenta, err)
 	}
@@ -146,7 +148,7 @@ func (r *repozytoriumWersjiAgenta) Przywroc(ctx context.Context, kodAgenta strin
 			tekstDoKolumny(zrodlo.KanalKod), tekstDoKolumny(zrodlo.Model),
 			tekstDoKolumny(zrodlo.Transport), zrodlo.ParametryJSON, zrodlo.ImieWlasne,
 			zrodlo.Favikon, zrodlo.UstawieniaJSON, zrodlo.TrybNakladki, zrodlo.Widocznosc,
-			kodAgenta); err != nil {
+			kodAgenta, KontoOperatora(ctx)); err != nil {
 			return fmt.Errorf("dane: nie można przywrócić wersji %d eksperta %q: %w",
 				numer, kodAgenta, err)
 		}
@@ -159,7 +161,8 @@ func (r *repozytoriumWersjiAgenta) Przywroc(ctx context.Context, kodAgenta strin
 			return err
 		}
 		powod := fmt.Sprintf("przywrocenie wersji %d", numer)
-		if _, err := oznacz.ExecContext(ctx, powod, kodAgenta, kodAgenta); err != nil {
+		konto := KontoOperatora(ctx)
+		if _, err := oznacz.ExecContext(ctx, powod, kodAgenta, konto, kodAgenta, konto); err != nil {
 			return fmt.Errorf("dane: nie można oznaczyć wersji przywróconej eksperta %q: %w",
 				kodAgenta, err)
 		}
@@ -182,15 +185,17 @@ func przywrocPoziomyPamieciWersji(ctx context.Context, transakcja *sql.Tx,
 	kodAgenta string, poziomy []string) error {
 
 	if _, err := transakcja.ExecContext(ctx,
-		`DELETE FROM agent_pamiec_poziom WHERE agent_id = (SELECT id FROM agent WHERE kod = ?)`,
-		kodAgenta); err != nil {
+		`DELETE FROM agent_pamiec_poziom
+		 WHERE agent_id = (SELECT id FROM agent WHERE kod = ? AND `+WarunekKonta+`)`,
+		kodAgenta, KontoOperatora(ctx)); err != nil {
 		return fmt.Errorf("dane: nie można wyczyścić poziomów pamięci eksperta %q: %w", kodAgenta, err)
 	}
 	for _, poziom := range poziomy {
 		if _, err := transakcja.ExecContext(ctx,
 			`INSERT INTO agent_pamiec_poziom (agent_id, poziom)
-			 VALUES ((SELECT id FROM agent WHERE kod = ?), ?)
-			 ON CONFLICT(agent_id, poziom) DO NOTHING`, kodAgenta, poziom); err != nil {
+			 VALUES ((SELECT id FROM agent WHERE kod = ? AND `+WarunekKonta+`), ?)
+			 ON CONFLICT(agent_id, poziom) DO NOTHING`,
+			kodAgenta, KontoOperatora(ctx), poziom); err != nil {
 			return fmt.Errorf("dane: nie można przywrócić poziomu %q eksperta %q: %w",
 				poziom, kodAgenta, err)
 		}
@@ -207,7 +212,8 @@ func (r *repozytoriumWersjiAgenta) wersjaPoNumerze(ctx context.Context, kodAgent
 	if err != nil {
 		return WersjaAgenta{}, err
 	}
-	wersja, err := odczytajWersjeAgenta(polecenie.QueryRowContext(ctx, kodAgenta, numer))
+	wersja, err := odczytajWersjeAgenta(polecenie.QueryRowContext(ctx, kodAgenta,
+		KontoOperatora(ctx), numer))
 	if errors.Is(err, sql.ErrNoRows) {
 		return WersjaAgenta{}, fmt.Errorf("dane: ekspert %q nie ma wersji %d: %w",
 			kodAgenta, numer, ErrBrakWiersza)
@@ -226,7 +232,7 @@ func (r *repozytoriumWersjiAgenta) numerBiezacy(ctx context.Context, kodAgenta s
 		return 0, err
 	}
 	var numer int
-	err = polecenie.QueryRowContext(ctx, kodAgenta).Scan(&numer)
+	err = polecenie.QueryRowContext(ctx, kodAgenta, KontoOperatora(ctx)).Scan(&numer)
 	if errors.Is(err, sql.ErrNoRows) {
 		return 0, fmt.Errorf("dane: ekspert %q nie istnieje: %w", kodAgenta, ErrBrakWiersza)
 	}

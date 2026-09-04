@@ -162,18 +162,19 @@ Pełny wykaz: `audyt2-ustalenia-7-kategorii.json`.
   kreator uruchomiony na tej maszynie pobrał z kanału
   `Danaco Console_2.0.0_hybryda_x64-setup.exe` — 2 598 033 bajty, instalka NSIS
   PE32 — więc kanał, wykaz i pobranie działają. Braku dotyczy wyłącznie `.deb`.
-- Rodzina `notification.*` ma wołającego własnego: dzwonek szyny otwiera centrum
-  powiadomień (rozstrzygnięcie 46).
-- Pięć opracowań, których spis żądał, a repozytorium nie niosło, wróciło z jego
-  własnej historii — rewizja `62c8f0de` wniosła dwanaście opracowań interfejsu,
-  `fad6a36d` zdjęła je przy zakładaniu ustroju przebudowy, a na `main` wróciło
-  siedem. Pozostałe pięć podjęte stamtąd, nie z materiału zabezpieczonego, więc
-  źródłem jest repozytorium. Objętości w spisie poprawione; rubryka objętości
-  jest zdjęciem z chwili wpisu i edycja dokumentu jej nie przelicza.
 - Okno produktu niesie 371 kształtów ikon, z czego 195 stoi poza zestawem
   (`design/zasoby/ikony/`, 152 pliki, 262 kształty). Zestaw nie wiąże znacznika
   (rozstrzygnięcie Właściciela z 28 sierpnia), więc to miara do zamknięcia
   w warstwie projektowej, nie usterka produktu.
+
+Obie pozycje wyżej są jedynymi otwartymi i obie należą do Właściciela: wgranie
+`.deb` do kanału oraz zamknięcie miary ikon. Zamknięte w tej rundzie: rodzina
+`notification.*` dostała wołającego własnego (rozstrzygnięcie 46); pięć opracowań
+interfejsu wróciło z historii repozytorium — rewizja `62c8f0de` wniosła dwanaście,
+`fad6a36d` zdjęła je przy zakładaniu ustroju przebudowy, a na `main` wróciło
+siedem, więc pozostałe pięć podjęte stamtąd, nie z materiału zabezpieczonego;
+osiem okien modułowych przestało przedstawiać dane, których nie ma
+(rozstrzygnięcie 47).
 
 ## 5a. Bramka etapu 2 — czym każde kryterium jest wykazane
 

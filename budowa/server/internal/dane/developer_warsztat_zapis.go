@@ -12,17 +12,19 @@ import (
 const (
 	wstawPunktPrzerwaniaDevelopera = `INSERT INTO developer_punkt_przerwania
 	                                  (kod, okno_kod, sciezka, wiersz, rodzaj, warunek,
-	                                   warunek_trafien, wpis, zweryfikowany)
-	                                  VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+	                                   warunek_trafien, wpis, zweryfikowany, konto_id)
+	                                  VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ` + WskazanieKonta + `)
 	                                  ON CONFLICT(okno_kod, sciezka, wiersz) DO UPDATE SET
 	                                    rodzaj          = excluded.rodzaj,
 	                                    warunek         = excluded.warunek,
 	                                    warunek_trafien = excluded.warunek_trafien,
 	                                    wpis            = excluded.wpis,
-	                                    zweryfikowany   = excluded.zweryfikowany`
+	                                    zweryfikowany   = excluded.zweryfikowany
+	                                  WHERE ` + WarunekKonta
 
 	usunPunktPrzerwaniaDevelopera = `DELETE FROM developer_punkt_przerwania
-	                                 WHERE okno_kod = ? AND sciezka = ? AND wiersz = ?`
+	                                 WHERE okno_kod = ? AND sciezka = ? AND wiersz = ?
+	                                   AND ` + WarunekKonta
 
 	// Warunek konta przy nadpisaniu jest konieczny, bo `kod` jest niepowtarzalny
 	// w całej tabeli, a nie w obrębie konta: bez niego zapis pod kodem cudzego
@@ -99,7 +101,8 @@ func (r *repozytoriumDevelopera) ZapiszPunktPrzerwania(ctx context.Context,
 	}
 	if _, err := polecenie.ExecContext(ctx, punkt.Kod, punkt.OknoKod, punkt.Sciezka,
 		punkt.Wiersz, punkt.Rodzaj, punkt.Warunek, punkt.WarunekTrafien, punkt.Wpis,
-		liczbaZPrawdy(punkt.Zweryfikowany)); err != nil {
+		liczbaZPrawdy(punkt.Zweryfikowany), KontoOperatora(ctx),
+		KontoOperatora(ctx)); err != nil {
 		return fmt.Errorf("dane: nie można zapisać punktu przerwania %q: %w", punkt.Sciezka, err)
 	}
 	return nil
@@ -114,7 +117,7 @@ func (r *repozytoriumDevelopera) UsunPunktPrzerwania(ctx context.Context,
 	if err != nil {
 		return err
 	}
-	if _, err := polecenie.ExecContext(ctx, oknoKod, sciezka, wiersz); err != nil {
+	if _, err := polecenie.ExecContext(ctx, oknoKod, sciezka, wiersz, KontoOperatora(ctx)); err != nil {
 		return fmt.Errorf("dane: nie można zdjąć punktu przerwania %q: %w", sciezka, err)
 	}
 	return nil

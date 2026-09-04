@@ -719,8 +719,11 @@ druga droga nie jest wykonalna.
 4. **Skrypty instalek natywnych są materiałem zamkniętym.** Leżą poza
    repozytorium, w `~/robocze/material/repo-2.0/budowa/scripts/`. Do budowy nie
    wchodzą.
-5. **Modele i arsenał nie wchodzą do żadnej instalki.** Stoją na serwerze
-   wdrożenia i są utrzymywane w jednym miejscu.
+5. **Modele i arsenał nie wchodzą do żadnej instalki.** Stoją poza nią i są
+   utrzymywane w jednym miejscu. Miejscem tym jest maszyna budująca, nie serwer
+   wdrożenia: ten drugi niesie ze `/opt/danaco-modele` samo `twarze` (186 MB
+   z 17 GB) i nie ma miejsca na resztę. Modele jadą osobnym archiwum pakietu
+   przeniesienia.
 
 ## 9. Wstążka narzędziowa okna roboczego i przybornik karty
 

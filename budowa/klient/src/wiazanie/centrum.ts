@@ -24,6 +24,7 @@ import { zwiazPowiadomienia } from './powiadomienia.ts';
 import { zwiazBadania, zwolnijBadania } from './research.ts';
 import { zwiazTlumaczenie, zwolnijTlumaczenie } from './translate.ts';
 import { zwiazDebate, zwolnijDebate } from './roundtable.ts';
+import { zwiazDiagnostyke, zwolnijDiagnostyke } from './diagnostics.ts';
 import { zwiazOkno, zwiazOknoStojace } from './okno-modulu.ts';
 import {
   nazwijKarte,
@@ -243,6 +244,8 @@ export function zwiazCentrum(kanal: Kanal | undefined = globalThis.DanacoKanal):
         zwiazDesign(kanal, nazwaSrodowiska, idOkna, wnetrze.wezel);
       } else if (modul.code === KOD_MODULU_TERMINALA) {
         zwiazTerminal(kanal, idOkna, wnetrze.wezel);
+      } else if (modul.code === 'diagnostics') {
+        zwiazDiagnostyke(kanal, nazwaSrodowiska, idOkna, wnetrze.wezel);
       } else if (modul.code === 'roundtable') {
         zwiazDebate(kanal, nazwaSrodowiska, idOkna, wnetrze.wezel);
       } else if (modul.code === 'translate') {
@@ -451,6 +454,7 @@ export function zwiazCentrum(kanal: Kanal | undefined = globalThis.DanacoKanal):
       zwolnijBadania(idKarty);
       zwolnijTlumaczenie(idKarty);
       zwolnijDebate(idKarty);
+      zwolnijDiagnostyke(idKarty);
       wnetrze.remove();
     }
   };
@@ -802,7 +806,7 @@ async function wczytajModuly(
    osiągalne katalogiem „Operacje platformy" w Centrum. */
 const MODULY_ZAPOWIEDZIANE = new Set([
   'developer',
-  'apps', 'automations', 'assistant', 'diagnostics',
+  'apps', 'automations', 'assistant',
 ]);
 
 function zapowiedzModul(modul: Module | undefined): void {

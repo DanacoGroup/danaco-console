@@ -1920,3 +1920,35 @@ cztery z pokryciem inną drogą, trzy zapowiedziane zdaniem wskazującym zastęp
 **Konsekwencje.** Żadne wejście platformowe nie jest martwe ani nie prowadzi do
 pustej powłoki, więc kryterium 6 bramki obejmuje je wszystkie. Zapowiedź niesie
 nazwę okna, zastępstwo i zdanie o wydaniu — sprawdzone klikaniem.
+
+## 42. Rodzina `project.*` zostaje wąska, bo szeroką jest `workspace.*`
+
+**Rzecz.** Kontrakt daje rodzinie `project.*` cztery komendy — `create`, `list`,
+`rename`, `delete` — a schemat niesie czternaście tabel z nazwą projektu:
+zadania, tablice i ich kolumny, notatki wraz z odnośnikami, komentarze, pamięć,
+kalendarz, zdarzenia, wersje instrukcji, przypisania agentów, wyciągi tekstu.
+Nasuwa się wniosek, że rodzina jest niedokończona.
+
+**Ustalenie.** Nie jest. Te tabele obsługuje rodzina `workspace.*` — czterdzieści
+jeden komend obejmujących `task`, `board`, `note`, `comment`, `calendar`,
+`agent`, `instructions`, `knowledge`, `library`, `schedule`, `search`,
+`activity`, `canvas`, `context`, `dashboard` i `project.status.set`. Podział
+biegnie po zasięgu: `project.*` prowadzi projekt jako szufladę sesji widoczną
+z Centrum, `workspace.*` prowadzi wnętrze projektu w środowisku WorkSpace.
+Przypisanie sesji do szuflady robi `session.project.set` i `session.project.clear`.
+
+**Rozważone warianty.**
+
+1. Przenieść komendy wnętrza pod `project.*`. Odrzucone: zerwałoby to zgodność
+   z rdzeniem wersji poprzedniej i przemianowało czterdzieści jeden komend po to,
+   by nazwa rodziny brzmiała pojemniej.
+2. Dołożyć do `project.*` komendy wnętrza obok istniejących w `workspace.*`.
+   Odrzucone: dwie nazwy na jedno pojęcie łamią regułę repozytorium.
+3. Zostawić podział po zasięgu. Przyjęte.
+
+**Decyzja.** Rodzina `project.*` zostaje czterokomendowa. Wąskość jest kształtem
+zamierzonym, nie brakiem.
+
+**Konsekwencje.** Cztery komendy `project.*` mają wołających w Centrum i wszystkie
+przeszły sprawdzenie klikaniem. Pytanie o kształt rodziny schodzi z wykazu pozycji
+czekających na Właściciela.

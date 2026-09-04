@@ -2,15 +2,21 @@
 
 import {
   Command,
+  type AutomationAlertRule,
+  type AutomationAuditEntry,
+  type AutomationSecretRef,
+  type AutomationTemplate,
   type AutomationWorkflow,
 } from '../../../shared/contract.ts';
 import type { Odsubskrybuj } from '../polaczenie/magistrala-zdarzen.ts';
 import type { Kanal } from '../protokol/kanal.ts';
 import { wywolaj } from '../protokol/wywolanie.ts';
 import {
+  cialoPanelu,
   opiszNaglowek,
   zapewnijOknoModulu,
   zdejmijSterowanieWspolne,
+  wykazPanelu,
   zdejmijTrescWspolna,
 } from './okno-modulu.ts';
 import { zwiazKatalogModulu } from './katalog-modulu.ts';
@@ -55,7 +61,19 @@ export function zwiazAutomatyzacje(
   let idOkna = idOknaStojacego;
   const odswiez = async (): Promise<void> => {
     if (idOkna === '') return;
-    await Promise.all([wypelnijAutomatyki(kanal, korzen)]);
+    await Promise.all([      wypelnijAutomatyki(kanal, korzen),
+      wykaz(kanal, korzen, 'panel-builder', Command.AutomationTemplateList,
+        'Rdzeń nie ma wzorców automatyki.',
+        (o) => (o.templates as AutomationTemplate[]).map((s) => [s.name, s.description ?? ''] as const)),
+      wykaz(kanal, korzen, 'panel-monitor', Command.AutomationAlertRuleList,
+        'Żadna reguła powiadamiania nie została ustawiona.',
+        (o) => (o.rules as AutomationAlertRule[]).map((r) => [r.trigger, r.condition ?? ''] as const)),
+      wykaz(kanal, korzen, 'panel-scheduler', Command.AutomationSecretList,
+        'Rdzeń nie ma poświadczeń automatyki.',
+        (o) => (o.secrets as AutomationSecretRef[]).map((s) => [s.name, s.scope ?? ''] as const)),
+      wykaz(kanal, korzen, 'panel-artefakty', Command.AutomationAuditList,
+        'Rdzeń nie odnotował czynności automatyk.',
+        (o) => (o.entries as AutomationAuditEntry[]).map((w) => [w.action, w.actorId ?? ''] as const))]);
   };
 
   void (async (): Promise<void> => {
@@ -129,6 +147,23 @@ async function wypelnijAutomatyki(kanal: Kanal, korzen: Element): Promise<void> 
     return;
   }
   cialo.replaceChildren(...wykaz.map((w) => pozycja(cialo, w.name, w.description ?? '')));
+}
+
+/* Panel wykazu bez własnego kształtu: komenda bez pól wymaganych. */
+async function wykaz(
+  kanal: Kanal,
+  korzen: Element,
+  panelId: string,
+  komenda: Parameters<typeof wywolaj>[1],
+  pusty: string,
+  mapuj: (wynik: Record<string, unknown>) => readonly (readonly [string, string])[],
+): Promise<void> {
+  const cialo = cialoPanelu(korzen, panelId);
+  if (cialo === null) return;
+  const odpowiedz = await wywolaj(kanal, komenda as never, {} as never);
+  const wynik = odpowiedz.wynik as Record<string, unknown> | undefined;
+  wykazPanelu(cialo, odpowiedz.udany, odpowiedz.blad?.message,
+    wynik === undefined ? undefined : [...mapuj(wynik)], pusty, (x) => x);
 }
 
 function pozycja(cialo: Element, tytul: string, podpis: string): HTMLElement {

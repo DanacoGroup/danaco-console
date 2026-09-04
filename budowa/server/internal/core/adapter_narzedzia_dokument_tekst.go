@@ -412,7 +412,7 @@ func zagwarantujCzyszczenieSkanuDostepne() error {
 	return odmowaDokumentu(shared.ErrorCodeChannelUnavailable,
 		"żądanie zamówiło obróbkę wstępną obrazu (pole preprocess), a programu "+
 			narzedzieCzyszczeniaSkanu.Nazwa+" ("+narzedzieCzyszczeniaSkanu.Program+
-			") nie ma na tej maszynie; naprawa: zainstalować pakiet "+
+			") nie ma na tej maszynie; instalacja serwera jest niepełna — brakuje pakietu "+
 			narzedzieCzyszczeniaSkanu.Pakiet+
 			". Droga, która działa bez niego: wysłać żądanie bez pola preprocess — "+
 			"rozpoznanie pobiegnie na materiale bez obróbki")
@@ -476,8 +476,8 @@ func (a *adapterNarzedziDokumentu) zweryfikujJezykTesseracta(ctx context.Context
 			return odmowaDokumentu(shared.ErrorCodeValidationFailed,
 				"Tesseract na tej maszynie nie niesie danych językowych "+czlon+
 					" — wykaz zainstalowanych: "+wykazJezykowTesseracta(dostepne)+
-					"; naprawa: wskazać jeden z niesionych języków polem language "+
-					"albo doinstalować pakiet danych językowych Tesseracta dla "+czlon)
+					"; wskaż jeden z niesionych języków polem language — instalacja "+
+					"bez danych językowych dla "+czlon+" jest niepełna")
 		}
 	}
 	return nil

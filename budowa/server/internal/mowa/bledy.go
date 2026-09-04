@@ -58,9 +58,8 @@ func (b *BrakInterpretera) Error() string {
 	}
 	komunikat := "Interpretera Pythona nie ma na ścieżce wyszukiwania systemu." +
 		" Skrypt pomocnika transkrypcji jest na miejscu, ale nie ma czym go uruchomić" +
-		"; naprawa: zainstalować Pythona 3 i udostępnić go pod nazwą " + nazwa +
-		" na ścieżce wyszukiwania. Biblioteki faster-whisper NIE instaluj teraz —" +
-		" bez interpretera nie ma do czego jej doinstalować"
+		"; instalacja jest niepełna — brakuje Pythona 3 pod nazwą " + nazwa +
+		" na ścieżce wyszukiwania, a wraz z nim biblioteki faster-whisper"
 	if b.Powod != nil {
 		komunikat += " (" + b.Powod.Error() + ")"
 	}
@@ -104,10 +103,9 @@ type BrakSilnika struct {
 func (b *BrakSilnika) Error() string {
 	komunikat := "Silnik faster-whisper niedostępny w Pythonie." +
 		" Pomocnik transkrypcji nie doszedł do rozpoznania" +
-		"; najczęstsza przyczyna to brak biblioteki — naprawa: pip install faster-whisper" +
-		" w tym samym interpreterze, który uruchamia pomocnika." +
-		" Jeżeli to nie pomoże, sprawdź, czy interpreter Pythona 3 jest osiągalny," +
-		" uruchamiając pomocnika ręcznie"
+		"; najczęstsza przyczyna to brak biblioteki faster-whisper w tym samym" +
+		" interpreterze, który uruchamia pomocnika — instalacja serwera jest wtedy" +
+		" niepełna. Drugą możliwością jest interpreter Pythona 3 poza zasięgiem"
 	if strings.TrimSpace(b.Powod) != "" {
 		komunikat += " (" + strings.TrimSpace(b.Powod) + ")"
 	}

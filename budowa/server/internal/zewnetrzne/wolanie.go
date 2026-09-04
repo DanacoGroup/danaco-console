@@ -30,8 +30,11 @@ type BrakNarzedzia struct {
 func (b *BrakNarzedzia) Error() string {
 	zdanie := "arsenał: nie ma na tej maszynie programu " + b.Narzedzie.Nazwa +
 		" (" + b.Narzedzie.Program + "), a serwer tej czynności nie wykona bez niego"
+	/* Odmowa nazywa brakujący pakiet, ale nie wydaje polecenia instalacji:
+	   arsenał stoi po stronie serwera i jego niekompletność jest usterką
+	   wdrożenia, nie zadaniem dla czytającego tę odmowę. */
 	if b.Narzedzie.Pakiet != "" {
-		zdanie += "; naprawa: zainstalować pakiet " + b.Narzedzie.Pakiet
+		zdanie += "; instalacja serwera jest niepełna — brakuje pakietu " + b.Narzedzie.Pakiet
 	}
 	return zdanie
 }

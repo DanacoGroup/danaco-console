@@ -40486,7 +40486,7 @@ type TerminalScriptLintResponse struct {
 	Formatted *string `json:"formatted,omitempty"`
 	// Czy program analizy lezy na maszynie rdzenia; falsz znaczy ze tresci nie sprawdzono wcale
 	AnalyzerAvailable bool `json:"analyzerAvailable"`
-	// Nazwa programu analizy wlasciwego tej powloce; podawana takze wtedy, gdy programu nie ma, zeby Operator wiedzial, co doinstalowac
+	// Nazwa programu analizy wlasciwego tej powloce; podawana takze wtedy, gdy programu nie ma, zeby bylo wiadomo, czego brakuje w instalacji
 	Analyzer string `json:"analyzer"`
 }
 

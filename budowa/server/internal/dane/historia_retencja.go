@@ -21,16 +21,6 @@ type ZasadaPrzechowywania struct {
 }
 
 const (
-	// Granicę czasu wylicza rdzeń, nie `now` bazy: dwa zegary to dwie prawdy.
-	// Retencja liczbą pozycji zostawia N najnowszych.
-	usunHistorieStarsza    = usunHistorieOkna + ` AND utworzono < ?`
-	usunHistorieNadmiarowa = usunHistorieOkna + ` AND id NOT IN (
-	                             SELECT w.id FROM wiadomosc w
-	                             JOIN okno_komunikacji o ON o.id = w.okno_komunikacji_id
-	                             WHERE o.identyfikator_zewnetrzny = ?
-	                             ORDER BY w.utworzono DESC, w.id DESC
-	                             LIMIT ?)`
-
 	// Zasada bez progów nie jest wierszem, tylko jego brakiem: nastawa wyłączona usuwa wiersz zamiast zapisywać
 	// go pustym. Kod pusty (zakres global) porównuje się przez funkcję COALESCE, bo kolumna trzyma wtedy wartość NULL.
 	usunZasadePrzechowywania = `DELETE FROM zasada_przechowywania
@@ -59,16 +49,37 @@ const (
 	                 OR zakres = 'global')
 	              ORDER BY CASE zakres WHEN 'window' THEN 0 WHEN 'session' THEN 1 ELSE 2 END
 	              LIMIT 1`
+)
+
+var (
+	// Granicę czasu wylicza rdzeń, nie `now` bazy: dwa zegary to dwie prawdy.
+	// Retencja liczbą pozycji zostawia N najnowszych.
+	usunHistorieStarsza    = usunHistorieOkna + ` AND utworzono < ?`
+	usunHistorieNadmiarowa = usunHistorieOkna + ` AND id NOT IN (
+	                             SELECT w.id FROM wiadomosc w
+	                             JOIN okno_komunikacji o ON o.id = w.okno_komunikacji_id
+	                             WHERE o.identyfikator_zewnetrzny = ?
+	                               AND ` + warunekKontaOkna("o") + `
+	                             ORDER BY w.utworzono DESC, w.id DESC
+	                             LIMIT ?)`
+
 	oknaZakresuSesji = `SELECT o.identyfikator_zewnetrzny
 	                    FROM okno_komunikacji o JOIN sesja s ON s.id = o.sesja_id
 	                    WHERE s.identyfikator_zewnetrzny = ?
-	                      AND o.identyfikator_zewnetrzny IS NOT NULL`
+	                      AND o.identyfikator_zewnetrzny IS NOT NULL
+	                      AND ` + warunekKontaOkna("o")
+
 	oknaZakresuGlobalnego = `SELECT identyfikator_zewnetrzny FROM okno_komunikacji
-	                         WHERE identyfikator_zewnetrzny IS NOT NULL`
+	                         WHERE identyfikator_zewnetrzny IS NOT NULL
+	                           AND ` + kontoOknaWlasnego
+
 	// Byt zakresu — okno albo sesja — sprawdzany jest przed zapisaniem zasady, żeby nastawa nie odnosiła się
 	// do bytu, którego nie ma.
-	istnienieOkna  = `SELECT 1 FROM okno_komunikacji WHERE identyfikator_zewnetrzny = ? LIMIT 1`
-	istnienieSesji = `SELECT 1 FROM sesja WHERE identyfikator_zewnetrzny = ? LIMIT 1`
+	istnienieOkna = `SELECT 1 FROM okno_komunikacji
+	                 WHERE identyfikator_zewnetrzny = ? AND ` + kontoOknaWlasnego + ` LIMIT 1`
+
+	istnienieSesji = `SELECT 1 FROM sesja
+	                  WHERE identyfikator_zewnetrzny = ? AND` + sesjaKonta + ` LIMIT 1`
 )
 
 // ZapiszZasade zakłada zasadę zakresu albo nadpisuje istniejącą; zasada bez obu progów zdejmuje wiersz zakresu,
@@ -149,7 +160,7 @@ func (r *repozytoriumHistorii) IstniejeByt(ctx context.Context, zakres, zakresKo
 		return false, err
 	}
 	var jeden int
-	err = polecenie.QueryRowContext(ctx, zakresKod).Scan(&jeden)
+	err = polecenie.QueryRowContext(ctx, zakresKod, KontoOperatora(ctx)).Scan(&jeden)
 	if errors.Is(err, sql.ErrNoRows) {
 		return false, nil
 	}
@@ -166,9 +177,9 @@ func (r *repozytoriumHistorii) OknaZakresu(ctx context.Context, zakres, zakresKo
 	if zakres == "window" {
 		return []string{zakresKod}, nil
 	}
-	zapytanie, argumenty := oknaZakresuGlobalnego, []any{}
+	zapytanie, argumenty := oknaZakresuGlobalnego, []any{KontoOperatora(ctx)}
 	if zakres == "session" {
-		zapytanie, argumenty = oknaZakresuSesji, []any{zakresKod}
+		zapytanie, argumenty = oknaZakresuSesji, []any{zakresKod, KontoOperatora(ctx)}
 	}
 	polecenie, err := r.zapytania.przygotuj(ctx, zapytanie)
 	if err != nil {
@@ -207,15 +218,17 @@ func (r *repozytoriumHistorii) Egzekwuj(ctx context.Context, oknoKod string) (in
 	err = wTransakcji(ctx, r.db, func(transakcja *sql.Tx) error {
 		if zasada.DniTrzymania != nil {
 			granica := time.Now().UTC().AddDate(0, 0, -*zasada.DniTrzymania).Format(znacznikCzasuHistorii)
-			liczba, err := wykonajUsuniecie(ctx, transakcja, usunHistorieStarsza, oknoKod, granica)
+			liczba, err := wykonajUsuniecie(ctx, transakcja, usunHistorieStarsza, oknoKod,
+				KontoOperatora(ctx), granica)
 			if err != nil {
 				return err
 			}
 			usuniete += liczba
 		}
 		if zasada.PozycjeTrzymane != nil {
+			konto := KontoOperatora(ctx)
 			liczba, err := wykonajUsuniecie(ctx, transakcja, usunHistorieNadmiarowa,
-				oknoKod, oknoKod, *zasada.PozycjeTrzymane)
+				oknoKod, konto, oknoKod, konto, *zasada.PozycjeTrzymane)
 			if err != nil {
 				return err
 			}

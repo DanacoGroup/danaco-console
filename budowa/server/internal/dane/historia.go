@@ -57,13 +57,15 @@ type RepozytoriumHistorii interface {
 	Egzekwuj(ctx context.Context, oknoKod string) (int, error)
 }
 
-const (
+// Okno nie ma kolumny konto_id; własność każdego okna sprawdza warunekKontaOkna.
+var (
 	// Kursor podany dwukrotnie tym samym parametrem: `?=''` przepuszcza wykaz
 	// cały, bo znacznik pusty nie jest datą.
 	warunekHistorii = ` FROM wiadomosc w
 	                    JOIN okno_komunikacji o ON o.id = w.okno_komunikacji_id
 	                    JOIN sesja s ON s.id = o.sesja_id
 	                    WHERE o.identyfikator_zewnetrzny = ?
+	                      AND ` + warunekKontaOkna("o") + `
 	                      AND (? = '' OR w.utworzono < ?)`
 	pozycjeHistorii = `SELECT w.id, COALESCE(w.identyfikator_zewnetrzny, ''),
 	                          COALESCE(s.identyfikator_zewnetrzny, ''),
@@ -75,7 +77,8 @@ const (
 	// dociąganiu starszych pozycji, a wartość idzie do pola całkowitej liczby w odpowiedzi.
 	liczbaPozycjiHistorii = `SELECT COUNT(*) FROM wiadomosc w
 	                         JOIN okno_komunikacji o ON o.id = w.okno_komunikacji_id
-	                         WHERE o.identyfikator_zewnetrzny = ?`
+	                         WHERE o.identyfikator_zewnetrzny = ?
+	                           AND ` + warunekKontaOkna("o")
 
 	// Rodzeństwo ostatniej pozycji strony: wiersze o tym samym znaczniku czasu, stojące
 	// w porządku wykazu za nią. Domykają stronę, żeby kursor czasu nie przeciął grupy
@@ -87,6 +90,7 @@ const (
 	                      JOIN okno_komunikacji o ON o.id = w.okno_komunikacji_id
 	                      JOIN sesja s ON s.id = o.sesja_id
 	                      WHERE o.identyfikator_zewnetrzny = ?
+	                        AND ` + warunekKontaOkna("o") + `
 	                        AND w.utworzono = ?
 	                        AND w.id < ?
 	                      ORDER BY w.id DESC`
@@ -94,13 +98,15 @@ const (
 	// Pozycję wskazuje identyfikator zewnętrzny, a wiersz bez niego — klucz
 	// wiersza w postaci napisu. Ta sama tożsamość, którą oddaje odczyt.
 	usunPozycjeHistorii = `DELETE FROM wiadomosc
-	                       WHERE okno_komunikacji_id = (SELECT id FROM okno_komunikacji
-	                                                    WHERE identyfikator_zewnetrzny = ?)
+	                       WHERE okno_komunikacji_id = (SELECT id FROM okno_komunikacji o
+	                                                    WHERE o.identyfikator_zewnetrzny = ?
+	                                                      AND ` + warunekKontaOkna("o") + `)
 	                         AND (identyfikator_zewnetrzny = ?
 	                              OR (identyfikator_zewnetrzny IS NULL AND CAST(id AS TEXT) = ?))`
 	usunHistorieOkna = `DELETE FROM wiadomosc
-	                    WHERE okno_komunikacji_id = (SELECT id FROM okno_komunikacji
-	                                                 WHERE identyfikator_zewnetrzny = ?)`
+	                    WHERE okno_komunikacji_id = (SELECT id FROM okno_komunikacji o
+	                                                 WHERE o.identyfikator_zewnetrzny = ?
+	                                                   AND ` + warunekKontaOkna("o") + `)`
 
 	// Bloki osierocone — wiszą na identyfikatorze wiadomości, której już nie ma
 	// (bez klucza obcego nie ma kaskady).
@@ -110,7 +116,8 @@ const (
 	                             SELECT COALESCE(w.identyfikator_zewnetrzny, '')
 	                             FROM wiadomosc w
 	                             JOIN okno_komunikacji o ON o.id = w.okno_komunikacji_id
-	                             WHERE o.identyfikator_zewnetrzny = ?)`
+	                             WHERE o.identyfikator_zewnetrzny = ?
+	                               AND ` + warunekKontaOkna("o") + `)`
 )
 
 type repozytoriumHistorii struct {
@@ -149,7 +156,7 @@ func (r *repozytoriumHistorii) stronaPozycji(ctx context.Context, oknoKod string
 	if err != nil {
 		return nil, err
 	}
-	wiersze, err := polecenie.QueryContext(ctx, oknoKod, kursor, kursor, limit, limit)
+	wiersze, err := polecenie.QueryContext(ctx, oknoKod, KontoOperatora(ctx), kursor, kursor, limit, limit)
 	if err != nil {
 		return nil, fmt.Errorf("dane: nie można odczytać historii okna %q: %w", oknoKod, err)
 	}
@@ -179,7 +186,7 @@ func (r *repozytoriumHistorii) rodzenstwoOstatniej(ctx context.Context, oknoKod 
 	if err != nil {
 		return nil, err
 	}
-	wiersze, err := polecenie.QueryContext(ctx, oknoKod, ostatnia.znacznik, ostatnia.klucz)
+	wiersze, err := polecenie.QueryContext(ctx, oknoKod, KontoOperatora(ctx), ostatnia.znacznik, ostatnia.klucz)
 	if err != nil {
 		return nil, fmt.Errorf("dane: nie można domknąć strony historii okna %q: %w", oknoKod, err)
 	}
@@ -207,7 +214,7 @@ func (r *repozytoriumHistorii) Policz(ctx context.Context, oknoKod string) (int,
 		return 0, err
 	}
 	liczba := 0
-	if err := polecenie.QueryRowContext(ctx, oknoKod).Scan(&liczba); err != nil {
+	if err := polecenie.QueryRowContext(ctx, oknoKod, KontoOperatora(ctx)).Scan(&liczba); err != nil {
 		return 0, fmt.Errorf("dane: nie można policzyć historii okna %q: %w", oknoKod, err)
 	}
 	return liczba, nil
@@ -221,7 +228,7 @@ func (r *repozytoriumHistorii) Usun(ctx context.Context, oknoKod string,
 	usuniete := 0
 	err := wTransakcji(ctx, r.db, func(transakcja *sql.Tx) error {
 		if len(identyfikatory) == 0 {
-			liczba, err := wykonajUsuniecie(ctx, transakcja, usunHistorieOkna, oknoKod)
+			liczba, err := wykonajUsuniecie(ctx, transakcja, usunHistorieOkna, oknoKod, KontoOperatora(ctx))
 			if err != nil {
 				return err
 			}
@@ -230,7 +237,7 @@ func (r *repozytoriumHistorii) Usun(ctx context.Context, oknoKod string,
 		}
 		for _, identyfikator := range identyfikatory {
 			liczba, err := wykonajUsuniecie(ctx, transakcja, usunPozycjeHistorii,
-				oknoKod, identyfikator, identyfikator)
+				oknoKod, KontoOperatora(ctx), identyfikator, identyfikator)
 			if err != nil {
 				return err
 			}
@@ -304,8 +311,9 @@ func wykonajUsuniecie(ctx context.Context, transakcja *sql.Tx,
 // sprzatnijBloki usuwa bloki wiadomości, których wypowiedzi już nie ma w tabeli
 // wiadomości, po usunięciu pozycji historii.
 func sprzatnijBloki(ctx context.Context, transakcja *sql.Tx, oknoKod string) error {
+	konto := KontoOperatora(ctx)
 	if _, err := transakcja.ExecContext(ctx, usunBlokiOsierocone, oknoKod,
-		KontoOperatora(ctx), oknoKod); err != nil {
+		konto, oknoKod, konto); err != nil {
 		return fmt.Errorf("dane: czyszczenie bloków okna %q: %w", oknoKod, err)
 	}
 	return nil

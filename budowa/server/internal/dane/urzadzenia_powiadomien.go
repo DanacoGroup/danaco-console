@@ -167,12 +167,13 @@ func NowePowiadomienia(db *sql.DB) RepozytoriumPowiadomien {
 // ── REJESTRACJA ─────────────────────────────────────────────────────────────
 
 const zapiszRejestracjePowiadomien = `
-	INSERT INTO urzadzenie_powiadomien (urzadzenie_id, kanal, klucz_kanalu, etykieta, aktywne)
-	VALUES (?, ?, ?, ?, 1)
+	INSERT INTO urzadzenie_powiadomien (urzadzenie_id, kanal, klucz_kanalu, etykieta, aktywne, konto_id)
+	VALUES (?, ?, ?, ?, 1, ` + WskazanieKonta + `)
 	ON CONFLICT(urzadzenie_id, kanal, klucz_kanalu) DO UPDATE SET
 	    etykieta       = COALESCE(excluded.etykieta, urzadzenie_powiadomien.etykieta),
 	    aktywne        = 1,
 	    wyrejestrowano = NULL
+	WHERE ` + WarunekKonta + `
 	RETURNING id`
 
 func (r *repozytoriumPowiadomien) Zarejestruj(ctx context.Context, rej RejestracjaPowiadomien) (int64, error) {
@@ -185,8 +186,9 @@ func (r *repozytoriumPowiadomien) Zarejestruj(ctx context.Context, rej Rejestrac
 		return 0, err
 	}
 	var id int64
+	konto := KontoOperatora(ctx)
 	err = polecenie.QueryRowContext(ctx, rej.UrzadzenieID, kanal, rej.KluczKanalu,
-		rej.Etykieta).Scan(&id)
+		rej.Etykieta, konto, konto).Scan(&id)
 	if err != nil {
 		return 0, fmt.Errorf("dane: nie można zapisać rejestracji powiadomień urządzenia %d "+
 			"na kanale %q: %w", rej.UrzadzenieID, kanal, err)
@@ -197,7 +199,7 @@ func (r *repozytoriumPowiadomien) Zarejestruj(ctx context.Context, rej Rejestrac
 const wyrejestrujPowiadomienia = `
 	UPDATE urzadzenie_powiadomien
 	   SET aktywne = 0, wyrejestrowano = ?
-	 WHERE kanal = ? AND klucz_kanalu = ? AND aktywne = 1`
+	 WHERE kanal = ? AND klucz_kanalu = ? AND aktywne = 1 AND ` + WarunekKonta
 
 // Wyrejestruj cofa zgodę. Brak wiersza nie jest błędem: cofnięcie zgody, której
 // nie było, kończy się tym samym stanem, o który wołający prosił.
@@ -206,7 +208,8 @@ func (r *repozytoriumPowiadomien) Wyrejestruj(ctx context.Context, kanal, kluczK
 	if err != nil {
 		return err
 	}
-	if _, err := polecenie.ExecContext(ctx, teraz, kanal, kluczKanalu); err != nil {
+	if _, err := polecenie.ExecContext(ctx, teraz, kanal, kluczKanalu,
+		KontoOperatora(ctx)); err != nil {
 		return fmt.Errorf("dane: nie można wyrejestrować powiadomień dla %q/%q: %w",
 			kanal, kluczKanalu, err)
 	}
@@ -262,8 +265,8 @@ func odczytajRejestracjePowiadomien(wiersz skaner) (RejestracjaPowiadomien, erro
 
 const wstawPowiadomienie = `
 	INSERT INTO powiadomienie (tytul, tresc, priorytet, powod, byt_rodzaj, byt_id,
-	                           nastepna_proba, wygasa)
-	VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+	                           nastepna_proba, wygasa, konto_id)
+	VALUES (?, ?, ?, ?, ?, ?, ?, ?, ` + WskazanieKonta + `)
 	RETURNING id`
 
 func (r *repozytoriumPowiadomien) Wstaw(ctx context.Context, p Powiadomienie) (int64, error) {
@@ -277,21 +280,22 @@ func (r *repozytoriumPowiadomien) Wstaw(ctx context.Context, p Powiadomienie) (i
 	}
 	var id int64
 	err = polecenie.QueryRowContext(ctx, p.Tytul, p.Tresc, priorytet, p.Powod,
-		p.BytRodzaj, p.BytID, p.NastepnaProba, p.Wygasa).Scan(&id)
+		p.BytRodzaj, p.BytID, p.NastepnaProba, p.Wygasa, KontoOperatora(ctx)).Scan(&id)
 	if err != nil {
 		return 0, fmt.Errorf("dane: nie można wnieść powiadomienia %q do kolejki: %w", p.Tytul, err)
 	}
 	return id, nil
 }
 
-const pobierzPowiadomienie = `SELECT ` + kolumnyPowiadomienia + ` FROM powiadomienie WHERE id = ?`
+const pobierzPowiadomienie = `SELECT ` + kolumnyPowiadomienia + ` FROM powiadomienie
+	WHERE id = ? AND ` + WarunekKonta
 
 func (r *repozytoriumPowiadomien) Pobierz(ctx context.Context, id int64) (Powiadomienie, error) {
 	polecenie, err := r.zapytania.przygotuj(ctx, pobierzPowiadomienie)
 	if err != nil {
 		return Powiadomienie{}, err
 	}
-	p, err := odczytajPowiadomienie(polecenie.QueryRowContext(ctx, id))
+	p, err := odczytajPowiadomienie(polecenie.QueryRowContext(ctx, id, KontoOperatora(ctx)))
 	if errors.Is(err, sql.ErrNoRows) {
 		return Powiadomienie{}, fmt.Errorf("dane: powiadomienie %d nie istnieje: %w", id, ErrBrakWiersza)
 	}
@@ -476,14 +480,14 @@ func (r *repozytoriumPowiadomien) Wygas(ctx context.Context, teraz string) (int,
 const odwolajPowiadomienia = `
 	UPDATE powiadomienie
 	   SET stan = 'odwolane', odwolano = ?, powod_odwolania = ?
-	 WHERE stan = 'oczekuje' AND byt_rodzaj = ? AND byt_id = ?`
+	 WHERE stan = 'oczekuje' AND byt_rodzaj = ? AND byt_id = ? AND ` + WarunekKonta
 
 func (r *repozytoriumPowiadomien) Odwolaj(ctx context.Context, bytRodzaj, bytID, powod, teraz string) (int, error) {
 	polecenie, err := r.zapytania.przygotuj(ctx, odwolajPowiadomienia)
 	if err != nil {
 		return 0, err
 	}
-	wynik, err := polecenie.ExecContext(ctx, teraz, powod, bytRodzaj, bytID)
+	wynik, err := polecenie.ExecContext(ctx, teraz, powod, bytRodzaj, bytID, KontoOperatora(ctx))
 	if err != nil {
 		return 0, fmt.Errorf("dane: nie można odwołać powiadomień o bycie %s/%s: %w",
 			bytRodzaj, bytID, err)

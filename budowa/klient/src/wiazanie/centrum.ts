@@ -68,17 +68,6 @@ import { zwiazAgents, zwolnijAgents } from './agents.ts';
 import { zwiazDesign, zwolnijDesign } from './design.ts';
 import { zwiazTerminal, zwolnijTerminal } from './terminal.ts';
 import { zwiazPrzegladarke, zwolnijPrzegladarke } from './browser.ts';
-import {
-  zwiazAplikacje,
-  zwiazAsystenta,
-  zwiazAutomatyzacje,
-  zwiazBadania,
-  zwiazDebate,
-  zwiazDevelopera,
-  zwiazDiagnostyke,
-  zwiazTlumaczenie,
-  zwolnijKatalogModulu,
-} from './moduly-katalogowe.ts';
 import { otworzOperacjePlatformy } from './platforma-operacje.ts';
 import { zglosUchwyt } from './zdarzenia.ts';
 
@@ -223,6 +212,10 @@ export function zwiazCentrum(kanal: Kanal | undefined = globalThis.DanacoKanal):
   let kartaBiezaca = '';
 
   const postawKarte = (karta: KartaRobocza, modul: Module): void => {
+    if (MODULY_ZAPOWIEDZIANE.has(modul.code)) {
+      zapowiedzModul(modul);
+      return;
+    }
     const wnetrze = wnetrzeKarty(wezly, karta.id, 'dn-tresc-' + modul.code);
     if (wnetrze === null) {
       zapowiedzModul(modul);
@@ -249,22 +242,6 @@ export function zwiazCentrum(kanal: Kanal | undefined = globalThis.DanacoKanal):
         zwiazTerminal(kanal, idOkna, wnetrze.wezel);
       } else if (modul.code === KOD_MODULU_PRZEGLADARKI) {
         zwiazPrzegladarke(kanal, idOkna, wnetrze.wezel);
-      } else if (modul.code === 'research') {
-        zwiazBadania(kanal, idOkna, wnetrze.wezel);
-      } else if (modul.code === 'translate') {
-        zwiazTlumaczenie(kanal, idOkna, wnetrze.wezel);
-      } else if (modul.code === 'developer') {
-        zwiazDevelopera(kanal, idOkna, wnetrze.wezel);
-      } else if (modul.code === 'roundtable') {
-        zwiazDebate(kanal, idOkna, wnetrze.wezel);
-      } else if (modul.code === 'apps') {
-        zwiazAplikacje(kanal, idOkna, wnetrze.wezel);
-      } else if (modul.code === 'automations') {
-        zwiazAutomatyzacje(kanal, idOkna, wnetrze.wezel);
-      } else if (modul.code === 'assistant') {
-        zwiazAsystenta(kanal, idOkna, wnetrze.wezel);
-      } else if (modul.code === 'diagnostics') {
-        zwiazDiagnostyke(kanal, idOkna, wnetrze.wezel);
       } else if (idOkna === '') {
         zwiazOkno(kanal, modul.code, nazwaSrodowiska, wnetrze.wezel);
       } else {
@@ -462,7 +439,6 @@ export function zwiazCentrum(kanal: Kanal | undefined = globalThis.DanacoKanal):
       zwolnijDesign(idKarty);
       zwolnijTerminal(idKarty);
       zwolnijPrzegladarke(idKarty);
-      zwolnijKatalogModulu(idKarty);
       wnetrze.remove();
     }
   };
@@ -808,6 +784,15 @@ async function wczytajModuly(
 
 /* Komunikat nazywa niegotowość wprost i podaje opis modułu z rejestru:
    twierdzenie, że okno się otwiera, byłoby nieprawdą. */
+/* Moduły, których znacznik prototypu niesie rozmowę, wykaz i liczniki wymyślone
+   na pokaz, a wydanie nie ma czym ich zastąpić. Plan etapu 2 zna dwa stany okna
+   i tylko dwa: okno działa albo jest zapowiedziane. Operacje tych rodzin zostają
+   osiągalne katalogiem „Operacje platformy" w Centrum. */
+const MODULY_ZAPOWIEDZIANE = new Set([
+  'research', 'translate', 'developer', 'roundtable',
+  'apps', 'automations', 'assistant', 'diagnostics',
+]);
+
 function zapowiedzModul(modul: Module | undefined): void {
   if (modul === undefined) return;
   const opis = modul.description ?? '';

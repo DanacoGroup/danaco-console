@@ -35,6 +35,7 @@ import { zwiazPrompt } from './design-prompt.ts';
 import { zwiazPodglad } from './design-podglad.ts';
 import { zwiazKolekcje } from './design-kolekcje.ts';
 import { zwiazZetony } from './design-zetony.ts';
+import { zwiazKatalogModulu } from './katalog-modulu.ts';
 import { pokazWarsztaty } from './design-warsztaty.ts';
 import { zejdzZKompozycji } from './design-adnotacje.ts';
 
@@ -98,6 +99,10 @@ export function zwiazDesign(
     zwiazPodglad(kontekst);
   });
 
+  /* Katalog stoi niezależnie od okna: bez kanału modelu rdzeń okna nie założy,
+     a operacje rodziny „design” wskazania okna nie wymagają. */
+  const katalog = zwiazKatalogModulu(kontekst.kanal, '', korzen, 'design', 'Design');
+  if (katalog !== null) odlaczenia.push(katalog);
   return true;
 }
 

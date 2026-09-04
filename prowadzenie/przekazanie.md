@@ -211,6 +211,13 @@ więc przejście przeglądarką prowadzi się na szerokości Właściciela (2560
 przy domyślnej szerokości karty wiersze są w drzewie, ale poza widokiem, co
 łatwo wziąć za pusty wykaz.
 
+Dzwonek szyny narzędziowej był afordancją martwą — odpowiadał samą etykietką.
+Powstało centrum powiadomień: plakietka na dzwonku liczy zdarzenia nowe w całym
+rejestrze, panel wystawia je od najnowszego z klasą, wagą i stanem, a przy każdym
+stoją trzy czynności kontraktu — odczytanie, zamknięcie i odłożenie o godzinę.
+Sprawdzone klikaniem: zamknięcie zdarzenia przestawia jego stan na `obsluzone`
+w tabeli `powiadomienie_centrum`, drugie zdarzenie zostaje nowe.
+
 ## 6. Rozstrzygnięcia czekające na Właściciela
 
 Czynność, nie rozstrzygnięcie: zakup certyfikatu OV w Certum na dokumenty spółki

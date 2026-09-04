@@ -2141,3 +2141,31 @@ już rozstrzygnięte, więc porównanie jest dokładne, bez drugiej reguły obok
 swoją sesję i jeden swój projekt, przecieków brak. Reguła na przyszłość: rejestr
 w pamięci jest drugą drogą do danych Operatora i granica musi iść nią tak samo
 jak zapytaniem — sam `WarunekKonta` w SQL jej nie domyka.
+
+## 49. Moduły zapowiedziane znikają — każdy czyta z rdzenia
+
+**Rzecz.** Rozstrzygnięcie 47 postawiło osiem modułów w stanie zapowiedzianym,
+bo ich okna pokazywały treść zmyśloną, a wiązania nie miały. Powód zniknął:
+każdy z nich dostał własne wiązanie i czyta wykazy z rdzenia.
+
+**Co powstało.** `research.ts`, `translate.ts`, `roundtable.ts`, `diagnostics.ts`,
+`developer.ts`, `apps.ts`, `assistant.ts`, `automations.ts`. Wszystkie idą jedną
+drogą: zakładają okno modułu wspólnym `zapewnijOknoModulu` (sesja, moduł, kanał,
+okno wolne albo nowe), zdejmują treść przykładową prototypu, wypełniają panele
+odpowiedzią rdzenia, a panel bez pokrycia dostaje zdanie mówiące, czego rdzeń
+nie podaje.
+
+**Skutek uboczny wart odnotowania.** Ta sama droga naprawiła Browser: wołał
+`browser.tab.list`, `source.list` i `note.list` bez wskazania okna, bo karta
+świeża okna nie miała, i dostawał odmowę rdzenia przy każdym otwarciu. Usterkę
+pokazał moduł Diagnostics, gdy zaczął czytać prawdziwy rejestr błędów instalacji.
+
+**Stan wobec planu etapu 2.** Plan zna dwa stany okna: działające albo
+zapowiedziane. Modułów zapowiedzianych nie ma już żadnego. Pełny przekrój od
+kliknięcia do zapisu i z powrotem mają Studio, Library i Research; pozostałe
+wystawiają wykazy i odmowy rdzenia — nic wymyślonego. Zakaz atrapy z planu jest
+utrzymany: żadne okno nie przedstawia danych, których nie ma.
+
+**Konsekwencje.** Komend z wołającym własnym jest 503 z 1086; reszta zostaje
+osiągalna katalogiem operacji. Zero naruszeń WCAG 2.0 A i AA utrzymane we
+wszystkich dziewięciu oknach i we wszystkich trzech przedsionkach.

@@ -31,8 +31,8 @@ type ProfilSilnika struct {
 func (r *repozytoriumTlumaczen) ProfileSilnikow(ctx context.Context,
 	zasieg, zasiegID string) ([]ProfilSilnika, error) {
 
-	warunki := []string{}
-	argumenty := []any{}
+	warunki := []string{WarunekKonta}
+	argumenty := []any{KontoOperatora(ctx)}
 	if strings.TrimSpace(zasieg) != "" {
 		warunki = append(warunki, "zasieg = ?")
 		argumenty = append(argumenty, zasieg)
@@ -43,10 +43,8 @@ func (r *repozytoriumTlumaczen) ProfileSilnikow(ctx context.Context,
 	}
 	zapytanie := `SELECT id, identyfikator_zewnetrzny, nazwa, dziedzina, zasieg, zasieg_id,
 	                     adaptacyjny, zasieg_pamieci, temperatura, zaktualizowano
-	                FROM profil_silnika_tlumaczenia`
-	if len(warunki) > 0 {
-		zapytanie += " WHERE " + strings.Join(warunki, " AND ")
-	}
+	                FROM profil_silnika_tlumaczenia
+	               WHERE ` + strings.Join(warunki, " AND ")
 	zapytanie += " ORDER BY nazwa"
 
 	wiersze, err := r.db.QueryContext(ctx, zapytanie, argumenty...)
@@ -127,7 +125,8 @@ func (r *repozytoriumTlumaczen) ProfilSilnikaPoKodzie(ctx context.Context,
 	wiersz := r.db.QueryRowContext(ctx,
 		`SELECT id, identyfikator_zewnetrzny, nazwa, dziedzina, zasieg, zasieg_id,
 		        adaptacyjny, zasieg_pamieci, temperatura, zaktualizowano
-		   FROM profil_silnika_tlumaczenia WHERE identyfikator_zewnetrzny = ?`, kod)
+		   FROM profil_silnika_tlumaczenia
+		  WHERE identyfikator_zewnetrzny = ? AND `+WarunekKonta, kod, KontoOperatora(ctx))
 	profil, err := odczytajProfilSilnika(wiersz)
 	if errors.Is(err, sql.ErrNoRows) {
 		return ProfilSilnika{}, ErrBrakWiersza
@@ -158,22 +157,25 @@ func (r *repozytoriumTlumaczen) ZapiszProfilSilnika(ctx context.Context,
 		}
 		if _, err := transakcja.ExecContext(ctx, `INSERT INTO profil_silnika_tlumaczenia
 			(identyfikator_zewnetrzny, nazwa, dziedzina, zasieg, zasieg_id, adaptacyjny,
-			 zasieg_pamieci, temperatura, zaktualizowano)
-			VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+			 zasieg_pamieci, temperatura, zaktualizowano, konto_id)
+			VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, `+WskazanieKonta+`)
 			ON CONFLICT(identyfikator_zewnetrzny) DO UPDATE SET
 				nazwa = excluded.nazwa, dziedzina = excluded.dziedzina,
 				zasieg = excluded.zasieg, zasieg_id = excluded.zasieg_id,
 				adaptacyjny = excluded.adaptacyjny, zasieg_pamieci = excluded.zasieg_pamieci,
-				temperatura = excluded.temperatura, zaktualizowano = excluded.zaktualizowano`,
+				temperatura = excluded.temperatura, zaktualizowano = excluded.zaktualizowano
+			WHERE `+WarunekKonta,
 			profil.Kod, profil.Nazwa, tekstDoKolumny(profil.Dziedzina), profil.Zasieg,
 			tekstDoKolumny(profil.ZasiegID), wartoscLogicznaDoKolumny(profil.Adaptacyjny),
-			tekstDoKolumny(profil.ZasiegPamieci), temperatura, teraz); err != nil {
+			tekstDoKolumny(profil.ZasiegPamieci), temperatura, teraz,
+			KontoOperatora(ctx), KontoOperatora(ctx)); err != nil {
 			return fmt.Errorf("dane: nie można zapisać profilu silnika %q: %w", profil.Kod, err)
 		}
 		var profilID int64
 		if err := transakcja.QueryRowContext(ctx,
-			`SELECT id FROM profil_silnika_tlumaczenia WHERE identyfikator_zewnetrzny = ?`,
-			profil.Kod).Scan(&profilID); err != nil {
+			`SELECT id FROM profil_silnika_tlumaczenia
+			  WHERE identyfikator_zewnetrzny = ? AND `+WarunekKonta,
+			profil.Kod, KontoOperatora(ctx)).Scan(&profilID); err != nil {
 			return fmt.Errorf("dane: nie można odczytać profilu silnika %q: %w", profil.Kod, err)
 		}
 		if _, err := transakcja.ExecContext(ctx,
@@ -221,7 +223,9 @@ func (r *repozytoriumTlumaczen) PolitykaPivotaZasiegu(ctx context.Context,
 	var domyslny sql.NullString
 	err := r.db.QueryRowContext(ctx,
 		`SELECT id, zasieg, zasieg_id, jezyk_domyslny, zaktualizowano
-		   FROM polityka_pivota WHERE zasieg = ? AND zasieg_id = ?`, zasieg, zasiegID).
+		   FROM polityka_pivota
+		  WHERE zasieg = ? AND zasieg_id = ? AND `+WarunekKonta,
+		zasieg, zasiegID, KontoOperatora(ctx)).
 		Scan(&polityka.ID, &polityka.Zasieg, &polityka.ZasiegID, &domyslny, &polityka.Zaktualizowano)
 	if errors.Is(err, sql.ErrNoRows) {
 		return PolitykaPivota{}, ErrBrakWiersza
@@ -256,18 +260,21 @@ func (r *repozytoriumTlumaczen) ZapiszPolitykePivota(ctx context.Context,
 	teraz := time.Now().UnixMilli()
 	err := wTransakcji(ctx, r.db, func(transakcja *sql.Tx) error {
 		if _, err := transakcja.ExecContext(ctx, `INSERT INTO polityka_pivota
-			(zasieg, zasieg_id, jezyk_domyslny, zaktualizowano) VALUES (?, ?, ?, ?)
+			(zasieg, zasieg_id, jezyk_domyslny, zaktualizowano, konto_id)
+			VALUES (?, ?, ?, ?, `+WskazanieKonta+`)
 			ON CONFLICT(zasieg, zasieg_id) DO UPDATE SET
 				jezyk_domyslny = excluded.jezyk_domyslny,
-				zaktualizowano = excluded.zaktualizowano`,
+				zaktualizowano = excluded.zaktualizowano
+			WHERE `+WarunekKonta,
 			polityka.Zasieg, polityka.ZasiegID, tekstDoKolumny(polityka.JezykDomyslny),
-			teraz); err != nil {
+			teraz, KontoOperatora(ctx), KontoOperatora(ctx)); err != nil {
 			return fmt.Errorf("dane: nie można zapisać polityki pivota: %w", err)
 		}
 		var politykaID int64
 		if err := transakcja.QueryRowContext(ctx,
-			`SELECT id FROM polityka_pivota WHERE zasieg = ? AND zasieg_id = ?`,
-			polityka.Zasieg, polityka.ZasiegID).Scan(&politykaID); err != nil {
+			`SELECT id FROM polityka_pivota
+			  WHERE zasieg = ? AND zasieg_id = ? AND `+WarunekKonta,
+			polityka.Zasieg, polityka.ZasiegID, KontoOperatora(ctx)).Scan(&politykaID); err != nil {
 			return fmt.Errorf("dane: nie można odczytać polityki pivota po zapisie: %w", err)
 		}
 		if _, err := transakcja.ExecContext(ctx,

@@ -258,8 +258,9 @@ func zawezenieStatystykBiblioteki(ctx context.Context, kolekcjaKod,
 		warunki = append(warunki, `EXISTS (SELECT 1 FROM przypisanie_kolekcji_biblioteki pk
 		                          JOIN kolekcja_biblioteki kb ON kb.id = pk.kolekcja_id
 		                          WHERE pk.plik_id = plik_biblioteki.id
-		                            AND kb.identyfikator_zewnetrzny = ?)`)
-		argumenty = append(argumenty, *kolekcjaKod)
+		                            AND kb.identyfikator_zewnetrzny = ?
+		                            AND `+strings.ReplaceAll(WarunekKonta, "konto_id", "kb.konto_id")+`)`)
+		argumenty = append(argumenty, *kolekcjaKod, KontoOperatora(ctx))
 	}
 	return strings.Join(warunki, " AND "), argumenty
 }

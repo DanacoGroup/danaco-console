@@ -124,7 +124,9 @@ export function zdejmijTrescWspolna(cialo: HTMLElement): void {
     zdanie.textContent = 'Rozmowa tego modułu nie jest jeszcze związana z rdzeniem.';
     historia.appendChild(zdanie);
   }
-  cialo.querySelector('.sta-kom-monitor .sta-kom-monitor-tresc')?.replaceChildren();
+  /* Monitor pokazuje, czym model zajmuje się w tej chwili. Bez wiązanej rozmowy
+     nie ma czego pokazywać, a jego tytuł prototypu opisuje cudzą pracę. */
+  cialo.querySelector('.sta-kom-monitor')?.remove();
   /* Żetony kontekstu i znacznik pracy prototyp wpisuje wprost — nazwy plików,
      adresy stron, „pracuje”. Bez zdjęcia stoją obok prawdziwych zer wykazu
      jako dwa stany wykluczające się, oba wzięte znikąd. */

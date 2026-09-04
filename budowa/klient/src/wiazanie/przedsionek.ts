@@ -29,6 +29,9 @@ let sesje: Session[] = [];
 let odpisy: SessionPresence[] = [];
 let nazwyModulow = new Map<string, string>();
 let kodOstatni = '';
+/* Wzorzec wiersza pochodzi ze znacznika i ginie przy pierwszym pustym wykazie,
+   więc szyna zapamiętuje go, zanim po raz pierwszy wymieni swoją zawartość. */
+let wzorzecWiersza: HTMLElement | null = null;
 
 /* Widok przedsionka powstaje w płótnie przy każdym wejściu w środowisko, więc
    wiązanie idzie za jego przebudową obserwatorem, nie odczytem znacznika. */
@@ -72,6 +75,11 @@ async function wejdz(kanal: Kanal, kod: string): Promise<void> {
   });
   if (!wynik.udany || wynik.wynik === undefined) {
     oglos(NAGLOWEK, zdanieOdmowy(wynik.blad), 'blad');
+    /* Bez odpowiedzi rdzenia w szynie stoją wiersze i miara ze znacznika.
+       Zostawione mówiłyby o cudzych sesjach jako o sesjach Operatora. */
+    sesje = [];
+    odpisy = [];
+    wypelnijSzyne('');
     return;
   }
   sesje = wynik.wynik.sessions;
@@ -102,13 +110,16 @@ function przestawZakres(filtr: HTMLElement): void {
 
 function wypelnijSzyne(ogniskowana: string): void {
   const lista = document.querySelector<HTMLElement>('.cd-tresc--przedsionek .pd-szyna-lista');
-  const wzor = lista?.querySelector<HTMLElement>('.pd-sesja');
-  if (lista === null || wzor === null || wzor === undefined) return;
-  const wzorzec = wzor.cloneNode(true) as HTMLElement;
+  if (lista === null) return;
+  const wzor = lista.querySelector<HTMLElement>('.pd-sesja');
+  if (wzor !== null) wzorzecWiersza = wzor.cloneNode(true) as HTMLElement;
+  const wzorzec = wzorzecWiersza;
+  if (wzorzec === null) return;
   const widoczne = sesje.filter((sesja) => zakres === '' || sesja.status === zakres);
   lista.replaceChildren(...widoczne.map(
     (sesja) => zbudujWiersz(wzorzec, sesja, sesja.id === ogniskowana),
   ));
+  if (widoczne.length === 0) lista.append(zdaniePustej(lista, zakres !== ''));
   opiszMiare(widoczne.length);
 }
 
@@ -133,6 +144,15 @@ function opisSesji(sesja: Session, odpis: SessionPresence | undefined): string {
     : nazwyModulow.get(odpis.moduleCode) ?? odpis.moduleCode;
   const stan = odpis?.live === true ? 'pracuje' : STANY[sesja.status];
   return modul === '' ? stan : `${modul} · ${stan}`;
+}
+
+function zdaniePustej(lista: HTMLElement, zawezona: boolean): HTMLElement {
+  const zdanie = lista.ownerDocument.createElement('p');
+  zdanie.className = 'dn-pusty';
+  zdanie.textContent = zawezona
+    ? 'Żadna sesja nie ma tego stanu.'
+    : 'Nie masz jeszcze sesji w tym środowisku.';
+  return zdanie;
 }
 
 function opiszMiare(ile: number): void {

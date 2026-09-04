@@ -112,7 +112,18 @@ export function uzgodnijPrzelacznikiPaneli(cialo: HTMLElement, _bezPokrycia: str
 }
 
 export function zdejmijTrescWspolna(cialo: HTMLElement): void {
-  cialo.querySelector('.sta-kom-historia')?.replaceChildren();
+  const historia = cialo.querySelector('.sta-kom-historia');
+  historia?.replaceChildren();
+  /* Wiadomość wysyła wyłącznie Studio, a Studio tej ścieżki nie wywołuje.
+     Puste pole nadawania obok wybranego modelu obiecuje odpowiedź, której
+     nikt nie da, więc miejsce rozmowy mówi wprost, jak jest. */
+  if (historia !== null) {
+    const zdanie = cialo.ownerDocument.createElement('p');
+    zdanie.className = 'dn-tekst-ciagly dn-tekst-ciagly--drobny';
+    zdanie.dataset.pustka = 'tak';
+    zdanie.textContent = 'Rozmowa tego modułu nie jest jeszcze związana z rdzeniem.';
+    historia.appendChild(zdanie);
+  }
   cialo.querySelector('.sta-kom-monitor .sta-kom-monitor-tresc')?.replaceChildren();
   /* Żetony kontekstu i znacznik pracy prototyp wpisuje wprost — nazwy plików,
      adresy stron, „pracuje”. Bez zdjęcia stoją obok prawdziwych zer wykazu
@@ -120,6 +131,11 @@ export function zdejmijTrescWspolna(cialo: HTMLElement): void {
   cialo.querySelector('.sta-kom-kontekst')?.replaceChildren();
   cialo.querySelector('.sta-kontekst-akcji')?.replaceChildren();
   cialo.querySelector('.sta-kom-stan')?.remove();
+  /* Znaczniki paneli niosą w prototypie liczby wzięte znikąd. Wiązanie panelu,
+     które ma czym je wypełnić, robi to po tym zdjęciu. */
+  for (const znacznik of cialo.querySelectorAll('.sta-okno-znacznik')) {
+    znacznik.textContent = '';
+  }
   for (const znacznik of cialo.querySelectorAll('#menu-filtr .sta-menu-poz[aria-checked]')) {
     znacznik.removeAttribute('aria-checked');
   }

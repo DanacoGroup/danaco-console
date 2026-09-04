@@ -241,7 +241,16 @@ Powstało centrum powiadomień: plakietka na dzwonku liczy zdarzenia nowe w cał
 rejestrze, panel wystawia je od najnowszego z klasą, wagą i stanem, a przy każdym
 stoją trzy czynności kontraktu — odczytanie, zamknięcie i odłożenie o godzinę.
 Sprawdzone klikaniem: zamknięcie zdarzenia przestawia jego stan na `obsluzone`
-w tabeli `powiadomienie_centrum`, drugie zdarzenie zostaje nowe.
+w tabeli `powiadomienie_centrum`, drugie zdarzenie zostaje nowe. Plakietka słucha
+`notification.raised` i `notification.changed`, więc licznik schodzi bez
+odświeżania okna.
+
+Wstążka okna roboczego w Studiu przeszła to samo przemiatanie. Cztery przyciski
+układu — podział pionowy, maksymalizacja okna roboczego, nowe okno pomocnicze
+i okno komunikacji — nie miały obsługi nigdzie: ani w wiązaniu, ani w bibliotece
+warstwy projektowej; opracowania opisują okna pomocnicze ogólnie, ale tych czynności
+nie określają. Zostały w oknie i nazywają swoją niegotowość, bo zdjęcie zmieniłoby
+wstążkę wobec prototypu, którą Właściciel ocenia w kryterium 5.
 
 ## 6. Rozstrzygnięcia czekające na Właściciela
 

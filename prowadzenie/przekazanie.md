@@ -118,6 +118,7 @@ szerokich terenów, nie na kilkanaście wąskich.
 | sumy migracji uzgadniane po numerze | naprawione; nazwa kroku sprawdzana przy każdym starcie (decyzja 32) |
 | trzy produkcyjne maszyny w zaczynie każdej instalacji | naprawione krokiem 483 (decyzja 33) |
 | znacznik „bramka bez poczty" jeden na instalację | naprawione; znacznik na konto, wpis zastany przejmowany raz |
+| klucze obce wskazywały tabele przejściowe dawnych przebudów | naprawione krokiem 497; zapis wypowiedzi debaty kończył się odmową „no such table: main.debata_tura_nowa" i tura nie zbierała ani jednej wypowiedzi |
 
 Termin gniazda przed bramką, dołożony w trakcie prac, został **zdjęty**: zabijał
 gniazdo serwera narzędzi i rejestrację z potwierdzeniem listem. Gniazdo

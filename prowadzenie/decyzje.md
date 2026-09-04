@@ -1771,3 +1771,40 @@ Prowadzącego i podlega obaleniu przez Właściciela.
 **Konsekwencje.** Konfiguracja stoi w `validators/dyscyplina.config.json` pluginu
 (kopia sprzed zmiany obok, z przyrostkiem daty). Aktualizacja pluginu może ją nadpisać
 — po aktualizacji próg trzeba sprawdzić.
+
+## 36. Korzenie bez wskazania konta dostają kolumnę, nie łańcuch
+
+**Rozstrzygnięcie Prowadzącego, 4 września 2026** (Właściciel deleguje, poz. 27).
+
+**Kontekst.** Po migracji 484 cztery korzenie pracy Operatora zostały bez kolumny
+`konto_id`: `okno_komunikacji`, `kolejka`, `raport_badania` i `przebieg_wsadu_studio`.
+Zapytania sięgające tych korzeni nie miały czym wskazać właściciela wiersza.
+
+**Decyzja.** Okno zostaje bez kolumny i sięga konta drogą `sesja` → `karta_sesji`
+(migracja 407); warunek stoi w jednym miejscu, w `dane.warunekKontaOkna`, i przyjmuje
+nazwę tabeli albo aliasu. Trzy pozostałe korzenie dostają kolumnę krokiem 489, bo nie
+wiszą kluczem obcym na niczym zawężonym — kolejka globalna nie ma sesji, raport badania
+stoi samodzielnie, przebieg wsadu wiąże się ze stroną.
+
+**Konsekwencje.** Zapytanie sięgające okna dokłada jeden argument konta w miejscu
+warunku. Aliasy wewnętrzne warunku (`so`, `ko`) są własne, żeby wszedł także do zapytania
+używającego aliasów `s` i `k`.
+
+## 37. Praca procesu bez zamawiającego zostaje bez zawężenia
+
+**Rozstrzygnięcie Prowadzącego, 4 września 2026** (Właściciel deleguje, poz. 27).
+
+**Kontekst.** Część zapytań rdzenia biegnie bez żądania Operatora: pętla doręczania
+powiadomień, wygaszanie przeterminowanych, zbieranie żywych odwołań treści biblioteki
+przed sprzątaniem blobów, rejestr kanałów modeli (poz. 34) oraz odczyty kluczem własnym
+wiersza wewnątrz transakcji, która ten wiersz przed chwilą zapisała.
+
+**Decyzja.** Te zapytania zostają bez warunku konta. Zawężenie ich kontem z kontekstu
+dałoby konto najstarsze i zatrzymałoby pracę pozostałych kont: powiadomienia konta
+młodszego nigdy nie doszłyby, a sprzątanie uznałoby żywe bloby cudzych kont za porzucone
+i skasowałoby treść biblioteki.
+
+**Konsekwencje.** Wejście do takiej pętli — wniesienie powiadomienia, rejestracja
+urządzenia, odwołanie powiadomień bytu, potwierdzenie doręczenia — jest zawężone, więc
+wiersz trafia do pętli już ze wskazaniem konta. Miara granicy konta liczy te miejsca
+jako rozstrzygnięte, nie jako dziury.

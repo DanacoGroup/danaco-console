@@ -151,8 +151,11 @@ Pełny wykaz: `audyt2-ustalenia-7-kategorii.json`.
 
 **Otwarte.**
 
-- Pakietu serwera wdrożenia nadal nie ma i wykaz wydań go nie wymienia. Pozycja
-  wpisana przed powstaniem pliku byłaby wypełniaczem, którego zakazuje plan etapu 2.
+- Pakiet serwera wdrożenia 2.0.0 jest złożony (`scripts/pakiet-serwera.sh`,
+  `wydania/2.0.0-2026-09-04/danaco-console_2.0.0_amd64.deb`, 40,4 MB) i wykaz
+  wydań kieruje na niego zamiast na 1.0.0 z 18 sierpnia. Pliku nie ma jeszcze
+  w kanale: wgranie należy do operatora wydania, a złożenie witryny melduje tę
+  pozycję jako NIESPRAWDZONĄ, póki poświadczeń kanału nie ma w środowisku.
 - Rodzina `notification.*` nie ma wołającego poza rejestrem komend: centrum
   powiadomień jest oknem spoza łańcucha etapu 2, więc zostaje zapowiedziane.
 - Granica 64 gniazd niezwiązanych — ustalenie zostaje otwarte po zdjęciu terminu

@@ -6,8 +6,10 @@ i czego nie wolno ruszyć.
 ## 1. Czym rzecz stoi
 
 Rdzeń działa. Interfejs prowadzi od wejścia przez przedsionek do Centrum i Studia;
-pozostałe moduły stoją na zapowiedzi niegotowości. Praca leży na gałęzi `teren/naprawy-audytu`;
-`main` i punkt cofnięcia `2881c425` są nietknięte.
+pozostałe moduły stoją na zapowiedzi niegotowości. Praca stoi na `main`: gałąź
+`teren/naprawy-audytu` weszła przesunięciem prostym 4 września 2026 po pełnym
+przebiegu `go test ./server/...` zamkniętym kodem 0. Punkt cofnięcia sprzed
+scalenia to `2881c425`.
 
 Cztery warstwy budowy sprawdzają się czysto: rdzeń Go (`go build`, `go vet`,
 `gofmt`, komplet sprawdzianów), klient TypeScript (`tsc --noEmit`, `vite build`),

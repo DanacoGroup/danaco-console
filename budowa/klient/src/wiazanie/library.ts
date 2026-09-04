@@ -10,6 +10,7 @@ import { zwiazEtykiety } from './library-etykiety.ts';
 import { zwiazPodglad } from './library-podglad.ts';
 import { zwiazWersje } from './library-wersje.ts';
 import { zwiazZadania } from './library-zadania.ts';
+import { zwiazKatalogModulu } from './katalog-modulu.ts';
 import { utworzKontekst, wartosc } from './library-wspolne.ts';
 import {
   uzgodnijPrzelacznikiPaneli,
@@ -67,6 +68,8 @@ export function zwiazLibrary(
     }),
   );
   void opiszZakres(kanal, obszar);
+  const katalog = zwiazKatalogModulu(kanal, idOknaStojacego, obszar, 'library', 'Biblioteka');
+  if (katalog !== null) odlaczenia.push(katalog);
   return true;
 }
 

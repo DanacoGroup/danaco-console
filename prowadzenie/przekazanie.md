@@ -220,10 +220,17 @@ cd ~/budowa/budowa/desktop/src-tauri && PATH=$HOME/.local/bin:$PATH cargo check 
 python3 ~/budowa/narzedzia/pokrycie-kontraktu.py
 ```
 
-Pakiet `server/internal/core` uruchamiać wybiórczo przez `-run` albo z `-skip`
-na sprawdzianach odtwarzania twarzy — sięgają silników zewnętrznych i nie kończą
-się w dziesięć minut. Dziennik startu rdzenia ma mówić `komend=1086`,
-`zależności zewnętrzne: 55 z 55 obecnych` i `klient=klient/dist`.
+Pełny `go test -count=1 -timeout 50m ./server/...` przechodzi w całości i tak go
+sprawdzać przed scaleniem; pakiet `core` idzie w nim ponad pół godziny, bo każdy
+z 433 montaży rdzenia kosztuje około 3,2 s. Dziennik startu rdzenia ma mówić
+`komend=1086`, `zależności zewnętrzne: 55 z 55 obecnych` i `klient=klient/dist`.
+
+**Przegląd odczytów na żywym rdzeniu.** Osobny rdzeń na własnym porcie i katalogu
+danych, po nim wywołanie każdej komendy wykazu i odczytu: 140 bez pól wymaganych
+i 68 zawężonych oknem albo sesją. Odmowa `internal_error` znaczy usterkę rdzenia,
+brak danych — nie. Ostatni przebieg: 180 udanych, zero odmów wewnętrznych;
+`developer.lint.get` przekracza czas, bo uruchamia analizatory na katalogu
+roboczym okna.
 
 ## 10. Pułapki tej maszyny
 

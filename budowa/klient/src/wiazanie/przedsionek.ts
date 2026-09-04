@@ -7,6 +7,7 @@ import {
   type Session,
   type SessionPresence,
 } from '../../../shared/contract.ts';
+import { miaraSesji } from '../model/miary.ts';
 import type { Kanal } from '../protokol/kanal.ts';
 import { tozsamoscKlienta } from '../protokol/tozsamosc-klienta.ts';
 import { wywolaj } from '../protokol/wywolanie.ts';
@@ -160,6 +161,11 @@ function opiszMiare(ile: number): void {
     '.cd-tresc--przedsionek .dn-szyna-modulu-glowa .dn-plakietka',
   );
   if (miara !== null) miara.textContent = `sesji: ${ile}`;
+  /* Listwa dolna niesie w prototypie miarę projektów i sesji naraz; kontrakt
+     nie wiąże projektu ze środowiskiem, więc zostaje sama liczba sesji.
+     Opisuje ją przedsionek, bo stoi także w środowisku bez modułów. */
+  const listwa = document.querySelector('.cd-tresc--przedsionek .pd-listwa-meta');
+  if (listwa !== null) listwa.textContent = miaraSesji(ile);
 }
 
 /* Sesja czynna idzie w otwarcie prowadzone przez Centrum; wstrzymana wymaga

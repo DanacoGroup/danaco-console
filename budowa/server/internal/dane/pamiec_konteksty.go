@@ -101,7 +101,8 @@ const (
 
 	zapiszZasadeRetencji = `INSERT INTO zasada_retencji_pamieci (` + kolumnyZasadyRetencji + `)
 	                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-	                        ON CONFLICT(zasieg, zasieg_kod, profil_kod) DO UPDATE SET
+	                        ON CONFLICT(zasieg, zasieg_kod, profil_kod,
+	                                    COALESCE(konto_id, 0)) DO UPDATE SET
 	                            dni_wygasania = excluded.dni_wygasania,
 	                            wrazliwe_domyslnie = excluded.wrazliwe_domyslnie,
 	                            wzorce_json = excluded.wzorce_json,

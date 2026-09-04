@@ -73,7 +73,7 @@ var (
 	zapiszPoswiadczenieAutomatyki = `INSERT INTO poswiadczenie_automatyki
 	                                 (odwolanie, nazwa, zasieg, zasieg_id, konto_id)
 	                                 VALUES (?, ?, ?, ?, ` + WskazanieKonta + `)
-	                                 ON CONFLICT(odwolanie) DO UPDATE SET
+	                                 ON CONFLICT(odwolanie, COALESCE(konto_id, 0)) DO UPDATE SET
 	                                     nazwa = excluded.nazwa,
 	                                     zasieg = excluded.zasieg,
 	                                     zasieg_id = excluded.zasieg_id,

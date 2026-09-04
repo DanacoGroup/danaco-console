@@ -53,7 +53,7 @@ const (
 	// w jeden wiersz; WarunekKonta przy DO UPDATE odcina zapis w wiersz cudzy.
 	wstawWpisSchowka = `INSERT INTO wpis_schowka (` + kolumnyWpisuSchowka + `, konto_id)
 	                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ` + WskazanieKonta + `)
-	                    ON CONFLICT(odcisk) DO UPDATE SET
+	                    ON CONFLICT(odcisk, COALESCE(konto_id, 0)) DO UPDATE SET
 	                        utworzono = excluded.utworzono,
 	                        okno_zrodlowe = COALESCE(excluded.okno_zrodlowe, okno_zrodlowe),
 	                        wrazliwy = MAX(wrazliwy, excluded.wrazliwy),

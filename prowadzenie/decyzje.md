@@ -1808,3 +1808,26 @@ i skasowałoby treść biblioteki.
 urządzenia, odwołanie powiadomień bytu, potwierdzenie doręczenia — jest zawężone, więc
 wiersz trafia do pętli już ze wskazaniem konta. Miara granicy konta liczy te miejsca
 jako rozstrzygnięte, nie jako dziury.
+
+## 38. Jednoznaczność klucza obowiązuje w koncie, nie w instalacji
+
+**Rozstrzygnięcie Prowadzącego, 4 września 2026** (Właściciel deleguje, poz. 27).
+
+**Kontekst.** Więz UNIQUE stał w 171 miejscach na całej tabeli, a nie w obrębie
+konta. Klucz wpisywany przez Operatora — nazwa hosta, skrót autozamiany, adres
+nastawy, ścieżka nagrania — był więc zajmowany na całą instalację: konto młodsze
+nie mogło użyć nazwy, której użyło starsze, a zapis `ON CONFLICT … DO UPDATE`
+sięgał wiersza konta cudzego.
+
+**Decyzja.** Klucz nadawany przez rdzeń (`identyfikator_zewnetrzny`, `kod`,
+znacznik losowy) zostaje jednoznaczny w całej tabeli: powstaje z licznika i losu,
+więc dwa konta nie zajmą tej samej wartości, a więz globalny wychwytuje pomyłkę
+wołającego. Klucz wpisywany albo wskazywany przez Operatora przechodzi do konta —
+kroki 490–494 przebudowują tabelę i zakładają wskaźnik jednoznaczny po wyrażeniu
+`(… , COALESCE(konto_id, 0))`, wzorem kroku 485.
+
+**Konsekwencje.** Każde polecenie `ON CONFLICT` celujące w przebudowany więz
+wymienia teraz `COALESCE(konto_id, 0)` w wykazie kolumn — inaczej silnik nie
+dopasuje więzu i zapytania nie da się przygotować. Rodzaj znacznika Studia
+zostaje przy więzie globalnym: jego `nazwa` jest celem klucza obcego, a SQLite
+wymaga dla takiego celu wskaźnika dokładnie po tej kolumnie.

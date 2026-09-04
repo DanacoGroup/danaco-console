@@ -19,7 +19,7 @@ powłoka Tauri i instalator Tauri — obie także w budowie krzyżowej na
 | miara | wartość |
 |---|---|
 | komendy kontraktu | 1086 |
-| komendy wołane przez klienta | 1086 z 1086 |
+| komendy wykonalne z klienta | 1086 z 1086: 485 z własnym wołającym, reszta przez katalog operacji |
 | tabele w bazie po przejeździe migracji | 421 |
 | tabele niosące pracę Operatora | 373, w tym 172 korzenie |
 | granica konta w zapytaniach | domknięta; 15 miejsc rozstrzygniętych, nie dziur |
@@ -254,6 +254,15 @@ Wcześniej szedł ponad pół godziny: profil wykazał, że dwie trzecie czasu z
 parsowanie SQL migracji przy każdym z 433 montaży, więc uprząż bierze teraz bazę
 z wzorca złożonego raz na przebieg pakietu. Dziennik startu rdzenia ma mówić
 `komend=1086`, `zależności zewnętrzne: 55 z 55 obecnych` i `klient=klient/dist`.
+
+**Czym jest pokrycie 1086/1086.** Miara liczy komendy wykonalne z interfejsu.
+485 z nich ma wołającego własnego — panel, przycisk albo wykaz zbudowany pod tę
+jedną komendę. Pozostałe wykonuje katalog operacji modułu
+(`klient/src/wiazanie/katalog-modulu.ts`): Operator wybiera komendę rodziny,
+dokłada parametry JSON, a katalog wysyła żądanie i melduje odmowę rdzenia.
+To wołający prawdziwy, nie wpis w wykazie — ale nie jest tym samym co panel
+zbudowany pod komendę. Panele dla modułów spoza łańcucha etapu 2 nie powstają
+z rozstrzygnięcia planu: okno zapowiedziane nie staje jako pusta skorupa.
 
 **Okno produktu w przeglądarce.** Osobny rdzeń serwuje pakiet interfejsu, a
 Chromium bez okna (puppeteer-core spod `pa11y`) przechodzi drogę: uruchomienie,

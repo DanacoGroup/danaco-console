@@ -3,15 +3,21 @@
 import {
   Command,
   type RoundtableArgumentNode,
+  type RoundtableEvidence,
   type RoundtableParticipant,
+  type RoundtableRole,
+  type RoundtableRubric,
+  type RoundtableTeam,
 } from '../../../shared/contract.ts';
 import type { Odsubskrybuj } from '../polaczenie/magistrala-zdarzen.ts';
 import type { Kanal } from '../protokol/kanal.ts';
 import { wywolaj } from '../protokol/wywolanie.ts';
 import {
+  cialoPanelu,
   opiszNaglowek,
   zapewnijOknoModulu,
   zdejmijSterowanieWspolne,
+  wykazPanelu,
   zdejmijTrescWspolna,
 } from './okno-modulu.ts';
 import { zwiazKatalogModulu } from './katalog-modulu.ts';
@@ -56,7 +62,20 @@ export function zwiazDebate(
   let idOkna = idOknaStojacego;
   const odswiez = async (): Promise<void> => {
     if (idOkna === '') return;
-    await Promise.all([wypelnijModele(kanal, korzen, idOkna), wypelnijArgumenty(kanal, korzen, idOkna)]);
+    await Promise.all([      wypelnijModele(kanal, korzen, idOkna),
+      wypelnijArgumenty(kanal, korzen, idOkna),
+      wykaz(kanal, korzen, idOkna, 'panel-consensus', Command.RoundtableEvidenceList,
+        'Żadna wypowiedź nie ma jeszcze dowodu.',
+        (o) => (o.evidence as RoundtableEvidence[]).map((d) => [d.claim, ''] as const)),
+      wykaz(kanal, korzen, '', 'panel-plan', Command.RoundtableTeamList,
+        'Rdzeń nie ma zespołu debaty.',
+        (o) => (o.teams as RoundtableTeam[]).map((z) => [z.name, z.format ?? ''] as const)),
+      wykaz(kanal, korzen, '', 'panel-artefakty', Command.RoundtableRoleList,
+        'Rdzeń nie ma ról debaty.',
+        (o) => (o.roles as RoundtableRole[]).map((r) => [r.name, ''] as const)),
+      wykaz(kanal, korzen, '', 'panel-zadania', Command.RoundtableRubricList,
+        'Rdzeń nie ma rubryk oceny.',
+        (o) => (o.rubrics as RoundtableRubric[]).map((r) => [r.name, ''] as const))]);
   };
 
   void (async (): Promise<void> => {
@@ -149,6 +168,25 @@ async function wypelnijArgumenty(kanal: Kanal, korzen: Element, idOkna: string):
     return;
   }
   cialo.replaceChildren(...argumenty.map((a) => pozycja(cialo, a.text, a.speechAct)));
+}
+
+/* Panel wykazu bez własnego kształtu; okno puste znaczy komendę bez pola okna. */
+async function wykaz(
+  kanal: Kanal,
+  korzen: Element,
+  idOkna: string,
+  panelId: string,
+  komenda: Parameters<typeof wywolaj>[1],
+  pusty: string,
+  mapuj: (wynik: Record<string, unknown>) => readonly (readonly [string, string])[],
+): Promise<void> {
+  const cialo = cialoPanelu(korzen, panelId);
+  if (cialo === null) return;
+  const zadanie = idOkna === '' ? {} : { windowId: idOkna };
+  const odpowiedz = await wywolaj(kanal, komenda as never, zadanie as never);
+  const wynik = odpowiedz.wynik as Record<string, unknown> | undefined;
+  wykazPanelu(cialo, odpowiedz.udany, odpowiedz.blad?.message,
+    wynik === undefined ? undefined : [...mapuj(wynik)], pusty, (x) => x);
 }
 
 function pozycja(cialo: Element, tytul: string, podpis: string): HTMLElement {

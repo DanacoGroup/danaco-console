@@ -39,8 +39,11 @@ export function zwiazKatalogModulu(
   rodzina: string,
   nazwaModulu: string,
 ): Odsubskrybuj | null {
-  const gniazdo = korzen.querySelector('.sta-obszar') ?? (korzen as Element).querySelector?.('*') ?? null;
-  const cel = korzen.querySelector('.sta-obszar');
+  // Wołający podaje albo kartę zawierającą obszar, albo sam obszar; okno operacji
+  // platformy składa go sobie samo i przekazuje wprost.
+  const wKorzeniu = korzen.querySelector('.sta-obszar');
+  const sam = korzen instanceof Element && korzen.classList.contains('sta-obszar') ? korzen : null;
+  const cel = wKorzeniu ?? sam;
   if (cel === null) return null;
 
   const dokument = cel.ownerDocument ?? globalThis.document;
@@ -97,7 +100,6 @@ export function zwiazKatalogModulu(
   sekcja.append(uruchom);
 
   cel.append(sekcja);
-  void gniazdo;
 
   const naKliknieciu = () => {
     void wykonaj();

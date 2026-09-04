@@ -196,12 +196,12 @@ func (r *repozytoriumBadan) idUstalenia(ctx context.Context, kod string) (int64,
 }
 
 func (r *repozytoriumBadan) idRaportu(ctx context.Context, kod string) (int64, error) {
-	polecenie, err := r.zapytania.przygotuj(ctx, `SELECT id FROM raport_badania WHERE identyfikator_zewnetrzny = ?`)
+	polecenie, err := r.zapytania.przygotuj(ctx, `SELECT id FROM raport_badania WHERE identyfikator_zewnetrzny = ? AND `+WarunekKonta)
 	if err != nil {
 		return 0, err
 	}
 	var id int64
-	err = polecenie.QueryRowContext(ctx, kod).Scan(&id)
+	err = polecenie.QueryRowContext(ctx, kod, KontoOperatora(ctx)).Scan(&id)
 	if errors.Is(err, sql.ErrNoRows) {
 		return 0, ErrBrakWiersza
 	}

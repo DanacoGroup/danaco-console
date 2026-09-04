@@ -9,6 +9,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"strings"
 )
 
 // PrzebiegWsaduStudia to wiersz tabeli przebieg_wsadu_studio, niosący nagłówek
@@ -41,23 +42,27 @@ const (
 	kolumnyPrzebieguWsaduStudia = `id, identyfikator_zewnetrzny, okno, akcja_id, parametry_json,
 	                               przyjete, odrzucone, utworzono`
 
+	// Przebieg wsadu niesie wskazanie konta od migracji 489.
 	zapiszPrzebiegWsaduStudia = `INSERT INTO przebieg_wsadu_studio
 	                             (identyfikator_zewnetrzny, okno, akcja_id, parametry_json,
-	                              przyjete, odrzucone)
-	                             VALUES (?, ?, ?, ?, ?, ?)`
+	                              przyjete, odrzucone, konto_id)
+	                             VALUES (?, ?, ?, ?, ?, ?, ` + WskazanieKonta + `)`
 
 	pobierzPrzebiegWsaduStudia = `SELECT ` + kolumnyPrzebieguWsaduStudia +
-		` FROM przebieg_wsadu_studio WHERE identyfikator_zewnetrzny = ?`
+		` FROM przebieg_wsadu_studio WHERE identyfikator_zewnetrzny = ? AND ` + WarunekKonta
 
 	zapiszPozycjeWsaduStudia = `INSERT INTO pozycja_wsadu_studio
 	                            (przebieg_id, dokument_kod, stan, powod, propozycja_kod)
 	                            VALUES (?, ?, ?, ?, ?)`
-
-	listaPozycjiWsaduStudia = `SELECT p.id, p.dokument_kod, p.stan, p.powod, p.propozycja_kod, p.utworzono
-	                           FROM pozycja_wsadu_studio p
-	                           JOIN przebieg_wsadu_studio w ON w.id = p.przebieg_id
-	                           WHERE w.identyfikator_zewnetrzny = ? ORDER BY p.id`
 )
+
+// Pozycja wsadu granicy nie niesie; sięga jej przez przebieg złączony aliasem `w`.
+var listaPozycjiWsaduStudia = `SELECT p.id, p.dokument_kod, p.stan, p.powod, p.propozycja_kod, p.utworzono
+                                 FROM pozycja_wsadu_studio p
+                                 JOIN przebieg_wsadu_studio w ON w.id = p.przebieg_id
+                                WHERE w.identyfikator_zewnetrzny = ?
+                                  AND ` + strings.ReplaceAll(WarunekKonta, "konto_id", "w.konto_id") + `
+                                ORDER BY p.id`
 
 // ZapiszPrzebiegWsadu zakłada przebieg wsadu wraz z kompletem jego pozycji jedną
 // transakcją i zwraca zapisany nagłówek przebiegu odczytany po zapisie.
@@ -73,7 +78,8 @@ func (r *repozytoriumStudia) ZapiszPrzebiegWsadu(ctx context.Context,
 			return err
 		}
 		wynik, err := polecenie.ExecContext(ctx, przebieg.Kod, przebieg.Okno, przebieg.AkcjaID,
-			tekstDoKolumny(przebieg.ParametryJSON), przebieg.Przyjete, przebieg.Odrzucone)
+			tekstDoKolumny(przebieg.ParametryJSON), przebieg.Przyjete, przebieg.Odrzucone,
+			KontoOperatora(ctx))
 		if err != nil {
 			return fmt.Errorf("dane: nie można zapisać przebiegu wsadu studio %q: %w",
 				przebieg.Kod, err)
@@ -119,7 +125,7 @@ func (r *repozytoriumStudia) PrzebiegWsadu(ctx context.Context,
 	}
 	var przebieg PrzebiegWsaduStudia
 	var parametry sql.NullString
-	err = polecenie.QueryRowContext(ctx, kod).Scan(&przebieg.ID, &przebieg.Kod, &przebieg.Okno,
+	err = polecenie.QueryRowContext(ctx, kod, KontoOperatora(ctx)).Scan(&przebieg.ID, &przebieg.Kod, &przebieg.Okno,
 		&przebieg.AkcjaID, &parametry, &przebieg.Przyjete, &przebieg.Odrzucone, &przebieg.Utworzono)
 	if errors.Is(err, sql.ErrNoRows) {
 		return PrzebiegWsaduStudia{}, ErrBrakWiersza
@@ -140,7 +146,7 @@ func (r *repozytoriumStudia) PozycjeWsadu(ctx context.Context,
 	if err != nil {
 		return nil, err
 	}
-	wiersze, err := polecenie.QueryContext(ctx, kodPrzebiegu)
+	wiersze, err := polecenie.QueryContext(ctx, kodPrzebiegu, KontoOperatora(ctx))
 	if err != nil {
 		return nil, fmt.Errorf("dane: nie można odczytać pozycji wsadu studio %q: %w", kodPrzebiegu, err)
 	}

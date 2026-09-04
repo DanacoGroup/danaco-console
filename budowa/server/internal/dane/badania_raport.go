@@ -7,6 +7,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"strings"
 )
 
 type RaportBadania struct {
@@ -43,15 +44,21 @@ type EksportRaportu struct {
 	Utworzono        string
 }
 
+// Raport badania niesie wskazanie konta; złączenia sięgają go aliasem `r`.
+var warunekKontaRaportu = strings.ReplaceAll(WarunekKonta, "konto_id", "r.konto_id")
+
 const (
 	kolumnyRaportuBadania = `id, identyfikator_zewnetrzny, okno, tytul, utworzono, zaktualizowano`
-	zapiszRaportBadania   = `INSERT INTO raport_badania
-	                       (identyfikator_zewnetrzny, okno, tytul, zaktualizowano)
-	                       VALUES (?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now'))
+	// Raport niesie wskazanie konta od migracji 489; człon WHERE przy DO UPDATE
+	// zatrzymuje nadpisanie raportu konta cudzego.
+	zapiszRaportBadania = `INSERT INTO raport_badania
+	                       (identyfikator_zewnetrzny, okno, tytul, zaktualizowano, konto_id)
+	                       VALUES (?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now'), ` + WskazanieKonta + `)
 	                       ON CONFLICT(identyfikator_zewnetrzny) DO UPDATE SET
-	                           tytul = excluded.tytul, zaktualizowano = excluded.zaktualizowano`
+	                           tytul = excluded.tytul, zaktualizowano = excluded.zaktualizowano
+	                       WHERE ` + WarunekKonta
 	pobierzRaportBadania = `SELECT ` + kolumnyRaportuBadania + ` FROM raport_badania
-	                        WHERE identyfikator_zewnetrzny = ?`
+	                        WHERE identyfikator_zewnetrzny = ? AND ` + WarunekKonta
 	usunSekcjeRaportuBadania  = `DELETE FROM sekcja_raportu_badania WHERE raport_id = ?`
 	wstawSekcjeRaportuBadania = `INSERT INTO sekcja_raportu_badania
 	                             (identyfikator_zewnetrzny, raport_id, tytul, tresc,
@@ -105,14 +112,19 @@ func (r *repozytoriumBadan) ZapiszRaport(ctx context.Context, raport RaportBadan
 		if err != nil {
 			return err
 		}
-		if _, err := zapis.ExecContext(ctx, raport.Kod, raport.Okno, raport.Tytul); err != nil {
+		konto := KontoOperatora(ctx)
+		wynik, err := zapis.ExecContext(ctx, raport.Kod, raport.Okno, raport.Tytul, konto, konto)
+		if err != nil {
 			return fmt.Errorf("dane: nie można zapisać raportu badania %q: %w", raport.Kod, err)
+		}
+		if err := sprawdzTrafienieZapisu(wynik, "raport badania", raport.Kod); err != nil {
+			return err
 		}
 		odczyt, err := r.zapytania.wTransakcji(ctx, transakcja, pobierzRaportBadania)
 		if err != nil {
 			return err
 		}
-		zapisany, err := odczytajRaportBadania(odczyt.QueryRowContext(ctx, raport.Kod))
+		zapisany, err := odczytajRaportBadania(odczyt.QueryRowContext(ctx, raport.Kod, KontoOperatora(ctx)))
 		if err != nil {
 			return fmt.Errorf("dane: nie można odczytać zapisanego raportu badania %q: %w", raport.Kod, err)
 		}
@@ -183,7 +195,7 @@ func (r *repozytoriumBadan) Raport(ctx context.Context, kod string) (RaportBadan
 	if err != nil {
 		return RaportBadania{}, err
 	}
-	raport, err := odczytajRaportBadania(polecenie.QueryRowContext(ctx, kod))
+	raport, err := odczytajRaportBadania(polecenie.QueryRowContext(ctx, kod, KontoOperatora(ctx)))
 	if errors.Is(err, sql.ErrNoRows) {
 		return RaportBadania{}, ErrBrakWiersza
 	}

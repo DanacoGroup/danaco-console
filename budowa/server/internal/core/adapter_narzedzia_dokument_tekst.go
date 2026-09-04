@@ -466,6 +466,12 @@ func (a *adapterNarzedziDokumentu) zweryfikujJezykTesseracta(ctx context.Context
 		return err
 	}
 	for _, czlon := range strings.Split(jezyk, "+") {
+		if czlon == "" {
+			return odmowaDokumentu(shared.ErrorCodeValidationFailed,
+				"wskazanie języka niesie pusty człon — złożenie "+strconv.Quote(jezyk)+
+					" ma dwa znaki plusa obok siebie albo krawędź pustą; "+
+					"naprawa: usunąć wpis pusty z pola language albo languages")
+		}
 		if !dostepne[czlon] {
 			return odmowaDokumentu(shared.ErrorCodeValidationFailed,
 				"Tesseract na tej maszynie nie niesie danych językowych "+czlon+
@@ -477,6 +483,19 @@ func (a *adapterNarzedziDokumentu) zweryfikujJezykTesseracta(ctx context.Context
 	return nil
 }
 
+// naglowekWykazuJezykowTesseracta jest fragmentem stałym pierwszego wiersza
+// wyjścia --list-langs, wpisanym wprost w program Tesseract niezależnie od
+// zainstalowanych pakietów — po nim rdzeń rozpoznaje nagłówek przed jego
+// odcięciem, zamiast zakładać z góry, że pierwszy wiersz nim jest.
+const naglowekWykazuJezykowTesseracta = "List of available languages"
+
+// jezykiPomijaneWWykazieTesseracta nazywa wpisy niosące przez --list-langs,
+// które nie są językiem rozpoznania: „osd" to dane orientacji i skryptu
+// pisma (osd.traineddata), czytane poleceniem --psm 0, nie przełącznikiem -l.
+// Dopuszczenie ich jako języka dawałoby Operatorowi odczyt zmyślony zamiast
+// odmowy.
+var jezykiPomijaneWWykazieTesseracta = map[string]bool{"osd": true}
+
 // jezykiTesseractaDostepne pyta Tesseracta wprost, jakie dane językowe niesie
 // ta maszyna (--list-langs), zamiast zakładać z góry stały wykaz — instalacja
 // pakietów językowych różni się między maszynami Operatora.
@@ -485,14 +504,27 @@ func (a *adapterNarzedziDokumentu) jezykiTesseractaDostepne(ctx context.Context)
 	if err != nil {
 		return nil, err
 	}
-	wiersze := strings.Split(strings.TrimSpace(string(wyjscie)), "\n")
+	oczyszczone := strings.TrimSpace(string(wyjscie))
+	if oczyszczone == "" {
+		return nil, odmowaDokumentu(shared.ErrorCodeInternalError,
+			"Tesseract nie oddał żadnego wiersza z --list-langs — nie da się rozstrzygnąć, "+
+				"jakie dane językowe niesie ta maszyna")
+	}
+	wiersze := strings.Split(oczyszczone, "\n")
+	if !strings.Contains(wiersze[0], naglowekWykazuJezykowTesseracta) {
+		return nil, odmowaDokumentu(shared.ErrorCodeInternalError,
+			"pierwszy wiersz --list-langs Tesseracta nie jest nagłówkiem wykazu ("+
+				strconv.Quote(naglowekWykazuJezykowTesseracta)+
+				") — wyjście programu ma nieznany kształt: "+strconv.Quote(wiersze[0]))
+	}
+	// Nagłówek sprawdzony wyżej — dopiero teraz wolno go odciąć.
 	dostepne := make(map[string]bool, len(wiersze))
-	// Pierwszy wiersz jest nagłówkiem z katalogiem danych, nie nazwą języka.
 	for _, wiersz := range wiersze[1:] {
 		nazwa := strings.TrimSpace(wiersz)
-		if nazwa != "" {
-			dostepne[nazwa] = true
+		if nazwa == "" || jezykiPomijaneWWykazieTesseracta[nazwa] {
+			continue
 		}
+		dostepne[nazwa] = true
 	}
 	return dostepne, nil
 }

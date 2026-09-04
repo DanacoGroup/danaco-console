@@ -14,7 +14,7 @@ import { zglosUchwyt } from '../polaczenie/rozdzielacz-zdarzen.ts';
 import type { Kanal } from '../protokol/kanal.ts';
 import { wywolaj } from '../protokol/wywolanie.ts';
 import { oglos } from './ogloszenie.ts';
-import { opiszNaglowek, zdejmijTrescWspolna } from './okno-modulu.ts';
+import { opiszNaglowek, zapewnijOknoModulu, zdejmijTrescWspolna } from './okno-modulu.ts';
 import { zwiazKatalogModulu } from './katalog-modulu.ts';
 import { zwiazWytworyPrzegladania } from './browser-wytwory.ts';
 
@@ -28,9 +28,10 @@ const WIAZANIA = new Map<string, WiazaniePrzegladarki>();
 export function zwiazPrzegladarke(
   kanal: Kanal,
   nazwaSrodowiska: string,
-  idOkna: string,
+  idOknaStojacego: string,
   wskazanieKorzenia: Element | string,
 ): boolean {
+  let idOkna = idOknaStojacego;
   const korzen = korzenKarty(wskazanieKorzenia);
   if (korzen === null) return false;
   const idKarty = korzen.getAttribute('data-karta') ?? '';
@@ -49,10 +50,16 @@ export function zwiazPrzegladarke(
   zdejmijTrescPrzykladowa(korzen);
   void opiszNaglowek(kanal, nazwaSrodowiska, korzen);
 
-  void wypelnijKarty(kanal, korzen, idOkna);
-  void wypelnijZrodla(kanal, korzen, idOkna);
-  void wypelnijNotatki(kanal, korzen, idOkna);
-  void zwiazWytworyPrzegladania(kanal, korzen, idOkna, przy);
+  /* Wykazy kart, źródeł i notatek rdzeń odmawia bez wskazania okna, a karta
+     świeża okna jeszcze nie ma — okno powstaje więc tu, przed pytaniami. */
+  void (async (): Promise<void> => {
+    idOkna = await zapewnijOknoModulu(kanal, idKarty, 'browser', 'Browser', idOkna);
+    if (idOkna === '') return;
+    void wypelnijKarty(kanal, korzen, idOkna);
+    void wypelnijZrodla(kanal, korzen, idOkna);
+    void wypelnijNotatki(kanal, korzen, idOkna);
+    void zwiazWytworyPrzegladania(kanal, korzen, idOkna, przy);
+  })();
 
   korzen.addEventListener('click', (zdarzenie) => {
     const cel = zdarzenie.target;

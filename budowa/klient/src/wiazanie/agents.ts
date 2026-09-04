@@ -241,4 +241,13 @@ function zdejmijTrescPrzykladowa(korzen: Element, nazwaSrodowiska: string): void
   for (const nazwa of korzen.querySelectorAll('.pt-pozycja-tytul')) {
     if ((nazwa.textContent ?? '').includes('Agent Redaktor')) nazwa.textContent = '';
   }
+  /* Biblioteka ekspertów w panelu Agent Builder niesie cztery karty wpisane
+     wprost w prototyp — nazwy, opisy i kanały modeli. Rdzeń tego wykazu nie
+     podaje, więc karty schodzą, a miejsce mówi, jak jest. */
+  const karty = korzen.querySelectorAll('#panel-builder .ab-karta');
+  if (karty.length > 0) {
+    const rodzic = karty[0].parentElement;
+    for (const karta of karty) karta.remove();
+    if (rodzic !== null) pustka(rodzic, 'Rdzeń nie podaje biblioteki ekspertów.');
+  }
 }

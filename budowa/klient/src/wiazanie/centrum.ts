@@ -617,19 +617,20 @@ export function zwiazCentrum(kanal: Kanal | undefined = globalThis.DanacoKanal):
         + 'więc przedsionek nie ma czego pokazać.');
       return;
     }
-    if ((srodowisko.moduleCodes?.length ?? 0) === 0) {
-      /* Bez powrotu na ekran główny zostaje przedsionek poprzedniego
+    const widok = widokPrzedsionka(wezly, gniazdoPrzedsionka(kodSrodowiska));
+    if (widok === null) {
+      /* Bez własnego przedsionka zostałby na ekranie przedsionek poprzedniego
          środowiska: Operator wskazał jedno, a widzi sesje drugiego. */
       wrocDoCentrum();
       oglos(srodowisko.name, zdanieBezModulow(srodowisko));
       return;
     }
-    const widok = widokPrzedsionka(wezly, gniazdoPrzedsionka(kodSrodowiska));
-    if (widok === null) return;
     pokazWidok(wezly, widok);
     nazwaSrodowiska = srodowisko.name;
     wskazSrodowisko(kodSrodowiska);
-    void zwiazWyborModulu(kanal, srodowisko);
+    /* Środowisko bez modułów niesie panel orkiestracji zamiast listy: boczna
+       nawigacja nie ma czego pokazać, a przedsionek ma. */
+    if ((srodowisko.moduleCodes?.length ?? 0) > 0) void zwiazWyborModulu(kanal, srodowisko);
   };
 
   document.addEventListener('keydown', (zdarzenie) => {

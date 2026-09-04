@@ -2,7 +2,6 @@
    i kafle odpowiedzią `environment.enter`, a kafel bez pokrycia zdejmuje. */
 
 import { Command, type Environment, type Module } from '../../../shared/contract.ts';
-import { miaraSesji } from '../model/miary.ts';
 import type { Kanal } from '../protokol/kanal.ts';
 import { tozsamoscKlienta } from '../protokol/tozsamosc-klienta.ts';
 import { wywolaj } from '../protokol/wywolanie.ts';
@@ -28,11 +27,9 @@ export async function zwiazWyborModulu(kanal: Kanal, srodowisko: Environment): P
   });
   if (!wynik.udany || wynik.wynik === undefined) {
     wezly.siatka.replaceChildren();
-    opiszListwe(wezly.plotno, 0);
     return true;
   }
   opiszSrodowisko(wezly.plotno, wynik.wynik.environment);
-  opiszListwe(wezly.plotno, wynik.wynik.sessions.length);
   wypelnijKafle(wezly.siatka, kafleWzorcowe, wynik.wynik.environment, wynik.wynik.modules);
   return true;
 }
@@ -69,13 +66,6 @@ function opiszSrodowisko(plotno: HTMLElement, srodowisko: Environment): void {
   if (opis !== null && srodowisko.description !== undefined) {
     opis.textContent = srodowisko.description;
   }
-}
-
-/* Listwa niesie w prototypie miarę projektów i sesji naraz; kontrakt nie wiąże
-   projektu ze środowiskiem, więc zostaje sama liczba kart sesji z wejścia. */
-function opiszListwe(plotno: HTMLElement, sesji: number): void {
-  const miara = plotno.querySelector('.pd-listwa-meta');
-  if (miara !== null) miara.textContent = miaraSesji(sesji);
 }
 
 /* Kolejność bierze się z wykazu kodów środowiska: to ona rozstrzyga układ

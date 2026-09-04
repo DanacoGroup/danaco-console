@@ -287,6 +287,13 @@ zgadzają się z odpowiedzią rdzenia, MultitaskingAI uczciwie pokazuje „0 mod
 a „pracuje" przy sesji bierze się z żywego stanu zwróconego przez `session.list`,
 nie ze znacznika. Wypełniacz siedział wyłącznie w oknach modułowych.
 
+Studio zdało ten sam sprawdzian bez zastrzeżeń i pokazuje przy okazji kształt
+docelowy: jego pasek nadawania niesie wartości rzeczywiste — „Ręczny · Kanał
+lokalny (claude) · high" — bo jest związany przez `studio-stan-okna.ts`, podczas
+gdy okna niezwiązane niosły domyślne „Sonnet 5 · Ultra" z prototypu. Rozmowa
+Studia niesie prawdziwą odpowiedź rdzenia, łącznie z odmową modelu, gdy kanał
+nie ma poświadczenia — zdanie z rdzenia, nie ze znacznika.
+
 Wstążka okna roboczego w Studiu przeszła to samo przemiatanie. Cztery przyciski
 układu — podział pionowy, maksymalizacja okna roboczego, nowe okno pomocnicze
 i okno komunikacji — nie miały obsługi nigdzie: ani w wiązaniu, ani w bibliotece

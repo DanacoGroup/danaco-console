@@ -125,8 +125,12 @@ a pozycje wykazu dostają `podpisany: true`.
 - Wystawiony plik kreatora nie pochodzi ze skryptu: pod nazwą instalatora leży
   surowa binarka, nie pakiet NSIS. `instalka-kreatora-win-x64.sh` składa pakiet
   właściwy — wymiana pliku w kanale wymaga wgrania.
-- Pakiet serwera w kanale jest wydaniem 1.0.0 z 18 sierpnia i leży pod ścieżką
-  za hasłem; pakiet 2.0.0 trzeba złożyć i wgrać pod `/pliki/`.
+- Pakiet serwera 2.0.0 jest złożony i leży w drzewie
+  (`budowa/wydania/2.0.0-2026-09-04/danaco-console_2.0.0_amd64.deb`, 40,4 MB,
+  suma w `wydania.json`); wykaz kieruje już na niego, nie na 1.0.0 z 18 sierpnia.
+  W kanale pliku jeszcze nie ma — wgranie pod `/pliki/` należy do operatora
+  wydania, a `zloz.mjs` melduje tę pozycję jako NIESPRAWDZONĄ, póki środowisko
+  nie niesie poświadczeń kanału.
 - Powłoki ARM64 pod numerem 2.0.0 nie ma i w tym etapie nie powstaje
   (rozstrzygnięcie 28) — pozycja stoi w `w_przygotowaniu` bez adresu pliku.
   Kreator czyta wykaz najpierw z kanału (`pobranie.rs`, `wykaz_biezacy`), więc

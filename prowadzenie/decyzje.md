@@ -1836,3 +1836,31 @@ wymienia teraz `COALESCE(konto_id, 0)` w wykazie kolumn — inaczej silnik nie
 dopasuje więzu i zapytania nie da się przygotować. Rodzaj znacznika Studia
 zostaje przy więzie globalnym: jego `nazwa` jest celem klucza obcego, a SQLite
 wymaga dla takiego celu wskaźnika dokładnie po tej kolumnie.
+
+## 39. Granica gniazd przed bramką zostaje na 64
+
+**Rozstrzygnięcie Prowadzącego, 4 września 2026** (Właściciel deleguje, poz. 27).
+
+**Kontekst.** Audyt zostawił otwartą wartość `limitPolaczenNiezwiazanych = 64`
+(`transport/nawiazanie.go`): sam mechanizm stoi i wyklucza gniazda serwera
+narzędzi, ale liczby nikt nie ratyfikował. Granica obowiązuje wyłącznie tam,
+gdzie bramka stoi — bez wymogu logowania żadne gniazdo nie jest związane
+i granica odcięłaby pracę własną.
+
+**Rozważone warianty.**
+
+1. Zejść do jednej cyfry. Odrzucone: wejście Operatora zajmuje jedno gniazdo,
+   ale po wybudzeniu maszyny albo zerwaniu sieci klient nawiązuje na nowo i przez
+   chwilę stoi niezwiązany; okien bywa kilka, a stare gniazdo schodzi dopiero po
+   swoim terminie. Granica jednocyfrowa odcinałaby powrót do pracy.
+2. Zdjąć granicę. Odrzucone: rejestr bez granicy jest drogą wyczerpania pamięci
+   maszyny z jednego procesu lokalnego, a to jedyne, przed czym ta liczba broni.
+3. Zostawić 64. Przyjęte.
+
+**Decyzja.** Wartość zostaje. Sześćdziesiąt cztery to jedna ósma granicy gniazd
+w ogóle (`limitPolaczen = 512`), więc gniazda przed bramką nie wypchną pracy
+uwierzytelnionej, a zapas pokrywa powrót po zerwaniu przy kilku oknach naraz.
+
+**Konsekwencje.** Liczba wiąże wyłącznie instalację z wymogiem logowania —
+wdrożenie serwerowe, gdzie pakiet stawia `DANACO_WYMOG_LOGOWANIA=true`.
+Na pętli zwrotnej bez bramki nie zmienia niczego.

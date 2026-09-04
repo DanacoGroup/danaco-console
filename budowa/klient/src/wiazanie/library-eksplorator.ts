@@ -445,6 +445,13 @@ function wybierzZDysku(
         const wynik = typeof czytnik.result === 'string' ? czytnik.result : '';
         odbierz(plik.name, plik.type, wynik.slice(wynik.indexOf(',') + 1));
       });
+      /* Odczyt zawodzi, gdy plik zniknął, leży na nośniku odłączonym albo
+         przeglądarka nie ma prawa go czytać. Bez tego zdania wskazanie takiego
+         pliku kończy się ciszą i Operator nie wie, czy import w ogóle ruszył. */
+      czytnik.addEventListener('error', () => {
+        oglos('Library', `Pliku ${plik.name} nie udało się odczytać z dysku. `
+          + 'Sprawdź, czy nadal tam leży i czy masz prawo go czytać.', 'blad');
+      });
       czytnik.readAsDataURL(plik);
     }
   });

@@ -1952,3 +1952,40 @@ zamierzonym, nie brakiem.
 **Konsekwencje.** Cztery komendy `project.*` mają wołających w Centrum i wszystkie
 przeszły sprawdzenie klikaniem. Pytanie o kształt rodziny schodzi z wykazu pozycji
 czekających na Właściciela.
+
+## 43. Reguła wykazu narzędzi modelu
+
+**Rzecz.** Kontrakt niesie 1086 komend, a modelowi wystawia 466 narzędzi. Nie
+było zapisane, co rozstrzyga o wejściu komendy na tę listę i skąd wykaz bierze
+się w czasie pracy.
+
+**Reguła zastana w źródle.** Wykaz jest wyliczeniem wprost: `narzedzia.pozycje`
+w `contract.json` wskazuje komendę i dokłada zdanie `zastosowanie` — kiedy
+model ma po nią sięgnąć. Żadna pozycja tego zdania nie jest pozbawiona. Nazwa
+powstaje z typu komendy (`danaco` plus człony rozdzielone podkreśleniem),
+a schemat wejścia wyprowadza się z kształtu żądania komendy, więc zmiana pola
+w kontrakcie zmienia schemat narzędzia w tej samej chwili. Komenda nieistniejąca
+w kontrakcie przerywa wytwarzanie błędem.
+
+W czasie pracy `tools.catalog.list` składa wykaz z dwóch źródeł żywych: tych
+deklaracji oraz zainstalowanego katalogu rozszerzeń. Trzeciego, osobnego katalogu
+akcji nie ma. Dołożyć do sesji można wyłącznie pozycję zainstalowaną i włączoną;
+komenda platformy wykonuje czynność i zestawu narzędzi nie zmienia.
+
+**Rozważone warianty.**
+
+1. Wystawić modelowi wszystkie 1086 komend. Odrzucone: wykaz narzędzi jest
+   czytany przy każdym zapytaniu i rośnie w kontekście; sześćset dodatkowych
+   pozycji obniża trafność wyboru, zamiast ją podnosić.
+2. Wyprowadzać wykaz z reguły (na przykład: każda komenda odczytu). Odrzucone:
+   o przydatności narzędzia rozstrzyga to, czy model umie powiedzieć, kiedy go
+   użyć — a tego z kształtu komendy wyliczyć się nie da.
+3. Zostawić wyliczenie wprost z wymaganym zdaniem zastosowania. Przyjęte.
+
+**Decyzja.** Komenda wchodzi na wykaz narzędzi wtedy i tylko wtedy, gdy stoi
+w `narzedzia.pozycje` z niepustym zdaniem zastosowania. Schematu wejścia się nie
+przepisuje — jest wyprowadzany.
+
+**Konsekwencje.** Dołożenie narzędzia to jeden wpis w `contract.json` i przebieg
+generatora; nic nie pisze się ręcznie ani po stronie Go, ani po stronie klienta.
+Pozycja bez zdania zastosowania jest usterką do zgłoszenia, nie swobodą.

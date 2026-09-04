@@ -42,7 +42,7 @@ type WpisAudytuAutomatyki struct {
 	Chwila        string
 }
 
-const (
+var (
 	kolumnyReguly = `r.identyfikator_zewnetrzny, r.automatyka_id, a.identyfikator_zewnetrzny,
 	                 r.wyzwalacz, r.warunek, r.kanaly, r.czynna, r.zaktualizowano`
 
@@ -108,6 +108,7 @@ const (
 	                         WHERE (? = 0 OR w.automatyka_id = ?)
 	                           AND (? = '' OR w.chwila >= ?)
 	                           AND (? = '' OR w.chwila <= ?)
+	                           AND ` + warunekKontaAutomatyki + `
 	                         ORDER BY w.chwila DESC, w.id DESC LIMIT ?`
 )
 
@@ -278,7 +279,7 @@ func (r *repozytoriumAutomatyk) AudytAutomatyki(ctx context.Context, automatykaI
 		return nil, err
 	}
 	wiersze, err := polecenie.QueryContext(ctx, automatykaID, automatykaID,
-		od, od, do, do, granicaWykazu(limit))
+		od, od, do, do, KontoOperatora(ctx), granicaWykazu(limit))
 	if err != nil {
 		return nil, fmt.Errorf("dane: nie można odczytać dziennika audytu: %w", err)
 	}

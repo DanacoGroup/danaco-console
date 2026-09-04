@@ -24,12 +24,13 @@ const (
 
 	zapiszPamiecTlumaczen = `INSERT INTO pamiec_tlumaczen
 	                         (identyfikator_zewnetrzny, panel_id, jezyk,
-	                          segment_zrodlowy, segment_docelowy, utworzono)
-	                         VALUES (?, ?, ?, ?, ?, ?)`
+	                          segment_zrodlowy, segment_docelowy, utworzono, konto_id)
+	                         VALUES (?, ?, ?, ?, ?, ?, ` + WskazanieKonta + `)`
 
 	// Zawężenie po języku i segmencie źródłowym korzysta z indeksu złożonego; najnowsze zatwierdzenia idą na przodzie wykazu podpowiedzi.
 	podpowiedziPamieciTlumaczen = `SELECT ` + kolumnyPamieciTlumaczen + ` FROM pamiec_tlumaczen
 	                               WHERE jezyk = ? AND segment_zrodlowy LIKE ?
+	                                 AND ` + WarunekKonta + `
 	                               ORDER BY utworzono DESC, id DESC LIMIT ?`
 )
 
@@ -50,7 +51,7 @@ func (r *repozytoriumTlumaczen) ZapiszPamiec(ctx context.Context, panelID int64,
 		return WpisPamieciTlumaczen{}, err
 	}
 	_, err = polecenie.ExecContext(ctx, wpis.Kod, panelID, wpis.Jezyk,
-		wpis.SegmentZrodlowy, wpis.SegmentDocelowy, utworzono)
+		wpis.SegmentZrodlowy, wpis.SegmentDocelowy, utworzono, KontoOperatora(ctx))
 	if err != nil {
 		return WpisPamieciTlumaczen{}, fmt.Errorf("dane: nie można zapisać wpisu pamięci tłumaczeń %q: %w", wpis.Kod, err)
 	}
@@ -73,7 +74,7 @@ func (r *repozytoriumTlumaczen) Podpowiedzi(ctx context.Context, jezyk, fraza st
 	if err != nil {
 		return nil, err
 	}
-	wiersze, err := polecenie.QueryContext(ctx, jezyk, "%"+fraza+"%", limit)
+	wiersze, err := polecenie.QueryContext(ctx, jezyk, "%"+fraza+"%", KontoOperatora(ctx), limit)
 	if err != nil {
 		return nil, fmt.Errorf("dane: nie można odczytać podpowiedzi pamięci tłumaczeń dla języka %q: %w", jezyk, err)
 	}

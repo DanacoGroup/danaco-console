@@ -84,17 +84,15 @@ const (
 	                                        sciezka_docelowa, plik_biblioteki_id, sciezka_wyniku,
 	                                        rozmiar_bajtow, utworzono
 	                                FROM eksport_raportu_badania WHERE identyfikator_zewnetrzny = ?`
-	// Tabela przestrzen_badania niesie CHECK(id = 1) (migracja 049): jeden wiersz
-	// na instalację, więc konto młodsze dostaje odmowę, nie własny wiersz.
-	ustawPrzestrzenBadania = `INSERT INTO przestrzen_badania (id, zakres, zaktualizowano, konto_id)
-	                          VALUES (1, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now'), ` + WskazanieKonta + `)
-	                          ON CONFLICT(id) DO UPDATE SET
-	                              zakres = excluded.zakres, zaktualizowano = excluded.zaktualizowano
-	                          WHERE ` + WarunekKonta
+	// Od kroku 495 przestrzeń badania stoi jednym wierszem na konto.
+	ustawPrzestrzenBadania = `INSERT INTO przestrzen_badania (zakres, zaktualizowano, konto_id)
+	                          VALUES (?, strftime('%Y-%m-%dT%H:%M:%fZ','now'), ` + WskazanieKonta + `)
+	                          ON CONFLICT(COALESCE(konto_id, 0)) DO UPDATE SET
+	                              zakres = excluded.zakres, zaktualizowano = excluded.zaktualizowano`
 	usunEtapyPrzestrzeniBadania = `DELETE FROM etap_przestrzeni_badania WHERE ` + WarunekKonta
 	wstawEtapPrzestrzeniBadania = `INSERT INTO etap_przestrzeni_badania (kolejnosc, etap, konto_id)
 	                               VALUES (?, ?, ` + WskazanieKonta + `)`
-	pobierzZakresPrzestrzeniBadania = `SELECT zakres FROM przestrzen_badania WHERE id = 1 AND ` + WarunekKonta
+	pobierzZakresPrzestrzeniBadania = `SELECT zakres FROM przestrzen_badania WHERE ` + WarunekKonta
 	listaEtapowPrzestrzeniBadania   = `SELECT etap FROM etap_przestrzeni_badania
 	                                   WHERE ` + WarunekKonta + ` ORDER BY kolejnosc`
 )
@@ -335,14 +333,14 @@ func odczytajEksportRaportu(wiersz skaner) (EksportRaportu, error) {
 	return eksport, nil
 }
 
-// UstawPrzestrzen nadpisuje jedyny wiersz przestrzeni badania i wymienia jej wszystkie etapy w całości.
+// UstawPrzestrzen nadpisuje wiersz przestrzeni badania konta i wymienia jej wszystkie etapy w całości.
 func (r *repozytoriumBadan) UstawPrzestrzen(ctx context.Context, zakres string, etapy []string) (string, []string, error) {
 	err := wTransakcji(ctx, r.db, func(transakcja *sql.Tx) error {
 		zapis, err := r.zapytania.wTransakcji(ctx, transakcja, ustawPrzestrzenBadania)
 		if err != nil {
 			return err
 		}
-		wynik, err := zapis.ExecContext(ctx, zakres, KontoOperatora(ctx), KontoOperatora(ctx))
+		wynik, err := zapis.ExecContext(ctx, zakres, KontoOperatora(ctx))
 		if err != nil {
 			return fmt.Errorf("dane: nie można zapisać przestrzeni badania: %w", err)
 		}

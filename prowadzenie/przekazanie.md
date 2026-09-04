@@ -273,6 +273,10 @@ bramka logowania, logowanie kontem, menu aplikacji, Centrum dowodzenia ze
 dał zero i zero. Ekrany stoją w jednym drzewie, więc szukać pól widocznych
 (`offsetParent !== null`), nie pierwszych w DOM.
 
+Kryterium 6 bramki etapu 2 wykazane tą samą drogą: naciśnięcie okna spoza wydania
+(`#cd-mobile`) odpowiada zdaniem „Mobile — To okno nie wchodzi do tego wydania",
+nie ciszą i nie pustą skorupą.
+
 Do Studia tą drogą nie doszedłem: przycisk szyny (`button[data-srodowisko]`)
 wybiera środowisko, a wejście prowadzi przez „Nowa sesja" z menu aplikacji, która
 dopiero pyta o środowisko. Pion do Studia jest wykazany protokołem (przebieg e2e:

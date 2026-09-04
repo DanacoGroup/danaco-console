@@ -305,7 +305,10 @@ błędów konsoli.
 szerokości 2560 px, po zalogowaniu. Stan końcowy: **zero naruszeń** w wejściu,
 Centrum, przedsionku i w każdym z dziewięciu okien modułowych.
 
-Badanie objęło trzy przedsionki i wszystkie okna modułowe w każdym z nich.
+Badanie objęło trzy przedsionki i wszystkie okna modułowe w każdym z nich, a dla
+Centrum oba motywy — jasny zastany i ciemny po przełączeniu (`data-theme=dark`,
+tło `rgb(13, 15, 19)`). Kontrast barw wchodzi w zakres WCAG 2.0 AA, więc zero
+naruszeń obejmuje i jego.
 
 Po drodze zeszły cztery usterki kodu. Przełączniki paneli dostawały `aria-checked`,
 którego zwykły przycisk nie przyjmuje — niosą teraz `aria-pressed`. Żetony

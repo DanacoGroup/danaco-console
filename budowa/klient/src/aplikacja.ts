@@ -142,14 +142,26 @@ zwiazBelkeOkna();
    w puste pole, zanim biblioteka zdąży złożyć okno. Zapora czasu jest po to,
    żeby usterka montażu nie zostawiła okna niewidocznym na zawsze. */
 const ZAPORA_POKAZANIA_MS = 4000;
+const ZAPORA_KLATKI_MS = 500;
 function ekranStartowyStoi(): boolean {
   const pole = document.querySelector('[data-ekran-startowy]') as
     (HTMLElement & { ekranStartowy?: unknown }) | null;
   return pole?.ekranStartowy !== undefined;
 }
+/* Okno nigdy niepokazane nie jest składane, a silnik widoku nie wywołuje wtedy
+   `requestAnimationFrame` — samo czekanie na klatkę zamyka więc okno w zapętleniu:
+   klatka czeka na pokazanie, pokazanie na klatkę. Klatka zostaje drogą pierwszą,
+   a zegar drogą zapasową; pierwsza z nich pokazuje okno, druga nie robi nic. */
+let pokazano = false;
+function pokazRaz(): void {
+  if (pokazano) return;
+  pokazano = true;
+  pokazOknoPowloki();
+}
 function pokazPoZlozeniu(odKiedy: number): void {
   if (ekranStartowyStoi() || Date.now() - odKiedy >= ZAPORA_POKAZANIA_MS) {
-    requestAnimationFrame(() => requestAnimationFrame(pokazOknoPowloki));
+    requestAnimationFrame(() => requestAnimationFrame(pokazRaz));
+    globalThis.setTimeout(pokazRaz, ZAPORA_KLATKI_MS);
     return;
   }
   globalThis.setTimeout(() => pokazPoZlozeniu(odKiedy), 50);

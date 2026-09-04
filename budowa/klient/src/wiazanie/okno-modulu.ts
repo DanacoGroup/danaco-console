@@ -158,6 +158,13 @@ export function zdejmijTrescWspolna(cialo: HTMLElement): void {
   for (const znacznik of cialo.querySelectorAll('.sta-okno-znacznik')) {
     znacznik.textContent = '';
   }
+  /* Plakietka w belce panelu niesie w prototypie miarę jego zawartości — „34
+     pliki”, „12 wpisów”. Wypełnia ją tylko rodzina Workspace i dopiero po tym
+     zdjęciu; reszta modułów nie ma czym, więc plakietka schodzi z widoku. */
+  for (const plakietka of cialo.querySelectorAll('.sta-okno-belka .dn-plakietka')) {
+    plakietka.textContent = '';
+    plakietka.setAttribute('hidden', '');
+  }
   for (const znacznik of cialo.querySelectorAll('#menu-filtr .sta-menu-poz[aria-checked]')) {
     znacznik.removeAttribute('aria-checked');
   }

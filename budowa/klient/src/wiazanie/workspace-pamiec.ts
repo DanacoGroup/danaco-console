@@ -23,7 +23,7 @@ import {
   cialoPanelu,
   kopiaWzoru,
   niegotowe,
-  plakietkaPanelu,
+  wpiszMiarePanelu,
   przyjmij,
   udzialProcentowy,
   ustawPostep,
@@ -63,7 +63,7 @@ export function zwiazPamiec(
     if (projekt === '') return;
     const pytanie = (szukaj?.value ?? '').trim();
     const wpisy = await pobierzWpisy(kanal, projekt, pytanie);
-    wpisz(plakietkaPanelu(panel), odmien(wpisy.length, ['wpis', 'wpisy', 'wpisów']));
+    wpiszMiarePanelu(panel, odmien(wpisy.length, ['wpis', 'wpisy', 'wpisów']));
     if (wpisy.length === 0 && pytanie !== '') {
       await pokazTrafienia(kanal, projekt, pytanie, gniazdo, wzorWpisu);
       return;

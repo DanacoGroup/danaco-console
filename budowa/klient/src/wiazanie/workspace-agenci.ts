@@ -13,10 +13,9 @@ import {
   cialoPanelu,
   kopiaWzoru,
   niegotowe,
-  plakietkaPanelu,
   przyjmij,
   usun,
-  wpisz,
+  wpiszMiarePanelu,
   type WezlyWorkspace,
 } from './workspace-wezly.ts';
 
@@ -64,7 +63,7 @@ export function zwiazAgentow(
     opisz: (pulpit) => {
       if (cialo === null) return;
       const agenci = pulpit.assignedAgentIds ?? [];
-      wpisz(plakietkaPanelu(panel), odmien(agenci.length, ['agent', 'agenci', 'agentów']));
+      wpiszMiarePanelu(panel, odmien(agenci.length, ['agent', 'agenci', 'agentów']));
       cialo.replaceChildren();
       if (agenci.length === 0) {
         niegotowe(cialo, 'Do tego projektu nie przypisano jeszcze eksperta.');

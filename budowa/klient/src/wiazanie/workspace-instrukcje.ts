@@ -120,10 +120,22 @@ function zwiazWarstwy(
       continue;
     }
     zeton.textContent = nazwa;
+    /* Żeton warstwy jest w znaczniku zwykłym `span`. Nasłuch czyni z niego
+       przycisk, więc rolę i wejście z klawiatury trzeba dołożyć — inaczej
+       `aria-pressed` stoi na elemencie, który go nie przyjmuje, a Operator
+       klawiatury nie ma jak warstwy przestawić. */
+    zeton.setAttribute('role', 'button');
+    zeton.tabIndex = 0;
     zeton.setAttribute('aria-pressed', String(poziom === ConfigScope.Project));
-    zeton.addEventListener('click', () => {
+    const przestaw = (): void => {
       for (const inny of zetony) inny.setAttribute('aria-pressed', String(inny === zeton));
       wybierz(poziom);
+    };
+    zeton.addEventListener('click', przestaw, przy);
+    zeton.addEventListener('keydown', (zdarzenie) => {
+      if (zdarzenie.key !== 'Enter' && zdarzenie.key !== ' ') return;
+      zdarzenie.preventDefault();
+      przestaw();
     }, przy);
   }
 }

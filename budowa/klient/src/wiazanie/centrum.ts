@@ -7,6 +7,7 @@ import {
   ErrorCode,
   EventType,
   ComponentKind,
+  NavigationKind,
   ProgressStatus,
   WindowStatus,
   type Component,
@@ -612,8 +613,7 @@ export function zwiazCentrum(kanal: Kanal | undefined = globalThis.DanacoKanal):
       return;
     }
     if ((srodowisko.moduleCodes?.length ?? 0) === 0) {
-      oglos(srodowisko.name, 'Rejestr rdzenia nie wskazuje dla tego środowiska '
-        + 'ani jednego modułu, więc przedsionek nie ma czego pokazać.');
+      oglos(srodowisko.name, zdanieBezModulow(srodowisko));
       return;
     }
     const widok = widokPrzedsionka(wezly, gniazdoPrzedsionka(kodSrodowiska));
@@ -711,8 +711,7 @@ export function zwiazCentrum(kanal: Kanal | undefined = globalThis.DanacoKanal):
       const srodowisko = katalogSrodowisk.get(przelacznik.dataset.srodowisko ?? '');
       if (srodowisko !== undefined && (srodowisko.moduleCodes?.length ?? 0) === 0) {
         zdarzenie.stopPropagation();
-        oglos(srodowisko.name, 'Rejestr rdzenia nie wskazuje dla tego środowiska '
-          + 'ani jednego modułu, więc lista nie ma czego rozwinąć.');
+        oglos(srodowisko.name, zdanieBezModulow(srodowisko));
       }
     }
 
@@ -862,6 +861,19 @@ function pokazWidok(wezly: WezlyCentrum, widok: HTMLElement): void {
     kandydat.hidden = kandydat !== widok;
   }
   widok.hidden = false;
+}
+
+/* Pusty wykaz modułów znaczy dwie różne rzeczy. Przy nawigacji orkiestracji
+   jest kształtem zamierzonym (migracja 072), więc zdanie nazywa brak panelu
+   w wydaniu; poza nią zostaje brakiem w rejestrze rdzenia. */
+function zdanieBezModulow(srodowisko: Environment): string {
+  if (srodowisko.navigationKind === NavigationKind.Orchestration) {
+    return 'To środowisko prowadzi się panelem orkiestracji, a nie listą modułów. '
+      + 'Panel nie wchodzi do tego wydania; operacje zespołów i przebiegów stoją '
+      + 'w katalogu „Operacje platformy".';
+  }
+  return 'Rejestr rdzenia nie wskazuje dla tego środowiska ani jednego modułu, '
+    + 'więc nie ma czego pokazać.';
 }
 
 function widokPrzedsionka(wezly: WezlyCentrum, gniazdo: string): HTMLElement | null {

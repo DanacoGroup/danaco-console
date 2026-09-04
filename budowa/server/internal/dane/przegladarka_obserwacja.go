@@ -105,8 +105,7 @@ const (
 	zapiszMonitor = `INSERT INTO monitor_przegladania
 	                 (identyfikator_zewnetrzny, okno, url, selektor, interwal_sekund, prog_zmiany,
 	                  kanal_powiadomienia, wlaczony, stan, odniesienie_odwolanie,
-	                  odniesienie_dlugosc, sprawdzono, zmieniono)
-	                  konto_id)
+	                  odniesienie_dlugosc, sprawdzono, zmieniono, konto_id)
 	                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ` + WskazanieKonta + `)
 	                 ON CONFLICT(identyfikator_zewnetrzny) DO UPDATE SET
 	                     okno = excluded.okno,
@@ -139,8 +138,8 @@ const (
 	                 interwal_sekund, pobrano, utworzono`
 
 	zapiszKanalObserwacji = `INSERT INTO kanal_przegladania
-	               (identyfikator_zewnetrzny, okno, url, tytul, postac, interwal_sekund, pobrano)
-	                konto_id)
+	               (identyfikator_zewnetrzny, okno, url, tytul, postac, interwal_sekund,
+	                pobrano, konto_id)
 	               VALUES (?, ?, ?, ?, ?, ?, ?, ` + WskazanieKonta + `)
 	               ON CONFLICT(okno, url) DO UPDATE SET
 	                   tytul = excluded.tytul,
@@ -187,8 +186,7 @@ const (
 
 	zapiszPozycjeCzytania = `INSERT INTO pozycja_czytania_przegladania
 	                         (identyfikator_zewnetrzny, okno, url, tytul, notatka,
-	                          przeczytana, przypomnienie)
-	                          konto_id)
+	                          przeczytana, przypomnienie, konto_id)
 	                         VALUES (?, ?, ?, ?, ?, ?, ?, ` + WskazanieKonta + `)
 	                         ON CONFLICT(identyfikator_zewnetrzny) DO UPDATE SET
 	                             url = excluded.url,

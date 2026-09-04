@@ -119,9 +119,11 @@ a pozycje wykazu dostają `podpisany: true`.
 
 ## Czego dziś brakuje
 
-- Pliku kreatora i pakietu serwera nie ma w `budowa/wydania/2.0.0-2026-08-30/`,
-  więc `zmierz.mjs --sprawdz` melduje „plików brakuje 2” i odmawia. Sumy tych
-  dwóch pozycji są przepisane, nie zmierzone z pliku leżącego w drzewie.
+- `zmierz.mjs --sprawdz` melduje dziś „rozjazdów 0, plików brakuje 1”: obie
+  pozycje Windows zgadzają się co do sumy i rozmiaru, a pakietu serwera nie widzi,
+  bo `katalog_plikow` wykazu nazywa katalog `2.0.0-2026-09-01`, a świeże wytwory
+  (pakiet serwera i pakiet kreatora) leżą w `2.0.0-2026-09-04`. Przy publikacji
+  wydania katalog wskazany w wykazie ma nieść komplet trzech plików.
 - Wystawiony plik kreatora nie pochodzi ze skryptu: pod nazwą instalatora leży
   surowa binarka, nie pakiet NSIS. Właściwy pakiet jest złożony skryptem
   `instalka-kreatora-win-x64.sh` i leży w drzewie

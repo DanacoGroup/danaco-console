@@ -5,8 +5,9 @@ i czego nie wolno ruszyć.
 
 ## 1. Czym rzecz stoi
 
-Rdzeń działa. Interfejs prowadzi od wejścia przez przedsionek do Centrum i Studia;
-pozostałe moduły stoją na zapowiedzi niegotowości. Praca stoi na `main`: gałąź
+Rdzeń działa. Interfejs prowadzi od wejścia przez przedsionek do Centrum i Studia.
+Poza Studiem czytają z rdzenia Library, Workspace, Browser, Agents, Design, Research
+i Translate; sześć modułów stoi na zapowiedzi niegotowości. Praca stoi na `main`: gałąź
 `teren/naprawy-audytu` weszła przesunięciem prostym 4 września 2026 po pełnym
 przebiegu `go test ./server/...` zamkniętym kodem 0. Punkt cofnięcia sprzed
 scalenia to `2881c425`.
@@ -19,7 +20,7 @@ powłoka Tauri i instalator Tauri — obie także w budowie krzyżowej na
 | miara | wartość |
 |---|---|
 | komendy kontraktu | 1086 |
-| komendy wykonalne z klienta | 1086 z 1086: 485 z własnym wołającym, reszta przez katalog operacji |
+| komendy wykonalne z klienta | 1086 z 1086: 489 z własnym wołającym, reszta przez katalog operacji |
 | tabele w bazie po przejeździe migracji | 421 |
 | tabele niosące pracę Operatora | 373, w tym 172 korzenie |
 | granica konta w zapytaniach | domknięta; 15 miejsc rozstrzygniętych, nie dziur |

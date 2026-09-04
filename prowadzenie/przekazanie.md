@@ -255,6 +255,13 @@ parsowanie SQL migracji przy każdym z 433 montaży, więc uprząż bierze teraz
 z wzorca złożonego raz na przebieg pakietu. Dziennik startu rdzenia ma mówić
 `komend=1086`, `zależności zewnętrzne: 55 z 55 obecnych` i `klient=klient/dist`.
 
+**Okno produktu w przeglądarce.** Osobny rdzeń serwuje pakiet interfejsu, a
+Chromium bez okna (puppeteer-core spod `pa11y`) przechodzi drogę: uruchomienie,
+bramka logowania, logowanie kontem, menu aplikacji, Centrum dowodzenia ze
+środowiskami. Miarą jest brak błędów konsoli i odmów sieci — ostatni przebieg
+dał zero i zero. Ekrany stoją w jednym drzewie, więc szukać pól widocznych
+(`offsetParent !== null`), nie pierwszych w DOM.
+
 **Przegląd odczytów na żywym rdzeniu.** Osobny rdzeń na własnym porcie i katalogu
 danych, po nim wywołanie każdej komendy wykazu i odczytu: 140 bez pól wymaganych
 i 68 zawężonych oknem albo sesją. Odmowa `internal_error` znaczy usterkę rdzenia,

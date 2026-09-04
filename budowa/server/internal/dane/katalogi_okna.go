@@ -18,13 +18,14 @@ const (
 
 	listaKatalogowOkna = `SELECT sciezka FROM katalog_okna
 	                      WHERE okno_komunikacji_id = ? ORDER BY kolejnosc, id`
-
-	listaKatalogowSesji = `SELECT k.okno_komunikacji_id, k.sciezka
-	                       FROM katalog_okna k
-	                       JOIN okno_komunikacji o ON o.id = k.okno_komunikacji_id
-	                       WHERE o.sesja_id = ?
-	                       ORDER BY k.okno_komunikacji_id, k.kolejnosc, k.id`
 )
+
+// Katalog okna nie ma kolumny konto_id; własność okna sprawdza warunekKontaOkna.
+var listaKatalogowSesji = `SELECT k.okno_komunikacji_id, k.sciezka
+                             FROM katalog_okna k
+                             JOIN okno_komunikacji o ON o.id = k.okno_komunikacji_id
+                            WHERE o.sesja_id = ? AND ` + warunekKontaOkna("o") + `
+                            ORDER BY k.okno_komunikacji_id, k.kolejnosc, k.id`
 
 // zapiszKatalogiOkna wymienia listę katalogów okna. Wywoływane wyłącznie
 // wewnątrz transakcji zapisu okna — inaczej okno i jego katalogi mogłyby się
@@ -90,7 +91,7 @@ func katalogiOkienSesji(ctx context.Context, z *zapytania, sesjaID int64) (map[i
 	if err != nil {
 		return nil, err
 	}
-	wiersze, err := polecenie.QueryContext(ctx, sesjaID)
+	wiersze, err := polecenie.QueryContext(ctx, sesjaID, KontoOperatora(ctx))
 	if err != nil {
 		return nil, fmt.Errorf("dane: nie można odczytać katalogów okien sesji %d: %w", sesjaID, err)
 	}

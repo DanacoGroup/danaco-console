@@ -25,24 +25,28 @@ type RepozytoriumRolOkien interface {
 	ZapiszRoleOkna(ctx context.Context, okno string, rola shared.WindowRole) error
 }
 
-const (
+// Okno nie ma kolumny konto_id; własność sprawdza warunekKontaOkna.
+var (
 	rolaOknaZewnetrznego = `SELECT wykonawca.rola_okna, koordynator.identyfikator_zewnetrzny
 	                        FROM okno_komunikacji wykonawca
 	                        LEFT JOIN okno_komunikacji koordynator
 	                            ON koordynator.id = wykonawca.okno_koordynatora_id
-	                        WHERE wykonawca.identyfikator_zewnetrzny = ?`
+	                        WHERE wykonawca.identyfikator_zewnetrzny = ?
+	                          AND ` + warunekKontaOkna("wykonawca")
 
 	zapiszRoleOknaZewnetrznego = `UPDATE okno_komunikacji
 	                              SET rola_okna = ?,
 	                                  zaktualizowano = strftime('%Y-%m-%dT%H:%M:%fZ','now')
-	                              WHERE identyfikator_zewnetrzny = ?`
+	                              WHERE identyfikator_zewnetrzny = ?
+	                                AND ` + kontoOknaWlasnego
 
 	// Zapis roli innej niż wykonawca zdejmuje więź tym samym poleceniem, a nie drugim: rola i więź muszą się zgadzać w każdej chwili.
 	zapiszRoleSamodzielnaOkna = `UPDATE okno_komunikacji
 	                             SET rola_okna = ?,
 	                                 okno_koordynatora_id = NULL,
 	                                 zaktualizowano = strftime('%Y-%m-%dT%H:%M:%fZ','now')
-	                             WHERE identyfikator_zewnetrzny = ?`
+	                             WHERE identyfikator_zewnetrzny = ?
+	                               AND ` + kontoOknaWlasnego
 )
 
 type repozytoriumRolOkien struct {
@@ -69,7 +73,7 @@ func (r *repozytoriumRolOkien) RolaOkna(ctx context.Context, okno string) (RolaO
 	}
 	var rola string
 	var koordynator sql.NullString
-	err = polecenie.QueryRowContext(ctx, okno).Scan(&rola, &koordynator)
+	err = polecenie.QueryRowContext(ctx, okno, KontoOperatora(ctx)).Scan(&rola, &koordynator)
 	if errors.Is(err, sql.ErrNoRows) {
 		return RolaOkna{}, fmt.Errorf("%w: okno %q", ErrBrakWiersza, okno)
 	}
@@ -97,7 +101,7 @@ func (r *repozytoriumRolOkien) ZapiszRoleOkna(ctx context.Context, okno string, 
 	if err != nil {
 		return err
 	}
-	wynik, err := polecenie.ExecContext(ctx, kolumna, okno)
+	wynik, err := polecenie.ExecContext(ctx, kolumna, okno, KontoOperatora(ctx))
 	if err != nil {
 		return fmt.Errorf("dane: nie można zapisać roli okna %q: %w", okno, err)
 	}

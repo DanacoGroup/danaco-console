@@ -40,10 +40,6 @@ const (
 	                   zaktualizowano = strftime('%Y-%m-%dT%H:%M:%fZ','now')
 	               WHERE id = ? AND usunieto_o IS NOT NULL`
 
-	listaKosza = `SELECT id, COALESCE(identyfikator_zewnetrzny, ''), tytul, usunieto_o
-	              FROM sesja WHERE usunieto_o IS NOT NULL
-	              ORDER BY usunieto_o DESC, id DESC`
-
 	// Bloki wiadomości okien sesji przeterminowanych — usuwane przed wierszami
 	// sesji, póki łańcuch sesja → okno jeszcze istnieje.
 	usunBlokiPrzeterminowane = `DELETE FROM blok_wiadomosci
@@ -57,6 +53,11 @@ const (
 	usunSesjePrzeterminowane = `DELETE FROM sesja
 	                            WHERE usunieto_o IS NOT NULL AND usunieto_o < ?`
 )
+
+// Sesja nie ma kolumny konto_id; własność sesji sprawdza sesjaKonta.
+var listaKosza = `SELECT id, COALESCE(identyfikator_zewnetrzny, ''), tytul, usunieto_o
+                    FROM sesja WHERE usunieto_o IS NOT NULL AND ` + sesjaKonta + `
+                   ORDER BY usunieto_o DESC, id DESC`
 
 type repozytoriumKoszaSesji struct {
 	zapytania *zapytania
@@ -106,7 +107,7 @@ func (r *repozytoriumKoszaSesji) Lista(ctx context.Context) ([]SesjaWKoszu, erro
 	if err != nil {
 		return nil, err
 	}
-	wiersze, err := polecenie.QueryContext(ctx)
+	wiersze, err := polecenie.QueryContext(ctx, KontoOperatora(ctx))
 	if err != nil {
 		return nil, fmt.Errorf("dane: nie można odczytać kosza sesji: %w", err)
 	}

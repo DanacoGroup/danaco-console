@@ -23,17 +23,20 @@ type AkcjaOkna struct {
 // bez granicy byłby pułapką wydajności przy oknie długo działającym.
 const limitDomyslnyAkcjiOkna = 100
 
-const (
-	idOknaPoIdentyfikatorzeAkcji = `SELECT id FROM okno_komunikacji WHERE identyfikator_zewnetrzny = ?`
+const zapiszAkcjeOkna = `INSERT INTO log_akcji_okna (okno_komunikacji_id, akcja_id, parametry, wynik)
+                         VALUES (?, ?, ?, ?)`
 
-	zapiszAkcjeOkna = `INSERT INTO log_akcji_okna (okno_komunikacji_id, akcja_id, parametry, wynik)
-	                   VALUES (?, ?, ?, ?)`
+// Dziennik akcji nie ma kolumny konto_id; własność okna sprawdza warunekKontaOkna.
+var (
+	idOknaPoIdentyfikatorzeAkcji = `SELECT id FROM okno_komunikacji
+	                                WHERE identyfikator_zewnetrzny = ? AND ` + kontoOknaWlasnego
 
 	pobierzAkcjeOkna = `SELECT log.id, ok.identyfikator_zewnetrzny, log.akcja_id, log.parametry,
 	                            log.wynik, log.utworzono
 	                    FROM log_akcji_okna log
 	                    JOIN okno_komunikacji ok ON ok.id = log.okno_komunikacji_id
 	                    WHERE ok.identyfikator_zewnetrzny = ?
+	                      AND ` + warunekKontaOkna("ok") + `
 	                    ORDER BY log.utworzono DESC, log.id DESC
 	                    LIMIT ?`
 )
@@ -54,7 +57,7 @@ func (r *repozytoriumPrzekazan) ZapiszAkcje(ctx context.Context, akcja AkcjaOkna
 		return AkcjaOkna{}, err
 	}
 	var oknoID int64
-	err = szukanieOkna.QueryRowContext(ctx, akcja.Okno).Scan(&oknoID)
+	err = szukanieOkna.QueryRowContext(ctx, akcja.Okno, KontoOperatora(ctx)).Scan(&oknoID)
 	if errors.Is(err, sql.ErrNoRows) {
 		return AkcjaOkna{}, fmt.Errorf("dane: okno %q nie istnieje: %w", akcja.Okno, ErrBrakWiersza)
 	}
@@ -94,7 +97,7 @@ func (r *repozytoriumPrzekazan) AkcjeOkna(ctx context.Context, okno string, limi
 	if err != nil {
 		return nil, err
 	}
-	wiersze, err := polecenie.QueryContext(ctx, okno, limit)
+	wiersze, err := polecenie.QueryContext(ctx, okno, KontoOperatora(ctx), limit)
 	if err != nil {
 		return nil, fmt.Errorf("dane: nie można odczytać akcji okna %q: %w", okno, err)
 	}

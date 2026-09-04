@@ -1809,6 +1809,11 @@ urządzenia, odwołanie powiadomień bytu, potwierdzenie doręczenia — jest za
 wiersz trafia do pętli już ze wskazaniem konta. Miara granicy konta liczy te miejsca
 jako rozstrzygnięte, nie jako dziury.
 
+**Granica z pozycją 34.** Rozstrzygnięcie dotyczy zapytania, które konta nie zna
+i znać nie ma. Gdy zapytanie JEST zawężone, a woła je praca procesu — przemiatanie
+retencji historii, odtworzenie stanu przy montażu — praca idzie po kontach po kolei
+(`core.kontekstyKont`), bo jeden przebieg objąłby wyłącznie konto najstarsze.
+
 ## 38. Jednoznaczność klucza obowiązuje w koncie, nie w instalacji
 
 **Rozstrzygnięcie Prowadzącego, 4 września 2026** (Właściciel deleguje, poz. 27).

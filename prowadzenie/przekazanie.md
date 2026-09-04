@@ -272,6 +272,12 @@ w tabeli `powiadomienie_centrum`, drugie zdarzenie zostaje nowe. Plakietka słuc
 `notification.raised` i `notification.changed`, więc licznik schodzi bez
 odświeżania okna.
 
+Dziewięć modułów przedsionka TalkIn otwarto po kolei — Studio, Workspace, Browser,
+Research, Library, Translate, Roundtable, Assistant, Agents. Każdy staje z treścią
+(od 405 do 5144 znaków, od 49 do 85 pozycji do naciśnięcia) i żaden nie zgłasza
+błędu konsoli. Pustego okna, jak przy „Operacjach platformy" przed naprawą,
+nie ma ani jednego.
+
 Wstążka okna roboczego w Studiu przeszła to samo przemiatanie. Cztery przyciski
 układu — podział pionowy, maksymalizacja okna roboczego, nowe okno pomocnicze
 i okno komunikacji — nie miały obsługi nigdzie: ani w wiązaniu, ani w bibliotece

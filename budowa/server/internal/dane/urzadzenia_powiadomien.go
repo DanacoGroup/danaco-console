@@ -504,7 +504,8 @@ const potwierdzDostarczenie = `
 	   SET potwierdzono = ?
 	 WHERE powiadomienie_id = ?
 	   AND urzadzenie_powiadomien_id = (SELECT id FROM urzadzenie_powiadomien
-	                                     WHERE kanal = ? AND klucz_kanalu = ?)`
+	                                     WHERE kanal = ? AND klucz_kanalu = ?
+	                                       AND ` + WarunekKonta + `)`
 
 // Potwierdz zapisuje, że Operator widział powiadomienie na tym urządzeniu.
 // Brak wiersza doręczenia nie jest błędem: potwierdzenie z urządzenia, któremu
@@ -516,7 +517,8 @@ func (r *repozytoriumPowiadomien) Potwierdz(ctx context.Context, powiadomienieID
 	if err != nil {
 		return err
 	}
-	if _, err := polecenie.ExecContext(ctx, teraz, powiadomienieID, kanal, kluczKanalu); err != nil {
+	if _, err := polecenie.ExecContext(ctx, teraz, powiadomienieID, kanal, kluczKanalu,
+		KontoOperatora(ctx)); err != nil {
 		return fmt.Errorf("dane: nie można potwierdzić powiadomienia %d na %q/%q: %w",
 			powiadomienieID, kanal, kluczKanalu, err)
 	}

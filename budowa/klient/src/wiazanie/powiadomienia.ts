@@ -3,7 +3,13 @@
 // i odłożeniem. Plakietka dzwonka liczy zdarzenia nowe w całym rejestrze, nie
 // w widoku, bo tak stanowi opis komendy wykazu.
 
-import { Command, type Notification, type NotificationState } from '../../../shared/contract.ts';
+import {
+  Command,
+  EventType,
+  type Notification,
+  type NotificationState,
+} from '../../../shared/contract.ts';
+import { zglosUchwyt } from '../polaczenie/rozdzielacz-zdarzen.ts';
 import type { Kanal } from '../protokol/kanal.ts';
 import { wywolaj } from '../protokol/wywolanie.ts';
 import { oglos } from './ogloszenie.ts';
@@ -34,6 +40,10 @@ export function zwiazPowiadomienia(kanal: Kanal): void {
     }
     void otworz(kanal);
   }, true);
+  /* Zdarzenie niesie samo powiadomienie, ale plakietka liczy cały rejestr,
+     więc licznik bierze się z rdzenia, nie z treści zdarzenia. */
+  zglosUchwyt(EventType.NotificationRaised, () => { void odswiezPlakietke(kanal); });
+  zglosUchwyt(EventType.NotificationChanged, () => { void odswiezPlakietke(kanal); });
   void odswiezPlakietke(kanal);
 }
 

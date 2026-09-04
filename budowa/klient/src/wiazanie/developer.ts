@@ -139,6 +139,7 @@ function zdejmijTrescPrzykladowa(korzen: Element): void {
   niegotowe(panel(korzen, 'panel-plan'), 'Plan pracy czeka na pierwsze zadanie.');
   niegotowe(panel(korzen, 'panel-artefakty'), 'Rdzeń nie podaje wytworów tego okna.');
   niegotowe(panel(korzen, 'panel-zadania'), 'Rdzeń nie podaje zadań dla tego okna.');
+  niegotowe(panel(korzen, 'panel-kolejka'), 'Rdzeń nie podaje kolejki dla tego okna.');
 }
 
 async function wypelnijBudowania(kanal: Kanal, korzen: Element, idOkna: string): Promise<void> {

@@ -439,6 +439,28 @@ parsowanie SQL migracji przy każdym z 433 montaży, więc uprząż bierze teraz
 z wzorca złożonego raz na przebieg pakietu. Dziennik startu rdzenia ma mówić
 `komend=1086`, `zależności zewnętrzne: 55 z 55 obecnych` i `klient=klient/dist`.
 
+**Czego te polecenia nie sprawdzą.** Wszystkie usterki tej rundy — puste okno,
+wygaszony przycisk, ginąca zmiana nazwy, martwy dzwonek, zmyślone wykazy plików,
+przeciek sesji między kontami — leżały poza ich zasięgiem. Widać je dopiero
+z przejścia po oknie i z zapytania dwoma kontami. Trzy przepisy, każdy do
+powtórzenia bez wymyślania od nowa:
+
+1. **Przejście przeglądarką.** Puppeteer stoi w `pa11y`
+   (`/usr/local/lib/node_modules/pa11y/node_modules/puppeteer-core`), Chromium
+   pod `/usr/bin/chromium-browser`. Kartę stawiać na `setViewport` 2560×1400 —
+   przy węższej szyny się zwijają i wiersze wypadają z widoku. Skutek przycisku
+   mierzyć trójką: wysyłką do rdzenia (podmieniony `WebSocket.prototype.send`),
+   ogłoszeniem i rozwinięciem menu. Miara ta nie widzi przełącznika zmieniającego
+   samą klasę, więc jej wynik jest wykazem podejrzeń, nie usterek.
+2. **Dostępność.** `axe-core` leży obok puppeteera; wstrzyknąć go
+   `page.evaluate` po zalogowaniu i wołać
+   `axe.run(document, { runOnly: { type: 'tag', values: ['wcag2a','wcag2aa'] } })`.
+   Samo `pa11y` z wiersza poleceń nie dojdzie dalej niż ekran logowania.
+3. **Granica konta.** Dwa konta przez protokół: `auth.register`, `auth.verify`
+   kodem ze zlewu SMTP, `auth.login` z polem `method: 'password'` i `secret`.
+   Każde konto zakłada jeden byt, potem oba pytają o wykazy. Wykaz z rejestru
+   w pamięci sprawdzać osobno od wykazu z bazy — to dwie różne drogi.
+
 **Czym jest pokrycie 1086/1086.** Miara liczy komendy wykonalne z interfejsu.
 489 z nich ma wołającego własnego — panel, przycisk albo wykaz zbudowany pod tę
 jedną komendę. Pozostałe wykonuje katalog operacji

@@ -1989,3 +1989,20 @@ przepisuje — jest wyprowadzany.
 **Konsekwencje.** Dołożenie narzędzia to jeden wpis w `contract.json` i przebieg
 generatora; nic nie pisze się ręcznie ani po stronie Go, ani po stronie klienta.
 Pozycja bez zdania zastosowania jest usterką do zgłoszenia, nie swobodą.
+
+## 44. Kolejność wpinania podgrup `studio.*` traci przedmiot
+
+**Rzecz.** Audyt pytał, w jakiej kolejności wpinać dwadzieścia kilka podgrup
+rodziny `studio.*` — od `document` i `format` po `lock` i `backup`.
+
+**Pomiar.** Wszystkie 179 komend `studio.*` z kontraktu ma dziś wołającego
+własnego w plikach osiągalnych z `klient/src/aplikacja.ts` — nie przez katalog
+operacji, tylko z osobnego wiązania podgrupy. Podgrup bez wołającego nie ma.
+
+**Decyzja.** Pozycja schodzi z wykazu jako bezprzedmiotowa. Kolejność miałaby
+znaczenie przy wyborze, co wpiąć najpierw; wpięte jest wszystko.
+
+**Konsekwencje.** Gdyby kontrakt urósł o nową podgrupę `studio.*`, wraca reguła
+ogólna: komenda bez własnego wołającego jest osiągalna przez katalog operacji
+i to wystarcza do miary pokrycia, ale okno formularzowe powstaje wtedy, gdy
+podgrupa ma własne miejsce w oknie Studia.

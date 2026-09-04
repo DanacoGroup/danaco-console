@@ -1462,11 +1462,15 @@ const OKNA_PLATFORMOWE: readonly DrogaPlatformowa[] = [
     nazwa: 'Konfiguracja',
     zamiast: 'Nastawy rdzenia zmienia dziś rodzina komend config.',
   },
-  { wybor: '#cd-mobile, [data-skrot-komponent="Mobile"]', nazwa: 'Mobile', zamiast: '' },
+  {
+    wybor: '#cd-mobile, [data-skrot-komponent="Mobile"]',
+    nazwa: 'Mobile',
+    zamiast: 'Operacje rodziny mobile stoją w katalogu „Operacje platformy".',
+  },
   {
     wybor: '#cd-aod-przelacz, [data-skrot-komponent="Always On Display"]',
     nazwa: 'Always On Display',
-    zamiast: '',
+    zamiast: 'Operacje nakładki stoją w katalogu „Operacje platformy".',
   },
   // Pozycje pomocy prowadzą do Instrukcji i Instalatora, więc nazwę niesie podpis.
   { wybor: '[data-nawiguj]', nazwa: '', zamiast: '' },

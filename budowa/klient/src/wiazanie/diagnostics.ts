@@ -118,6 +118,8 @@ function zdejmijTrescPrzykladowa(korzen: Element): void {
   niegotowe(panel(korzen, 'panel-plan'), 'Plan naprawy powstaje z rekomendacji.');
   niegotowe(panel(korzen, 'panel-artefakty'), 'Rdzeń nie podaje wytworów diagnostyki.');
   niegotowe(panel(korzen, 'panel-kolejka'), 'Rdzeń nie podaje zadań w tle dla tego okna.');
+  niegotowe(panel(korzen, 'panel-zadania'), 'Rdzeń nie podaje zadań w tle dla tego okna.');
+  niegotowe(panel(korzen, 'panel-terminal'), 'Terminal diagnostyki nie jest jeszcze wystawiony przez rdzeń.');
 }
 
 async function wypelnijBledy(kanal: Kanal, korzen: Element): Promise<void> {

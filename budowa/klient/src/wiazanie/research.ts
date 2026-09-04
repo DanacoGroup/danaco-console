@@ -141,6 +141,7 @@ function zdejmijTrescPrzykladowa(korzen: Element): void {
   niegotowe(panel(korzen, 'panel-przegladarka'), 'Wykaz czeka na odpowiedź rdzenia.');
   niegotowe(panel(korzen, 'panel-plan'), 'Plan badania czeka na pierwsze źródło.');
   niegotowe(panel(korzen, 'panel-kolejka'), 'Rdzeń nie podaje zadań w tle dla tego okna.');
+  niegotowe(panel(korzen, 'panel-zadania'), 'Rdzeń nie podaje zadań w tle dla tego okna.');
 }
 
 async function wypelnijZrodla(kanal: Kanal, korzen: Element, idOkna: string): Promise<void> {

@@ -281,6 +281,12 @@ a moduły wiązane z rdzeniem przestały zmyślać. Po naprawie żadne okno modu
 nie niesie treści bez pokrycia, a miejsce rozmowy mówi wprost, że wiadomość
 wysyła w tym wydaniu wyłącznie Studio.
 
+Tą samą metodą — odczytem `innerText` żywego okna, nie oglądaniem — sprawdzone
+zostały Centrum i przedsionek TalkIn. Oba są czyste: liczby modułów i sesji
+zgadzają się z odpowiedzią rdzenia, MultitaskingAI uczciwie pokazuje „0 modułów",
+a „pracuje" przy sesji bierze się z żywego stanu zwróconego przez `session.list`,
+nie ze znacznika. Wypełniacz siedział wyłącznie w oknach modułowych.
+
 Wstążka okna roboczego w Studiu przeszła to samo przemiatanie. Cztery przyciski
 układu — podział pionowy, maksymalizacja okna roboczego, nowe okno pomocnicze
 i okno komunikacji — nie miały obsługi nigdzie: ani w wiązaniu, ani w bibliotece

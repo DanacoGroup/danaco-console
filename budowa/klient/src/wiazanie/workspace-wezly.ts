@@ -42,9 +42,22 @@ export function plakietkaPanelu(panel: HTMLElement | null): HTMLElement | null {
   return panel?.querySelector<HTMLElement>('.sta-okno-belka .dn-plakietka') ?? null;
 }
 
+/* Plakietki paneli stoją zdjęte z widoku, dopóki nie ma czym ich wypełnić;
+   wpisana wartość przywraca je, pusta zostawia zdjęte. */
 export function wpisz(wezel: Element | null | undefined, wartosc: string): void {
   if (wezel === null || wezel === undefined) return;
   wezel.textContent = wartosc;
+  if (wartosc === '') wezel.setAttribute('hidden', '');
+  else wezel.removeAttribute('hidden');
+}
+
+/* Kafel pulpitu i plakietka panelu podają tę samą miarę, każde w swoim miejscu.
+   Rozdzielone dwoma zapisami rozjeżdżałyby się na pierwszym odświeżeniu. */
+export function wpiszMiarePanelu(panel: HTMLElement | null, wartosc: string): void {
+  wpisz(plakietkaPanelu(panel), wartosc);
+  const kafel = panel?.closest('.cd-tresc--modul')
+    ?.querySelector(`.wk-kafel[data-panel-toggle="${panel.id}"] span`);
+  wpisz(kafel, wartosc);
 }
 
 /** Pierwszy wiersz listy staje się wzorem, lista zostaje pusta. */

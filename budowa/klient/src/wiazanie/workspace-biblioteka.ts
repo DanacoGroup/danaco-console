@@ -22,7 +22,7 @@ import {
   cialoPanelu,
   kopiaWzoru,
   niegotowe,
-  plakietkaPanelu,
+  wpiszMiarePanelu,
   przyjmij,
   wpisz,
   type WezlyWorkspace,
@@ -57,7 +57,7 @@ export function zwiazBiblioteke(
     if (projekt === '') return;
     const odpowiedz = await pobierzPliki(kanal, projekt, znacznik);
     const pliki = odpowiedz?.files ?? [];
-    wpisz(plakietkaPanelu(panel), odmien(odpowiedz?.total ?? pliki.length, ['plik', 'pliki', 'plików']));
+    wpiszMiarePanelu(panel, odmien(odpowiedz?.total ?? pliki.length, ['plik', 'pliki', 'plików']));
     opiszZnaczniki(pasek, wzorZnacznika, pliki, znacznik, (wybrany) => {
       znacznik = wybrany;
       void odswiez();

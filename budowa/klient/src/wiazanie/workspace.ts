@@ -70,6 +70,7 @@ export function zwiazWorkspace(
   zdejmijTrescWspolna(korzen as HTMLElement);
   zdejmijSterowanieWspolne(korzen as HTMLElement);
   void opiszNaglowek(kanal, nazwaSrodowiska, korzen);
+  zdejmijMiaryKafli(korzen);
   zdejmijPanelBezPokrycia(wezly);
   const zadania = zwiazZadania(wezly, kanal, projekt, przy);
   const instrukcje = zwiazInstrukcje(wezly, kanal, projekt, przy);
@@ -162,6 +163,15 @@ async function ustalProjekt(kanal: Kanal, idOknaStojacego: string): Promise<stri
 }
 
 /** Zadania w tle i terminal nie mają odpowiednika w rodzinie `workspace.*`. */
+/* Kafle pulpitu niosą miary wpisane w prototyp. Trzy z nich wypełniają wiązania
+   paneli po tym zdjęciu; czwarty, przy zestawie instrukcji, nie ma źródła. */
+function zdejmijMiaryKafli(korzen: Element): void {
+  for (const miara of korzen.querySelectorAll('.wk-kafel span')) {
+    miara.textContent = '';
+    miara.setAttribute('hidden', '');
+  }
+}
+
 function zdejmijPanelBezPokrycia(wezly: WezlyWorkspace): void {
   niegotowe(cialoPanelu(wezly.wTle), 'Rdzeń nie podaje zadań w tle dla tego modułu.');
   niegotowe(cialoPanelu(wezly.terminal), 'Terminal projektu nie jest jeszcze wystawiony przez rdzeń.');

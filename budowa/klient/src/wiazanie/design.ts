@@ -12,6 +12,7 @@ import type { Odsubskrybuj } from '../polaczenie/magistrala-zdarzen.ts';
 import type { Kanal } from '../protokol/kanal.ts';
 import { oglos } from './ogloszenie.ts';
 import {
+  opiszNaglowek,
   uzgodnijPrzelacznikiPaneli,
   zdejmijSterowanieWspolne,
   zdejmijTrescWspolna,
@@ -77,6 +78,7 @@ export function zwiazDesign(
   zdejmijTrescPrzykladowa(kontekst);
   zdejmijSterowanieWspolne(korzen);
   zdejmijTrescWspolna(korzen);
+  void opiszNaglowek(kanal, nazwaSrodowiska, korzen);
   uzgodnijPrzelacznikiPaneli(korzen, []);
   opiszSrodowisko(korzen, nazwaSrodowiska);
 

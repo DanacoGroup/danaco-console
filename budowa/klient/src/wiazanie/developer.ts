@@ -77,7 +77,7 @@ export function zwiazDevelopera(
       wykaz(kanal, korzen, idOkna, 'panel-zadania', Command.DeveloperDataConnectionList,
         'Rdzeń nie ma połączeń z bazami dla tego okna.',
         (o) => (o.connections as DataConnection[]).map((p) => [p.name, p.engine] as const)),
-      wykaz(kanal, korzen, '', 'panel-plan', Command.DeveloperScanResultList,
+      wykaz(kanal, korzen, idOkna, 'panel-plan', Command.DeveloperScanResultList,
         'Rdzeń nie odnotował zgłoszeń przeglądu bezpieczeństwa.',
         (o) => (o.findings as ScanFinding[]).map((z) => [z.title, z.severity] as const))]);
   };

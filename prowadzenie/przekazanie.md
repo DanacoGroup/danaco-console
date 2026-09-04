@@ -198,7 +198,7 @@ osiem okien modułowych przestało przedstawiać dane, których nie ma
 | 3. zerwanie i powrót nie gubią stanu | wykazane | tryb bez sieci i powrót: okno zostaje w Centrum |
 | 4. typy z kontraktu, rozjazd wykrywany maszynowo | wykazane | drabina: świeżość wytworów wobec `contract.json`, pokrycie 1086/1086 |
 | 5. Studio odpowiada prototypowi | do oceny Właściciela, materiał zebrany | 158 ze 175 klas prototypu Studia stoi w żywym oknie; 17 pozostałych to stany wywoływane, każdy z wiązaniem albo regułą arkusza |
-| 6. okno obecne nazywa swoją niegotowość | wykazane | okna platformowe odpowiadają zdaniem ze wskazaniem zastępstwa; osiem modułów bez pokrycia jest zapowiedzianych nazwą, opisem i zdaniem o wydaniu; okna modułowe wiązane nie niosą już ani jednej liczby i nazwy z prototypu — sprawdzone odczytem tekstu w trzech przedsionkach |
+| 6. okno obecne nazywa swoją niegotowość | wykazane | okna platformowe odpowiadają zdaniem ze wskazaniem zastępstwa; wszystkie dziewięć okien modułowych czyta z rdzenia, a panel bez pokrycia mówi, czego rdzeń nie podaje — sprawdzone odczytem tekstu w trzech przedsionkach (rozstrzygnięcie 49) |
 | 7. przejście bez ślepego zaułka | wykazane | uruchomienie → bramka → logowanie → Centrum → przedsionek → Studio, zero błędów konsoli |
 
 Czego przy tym **nie** udało się rozstrzygnąć: okno główne powłoki nie zmapowało

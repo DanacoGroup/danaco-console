@@ -272,11 +272,14 @@ w tabeli `powiadomienie_centrum`, drugie zdarzenie zostaje nowe. Plakietka słuc
 `notification.raised` i `notification.changed`, więc licznik schodzi bez
 odświeżania okna.
 
-Dziewięć modułów przedsionka TalkIn otwarto po kolei — Studio, Workspace, Browser,
-Research, Library, Translate, Roundtable, Assistant, Agents. Każdy staje z treścią
-(od 405 do 5144 znaków, od 49 do 85 pozycji do naciśnięcia) i żaden nie zgłasza
-błędu konsoli. Pustego okna, jak przy „Operacjach platformy" przed naprawą,
-nie ma ani jednego.
+Dziewięć modułów przedsionka TalkIn otwarto po kolei i to przejście ujawniło
+najpoważniejszą usterkę tej rundy: osiem okien przedstawiało dane zmyślone —
+sześć nieistniejących plików obok prawdziwego „Materiały: 0", ceny, wymyślone
+rozmowy, nagłówek „ŚRODOWISKO WorkSpace" w sesji TalkIn. Zamyka to
+rozstrzygnięcie 47: moduły prowadzone samym katalogiem są odtąd zapowiedziane,
+a moduły wiązane z rdzeniem przestały zmyślać. Po naprawie żadne okno modułowe
+nie niesie treści bez pokrycia, a miejsce rozmowy mówi wprost, że wiadomość
+wysyła w tym wydaniu wyłącznie Studio.
 
 Wstążka okna roboczego w Studiu przeszła to samo przemiatanie. Cztery przyciski
 układu — podział pionowy, maksymalizacja okna roboczego, nowe okno pomocnicze

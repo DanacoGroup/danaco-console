@@ -59,16 +59,19 @@ const (
 	kolumnyKolejki = `id, nazwa, rodzaj, sesja_id, okno_koordynatora_id, stan,
 	                  utworzono, zaktualizowano`
 
-	wstawKolejke = `INSERT INTO kolejka (nazwa, rodzaj, sesja_id, okno_koordynatora_id, stan)
-	                VALUES (?, ?, ?, ?, ?)`
+	// Kolejka niesie wskazanie konta od migracji 489: kolejka globalna nie ma
+	// sesji, więc właściciela nie dałoby się wyprowadzić drogą klucza obcego.
+	wstawKolejke = `INSERT INTO kolejka (nazwa, rodzaj, sesja_id, okno_koordynatora_id, stan, konto_id)
+	                VALUES (?, ?, ?, ?, ?, ` + WskazanieKonta + `)`
 
-	pobierzKolejke = `SELECT ` + kolumnyKolejki + ` FROM kolejka WHERE id = ?`
+	pobierzKolejke = `SELECT ` + kolumnyKolejki + ` FROM kolejka
+	                  WHERE id = ? AND ` + WarunekKonta
 
 	zmienStanKolejki = `UPDATE kolejka
 	                    SET stan = ?, zaktualizowano = strftime('%Y-%m-%dT%H:%M:%fZ','now')
-	                    WHERE id = ?`
+	                    WHERE id = ? AND ` + WarunekKonta
 
-	odczytStanuKolejki = `SELECT stan FROM kolejka WHERE id = ?`
+	odczytStanuKolejki = `SELECT stan FROM kolejka WHERE id = ? AND ` + WarunekKonta
 )
 
 type repozytoriumKolejek struct {
@@ -97,7 +100,8 @@ func (r *repozytoriumKolejek) UtworzKolejke(ctx context.Context, kolejka Kolejka
 			return err
 		}
 		wynik, err := polecenie.ExecContext(ctx, kolejka.Nazwa, rodzaj,
-			liczbaDoKolumny(kolejka.SesjaID), liczbaDoKolumny(kolejka.OknoKoordynatoraID), stan)
+			liczbaDoKolumny(kolejka.SesjaID), liczbaDoKolumny(kolejka.OknoKoordynatoraID), stan,
+			KontoOperatora(ctx))
 		if err != nil {
 			return fmt.Errorf("dane: nie można założyć kolejki %q: %w", kolejka.Nazwa, err)
 		}
@@ -123,7 +127,7 @@ func (r *repozytoriumKolejek) PobierzKolejke(ctx context.Context, id int64) (Kol
 	var kolejka Kolejka
 	var sesja, okno sql.NullInt64
 	var stan string
-	err = polecenie.QueryRowContext(ctx, id).Scan(&kolejka.ID, &kolejka.Nazwa, &kolejka.Rodzaj,
+	err = polecenie.QueryRowContext(ctx, id, KontoOperatora(ctx)).Scan(&kolejka.ID, &kolejka.Nazwa, &kolejka.Rodzaj,
 		&sesja, &okno, &stan, &kolejka.Utworzono, &kolejka.Zaktualizowano)
 	if errors.Is(err, sql.ErrNoRows) {
 		return Kolejka{}, fmt.Errorf("dane: kolejka %d nie istnieje", id)
@@ -157,7 +161,7 @@ func (r *repozytoriumKolejek) ZmienStanKolejki(ctx context.Context, id int64,
 		if err != nil {
 			return err
 		}
-		wynik, err := polecenie.ExecContext(ctx, kolumna, id)
+		wynik, err := polecenie.ExecContext(ctx, kolumna, id, KontoOperatora(ctx))
 		if err != nil {
 			return fmt.Errorf("dane: nie można zmienić stanu kolejki %d: %w", id, err)
 		}
@@ -178,7 +182,7 @@ func stanKolejkiSprzed(ctx context.Context, z *zapytania, transakcja *sql.Tx, id
 		return nil, err
 	}
 	var stan string
-	err = polecenie.QueryRowContext(ctx, id).Scan(&stan)
+	err = polecenie.QueryRowContext(ctx, id, KontoOperatora(ctx)).Scan(&stan)
 	if errors.Is(err, sql.ErrNoRows) {
 		return nil, fmt.Errorf("dane: kolejka %d nie istnieje", id)
 	}

@@ -43,7 +43,7 @@ const (
 	                        FROM powiazanie_kolejki WHERE kolejka_id = ?
 	                        ORDER BY rodzaj, id`
 
-	czyKolejkaIstnieje = `SELECT 1 FROM kolejka WHERE id = ?`
+	czyKolejkaIstnieje = `SELECT 1 FROM kolejka WHERE id = ? AND ` + WarunekKonta
 )
 
 // CzyKolejkaIstnieje mówi, czy wiersz kolejki jest w bazie. Osobna czynność,
@@ -55,7 +55,7 @@ func (r *repozytoriumKolejek) CzyKolejkaIstnieje(ctx context.Context, id int64) 
 		return false, err
 	}
 	var jeden int
-	err = polecenie.QueryRowContext(ctx, id).Scan(&jeden)
+	err = polecenie.QueryRowContext(ctx, id, KontoOperatora(ctx)).Scan(&jeden)
 	if errors.Is(err, sql.ErrNoRows) {
 		return false, nil
 	}

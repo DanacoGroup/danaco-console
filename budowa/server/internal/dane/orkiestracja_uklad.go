@@ -92,7 +92,8 @@ const (
 
 	// Kolejki automatyki rozpoznaje nazwa równa jej kodowi — tak zakłada je
 	// `core/adapter_modul_automations_kolejka.go` i innej drogi nie ma.
-	kolejkiAutomatykiUkladu = `SELECT id FROM kolejka WHERE nazwa = ? ORDER BY id`
+	kolejkiAutomatykiUkladu = `SELECT id FROM kolejka WHERE nazwa = ? AND ` + WarunekKonta + `
+	                           ORDER BY id`
 )
 
 // repozytoriumUkladuOrkiestracji obsługuje dopełnienia układu zależności —
@@ -379,7 +380,8 @@ func (r *repozytoriumUkladuOrkiestracji) ZapiszSpiecieAutomatyki(ctx context.Con
 		if _, err := transakcja.ExecContext(ctx,
 			`UPDATE kolejka SET rodzaj = 'multitasking', okno_koordynatora_id = ?,
 			     zaktualizowano = strftime('%Y-%m-%dT%H:%M:%fZ','now')
-			  WHERE nazwa = ?`, liczbaDoKolumny(oknoRoliID), kodAutomatyki); err != nil {
+			  WHERE nazwa = ? AND `+WarunekKonta,
+			liczbaDoKolumny(oknoRoliID), kodAutomatyki, KontoOperatora(ctx)); err != nil {
 			return nil, fmt.Errorf("dane: nie można spiąć kolejek automatyki %q: %w", kodAutomatyki, err)
 		}
 	} else {
@@ -391,7 +393,8 @@ func (r *repozytoriumUkladuOrkiestracji) ZapiszSpiecieAutomatyki(ctx context.Con
 		if _, err := transakcja.ExecContext(ctx,
 			`UPDATE kolejka SET okno_koordynatora_id = NULL,
 			     zaktualizowano = strftime('%Y-%m-%dT%H:%M:%fZ','now')
-			  WHERE nazwa = ?`, kodAutomatyki); err != nil {
+			  WHERE nazwa = ? AND `+WarunekKonta,
+			kodAutomatyki, KontoOperatora(ctx)); err != nil {
 			return nil, fmt.Errorf("dane: nie można rozłączyć kolejek automatyki %q: %w", kodAutomatyki, err)
 		}
 	}
@@ -410,7 +413,7 @@ func (r *repozytoriumUkladuOrkiestracji) kolejkiAutomatyki(ctx context.Context,
 	if err != nil {
 		return nil, err
 	}
-	wiersze, err := polecenie.QueryContext(ctx, kodAutomatyki)
+	wiersze, err := polecenie.QueryContext(ctx, kodAutomatyki, KontoOperatora(ctx))
 	if err != nil {
 		return nil, fmt.Errorf("dane: nie można odczytać kolejek automatyki %q: %w", kodAutomatyki, err)
 	}

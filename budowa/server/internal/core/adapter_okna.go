@@ -19,6 +19,14 @@ type adapterOkien struct {
 	kanaly       czytelnikKanalow
 	moduly       czytelnikModulow
 	straz        StrazEksperta
+	// konta rozstrzyga granicę wykazu okien: bez wskazania sesji wykaz szedłby
+	// po rejestrze całej instalacji, więc konto musi być czym rozstrzygnąć.
+	konta dane.RepozytoriumKontaWlasciciela
+}
+
+func (a *adapterOkien) ZKontami(k dane.RepozytoriumKontaWlasciciela) *adapterOkien {
+	a.konta = k
+	return a
 }
 
 type czytelnikModulow interface {
@@ -122,7 +130,7 @@ func (a *adapterOkien) Utworz(ctx context.Context, z shared.WindowCreateRequest)
 }
 
 func (a *adapterOkien) Wykaz(ctx context.Context, z shared.WindowListRequest) (shared.WindowListResponse, error) {
-	okna, err := a.okna(z.SessionId)
+	okna, err := a.okna(ctx, z.SessionId)
 	if err != nil {
 		return shared.WindowListResponse{}, bladSesji(err)
 	}
@@ -182,12 +190,12 @@ func (a *adapterOkien) Zamknij(ctx context.Context, z shared.WindowCloseRequest)
 	return shared.WindowCloseResponse{Window: oknoKontraktu(okno)}, nil
 }
 
-func (a *adapterOkien) okna(idSesji *string) ([]session.Okno, error) {
+func (a *adapterOkien) okna(ctx context.Context, idSesji *string) ([]session.Okno, error) {
 	if idSesji != nil && *idSesji != "" {
 		return a.nadzorca.Rejestr().OknaSesji(*idSesji)
 	}
 	var wszystkie []session.Okno
-	for _, sesja := range a.nadzorca.Rejestr().Sesje() {
+	for _, sesja := range a.nadzorca.Rejestr().SesjeKonta(kontoZRepozytorium(ctx, a.konta)) {
 		okna, err := a.nadzorca.Rejestr().OknaSesji(sesja.Id)
 		if err != nil {
 			return nil, err

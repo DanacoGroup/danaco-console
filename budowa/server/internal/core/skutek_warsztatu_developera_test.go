@@ -60,7 +60,7 @@ func zlozWarsztatDevelopera(t *testing.T) warsztatDevelopera {
 	}
 
 	okna := session.NowyRejestr()
-	sesja := okna.ZalozSesje("sprawdzian warsztatu", "")
+	sesja := okna.ZalozSesje("sprawdzian warsztatu", "", 0)
 	okno, err := okna.OtworzOkno(sesja.Id, session.Ustawienia{
 		Modul:           "developer",
 		KatalogiRobocze: []string{roboczy},

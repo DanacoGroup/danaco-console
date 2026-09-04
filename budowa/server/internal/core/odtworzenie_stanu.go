@@ -79,6 +79,9 @@ func wniesSesjeDoRejestru(kontekst context.Context, repozytoria *dane.Zestaw,
 		// Bez znaczników z bazy sesja odtworzona pokazałaby Operatorowi rok pierwszy zamiast dnia startu pracy.
 		Utworzono:      chwilaZBazy(wiersz.Utworzono),
 		Zaktualizowano: chwilaZBazy(wiersz.Zaktualizowano),
+		// Odtworzenie idzie kontekstem jednego konta; bez tego wpisu sesja
+		// wracałaby do rejestru bez granicy i weszła do cudzego wykazu.
+		KontoId: dane.KontoOperatora(kontekst),
 	}
 	nadzorca.Rejestr().Odtworz(sesja, oknaOdtworzone(wiersze, sesja.Id, moduly, kanaly))
 	return true

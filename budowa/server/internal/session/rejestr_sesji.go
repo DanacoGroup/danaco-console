@@ -24,15 +24,16 @@ func NowyRejestr() *Rejestr {
 }
 
 // Metoda ZalozSesje zakłada nową sesję czynną z podanym tytułem i identyfikatorem projektu i zwraca jej odpis.
-func (r *Rejestr) ZalozSesje(tytul, idProjektu string) Sesja {
-	return r.ZalozSesjeSrodowiska(tytul, idProjektu, "")
+func (r *Rejestr) ZalozSesje(tytul, idProjektu string, kontoId int64) Sesja {
+	return r.ZalozSesjeSrodowiska(tytul, idProjektu, "", kontoId)
 }
 
 // Metoda ZalozSesjeSrodowiska zakłada sesję opisaną środowiskiem, przez które
 // Operator wszedł do pracy. Po tym opisie karta środowiska liczy swoje sesje.
-func (r *Rejestr) ZalozSesjeSrodowiska(tytul, idProjektu, kodSrodowiska string) Sesja {
+func (r *Rejestr) ZalozSesjeSrodowiska(tytul, idProjektu, kodSrodowiska string, kontoId int64) Sesja {
 	s := nowaSesja(tytul, idProjektu)
 	s.KodSrodowiska = kodSrodowiska
+	s.KontoId = kontoId
 	r.mu.Lock()
 	defer r.mu.Unlock()
 	r.sesje[s.Id] = s
@@ -48,6 +49,18 @@ func (r *Rejestr) Sesja(id string) (Sesja, error) {
 		return Sesja{}, fmt.Errorf("%w: %s", ErrBrakSesji, id)
 	}
 	return s.Kopia(), nil
+}
+
+// SesjeKonta zwraca odpisy sesji jednego konta. Wykaz Operatora idzie tędy,
+// nie przez Sesje: rejestr trzyma sesje całej instalacji.
+func (r *Rejestr) SesjeKonta(kontoId int64) []Sesja {
+	wykaz := make([]Sesja, 0, len(r.sesje))
+	for _, s := range r.Sesje() {
+		if s.KontoId == kontoId {
+			wykaz = append(wykaz, s)
+		}
+	}
+	return wykaz
 }
 
 // Metoda Sesje zwraca odpisy wszystkich sesji przechowywanych obecnie w tym rejestrze sesji rdzenia aplikacji.

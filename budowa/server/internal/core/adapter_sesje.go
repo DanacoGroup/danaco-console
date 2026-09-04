@@ -76,7 +76,7 @@ func (a *adapterSesji) Utworz(ctx context.Context, z shared.SessionCreateRequest
 	if z.EnvironmentCode != nil {
 		srodowisko = *z.EnvironmentCode
 	}
-	sesja := a.nadzorca.ZalozSesjeSrodowiska(tytul, projekt, srodowisko)
+	sesja := a.nadzorca.ZalozSesjeSrodowiska(tytul, projekt, srodowisko, kontoRejestru(ctx, a.zestaw))
 	// Sesja idzie do bazy od razu, nie dopiero z pierwszą wiadomością, bo zapis ma trwać.
 	a.utrwalZalozona(ctx, sesja)
 	return shared.SessionCreateResponse{Session: sesjaKontraktu(sesja)}, nil
@@ -136,7 +136,7 @@ func zapisSesjiDoCzytania(sesja shared.Session, okna []shared.Window) string {
 }
 
 func (a *adapterSesji) Wykaz(ctx context.Context, z shared.SessionListRequest) (shared.SessionListResponse, error) {
-	wszystkie := a.nadzorca.Rejestr().Sesje()
+	wszystkie := a.nadzorca.Rejestr().SesjeKonta(kontoRejestru(ctx, a.zestaw))
 	wybrane := make([]shared.Session, 0, len(wszystkie))
 	for _, sesja := range wszystkie {
 		if z.Status != nil && sesja.Stan != *z.Status {
@@ -154,7 +154,7 @@ func (a *adapterSesji) Wykaz(ctx context.Context, z shared.SessionListRequest) (
 	}
 	wynik := shared.SessionListResponse{Sessions: wycinek(wybrane, z.Offset, z.Limit), Total: len(wybrane)}
 	if z.IncludePresence != nil && *z.IncludePresence {
-		wynik.Presence = a.obecnosc.Odpisy(ctx)
+		wynik.Presence = a.obecnosc.Odpisy(ctx, kontoRejestru(ctx, a.zestaw))
 	}
 	return wynik, nil
 }
@@ -209,4 +209,32 @@ func wycinek(wykaz []shared.Session, przesuniecie, ograniczenie *int) []shared.S
 		koniec = poczatek + *ograniczenie
 	}
 	return wykaz[poczatek:koniec]
+}
+
+/*
+Rejestr sesji trzyma konto liczbą, a `WarunekKonta` w bazie tłumaczy zero
+
+	i NULL na konto najstarsze. Żeby wykaz z rejestru wypadał tak samo jak
+	zapytanie, konto operatora rozstrzyga się tu raz i tą samą regułą.
+*/
+func kontoRejestru(ctx context.Context, zestaw *dane.Zestaw) int64 {
+	if zestaw == nil {
+		return kontoZRepozytorium(ctx, nil)
+	}
+	return kontoZRepozytorium(ctx, zestaw.KontoWlasciciela)
+}
+
+// kontoZRepozytorium rozstrzyga to samo tam, gdzie adapter nie ma całego zestawu.
+func kontoZRepozytorium(ctx context.Context, konta dane.RepozytoriumKontaWlasciciela) int64 {
+	if id := dane.KontoOperatora(ctx); id != 0 {
+		return id
+	}
+	if konta == nil {
+		return 0
+	}
+	konto, err := konta.Konto(ctx)
+	if err != nil {
+		return 0
+	}
+	return konto.Id
 }

@@ -102,7 +102,8 @@ func zlozPorty(s skladPortow) Porty {
 	okna := nowyAdapterOkien(s.nadzorca).ZTrwaloscia(s.trwalosc).ZPetla(s.petla).
 		ZPrzerwaniemTury(s.rozmowa.PrzerwijTure, s.rozmowa.CzyTuraWBiegu).
 		ZWieziami(s.repozytoria.Przekazania).ZKanalami(s.repozytoria.Kanaly).
-		ZModulami(s.repozytoria.Moduly).ZeStrazaEksperta(s.strazEkspertow)
+		ZModulami(s.repozytoria.Moduly).ZeStrazaEksperta(s.strazEkspertow).
+		ZKontami(s.repozytoria.KontoWlasciciela)
 
 	warsztatPdf := nowyAdapterPdfStudia().
 		ZKatalogiemDanych(katalogDanych).ZZasobami(s.repozytoria.Design)

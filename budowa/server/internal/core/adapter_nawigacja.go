@@ -59,7 +59,7 @@ func (a *adapterNawigacji) StronaGlowna(ctx context.Context, z shared.HomeEnterR
 		wynik.FocusedSessionId = &idSesji
 	}
 	// Kontrolka powrotu potrzebuje wiedzieć, czy jest dokąd wracać i co tam trwa.
-	wynik.Presence = a.obecnosc.Odpisy(ctx)
+	wynik.Presence = a.obecnosc.Odpisy(ctx, kontoRejestru(ctx, a.zestaw))
 	return wynik, nil
 }
 
@@ -108,7 +108,7 @@ func (a *adapterNawigacji) srodowiska(ctx context.Context, zModulami bool) ([]sh
 	if err != nil {
 		return nil, err
 	}
-	sesji := a.sesjeSrodowisk()
+	sesji := a.sesjeSrodowisk(ctx)
 	wykaz := make([]shared.Environment, 0, len(wiersze))
 	for pozycja, wiersz := range wiersze {
 		moduly, err := a.zestaw.Moduly.ListaSrodowiska(ctx, wiersz.ID)
@@ -126,12 +126,12 @@ func (a *adapterNawigacji) srodowiska(ctx context.Context, zModulami bool) ([]sh
 
 // sesjeSrodowisk liczy sesje czynne przypadające na środowisko wejścia.
 // Sesja bez środowiska nie wchodzi do żadnej miary.
-func (a *adapterNawigacji) sesjeSrodowisk() map[string]int {
+func (a *adapterNawigacji) sesjeSrodowisk(ctx context.Context) map[string]int {
 	miary := map[string]int{}
 	if a.nadzorca == nil {
 		return miary
 	}
-	for _, sesja := range a.nadzorca.Rejestr().Sesje() {
+	for _, sesja := range a.nadzorca.Rejestr().SesjeKonta(kontoRejestru(ctx, a.zestaw)) {
 		if sesja.KodSrodowiska == "" || sesja.Stan != shared.SessionStatusActive {
 			continue
 		}
@@ -146,7 +146,7 @@ func (a *adapterNawigacji) sesjeCzynne(ctx context.Context) ([]shared.Session, e
 	wykaz := []shared.Session{}
 	widziane := map[string]struct{}{}
 	if a.nadzorca != nil {
-		for _, sesja := range a.nadzorca.Rejestr().Sesje() {
+		for _, sesja := range a.nadzorca.Rejestr().SesjeKonta(kontoRejestru(ctx, a.zestaw)) {
 			if !czynna(sesja.Stan) {
 				continue
 			}

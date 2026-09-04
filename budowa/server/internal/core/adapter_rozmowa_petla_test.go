@@ -77,7 +77,7 @@ func noweStanowiskoTuryKoordynatora(t *testing.T, bladZamkniecia bool) *stanowis
 	t.Helper()
 
 	nadzorca := session.NowyNadzorca()
-	sesja := nadzorca.ZalozSesje("bieg naprawczy", "")
+	sesja := nadzorca.ZalozSesje("bieg naprawczy", "", 0)
 	koordynator, err := nadzorca.OtworzOkno(sesja.Id, session.Ustawienia{
 		RolaOkna: shared.WindowRoleCoordinator, KanalModelu: "zamkniecie",
 	})

@@ -35,7 +35,8 @@ func (a *adapterSesji) Kopiuj(ctx context.Context,
 			shared.ErrorCodeNotFound, "sesja "+z.SessionId+" nie istnieje"))
 	}
 
-	kopia := a.nadzorca.ZalozSesje(nazwaKopii(zrodlo.Tytul, z.Title), tekstLubPusty(zrodlo.Projekt))
+	kopia := a.nadzorca.ZalozSesje(nazwaKopii(zrodlo.Tytul, z.Title), tekstLubPusty(zrodlo.Projekt),
+		kontoRejestru(ctx, a.zestaw))
 	a.utrwalZalozona(ctx, kopia)
 
 	// Okna bierzemy z rejestru żywego, nie z wierszy, bo obejmuje to także sesje sprzed restartu rdzenia.

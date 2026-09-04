@@ -29,7 +29,7 @@ func noweStanowisko(t *testing.T) *stanowiskoPetli {
 
 	s := &stanowiskoPetli{}
 	nadzorca := NowyNadzorca()
-	sesja := nadzorca.ZalozSesje("bieg naprawczy", "")
+	sesja := nadzorca.ZalozSesje("bieg naprawczy", "", 0)
 
 	koordynator, err := nadzorca.OtworzOkno(sesja.Id, Ustawienia{
 		RolaOkna: shared.WindowRoleCoordinator,

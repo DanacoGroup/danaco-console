@@ -290,6 +290,11 @@ nie ze znacznika. Wypełniacz siedział wyłącznie w oknach modułowych. Przej�
 TalkIn, WorkSpace i CodeStudio — po naprawie żadne okno modułowe w żadnym z nich
 nie niesie nazwy ani liczby wziętej z prototypu.
 
+Odczytem tekstu przeszedł też pakiet pięciu okien w komplecie. Droga wejścia
+niesie opis platformy, formularz i trzy metody logowania oznaczone wprost jako
+nieaktywne — nic ponadto. Instalator podaje odczyty tej maszyny. Centrum,
+przedsionek i Studio opisane wyżej.
+
 Sprawdzian końcowy: żaden ze wzorów wypełniacza — `raport-koncowy`, `eurostat`,
 „149 zł", „Raport tygodniowy", „Ilustracja bohatera", „Agent Redaktor",
 `adres-strony`, `konkurent.pl`, „Wersje (", „AI widzi", „22 ustalenia",

@@ -440,10 +440,13 @@ z wzorca złożonego raz na przebieg pakietu. Dziennik startu rdzenia ma mówić
 `komend=1086`, `zależności zewnętrzne: 55 z 55 obecnych` i `klient=klient/dist`.
 
 **Czym jest pokrycie 1086/1086.** Miara liczy komendy wykonalne z interfejsu.
-485 z nich ma wołającego własnego — panel, przycisk albo wykaz zbudowany pod tę
-jedną komendę. Pozostałe wykonuje katalog operacji modułu
+489 z nich ma wołającego własnego — panel, przycisk albo wykaz zbudowany pod tę
+jedną komendę. Pozostałe wykonuje katalog operacji
 (`klient/src/wiazanie/katalog-modulu.ts`): Operator wybiera komendę rodziny,
 dokłada parametry JSON, a katalog wysyła żądanie i melduje odmowę rdzenia.
+Katalog stoi w dwóch miejscach: w oknie modułu wiązanego z rdzeniem oraz
+w oknie „Operacje platformy" Centrum, które obejmuje każdą rodzinę kontraktu —
+także rodziny modułów zapowiedzianych (rozstrzygnięcie 47).
 To wołający prawdziwy, nie wpis w wykazie — ale nie jest tym samym co panel
 zbudowany pod komendę. Wykazane uruchomieniem: okno „Operacje platformy" (przycisk
 konfiguracji w Centrum) składa 67 katalogów, żaden pusty, razem 1086 komend,

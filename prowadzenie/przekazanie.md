@@ -6,8 +6,10 @@ i czego nie wolno ruszyć.
 ## 1. Czym rzecz stoi
 
 Rdzeń działa. Interfejs prowadzi od wejścia przez przedsionek do Centrum i Studia.
-Poza Studiem czytają z rdzenia Library, Workspace, Browser, Agents, Design, Research,
-Translate i Roundtable; pięć modułów stoi na zapowiedzi niegotowości. Praca stoi na `main`: gałąź
+Każdy moduł ma własne wiązanie i czyta z rdzenia — modułów zapowiedzianych nie
+ma już żadnego. Pełny przekrój od kliknięcia do zapisu i z powrotem mają Studio,
+Library i Research; pozostałe wystawiają wykazy rdzenia i odmowy rdzenia,
+bez treści wymyślonej. Praca stoi na `main`: gałąź
 `teren/naprawy-audytu` weszła przesunięciem prostym 4 września 2026 po pełnym
 przebiegu `go test ./server/...` zamkniętym kodem 0. Punkt cofnięcia sprzed
 scalenia to `2881c425`.
@@ -20,7 +22,7 @@ powłoka Tauri i instalator Tauri — obie także w budowie krzyżowej na
 | miara | wartość |
 |---|---|
 | komendy kontraktu | 1086 |
-| komendy wykonalne z klienta | 1086 z 1086: 489 z własnym wołającym, reszta przez katalog operacji |
+| komendy wykonalne z klienta | 1086 z 1086: 503 z własnym wołającym, reszta przez katalog operacji |
 | tabele w bazie po przejeździe migracji | 421 |
 | tabele niosące pracę Operatora | 373, w tym 172 korzenie |
 | granica konta w zapytaniach | domknięta; 15 miejsc rozstrzygniętych, nie dziur |
@@ -284,17 +286,15 @@ w tabeli `powiadomienie_centrum`, drugie zdarzenie zostaje nowe. Plakietka słuc
 `notification.raised` i `notification.changed`, więc licznik schodzi bez
 odświeżania okna.
 
-**Moduły doprowadzone do działania.** Research, Translate i Roundtable przeszły
-z zapowiedzianych na działające i mają własne wiązanie (`research.ts`,
-`translate.ts`): okno modułu zakładane z rdzenia, panele wypełniane odpowiedzią
-rdzenia, treść przykładowa prototypu zdjęta. Research wykazany całym pionem —
-wniesienie źródła od kliknięcia do wiersza w `zrodlo_badania`. Translate ma
-wykazany odczyt (glosariusz z rdzenia); dołożenie panelu języka odmawia na tej
-maszynie, bo kanał modelu nie ma poświadczenia — odmowa idzie z rdzenia i jest
-Operatorowi pokazywana. Roundtable wystawia uczestników i argumenty z rdzenia; przy pustej debacie mówi
-„Żaden model nie stanął jeszcze do tej debaty" i „Debata nie ma jeszcze ani jednej
-wypowiedzi". Zapowiedziane zostają: `developer`, `apps`, `automations`,
-`assistant`, `diagnostics`.
+**Moduły doprowadzone do działania.** Osiem modułów przeszło z zapowiedzianych
+na czytające z rdzenia i ma własne wiązanie: `research.ts`, `translate.ts`,
+`roundtable.ts`, `diagnostics.ts`, `developer.ts`, `apps.ts`, `assistant.ts`,
+`automations.ts`. Każde okno zakłada sobie okno modułu wspólną drogą
+(`zapewnijOknoModulu`), wypełnia panele odpowiedzią rdzenia i zdejmuje treść
+przykładową prototypu. Research ma wykazany cały pion — wniesienie źródła od
+kliknięcia do wiersza w `zrodlo_badania`. Diagnostics pokazuje prawdziwy rejestr
+błędów instalacji. Ta sama droga naprawiła Browser, który wołał wykazy bez
+wskazania okna i dostawał odmowę.
 
 Dziewięć modułów przedsionka TalkIn otwarto po kolei i to przejście ujawniło
 najpoważniejszą usterkę tej rundy: osiem okien przedstawiało dane zmyślone —

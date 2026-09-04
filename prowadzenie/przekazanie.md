@@ -160,6 +160,10 @@ Pełny wykaz: `audyt2-ustalenia-7-kategorii.json`.
   powiadomień jest oknem spoza łańcucha etapu 2, więc zostaje zapowiedziane.
 - Granica 64 gniazd niezwiązanych — ustalenie zostaje otwarte po zdjęciu terminu
   gniazda przed bramką (sekcja 4).
+- Okno produktu niesie 371 kształtów ikon, z czego 195 stoi poza zestawem
+  (`design/zasoby/ikony/`, 152 pliki, 262 kształty). Zestaw nie wiąże znacznika
+  (rozstrzygnięcie Właściciela z 28 sierpnia), więc to miara do zamknięcia
+  w warstwie projektowej, nie usterka produktu.
 - Przycisk „nowy dokument" w oknie Studia (`klient/src/wiazanie/studio.ts:249`)
   gaśnie, gdy okno nie prowadzi jeszcze rozmowy, choć zasada zero blokad
   (`design/zasoby/css/komponenty.css`) każe zostawić go klikalnym i odpowiedzieć

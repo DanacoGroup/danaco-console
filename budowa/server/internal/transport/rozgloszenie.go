@@ -7,13 +7,15 @@ func (s *Serwer) Rozglos(konto string, k protocol.Koperta) int {
 	return s.rozglosPoza(konto, "", k)
 }
 
-/*
-RozglosPoBramce wysyła kopertę do połączeń wskazanego konta, pomijając te, które
-bramki jeszcze nie przeszły. Tędy idzie telemetria rdzenia: opisuje pracę
-Operatora — nazwy procesów, stopień ukończenia — więc gniazdo przed zalogowaniem
-nie ma jej po co dostawać, choć zdarzenie nie ma zamawiającego i konta.
-*/
+// RozglosPoBramce pomija gniazda, które bramki jeszcze nie przeszły: telemetria
+// opisuje pracę Operatora, choć nie ma zamawiającego ani konta.
+//
+// Bez wymogu logowania znacznika przejścia nie dostaje żadne gniazdo, więc
+// rozgłoszenie idzie wtedy do wszystkich.
 func (s *Serwer) RozglosPoBramce(konto string, k protocol.Koperta) int {
+	if !s.ustawienia.dopuszczenie().wymagana {
+		return s.Rozglos(konto, k)
+	}
 	dane, err := protocol.Zakoduj(k)
 	if err != nil {
 		s.ustawienia.Dziennik.Printf("transport: rozgłoszenie %s niezakodowane: %v", k.Type, err)

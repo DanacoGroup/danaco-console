@@ -173,9 +173,26 @@ document.addEventListener('click', (zdarzenie) => {
   if (przycisk !== null) przelaczMenu(przycisk);
 }, true);
 
+/* Cztery przyciski układu okna roboczego stoją we wstążce prototypu, a wydanie
+   nie niesie ani ich obsługi, ani opracowania, które by ją określiło. Zostają
+   z nazwaniem niegotowości, bo zdjęcie zmieniłoby wstążkę wobec prototypu. */
+const UKLAD_OKNA_ROBOCZEGO: Readonly<Record<string, string>> = {
+  'Podział pionowy': 'Dzielenie okna roboczego na kolumny',
+  'Maksymalizuj okno robocze': 'Rozpieranie okna roboczego na całą przestrzeń',
+  'Nowe okno pomocnicze': 'Okno pomocnicze w kolumnie bocznej',
+  'Okno komunikacji': 'Osobne okno rozmowy obok okna roboczego',
+};
+
 document.addEventListener('click', (zdarzenie) => {
   const cel = zdarzenie.target;
   if (!(cel instanceof Element)) return;
+  const uklad = cel.closest<HTMLElement>('[data-etykietka]')?.dataset.etykietka ?? '';
+  const zakres = UKLAD_OKNA_ROBOCZEGO[uklad];
+  if (zakres !== undefined) {
+    zdarzenie.stopPropagation();
+    powiadom(uklad, zakres + ' nie wchodzi do tego wydania.', 'informacja', godzinaZycia(0));
+    return;
+  }
   const modal = cel.closest<HTMLElement>('[data-otworz-modal]')?.dataset.otworzModal;
   if (modal !== undefined) document.querySelector<HTMLDialogElement>(`#${modal}`)?.showModal();
   const przelacznik = cel.closest<HTMLElement>('[data-przelacz]');

@@ -172,13 +172,6 @@ Pełny wykaz: `audyt2-ustalenia-7-kategorii.json`.
   (`design/zasoby/ikony/`, 152 pliki, 262 kształty). Zestaw nie wiąże znacznika
   (rozstrzygnięcie Właściciela z 28 sierpnia), więc to miara do zamknięcia
   w warstwie projektowej, nie usterka produktu.
-- Przycisk „nowy dokument" w oknie Studia (`klient/src/wiazanie/studio.ts:249`)
-  gaśnie, gdy okno nie prowadzi jeszcze rozmowy, choć zasada zero blokad
-  (`design/zasoby/css/komponenty.css`) każe zostawić go klikalnym i odpowiedzieć
-  zdaniem — tak jak robi to przycisk zatrzymania w tym samym pliku. Zmiany nie
-  wprowadzam: okno Studia prowadzi Właściciel własnoręcznie (CLAUDE.md).
-  Pozostałe wygaszenia w kliencie idą w parze ze zdaniem `nieGotowe` i zasady
-  nie łamią.
 
 ## 6. Rozstrzygnięcia czekające na Właściciela
 

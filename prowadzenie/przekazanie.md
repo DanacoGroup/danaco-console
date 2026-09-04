@@ -158,6 +158,10 @@ Pełny wykaz: `audyt2-ustalenia-7-kategorii.json`.
   wydań kieruje na niego zamiast na 1.0.0 z 18 sierpnia. Pliku nie ma jeszcze
   w kanale: wgranie należy do operatora wydania, a złożenie witryny melduje tę
   pozycję jako NIESPRAWDZONĄ, póki poświadczeń kanału nie ma w środowisku.
+  Dwie pozycje Windows z tego samego wykazu są natomiast sprawdzone ruchem:
+  kreator uruchomiony na tej maszynie pobrał z kanału
+  `Danaco Console_2.0.0_hybryda_x64-setup.exe` — 2 598 033 bajty, instalka NSIS
+  PE32 — więc kanał, wykaz i pobranie działają. Braku dotyczy wyłącznie `.deb`.
 - Rodzina `notification.*` ma wołającego własnego: dzwonek szyny otwiera centrum
   powiadomień (rozstrzygnięcie 46).
 - Pięć opracowań, których spis żądał, a repozytorium nie niosło, wróciło z jego
@@ -182,6 +186,16 @@ Pełny wykaz: `audyt2-ustalenia-7-kategorii.json`.
 | 5. Studio odpowiada prototypowi | do oceny Właściciela, materiał zebrany | 158 ze 175 klas prototypu Studia stoi w żywym oknie; 17 pozostałych to stany wywoływane, każdy z wiązaniem albo regułą arkusza |
 | 6. okno obecne nazywa swoją niegotowość | wykazane | `#cd-mobile` odpowiada zdaniem „To okno nie wchodzi do tego wydania" |
 | 7. przejście bez ślepego zaułka | wykazane | uruchomienie → bramka → logowanie → Centrum → przedsionek → Studio, zero błędów konsoli |
+
+Kreator instalacji też przeszedł na tej maszynie, pod `xvfb-run`. Pięć kroków
+z sześciu wykonał do końca: odczytał parametry urządzenia (Ubuntu 26.4.0,
+Intel/AMD x64, 35,0 GB wolnego), wygasił „Dalej" do czasu akceptacji licencji,
+zaproponował katalogi dopiero po podaniu `LOCALAPPDATA` — bez tej zmiennej mówi
+wprost „Odmowa: zmienna środowiskowa LOCALAPPDATA nie jest ustawiona", zamiast
+zmyślać ścieżkę — prawo zapisu potwierdził próbą zapisu, po czym pobrał z kanału
+instalkę wydania. Zatrzymał się na kroku 5 z powodem `system-nieobslugiwany`:
+„Instalka wydania jest plikiem wykonywalnym Windows — na tym systemie nie ma jej
+czym uruchomić". Nieprzebadane zostaje wyłącznie to ostatnie uruchomienie.
 
 Kryterium 1 wykazane na tej maszynie, bez Windows: powłoka złożona
 `cargo build --release` ze wskazaniem `DANACO_HOST_WDROZENIA=127.0.0.1`,

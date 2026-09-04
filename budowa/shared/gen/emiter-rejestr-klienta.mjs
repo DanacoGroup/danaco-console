@@ -8,6 +8,9 @@ import { linieNaglowka } from './naglowek.mjs';
 export function emitujRejestrKlienta(model) {
   const naglowek = linieNaglowka(model.kontrakt, 'rejestr-komend.ts');
   const wpisy = model.komendy.map((k) => `  Command.${k.staly},`);
+  const wymagane = model.komendy
+    .filter((k) => k.polaWymagane.length > 0)
+    .map((k) => `  [Command.${k.staly}, [${k.polaWymagane.map((p) => `'${p}'`).join(', ')}]],`);
   return [
     '/*',
     ...naglowek.map((l) => (l ? ` * ${l}` : ' *')),
@@ -19,6 +22,11 @@ export function emitujRejestrKlienta(model) {
     'export const REJESTR_KOMEND: readonly Command[] = [',
     ...wpisy,
     '];',
+    '',
+    '/** Pola, bez których rdzeń odmawia operacji — katalog podaje z nich kształt żądania. */',
+    'export const POLA_WYMAGANE: ReadonlyMap<Command, readonly string[]> = new Map([',
+    ...wymagane,
+    ']);',
     '',
   ].join('\n');
 }

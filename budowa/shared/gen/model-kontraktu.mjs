@@ -68,6 +68,7 @@ function komendy(zrodlo) {
     staly: naPascal(k.typ),
     typZadania: nazwaZadania(k.typ),
     typWyniku: nazwaWyniku(k.typ),
+    polaWymagane: (k.zadanie ?? []).filter((p) => p.wymagane).map((p) => p.nazwa),
   }));
 }
 

@@ -7,7 +7,7 @@ import type { Odsubskrybuj } from '../polaczenie/magistrala-zdarzen.ts';
 import type { Kanal } from '../protokol/kanal.ts';
 import { wywolaj } from '../protokol/wywolanie.ts';
 import { oglos } from './ogloszenie.ts';
-import { REJESTR_KOMEND } from './rejestr-komend.ts';
+import { POLA_WYMAGANE, REJESTR_KOMEND } from './rejestr-komend.ts';
 
 interface PozycjaKatalogu {
   komenda: Command;
@@ -93,6 +93,24 @@ export function zwiazKatalogModulu(
   parametry.setAttribute('aria-label', 'Parametry JSON');
   sekcja.append(parametry);
 
+  /* Rdzeń odmawia operacji bez pól wymaganych, a ich nazw nie da się zgadnąć
+     z samej nazwy komendy. Wybór operacji podaje więc szkielet żądania;
+     wskazanie okna katalog dokłada sam, więc z podpowiedzi schodzi. */
+  const podpowiedzKsztaltu = (): void => {
+    const komenda = komendaPoWartosci.get(wybor.value);
+    if (komenda === undefined) return;
+    const pola = (POLA_WYMAGANE.get(komenda) ?? []).filter((p) => p !== 'windowId');
+    if (pola.length === 0) {
+      parametry.value = '';
+      parametry.placeholder = 'Operacja nie wymaga parametrów';
+      return;
+    }
+    parametry.placeholder = 'Parametry JSON';
+    parametry.value = `{\n${pola.map((p) => `  "${p}": ""`).join(',\n')}\n}`;
+  };
+  wybor.addEventListener('change', podpowiedzKsztaltu);
+  podpowiedzKsztaltu();
+
   const uruchom = dokument.createElement('button');
   uruchom.className = 'dn-btn dn-btn--sygnal dn-btn--sm';
   uruchom.type = 'button';
@@ -132,6 +150,7 @@ export function zwiazKatalogModulu(
 
   return () => {
     uruchom.removeEventListener('click', naKliknieciu);
+    wybor.removeEventListener('change', podpowiedzKsztaltu);
     sekcja.remove();
   };
 }

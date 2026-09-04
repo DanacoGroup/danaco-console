@@ -2103,3 +2103,41 @@ nim stoi zdanie o braku wiązania — zostają do czasu, aż pasek zacznie wybie
 **Konsekwencje.** Kryterium 6 bramki obejmuje odtąd wszystkie okna modułowe,
 nie tylko platformowe. Miara treści okna po naprawie: Library 1081 → 714 znaków,
 Browser 1962 → 1350, Workspace 1520 → 1391 — różnicę stanowiła treść zmyślona.
+
+## 48. Rejestr sesji niesie granicę konta, bo bazy nie widzi
+
+**Rzecz.** Granica konta była domykana w warstwie zapytań: jeden `WarunekKonta`
+na wszystkie tabele niosące pracę Operatora. Sprawdzian ruchem — dwa konta
+założone przez protokół, każde z własną sesją i własnym projektem — pokazał, że
+projekty są odseparowane, a sesje nie: każde konto widziało sesje obu.
+
+**Przyczyna.** `session.list` nie pyta bazy. Czyta `Rejestr().Sesje()` — rejestr
+sesji żywych, który rdzeń trzyma w pamięci obok bazy i który konta nie znał.
+Zapytanie `listaSesji` warunek konta ma i stosuje poprawnie; tamtędy jednak
+wykaz nie szedł. Tą samą drogą szły jeszcze cztery odczyty: wykaz okien bez
+wskazania sesji, licznik sesji na kartach środowisk, wykaz sesji czynnych
+przedsionka i żywy stan sesji (`presence`).
+
+**Rozważone warianty.**
+
+1. Przepiąć wykaz na zapytanie bazy. Odrzucone: rejestr niesie stan żywy —
+   okna, procesy, bieg tury — którego w bazie nie ma, więc wykaz z bazy byłby
+   uboższy o to, po co rejestr powstał.
+2. Przecinać wykaz rejestru z wykazem bazy przy każdym wywołaniu. Odrzucone:
+   granica zależałaby od dwóch źródeł naraz i rozjeżdżała się przy każdej sesji
+   założonej między jednym zapytaniem a drugim.
+3. Dać rejestrowi konto. Przyjęte.
+
+**Decyzja.** `session.Sesja` niesie `KontoId`. Wpisuje je zakładanie sesji
+(z kontekstu żądania) i odtworzenie stanu (z kontekstu konta, po którym pętla
+odtworzenia i tak przechodzi). Odczyty idą przez `Rejestr().SesjeKonta(konto)`.
+
+**Zgodność z regułą bazy.** `WarunekKonta` tłumaczy zero i NULL na konto
+najstarsze, więc rejestr musi rozstrzygać tak samo — robi to `kontoRejestru`,
+jedna funkcja dla wszystkich pięciu odczytów. Konto zapisane w rejestrze jest
+już rozstrzygnięte, więc porównanie jest dokładne, bez drugiej reguły obok.
+
+**Konsekwencje.** Wykazane ruchem po naprawie: dwa konta, każde widzi jedną
+swoją sesję i jeden swój projekt, przecieków brak. Reguła na przyszłość: rejestr
+w pamięci jest drugą drogą do danych Operatora i granica musi iść nią tak samo
+jak zapytaniem — sam `WarunekKonta` w SQL jej nie domyka.

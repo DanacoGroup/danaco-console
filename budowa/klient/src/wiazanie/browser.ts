@@ -126,6 +126,14 @@ function zdejmijTrescPrzykladowa(korzen: Element): void {
   for (const wezel of korzen.querySelectorAll('[title="Wskaźnik obecności AI"]')) {
     wezel.remove();
   }
+  /* Pliki i zadania w tle to wyposażenie wspólne okna, którego przeglądanie nie
+     wypełnia — panel zadań niesie w prototypie licznik wzięty znikąd. Oba stoją
+     ukryte, więc przejście po oknach ich nie widzi; zdanie wchodzi mimo to. */
+  for (const identyfikator of ['panel-pliki', 'panel-zadania']) {
+    const cialo = korzen.querySelector(`#${identyfikator} .sta-okno-tresc`);
+    if (cialo === null) continue;
+    postawStanPusty(cialo, 'Rdzeń nie podaje tego wykazu dla okna przeglądania.');
+  }
 }
 
 async function wypelnijKarty(kanal: Kanal, korzen: Element, idOkna: string): Promise<void> {

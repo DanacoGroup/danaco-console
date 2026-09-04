@@ -612,11 +612,15 @@ export function zwiazCentrum(kanal: Kanal | undefined = globalThis.DanacoKanal):
     if (kodSrodowiska === '') return;
     const srodowisko = katalogSrodowisk.get(kodSrodowiska);
     if (srodowisko === undefined) {
+      wrocDoCentrum();
       oglos('Środowisko', 'Rejestr rdzenia nie zna tego środowiska, '
         + 'więc przedsionek nie ma czego pokazać.');
       return;
     }
     if ((srodowisko.moduleCodes?.length ?? 0) === 0) {
+      /* Bez powrotu na ekran główny zostaje przedsionek poprzedniego
+         środowiska: Operator wskazał jedno, a widzi sesje drugiego. */
+      wrocDoCentrum();
       oglos(srodowisko.name, zdanieBezModulow(srodowisko));
       return;
     }

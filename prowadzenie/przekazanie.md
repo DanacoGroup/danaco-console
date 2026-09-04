@@ -45,6 +45,16 @@ braki produktowe. Skrypt przebiegu leży w materiale przekazania.
 
 ## 3. Granica konta — domknięta
 
+**Sprawdzian ruchem, 4.09.** Dwa konta założone przez protokół, każde z własną
+sesją i własnym projektem, wykazały przeciek: projekty były odseparowane,
+a sesje nie — każde konto widziało sesje obu. Przyczyna leżała poza SQL:
+`session.list` czyta rejestr sesji żywych trzymany w pamięci rdzenia, który
+konta nie znał; tą samą drogą szły jeszcze cztery odczyty. Zamknięte
+rozstrzygnięciem 48 — rejestr niesie `KontoId`, odczyty idą przez
+`SesjeKonta`. Powtórzony sprawdzian: każde konto widzi wyłącznie swoje,
+przecieków brak. **Reguła stąd:** sam `WarunekKonta` w zapytaniach granicy nie
+domyka; każdy rejestr trzymany w pamięci jest drugą drogą do tych samych danych.
+
 **Miara.** Platforma prowadzi wiele kont od migracji 406. Granica konta objęła do
 tej sesji cztery tabele: trzy tabele bramki i karty sesji. Rozpoznanie wszystkich
 418 tabel wykazało **373 tabele niosące pracę Operatora**; z nich **172 to

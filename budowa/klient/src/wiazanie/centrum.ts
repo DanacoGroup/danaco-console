@@ -19,6 +19,7 @@ import { wywolaj } from '../protokol/wywolanie.ts';
 import { miaraModulow, miaraSesji } from '../model/miary.ts';
 import { zwiazWyborModulu } from './wybor-modulu.ts';
 import { oglos } from './ogloszenie.ts';
+import { zwiazPowiadomienia } from './powiadomienia.ts';
 import { zwiazOkno, zwiazOknoStojace } from './okno-modulu.ts';
 import {
   nazwijKarte,
@@ -120,6 +121,7 @@ export function zwiazCentrum(kanal: Kanal | undefined = globalThis.DanacoKanal):
     void odswiezWykaz(kanal, wezly.wykazSesji, wzorWiersza);
   };
   odswiez();
+  zwiazPowiadomienia(kanal);
   void wypelnijKomponenty(kanal);
   void wypelnijProjekty(kanal);
   void wypelnijSrodowiska(kanal, wezly.obszar);

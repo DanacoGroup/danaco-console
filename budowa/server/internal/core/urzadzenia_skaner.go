@@ -410,9 +410,9 @@ func odmowaWia(rozpoznanie string) error {
 	case strings.HasPrefix(tresc, "BRAK-STEROWNIKA"):
 		return protocol.JakoError(protocol.NowyBlad(shared.ErrorCodeChannelUnavailable,
 			"moduł Studio: skaner jest w wykazie WIA, ale nie da się z nim połączyć — "+
-				"to brak albo usterka sterownika WIA urządzenia. Naprawa: doinstalować "+
-				"sterownik producenta ze wsparciem WIA (sam sterownik TWAIN nie "+
-				"wystarczy). Diagnostyka warstwy: "+tresc))
+				"to brak albo usterka sterownika WIA urządzenia; sam sterownik TWAIN "+
+				"nie wystarcza. Zgłoś to wraz z modelem skanera. Diagnostyka "+
+				"warstwy: "+tresc))
 	case strings.HasPrefix(tresc, "TRANSFER-NIEUDANY"):
 		return protocol.JakoError(protocol.NowyBlad(shared.ErrorCodeChannelUnavailable,
 			"moduł Studio: skaner przyjął nastawy, ale nie oddał obrazu. Naprawa: "+
@@ -434,7 +434,7 @@ func bladWarstwySane(err error) error {
 			"moduł Studio: skanowanie na Linuksie idzie warstwą SANE, a serwer sięga po "+
 				"nią programem `scanimage` — tego programu na tej maszynie nie ma. Bez "+
 				"niego serwer nie ma ŻADNEJ drogi do skanera na Linuksie (WIA na tym "+
-				"systemie nie istnieje). Naprawa: zainstalować "+brak.Narzedzie.Pakiet+
+				"systemie nie istnieje). Instalacja serwera jest niepełna — brakuje "+brak.Narzedzie.Pakiet+
 				". Droga, która działa bez tego: zeskanuj materiał programem systemu "+
 				"i dołóż plik komendą `studio.ingest.queue.add`."))
 	}
@@ -451,7 +451,7 @@ func bladWarstwyWia(err error) error {
 			"moduł Studio: skanowanie na Windowsie idzie warstwą WIA, a serwer sięga po "+
 				"nią PowerShellem — programu `pwsh` na tej maszynie nie ma. Bez niego "+
 				"serwer nie ma ŻADNEJ drogi do skanera Windows (SANE na tym systemie nie "+
-				"istnieje). Naprawa: zainstalować "+brak.Narzedzie.Pakiet+". Droga, "+
+				"istnieje). Instalacja serwera jest niepełna — brakuje "+brak.Narzedzie.Pakiet+". Droga, "+
 				"która działa bez tego: zeskanuj materiał programem systemu i dołóż "+
 				"plik komendą `studio.ingest.queue.add`."))
 	}

@@ -35597,7 +35597,7 @@ export interface TerminalScriptLintResponse {
   formatted?: string;
   /** Czy program analizy lezy na maszynie rdzenia; falsz znaczy ze tresci nie sprawdzono wcale */
   analyzerAvailable: boolean;
-  /** Nazwa programu analizy wlasciwego tej powloce; podawana takze wtedy, gdy programu nie ma, zeby Operator wiedzial, co doinstalowac */
+  /** Nazwa programu analizy wlasciwego tej powloce; podawana takze wtedy, gdy programu nie ma, zeby bylo wiadomo, czego brakuje w instalacji */
   analyzer: string;
 }
 

@@ -377,7 +377,7 @@ func odmowaDrukuWindows(rozpoznanie, plik string) error {
 			"druk lokalny: system nie przyjął zlecenia druku: "+tresc+
 				". Częsty powód przy dokumencie PDF: żaden program nie ma zarejestrowanego "+
 				"czasownika drukowania, więc powłoka systemu nie wie, czym go wydrukować; "+
-				"naprawa: zainstalować czytnik PDF obsługujący druk z powłoki."))
+				"instalacja jest niepełna — brakuje czytnika PDF obsługującego druk z powłoki."))
 	}
 }
 
@@ -410,7 +410,7 @@ func bladWarstwyDruku(err error) error {
 			" (" + brak.Narzedzie.Program + "), a bez niego serwer nie ma drogi do drukarki " +
 			"systemowej — plik wydany do druku pozostanie plikiem"
 		if brak.Narzedzie.Pakiet != "" {
-			zdanie += "; naprawa: zainstalować " + brak.Narzedzie.Pakiet
+			zdanie += "; instalacja serwera jest niepełna — brakuje " + brak.Narzedzie.Pakiet
 		}
 		return protocol.JakoError(protocol.NowyBlad(shared.ErrorCodeChannelUnavailable, zdanie))
 	}

@@ -209,8 +209,8 @@ func (b *BrakSilnika) opisNaprawy() string {
 			"` katalog pusty i pozwolić bibliotece pobrać własne wydanie modelu `" +
 			KluczModel + "`"
 	default:
-		return "zainstalować bibliotekę poleceniem `python3 -m pip install fastembed` " +
-			"w interpreterze wskazanym ustawieniem `" + KluczProgram + "` " +
+		return "instalacja serwera jest niepełna — w interpreterze wskazanym " +
+			"ustawieniem `" + KluczProgram + "` brakuje biblioteki `fastembed` " +
 			"(pusta wartość znaczy `python3` ze ścieżki wyszukiwania systemu)"
 	}
 }
@@ -229,10 +229,10 @@ func (b *BrakSilnika) opisNaprawyDolozonej() string {
 			"tokeny; albo wskazać tym ustawieniem katalog pusty i pozwolić bibliotece " +
 			"pobrać wydanie własne"
 	default:
-		return "zainstalować biblioteki poleceniem `python3 -m pip install " +
-			b.pakietyDoInstalacji() + "` w interpreterze wskazanym ustawieniem `" +
-			KluczProgram + "` (pusta wartość znaczy `python3` ze ścieżki wyszukiwania " +
-			"systemu)"
+		return "instalacja serwera jest niepełna — w interpreterze wskazanym " +
+			"ustawieniem `" + KluczProgram + "` brakuje bibliotek " +
+			b.pakietyDoInstalacji() + " (pusta wartość znaczy `python3` ze ścieżki " +
+			"wyszukiwania systemu)"
 	}
 }
 

@@ -479,7 +479,7 @@ func (a *adapterStudia) oczyscMaterial(ctx context.Context, sciezka string,
 		return "", pusto, protocol.JakoError(protocol.NowyBlad(shared.ErrorCodeChannelUnavailable,
 			"moduł Studio: nastawy pozycji żądają obróbki wstępnej obrazu, a programu "+
 				narzedzieCzyszczeniaSkanu.Nazwa+" ("+narzedzieCzyszczeniaSkanu.Program+
-				") nie ma na tej maszynie; naprawa: zainstalować pakiet "+
+				") nie ma na tej maszynie; instalacja serwera jest niepełna — brakuje pakietu "+
 				narzedzieCzyszczeniaSkanu.Pakiet+
 				". Droga, która działa bez niego: wyłączyć w nastawach prostowanie, "+
 				"odszumianie, progowanie i przycinanie marginesów — rozpoznanie pobiegnie "+

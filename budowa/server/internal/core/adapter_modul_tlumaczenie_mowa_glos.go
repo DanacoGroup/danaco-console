@@ -47,7 +47,8 @@ func dobierzSyntezator(jezyk string) (wyborSyntezatora, error) {
 		"nie ma czym zsyntezować mowy — żaden z dwóch silników nie jest gotowy. " +
 			"Piper (głos dobry): " + powodPipera + ". " +
 			"Espeak-ng (głos zapasowy): nie ma binarium " + espeak.Program +
-			" (wskazanie: zmienna " + zmiennaEspeaka + " albo nazwa espeak-ng w PATH; naprawa: apt install espeak-ng)")
+			" (wskazanie: zmienna " + zmiennaEspeaka + " albo nazwa espeak-ng w PATH; " +
+			"instalacja serwera jest niepełna — brakuje pakietu espeak-ng)")
 }
 
 // programPipera wskazuje binarium pipera: ścieżka ze zmiennej środowiska, potem goła nazwa w PATH, na końcu miejsce typowe arsenału. Ścieżkę ze zmiennej bierze się wprost i bez sprawdzania na dysku — o wykonywalności rozstrzyga `Stoi`.

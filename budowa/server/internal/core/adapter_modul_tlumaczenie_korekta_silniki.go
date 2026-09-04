@@ -390,7 +390,7 @@ func (a *adapterTlumaczenia) slownikHunspella(ctx context.Context,
 	dostepne := slownikiZWykazu(wynik.Diagnostyka)
 	if len(dostepne) == 0 {
 		powod := "hunspell stoi na tej maszynie, ale nie wypisał ani jednego słownika; " +
-			"naprawa: doinstalować pakiet słownika języka panelu (hunspell-pl, hunspell-en-us)"
+			"instalacja jest niepełna — brakuje pakietów hunspell-pl i hunspell-en-us"
 		if blad != nil {
 			powod += ". Diagnostyka wywołania: " + blad.Error()
 		}
@@ -419,7 +419,7 @@ func (a *adapterTlumaczenia) slownikHunspella(ctx context.Context,
 	}
 	return "", bladKorektyZewnetrznej("hunspell nie ma słownika dla języka panelu „" + jezyk +
 		"”; słowniki, które stoją na tej maszynie: " + strings.Join(dostepne, ", ") +
-		"; naprawa: doinstalować pakiet słownika tego języka")
+		"; instalacja jest niepełna — brakuje pakietu słownika tego języka")
 }
 
 // slownikiZWykazu czyta nazwy słowników z wykazu `hunspell -D`. Wykaz idzie

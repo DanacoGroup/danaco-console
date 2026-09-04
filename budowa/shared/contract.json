@@ -74618,7 +74618,7 @@
           "nazwa": "analyzer",
           "typ": "string",
           "wymagane": true,
-          "opis": "Nazwa programu analizy wlasciwego tej powloce; podawana takze wtedy, gdy programu nie ma, zeby Operator wiedzial, co doinstalowac"
+          "opis": "Nazwa programu analizy wlasciwego tej powloce; podawana takze wtedy, gdy programu nie ma, zeby bylo wiadomo, czego brakuje w instalacji"
         }
       ]
     },

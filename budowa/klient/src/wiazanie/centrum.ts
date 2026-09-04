@@ -932,6 +932,12 @@ function opiszGloweKarty(wnetrze: HTMLElement, nazwaModulu: string, nazwaSesji: 
   if (nazwa !== null) nazwa.textContent = nazwaModulu;
   const meta = wnetrze.querySelector('.cd-modul-glowa .dn-meta');
   if (meta !== null) meta.textContent = nazwaSesji === '' ? '' : 'sesja: ' + nazwaSesji;
+  /* Pas kontekstu niesie w prototypie `aria-label` na dzielniku bez roli, czego
+     ARIA zabrania. Rola grupy czyni z niego pojemnik nazwany — poprawka stoi tu,
+     bo znacznik jest powielony w dziewiętnastu plikach warstwy projektowej. */
+  for (const pas of wnetrze.querySelectorAll('.sta-kom-kontekst[aria-label]')) {
+    pas.setAttribute('role', 'group');
+  }
 }
 
 const KOMPONENTY = new Map<string, Component>();

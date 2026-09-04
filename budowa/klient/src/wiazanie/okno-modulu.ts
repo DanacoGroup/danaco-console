@@ -107,7 +107,10 @@ export function zdejmijSterowanieWspolne(cialo: HTMLElement): void {
 export function uzgodnijPrzelacznikiPaneli(cialo: HTMLElement, _bezPokrycia: string[]): void {
   for (const przelacznik of cialo.querySelectorAll<HTMLElement>('[data-panel-toggle]')) {
     const panel = cialo.querySelector(`#${przelacznik.dataset.panelToggle ?? ''}`);
-    przelacznik.setAttribute('aria-checked', String(panel?.hasAttribute('hidden') === false));
+    /* Przycisk bez roli nie przyjmuje `aria-checked`; stan wciśnięcia niesie
+       `aria-pressed`, jedyny atrybut przełącznika dopuszczony na przycisku. */
+    przelacznik.setAttribute('aria-pressed', String(panel?.hasAttribute('hidden') === false));
+    przelacznik.removeAttribute('aria-checked');
   }
 }
 

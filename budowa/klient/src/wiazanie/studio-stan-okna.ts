@@ -162,5 +162,9 @@ function zbierzWezly(korzen: ParentNode): WezlyStanu | null {
     if (tetno !== null) wzorTetna ??= tetno.cloneNode(true) as Element;
   }
   const tryb = korzen.querySelector('.sta-chip--tryb');
+  /* Znacznik prototypu daje temu przyciskowi treść pustą, a nazwę bierze on
+     dopiero ze stanu okna. Do tej chwili jest przyciskiem bez nazwy, więc
+     czytnik ekranu nie ma czego zapowiedzieć. */
+  if (tryb instanceof HTMLElement) tryb.setAttribute('aria-label', 'Tryb uprawnień okna');
   return { stan, plakietki, tetno: wzorTetna, tryb: tryb instanceof HTMLElement ? tryb : null };
 }

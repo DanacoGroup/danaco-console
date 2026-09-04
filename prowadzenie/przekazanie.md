@@ -249,7 +249,7 @@ python3 ~/budowa/narzedzia/pokrycie-kontraktu.py
 ```
 
 Pełny `go test -count=1 -timeout 50m ./server/...` przechodzi w całości i tak go
-sprawdzać przed scaleniem; pakiet `core` idzie w nim niecałe dziesięć minut.
+sprawdzać przed scaleniem; cały przebieg idzie w nim niecałe dziewięć minut.
 Wcześniej szedł ponad pół godziny: profil wykazał, że dwie trzecie czasu zjadało
 parsowanie SQL migracji przy każdym z 433 montaży, więc uprząż bierze teraz bazę
 z wzorca złożonego raz na przebieg pakietu. Dziennik startu rdzenia ma mówić

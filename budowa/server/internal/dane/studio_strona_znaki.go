@@ -37,7 +37,7 @@ const (
 	symbolZapiszZasade = `INSERT INTO autozamiana_znaku_studio
 	                      (skrot, zamiennik, czynna, fabryczna, konto_id)
 	                      VALUES (?, ?, ?, 0, ` + WskazanieKonta + `)
-	                      ON CONFLICT(skrot) DO UPDATE SET
+	                      ON CONFLICT(skrot, COALESCE(konto_id, 0)) DO UPDATE SET
 	                          zamiennik = excluded.zamiennik,
 	                          czynna = excluded.czynna,
 	                          zaktualizowano = strftime('%Y-%m-%dT%H:%M:%fZ','now')

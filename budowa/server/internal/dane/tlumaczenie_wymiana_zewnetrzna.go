@@ -262,7 +262,7 @@ func (r *repozytoriumTlumaczen) ZapiszPolitykePivota(ctx context.Context,
 		if _, err := transakcja.ExecContext(ctx, `INSERT INTO polityka_pivota
 			(zasieg, zasieg_id, jezyk_domyslny, zaktualizowano, konto_id)
 			VALUES (?, ?, ?, ?, `+WskazanieKonta+`)
-			ON CONFLICT(zasieg, zasieg_id) DO UPDATE SET
+			ON CONFLICT(zasieg, zasieg_id, COALESCE(konto_id, 0)) DO UPDATE SET
 				jezyk_domyslny = excluded.jezyk_domyslny,
 				zaktualizowano = excluded.zaktualizowano
 			WHERE `+WarunekKonta,

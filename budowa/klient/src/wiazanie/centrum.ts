@@ -1429,8 +1429,12 @@ function zdejmijZapowiedziPrototypu(): void {
   }
 }
 
+/* Szukania w oknie nie obsługuje ani wiązanie, ani biblioteka warstwy
+   projektowej, a kontrakt nie ma komendy, po której zakres tego szukania
+   dałoby się poznać. Przycisk schodzi zamiast stać martwy. */
 const DROGI_BEZ_POKRYCIA = [
   '.cd-sekcja-glowa [data-operacja]',
+  '[data-etykietka="Szukaj w oknie"]',
 ];
 
 function zdejmijDrogiBezPokrycia(): void {

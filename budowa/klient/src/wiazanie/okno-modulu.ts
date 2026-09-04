@@ -1,10 +1,17 @@
 // Wiązanie karty okna roboczego z oknem komunikacji rdzenia wraz z wpisami
 // wspólnymi wiązaniom modułów. Znacznik niesie biblioteka Właściciela.
-import { Command } from '../../../shared/contract.ts';
+import {
+  Command,
+  ExecutionEnv,
+  PermissionMode,
+  WindowRole,
+  WindowStatus,
+} from '../../../shared/contract.ts';
 import type { Kanal } from '../protokol/kanal.ts';
 import { wywolaj } from '../protokol/wywolanie.ts';
 import { oglos } from './ogloszenie.ts';
-import { przypiszOknoKomunikacji } from './okna-robocze.ts';
+import { kartyOkna, oknaRobocze, przypiszOknoKomunikacji } from './okna-robocze.ts';
+import { zapewnijSesje } from './sesja-biezaca.ts';
 
 export function zwiazOkno(
   kanal: Kanal,
@@ -184,4 +191,58 @@ export function wpiszTekstAlboZdejmij(wezel: Element | null, wartosc: string): v
     return;
   }
   zdejmijAlboPostaw(wezel, wartosc !== '');
+}
+
+/* Moduł bez okna nie ma czym wołać komend rdzenia: wykaz kart, źródeł czy
+   ustaleń odmawia bez wskazania okna. Droga jest jedna dla wszystkich modułów. */
+export async function zapewnijOknoModulu(
+  kanal: Kanal,
+  idKarty: string,
+  kodModulu: string,
+  nazwaSesji: string,
+  stojace: string,
+): Promise<string> {
+  if (stojace !== '') return stojace;
+  const idSesji = await zapewnijSesje(kanal, idKarty, nazwaSesji);
+  if (idSesji === '') return '';
+  const moduly = await wywolaj(kanal, Command.ModuleList, {});
+  const idModulu = moduly.wynik?.modules.find((m) => m.code === kodModulu)?.id ?? '';
+  if (idModulu === '') return '';
+  const wolne = await wskazOknoWolneModulu(kanal, idSesji, idModulu);
+  if (wolne !== '') {
+    przypiszOknoKomunikacji(idKarty, wolne);
+    return wolne;
+  }
+  const kanaly = await wywolaj(kanal, Command.ChannelList, { enabledOnly: true });
+  const idKanalu = kanaly.wynik?.channels[0]?.id ?? '';
+  if (idKanalu === '') return '';
+  const okno = await wywolaj(kanal, Command.WindowCreate, {
+    sessionId: idSesji,
+    moduleId: idModulu,
+    modelChannelId: idKanalu,
+    workingDirs: [],
+    executionEnv: ExecutionEnv.Local,
+    permissionMode: PermissionMode.Manual,
+    windowRole: WindowRole.Standalone,
+  });
+  const powstale = okno.wynik?.window.id ?? '';
+  if (powstale !== '') przypiszOknoKomunikacji(idKarty, powstale);
+  return powstale;
+}
+
+async function wskazOknoWolneModulu(kanal: Kanal, idSesji: string, idModulu: string): Promise<string> {
+  const odpowiedz = await wywolaj(kanal, Command.WindowList, {
+    sessionId: idSesji,
+    status: WindowStatus.Open,
+  });
+  if (!odpowiedz.udany || odpowiedz.wynik === undefined) return '';
+  const zajete = new Set<string>();
+  for (const okno of oknaRobocze()) {
+    for (const karta of kartyOkna(okno)) {
+      if (karta.idOknaKomunikacji !== '') zajete.add(karta.idOknaKomunikacji);
+    }
+  }
+  return odpowiedz.wynik.windows.find(
+    (okno) => okno.moduleId === idModulu && !zajete.has(okno.id),
+  )?.id ?? '';
 }

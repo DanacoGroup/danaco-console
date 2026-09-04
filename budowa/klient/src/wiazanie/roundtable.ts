@@ -2,20 +2,19 @@
 
 import {
   Command,
-  ExecutionEnv,
-  PermissionMode,
-  WindowRole,
-  WindowStatus,
   type RoundtableArgumentNode,
   type RoundtableParticipant,
 } from '../../../shared/contract.ts';
 import type { Odsubskrybuj } from '../polaczenie/magistrala-zdarzen.ts';
 import type { Kanal } from '../protokol/kanal.ts';
 import { wywolaj } from '../protokol/wywolanie.ts';
-import { kartyOkna, oknaRobocze, przypiszOknoKomunikacji } from './okna-robocze.ts';
-import { opiszNaglowek, zdejmijSterowanieWspolne, zdejmijTrescWspolna } from './okno-modulu.ts';
+import {
+  opiszNaglowek,
+  zapewnijOknoModulu,
+  zdejmijSterowanieWspolne,
+  zdejmijTrescWspolna,
+} from './okno-modulu.ts';
 import { zwiazKatalogModulu } from './katalog-modulu.ts';
-import { zapewnijSesje } from './sesja-biezaca.ts';
 
 const KOD_MODULU = 'roundtable';
 
@@ -61,7 +60,7 @@ export function zwiazDebate(
   };
 
   void (async (): Promise<void> => {
-    idOkna = await zapewnijOkno(kanal, idKarty, idOkna);
+    idOkna = await zapewnijOknoModulu(kanal, idKarty, KOD_MODULU, 'Roundtable', idOkna);
     if (idOkna === '') {
       niegotowe(panel(korzen, 'panel-debate'), 'Rdzeń nie dał okna debaty dla tej karty.');
       return;
@@ -118,52 +117,6 @@ function zdejmijTrescPrzykladowa(korzen: Element): void {
   niegotowe(panel(korzen, 'panel-plan'), 'Plan debaty czeka na pierwszą turę.');
   niegotowe(panel(korzen, 'panel-artefakty'), 'Rdzeń nie podaje wytworów tej debaty.');
   niegotowe(panel(korzen, 'panel-zadania'), 'Rdzeń nie podaje zadań debaty dla tego okna.');
-}
-
-async function zapewnijOkno(kanal: Kanal, idKarty: string, stojace: string): Promise<string> {
-  if (stojace !== '') return stojace;
-  const idSesji = await zapewnijSesje(kanal, idKarty, 'Roundtable');
-  if (idSesji === '') return '';
-  const moduly = await wywolaj(kanal, Command.ModuleList, {});
-  const idModulu = moduly.wynik?.modules.find((m) => m.code === KOD_MODULU)?.id ?? '';
-  if (idModulu === '') return '';
-  const wolne = await wskazOknoWolne(kanal, idSesji, idModulu);
-  if (wolne !== '') {
-    przypiszOknoKomunikacji(idKarty, wolne);
-    return wolne;
-  }
-  const kanaly = await wywolaj(kanal, Command.ChannelList, { enabledOnly: true });
-  const idKanalu = kanaly.wynik?.channels[0]?.id ?? '';
-  if (idKanalu === '') return '';
-  const okno = await wywolaj(kanal, Command.WindowCreate, {
-    sessionId: idSesji,
-    moduleId: idModulu,
-    modelChannelId: idKanalu,
-    workingDirs: [],
-    executionEnv: ExecutionEnv.Local,
-    permissionMode: PermissionMode.Manual,
-    windowRole: WindowRole.Standalone,
-  });
-  const powstale = okno.wynik?.window.id ?? '';
-  if (powstale !== '') przypiszOknoKomunikacji(idKarty, powstale);
-  return powstale;
-}
-
-async function wskazOknoWolne(kanal: Kanal, idSesji: string, idModulu: string): Promise<string> {
-  const odpowiedz = await wywolaj(kanal, Command.WindowList, {
-    sessionId: idSesji,
-    status: WindowStatus.Open,
-  });
-  if (!odpowiedz.udany || odpowiedz.wynik === undefined) return '';
-  const zajete = new Set<string>();
-  for (const okno of oknaRobocze()) {
-    for (const karta of kartyOkna(okno)) {
-      if (karta.idOknaKomunikacji !== '') zajete.add(karta.idOknaKomunikacji);
-    }
-  }
-  return odpowiedz.wynik.windows.find(
-    (okno) => okno.moduleId === idModulu && !zajete.has(okno.id),
-  )?.id ?? '';
 }
 
 async function wypelnijModele(kanal: Kanal, korzen: Element, idOkna: string): Promise<void> {

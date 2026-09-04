@@ -102,7 +102,8 @@ const (
 	zapiszWersjeRozszerzenia = `INSERT INTO wersja_rozszerzenia
 	                            (rozszerzenie_kod, wersja, dziennik_zmian, paczka_odwolanie, utworzono, konto_id)
 	                            VALUES (?, ?, ?, ?, ?, ` + WskazanieKonta + `)
-	                            ON CONFLICT(rozszerzenie_kod, wersja) DO UPDATE SET
+	                            ON CONFLICT(rozszerzenie_kod, wersja,
+	                                        COALESCE(konto_id, 0)) DO UPDATE SET
 	                                dziennik_zmian = IFNULL(excluded.dziennik_zmian,
 	                                                        wersja_rozszerzenia.dziennik_zmian),
 	                                paczka_odwolanie = IFNULL(excluded.paczka_odwolanie,

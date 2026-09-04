@@ -235,7 +235,7 @@ func (r *repozytoriumKondycji) UsunSonde(ctx context.Context, kod string) (int, 
 		if err != nil {
 			return err
 		}
-		wynik, err := kasowanie.ExecContext(ctx, kod)
+		wynik, err := kasowanie.ExecContext(ctx, kod, KontoOperatora(ctx))
 		if err != nil {
 			return fmt.Errorf("dane: nie można usunąć sondy kondycji %q: %w", kod, err)
 		}

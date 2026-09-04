@@ -89,7 +89,8 @@ func ustawWiedzy(t *testing.T, katalogDanych, klucz, wartosc string) {
 		                        wartosc, rodzaj_wartosci)
 		VALUES ((SELECT id FROM poziom_zasiegu WHERE kod = 'globalny'), '', 'platform', '',
 		        ?, ?, 'tekst')
-		ON CONFLICT(poziom_zasiegu_id, klucz_zasiegu, os, klucz_osi, klucz) DO UPDATE SET
+		ON CONFLICT(poziom_zasiegu_id, klucz_zasiegu, os, klucz_osi, klucz,
+		            COALESCE(konto_id, 0)) DO UPDATE SET
 		    wartosc = excluded.wartosc`,
 		klucz, wartosc)
 	if err != nil {

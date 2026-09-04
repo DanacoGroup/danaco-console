@@ -8,6 +8,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"strings"
 
 	"danacoconsole/shared"
 )
@@ -62,37 +63,49 @@ type RepozytoriumIzolacji interface {
 	Warstwa(ctx context.Context, poziom shared.ConfigScope, kluczZasiegu string) (string, bool, error)
 }
 
-const (
-	listaPoziomowZasiegu = `SELECT kod, nazwa, pierwszenstwo FROM poziom_zasiegu ORDER BY pierwszenstwo`
+const listaPoziomowZasiegu = `SELECT kod, nazwa, pierwszenstwo FROM poziom_zasiegu
+                              ORDER BY pierwszenstwo`
 
-	zapiszProfilIzolacji = `INSERT INTO profil_izolacji (kod, nazwa, opis) VALUES (?, ?, ?)
+// Profil i warstwa izolacji niosą wskazanie konta; zapytania biorą je stąd.
+var (
+
+	// Człon WHERE przy DO UPDATE zatrzymuje nadpisanie profilu konta cudzego:
+	// więz jednoznaczności kodu obejmuje całą tabelę, nie konto.
+	zapiszProfilIzolacji = `INSERT INTO profil_izolacji (kod, nazwa, opis, konto_id)
+	                        VALUES (?, ?, ?, ` + WskazanieKonta + `)
 	                        ON CONFLICT(kod) DO UPDATE SET
 	                            nazwa = excluded.nazwa,
 	                            opis = excluded.opis,
-	                            zaktualizowano = strftime('%Y-%m-%dT%H:%M:%fZ','now')`
+	                            zaktualizowano = strftime('%Y-%m-%dT%H:%M:%fZ','now')
+	                        WHERE ` + WarunekKonta
 
 	usunPrzelacznikiProfilu = `DELETE FROM przelacznik_profilu_izolacji
-	                           WHERE profil_id = (SELECT id FROM profil_izolacji WHERE kod = ?)`
+	                           WHERE profil_id = (SELECT id FROM profil_izolacji
+	                                              WHERE kod = ? AND ` + WarunekKonta + `)`
 
 	zapiszPrzelacznikProfilu = `INSERT INTO przelacznik_profilu_izolacji (profil_id, klucz, wartosc)
-	                            VALUES ((SELECT id FROM profil_izolacji WHERE kod = ?), ?, ?)
+	                            VALUES ((SELECT id FROM profil_izolacji
+	                                     WHERE kod = ? AND ` + WarunekKonta + `), ?, ?)
 	                            ON CONFLICT(profil_id, klucz) DO UPDATE SET wartosc = excluded.wartosc`
 
 	pobierzProfilIzolacji = `SELECT kod, nazwa, opis, utworzono, zaktualizowano
-	                         FROM profil_izolacji WHERE kod = ?`
+	                         FROM profil_izolacji WHERE kod = ? AND ` + WarunekKonta
 
 	listaProfiliIzolacji = `SELECT kod, nazwa, opis, utworzono, zaktualizowano
-	                        FROM profil_izolacji ORDER BY nazwa, kod`
+	                        FROM profil_izolacji WHERE ` + WarunekKonta + `
+	                        ORDER BY nazwa, kod`
 
 	pobierzPrzelacznikiProfilu = `SELECT klucz, wartosc FROM przelacznik_profilu_izolacji
-	                              WHERE profil_id = (SELECT id FROM profil_izolacji WHERE kod = ?)
+	                              WHERE profil_id = (SELECT id FROM profil_izolacji
+	                                                 WHERE kod = ? AND ` + WarunekKonta + `)
 	                              ORDER BY klucz`
 
-	usunProfilIzolacji = `DELETE FROM profil_izolacji WHERE kod = ?`
+	usunProfilIzolacji = `DELETE FROM profil_izolacji WHERE kod = ? AND ` + WarunekKonta
 
 	zapiszPrzypisanieProfilu = `INSERT INTO przypisanie_profilu_izolacji
 	                            (profil_id, poziom_zasiegu_id, klucz_zasiegu)
-	                            VALUES ((SELECT id FROM profil_izolacji WHERE kod = ?),
+	                            VALUES ((SELECT id FROM profil_izolacji
+	                                     WHERE kod = ? AND ` + WarunekKonta + `),
 	                                    (SELECT id FROM poziom_zasiegu WHERE kod = ?), ?)
 	                            ON CONFLICT(poziom_zasiegu_id, klucz_zasiegu) DO UPDATE SET
 	                                profil_id = excluded.profil_id,
@@ -101,17 +114,22 @@ const (
 	pobierzPrzypisanieProfilu = `SELECT p.kod FROM przypisanie_profilu_izolacji a
 	                             JOIN profil_izolacji p ON p.id = a.profil_id
 	                             JOIN poziom_zasiegu z ON z.id = a.poziom_zasiegu_id
-	                             WHERE z.kod = ? AND a.klucz_zasiegu = ?`
+	                             WHERE z.kod = ? AND a.klucz_zasiegu = ?
+	                               AND ` + strings.ReplaceAll(WarunekKonta, "konto_id", "p.konto_id")
 
-	zapiszWarstweIzolacji = `INSERT INTO warstwa_izolacji (poziom_zasiegu_id, klucz_zasiegu, warstwa)
-	                         VALUES ((SELECT id FROM poziom_zasiegu WHERE kod = ?), ?, ?)
+	zapiszWarstweIzolacji = `INSERT INTO warstwa_izolacji
+	                         (poziom_zasiegu_id, klucz_zasiegu, warstwa, konto_id)
+	                         VALUES ((SELECT id FROM poziom_zasiegu WHERE kod = ?), ?, ?,
+	                                 ` + WskazanieKonta + `)
 	                         ON CONFLICT(poziom_zasiegu_id, klucz_zasiegu) DO UPDATE SET
 	                             warstwa = excluded.warstwa,
-	                             zaktualizowano = strftime('%Y-%m-%dT%H:%M:%fZ','now')`
+	                             zaktualizowano = strftime('%Y-%m-%dT%H:%M:%fZ','now')
+	                         WHERE ` + WarunekKonta
 
 	pobierzWarstweIzolacji = `SELECT w.warstwa FROM warstwa_izolacji w
 	                          JOIN poziom_zasiegu z ON z.id = w.poziom_zasiegu_id
-	                          WHERE z.kod = ? AND w.klucz_zasiegu = ?`
+	                          WHERE z.kod = ? AND w.klucz_zasiegu = ?
+	                            AND ` + strings.ReplaceAll(WarunekKonta, "konto_id", "w.konto_id")
 )
 
 type repozytoriumIzolacji struct {
@@ -170,10 +188,12 @@ func (r *repozytoriumIzolacji) ZapiszProfil(ctx context.Context, profil ProfilIz
 	}
 	defer func() { _ = transakcja.Rollback() }()
 
-	if _, err := transakcja.ExecContext(ctx, zapiszProfilIzolacji, profil.Kod, profil.Nazwa, profil.Opis); err != nil {
+	konto := KontoOperatora(ctx)
+	if _, err := transakcja.ExecContext(ctx, zapiszProfilIzolacji, profil.Kod, profil.Nazwa, profil.Opis,
+		konto, konto); err != nil {
 		return ProfilIzolacji{}, fmt.Errorf("dane: nie można zapisać profilu izolacji %q: %w", profil.Kod, err)
 	}
-	if _, err := transakcja.ExecContext(ctx, usunPrzelacznikiProfilu, profil.Kod); err != nil {
+	if _, err := transakcja.ExecContext(ctx, usunPrzelacznikiProfilu, profil.Kod, konto); err != nil {
 		return ProfilIzolacji{}, fmt.Errorf("dane: nie można wyczyścić przełączników profilu %q: %w", profil.Kod, err)
 	}
 	for _, przelacznik := range profil.Przelaczniki {
@@ -181,7 +201,7 @@ func (r *repozytoriumIzolacji) ZapiszProfil(ctx context.Context, profil ProfilIz
 			continue
 		}
 		if _, err := transakcja.ExecContext(ctx, zapiszPrzelacznikProfilu,
-			profil.Kod, przelacznik.Klucz, przelacznik.Wartosc); err != nil {
+			profil.Kod, konto, przelacznik.Klucz, przelacznik.Wartosc); err != nil {
 			return ProfilIzolacji{}, fmt.Errorf("dane: nie można zapisać przełącznika %q profilu %q: %w",
 				przelacznik.Klucz, profil.Kod, err)
 		}
@@ -199,7 +219,7 @@ func (r *repozytoriumIzolacji) Profil(ctx context.Context, kod string) (ProfilIz
 	if err != nil {
 		return ProfilIzolacji{}, err
 	}
-	profil, err := odczytajProfilIzolacji(polecenie.QueryRowContext(ctx, kod))
+	profil, err := odczytajProfilIzolacji(polecenie.QueryRowContext(ctx, kod, KontoOperatora(ctx)))
 	if errors.Is(err, sql.ErrNoRows) {
 		return ProfilIzolacji{}, ErrBrakWiersza
 	}
@@ -219,7 +239,7 @@ func (r *repozytoriumIzolacji) Profile(ctx context.Context) ([]ProfilIzolacji, e
 	if err != nil {
 		return nil, err
 	}
-	wiersze, err := polecenie.QueryContext(ctx)
+	wiersze, err := polecenie.QueryContext(ctx, KontoOperatora(ctx))
 	if err != nil {
 		return nil, fmt.Errorf("dane: nie można odczytać profili izolacji: %w", err)
 	}
@@ -251,7 +271,7 @@ func (r *repozytoriumIzolacji) UsunProfil(ctx context.Context, kod string) (bool
 	if err != nil {
 		return false, err
 	}
-	wynik, err := polecenie.ExecContext(ctx, kod)
+	wynik, err := polecenie.ExecContext(ctx, kod, KontoOperatora(ctx))
 	if err != nil {
 		return false, fmt.Errorf("dane: nie można usunąć profilu izolacji %q: %w", kod, err)
 	}
@@ -275,7 +295,7 @@ func (r *repozytoriumIzolacji) PrzypiszProfil(ctx context.Context, kod string,
 	if err != nil {
 		return err
 	}
-	if _, err := polecenie.ExecContext(ctx, kod, kodPoziomu, kluczZasiegu); err != nil {
+	if _, err := polecenie.ExecContext(ctx, kod, KontoOperatora(ctx), kodPoziomu, kluczZasiegu); err != nil {
 		return fmt.Errorf("dane: nie można przypisać profilu izolacji %q do poziomu %q: %w",
 			kod, kodPoziomu, err)
 	}
@@ -303,7 +323,8 @@ func (r *repozytoriumIzolacji) ZapiszWarstwe(ctx context.Context, poziom shared.
 	if err != nil {
 		return err
 	}
-	if _, err := polecenie.ExecContext(ctx, kodPoziomu, kluczZasiegu, warstwa); err != nil {
+	if _, err := polecenie.ExecContext(ctx, kodPoziomu, kluczZasiegu, warstwa,
+		KontoOperatora(ctx), KontoOperatora(ctx)); err != nil {
 		return fmt.Errorf("dane: nie można zapisać warstwy izolacji %q na poziomie %q: %w",
 			warstwa, kodPoziomu, err)
 	}
@@ -332,7 +353,7 @@ func (r *repozytoriumIzolacji) jednaWartosc(ctx context.Context, zapytanie strin
 		return "", false, err
 	}
 	var wartosc string
-	err = polecenie.QueryRowContext(ctx, kodPoziomu, kluczZasiegu).Scan(&wartosc)
+	err = polecenie.QueryRowContext(ctx, kodPoziomu, kluczZasiegu, KontoOperatora(ctx)).Scan(&wartosc)
 	if errors.Is(err, sql.ErrNoRows) {
 		return "", false, nil
 	}
@@ -349,7 +370,7 @@ func (r *repozytoriumIzolacji) przelaczniki(ctx context.Context, kod string) ([]
 	if err != nil {
 		return nil, err
 	}
-	wiersze, err := polecenie.QueryContext(ctx, kod)
+	wiersze, err := polecenie.QueryContext(ctx, kod, KontoOperatora(ctx))
 	if err != nil {
 		return nil, fmt.Errorf("dane: nie można odczytać przełączników profilu %q: %w", kod, err)
 	}

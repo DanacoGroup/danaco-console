@@ -414,6 +414,12 @@ w ogóle, więc zwłoka kosztowałaby moduł, nie tylko porządek.
 Maszyna budująca idzie do odłączenia. Wyjeżdża wszystko, czego nie da się
 odtworzyć instalacją — łącznie około 30 GB.
 
+Złożone stoi w `~/przeniesienie` (16 GB): `opt-zaleznosci.tar.zst` z całym
+`/opt`, `budowa-main.bundle` z historią, `robocze.tar.gz` z materiałem
+prowadzenia, `konfiguracje-i-klucze.tar.gz` (klucze prywatne — kasować po
+rozpakowaniu), katalog `programy-wlasne`, wykaz wersji npm oraz
+`ODTWORZENIE.md` z krokami i `SUMY-KONTROLNE.txt` do `sha256sum -c`.
+
 | co | rozmiar | dlaczego nieodtwarzalne |
 |---|---|---|
 | `/opt/danaco-modele` | 17 GB | bez nich rdzeń melduje brak zależności zewnętrznych; moduły obrazu, mowy i wiedzy przestają działać |

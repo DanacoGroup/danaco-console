@@ -93,19 +93,23 @@ const (
 
 	zapiszOceneDebaty = `INSERT INTO debata_ocena
 	                     (identyfikator_zewnetrzny, okno, rodzaj, wypowiedz, uczestnik,
-	                      gwiazdki, wskazana)
-	                     VALUES (?, ?, ?, ?, ?, ?, ?)`
+	                      gwiazdki, wskazana, konto_id)
+	                     VALUES (?, ?, ?, ?, ?, ?, ?, ` + WskazanieKonta + `)`
 
 	pobierzOcenePoKodzieDebaty = `SELECT ` + kolumnyOcenyDebaty + `
-	                              FROM debata_ocena WHERE identyfikator_zewnetrzny = ?`
+	                              FROM debata_ocena
+	                              WHERE identyfikator_zewnetrzny = ? AND ` + WarunekKonta
 
 	pobierzOcenyDebaty = `SELECT ` + kolumnyOcenyDebaty + `
-	                      FROM debata_ocena WHERE okno = ? ORDER BY id ASC`
+	                      FROM debata_ocena WHERE okno = ? AND ` + WarunekKonta + `
+	                      ORDER BY id ASC`
 
-	zapiszRubrykeDebaty = `INSERT INTO debata_rubryka (identyfikator_zewnetrzny, okno, nazwa)
-	                       VALUES (?, ?, ?)
+	zapiszRubrykeDebaty = `INSERT INTO debata_rubryka
+	                       (identyfikator_zewnetrzny, okno, nazwa, konto_id)
+	                       VALUES (?, ?, ?, ` + WskazanieKonta + `)
 	                       ON CONFLICT(identyfikator_zewnetrzny) DO UPDATE SET
-	                           nazwa = excluded.nazwa, okno = excluded.okno`
+	                           nazwa = excluded.nazwa, okno = excluded.okno
+	                       WHERE ` + WarunekKonta
 
 	usunKryteriaRubrykiDebaty = `DELETE FROM debata_kryterium WHERE rubryka = ?`
 
@@ -114,12 +118,14 @@ const (
 	                                VALUES (?, ?, ?, ?, ?, ?)`
 
 	pobierzRubrykeDebaty = `SELECT identyfikator_zewnetrzny, okno, nazwa, utworzono
-	                        FROM debata_rubryka WHERE identyfikator_zewnetrzny = ?`
+	                        FROM debata_rubryka
+	                        WHERE identyfikator_zewnetrzny = ? AND ` + WarunekKonta
 
 	// Okno puste w żądaniu oddaje same rubryki wspólne; wskazanie okna oddaje
 	// wspólne i te należące do wskazanego okna.
 	pobierzRubrykiDebaty = `SELECT identyfikator_zewnetrzny, okno, nazwa, utworzono
-	                        FROM debata_rubryka WHERE okno = '' OR okno = ?
+	                        FROM debata_rubryka
+	                        WHERE (okno = '' OR okno = ?) AND ` + WarunekKonta + `
 	                        ORDER BY id ASC`
 
 	pobierzKryteriaRubrykiDebaty = `SELECT identyfikator_zewnetrzny, rubryka, nazwa, waga, opis,
@@ -142,24 +148,25 @@ const (
 
 	zapiszRankingDebaty = `INSERT INTO debata_ranking
 	                       (klucz_tozsamosci, nazwa, zakres, okno, algorytm, punktacja,
-	                        odchylenie, pojedynki, wygrane)
-	                       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+	                        odchylenie, pojedynki, wygrane, konto_id)
+	                       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ` + WskazanieKonta + `)
 	                       ON CONFLICT(klucz_tozsamosci, zakres, okno, algorytm) DO UPDATE SET
 	                           nazwa = excluded.nazwa,
 	                           punktacja = excluded.punktacja,
 	                           odchylenie = excluded.odchylenie,
 	                           pojedynki = excluded.pojedynki,
 	                           wygrane = excluded.wygrane,
-	                           zaktualizowano = strftime('%Y-%m-%dT%H:%M:%fZ','now')`
+	                           zaktualizowano = strftime('%Y-%m-%dT%H:%M:%fZ','now')
+	                       WHERE ` + WarunekKonta
 
 	pobierzPozycjeRankinguDebaty = `SELECT ` + kolumnyRankinguDebaty + `
 	                                FROM debata_ranking
 	                                WHERE klucz_tozsamosci = ? AND zakres = ? AND okno = ?
-	                                  AND algorytm = ?`
+	                                  AND algorytm = ? AND ` + WarunekKonta
 
 	pobierzRankingDebaty = `SELECT ` + kolumnyRankinguDebaty + `
 	                        FROM debata_ranking
-	                        WHERE zakres = ? AND okno = ? AND algorytm = ?
+	                        WHERE zakres = ? AND okno = ? AND algorytm = ? AND ` + WarunekKonta + `
 	                        ORDER BY punktacja DESC, pojedynki DESC
 	                        LIMIT (CASE WHEN ? > 0 THEN ? ELSE -1 END)`
 )
@@ -173,14 +180,14 @@ func (r *repozytoriumRoundtable) ZapiszOceneDebaty(ctx context.Context,
 		return OcenaDebaty{}, err
 	}
 	if _, err := polecenie.ExecContext(ctx, ocena.Kod, ocena.Okno, ocena.Rodzaj, ocena.Wypowiedz,
-		ocena.Uczestnik, ocena.Gwiazdki, ocena.Wskazana); err != nil {
+		ocena.Uczestnik, ocena.Gwiazdki, ocena.Wskazana, KontoOperatora(ctx)); err != nil {
 		return OcenaDebaty{}, fmt.Errorf("dane: nie można zapisać oceny debaty %q: %w", ocena.Kod, err)
 	}
 	odczyt, err := r.zapytania.przygotuj(ctx, pobierzOcenePoKodzieDebaty)
 	if err != nil {
 		return OcenaDebaty{}, err
 	}
-	return odczytajOceneDebaty(odczyt.QueryRowContext(ctx, ocena.Kod))
+	return odczytajOceneDebaty(odczyt.QueryRowContext(ctx, ocena.Kod, KontoOperatora(ctx)))
 }
 
 // OcenyDebaty zwraca wszystkie oceny Operatora postawione w oknie debaty, w kolejności ich zapisu do dziennika.
@@ -189,7 +196,7 @@ func (r *repozytoriumRoundtable) OcenyDebaty(ctx context.Context, okno string) (
 	if err != nil {
 		return nil, err
 	}
-	wiersze, err := polecenie.QueryContext(ctx, okno)
+	wiersze, err := polecenie.QueryContext(ctx, okno, KontoOperatora(ctx))
 	if err != nil {
 		return nil, fmt.Errorf("dane: nie można odczytać ocen debaty okna %q: %w", okno, err)
 	}
@@ -218,7 +225,8 @@ func (r *repozytoriumRoundtable) ZapiszRubrykeDebaty(ctx context.Context,
 		if err != nil {
 			return err
 		}
-		if _, err := naglowek.ExecContext(ctx, rubryka.Kod, rubryka.Okno, rubryka.Nazwa); err != nil {
+		if _, err := naglowek.ExecContext(ctx, rubryka.Kod, rubryka.Okno, rubryka.Nazwa,
+			KontoOperatora(ctx), KontoOperatora(ctx)); err != nil {
 			return fmt.Errorf("dane: nie można zapisać rubryki debaty %q: %w", rubryka.Kod, err)
 		}
 		wyczysc, err := r.zapytania.wTransakcji(ctx, transakcja, usunKryteriaRubrykiDebaty)
@@ -256,7 +264,7 @@ func (r *repozytoriumRoundtable) RubrykaDebatyPoKodzie(ctx context.Context,
 		return RubrykaDebaty{}, err
 	}
 	var rubryka RubrykaDebaty
-	err = polecenie.QueryRowContext(ctx, kod).Scan(&rubryka.Kod, &rubryka.Okno, &rubryka.Nazwa,
+	err = polecenie.QueryRowContext(ctx, kod, KontoOperatora(ctx)).Scan(&rubryka.Kod, &rubryka.Okno, &rubryka.Nazwa,
 		&rubryka.Utworzono)
 	if errors.Is(err, sql.ErrNoRows) {
 		return RubrykaDebaty{}, ErrBrakWiersza
@@ -279,7 +287,7 @@ func (r *repozytoriumRoundtable) RubrykiDebaty(ctx context.Context,
 	if err != nil {
 		return nil, err
 	}
-	wiersze, err := polecenie.QueryContext(ctx, okno)
+	wiersze, err := polecenie.QueryContext(ctx, okno, KontoOperatora(ctx))
 	if err != nil {
 		return nil, fmt.Errorf("dane: nie można odczytać rubryk debaty: %w", err)
 	}
@@ -384,7 +392,7 @@ func (r *repozytoriumRoundtable) ZapiszPozycjeRankinguDebaty(ctx context.Context
 	}
 	if _, err := polecenie.ExecContext(ctx, pozycja.KluczTozsamosci, pozycja.Nazwa, pozycja.Zakres,
 		pozycja.Okno, pozycja.Algorytm, pozycja.Punktacja, pozycja.Odchylenie, pozycja.Pojedynki,
-		pozycja.Wygrane); err != nil {
+		pozycja.Wygrane, KontoOperatora(ctx), KontoOperatora(ctx)); err != nil {
 		return fmt.Errorf("dane: nie można zapisać pozycji rankingu %q: %w",
 			pozycja.KluczTozsamosci, err)
 	}
@@ -400,7 +408,7 @@ func (r *repozytoriumRoundtable) PozycjaRankinguDebaty(ctx context.Context,
 		return PozycjaRankinguDebaty{}, err
 	}
 	pozycja, err := odczytajPozycjeRankinguDebaty(
-		polecenie.QueryRowContext(ctx, klucz, zakres, okno, algorytm))
+		polecenie.QueryRowContext(ctx, klucz, zakres, okno, algorytm, KontoOperatora(ctx)))
 	if errors.Is(err, sql.ErrNoRows) {
 		return PozycjaRankinguDebaty{}, ErrBrakWiersza
 	}
@@ -419,7 +427,7 @@ func (r *repozytoriumRoundtable) RankingDebaty(ctx context.Context, zakres, okno
 	if err != nil {
 		return nil, err
 	}
-	wiersze, err := polecenie.QueryContext(ctx, zakres, okno, algorytm, limit, limit)
+	wiersze, err := polecenie.QueryContext(ctx, zakres, okno, algorytm, KontoOperatora(ctx), limit, limit)
 	if err != nil {
 		return nil, fmt.Errorf("dane: nie można odczytać rankingu debaty: %w", err)
 	}

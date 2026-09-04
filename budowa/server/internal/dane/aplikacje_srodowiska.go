@@ -64,20 +64,23 @@ const (
 	                        domena, wpisy_dns, utworzono, zaktualizowano`
 
 	zapiszSrodowiskoApp = `INSERT INTO srodowisko_apps
-	                       (identyfikator_zewnetrzny, okno, kod, nazwa, kolejnosc, domena, wpisy_dns)
-	                       VALUES (?, ?, ?, ?, ?, ?, ?)
+	                       (identyfikator_zewnetrzny, okno, kod, nazwa, kolejnosc, domena,
+	                        wpisy_dns, konto_id)
+	                       VALUES (?, ?, ?, ?, ?, ?, ?, ` + WskazanieKonta + `)
 	                       ON CONFLICT(okno, kod) DO UPDATE SET
 	                           nazwa = excluded.nazwa,
 	                           kolejnosc = excluded.kolejnosc,
 	                           domena = IFNULL(excluded.domena, srodowisko_apps.domena),
 	                           wpisy_dns = IFNULL(excluded.wpisy_dns, srodowisko_apps.wpisy_dns),
-	                           zaktualizowano = strftime('%Y-%m-%dT%H:%M:%fZ','now')`
+	                           zaktualizowano = strftime('%Y-%m-%dT%H:%M:%fZ','now')
+	                       WHERE ` + WarunekKonta
 
 	listaSrodowiskApp = `SELECT ` + kolumnySrodowiskaApp + ` FROM srodowisko_apps
-	                     WHERE okno = ? ORDER BY kolejnosc, id`
+	                     WHERE okno = ? AND ` + WarunekKonta + `
+	                     ORDER BY kolejnosc, id`
 
 	pobierzSrodowiskoApp = `SELECT ` + kolumnySrodowiskaApp + ` FROM srodowisko_apps
-	                        WHERE okno = ? AND kod = ?`
+	                        WHERE okno = ? AND kod = ? AND ` + WarunekKonta
 
 	kolumnyZmiennejSrodowiskaApp = `id, okno, srodowisko, nazwa, wartosc, odwolanie_sekretu,
 	                                zaktualizowano`
@@ -104,26 +107,29 @@ const (
 	                               ORDER BY nazwa`
 
 	zapiszSkalowanieApp = `INSERT INTO skalowanie_apps
-	                       (okno, srodowisko, instancje, min_instancji, maks_instancji, reguly)
-	                       VALUES (?, ?, ?, ?, ?, ?)
+	                       (okno, srodowisko, instancje, min_instancji, maks_instancji, reguly,
+	                        konto_id)
+	                       VALUES (?, ?, ?, ?, ?, ?, ` + WskazanieKonta + `)
 	                       ON CONFLICT(okno, srodowisko) DO UPDATE SET
 	                           instancje = excluded.instancje,
 	                           min_instancji = excluded.min_instancji,
 	                           maks_instancji = excluded.maks_instancji,
 	                           reguly = excluded.reguly,
-	                           zaktualizowano = strftime('%Y-%m-%dT%H:%M:%fZ','now')`
+	                           zaktualizowano = strftime('%Y-%m-%dT%H:%M:%fZ','now')
+	                       WHERE ` + WarunekKonta
 
 	pobierzSkalowanieApp = `SELECT okno, srodowisko, instancje, min_instancji, maks_instancji,
 	                               reguly, zaktualizowano
-	                        FROM skalowanie_apps WHERE okno = ? AND srodowisko = ?`
+	                        FROM skalowanie_apps
+	                        WHERE okno = ? AND srodowisko = ? AND ` + WarunekKonta
 
 	wstawKondycjeApp = `INSERT INTO kondycja_wdrozenia_apps
-	                    (okno, srodowisko, dostepna, szczegol, sprawdzono)
-	                    VALUES (?, ?, ?, ?, ?)`
+	                    (okno, srodowisko, dostepna, szczegol, sprawdzono, konto_id)
+	                    VALUES (?, ?, ?, ?, ?, ` + WskazanieKonta + `)`
 
 	listaKondycjiApp = `SELECT id, okno, srodowisko, dostepna, szczegol, sprawdzono
 	                    FROM kondycja_wdrozenia_apps
-	                    WHERE okno = ? AND srodowisko = ?
+	                    WHERE okno = ? AND srodowisko = ? AND ` + WarunekKonta + `
 	                    ORDER BY sprawdzono DESC, id DESC LIMIT ?`
 )
 
@@ -142,7 +148,7 @@ func (r *repozytoriumAplikacji) ZapiszSrodowiskoApp(ctx context.Context,
 	}
 	_, err = polecenie.ExecContext(ctx, srodowisko.Kod, srodowisko.Okno, srodowisko.KodSrodowiska,
 		srodowisko.Nazwa, srodowisko.Kolejnosc, tekstDoKolumny(srodowisko.Domena),
-		tekstDoKolumny(srodowisko.WpisyDNS))
+		tekstDoKolumny(srodowisko.WpisyDNS), KontoOperatora(ctx), KontoOperatora(ctx))
 	if err != nil {
 		return SrodowiskoApp{}, fmt.Errorf("dane: nie można zapisać środowiska %q okna %q: %w",
 			srodowisko.KodSrodowiska, srodowisko.Okno, err)
@@ -157,7 +163,7 @@ func (r *repozytoriumAplikacji) SrodowiskoApp(ctx context.Context, okno, kod str
 	if err != nil {
 		return SrodowiskoApp{}, err
 	}
-	srodowisko, err := odczytajSrodowiskoApp(polecenie.QueryRowContext(ctx, okno, kod))
+	srodowisko, err := odczytajSrodowiskoApp(polecenie.QueryRowContext(ctx, okno, kod, KontoOperatora(ctx)))
 	if err == sql.ErrNoRows {
 		return SrodowiskoApp{}, ErrBrakWiersza
 	}
@@ -174,7 +180,7 @@ func (r *repozytoriumAplikacji) SrodowiskaApp(ctx context.Context, okno string) 
 	if err != nil {
 		return nil, err
 	}
-	wiersze, err := polecenie.QueryContext(ctx, okno)
+	wiersze, err := polecenie.QueryContext(ctx, okno, KontoOperatora(ctx))
 	if err != nil {
 		return nil, fmt.Errorf("dane: nie można odczytać środowisk okna %q: %w", okno, err)
 	}
@@ -280,7 +286,8 @@ func (r *repozytoriumAplikacji) ZapiszSkalowanieApp(ctx context.Context,
 	}
 	_, err = polecenie.ExecContext(ctx, skalowanie.Okno, skalowanie.Srodowisko,
 		liczbaDoKolumny(skalowanie.Instancje), liczbaDoKolumny(skalowanie.MinInstancji),
-		liczbaDoKolumny(skalowanie.MaksInstancji), tekstDoKolumny(skalowanie.Reguly))
+		liczbaDoKolumny(skalowanie.MaksInstancji), tekstDoKolumny(skalowanie.Reguly),
+		KontoOperatora(ctx), KontoOperatora(ctx))
 	if err != nil {
 		return SkalowanieApp{}, fmt.Errorf("dane: nie można zapisać skalowania %q okna %q: %w",
 			skalowanie.Srodowisko, skalowanie.Okno, err)
@@ -300,7 +307,7 @@ func (r *repozytoriumAplikacji) SkalowanieApp(ctx context.Context,
 	var nastawa SkalowanieApp
 	var instancje, minimum, maksimum sql.NullInt64
 	var reguly sql.NullString
-	err = polecenie.QueryRowContext(ctx, okno, srodowisko).Scan(&nastawa.Okno, &nastawa.Srodowisko,
+	err = polecenie.QueryRowContext(ctx, okno, srodowisko, KontoOperatora(ctx)).Scan(&nastawa.Okno, &nastawa.Srodowisko,
 		&instancje, &minimum, &maksimum, &reguly, &nastawa.Zaktualizowano)
 	if err == sql.ErrNoRows {
 		return SkalowanieApp{}, ErrBrakWiersza
@@ -327,7 +334,8 @@ func (r *repozytoriumAplikacji) ZapiszKondycjeApp(ctx context.Context, kondycja 
 		return err
 	}
 	_, err = polecenie.ExecContext(ctx, kondycja.Okno, kondycja.Srodowisko,
-		liczbaLogiczna(kondycja.Dostepna), tekstDoKolumny(kondycja.Szczegol), kondycja.Sprawdzono)
+		liczbaLogiczna(kondycja.Dostepna), tekstDoKolumny(kondycja.Szczegol), kondycja.Sprawdzono,
+		KontoOperatora(ctx))
 	if err != nil {
 		return fmt.Errorf("dane: nie można zapisać wyniku kondycji okna %q: %w", kondycja.Okno, err)
 	}
@@ -346,7 +354,7 @@ func (r *repozytoriumAplikacji) KondycjeApp(ctx context.Context, okno, srodowisk
 	if err != nil {
 		return nil, err
 	}
-	wiersze, err := polecenie.QueryContext(ctx, okno, srodowisko, granica)
+	wiersze, err := polecenie.QueryContext(ctx, okno, srodowisko, KontoOperatora(ctx), granica)
 	if err != nil {
 		return nil, fmt.Errorf("dane: nie można odczytać kondycji %q okna %q: %w", srodowisko, okno, err)
 	}

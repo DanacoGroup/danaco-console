@@ -52,16 +52,19 @@ const (
 
 	// wstawienie-lub-nadpisanie po oknie — jeden produkt na okno; kod nadany przy pierwszym zapisie zostaje stały.
 	zapiszProduktApp = `INSERT INTO produkt_apps
-	                    (identyfikator_zewnetrzny, okno, nazwa, opis, platformy, repozytorium)
-	                    VALUES (?, ?, ?, ?, ?, ?)
+	                    (identyfikator_zewnetrzny, okno, nazwa, opis, platformy, repozytorium,
+	                     konto_id)
+	                    VALUES (?, ?, ?, ?, ?, ?, ` + WskazanieKonta + `)
 	                    ON CONFLICT(okno) DO UPDATE SET
 	                        nazwa = excluded.nazwa,
 	                        opis = excluded.opis,
 	                        platformy = excluded.platformy,
 	                        repozytorium = excluded.repozytorium,
-	                        zaktualizowano = strftime('%Y-%m-%dT%H:%M:%fZ','now')`
+	                        zaktualizowano = strftime('%Y-%m-%dT%H:%M:%fZ','now')
+	                    WHERE ` + WarunekKonta
 
-	pobierzProduktApp = `SELECT ` + kolumnyProduktuApp + ` FROM produkt_apps WHERE okno = ?`
+	pobierzProduktApp = `SELECT ` + kolumnyProduktuApp + ` FROM produkt_apps
+	                     WHERE okno = ? AND ` + WarunekKonta
 
 	kolumnyEtapuApp = `id, identyfikator_zewnetrzny, okno, nazwa, kolejnosc, stan,
 	                   wykonawca, utworzono, zaktualizowano`
@@ -129,7 +132,7 @@ func (r *repozytoriumAplikacji) ZapiszProduktApp(ctx context.Context, produkt Pr
 	}
 	_, err = polecenie.ExecContext(ctx, produkt.Kod, produkt.Okno, produkt.Nazwa,
 		tekstDoKolumny(produkt.Opis), listaDoKolumny(produkt.Platformy),
-		tekstDoKolumny(produkt.Repozytorium))
+		tekstDoKolumny(produkt.Repozytorium), KontoOperatora(ctx), KontoOperatora(ctx))
 	if err != nil {
 		return ProduktApp{}, fmt.Errorf("dane: nie można zapisać produktu okna %q: %w", produkt.Okno, err)
 	}
@@ -142,7 +145,7 @@ func (r *repozytoriumAplikacji) ProduktApp(ctx context.Context, okno string) (Pr
 	if err != nil {
 		return ProduktApp{}, err
 	}
-	produkt, err := odczytajProduktApp(polecenie.QueryRowContext(ctx, okno))
+	produkt, err := odczytajProduktApp(polecenie.QueryRowContext(ctx, okno, KontoOperatora(ctx)))
 	if err == sql.ErrNoRows {
 		return ProduktApp{}, ErrBrakWiersza
 	}

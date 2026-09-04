@@ -35,7 +35,7 @@ Audyt powtórny stanął na 7 z 13 kategorii. **Nie ruszyły**: rdzeń Go, klien
 TypeScript, warstwa projektowa, powłoka i instalator, poczta i droga wejścia,
 braki produktowe. Skrypt przebiegu leży w materiale przekazania.
 
-## 3. Granica konta — rzecz największa i niedokończona
+## 3. Granica konta — domknięta
 
 **Miara.** Platforma prowadzi wiele kont od migracji 406. Granica konta objęła do
 tej sesji cztery tabele: trzy tabele bramki i karty sesji. Rozpoznanie wszystkich
@@ -84,28 +84,30 @@ zachowania. Teren 15 (własność kanału przy użyciu, 11 miejsc w `core`, wyka
 500K tokenów wyniku i ma dać więcej wyniku, niż przeczyta; rundy dzielić na 3–5
 szerokich terenów, nie na kilkanaście wąskich.
 
-**Co otwarte — praca następnej sesji.**
+**Stan po sesji 4 września 2026.** Granica konta jest domknięta.
 
-1. **Kontrola rundy trzeciej i sprawdziany.** `go test -count=1 -timeout 30m` na
-   `dane`, `konfig`, `zdalne`, `session`, `injection`, `transport`; jeden kontroler na
-   rodzinę plików, nie na teren.
-2. **Poza terenem z rundy trzeciej** (pełny wykaz w `wyniki-terenow-01-13.txt`):
-   przekład `ErrKolizjaWiersza` na `conflict` w kilkunastu adapterach (`bladStudio`,
-   `bladTlumaczenia`, `bladBiblioteki`, `bladDesignu`, `bladDebaty`, `bladBadan`,
-   `bladAutomatyki`, `bladKomponentu`, `bladRozszerzenia`, `bladPrzegladarki`,
-   `bladNadania`, `bladWskazania`); `sesje_historia.go` i `agenci.go` bez warunku
-   konta; stan sesji odtwarzany z kontekstu montażu (`trwalosc_stanow.go`,
-   `odtworzenie_stanu.go`, `stan_sesji_nadzor.go`) — po zawężeniu odtwarza wyłącznie
-   konto najstarsze, do rozstrzygnięcia wg decyzji 34; tunele i obserwacje terminala
-   na kontekście życia procesu (`adapter_modul_terminal_tunele.go`,
-   `_obserwacje.go`); `przegladarka_okno.go` `sladOkna` bez warunku.
-3. **Tabele bez drogi do konta**: `pamiec_tlumaczen` (bez `konto_id`, `panel_id`
-   bywa NULL), `nastawa_pracy_studio` na poziomie okna, `przestrzen_badania`
-   jednowierszowa na instalację (`CHECK(id = 1)`, migracja 049) — po zawężeniu konto
-   młodsze dostaje kolizję; wymagają migracji ponad 485.
-4. **125 korzeni pozostałych** oraz **77 zapisów do korzeni bez konta w 49 plikach**
-   spoza rundy: `zapisy-korzeni-bez-konta-poza-runda-3.json`.
-5. **176 więzów UNIQUE wewnątrz `CREATE TABLE`** — osobny etap z migracją.
+- **Zapytania.** Z 173 zapytań sięgających korzenia bez warunku konta zostało 15,
+  wszystkie rozstrzygnięte jako praca procesu bez zamawiającego albo odczyt
+  kluczem własnym wiersza wewnątrz transakcji, która ten wiersz zapisała
+  (rejestr decyzji, poz. 37). Miarę odtwarza skrypt liczący literały SQL sięgające
+  korzeni z `korzenie-granicy-konta.json`.
+- **Korzenie bez kolumny.** Krok 489 dołożył `konto_id` kolejce, raportowi badania
+  i przebiegowi wsadu Studia; okno komunikacji sięga konta drogą przez sesję do
+  karty sesji wspólnym `dane.warunekKontaOkna` (poz. 36).
+- **Więzy UNIQUE.** Kroki 490–494 przeniosły do konta jednoznaczność każdego
+  klucza wpisywanego przez Operatora. Więz na kluczu nadawanym przez rdzeń
+  zostaje globalny (poz. 38).
+- **Tabele bez drogi do konta.** Krok 495 rozbił przestrzeń badania z jednego
+  wiersza na instalację na wiersz na konto i dołożył wskazanie konta pamięci
+  tłumaczeń.
+
+**Co zostaje otwarte.**
+
+1. Nastawa pracy Studia (`nastawa_pracy_studio`) własnej kolumny konta nie ma;
+   sięga go kodem okna, który nadaje rdzeń. Wystawienia to nie tworzy, ale
+   rozstrzygnięcie warto zapisać przy najbliższej pracy nad Studiem.
+2. Rodzaj znacznika Studia zostaje z więzem jednoznaczności na całą tabelę:
+   jego `nazwa` jest celem klucza obcego z `znakowanie_studio` (poz. 38).
 
 ## 4. Naprawy krytyczne — stan
 

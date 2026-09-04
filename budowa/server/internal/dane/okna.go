@@ -8,6 +8,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"strings"
 
 	"danacoconsole/shared"
 )
@@ -62,25 +63,47 @@ const (
 	              agent_kod, kolejnosc)
 	             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
 	                     (SELECT COALESCE(MAX(kolejnosc) + 1, 0) FROM okno_komunikacji WHERE sesja_id = ?))`
+)
 
-	pobierzOkno = `SELECT ` + kolumnyOkna + ` FROM okno_komunikacji WHERE id = ?`
+/*
+warunekKontaOkna zwraca sprawdzenie własności okna dla okna nazwanego w zapytaniu
+tabelą albo aliasem. Tabela `okno_komunikacji` nie ma kolumny `konto_id`: granica
+dochodzi do niej przez sesję i kartę sesji (migracja 407), więc każde zapytanie
+sięgające okna dokłada ten warunek zamiast porównania kolumny.
+
+Aliasy wewnętrzne są własne (`so`, `ko`), żeby warunek wszedł także do zapytania,
+które samo używa aliasów `s` i `k`.
+*/
+func warunekKontaOkna(okno string) string {
+	return `EXISTS (SELECT 1 FROM sesja so
+	                  JOIN karta_sesji ko ON ko.id = so.karta_sesji_id
+	                 WHERE so.id = ` + okno + `.sesja_id
+	                   AND ` + strings.ReplaceAll(WarunekKonta, "konto_id", "ko.konto_id") + `)`
+}
+
+var (
+	kontoOknaWlasnego = warunekKontaOkna("okno_komunikacji")
+
+	pobierzOkno = `SELECT ` + kolumnyOkna + ` FROM okno_komunikacji
+	               WHERE id = ? AND ` + kontoOknaWlasnego
 
 	oknoPoIdentyfikatorze = `SELECT ` + kolumnyOkna + ` FROM okno_komunikacji
-	                         WHERE identyfikator_zewnetrzny = ?`
+	                         WHERE identyfikator_zewnetrzny = ? AND ` + kontoOknaWlasnego
 
 	listaOkienSesji = `SELECT ` + kolumnyOkna + ` FROM okno_komunikacji
-	                   WHERE sesja_id = ? ORDER BY kolejnosc, id`
+	                   WHERE sesja_id = ? AND ` + kontoOknaWlasnego + `
+	                   ORDER BY kolejnosc, id`
 
 	aktualizujOkno = `UPDATE okno_komunikacji
 	                  SET modul_id = ?, kanal_modelu_id = ?, tytul = ?, srodowisko_wykonania = ?,
 	                      tryb_uprawnien = ?, rola_okna = ?, okno_koordynatora_id = ?,
 	                      tryb_komunikacji = ?, agent_kod = ?,
 	                      zaktualizowano = strftime('%Y-%m-%dT%H:%M:%fZ','now')
-	                  WHERE id = ?`
+	                  WHERE id = ? AND ` + kontoOknaWlasnego
 
 	zmienStanOkna = `UPDATE okno_komunikacji
 	                 SET stan = ?, zaktualizowano = strftime('%Y-%m-%dT%H:%M:%fZ','now')
-	                 WHERE id = ?`
+	                 WHERE id = ? AND ` + kontoOknaWlasnego
 
 	// Ciągłość rozmowy. Kolumna jest czytana i zapisywana osobnymi poleceniami,
 	// a nie razem z resztą okna: identyfikator nadaje program `claude` w trakcie
@@ -88,9 +111,10 @@ const (
 	// nadpisywałby jedno drugim.
 	zapiszRozmoweCLI = `UPDATE okno_komunikacji
 	                    SET id_rozmowy_cli = ?, zaktualizowano = strftime('%Y-%m-%dT%H:%M:%fZ','now')
-	                    WHERE id = ?`
+	                    WHERE id = ? AND ` + kontoOknaWlasnego
 
-	odczytajRozmoweCLI = `SELECT id_rozmowy_cli FROM okno_komunikacji WHERE id = ?`
+	odczytajRozmoweCLI = `SELECT id_rozmowy_cli FROM okno_komunikacji
+	                      WHERE id = ? AND ` + kontoOknaWlasnego
 )
 
 type repozytoriumOkien struct {
@@ -139,7 +163,7 @@ func (r *repozytoriumOkien) Pobierz(ctx context.Context, id int64) (Okno, error)
 	if err != nil {
 		return Okno{}, err
 	}
-	okno, err := odczytajOkno(polecenie.QueryRowContext(ctx, id))
+	okno, err := odczytajOkno(polecenie.QueryRowContext(ctx, id, KontoOperatora(ctx)))
 	if errors.Is(err, sql.ErrNoRows) {
 		return Okno{}, fmt.Errorf("dane: okno %d nie istnieje", id)
 	}
@@ -161,7 +185,7 @@ func (r *repozytoriumOkien) PoIdentyfikatorze(ctx context.Context, identyfikator
 	if err != nil {
 		return Okno{}, err
 	}
-	okno, err := odczytajOkno(polecenie.QueryRowContext(ctx, identyfikator))
+	okno, err := odczytajOkno(polecenie.QueryRowContext(ctx, identyfikator, KontoOperatora(ctx)))
 	if errors.Is(err, sql.ErrNoRows) {
 		return Okno{}, fmt.Errorf("%w: okno %q", ErrBrakWiersza, identyfikator)
 	}
@@ -181,7 +205,7 @@ func (r *repozytoriumOkien) ListaSesji(ctx context.Context, sesjaID int64) ([]Ok
 	if err != nil {
 		return nil, err
 	}
-	wiersze, err := polecenie.QueryContext(ctx, sesjaID)
+	wiersze, err := polecenie.QueryContext(ctx, sesjaID, KontoOperatora(ctx))
 	if err != nil {
 		return nil, fmt.Errorf("dane: nie można odczytać okien sesji %d: %w", sesjaID, err)
 	}
@@ -222,7 +246,7 @@ func (r *repozytoriumOkien) Aktualizuj(ctx context.Context, okno Okno) error {
 		wynik, err := polecenie.ExecContext(ctx, okno.ModulID, okno.KanalModeluID,
 			tekstDoKolumny(okno.Tytul), wartosci.srodowisko, wartosci.tryb, wartosci.rola,
 			liczbaDoKolumny(okno.OknoKoordynatoraID), wartosci.trybKomunikacji,
-			tekstDoKolumny(okno.AgentKod), okno.ID)
+			tekstDoKolumny(okno.AgentKod), okno.ID, KontoOperatora(ctx))
 		if err != nil {
 			return fmt.Errorf("dane: nie można zapisać zmian okna %d: %w", okno.ID, err)
 		}
@@ -243,7 +267,7 @@ func (r *repozytoriumOkien) ZmienStan(ctx context.Context, id int64, stan shared
 	if err != nil {
 		return err
 	}
-	wynik, err := polecenie.ExecContext(ctx, kolumna, id)
+	wynik, err := polecenie.ExecContext(ctx, kolumna, id, KontoOperatora(ctx))
 	if err != nil {
 		return fmt.Errorf("dane: nie można zmienić stanu okna %d: %w", id, err)
 	}
@@ -256,7 +280,7 @@ func (r *repozytoriumOkien) ZapiszRozmoweCLI(ctx context.Context, id int64, idRo
 	if err != nil {
 		return err
 	}
-	wynik, err := polecenie.ExecContext(ctx, idRozmowy, id)
+	wynik, err := polecenie.ExecContext(ctx, idRozmowy, id, KontoOperatora(ctx))
 	if err != nil {
 		return fmt.Errorf("dane: nie można zapisać rozmowy CLI okna %d: %w", id, err)
 	}
@@ -270,7 +294,7 @@ func (r *repozytoriumOkien) RozmowaCLI(ctx context.Context, id int64) (string, e
 		return "", err
 	}
 	var idRozmowy string
-	if err := polecenie.QueryRowContext(ctx, id).Scan(&idRozmowy); err != nil {
+	if err := polecenie.QueryRowContext(ctx, id, KontoOperatora(ctx)).Scan(&idRozmowy); err != nil {
 		return "", fmt.Errorf("dane: nie można odczytać rozmowy CLI okna %d: %w", id, err)
 	}
 	return idRozmowy, nil

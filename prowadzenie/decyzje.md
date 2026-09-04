@@ -2006,3 +2006,30 @@ znaczenie przy wyborze, co wpiąć najpierw; wpięte jest wszystko.
 ogólna: komenda bez własnego wołającego jest osiągalna przez katalog operacji
 i to wystarcza do miary pokrycia, ale okno formularzowe powstaje wtedy, gdy
 podgrupa ma własne miejsce w oknie Studia.
+
+## 45. Kanał `/wydania/` za hasłem zostaje, a jego odbiór przestaje być pozorny
+
+**Rzecz.** Kanał wydań ma dwie ścieżki: `/pliki/` otwartą, po którą sięga kreator
+instalacji i strona „Pobierz”, oraz `/wydania/` zamkniętą uwierzytelnieniem
+podstawowym, po którą sięgają Właściciel i administrator. Pytanie brzmiało, czy
+druga ścieżka ma sens, skoro kreator sześciu kroków nie ma pola na hasło.
+
+**Rozważone warianty.**
+
+1. Zwinąć `/wydania/` i zostawić sam kanał otwarty. Odrzucone: pakiet serwera
+   wdrożenia i materiały administratora nie są przeznaczone dla każdego, kto zna
+   adres, a jedyne, co je dziś zasłania, to właśnie ta ścieżka.
+2. Otworzyć `/wydania/` i polegać na nieodgadnionym adresie. Odrzucone: adres
+   stoi w wykazie publicznym, więc zasłona byłaby pozorna.
+3. Zostawić obie ścieżki z jawnym oznaczeniem pozycji. Przyjęte.
+
+**Decyzja.** Obie ścieżki zostają. Pozycja wykazu leżąca pod `/wydania/` niesie
+`chronione_haslem: true`, pozycja spod `/pliki/` — `false`; strona zapowiada
+pytanie o hasło przy tej jednej pozycji.
+
+**Konsekwencje.** Krok odbioru w `zloz.mjs` nie przyjmuje już 401 jako
+potwierdzenia: gdy środowisko niesie `DANACO_KANAL_UZYTKOWNIK` i
+`DANACO_KANAL_HASLO`, pozycja jest pytana z uwierzytelnieniem podstawowym
+i musi odpowiedzieć jak każda inna; bez poświadczeń wchodzi jako NIESPRAWDZONA
+i tak jest meldowana. Wcześniej odpowiedź 401 przechodziła za dowód, że plik
+leży pod adresem — czyli nie sprawdzała niczego.

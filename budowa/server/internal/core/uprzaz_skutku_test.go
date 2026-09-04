@@ -13,6 +13,7 @@ import (
 	"os"
 	"path/filepath"
 	"strconv"
+	"sync"
 	"testing"
 
 	"danacoconsole/server/internal/konfiguracja"
@@ -29,7 +30,9 @@ func zmontujDoPomiaruSkutku(t *testing.T) (*Zmontowany, context.Context, string)
 	t.Helper()
 
 	katalog := t.TempDir()
-	baza, err := store.Otworz(filepath.Join(katalog, "dane.sqlite"))
+	sciezka := filepath.Join(katalog, "dane.sqlite")
+	polozWzorzecBazy(t, sciezka)
+	baza, err := store.Otworz(sciezka)
 	if err != nil {
 		t.Fatalf("nie można otworzyć bazy sprawdzianu: %v", err)
 	}
@@ -192,4 +195,45 @@ func jsonSurowy(t *testing.T, wartosc any) json.RawMessage {
 // wskaźnikami, a literału adresu wziąć nie można.
 func wskaznik[T any](wartosc T) *T {
 	return &wartosc
+}
+
+// Montaż w sprawdzianach idzie setki razy, a każdy przejazd migracji parsuje SQL
+// wszystkich kroków: kopia pliku po przejeździe kosztuje milisekundy zamiast sekund.
+var wzorzecBazy struct {
+	raz     sync.Once
+	sciezka string
+	blad    error
+}
+
+func polozWzorzecBazy(t *testing.T, cel string) {
+	t.Helper()
+
+	wzorzecBazy.raz.Do(func() {
+		katalog, err := os.MkdirTemp("", "wzorzec-bazy-")
+		if err != nil {
+			wzorzecBazy.blad = err
+			return
+		}
+		sciezka := filepath.Join(katalog, "wzorzec.sqlite")
+		baza, err := store.Otworz(sciezka)
+		if err != nil {
+			wzorzecBazy.blad = err
+			return
+		}
+		if err := baza.Zamknij(); err != nil {
+			wzorzecBazy.blad = err
+			return
+		}
+		wzorzecBazy.sciezka = sciezka
+	})
+	if wzorzecBazy.blad != nil {
+		t.Fatalf("nie można złożyć wzorca bazy sprawdzianów: %v", wzorzecBazy.blad)
+	}
+	tresc, err := os.ReadFile(wzorzecBazy.sciezka)
+	if err != nil {
+		t.Fatalf("nie można odczytać wzorca bazy sprawdzianów: %v", err)
+	}
+	if err := os.WriteFile(cel, tresc, 0o600); err != nil {
+		t.Fatalf("nie można położyć bazy sprawdzianu: %v", err)
+	}
 }

@@ -28,6 +28,10 @@ type Sesja struct {
 	// Utworzono i Zaktualizowano znakują cykl życia sesji.
 	Utworzono      time.Time
 	Zaktualizowano time.Time
+	// KontoId niesie granicę konta w rejestrze. Rejestr stoi obok bazy i jej
+	// warunku nie widzi, więc bez tego pola wykaz sesji pokazywałby Operatorowi
+	// sesje wszystkich kont instalacji. Zero znaczy instalację bez kont.
+	KontoId int64
 }
 
 // nowaSesja zakłada sesję czynną. Brak tytułu ani projektu niczego nie blokuje

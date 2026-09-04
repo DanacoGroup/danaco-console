@@ -58,11 +58,13 @@ func (r *rejestrObecnosci) ZeStrumieniem(strumien zrodloStrumienia) *rejestrObec
 	return r
 }
 
-func (r *rejestrObecnosci) Odpisy(ctx context.Context) []shared.SessionPresence {
+// Odpisy zwraca żywy stan sesji jednego konta. Konto podaje wołający, bo to on
+// rozstrzygnął je regułą bazy; rejestr obecności trzyma sesje całej instalacji.
+func (r *rejestrObecnosci) Odpisy(ctx context.Context, kontoId int64) []shared.SessionPresence {
 	if r == nil || r.nadzorca == nil {
 		return nil
 	}
-	sesje := r.nadzorca.Rejestr().Sesje()
+	sesje := r.nadzorca.Rejestr().SesjeKonta(kontoId)
 	wykaz := make([]shared.SessionPresence, 0, len(sesje))
 	otwarte := map[string]struct{}{}
 	for _, sesja := range sesje {

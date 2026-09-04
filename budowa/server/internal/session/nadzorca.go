@@ -38,13 +38,13 @@ func (n *Nadzorca) Wybudzacz() *Wybudzacz { return n.wybudzacz }
 
 // ZalozSesje zakłada sesję wspólną dla plików, pamięci, projektu i agentów,
 // zwracając jej pełny opis startowy.
-func (n *Nadzorca) ZalozSesje(tytul, idProjektu string) Sesja {
-	return n.rejestr.ZalozSesje(tytul, idProjektu)
+func (n *Nadzorca) ZalozSesje(tytul, idProjektu string, kontoId int64) Sesja {
+	return n.rejestr.ZalozSesje(tytul, idProjektu, kontoId)
 }
 
 // ZalozSesjeSrodowiska zakłada sesję opisaną środowiskiem wejścia Operatora.
-func (n *Nadzorca) ZalozSesjeSrodowiska(tytul, idProjektu, kodSrodowiska string) Sesja {
-	return n.rejestr.ZalozSesjeSrodowiska(tytul, idProjektu, kodSrodowiska)
+func (n *Nadzorca) ZalozSesjeSrodowiska(tytul, idProjektu, kodSrodowiska string, kontoId int64) Sesja {
+	return n.rejestr.ZalozSesjeSrodowiska(tytul, idProjektu, kodSrodowiska, kontoId)
 }
 
 // OtworzOkno zakłada okno komunikacji w sesji i zwraca jego opis wraz

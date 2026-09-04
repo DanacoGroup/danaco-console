@@ -290,6 +290,12 @@ nie ze znacznika. Wypełniacz siedział wyłącznie w oknach modułowych. Przej�
 TalkIn, WorkSpace i CodeStudio — po naprawie żadne okno modułowe w żadnym z nich
 nie niesie nazwy ani liczby wziętej z prototypu.
 
+Sprawdzian końcowy: żaden ze wzorów wypełniacza — `raport-koncowy`, `eurostat`,
+„149 zł", „Raport tygodniowy", „Ilustracja bohatera", „Agent Redaktor",
+`adres-strony`, `konkurent.pl`, „Wersje (", „AI widzi", „22 ustalenia",
+„34 pliki", „Segment:" — nie występuje już w żadnym oknie modułowym, przy zerze
+błędów konsoli.
+
 Przemiatanie protokołem powtórzone po tych zmianach: 208 komend odczytu, 181
 odpowiedzi udanych, ani jednej odmowy `internal_error`. Jedyna pozycja bez
 odpowiedzi to `developer.lint.get` — nie zawiesza się, tylko uruchamia programy

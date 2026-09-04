@@ -200,6 +200,11 @@ własny, nazwa wchodzi wprost w pozycji wykazu, a menu wystawia „duplikuj" i �
 — eksportu i importu z prototypu tam nie ma z rozstrzygnięcia 40. Powielenie
 odkłada drugi wiersz z przyrostkiem „— kopia" i własnym bytem docelowym.
 
+Wiersz projektu wystawia „nazwa" i „usuń"; oba doszły do bazy. Zmiana nazwy
+przedtem ginęła po cichu — powrót ogniska z menu domykał pole wpisu zdarzeniem
+`blur`, więc wpis rozstrzygał się wartością pustą i żadna komenda nie wychodziła.
+Ścieżka czeka teraz obrót pętli i odsłania panel, tak jak ścieżka zakładania.
+
 ## 6. Rozstrzygnięcia czekające na Właściciela
 
 Czynność, nie rozstrzygnięcie: zakup certyfikatu OV w Certum na dokumenty spółki

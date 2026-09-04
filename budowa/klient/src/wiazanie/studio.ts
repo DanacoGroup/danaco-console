@@ -245,13 +245,8 @@ export function zwiazStudio(
     wezly.formularz.requestSubmit();
   }, przy);
 
-  const ustawNowyDokument = (): void => {
-    if (wezly.nowyDokument instanceof HTMLButtonElement) wezly.nowyDokument.disabled = idOkna === '';
-  };
-
   const zdejmijStanowisko = (): void => {
     idOkna = '';
-    ustawNowyDokument();
   };
 
   /* Sesja powstaje pierwszą wiadomością, nie otwarciem okna ani wejściem
@@ -264,7 +259,6 @@ export function zwiazStudio(
     if (stanowisko === null) return '';
     idOkna = stanowisko.idOkna;
     idSesji = stanowisko.idSesji;
-    ustawNowyDokument();
     // Karta bez okna komunikacji nie zamknie go w rdzeniu przy swoim zejściu.
     if (!przypiszOknoKomunikacji(idKarty, idOkna)) {
       oglos('Studio', 'Okno rozmowy stanęło, gdy jego karta zeszła z pasma — '
@@ -424,7 +418,6 @@ export function zwiazStudio(
   );
 
   opiszDokument(null);
-  ustawNowyDokument();
   void opiszKanal(kanal, nazwaSrodowiska, korzen);
   void opiszWyborModelu(kanal, korzen);
   opiszWyborNakladu(korzen);

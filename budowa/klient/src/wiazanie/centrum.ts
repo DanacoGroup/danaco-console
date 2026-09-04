@@ -1134,6 +1134,10 @@ async function wykonajCzynnoscProjektu(
 ): Promise<Wynik<unknown> | null> {
   if (czynnosc === 'usun') return wywolaj(kanal, Command.ProjectDelete, { projectId: idProjektu });
   if (czynnosc !== 'nazwa') return null;
+  /* Wpis zaczyna się po domknięciu menu przez bibliotekę: jej powrót ogniska
+     na wyzwalacz domknąłby pole wpisu zdarzeniem blur. */
+  await new Promise((gotowe) => setTimeout(gotowe, 0));
+  pokazPanelProjektow();
   const wezel = wezelNazwyProjektu(idProjektu);
   const nazwa = wezel === null ? null : await zapytajWWezle(wezel, null);
   if (nazwa === null || nazwa === '') return null;

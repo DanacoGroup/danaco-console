@@ -189,6 +189,12 @@ Kryteria 2, 3, 6 i 7 wykazane klikaniem po naprawie dwóch usterek, które wysz�
 dopiero przy tym przejściu: pustego okna „Operacje platformy" i wygaszonego
 przycisku nowego dokumentu.
 
+Czynności wiersza sesji w Centrum przeszły tą samą drogą. Menu wystawia dokładnie
+pięć pozycji mających pokrycie w komendach — reszta znaczników prototypu schodzi
+z okna, zamiast stać martwa. Zmiana nazwy wpisana wprost w wierszu leży w kolumnie
+`tytul`, przeniesienie zakłada projekt ze wskazaniem konta operatora i wiąże z nim
+sesję, archiwizacja przestawia `stan` na `archiwalna`. Każde bez błędu konsoli.
+
 ## 6. Rozstrzygnięcia czekające na Właściciela
 
 Czynność, nie rozstrzygnięcie: zakup certyfikatu OV w Certum na dokumenty spółki

@@ -179,9 +179,6 @@ Pełny wykaz: `audyt2-ustalenia-7-kategorii.json`.
   wprowadzam: okno Studia prowadzi Właściciel własnoręcznie (CLAUDE.md).
   Pozostałe wygaszenia w kliencie idą w parze ze zdaniem `nieGotowe` i zasady
   nie łamią.
-- `go test ./...` na pakiecie `core` idzie ponad kwadrans: każdy z 433 montaży
-  rdzenia kosztuje około 3,2 s. Koszt nie leży w migracjach — sprawdzone kopią
-  bazy po migracjach, przebieg skrócił się o zero.
 
 ## 6. Rozstrzygnięcia czekające na Właściciela
 
@@ -252,8 +249,10 @@ python3 ~/budowa/narzedzia/pokrycie-kontraktu.py
 ```
 
 Pełny `go test -count=1 -timeout 50m ./server/...` przechodzi w całości i tak go
-sprawdzać przed scaleniem; pakiet `core` idzie w nim ponad pół godziny, bo każdy
-z 433 montaży rdzenia kosztuje około 3,2 s. Dziennik startu rdzenia ma mówić
+sprawdzać przed scaleniem; pakiet `core` idzie w nim niecałe dziesięć minut.
+Wcześniej szedł ponad pół godziny: profil wykazał, że dwie trzecie czasu zjadało
+parsowanie SQL migracji przy każdym z 433 montaży, więc uprząż bierze teraz bazę
+z wzorca złożonego raz na przebieg pakietu. Dziennik startu rdzenia ma mówić
 `komend=1086`, `zależności zewnętrzne: 55 z 55 obecnych` i `klient=klient/dist`.
 
 **Przegląd odczytów na żywym rdzeniu.** Osobny rdzeń na własnym porcie i katalogu

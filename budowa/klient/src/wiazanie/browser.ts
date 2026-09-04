@@ -5,9 +5,6 @@ import {
   BrowserScreenshotMode,
   Command,
   EventType,
-  type BrowserBookmark,
-  type BrowserDownload,
-  type BrowserFeed,
   type BrowserNote,
   type BrowserSource,
   type BrowserTab,
@@ -17,13 +14,7 @@ import { zglosUchwyt } from '../polaczenie/rozdzielacz-zdarzen.ts';
 import type { Kanal } from '../protokol/kanal.ts';
 import { wywolaj } from '../protokol/wywolanie.ts';
 import { oglos } from './ogloszenie.ts';
-import {
-  cialoPanelu,
-  opiszNaglowek,
-  wykazPanelu,
-  zapewnijOknoModulu,
-  zdejmijTrescWspolna,
-} from './okno-modulu.ts';
+import { opiszNaglowek, zapewnijOknoModulu, zdejmijTrescWspolna } from './okno-modulu.ts';
 import { zwiazKatalogModulu } from './katalog-modulu.ts';
 import { zwiazWytworyPrzegladania } from './browser-wytwory.ts';
 
@@ -68,15 +59,6 @@ export function zwiazPrzegladarke(
     void wypelnijZrodla(kanal, korzen, idOkna);
     void wypelnijNotatki(kanal, korzen, idOkna);
     void zwiazWytworyPrzegladania(kanal, korzen, idOkna, przy);
-    void wykaz(kanal, korzen, 'panel-pliki', Command.BrowserDownloadList,
-      'Żadnego pliku nie pobrano z przeglądania.',
-      (o) => (o.downloads as BrowserDownload[]).map((d) => [d.fileName ?? d.url, ''] as const));
-    void wykaz(kanal, korzen, 'panel-artefakty', Command.BrowserBookmarkList,
-      'Żadnej strony nie odłożono do zakładek.',
-      (o) => (o.bookmarks as BrowserBookmark[]).map((z) => [z.title ?? z.url, ''] as const));
-    void wykaz(kanal, korzen, 'panel-zadania', Command.BrowserFeedList,
-      'Żadnego kanału nie zapisano do śledzenia.',
-      (o) => (o.feeds as BrowserFeed[]).map((k) => [k.title ?? k.url, ''] as const));
   })();
 
   korzen.addEventListener('click', (zdarzenie) => {
@@ -144,23 +126,6 @@ function zdejmijTrescPrzykladowa(korzen: Element): void {
   for (const wezel of korzen.querySelectorAll('[title="Wskaźnik obecności AI"]')) {
     wezel.remove();
   }
-}
-
-/* Panel wykazu bez własnego kształtu: komenda bez pól wymaganych. */
-async function wykaz(
-  kanal: Kanal,
-  korzen: Element,
-  panelId: string,
-  komenda: Parameters<typeof wywolaj>[1],
-  pusty: string,
-  mapuj: (wynik: Record<string, unknown>) => readonly (readonly [string, string])[],
-): Promise<void> {
-  const cialo = cialoPanelu(korzen, panelId);
-  if (cialo === null) return;
-  const odpowiedz = await wywolaj(kanal, komenda as never, {} as never);
-  const wynik = odpowiedz.wynik as Record<string, unknown> | undefined;
-  wykazPanelu(cialo, odpowiedz.udany, odpowiedz.blad?.message,
-    wynik === undefined ? undefined : [...mapuj(wynik)], pusty, (x) => x);
 }
 
 async function wypelnijKarty(kanal: Kanal, korzen: Element, idOkna: string): Promise<void> {

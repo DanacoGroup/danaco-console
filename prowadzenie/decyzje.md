@@ -1890,3 +1890,33 @@ komponentu wchodzi wtedy, gdy Właściciel poda jego zakres i format.
 prototypu i różnica ta jest zamierzona — przy ocenie kryterium 5 nie liczy się
 jako rozjazd z prototypem. Eksport rzeczy innych niż komponent działa bez
 zmian: `session.export`, `research.export.*`, `studio.export.profile.*`.
+
+## 41. Los siedmiu okien platformowych
+
+**Rzecz.** Prototypy platformowe to Instalator, Instrukcja użytkowania, Nowy
+projekt, Ustawienia, Konfiguracja, Historia sesji, Mobile i Always On Display.
+Do wydania wchodzi Instalator; pozostałe albo mają pokrycie inną drogą, albo
+nie mają go wcale, a plan etapu 2 zabrania i pustej powłoki, i zdjęcia wejścia.
+
+**Rozstrzygnięcie po oknach.** Nowy projekt działa wprost — zakłada projekt
+z Centrum i z przedsionka, bez osobnego okna. Konfiguracja otwiera katalog
+„Operacje platformy" z rodziną `config`. Instrukcja użytkowania i Instalator
+stoją pod pozycjami pomocy. Historia sesji, Mobile i Always On Display zostają
+zapowiedziane: wejście klika się, a produkt odpowiada zdaniem, gdzie ten zakres
+jest dziś — sesje w panelu bocznym, obie pozostałe w katalogu operacji.
+
+**Rozważone warianty.**
+
+1. Dołożyć trzy brakujące okna. Odrzucone: żadne nie należy do pakietu pięciu
+   okien wydania, a zbudowanie ich odsunęłoby bramkę bez zysku dla Operatora,
+   który te same operacje wywoła z katalogu.
+2. Zdjąć wejścia z okna. Odrzucone: znika wtedy ślad, że taki zakres w produkcie
+   istnieje, i Operator nie ma jak się dowiedzieć, gdzie go szukać.
+3. Zostawić wejścia i nazwać niegotowość zdaniem. Przyjęte.
+
+**Decyzja.** Osiem prototypów platformowych zamyka się tak: jeden w wydaniu,
+cztery z pokryciem inną drogą, trzy zapowiedziane zdaniem wskazującym zastępstwo.
+
+**Konsekwencje.** Żadne wejście platformowe nie jest martwe ani nie prowadzi do
+pustej powłoki, więc kryterium 6 bramki obejmuje je wszystkie. Zapowiedź niesie
+nazwę okna, zastępstwo i zdanie o wydaniu — sprawdzone klikaniem.

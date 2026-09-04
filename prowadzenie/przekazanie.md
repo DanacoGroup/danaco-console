@@ -283,6 +283,16 @@ w tabeli `powiadomienie_centrum`, drugie zdarzenie zostaje nowe. Plakietka słuc
 `notification.raised` i `notification.changed`, więc licznik schodzi bez
 odświeżania okna.
 
+**Moduły doprowadzone do działania.** Research i Translate przeszły
+z zapowiedzianych na działające i mają własne wiązanie (`research.ts`,
+`translate.ts`): okno modułu zakładane z rdzenia, panele wypełniane odpowiedzią
+rdzenia, treść przykładowa prototypu zdjęta. Research wykazany całym pionem —
+wniesienie źródła od kliknięcia do wiersza w `zrodlo_badania`. Translate ma
+wykazany odczyt (glosariusz z rdzenia); dołożenie panelu języka odmawia na tej
+maszynie, bo kanał modelu nie ma poświadczenia — odmowa idzie z rdzenia i jest
+Operatorowi pokazywana. Zapowiedziane zostają: `developer`, `roundtable`,
+`apps`, `automations`, `assistant`, `diagnostics`.
+
 Dziewięć modułów przedsionka TalkIn otwarto po kolei i to przejście ujawniło
 najpoważniejszą usterkę tej rundy: osiem okien przedstawiało dane zmyślone —
 sześć nieistniejących plików obok prawdziwego „Materiały: 0", ceny, wymyślone
@@ -336,10 +346,10 @@ w żadnym z tych okien.
 
 Piąta, `aria-prohibited-attr` na `<div class="sta-kom-kontekst" aria-label>`,
 pochodzi z `design/05-okna/WZORZEC-STANOWISKA.html` i jest powielona
-w dziewiętnastu plikach prototypów. Zmiana zbiorcza w warstwie projektowej
-należy do Właściciela, więc rola grupy dokładana jest tymczasowo z kodu, przy
-opisywaniu głowy karty. Gdy prototypy dostaną `role="group"` przy tym dzielniku
-albo stracą `aria-label`, ta linia w `centrum.ts` przestanie być potrzebna.
+w dziewiętnastu plikach prototypów. Produkt ją prostuje sam: rolę grupy dokłada
+`centrum.ts` przy opisywaniu głowy karty, a idzie tamtędy każda karta modułu, więc
+w oknie naruszenia nie ma. Zmiana zbiorcza w prototypach nic by w produkcie nie
+zmieniła — kod stoi wyżej. Nic tu nie czeka na zrobienie.
 
 Przemiatanie protokołem powtórzone po tych zmianach: 208 komend odczytu, 181
 odpowiedzi udanych, ani jednej odmowy `internal_error`. Jedyna pozycja bez

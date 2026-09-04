@@ -6,8 +6,8 @@ i czego nie wolno ruszyć.
 ## 1. Czym rzecz stoi
 
 Rdzeń działa. Interfejs prowadzi od wejścia przez przedsionek do Centrum i Studia.
-Poza Studiem czytają z rdzenia Library, Workspace, Browser, Agents, Design, Research
-i Translate; sześć modułów stoi na zapowiedzi niegotowości. Praca stoi na `main`: gałąź
+Poza Studiem czytają z rdzenia Library, Workspace, Browser, Agents, Design, Research,
+Translate i Roundtable; pięć modułów stoi na zapowiedzi niegotowości. Praca stoi na `main`: gałąź
 `teren/naprawy-audytu` weszła przesunięciem prostym 4 września 2026 po pełnym
 przebiegu `go test ./server/...` zamkniętym kodem 0. Punkt cofnięcia sprzed
 scalenia to `2881c425`.
@@ -284,15 +284,17 @@ w tabeli `powiadomienie_centrum`, drugie zdarzenie zostaje nowe. Plakietka słuc
 `notification.raised` i `notification.changed`, więc licznik schodzi bez
 odświeżania okna.
 
-**Moduły doprowadzone do działania.** Research i Translate przeszły
+**Moduły doprowadzone do działania.** Research, Translate i Roundtable przeszły
 z zapowiedzianych na działające i mają własne wiązanie (`research.ts`,
 `translate.ts`): okno modułu zakładane z rdzenia, panele wypełniane odpowiedzią
 rdzenia, treść przykładowa prototypu zdjęta. Research wykazany całym pionem —
 wniesienie źródła od kliknięcia do wiersza w `zrodlo_badania`. Translate ma
 wykazany odczyt (glosariusz z rdzenia); dołożenie panelu języka odmawia na tej
 maszynie, bo kanał modelu nie ma poświadczenia — odmowa idzie z rdzenia i jest
-Operatorowi pokazywana. Zapowiedziane zostają: `developer`, `roundtable`,
-`apps`, `automations`, `assistant`, `diagnostics`.
+Operatorowi pokazywana. Roundtable wystawia uczestników i argumenty z rdzenia; przy pustej debacie mówi
+„Żaden model nie stanął jeszcze do tej debaty" i „Debata nie ma jeszcze ani jednej
+wypowiedzi". Zapowiedziane zostają: `developer`, `apps`, `automations`,
+`assistant`, `diagnostics`.
 
 Dziewięć modułów przedsionka TalkIn otwarto po kolei i to przejście ujawniło
 najpoważniejszą usterkę tej rundy: osiem okien przedstawiało dane zmyślone —

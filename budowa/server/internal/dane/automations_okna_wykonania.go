@@ -31,7 +31,7 @@ type WyzwolenieAutomatyki struct {
 	Chwila         string
 }
 
-const (
+var (
 	usunOknaWykonania = `DELETE FROM okno_wykonania_harmonogramu WHERE harmonogram_id = ?`
 
 	wstawOknoWykonania = `INSERT INTO okno_wykonania_harmonogramu
@@ -68,6 +68,7 @@ const (
 	                 LEFT JOIN przebieg_automatyki p ON p.id = w.przebieg_id
 	                 WHERE (? = 0 OR w.automatyka_id = ?)
 	                   AND (? = 0 OR w.harmonogram_id = ?)
+	                   AND ` + warunekKontaAutomatyki + `
 	                 ORDER BY w.chwila DESC, w.id DESC LIMIT ?`
 )
 
@@ -179,7 +180,7 @@ func (r *repozytoriumAutomatyk) Wyzwolenia(ctx context.Context, automatykaID, ha
 		return nil, err
 	}
 	wiersze, err := polecenie.QueryContext(ctx, automatykaID, automatykaID,
-		harmonogramID, harmonogramID, granicaWykazu(limit))
+		harmonogramID, harmonogramID, KontoOperatora(ctx), granicaWykazu(limit))
 	if err != nil {
 		return nil, fmt.Errorf("dane: nie można odczytać historii wyzwoleń: %w", err)
 	}

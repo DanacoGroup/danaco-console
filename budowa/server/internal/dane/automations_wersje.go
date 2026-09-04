@@ -48,18 +48,18 @@ const (
 	ustawWersjeOpublikowana = `UPDATE automatyka
 	                           SET wersja_opublikowana = ?,
 	                               zaktualizowano = strftime('%Y-%m-%dT%H:%M:%fZ','now')
-	                           WHERE id = ?`
+	                           WHERE id = ? AND ` + WarunekKonta
 
 	ustawUdostepnienieAutomatyki = `UPDATE automatyka
 	                                SET udostepniona = ?,
 	                                    zaktualizowano = strftime('%Y-%m-%dT%H:%M:%fZ','now')
-	                                WHERE id = ?`
+	                                WHERE id = ? AND ` + WarunekKonta
 
 	ustawBudzetyAutomatyki = `UPDATE automatyka
 	                          SET budzet_przebiegu_sekundy = ?, budzet_kroku_sekundy = ?,
 	                              regula_budzetu = ?,
 	                              zaktualizowano = strftime('%Y-%m-%dT%H:%M:%fZ','now')
-	                          WHERE id = ?`
+	                          WHERE id = ? AND ` + WarunekKonta
 )
 
 // ZapiszWersjeAutomatyki dopisuje migawkę definicji automatyki wraz z jej pełnym kompletem kroków wykonania.
@@ -141,7 +141,7 @@ func (r *repozytoriumAutomatyk) OpublikujWersjeAutomatyki(ctx context.Context,
 		}{
 			{zdejmijPublikacjeWersji, []any{automatykaID}},
 			{nadajPublikacjeWersji, []any{automatykaID, numer}},
-			{ustawWersjeOpublikowana, []any{numer, automatykaID}},
+			{ustawWersjeOpublikowana, []any{numer, automatykaID, KontoOperatora(ctx)}},
 		} {
 			polecenie, err := r.zapytania.wTransakcji(ctx, transakcja, para.zapytanie)
 			if err != nil {
@@ -164,7 +164,8 @@ func (r *repozytoriumAutomatyk) UstawUdostepnienieAutomatyki(ctx context.Context
 	if err != nil {
 		return err
 	}
-	if _, err := polecenie.ExecContext(ctx, liczbaLogiczna(udostepniona), automatykaID); err != nil {
+	if _, err := polecenie.ExecContext(ctx, liczbaLogiczna(udostepniona), automatykaID,
+		KontoOperatora(ctx)); err != nil {
 		return fmt.Errorf("dane: nie można zmienić udostępnienia automatyki %d: %w", automatykaID, err)
 	}
 	return nil
@@ -180,7 +181,7 @@ func (r *repozytoriumAutomatyk) UstawBudzetyAutomatyki(ctx context.Context, auto
 		return err
 	}
 	_, err = polecenie.ExecContext(ctx, budzetPrzebiegu, budzetKroku,
-		tekstDoKolumny(regula), automatykaID)
+		tekstDoKolumny(regula), automatykaID, KontoOperatora(ctx))
 	if err != nil {
 		return fmt.Errorf("dane: nie można zapisać budżetów automatyki %d: %w", automatykaID, err)
 	}

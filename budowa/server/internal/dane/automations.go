@@ -7,6 +7,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"strings"
 )
 
 type Automatyka struct {
@@ -108,6 +109,9 @@ type RepozytoriumAutomatyk interface {
 	Wyzwolenia(ctx context.Context, automatykaID, harmonogramID int64,
 		limit int) ([]WyzwolenieAutomatyki, error)
 }
+
+// Wpisy wiszące na automatyce granicy nie niosą; sięgają jej złączeniem aliasem `a`.
+var warunekKontaAutomatyki = strings.ReplaceAll(WarunekKonta, "konto_id", "a.konto_id")
 
 const (
 	kolumnyAutomatyki = `id, identyfikator_zewnetrzny, nazwa, opis, czynna, wersja,

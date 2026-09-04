@@ -69,7 +69,9 @@ func zmontujDrogeWejscia(t *testing.T, tryb trybPoczty) uprzazWejscia {
 	t.Helper()
 
 	katalog := t.TempDir()
-	baza, err := store.Otworz(filepath.Join(katalog, "dane.sqlite"))
+	sciezka := filepath.Join(katalog, "dane.sqlite")
+	polozWzorzecBazy(t, sciezka)
+	baza, err := store.Otworz(sciezka)
 	if err != nil {
 		t.Fatalf("nie można otworzyć bazy sprawdzianu: %v", err)
 	}

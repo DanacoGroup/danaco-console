@@ -36,7 +36,9 @@ func zlozAdapterBadan(t *testing.T) (*adapterBadan, dane.RepozytoriumBadan, cont
 	t.Helper()
 
 	katalog := t.TempDir()
-	baza, err := store.Otworz(filepath.Join(katalog, "dane.sqlite"))
+	sciezka := filepath.Join(katalog, "dane.sqlite")
+	polozWzorzecBazy(t, sciezka)
+	baza, err := store.Otworz(sciezka)
 	if err != nil {
 		t.Fatalf("nie można otworzyć bazy sprawdzianu: %v", err)
 	}

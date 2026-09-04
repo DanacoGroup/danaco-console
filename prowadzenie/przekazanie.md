@@ -160,8 +160,6 @@ Pełny wykaz: `audyt2-ustalenia-7-kategorii.json`.
   pozycję jako NIESPRAWDZONĄ, póki poświadczeń kanału nie ma w środowisku.
 - Rodzina `notification.*` nie ma wołającego poza rejestrem komend: centrum
   powiadomień jest oknem spoza łańcucha etapu 2, więc zostaje zapowiedziane.
-- Granica 64 gniazd niezwiązanych — ustalenie zostaje otwarte po zdjęciu terminu
-  gniazda przed bramką (sekcja 4).
 - `docs/SPIS-OPRACOWAN.md` wymienia pięć opracowań, których w repozytorium nie ma:
   `interfejs-uzytkownika/rama-okna.md`, `okno-nowego-projektu.md`,
   `okno-historii-sesji.md`, `okno-instalatora.md`, `okno-instrukcji.md` — spis

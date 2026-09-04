@@ -179,7 +179,7 @@ Pełny wykaz: `audyt2-ustalenia-7-kategorii.json`.
 | 2. pełne działanie modułu od kliknięcia do zapisu | wykazane | przejście w przeglądarce: przedsionek, okno Studia, wiadomość, dokument, treść z kanwy leży w `dokument_studio` |
 | 3. zerwanie i powrót nie gubią stanu | wykazane | tryb bez sieci i powrót: okno zostaje w Centrum |
 | 4. typy z kontraktu, rozjazd wykrywany maszynowo | wykazane | drabina: świeżość wytworów wobec `contract.json`, pokrycie 1086/1086 |
-| 5. Studio odpowiada prototypowi | do oceny Właściciela | ocena wizualna, nie do zmierzenia stąd |
+| 5. Studio odpowiada prototypowi | do oceny Właściciela, materiał zebrany | 158 ze 175 klas prototypu Studia stoi w żywym oknie; 17 pozostałych to stany wywoływane, każdy z wiązaniem albo regułą arkusza |
 | 6. okno obecne nazywa swoją niegotowość | wykazane | `#cd-mobile` odpowiada zdaniem „To okno nie wchodzi do tego wydania" |
 | 7. przejście bez ślepego zaułka | wykazane | uruchomienie → bramka → logowanie → Centrum → przedsionek → Studio, zero błędów konsoli |
 
@@ -190,6 +190,17 @@ uruchomiona pod `xvfb-run`, postawiła rdzeń procesem pobocznym (dziennik powł
 „rdzeń: proces poboczny … wystartowany z sekretem nawiązania"), otworzyła port
 17911 i okno z ikoną zasobnika. Bez wskazania powłoka nie zgaduje: mówi, że czeka
 na podanie serwera wdrożenia.
+
+Do kryterium 5 zebrany materiał, którego ocena wizualna nie zastąpi, ale który
+mówi, gdzie patrzeć. Ze 175 klas własnych prototypu Studia 158 stoi w oknie
+otwartym na żywo; brakujące siedemnaście — `dn-wersja*`, `dn-diff-*`, `dn-kartka*`,
+`dn-zazn`, `dn-plyw`, `dn-stan-miara`, `dn-stan-tor`, `st-obudowa`, `st-miara`,
+`st-szyna-grupa` — to stany wywoływane: pojawiają się przy wersjach dokumentu,
+różnicy, podglądzie stron i zaznaczeniu. Każda z nich ma albo wiązanie, które
+ją stawia (`studio.ts`, `studio-repozytorium.ts`, `studio-sledzenie.ts`), albo
+regułę w arkuszu (`studio.css`, `komponenty.css`, `rama.css`). Pomiar prowadzi
+się na żywym dokumencie, nie na `dist/index.html`: rama okna powstaje skryptem
+warstwy projektowej, więc w pliku wydania jej nie ma.
 
 Kryteria 2, 3, 6 i 7 wykazane klikaniem po naprawie dwóch usterek, które wyszły
 dopiero przy tym przejściu: pustego okna „Operacje platformy" i wygaszonego

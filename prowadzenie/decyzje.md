@@ -1864,3 +1864,29 @@ uwierzytelnionej, a zapas pokrywa powrót po zerwaniu przy kilku oknach naraz.
 **Konsekwencje.** Liczba wiąże wyłącznie instalację z wymogiem logowania —
 wdrożenie serwerowe, gdzie pakiet stawia `DANACO_WYMOG_LOGOWANIA=true`.
 Na pętli zwrotnej bez bramki nie zmienia niczego.
+
+## 40. Eksport i import komponentu zostają poza wydaniem
+
+**Rzecz.** Prototyp Centrum niesie w menu komponentu pozycje `eksport` (siedem
+wystąpień) i `import` (jedno). Kontrakt rodziny `component` ma `assign`,
+`changed`, `create`, `delete`, `list` i `update` — nic, co by te dwie pozycje
+obsłużyło. Wiązanie Centrum zdejmuje je z okna, więc Operator ich nie widzi.
+
+**Rozważone warianty.**
+
+1. Dopisać `component.export` i `component.import` do kontraktu. Odrzucone:
+   prototyp podaje nazwę pozycji i nic ponadto — nie mówi, co wchodzi do paczki,
+   w jakim formacie, czy niesie ze sobą przypisania i konfigurację, ani jak
+   zachować się przy imporcie komponentu o nazwie już zajętej. Napisanie tego
+   byłoby dopowiedzeniem zachowania, którego w źródle nie ma.
+2. Zostawić pozycje wygaszone. Odrzucone: martwa pozycja w menu to blokada bez
+   zdania wyjaśniającego.
+3. Zdejmować je z okna i nazwać rzecz Właścicielowi. Przyjęte.
+
+**Decyzja.** Pozycje zostają zdjęte, kontraktu się nie poszerza. Eksport
+komponentu wchodzi wtedy, gdy Właściciel poda jego zakres i format.
+
+**Konsekwencje.** Menu komponentu w Centrum jest o dwie pozycje uboższe od
+prototypu i różnica ta jest zamierzona — przy ocenie kryterium 5 nie liczy się
+jako rozjazd z prototypem. Eksport rzeczy innych niż komponent działa bez
+zmian: `session.export`, `research.export.*`, `studio.export.profile.*`.

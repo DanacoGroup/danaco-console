@@ -109,12 +109,16 @@ function korzenKarty(wskazanie: Element | string): Element | null {
 /* Znacznik niesie karty, źródła i notatki wpisane wprost. Wypełniacz zostaje
    w produkcie na zawsze, więc schodzi przed pierwszym pytaniem rdzenia. */
 function zdejmijTrescPrzykladowa(korzen: Element): void {
-  for (const wybor of ['.br-karta', '.br-zrodlo', '.br-notatka', '.br-artefakt']) {
+  for (const wybor of ['.br-karta', '.br-zrodlo', '.br-notatka', '.br-artefakt', '.brw-tab']) {
     for (const wezel of korzen.querySelectorAll(wybor)) wezel.remove();
   }
   // Rozmowa, żetony kontekstu i znacznik pracy też są wpisane wprost w prototyp.
   if (korzen instanceof HTMLElement) zdejmijTrescWspolna(korzen);
-  korzen.querySelector('.sta-kom-monitor')?.remove();
+  /* Wskaźnik obecności twierdzi, że model patrzy na stronę. Rdzeń takiego
+     stanu nie podaje, więc plakietka mówiłaby to bez pokrycia. */
+  for (const wezel of korzen.querySelectorAll('[title="Wskaźnik obecności AI"]')) {
+    wezel.remove();
+  }
 }
 
 async function wypelnijKarty(kanal: Kanal, korzen: Element, idOkna: string): Promise<void> {

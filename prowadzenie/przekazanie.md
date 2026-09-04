@@ -175,13 +175,21 @@ Pełny wykaz: `audyt2-ustalenia-7-kategorii.json`.
 
 | kryterium | stan | czym wykazane |
 |---|---|---|
-| 1. produkt złożony, nie zestaw procesów | częściowo | powłoka niesie pakiet interfejsu (`frontendDist`) i stawia rdzeń procesem pobocznym; przejście instalki wymaga maszyny z Windows |
+| 1. produkt złożony, nie zestaw procesów | wykazane poza instalką | powłoka złożona ze wskazaniem lokalnym i uruchomiona sama jedna stawia rdzeń procesem pobocznym z sekretem nawiązania, otwiera okno i ikonę zasobnika; przejście instalki wymaga maszyny z Windows |
 | 2. pełne działanie modułu od kliknięcia do zapisu | wykazane | przejście w przeglądarce: przedsionek, okno Studia, wiadomość, dokument, treść z kanwy leży w `dokument_studio` |
 | 3. zerwanie i powrót nie gubią stanu | wykazane | tryb bez sieci i powrót: okno zostaje w Centrum |
 | 4. typy z kontraktu, rozjazd wykrywany maszynowo | wykazane | drabina: świeżość wytworów wobec `contract.json`, pokrycie 1086/1086 |
 | 5. Studio odpowiada prototypowi | do oceny Właściciela | ocena wizualna, nie do zmierzenia stąd |
 | 6. okno obecne nazywa swoją niegotowość | wykazane | `#cd-mobile` odpowiada zdaniem „To okno nie wchodzi do tego wydania" |
 | 7. przejście bez ślepego zaułka | wykazane | uruchomienie → bramka → logowanie → Centrum → przedsionek → Studio, zero błędów konsoli |
+
+Kryterium 1 wykazane na tej maszynie, bez Windows: powłoka złożona
+`cargo build --release` ze wskazaniem `DANACO_HOST_WDROZENIA=127.0.0.1`,
+`DANACO_PORT_WDROZENIA=17911` i rdzeniem położonym obok pliku wykonywalnego,
+uruchomiona pod `xvfb-run`, postawiła rdzeń procesem pobocznym (dziennik powłoki:
+„rdzeń: proces poboczny … wystartowany z sekretem nawiązania"), otworzyła port
+17911 i okno z ikoną zasobnika. Bez wskazania powłoka nie zgaduje: mówi, że czeka
+na podanie serwera wdrożenia.
 
 Kryteria 2, 3, 6 i 7 wykazane klikaniem po naprawie dwóch usterek, które wyszły
 dopiero przy tym przejściu: pustego okna „Operacje platformy" i wygaszonego

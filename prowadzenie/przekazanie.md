@@ -274,10 +274,11 @@ Kryterium 6 bramki etapu 2 wykazane tą samą drogą: naciśnięcie okna spoza w
 (`#cd-mobile`) odpowiada zdaniem „Mobile — To okno nie wchodzi do tego wydania",
 nie ciszą i nie pustą skorupą.
 
-Do Studia tą drogą nie doszedłem: przycisk szyny (`button[data-srodowisko]`)
-wybiera środowisko, a wejście prowadzi przez „Nowa sesja" z menu aplikacji, która
-dopiero pyta o środowisko. Pion do Studia jest wykazany protokołem (przebieg e2e:
-`window.create`, `studio.document.save`, odczyt zwrotny), nie klikaniem.
+Kryterium 2 wykazane tą samą drogą, klikaniem: wejście `[data-nowa-sesja-srodowisko]`
+otwiera przedsionek TalkIn, kafel Studia stawia okno modułu, pierwsza wiadomość
+zakłada stanowisko, przycisk zakłada dokument, a treść wpisana w kanwie i odłożona
+skrótem Ctrl+S leży w `dokument_studio` — sprawdzone zapytaniem do pliku bazy.
+Przycisk szyny (`button[data-srodowisko]`) sam środowiska nie otwiera: wybiera je.
 
 **Przegląd odczytów na żywym rdzeniu.** Osobny rdzeń na własnym porcie i katalogu
 danych, po nim wywołanie każdej komendy wykazu i odczytu: 140 bez pól wymaganych

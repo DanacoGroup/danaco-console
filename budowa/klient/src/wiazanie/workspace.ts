@@ -5,6 +5,7 @@ import { zglosUchwyt } from '../polaczenie/rozdzielacz-zdarzen.ts';
 import type { Kanal } from '../protokol/kanal.ts';
 import { wywolaj } from '../protokol/wywolanie.ts';
 import {
+  opiszNaglowek,
   uzgodnijPrzelacznikiPaneli,
   zdejmijSterowanieWspolne,
   zdejmijTrescWspolna,
@@ -39,7 +40,7 @@ const WIAZANIA = new Map<string, WiazanieKarty>();
 
 export function zwiazWorkspace(
   kanal: Kanal,
-  _nazwaSrodowiska: string,
+  nazwaSrodowiska: string,
   idOknaStojacego: string,
   wskazanieKorzenia: Element | string,
 ): boolean {
@@ -68,6 +69,7 @@ export function zwiazWorkspace(
 
   zdejmijTrescWspolna(korzen as HTMLElement);
   zdejmijSterowanieWspolne(korzen as HTMLElement);
+  void opiszNaglowek(kanal, nazwaSrodowiska, korzen);
   zdejmijPanelBezPokrycia(wezly);
   const zadania = zwiazZadania(wezly, kanal, projekt, przy);
   const instrukcje = zwiazInstrukcje(wezly, kanal, projekt, przy);

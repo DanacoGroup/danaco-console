@@ -13,6 +13,7 @@ import type { Kanal } from '../protokol/kanal.ts';
 import { wywolaj } from '../protokol/wywolanie.ts';
 import { oglos } from './ogloszenie.ts';
 import {
+  opiszNaglowek,
   uzgodnijPrzelacznikiPaneli,
   zdejmijSterowanieWspolne,
   zdejmijTrescWspolna,
@@ -63,6 +64,7 @@ export function zwiazAgents(
     uzgodnijPrzelacznikiPaneli(korzen, []);
   }
   zdejmijTrescPrzykladowa(korzen, nazwaSrodowiska);
+  void opiszNaglowek(kanal, nazwaSrodowiska, korzen);
 
   let ekspert: Agent | null = null;
 

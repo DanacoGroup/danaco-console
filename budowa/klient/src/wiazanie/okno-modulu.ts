@@ -29,7 +29,10 @@ export function zwiazOknoStojace(
   void opiszNaglowek(kanal, nazwaSrodowiska, korzen);
 }
 
-async function opiszNaglowek(
+/* Nagłówek prototypu niesie środowisko, model i wysiłek wpisane wprost. Pole
+   o znanej wartości dostaje ją z rdzenia, pole bez pokrycia schodzi — inaczej
+   okno w sesji TalkIn twierdzi, że stoi w WorkSpace. */
+export async function opiszNaglowek(
   kanal: Kanal,
   nazwaSrodowiska: string,
   korzen: ParentNode,
@@ -111,6 +114,12 @@ export function uzgodnijPrzelacznikiPaneli(cialo: HTMLElement, _bezPokrycia: str
 export function zdejmijTrescWspolna(cialo: HTMLElement): void {
   cialo.querySelector('.sta-kom-historia')?.replaceChildren();
   cialo.querySelector('.sta-kom-monitor .sta-kom-monitor-tresc')?.replaceChildren();
+  /* Żetony kontekstu i znacznik pracy prototyp wpisuje wprost — nazwy plików,
+     adresy stron, „pracuje”. Bez zdjęcia stoją obok prawdziwych zer wykazu
+     jako dwa stany wykluczające się, oba wzięte znikąd. */
+  cialo.querySelector('.sta-kom-kontekst')?.replaceChildren();
+  cialo.querySelector('.sta-kontekst-akcji')?.replaceChildren();
+  cialo.querySelector('.sta-kom-stan')?.remove();
   for (const znacznik of cialo.querySelectorAll('#menu-filtr .sta-menu-poz[aria-checked]')) {
     znacznik.removeAttribute('aria-checked');
   }

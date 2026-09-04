@@ -241,7 +241,7 @@ export function zwiazCentrum(kanal: Kanal | undefined = globalThis.DanacoKanal):
       } else if (modul.code === KOD_MODULU_TERMINALA) {
         zwiazTerminal(kanal, idOkna, wnetrze.wezel);
       } else if (modul.code === KOD_MODULU_PRZEGLADARKI) {
-        zwiazPrzegladarke(kanal, idOkna, wnetrze.wezel);
+        zwiazPrzegladarke(kanal, nazwaSrodowiska, idOkna, wnetrze.wezel);
       } else if (idOkna === '') {
         zwiazOkno(kanal, modul.code, nazwaSrodowiska, wnetrze.wezel);
       } else {

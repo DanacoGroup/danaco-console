@@ -13,7 +13,7 @@ import (
 // każdy krok dalej zamiast przerywać na braku nadań albo identyfikatora.
 func (m *mostyOkna) tekstZNarzedziami(ctx context.Context, idOkna string) string {
 	dotychczasowy := m.Tekst(ctx, idOkna)
-	polecenie, argumenty, powod, jest := narzedzia.Wpis(idOkna)
+	polecenie, argumenty, srodowisko, powod, jest := narzedzia.Wpis(idOkna)
 	if !jest {
 		m.zglosBrakNarzedzi(idOkna, powod)
 		return dotychczasowy
@@ -28,6 +28,7 @@ func (m *mostyOkna) tekstZNarzedziami(ctx context.Context, idOkna string) string
 		Type:    RodzajWpisuMostu,
 		Command: polecenie,
 		Args:    argumenty,
+		Env:     srodowisko,
 	}
 	tresc, err := json.MarshalIndent(konfiguracja, "", "  ")
 	if err != nil {

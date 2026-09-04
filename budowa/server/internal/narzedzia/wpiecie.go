@@ -1,6 +1,5 @@
-// Plik niesie dane wpisu danaco w konfiguracji MCP okna rozmowy; okno
-// i poświadczenie wchodzą argumentami uruchomienia, adres rdzenia wchodzi
-// zmienną środowiska.
+// Plik niesie dane wpisu danaco w konfiguracji MCP okna rozmowy; okno wchodzi
+// argumentem uruchomienia, a poświadczenie i adres rdzenia — zmienną środowiska.
 package narzedzia
 
 import (
@@ -22,9 +21,10 @@ const (
 	// PrzelacznikRdzenia jest nazwą przełącznika uruchomieniowego niosącego
 	// adres gniazda WebSocket rdzenia.
 	PrzelacznikRdzenia = "rdzen"
-	// PrzelacznikPoswiadczenia niesie poświadczenie wydane przez rdzeń; bez
-	// niego rdzeń nie uznaje gniazda za serwer narzędzi.
+	// Przełącznik zostaje dla uruchomienia ręcznego; wpis MCP podaje poświadczenie zmienną.
 	PrzelacznikPoswiadczenia = "poswiadczenie"
+	// Wiersz poleceń procesu czyta każdy program użytkownika, środowisko — właściciel procesu.
+	ZmiennaPoswiadczenia = "DANACO_POSWIADCZENIE_NARZEDZI"
 	// NazwaBinarium jest nazwą binarium serwera narzędzi, bez rozszerzenia
 	// właściwego systemowi operacyjnemu.
 	NazwaBinarium = "danaco-narzedzia"
@@ -38,25 +38,28 @@ const (
 	skryptPakietu = "scripts/pakiet-serwera.sh"
 )
 
-// Wpis zwraca polecenie i argumenty wpisu danaco dla wskazanego okna: okno
-// i poświadczenie procesu rdzenia. Okno puste albo poświadczenie niewydane
-// daje fałsz, wpisu wtedy nie dokłada się wcale.
-func Wpis(idOkna string) (polecenie string, argumenty []string, powod string, jest bool) {
+// Wpis zwraca polecenie, argumenty i środowisko wpisu danaco dla wskazanego
+// okna. Okno puste albo poświadczenie niewydane daje fałsz, wpisu wtedy nie
+// dokłada się wcale.
+func Wpis(idOkna string) (polecenie string, argumenty []string,
+	srodowisko map[string]string, powod string, jest bool) {
+
 	if idOkna == "" {
-		return "", nil, "okno rozmowy bez identyfikatora — wpis nie miałby zasięgu", false
+		return "", nil, nil, "okno rozmowy bez identyfikatora — wpis nie miałby zasięgu", false
 	}
 	poswiadczenie := transport.PoswiadczenieNarzedzi()
 	if poswiadczenie == "" {
-		return "", nil, "poświadczenie serwera narzędzi niewydane — brak źródła losowego procesu", false
+		return "", nil, nil,
+			"poświadczenie serwera narzędzi niewydane — brak źródła losowego procesu", false
 	}
 	sciezka, err := sciezkaProgramu()
 	if err != nil {
-		return "", nil, err.Error(), false
+		return "", nil, nil, err.Error(), false
 	}
-	return sciezka, []string{
-		"--" + PrzelacznikOkna, idOkna,
-		"--" + PrzelacznikPoswiadczenia, poswiadczenie,
-	}, "", true
+	return sciezka,
+		[]string{"--" + PrzelacznikOkna, idOkna},
+		map[string]string{ZmiennaPoswiadczenia: poswiadczenie},
+		"", true
 }
 
 // sciezkaProgramu wskazuje binarium serwera narzędzi albo mówi, czemu go nie

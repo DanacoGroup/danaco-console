@@ -124,21 +124,35 @@ gniazdo serwera narzędzi i rejestrację z potwierdzeniem listem. Gniazdo
 z poświadczeniem nie liczy się odtąd do granicy gniazd niezwiązanych; samo
 ustalenie audytu o granicy 64 zostaje otwarte.
 
-## 5. Ustalenia audytu powtórnego czekające na pracę
+## 5. Ustalenia audytu powtórnego — stan
 
-Poza granicą konta, z siedmiu zamkniętych kategorii (pełny wykaz:
-`audyt2-ustalenia-7-kategorii.json`):
+Pełny wykaz: `audyt2-ustalenia-7-kategorii.json`.
 
-- **wysokie**: poświadczenia kanału w `option_env!` bez wznowienia budowy —
-  instalator złożony po próbnym złożeniu wyniesie hasło
-  (`instalator/src-tauri/build.rs`); pakietu serwera wdrożenia nadal nie ma,
-  wykaz kieruje na plik z 18 sierpnia; `zloz.mjs` ślepy na pozycję za hasłem;
-  sekret nawiązania nie jest przez powłokę ani wytwarzany, ani przekazywany
-  rdzeniowi; rodzina `notification.*` bez wołającego; pokrycie klienta 5,34 %.
-- **średnie**: `ZamknijKodem` daje 5 s na każde zamknięcie gniazda;
-  `progress.changed` idzie do gniazd przed bramką; poświadczenie serwera
-  narzędzi jedzie w wierszu poleceń procesu potomnego; wskaźnik PIN-u nie zna
-  konta; `go test ./...` nie kończy się przez sprawdzian odtwarzania twarzy.
+**Zamknięte 4 września 2026.**
+
+| ustalenie | co zrobiono |
+|---|---|
+| poświadczenie serwera narzędzi w wierszu poleceń procesu | wpis MCP podaje je zmienną `DANACO_POSWIADCZENIE_NARZEDZI`; wiersz poleceń czyta każdy program użytkownika, środowisko — tylko właściciel procesu |
+| `progress.changed` idzie do gniazd przed bramką | telemetria idzie `RozglosPoBramce`; gniazdo przed zalogowaniem jej nie dostaje |
+| wskaźnik PIN-u nie zna konta | krok 496; para (urządzenie, rodzaj) jest jednoznaczna w koncie |
+| `ZamknijKodem` daje 5 s na każde zamknięcie gniazda | własny termin 500 ms, potem gniazdo schodzi twardo |
+| `zloz.mjs` ślepy na pozycję za hasłem | odbiór idzie z poświadczeniami kanału, gdy środowisko je niesie; bez nich pozycja melduje się jako NIESPRAWDZONA |
+| poświadczenia kanału w `option_env!` bez wznowienia budowy | zastane naprawione: `build.rs` ma `cargo:rerun-if-env-changed` na obu zmiennych |
+| wykaz kieruje na plik z 18 sierpnia | zastane naprawione: `wydania.json` niesie wydanie 2.0.0 z 1 września |
+| pokrycie klienta 5,34 % | zastane naprawione: interfejs woła 1086/1086 komend kontraktu |
+| sekret nawiązania nie jest przez powłokę wytwarzany ani przekazywany | zastane naprawione: `desktop/src-tauri/src/sekret.rs` losuje go na uruchomienie, `rdzen/proces.rs` podaje rdzeniowi zmienną `DANACO_SEKRET_NAWIAZANIA` |
+
+**Otwarte.**
+
+- Pakietu serwera wdrożenia nadal nie ma i wykaz wydań go nie wymienia. Pozycja
+  wpisana przed powstaniem pliku byłaby wypełniaczem, którego zakazuje plan etapu 2.
+- Rodzina `notification.*` nie ma wołającego poza rejestrem komend: centrum
+  powiadomień jest oknem spoza łańcucha etapu 2, więc zostaje zapowiedziane.
+- Granica 64 gniazd niezwiązanych — ustalenie zostaje otwarte po zdjęciu terminu
+  gniazda przed bramką (sekcja 4).
+- `go test ./...` na pakiecie `core` idzie ponad kwadrans: każdy z 433 montaży
+  rdzenia kosztuje około 3,2 s. Koszt nie leży w migracjach — sprawdzone kopią
+  bazy po migracjach, przebieg skrócił się o zero.
 
 ## 6. Rozstrzygnięcia czekające na Właściciela
 

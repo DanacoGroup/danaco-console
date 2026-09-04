@@ -270,6 +270,10 @@ func (n nasluchTransportu) Rozglos(konto string, k protocol.Koperta) {
 	if k.Type == shared.EventStreamChunk && n.tor.dostarcz(n.serwer, k) {
 		return
 	}
+	if k.Type == shared.EventProgressChanged {
+		n.serwer.RozglosPoBramce(konto, k)
+		return
+	}
 	n.serwer.Rozglos(konto, k)
 }
 

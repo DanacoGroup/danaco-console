@@ -27,8 +27,10 @@ func main() {
 		"okno rozmowy, w którego zasięgu pracuje serwer narzędzi")
 	adres := flag.String(narzedzia.PrzelacznikRdzenia, narzedzia.AdresRdzenia(),
 		"adres gniazda WebSocket rdzenia")
-	// Poświadczenie wydaje rdzeń we wpisie MCP; bez niego rdzeń nie uzna gniazda za serwer narzędzi.
-	poswiadczenie := flag.String(narzedzia.PrzelacznikPoswiadczenia, "",
+	// Poświadczenie wydaje rdzeń we wpisie MCP i podaje zmienną środowiska;
+	// przełącznik zostaje dla uruchomienia ręcznego i ma przed nią pierwszeństwo.
+	poswiadczenie := flag.String(narzedzia.PrzelacznikPoswiadczenia,
+		os.Getenv(narzedzia.ZmiennaPoswiadczenia),
 		"poświadczenie serwera narzędzi wydane przez rdzeń przy uruchomieniu")
 	// Zasięg jest rolą okna, nie prośbą modelu; przełącznik czyta się raz, przy uruchomieniu.
 	zasieg := flag.String(narzedzia.PrzelacznikZasiegu, string(narzedzia.ZasiegOkna),

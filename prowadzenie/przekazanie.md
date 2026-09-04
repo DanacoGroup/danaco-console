@@ -195,6 +195,11 @@ z okna, zamiast stać martwa. Zmiana nazwy wpisana wprost w wierszu leży w kolu
 `tytul`, przeniesienie zakłada projekt ze wskazaniem konta operatora i wiąże z nim
 sesję, archiwizacja przestawia `stan` na `archiwalna`. Każde bez błędu konsoli.
 
+Kafle komponentów przeszły tak samo: kliknięcie kafla rodzaju zakłada komponent
+własny, nazwa wchodzi wprost w pozycji wykazu, a menu wystawia „duplikuj" i „usuń"
+— eksportu i importu z prototypu tam nie ma z rozstrzygnięcia 40. Powielenie
+odkłada drugi wiersz z przyrostkiem „— kopia" i własnym bytem docelowym.
+
 ## 6. Rozstrzygnięcia czekające na Właściciela
 
 Czynność, nie rozstrzygnięcie: zakup certyfikatu OV w Certum na dokumenty spółki

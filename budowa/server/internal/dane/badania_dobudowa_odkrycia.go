@@ -320,7 +320,7 @@ func (r *repozytoriumBadan) UstawSzczegolyPrzestrzeni(ctx context.Context, s Szc
 	        protokol = COALESCE(?, protokol),
 	        granice  = COALESCE(?, granice),
 	        zaktualizowano = strftime('%Y-%m-%dT%H:%M:%fZ','now')
-	    WHERE id = 1 AND `+WarunekKonta,
+	    WHERE `+WarunekKonta,
 		"przestrzeń badania", "1",
 		tekstDoKolumny(s.Odbiorca), tekstDoKolumny(s.Protokol), tekstDoKolumny(s.Granice),
 		KontoOperatora(ctx))
@@ -331,7 +331,7 @@ func (r *repozytoriumBadan) SzczegolyPrzestrzeniBadania(ctx context.Context) (Sz
 		return SzczegolyPrzestrzeniBadania{}, err
 	}
 	polecenie, err := r.zapytania.przygotuj(ctx,
-		`SELECT odbiorca, protokol, granice, notatka FROM przestrzen_badania WHERE id = 1 AND `+WarunekKonta)
+		`SELECT odbiorca, protokol, granice, notatka FROM przestrzen_badania WHERE `+WarunekKonta)
 	if err != nil {
 		return SzczegolyPrzestrzeniBadania{}, err
 	}
@@ -355,12 +355,12 @@ func (r *repozytoriumBadan) UstawNotatkePrzestrzeni(ctx context.Context, tresc s
 	}
 	err := r.zapiszWGranicyBadania(ctx, `UPDATE przestrzen_badania
 	    SET notatka = ?, zaktualizowano = strftime('%Y-%m-%dT%H:%M:%fZ','now')
-	    WHERE id = 1 AND `+WarunekKonta, "przestrzeń badania", "1", tresc, KontoOperatora(ctx))
+	    WHERE `+WarunekKonta, "przestrzeń badania", "1", tresc, KontoOperatora(ctx))
 	if err != nil {
 		return "", err
 	}
 	polecenie, err := r.zapytania.przygotuj(ctx,
-		`SELECT zaktualizowano FROM przestrzen_badania WHERE id = 1 AND `+WarunekKonta)
+		`SELECT zaktualizowano FROM przestrzen_badania WHERE `+WarunekKonta)
 	if err != nil {
 		return "", err
 	}
@@ -371,11 +371,12 @@ func (r *repozytoriumBadan) UstawNotatkePrzestrzeni(ctx context.Context, tresc s
 	return chwila, nil
 }
 
-// Tabela przestrzen_badania niesie CHECK(id = 1) (migracja 049): wiersz zastany
-// cudzego konta zostaje, a zapis poniżej odcina go WarunekKonta.
+// Od kroku 495 każde konto ma własny wiersz przestrzeni; wskaźnik po wyrażeniu
+// pilnuje, żeby drugie wywołanie go nie zdublowało.
 func (r *repozytoriumBadan) zapewnijPrzestrzen(ctx context.Context) error {
-	return r.wykonajBadania(ctx, `INSERT OR IGNORE INTO przestrzen_badania (id, zakres, konto_id)
-	    VALUES (1, '', `+WskazanieKonta+`)`, KontoOperatora(ctx))
+	return r.wykonajBadania(ctx, `INSERT INTO przestrzen_badania (zakres, konto_id)
+	    VALUES ('', `+WskazanieKonta+`)
+	    ON CONFLICT(COALESCE(konto_id, 0)) DO NOTHING`, KontoOperatora(ctx))
 }
 
 func (r *repozytoriumBadan) ZapiszStylCytowania(ctx context.Context, kod, nazwa string) error {

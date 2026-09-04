@@ -60,9 +60,11 @@ const zrodloWpisuPamieciTlumaczen = ` FROM pamiec_tlumaczen w
 const warunekOknaPolitykiPamieci = `EXISTS (SELECT 1 FROM okno_tlumaczenia
 	WHERE okno_tlumaczenia.id = polityka_pamieci_okna.okno_id AND ` + WarunekKonta + `)`
 
-func warunkiPamieci(filtr FiltrPamieciTlumaczen) (string, []any) {
-	warunki := []string{}
-	argumenty := []any{}
+// Pamięć tłumaczeń niesie wskazanie konta od kroku 495; warunek wchodzi do
+// każdego wykazu, bo `panel_id` bywa pusty i drogi przez panel nie ma.
+func warunkiPamieci(ctx context.Context, filtr FiltrPamieciTlumaczen) (string, []any) {
+	warunki := []string{strings.ReplaceAll(WarunekKonta, "konto_id", "w.konto_id")}
+	argumenty := []any{KontoOperatora(ctx)}
 	if strings.TrimSpace(filtr.Jezyk) != "" {
 		warunki = append(warunki, "w.jezyk = ?")
 		argumenty = append(argumenty, filtr.Jezyk)
@@ -81,9 +83,6 @@ func warunkiPamieci(filtr FiltrPamieciTlumaczen) (string, []any) {
 		wzorzec := "%" + fraza + "%"
 		argumenty = append(argumenty, wzorzec, wzorzec)
 	}
-	if len(warunki) == 0 {
-		return "", argumenty
-	}
 	return " WHERE " + strings.Join(warunki, " AND "), argumenty
 }
 
@@ -91,7 +90,7 @@ func warunkiPamieci(filtr FiltrPamieciTlumaczen) (string, []any) {
 func (r *repozytoriumTlumaczen) WpisyPamieci(ctx context.Context,
 	filtr FiltrPamieciTlumaczen) ([]WpisPamieciTlumaczenPelny, int, error) {
 
-	warunek, argumenty := warunkiPamieci(filtr)
+	warunek, argumenty := warunkiPamieci(ctx, filtr)
 
 	var razem int
 	if err := r.db.QueryRowContext(ctx,
@@ -180,8 +179,8 @@ func (r *repozytoriumTlumaczen) ZapiszWpisPamieci(ctx context.Context,
 	_, err := r.db.ExecContext(ctx, `INSERT INTO pamiec_tlumaczen
 		(identyfikator_zewnetrzny, panel_id, jezyk, segment_zrodlowy, segment_docelowy,
 		 projekt, klient, autor, kontekst_poprzedni, kontekst_nastepny, zasieg,
-		 utworzono, zaktualizowano)
-		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+		 utworzono, zaktualizowano, konto_id)
+		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, `+WskazanieKonta+`)
 		ON CONFLICT(identyfikator_zewnetrzny) DO UPDATE SET
 			panel_id = excluded.panel_id,
 			jezyk = excluded.jezyk,
@@ -193,11 +192,13 @@ func (r *repozytoriumTlumaczen) ZapiszWpisPamieci(ctx context.Context,
 			kontekst_poprzedni = excluded.kontekst_poprzedni,
 			kontekst_nastepny = excluded.kontekst_nastepny,
 			zasieg = excluded.zasieg,
-			zaktualizowano = excluded.zaktualizowano`,
+			zaktualizowano = excluded.zaktualizowano
+		WHERE `+WarunekKonta,
 		wpis.Kod, liczbaDoKolumny(wpis.PanelID), wpis.Jezyk, wpis.SegmentZrodlowy,
 		wpis.SegmentDocelowy, tekstDoKolumny(wpis.Projekt), tekstDoKolumny(wpis.Klient),
 		tekstDoKolumny(wpis.Autor), tekstDoKolumny(wpis.KontekstPoprzedni),
-		tekstDoKolumny(wpis.KontekstNastepny), zasieg, utworzono, teraz)
+		tekstDoKolumny(wpis.KontekstNastepny), zasieg, utworzono, teraz,
+		KontoOperatora(ctx), KontoOperatora(ctx))
 	if err != nil {
 		return WpisPamieciTlumaczenPelny{}, fmt.Errorf("dane: nie można zapisać wpisu pamięci %q: %w", wpis.Kod, err)
 	}
@@ -206,7 +207,8 @@ func (r *repozytoriumTlumaczen) ZapiszWpisPamieci(ctx context.Context,
 
 func (r *repozytoriumTlumaczen) UsunWpisPamieci(ctx context.Context, kod string) (bool, error) {
 	wynik, err := r.db.ExecContext(ctx,
-		`DELETE FROM pamiec_tlumaczen WHERE identyfikator_zewnetrzny = ?`, kod)
+		`DELETE FROM pamiec_tlumaczen WHERE identyfikator_zewnetrzny = ? AND `+WarunekKonta,
+		kod, KontoOperatora(ctx))
 	if err != nil {
 		return false, fmt.Errorf("dane: nie można usunąć wpisu pamięci %q: %w", kod, err)
 	}
@@ -225,13 +227,13 @@ func (r *repozytoriumTlumaczen) UsunWpisyPamieci(ctx context.Context, kody []str
 	zeszlo := 0
 	err := wTransakcji(ctx, r.db, func(transakcja *sql.Tx) error {
 		polecenie, err := transakcja.PrepareContext(ctx,
-			`DELETE FROM pamiec_tlumaczen WHERE identyfikator_zewnetrzny = ?`)
+			`DELETE FROM pamiec_tlumaczen WHERE identyfikator_zewnetrzny = ? AND `+WarunekKonta)
 		if err != nil {
 			return fmt.Errorf("dane: nie można przygotować usunięcia par pamięci: %w", err)
 		}
 		defer polecenie.Close()
 		for _, kod := range kody {
-			wynik, err := polecenie.ExecContext(ctx, kod)
+			wynik, err := polecenie.ExecContext(ctx, kod, KontoOperatora(ctx))
 			if err != nil {
 				return fmt.Errorf("dane: nie można usunąć pary pamięci %q: %w", kod, err)
 			}

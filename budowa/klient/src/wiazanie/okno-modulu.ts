@@ -246,3 +246,52 @@ async function wskazOknoWolneModulu(kanal: Kanal, idSesji: string, idModulu: str
     (okno) => okno.moduleId === idModulu && !zajete.has(okno.id),
   )?.id ?? '';
 }
+
+/* Panel modułu wypełnia się zawsze tak samo: odmowa rdzenia idzie zdaniem,
+   wykaz pusty własnym zdaniem, a pozycja niesie tytuł i podpis. Pomocnik
+   trzyma ten porządek w jednym miejscu dla wszystkich modułów. */
+export function wykazPanelu<T>(
+  cialo: Element | null,
+  udany: boolean,
+  blad: string | undefined,
+  pozycje: T[] | undefined,
+  pusty: string,
+  mapuj: (pozycja: T) => readonly [string, string],
+): void {
+  if (cialo === null) return;
+  if (!udany || pozycje === undefined) {
+    niegotowyPanel(cialo, blad ?? 'Wykaz nie doszedł.');
+    return;
+  }
+  if (pozycje.length === 0) {
+    niegotowyPanel(cialo, pusty);
+    return;
+  }
+  cialo.replaceChildren(...pozycje.map((p) => {
+    const [tytul, podpis] = mapuj(p);
+    const wiersz = cialo.ownerDocument.createElement('div');
+    wiersz.className = 'dn-wykaz-modulu-poz';
+    const nazwa = cialo.ownerDocument.createElement('span');
+    nazwa.textContent = tytul;
+    wiersz.append(nazwa);
+    if (podpis !== '') {
+      const meta = cialo.ownerDocument.createElement('span');
+      meta.className = 'dn-meta';
+      meta.textContent = podpis;
+      wiersz.append(meta);
+    }
+    return wiersz;
+  }));
+}
+
+export function niegotowyPanel(cialo: Element | null, zdanie: string): void {
+  if (cialo === null) return;
+  const napis = cialo.ownerDocument.createElement('div');
+  napis.className = 'dn-meta';
+  napis.textContent = zdanie;
+  cialo.replaceChildren(napis);
+}
+
+export function cialoPanelu(korzen: ParentNode, identyfikator: string): Element | null {
+  return korzen.querySelector(`#${identyfikator} .sta-okno-tresc`);
+}

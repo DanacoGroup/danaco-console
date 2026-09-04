@@ -2,16 +2,23 @@
 
 import {
   Command,
+  type ApprovalRecord,
   type GlossaryTerm,
+  type QaProfile,
+  type SegmentationRuleset,
+  type TranslationMemoryEntry,
+  type TranslationStep,
 } from '../../../shared/contract.ts';
 import type { Odsubskrybuj } from '../polaczenie/magistrala-zdarzen.ts';
 import type { Kanal } from '../protokol/kanal.ts';
 import { wywolaj } from '../protokol/wywolanie.ts';
 import { oglos } from './ogloszenie.ts';
 import {
+  cialoPanelu,
   opiszNaglowek,
   zapewnijOknoModulu,
   zdejmijSterowanieWspolne,
+  wykazPanelu,
   zdejmijTrescWspolna,
 } from './okno-modulu.ts';
 import { zwiazKatalogModulu } from './katalog-modulu.ts';
@@ -56,7 +63,24 @@ export function zwiazTlumaczenie(
   let idOkna = idOknaStojacego;
   const odswiez = async (): Promise<void> => {
     if (idOkna === '') return;
-    await wypelnijGlosariusz(kanal, korzen);
+    await Promise.all([
+      wypelnijGlosariusz(kanal, korzen),
+      wykaz(kanal, korzen, 'panel-zadania', Command.TranslateStepList,
+        'Rdzeń nie podaje kroków tłumaczenia.',
+        (o) => (o.steps as TranslationStep[]).map((s) => [s.name, s.kind] as const)),
+      wykaz(kanal, korzen, 'panel-obszar-tlum', Command.TranslateMemoryList,
+        'Pamięć tłumaczeń jest pusta.',
+        (o) => (o.entries as TranslationMemoryEntry[]).map((e) => [e.sourceSegment, e.language] as const)),
+      wykaz(kanal, korzen, 'panel-plan', Command.TranslateQaProfileList,
+        'Rdzeń nie ma profilu kontroli jakości.',
+        (o) => (o.profiles as QaProfile[]).map((q) => [q.name, q.scope ?? ''] as const)),
+      wykaz(kanal, korzen, 'panel-kolejka', Command.TranslateApprovalList,
+        'Żadna zgoda nie została jeszcze wydana.',
+        (o) => (o.records as ApprovalRecord[]).map((r) => [r.stage, r.author ?? ''] as const)),
+      wykaz(kanal, korzen, 'panel-pliki', Command.TranslateSegmentationRulesList,
+        'Rdzeń nie ma zestawu reguł segmentacji.',
+        (o) => (o.rulesets as SegmentationRuleset[]).map((r) => [r.name, r.language ?? ''] as const)),
+    ]);
   };
 
   void (async (): Promise<void> => {
@@ -136,6 +160,24 @@ async function wypelnijGlosariusz(kanal: Kanal, korzen: Element): Promise<void> 
     return;
   }
   cialo.replaceChildren(...wpisy.map((w) => pozycja(cialo, w.source, w.target ?? w.language)));
+}
+
+/* Panel wykazu bez własnego kształtu: komenda bez pól wymaganych, pozycje
+   z odpowiedzi rdzenia, zdanie przy pustce. */
+async function wykaz(
+  kanal: Kanal,
+  korzen: Element,
+  panelId: string,
+  komenda: Parameters<typeof wywolaj>[1],
+  pusty: string,
+  mapuj: (wynik: Record<string, unknown>) => readonly (readonly [string, string])[],
+): Promise<void> {
+  const cialo = cialoPanelu(korzen, panelId);
+  if (cialo === null) return;
+  const odpowiedz = await wywolaj(kanal, komenda as never, {} as never);
+  const wynik = odpowiedz.wynik as Record<string, unknown> | undefined;
+  wykazPanelu(cialo, odpowiedz.udany, odpowiedz.blad?.message,
+    wynik === undefined ? undefined : [...mapuj(wynik)], pusty, (p) => p);
 }
 
 function pozycja(cialo: Element, tytul: string, podpis: string): HTMLElement {

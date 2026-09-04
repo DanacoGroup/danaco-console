@@ -4,7 +4,10 @@
 import {
   Command,
   ResearchSourceKind,
+  type ResearchExcerpt,
   type ResearchFinding,
+  type ResearchMonitor,
+  type ResearchReportTemplate,
   type ResearchSource,
 } from '../../../shared/contract.ts';
 import type { Odsubskrybuj } from '../polaczenie/magistrala-zdarzen.ts';
@@ -59,7 +62,13 @@ export function zwiazBadania(
   let idOkna = idOknaStojacego;
   const odswiez = async (): Promise<void> => {
     if (idOkna === '') return;
-    await Promise.all([wypelnijZrodla(kanal, korzen, idOkna), wypelnijUstalenia(kanal, korzen, idOkna)]);
+    await Promise.all([
+      wypelnijZrodla(kanal, korzen, idOkna),
+      wypelnijUstalenia(kanal, korzen, idOkna),
+      wypelnijWyciagi(kanal, korzen, idOkna),
+      wypelnijObserwacje(kanal, korzen, idOkna),
+      wypelnijSzablony(kanal, korzen),
+    ]);
   };
 
   void (async (): Promise<void> => {
@@ -122,7 +131,9 @@ function zdejmijTrescPrzykladowa(korzen: Element): void {
   for (const zeton of korzen.querySelectorAll('.sta-kom-stan ~ * .sta-chip')) zeton.remove();
   const nazwa = korzen.querySelector('.rs-nawig b, #panel-workspace .sta-okno-tresc b');
   if (nazwa !== null) nazwa.textContent = '';
-  niegotowe(panel(korzen, 'panel-report'), 'Raport powstaje z ustaleń; żadnego jeszcze nie ma.');
+  niegotowe(panel(korzen, 'panel-report'), 'Wykaz czeka na odpowiedź rdzenia.');
+  niegotowe(panel(korzen, 'panel-pliki'), 'Wykaz czeka na odpowiedź rdzenia.');
+  niegotowe(panel(korzen, 'panel-przegladarka'), 'Wykaz czeka na odpowiedź rdzenia.');
   niegotowe(panel(korzen, 'panel-plan'), 'Plan badania czeka na pierwsze źródło.');
   niegotowe(panel(korzen, 'panel-kolejka'), 'Rdzeń nie podaje zadań w tle dla tego okna.');
 }
@@ -157,6 +168,54 @@ async function wypelnijUstalenia(kanal: Kanal, korzen: Element, idOkna: string):
     return;
   }
   cialo.replaceChildren(...ustalenia.map((u) => pozycja(cialo, u.content, u.status ?? '')));
+}
+
+async function wypelnijWyciagi(kanal: Kanal, korzen: Element, idOkna: string): Promise<void> {
+  const cialo = panel(korzen, 'panel-pliki');
+  if (cialo === null) return;
+  const odpowiedz = await wywolaj(kanal, Command.ResearchExcerptList, { windowId: idOkna });
+  if (!odpowiedz.udany || odpowiedz.wynik === undefined) {
+    niegotowe(cialo, odpowiedz.blad?.message ?? 'Wykaz wyciągów nie doszedł.');
+    return;
+  }
+  const wyciagi: ResearchExcerpt[] = odpowiedz.wynik.excerpts;
+  if (wyciagi.length === 0) {
+    niegotowe(cialo, 'Z żadnego źródła nie wyjęto jeszcze cytatu.');
+    return;
+  }
+  cialo.replaceChildren(...wyciagi.map((w) => pozycja(cialo, w.quote, w.sourceTitle ?? '')));
+}
+
+async function wypelnijObserwacje(kanal: Kanal, korzen: Element, idOkna: string): Promise<void> {
+  const cialo = panel(korzen, 'panel-przegladarka');
+  if (cialo === null) return;
+  const odpowiedz = await wywolaj(kanal, Command.ResearchMonitorList, { windowId: idOkna });
+  if (!odpowiedz.udany || odpowiedz.wynik === undefined) {
+    niegotowe(cialo, odpowiedz.blad?.message ?? 'Wykaz obserwacji nie doszedł.');
+    return;
+  }
+  const obserwacje: ResearchMonitor[] = odpowiedz.wynik.monitors;
+  if (obserwacje.length === 0) {
+    niegotowe(cialo, 'Żadne źródło nie jest obserwowane.');
+    return;
+  }
+  cialo.replaceChildren(...obserwacje.map((o) => pozycja(cialo, o.query ?? o.url ?? o.id, o.kind)));
+}
+
+async function wypelnijSzablony(kanal: Kanal, korzen: Element): Promise<void> {
+  const cialo = panel(korzen, 'panel-report');
+  if (cialo === null) return;
+  const odpowiedz = await wywolaj(kanal, Command.ResearchReportTemplateList, {});
+  if (!odpowiedz.udany || odpowiedz.wynik === undefined) {
+    niegotowe(cialo, odpowiedz.blad?.message ?? 'Wykaz szablonów raportu nie doszedł.');
+    return;
+  }
+  const szablony: ResearchReportTemplate[] = odpowiedz.wynik.templates;
+  if (szablony.length === 0) {
+    niegotowe(cialo, 'Rdzeń nie ma szablonu raportu.');
+    return;
+  }
+  cialo.replaceChildren(...szablony.map((s) => pozycja(cialo, s.name, String(s.sectionTitles.length) + ' sekcji')));
 }
 
 function pozycja(cialo: Element, tytul: string, podpis: string): HTMLElement {

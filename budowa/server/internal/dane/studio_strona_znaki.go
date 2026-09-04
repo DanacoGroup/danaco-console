@@ -32,22 +32,27 @@ type ZnakOstatnioUzytyStudia struct {
 const (
 	symbolKolumnyZasady = `id, skrot, zamiennik, czynna, fabryczna, utworzono, zaktualizowano`
 
-	symbolZapiszZasade = `INSERT INTO autozamiana_znaku_studio (skrot, zamiennik, czynna, fabryczna)
-	                      VALUES (?, ?, ?, 0)
+	// Skrót jest niepowtarzalny w całej tabeli, nie w koncie: warunek przy
+	// DO UPDATE zostawia zasadę konta cudzego nietkniętą.
+	symbolZapiszZasade = `INSERT INTO autozamiana_znaku_studio
+	                      (skrot, zamiennik, czynna, fabryczna, konto_id)
+	                      VALUES (?, ?, ?, 0, ` + WskazanieKonta + `)
 	                      ON CONFLICT(skrot) DO UPDATE SET
 	                          zamiennik = excluded.zamiennik,
 	                          czynna = excluded.czynna,
-	                          zaktualizowano = strftime('%Y-%m-%dT%H:%M:%fZ','now')`
+	                          zaktualizowano = strftime('%Y-%m-%dT%H:%M:%fZ','now')
+	                      WHERE ` + WarunekKonta
 
 	symbolPobierzZasade = `SELECT ` + symbolKolumnyZasady + ` FROM autozamiana_znaku_studio
-	                       WHERE skrot = ?`
+	                       WHERE skrot = ? AND ` + WarunekKonta
 
 	symbolListaZasad = `SELECT ` + symbolKolumnyZasady + ` FROM autozamiana_znaku_studio
+	                    WHERE ` + WarunekKonta + `
 	                    ORDER BY skrot`
 
 	// Usunięcie obejmuje wyłącznie zasadę własną; zasada fabryczna zostaje, a warunek stoi w SQL, nie w rdzeniu.
 	symbolUsunZasade = `DELETE FROM autozamiana_znaku_studio
-	                    WHERE skrot = ? AND fabryczna = 0`
+	                    WHERE skrot = ? AND fabryczna = 0 AND ` + WarunekKonta
 
 	// Licznik podnosi baza, nie wywołujący: dwa okna wstawiające ten sam znak naraz nie zgubią użycia.
 	symbolOdnotujUzycie = `INSERT INTO znak_ostatnio_uzyty_studio (kod, znak, konto_id)
@@ -80,7 +85,8 @@ func (r *repozytoriumStudia) ZapiszZasadeAutozamiany(ctx context.Context,
 	if zasada.Czynna {
 		czynna = 1
 	}
-	if _, err := polecenie.ExecContext(ctx, skrot, zasada.Zamiennik, czynna); err != nil {
+	if _, err := polecenie.ExecContext(ctx, skrot, zasada.Zamiennik, czynna,
+		KontoOperatora(ctx), KontoOperatora(ctx)); err != nil {
 		return ZasadaAutozamianyStudia{}, fmt.Errorf(
 			"dane: nie można zapisać zasady autozamiany %q: %w", skrot, err)
 	}
@@ -94,7 +100,8 @@ func (r *repozytoriumStudia) ZasadaAutozamiany(ctx context.Context,
 	if err != nil {
 		return ZasadaAutozamianyStudia{}, err
 	}
-	zasada, err := symbolOdczytajZasade(polecenie.QueryRowContext(ctx, strings.TrimSpace(skrot)))
+	zasada, err := symbolOdczytajZasade(polecenie.QueryRowContext(ctx, strings.TrimSpace(skrot),
+		KontoOperatora(ctx)))
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return ZasadaAutozamianyStudia{}, ErrBrakWiersza
@@ -110,7 +117,7 @@ func (r *repozytoriumStudia) ZasadyAutozamiany(ctx context.Context) ([]ZasadaAut
 	if err != nil {
 		return nil, err
 	}
-	wiersze, err := polecenie.QueryContext(ctx)
+	wiersze, err := polecenie.QueryContext(ctx, KontoOperatora(ctx))
 	if err != nil {
 		return nil, fmt.Errorf("dane: nie można odczytać zasad autozamiany: %w", err)
 	}
@@ -135,7 +142,7 @@ func (r *repozytoriumStudia) UsunZasadeAutozamiany(ctx context.Context, skrot st
 	if err != nil {
 		return false, err
 	}
-	wynik, err := polecenie.ExecContext(ctx, strings.TrimSpace(skrot))
+	wynik, err := polecenie.ExecContext(ctx, strings.TrimSpace(skrot), KontoOperatora(ctx))
 	if err != nil {
 		return false, fmt.Errorf("dane: nie można usunąć zasady autozamiany %q: %w", skrot, err)
 	}

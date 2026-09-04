@@ -60,7 +60,7 @@ const (
 
 	dotknijKolekcjeDesignu = `UPDATE kolekcja_design
 	                          SET zaktualizowano = strftime('%Y-%m-%dT%H:%M:%fZ','now')
-	                          WHERE id = ?`
+	                          WHERE id = ? AND ` + WarunekKonta
 
 	listaZasobowKolekcjiDesignu = `SELECT zasob_id FROM pozycja_kolekcji_design
 	                               WHERE kolekcja_id = ? ORDER BY kolejnosc, rowid`
@@ -198,7 +198,7 @@ func (r *repozytoriumDesignu) ZmienPrzypisaniaKolekcjiDesignu(ctx context.Contex
 		if err != nil {
 			return err
 		}
-		if _, err := dotkniecie.ExecContext(ctx, kolekcjaID); err != nil {
+		if _, err := dotkniecie.ExecContext(ctx, kolekcjaID, KontoOperatora(ctx)); err != nil {
 			return fmt.Errorf("dane: nie można odnotować zmiany kolekcji design %d: %w", kolekcjaID, err)
 		}
 		return nil

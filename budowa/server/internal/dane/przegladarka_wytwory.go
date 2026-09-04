@@ -133,8 +133,8 @@ const (
 
 	zapiszPobranie = `INSERT INTO pobranie_przegladania
 	                  (identyfikator_zewnetrzny, okno, url, nazwa_pliku, sciezka_docelowa, typ_mime,
-	                   stan, odebrano_bajtow, razem_bajtow, komunikat_bledu, zakonczono)
-	                  VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+	                   stan, odebrano_bajtow, razem_bajtow, komunikat_bledu, zakonczono, konto_id)
+	                  VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ` + WskazanieKonta + `)
 	                  ON CONFLICT(identyfikator_zewnetrzny) DO UPDATE SET
 	                      url = excluded.url,
 	                      nazwa_pliku = excluded.nazwa_pliku,
@@ -144,35 +144,40 @@ const (
 	                      odebrano_bajtow = excluded.odebrano_bajtow,
 	                      razem_bajtow = excluded.razem_bajtow,
 	                      komunikat_bledu = excluded.komunikat_bledu,
-	                      zakonczono = excluded.zakonczono`
+	                      zakonczono = excluded.zakonczono
+	                  WHERE ` + WarunekKonta
 
 	pobierzPobranie = `SELECT ` + kolumnyPobrania + ` FROM pobranie_przegladania
-	                   WHERE identyfikator_zewnetrzny = ?`
+	                   WHERE identyfikator_zewnetrzny = ? AND ` + WarunekKonta
 
 	listaPobran = `SELECT ` + kolumnyPobrania + ` FROM pobranie_przegladania
-	               WHERE (? = '' OR okno = ?) AND (? = '' OR stan = ?)
+	               WHERE (? = '' OR okno = ?) AND (? = '' OR stan = ?) AND ` + WarunekKonta + `
 	               ORDER BY rozpoczeto DESC, id DESC LIMIT ?`
 
-	usunPobranie = `DELETE FROM pobranie_przegladania WHERE identyfikator_zewnetrzny = ?`
+	usunPobranie = `DELETE FROM pobranie_przegladania
+	                WHERE identyfikator_zewnetrzny = ? AND ` + WarunekKonta
 
 	kolumnyMakra = `id, identyfikator_zewnetrzny, okno, nazwa, kroki_json, nagrywanie,
 	                automatyka_zewnetrzna_id, utworzono, zaktualizowano`
 
 	zapiszMakro = `INSERT INTO makro_przegladania
-	               (identyfikator_zewnetrzny, okno, nazwa, kroki_json, nagrywanie, automatyka_zewnetrzna_id)
-	               VALUES (?, ?, ?, ?, ?, ?)
+	               (identyfikator_zewnetrzny, okno, nazwa, kroki_json, nagrywanie,
+	                automatyka_zewnetrzna_id, konto_id)
+	               VALUES (?, ?, ?, ?, ?, ?, ` + WskazanieKonta + `)
 	               ON CONFLICT(identyfikator_zewnetrzny) DO UPDATE SET
 	                   nazwa = excluded.nazwa,
 	                   kroki_json = excluded.kroki_json,
 	                   nagrywanie = excluded.nagrywanie,
 	                   automatyka_zewnetrzna_id = excluded.automatyka_zewnetrzna_id,
-	                   zaktualizowano = strftime('%Y-%m-%dT%H:%M:%fZ','now')`
+	                   zaktualizowano = strftime('%Y-%m-%dT%H:%M:%fZ','now')
+	               WHERE ` + WarunekKonta
 
 	pobierzMakro = `SELECT ` + kolumnyMakra + ` FROM makro_przegladania
-	                WHERE identyfikator_zewnetrzny = ?`
+	                WHERE identyfikator_zewnetrzny = ? AND ` + WarunekKonta
 
 	listaMakr = `SELECT ` + kolumnyMakra + ` FROM makro_przegladania
-	             WHERE okno = ? ORDER BY utworzono DESC, id DESC LIMIT ?`
+	             WHERE okno = ? AND ` + WarunekKonta + `
+	             ORDER BY utworzono DESC, id DESC LIMIT ?`
 
 	kolumnyGranicy = `id, zasieg, zasieg_id, max_krokow, max_czas_sekund,
 	                  domeny_dozwolone_json, domeny_zablokowane_json,
@@ -180,18 +185,19 @@ const (
 
 	zapiszGranice = `INSERT INTO granica_wykonawcy_przegladania
 	                 (zasieg, zasieg_id, max_krokow, max_czas_sekund, domeny_dozwolone_json,
-	                  domeny_zablokowane_json, potwierdzaj_wyslanie)
-	                 VALUES (?, ?, ?, ?, ?, ?, ?)
+	                  domeny_zablokowane_json, potwierdzaj_wyslanie, konto_id)
+	                 VALUES (?, ?, ?, ?, ?, ?, ?, ` + WskazanieKonta + `)
 	                 ON CONFLICT(zasieg, zasieg_id) DO UPDATE SET
 	                     max_krokow = excluded.max_krokow,
 	                     max_czas_sekund = excluded.max_czas_sekund,
 	                     domeny_dozwolone_json = excluded.domeny_dozwolone_json,
 	                     domeny_zablokowane_json = excluded.domeny_zablokowane_json,
 	                     potwierdzaj_wyslanie = excluded.potwierdzaj_wyslanie,
-	                     zaktualizowano = strftime('%Y-%m-%dT%H:%M:%fZ','now')`
+	                     zaktualizowano = strftime('%Y-%m-%dT%H:%M:%fZ','now')
+	                 WHERE ` + WarunekKonta
 
 	pobierzGranice = `SELECT ` + kolumnyGranicy + ` FROM granica_wykonawcy_przegladania
-	                  WHERE zasieg = ? AND zasieg_id = ?`
+	                  WHERE zasieg = ? AND zasieg_id = ? AND ` + WarunekKonta
 )
 
 // ZapiszWytwor odkłada wytwór sesji przeglądania jako kolejny wiersz
@@ -336,7 +342,7 @@ func (r *repozytoriumPrzegladania) ZapiszPobranie(ctx context.Context,
 		tekstDoKolumny(pobranie.NazwaPliku), tekstDoKolumny(pobranie.SciezkaDocelowa),
 		tekstDoKolumny(pobranie.TypMime), pobranie.Stan, liczbaDoKolumny(pobranie.OdebranoBajtow),
 		liczbaDoKolumny(pobranie.RazemBajtow), tekstDoKolumny(pobranie.KomunikatBledu),
-		tekstDoKolumny(pobranie.Zakonczono))
+		tekstDoKolumny(pobranie.Zakonczono), KontoOperatora(ctx), KontoOperatora(ctx))
 	if err != nil {
 		return PobraniePrzegladania{}, fmt.Errorf("dane: nie można zapisać pobrania %q: %w", pobranie.Kod, err)
 	}
@@ -350,7 +356,7 @@ func (r *repozytoriumPrzegladania) Pobranie(ctx context.Context, kod string) (Po
 	if err != nil {
 		return PobraniePrzegladania{}, err
 	}
-	pobranie, err := odczytajPobranie(polecenie.QueryRowContext(ctx, kod))
+	pobranie, err := odczytajPobranie(polecenie.QueryRowContext(ctx, kod, KontoOperatora(ctx)))
 	if errors.Is(err, sql.ErrNoRows) {
 		return PobraniePrzegladania{}, ErrBrakWiersza
 	}
@@ -367,7 +373,8 @@ func (r *repozytoriumPrzegladania) Pobrania(ctx context.Context, okno, stan stri
 	if err != nil {
 		return nil, err
 	}
-	wiersze, err := polecenie.QueryContext(ctx, okno, okno, stan, stan, granicaWykazu(limit))
+	wiersze, err := polecenie.QueryContext(ctx, okno, okno, stan, stan,
+		KontoOperatora(ctx), granicaWykazu(limit))
 	if err != nil {
 		return nil, fmt.Errorf("dane: nie można odczytać pobrań: %w", err)
 	}
@@ -390,7 +397,7 @@ func (r *repozytoriumPrzegladania) Pobrania(ctx context.Context, okno, stan stri
 // UsunPobranie zdejmuje pobranie o wskazanym kodzie zewnętrznym z wykazu,
 // oddając informację, czy wiersz istniał przed usunięciem.
 func (r *repozytoriumPrzegladania) UsunPobranie(ctx context.Context, kod string) (bool, error) {
-	return r.usunWiersz(ctx, usunPobranie, kod, "pobranie")
+	return r.usunWiersz(ctx, usunPobranie, kod, "pobranie", KontoOperatora(ctx))
 }
 
 // ZapiszMakro zakłada nowe makro albo nadpisuje zastane wraz z krokami, gdy
@@ -405,7 +412,7 @@ func (r *repozytoriumPrzegladania) ZapiszMakro(ctx context.Context, makro MakroP
 	}
 	_, err = polecenie.ExecContext(ctx, makro.Kod, makro.Okno, makro.Nazwa,
 		tekstDoKolumny(makro.KrokiJson), liczbaLogiczna(makro.Nagrywanie),
-		tekstDoKolumny(makro.AutomatykaKod))
+		tekstDoKolumny(makro.AutomatykaKod), KontoOperatora(ctx), KontoOperatora(ctx))
 	if err != nil {
 		return MakroPrzegladania{}, fmt.Errorf("dane: nie można zapisać makra %q: %w", makro.Kod, err)
 	}
@@ -419,7 +426,7 @@ func (r *repozytoriumPrzegladania) Makro(ctx context.Context, kod string) (Makro
 	if err != nil {
 		return MakroPrzegladania{}, err
 	}
-	makro, err := odczytajMakro(polecenie.QueryRowContext(ctx, kod))
+	makro, err := odczytajMakro(polecenie.QueryRowContext(ctx, kod, KontoOperatora(ctx)))
 	if errors.Is(err, sql.ErrNoRows) {
 		return MakroPrzegladania{}, ErrBrakWiersza
 	}
@@ -436,7 +443,7 @@ func (r *repozytoriumPrzegladania) Makra(ctx context.Context, okno string, limit
 	if err != nil {
 		return nil, err
 	}
-	wiersze, err := polecenie.QueryContext(ctx, okno, granicaWykazu(limit))
+	wiersze, err := polecenie.QueryContext(ctx, okno, KontoOperatora(ctx), granicaWykazu(limit))
 	if err != nil {
 		return nil, fmt.Errorf("dane: nie można odczytać makr okna %q: %w", okno, err)
 	}
@@ -468,7 +475,8 @@ func (r *repozytoriumPrzegladania) ZapiszGranice(ctx context.Context, granica Gr
 	}
 	_, err = polecenie.ExecContext(ctx, granica.Zasieg, granica.ZasiegID, granica.MaxKrokow,
 		granica.MaxCzasSekund, tekstDoKolumny(granica.DomenyDozwoloneJson),
-		tekstDoKolumny(granica.DomenyZablokowaneJson), liczbaLogiczna(granica.PotwierdzajWyslanie))
+		tekstDoKolumny(granica.DomenyZablokowaneJson), liczbaLogiczna(granica.PotwierdzajWyslanie),
+		KontoOperatora(ctx), KontoOperatora(ctx))
 	if err != nil {
 		return GranicaWykonawcy{}, fmt.Errorf("dane: nie można zapisać granic Wykonawcy: %w", err)
 	}
@@ -483,7 +491,7 @@ func (r *repozytoriumPrzegladania) Granice(ctx context.Context, zasieg, zasiegID
 	if err != nil {
 		return GranicaWykonawcy{}, err
 	}
-	granica, err := odczytajGranice(polecenie.QueryRowContext(ctx, zasieg, zasiegID))
+	granica, err := odczytajGranice(polecenie.QueryRowContext(ctx, zasieg, zasiegID, KontoOperatora(ctx)))
 	if errors.Is(err, sql.ErrNoRows) {
 		return GranicaWykonawcy{}, ErrBrakWiersza
 	}

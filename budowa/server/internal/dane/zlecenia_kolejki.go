@@ -122,7 +122,8 @@ const (
 	                          wycofanie, wycofanie_sekundy, rozproszenie, zadania_martwe,
 	                          idempotencja_zycie_sekundy`
 
-	pobierzPolitykeKolejki = `SELECT ` + kolumnyPolitykiKolejki + ` FROM kolejka WHERE id = ?`
+	pobierzPolitykeKolejki = `SELECT ` + kolumnyPolitykiKolejki + ` FROM kolejka
+	                          WHERE id = ? AND ` + WarunekKonta
 
 	zapiszPolitykeKolejki = `UPDATE kolejka
 	                         SET zasieg = ?, zasieg_id = ?, limit_rownoleglych = ?,
@@ -130,7 +131,7 @@ const (
 	                             wycofanie_sekundy = ?, rozproszenie = ?, zadania_martwe = ?,
 	                             idempotencja_zycie_sekundy = ?,
 	                             zaktualizowano = strftime('%Y-%m-%dT%H:%M:%fZ','now')
-	                         WHERE id = ?`
+	                         WHERE id = ? AND ` + WarunekKonta
 )
 
 // DodajZlecenie zakłada nowe zlecenie w kolejce, nadając mu stan oczekuje,
@@ -325,7 +326,7 @@ func (r *repozytoriumKolejek) PolitykaKolejki(ctx context.Context,
 	var polityka PolitykaKolejki
 	var zasiegID sql.NullString
 	var rozproszenie, martwe int
-	err = polecenie.QueryRowContext(ctx, kolejkaID).Scan(&polityka.Zasieg, &zasiegID,
+	err = polecenie.QueryRowContext(ctx, kolejkaID, KontoOperatora(ctx)).Scan(&polityka.Zasieg, &zasiegID,
 		&polityka.LimitRownoleglych, &polityka.TempoNaMinute, &polityka.LimitProb,
 		&polityka.Wycofanie, &polityka.WycofanieSekundy, &rozproszenie, &martwe,
 		&polityka.IdempotencjaZycie)
@@ -353,7 +354,8 @@ func (r *repozytoriumKolejek) ZapiszPolitykeKolejki(ctx context.Context, kolejka
 	_, err = polecenie.ExecContext(ctx, polityka.Zasieg, tekstDoKolumny(polityka.ZasiegID),
 		polityka.LimitRownoleglych, polityka.TempoNaMinute, polityka.LimitProb,
 		polityka.Wycofanie, polityka.WycofanieSekundy, liczbaLogiczna(polityka.Rozproszenie),
-		liczbaLogiczna(polityka.ZadaniaMartwe), polityka.IdempotencjaZycie, kolejkaID)
+		liczbaLogiczna(polityka.ZadaniaMartwe), polityka.IdempotencjaZycie, kolejkaID,
+		KontoOperatora(ctx))
 	if err != nil {
 		return fmt.Errorf("dane: nie można zapisać polityki kolejki %d: %w", kolejkaID, err)
 	}

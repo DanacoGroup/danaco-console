@@ -129,6 +129,16 @@ export function zdejmijTrescWspolna(cialo: HTMLElement): void {
      adresy stron, „pracuje”. Bez zdjęcia stoją obok prawdziwych zer wykazu
      jako dwa stany wykluczające się, oba wzięte znikąd. */
   cialo.querySelector('.sta-kom-kontekst')?.replaceChildren();
+  /* Belka panelu rozmowy niesie nazwę pracy wymyśloną na pokaz — raz żetonem,
+     raz dopiskiem w cudzysłowie przy tytule panelu. */
+  for (const zeton of cialo.querySelectorAll('.sta-kom > .sta-okno-belka .sta-chip')) {
+    zeton.remove();
+  }
+  const tytulRozmowy = cialo.querySelector('.sta-kom > .sta-okno-belka .sta-okno-tytul b');
+  if (tytulRozmowy !== null) {
+    tytulRozmowy.textContent = (tytulRozmowy.textContent ?? '')
+      .replace(/\s*[—–-]?\s*„[^”]*”/u, '').trim();
+  }
   cialo.querySelector('.sta-kontekst-akcji')?.replaceChildren();
   cialo.querySelector('.sta-kom-stan')?.remove();
   /* Znaczniki paneli niosą w prototypie liczby wzięte znikąd. Wiązanie panelu,

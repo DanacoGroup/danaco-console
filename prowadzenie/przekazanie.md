@@ -261,7 +261,9 @@ jedną komendę. Pozostałe wykonuje katalog operacji modułu
 (`klient/src/wiazanie/katalog-modulu.ts`): Operator wybiera komendę rodziny,
 dokłada parametry JSON, a katalog wysyła żądanie i melduje odmowę rdzenia.
 To wołający prawdziwy, nie wpis w wykazie — ale nie jest tym samym co panel
-zbudowany pod komendę. Panele dla modułów spoza łańcucha etapu 2 nie powstają
+zbudowany pod komendę. Wykazane uruchomieniem: okno „Operacje platformy" (przycisk
+konfiguracji w Centrum) składa 67 katalogów, żaden pusty, razem 1086 komend,
+a wybrana z katalogu `session.list` wykonuje się bez odmowy. Panele dla modułów spoza łańcucha etapu 2 nie powstają
 z rozstrzygnięcia planu: okno zapowiedziane nie staje jako pusta skorupa.
 
 **Okno produktu w przeglądarce.** Osobny rdzeń serwuje pakiet interfejsu, a

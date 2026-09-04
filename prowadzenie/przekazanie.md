@@ -216,9 +216,12 @@ przy domyślnej szerokości karty wiersze są w drzewie, ale poza widokiem, co
 Czynność, nie rozstrzygnięcie: zakup certyfikatu OV w Certum na dokumenty spółki
 i konto SimplySign. Do zakupu wydania idą z `DANACO_PODPIS=pomijany`.
 
-Pozycje audytu bez rozstrzygnięcia: los kanału `/wydania/` za hasłem; kształt
-rodziny `project.*`; reguła wykazu narzędzi modelu; kolejność wpinania
-podgrup `studio.*`; los siedmiu okien platformowych.
+Pozycji audytu bez rozstrzygnięcia już nie ma. Pięć ostatnich zamknęły
+rozstrzygnięcia 41–45 z upoważnienia „Rozstrzygaj za mnie": los okien
+platformowych, kształt rodziny `project.*`, reguła wykazu narzędzi modelu,
+kolejność wpinania podgrup `studio.*` i los kanału `/wydania/` za hasłem.
+Trzy z nich okazały się bezprzedmiotowe po pomiarze — rzecz stała już
+rozstrzygnięta w źródle, brakowało tylko zapisu.
 
 Naprawa uszkodzeń po dawnych przebudowach (w tym kroku 269) weszła krokiem 497
 z upoważnienia „Rozstrzygaj za mnie" — zapis wypowiedzi debaty nie działał

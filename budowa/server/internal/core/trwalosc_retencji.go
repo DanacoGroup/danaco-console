@@ -13,15 +13,40 @@ func przemiecRetencjeHistorii(kontekst context.Context, repozytoria *dane.Zestaw
 	if repozytoria == nil || repozytoria.Historia == nil {
 		return
 	}
+	// Przemiatanie idzie po kontach po kolei (decyzja 34): wykaz okien jest
+	// zawężony kontem, więc jeden przebieg objąłby wyłącznie konto najstarsze.
+	konteksty, err := kontekstyKont(kontekst, repozytoria.KontoWlasciciela)
+	if err != nil {
+		if dziennik != nil {
+			dziennik.Printf("przemiatanie retencji historii, odczyt kont: %v", err)
+		}
+		return
+	}
+	przyciete, oknaPrzyciete, sprawdzonych := 0, 0, 0
+	for _, kontekstKonta := range konteksty {
+		p, o, s := przemiecRetencjeKonta(kontekstKonta, repozytoria, dziennik)
+		przyciete += p
+		oknaPrzyciete += o
+		sprawdzonych += s
+	}
+	if przyciete > 0 && dziennik != nil {
+		dziennik.Printf("retencja historii: przycięto trwale %d pozycji w %d oknach (przemiatanie startowe, %d okien sprawdzonych)",
+			przyciete, oknaPrzyciete, sprawdzonych)
+	}
+}
+
+// przemiecRetencjeKonta przemiata okna jednego konta i oddaje liczby do sumy.
+func przemiecRetencjeKonta(kontekst context.Context, repozytoria *dane.Zestaw,
+	dziennik *log.Logger) (przyciete, oknaPrzyciete, sprawdzonych int) {
+
 	// Zakres global wylicza wszystkie okna kontraktowe; kolejność zasad rozstrzyga Egzekwuj osobno.
 	okna, err := repozytoria.Historia.OknaZakresu(kontekst, "global", "")
 	if err != nil {
 		if dziennik != nil {
 			dziennik.Printf("przemiatanie retencji historii: %v", err)
 		}
-		return
+		return 0, 0, 0
 	}
-	przyciete, oknaPrzyciete := 0, 0
 	for _, oknoKod := range okna {
 		usuniete, err := repozytoria.Historia.Egzekwuj(kontekst, oknoKod)
 		if err != nil {
@@ -37,8 +62,5 @@ func przemiecRetencjeHistorii(kontekst context.Context, repozytoria *dane.Zestaw
 			oknaPrzyciete++
 		}
 	}
-	if przyciete > 0 && dziennik != nil {
-		dziennik.Printf("retencja historii: przycięto trwale %d pozycji w %d oknach (przemiatanie startowe, %d okien sprawdzonych)",
-			przyciete, oknaPrzyciete, len(okna))
-	}
+	return przyciete, oknaPrzyciete, len(okna)
 }

@@ -2033,3 +2033,35 @@ potwierdzenia: gdy środowisko niesie `DANACO_KANAL_UZYTKOWNIK` i
 i musi odpowiedzieć jak każda inna; bez poświadczeń wchodzi jako NIESPRAWDZONA
 i tak jest meldowana. Wcześniej odpowiedź 401 przechodziła za dowód, że plik
 leży pod adresem — czyli nie sprawdzała niczego.
+
+## 46. Przycisk szukania w oknie schodzi, dzwonek dostaje centrum
+
+**Rzecz.** Przemiatanie szyny narzędziowej Centrum — trzydzieści cztery przyciski
+kliknięte po kolei, każdy mierzony wysyłką do rdzenia, ogłoszeniem i rozwinięciem
+menu — pokazało dwie afordancje bez skutku: dzwonek „Powiadomienia" i „Szukaj
+w oknie". Obie wyglądały na czynne i obie odpowiadały samą etykietką.
+
+**Rozstrzygnięcie różne, bo różny jest stan źródła.** Rodzina `notification.*`
+niesie cztery komendy o pełnej semantyce, a opis `notification.list` wprost
+mówi o plakietce liczącej zdarzenia nowe w całym rejestrze — prezentacja jest
+więc zadana, nie do wymyślenia. Dzwonek dostał centrum powiadomień. Szukania
+w oknie nie obsługuje ani wiązanie, ani biblioteka warstwy projektowej, a kontrakt
+nie ma komendy, z której dałoby się poznać zakres tego szukania — po czym miałoby
+biec, co pokazać, jak zawęzić widok. Przycisk zszedł z okna.
+
+**Rozważone warianty dla szukania.**
+
+1. Napisać szukanie po widocznych wykazach. Odrzucone: zakres, postać wyniku
+   i zachowanie przy braku trafienia byłyby dopowiedzeniem.
+2. Zostawić przycisk i zapowiedzieć zdaniem. Odrzucone: zapowiedź nazywa okno,
+   którego nie ma w wydaniu; tu nie ma ani okna, ani komendy, więc zdanie nie
+   miałoby na co wskazać.
+3. Zdjąć przycisk mechanizmem `DROGI_BEZ_POKRYCIA`. Przyjęte.
+
+**Decyzja.** Dzwonek prowadzi do centrum powiadomień; przycisk szukania w oknie
+schodzi. Szukanie wraca wtedy, gdy kontrakt dostanie komendę nazywającą jego zakres.
+
+**Uwaga o mierze.** Przemiatanie klikaniem nie odróżnia przycisku martwego od
+przełącznika, który zmienia samą klasę na znaczniku już stojącym — „Czynności
+sesji" i „Samouczek" wychodzą w nim jako bez skutku, choć działają. Wynik takiego
+przemiatania jest wykazem podejrzeń do sprawdzenia w źródle, nie wykazem usterek.

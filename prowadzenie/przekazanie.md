@@ -209,6 +209,14 @@ więc przejście przeglądarką prowadzi się na szerokości Właściciela (2560
 przy domyślnej szerokości karty wiersze są w drzewie, ale poza widokiem, co
 łatwo wziąć za pusty wykaz.
 
+Cztery środowiska przeszły klikaniem. TalkIn, WorkSpace i CodeStudio otwierają
+przedsionek z wykazem sesji, który zwraca `environment.enter`. MultitaskingAI
+nie otwiera go i otwierać nie ma: pusty wykaz modułów jest tam kształtem
+zamierzonym (migracja 072 — `navigationKind: orchestration`), a panel orkiestracji
+nie wchodzi do pakietu pięciu okien. Zdanie odpowiedzi obwiniało wcześniej rejestr
+rdzenia, więc czytało się jak brak danych; teraz nazywa rzecz i wskazuje katalog
+operacji.
+
 Dzwonek szyny narzędziowej był afordancją martwą — odpowiadał samą etykietką.
 Powstało centrum powiadomień: plakietka na dzwonku liczy zdarzenia nowe w całym
 rejestrze, panel wystawia je od najnowszego z klasą, wagą i stanem, a przy każdym

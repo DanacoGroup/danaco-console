@@ -2,15 +2,18 @@
 
 import {
   Command,
+  type AssistantAction,
   type AssistantActivityEntry,
 } from '../../../shared/contract.ts';
 import type { Odsubskrybuj } from '../polaczenie/magistrala-zdarzen.ts';
 import type { Kanal } from '../protokol/kanal.ts';
 import { wywolaj } from '../protokol/wywolanie.ts';
 import {
+  cialoPanelu,
   opiszNaglowek,
   zapewnijOknoModulu,
   zdejmijSterowanieWspolne,
+  wykazPanelu,
   zdejmijTrescWspolna,
 } from './okno-modulu.ts';
 import { zwiazKatalogModulu } from './katalog-modulu.ts';
@@ -55,7 +58,8 @@ export function zwiazAsystenta(
   let idOkna = idOknaStojacego;
   const odswiez = async (): Promise<void> => {
     if (idOkna === '') return;
-    await Promise.all([wypelnijDziennik(kanal, korzen, idOkna)]);
+    await Promise.all([      wypelnijDziennik(kanal, korzen, idOkna),
+      wypelnijZlecenia(kanal, korzen, idOkna)]);
   };
 
   void (async (): Promise<void> => {
@@ -127,6 +131,21 @@ async function wypelnijDziennik(kanal: Kanal, korzen: Element, idOkna: string): 
     return;
   }
   cialo.replaceChildren(...wpisy.map((w) => pozycja(cialo, w.content, w.kind)));
+}
+
+/* Zlecenia asystenta: te w biegu i te czekające na zgodę Operatora idą jednym
+   wykazem, bo w oknie stoją obok siebie. */
+async function wypelnijZlecenia(kanal: Kanal, korzen: Element, idOkna: string): Promise<void> {
+  const cialo = cialoPanelu(korzen, 'panel-actions');
+  if (cialo === null) return;
+  const odpowiedz = await wywolaj(kanal, Command.AssistantActionStatus, { windowId: idOkna });
+  const wynik = odpowiedz.wynik;
+  const zlecenia: AssistantAction[] = wynik === undefined
+    ? [] : [...(wynik.actions ?? []), ...(wynik.awaiting ?? [])];
+  wykazPanelu(cialo, odpowiedz.udany, odpowiedz.blad?.message,
+    wynik === undefined ? undefined : zlecenia,
+    'Asystent nie ma zleceń ani czekających, ani w biegu.',
+    (z) => [z.title ?? z.id, z.status ?? ''] as const);
 }
 
 function pozycja(cialo: Element, tytul: string, podpis: string): HTMLElement {

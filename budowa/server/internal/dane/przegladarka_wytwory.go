@@ -187,7 +187,7 @@ const (
 	                 (zasieg, zasieg_id, max_krokow, max_czas_sekund, domeny_dozwolone_json,
 	                  domeny_zablokowane_json, potwierdzaj_wyslanie, konto_id)
 	                 VALUES (?, ?, ?, ?, ?, ?, ?, ` + WskazanieKonta + `)
-	                 ON CONFLICT(zasieg, zasieg_id) DO UPDATE SET
+	                 ON CONFLICT(zasieg, zasieg_id, COALESCE(konto_id, 0)) DO UPDATE SET
 	                     max_krokow = excluded.max_krokow,
 	                     max_czas_sekund = excluded.max_czas_sekund,
 	                     domeny_dozwolone_json = excluded.domeny_dozwolone_json,

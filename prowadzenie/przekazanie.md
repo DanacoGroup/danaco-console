@@ -160,6 +160,13 @@ Pełny wykaz: `audyt2-ustalenia-7-kategorii.json`.
   powiadomień jest oknem spoza łańcucha etapu 2, więc zostaje zapowiedziane.
 - Granica 64 gniazd niezwiązanych — ustalenie zostaje otwarte po zdjęciu terminu
   gniazda przed bramką (sekcja 4).
+- Przycisk „nowy dokument" w oknie Studia (`klient/src/wiazanie/studio.ts:249`)
+  gaśnie, gdy okno nie prowadzi jeszcze rozmowy, choć zasada zero blokad
+  (`design/zasoby/css/komponenty.css`) każe zostawić go klikalnym i odpowiedzieć
+  zdaniem — tak jak robi to przycisk zatrzymania w tym samym pliku. Zmiany nie
+  wprowadzam: okno Studia prowadzi Właściciel własnoręcznie (CLAUDE.md).
+  Pozostałe wygaszenia w kliencie idą w parze ze zdaniem `nieGotowe` i zasady
+  nie łamią.
 - `go test ./...` na pakiecie `core` idzie ponad kwadrans: każdy z 433 montaży
   rdzenia kosztuje około 3,2 s. Koszt nie leży w migracjach — sprawdzone kopią
   bazy po migracjach, przebieg skrócił się o zero.

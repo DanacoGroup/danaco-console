@@ -273,6 +273,10 @@ bramka logowania, logowanie kontem, menu aplikacji, Centrum dowodzenia ze
 dał zero i zero. Ekrany stoją w jednym drzewie, więc szukać pól widocznych
 (`offsetParent !== null`), nie pierwszych w DOM.
 
+Kryterium 3 wykazane tą samą drogą: przełączenie karty w tryb bez sieci
+(`setOfflineMode`) zostawia okno w Centrum, a powrót sieci wraca do Centrum, nie
+na bramkę logowania — sesja przeżywa zerwanie.
+
 Kryterium 6 bramki etapu 2 wykazane tą samą drogą: naciśnięcie okna spoza wydania
 (`#cd-mobile`) odpowiada zdaniem „Mobile — To okno nie wchodzi do tego wydania",
 nie ciszą i nie pustą skorupą.

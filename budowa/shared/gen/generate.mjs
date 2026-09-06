@@ -22,7 +22,7 @@ const model = zbudujModel(zrodlo);
 const artefakty = [
   zapiszArtefakt(katalog, model.kontrakt.artefakty.typescript, emitujTypeScript(model)),
   zapiszArtefakt(katalog, model.kontrakt.artefakty.go, emitujGo(model)),
-  zapiszArtefakt(katalog, '../klient/src/wiazanie/rejestr-komend.ts', emitujRejestrKlienta(model)),
+  zapiszArtefakt(katalog, model.kontrakt.artefakty.rejestrKlienta, emitujRejestrKlienta(model)),
 ];
 
 console.log(`Kontrakt ${model.kontrakt.produkt} — protokol ${model.kontrakt.protokol}`);

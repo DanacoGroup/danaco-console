@@ -141,6 +141,8 @@ export function zwiazCentrum(kanal: Kanal | undefined = globalThis.DanacoKanal):
       zdarzenie.preventDefault();
       if (droga.wybor === '#cd-konfiguracja' && kanal !== undefined) {
         otworzOperacjePlatformy(kanal);
+      } else if (droga.wybor === '#cd-ustawienia') {
+        postawOknoUstawien();
       } else {
         zapowiedzOknoPlatformowe(droga, wezel);
       }
@@ -1482,13 +1484,18 @@ interface DrogaPlatformowa {
   zamiast: string;
 }
 
-/* Pięć dróg do okien platformowych. Droga zostaje w oknie i nazywa swoją
+/* Sześć dróg do okien platformowych. Droga zostaje w oknie i nazywa swoją
    niegotowość — zdjęcie jej zabrałoby ślad, że taki zakres w produkcie jest. */
 const OKNA_PLATFORMOWE: readonly DrogaPlatformowa[] = [
   {
     wybor: '[data-otwarz-historie]',
     nazwa: 'Historia sesji',
     zamiast: 'Sesje konta stoją w panelu bocznym okna roboczego.',
+  },
+  {
+    wybor: '#cd-ustawienia',
+    nazwa: 'Ustawienia',
+    zamiast: '',
   },
   {
     wybor: '#cd-konfiguracja',
@@ -1508,6 +1515,18 @@ const OKNA_PLATFORMOWE: readonly DrogaPlatformowa[] = [
   // Pozycje pomocy prowadzą do Instrukcji i Instalatora, więc nazwę niesie podpis.
   { wybor: '[data-nawiguj]', nazwa: '', zamiast: '' },
 ];
+
+/* Okno Ustawień stoi w produkcie, więc jego droga nie zapowiada niegotowości,
+   tylko podmienia treść ramy — tak samo jak trasa wycofania z listu. */
+function postawOknoUstawien(): void {
+  const szablon = document.getElementById('dn-tresc-ustawienia');
+  if (!(szablon instanceof HTMLTemplateElement)) return;
+  const blok = szablon.content.firstElementChild;
+  const rama = document.querySelector<HTMLElement>('[data-rama-aplikacji]');
+  if (blok === null || rama === null) return;
+  rama.hidden = false;
+  rama.replaceChildren(blok.cloneNode(true));
+}
 
 function zapowiedzOknoPlatformowe(droga: DrogaPlatformowa, wezel: HTMLElement): void {
   const podpis = droga.nazwa === '' ? (wezel.textContent ?? '').trim() : droga.nazwa;

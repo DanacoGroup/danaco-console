@@ -2487,6 +2487,10 @@
         {
           "wartosc": "passwordReset",
           "opis": "Ustawiono nowe haslo w drodze odzyskania konta; tokeny wydane wczesniej sa uniewaznione"
+        },
+        {
+          "wartosc": "emailChanged",
+          "opis": "Zmieniono adres e-mail uwierzytelniajacy po potwierdzeniu kodem z nowego adresu"
         }
       ]
     },
@@ -46098,6 +46102,78 @@
           "typ": "AuthSession",
           "wymagane": true,
           "opis": "Sesja po przedluzeniu"
+        }
+      ]
+    },
+    {
+      "typ": "auth.email.change.start",
+      "opis": "Wszczyna zmiane adresu e-mail uwierzytelniajacego. Wychodza DWA listy naraz: kod potwierdzenia na adres nowy oraz ostrzezenie z droga wycofania na adres dotychczasowy. Para jest wymogiem bezpieczenstwa — bez listu na adres dotychczasowy przejete konto zmienia adres niepostrzezenie. Konto zostaje przy adresie dotychczasowym az do auth.email.change.confirm",
+      "zadanie": [
+        {
+          "nazwa": "newEmail",
+          "typ": "string",
+          "wymagane": true,
+          "opis": "Adres, na ktory konto ma przejsc; kod potwierdzenia idzie wylacznie tam"
+        },
+        {
+          "nazwa": "currentPassword",
+          "typ": "string",
+          "wymagane": true,
+          "opis": "Haslo biezace. Zmiana adresu wymaga znajomosci hasla, bo adres jest jedyna droga odzyskania konta"
+        }
+      ],
+      "wynik": [
+        {
+          "nazwa": "sent",
+          "typ": "bool",
+          "wymagane": true,
+          "opis": "Czy zadanie przyjeto. Prawda takze wtedy, gdy adres nowy jest juz zajety — inaczej odpowiedz mowilaby pytajacemu, ktore adresy maja konto"
+        }
+      ]
+    },
+    {
+      "typ": "auth.email.change.confirm",
+      "opis": "Domyka zmiane adresu kodem z listu wyslanego na adres nowy. Dopiero ta komenda przenosi konto na adres oczekujacy i uniewaznia droge wycofania. Adres dotychczasowy przestaje uwierzytelniac",
+      "zadanie": [
+        {
+          "nazwa": "code",
+          "typ": "string",
+          "wymagane": true,
+          "opis": "Kod potwierdzenia z listu wyslanego na adres nowy"
+        }
+      ],
+      "wynik": [
+        {
+          "nazwa": "changed",
+          "typ": "bool",
+          "wymagane": true,
+          "opis": "Czy adres konta zostal zmieniony"
+        },
+        {
+          "nazwa": "email",
+          "typ": "string",
+          "wymagane": true,
+          "opis": "Adres uwierzytelniajacy po zmianie"
+        }
+      ]
+    },
+    {
+      "typ": "auth.email.change.revoke",
+      "opis": "Wycofuje zamowiona zmiane adresu droga z listu wyslanego na adres dotychczasowy. Uniewaznia kod wyslany na adres nowy i zostawia konto przy adresie dotychczasowym. Droga dziala bez sesji — Operator, ktoremu przejeto konto, sesji miec nie musi",
+      "zadanie": [
+        {
+          "nazwa": "token",
+          "typ": "string",
+          "wymagane": true,
+          "opis": "Droga wycofania z listu wyslanego na adres dotychczasowy"
+        }
+      ],
+      "wynik": [
+        {
+          "nazwa": "revoked",
+          "typ": "bool",
+          "wymagane": true,
+          "opis": "Czy zmiane wycofano. Falsz znaczy droge nieznana, uzyta albo przeterminowana"
         }
       ]
     },

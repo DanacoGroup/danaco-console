@@ -13,6 +13,7 @@ import { pilnujTokenu, tokenSesji } from './protokol/token-sesji.ts';
 import { tozsamoscKlienta } from './protokol/tozsamosc-klienta.ts';
 import { oglos } from './wiazanie/ogloszenie.ts';
 import { pokazOknoPowloki, zwiazBelkeOkna } from './wiazanie/belka-okna.ts';
+import { zwiazZmianeAdresu } from './wiazanie/konto-zmiana-adresu.ts';
 import { zwiazWejscie } from './wiazanie/wejscie.ts';
 import { zwiazZdarzenia } from './wiazanie/zdarzenia.ts';
 
@@ -133,6 +134,10 @@ zwiazZdarzenia(kanal);
 /* Wiązanie znacznika Właściciela z komendami rdzenia: nasłuchy na jego
    przyciskach i polach. Nie stawia żadnego elementu. */
 zwiazWejscie(kanal);
+
+/* Zmiana adresu konta: zamówienie i potwierdzenie z okna, wycofanie drogą
+   z listu — ta ostatnia wykonuje się przy wejściu, bez kliknięcia. */
+zwiazZmianeAdresu(kanal);
 
 /* Belka okna zastępuje ramę systemową, więc sterowanie oknem idzie z niej. */
 zwiazBelkeOkna();

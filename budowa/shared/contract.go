@@ -2584,6 +2584,8 @@ const (
 	AuthChangeReasonEmailVerified = "emailVerified"
 	// Ustawiono nowe haslo w drodze odzyskania konta; tokeny wydane wczesniej sa uniewaznione
 	AuthChangeReasonPasswordReset = "passwordReset"
+	// Zmieniono adres e-mail uwierzytelniajacy po potwierdzeniu kodem z nowego adresu
+	AuthChangeReasonEmailChanged = "emailChanged"
 )
 
 // WartosciAuthChangeReason zwraca komplet wartosci AuthChangeReason w kolejnosci kontraktu.
@@ -2595,6 +2597,7 @@ func WartosciAuthChangeReason() []AuthChangeReason {
 		AuthChangeReasonSessionRevoked,
 		AuthChangeReasonEmailVerified,
 		AuthChangeReasonPasswordReset,
+		AuthChangeReasonEmailChanged,
 	}
 }
 
@@ -9617,7 +9620,7 @@ var ZakresyWyliczen = map[string][]string{
 	"TerminalOutputChannel":            {TerminalOutputChannelStdout, TerminalOutputChannelStderr},
 	"MobileProcessControl":             {MobileProcessControlPause, MobileProcessControlResume, MobileProcessControlStop, MobileProcessControlRestart, MobileProcessControlApprove, MobileProcessControlModify},
 	"AuthMethodKind":                   {AuthMethodKindPassword, AuthMethodKindPin, AuthMethodKindHello},
-	"AuthChangeReason":                 {AuthChangeReasonMethodAdded, AuthChangeReasonMethodRemoved, AuthChangeReasonPasswordChanged, AuthChangeReasonSessionRevoked, AuthChangeReasonEmailVerified, AuthChangeReasonPasswordReset},
+	"AuthChangeReason":                 {AuthChangeReasonMethodAdded, AuthChangeReasonMethodRemoved, AuthChangeReasonPasswordChanged, AuthChangeReasonSessionRevoked, AuthChangeReasonEmailVerified, AuthChangeReasonPasswordReset, AuthChangeReasonEmailChanged},
 	"AdvisorSelection":                 {AdvisorSelectionOperatorIndication, AdvisorSelectionStrengthCeiling},
 	"ImageTransformKind":               {ImageTransformKindResize, ImageTransformKindCrop, ImageTransformKindRotate, ImageTransformKindFlipHorizontal, ImageTransformKindFlipVertical, ImageTransformKindThumbnail},
 	"ImageAdjustKind":                  {ImageAdjustKindBrightness, ImageAdjustKindContrast, ImageAdjustKindSaturation, ImageAdjustKindSharpen, ImageAdjustKindBlur, ImageAdjustKindDenoise, ImageAdjustKindGrayscale, ImageAdjustKindAutoLevels},
@@ -10853,6 +10856,12 @@ const (
 	CommandAuthPasswordReset MessageType = "auth.password.reset"
 	// Przedluza sesje bramki jawnie. W Danaco HUB dzieje sie to samo przy kazdym zadaniu HTTP; tu jest komenda, bo transportem jest jedno gniazdo WebSocket
 	CommandAuthTokenRefresh MessageType = "auth.token.refresh"
+	// Wszczyna zmiane adresu e-mail uwierzytelniajacego. Wychodza DWA listy naraz: kod potwierdzenia na adres nowy oraz ostrzezenie z droga wycofania na adres dotychczasowy. Para jest wymogiem bezpieczenstwa — bez listu na adres dotychczasowy przejete konto zmienia adres niepostrzezenie. Konto zostaje przy adresie dotychczasowym az do auth.email.change.confirm
+	CommandAuthEmailChangeStart MessageType = "auth.email.change.start"
+	// Domyka zmiane adresu kodem z listu wyslanego na adres nowy. Dopiero ta komenda przenosi konto na adres oczekujacy i uniewaznia droge wycofania. Adres dotychczasowy przestaje uwierzytelniac
+	CommandAuthEmailChangeConfirm MessageType = "auth.email.change.confirm"
+	// Wycofuje zamowiona zmiane adresu droga z listu wyslanego na adres dotychczasowy. Uniewaznia kod wyslany na adres nowy i zostawia konto przy adresie dotychczasowym. Droga dziala bez sesji — Operator, ktoremu przejeto konto, sesji miec nie musi
+	CommandAuthEmailChangeRevoke MessageType = "auth.email.change.revoke"
 	// Wykaz urzadzen powiazanych z kontem wlasciciela. Konto jest jedno, urzadzen dowolnie wiele: komputery, telefony, tablety. Kazde niesie wlasny token dostepu, wiec wykaz jest miejscem, w ktorym Operator widzi, co ma dostep do platformy
 	CommandDeviceList MessageType = "device.list"
 	// Uniewaznia token dostepu wskazanego urzadzenia — urzadzenie loguje sie ponownie przy nastepnym uruchomieniu. Zmiana idzie do wszystkich polaczonych urzadzen zdarzeniem device.changed, wiec Operator widzi skutek natychmiast na pozostalych ekranach. Tej samej drogi uzywa odzyskanie konta, ktore uniewaznia tokeny wydane przed zmiana hasla
@@ -27634,6 +27643,46 @@ type AuthTokenRefreshRequest struct {
 type AuthTokenRefreshResponse struct {
 	// Sesja po przedluzeniu
 	Session AuthSession `json:"session"`
+}
+
+// AuthEmailChangeStartRequest — Tresc zadania auth.email.change.start — Wszczyna zmiane adresu e-mail uwierzytelniajacego. Wychodza DWA listy naraz: kod potwierdzenia na adres nowy oraz ostrzezenie z droga wycofania na adres dotychczasowy. Para jest wymogiem bezpieczenstwa — bez listu na adres dotychczasowy przejete konto zmienia adres niepostrzezenie. Konto zostaje przy adresie dotychczasowym az do auth.email.change.confirm
+type AuthEmailChangeStartRequest struct {
+	// Adres, na ktory konto ma przejsc; kod potwierdzenia idzie wylacznie tam
+	NewEmail string `json:"newEmail"`
+	// Haslo biezace. Zmiana adresu wymaga znajomosci hasla, bo adres jest jedyna droga odzyskania konta
+	CurrentPassword string `json:"currentPassword"`
+}
+
+// AuthEmailChangeStartResponse — Tresc wyniku auth.email.change.start — Wszczyna zmiane adresu e-mail uwierzytelniajacego. Wychodza DWA listy naraz: kod potwierdzenia na adres nowy oraz ostrzezenie z droga wycofania na adres dotychczasowy. Para jest wymogiem bezpieczenstwa — bez listu na adres dotychczasowy przejete konto zmienia adres niepostrzezenie. Konto zostaje przy adresie dotychczasowym az do auth.email.change.confirm
+type AuthEmailChangeStartResponse struct {
+	// Czy zadanie przyjeto. Prawda takze wtedy, gdy adres nowy jest juz zajety — inaczej odpowiedz mowilaby pytajacemu, ktore adresy maja konto
+	Sent bool `json:"sent"`
+}
+
+// AuthEmailChangeConfirmRequest — Tresc zadania auth.email.change.confirm — Domyka zmiane adresu kodem z listu wyslanego na adres nowy. Dopiero ta komenda przenosi konto na adres oczekujacy i uniewaznia droge wycofania. Adres dotychczasowy przestaje uwierzytelniac
+type AuthEmailChangeConfirmRequest struct {
+	// Kod potwierdzenia z listu wyslanego na adres nowy
+	Code string `json:"code"`
+}
+
+// AuthEmailChangeConfirmResponse — Tresc wyniku auth.email.change.confirm — Domyka zmiane adresu kodem z listu wyslanego na adres nowy. Dopiero ta komenda przenosi konto na adres oczekujacy i uniewaznia droge wycofania. Adres dotychczasowy przestaje uwierzytelniac
+type AuthEmailChangeConfirmResponse struct {
+	// Czy adres konta zostal zmieniony
+	Changed bool `json:"changed"`
+	// Adres uwierzytelniajacy po zmianie
+	Email string `json:"email"`
+}
+
+// AuthEmailChangeRevokeRequest — Tresc zadania auth.email.change.revoke — Wycofuje zamowiona zmiane adresu droga z listu wyslanego na adres dotychczasowy. Uniewaznia kod wyslany na adres nowy i zostawia konto przy adresie dotychczasowym. Droga dziala bez sesji — Operator, ktoremu przejeto konto, sesji miec nie musi
+type AuthEmailChangeRevokeRequest struct {
+	// Droga wycofania z listu wyslanego na adres dotychczasowy
+	Token string `json:"token"`
+}
+
+// AuthEmailChangeRevokeResponse — Tresc wyniku auth.email.change.revoke — Wycofuje zamowiona zmiane adresu droga z listu wyslanego na adres dotychczasowy. Uniewaznia kod wyslany na adres nowy i zostawia konto przy adresie dotychczasowym. Droga dziala bez sesji — Operator, ktoremu przejeto konto, sesji miec nie musi
+type AuthEmailChangeRevokeResponse struct {
+	// Czy zmiane wycofano. Falsz znaczy droge nieznana, uzyta albo przeterminowana
+	Revoked bool `json:"revoked"`
 }
 
 // DeviceListRequest — Tresc zadania device.list — Wykaz urzadzen powiazanych z kontem wlasciciela. Konto jest jedno, urzadzen dowolnie wiele: komputery, telefony, tablety. Kazde niesie wlasny token dostepu, wiec wykaz jest miejscem, w ktorym Operator widzi, co ma dostep do platformy
@@ -45833,6 +45882,9 @@ func WszystkieKomendy() []MessageType {
 		CommandAuthMethodRemove,
 		CommandAuthPasswordReset,
 		CommandAuthTokenRefresh,
+		CommandAuthEmailChangeStart,
+		CommandAuthEmailChangeConfirm,
+		CommandAuthEmailChangeRevoke,
 		CommandDeviceList,
 		CommandDeviceRevoke,
 		CommandTeamSave,
@@ -47074,6 +47126,9 @@ var zbiorKomend = map[MessageType]struct{}{
 	CommandAuthMethodRemove:                    {},
 	CommandAuthPasswordReset:                   {},
 	CommandAuthTokenRefresh:                    {},
+	CommandAuthEmailChangeStart:                {},
+	CommandAuthEmailChangeConfirm:              {},
+	CommandAuthEmailChangeRevoke:               {},
 	CommandDeviceList:                          {},
 	CommandDeviceRevoke:                        {},
 	CommandTeamSave:                            {},

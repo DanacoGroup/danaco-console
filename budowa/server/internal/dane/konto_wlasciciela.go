@@ -43,6 +43,8 @@ type RepozytoriumKontaWlasciciela interface {
 	ZalozKonto(ctx context.Context, konto KontoWlasciciela) (int64, error)
 	PotwierdzKonto(ctx context.Context, kontoId int64) error
 	UsunKonto(ctx context.Context, kontoId int64) error
+	// UstawAdresKonta przenosi konto na adres potwierdzony kodem ze zmiany adresu.
+	UstawAdresKonta(ctx context.Context, kontoId int64, adres string) error
 
 	ZalozPotwierdzenie(ctx context.Context, p PotwierdzenieTozsamosci) error
 	PotwierdzeniePoSkrocie(ctx context.Context, skrot string) (PotwierdzenieTozsamosci, error)
@@ -74,6 +76,8 @@ const (
 	potwierdzKontoWlasciciela = `UPDATE konto_wlasciciela SET potwierdzone = 1 WHERE id = ?`
 
 	usunKontoWlasciciela = `DELETE FROM konto_wlasciciela WHERE id = ?`
+
+	ustawAdresKontaWlasciciela = `UPDATE konto_wlasciciela SET email = ? WHERE id = ?`
 
 	wstawPotwierdzenieTozsamosci = `INSERT INTO potwierdzenie_tozsamosci
 	                                (skrot, cel, wygasa, uzyte, utworzono, konto_id)
@@ -209,6 +213,19 @@ func (r *repozytoriumKontaWlasciciela) UsunKonto(ctx context.Context, kontoId in
 	}
 	if _, err := polecenie.ExecContext(ctx, kontoId); err != nil {
 		return fmt.Errorf("dane: nie można usunąć konta: %w", err)
+	}
+	return nil
+}
+
+func (r *repozytoriumKontaWlasciciela) UstawAdresKonta(ctx context.Context,
+	kontoId int64, adres string) error {
+
+	polecenie, err := r.zapytania.przygotuj(ctx, ustawAdresKontaWlasciciela)
+	if err != nil {
+		return err
+	}
+	if _, err := polecenie.ExecContext(ctx, adres, kontoId); err != nil {
+		return fmt.Errorf("dane: nie można zmienić adresu konta: %w", err)
 	}
 	return nil
 }

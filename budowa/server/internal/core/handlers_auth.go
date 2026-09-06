@@ -29,6 +29,12 @@ type Uwierzytelnianie interface {
 	ZdejmijMetodeWejscia(ctx context.Context, z shared.AuthMethodRemoveRequest) (shared.AuthMethodRemoveResponse, error)
 	// ZmienHasloBramki obsługuje `auth.password.reset`.
 	ZmienHasloBramki(ctx context.Context, z shared.AuthPasswordResetRequest) (shared.AuthPasswordResetResponse, error)
+	// RozpocznijZmianeAdresu obsługuje `auth.email.change.start`.
+	RozpocznijZmianeAdresu(ctx context.Context, z shared.AuthEmailChangeStartRequest) (shared.AuthEmailChangeStartResponse, error)
+	// PotwierdzZmianeAdresu obsługuje `auth.email.change.confirm`.
+	PotwierdzZmianeAdresu(ctx context.Context, z shared.AuthEmailChangeConfirmRequest) (shared.AuthEmailChangeConfirmResponse, error)
+	// WycofajZmianeAdresu obsługuje `auth.email.change.revoke`.
+	WycofajZmianeAdresu(ctx context.Context, z shared.AuthEmailChangeRevokeRequest) (shared.AuthEmailChangeRevokeResponse, error)
 	// PrzedluzSesjeBramki obsługuje `auth.token.refresh`.
 	PrzedluzSesjeBramki(ctx context.Context, z shared.AuthTokenRefreshRequest) (shared.AuthTokenRefreshResponse, error)
 
@@ -94,6 +100,30 @@ func zarejestrujUwierzytelnianie(r *Rejestr, u Uwierzytelnianie, e *emiter, wiez
 				rozlaczPoUniewaznieniu(ctx, e, "sesja bramki unieważniona po ustawieniu nowego hasła")
 			}
 			return odpowiedz, err
+		}))
+
+	r.Zarejestruj(shared.CommandAuthEmailChangeStart,
+		obsluz(func(ctx context.Context, z shared.AuthEmailChangeStartRequest) (shared.AuthEmailChangeStartResponse, error) {
+			return u.RozpocznijZmianeAdresu(ctx, z)
+		}))
+
+	// Zmiana adresu przenosi tożsamość konta, więc urządzenia dowiadują się o niej
+	// tak samo jak o zmianie hasła.
+	r.Zarejestruj(shared.CommandAuthEmailChangeConfirm,
+		obsluz(func(ctx context.Context, z shared.AuthEmailChangeConfirmRequest) (shared.AuthEmailChangeConfirmResponse, error) {
+			odpowiedz, err := u.PotwierdzZmianeAdresu(ctx, z)
+			if err == nil {
+				e.wyslijDoKonta(ctx, shared.EventAuthChanged, "", shared.AuthChangedEvent{
+					Reason: shared.AuthChangeReasonEmailChanged,
+				})
+			}
+			return odpowiedz, err
+		}))
+
+	// Wycofanie idzie drogą z listu, bez sesji: rozgłoszenia nie ma czym adresować.
+	r.Zarejestruj(shared.CommandAuthEmailChangeRevoke,
+		obsluz(func(ctx context.Context, z shared.AuthEmailChangeRevokeRequest) (shared.AuthEmailChangeRevokeResponse, error) {
+			return u.WycofajZmianeAdresu(ctx, z)
 		}))
 
 	r.Zarejestruj(shared.CommandAuthLogin,

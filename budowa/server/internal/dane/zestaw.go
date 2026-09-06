@@ -134,6 +134,7 @@ type Zestaw struct {
 	// KontoWlasciciela mówi, czyja jest bramka: login, e-mail, stan
 	// potwierdzenia i drogi odzyskiwania.
 	KontoWlasciciela RepozytoriumKontaWlasciciela
+	ZmianaAdresu     RepozytoriumZmianyAdresu
 	// Kondycja i Alerty opisują stan produktu: sondy z pomiarami oraz reguły
 	// wyzwalania z wyzwoleniami.
 	Kondycja RepozytoriumKondycji
@@ -221,6 +222,7 @@ func Otworz(ctx context.Context, baza *store.Baza) (*Zestaw, error) {
 		Komponenty:          noweRepozytoriumKomponentow(zapytania),
 		Uwierzytelnienie:    noweRepozytoriumUwierzytelnienia(zapytania),
 		KontoWlasciciela:    noweRepozytoriumKontaWlasciciela(zapytania),
+		ZmianaAdresu:        noweRepozytoriumZmianyAdresu(zapytania),
 		ZdarzeniaWykonawcze: noweRepozytoriumZdarzenWykonawczych(zapytania),
 		Bloki:               noweRepozytoriumBlokow(zapytania),
 		Historia:            noweRepozytoriumHistorii(zapytania, baza.DB),

@@ -41,6 +41,9 @@ type adapterUwierzytelnienia struct {
 	// odmawia rejestracji wprost.
 	konto dane.RepozytoriumKontaWlasciciela
 
+	// zmianaAdresu prowadzi zamówione zmiany adresu uwierzytelniającego.
+	zmianaAdresu dane.RepozytoriumZmianyAdresu
+
 	// nadajnik to konto nadawcze platformy podane przy starcie; nastawy
 	// nakładają na nie kontoNadawcze.
 	nadajnik nadajnik.Nastawy
@@ -81,6 +84,15 @@ func (a *adapterUwierzytelnienia) ZKontem(
 	konto dane.RepozytoriumKontaWlasciciela) *adapterUwierzytelnienia {
 
 	a.konto = konto
+	return a
+}
+
+// ZZmianaAdresu wpina trwałość zamówionych zmian adresu. Bez niej zmiana adresu
+// odmawia, bo zamówienia nie ma gdzie zapisać.
+func (a *adapterUwierzytelnienia) ZZmianaAdresu(
+	zmiana dane.RepozytoriumZmianyAdresu) *adapterUwierzytelnienia {
+
+	a.zmianaAdresu = zmiana
 	return a
 }
 

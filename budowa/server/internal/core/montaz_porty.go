@@ -217,6 +217,7 @@ func zlozPorty(s skladPortow) Porty {
 		Uwierzytelnianie: nowyAdapterUwierzytelnienia(s.repozytoria.Uwierzytelnienie).
 			ZSejfem(sejf).
 			ZKontem(s.repozytoria.KontoWlasciciela).
+			ZZmianaAdresu(s.repozytoria.ZmianaAdresu).
 			ZNadajnikiem(s.nadajnik).
 			ZAdresemKonsoli(s.montaz.Konfiguracja.AdresKonsoli).
 			ZNastawamiPlatformy(s.ustawienia),

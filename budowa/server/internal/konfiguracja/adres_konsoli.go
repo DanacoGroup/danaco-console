@@ -2,7 +2,10 @@
 // okna wskazywane odsyłaczem z listu.
 package konfiguracja
 
-import "strings"
+import (
+	"net/url"
+	"strings"
+)
 
 // AdresKonsoliDomyslny to adres, pod którym stoi Konsola platformy. Wartość jest
 // ta sama, którą niosą szablony listów transakcyjnych
@@ -21,6 +24,11 @@ const AdresKonsoliDomyslny = "https://console.danaco-group.pl"
 // SciezkaAktywacji to okno, w którym Operator wprowadza kod z listu aktywacji.
 const SciezkaAktywacji = "/aktywacja"
 
+// SciezkaWycofaniaZmiany to trasa, którą otwiera odsyłacz z listu ostrzegającego
+// o zamówionej zmianie adresu. Droga wycofania stoi w zapytaniu, bo Operator
+// klika ją z poczty, nie przepisuje do okna.
+const SciezkaWycofaniaZmiany = "/wycofaj-zmiane-adresu"
+
 /*
 AdresAktywacji składa pełny odsyłacz do okna aktywacji.
 
@@ -32,4 +40,12 @@ func AdresAktywacji(adresKonsoli string) string {
 		adresKonsoli = AdresKonsoliDomyslny
 	}
 	return strings.TrimRight(adresKonsoli, "/") + SciezkaAktywacji
+}
+
+// AdresWycofaniaZmiany składa odsyłacz wycofania wraz z drogą w zapytaniu.
+func AdresWycofaniaZmiany(adresKonsoli, droga string) string {
+	if adresKonsoli == "" {
+		adresKonsoli = AdresKonsoliDomyslny
+	}
+	return strings.TrimRight(adresKonsoli, "/") + SciezkaWycofaniaZmiany + "?droga=" + url.QueryEscape(droga)
 }

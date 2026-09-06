@@ -62,7 +62,7 @@ jobs:
 
       - name: Typy
         working-directory: budowa/klient
-        run: npx tsc --noEmit
+        run: npm run typy
 
       - name: Budowanie
         working-directory: budowa/klient

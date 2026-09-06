@@ -15,6 +15,7 @@ import { oglos } from './wiazanie/ogloszenie.ts';
 import { pokazOknoPowloki, zwiazBelkeOkna } from './wiazanie/belka-okna.ts';
 import { zwiazZmianeAdresu } from './wiazanie/konto-zmiana-adresu.ts';
 import { zwiazWyglad } from './wiazanie/wyglad-okna.ts';
+import { zwiazUrzadzenia } from './wiazanie/urzadzenia-konta.ts';
 import { zwiazWejscie } from './wiazanie/wejscie.ts';
 import { zwiazZdarzenia } from './wiazanie/zdarzenia.ts';
 
@@ -143,6 +144,10 @@ zwiazZmianeAdresu(kanal);
 /* Motyw i gęstość należą do konta, nie do przeglądarki: wybór idzie do rdzenia
    i wraca przy każdym otwarciu okna. */
 zwiazWyglad(kanal);
+
+/* Wykaz urządzeń bierze się z rdzenia: prototyp niesie przykłady, a instalacja
+   ma tyle urządzeń, ile faktycznie się na niej uwierzytelniło. */
+zwiazUrzadzenia(kanal);
 
 /* Belka okna zastępuje ramę systemową, więc sterowanie oknem idzie z niej. */
 zwiazBelkeOkna();

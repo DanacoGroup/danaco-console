@@ -1,6 +1,0 @@
-/* Klasa dn-ikona to hak semantyczny nośnika SVG: nie narzuca rozmiaru ani barwy, a barwa idzie z currentColor razem z motywem tekstu obok niej. */
-
-.dn-ikona {
-  display: inline-block;
-  flex: none;
-}

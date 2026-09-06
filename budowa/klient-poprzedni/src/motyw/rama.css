@@ -1,9 +1,0 @@
-/* Żetony ramy kokpitu opisują pasek górny i jego części; rama pozostaje stała w obu motywach, ponieważ jest obudową narzędzia, a nie treścią dokumentu. */
-
-:root {
-  --dn-rama: var(--dn-szary-925);          /* #131313 — płaszczyzna paska */
-  --dn-rama-tekst: var(--dn-szary-100);    /* #ECECEC — tekst pierwszoplanowy */
-  --dn-rama-tekst-2: var(--dn-szary-400);  /* #9E9E9E — tekst drugoplanowy */
-  --dn-rama-hover: rgba(255, 255, 255, 0.08);
-  --dn-rama-obrys: rgba(255, 255, 255, 0.10);
-}

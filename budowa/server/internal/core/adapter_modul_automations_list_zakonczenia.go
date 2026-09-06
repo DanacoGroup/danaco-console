@@ -30,6 +30,23 @@ var stanyListu = map[string]string{
 	shared.AutomationExecutionStatusStopped:   "zatrzymany",
 }
 
+/*
+KluczListowPrzebiegow to nastawa częstotliwości listów o zakończonych biegach.
+
+Stopka listu obiecuje ją w oknie Ustawienia konta. Wartości są trzy i nie rosną:
+`zawsze` — każde zakończenie, `niepowodzenia` — tylko biegi, które stanęły przed
+metą, `nigdy` — cisza. Brak nastawy znaczy `zawsze`: instalacja zastana wysyłała
+listy o każdym zakończeniu i zmiana domyślnej odbierałaby powiadomienia komuś,
+kto o to nie prosił.
+*/
+const KluczListowPrzebiegow = "poczta.przebiegi.kiedy"
+
+const (
+	listyZawsze        = "zawsze"
+	listyNiepowodzenia = "niepowodzenia"
+	listyNigdy         = "nigdy"
+)
+
 // listZakonczeniaPrzebiegu wysyła list 7, gdy przebieg właśnie wszedł w stan
 // końcowy. Znacznik `Powiadomiono` zamyka drogę po pierwszym nadaniu.
 func (a *adapterAutomatyk) listZakonczeniaPrzebiegu(ctx context.Context,
@@ -40,6 +57,11 @@ func (a *adapterAutomatyk) listZakonczeniaPrzebiegu(ctx context.Context,
 	}
 	if a.nastawyListow == nil {
 		return false, nil
+	}
+	if !a.listPrzysluguje(ctx, przebieg.Stan) {
+		/* Nastawa wyciszyła ten stan. Znacznik i tak schodzi: bieg zakończony
+		   raz nie wraca do stanu, w którym list mógłby jeszcze wyjść. */
+		return true, nil
 	}
 	adresat, nazwa, err := a.adresatPrzebiegu(ctx, przebieg)
 	if err != nil || adresat == "" {
@@ -70,6 +92,43 @@ func (a *adapterAutomatyk) listZakonczeniaPrzebiegu(ctx context.Context,
 		return false, fmt.Errorf("nie udało się wysłać listu o przebiegu %s: %w", przebieg.Kod, err)
 	}
 	return true, nil
+}
+
+/*
+listPrzysluguje rozstrzyga, czy stan końcowy zasługuje na list wedle nastawy konta.
+
+Nastawa stoi na osi platformy, nie konta: automatyka bez wskazania konta listu
+i tak nie dostaje, a instalacja jednoosobowa — a taka jest każda dziś — ma jedną
+skrzynkę. Rozszerzenie na oś konta nie wymaga zmiany tej funkcji, tylko poziomu
+odczytu.
+*/
+func (a *adapterAutomatyk) listPrzysluguje(ctx context.Context, stan string) bool {
+	nastawa := listyZawsze
+	if a.konfiguracja != nil {
+		if wpis, jest, err := a.konfiguracja.Odczytaj(ctx,
+			shared.ConfigScopeApplication, "", KluczListowPrzebiegow); err == nil && jest {
+			if wartosc := strings.TrimSpace(wartoscUstawienia(wpis)); wartosc != "" {
+				nastawa = wartosc
+			}
+		}
+	}
+	switch nastawa {
+	case listyNigdy:
+		return false
+	case listyNiepowodzenia:
+		return stan != shared.AutomationExecutionStatusSucceeded
+	default:
+		return true
+	}
+}
+
+// wartoscUstawienia oddaje treść wpisu konfiguracji; wpis bez wartości znaczy
+// nastawę zdjętą, nie nastawę pustą.
+func wartoscUstawienia(wpis dane.Ustawienie) string {
+	if wpis.Wartosc == nil {
+		return ""
+	}
+	return *wpis.Wartosc
 }
 
 // adresatPrzebiegu wyprowadza odbiorcę listu łańcuchem przebieg → automatyka →

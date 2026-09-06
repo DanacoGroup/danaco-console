@@ -34,6 +34,8 @@ type adapterAutomatyk struct {
 	nastawyListow func(context.Context) nadajnik.Nastawy
 	// adresKonsoli to publiczny adres, pod który kieruje odsyłacz z listu.
 	adresKonsoli string
+	// konfiguracja daje nastawę częstotliwości listów o zakończonych biegach.
+	konfiguracja dane.RepozytoriumKonfiguracji
 }
 
 // ZPocztaPrzebiegow wpina drogi listu o zakończonym przebiegu: konto adresata,
@@ -42,6 +44,14 @@ func (a *adapterAutomatyk) ZPocztaPrzebiegow(konta dane.RepozytoriumKontaWlascic
 	nastawy func(context.Context) nadajnik.Nastawy, adresKonsoli string) *adapterAutomatyk {
 
 	a.konta, a.nastawyListow, a.adresKonsoli = konta, nastawy, adresKonsoli
+	return a
+}
+
+// ZNastawaListow wpina odczyt nastawy częstotliwości listów o przebiegach.
+func (a *adapterAutomatyk) ZNastawaListow(
+	konfiguracja dane.RepozytoriumKonfiguracji) *adapterAutomatyk {
+
+	a.konfiguracja = konfiguracja
 	return a
 }
 

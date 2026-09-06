@@ -63,7 +63,8 @@ func zlozAdapteryModulow(kontekst context.Context, m Montaz, repozytoria *dane.Z
 		   adapter ustawień powstaje przy montażu portów, później niż moduły. */
 		ZPocztaPrzebiegow(repozytoria.KontoWlasciciela,
 			func(context.Context) nadajnik.Nastawy { return nastawyNadajnika(m.Konfiguracja) },
-			m.Konfiguracja.AdresKonsoli)
+			m.Konfiguracja.AdresKonsoli).
+		ZNastawaListow(repozytoria.Konfiguracja)
 
 	// Diagnostics pisze dziennik rdzenia do bazy i przyjmuje odmowy wykonania komend przed rdzeniem.
 	diagnostyka := nowyAdapterDiagnostyki(kontekst, repozytoria.Diagnostyka)

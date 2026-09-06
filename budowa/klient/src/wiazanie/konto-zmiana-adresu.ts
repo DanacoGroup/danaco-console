@@ -6,10 +6,8 @@ import { oglos } from './ogloszenie.ts';
 
 const NAGLOWEK = 'Adres konta';
 
-// Pozycja zapytania niesiona odsyłaczem z listu; nazwę składa rdzeń.
 const PARAMETR_DROGI = 'droga';
 
-// Trasa odsyłacza z listu; tę samą składa rdzeń w konfiguracji.
 const SCIEZKA_WYCOFANIA = '/wycofaj-zmiane-adresu';
 
 // Wycofanie idzie samą drogą z zapytania: Operator otwiera je z poczty.
@@ -54,13 +52,8 @@ async function potwierdzZmiane(kanal: Kanal): Promise<void> {
   oglos(NAGLOWEK, `Konto stoi przy adresie ${wynik.wynik?.email ?? ''}.`);
 }
 
-/*
-postawUstawieniaZDrogi pokazuje okno Ustawień, gdy adres niesie drogę wycofania.
-
-Odsyłacz z listu ostrzegawczego prowadzi wprost do trasy wycofania, a poza
-Centrum nikt tej treści nie stawia — bez tego Operator klikał w list i trafiał
-na okno wejścia, nie na sekcję Konto, o której mówi wiadomość.
-*/
+// postawUstawieniaZDrogi pokazuje Ustawienia, gdy adres niesie drogę wycofania:
+// poza Centrum nikt tej treści nie stawia.
 function postawUstawieniaZDrogi(): void {
   if (window.location.pathname !== SCIEZKA_WYCOFANIA) return;
   const szablon = document.getElementById('dn-tresc-ustawienia');

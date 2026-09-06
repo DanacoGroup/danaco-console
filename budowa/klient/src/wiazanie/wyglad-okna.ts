@@ -8,6 +8,8 @@ const NAGLOWEK = 'Wygląd';
 
 const KLUCZ_MOTYWU = 'wyglad.motyw';
 const KLUCZ_GESTOSCI = 'wyglad.gestosc';
+// Klucz czytany przez rdzeń przy wysyłce listu o zakończonym przebiegu.
+const KLUCZ_LISTOW = 'poczta.przebiegi.kiedy';
 
 const NAZWY_MOTYWU: Readonly<Record<string, string>> = {
   light: 'jasny',
@@ -20,6 +22,12 @@ const NAZWY_GESTOSCI: Readonly<Record<string, string>> = {
   luzna: 'luźna',
 };
 
+const NAZWY_LISTOW: Readonly<Record<string, string>> = {
+  zawsze: 'zawsze',
+  niepowodzenia: 'tylko niepowodzenia',
+  nigdy: 'nigdy',
+};
+
 export function zwiazWyglad(kanal: Kanal): void {
   void wczytajWyglad(kanal);
   document.addEventListener('click', (zdarzenie) => {
@@ -29,12 +37,14 @@ export function zwiazWyglad(kanal: Kanal): void {
     if (motyw !== null) void ustawWyglad(kanal, KLUCZ_MOTYWU, motyw.dataset.motyw ?? '');
     const gestosc = cel.closest<HTMLElement>('[data-gestosc]');
     if (gestosc !== null) void ustawWyglad(kanal, KLUCZ_GESTOSCI, gestosc.dataset.gestosc ?? '');
+    const listy = cel.closest<HTMLElement>('[data-listy]');
+    if (listy !== null) void ustawWyglad(kanal, KLUCZ_LISTOW, listy.dataset.listy ?? '');
   }, true);
 }
 
 // Brak nastawy zostawia stan z prototypu — to on niesie wartość domyślną.
 async function wczytajWyglad(kanal: Kanal): Promise<void> {
-  for (const klucz of [KLUCZ_MOTYWU, KLUCZ_GESTOSCI]) {
+  for (const klucz of [KLUCZ_MOTYWU, KLUCZ_GESTOSCI, KLUCZ_LISTOW]) {
     const wynik = await wywolaj(kanal, Command.ConfigGet, {
       key: klucz,
       scope: ConfigScope.Application,
@@ -61,23 +71,43 @@ async function ustawWyglad(kanal: Kanal, klucz: string, wartosc: string): Promis
   nanies(klucz, wartosc);
 }
 
+interface Pozycja {
+  grupa: string;
+  wybor: string;
+  stan: string;
+  nazwy: Readonly<Record<string, string>>;
+}
+
+const POZYCJE: Readonly<Record<string, Pozycja>> = {
+  [KLUCZ_MOTYWU]: {
+    grupa: 'us-motyw', wybor: 'data-motyw', stan: 'us-motyw-stan', nazwy: NAZWY_MOTYWU,
+  },
+  [KLUCZ_GESTOSCI]: {
+    grupa: 'us-gestosc', wybor: 'data-gestosc', stan: 'us-gestosc-stan', nazwy: NAZWY_GESTOSCI,
+  },
+  [KLUCZ_LISTOW]: {
+    grupa: 'us-listy-przebiegow', wybor: 'data-listy', stan: 'us-listy-stan', nazwy: NAZWY_LISTOW,
+  },
+};
+
 function nanies(klucz: string, wartosc: string): void {
-  const motyw = klucz === KLUCZ_MOTYWU;
-  const pozycja = document.getElementById(motyw ? 'us-motyw' : 'us-gestosc');
-  const wybor = motyw ? 'data-motyw' : 'data-gestosc';
+  const opis = POZYCJE[klucz];
+  if (opis === undefined) return;
+  const pozycja = document.getElementById(opis.grupa);
   if (pozycja !== null) {
-    for (const zakladka of pozycja.querySelectorAll<HTMLElement>(`[${wybor}]`)) {
-      const wlasna = zakladka.getAttribute(wybor) === wartosc;
+    for (const zakladka of pozycja.querySelectorAll<HTMLElement>(`[${opis.wybor}]`)) {
+      const wlasna = zakladka.getAttribute(opis.wybor) === wartosc;
       zakladka.setAttribute('aria-checked', wlasna ? 'true' : 'false');
     }
   }
-  const stan = document.getElementById(motyw ? 'us-motyw-stan' : 'us-gestosc-stan');
-  const nazwy = motyw ? NAZWY_MOTYWU : NAZWY_GESTOSCI;
-  if (stan !== null) stan.textContent = `wartość: ${nazwy[wartosc] ?? wartosc}`;
-  if (!motyw) {
+  const stan = document.getElementById(opis.stan);
+  if (stan !== null) stan.textContent = `wartość: ${opis.nazwy[wartosc] ?? wartosc}`;
+  if (klucz === KLUCZ_GESTOSCI) {
     document.documentElement.dataset.gestosc = wartosc;
     return;
   }
+  // Listy o przebiegach zmieniają zachowanie rdzenia, nie wygląd okna.
+  if (klucz !== KLUCZ_MOTYWU) return;
   // Motyw systemowy zdejmuje znacznik — arkusz idzie wtedy za systemem.
   if (wartosc === 'system') delete document.documentElement.dataset.theme;
   else document.documentElement.dataset.theme = wartosc;

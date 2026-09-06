@@ -47,6 +47,12 @@ func polaczenieZKontekstu(ctx context.Context) string {
 	return tozsamoscZKontekstu(ctx).IdPolaczenia
 }
 
+// zrodloZadania oddaje adres urządzenia, z którego przyszło żądanie. Pustka
+// znaczy kontekst bez gniazda — tak wygląda praca procesu bez zamawiającego.
+func zrodloZadania(ctx context.Context) string {
+	return tozsamoscZKontekstu(ctx).AdresZrodlowy
+}
+
 // wiezBramki trzyma przypisania połączenie-skrót tokenu sesji bramki. Skrót, nie token: token surowy zna klient i zna go rdzeń przez jedną chwilę przy zakładaniu sesji. Do obu zastosowań więzi skrót wystarcza.
 type wiezBramki struct {
 	zamek        sync.RWMutex

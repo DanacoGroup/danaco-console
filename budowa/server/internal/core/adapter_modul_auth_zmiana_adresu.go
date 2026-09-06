@@ -112,10 +112,8 @@ func (a *adapterUwierzytelnienia) RozpocznijZmianeAdresu(ctx context.Context,
 		WygasaKod:       teraz.Add(trwanieDrogiPotwierdzenia).UnixMilli(),
 		WygasaWycofanie: teraz.Add(trwanieDrogiWycofania).UnixMilli(),
 		Utworzono:       teraz.UnixMilli(),
-		// Adresu źródłowego rdzeń nie zna: gniazdo WebSocket kończy się na
-		// warstwie transportu, a kontekst żądania go nie niesie. List pokazuje
-		// wtedy myślnik zamiast wiersza wymyślonego.
-		Urzadzenie: a.urzadzenieSesji(ctx),
+		ZrodloIP:        zrodloZadania(ctx),
+		Urzadzenie:      a.urzadzenieSesji(ctx),
 	}
 	if err := a.zmianaAdresu.ZamowZmianeAdresu(ctx, zamowienie); err != nil {
 		return shared.AuthEmailChangeStartResponse{}, err

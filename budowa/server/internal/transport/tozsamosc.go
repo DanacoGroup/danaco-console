@@ -55,6 +55,11 @@ type Tozsamosc struct {
 	// nawiązania z poświadczeniem wydanym przez rdzeń. Sam napis tu nie wchodzi:
 	// tożsamość jedzie do dziennika i do zdarzeń, a sekret nie ma tam czego szukać.
 	PoswiadczenieSprawdzone bool
+	// AdresZrodlowy to adres urządzenia po drugiej stronie gniazda. Wchodzi do
+	// tożsamości, a nie zostaje w dzienniku, bo list ostrzegający o zmianie
+	// adresu konta ma nim nazwać źródło żądania — bez tego jedyna obrona
+	// Operatora, któremu przejęto konto, pokazuje myślnik.
+	AdresZrodlowy string
 }
 
 // Narzedzia mówi, czy gniazdo należy do serwera narzędzi modelu. Rodzaj bez
@@ -69,6 +74,9 @@ func (t Tozsamosc) Narzedzia() bool {
 // powitaniem.
 func tozsamoscZadania(id string, r *http.Request, poswiadczone bool) Tozsamosc {
 	tozsamosc := Tozsamosc{IdPolaczenia: id, PoswiadczenieSprawdzone: poswiadczone}
+	// Adres źródłowy stoi poza bramą poświadczenia: gniazdo bez poświadczenia
+	// też ma adres, a właśnie takie zakłada okno logowania.
+	tozsamosc.AdresZrodlowy = adresZdalny(r)
 	if r == nil || !poswiadczone {
 		return tozsamosc
 	}

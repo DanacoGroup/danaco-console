@@ -4,37 +4,28 @@ import (
 	"context"
 
 	"danacoconsole/server/internal/dane"
+	"danacoconsole/server/internal/protocol"
 	"danacoconsole/shared"
 )
 
-// Silnik wykonania kolejki: zlecenie powstaje, przechodzi stany i kończy się wynikiem. Jeden silnik obsługuje pętlę sesyjną i MultitaskingAI; drugiego przebiegu stanów nie ma nigdzie indziej.
+// Jeden silnik na pętlę sesyjną i MultitaskingAI; drugiego przebiegu stanów nie ma.
 type silnikKolejki struct {
 	repozytorium dane.RepozytoriumKolejek
-	// wykonawca uruchamia pracę pozycji wchodzącej w stan wykonywana; pusty zostawia silnik przy stanach.
-	wykonawca wykonawcaKroku
-	// ujscieWyniku odbiera zebraną treść odpowiedzi tury; puste znaczy, że płynie wyłącznie strumieniem.
+	wykonawca    wykonawcaKroku
 	ujscieWyniku func(ctx context.Context, pozycjaID int64, tresc string)
 }
 
-// ZWykonawca wpina most do realnego wykonania pozycji. Zwraca silnik przez
-// wartość, bo `silnikKolejki` trzymany jest w adapterze kolejek jako pole
-// wartościowe, a nie wskaźnik — montaż podmienia je w miejscu.
 func (s silnikKolejki) ZWykonawca(w wykonawcaKroku) silnikKolejki {
 	s.wykonawca = w
 	return s
 }
 
-// ZUjsciemWyniku wpina odbiorcę zebranej treści tury. Silnik nie wie, kto
-// odbiera — dziś jest to wiersz podagenta (`adapter_modul_orkiestracja.go`),
-// ale silnik zna wyłącznie pozycję; pozycja bez odbiorcy przechodzi bez śladu
-// treści.
 func (s silnikKolejki) ZUjsciemWyniku(ujscie func(ctx context.Context, pozycjaID int64, tresc string)) silnikKolejki {
 	s.ujscieWyniku = ujscie
 	return s
 }
 
-// Zasil zakłada zlecenia początkowe kolejki. Wykaz pusty zostawia kolejkę bez
-// pozycji — to poprawny stan, nie awaria.
+// Wykaz pusty zostawia kolejkę bez pozycji — to poprawny stan, nie awaria.
 func (s silnikKolejki) Zasil(ctx context.Context, kolejkaID int64, pozycje []dane.Pozycja) error {
 	for _, pozycja := range pozycje {
 		pozycja.KolejkaID = kolejkaID
@@ -45,9 +36,7 @@ func (s silnikKolejki) Zasil(ctx context.Context, kolejkaID int64, pozycje []dan
 	return nil
 }
 
-// Wykonaj stosuje działanie do pozycji kolejki i zwraca stan, w jakim kolejka
-// znajduje się po nim. Stan kolejki jest wyprowadzony z pozycji, nie zadeklarowany:
-// dopóki jest co robić, kolejka pracuje; gdy nie ma — jest wyczerpana.
+// Stan kolejki jest wyprowadzony z pozycji, nie zadeklarowany.
 func (s silnikKolejki) Wykonaj(ctx context.Context, kolejkaID int64,
 	dzialanie shared.QueueAction, idPozycji *string) (shared.QueueStatus, error) {
 
@@ -55,7 +44,7 @@ func (s silnikKolejki) Wykonaj(ctx context.Context, kolejkaID int64,
 	if err != nil {
 		return "", err
 	}
-	if err := s.zastosuj(ctx, dzialanie, pozycje, idPozycji); err != nil {
+	if err := s.zastosuj(ctx, kolejkaID, dzialanie, pozycje, idPozycji); err != nil {
 		return "", err
 	}
 	poZmianie, err := s.repozytorium.ListaPozycji(ctx, kolejkaID)
@@ -65,8 +54,7 @@ func (s silnikKolejki) Wykonaj(ctx context.Context, kolejkaID int64,
 	return stanKolejkiPoDzialaniu(dzialanie, poZmianie), nil
 }
 
-// Pozycje zwraca zlecenia kolejki. Błąd odczytu daje wykaz pusty — odpowiedź
-// o kolejce nie ma znikać z powodu jednego zapytania pobocznego.
+// Błąd odczytu daje wykaz pusty, żeby kolejka nie znikała z odpowiedzi.
 func (s silnikKolejki) Pozycje(ctx context.Context, kolejkaID int64) []dane.Pozycja {
 	pozycje, err := s.repozytorium.ListaPozycji(ctx, kolejkaID)
 	if err != nil {
@@ -75,9 +63,7 @@ func (s silnikKolejki) Pozycje(ctx context.Context, kolejkaID int64) []dane.Pozy
 	return pozycje
 }
 
-// Cykl podaje licznik obiegów pozycji, na której stoi kolejka — pole
-// Queue.Cycle kontraktu. Kolejka wyczerpana pokazuje licznik pozycji ostatniej,
-// kolejka pusta nie pokazuje żadnego.
+// Kolejka wyczerpana pokazuje licznik pozycji ostatniej, pusta — żadnego.
 func (s silnikKolejki) Cykl(pozycje []dane.Pozycja) *int {
 	if len(pozycje) == 0 {
 		return nil
@@ -90,9 +76,8 @@ func (s silnikKolejki) Cykl(pozycje []dane.Pozycja) *int {
 	return &obieg
 }
 
-// zastosuj przeprowadza pozycje przez działanie, jedną po drugiej, aż do wyczerpania całego wykazu kolejki.
-func (s silnikKolejki) zastosuj(ctx context.Context, dzialanie shared.QueueAction,
-	pozycje []dane.Pozycja, idPozycji *string) error {
+func (s silnikKolejki) zastosuj(ctx context.Context, kolejkaID int64,
+	dzialanie shared.QueueAction, pozycje []dane.Pozycja, idPozycji *string) error {
 
 	cel, err := celDzialania(pozycje, idPozycji)
 	if err != nil {
@@ -105,11 +90,20 @@ func (s silnikKolejki) zastosuj(ctx context.Context, dzialanie shared.QueueActio
 		return s.biegNaprawczy(ctx, celNaprawy(pozycje, cel))
 	case shared.QueueActionStop, shared.QueueActionClear:
 		return s.anuluj(ctx, przerywane(pozycje, cel, czyWskazano(idPozycji)))
+	case shared.QueueActionEnqueue:
+		return wstawZlecenie(ctx, s.repozytorium, kolejkaID, pozycje, cel, czyWskazano(idPozycji))
+	case shared.QueueActionDequeue:
+		return zdejmijZlecenie(ctx, s.repozytorium, cel, czyWskazano(idPozycji))
+	case shared.QueueActionPause:
+		// Bieg podjęty dobiega do końca; zmienia się stan kolejki, nie pozycji.
+		return nil
 	}
-	return nil
+	// Bez tej gałęzi `switch` oddawał sukces, choć nic się nie ruszyło.
+	return protocol.JakoError(protocol.NowyBlad(shared.ErrorCodeValidationFailed,
+		"Działanie kolejki „"+string(dzialanie)+"” nie jest prowadzone przez silnik kolejek."))
 }
 
-// krok posuwa pozycję o jeden stan naprzód; brak pozycji do podjęcia nie jest błędem, bo kolejka pusta albo wyczerpana po prostu nie ma czego posunąć.
+// Brak pozycji do podjęcia nie jest błędem — kolejka nie ma czego posunąć.
 func (s silnikKolejki) krok(ctx context.Context, pozycja *dane.Pozycja) error {
 	if pozycja == nil {
 		return nil
@@ -128,7 +122,7 @@ func (s silnikKolejki) krok(ctx context.Context, pozycja *dane.Pozycja) error {
 	return nil
 }
 
-// biegNaprawczy podnosi licznik obiegów i zawraca pozycję do wykonania; licznik rośnie bez progu, a odmowy nie ma na żadnym obiegu.
+// Licznik obiegów rośnie bez progu, a odmowy nie ma na żadnym obiegu.
 func (s silnikKolejki) biegNaprawczy(ctx context.Context, pozycja *dane.Pozycja) error {
 	if pozycja == nil {
 		return nil
@@ -144,7 +138,43 @@ func (s silnikKolejki) biegNaprawczy(ctx context.Context, pozycja *dane.Pozycja)
 	return s.wykonaj(ctx, *pozycja)
 }
 
-// wykonaj uruchamia realną pracę pozycji, która właśnie weszła w stan wykonywana, i przesuwa jej stan według wyniku; silnik bez wpiętego wykonawcy zostawia pozycję w wykonywana.
+// Wskazane zlecenie wraca do kolejki nowym wierszem: zamknięte zostaje z wynikiem.
+func wstawZlecenie(ctx context.Context, repozytorium dane.RepozytoriumKolejek, kolejkaID int64,
+	pozycje []dane.Pozycja, cel *dane.Pozycja, wskazano bool) error {
+
+	if !wskazano {
+		// Zlecenia automatyki dokłada Queue Manager przed wejściem w silnik.
+		if pierwszaCzynna(pozycje) == nil {
+			return protocol.JakoError(protocol.NowyBlad(shared.ErrorCodeValidationFailed,
+				"Wstawienie zlecenia wymaga wskazania zlecenia (itemId) albo automatyki (workflowId) wnoszącej kroki."))
+		}
+		return nil
+	}
+	if cel == nil {
+		return nil
+	}
+	wstawiane := dane.Pozycja{
+		KolejkaID: kolejkaID, OknoWykonawcyID: cel.OknoWykonawcyID, Tytul: cel.Tytul,
+		TrescZlecenia: cel.TrescZlecenia, TrescOdwolanie: cel.TrescOdwolanie,
+		Stan: stanPozycjiOczekuje,
+	}
+	_, err := repozytorium.DodajPozycje(ctx, wstawiane)
+	return err
+}
+
+// Wiersz zostaje anulowany, nie skasowany: kolejka jest zapisem przebiegu.
+func zdejmijZlecenie(ctx context.Context, repozytorium dane.RepozytoriumKolejek, cel *dane.Pozycja, wskazano bool) error {
+	if !wskazano {
+		return protocol.JakoError(protocol.NowyBlad(shared.ErrorCodeValidationFailed,
+			"Zdjęcie zlecenia z kolejki wymaga wskazania zlecenia (itemId)."))
+	}
+	if cel == nil {
+		return nil
+	}
+	return repozytorium.ZmienStanPozycji(ctx, cel.ID, stanPozycjiAnulowana, nil)
+}
+
+// Silnik bez wpiętego wykonawcy zostawia pozycję w stanie wykonywana.
 func (s silnikKolejki) wykonaj(ctx context.Context, pozycja dane.Pozycja) error {
 	if s.wykonawca == nil {
 		return nil
@@ -154,14 +184,13 @@ func (s silnikKolejki) wykonaj(ctx context.Context, pozycja dane.Pozycja) error 
 		s.ujscieWyniku(ctx, pozycja.ID, tresc)
 	}
 	if err != nil {
-		// Niepowodzenie wykonania jest stanem błędu, nie ukończeniem; da się ponowić biegiem naprawczym.
+		// Niepowodzenie to stan błędu, nie ukończenie; ponawia je bieg naprawczy.
 		return s.domknijPoTurze(ctx, pozycja, stanPozycjiBledna)
 	}
-	// Praca się zakończyła; wynik czeka na weryfikację, do ukonczona przesuwa go dopiero przyjęcie wyniku.
 	return s.domknijPoTurze(ctx, pozycja, stanPozycjiDoWeryfikacji)
 }
 
-// domknijPoTurze zapisuje stan pozycji wynikający z tury, chyba że pozycja w międzyczasie weszła w stan końcowy; queue.action stop wydane w trakcie tury ma pierwszeństwo przed spóźnionym werdyktem.
+// Zatrzymanie wydane w trakcie tury ma pierwszeństwo przed spóźnionym werdyktem.
 func (s silnikKolejki) domknijPoTurze(ctx context.Context, pozycja dane.Pozycja, stan string) error {
 	pozycje, err := s.repozytorium.ListaPozycji(ctx, pozycja.KolejkaID)
 	if err == nil {
@@ -178,8 +207,7 @@ func (s silnikKolejki) domknijPoTurze(ctx context.Context, pozycja dane.Pozycja,
 	return s.repozytorium.ZmienStanPozycji(ctx, pozycja.ID, stan, nil)
 }
 
-// anuluj zamyka pozycje przerwaniem. Wiersz zostaje razem z dziennikiem —
-// ślad przerwanego zlecenia jest częścią przejrzystości pętli.
+// Wiersz zostaje — ślad przerwanego zlecenia należy do przejrzystości pętli.
 func (s silnikKolejki) anuluj(ctx context.Context, pozycje []dane.Pozycja) error {
 	for _, pozycja := range pozycje {
 		if err := s.repozytorium.ZmienStanPozycji(ctx, pozycja.ID, stanPozycjiAnulowana, nil); err != nil {

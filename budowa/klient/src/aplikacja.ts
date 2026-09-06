@@ -17,6 +17,7 @@ import { zwiazZmianeAdresu } from './wiazanie/konto-zmiana-adresu.ts';
 import { zwiazWyglad } from './wiazanie/wyglad-okna.ts';
 import { zwiazUrzadzenia } from './wiazanie/urzadzenia-konta.ts';
 import { zwiazWejscie } from './wiazanie/wejscie.ts';
+import { przejdzDoModulu } from './wiazanie/przejscie-do-modulu.ts';
 import { zwiazZdarzenia } from './wiazanie/zdarzenia.ts';
 
 /**
@@ -46,8 +47,15 @@ i mieć nie może. Wystawienie jest jedynym stykiem między nimi a rdzeniem.
 declare global {
   // eslint-disable-next-line no-var
   var DanacoKanal: typeof kanal | undefined;
+  // eslint-disable-next-line no-var
+  var DanacoPrzejscieDoModulu: ((kodModulu: string, idSesji?: string) => void) | undefined;
 }
 globalThis.DanacoKanal = kanal;
+
+/* Przejście z przedsionka do okna modułu wystawione globalnie: skrypty
+   biblioteki i wiązania przedsionków wchodzą w moduł jedną drogą. */
+globalThis.DanacoPrzejscieDoModulu = (kodModulu: string, idSesji = ''): void =>
+  przejdzDoModulu(kanal, kodModulu, idSesji);
 
 // Ekran startowy niesie `data-czekaj` i stoi do wywołania `gotowe()`.
 function zglosGotowosc(): boolean {

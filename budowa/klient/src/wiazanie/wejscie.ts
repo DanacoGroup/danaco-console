@@ -21,6 +21,10 @@ import { przygotujSrodowisko, zwiazPasPrzygotowania } from './wejscie-przygotowa
 import { powlokaStoi, stanRdzenia, wskazRdzen, wskazanieRdzenia } from './wejscie-powloka.ts';
 import { zapamietajMetody, zwiazMetody } from './logowanie-metody.ts';
 import { zwiazPrzedsionek } from './przedsionek.ts';
+import { zwiazPrzedsionekTalkin } from './przedsionek-talkin.ts';
+import { zwiazPrzedsionekWorkspace } from './przedsionek-workspace.ts';
+import { zwiazPrzedsionekCodeStudio } from './przedsionek-codestudio.ts';
+import { zwiazPrzedsionekMultitaskingAI } from './przedsionek-multitaskingai.ts';
 
 interface EkranStartowy {
   gotowe(): void;
@@ -72,6 +76,12 @@ export function zwiazWejscie(podany?: Kanal): void {
     zwiazMetody(most);
     zwiazPasPrzygotowania(most);
     zwiazPrzedsionek(most);
+    // Każde środowisko wnosi własne miary i czynności ponad wspólną szyną sesji;
+    // wiązania stoją po wspólnym, bo przepuszczają do niego kliknięcia.
+    zwiazPrzedsionekTalkin(most);
+    zwiazPrzedsionekWorkspace(most);
+    zwiazPrzedsionekCodeStudio(most);
+    zwiazPrzedsionekMultitaskingAI(most);
   });
   gotowosc(() => {
     void powitaj(most);

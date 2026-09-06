@@ -1,8 +1,9 @@
 // Wiązanie zmiany adresu konta: zamówienie, potwierdzenie kodem i wycofanie.
-import { Command } from '../../../shared/contract.ts';
+import { AuthMethodKind, Command } from '../../../shared/contract.ts';
 import type { Kanal } from '../protokol/kanal.ts';
 import { wywolaj } from '../protokol/wywolanie.ts';
 import { oglos } from './ogloszenie.ts';
+import { urzadzenieTrwale } from './wejscie-katalog.ts';
 
 const NAGLOWEK = 'Adres konta';
 
@@ -19,6 +20,7 @@ export function zwiazZmianeAdresu(kanal: Kanal): void {
     if (!(cel instanceof Element)) return;
     if (cel.closest('[data-adres-zamow]') !== null) void zamowZmiane(kanal);
     if (cel.closest('[data-adres-potwierdz]') !== null) void potwierdzZmiane(kanal);
+    if (cel.closest('[data-pin-ustaw]') !== null) void ustawPin(kanal);
   }, true);
 }
 
@@ -37,6 +39,24 @@ async function zamowZmiane(kanal: Kanal): Promise<void> {
   haslo.value = '';
   // Odpowiedź rdzenia nie zdradza, czy adres jest wolny.
   oglos(NAGLOWEK, 'Kod poszedł na nowy adres, ostrzeżenie na dotychczasowy.');
+}
+
+// ustawPin zakłada metodę szybkiego wejścia na tym urządzeniu. PIN nie zastępuje
+// hasła — otwiera bramkę obok niego, na urządzeniu, które Operator już zna.
+async function ustawPin(kanal: Kanal): Promise<void> {
+  const pole = document.querySelector<HTMLInputElement>('[data-pin-wartosc]');
+  if (pole === null) return;
+  const wynik = await wywolaj(kanal, Command.AuthMethodAdd, {
+    kind: AuthMethodKind.Pin,
+    deviceId: urzadzenieTrwale(),
+    secret: pole.value,
+  });
+  if (!wynik.udany) {
+    oglos(NAGLOWEK, wynik.blad?.message ?? 'Rdzeń odmówił założenia PIN-u.', 'ostrzezenie');
+    return;
+  }
+  pole.value = '';
+  oglos(NAGLOWEK, 'PIN działa na tym urządzeniu.');
 }
 
 // potwierdzZmiane domyka czynność kodem z listu.

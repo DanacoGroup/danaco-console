@@ -23,19 +23,24 @@ type Przebieg struct {
 	KomunikatBledu *string
 	Rozpoczeto     string
 	Zakonczono     *string
+	// Powiadomiono zamyka list o zakończeniu po pierwszym nadaniu: stan przebiegu
+	// jest wyprowadzany przy każdym odczycie, więc bez znacznika list wychodziłby
+	// tyle razy, ile razy ktoś otworzy okno przebiegów.
+	Powiadomiono bool
 }
 
 const (
 	kolumnyPrzebiegu = `p.id, p.identyfikator_zewnetrzny, p.automatyka_id, a.identyfikator_zewnetrzny,
 	                    p.kolejka_id, p.stan, p.etap_biezacy, p.etapow, p.proba,
-	                    p.komunikat_bledu, p.rozpoczeto, p.zakonczono`
+	                    p.komunikat_bledu, p.rozpoczeto, p.zakonczono, p.powiadomiono`
 
 	zrodloPrzebiegu = ` FROM przebieg_automatyki p JOIN automatyka a ON a.id = p.automatyka_id`
 
 	zapiszPrzebieg = `INSERT INTO przebieg_automatyki
 	                  (identyfikator_zewnetrzny, automatyka_id, kolejka_id, stan,
-	                   etap_biezacy, etapow, proba, komunikat_bledu, zakonczono)
-	                  VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+	                   etap_biezacy, etapow, proba, komunikat_bledu, zakonczono,
+	                   powiadomiono)
+	                  VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
 	                  ON CONFLICT(identyfikator_zewnetrzny) DO UPDATE SET
 	                      kolejka_id = excluded.kolejka_id,
 	                      stan = excluded.stan,
@@ -43,7 +48,8 @@ const (
 	                      etapow = excluded.etapow,
 	                      proba = excluded.proba,
 	                      komunikat_bledu = excluded.komunikat_bledu,
-	                      zakonczono = excluded.zakonczono`
+	                      zakonczono = excluded.zakonczono,
+	                      powiadomiono = excluded.powiadomiono`
 
 	pobierzPrzebieg = `SELECT ` + kolumnyPrzebiegu + zrodloPrzebiegu +
 		` WHERE p.identyfikator_zewnetrzny = ?`
@@ -70,7 +76,7 @@ func (r *repozytoriumAutomatyk) ZapiszPrzebieg(ctx context.Context, przebieg Prz
 	_, err = polecenie.ExecContext(ctx, przebieg.Kod, przebieg.AutomatykaID,
 		liczbaDoKolumny(przebieg.KolejkaID), przebieg.Stan, przebieg.EtapBiezacy,
 		przebieg.Etapow, przebieg.Proba, tekstDoKolumny(przebieg.KomunikatBledu),
-		tekstDoKolumny(przebieg.Zakonczono))
+		tekstDoKolumny(przebieg.Zakonczono), przebieg.Powiadomiono)
 	if err != nil {
 		return Przebieg{}, fmt.Errorf("dane: nie można zapisać przebiegu %q: %w", przebieg.Kod, err)
 	}
@@ -142,13 +148,15 @@ func odczytajPrzebieg(wiersz skaner) (Przebieg, error) {
 	var przebieg Przebieg
 	var kolejka sql.NullInt64
 	var komunikat, zakonczono sql.NullString
+	var powiadomiono int64
 	err := wiersz.Scan(&przebieg.ID, &przebieg.Kod, &przebieg.AutomatykaID, &przebieg.AutomatykaKod,
 		&kolejka, &przebieg.Stan, &przebieg.EtapBiezacy, &przebieg.Etapow, &przebieg.Proba,
-		&komunikat, &przebieg.Rozpoczeto, &zakonczono)
+		&komunikat, &przebieg.Rozpoczeto, &zakonczono, &powiadomiono)
 	if err != nil {
 		return Przebieg{}, err
 	}
 	przebieg.KolejkaID = liczbaZKolumny(kolejka)
 	przebieg.KomunikatBledu, przebieg.Zakonczono = tekstZKolumny(komunikat), tekstZKolumny(zakonczono)
+	przebieg.Powiadomiono = powiadomiono != 0
 	return przebieg, nil
 }

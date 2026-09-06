@@ -8,6 +8,7 @@ import (
 	"danacoconsole/server/internal/konfig"
 	"danacoconsole/server/internal/models"
 	"danacoconsole/server/internal/mowa"
+	"danacoconsole/server/internal/nadajnik"
 	"danacoconsole/server/internal/podagenci"
 	"danacoconsole/server/internal/session"
 )
@@ -56,7 +57,13 @@ func zlozAdapteryModulow(kontekst context.Context, m Montaz, repozytoria *dane.Z
 	// Automatyki stoją na tym samym adapterze kolejek, dzieląc port modułu i budzik harmonogramu.
 	automatyki := nowyAdapterAutomatyk(repozytoria.Automatyki).ZKolejkami(kolejki).
 		ZUkladem(repozytoria.UkladOrkiestracji).ZOknami(repozytoria.Okna).
-		ZSejfem(dane.NowySejfPlikowy(m.Konfiguracja.KatalogDanych))
+		ZSejfem(dane.NowySejfPlikowy(m.Konfiguracja.KatalogDanych)).
+		/* Poczta przebiegów: list o zakończeniu idzie na adres konta, do którego
+		   należy automatyka. Konto nadawcze bierze się z nastaw startowych —
+		   adapter ustawień powstaje przy montażu portów, później niż moduły. */
+		ZPocztaPrzebiegow(repozytoria.KontoWlasciciela,
+			func(context.Context) nadajnik.Nastawy { return nastawyNadajnika(m.Konfiguracja) },
+			m.Konfiguracja.AdresKonsoli)
 
 	// Diagnostics pisze dziennik rdzenia do bazy i przyjmuje odmowy wykonania komend przed rdzeniem.
 	diagnostyka := nowyAdapterDiagnostyki(kontekst, repozytoria.Diagnostyka)

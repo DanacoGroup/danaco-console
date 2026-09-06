@@ -15,7 +15,32 @@ w ciszy.
 
 ---
 
-## Listy 5 i 6 — zmiana adresu konta
+## Listy 5 i 6 — zmiana adresu konta — WYKONANE 6.09.2026
+
+Przebieg stoi we wszystkich warstwach; rewizja `9e99ee57`.
+
+| Warstwa | Co powstało |
+|---|---|
+| kontrakt | `auth.email.change.start`, `.confirm`, `.revoke`; powód `emailChanged` |
+| rdzeń | `adapter_modul_auth_zmiana_adresu.go`, trzy metody portu, rejestracja komend |
+| trwałość | krok 498: tabela `zmiana_adresu_konta`; `UstawAdresKonta` w repozytorium konta |
+| trasa | `konfiguracja.AdresWycofaniaZmiany` składa `{{revoke_url}}` z drogą w zapytaniu |
+| wysyłka | para listów jest jedną czynnością: niepowodzenie nadania zamyka zamówienie |
+| klient | `konto-zmiana-adresu.ts`; wycofanie idzie z zapytania adresu, bez kliknięcia |
+
+**Rozstrzygnięte przy pracy.** `{{revoke_expiry_hours}}` nie miało źródła —
+przyjęto **72 godziny**: wycofanie ma przeżyć weekend, bo list na adres
+dotychczasowy jest jedyną obroną Operatora, któremu przejęto konto. Kod zostaje
+przy godzinie wspólnej wszystkim drogom potwierdzenia.
+
+**Zostaje otwarte.** `{{ip_address}}` listu 6 pokazuje myślnik: rdzeń nie zna
+adresu źródłowego żądania — gniazdo WebSocket kończy się na warstwie transportu,
+a kontekst żądania adresu nie niesie. Urządzenie idzie z sesji bramki.
+Okna Ustawienia konta w kliencie nadal nie ma; wiązanie czeka na elementy
+`data-adres-nowy`, `data-adres-haslo`, `data-adres-kod`, `data-adres-zamow`
+i `data-adres-potwierdz`.
+
+## Listy 5 i 6 — zakres rozpoznany przed pracą
 
 Oba wychodzą **razem, na dwa różne adresy**: kod na adres nowy, ostrzeżenie
 z drogą wycofania na dotychczasowy. Para jest wymaganiem bezpieczeństwa, nie

@@ -10,6 +10,13 @@ import (
 	"strings"
 )
 
+// WlascicielAutomatyki to konto i nazwa automatyki — komplet, którym list
+// o zakończonym przebiegu adresuje wiadomość i nazywa bieg.
+type WlascicielAutomatyki struct {
+	KontoId int64
+	Nazwa   string
+}
+
 type Automatyka struct {
 	ID             int64
 	Kod            string
@@ -31,6 +38,8 @@ type RepozytoriumAutomatyk interface {
 	ZapiszAutomatyke(ctx context.Context, automatyka Automatyka) (Automatyka, error)
 	Automatyka(ctx context.Context, kod string) (Automatyka, error)
 	AutomatykaPoID(ctx context.Context, id int64) (Automatyka, error)
+	// WlascicielAutomatyki oddaje konto i nazwę automatyki — adresata listu o zakończonym przebiegu.
+	WlascicielAutomatyki(ctx context.Context, id int64) (WlascicielAutomatyki, error)
 	Automatyki(ctx context.Context, tylkoCzynne bool, limit int) ([]Automatyka, error)
 
 	ZapiszKroki(ctx context.Context, automatykaID int64, kroki []KrokAutomatyki) error
@@ -119,6 +128,8 @@ const (
 	                     budzet_przebiegu_sekundy, budzet_kroku_sekundy, regula_budzetu`
 
 	// UNIQUE na identyfikatorze obejmuje całą tabelę, więc człon DO UPDATE niesie warunek konta.
+	wlascicielAutomatyki = `SELECT konto_id, nazwa FROM automatyka WHERE id = ?`
+
 	zapiszAutomatyke = `INSERT INTO automatyka
 	                    (identyfikator_zewnetrzny, nazwa, opis, czynna, konto_id)
 	                    VALUES (?, ?, ?, ?, ` + WskazanieKonta + `)
@@ -254,4 +265,26 @@ func odczytajAutomatyke(wiersz skaner) (Automatyka, error) {
 		automatyka.WersjaOpublikowana = &numer
 	}
 	return automatyka, nil
+}
+
+// WlascicielAutomatyki czyta konto i nazwę wprost z wiersza automatyki. Konto
+// zerowe znaczy automatykę zastaną sprzed migracji 484 i listu nie ma komu wysłać.
+func (r *repozytoriumAutomatyk) WlascicielAutomatyki(ctx context.Context,
+	id int64) (WlascicielAutomatyki, error) {
+
+	polecenie, err := r.zapytania.przygotuj(ctx, wlascicielAutomatyki)
+	if err != nil {
+		return WlascicielAutomatyki{}, err
+	}
+	var wlasciciel WlascicielAutomatyki
+	var konto sql.NullInt64
+	err = polecenie.QueryRowContext(ctx, id).Scan(&konto, &wlasciciel.Nazwa)
+	if errors.Is(err, sql.ErrNoRows) {
+		return WlascicielAutomatyki{}, fmt.Errorf("dane: automatyki %d nie ma: %w", id, ErrBrakWiersza)
+	}
+	if err != nil {
+		return WlascicielAutomatyki{}, fmt.Errorf("dane: nie można odczytać właściciela automatyki: %w", err)
+	}
+	wlasciciel.KontoId = konto.Int64
+	return wlasciciel, nil
 }

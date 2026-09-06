@@ -6,6 +6,7 @@ import (
 	"errors"
 
 	"danacoconsole/server/internal/dane"
+	"danacoconsole/server/internal/nadajnik"
 	"danacoconsole/server/internal/protocol"
 	"danacoconsole/shared"
 )
@@ -25,6 +26,23 @@ type adapterAutomatyk struct {
 	uklad        dane.RepozytoriumUkladuOrkiestracji
 	sejf         SejfPoswiadczenAutomatyki
 	okna         dane.RepozytoriumOkien
+
+	// konta daje adres, na który idzie list o zakończonym przebiegu.
+	konta dane.RepozytoriumKontaWlasciciela
+	// nastawyListow oddaje konto nadawcze platformy; puste znaczy, że listów
+	// nie ma czym wysłać i przebieg kończy się bez powiadomienia.
+	nastawyListow func(context.Context) nadajnik.Nastawy
+	// adresKonsoli to publiczny adres, pod który kieruje odsyłacz z listu.
+	adresKonsoli string
+}
+
+// ZPocztaPrzebiegow wpina drogi listu o zakończonym przebiegu: konto adresata,
+// konto nadawcze i adres Konsoli.
+func (a *adapterAutomatyk) ZPocztaPrzebiegow(konta dane.RepozytoriumKontaWlasciciela,
+	nastawy func(context.Context) nadajnik.Nastawy, adresKonsoli string) *adapterAutomatyk {
+
+	a.konta, a.nastawyListow, a.adresKonsoli = konta, nastawy, adresKonsoli
+	return a
 }
 
 func nowyAdapterAutomatyk(repozytorium dane.RepozytoriumAutomatyk) *adapterAutomatyk {

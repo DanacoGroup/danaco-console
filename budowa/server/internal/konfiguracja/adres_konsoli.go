@@ -49,3 +49,14 @@ func AdresWycofaniaZmiany(adresKonsoli, droga string) string {
 	}
 	return strings.TrimRight(adresKonsoli, "/") + SciezkaWycofaniaZmiany + "?droga=" + url.QueryEscape(droga)
 }
+
+// SciezkaPrzebiegu to okno Execution Monitor otwarte na wskazanym przebiegu.
+const SciezkaPrzebiegu = "/automatyki/przebieg"
+
+// AdresPrzebiegu składa odsyłacz do okna przebiegu wskazanego identyfikatorem.
+func AdresPrzebiegu(adresKonsoli, kod string) string {
+	if adresKonsoli == "" {
+		adresKonsoli = AdresKonsoliDomyslny
+	}
+	return strings.TrimRight(adresKonsoli, "/") + SciezkaPrzebiegu + "/" + url.PathEscape(kod)
+}

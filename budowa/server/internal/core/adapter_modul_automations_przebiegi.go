@@ -101,8 +101,17 @@ func (a *adapterAutomatyk) odnotujPrzebieg(ctx context.Context, kolejkaID int64,
 		}
 	}
 	naniesPostep(&przebieg, kolejka.Status, pozycje)
-	_, err = a.repozytorium.ZapiszPrzebieg(ctx, przebieg)
-	return err
+	/* List o zakończeniu idzie przed zapisem znacznika i tylko raz: stan
+	   przebiegu jest wyprowadzany przy każdym odczycie, więc bez znacznika
+	   wiadomość wychodziłaby tyle razy, ile razy ktoś otworzy okno. */
+	wyslano, bladListu := a.listZakonczeniaPrzebiegu(ctx, przebieg)
+	if wyslano {
+		przebieg.Powiadomiono = true
+	}
+	if _, err := a.repozytorium.ZapiszPrzebieg(ctx, przebieg); err != nil {
+		return err
+	}
+	return bladListu
 }
 
 // naniesPostep wypełnia przebieg stanem wyprowadzonym z kolejki i jej

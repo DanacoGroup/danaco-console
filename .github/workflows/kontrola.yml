@@ -1,0 +1,94 @@
+# Bramka kontroli na GitHubie. Odwzorowuje szczeble drabiny, ktore da sie
+# wykonac bez zasobow maszyny budujacej: format, budowa, analiza statyczna,
+# swiezosc wytworow kontraktu i typy klienta.
+
+name: Kontrola
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  rdzen:
+    name: Rdzen Go
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: budowa/go.mod
+          cache-dependency-path: budowa/go.sum
+
+      - name: Format
+        working-directory: budowa
+        run: |
+          NIESFORMATOWANE="$(gofmt -l .)"
+          if [ -n "$NIESFORMATOWANE" ]; then
+            echo "gofmt zglasza pliki:"; echo "$NIESFORMATOWANE"; exit 1
+          fi
+
+      - name: Budowa
+        working-directory: budowa
+        run: go build ./...
+
+      - name: Analiza statyczna
+        working-directory: budowa
+        run: go vet ./...
+
+      - name: Sprawdziany kontraktu
+        working-directory: budowa
+        run: go test ./shared/... -count=1
+
+  klient:
+    name: Klient TypeScript
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: budowa/klient/package-lock.json
+
+      - name: Zaleznosci
+        working-directory: budowa/klient
+        run: npm ci
+
+      - name: Typy
+        working-directory: budowa/klient
+        run: npx tsc --noEmit
+
+      - name: Budowanie
+        working-directory: budowa/klient
+        run: npm run budowanie
+
+  kontrakt:
+    name: Swiezosc wytworow kontraktu
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Generacja z zrodla prawdy
+        run: node budowa/shared/gen/generate.mjs
+
+      - name: Rozjazd wytworow
+        run: |
+          ROZJAZD="$(git status --porcelain \
+            budowa/shared/contract.go \
+            budowa/shared/contract.ts \
+            budowa/klient/src/wiazanie/rejestr-komend.ts)"
+          if [ -n "$ROZJAZD" ]; then
+            echo "Wytwory rozjechaly sie z contract.json:"; echo "$ROZJAZD"
+            git --no-pager diff --stat
+            exit 1
+          fi

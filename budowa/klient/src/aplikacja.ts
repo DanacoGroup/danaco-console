@@ -14,6 +14,7 @@ import { tozsamoscKlienta } from './protokol/tozsamosc-klienta.ts';
 import { oglos } from './wiazanie/ogloszenie.ts';
 import { pokazOknoPowloki, zwiazBelkeOkna } from './wiazanie/belka-okna.ts';
 import { zwiazZmianeAdresu } from './wiazanie/konto-zmiana-adresu.ts';
+import { zwiazWyglad } from './wiazanie/wyglad-okna.ts';
 import { zwiazWejscie } from './wiazanie/wejscie.ts';
 import { zwiazZdarzenia } from './wiazanie/zdarzenia.ts';
 
@@ -138,6 +139,10 @@ zwiazWejscie(kanal);
 /* Zmiana adresu konta: zamówienie i potwierdzenie z okna, wycofanie drogą
    z listu — ta ostatnia wykonuje się przy wejściu, bez kliknięcia. */
 zwiazZmianeAdresu(kanal);
+
+/* Motyw i gęstość należą do konta, nie do przeglądarki: wybór idzie do rdzenia
+   i wraca przy każdym otwarciu okna. */
+zwiazWyglad(kanal);
 
 /* Belka okna zastępuje ramę systemową, więc sterowanie oknem idzie z niej. */
 zwiazBelkeOkna();

@@ -9,8 +9,12 @@ const NAGLOWEK = 'Adres konta';
 // Pozycja zapytania niesiona odsyłaczem z listu; nazwę składa rdzeń.
 const PARAMETR_DROGI = 'droga';
 
+// Trasa odsyłacza z listu; tę samą składa rdzeń w konfiguracji.
+const SCIEZKA_WYCOFANIA = '/wycofaj-zmiane-adresu';
+
 // Wycofanie idzie samą drogą z zapytania: Operator otwiera je z poczty.
 export function zwiazZmianeAdresu(kanal: Kanal): void {
+  postawUstawieniaZDrogi();
   void wycofajZDrogiWejscia(kanal);
   document.addEventListener('click', (zdarzenie) => {
     const cel = zdarzenie.target;
@@ -48,6 +52,25 @@ async function potwierdzZmiane(kanal: Kanal): Promise<void> {
   }
   kod.value = '';
   oglos(NAGLOWEK, `Konto stoi przy adresie ${wynik.wynik?.email ?? ''}.`);
+}
+
+/*
+postawUstawieniaZDrogi pokazuje okno Ustawień, gdy adres niesie drogę wycofania.
+
+Odsyłacz z listu ostrzegawczego prowadzi wprost do trasy wycofania, a poza
+Centrum nikt tej treści nie stawia — bez tego Operator klikał w list i trafiał
+na okno wejścia, nie na sekcję Konto, o której mówi wiadomość.
+*/
+function postawUstawieniaZDrogi(): void {
+  if (window.location.pathname !== SCIEZKA_WYCOFANIA) return;
+  const szablon = document.getElementById('dn-tresc-ustawienia');
+  if (!(szablon instanceof HTMLTemplateElement)) return;
+  const blok = szablon.content.firstElementChild;
+  if (blok === null) return;
+  const rama = document.querySelector<HTMLElement>('[data-rama-aplikacji]');
+  if (rama === null) return;
+  rama.hidden = false;
+  rama.replaceChildren(blok.cloneNode(true));
 }
 
 // wycofajZDrogiWejscia działa bez kliknięcia: droga stoi w zapytaniu adresu.

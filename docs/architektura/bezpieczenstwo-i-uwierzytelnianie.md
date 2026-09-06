@@ -332,6 +332,61 @@ Odzyskiwanie konta nie tworzy nowej encji Konto — działa na tej samej, jedyne
 
 ---
 
+## 7a. Zmiana adresu e-mail uwierzytelniającego
+
+Adres e-mail jest jedynym elementem tożsamości niezależnym od urządzenia i jedyną
+drogą odzyskania konta (rozdz. 7). Kto zmieni adres, ten przejmuje konto na stałe —
+dlatego czynność ma trzy zabezpieczenia naraz, a nie jedno.
+
+### 7a.1. Przebieg
+
+| Krok | Komenda | Co się dzieje |
+|---|---|---|
+| wszczęcie | `auth.email.change.start` | Rdzeń sprawdza hasło bieżące, zapisuje zamówienie i wysyła **parę** listów |
+| domknięcie | `auth.email.change.confirm` | Kod z listu przenosi konto na adres oczekujący |
+| wycofanie | `auth.email.change.revoke` | Droga z listu ostrzegawczego zdejmuje zamówienie |
+
+Konto stoi przy adresie dotychczasowym do chwili domknięcia. Adres oczekujący nie
+uwierzytelnia niczego.
+
+### 7a.2. Para listów jako wymóg, nie układ graficzny
+
+Wychodzą dwa listy na dwa różne adresy: kod potwierdzenia na adres nowy, ostrzeżenie
+z drogą wycofania na dotychczasowy. Bez drugiego listu przejęte konto zmieniałoby
+adres niepostrzeżenie — właściciel dowiedziałby się o tym dopiero przy próbie
+odzyskania dostępu, czyli po fakcie.
+
+Nadanie jest jedną czynnością: niepowodzenie któregokolwiek z listów zamyka
+zamówienie. Zamówienie bez ostrzeżenia byłoby tą samą luką, co brak listu w dostawie.
+
+### 7a.3. Terminy
+
+| Droga | Termin | Powód |
+|---|---|---|
+| kod potwierdzenia | godzina | tyle, co każda droga potwierdzenia tożsamości |
+| droga wycofania | 72 godziny | list na adres dotychczasowy jest jedyną obroną Operatora, któremu przejęto konto, a ten czyta pocztę wtedy, kiedy czyta |
+
+Kod znosi się po pięciu pomyłkach: sześć cyfr to milion wartości i bez sufitu cały
+ten zakres przechodzi się próbami, dopóki zamówienie stoi otwarte.
+
+### 7a.4. Czego odpowiedź nie zdradza
+
+Wszczęcie odpowiada tak samo, gdy adres nowy jest już zajęty. Różnica mówiłaby
+pytającemu, które adresy mają konto na tej instalacji — tą samą drogą, którą zamyka
+odpowiedź `auth.recover`. Listy w takim wypadku nie wychodzą.
+
+Wycofanie odpowiada fałszem na drogę nieznaną, użytą i przeterminowaną jednakowo.
+
+### 7a.5. Trwałość
+
+Zamówienia stoją w tabeli `zmiana_adresu_konta` (krok migracji 498): adres oczekujący,
+skrót kodu, skrót drogi wycofania, dwa terminy, licznik pomyłek i znacznik zamknięcia.
+Zamówienie nowe zamyka poprzednie tego konta — bez tego w obiegu zostaje tyle kodów
+i tyle dróg wycofania, ile razy Operator poprosił o zmianę.
+
+Wycofanie działa **bez sesji**: wiersz odnajduje sam skrót drogi z listu, a konto
+bierze się stamtąd, nie z gniazda. Operator, któremu przejęto konto, sesji mieć nie musi.
+
 ## 8. Token dostępu i połączenie WebSocket
 
 ### 8.1. Wydanie tokenu

@@ -145,6 +145,13 @@ const WNETRZA_OKIEN = [
     otwarcie: '<div class="pd-cialo">',
     zamkniecie: null,
   },
+  // Okno Ustawień niesie sekcję Konto, do której odsyłają listy zmiany adresu.
+  {
+    gniazdo: 'dn-tresc-ustawienia',
+    prototyp: '../../design/05-okna/platformowe/ustawienia.html',
+    otwarcie: '<main class="us-plotno" id="us-plotno">',
+    zamkniecie: '</main>',
+  },
   {
     gniazdo: 'dn-tresc-studio',
     prototyp: '../../design/05-okna/moduly/studio.html',

@@ -657,10 +657,17 @@
             <button class="us-pomoc" type="button" aria-label="Objaśnienie"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M9.5 9a2.5 2.5 0 0 1 4.5 1.5c0 1.5-2 2-2 3"/><path d="M12 17h.01"/></svg></button>
             <span class="us-prawa"><span class="dn-plakietka dn-plakietka--sukces"><span class="dn-kropka dn-kropka--sukces" aria-hidden="true"></span> potwierdzony</span></span>
           </div>
-          <input class="dn-pole us-pole-szer" type="email" value="support@danaco-core.pl" aria-label="Adres e-mail uwierzytelniający">
+          <input class="dn-pole us-pole-szer" type="email" value="support@danaco-core.pl" aria-label="Adres e-mail uwierzytelniający" data-adres-nowy>
           <div class="us-wiersz">
-            <button class="dn-btn dn-btn--duch dn-btn--sm" type="button">Wyślij ponownie potwierdzenie</button>
-            <span class="us-opis--drobny">Pełni funkcję weryfikacji, logowania i odzyskiwania konta. Zmiana uruchamia ponowną weryfikację adresu.</span>
+            <input class="dn-pole" type="password" placeholder="Hasło bieżące" aria-label="Hasło bieżące" data-adres-haslo>
+            <button class="dn-btn dn-btn--zarys dn-btn--sm" type="button" data-adres-zamow>Zamów zmianę adresu</button>
+          </div>
+          <div class="us-wiersz">
+            <input class="dn-pole" type="text" inputmode="numeric" placeholder="Kod z nowego adresu" aria-label="Kod potwierdzenia" data-adres-kod>
+            <button class="dn-btn dn-btn--duch dn-btn--sm" type="button" data-adres-potwierdz>Potwierdź</button>
+          </div>
+          <div class="us-wiersz">
+            <span class="us-opis--drobny">Pełni funkcję weryfikacji, logowania i odzyskiwania konta. Kod potwierdzenia idzie na adres nowy, ostrzeżenie z drogą wycofania — na dotychczasowy.</span>
           </div>
         </div>
 
@@ -669,7 +676,7 @@
             <span class="us-etykieta">Hasło</span>
             <span class="pt-mono" style="color:var(--dn-tekst-3)">••••••••••</span>
           </div>
-          <button class="dn-btn dn-btn--zarys dn-btn--sm" type="button" id="us-zmien-haslo">Zmień hasło</button>
+          <button class="dn-btn dn-btn--zarys dn-btn--sm" type="button" id="us-zmien-haslo" data-zmien-haslo>Zmień hasło</button>
         </div>
 
         <div class="us-komunikat us-komunikat--informacja">
@@ -712,7 +719,7 @@
           <div class="us-nawigacja-kolumna" style="flex:1">
             <span class="us-etykieta">PIN <span class="dn-plakietka">wyłączony</span></span>
             <span class="us-opis--drobny">Krótki kod numeryczny do szybkiego potwierdzenia tożsamości na tym urządzeniu. Nie zastępuje hasła — działa niezależnie.</span>
-            <div class="us-wiersz" data-po-wlaczeniu hidden style="margin-top:var(--dn-od-2)"><button class="dn-btn dn-btn--zarys dn-btn--sm" type="button">Ustaw PIN</button></div>
+            <div class="us-wiersz" data-po-wlaczeniu hidden style="margin-top:var(--dn-od-2)"><input class="dn-pole" type="password" inputmode="numeric" placeholder="PIN" aria-label="PIN urządzenia" data-pin-wartosc><button class="dn-btn dn-btn--zarys dn-btn--sm" type="button" data-pin-ustaw>Ustaw PIN</button></div>
           </div>
           <button class="dn-przelacznik" type="button" data-przelacznik role="switch" aria-checked="false" data-metoda-przel aria-label="PIN"></button>
         </div>
@@ -879,6 +886,19 @@
         </div>
 
         <div class="us-tabela-ramka">
+          <div class="us-pozycja">
+            <div class="us-pozycja-glowa">
+              <span class="us-etykieta">Listy o zakończonych przebiegach</span>
+              <span class="us-prawa"><span class="pt-mono" id="us-listy-stan">wartość: zawsze</span></span>
+            </div>
+            <div class="dn-zakladki dn-zakladki--pigulki dn-zakladki--wybor" role="radiogroup" aria-label="Listy o zakończonych przebiegach" id="us-listy-przebiegow">
+              <button class="dn-zakladka" type="button" role="radio" aria-checked="true" data-listy="zawsze">Zawsze</button>
+              <button class="dn-zakladka" type="button" role="radio" aria-checked="false" data-listy="niepowodzenia">Tylko niepowodzenia</button>
+              <button class="dn-zakladka" type="button" role="radio" aria-checked="false" data-listy="nigdy">Nigdy</button>
+            </div>
+            <p class="us-opis--drobny">Rozstrzyga, kiedy platforma wysyła list o zakończeniu przebiegu automatyki na adres konta.</p>
+          </div>
+
           <table class="dn-tabela us-macierz" id="us-macierz">
             <thead>
               <tr>

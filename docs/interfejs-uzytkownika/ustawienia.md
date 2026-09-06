@@ -324,6 +324,40 @@ poza bazą (rozdz. 10 Bezpieczeństwa); zawsze sprawdza zgodność nowego hasła
 
 ---
 
+### 3.5. Zmiana adresu uwierzytelniającego
+
+Sekcja Konto prowadzi zmianę adresu e-mail w dwóch krokach, bo adres jest jedyną
+drogą odzyskania konta (Bezpieczeństwo i uwierzytelnianie, rozdz. 7a).
+
+| Element okna | Znacznik wiązania | Co robi |
+|---|---|---|
+| pole adresu | `data-adres-nowy` | adres, na który konto ma przejść |
+| pole hasła | `data-adres-haslo` | hasło bieżące; bez niego czynność nie rusza |
+| „Zamów zmianę adresu” | `data-adres-zamow` | wysyła kod na adres nowy i ostrzeżenie na dotychczasowy |
+| pole kodu | `data-adres-kod` | kod przepisany z listu |
+| „Potwierdź” | `data-adres-potwierdz` | przenosi konto na adres oczekujący |
+
+Konto stoi przy adresie dotychczasowym do potwierdzenia. Komunikat po zamówieniu
+nie mówi, czy adres nowy jest wolny — odpowiedź rdzenia tego nie zdradza.
+
+Odsyłacz z listu ostrzegawczego otwiera to samo okno na trasie
+`/wycofaj-zmiane-adresu`; wycofanie wykonuje się wtedy bez kliknięcia, bo droga
+stoi w zapytaniu adresu. Operator, któremu przejęto konto, sesji mieć nie musi.
+
+### 3.6. PIN urządzenia
+
+Pozycja PIN-u w Metodach wejścia zakłada metodę szybkiego wejścia na urządzeniu,
+przy którym Operator siedzi. PIN nie zastępuje hasła — otwiera bramkę obok niego.
+
+| Element okna | Znacznik wiązania | Co robi |
+|---|---|---|
+| pole PIN-u | `data-pin-wartosc` | wartość zakładanej metody |
+| „Ustaw PIN” | `data-pin-ustaw` | zakłada metodę na urządzeniu trwałym |
+| przełącznik pozycji | `data-metoda-przel` | zdejmuje metodę; założenia nie prowadzi, bo bez PIN-u nie ma czym |
+
+Stan przełączników pochodzi z odpowiedzi rdzenia, nie z prototypu: obie komendy
+oddają wykaz metod, a okno nanosi go wraz z identyfikatorem potrzebnym do zdjęcia.
+
 ## 4. Uwierzytelnianie
 
 ### 4.1. Zasada: wszystkie metody logowania jako ustawienie konfiguracyjne, hasło jako domyślna
@@ -392,6 +426,13 @@ Wykaz urządzeń i unieważnianie ich tokenów dostępu jest zawartością sekcj
 ---
 
 ## 5. Wygląd: motyw i język
+
+Wybór motywu i gęstości idzie do rdzenia komendą `config.set` na poziomie
+aplikacji i wraca przy otwarciu okna: nastawa należy do konta, nie do
+przeglądarki. Nanosi się dopiero po potwierdzeniu rdzenia — nastawa widoczna,
+której rdzeń nie przyjął, kłamie. Motyw systemowy zdejmuje znacznik dokumentu,
+więc arkusz idzie wtedy za preferencją systemu.
+
 
 ### 5.1. Motyw wizualny
 

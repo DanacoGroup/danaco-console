@@ -21,6 +21,7 @@ import {
   zdejmijTrescWspolna,
 } from './okno-modulu.ts';
 import { zwiazKatalogModulu } from './katalog-modulu.ts';
+import { zwiazCzynnosciAutomatyk } from './automations-czynnosci.ts';
 
 const KOD_MODULU = 'automations';
 
@@ -58,6 +59,11 @@ export function zwiazAutomatyzacje(
   }
   zdejmijTrescPrzykladowa(korzen);
   void opiszNaglowek(kanal, nazwaSrodowiska, korzen);
+  /* Czynności wierszy: nasłuch stoi na korzeniu okna, więc przetrwa każde
+     odświeżenie wykazu automatyk. */
+  zwiazCzynnosciAutomatyk(kanal, korzen, () => {
+    void wypelnijAutomatyki(kanal, korzen);
+  });
 
   let idOkna = idOknaStojacego;
   const odswiez = async (): Promise<void> => {
@@ -150,7 +156,7 @@ async function wypelnijAutomatyki(kanal: Kanal, korzen: Element): Promise<void> 
     niegotowe(cialo, 'Żadna automatyka nie została jeszcze złożona.');
     return;
   }
-  cialo.replaceChildren(...wykaz.map((w) => pozycja(cialo, w.name, w.description ?? '')));
+  cialo.replaceChildren(...wykaz.map((w) => wierszAutomatyki(cialo, w)));
 }
 
 /* Panel wykazu bez własnego kształtu: komenda bez pól wymaganych. */
@@ -168,6 +174,27 @@ async function wykaz(
   const wynik = odpowiedz.wynik as Record<string, unknown> | undefined;
   wykazPanelu(cialo, odpowiedz.udany, odpowiedz.blad?.message,
     wynik === undefined ? undefined : [...mapuj(wynik)], pusty, (x) => x);
+}
+
+/* Wiersz automatyki niesie jej kod i czynności; sam wykaz zostaje wykazem. */
+function wierszAutomatyki(cialo: Element, automatyka: AutomationWorkflow): HTMLElement {
+  const wiersz = pozycja(cialo, automatyka.name, automatyka.description ?? '');
+  wiersz.dataset.automatyka = automatyka.id;
+  const czynnosci: readonly (readonly [string, string])[] = [
+    ['uruchom', 'Uruchom'],
+    ['zatrzymaj', 'Zatrzymaj'],
+    [automatyka.enabled === true ? 'wylacz' : 'wlacz',
+      automatyka.enabled === true ? 'Wyłącz' : 'Włącz'],
+  ];
+  for (const [kod, etykieta] of czynnosci) {
+    const przycisk = cialo.ownerDocument.createElement('button');
+    przycisk.type = 'button';
+    przycisk.className = 'dn-btn dn-btn--duch dn-btn--sm';
+    przycisk.dataset.czynnoscAutomatyki = kod;
+    przycisk.textContent = etykieta;
+    wiersz.append(przycisk);
+  }
+  return wiersz;
 }
 
 function pozycja(cialo: Element, tytul: string, podpis: string): HTMLElement {

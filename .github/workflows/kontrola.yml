@@ -58,7 +58,7 @@ jobs:
 
       - name: Zaleznosci
         working-directory: budowa/klient
-        run: npm ci
+        run: npm ci --include=dev
 
       - name: Typy
         working-directory: budowa/klient

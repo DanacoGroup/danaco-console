@@ -64,7 +64,34 @@ niż kod; jak długo, nie mówi żadne źródło.
 
 ---
 
-## List 7 — przebieg automatyki zakończony
+## List 7 — przebieg automatyki zakończony — WYKONANE 6.09.2026
+
+Rewizja `7edb31c3`. Obie przeszkody nazwane niżej ustąpiły.
+
+**Adresat.** Łańcuch przebieg → automatyka → konto działa: kolumna `konto_id`
+stoi w automatyce od kroku 484, brakowało odczytu, który ją czyta —
+`WlascicielAutomatyki` w repozytorium automatyk. Automatyka bez wskazania konta
+listu nie dostaje i nie jest to błąd przebiegu.
+
+**Wyzwalacz.** Stan przebiegu jest wyprowadzany z kolejki przy każdym odczycie,
+więc wysyłka przy odczycie znaczyłaby list przy każdym otwarciu okna. Krok 499
+dokłada znacznik `powiadomiono`; list idzie raz, przy pierwszym przejściu
+w stan końcowy.
+
+**Zmienne.** Siedem z ośmiu ma źródło: `run_name` (nazwa automatyki albo jej
+identyfikator), `run_status` (trzy stany rdzenia przełożone na dwa słowa
+dostawy: powodzenie to „zakończony”, niepowodzenie i przerwanie to
+„zatrzymany”), `run_duration` (z obu znaczników, w postaci `4 min 12 s`),
+`run_step` (`3 z 5`), `started_at`, `run_url`
+(`konfiguracja.AdresPrzebiegu`), `environment_name` — nazwa produktu, bo
+migracja 039 stanowi, że automatyka nie jest bytem sesji ani okna.
+
+**Zostaje otwarte.** Nastawy częstotliwości, którą stopka listu obiecuje w oknie
+Ustawienia konta, nadal nie ma — list idzie przy każdym zakończeniu. Konto
+nadawcze bierze się z nastaw startowych, nie z okna Konfiguracji: adapter
+ustawień powstaje przy montażu portów, później niż moduły.
+
+## List 7 — zakres rozpoznany przed pracą
 
 Punkty zakończenia przebiegu **istnieją, dwa i niezależne**: wyprowadzenie
 stanu z kolejki (`adapter_modul_automations_przebiegi.go`) oraz zatrzymanie

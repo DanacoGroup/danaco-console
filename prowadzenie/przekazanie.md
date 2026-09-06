@@ -21,15 +21,15 @@ powłoka Tauri i instalator Tauri — obie także w budowie krzyżowej na
 
 | miara | wartość |
 |---|---|
-| komendy kontraktu | 1086 |
-| komendy wykonalne z klienta | 1086 z 1086: 503 z własnym wołającym, reszta przez katalog operacji |
+| komendy kontraktu | 1089 |
+| komendy wykonalne z klienta | 1089 z 1089: 506 z własnym wołającym, reszta przez katalog operacji |
 | tabele w bazie po przejeździe migracji | 421 |
 | tabele niosące pracę Operatora | 373, w tym 172 korzenie |
 | granica konta w zapytaniach | domknięta; 15 miejsc rozstrzygniętych, nie dziur |
-| kroki migracji | do 497 |
+| kroki migracji | do 499 |
 | `go test ./server/...` | przechodzi w całości |
-| prototypy okien w `design/05-okna/` | 35; okien w produkcie 8 |
-| droga wejścia | rejestracja, logowanie, metody, urządzenia, sesje bramki |
+| prototypy okien w `design/05-okna/` | 35; okien w produkcie 9 |
+| droga wejścia | rejestracja, logowanie, metody, urządzenia, sesje bramki, zmiana adresu |
 
 ## 2. Gałęzie, dokumenty, materiał
 

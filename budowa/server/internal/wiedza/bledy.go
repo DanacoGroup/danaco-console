@@ -211,7 +211,8 @@ func (b *BrakSilnika) opisNaprawy() string {
 	default:
 		return "instalacja serwera jest niepełna — w interpreterze wskazanym " +
 			"ustawieniem `" + KluczProgram + "` brakuje biblioteki `fastembed` " +
-			"(pusta wartość znaczy `python3` ze ścieżki wyszukiwania systemu)"
+			"(pusta wartość znaczy `python3` ze ścieżki wyszukiwania systemu); " +
+			"wykonać `pip install fastembed` dla tego interpretera"
 	}
 }
 

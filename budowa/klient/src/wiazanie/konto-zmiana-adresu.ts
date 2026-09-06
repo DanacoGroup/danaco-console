@@ -1,5 +1,6 @@
 // Wiązanie zmiany adresu konta: zamówienie, potwierdzenie kodem i wycofanie.
 import { AuthMethodKind, Command } from '../../../shared/contract.ts';
+import type { AuthMethod } from '../../../shared/contract.ts';
 import type { Kanal } from '../protokol/kanal.ts';
 import { wywolaj } from '../protokol/wywolanie.ts';
 import { oglos } from './ogloszenie.ts';
@@ -21,6 +22,8 @@ export function zwiazZmianeAdresu(kanal: Kanal): void {
     if (cel.closest('[data-adres-zamow]') !== null) void zamowZmiane(kanal);
     if (cel.closest('[data-adres-potwierdz]') !== null) void potwierdzZmiane(kanal);
     if (cel.closest('[data-pin-ustaw]') !== null) void ustawPin(kanal);
+    const przelacznik = cel.closest<HTMLElement>('[data-metoda="pin"] [data-metoda-przel]');
+    if (przelacznik !== null) void przelaczPin(kanal, przelacznik);
   }, true);
 }
 
@@ -56,7 +59,54 @@ async function ustawPin(kanal: Kanal): Promise<void> {
     return;
   }
   pole.value = '';
+  nanieMetody(wynik.wynik?.methods ?? []);
   oglos(NAGLOWEK, 'PIN działa na tym urządzeniu.');
+}
+
+/*
+przelaczPin zdejmuje PIN z urządzenia; założenie idzie polem, nie przełącznikiem.
+
+Przełącznik przestawiony w prawo bez podanego PIN-u nie ma czym założyć metody,
+więc wraca do pozycji wyjściowej i mówi, gdzie PIN się wpisuje.
+*/
+async function przelaczPin(kanal: Kanal, przelacznik: HTMLElement): Promise<void> {
+  if (przelacznik.getAttribute('aria-checked') !== 'true') {
+    oglos(NAGLOWEK, 'Podaj PIN w polu obok i naciśnij „Ustaw PIN”.');
+    return;
+  }
+  const metoda = przelacznik.closest<HTMLElement>('[data-metoda]')?.dataset.metodaId;
+  if (metoda === undefined || metoda === '') {
+    oglos(NAGLOWEK, 'Rdzeń nie podał, którą metodę zdjąć.', 'ostrzezenie');
+    return;
+  }
+  const wynik = await wywolaj(kanal, Command.AuthMethodRemove, { methodId: metoda });
+  if (!wynik.udany) {
+    oglos(NAGLOWEK, wynik.blad?.message ?? 'Rdzeń odmówił zdjęcia PIN-u.', 'ostrzezenie');
+    return;
+  }
+  nanieMetody(wynik.wynik?.methods ?? []);
+  oglos(NAGLOWEK, 'PIN zdjęty z tego urządzenia.');
+}
+
+/*
+nanieMetody nanosi stan metod z rdzenia na przełączniki okna.
+
+Prototyp niesie stan zastany — PIN wyłączony, e-mail włączony — a po zmianie
+okno musi pokazywać to, co rdzeń faktycznie prowadzi, nie to, co narysował
+prototyp. Identyfikator metody zostaje przy pozycji, bo zdjęcie go potrzebuje.
+*/
+function nanieMetody(metody: readonly AuthMethod[]): void {
+  for (const pozycja of document.querySelectorAll<HTMLElement>('[data-metoda]')) {
+    const rodzaj = pozycja.dataset.metoda;
+    if (rodzaj === undefined) continue;
+    const wpis = metody.find((m) => m.kind === rodzaj);
+    const przelacznik = pozycja.querySelector<HTMLElement>('[data-metoda-przel]');
+    if (przelacznik !== null) {
+      przelacznik.setAttribute('aria-checked', wpis === undefined ? 'false' : 'true');
+    }
+    if (wpis === undefined) delete pozycja.dataset.metodaId;
+    else pozycja.dataset.metodaId = wpis.id;
+  }
 }
 
 // potwierdzZmiane domyka czynność kodem z listu.

@@ -29,11 +29,13 @@ Jedno repozytorium: `~/budowa`. Poza nim nie ma drugiego drzewa z tą samą tre�
 | `budowa/shared/` | `contract.json` — jedyne źródło prawdy typów — wraz z generatorem |
 | `budowa/klient/` | nowy klient TypeScript; powstaje w terenie `fundament-klienta` |
 | `budowa/desktop/` | powłoka Tauri |
-| `budowa/klient-poprzedni/` | klient wersji poprzedniej; **materiał do czytania i przeszczepu, nie do rozwoju** |
 | `design/` | system projektowy wraz z prototypami okien |
 | `docs/` | dokumentacja projektowa |
 | `prowadzenie/` | prowadzenie budowy; **znika przed wydaniem** |
 | `narzedzia/` | skrypty budowy |
+
+Klient wersji poprzedniej nie leży już w drzewie. Materiał do czytania i przeszczepu
+wyjmuje się z historii: `git show klient-poprzedni-ostatni:budowa/klient-poprzedni/<ścieżka>`.
 
 **Design stoi w `design/` tego repozytorium.** Nie ma dla niego osobnego drzewa
 ani osobnej gałęzi; wcześniejszy warsztat `teren/prototypy` w `~/robocze/prototypy`

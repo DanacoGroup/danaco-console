@@ -1,6 +1,0 @@
-/* Żetony gradientów systemu obejmują dwa wzory niezależne od motywu, przeznaczone wyłącznie do użycia ilustracyjnego, nigdy jako tło przycisku, karty ani sekcji. */
-
-:root {
-  --dn-grad-atrament: linear-gradient(180deg, var(--dn-szary-800), var(--dn-szary-925));
-  --dn-grad-sygnal: linear-gradient(135deg, var(--dn-sygnal-400), var(--dn-sygnal-600));
-}

@@ -10,7 +10,7 @@ import (
 
 // Świeżość generatu kontraktu; sprawdzian puszcza generator na kopii i porównuje wynik z drzewem.
 
-// zrodloKontraktu odwzorowuje wyłącznie listę artefaktów z contract.json.
+// zrodloKontraktu to lista artefaktów z contract.json.
 type zrodloKontraktu struct {
 	Kontrakt struct {
 		Artefakty struct {
@@ -29,8 +29,7 @@ func TestGeneratOdpowiadaZrodluKontraktu(t *testing.T) {
 		t.Skip("brak node w PATH — sprawdzian świeżości generatu wymaga uruchamiacza generatora")
 	}
 
-	// Generator zapisuje część artefaktów poza shared/, więc kopia musi odwzorować
-	// układ katalogów repozytorium, a nie sam katalog shared/.
+	// Część artefaktów powstaje poza shared/, więc kopia odwzorowuje układ katalogów.
 	korzen := t.TempDir()
 	katalogRoboczy := filepath.Join(korzen, "shared")
 	if err := os.MkdirAll(katalogRoboczy, 0o755); err != nil {
@@ -67,8 +66,7 @@ func TestGeneratOdpowiadaZrodluKontraktu(t *testing.T) {
 	}
 }
 
-// artefaktyKontraktu zwraca ścieżki wytworów zadeklarowane w źródle prawdy;
-// dopisanie kolejnego artefaktu w contract.json obejmuje sprawdzian bez zmiany kodu.
+// artefaktyKontraktu zwraca ścieżki wytworów zadeklarowane w contract.json.
 func artefaktyKontraktu(t *testing.T) []string {
 	t.Helper()
 	var zrodlo zrodloKontraktu

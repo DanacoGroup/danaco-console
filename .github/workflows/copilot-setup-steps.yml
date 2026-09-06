@@ -1,0 +1,15 @@
+- name: Designite Incremental Code Quality Analysis
+  # You may pin to the exact commit or the version.
+  # uses: DesigniteTools/designite-incremental-analysis@c9ec3cf4d058aa09194f2285f3e8f299cfdfd66f
+  uses: DesigniteTools/designite-incremental-analysis@v2.1.0
+  with:
+    # GitHub token created during workflow execution (Set to Read and Write)
+    github-token: 
+    # Code quality analysis output folder name from previous commit
+    designite-output-old: 
+    # Code quality analysis output folder name from current commit
+    designite-output-new: 
+    # Repository name
+    repo-name: 
+    # Tool used for code analysis (dj or dpy)
+    tool-name: 

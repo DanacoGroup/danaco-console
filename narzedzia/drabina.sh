@@ -74,9 +74,12 @@ fi
 
 szczebel "Świeżość wytworów kontraktu"
 if [ -d budowa/shared/gen ]; then
-	PRZED="$(git status --porcelain budowa/shared/contract.go budowa/shared/contract.ts 2>/dev/null | wc -l)"
+	# Komplet wytworow generatora. Rejestr komend klienta powstaje poza shared/,
+	# wiec pominiecie go zostawialoby rozjazd kontraktu z wiazaniem bez kontroli.
+	WYTWORY="budowa/shared/contract.go budowa/shared/contract.ts budowa/klient/src/wiazanie/rejestr-komend.ts"
+	PRZED="$(git status --porcelain $WYTWORY 2>/dev/null | wc -l)"
 	if (cd budowa/klient && npm run kontrakt >/dev/null 2>&1); then
-		PO="$(git status --porcelain budowa/shared/contract.go budowa/shared/contract.ts 2>/dev/null | wc -l)"
+		PO="$(git status --porcelain $WYTWORY 2>/dev/null | wc -l)"
 		if [ "$PRZED" = "$PO" ]; then
 			zdany "wytwory kontraktu są świeże wobec contract.json"
 		else

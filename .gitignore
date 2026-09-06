@@ -11,6 +11,12 @@ target/
 budowa/danaco-console
 budowa/danaco-console.exe
 
+# Rdzen wkladany do pakietu powloki. Wytwor budowy, nie zrodlo — wazy
+# ponad 80 MB i dwa takie pliki weszly juz raz do historii repozytorium.
+budowa/desktop/src-tauri/zasoby-natywne/rdzen/
+budowa/desktop/src-tauri/zasoby-natywna-linux/rdzen/
+budowa/instalator/src-tauri/zasoby-natywne/rdzen/
+
 # Stan lokalny
 *.db
 *.db-shm

@@ -10,7 +10,8 @@
     "artefakty": {
       "typescript": "contract.ts",
       "go": "contract.go",
-      "pakietGo": "shared"
+      "pakietGo": "shared",
+      "rejestrKlienta": "../klient/src/wiazanie/rejestr-komend.ts"
     }
   },
   "koperta": {

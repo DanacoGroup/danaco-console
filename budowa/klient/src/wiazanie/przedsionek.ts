@@ -1,8 +1,5 @@
-// Wspólne wiązanie przedsionka: wejście w środowisko, szyna sesji, powrót do
-// pracy i jedna droga z kafla w moduł. Cztery przedsionki mają tu wspólną
-// warstwę, a pliki `przedsionek-talkin`, `-workspace`, `-codestudio`
-// i `-multitaskingai` dokładają wyłącznie to, czym środowiska się różnią.
-// Wykaz modułów i sesji bierze się wyłącznie z odpowiedzi rdzenia.
+// Wiązanie przedsionka środowiska: wejście w środowisko, szyna sesji i powrót
+// do pracy. Wykaz modułów i sesji bierze się wyłącznie z odpowiedzi rdzenia.
 import {
   Command,
   SessionStatus,
@@ -28,14 +25,10 @@ const STANY: Readonly<Record<SessionStatus, string>> = {
   [SessionStatus.Archived]: 'archiwalna',
 };
 
-/* Kafle projektu, repozytorium i przebiegu prowadzą we własne byty środowiska,
-   więc rozpoznawanie modułu ich nie dotyka. */
-const ZNAKI_OBCE: readonly string[] = ['data-projekt', 'data-repozytorium', 'data-przebieg'];
-
 let zakres: SessionStatus | '' = SessionStatus.Active;
 let sesje: Session[] = [];
 let odpisy: SessionPresence[] = [];
-let katalogModulow = new Map<string, Module>();
+let nazwyModulow = new Map<string, string>();
 let kodOstatni = '';
 /* Wzorzec wiersza pochodzi ze znacznika i ginie przy pierwszym pustym wykazie,
    więc szyna zapamiętuje go, zanim po raz pierwszy wymieni swoją zawartość. */
@@ -52,11 +45,6 @@ export function zwiazPrzedsionek(kanal: Kanal): void {
     if (filtr !== null) {
       zdarzenie.stopPropagation();
       przestawZakres(filtr);
-      return;
-    }
-    const kafel = cel.closest<HTMLElement>('.cd-tresc--przedsionek .pd-siatka .pd-kafel');
-    if (kafel !== null) {
-      ujednolicKafel(kafel);
       return;
     }
     const wiersz = cel.closest<HTMLElement>('.pd-sesja[data-id-sesji]');
@@ -92,55 +80,22 @@ async function wejdz(kanal: Kanal, kod: string): Promise<void> {
        Zostawione mówiłyby o cudzych sesjach jako o sesjach Operatora. */
     sesje = [];
     odpisy = [];
-    katalogModulow = new Map();
     wypelnijSzyne('');
     return;
   }
   sesje = wynik.wynik.sessions;
-  katalogModulow = spisModulow(wynik.wynik.modules);
+  nazwyModulow = spisModulow(wynik.wynik.modules);
   odpisy = await pobierzOdpisy(kanal);
   wypelnijSzyne(wynik.wynik.focusedSessionId ?? '');
 }
 
-function spisModulow(moduly: Module[]): Map<string, Module> {
-  return new Map(moduly.map((modul) => [modul.code.toLowerCase(), modul]));
+function spisModulow(moduly: Module[]): Map<string, string> {
+  return new Map(moduly.map((modul) => [modul.code, modul.name]));
 }
 
 async function pobierzOdpisy(kanal: Kanal): Promise<SessionPresence[]> {
   const wynik = await wywolaj(kanal, Command.SessionList, { includePresence: true });
-  if (!wynik.udany || wynik.wynik === undefined) {
-    /* Bez odpisów wiersze stoją dalej, ale milczą o pracy sesji; odmowa
-       nazwana Operatorowi odróżnia sesję bezczynną od nieznanej. */
-    oglos(NAGLOWEK, `Rdzeń nie wydał stanu sesji. ${zdanieOdmowy(wynik.blad)}`, 'ostrzezenie');
-    return [];
-  }
-  return wynik.wynik.presence ?? [];
-}
-
-/* Centrum otwiera moduł po znaczniku `data-modul`, a prototypy niosą w nim raz
-   kod modułu, raz polską nazwę sekcji. Przedsionek wpisuje tam kod z wykazu
-   rdzenia, zanim Centrum znacznik odczyta, więc cztery przedsionki wchodzą
-   w moduł jedną drogą. */
-/* Kafel bez pokrycia w wykazie zostaje nietknięty: odpowiada za niego wiązanie
-   własne środowiska. */
-function ujednolicKafel(kafel: HTMLElement): void {
-  if (ZNAKI_OBCE.some((znak) => kafel.hasAttribute(znak))) return;
-  const modul = rozpoznajModul(kafel);
-  if (modul !== undefined) kafel.dataset.modul = modul.code;
-}
-
-/* Kod ze znacznika ma pierwszeństwo; kafel bez kodu albo z kodem spoza wykazu
-   rozpoznaje się nazwą, bo to ona stoi Operatorowi na kaflu. */
-function rozpoznajModul(kafel: HTMLElement): Module | undefined {
-  const znak = (kafel.dataset.modul ?? '').trim().toLowerCase();
-  const poKodzie = katalogModulow.get(znak);
-  if (poKodzie !== undefined) return poKodzie;
-  const napis = kafel.querySelector('.pd-kafel-nazwa')?.textContent ?? '';
-  const nazwa = napis.trim().toLowerCase() || znak;
-  if (nazwa === '') return undefined;
-  return [...katalogModulow.values()].find(
-    (modul) => modul.name.trim().toLowerCase() === nazwa,
-  );
+  return wynik.wynik?.presence ?? [];
 }
 
 function przestawZakres(filtr: HTMLElement): void {
@@ -185,10 +140,9 @@ function zbudujWiersz(wzorzec: HTMLElement, sesja: Session, ogniskowana: boolean
 }
 
 function opisSesji(sesja: Session, odpis: SessionPresence | undefined): string {
-  const kod = odpis?.moduleCode;
-  const modul = kod === undefined
+  const modul = odpis?.moduleCode === undefined
     ? ''
-    : katalogModulow.get(kod.toLowerCase())?.name ?? kod;
+    : nazwyModulow.get(odpis.moduleCode) ?? odpis.moduleCode;
   const stan = odpis?.live === true ? 'pracuje' : STANY[sesja.status];
   return modul === '' ? stan : `${modul} · ${stan}`;
 }

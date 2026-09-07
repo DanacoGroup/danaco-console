@@ -548,7 +548,10 @@ Miara mówi o kodzie, nie o zachowaniu. Czynność uznaje się za wykonaną dopi
 wtedy, gdy uruchomiono ją w oknie na stanowisku podglądu i zapisano odpowiedź
 rdzenia — łącznie z gałęzią odmowy. Obchód wszystkich modułów po stanowisku
 staje bez błędów strony; poszczególne czynności wykazują protokoły w opisach
-commitów.
+commitów. Przebieg kontrolny nacisnął 940 pozycji menu nieotwierających
+szuflady: 920 zameldowało odpowiedź rdzenia, a 20 milczących to przełączniki
+widoku (panele, wybór środowiska, status obecności, cel zrzutu), które rdzenia
+nie wołają. Żadna pozycja nie zameldowała braku odpowiedzi.
 
 **Okno produktu w przeglądarce.** Osobny rdzeń serwuje pakiet interfejsu, a
 Chromium bez okna (puppeteer-core spod `pa11y`) przechodzi drogę: uruchomienie,

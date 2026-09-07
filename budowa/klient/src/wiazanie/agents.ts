@@ -27,6 +27,7 @@ import { zwiazUprawnienia } from './agents-uprawnienia.ts';
 import { zwiazWersje } from './agents-wersje.ts';
 import { zwiazZespoly } from './agents-zespoly.ts';
 import { zwiazKatalogModulu } from './katalog-modulu.ts';
+import { zwiazRejestrKonektorow } from './agents-rejestr.ts';
 import { pustka, tekst, type StanowiskoEkspertow } from './agents-wspolne.ts';
 
 interface WiazanieKarty {
@@ -170,6 +171,12 @@ export function zwiazAgents(
   biblioteka?.odswiez();
   /* Rodzina kontraktu nazywa się „agent”, okno „agents” — katalog dostaje
      nazwę rodziny, bo po niej wybiera operacje. */
+  zwiazRejestrKonektorow(kanal, korzen, () => {
+    biblioteka?.odswiez();
+  }, (zdejmij) => {
+    odlaczenia.push(zdejmij);
+  }, przy);
+
   const katalog = zwiazKatalogModulu(kanal, idOknaStojacego, korzen, 'agent', 'Agenci');
   if (katalog !== null) odlaczenia.push(katalog);
   return true;

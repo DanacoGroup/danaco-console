@@ -17,6 +17,7 @@ import {
   zdejmijTrescWspolna,
 } from './okno-modulu.ts';
 import { zwiazKatalogModulu } from './katalog-modulu.ts';
+import { zwiazCzynnosciDiagnostyki } from './diagnostics-czynnosci.ts';
 
 const KOD_MODULU = 'diagnostics';
 
@@ -79,6 +80,12 @@ export function zwiazDiagnostyke(
     void odswiez();
   }, przy);
 
+  zwiazCzynnosciDiagnostyki(kanal, korzen, () => idOkna, () => {
+    void odswiez();
+  }, (zdejmij) => {
+    odlaczenia.push(zdejmij);
+  }, przy);
+
   const katalog = zwiazKatalogModulu(kanal, idOkna, korzen, KOD_MODULU, 'Diagnostyka');
   if (katalog !== null) odlaczenia.push(katalog);
   return true;
@@ -113,7 +120,7 @@ function niegotowe(cialo: Element | null, zdanie: string): void {
 function zdejmijTrescPrzykladowa(korzen: Element): void {
   niegotowe(panel(korzen, 'panel-bledy'), 'Wykaz czeka na odpowiedź rdzenia.');
   niegotowe(panel(korzen, 'panel-rekomendacje'), 'Wykaz czeka na odpowiedź rdzenia.');
-  niegotowe(panel(korzen, 'panel-logi'), 'Rdzeń nie podaje dziennika dla tego okna.');
+  niegotowe(panel(korzen, 'panel-logi'), 'Dziennik czeka na odczyt z czynności panelu.');
   niegotowe(panel(korzen, 'panel-centrum'), 'Centrum diagnostyki czeka na pierwszy błąd.');
   niegotowe(panel(korzen, 'panel-plan'), 'Plan naprawy powstaje z rekomendacji.');
   niegotowe(panel(korzen, 'panel-artefakty'), 'Rdzeń nie podaje wytworów diagnostyki.');

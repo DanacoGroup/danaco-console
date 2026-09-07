@@ -24,6 +24,7 @@ import {
   zdejmijTrescWspolna,
 } from './okno-modulu.ts';
 import { zwiazKatalogModulu } from './katalog-modulu.ts';
+import { zwiazCzynnosciAplikacji } from './apps-czynnosci.ts';
 
 const KOD_MODULU = 'apps';
 
@@ -104,6 +105,12 @@ export function zwiazAplikacje(
     if (cel.closest('#panel-deployment .sta-okno-akcje .dn-btn-ikona') === null) return;
     zdarzenie.stopPropagation();
     void odswiez();
+  }, przy);
+
+  zwiazCzynnosciAplikacji(kanal, korzen, () => idOkna, () => {
+    void odswiez();
+  }, (zdejmij) => {
+    odlaczenia.push(zdejmij);
   }, przy);
 
   const katalog = zwiazKatalogModulu(kanal, idOkna, korzen, KOD_MODULU, 'Apps');

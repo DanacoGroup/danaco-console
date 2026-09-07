@@ -22,6 +22,7 @@ import {
   zdejmijTrescWspolna,
 } from './okno-modulu.ts';
 import { zwiazKatalogModulu } from './katalog-modulu.ts';
+import { zwiazCzynnosciDevelopera } from './developer-czynnosci.ts';
 
 const KOD_MODULU = 'developer';
 
@@ -95,6 +96,12 @@ export function zwiazDevelopera(
     if (cel.closest('#panel-build .sta-okno-akcje .dn-btn-ikona') === null) return;
     zdarzenie.stopPropagation();
     void odswiez();
+  }, przy);
+
+  zwiazCzynnosciDevelopera(kanal, korzen, () => idOkna, () => {
+    void odswiez();
+  }, (zdejmij) => {
+    odlaczenia.push(zdejmij);
   }, przy);
 
   const katalog = zwiazKatalogModulu(kanal, idOkna, korzen, KOD_MODULU, 'Developer');

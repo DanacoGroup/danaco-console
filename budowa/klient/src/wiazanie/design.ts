@@ -36,6 +36,7 @@ import { zwiazPodglad } from './design-podglad.ts';
 import { zwiazKolekcje } from './design-kolekcje.ts';
 import { zwiazZetony } from './design-zetony.ts';
 import { zwiazKatalogModulu } from './katalog-modulu.ts';
+import { zwiazObrazyDesignu } from './design-obrazy.ts';
 import { pokazWarsztaty } from './design-warsztaty.ts';
 import { zejdzZKompozycji } from './design-adnotacje.ts';
 
@@ -94,6 +95,11 @@ export function zwiazDesign(
       return;
     }
     odlaczenia.push(...zwiazZasoby(kontekst));
+    zwiazObrazyDesignu(kontekst.kanal, korzen, () => kontekst.stan.idOkna, () => {
+      odswiezPliki(kontekst);
+    }, (zdejmij) => {
+      odlaczenia.push(zdejmij);
+    }, kontekst.przy);
     odlaczenia.push(...zwiazPlansze(kontekst));
     zwiazPrompt(kontekst);
     zwiazPodglad(kontekst);

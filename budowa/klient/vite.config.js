@@ -152,6 +152,14 @@ const WNETRZA_OKIEN = [
     otwarcie: '<main class="us-plotno" id="us-plotno">',
     zamkniecie: '</main>',
   },
+  /* Konfiguracja jest nakładką nad bieżącym widokiem, nie osobnym oknem: wchodzi
+     z menu Ustawień i zamyka się, zostawiając widok pod spodem nietknięty. */
+  {
+    gniazdo: 'dn-tresc-konfiguracja',
+    prototyp: '../../design/05-okna/platformowe/konfiguracja.html',
+    otwarcie: '<div class="kf-nakladka"',
+    zamkniecie: null,
+  },
   {
     gniazdo: 'dn-tresc-studio',
     prototyp: '../../design/05-okna/moduly/studio.html',

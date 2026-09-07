@@ -17,6 +17,7 @@ import {
   zdejmijTrescWspolna,
 } from './okno-modulu.ts';
 import { zwiazKatalogModulu } from './katalog-modulu.ts';
+import { zwiazGlosAsystenta } from './assistant-glos.ts';
 import { oglos } from './ogloszenie.ts';
 
 const KOD_MODULU = 'assistant';
@@ -86,6 +87,10 @@ export function zwiazAsystenta(
     if (cel.closest('#panel-activity .sta-okno-akcje .dn-btn-ikona') === null) return;
     zdarzenie.stopPropagation();
     void odswiez();
+  }, przy);
+
+  zwiazGlosAsystenta(kanal, korzen, () => idOkna, (zdejmij) => {
+    odlaczenia.push(zdejmij);
   }, przy);
 
   const katalog = zwiazKatalogModulu(kanal, idOkna, korzen, KOD_MODULU, 'Assistant');

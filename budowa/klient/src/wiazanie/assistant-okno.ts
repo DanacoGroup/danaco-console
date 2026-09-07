@@ -1,6 +1,6 @@
 // Panel czynności w oknie Assistant: czynności okna komunikacji, przestawienie
 // samego okna i przekazanie pracy innemu oknu.
-import { Command, ExecutionEnv, PermissionMode } from '../../../shared/contract.ts';
+import { Command, ConfigScope, ExecutionEnv, PermissionMode } from '../../../shared/contract.ts';
 import type { Kanal } from '../protokol/kanal.ts';
 import { wywolaj } from '../protokol/wywolanie.ts';
 import { dolozCzynnosciPanelu, zapytajWSzufladzie } from './czynnosci-okna.ts';
@@ -51,6 +51,8 @@ export function zwiazOknoAsystenta(
       pozycje: [
         { kod: 'przestaw', nazwa: 'Przestaw okno…' },
         { kod: 'przekaz', nazwa: 'Przekaż pracę innemu oknu…' },
+        { kod: 'przenies-kontekst', nazwa: 'Przenieś rozmowę do innego modułu…' },
+        { kod: 'skladnik', nazwa: 'Przypisz składnik…' },
       ],
     },
   ], (kod) => {
@@ -79,6 +81,8 @@ async function wykonaj(otoczenie: Otoczenie, kod: string): Promise<void> {
   if (kod === 'wykonaj') return wykonajCzynnosc(otoczenie);
   if (kod === 'przestaw') return przestawOkno(otoczenie);
   if (kod === 'przekaz') return przekazPrace(otoczenie);
+  if (kod === 'przenies-kontekst') return przeniesKontekst(otoczenie);
+  if (kod === 'skladnik') return przypiszSkladnik(otoczenie);
   /* Czynność spoza obsłużonych odmawia zamiast milczeć. */
   oglos(NAGLOWEK, `Czynność „${kod}" nie jest prowadzona przez to okno.`, 'ostrzezenie');
 }
@@ -214,4 +218,81 @@ async function przekazPrace(otoczenie: Otoczenie): Promise<void> {
     return;
   }
   oglos(NAGLOWEK, 'Praca przekazana wskazanemu oknu.');
+}
+
+
+const ZASIEGI_SKLADNIKA: ReadonlyArray<readonly [string, string]> = [
+  [ConfigScope.Window, 'To okno'],
+  [ConfigScope.Session, 'Ta sesja'],
+  [ConfigScope.Module, 'Cały moduł'],
+  [ConfigScope.Application, 'Cała platforma'],
+];
+
+/* Przeniesienie zakłada okno w innym module i wnosi do niego wskazane treści:
+   rozmowa nie wraca do modułu źródłowego, więc czynność pyta o polecenie. */
+async function przeniesKontekst(otoczenie: Otoczenie): Promise<void> {
+  const moduly = await wywolaj(otoczenie.kanal, Command.ModuleList, {});
+  const wybor = (moduly.wynik?.modules ?? []).map((modul) =>
+    [modul.id, modul.name] as const);
+  if (wybor.length === 0) {
+    oglos(NAGLOWEK, 'Rdzeń nie podaje żadnego modułu.', 'ostrzezenie');
+    return;
+  }
+  const wartosci = await zapytajWSzufladzie(otoczenie.korzen, PANEL, {
+    tytul: 'Przeniesienie rozmowy',
+    opis: 'Rdzeń założy okno we wskazanym module i wniesie do niego polecenie.',
+    pola: [
+      { klucz: 'modul', etykieta: 'Moduł docelowy', wybor },
+      { klucz: 'polecenie', etykieta: 'Polecenie dla nowego okna', obszerne: true },
+    ],
+    wykonanie: 'Przenieś rozmowę',
+  });
+  if (wartosci === null) return;
+  oglos(NAGLOWEK, 'Przenoszę rozmowę…');
+  const wynik = await wywolaj(otoczenie.kanal, Command.ContextTransfer, {
+    sourceWindowId: otoczenie.idOkna(),
+    targetModuleId: wartosci.modul ?? '',
+    bundle: wartosci.polecenie === '' ? {} : { prompt: wartosci.polecenie },
+  });
+  if (!wynik.udany || wynik.wynik === undefined) {
+    oglos(NAGLOWEK, wynik.blad?.message ?? 'Rdzeń odmówił przeniesienia rozmowy.',
+      'ostrzezenie');
+    return;
+  }
+  oglos(NAGLOWEK, wynik.wynik.transferred
+    ? 'Rozmowa stoi w nowym oknie wskazanego modułu.'
+    : 'Rdzeń wskazał okno, ale treści nie przeniósł.');
+}
+
+/* Składnik przypisany szerzej niż oknu obowiązuje też okna zakładane później:
+   zasięg jest tu rozstrzygnięciem, nie ozdobą. */
+async function przypiszSkladnik(otoczenie: Otoczenie): Promise<void> {
+  const skladniki = await wywolaj(otoczenie.kanal, Command.ComponentList, {});
+  const wybor = (skladniki.wynik?.components ?? []).map((skladnik) =>
+    [skladnik.id, `${skladnik.name} · ${skladnik.kind}`] as const);
+  if (wybor.length === 0) {
+    oglos(NAGLOWEK, 'Katalog nie ma jeszcze żadnego składnika.', 'ostrzezenie');
+    return;
+  }
+  const wartosci = await zapytajWSzufladzie(otoczenie.korzen, PANEL, {
+    tytul: 'Przypisanie składnika',
+    pola: [
+      { klucz: 'skladnik', etykieta: 'Składnik', wybor },
+      { klucz: 'zasieg', etykieta: 'Gdzie ma obowiązywać', wybor: ZASIEGI_SKLADNIKA },
+    ],
+    wykonanie: 'Przypisz',
+  });
+  if (wartosci === null) return;
+  const zasieg = (wartosci.zasieg ?? ConfigScope.Window) as ConfigScope;
+  const wynik = await wywolaj(otoczenie.kanal, Command.ComponentAssign, {
+    componentId: wartosci.skladnik ?? '',
+    scope: zasieg,
+    ...(zasieg === ConfigScope.Window ? { scopeId: otoczenie.idOkna() } : {}),
+  });
+  if (!wynik.udany) {
+    oglos(NAGLOWEK, wynik.blad?.message ?? 'Rdzeń odmówił przypisania składnika.',
+      'ostrzezenie');
+    return;
+  }
+  oglos(NAGLOWEK, 'Składnik przypisany.');
 }

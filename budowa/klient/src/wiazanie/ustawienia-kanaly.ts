@@ -86,6 +86,7 @@ function wiersz(cialo: Element, pozycja: Channel): HTMLElement {
     komorkaCzynnosci(dokument, [
       ['popraw', 'Popraw'],
       ['sprawdz', 'Sprawdź'],
+      ['wskaz-oknu', 'Wskaż oknu'],
       ['zdejmij', 'Zdejmij'],
     ], 'data-kanal-czynnosc'),
   );
@@ -109,6 +110,7 @@ async function wykonaj(
 ): Promise<void> {
   if (czynnosc === 'popraw') return popraw(kanal, sekcja, identyfikator);
   if (czynnosc === 'sprawdz') return sprawdz(kanal, identyfikator);
+  if (czynnosc === 'wskaz-oknu') return wskazOknu(kanal, identyfikator);
   if (czynnosc === 'zdejmij') return zdejmij(kanal, sekcja, identyfikator);
   /* Czynność spoza obsłużonych odmawia zamiast milczeć. */
   oglos(NAGLOWEK, `Czynność „${czynnosc}" nie jest prowadzona przez to okno.`, 'ostrzezenie');
@@ -203,6 +205,34 @@ async function sprawdz(kanal: Kanal, identyfikator: string): Promise<void> {
     + ` · ${stanPoswiadczenia}`
     + (wynik.wynik.detail === undefined || wynik.wynik.detail === ''
       ? '' : ` · ${wynik.wynik.detail}`));
+}
+
+/* Wskazanie kanału oknu przestawia rozmowę na inny model od następnej tury:
+   tury już biegnące kończą się na kanale, na którym ruszyły. */
+async function wskazOknu(kanal: Kanal, identyfikator: string): Promise<void> {
+  const okna = await wywolaj(kanal, Command.WindowList, {});
+  const wybor = (okna.wynik?.windows ?? []).map((okno) =>
+    [okno.id, okno.title ?? okno.id] as const);
+  if (wybor.length === 0) {
+    oglos(NAGLOWEK, 'Nie ma jeszcze żadnego okna komunikacji.', 'ostrzezenie');
+    return;
+  }
+  const wartosci = await zapytajWOknieModalnym({
+    tytul: 'Wskazanie kanału oknu',
+    opis: 'Tury już biegnące kończą się na kanale, na którym ruszyły.',
+    pola: [{ klucz: 'okno', etykieta: 'Okno komunikacji', wybor }],
+    wykonanie: 'Wskaż kanał',
+  });
+  if (wartosci === null) return;
+  const wynik = await wywolaj(kanal, Command.ModelChannelSet, {
+    modelChannelId: identyfikator,
+    windowId: wartosci.okno ?? '',
+  });
+  if (!wynik.udany) {
+    oglos(NAGLOWEK, wynik.blad?.message ?? 'Rdzeń odmówił wskazania kanału.', 'ostrzezenie');
+    return;
+  }
+  oglos(NAGLOWEK, 'Okno rozmawia teraz tym kanałem.');
 }
 
 async function zdejmij(kanal: Kanal, sekcja: Element, identyfikator: string): Promise<void> {

@@ -15,7 +15,6 @@ import type { Kanal } from '../protokol/kanal.ts';
 import { wywolaj } from '../protokol/wywolanie.ts';
 import { oglos } from './ogloszenie.ts';
 import { zwiazKatalogModulu } from './katalog-modulu.ts';
-import { zwiazCzynnosciTerminala } from './terminal-czynnosci.ts';
 
 interface WiazanieTerminala {
   korzen: Element;
@@ -49,14 +48,6 @@ export function zwiazTerminal(
   void wypelnijKarty(kanal, korzen, idOkna);
   void wypelnijProcesy(kanal, korzen, idOkna);
   void wypelnijSciage(kanal, korzen);
-
-  zwiazCzynnosciTerminala(kanal, korzen, idOkna, () => {
-    void wypelnijKarty(kanal, korzen, idOkna);
-    void wypelnijProcesy(kanal, korzen, idOkna);
-    void wypelnijSciage(kanal, korzen);
-  }, (odsubskrybuj) => {
-    odlaczenia.push(odsubskrybuj);
-  }, przy);
 
   korzen.addEventListener('click', (zdarzenie) => {
     const cel = zdarzenie.target;
@@ -118,10 +109,10 @@ function zdejmijTrescPrzykladowa(korzen: Element): void {
   for (const wybor of ['.oc-wiersz', '.pm-wiersz', '[data-sciaga]', '.tt-karta']) {
     for (const wezel of korzen.querySelectorAll(wybor)) wezel.remove();
   }
-  /* Plan niesie w prototypie cudzą pracę wpisaną wprost — nazwę zlecenia. Panel
-     stoi ukryty, więc przejście po oknach go nie widzi, a rdzeń planu dla okna
-     terminala nie podaje. Panel plików wypełnia teraz odczyt pliku karty. */
-  for (const identyfikator of ['panel-plan']) {
+  /* Plan i pliki niosą w prototypie cudzą pracę wpisaną wprost — nazwę zlecenia
+     i wykaz plików wraz z wagą. Oba panele stoją ukryte, więc przejście po
+     oknach ich nie widzi, a rdzeń dla terminala żadnego z nich nie podaje. */
+  for (const identyfikator of ['panel-plan', 'panel-pliki']) {
     const cialo = korzen.querySelector(`#${identyfikator} .sta-okno-tresc`);
     if (cialo === null) continue;
     postawStanPusty(cialo, 'Rdzeń nie podaje tego wykazu dla okna terminala.');

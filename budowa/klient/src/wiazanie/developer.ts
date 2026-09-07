@@ -22,6 +22,9 @@ import {
   zdejmijTrescWspolna,
 } from './okno-modulu.ts';
 import { zwiazKatalogModulu } from './katalog-modulu.ts';
+import { zwiazPlikiDevelopera } from './developer-pliki.ts';
+import { zwiazKontroleDevelopera } from './developer-jakosc.ts';
+import { zwiazZasobyDevelopera } from './developer-zasoby.ts';
 
 const KOD_MODULU = 'developer';
 
@@ -94,6 +97,14 @@ export function zwiazDevelopera(
     if (!(cel instanceof Element)) return;
     if (cel.closest('#panel-build .sta-okno-akcje .dn-btn-ikona') === null) return;
     zdarzenie.stopPropagation();
+    void odswiez();
+  }, przy);
+
+  zwiazPlikiDevelopera(kanal, korzen, () => idOkna, przy);
+  zwiazKontroleDevelopera(kanal, korzen, () => idOkna, () => {
+    void odswiez();
+  }, przy);
+  zwiazZasobyDevelopera(kanal, korzen, () => idOkna, () => {
     void odswiez();
   }, przy);
 

@@ -4,6 +4,7 @@ import {
   AutomationDependencyKind,
   Command,
   OrchestrationGateRule,
+  WindowRole,
 } from '../../../shared/contract.ts';
 import type { AutomationDependency, AutomationSchedule } from '../../../shared/contract.ts';
 import type { Kanal } from '../protokol/kanal.ts';
@@ -57,6 +58,15 @@ export function zwiazOrkiestracjeAutomatyk(
         { kod: 'nadrobienie', nazwa: 'Nadrób zaległe biegi…' },
         { kod: 'dzieje-wyzwolen', nazwa: 'Dzieje wyzwoleń' },
         { kod: 'wejscie-sieciowe', nazwa: 'Adres wejścia sieciowego…' },
+      ],
+    },
+    {
+      naglowek: 'Role okien',
+      pozycje: [
+        { kod: 'role', nazwa: 'Wykaz ról okien' },
+        { kod: 'rola-nadaj', nazwa: 'Nadaj oknu rolę…' },
+        { kod: 'rola-popraw', nazwa: 'Popraw rolę okna…' },
+        { kod: 'rola-zdejmij', nazwa: 'Zdejmij rolę okna…' },
       ],
     },
   ], (kod) => {
@@ -119,6 +129,10 @@ async function wykonaj(otoczenie: Otoczenie, kod: string, panel: string): Promis
   if (kod === 'nadrobienie') return nadrobBiegi(otoczenie, panel);
   if (kod === 'dzieje-wyzwolen') return dziejeWyzwolen(otoczenie);
   if (kod === 'wejscie-sieciowe') return wejscieSieciowe(otoczenie, panel);
+  if (kod === 'role') return wykazRol(otoczenie);
+  if (kod === 'rola-nadaj') return nadajRole(otoczenie, panel);
+  if (kod === 'rola-popraw') return poprawRole(otoczenie, panel);
+  if (kod === 'rola-zdejmij') return zdejmijRole(otoczenie, panel);
   /* Czynność spoza obsłużonych odmawia zamiast milczeć: pozycja bez gałęzi
      wyglądałaby jak działająca. */
   oglos(NAGLOWEK, `Czynność „${kod}" nie jest prowadzona przez to okno.`, 'ostrzezenie');
@@ -484,4 +498,127 @@ async function wejscieSieciowe(otoczenie: Otoczenie, panel: string): Promise<voi
     `okno odrzucania powtórzeń: ${wynik.wynik.deduplicationWindowSeconds} sekund`,
   ]);
   oglos(NAGLOWEK, 'Adres wejścia sieciowego stoi w planie.');
+}
+
+
+const ROLE: ReadonlyArray<readonly [string, string]> = [
+  [WindowRole.Standalone, 'Osobne'],
+  [WindowRole.Coordinator, 'Prowadzące'],
+  [WindowRole.Executor, 'Wykonawcze'],
+];
+
+function nazwaRoli(rola: string): string {
+  return ROLE.find((pozycja) => pozycja[0] === rola)?.[1] ?? rola;
+}
+
+/* Rola mówi, czy okno pracuje samo, prowadzi inne, czy wykonuje zlecone —
+   wykaz bierze wszystkie okna, nie tylko podległe jednemu prowadzącemu. */
+async function wykazRol(otoczenie: Otoczenie): Promise<void> {
+  const wynik = await wywolaj(otoczenie.kanal, Command.RoleList, {});
+  if (!wynik.udany || wynik.wynik === undefined) {
+    oglos(NAGLOWEK, wynik.blad?.message ?? 'Rdzeń odmówił odczytu ról.', 'ostrzezenie');
+    return;
+  }
+  const nadania = wynik.wynik.assignments;
+  wypelnij(otoczenie.korzen, nadania.length === 0
+    ? ['Żadne okno nie ma jeszcze nadanej roli.']
+    : nadania.map((nadanie) => `${nadanie.windowId} · ${nazwaRoli(nadanie.role)}`
+      + (nadanie.persona === undefined || nadanie.persona === ''
+        ? '' : ` · ${nadanie.persona}`)
+      + (nadanie.coordinatorWindowId === undefined
+        ? '' : ` · prowadzi ${nadanie.coordinatorWindowId}`)));
+  oglos(NAGLOWEK, `Ról nadanych: ${String(wynik.wynik.total)}.`);
+}
+
+async function wyborOkien(kanal: Kanal): Promise<ReadonlyArray<readonly [string, string]>> {
+  const wykaz = await wywolaj(kanal, Command.WindowList, {});
+  return (wykaz.wynik?.windows ?? []).map((okno) => [okno.id, okno.title ?? okno.id] as const);
+}
+
+async function wskazOkno(
+  otoczenie: Otoczenie,
+  panel: string,
+  tytul: string,
+  wykonanie: string,
+  dodatkowe: Parameters<typeof zapytajWSzufladzie>[2]['pola'] = [],
+  opis?: string,
+): Promise<Record<string, string> | null> {
+  const wybor = await wyborOkien(otoczenie.kanal);
+  if (wybor.length === 0) {
+    oglos(NAGLOWEK, 'Nie ma jeszcze żadnego okna komunikacji.', 'ostrzezenie');
+    return null;
+  }
+  return zapytajWSzufladzie(otoczenie.korzen, panel, {
+    tytul,
+    ...(opis === undefined ? {} : { opis }),
+    pola: [{ klucz: 'okno', etykieta: 'Okno komunikacji', wybor }, ...dodatkowe],
+    wykonanie,
+  });
+}
+
+async function nadajRole(otoczenie: Otoczenie, panel: string): Promise<void> {
+  const prowadzace = await wyborOkien(otoczenie.kanal);
+  const wartosci = await wskazOkno(otoczenie, panel, 'Nadanie roli oknu', 'Nadaj rolę', [
+    { klucz: 'rola', etykieta: 'Rola', wybor: ROLE },
+    {
+      klucz: 'prowadzace',
+      etykieta: 'Okno prowadzące',
+      wybor: [['', 'bez prowadzącego'] as const, ...prowadzace],
+    },
+  ], 'Okno wykonawcze pracuje pod prowadzącym; osobne nie ma prowadzącego.');
+  if (wartosci === null) return;
+  const wynik = await wywolaj(otoczenie.kanal, Command.RoleAssign, {
+    windowId: wartosci.okno ?? '',
+    role: (wartosci.rola ?? WindowRole.Standalone) as WindowRole,
+    ...(wartosci.prowadzace === '' ? {} : { coordinatorWindowId: wartosci.prowadzace }),
+  });
+  if (!wynik.udany) {
+    oglos(NAGLOWEK, wynik.blad?.message ?? 'Rdzeń odmówił nadania roli.', 'ostrzezenie');
+    return;
+  }
+  oglos(NAGLOWEK, `Okno ma teraz rolę: ${nazwaRoli(wartosci.rola ?? '')}.`);
+  otoczenie.odswiez();
+}
+
+async function poprawRole(otoczenie: Otoczenie, panel: string): Promise<void> {
+  const prowadzace = await wyborOkien(otoczenie.kanal);
+  const wartosci = await wskazOkno(otoczenie, panel, 'Poprawa roli okna', 'Zapisz poprawki', [
+    { klucz: 'rola', etykieta: 'Rola', wybor: ROLE },
+    { klucz: 'postac', etykieta: 'Postać okna' },
+    {
+      klucz: 'prowadzace',
+      etykieta: 'Okno prowadzące',
+      wybor: [['', 'bez prowadzącego'] as const, ...prowadzace],
+    },
+  ]);
+  if (wartosci === null) return;
+  const wynik = await wywolaj(otoczenie.kanal, Command.RoleUpdate, {
+    windowId: wartosci.okno ?? '',
+    role: (wartosci.rola ?? WindowRole.Standalone) as WindowRole,
+    persona: wartosci.postac ?? '',
+    ...(wartosci.prowadzace === '' ? {} : { coordinatorWindowId: wartosci.prowadzace }),
+  });
+  if (!wynik.udany) {
+    oglos(NAGLOWEK, wynik.blad?.message ?? 'Rdzeń odmówił poprawy roli.', 'ostrzezenie');
+    return;
+  }
+  oglos(NAGLOWEK, 'Rola okna poprawiona.');
+  otoczenie.odswiez();
+}
+
+/* Zdjęcie roli zostawia okno bez przydziału: przestaje być prowadzone i samo
+   przestaje prowadzić, więc czynność pyta o potwierdzenie. */
+async function zdejmijRole(otoczenie: Otoczenie, panel: string): Promise<void> {
+  const wartosci = await wskazOkno(otoczenie, panel, 'Zdjęcie roli okna', 'Zdejmij rolę', [],
+    'Okno przestanie być prowadzone i samo przestanie prowadzić inne okna.');
+  if (wartosci === null) return;
+  const wynik = await wywolaj(otoczenie.kanal, Command.RoleRemove, {
+    windowId: wartosci.okno ?? '',
+  });
+  if (!wynik.udany) {
+    oglos(NAGLOWEK, wynik.blad?.message ?? 'Rdzeń odmówił zdjęcia roli.', 'ostrzezenie');
+    return;
+  }
+  oglos(NAGLOWEK, 'Rola okna zdjęta.');
+  otoczenie.odswiez();
 }

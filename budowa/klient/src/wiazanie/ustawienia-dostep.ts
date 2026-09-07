@@ -5,6 +5,13 @@ import type { AccessGrant, AccessPoint } from '../../../shared/contract.ts';
 import type { Kanal } from '../protokol/kanal.ts';
 import { wywolaj } from '../protokol/wywolanie.ts';
 import { oglos } from './ogloszenie.ts';
+import {
+  grupaKatalogu,
+  komorka,
+  komorkaCzynnosci,
+  wypelnijWybor,
+  zdanieWiersza,
+} from './ustawienia-katalog.ts';
 import { zapytajWOknieModalnym } from './pytanie-modalne.ts';
 
 const NAGLOWEK = 'Dostęp do maszyn';
@@ -36,15 +43,25 @@ export function zwiazDostepUstawien(kanal: Kanal, korzen: Element): void {
   if (sekcja === null) return;
   const dokument = sekcja.ownerDocument;
 
-  const punkty = grupa(dokument, 'us-punkty', 'Punkty dostępu',
-    'Katalog maszyn i katalogów, po które sięgają okna komunikacji. Punkt sam '
-    + 'z siebie niczego nie otwiera — dopiero nadanie wiąże go z oknem.',
-    'Dołóż punkt', ['Punkt', 'Rodzaj', 'Korzenie', 'Stan', 'Akcje'], false);
-  const nadania = grupa(dokument, 'us-nadania', 'Nadania dostępu',
-    'Nadania rdzeń prowadzi osobno dla każdego okna komunikacji, więc wykaz '
-    + 'zaczyna się od wskazania okna. Nadanie główne rozstrzyga, gdzie okno '
-    + 'szuka najpierw.',
-    'Nadaj dostęp', ['Okno', 'Punkt', 'Tryb', 'Kolejność', 'Akcje'], true);
+  const punkty = grupaKatalogu(dokument, {
+    kod: 'us-punkty',
+    tytul: 'Punkty dostępu',
+    opis: 'Katalog maszyn i katalogów, po które sięgają okna komunikacji. Punkt '
+      + 'sam z siebie niczego nie otwiera — dopiero nadanie wiąże go z oknem.',
+    napisPrzycisku: 'Dołóż punkt',
+    kolumny: ['Punkt', 'Rodzaj', 'Korzenie', 'Stan', 'Akcje'],
+  });
+  const nadania = grupaKatalogu(dokument, {
+    kod: 'us-nadania',
+    tytul: 'Nadania dostępu',
+    opis: 'Nadania rdzeń prowadzi osobno dla każdego okna komunikacji, więc '
+      + 'wykaz zaczyna się od wskazania okna. Nadanie główne rozstrzyga, gdzie '
+      + 'okno szuka najpierw.',
+    napisPrzycisku: 'Nadaj dostęp',
+    kolumny: ['Okno', 'Punkt', 'Tryb', 'Kolejność', 'Akcje'],
+    poleWyboru: 'okno',
+    napisWyboru: 'Pokaż nadania',
+  });
   sekcja.append(punkty, nadania);
 
   void odswiez(kanal, sekcja);
@@ -74,70 +91,6 @@ export function zwiazDostepUstawien(kanal: Kanal, korzen: Element): void {
     void wykonaj(kanal, sekcja, czynnosc.dataset.dostepCzynnosc ?? '',
       wiersz.dataset.dostepId ?? '');
   });
-}
-
-function grupa(
-  dokument: Document,
-  kod: string,
-  tytul: string,
-  opis: string,
-  napis: string,
-  kolumny: readonly string[],
-  zOknem: boolean,
-): HTMLElement {
-  const pozycja = dokument.createElement('div');
-  pozycja.className = 'us-pozycja';
-
-  const glowa = dokument.createElement('div');
-  glowa.className = 'us-pozycja-glowa';
-  const etykieta = dokument.createElement('span');
-  etykieta.className = 'us-etykieta';
-  etykieta.textContent = tytul;
-  const prawa = dokument.createElement('span');
-  prawa.className = 'us-prawa';
-  if (zOknem) {
-    const okno = dokument.createElement('select');
-    okno.className = 'dn-pole-kontrolka';
-    okno.id = `${kod}-okno`;
-    const pokaz = dokument.createElement('button');
-    pokaz.type = 'button';
-    pokaz.className = 'dn-btn dn-btn--duch dn-btn--sm';
-    pokaz.id = `${kod}-pokaz`;
-    pokaz.textContent = 'Pokaż nadania';
-    prawa.append(okno, pokaz);
-  }
-  const przyciskDodania = dokument.createElement('button');
-  przyciskDodania.type = 'button';
-  przyciskDodania.className = 'dn-btn dn-btn--atrament dn-btn--sm';
-  przyciskDodania.id = `${kod}-dodaj`;
-  przyciskDodania.textContent = napis;
-  prawa.appendChild(przyciskDodania);
-  glowa.append(etykieta, prawa);
-
-  const zdanie = dokument.createElement('p');
-  zdanie.className = 'us-opis';
-  zdanie.textContent = opis;
-
-  const ramka = dokument.createElement('div');
-  ramka.className = 'us-tabela-ramka';
-  const tabela = dokument.createElement('table');
-  tabela.className = 'dn-tabela us-tabela';
-  const glowica = dokument.createElement('thead');
-  const wierszGlowicy = dokument.createElement('tr');
-  for (const nazwa of kolumny) {
-    const komorkaGlowicy = dokument.createElement('th');
-    komorkaGlowicy.scope = 'col';
-    komorkaGlowicy.textContent = nazwa;
-    wierszGlowicy.appendChild(komorkaGlowicy);
-  }
-  glowica.appendChild(wierszGlowicy);
-  const cialo = dokument.createElement('tbody');
-  cialo.id = `${kod}-cialo`;
-  tabela.append(glowica, cialo);
-  ramka.appendChild(tabela);
-
-  pozycja.append(glowa, zdanie, ramka);
-  return pozycja;
 }
 
 async function odswiez(kanal: Kanal, sekcja: Element): Promise<void> {
@@ -184,16 +137,7 @@ async function nazwyPunktow(kanal: Kanal): Promise<Array<readonly [string, strin
 async function wypelnijOkna(kanal: Kanal, sekcja: Element): Promise<void> {
   const wybor = sekcja.querySelector<HTMLSelectElement>('#us-nadania-okno');
   if (wybor === null) return;
-  const okna = await nazwyOkien(kanal);
-  const stojace = wybor.value;
-  wybor.replaceChildren();
-  for (const [wartosc, nazwa] of [['', 'Wskaż okno'] as const, ...okna]) {
-    const pozycja = sekcja.ownerDocument.createElement('option');
-    pozycja.value = wartosc;
-    pozycja.textContent = nazwa;
-    wybor.appendChild(pozycja);
-  }
-  wybor.value = okna.some((pozycja) => pozycja[0] === stojace) ? stojace : '';
+  wypelnijWybor(wybor, await nazwyOkien(kanal), 'Wskaż okno');
 }
 
 /* Rdzeń prowadzi nadania osobno dla każdego okna i bez wskazania okna oddaje
@@ -222,15 +166,6 @@ async function wypelnijNadania(kanal: Kanal, sekcja: Element): Promise<void> {
   cialo.replaceChildren(...nadania.map((nadanie) => wierszNadania(cialo, nadanie)));
 }
 
-function zdanieWiersza(cialo: Element, ile: number, zdanie: string): HTMLElement {
-  const wiersz = cialo.ownerDocument.createElement('tr');
-  const komorkaZdania = cialo.ownerDocument.createElement('td');
-  komorkaZdania.colSpan = ile;
-  komorkaZdania.className = 'us-opis--drobny';
-  komorkaZdania.textContent = zdanie;
-  wiersz.appendChild(komorkaZdania);
-  return wiersz;
-}
 
 function wierszPunktu(cialo: Element, punkt: AccessPoint): HTMLElement {
   const dokument = cialo.ownerDocument;
@@ -247,7 +182,7 @@ function wierszPunktu(cialo: Element, punkt: AccessPoint): HTMLElement {
       ['popraw-punkt', 'Popraw'],
       ['sprawdz-punkt', 'Sprawdź'],
       ['zdejmij-punkt', 'Zdejmij'],
-    ]),
+    ], 'data-dostep-czynnosc'),
   );
   return wiersz;
 }
@@ -266,17 +201,11 @@ function wierszNadania(cialo: Element, nadanie: AccessGrant): HTMLElement {
     komorkaCzynnosci(dokument, [
       ['popraw-nadanie', 'Popraw'],
       ['zdejmij-nadanie', 'Zdejmij'],
-    ]),
+    ], 'data-dostep-czynnosc'),
   );
   return wiersz;
 }
 
-function komorka(dokument: Document, tresc: string, klasa = ''): HTMLElement {
-  const wezel = dokument.createElement('td');
-  if (klasa !== '') wezel.className = klasa;
-  wezel.textContent = tresc;
-  return wezel;
-}
 
 /* Stan punktu mówi o ostatnim sprawdzeniu, a nie o tym, czy punkt jest czynny —
    punkt wyłączony też może odpowiadać, więc obie rzeczy stoją obok siebie. */
@@ -297,24 +226,6 @@ function plakietkaPunktu(dokument: Document, punkt: AccessPoint): HTMLElement {
   return wezel;
 }
 
-function komorkaCzynnosci(
-  dokument: Document,
-  czynnosci: ReadonlyArray<readonly [string, string]>,
-): HTMLElement {
-  const wezel = dokument.createElement('td');
-  const gniazdo = dokument.createElement('span');
-  gniazdo.className = 'us-akcje-komorka';
-  for (const [kod, napis] of czynnosci) {
-    const przyciskCzynnosci = dokument.createElement('button');
-    przyciskCzynnosci.type = 'button';
-    przyciskCzynnosci.className = 'dn-btn dn-btn--duch dn-btn--sm';
-    przyciskCzynnosci.dataset.dostepCzynnosc = kod;
-    przyciskCzynnosci.textContent = napis;
-    gniazdo.appendChild(przyciskCzynnosci);
-  }
-  wezel.appendChild(gniazdo);
-  return wezel;
-}
 
 async function wykonaj(
   kanal: Kanal,

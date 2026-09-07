@@ -77,6 +77,7 @@ import { zwiazDesign, zwolnijDesign } from './design.ts';
 import { zwiazTerminal, zwolnijTerminal } from './terminal.ts';
 import { dolozPozycjeSesji, prowadzNarzedziaSesji, zamknijSesje } from './sesja-narzedzia.ts';
 import { zwiazDostepUstawien } from './ustawienia-dostep.ts';
+import { zwiazKanalyUstawien } from './ustawienia-kanaly.ts';
 import { zwiazKontaUstawien } from './ustawienia-konta.ts';
 import { zwiazPrzegladarke, zwolnijPrzegladarke } from './browser.ts';
 import { otworzOperacjePlatformy } from './platforma-operacje.ts';
@@ -1610,6 +1611,7 @@ function postawOknoUstawien(kanal: Kanal | undefined): void {
   if (kanal !== undefined) {
     zwiazKontaUstawien(kanal, rama);
     zwiazDostepUstawien(kanal, rama);
+    zwiazKanalyUstawien(kanal, rama);
   }
 }
 

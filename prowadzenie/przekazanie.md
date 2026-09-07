@@ -22,7 +22,7 @@ powłoka Tauri i instalator Tauri — obie także w budowie krzyżowej na
 | miara | wartość |
 |---|---|
 | komendy kontraktu | 1089 |
-| komendy wykonalne z klienta | 1089 z 1089: 506 z własnym wołającym, reszta przez katalog operacji |
+| komendy wykonalne z klienta | 1089 z 1089, każda z własnym wołającym w wiązaniu |
 | tabele w bazie po przejeździe migracji | 421 |
 | tabele niosące pracę Operatora | 373, w tym 172 korzenie |
 | granica konta w zapytaniach | domknięta; 15 miejsc rozstrzygniętych, nie dziur |
@@ -535,19 +535,20 @@ powtórzenia bez wymyślania od nowa:
    Każde konto zakłada jeden byt, potem oba pytają o wykazy. Wykaz z rejestru
    w pamięci sprawdzać osobno od wykazu z bazy — to dwie różne drogi.
 
-**Czym jest pokrycie 1086/1086.** Miara liczy komendy wykonalne z interfejsu.
-489 z nich ma wołającego własnego — panel, przycisk albo wykaz zbudowany pod tę
-jedną komendę. Pozostałe wykonuje katalog operacji
-(`klient/src/wiazanie/katalog-modulu.ts`): Operator wybiera komendę rodziny,
-dokłada parametry JSON, a katalog wysyła żądanie i melduje odmowę rdzenia.
-Katalog stoi w dwóch miejscach: w oknie modułu wiązanego z rdzeniem oraz
-w oknie „Operacje platformy" Centrum, które obejmuje każdą rodzinę kontraktu —
-także rodziny modułów zapowiedzianych (rozstrzygnięcie 47).
-To wołający prawdziwy, nie wpis w wykazie — ale nie jest tym samym co panel
-zbudowany pod komendę. Wykazane uruchomieniem: okno „Operacje platformy" (przycisk
-konfiguracji w Centrum) składa 67 katalogów, żaden pusty, razem 1086 komend,
-a wybrana z katalogu `session.list` wykonuje się bez odmowy. Panele dla modułów spoza łańcucha etapu 2 nie powstają
-z rozstrzygnięcia planu: okno zapowiedziane nie staje jako pusta skorupa.
+**Czym jest pokrycie 1089/1089.** Miara liczy komendy, które któreś wiązanie
+klienta woła po nazwie; `narzedzia/pokrycie-wiazan.py` pomija rejestr komend
+i wytwór kontraktu, bo te wymieniają wszystko z definicji. Wołających jest 130
+plików w `klient/src/wiazanie/`, a katalog operacji
+(`klient/src/wiazanie/katalog-modulu.ts`) nie nazywa ani jednej komendy — więc
+liczba mówi o czynnościach zbudowanych pod komendy, nie o wykazie rodzin.
+Katalog stoi obok jako droga do rodzin zapowiedzianych: Operator wybiera
+komendę, dokłada parametry JSON, a katalog melduje odmowę rdzenia.
+
+Miara mówi o kodzie, nie o zachowaniu. Czynność uznaje się za wykonaną dopiero
+wtedy, gdy uruchomiono ją w oknie na stanowisku podglądu i zapisano odpowiedź
+rdzenia — łącznie z gałęzią odmowy. Obchód wszystkich modułów po stanowisku
+staje bez błędów strony; poszczególne czynności wykazują protokoły w opisach
+commitów.
 
 **Okno produktu w przeglądarce.** Osobny rdzeń serwuje pakiet interfejsu, a
 Chromium bez okna (puppeteer-core spod `pa11y`) przechodzi drogę: uruchomienie,

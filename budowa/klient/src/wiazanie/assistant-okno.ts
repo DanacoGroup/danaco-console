@@ -228,8 +228,9 @@ const ZASIEGI_SKLADNIKA: ReadonlyArray<readonly [string, string]> = [
   [ConfigScope.Application, 'Cała platforma'],
 ];
 
-/* Przeniesienie zakłada okno w innym module i wnosi do niego wskazane treści:
-   rozmowa nie wraca do modułu źródłowego, więc czynność pyta o polecenie. */
+/* Przeniesienie zakłada okno w innym module i wnosi do niego wskazane treści.
+   Rdzeń odróżnia wskazanie okna od przeniesienia treści, więc ogłoszenie mówi,
+   która z tych dwóch rzeczy się wydarzyła. */
 async function przeniesKontekst(otoczenie: Otoczenie): Promise<void> {
   const moduly = await wywolaj(otoczenie.kanal, Command.ModuleList, {});
   const wybor = (moduly.wynik?.modules ?? []).map((modul) =>

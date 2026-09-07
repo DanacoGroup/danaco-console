@@ -75,6 +75,8 @@ import { zwiazWorkspace, zwolnijWorkspace } from './workspace.ts';
 import { zwiazAgents, zwolnijAgents } from './agents.ts';
 import { zwiazDesign, zwolnijDesign } from './design.ts';
 import { zwiazTerminal, zwolnijTerminal } from './terminal.ts';
+import { dolozPozycjeSesji, prowadzNarzedziaSesji, zamknijSesje } from './sesja-narzedzia.ts';
+import { zwiazDostepUstawien } from './ustawienia-dostep.ts';
 import { zwiazKontaUstawien } from './ustawienia-konta.ts';
 import { zwiazPrzegladarke, zwolnijPrzegladarke } from './browser.ts';
 import { otworzOperacjePlatformy } from './platforma-operacje.ts';
@@ -1327,6 +1329,7 @@ function zbudujWiersz(wzor: HTMLElement, sesja: Session, przedrostek = 'menu-ses
     menu.id = oznaczenie;
     wyzwalacz.setAttribute('data-menu', oznaczenie);
   }
+  dolozPozycjeSesji(wiersz);
   zdejmijCzynnosciBezZrodla(wiersz);
   /* Identyfikator sesji siada na samej pozycji menu: biblioteka menu przenosi
      treść menu poza wiersz, więc szukanie sesji w przodkach nic nie znajdzie. */
@@ -1365,6 +1368,8 @@ const CZYNNOSCI_SESJI: Record<
   wydaj: (kanal, idSesji) => wydajZapisSesji(kanal, idSesji),
   przywroc: (kanal, idSesji) =>
     wywolaj(kanal, Command.SessionRestore, { sessionIds: [idSesji] }),
+  narzedzia: (kanal, idSesji) => prowadzNarzedziaSesji(kanal, idSesji),
+  zamknij: (kanal, idSesji) => zamknijSesje(kanal, idSesji),
 };
 
 /* Zatrzymanie dotyczy tur biegnących we wszystkich oknach sesji, więc odpowiedź
@@ -1602,7 +1607,10 @@ function postawOknoUstawien(kanal: Kanal | undefined): void {
   if (blok === null || rama === null) return;
   rama.hidden = false;
   rama.replaceChildren(blok.cloneNode(true));
-  if (kanal !== undefined) zwiazKontaUstawien(kanal, rama);
+  if (kanal !== undefined) {
+    zwiazKontaUstawien(kanal, rama);
+    zwiazDostepUstawien(kanal, rama);
+  }
 }
 
 function zapowiedzOknoPlatformowe(droga: DrogaPlatformowa, wezel: HTMLElement): void {

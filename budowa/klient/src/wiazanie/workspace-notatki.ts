@@ -1,7 +1,8 @@
 /**
- * Notatki projektu w panelu „Artefakty"; wywołania z poprzedniego klienta
- * (`wiki-projektu.ts`): `workspace.note.list`, `.note.tree.get`, `.note.get`,
- * `.note.backlink.list` i `workspace.comment.list`.
+ * Notatki projektu w panelu „Artefakty": wykaz, powiązania, założenie strony
+ * i usunięcie stojącej. Wywołania: `workspace.note.list`, `.note.tree.get`,
+ * `.note.get`, `.note.backlink.list`, `.note.save`, `.note.delete`
+ * i `workspace.comment.list`.
  */
 
 import {
@@ -36,6 +37,7 @@ export function zwiazNotatki(
   const cialo = cialoPanelu(wezly.artefakty);
   const wzor = kopiaWzoru(cialo?.querySelector<HTMLElement>('.dn-wykaz-modulu-poz') ?? null);
   for (const stary of cialo?.querySelectorAll('.dn-wykaz-modulu-poz') ?? []) stary.remove();
+  const pole = zalozPasDzialan(cialo);
 
   const odswiez = async (): Promise<void> => {
     const projekt = idProjektu();
@@ -53,16 +55,92 @@ export function zwiazNotatki(
     }
   };
 
-  cialo?.addEventListener('click', (zdarzenie) => {
+  wezly.artefakty?.addEventListener('click', (zdarzenie) => {
     const cel = zdarzenie.target;
     if (!(cel instanceof Element)) return;
+    if (cel.closest('[data-notatka-nowa]') !== null) {
+      zdarzenie.stopPropagation();
+      void zalozNotatke(kanal, pole, idProjektu(), odswiez);
+      return;
+    }
     const wierszMoze = cel.closest<HTMLElement>('[data-notatka]');
     if (wierszMoze === null) return;
     const wiersz = wierszMoze;
+    if (cel.closest('[data-notatka-usun]') !== null) {
+      zdarzenie.stopPropagation();
+      void usunNotatke(kanal, wiersz, odswiez);
+      return;
+    }
+    if (cel.closest('[data-notatka-komentarz]') !== null) {
+      zdarzenie.stopPropagation();
+      void dolozKomentarz(kanal, idProjektu(), wiersz);
+      return;
+    }
     void opiszPowiazania(kanal, idProjektu(), wiersz);
   }, przy);
 
   return { odswiez };
+}
+
+/* Pas działań stoi nad wykazem, bo ciało panelu jest wymieniane przy każdym
+   odświeżeniu i wszystko w nim postawione znikłoby wraz z wykazem. */
+function zalozPasDzialan(cialo: HTMLElement | null): HTMLInputElement | null {
+  if (cialo === null || cialo.parentElement === null) return null;
+  const pas = cialo.ownerDocument.createElement('div');
+  pas.className = 'dn-pas-dzialan';
+  const pole = cialo.ownerDocument.createElement('input');
+  pole.type = 'text';
+  pole.className = 'dn-pole dn-pole--sm';
+  pole.placeholder = 'Tytuł nowej strony';
+  pole.setAttribute('aria-label', 'Tytuł nowej strony');
+  const przycisk = cialo.ownerDocument.createElement('button');
+  przycisk.type = 'button';
+  przycisk.className = 'dn-btn dn-btn--duch dn-btn--sm';
+  przycisk.dataset.notatkaNowa = '';
+  przycisk.textContent = 'Nowa strona';
+  pas.append(pole, przycisk);
+  cialo.parentElement.insertBefore(pas, cialo);
+  return pole;
+}
+
+/* Nowa strona wchodzi z pustą treścią: `workspace.note.save` bez `noteId`
+   zakłada notatkę, a treść dopisuje się w oknie strony. */
+async function zalozNotatke(
+  kanal: Kanal,
+  pole: HTMLInputElement | null,
+  idProjektu: string,
+  odswiez: () => Promise<void>,
+): Promise<void> {
+  const tytul = (pole?.value ?? '').trim();
+  if (idProjektu === '' || tytul === '') return;
+  const wynik = await wywolaj(kanal, Command.WorkspaceNoteSave, {
+    projectId: idProjektu,
+    title: tytul,
+    content: '',
+  });
+  if (przyjmij('Nowa strona', wynik) === null) return;
+  if (pole !== null) pole.value = '';
+  await odswiez();
+}
+
+/* Usunięcie jest nieodwracalne, więc pierwsze naciśnięcie uzbraja przycisk.
+   Bez `withChildren` strony podrzędne przechodzą pod stronę nadrzędną
+   usuwanej, zamiast zniknąć razem z nią. */
+async function usunNotatke(
+  kanal: Kanal,
+  wiersz: HTMLElement,
+  odswiez: () => Promise<void>,
+): Promise<void> {
+  const idNotatki = wiersz.dataset.notatka ?? '';
+  if (idNotatki === '') return;
+  const przycisk = wiersz.querySelector<HTMLElement>('[data-notatka-usun]');
+  if (przycisk !== null && przycisk.dataset.uzbrojone !== 'tak') {
+    przycisk.dataset.uzbrojone = 'tak';
+    przycisk.setAttribute('aria-label', 'Naciśnij ponownie, aby usunąć stronę');
+    return;
+  }
+  const wynik = await wywolaj(kanal, Command.WorkspaceNoteDelete, { noteId: idNotatki });
+  if (przyjmij('Usunięcie strony', wynik) !== null) await odswiez();
 }
 
 async function pobierzNotatki(kanal: Kanal, idProjektu: string): Promise<WorkspaceNote[]> {
@@ -112,7 +190,67 @@ function wierszNotatki(
   }
   wiersz.style.paddingInlineStart = `${glebokosc * 12}px`;
   wiersz.dataset.notatka = notatka.id;
+  const skomentuj = wiersz.ownerDocument.createElement('button');
+  skomentuj.type = 'button';
+  skomentuj.className = 'dn-btn-ikona';
+  skomentuj.dataset.notatkaKomentarz = '';
+  skomentuj.setAttribute('aria-label', 'Dołóż komentarz do strony');
+  skomentuj.textContent = '💬';
+  wiersz.appendChild(skomentuj);
+  const usun = wiersz.ownerDocument.createElement('button');
+  usun.type = 'button';
+  usun.className = 'dn-btn-ikona';
+  usun.dataset.notatkaUsun = '';
+  usun.setAttribute('aria-label', 'Usuń stronę');
+  usun.textContent = '×';
+  wiersz.appendChild(usun);
   return wiersz;
+}
+
+/* Treść komentarza wchodzi w wierszu strony: okna komentarzy wydanie nie
+   niesie, a licznik przy wierszu i tak pokazuje, ile ich jest. */
+async function dolozKomentarz(
+  kanal: Kanal,
+  idProjektu: string,
+  wiersz: HTMLElement,
+): Promise<void> {
+  const idNotatki = wiersz.dataset.notatka ?? '';
+  if (idProjektu === '' || idNotatki === '') return;
+  const tresc = await zapytajWWierszu(wiersz);
+  if (tresc === null || tresc === '') return;
+  const wynik = await wywolaj(kanal, Command.WorkspaceCommentAdd, {
+    projectId: idProjektu,
+    targetKind: WorkspaceEntityKind.Note,
+    targetId: idNotatki,
+    content: tresc,
+  });
+  if (przyjmij('Komentarz', wynik) !== null) await opiszPowiazania(kanal, idProjektu, wiersz);
+}
+
+/* Wiersz staje się polem na czas pisania i wraca do swojej treści; wpis
+   zatwierdza Enter, odwołuje Escape albo odejście wskazania. */
+function zapytajWWierszu(wiersz: HTMLElement): Promise<string | null> {
+  const pole = wiersz.ownerDocument.createElement('input');
+  pole.type = 'text';
+  pole.className = 'dn-pole dn-pole--sm';
+  pole.placeholder = 'Treść komentarza';
+  pole.setAttribute('aria-label', 'Treść komentarza');
+  wiersz.appendChild(pole);
+  pole.focus();
+  return new Promise((rozstrzygnij) => {
+    let domkniete = false;
+    const domknij = (wpis: string | null): void => {
+      if (domkniete) return;
+      domkniete = true;
+      pole.remove();
+      rozstrzygnij(wpis);
+    };
+    pole.addEventListener('keydown', (zdarzenie) => {
+      if (zdarzenie.key === 'Enter') domknij(pole.value.trim());
+      if (zdarzenie.key === 'Escape') domknij(null);
+    });
+    pole.addEventListener('blur', () => domknij(null));
+  });
 }
 
 async function opiszPowiazania(

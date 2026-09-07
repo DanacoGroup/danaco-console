@@ -1042,7 +1042,7 @@ async function zalozKomponent(kanal: Kanal, rodzaj: ComponentKind): Promise<Wyni
 }
 
 // Kontrakt nie zna kopiowania komponentu: kopia zakłada go z definicji stojącej.
-const OPERACJE_KOMPONENTU = new Set(['duplikuj', 'usun']);
+const OPERACJE_KOMPONENTU = new Set(['nazwa', 'duplikuj', 'usun']);
 
 async function wykonajOperacjeKomponentu(
   kanal: Kanal,
@@ -1063,12 +1063,48 @@ async function wykonajOperacjeKomponentu(
   if (operacja === 'usun') {
     return wywolaj(kanal, Command.ComponentDelete, { componentId: idKomponentu });
   }
+  if (operacja === 'nazwa') {
+    return zmienNazweKomponentu(kanal, idKomponentu, zrodlo.name);
+  }
   return wywolaj(kanal, Command.ComponentCreate, {
     kind: zrodlo.kind,
     name: `${zrodlo.name} — kopia`,
     description: zrodlo.description,
     config: zrodlo.config,
   });
+}
+
+/* Pola pominięte w `component.update` zostają bez zmian, więc idzie sama nazwa;
+   pusty wpis znaczy odwołanie i nie wysyła nic. Węzeł nazwy wskazuje pozycja
+   komponentu, nie wiersz sesji — `zapytajWWierszu` szuka po sesjach i dla
+   komponentu oddawało pustkę, więc czynność meldowała powodzenie bez zmiany. */
+async function zmienNazweKomponentu(
+  kanal: Kanal,
+  idKomponentu: string,
+  nazwaStojaca: string,
+): Promise<Wynik<unknown>> {
+  const wezel = wezelNazwyKomponentu(idKomponentu);
+  if (wezel === null) {
+    return {
+      udany: false,
+      blad: {
+        code: ErrorCode.NotFound,
+        message: 'Pozycja komponentu zniknęła z wykazu — odśwież widok.',
+        retryable: false,
+      },
+    };
+  }
+  const wpis = await zapytajWWezle(wezel, nazwaStojaca);
+  if (wpis === null || wpis === '' || wpis === nazwaStojaca) {
+    return { udany: true, wynik: undefined };
+  }
+  return wywolaj(kanal, Command.ComponentUpdate, { componentId: idKomponentu, name: wpis });
+}
+
+function wezelNazwyKomponentu(idKomponentu: string): HTMLElement | null {
+  const otworz = document.querySelector(`[data-otworz-komponent="${idKomponentu}"]`);
+  const pozycja = otworz?.closest('.cd-wlasny') ?? null;
+  return pozycja === null ? null : pozycja.querySelector<HTMLElement>('.dn-kafel-nazwa');
 }
 
 function zdejmijOperacjeBezZrodla(pozycja: HTMLElement): void {
@@ -1232,12 +1268,18 @@ async function odswiezWykaz(
 ): Promise<void> {
   if (wzor === null) return;
   wykaz.replaceChildren();
-  const wynik = await wywolaj(kanal, Command.SessionList, {});
+  /* Archiwum stoi w rdzeniu osobno: `session.list` go nie niesie, więc widok
+     archiwum pyta własną komendą, a nie przesiewa wykazu bieżącego. */
+  const zArchiwum = widokWykazu === 'archiwum';
+  const wynik = zArchiwum
+    ? await wywolaj(kanal, Command.SessionArchiveList, {})
+    : await wywolaj(kanal, Command.SessionList, {});
   if (!wynik.udany || wynik.wynik === undefined) {
     oglos('Wykaz sesji', wynik.blad?.message ?? 'Rdzeń odmówił wykazu sesji.', 'blad');
     return;
   }
-  for (const sesja of uporzadkuj(przesiej(wynik.wynik.sessions))) {
+  const sesje = wynik.wynik.sessions;
+  for (const sesja of uporzadkuj(zArchiwum ? [...sesje] : przesiej(sesje))) {
     wykaz.appendChild(zbudujWiersz(wzor, sesja));
   }
 }
@@ -1317,7 +1359,42 @@ const CZYNNOSCI_SESJI: Record<
     wywolaj(kanal, Command.SessionDelete, { sessionIds: [idSesji], confirm: true }),
   wyjmij: (kanal, idSesji) =>
     wywolaj(kanal, Command.SessionProjectClear, { sessionIds: [idSesji] }),
+  zatrzymaj: (kanal, idSesji) => zatrzymajTury(kanal, idSesji),
+  powiel: (kanal, idSesji) => wywolaj(kanal, Command.SessionCopy, { sessionId: idSesji }),
+  wydaj: (kanal, idSesji) => wydajZapisSesji(kanal, idSesji),
+  przywroc: (kanal, idSesji) =>
+    wywolaj(kanal, Command.SessionRestore, { sessionIds: [idSesji] }),
 };
+
+/* Zatrzymanie dotyczy tur biegnących we wszystkich oknach sesji, więc odpowiedź
+   nazywa ich liczbę — bez tego Operator nie wie, czy cokolwiek stanęło. */
+async function zatrzymajTury(kanal: Kanal, idSesji: string): Promise<Wynik<unknown> | null> {
+  const wynik = await wywolaj(kanal, Command.SessionStop, { sessionId: idSesji });
+  if (!wynik.udany) return wynik;
+  const zatrzymane = wynik.wynik?.stoppedWindowIds?.length ?? 0;
+  oglos('Sesja', zatrzymane === 0
+    ? 'Żadna tura tej sesji nie biegła.'
+    : `Zatrzymano tury w ${zatrzymane} oknach sesji.`);
+  return wynik;
+}
+
+/* Zapis idzie do schowka, bo okno nie ma miejsca, w którym mogłoby zostawić
+   plik: powłoka wskazania katalogu nie prowadzi. Nazwa pliku z rdzenia jest
+   podana, żeby Operator wiedział, pod czym zapis zachować. */
+async function wydajZapisSesji(kanal: Kanal, idSesji: string): Promise<Wynik<unknown> | null> {
+  const wynik = await wywolaj(kanal, Command.SessionExport, { sessionId: idSesji });
+  if (!wynik.udany) return wynik;
+  const tresc = wynik.wynik?.content ?? '';
+  const nazwa = wynik.wynik?.fileName ?? 'sesja';
+  try {
+    await navigator.clipboard.writeText(tresc);
+    oglos('Sesja', `Zapis sesji jest w schowku; nazwa pliku to „${nazwa}".`);
+  } catch {
+    oglos('Sesja', 'Przeglądarka nie dała dostępu do schowka, więc zapis nie został przeniesiony.',
+      'ostrzezenie');
+  }
+  return wynik;
+}
 
 async function zmienNazweSesji(kanal: Kanal, idSesji: string): Promise<Wynik<unknown> | null> {
   const nazwa = await zapytajWWierszu(idSesji, null);
@@ -1458,12 +1535,10 @@ function zdejmijZapowiedziPrototypu(): void {
   }
 }
 
-/* Szukania w oknie nie obsługuje ani wiązanie, ani biblioteka warstwy
-   projektowej, a kontrakt nie ma komendy, po której zakres tego szukania
-   dałoby się poznać. Przycisk schodzi zamiast stać martwy. */
+/* Szukanie w oknie zawęża wiersze już wczytane do panelu — zakresem jest okno,
+   nie rdzeń, bo kontrakt komendy szukania sesji nie ma. */
 const DROGI_BEZ_POKRYCIA = [
   '.cd-sekcja-glowa [data-operacja]',
-  '[data-etykietka="Szukaj w oknie"]',
 ];
 
 function zdejmijDrogiBezPokrycia(): void {
@@ -1577,8 +1652,18 @@ function opiszSrodowisko(karta: HTMLElement, srodowisko: Environment): void {
     opis.textContent = srodowisko.description;
   }
   const miara = karta.querySelector('.dn-karta-srodowiska-motto .cd-metryka-czlon');
-  if (miara !== null) miara.textContent = miaraModulow(srodowisko.moduleCodes?.length ?? 0);
+  if (miara !== null) miara.textContent = miaraKafla(srodowisko);
   opiszStopke(karta, srodowisko.sessionCount ?? 0);
+}
+
+/* Środowisko prowadzone panelem orkiestracji modułów nie ma i mieć nie musi.
+   „0 modułów" czytało się jak brak zawartości, choć kształt jest zamierzony. */
+function miaraKafla(srodowisko: Environment): string {
+  const modulow = srodowisko.moduleCodes?.length ?? 0;
+  if (modulow === 0 && srodowisko.navigationKind === NavigationKind.Orchestration) {
+    return 'panel orkiestracji';
+  }
+  return miaraModulow(modulow);
 }
 
 function opiszStopke(karta: HTMLElement, sesji: number): void {

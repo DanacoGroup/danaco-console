@@ -49,11 +49,24 @@ declare global {
 }
 globalThis.DanacoKanal = kanal;
 
+interface EkranStartowy {
+  gotowe?: () => void;
+  odtworz?: (opcje?: Record<string, unknown>) => void;
+}
+
+function polePoczatku(): (HTMLElement & { ekranStartowy?: EkranStartowy }) | null {
+  return document.querySelector('[data-ekran-startowy]');
+}
+
+/* Składnik staje, gdy scena jest ukryta i pole ma zerowy wymiar. Odtworzenie
+   po pokazaniu okna liczy bieg od zera na polu, które wymiar już ma. */
+function odtworzPoczatek(): void {
+  polePoczatku()?.ekranStartowy?.odtworz?.();
+}
+
 // Ekran startowy niesie `data-czekaj` i stoi do wywołania `gotowe()`.
 function zglosGotowosc(): boolean {
-  const pole = document.querySelector('[data-ekran-startowy]') as
-    (HTMLElement & { ekranStartowy?: { gotowe?: () => void } }) | null;
-  const gotowe = pole?.ekranStartowy?.gotowe;
+  const gotowe = polePoczatku()?.ekranStartowy?.gotowe;
   if (gotowe === undefined) return false;
   gotowe();
   return true;
@@ -64,8 +77,10 @@ function zglosGotowosc(): boolean {
    zgubiony zostawiałby ekran startowy czekający na `gotowe()` bez końca. */
 let gotowoscZgloszona = false;
 let ponowienie: ReturnType<typeof setTimeout> | undefined;
+let wolnoDomknac = false;
 function raz(): void {
   if (gotowoscZgloszona) return;
+  if (!wolnoDomknac) return;
   if (zglosGotowosc()) {
     gotowoscZgloszona = true;
     return;
@@ -95,7 +110,10 @@ transport.naStan((stan) => {
   if (stan === 'rozlaczony') oglos('Połączenie', 'Łączność z rdzeniem zerwana.', 'ostrzezenie');
   if (stan === 'ponawianie') oglos('Połączenie', 'Wznawianie łączności z rdzeniem.', 'ostrzezenie');
 });
-globalThis.setTimeout(raz, 6000);
+globalThis.setTimeout(() => {
+  wolnoDomknac = true;
+  raz();
+}, 6000);
 
 /* Token sesji bramki przejmowany jest z odpowiedzi rdzenia, bo to on rozstrzyga
    o ważności sesji; powitanie ponawiane niesie go z powrotem. */
@@ -172,6 +190,12 @@ function pokazRaz(): void {
   if (pokazano) return;
   pokazano = true;
   pokazOknoPowloki();
+  // Odwrotna kolejność gasi ekran przed pokazem.
+  requestAnimationFrame(() => {
+    odtworzPoczatek();
+    wolnoDomknac = true;
+    raz();
+  });
 }
 function pokazPoZlozeniu(odKiedy: number): void {
   if (ekranStartowyStoi() || Date.now() - odKiedy >= ZAPORA_POKAZANIA_MS) {

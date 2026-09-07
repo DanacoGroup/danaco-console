@@ -21,6 +21,7 @@ import { przygotujSrodowisko, zwiazPasPrzygotowania } from './wejscie-przygotowa
 import { powlokaStoi, stanRdzenia, wskazRdzen, wskazanieRdzenia } from './wejscie-powloka.ts';
 import { zapamietajMetody, zwiazMetody } from './logowanie-metody.ts';
 import { zwiazPrzedsionek } from './przedsionek.ts';
+import { zwiazSzukanieWOknie } from './szukanie-w-oknie.ts';
 
 interface EkranStartowy {
   gotowe(): void;
@@ -72,6 +73,7 @@ export function zwiazWejscie(podany?: Kanal): void {
     zwiazMetody(most);
     zwiazPasPrzygotowania(most);
     zwiazPrzedsionek(most);
+    zwiazSzukanieWOknie();
   });
   gotowosc(() => {
     void powitaj(most);
@@ -110,11 +112,19 @@ function etapLaczeniaAktywny(): boolean {
   return document.querySelector('.we-scena[data-widok="laczenie"][data-widok-aktywny="tak"]') !== null;
 }
 
+/* Zdarzenie końca należy do ekranu startowego. Podrabiane tutaj gasiło pokaz
+   w chwili odpowiedzi rdzenia. Bez składnika idzie wprost: okno nie może
+   czekać na zdarzenie, którego nie ma kto wysłać. */
 function odegrajLaczenie(wariant: 'w-laczenie' | 'w-token' = 'w-laczenie'): void {
   ustawWariant(wariant);
-  document
-    .querySelector('[data-ekran-startowy]')
-    ?.dispatchEvent(new CustomEvent('ekran-startowy-koniec', { bubbles: true }));
+  const pole = document.querySelector('[data-ekran-startowy]');
+  const ekran = (pole as unknown as { ekranStartowy?: EkranStartowy } | null)?.ekranStartowy;
+  if (pole === null) return;
+  if (ekran === undefined) {
+    pole.dispatchEvent(new CustomEvent('ekran-startowy-koniec', { bubbles: true }));
+    return;
+  }
+  domknijEkranStartowy();
 }
 
 // Rdzeń adresuje `auth.changed` do konta, nie do jednego urządzenia sesji.
@@ -291,10 +301,38 @@ async function przyjmijWskazanie(adres: string): Promise<void> {
   }
 }
 
+/* Powitanie z rdzenia na tej samej maszynie wraca szybciej, niż scena zdąży
+   się pokazać, więc domknięcie ucinało bieg przed pierwszą klatką. Zgoda czeka
+   na wymiar pola i na czas pokazu. */
+const NAJKROTSZY_POKAZ_MS = 1400;
+let odKiedyWidoczny = 0;
+let domkniecieZamowione = false;
+
 function domknijEkranStartowy(): void {
-  const pole = document.querySelector('[data-ekran-startowy]');
+  domkniecieZamowione = true;
+  domknijGdyPokazany();
+}
+
+function domknijGdyPokazany(): void {
+  const pole = document.querySelector<HTMLElement>('[data-ekran-startowy]');
   const ekran = (pole as unknown as { ekranStartowy?: EkranStartowy } | null)?.ekranStartowy;
-  ekran?.gotowe();
+  if (pole === null || ekran === undefined) {
+    globalThis.setTimeout(domknijGdyPokazany, 60);
+    return;
+  }
+  if (pole.offsetWidth === 0 || pole.offsetHeight === 0) {
+    odKiedyWidoczny = 0;
+    globalThis.setTimeout(domknijGdyPokazany, 60);
+    return;
+  }
+  if (odKiedyWidoczny === 0) odKiedyWidoczny = Date.now();
+  const pozostalo = NAJKROTSZY_POKAZ_MS - (Date.now() - odKiedyWidoczny);
+  if (pozostalo > 0) {
+    globalThis.setTimeout(domknijGdyPokazany, pozostalo);
+    return;
+  }
+  if (!domkniecieZamowione) return;
+  ekran.gotowe();
 }
 
 async function wykonaj(

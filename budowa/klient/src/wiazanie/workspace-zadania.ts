@@ -8,6 +8,7 @@
 import {
   Command,
   WorkspaceAssigneeKind,
+  WorkspaceCalendarSpan,
   WorkspaceTaskStatus,
   type WorkspaceBoard,
   type WorkspaceScheduleBar,
@@ -85,6 +86,11 @@ export function zwiazZadania(
       if (wierszMoze === null) return;
       const wiersz = wierszMoze;
       const idZadania = wiersz.dataset.zadanie ?? '';
+      if (cel.closest('[data-zadanie-usun]') !== null) {
+        zdarzenie.stopPropagation();
+        void usunZadanie(kanal, wiersz, idZadania, odswiez);
+        return;
+      }
       const stan = wiersz.dataset.stan ?? WorkspaceTaskStatus.Todo;
       const kolumna = wiersz.dataset.nastepnaKolumna ?? '';
       void (kolumna === ''
@@ -94,7 +100,84 @@ export function zwiazZadania(
     przy,
   );
 
+  wezly.pulpit.querySelector('[data-zadanie-nowe]')?.addEventListener(
+    'click',
+    () => {
+      void zalozZadanie(kanal, lista, wzor, idProjektu(), odswiez);
+    },
+    przy,
+  );
+
   return { odswiez };
+}
+
+/* Okna zakładania zadania wydanie nie niesie, więc tytuł wchodzi wprost w
+   wierszu wstawionym na czoło listy — tą samą drogą, którą idzie nazwa
+   komponentu w Centrum. Pusty wpis znaczy odwołanie. */
+async function zalozZadanie(
+  kanal: Kanal,
+  lista: HTMLElement | null,
+  wzor: HTMLElement | null,
+  idProjektu: string,
+  odswiez: () => Promise<void>,
+): Promise<void> {
+  if (lista === null || wzor === null || idProjektu === '') return;
+  const wiersz = kopiaWzoru(wzor);
+  if (wiersz === null) return;
+  for (const zbedne of wiersz.querySelectorAll('[data-zadanie-usun], .dn-meta')) zbedne.remove();
+  const pole = wiersz.querySelector<HTMLElement>('.wk-zadanie-tytul') ?? wiersz;
+  lista.prepend(wiersz);
+  const tytul = await zapytajWWezle(pole, '');
+  wiersz.remove();
+  if (tytul === null || tytul === '') return;
+  const wynik = await wywolaj(kanal, Command.WorkspaceTaskCreate, { projectId: idProjektu, title: tytul });
+  if (przyjmij('Nowe zadanie', wynik) !== null) await odswiez();
+}
+
+/* Usunięcie zadania jest nieodwracalne, więc pierwsze naciśnięcie uzbraja
+   przycisk, a dopiero drugie wysyła komendę. */
+async function usunZadanie(
+  kanal: Kanal,
+  wiersz: HTMLElement,
+  idZadania: string,
+  odswiez: () => Promise<void>,
+): Promise<void> {
+  if (idZadania === '') return;
+  const przycisk = wiersz.querySelector<HTMLElement>('[data-zadanie-usun]');
+  if (przycisk !== null && przycisk.dataset.uzbrojone !== 'tak') {
+    przycisk.dataset.uzbrojone = 'tak';
+    przycisk.setAttribute('aria-label', 'Naciśnij ponownie, aby usunąć zadanie');
+    return;
+  }
+  const wynik = await wywolaj(kanal, Command.WorkspaceTaskDelete, { taskId: idZadania });
+  if (przyjmij('Usunięcie zadania', wynik) !== null) await odswiez();
+}
+
+/* Wpis w węźle listy: węzeł staje się polem na czas pisania i wraca do swojej
+   treści po zatwierdzeniu albo odwołaniu. */
+function zapytajWWezle(wezel: HTMLElement, wartosc: string): Promise<string | null> {
+  const przed = wezel.textContent ?? '';
+  return new Promise((rozstrzygnij) => {
+    let domkniete = false;
+    const domknij = (wpis: string | null): void => {
+      if (domkniete) return;
+      domkniete = true;
+      wezel.removeAttribute('contenteditable');
+      wezel.textContent = przed;
+      rozstrzygnij(wpis);
+    };
+    wezel.setAttribute('contenteditable', 'plaintext-only');
+    wezel.textContent = wartosc;
+    wezel.focus();
+    wezel.addEventListener('keydown', (zdarzenie) => {
+      if (zdarzenie.key === 'Enter') {
+        zdarzenie.preventDefault();
+        domknij((wezel.textContent ?? '').trim());
+      }
+      if (zdarzenie.key === 'Escape') domknij(null);
+    });
+    wezel.addEventListener('blur', () => domknij(null));
+  });
 }
 
 function wypelnijListe(lista: HTMLElement, wzor: HTMLElement, zadania: WorkspaceTask[]): void {
@@ -238,6 +321,42 @@ export async function opiszPlan(
   for (const pasek of [...paski].sort((jeden, drugi) => jeden.startAt - drugi.startAt)) {
     const wiersz = wierszPaska(wzor, pasek);
     if (wiersz !== null) cialo.appendChild(wiersz);
+  }
+  await dopiszKalendarz(cialo, wzor, kanal, idProjektu);
+}
+
+/* Harmonogram pokazuje paski zadań, a kalendarz terminy i kamienie milowe —
+   to dwa różne wykazy rdzenia, więc miesiąc bieżący dochodzi pod paskami
+   zamiast je zastępować. Kotwicą jest chwila otwarcia panelu. */
+async function dopiszKalendarz(
+  cialo: HTMLElement,
+  wzor: HTMLElement | null,
+  kanal: Kanal,
+  idProjektu: string,
+): Promise<void> {
+  if (wzor === null) return;
+  const wynik = await wywolaj(kanal, Command.WorkspaceCalendarGet, {
+    projectId: idProjektu,
+    span: WorkspaceCalendarSpan.Month,
+    anchorAt: Date.now(),
+  });
+  const pozycje = przyjmij('Kalendarz projektu', wynik)?.entries ?? [];
+  if (pozycje.length === 0) return;
+  const naglowek = cialo.ownerDocument.createElement('div');
+  naglowek.className = 'pt-etykieta';
+  naglowek.textContent = 'Kalendarz miesiąca';
+  cialo.appendChild(naglowek);
+  for (const pozycja of pozycje) {
+    const wiersz = kopiaWzoru(wzor);
+    if (wiersz === null) continue;
+    const meta = wiersz.querySelector<HTMLElement>('.dn-meta');
+    wiersz.replaceChildren();
+    wiersz.append(`${pozycja.milestone === true ? '◆ ' : ''}${pozycja.title} `);
+    if (meta !== null) {
+      meta.textContent = data(pozycja.startAt);
+      wiersz.appendChild(meta);
+    }
+    cialo.appendChild(wiersz);
   }
 }
 

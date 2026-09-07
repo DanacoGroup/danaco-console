@@ -28,6 +28,8 @@ import { zwiazWersje } from './agents-wersje.ts';
 import { zwiazZespoly } from './agents-zespoly.ts';
 import { zwiazKatalogModulu } from './katalog-modulu.ts';
 import { zwiazRejestrKonektorow } from './agents-rejestr.ts';
+import { zwiazPamiecAgentow } from './agents-pamiec.ts';
+import { zapewnijSesje } from './sesja-biezaca.ts';
 import { pustka, tekst, type StanowiskoEkspertow } from './agents-wspolne.ts';
 
 interface WiazanieKarty {
@@ -174,6 +176,17 @@ export function zwiazAgents(
   zwiazRejestrKonektorow(kanal, korzen, () => {
     biblioteka?.odswiez();
   }, (zdejmij) => {
+    odlaczenia.push(zdejmij);
+  }, przy);
+
+  /* Kontekst pamięci wchodzi do sesji karty, nie do okna modułu, więc
+     czynności pamięci potrzebują wskazania sesji. */
+  let idSesji = '';
+  void (async (): Promise<void> => {
+    idSesji = await zapewnijSesje(kanal, idKarty, 'Agenci');
+  })();
+
+  zwiazPamiecAgentow(kanal, korzen, () => idSesji, (zdejmij) => {
     odlaczenia.push(zdejmij);
   }, przy);
 

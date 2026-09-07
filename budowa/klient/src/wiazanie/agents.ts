@@ -29,6 +29,7 @@ import { zwiazZespoly } from './agents-zespoly.ts';
 import { zwiazKatalogModulu } from './katalog-modulu.ts';
 import { zwiazRejestrKonektorow } from './agents-rejestr.ts';
 import { zwiazPamiecAgentow } from './agents-pamiec.ts';
+import { zwiazIzolacjeAgentow } from './agents-izolacja.ts';
 import { zapewnijSesje } from './sesja-biezaca.ts';
 import { pustka, tekst, type StanowiskoEkspertow } from './agents-wspolne.ts';
 
@@ -187,6 +188,10 @@ export function zwiazAgents(
   })();
 
   zwiazPamiecAgentow(kanal, korzen, () => idSesji, (zdejmij) => {
+    odlaczenia.push(zdejmij);
+  }, przy);
+
+  zwiazIzolacjeAgentow(kanal, korzen, () => idSesji, (zdejmij) => {
     odlaczenia.push(zdejmij);
   }, przy);
 

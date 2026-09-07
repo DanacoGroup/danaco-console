@@ -19,6 +19,7 @@ import {
 import { zwiazKatalogModulu } from './katalog-modulu.ts';
 import { zwiazCzynnosciDiagnostyki } from './diagnostics-czynnosci.ts';
 import { zwiazCzuwanieDiagnostyki } from './diagnostics-czuwanie.ts';
+import { zwiazPochodzenieDiagnostyki } from './diagnostics-pochodzenie.ts';
 
 const KOD_MODULU = 'diagnostics';
 
@@ -88,6 +89,10 @@ export function zwiazDiagnostyke(
   }, przy);
 
   zwiazCzuwanieDiagnostyki(kanal, korzen, (zdejmij) => {
+    odlaczenia.push(zdejmij);
+  }, przy);
+
+  zwiazPochodzenieDiagnostyki(kanal, korzen, () => idOkna, (zdejmij) => {
     odlaczenia.push(zdejmij);
   }, przy);
 

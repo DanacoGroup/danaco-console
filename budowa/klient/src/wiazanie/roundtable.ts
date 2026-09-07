@@ -21,6 +21,13 @@ import {
   zdejmijTrescWspolna,
 } from './okno-modulu.ts';
 import { zwiazKatalogModulu } from './katalog-modulu.ts';
+import { zwiazObrady } from './roundtable-obrady.ts';
+import { zwiazArgumenty } from './roundtable-argumenty.ts';
+import { zwiazMiary } from './roundtable-miary.ts';
+import { zwiazProwadzenie } from './roundtable-prowadzenie.ts';
+import { zwiazSklad } from './roundtable-sklad.ts';
+import { zwiazStanowisko } from './roundtable-stanowisko.ts';
+import { zwiazZespoly } from './roundtable-zespoly.ts';
 
 const KOD_MODULU = 'roundtable';
 
@@ -58,6 +65,23 @@ export function zwiazDebate(
   }
   zdejmijTrescPrzykladowa(korzen);
   void opiszNaglowek(kanal, nazwaSrodowiska, korzen);
+  zwiazObrady(kanal, korzen, () => idOkna, () => {
+    void odswiez();
+  }, przy);
+  zwiazSklad(kanal, korzen, () => idOkna, () => {
+    void odswiez();
+  }, przy);
+  zwiazZespoly(kanal, korzen, () => idOkna, () => {
+    void odswiez();
+  }, przy);
+  zwiazProwadzenie(kanal, korzen, () => idOkna, () => {
+    void odswiez();
+  }, przy);
+  zwiazArgumenty(kanal, korzen, () => idOkna, () => {
+    void odswiez();
+  }, przy);
+  zwiazMiary(kanal, korzen, () => idOkna, przy);
+  zwiazStanowisko(kanal, korzen, () => idOkna, przy);
 
   let idOkna = idOknaStojacego;
   const odswiez = async (): Promise<void> => {

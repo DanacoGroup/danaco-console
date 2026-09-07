@@ -24,6 +24,17 @@ import {
   zdejmijTrescWspolna,
 } from './okno-modulu.ts';
 import { zwiazKatalogModulu } from './katalog-modulu.ts';
+import type { KontekstBadania } from './research-czynnosci.ts';
+import { zwiazCzynnosciObserwacji } from './research-obserwacje.ts';
+import { zwiazCzynnosciObszaru } from './research-obszar.ts';
+import { zwiazCzynnosciRaportu } from './research-raport.ts';
+import { wierszUstalenia, zwiazCzynnosciUstalen } from './research-ustalenia.ts';
+import { wierszZrodla, zwiazCzynnosciZrodel } from './research-zrodla.ts';
+import { zwiazCzynnosciLektury } from './research-lektura.ts';
+import { zwiazCzynnosciRecenzji } from './research-recenzja.ts';
+import { zwiazCzynnosciRzetelnosci } from './research-rzetelnosc.ts';
+import { zwiazCzynnosciSyntezy } from './research-synteza.ts';
+import { zwiazCzynnosciWydobycia } from './research-wydobycie.ts';
 
 const KOD_MODULU = 'research';
 
@@ -94,6 +105,23 @@ export function zwiazBadania(
     void wniesZrodlo(kanal, korzen, idOkna).then(odswiez);
   }, przy);
 
+  const kontekst: KontekstBadania = {
+    kanal,
+    korzen,
+    idOkna: () => idOkna,
+    odswiez,
+  };
+  odlaczenia.push(zwiazCzynnosciZrodel(kontekst));
+  odlaczenia.push(zwiazCzynnosciUstalen(kontekst));
+  odlaczenia.push(zwiazCzynnosciRaportu(kontekst));
+  odlaczenia.push(zwiazCzynnosciObszaru(kontekst));
+  odlaczenia.push(zwiazCzynnosciObserwacji(kontekst));
+  odlaczenia.push(zwiazCzynnosciWydobycia(kontekst));
+  odlaczenia.push(zwiazCzynnosciSyntezy(kontekst));
+  odlaczenia.push(zwiazCzynnosciRecenzji(kontekst));
+  odlaczenia.push(zwiazCzynnosciRzetelnosci(kontekst));
+  odlaczenia.push(zwiazCzynnosciLektury(kontekst));
+
   const katalog = zwiazKatalogModulu(kanal, idOkna, korzen, KOD_MODULU, 'Badania');
   if (katalog !== null) odlaczenia.push(katalog);
   return true;
@@ -157,7 +185,7 @@ async function wypelnijZrodla(kanal: Kanal, korzen: Element, idOkna: string): Pr
     niegotowe(cialo, 'Żadne źródło nie zostało jeszcze wniesione.');
     return;
   }
-  cialo.replaceChildren(...zrodla.map((zrodlo) => pozycja(cialo, zrodlo.title, zrodlo.url ?? zrodlo.kind)));
+  cialo.replaceChildren(...zrodla.map((zrodlo) => wierszZrodla(cialo, zrodlo)));
 }
 
 async function wypelnijUstalenia(kanal: Kanal, korzen: Element, idOkna: string): Promise<void> {
@@ -173,7 +201,7 @@ async function wypelnijUstalenia(kanal: Kanal, korzen: Element, idOkna: string):
     niegotowe(cialo, 'Żadne ustalenie nie zostało jeszcze zapisane.');
     return;
   }
-  cialo.replaceChildren(...ustalenia.map((u) => pozycja(cialo, u.content, u.status ?? '')));
+  cialo.replaceChildren(...ustalenia.map((u) => wierszUstalenia(cialo, u)));
 }
 
 async function wypelnijWyciagi(kanal: Kanal, korzen: Element, idOkna: string): Promise<void> {

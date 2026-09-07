@@ -10,19 +10,51 @@ import {
   type BrowserMonitor,
   type BrowserWorkspace,
 } from '../../../shared/contract.ts';
+import type { Odsubskrybuj } from '../polaczenie/magistrala-zdarzen.ts';
 import { zglosUchwyt } from '../polaczenie/rozdzielacz-zdarzen.ts';
 import type { Kanal } from '../protokol/kanal.ts';
 import { wywolaj } from '../protokol/wywolanie.ts';
-import { oglos } from './ogloszenie.ts';
+import { dolozPrzycisk, odmowa } from './browser-wspolne.ts';
+
+export interface DzialanieSzyny {
+  etykieta: string;
+  cecha: string;
+  wartosc: string;
+}
+
+export interface PozycjaSzyny {
+  tytul: string;
+  cechy: Record<string, string>;
+  dzialania?: DzialanieSzyny[];
+}
+
+export interface WytworyPrzegladania {
+  odlaczenia: Odsubskrybuj[];
+  odswiezZakladki: () => void;
+  odswiezObserwacje: () => void;
+  odswiezKanaly: () => void;
+  odswiezPrzestrzenie: () => void;
+  odswiezPobrania: () => void;
+}
+
+export function szynaModulu(korzen: Element): Element | null {
+  return korzen.querySelector('.dn-szyna-modulu-lista');
+}
 
 export async function zwiazWytworyPrzegladania(
   kanal: Kanal,
   korzen: Element,
   idOkna: string,
   przy: AddEventListenerOptions,
-): Promise<void> {
-  const szyna = korzen.querySelector('.dn-szyna-modulu-lista');
+): Promise<WytworyPrzegladania> {
+  const szyna = szynaModulu(korzen);
   if (szyna !== null) zdejmijPozycjeWzorcowe(szyna);
+
+  const odswiezZakladki = (): void => void postawZakladki(kanal, szyna, idOkna);
+  const odswiezObserwacje = (): void => void postawObserwacje(kanal, szyna, idOkna);
+  const odswiezKanaly = (): void => void postawKanaly(kanal, szyna, idOkna);
+  const odswiezPrzestrzenie = (): void => void postawPrzestrzenie(kanal, szyna);
+  const odswiezPobrania = (): void => void wypelnijPobrania(kanal, korzen, idOkna);
 
   await Promise.all([
     postawZakladki(kanal, szyna, idOkna),
@@ -30,7 +62,7 @@ export async function zwiazWytworyPrzegladania(
     postawKanaly(kanal, szyna, idOkna),
     postawPrzestrzenie(kanal, szyna),
   ]);
-  void wypelnijPobrania(kanal, korzen, idOkna);
+  odswiezPobrania();
 
   korzen.addEventListener('click', (zdarzenie) => {
     const cel = zdarzenie.target;
@@ -57,12 +89,19 @@ export async function zwiazWytworyPrzegladania(
     }
   }, przy);
 
-  zglosUchwyt(EventType.BrowserDownloadChanged, () => {
-    void wypelnijPobrania(kanal, korzen, idOkna);
-  });
-  zglosUchwyt(EventType.BrowserMonitorChanged, () => {
-    void postawObserwacje(kanal, szyna, idOkna);
-  });
+  const odlaczenia = [
+    zglosUchwyt(EventType.BrowserDownloadChanged, odswiezPobrania),
+    zglosUchwyt(EventType.BrowserMonitorChanged, odswiezObserwacje),
+  ];
+
+  return {
+    odlaczenia,
+    odswiezZakladki,
+    odswiezObserwacje,
+    odswiezKanaly,
+    odswiezPrzestrzenie,
+    odswiezPobrania,
+  };
 }
 
 /* Znacznik niesie nazwy zakładek i obserwacji wpisane wprost; pozycje wzorcowe
@@ -76,7 +115,7 @@ async function postawZakladki(kanal: Kanal, szyna: Element | null, idOkna: strin
   const wynik = await wywolaj(kanal, Command.BrowserBookmarkList, { windowId: idOkna });
   if (!wynik.udany) return;
   const zakladki = (wynik.wynik as { bookmarks?: BrowserBookmark[] } | undefined)?.bookmarks ?? [];
-  postawGrupe(szyna, 'Zakładki', zakladki.map((zakladka) => ({
+  postawGrupeSzyny(szyna, 'zakladki', 'Zakładki', zakladki.map((zakladka) => ({
     tytul: zakladka.title ?? zakladka.url,
     cechy: { zakladkaZdejmij: zakladka.id },
   })));
@@ -87,9 +126,10 @@ async function postawObserwacje(kanal: Kanal, szyna: Element | null, idOkna: str
   const wynik = await wywolaj(kanal, Command.BrowserMonitorList, { windowId: idOkna });
   if (!wynik.udany) return;
   const obserwacje = (wynik.wynik as { monitors?: BrowserMonitor[] } | undefined)?.monitors ?? [];
-  postawGrupe(szyna, 'Obserwacje stron', obserwacje.map((obserwacja) => ({
-    tytul: obserwacja.url,
+  postawGrupeSzyny(szyna, 'obserwacje', 'Obserwacje stron', obserwacje.map((obserwacja) => ({
+    tytul: `${obserwacja.url} — ${obserwacja.status}`,
     cechy: { obserwacjaSprawdz: obserwacja.id },
+    dzialania: [{ etykieta: 'Zdejmij', cecha: 'obserwacjaZdejmij', wartosc: obserwacja.id }],
   })));
 }
 
@@ -98,7 +138,7 @@ async function postawKanaly(kanal: Kanal, szyna: Element | null, idOkna: string)
   const wynik = await wywolaj(kanal, Command.BrowserFeedList, { windowId: idOkna });
   if (!wynik.udany) return;
   const kanaly = (wynik.wynik as { feeds?: BrowserFeed[] } | undefined)?.feeds ?? [];
-  postawGrupe(szyna, 'Kanały treści', kanaly.map((pozycja) => ({
+  postawGrupeSzyny(szyna, 'kanaly', 'Kanały treści', kanaly.map((pozycja) => ({
     tytul: pozycja.title ?? pozycja.url,
     cechy: { kanalZdejmij: pozycja.id },
   })));
@@ -110,9 +150,10 @@ async function postawPrzestrzenie(kanal: Kanal, szyna: Element | null): Promise<
   if (!wynik.udany) return;
   const przestrzenie =
     (wynik.wynik as { workspaces?: BrowserWorkspace[] } | undefined)?.workspaces ?? [];
-  postawGrupe(szyna, 'Przestrzenie kart', przestrzenie.map((przestrzen) => ({
-    tytul: przestrzen.name,
+  postawGrupeSzyny(szyna, 'przestrzenie', 'Przestrzenie kart', przestrzenie.map((przestrzen) => ({
+    tytul: `${przestrzen.name} — kart: ${przestrzen.tabCount}`,
     cechy: { przestrzenOtworz: przestrzen.id },
+    dzialania: [{ etykieta: 'Usuń', cecha: 'przestrzenUsun', wartosc: przestrzen.id }],
   })));
 }
 
@@ -133,22 +174,48 @@ async function wypelnijPobrania(kanal: Kanal, korzen: Element, idOkna: string): 
   for (const pobranie of pobrania) {
     const wiersz = document.createElement('div');
     wiersz.className = 'br-artefakt';
-    wiersz.textContent = `${pobranie.fileName ?? pobranie.url} — ${pobranie.status}`;
+    wiersz.dataset.pobranie = pobranie.id;
+    const opis = document.createElement('span');
+    opis.textContent = `${pobranie.fileName ?? pobranie.url} — ${pobranie.status}`;
+    wiersz.append(opis);
+    const rzad = document.createElement('div');
+    rzad.className = 'sta-chip-rzad';
+    for (const [etykieta, czynnosc] of CZYNNOSCI_POBRANIA) {
+      dolozPrzycisk(rzad, etykieta, 'pobranieCzynnosc', czynnosc);
+    }
+    wiersz.append(rzad);
     gniazdo.append(wiersz);
   }
 }
 
-interface PozycjaSzyny {
-  tytul: string;
-  cechy: Record<string, string>;
-}
+const CZYNNOSCI_POBRANIA: readonly (readonly [string, string])[] = [
+  ['Wstrzymaj', 'pause'],
+  ['Wznów', 'resume'],
+  ['Przerwij', 'cancel'],
+  ['Ponów', 'retry'],
+  ['Usuń', 'remove'],
+];
 
-function postawGrupe(szyna: Element, etykieta: string, pozycje: PozycjaSzyny[]): void {
+/* Grupa stoi we własnym pojemniku pod kluczem: odświeżenie jednej grupy
+   wymienia jej zawartość zamiast dokładać drugi nagłówek obok pierwszego. */
+export function postawGrupeSzyny(
+  szyna: Element,
+  klucz: string,
+  etykieta: string,
+  pozycje: PozycjaSzyny[],
+): void {
+  let pojemnik = szyna.querySelector<HTMLElement>(`[data-grupa-szyny="${klucz}"]`);
+  if (pojemnik === null) {
+    pojemnik = document.createElement('div');
+    pojemnik.dataset.grupaSzyny = klucz;
+    szyna.append(pojemnik);
+  }
+  pojemnik.replaceChildren();
   if (pozycje.length === 0) return;
   const naglowek = document.createElement('div');
   naglowek.className = 'dn-etyk-mono';
   naglowek.textContent = etykieta;
-  szyna.append(naglowek);
+  pojemnik.append(naglowek);
   for (const pozycja of pozycje) {
     const przycisk = document.createElement('button');
     przycisk.className = 'pt-pozycja';
@@ -160,7 +227,14 @@ function postawGrupe(szyna: Element, etykieta: string, pozycje: PozycjaSzyny[]):
     tytul.className = 'pt-pozycja-tytul';
     tytul.textContent = pozycja.tytul;
     przycisk.append(tytul);
-    szyna.append(przycisk);
+    pojemnik.append(przycisk);
+    if (pozycja.dzialania === undefined || pozycja.dzialania.length === 0) continue;
+    const rzad = document.createElement('div');
+    rzad.className = 'sta-chip-rzad';
+    for (const dzialanie of pozycja.dzialania) {
+      dolozPrzycisk(rzad, dzialanie.etykieta, dzialanie.cecha, dzialanie.wartosc);
+    }
+    pojemnik.append(rzad);
   }
 }
 
@@ -173,7 +247,7 @@ async function zdejmijZakladke(
   if (id === '') return;
   const wynik = await wywolaj(kanal, Command.BrowserBookmarkRemove, { bookmarkId: id });
   if (!wynik.udany) {
-    oglos('Przeglądanie', wynik.blad?.message ?? 'Zakładka nie została zdjęta.', 'blad');
+    odmowa(wynik.blad, 'Zakładka nie została zdjęta.');
     return;
   }
   void postawZakladki(kanal, szyna, idOkna);
@@ -183,7 +257,7 @@ async function sprawdzObserwacje(kanal: Kanal, id: string): Promise<void> {
   if (id === '') return;
   const wynik = await wywolaj(kanal, Command.BrowserMonitorCheck, { monitorId: id });
   if (!wynik.udany) {
-    oglos('Przeglądanie', wynik.blad?.message ?? 'Obserwacja nie została sprawdzona.', 'blad');
+    odmowa(wynik.blad, 'Obserwacja nie została sprawdzona.');
   }
 }
 
@@ -196,7 +270,7 @@ async function zdejmijKanal(
   if (id === '') return;
   const wynik = await wywolaj(kanal, Command.BrowserFeedRemove, { feedId: id });
   if (!wynik.udany) {
-    oglos('Przeglądanie', wynik.blad?.message ?? 'Kanał nie został zdjęty.', 'blad');
+    odmowa(wynik.blad, 'Kanał nie został zdjęty.');
     return;
   }
   void postawKanaly(kanal, szyna, idOkna);
@@ -209,6 +283,6 @@ async function otworzPrzestrzen(kanal: Kanal, idOkna: string, id: string): Promi
     windowId: idOkna,
   });
   if (!wynik.udany) {
-    oglos('Przeglądanie', wynik.blad?.message ?? 'Przestrzeń nie została otwarta.', 'blad');
+    odmowa(wynik.blad, 'Przestrzeń nie została otwarta.');
   }
 }

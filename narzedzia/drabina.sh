@@ -93,7 +93,18 @@ fi
 szczebel "Pokrycie kontraktu przez interfejs"
 POKRYCIE="$(python3 narzedzia/pokrycie-kontraktu.py . 2>/dev/null)"
 if [ -n "$POKRYCIE" ]; then
-	printf '   interfejs woła %s komend kontraktu\n' "$POKRYCIE"
+	printf '   interfejs zna %s komend kontraktu\n' "$POKRYCIE"
+else
+	printf '   pominięty: pomiaru nie dało się wykonać\n'
+fi
+
+# Miara powyżej zalicza całą rodzinę komend po jednym wywołaniu katalogu
+# modułu, więc pokazuje komplet niezależnie od stanu okien. Poniższa liczy
+# wyłącznie komendy faktycznie wołane przez wiązania.
+szczebel "Pokrycie kontraktu przez wiązania"
+WIAZANIA="$(python3 narzedzia/pokrycie-wiazan.py . 2>/dev/null)"
+if [ -n "$WIAZANIA" ]; then
+	printf '   wiązania wołają %s komend kontraktu\n' "$WIAZANIA"
 else
 	printf '   pominięty: pomiaru nie dało się wykonać\n'
 fi

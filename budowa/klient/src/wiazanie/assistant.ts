@@ -17,6 +17,7 @@ import {
   zdejmijTrescWspolna,
 } from './okno-modulu.ts';
 import { zwiazKatalogModulu } from './katalog-modulu.ts';
+import { oglos } from './ogloszenie.ts';
 
 const KOD_MODULU = 'assistant';
 
@@ -71,6 +72,17 @@ export function zwiazAsystenta(
   korzen.addEventListener('click', (zdarzenie) => {
     const cel = zdarzenie.target;
     if (!(cel instanceof Element)) return;
+    const wiersz = cel.closest<HTMLElement>('[data-wpis-dziennika]');
+    if (wiersz !== null && cel.closest('[data-wpis-wyroznij]') !== null) {
+      zdarzenie.stopPropagation();
+      void przelaczWyroznienie(kanal, korzen, wiersz, idOkna);
+      return;
+    }
+    if (cel.closest('[data-polecenie-wyslij]') !== null) {
+      zdarzenie.stopPropagation();
+      void wyslijPolecenie(kanal, korzen, idOkna);
+      return;
+    }
     if (cel.closest('#panel-activity .sta-okno-akcje .dn-btn-ikona') === null) return;
     zdarzenie.stopPropagation();
     void odswiez();
@@ -110,7 +122,7 @@ function niegotowe(cialo: Element | null, zdanie: string): void {
 function zdejmijTrescPrzykladowa(korzen: Element): void {
   niegotowe(panel(korzen, 'panel-activity'), 'Wykaz czeka na odpowiedź rdzenia.');
   niegotowe(panel(korzen, 'panel-actions'), 'Rdzeń nie podaje zleceń dla tego okna.');
-  niegotowe(panel(korzen, 'panel-voice'), 'Nagrywanie głosu nie wchodzi do tego wydania.');
+  postawPolecenie(panel(korzen, 'panel-voice'));
   niegotowe(panel(korzen, 'panel-plan'), 'Plan pracy czeka na pierwsze zlecenie.');
   niegotowe(panel(korzen, 'panel-artefakty'), 'Rdzeń nie podaje wytworów tego okna.');
   niegotowe(panel(korzen, 'panel-pliki'), 'Rdzeń nie podaje plików tego okna.');
@@ -130,7 +142,88 @@ async function wypelnijDziennik(kanal: Kanal, korzen: Element, idOkna: string): 
     niegotowe(cialo, 'Asystent nie odnotował jeszcze żadnego działania.');
     return;
   }
-  cialo.replaceChildren(...wpisy.map((w) => pozycja(cialo, w.content, w.kind)));
+  cialo.replaceChildren(...wpisy.map((w) => wpisDziennika(cialo, w)));
+}
+
+/* Wpis dziennika niesie własne wyróżnienie: `assistant.activity.flag` odwraca
+   oznaczenie, a wykaz wczytuje się na nowo, bo rdzeń rozstrzyga o kolejności. */
+function wpisDziennika(cialo: Element, wpis: AssistantActivityEntry): HTMLElement {
+  const wiersz = pozycja(cialo, wpis.content, wpis.kind);
+  wiersz.dataset.wpisDziennika = wpis.id;
+  const przelacz = cialo.ownerDocument.createElement('button');
+  przelacz.type = 'button';
+  przelacz.className = 'dn-btn-ikona';
+  przelacz.dataset.wpisWyroznij = wpis.important === true ? 'zdejmij' : 'nadaj';
+  przelacz.setAttribute(
+    'aria-label',
+    wpis.important === true ? 'Zdejmij wyróżnienie wpisu' : 'Wyróżnij wpis dziennika',
+  );
+  przelacz.textContent = wpis.important === true ? '★' : '☆';
+  wiersz.appendChild(przelacz);
+  return wiersz;
+}
+
+/* Nagrywania okno nie prowadzi, ale komenda przyjmuje samą transkrypcję, więc
+   polecenie da się podyktować pisemnie: pole i przycisk zamiast zdania o braku. */
+function postawPolecenie(cialo: Element | null): void {
+  if (cialo === null) return;
+  const pole = cialo.ownerDocument.createElement('input');
+  pole.type = 'text';
+  pole.className = 'dn-pole dn-pole--sm';
+  pole.placeholder = 'Treść polecenia';
+  pole.setAttribute('aria-label', 'Treść polecenia dla asystenta');
+  pole.dataset.polecenieTresc = '';
+  const przycisk = cialo.ownerDocument.createElement('button');
+  przycisk.type = 'button';
+  przycisk.className = 'dn-btn dn-btn--duch dn-btn--sm';
+  przycisk.dataset.polecenieWyslij = '';
+  przycisk.textContent = 'Wyślij polecenie';
+  const zdanie = cialo.ownerDocument.createElement('div');
+  zdanie.className = 'dn-meta';
+  zdanie.textContent = 'Nagrywanie głosu nie wchodzi do tego wydania; polecenie idzie pisemnie.';
+  cialo.replaceChildren(pole, przycisk, zdanie);
+}
+
+async function wyslijPolecenie(
+  kanal: Kanal,
+  korzen: Element,
+  idOkna: string,
+): Promise<void> {
+  const pole = korzen.querySelector<HTMLInputElement>('[data-polecenie-tresc]');
+  const tresc = (pole?.value ?? '').trim();
+  if (idOkna === '' || tresc === '') return;
+  const wynik = await wywolaj(kanal, Command.AssistantVoiceCommand, {
+    windowId: idOkna,
+    transcript: tresc,
+  });
+  if (!wynik.udany) {
+    oglos('Asystent', wynik.blad?.message ?? 'Rdzeń odmówił przyjęcia polecenia.', 'ostrzezenie');
+    return;
+  }
+  if (pole !== null) pole.value = '';
+  oglos('Asystent', `Zlecenie założone: ${wynik.wynik?.action.title ?? 'bez nazwy'}.`);
+  await wypelnijZlecenia(kanal, korzen, idOkna);
+}
+
+async function przelaczWyroznienie(
+  kanal: Kanal,
+  korzen: Element,
+  wiersz: HTMLElement,
+  idOkna: string,
+): Promise<void> {
+  const idWpisu = wiersz.dataset.wpisDziennika ?? '';
+  const przycisk = wiersz.querySelector<HTMLElement>('[data-wpis-wyroznij]');
+  if (idWpisu === '' || przycisk === null) return;
+  const wynik = await wywolaj(kanal, Command.AssistantActivityFlag, {
+    entryId: idWpisu,
+    important: przycisk.dataset.wpisWyroznij === 'nadaj',
+  });
+  if (!wynik.udany) {
+    oglos('Dziennik asystenta',
+      wynik.blad?.message ?? 'Rdzeń odmówił zmiany wyróżnienia wpisu.', 'ostrzezenie');
+    return;
+  }
+  await wypelnijDziennik(kanal, korzen, idOkna);
 }
 
 /* Zlecenia asystenta: te w biegu i te czekające na zgodę Operatora idą jednym

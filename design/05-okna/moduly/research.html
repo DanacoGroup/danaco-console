@@ -569,16 +569,35 @@
               <button class="dn-btn dn-btn--zarys dn-btn--sm" type="button">Zbadaj →</button>
             </div>
             <div class="rs-nawig">
+              <button class="dn-btn dn-btn--zarys dn-btn--sm" type="button" data-czynnosc-obszaru="pytanie">Pytanie badawcze</button>
+              <button class="dn-btn dn-btn--zarys dn-btn--sm" type="button" data-czynnosc-obszaru="notatka">Notatka robocza</button>
+              <button class="dn-btn dn-btn--zarys dn-btn--sm" type="button" data-czynnosc-obszaru="pokrycie">Pokrycie pytań</button>
+              <button class="dn-btn dn-btn--zarys dn-btn--sm" type="button" data-czynnosc-obszaru="swiezosc">Świeżość materiału</button>
+            </div>
+            <div class="dn-wykaz-modulu" data-obszar-wynik></div>
+            <div class="rs-nawig">
               <button class="dn-btn dn-btn--zarys dn-btn--sm" type="button" data-panel-cel="panel-sources">→ Sources Manager</button>
               <button class="dn-btn dn-btn--zarys dn-btn--sm" type="button" data-panel-cel="panel-findings">→ Findings Panel</button>
               <button class="dn-btn dn-btn--zarys dn-btn--sm" type="button" data-panel-cel="panel-report">→ Report Builder</button>
             </div>
           </div>
+          <div class="sta-okno-tresc">
+            <div class="rs-nawig">
+              <button class="dn-btn dn-btn--zarys dn-btn--sm" type="button" data-czynnosc-rzetelnosci="cytowania">Sprawdź cytowania</button>
+              <button class="dn-btn dn-btn--zarys dn-btn--sm" type="button" data-czynnosc-rzetelnosci="zloz-cytat">Złóż cytaty</button>
+              <button class="dn-btn dn-btn--zarys dn-btn--sm" type="button" data-czynnosc-rzetelnosci="wycofania">Sprawdź wycofania</button>
+              <button class="dn-btn dn-btn--zarys dn-btn--sm" type="button" data-czynnosc-rzetelnosci="przesiew">Liczniki przesiewu</button>
+              <button class="dn-btn dn-btn--zarys dn-btn--sm" type="button" data-czynnosc-rzetelnosci="graf">Graf dowodów</button>
+              <button class="dn-btn dn-btn--zarys dn-btn--sm" type="button" data-czynnosc-rzetelnosci="luki">Luki badawcze</button>
+            </div>
+            <div class="dn-wykaz-modulu" data-rzetelnosc-wynik></div>
+          </div>
+
         </section>
 
         <!-- Sources Manager -->
         <section class="sta-okno" id="panel-sources" data-nazwa="Sources Manager">
-          <header class="sta-okno-belka"><span class="sta-okno-tytul"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 4h16v4H4zM4 10h16v4H4zM4 16h16v4H4z"/></svg><b>Sources Manager</b></span><span class="sta-okno-znacznik">14</span><span class="sta-okno-akcje"><button class="dn-btn-ikona" type="button" data-okno-zamknij aria-label="Zamknij"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></button></span></header>
+          <header class="sta-okno-belka"><span class="sta-okno-tytul"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 4h16v4H4zM4 10h16v4H4zM4 16h16v4H4z"/></svg><b>Sources Manager</b></span><span class="sta-okno-znacznik">14</span><span class="sta-okno-akcje"><button class="dn-btn dn-btn--zarys dn-btn--sm" type="button" data-czynnosc-zrodla="wciagnij">Wciągnij bibliografię</button><button class="dn-btn dn-btn--zarys dn-btn--sm" type="button" data-czynnosc-zrodla="scal">Scal duplikaty</button><button class="dn-btn dn-btn--zarys dn-btn--sm" type="button" data-czynnosc-zrodla="rozpoznaj">Rozpoznaj identyfikator</button><button class="dn-btn-ikona" type="button" data-okno-zamknij aria-label="Zamknij"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></button></span></header>
           <div class="sta-okno-tresc dn-wykaz-modulu">
             <div style="display:flex;gap:var(--dn-od-2);align-items:center;flex-wrap:wrap">
               <button class="dn-btn dn-btn--zarys dn-btn--sm" type="button">+ Dodaj źródło</button>
@@ -592,11 +611,25 @@
             <div class="dn-wykaz-modulu-poz"><span class="dn-kropka dn-kropka--sukces" aria-hidden="true"></span><span class="dn-plakietka">[11]</span> dane-eurostat.csv <span class="dn-meta">wysoka · 6 ust.</span></div>
             <button class="dn-btn dn-btn--zarys dn-btn--sm" type="button" style="margin-top:var(--dn-od-1)">Eksportuj bibliografię</button>
           </div>
+          <div class="sta-okno-tresc">
+            <div class="rs-nawig">
+              <button class="dn-btn dn-btn--zarys dn-btn--sm" type="button" data-czynnosc-wydobycia="przechwyc">Przechwyć stronę</button>
+              <button class="dn-btn dn-btn--zarys dn-btn--sm" type="button" data-czynnosc-wydobycia="partia">Partia adresów</button>
+              <button class="dn-btn dn-btn--zarys dn-btn--sm" type="button" data-czynnosc-wydobycia="pismo">Rozpoznaj pismo</button>
+              <button class="dn-btn dn-btn--zarys dn-btn--sm" type="button" data-czynnosc-wydobycia="przepisz">Przepisz nagranie</button>
+              <button class="dn-btn dn-btn--zarys dn-btn--sm" type="button" data-czynnosc-wydobycia="tabele">Wydobądź tabele</button>
+              <button class="dn-btn dn-btn--zarys dn-btn--sm" type="button" data-czynnosc-wydobycia="twierdzenia">Wydobądź twierdzenia</button>
+              <button class="dn-btn dn-btn--zarys dn-btn--sm" type="button" data-czynnosc-wydobycia="zalacz">Dołącz plik</button>
+              <button class="dn-btn dn-btn--zarys dn-btn--sm" type="button" data-czynnosc-wydobycia="zalaczniki">Załączniki źródła</button>
+            </div>
+            <div class="dn-wykaz-modulu" data-wydobycie-wynik></div>
+          </div>
+
         </section>
 
         <!-- Findings Panel -->
         <section class="sta-okno" id="panel-findings" data-nazwa="Findings Panel">
-          <header class="sta-okno-belka"><span class="sta-okno-tytul"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 11l3 3 8-8"/><path d="M20 12v6a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h9"/></svg><b>Findings Panel</b></span><span class="sta-okno-znacznik">22</span><span class="sta-okno-akcje"><button class="dn-btn-ikona" type="button" data-okno-zamknij aria-label="Zamknij"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></button></span></header>
+          <header class="sta-okno-belka"><span class="sta-okno-tytul"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 11l3 3 8-8"/><path d="M20 12v6a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h9"/></svg><b>Findings Panel</b></span><span class="sta-okno-znacznik">22</span><span class="sta-okno-akcje"><button class="dn-btn dn-btn--zarys dn-btn--sm" type="button" data-czynnosc-ustalenia="dodaj">Nowe ustalenie</button><button class="dn-btn dn-btn--zarys dn-btn--sm" type="button" data-czynnosc-ustalenia="sprzecznosci">Sprzeczności</button><button class="dn-btn-ikona" type="button" data-okno-zamknij aria-label="Zamknij"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></button></span></header>
           <div class="sta-okno-tresc dn-wykaz-modulu">
             <div class="dn-wykaz-modulu-poz"><span class="dn-plakietka">Ustalenie 12</span> Sprzeczność prognoz [3] ↔ [7] <span class="dn-plakietka dn-plakietka--ostrzezenie dn-na-koniec">sporne</span></div>
             <div class="dn-wykaz-modulu-poz"><span class="dn-plakietka">Ustalenie 11</span> Bariery wejścia — koszt kapitału <span class="dn-meta">[3][11]</span></div>
@@ -604,11 +637,25 @@
             <div class="dn-wykaz-modulu-poz"><span class="dn-plakietka">Ustalenie 7</span> Rosnący popyt na magazyny sieciowe <span class="dn-meta">[7][11]</span></div>
             <div class="dn-meta">Sortowanie: etap · powiązane źródło · sprzeczność</div>
           </div>
+          <div class="sta-okno-tresc">
+            <div class="rs-nawig">
+              <button class="dn-btn dn-btn--zarys dn-btn--sm" type="button" data-czynnosc-syntezy="scal">Scal ustalenia</button>
+              <button class="dn-btn dn-btn--zarys dn-btn--sm" type="button" data-czynnosc-syntezy="watki">Wątki tematyczne</button>
+              <button class="dn-btn dn-btn--zarys dn-btn--sm" type="button" data-czynnosc-syntezy="koduj">Koduj ustalenie</button>
+              <button class="dn-btn dn-btn--zarys dn-btn--sm" type="button" data-czynnosc-syntezy="macierz">Macierz kodowania</button>
+              <button class="dn-btn dn-btn--zarys dn-btn--sm" type="button" data-czynnosc-syntezy="slad">Ślad pochodzenia</button>
+              <button class="dn-btn dn-btn--zarys dn-btn--sm" type="button" data-czynnosc-syntezy="rozstrzygnij">Rozstrzygnij sprzeczność</button>
+              <button class="dn-btn dn-btn--zarys dn-btn--sm" type="button" data-czynnosc-syntezy="ksiazka">Książka kodów</button>
+              <button class="dn-btn dn-btn--zarys dn-btn--sm" type="button" data-czynnosc-syntezy="dopisz-kod">Dopisz kod</button>
+            </div>
+            <div class="dn-wykaz-modulu" data-synteza-wynik></div>
+          </div>
+
         </section>
 
         <!-- Report Builder -->
         <section class="sta-okno" id="panel-report" data-nazwa="Report Builder">
-          <header class="sta-okno-belka"><span class="sta-okno-tytul"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 2h9l5 5v15a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V3a1 1 0 0 1 1-1z"/><path d="M14 2v6h6M8 13h8M8 17h6"/></svg><b>Report Builder</b></span><span class="sta-okno-znacznik">40%</span><span class="sta-okno-akcje"><button class="dn-btn-ikona" type="button" data-okno-zamknij aria-label="Zamknij"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></button></span></header>
+          <header class="sta-okno-belka"><span class="sta-okno-tytul"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 2h9l5 5v15a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V3a1 1 0 0 1 1-1z"/><path d="M14 2v6h6M8 13h8M8 17h6"/></svg><b>Report Builder</b></span><span class="sta-okno-znacznik">40%</span><span class="sta-okno-akcje"><button class="dn-btn dn-btn--zarys dn-btn--sm" type="button" data-czynnosc-raportu="zloz">Złóż raport</button><button class="dn-btn dn-btn--zarys dn-btn--sm" type="button" data-czynnosc-raportu="wstaw">Wstaw zestawienie</button><button class="dn-btn dn-btn--zarys dn-btn--sm" type="button" data-czynnosc-raportu="stresc">Streszczenie zarządcze</button><button class="dn-btn dn-btn--zarys dn-btn--sm" type="button" data-czynnosc-raportu="bibliografia">Bibliografia</button><button class="dn-btn dn-btn--zarys dn-btn--sm" type="button" data-czynnosc-raportu="wydaj">Wydaj raport</button><button class="dn-btn-ikona" type="button" data-okno-zamknij aria-label="Zamknij"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></button></span></header>
           <div class="sta-okno-tresc dn-wykaz-modulu">
             <div class="pt-etykieta">Struktura raportu</div>
             <div class="dn-wykaz-modulu-poz"><span class="dn-kropka dn-kropka--sukces" aria-hidden="true"></span> 1. Streszczenie zarządcze <span class="dn-meta">✓</span></div>
@@ -618,6 +665,21 @@
             <div class="dn-wykaz-modulu-poz"><span class="dn-kropka dn-kropka--neutralna" aria-hidden="true"></span> 5. Rekomendacje <span class="dn-meta">○</span></div>
             <button class="dn-btn dn-btn--zarys dn-btn--sm" type="button" style="margin-top:var(--dn-od-1)">Wstaw ustalenia jako sekcję</button>
           </div>
+          <div class="sta-okno-tresc">
+            <div class="rs-nawig">
+              <button class="dn-btn dn-btn--zarys dn-btn--sm" type="button" data-czynnosc-recenzji="wersje">Wersje raportu</button>
+              <button class="dn-btn dn-btn--zarys dn-btn--sm" type="button" data-czynnosc-recenzji="roznica">Różnica wersji</button>
+              <button class="dn-btn dn-btn--zarys dn-btn--sm" type="button" data-czynnosc-recenzji="komentarz">Dodaj komentarz</button>
+              <button class="dn-btn dn-btn--zarys dn-btn--sm" type="button" data-czynnosc-recenzji="komentarze">Komentarze recenzji</button>
+              <button class="dn-btn dn-btn--zarys dn-btn--sm" type="button" data-czynnosc-recenzji="przypisy">Ustaw przypisy</button>
+              <button class="dn-btn dn-btn--zarys dn-btn--sm" type="button" data-czynnosc-recenzji="operacja">Operacja na sekcji</button>
+              <button class="dn-btn dn-btn--zarys dn-btn--sm" type="button" data-czynnosc-recenzji="szablony">Szablony eksportu</button>
+              <button class="dn-btn dn-btn--zarys dn-btn--sm" type="button" data-czynnosc-recenzji="szablon">Zapisz szablon</button>
+              <button class="dn-btn dn-btn--zarys dn-btn--sm" type="button" data-czynnosc-recenzji="odnosnik">Odnośnik dla odbiorcy</button>
+            </div>
+            <div class="dn-wykaz-modulu" data-recenzja-wynik></div>
+          </div>
+
         </section>
 
         <!-- Export Panel (domyślnie ukryty) -->
@@ -686,12 +748,27 @@
 
         <!-- Przeglądarka (ukryty) -->
         <section class="sta-okno" id="panel-przegladarka" data-nazwa="Przeglądarka" hidden>
-          <header class="sta-okno-belka"><span class="sta-okno-tytul"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a15 15 0 0 1 0 18M12 3a15 15 0 0 0 0 18"/></svg><b>Przeglądarka</b></span><span class="sta-okno-akcje"><button class="dn-btn-ikona" type="button" data-okno-zamknij aria-label="Zamknij"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></button></span></header>
+          <header class="sta-okno-belka"><span class="sta-okno-tytul"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a15 15 0 0 1 0 18M12 3a15 15 0 0 0 0 18"/></svg><b>Przeglądarka</b></span><span class="sta-okno-akcje"><button class="dn-btn dn-btn--zarys dn-btn--sm" type="button" data-czynnosc-obserwacji="nastaw">Nastaw monitor</button><button class="dn-btn dn-btn--zarys dn-btn--sm" type="button" data-czynnosc-obserwacji="odswiez">Odśwież monitory</button><button class="dn-btn dn-btn--zarys dn-btn--sm" type="button" data-czynnosc-obserwacji="szukaj">Szukaj źródeł</button><button class="dn-btn-ikona" type="button" data-okno-zamknij aria-label="Zamknij"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></button></span></header>
           <div class="sta-okno-tresc dn-wykaz-modulu">
             <label class="dn-szukaj"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><input type="search" placeholder="Adres źródła do pozyskania…" aria-label="Adres"></label>
             <div class="dn-wykaz-modulu-poz">eurostat.eu/energy-storage <span class="dn-btn dn-btn--zarys dn-btn--sm dn-na-koniec" style="margin-left:auto">→ do źródeł</span></div>
           </div>
-        </section>
+                  <div class="sta-okno-tresc dn-wykaz-modulu" data-odkrycia-wynik></div>
+          <div class="sta-okno-tresc">
+            <div class="rs-nawig">
+              <button class="dn-btn dn-btn--zarys dn-btn--sm" type="button" data-czynnosc-lektury="zapytania">Ułóż zapytania</button>
+              <button class="dn-btn dn-btn--zarys dn-btn--sm" type="button" data-czynnosc-lektury="cytowania">Graf cytowań</button>
+              <button class="dn-btn dn-btn--zarys dn-btn--sm" type="button" data-czynnosc-lektury="czytaj">Czytaj źródło</button>
+              <button class="dn-btn dn-btn--zarys dn-btn--sm" type="button" data-czynnosc-lektury="adnotuj">Dodaj adnotację</button>
+              <button class="dn-btn dn-btn--zarys dn-btn--sm" type="button" data-czynnosc-lektury="adnotacje">Adnotacje okna</button>
+              <button class="dn-btn dn-btn--zarys dn-btn--sm" type="button" data-czynnosc-lektury="usun-adnotacje">Usuń adnotację</button>
+              <button class="dn-btn dn-btn--zarys dn-btn--sm" type="button" data-czynnosc-lektury="pytanie">Zapytaj korpus</button>
+              <button class="dn-btn dn-btn--zarys dn-btn--sm" type="button" data-czynnosc-lektury="zakres">Zakres badania</button>
+            </div>
+            <div class="dn-wykaz-modulu" data-lektura-wynik></div>
+          </div>
+
+</section>
 
       </div><!-- /sta-robocza -->
     </div><!-- /sta-obszar -->

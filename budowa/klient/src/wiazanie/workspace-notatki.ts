@@ -14,6 +14,7 @@ import {
 import type { Kanal } from '../protokol/kanal.ts';
 import { wywolaj } from '../protokol/wywolanie.ts';
 import { data } from './okno-modulu.ts';
+import { oglos } from './ogloszenie.ts';
 import { odmien } from './workspace-projekt.ts';
 import {
   cialoPanelu,
@@ -74,6 +75,11 @@ export function zwiazNotatki(
     if (cel.closest('[data-notatka-komentarz]') !== null) {
       zdarzenie.stopPropagation();
       void dolozKomentarz(kanal, idProjektu(), wiersz);
+      return;
+    }
+    if (cel.closest('[data-komentarz-zdejmij]') !== null) {
+      zdarzenie.stopPropagation();
+      void zdejmijKomentarz(kanal, idProjektu(), wiersz);
       return;
     }
     void opiszPowiazania(kanal, idProjektu(), wiersz);
@@ -190,6 +196,13 @@ function wierszNotatki(
   }
   wiersz.style.paddingInlineStart = `${glebokosc * 12}px`;
   wiersz.dataset.notatka = notatka.id;
+  const zdejmij = wiersz.ownerDocument.createElement('button');
+  zdejmij.type = 'button';
+  zdejmij.className = 'dn-btn-ikona';
+  zdejmij.dataset.komentarzZdejmij = '';
+  zdejmij.setAttribute('aria-label', 'Zdejmij ostatni komentarz strony');
+  zdejmij.textContent = '⌫';
+  wiersz.appendChild(zdejmij);
   const skomentuj = wiersz.ownerDocument.createElement('button');
   skomentuj.type = 'button';
   skomentuj.className = 'dn-btn-ikona';
@@ -225,6 +238,43 @@ async function dolozKomentarz(
     content: tresc,
   });
   if (przyjmij('Komentarz', wynik) !== null) await opiszPowiazania(kanal, idProjektu, wiersz);
+}
+
+/*
+zdejmijKomentarz usuwa komentarz ostatni, bo wykazu komentarzy okno nie niesie.
+
+Usunięcie jest nieodwracalne i zabiera także odpowiedzi w wątku — taki jest
+domyślny kształt komendy — więc pierwsze naciśnięcie uzbraja przycisk.
+*/
+async function zdejmijKomentarz(
+  kanal: Kanal,
+  idProjektu: string,
+  wiersz: HTMLElement,
+): Promise<void> {
+  const idNotatki = wiersz.dataset.notatka ?? '';
+  if (idProjektu === '' || idNotatki === '') return;
+  const przycisk = wiersz.querySelector<HTMLElement>('[data-komentarz-zdejmij]');
+  if (przycisk !== null && przycisk.dataset.uzbrojone !== 'tak') {
+    przycisk.dataset.uzbrojone = 'tak';
+    przycisk.setAttribute('aria-label', 'Naciśnij ponownie, aby zdjąć komentarz wraz z wątkiem');
+    return;
+  }
+  const wykaz = await wywolaj(kanal, Command.WorkspaceCommentList, {
+    projectId: idProjektu,
+    targetKind: WorkspaceEntityKind.Note,
+    targetId: idNotatki,
+    limit: 50,
+  });
+  const komentarze = przyjmij('Komentarze strony', wykaz)?.comments ?? [];
+  const ostatni = komentarze[komentarze.length - 1]?.id ?? '';
+  if (ostatni === '') {
+    oglos('Komentarze strony', 'Ta strona nie ma jeszcze komentarza do zdjęcia.', 'ostrzezenie');
+    return;
+  }
+  const wynik = await wywolaj(kanal, Command.WorkspaceCommentDelete, { commentId: ostatni });
+  if (przyjmij('Komentarze strony', wynik) !== null) {
+    await opiszPowiazania(kanal, idProjektu, wiersz);
+  }
 }
 
 /* Wiersz staje się polem na czas pisania i wraca do swojej treści; wpis

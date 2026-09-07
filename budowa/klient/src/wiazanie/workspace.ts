@@ -16,6 +16,7 @@ import { zwiazAgentow } from './workspace-agenci.ts';
 import { zwiazBiblioteke } from './workspace-biblioteka.ts';
 import { zwiazInstrukcje } from './workspace-instrukcje.ts';
 import { zwiazNotatki } from './workspace-notatki.ts';
+import { zwiazWiedze } from './workspace-wiedza.ts';
 import { zwiazPamiec } from './workspace-pamiec.ts';
 import {
   opiszKafle,
@@ -77,6 +78,7 @@ export function zwiazWorkspace(
   const pamiec = zwiazPamiec(wezly, kanal, projekt, przy);
   const biblioteka = zwiazBiblioteke(wezly, kanal, projekt, przy);
   const notatki = zwiazNotatki(wezly, kanal, projekt, przy);
+  const wiedza = zwiazWiedze(wezly, kanal, projekt, przy);
   const agenci = zwiazAgentow(wezly, kanal, projekt, () => odswiezPulpit(), przy);
 
   async function odswiezPulpit(): Promise<void> {
@@ -98,6 +100,7 @@ export function zwiazWorkspace(
       pamiec.odswiez(),
       biblioteka.odswiez(),
       notatki.odswiez(),
+      wiedza.odswiez(),
       instrukcje.wczytaj(),
       opiszPlan(wezly, kanal, idProjektu),
     ]);
@@ -173,6 +176,5 @@ function zdejmijMiaryKafli(korzen: Element): void {
 }
 
 function zdejmijPanelBezPokrycia(wezly: WezlyWorkspace): void {
-  niegotowe(cialoPanelu(wezly.wTle), 'Rdzeń nie podaje zadań w tle dla tego modułu.');
   niegotowe(cialoPanelu(wezly.terminal), 'Terminal projektu nie jest jeszcze wystawiony przez rdzeń.');
 }

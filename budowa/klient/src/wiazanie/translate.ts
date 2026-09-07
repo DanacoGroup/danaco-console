@@ -1,4 +1,6 @@
-// Wiązanie karty modułu Translate z rdzeniem: okno tłumaczenia i wykaz glosariusza. Węzły pochodzą ze znacznika Właściciela, treść z rdzenia.
+// Wiązanie karty modułu Translate z rdzeniem: okno tłumaczenia, wykazy rdzenia
+// i pasy czynności nad panelami. Węzły pochodzą ze znacznika Właściciela,
+// treść z rdzenia.
 
 import {
   Command,
@@ -22,6 +24,20 @@ import {
   zdejmijTrescWspolna,
 } from './okno-modulu.ts';
 import { zwiazKatalogModulu } from './katalog-modulu.ts';
+import { czynnosciGlosariusza } from './translate-glosariusz.ts';
+import { czynnosciJakosci } from './translate-jakosc.ts';
+import { czynnosciNapisow } from './translate-napisy.ts';
+import { czynnosciPamieci } from './translate-pamiec.ts';
+import {
+  NAGLOWEK,
+  pasDzialan,
+  przyjmijPanele,
+  zapytaj,
+  type CzynnosciTlumaczenia,
+  type StanTlumaczenia,
+} from './translate-wspolne.ts';
+import { czynnosciWymiany } from './translate-wymiana.ts';
+import { czynnosciZrodla } from './translate-zrodlo.ts';
 
 const KOD_MODULU = 'translate';
 
@@ -83,6 +99,26 @@ export function zwiazTlumaczenie(
     ]);
   };
 
+  const stan: StanTlumaczenia = {
+    kanal,
+    korzen,
+    idOkna: () => idOkna,
+    odswiez,
+    panele: [],
+    idDokumentu: '',
+    idZasobu: '',
+    idPakietu: '',
+  };
+  zalozPasyDzialan(korzen);
+  const czynnosci: CzynnosciTlumaczenia = {
+    ...czynnosciZrodla(stan),
+    ...czynnosciPamieci(stan),
+    ...czynnosciGlosariusza(stan),
+    ...czynnosciJakosci(stan),
+    ...czynnosciNapisow(stan),
+    ...czynnosciWymiany(stan),
+  };
+
   void (async (): Promise<void> => {
     idOkna = await zapewnijOknoModulu(kanal, idKarty, KOD_MODULU, 'Translate', idOkna);
     if (idOkna === '') {
@@ -95,9 +131,16 @@ export function zwiazTlumaczenie(
   korzen.addEventListener('click', (zdarzenie) => {
     const cel = zdarzenie.target;
     if (!(cel instanceof Element)) return;
-    if (cel.closest('#panel-glossary .sta-okno-akcje .dn-btn-ikona') === null) return;
+    if (cel.closest('#panel-glossary .sta-okno-akcje .dn-btn-ikona') !== null) {
+      zdarzenie.stopPropagation();
+      void wniesPanel(stan).then(odswiez);
+      return;
+    }
+    const przycisk = cel.closest<HTMLElement>('[data-czynnosc-tlumaczenia]');
+    if (przycisk === null) return;
     zdarzenie.stopPropagation();
-    void wniesPanel(kanal, korzen, idOkna).then(odswiez);
+    const czynnosc = czynnosci[przycisk.dataset.czynnoscTlumaczenia ?? ''];
+    if (czynnosc !== undefined) void czynnosc();
   }, przy);
 
   const katalog = zwiazKatalogModulu(kanal, idOkna, korzen, KOD_MODULU, 'Tłumaczenie');
@@ -110,6 +153,82 @@ export function zwolnijTlumaczenie(idKarty: string): void {
   if (wiazanie === undefined) return;
   for (const odlacz of wiazanie.odlaczenia) odlacz();
   WIAZANIA.delete(idKarty);
+}
+
+/* Pas czynności stoi przy panelu, którego wykazu dotyczy: pamięć i źródło przy
+   obszarze tłumaczenia, terminy przy glosariuszu, kontrola przy planie. */
+function zalozPasyDzialan(korzen: Element): void {
+  pasDzialan(korzen, 'panel-obszar-tlum', 'Źródło i segmenty', [
+    ['zrodlo-wczytaj', 'Wczytaj źródło'],
+    ['zrodlo-jezyk', 'Rozpoznaj język'],
+    ['zrodlo-segmentuj', 'Segmentuj'],
+    ['segment-scal', 'Scal segmenty'],
+    ['segment-podziel', 'Podziel segment'],
+    ['tlumaczenie-zapisz', 'Zapisz przekład'],
+    ['panel-ton', 'Ton panelu'],
+    ['reguly-segmentacji', 'Reguły segmentacji'],
+  ]);
+  pasDzialan(korzen, 'panel-obszar-tlum', 'Pamięć tłumaczeń', [
+    ['pamiec-podpowiedz', 'Podpowiedzi'],
+    ['pamiec-wstepne', 'Tłumacz wstępnie'],
+    ['pamiec-zapisz', 'Zapisz parę'],
+    ['pamiec-usun', 'Usuń parę'],
+    ['pamiec-wciagnij', 'Wciągnij pamięć'],
+    ['pamiec-wydaj', 'Wydaj pamięć'],
+    ['pamiec-wyrownaj', 'Wyrównaj teksty'],
+    ['pamiec-uporzadkuj', 'Uporządkuj pamięć'],
+    ['pamiec-polityka-odczyt', 'Polityka pamięci'],
+    ['pamiec-polityka-zapis', 'Zapisz politykę'],
+  ]);
+  pasDzialan(korzen, 'panel-glossary', 'Glosariusz', [
+    ['glosariusz-zapisz', 'Zapisz termin'],
+    ['glosariusz-wystapienia', 'Wystąpienia'],
+    ['glosariusz-ujednolic', 'Ujednolić'],
+    ['glosariusz-wciagnij', 'Wciągnij glosariusz'],
+    ['glosariusz-wydaj', 'Wydaj glosariusz'],
+    ['terminy-wydobadz', 'Wydobądź terminy'],
+  ]);
+  pasDzialan(korzen, 'panel-plan', 'Kontrola jakości', [
+    ['jakosc-sprawdz', 'Sprawdź jakość'],
+    ['spojnosc-sprawdz', 'Sprawdź spójność'],
+    ['korekta-uruchom', 'Uruchom korektę'],
+    ['korekta-zastosuj', 'Zastosuj korektę'],
+    ['zwrotne-tlumaczenie', 'Tłumaczenie zwrotne'],
+    ['zatwierdzenie-ustaw', 'Ustaw etap'],
+    ['profil-jakosci-zapisz', 'Zapisz profil'],
+    ['profil-jakosci-usun', 'Usuń profil'],
+  ]);
+  pasDzialan(korzen, 'panel-pliki', 'Dokumenty i zasoby', [
+    ['dokument-wczytaj', 'Wczytaj dokument'],
+    ['dokument-zloz', 'Złóż dokument'],
+    ['dokument-uklad', 'Porównaj układ'],
+    ['xliff-wciagnij', 'Wciągnij XLIFF'],
+    ['zasob-wciagnij', 'Wciągnij zasób'],
+    ['zasob-wydaj', 'Wydaj zasób'],
+    ['zasob-formy-mnogie', 'Formy mnogie'],
+    ['zasob-kontekst-klucza', 'Kontekst klucza'],
+  ]);
+  pasDzialan(korzen, 'panel-pliki', 'Napisy i dubbing', [
+    ['napisy-wciagnij', 'Wciągnij napisy'],
+    ['napisy-wydaj', 'Wydaj napisy'],
+    ['napisy-taktowanie', 'Sprawdź taktowanie'],
+    ['dubbing-skrypt', 'Skrypt dubbingu'],
+  ]);
+  pasDzialan(korzen, 'panel-kolejka', 'Przekład i wymiana', [
+    ['profile-przekladu', 'Profile przekładu'],
+    ['profil-przekladu-zapisz', 'Zapisz profil przekładu'],
+    ['przeklady-porownaj', 'Porównaj przekłady'],
+    ['pivot-odczyt', 'Język pośredni'],
+    ['pivot-zapis', 'Zapisz język pośredni'],
+    ['zlecenie-wsadowe', 'Zlecenie wsadowe'],
+    ['panel-wydaj', 'Wydaj panel'],
+    ['mowa-synteza', 'Synteza mowy'],
+    ['artefakt-opublikuj', 'Opublikuj artefakt'],
+    ['pakiet-zloz', 'Złóż pakiet'],
+    ['pakiet-przyjmij', 'Przyjmij zwrot'],
+    ['most-przyjmij-zrodlo', 'Przyjmij ze Studia'],
+    ['most-odeslij-wynik', 'Odeślij do Studia'],
+  ]);
 }
 
 function korzenKarty(wskazanie: Element | string): Element | null {
@@ -197,21 +316,22 @@ function pozycja(cialo: Element, tytul: string, podpis: string): HTMLElement {
 
 /* Okna zakładania źródła wydanie nie niesie: tytuł wchodzi zapytaniem w oknie,
    tak samo jak nazwa komponentu w Centrum. */
-async function wniesPanel(kanal: Kanal, korzen: Element, idOkna: string): Promise<void> {
+async function wniesPanel(stan: StanTlumaczenia): Promise<void> {
+  const idOkna = stan.idOkna();
   if (idOkna === '') {
-    oglos('Tłumaczenie', 'Okno tłumaczenia jeszcze nie powstało, więc nie ma do czego dołożyć panelu.');
+    oglos(NAGLOWEK, 'Okno tłumaczenia jeszcze nie powstało, więc nie ma do czego dołożyć panelu.');
     return;
   }
-  const jezyk = globalThis.prompt?.('Język panelu (kod, np. DE)') ?? '';
-  if (jezyk.trim() === '') return;
-  const odpowiedz = await wywolaj(kanal, Command.TranslateTargetAdd, {
+  const jezyk = zapytaj('Język panelu (kod, np. DE)');
+  if (jezyk === '') return;
+  const odpowiedz = await wywolaj(stan.kanal, Command.TranslateTargetAdd, {
     windowId: idOkna,
-    language: jezyk.trim(),
+    language: jezyk,
   });
-  if (!odpowiedz.udany) {
-    oglos('Tłumaczenie', odpowiedz.blad?.message ?? 'Rdzeń odmówił dołożenia panelu.', 'blad');
+  if (!odpowiedz.udany || odpowiedz.wynik === undefined) {
+    oglos(NAGLOWEK, odpowiedz.blad?.message ?? 'Rdzeń odmówił dołożenia panelu.', 'blad');
     return;
   }
-  oglos('Tłumaczenie', `Panel języka ${jezyk.trim()} dołożony.`);
-  void korzen;
+  przyjmijPanele(stan, [odpowiedz.wynik.panel]);
+  oglos(NAGLOWEK, `Panel języka ${jezyk} dołożony.`);
 }

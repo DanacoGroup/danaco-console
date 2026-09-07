@@ -17,6 +17,7 @@ import {
 import type { Kanal } from '../protokol/kanal.ts';
 import { wywolaj } from '../protokol/wywolanie.ts';
 import { data } from './okno-modulu.ts';
+import { oglos } from './ogloszenie.ts';
 import {
   cialoPanelu,
   kopiaWzoru,
@@ -91,6 +92,11 @@ export function zwiazZadania(
         void usunZadanie(kanal, wiersz, idZadania, odswiez);
         return;
       }
+      if (cel.closest('[data-zadanie-zaleznosc]') !== null) {
+        zdarzenie.stopPropagation();
+        void przestawZaleznosc(kanal, lista, idProjektu(), idZadania, odswiez);
+        return;
+      }
       const stan = wiersz.dataset.stan ?? WorkspaceTaskStatus.Todo;
       const kolumna = wiersz.dataset.nastepnaKolumna ?? '';
       void (kolumna === ''
@@ -124,7 +130,9 @@ async function zalozZadanie(
   if (lista === null || wzor === null || idProjektu === '') return;
   const wiersz = kopiaWzoru(wzor);
   if (wiersz === null) return;
-  for (const zbedne of wiersz.querySelectorAll('[data-zadanie-usun], .dn-meta')) zbedne.remove();
+  for (const zbedne of wiersz.querySelectorAll(
+    '[data-zadanie-usun], [data-zadanie-zaleznosc], .dn-meta',
+  )) zbedne.remove();
   const pole = wiersz.querySelector<HTMLElement>('.wk-zadanie-tytul') ?? wiersz;
   lista.prepend(wiersz);
   const tytul = await zapytajWWezle(pole, '');
@@ -132,6 +140,46 @@ async function zalozZadanie(
   if (tytul === null || tytul === '') return;
   const wynik = await wywolaj(kanal, Command.WorkspaceTaskCreate, { projectId: idProjektu, title: tytul });
   if (przyjmij('Nowe zadanie', wynik) !== null) await odswiez();
+}
+
+/*
+przestawZaleznosc wiąże zadanie z poprzednikiem albo znosi wiązanie stojące.
+
+Poprzednikiem jest zadanie stojące w wykazie nad wskazanym: okno nie prowadzi
+wyboru zadania, a kolejność wykazu jest jedynym wskazaniem, które Operator widzi.
+Zależność stojąca schodzi, więc ten sam przycisk działa w obie strony.
+*/
+async function przestawZaleznosc(
+  kanal: Kanal,
+  lista: HTMLElement | null,
+  idProjektu: string,
+  idZadania: string,
+  odswiez: () => Promise<void>,
+): Promise<void> {
+  if (lista === null || idProjektu === '' || idZadania === '') return;
+  const wiersze = [...lista.querySelectorAll<HTMLElement>('.wk-zadanie[data-zadanie]')];
+  const numer = wiersze.findIndex((w) => w.dataset.zadanie === idZadania);
+  const poprzednik = wiersze[numer - 1]?.dataset.zadanie ?? '';
+  if (poprzednik === '') {
+    oglos('Zadania', 'Pierwsze zadanie wykazu nie ma poprzednika.', 'ostrzezenie');
+    return;
+  }
+  const stojaca = wiersze[numer]?.dataset.zaleznosc ?? '';
+  /* Obie drogi oddają inny kształt wyniku, więc każda przyjmowana jest osobno;
+     wspólna zmienna zlewałaby dwa typy odpowiedzi w jeden. */
+  if (stojaca === '') {
+    const zalozona = await wywolaj(kanal, Command.WorkspaceTaskDependencySet, {
+      projectId: idProjektu,
+      predecessorTaskId: poprzednik,
+      successorTaskId: idZadania,
+    });
+    if (przyjmij('Zależność zadań', zalozona) !== null) await odswiez();
+    return;
+  }
+  const zniesiona = await wywolaj(kanal, Command.WorkspaceTaskDependencyRemove, {
+    dependencyId: stojaca,
+  });
+  if (przyjmij('Zależność zadań', zniesiona) !== null) await odswiez();
 }
 
 /* Usunięcie zadania jest nieodwracalne, więc pierwsze naciśnięcie uzbraja

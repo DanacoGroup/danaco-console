@@ -22,6 +22,7 @@ import {
 } from './okno-modulu.ts';
 import { zwiazKatalogModulu } from './katalog-modulu.ts';
 import { zwiazPaneleAutomatyk } from './automations-panele.ts';
+import { zwiazOrkiestracjeAutomatyk } from './automations-orkiestracja.ts';
 import { zapewnijSesje } from './sesja-biezaca.ts';
 import { zwiazCzynnosciAutomatyk } from './automations-czynnosci.ts';
 
@@ -110,6 +111,12 @@ export function zwiazAutomatyzacje(
   })();
 
   zwiazPaneleAutomatyk(kanal, korzen, () => idOkna, () => idSesji, () => {
+    void odswiez();
+  }, (zdejmij) => {
+    odlaczenia.push(zdejmij);
+  }, przy);
+
+  zwiazOrkiestracjeAutomatyk(kanal, korzen, () => {
     void odswiez();
   }, (zdejmij) => {
     odlaczenia.push(zdejmij);

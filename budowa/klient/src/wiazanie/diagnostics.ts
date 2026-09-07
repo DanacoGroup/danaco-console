@@ -18,6 +18,7 @@ import {
 } from './okno-modulu.ts';
 import { zwiazKatalogModulu } from './katalog-modulu.ts';
 import { zwiazCzynnosciDiagnostyki } from './diagnostics-czynnosci.ts';
+import { zwiazCzuwanieDiagnostyki } from './diagnostics-czuwanie.ts';
 
 const KOD_MODULU = 'diagnostics';
 
@@ -86,6 +87,10 @@ export function zwiazDiagnostyke(
     odlaczenia.push(zdejmij);
   }, przy);
 
+  zwiazCzuwanieDiagnostyki(kanal, korzen, (zdejmij) => {
+    odlaczenia.push(zdejmij);
+  }, przy);
+
   const katalog = zwiazKatalogModulu(kanal, idOkna, korzen, KOD_MODULU, 'Diagnostyka');
   if (katalog !== null) odlaczenia.push(katalog);
   return true;
@@ -121,11 +126,11 @@ function zdejmijTrescPrzykladowa(korzen: Element): void {
   niegotowe(panel(korzen, 'panel-bledy'), 'Wykaz czeka na odpowiedź rdzenia.');
   niegotowe(panel(korzen, 'panel-rekomendacje'), 'Wykaz czeka na odpowiedź rdzenia.');
   niegotowe(panel(korzen, 'panel-logi'), 'Dziennik czeka na odczyt z czynności panelu.');
-  niegotowe(panel(korzen, 'panel-centrum'), 'Centrum diagnostyki czeka na pierwszy błąd.');
+  niegotowe(panel(korzen, 'panel-centrum'), 'Czujki i zapłony czekają na odczyt z czynności panelu.');
   niegotowe(panel(korzen, 'panel-plan'), 'Plan naprawy powstaje z rekomendacji.');
   niegotowe(panel(korzen, 'panel-artefakty'), 'Rdzeń nie podaje wytworów diagnostyki.');
   niegotowe(panel(korzen, 'panel-kolejka'), 'Rdzeń nie podaje zadań w tle dla tego okna.');
-  niegotowe(panel(korzen, 'panel-zadania'), 'Rdzeń nie podaje zadań w tle dla tego okna.');
+  niegotowe(panel(korzen, 'panel-zadania'), 'Sondy zdrowia czekają na odczyt z czynności panelu.');
   niegotowe(panel(korzen, 'panel-terminal'), 'Terminal diagnostyki nie jest jeszcze wystawiony przez rdzeń.');
 }
 

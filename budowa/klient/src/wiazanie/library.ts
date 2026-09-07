@@ -8,6 +8,7 @@ import { wywolaj } from '../protokol/wywolanie.ts';
 import { zwiazEksplorator } from './library-eksplorator.ts';
 import { zwiazEtykiety } from './library-etykiety.ts';
 import { zwiazPodglad } from './library-podglad.ts';
+import { zwiazWiedzeBiblioteki } from './library-wiedza.ts';
 import { zwiazWersje } from './library-wersje.ts';
 import { zwiazZadania } from './library-zadania.ts';
 import { zwiazKatalogModulu } from './katalog-modulu.ts';
@@ -60,6 +61,9 @@ export function zwiazLibrary(
   zwiazPodglad(kanal, obszar, idOknaStojacego, kontekst, przy);
   zwiazWersje(kanal, obszar, kontekst, przy);
   zwiazZadania(kanal, obszar, kontekst, przy);
+  zwiazWiedzeBiblioteki(kanal, obszar, () => idOknaStojacego, (zdejmij) => {
+    odlaczenia.push(zdejmij);
+  }, przy);
   uzgodnijPrzelacznikiPaneli(obszar, []);
 
   odlaczenia.push(

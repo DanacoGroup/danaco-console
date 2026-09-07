@@ -15,6 +15,8 @@ import type { Kanal } from '../protokol/kanal.ts';
 import { wywolaj } from '../protokol/wywolanie.ts';
 import { oglos } from './ogloszenie.ts';
 import { zwiazKatalogModulu } from './katalog-modulu.ts';
+import { zwiazCzynnosciTerminala } from './terminal-czynnosci.ts';
+import { zapewnijOknoModulu } from './okno-modulu.ts';
 
 interface WiazanieTerminala {
   korzen: Element;
@@ -25,7 +27,7 @@ const WIAZANIA = new Map<string, WiazanieTerminala>();
 
 export function zwiazTerminal(
   kanal: Kanal,
-  idOkna: string,
+  idOknaStojacego: string,
   wskazanieKorzenia: Element | string,
 ): boolean {
   const korzen = korzenKarty(wskazanieKorzenia);
@@ -45,9 +47,24 @@ export function zwiazTerminal(
 
   zdejmijTrescPrzykladowa(korzen);
 
-  void wypelnijKarty(kanal, korzen, idOkna);
-  void wypelnijProcesy(kanal, korzen, idOkna);
-  void wypelnijSciage(kanal, korzen);
+  /* Bez okna modułu każde wywołanie szło z pustym wskazaniem i rdzeń oddawał
+     wykaz cudzy albo pusty. Okno bierze się tak samo jak w pozostałych
+     modułach: z sesji karty i wykazu modułów rdzenia. */
+  let idOkna = idOknaStojacego;
+  const odswiez = (): void => {
+    void wypelnijKarty(kanal, korzen, idOkna);
+    void wypelnijProcesy(kanal, korzen, idOkna);
+    void wypelnijSciage(kanal, korzen);
+  };
+
+  void (async (): Promise<void> => {
+    idOkna = await zapewnijOknoModulu(kanal, idKarty, 'terminal', 'Terminal', idOkna);
+    odswiez();
+  })();
+
+  zwiazCzynnosciTerminala(kanal, korzen, () => idOkna, odswiez, (odsubskrybuj) => {
+    odlaczenia.push(odsubskrybuj);
+  }, przy);
 
   korzen.addEventListener('click', (zdarzenie) => {
     const cel = zdarzenie.target;
@@ -109,10 +126,10 @@ function zdejmijTrescPrzykladowa(korzen: Element): void {
   for (const wybor of ['.oc-wiersz', '.pm-wiersz', '[data-sciaga]', '.tt-karta']) {
     for (const wezel of korzen.querySelectorAll(wybor)) wezel.remove();
   }
-  /* Plan i pliki niosą w prototypie cudzą pracę wpisaną wprost — nazwę zlecenia
-     i wykaz plików wraz z wagą. Oba panele stoją ukryte, więc przejście po
-     oknach ich nie widzi, a rdzeń dla terminala żadnego z nich nie podaje. */
-  for (const identyfikator of ['panel-plan', 'panel-pliki']) {
+  /* Plan niesie w prototypie cudzą pracę wpisaną wprost — nazwę zlecenia.
+     Panel stoi ukryty, więc przejście po oknach go nie widzi, a rdzeń planu dla
+     okna terminala nie podaje. Panel plików prowadzi zasoby połączeń. */
+  for (const identyfikator of ['panel-plan']) {
     const cialo = korzen.querySelector(`#${identyfikator} .sta-okno-tresc`);
     if (cialo === null) continue;
     postawStanPusty(cialo, 'Rdzeń nie podaje tego wykazu dla okna terminala.');

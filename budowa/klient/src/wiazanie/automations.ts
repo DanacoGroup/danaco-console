@@ -21,6 +21,8 @@ import {
   zdejmijTrescWspolna,
 } from './okno-modulu.ts';
 import { zwiazKatalogModulu } from './katalog-modulu.ts';
+import { zwiazPaneleAutomatyk } from './automations-panele.ts';
+import { zapewnijSesje } from './sesja-biezaca.ts';
 import { zwiazCzynnosciAutomatyk } from './automations-czynnosci.ts';
 
 const KOD_MODULU = 'automations';
@@ -98,6 +100,19 @@ export function zwiazAutomatyzacje(
     if (cel.closest('#panel-orch .sta-okno-akcje .dn-btn-ikona') === null) return;
     zdarzenie.stopPropagation();
     void odswiez();
+  }, przy);
+
+  /* Kolejka należy do sesji karty, nie do okna modułu, więc czynności kolejki
+     potrzebują wskazania sesji obok wskazania okna. */
+  let idSesji = '';
+  void (async (): Promise<void> => {
+    idSesji = await zapewnijSesje(kanal, idKarty, 'Automations');
+  })();
+
+  zwiazPaneleAutomatyk(kanal, korzen, () => idOkna, () => idSesji, () => {
+    void odswiez();
+  }, (zdejmij) => {
+    odlaczenia.push(zdejmij);
   }, przy);
 
   const katalog = zwiazKatalogModulu(kanal, idOkna, korzen, KOD_MODULU, 'Automations');

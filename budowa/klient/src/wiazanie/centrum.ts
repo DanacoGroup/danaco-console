@@ -75,6 +75,7 @@ import { zwiazWorkspace, zwolnijWorkspace } from './workspace.ts';
 import { zwiazAgents, zwolnijAgents } from './agents.ts';
 import { zwiazDesign, zwolnijDesign } from './design.ts';
 import { zwiazTerminal, zwolnijTerminal } from './terminal.ts';
+import { zwiazKontaUstawien } from './ustawienia-konta.ts';
 import { zwiazPrzegladarke, zwolnijPrzegladarke } from './browser.ts';
 import { otworzOperacjePlatformy } from './platforma-operacje.ts';
 import { zglosUchwyt } from './zdarzenia.ts';
@@ -142,7 +143,7 @@ export function zwiazCentrum(kanal: Kanal | undefined = globalThis.DanacoKanal):
       if (droga.wybor === '#cd-konfiguracja' && kanal !== undefined) {
         otworzOperacjePlatformy(kanal);
       } else if (droga.wybor === '#cd-ustawienia') {
-        postawOknoUstawien();
+        postawOknoUstawien(kanal);
       } else {
         zapowiedzOknoPlatformowe(droga, wezel);
       }
@@ -1593,7 +1594,7 @@ const OKNA_PLATFORMOWE: readonly DrogaPlatformowa[] = [
 
 /* Okno Ustawień stoi w produkcie, więc jego droga nie zapowiada niegotowości,
    tylko podmienia treść ramy — tak samo jak trasa wycofania z listu. */
-function postawOknoUstawien(): void {
+function postawOknoUstawien(kanal: Kanal | undefined): void {
   const szablon = document.getElementById('dn-tresc-ustawienia');
   if (!(szablon instanceof HTMLTemplateElement)) return;
   const blok = szablon.content.firstElementChild;
@@ -1601,6 +1602,7 @@ function postawOknoUstawien(): void {
   if (blok === null || rama === null) return;
   rama.hidden = false;
   rama.replaceChildren(blok.cloneNode(true));
+  if (kanal !== undefined) zwiazKontaUstawien(kanal, rama);
 }
 
 function zapowiedzOknoPlatformowe(droga: DrogaPlatformowa, wezel: HTMLElement): void {

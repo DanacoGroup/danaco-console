@@ -19,6 +19,7 @@ import {
 import { zwiazKatalogModulu } from './katalog-modulu.ts';
 import { zwiazGlosAsystenta } from './assistant-glos.ts';
 import { zwiazOknoAsystenta } from './assistant-okno.ts';
+import { zwiazSchowekAsystenta } from './assistant-schowek.ts';
 import { oglos } from './ogloszenie.ts';
 
 const KOD_MODULU = 'assistant';
@@ -95,6 +96,10 @@ export function zwiazAsystenta(
   }, przy);
 
   zwiazOknoAsystenta(kanal, korzen, () => idOkna, (zdejmij) => {
+    odlaczenia.push(zdejmij);
+  }, przy);
+
+  zwiazSchowekAsystenta(kanal, korzen, () => idOkna, (zdejmij) => {
     odlaczenia.push(zdejmij);
   }, przy);
 
